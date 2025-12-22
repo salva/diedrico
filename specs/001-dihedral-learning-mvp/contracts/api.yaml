@@ -1,0 +1,755 @@
+openapi: 3.0.3
+info:
+  title: Diedrico MVP Backend API
+  description: |
+    REST API for project persistence in the Diedrico dihedral learning application.
+    The backend serves as a simple storage layer; all business logic resides in the frontend.
+  version: 1.0.0
+  contact:
+    name: Diedrico Development
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: http://localhost:3000/api
+    description: Production server (TBD)
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns server status and version
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /projects:
+    get:
+      summary: List all projects
+      description: Returns metadata for all saved projects (id, name, modified timestamp)
+      operationId: listProjects
+      tags:
+        - Projects
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProjectMetadata'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new project
+      description: |
+        Creates a new project with minimal initial structure:
+        - Two default projection planes (P_H, P_V)
+        - One hinge line (HL_HV)
+        - Empty element and action lists
+        Returns the full project including generated ID.
+      operationId: createProject
+      tags:
+        - Projects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  example: "Exercise 1: Basic Projections"
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /projects/{projectId}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        description: UUID of the project
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Load a project
+      description: Returns the complete project data including all planes, elements, actions, and view state
+      operationId: getProject
+      tags:
+        - Projects
+      responses:
+        '200':
+          description: Project data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Save project changes
+      description: |
+        Updates the entire project. This is called on autosave (500ms debounce after changes).
+        Frontend sends the complete project state; backend validates and persists.
+        Updates the `modified` timestamp automatically.
+      operationId: updateProject
+      tags:
+        - Projects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+      responses:
+        '200':
+          description: Project saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  modified:
+                    type: string
+                    format: date-time
+                    description: Server-set modification timestamp
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete a project
+      description: Permanently deletes a project and its associated data
+      operationId: deleteProject
+      tags:
+        - Projects
+      responses:
+        '204':
+          description: Project deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    ProjectMetadata:
+      type: object
+      description: Minimal project information for listing
+      required:
+        - id
+        - name
+        - modified
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique project identifier
+        name:
+          type: string
+          maxLength: 100
+          description: User-provided project name
+        modified:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+
+    Project:
+      type: object
+      description: |
+        Complete project data structure. This is the root aggregate containing
+        all user work for one dihedral drawing exercise. See data-model.md for
+        full entity definitions.
+      required:
+        - id
+        - name
+        - schemaVersion
+        - created
+        - modified
+        - planes
+        - hingeLines
+        - elements2D
+        - elements3D
+        - actions
+        - viewState
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        schemaVersion:
+          type: string
+          pattern: '^\d+\.\d+\.\d+$'
+          example: "1.0.0"
+          description: Semantic version for data format migrations
+        created:
+          type: string
+          format: date-time
+          description: Project creation timestamp
+        modified:
+          type: string
+          format: date-time
+          description: Last modification timestamp (server-updated on save)
+        planes:
+          type: array
+          description: Projection planes (minimum 2 for MVP)
+          minItems: 2
+          items:
+            $ref: '#/components/schemas/ProjectionPlane'
+        hingeLines:
+          type: array
+          description: Hinge lines between planes (minimum 1 for MVP)
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/HingeLine'
+        elements2D:
+          type: array
+          description: 2D geometric elements (points, segments, lines, circles, arcs)
+          items:
+            $ref: '#/components/schemas/Element2D'
+        elements3D:
+          type: array
+          description: 3D elements derived from 2D projections
+          items:
+            $ref: '#/components/schemas/Element3D'
+        actions:
+          type: array
+          description: Ordered command history (constructive actions)
+          items:
+            $ref: '#/components/schemas/ConstructiveAction'
+        viewState:
+          $ref: '#/components/schemas/ViewState'
+
+    ProjectionPlane:
+      type: object
+      description: Named 2D surface where 2D elements exist
+      required:
+        - id
+        - name
+        - isActive
+        - isVisible
+        - transform2DTo3D
+        - color
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          pattern: '^P_[A-Z0-9]+$'
+          example: "P_H"
+          description: Plane identifier (e.g., P_H for horizontal, P_V for vertical)
+        isActive:
+          type: boolean
+          description: Whether this is the active plane (exactly one per project)
+        isVisible:
+          type: boolean
+          description: Whether this plane is visible in UI
+        transform2DTo3D:
+          type: array
+          description: 4x4 transformation matrix (row-major order)
+          items:
+            type: number
+          minItems: 16
+          maxItems: 16
+        color:
+          $ref: '#/components/schemas/Color'
+
+    HingeLine:
+      type: object
+      description: Intersection line shared by two projection planes
+      required:
+        - id
+        - name
+        - plane1
+        - plane2
+        - line2DInPlane1
+        - line2DInPlane2
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          pattern: '^HL_[A-Z0-9]+$'
+          example: "HL_HV"
+        plane1:
+          type: string
+          format: uuid
+          description: Reference to first plane ID
+        plane2:
+          type: string
+          format: uuid
+          description: Reference to second plane ID
+        line2DInPlane1:
+          $ref: '#/components/schemas/Line2DGeometry'
+        line2DInPlane2:
+          $ref: '#/components/schemas/Line2DGeometry'
+
+    Element2D:
+      type: object
+      description: |
+        2D geometric element on a projection plane. This is a union type;
+        `elementType` discriminates which fields are present.
+      required:
+        - id
+        - name
+        - elementType
+        - plane
+        - createdBy
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: User-visible identifier (e.g., "a", "s1", "r1", "c1")
+        elementType:
+          type: string
+          enum: [point, segment, line, circle, arc]
+        plane:
+          type: string
+          format: uuid
+          description: ID of projection plane this element belongs to
+        createdBy:
+          type: string
+          format: uuid
+          description: ID of action that created this element
+        visualStyle:
+          $ref: '#/components/schemas/VisualStyle'
+        # Point-specific fields
+        x:
+          type: number
+          description: X coordinate (for point type)
+        y:
+          type: number
+          description: Y coordinate (for point type)
+        # Segment/Line-specific fields
+        point1:
+          type: string
+          format: uuid
+          description: First defining point (for segment, line types)
+        point2:
+          type: string
+          format: uuid
+          description: Second defining point (for segment, line types)
+        # Circle-specific fields
+        center:
+          type: string
+          format: uuid
+          description: Center point (for circle, arc types)
+        radius:
+          type: number
+          description: Radius (for circle type)
+        # Arc-specific fields
+        startPoint:
+          type: string
+          format: uuid
+          description: Arc start point (for arc type)
+        endPoint:
+          type: string
+          format: uuid
+          description: Arc end point (for arc type)
+
+    Element3D:
+      type: object
+      description: 3D element derived from 2D projections
+      required:
+        - id
+        - name
+        - elementType
+        - createdBy
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Uppercase identifier (e.g., "A", "L1", "S1")
+        elementType:
+          type: string
+          enum: [point3D, line3D, segment3D, plane3D]
+        createdBy:
+          type: string
+          format: uuid
+        visualStyle:
+          $ref: '#/components/schemas/VisualStyle'
+        # Point3D-specific
+        projectionH:
+          type: string
+          format: uuid
+          description: Projection on horizontal plane (for point3D)
+        projectionV:
+          type: string
+          format: uuid
+          description: Projection on vertical plane (for point3D)
+        x:
+          type: number
+          description: Computed 3D X coordinate (for point3D)
+        y:
+          type: number
+          description: Computed 3D Y coordinate (for point3D)
+        z:
+          type: number
+          description: Computed 3D Z coordinate (for point3D)
+        # Line3D-specific
+        projectionHLine:
+          type: string
+          format: uuid
+          description: Horizontal projection line (for line3D)
+        projectionVLine:
+          type: string
+          format: uuid
+          description: Vertical projection line (for line3D)
+        # Segment3D-specific
+        point3D1:
+          type: string
+          format: uuid
+          description: First 3D endpoint (for segment3D)
+        point3D2:
+          type: string
+          format: uuid
+          description: Second 3D endpoint (for segment3D)
+        # Plane3D-specific
+        traceH:
+          type: string
+          format: uuid
+          description: Horizontal trace (for plane3D)
+        traceV:
+          type: string
+          format: uuid
+          description: Vertical trace (for plane3D)
+
+    ConstructiveAction:
+      type: object
+      description: Records one user operation; defines command history and dependencies
+      required:
+        - id
+        - type
+        - timestamp
+        - inputs
+        - outputs
+        - infeasible
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - CreateFreePoint
+            - CreatePointOnElement
+            - CreateIntersectionPoint
+            - CreateMidpoint
+            - CreateSegment
+            - CreateLine
+            - CreateParallelLine
+            - CreatePerpendicularLine
+            - CreateCircleCenterRadius
+            - CreateCircleThreePoints
+            - CreateGuide
+            - TransportPoint
+            - TransportDistance
+            - Create3DPoint
+            - Create3DLine
+            - Create3DSegment
+            - Create3DPlane
+        timestamp:
+          type: string
+          format: date-time
+        inputs:
+          type: array
+          description: IDs of input elements (dependencies)
+          items:
+            type: string
+            format: uuid
+        outputs:
+          type: array
+          description: IDs of output elements (results)
+          items:
+            type: string
+            format: uuid
+        parameters:
+          type: object
+          description: Tool-specific parameters (e.g., radius, angle)
+          additionalProperties: true
+        auxiliaryActions:
+          type: array
+          description: Nested actions (e.g., auto-created intersection points)
+          items:
+            $ref: '#/components/schemas/ConstructiveAction'
+        subprocess:
+          type: string
+          format: uuid
+          description: Optional grouping ID for collapsible sections
+        infeasible:
+          type: boolean
+          description: Whether this action is currently infeasible
+        infeasibilityReason:
+          type: string
+          description: Human-readable explanation of why action is infeasible
+        visualStyle:
+          $ref: '#/components/schemas/VisualStyle'
+
+    ViewState:
+      type: object
+      description: UI state for pan/zoom/camera/visibility
+      required:
+        - view2D
+        - view3D
+        - visibility
+        - ui
+      properties:
+        view2D:
+          type: object
+          required:
+            - pan
+            - zoom
+            - activePlane
+          properties:
+            pan:
+              type: object
+              properties:
+                x:
+                  type: number
+                y:
+                  type: number
+            zoom:
+              type: number
+              minimum: 0.1
+              maximum: 10.0
+            activePlane:
+              type: string
+              format: uuid
+        view3D:
+          type: object
+          required:
+            - camera
+            - show2DElements
+            - showLinkingVisuals
+          properties:
+            camera:
+              type: object
+              properties:
+                position:
+                  $ref: '#/components/schemas/Vector3'
+                target:
+                  $ref: '#/components/schemas/Vector3'
+                up:
+                  $ref: '#/components/schemas/Vector3'
+            show2DElements:
+              type: boolean
+            showLinkingVisuals:
+              type: boolean
+        visibility:
+          type: object
+          description: Per-entity visibility toggles
+          properties:
+            planes:
+              type: object
+              additionalProperties:
+                type: boolean
+            hingeLines:
+              type: object
+              additionalProperties:
+                type: boolean
+            guides:
+              type: object
+              additionalProperties:
+                type: boolean
+        ui:
+          type: object
+          required:
+            - dependencyHoverEnabled
+            - snapRadius
+          properties:
+            dependencyHoverEnabled:
+              type: boolean
+              description: Toggle for FR-036 hover highlighting
+            snapRadius:
+              type: number
+              description: Point snapping radius in pixels (FR-038)
+              minimum: 1
+              maximum: 50
+
+    VisualStyle:
+      type: object
+      description: Non-geometric styling properties with inheritance
+      properties:
+        color:
+          $ref: '#/components/schemas/Color'
+        lineWidth:
+          type: number
+          minimum: 0
+        lineStyle:
+          type: string
+          enum: [solid, dashed, dotted]
+        visibility:
+          type: boolean
+        opacity:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    Color:
+      type: object
+      required:
+        - r
+        - g
+        - b
+        - a
+      properties:
+        r:
+          type: integer
+          minimum: 0
+          maximum: 255
+        g:
+          type: integer
+          minimum: 0
+          maximum: 255
+        b:
+          type: integer
+          minimum: 0
+          maximum: 255
+        a:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Alpha (opacity)
+
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+
+    Line2DGeometry:
+      type: object
+      description: 2D line representation (point + direction or two points)
+      required:
+        - point1
+        - point2
+      properties:
+        point1:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+        point2:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error context
+          additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "ValidationError"
+            message: "Project name is required"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "NotFound"
+            message: "Project with ID '...' not found"
+
+    InternalServerError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "InternalServerError"
+            message: "Failed to save project"
+
+tags:
+  - name: System
+    description: System health and status
+  - name: Projects
+    description: Project CRUD operations
