@@ -158,8 +158,11 @@ The full UI structure, tool groupings, and interaction rules are defined in **Us
 At a conceptual level, the UI is designed so that:
 
 - Tools are grouped by operation type and may offer **explicit variants** the user deliberately chooses.
-- Constructive inputs are explicit (notably, **no implicit point-on-entity** inputs).
+- Constructive inputs are explicit:
+  - **No arbitrary point-on-element inputs**: clicking on a segment away from intersections does not create a point.
+  - **Automatic but traceable exceptions**: intersections and free space clicks create explicit points recorded as auxiliary actions.
 - Hover is a non-destructive inspection mechanism (unified dependency-hover highlighting when enabled).
+- Point snapping assists selection without introducing implicit geometry.
 
 ### Naming Conventions (Visible in UI)
 
@@ -955,13 +958,13 @@ These use cases cover primitive user actions and micro-interactions. They are in
 20. **Auxiliary actions in the Constructive Actions Panel**
   - **Given** I create a segment by clicking on two empty locations, **When** I view the Constructive Actions Panel, **Then** I see one main action ("Create segment") with two nested auxiliary actions ("Create free point" for each endpoint), and I can expand/collapse to show/hide the auxiliary actions.
 
-20. **3D element creation success**
+21. **3D element creation success**
   - **Given** compatible 2D projections are selected, **When** I run a 3D creation tool, **Then** the 3D element is created and visible in the 3D overlay.
 
-21. **3D element creation invalid selection**
+22. **3D element creation invalid selection**
   - **Given** incompatible projections are selected, **When** I run a 3D creation tool, **Then** no 3D element is created and I receive immediate non-modal feedback.
 
-22. **Autosave on change**
+23. **Autosave on change**
   - **Given** a project is open, **When** I create or modify geometry, **Then** the project is persisted automatically without an explicit save action.
 
 ## Requirements *(mandatory)*
