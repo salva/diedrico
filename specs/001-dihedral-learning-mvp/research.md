@@ -174,6 +174,396 @@ From Technical Context, we need to resolve:
 
 ---
 
+### 5. Proximity Detection & Snapping Architecture
+
+**Challenge**: Implementing FR-037 (hover feedback) and FR-038 (point snapping) requires:
+1. Detecting when cursor is near elements (not just hovering directly over them)
+2. Finding all intersections between elements near the cursor
+3. Computing distances to determine closest snap target
+4. Performing this efficiently on every mousemove (60fps = 16ms budget)
+
+**Decision**: **Grid-based spatial index** + **cached intersection computation**
+
+---
+
+#### Spatial Indexing Strategy
+
+**Why spatial indexing is needed**:
+- Naive approach: Check distance to every element on every mousemove
+- For 200 elements: 200 distance calculations × 60fps = 12,000 calculations/sec
+- Too slow, especially for complex shapes (circles, arcs)
+
+**Grid-based spatial index** (chosen over R-tree):
+
+```typescript
+class SpatialGrid {
+  private cellSize: number; // e.g., 50 pixels
+  private cells: Map<string, Set<ElementId>>;
+  
+  // Insert element into cells it overlaps
+  insert(element: Element2D): void {
+    const bounds = element.getBounds(); // {minX, minY, maxX, maxY}
+    const cells = this.getCellsInBounds(bounds);
+    cells.forEach(cellKey => {
+      if (!this.cells.has(cellKey)) this.cells.set(cellKey, new Set());
+      this.cells.get(cellKey).add(element.id);
+    });
+  }
+  
+  // Query elements near a point
+  queryPoint(x: number, y: number, radius: number): Element2D[] {
+    const bounds = {
+      minX: x - radius,
+      minY: y - radius,
+      maxX: x + radius,
+      maxY: y + radius
+    };
+    const cells = this.getCellsInBounds(bounds);
+    const candidateIds = new Set<ElementId>();
+    cells.forEach(cellKey => {
+      this.cells.get(cellKey)?.forEach(id => candidateIds.add(id));
+    });
+    return Array.from(candidateIds).map(id => elementsStore.get(id));
+  }
+  
+  private getCellsInBounds(bounds: Bounds): string[] {
+    const cells = [];
+    const startCol = Math.floor(bounds.minX / this.cellSize);
+    const endCol = Math.floor(bounds.maxX / this.cellSize);
+    const startRow = Math.floor(bounds.minY / this.cellSize);
+    const endRow = Math.floor(bounds.maxY / this.cellSize);
+    for (let col = startCol; col <= endCol; col++) {
+      for (let row = startRow; row <= endRow; row++) {
+        cells.push(`${col},${row}`);
+      }
+    }
+    return cells;
+  }
+}
+```
+
+**Why grid over R-tree**:
+- **Simpler**: R-tree requires balancing, splitting, complex insertion logic
+- **Fast updates**: Grid updates are O(1) per cell; R-tree requires tree rebalancing
+- **Predictable**: Grid performance is consistent; R-tree can degrade if poorly balanced
+- **Sufficient**: For 200 elements with 50px cells on 1920x1080 screen = ~800 cells; most cells have 0-3 elements
+- **When to reconsider**: If we hit >1000 elements or need more sophisticated queries
+
+**Update strategy**:
+- Rebuild grid on zoom (cell size adapts to zoom level)
+- Incremental update when elements move: remove from old cells, insert into new
+- Full rebuild on major changes: < 1ms for 200 elements
+
+---
+
+#### Distance Calculation Functions
+
+**Required distance functions** (all return distance in pixels):
+
+```typescript
+// Point to point
+function distancePointToPoint(p1: Point2D, p2: Point2D): number {
+  return Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+}
+
+// Point to line segment (perpendicular distance, or to nearest endpoint)
+function distancePointToSegment(p: Point2D, seg: Segment): number {
+  const {point1, point2} = seg;
+  const L2 = distancePointToPoint(point1, point2) ** 2;
+  if (L2 === 0) return distancePointToPoint(p, point1); // Degenerate segment
+  
+  // Project point onto line, clamp to segment
+  const t = Math.max(0, Math.min(1, 
+    ((p.x - point1.x) * (point2.x - point1.x) + 
+     (p.y - point1.y) * (point2.y - point1.y)) / L2
+  ));
+  
+  const projection = {
+    x: point1.x + t * (point2.x - point1.x),
+    y: point1.y + t * (point2.y - point1.y)
+  };
+  
+  return distancePointToPoint(p, projection);
+}
+
+// Point to infinite line
+function distancePointToLine(p: Point2D, line: Line2D): number {
+  const {point1, point2} = line;
+  const dx = point2.x - point1.x;
+  const dy = point2.y - point1.y;
+  const length = Math.sqrt(dx * dx + dy * dy);
+  
+  // Perpendicular distance formula
+  return Math.abs((dy * p.x - dx * p.y + point2.x * point1.y - point2.y * point1.x)) / length;
+}
+
+// Point to circle (distance to circumference)
+function distancePointToCircle(p: Point2D, circle: Circle): number {
+  const distToCenter = distancePointToPoint(p, circle.center);
+  return Math.abs(distToCenter - circle.radius);
+}
+
+// Point to arc (distance to arc path, not full circle)
+function distancePointToArc(p: Point2D, arc: Arc): number {
+  const distToCenter = distancePointToPoint(p, arc.center);
+  const angleToPoint = Math.atan2(p.y - arc.center.y, p.x - arc.center.x);
+  
+  // Normalize angle to [0, 2π]
+  const normalizedAngle = ((angleToPoint % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  
+  // Check if angle is within arc range
+  const isInRange = isAngleBetween(normalizedAngle, arc.startAngle, arc.endAngle);
+  
+  if (isInRange) {
+    // Distance to arc circumference
+    return Math.abs(distToCenter - arc.radius);
+  } else {
+    // Distance to nearest endpoint
+    return Math.min(
+      distancePointToPoint(p, arc.startPoint),
+      distancePointToPoint(p, arc.endPoint)
+    );
+  }
+}
+```
+
+**Optimization**: These functions are hot paths. Considerations:
+- **Avoid Math.sqrt when possible**: Compare squared distances if only checking proximity
+- **Early exit**: If bounding box distance > threshold, skip detailed calculation
+- **Memoization**: Cache results for same cursor position (useful during hover without movement)
+
+---
+
+#### Intersection Detection & Caching
+
+**Challenge**: Finding intersections on-demand is expensive:
+- Line-line: O(1) per pair
+- Line-circle: O(1) per pair (quadratic formula)
+- Circle-circle: O(1) per pair
+- For N=200 elements: up to N²/2 = 20,000 pairs to check
+
+**Strategy**: **Lazy computation with spatial filtering**
+
+```typescript
+class IntersectionCache {
+  private cache: Map<string, Point2D[]>; // Key: "elementId1:elementId2"
+  private dirtyElements: Set<ElementId>;
+  
+  getIntersections(element1: Element2D, element2: Element2D): Point2D[] {
+    const key = this.makeKey(element1.id, element2.id);
+    
+    // Check cache
+    if (this.cache.has(key) && 
+        !this.dirtyElements.has(element1.id) && 
+        !this.dirtyElements.has(element2.id)) {
+      return this.cache.get(key);
+    }
+    
+    // Compute intersections
+    const intersections = this.computeIntersection(element1, element2);
+    this.cache.set(key, intersections);
+    
+    return intersections;
+  }
+  
+  // Find all intersections near cursor
+  getNearbyIntersections(x: number, y: number, radius: number): Point2D[] {
+    // 1. Query spatial grid for elements near cursor
+    const nearbyElements = spatialGrid.queryPoint(x, y, radius * 2); // Wider search
+    
+    // 2. Check all pairs for intersections
+    const intersections: Point2D[] = [];
+    for (let i = 0; i < nearbyElements.length; i++) {
+      for (let j = i + 1; j < nearbyElements.length; j++) {
+        const pts = this.getIntersections(nearbyElements[i], nearbyElements[j]);
+        intersections.push(...pts);
+      }
+    }
+    
+    // 3. Filter by distance to cursor
+    return intersections.filter(pt => 
+      distancePointToPoint({x, y}, pt) < radius
+    );
+  }
+  
+  // Mark element as modified (invalidate cache)
+  markDirty(elementId: ElementId): void {
+    this.dirtyElements.add(elementId);
+  }
+  
+  // Clear dirty flags after recomputation
+  clearDirty(): void {
+    this.dirtyElements.clear();
+  }
+  
+  private computeIntersection(el1: Element2D, el2: Element2D): Point2D[] {
+    // Dispatch based on element types
+    if (el1 instanceof Line && el2 instanceof Line) {
+      return intersectLineLine(el1, el2);
+    } else if (el1 instanceof Line && el2 instanceof Circle) {
+      return intersectLineCircle(el1, el2);
+    } else if (el1 instanceof Circle && el2 instanceof Circle) {
+      return intersectCircleCircle(el1, el2);
+    }
+    // ... handle all type combinations
+    return [];
+  }
+}
+```
+
+**Cache invalidation**:
+- When element moves/changes: mark as dirty
+- Before next query: recompute only dirty pairs
+- Avoid full cache clear unless necessary
+
+---
+
+#### Hover Feedback Implementation
+
+**Full mousemove handler**:
+
+```typescript
+function onMouseMove(event: MouseEvent, snapRadius: number) {
+  const {x, y} = getSVGCoordinates(event); // Account for zoom/pan transform
+  
+  // 1. Query nearby elements (spatial grid)
+  const nearbyElements = spatialGrid.queryPoint(x, y, snapRadius);
+  
+  // 2. Calculate distances to elements
+  const elementDistances = nearbyElements.map(element => ({
+    element,
+    distance: calculateDistance({x, y}, element),
+    type: 'element' as const
+  }));
+  
+  // 3. Find nearby intersections
+  const nearbyIntersections = intersectionCache.getNearbyIntersections(x, y, snapRadius);
+  const intersectionDistances = nearbyIntersections.map(pt => ({
+    element: pt,
+    distance: distancePointToPoint({x, y}, pt),
+    type: 'intersection' as const
+  }));
+  
+  // 4. Combine and find closest
+  const allTargets = [...elementDistances, ...intersectionDistances];
+  const closest = allTargets.reduce((min, curr) => 
+    curr.distance < min.distance ? curr : min
+  , {distance: Infinity, element: null, type: null});
+  
+  // 5. Update UI state
+  if (closest.distance < snapRadius) {
+    if (closest.type === 'element') {
+      highlightElement(closest.element);
+      snapCursorTo(null); // Show element highlight only
+    } else {
+      highlightIntersection(closest.element); // Show both elements + marker
+      snapCursorTo(closest.element); // Snap cursor to intersection point
+    }
+  } else {
+    clearHighlights();
+    snapCursorTo(null);
+  }
+}
+```
+
+**Performance targets**:
+- Spatial grid query: <1ms (typical: 5-20 candidates)
+- Distance calculations: <2ms (5-20 elements)
+- Intersection queries: <3ms (0-10 pairs)
+- Total: <6ms per mousemove (well within 16ms budget for 60fps)
+
+---
+
+#### Adaptive Snap Radius
+
+**Problem**: Fixed pixel radius feels wrong at different zoom levels:
+- Zoomed in (200%): 20px radius = too large (snaps to distant points)
+- Zoomed out (50%): 20px radius = too small (hard to snap)
+
+**Solution**: Scale snap radius inversely with zoom
+
+```typescript
+function getAdaptiveSnapRadius(baseRadius: number, zoomLevel: number): number {
+  // baseRadius = user preference (e.g., 20px at 100% zoom)
+  // zoomLevel = current zoom factor (1.0 = 100%, 2.0 = 200%, 0.5 = 50%)
+  return baseRadius / zoomLevel;
+}
+```
+
+**Example**:
+- Base: 20px at 100% zoom
+- At 200% zoom: 20 / 2 = 10px (smaller screen radius = same world-space radius)
+- At 50% zoom: 20 / 0.5 = 40px (larger screen radius = same world-space radius)
+
+**UI control**:
+- Slider: "Snap sensitivity" (adjusts baseRadius: 10-50px)
+- Auto-adapt to zoom (invisible to user)
+
+---
+
+#### Implementation Phases
+
+**Phase 1** (Week 3-4): Basic hover without snapping
+- Implement spatial grid
+- Distance calculations for points and segments only
+- Highlight on exact hover (DOM events)
+
+**Phase 2** (Week 6): Proximity detection
+- Add distance-based highlighting (within radius)
+- Implement snap radius adaptation to zoom
+- Distance calculations for lines, circles
+
+**Phase 3** (Week 7): Intersection detection
+- Implement intersection cache
+- Line-line, line-circle intersections
+- Auto-create points on click
+
+**Phase 4** (Week 8-9): Full snapping
+- Cursor snapping (visual feedback)
+- Intersection highlighting (both elements + marker)
+- Performance optimization if needed
+
+---
+
+#### Alternatives Considered
+
+**Canvas-based hit testing**:
+- Render each element to offscreen canvas with unique color
+- Read pixel at cursor position to identify element
+- **Rejected**: Doesn't give distance, only boolean "hit/no hit". Can't implement snap radius or "nearby" logic.
+
+**R-tree spatial index**:
+- More sophisticated than grid (better for non-uniform distributions)
+- **Rejected for MVP**: Over-engineered. Grid is simpler and sufficient for 200 elements.
+- **Reconsider**: If element count exceeds 1000 or performance issues arise.
+
+**Pre-compute all intersections**:
+- Compute all N²/2 pairs on every change
+- **Rejected**: Wasteful. Most intersections are far from cursor and irrelevant.
+- **Chosen instead**: Lazy computation with spatial filtering.
+
+**Brute-force distance checks**:
+- No spatial index, check all elements on mousemove
+- **Rejected**: Too slow for 200 elements at 60fps (>3200 calculations/sec).
+
+---
+
+#### Key Takeaways
+
+1. **Spatial grid is essential** for interactive performance at scale
+2. **Intersection caching** with spatial filtering keeps N² problem manageable
+3. **Adaptive snap radius** provides consistent feel across zoom levels
+4. **Incremental implementation** allows early validation before full complexity
+5. **Performance budget**: 6ms per mousemove leaves 10ms for rendering (60fps target)
+
+**Implementation notes**:
+- Create `frontend/src/services/SpatialService.ts` for grid and cache
+- Create `frontend/src/domain/geometry/distances.ts` for distance functions
+- Create `frontend/src/composables/useProximityDetection.ts` for Vue integration
+- Unit test all distance functions with edge cases (coincident points, parallel lines, tangent circles)
+
+---
+
 ## Best Practices by Technology
 
 ### Vue.js 3 + Composition API
