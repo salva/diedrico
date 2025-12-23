@@ -129,16 +129,16 @@
 
 ### Workspace & Basic Tools
 
-- [ ] T071 [US2] Create frontend/src/components/workspace/Workspace2D.vue with SVG canvas
-- [ ] T072 [US2] Implement D3.js zoom/pan behavior in Workspace2D.vue (Shift+drag pan, wheel zoom)
-- [ ] T073 [US2] Create frontend/src/components/workspace/ElementRenderer.vue to render Point2D, Segment2D as SVG
-- [ ] T074 [US2] Create frontend/src/components/toolbars/MainToolbar.vue with tool selector buttons
-- [ ] T075 [US2] Create frontend/src/components/toolbars/PlaneSelector.vue with active plane toggle (P_H, P_V)
-- [ ] T076 [US2] Implement active plane selection logic in viewStore.ts
-- [ ] T077 [US2] Create frontend/src/composables/useSnapping.ts for point snapping within radius
-- [ ] T078 [US2] Create frontend/src/composables/useHoverHighlight.ts for dependency highlighting
-- [ ] T079 [US2] Create frontend/src/composables/useToolFeedback.ts for visual feedback during tool use
-- [ ] T080 [US2] Create frontend/src/composables/useCommandExecution.ts for command building and commit
+- [X] T071 [US2] Create frontend/src/components/workspace/Workspace2D.vue with SVG canvas
+- [X] T072 [US2] Implement D3.js zoom/pan behavior in Workspace2D.vue (Shift+drag pan, wheel zoom)
+- [X] T073 [US2] Create frontend/src/components/workspace/ElementRenderer.vue to render Point2D, Segment2D as SVG
+- [X] T074 [US2] Create frontend/src/components/toolbars/MainToolbar.vue with tool selector buttons
+- [X] T075 [US2] Create frontend/src/components/toolbars/PlaneSelector.vue with active plane toggle (P_H, P_V)
+- [X] T076 [US2] Implement active plane selection logic in viewStore.ts
+- [X] T077 [US2] Create frontend/src/composables/useSnapping.ts for point snapping within radius
+- [X] T078 [US2] Create frontend/src/composables/useHoverHighlight.ts for dependency highlighting
+- [X] T079 [US2] Create frontend/src/composables/useToolFeedback.ts for visual feedback during tool use
+- [X] T080 [US2] Create frontend/src/composables/useCommandExecution.ts for command building and commit
 
 ### Point Tools
 
