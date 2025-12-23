@@ -562,14 +562,15 @@ interface Subprocess {
   
   // Visual properties
   defaultStyle?: VisualStyle;       // Default style inherited by contained elements
-  visible: boolean;                 // Visibility cascades to children and elements
+  visible: boolean;                 // Controls element visibility in drawing (cascades to children)
+                                    // For auxiliary subprocesses: visible has no effect (inherit from parent)
   
   // UI state
-  collapsed: boolean;               // Whether subprocess is collapsed in UI
+  collapsed: boolean;               // Whether subprocess is collapsed in construction panel UI
   
   // Metadata
   isAuxiliary: boolean;             // True for auto-generated auxiliary action containers
-                                    // Auxiliary subprocesses: displayed differently, properties not editable
+                                    // Auxiliary subprocesses: properties not editable, special display
   created: Date;
 }
 ```
@@ -598,14 +599,34 @@ Root (Project)
 **Auxiliary Subprocess Pattern**:
 - When a main action needs auxiliary actions (auto-created points), an auxiliary subprocess is automatically created
 - The auxiliary subprocess has `isAuxiliary: true`
-- **Not hidden**: Auxiliary subprocesses are visible but displayed differently in UI (e.g., lighter color, special icon)
-- **Properties locked**: User cannot edit name, defaultStyle, or other properties of auxiliary subprocesses
+- **Element Visibility**: Auxiliary subprocesses do NOT have independent visibility control
+  - `visible` field is ignored for auxiliary subprocesses
+  - Elements in auxiliary subprocess inherit visibility from parent subprocess only
+  - No UI toggle for auxiliary subprocess visibility
+- **UI Display**: Auxiliary subprocess and its actions are shown in construction panel
+  - Displayed with special visual treatment (lighter color, special icon)
+  - Actions grouped together differently from regular subprocesses
+  - Can be collapsed/expanded independently
+- **Properties locked**: User cannot edit name, defaultStyle, or visibility of auxiliary subprocesses
 - **Always grouped with main action**: The auxiliary subprocess is a child of the main action's parent subprocess
 - Structure: MainAction's subprocess → contains → AuxiliarySubprocess → contains → AuxiliaryActions
 - The main action's `subprocess` field points to its parent subprocess
 - The main action's `auxiliarySubprocess` field points to the auxiliary subprocess
 
-**Visibility Cascade**:
+**Two Types of Visibility**:
+
+1. **Element Visibility** (in the drawing workspace):
+   - Controlled by subprocess.visible for regular subprocesses
+   - For auxiliary subprocesses: always inherit from parent, no independent toggle
+   - Determines whether geometric elements are rendered in the 2D/3D view
+
+2. **UI Visibility** (in the construction panel):
+   - Controlled by subprocess.collapsed
+   - Determines whether subprocess content is shown/hidden in the action list
+   - Both regular and auxiliary subprocesses can be collapsed/expanded
+   - Auxiliary subprocesses use different visual grouping (see UI Presentation below)
+
+**Visibility Cascade for Elements**:
 ```typescript
 function isElementVisible(element: Element2D | Element3D): boolean {
   // 1. Element must not be infeasible
@@ -615,7 +636,7 @@ function isElementVisible(element: Element2D | Element3D): boolean {
   const action = actions[element.createdBy];
   const subprocess = subprocesses[action.subprocess];
   
-  // 3. Check subprocess visibility (cascades up tree)
+  // 3. Check subprocess visibility (cascades up tree, skips auxiliary)
   if (!isSubprocessVisible(subprocess)) return false;
   
   // 4. Check plane visibility (for 2D elements)
@@ -629,6 +650,12 @@ function isElementVisible(element: Element2D | Element3D): boolean {
 }
 
 function isSubprocessVisible(subprocess: Subprocess): boolean {
+  // Auxiliary subprocesses don't control visibility - skip to parent
+  if (subprocess.isAuxiliary && subprocess.parent) {
+    return isSubprocessVisible(subprocesses[subprocess.parent]);
+  }
+  
+  // Regular subprocess visibility check
   if (!subprocess.visible) return false;
   if (subprocess.parent) {
     return isSubprocessVisible(subprocesses[subprocess.parent]);
@@ -746,9 +773,53 @@ The old `auxiliaryActions: ConstructiveAction[]` field is replaced with `auxilia
   parent: "subprocess-construction", // Same parent as main action
   isAuxiliary: true,
   collapsed: true,
-  visible: true,
+  visible: true, // Note: This field is ignored - visibility inherited from parent
   actions: ["action-point-a", "action-point-b"]
 }
+```
+
+**UI Presentation in Construction Panel**:
+
+The construction panel shows two different visibility concepts:
+
+1. **Panel Collapse State** (subprocess.collapsed):
+   - Controls whether subprocess content is shown in the panel
+   - Both regular and auxiliary subprocesses can be collapsed/expanded
+
+2. **Drawing Visibility** (subprocess.visible for regular, inherited for auxiliary):
+   - Regular subprocesses have eye icon to toggle element visibility in drawing
+   - Auxiliary subprocesses have NO visibility toggle (always inherit from parent)
+
+**Regular Subprocess Display**:
+```
+▼ 👁 Construction Phase 1         ← visibility toggle, collapse/expand
+  ○ Create segment s1
+  ▶ ⚙ Auxiliary (2 actions)       ← no visibility toggle, collapse/expand only  
+  ○ Create circle c1
+  ▼ 👁 Nested Subprocess          ← nested subprocess with visibility control
+    ○ Create guide g1
+```
+
+**Auxiliary Subprocess Display** (different visual treatment):
+```
+▼ 👁 Construction Phase 1
+  ○ Create segment s1
+  ┌─────────────────────────────┐
+  │ ⚙ Auxiliary (2 actions)    │  ← boxed/indented, lighter color, no eye icon
+  │   ○ Create free point a    │
+  │   ○ Create free point b    │
+  └─────────────────────────────┘
+  ○ Create circle c1
+```
+
+Or with icons:
+```
+▼ 👁 Construction Phase 1
+  ○ Create segment s1
+  ▼ ⚙ Auxiliary (2 actions)       ← gear icon, lighter text, no eye icon
+    ⋅ Create free point a         ← bullet instead of circle to show auxiliary
+    ⋅ Create free point b
+  ○ Create circle c1
 ```
 
 **Validation Rules**:

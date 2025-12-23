@@ -674,15 +674,32 @@ All panels are located on the left side and are stackable and collapsible.
 #### Constructive Actions Panel
 
 - Shows the history of performed actions, organized hierarchically by subprocesses.
-- **Auxiliary actions**: When a tool automatically creates supporting geometry (e.g., free points or intersection points during segment creation), these appear as nested auxiliary actions within the main action. For example:
-  ```
-  ▼ Create segment s1
-    └─ Create free point p1 (auxiliary)
-    └─ Create free point p2 (auxiliary)
-  ```
-- Allows expanding/collapsing subprocesses and individual actions to show/hide auxiliary actions.
+- **Auxiliary subprocesses**: When a tool automatically creates supporting geometry (e.g., free points or intersection points during segment creation), these are grouped in auxiliary subprocesses. Auxiliary subprocesses are displayed with special visual treatment:
+  - **No visibility toggle**: Auxiliary subprocesses do not have an eye icon for toggling visibility. Elements in auxiliary subprocesses inherit visibility from the parent subprocess.
+  - **Special styling**: Displayed with lighter color/gray text, special icon (⚙ gear), or boxed/indented layout
+  - **Collapsible**: Can be collapsed/expanded like regular subprocesses to show/hide auxiliary actions
+  - **Properties locked**: User cannot edit name or properties of auxiliary subprocesses
+  
+**Example display**:
+```
+▼ 👁 Construction Phase 1          ← regular subprocess with visibility toggle
+  ○ Create segment s1
+  ▼ ⚙ Auxiliary (2 actions)        ← auxiliary subprocess, no eye icon, gear icon
+    ⋅ Create free point a          ← auxiliary actions with different bullet
+    ⋅ Create free point b
+  ○ Create circle c1
+```
+
+**Two types of visibility**:
+1. **Drawing visibility**: Whether geometric elements appear in the 2D/3D workspace
+   - Regular subprocesses: controlled by eye icon toggle (subprocess.visible)
+   - Auxiliary subprocesses: no toggle, always inherit from parent subprocess
+2. **Panel visibility**: Whether subprocess content is shown/hidden in the action list
+   - Both regular and auxiliary: controlled by collapse/expand triangle (subprocess.collapsed)
+
+- Allows expanding/collapsing subprocesses and individual actions to show/hide content.
 - Hover behavior uses unified hover highlighting (focus element, direct ancestors, direct descendants).
-- Auxiliary actions can be hovered and inspected individually, but are visually distinguished from primary actions (e.g., with indentation and different styling).
+- Auxiliary actions can be hovered and inspected individually, but are visually distinguished from primary actions (lighter styling, different bullet/icon).
 
 #### Elements Panel
 
