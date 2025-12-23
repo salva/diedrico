@@ -14,9 +14,11 @@ app.use(express.json());
 app.use('/api', healthRouter);
 app.use('/api/projects', projectsRouter);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
-});
+// Only start server if not imported for testing
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(PORT, () => {
+    console.log(`Backend server running on http://localhost:${PORT}`);
+  });
+}
 
 export default app;
