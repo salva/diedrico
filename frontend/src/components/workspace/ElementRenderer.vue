@@ -1,12 +1,13 @@
 <template>
-  <g :class="['element', element.kind, { infeasible: element.infeasible }]">
+  <!-- Do not render infeasible elements at all (per spec: "draw no infeasible outputs") -->
+  <g v-if="!element.infeasible" :class="['element', element.kind]">
     <!-- Point2D -->
     <circle
       v-if="element.kind.startsWith('Point2D')"
       :cx="getPointX(element as Point2D)"
       :cy="getPointY(element as Point2D)"
       :r="pointRadius"
-      :fill="element.visualStyle?.color || (element.infeasible ? 'red' : 'black')"
+      :fill="element.visualStyle?.color || 'black'"
       :opacity="element.visualStyle?.opacity || 1.0"
     />
     
@@ -16,7 +17,7 @@
       :x="getPointX(element as Point2D) + labelOffset"
       :y="getPointY(element as Point2D) - labelOffset"
       class="element-label"
-      :fill="element.visualStyle?.color || (element.infeasible ? 'red' : 'black')"
+      :fill="element.visualStyle?.color || 'black'"
     >
       {{ element.name }}
     </text>
@@ -250,10 +251,6 @@ function getCircleRadius(element: any): number {
 
 .element:hover {
   filter: brightness(1.2);
-}
-
-.element.infeasible {
-  opacity: 0.6;
 }
 
 .element-label {
