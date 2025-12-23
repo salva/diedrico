@@ -77,16 +77,16 @@
 - [X] T038 [P] Create frontend/src/commands/operations/ProcessTreeOperations.ts with AddSubprocessOp, AddActionGroupOp, AddActionToGroupOp
 - [X] T039 [P] Create frontend/src/commands/operations/ViewStateOperations.ts with SetActivePlaneOp, UpdateView2DOp
 - [X] T040 [P] Create frontend/src/commands/operations/DependencyOperations.ts with AddDependencyEdgesOp, RemoveDependencyEdgesOp
-- [ ] T041 [P] Write unit tests for Command.ts incremental execution in frontend/tests/unit/commands.spec.ts
-- [ ] T042 [P] Write unit tests for CommandStack.ts undo/redo in frontend/tests/unit/commandStack.spec.ts
-- [ ] T043 [P] Create frontend/src/stores/worldStore.ts with elements2D, elements3D, dependencyGraph state
-- [ ] T044 [P] Create frontend/src/stores/processStore.ts with ProcessTree and command history state
-- [ ] T045 [P] Create frontend/src/stores/viewStore.ts with active plane and view state
-- [ ] T046 [P] Create frontend/src/stores/toolStore.ts with active tool state
-- [ ] T047 [P] Create frontend/src/utils/idGenerator.ts with ID generation utilities
-- [ ] T048 [P] Create frontend/src/services/GeometryService.ts wrapping calculation functions
-- [ ] T049 [P] Create frontend/src/services/DependencyService.ts with recomputation and topological sort
-- [ ] T050 [P] Create frontend/src/services/ValidationService.ts with infeasibility checks
+- [X] T041 [P] Write unit tests for Command.ts incremental execution in frontend/tests/unit/commands.spec.ts
+- [X] T042 [P] Write unit tests for CommandStack.ts undo/redo in frontend/tests/unit/commandStack.spec.ts
+- [X] T043 [P] Create frontend/src/stores/worldStore.ts with elements2D, elements3D, dependencyGraph state
+- [X] T044 [P] Create frontend/src/stores/processStore.ts with ProcessTree and command history state
+- [X] T045 [P] Create frontend/src/stores/viewStore.ts with active plane and view state
+- [X] T046 [P] Create frontend/src/stores/toolStore.ts with active tool state
+- [X] T047 [P] Create frontend/src/utils/idGenerator.ts with ID generation utilities
+- [X] T048 [P] Create frontend/src/services/GeometryService.ts wrapping calculation functions
+- [X] T049 [P] Create frontend/src/services/DependencyService.ts with recomputation and topological sort
+- [X] T050 [P] Create frontend/src/services/ValidationService.ts with infeasibility checks
 
 ---
 
