@@ -1582,18 +1582,33 @@ interface UpdatePanelCollapseOp extends OperationBase {
 **Operation Execution**:
 ```typescript
 interface IOperation {
-  apply(project: Project): OperationResult;  // Apply operation, return result with generated IDs
+  apply(project: Project): OperationResult;  // Apply operation, return result
   undo(project: Project): void;              // Reverse operation (use beforeState)
+  outputs: Record<string, any>;              // Stored outputs after execution (symbolic paths or values)
 }
 
 interface OperationResult {
   success: boolean;
-  data?: any;                                // Operation-specific result (e.g., created element)
+  outputs: Record<string, any>;              // Dictionary of named outputs (symbolic paths or fixed values)
   error?: string;
 }
 
+// Output value types
+type OutputValue = 
+  | string        // Symbolic path (e.g., "/world/elements2D/p1")
+  | number        // Numeric value (e.g., x: 100, angle: 45)
+  | boolean       // Boolean value (e.g., visible: true)
+  | null;         // Null value
+
+// Example outputs
+// { "elementPath": "/world/elements2D/p1", "x": 100, "y": 200 }
+// { "segmentPath": "/world/elements2D/s1", "length": 250.5 }
+// { "actionPath": "/process/subprocess/sp1/actionGroup/ag1/action/a1" }
+
 // Example implementation
 class AddElementOperation implements IOperation {
+  outputs: Record<string, any> = {};  // Stored after execution
+  
   constructor(private params: AddElementOp["parameters"]) {}
   
   apply(project: Project): OperationResult {
@@ -1609,15 +1624,24 @@ class AddElementOperation implements IOperation {
     } else if (path.startsWith("/world/elements3D/")) {
       project.world.elements3D.push(element as Element3D);
     } else {
-      return { success: false, error: `Invalid element path: ${path}` };
+      return { success: false, outputs: {}, error: `Invalid element path: ${path}` };
     }
+    
+    // Build outputs dictionary with symbolic path and relevant values
+    const outputs = {
+      elementPath: this.params.elementPath,      // Symbolic path
+      elementId: element.id,                      // ID for convenience
+      elementType: element.type,                  // Type for reference
+      ...(element.type === "Point2D" ? { x: element.x, y: element.y } : {}),
+      ...(element.type === "Segment2D" ? { length: this.computeLength(element) } : {})
+    };
+    
+    // Store outputs in operation for later reference
+    this.outputs = outputs;
     
     return { 
       success: true, 
-      data: { 
-        element,           // Created element
-        path: this.params.elementPath  // Symbolic path for next operations
-      }
+      outputs
     };
   }
   
@@ -1756,6 +1780,7 @@ try {
     elementData: { id: p1Id, type: "Point2D", x: 100, y: 200, plane: "P_H", ... },
     beforeState: null
   }));
+  // p1Result.outputs = { elementPath: "/world/elements2D/p1", elementId: "p1", x: 100, y: 200 }
   
   // Create second point using symbolic path
   const p2Result = cmd.addAndExecute(new AddElementOp({ 
@@ -1763,40 +1788,44 @@ try {
     elementData: { id: p2Id, type: "Point2D", x: 300, y: 400, plane: "P_H", ... },
     beforeState: null
   }));
+  // p2Result.outputs = { elementPath: "/world/elements2D/p2", elementId: "p2", x: 300, y: 400 }
   
-  // Create segment referencing points via their IDs (not paths)
+  // Create segment using outputs from previous operations
   const segmentResult = cmd.addAndExecute(new AddElementOp({ 
     elementPath: `/world/elements2D/${segmentId}`,
     elementData: { 
       id: segmentId, 
       type: "Segment2D", 
-      point1: p1Id,  // Reference by ID (stored in element data)
-      point2: p2Id,  // Reference by ID (stored in element data)
+      point1: p1Result.outputs.elementId,  // Use ID from previous operation output
+      point2: p2Result.outputs.elementId,  // Use ID from previous operation output
       plane: "P_H",
       ... 
     },
     beforeState: null
   }));
+  // segmentResult.outputs = { elementPath: "/world/elements2D/s1", elementId: "s1", length: 282.8 }
   
-  // Add action to process tree using symbolic paths
-  cmd.addAndExecute(new AddActionToGroupOp({ 
+  // Add action to process tree using symbolic paths from outputs
+  const actionResult = cmd.addAndExecute(new AddActionToGroupOp({ 
     actionGroupPath: "/process/subprocess/sp1/actionGroup/ag1",
     actionData: { 
       id: generateId(),
       type: "ConstructiveAction",
       timestamp: new Date(),
-      outputs: [segmentId]  // References element by ID
+      outputs: [segmentResult.outputs.elementId]  // References element by ID from output
     },
     position: 0
   }));
+  // actionResult.outputs = { actionPath: "/process/subprocess/sp1/actionGroup/ag1/action/a1" }
   
-  // Add dependency edges using symbolic paths
+  // Add dependency edges using symbolic paths from outputs
   cmd.addAndExecute(new AddDependencyEdgesOp({ 
     edges: [
-      { from: `/world/elements2D/${p1Id}`, to: `/world/elements2D/${segmentId}` },
-      { from: `/world/elements2D/${p2Id}`, to: `/world/elements2D/${segmentId}` }
+      { from: p1Result.outputs.elementPath, to: segmentResult.outputs.elementPath },
+      { from: p2Result.outputs.elementPath, to: segmentResult.outputs.elementPath }
     ]
   }));
+  // Outputs = { edgeCount: 2 }
   
   // All operations succeeded, commit to stack
   commandStack.commit(cmd);
