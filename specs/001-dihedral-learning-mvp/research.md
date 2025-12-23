@@ -233,14 +233,15 @@ interface Project {
 1. **Correct modeling**: HingeLine entities represent physical folds. BHL projections are geometric constructs.
 2. **Transport operations**: Most distance transport in practice occurs between **BHL projections** (Element2D lines), not between regular HLs
 3. **Scalability**: With N projection planes, you have N(N-1)/2 hinge lines, but potentially hundreds of BHL projections
-4. **Tool design**: "Chained transport" tool must accept generic Element2D lines (BHL projections, guides, or HL representations), not just HingeLine entities
+4. **Automatic transport**: Guides created from BHL projections automatically appear on both planes, eliminating the need for explicit multi-step transport tools
 
 **Implementation Note**:
 
-When implementing the "Chained Transport" tool or similar operations:
-- Don't restrict the tool to only work with HingeLine entities
-- Allow selection of any Element2D line (could be a BHL projection, a guide, or an HL representation)
-- The geometric operation (perpendicular transport) works identically regardless of the semantic type
+Guide creation automatically handles transport across BHL projections:
+- User creates guide perpendicular to BHL projection on plane A
+- System automatically creates corresponding guide on plane B (perpendicular to BHL_AB projection on B)
+- Both guide projections appear atomically as single operation
+- No need for separate "chained transport" tool—the guide itself establishes the correspondence
 - Optionally: Add metadata to Element2D to tag BHL projections for visual distinction (e.g., dashed lines)
 
 ---

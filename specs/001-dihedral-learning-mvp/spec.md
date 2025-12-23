@@ -597,16 +597,7 @@ Contains dihedral-specific tools related to hinge lines (HL), guides, and transp
   - **Purpose**: Enables explicit measurement transfer between projection planes.
   - **Dependency**: The transported distance updates if the source distance or guides change.
 
-- **Chained transport**:
-  - **Description**: Performs a transport operation through multiple planes using a sequence of hinge lines that share a common plane.
-  - **Steps**:
-    1. Activate the chained-transport tool.
-    2. Select the first hinge line.
-    3. Select the second hinge line (must share a plane with the first).
-    4. Select the point or distance to transport.
-  - **Result**: The geometry is transported through the intermediate plane to the final destination plane.
-  - **Scope**: May involve auxiliary planes in later versions; MVP focuses on two-step chains.
-  - **Purpose**: Supports classical chained transport constructions used in dihedral drawing exercises.
+**Note**: Since guides automatically transport across BHL projections (appearing on both planes simultaneously), complex multi-plane transports are achieved by creating guides perpendicular to the relevant BHL projections.
 
 These tools operate on 2D planes, HL, guides, and explicit 2D entities; they do not directly edit 3D geometry.
 
