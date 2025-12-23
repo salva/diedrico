@@ -90,6 +90,7 @@ interface Project {
   world: World;                     // All domain/construction data (the "what")
   processTree: ProcessTree;         // The process that builds/manipulates the world (the "how")
   viewState: ViewState;             // UI state (zoom, camera, visibility)
+  commandStack: CommandStack;       // Command history for undo/redo
 }
 ```
 
@@ -97,13 +98,15 @@ interface Project {
 - **World**: The geometric construction - planes, elements, dependencies
 - **ProcessTree**: The construction process - actions organized in subprocesses/groups
 - **ViewState**: UI presentation state
+- **CommandStack**: History of all user operations for undo/redo
 
-The process tree manipulates the world through actions that create/modify elements.
+All mutations to World, ProcessTree, and ViewState happen through Commands, which are composed of reversible Operations.
 
 **Relationships**:
 - 1 Project → 1 World
 - 1 Project → 1 ProcessTree
 - 1 Project → 1 ViewState
+- 1 Project → 1 CommandStack
 
 **Validation Rules**:
 - `name` must be non-empty, max 100 characters
@@ -1120,6 +1123,449 @@ interface ViewState {
 
 ---
 
+## Command Pattern (Undo/Redo)
+
+### Domain Entity: Command
+
+**Purpose**: Represents a user action that can be executed and undone; composed of atomic operations
+
+**Fields**:
+```typescript
+interface Command {
+  id: CommandId;                    // UUID
+  timestamp: Date;                  // When command was executed
+  description: string;              // Human-readable description (e.g., "Create segment s1")
+  operations: Operation[];          // List of atomic operations (executed in order)
+  executed: boolean;                // Whether command has been executed
+}
+```
+
+**Key Concepts**:
+- **Atomic**: All operations in a command succeed or fail together
+- **Reversible**: Every operation stores both "before" and "after" state
+- **Composable**: Commands are built from multiple operations
+- **Ordered**: Operations execute in sequence during apply, reverse during undo
+
+**Example Command**:
+```typescript
+// "Create Segment" command
+{
+  id: "cmd-123",
+  timestamp: new Date(),
+  description: "Create segment s1",
+  operations: [
+    // 1. Add two points to World
+    {
+      type: "AddElement",
+      parameters: {
+        element: { id: "p1", type: "Point2D", x: 100, y: 200, ... },
+        beforeState: null  // Element didn't exist
+      }
+    },
+    {
+      type: "AddElement",
+      parameters: {
+        element: { id: "p2", type: "Point2D", x: 300, y: 400, ... },
+        beforeState: null
+      }
+    },
+    // 2. Add segment to World
+    {
+      type: "AddElement",
+      parameters: {
+        element: { id: "s1", type: "Segment2D", point1: "p1", point2: "p2", ... },
+        beforeState: null
+      }
+    },
+    // 3. Add action to ProcessTree
+    {
+      type: "AddActionToGroup",
+      parameters: {
+        actionGroupId: "ag-456",
+        action: { id: "act-789", actionType: "CreateSegment", outputs: ["p1", "p2", "s1"], ... }
+      }
+    },
+    // 4. Update DependencyGraph
+    {
+      type: "AddDependencyEdges",
+      parameters: {
+        edges: [
+          { from: "p1", to: "act-789" },
+          { from: "p2", to: "act-789" },
+          { from: "act-789", to: "s1" }
+        ]
+      }
+    }
+  ],
+  executed: true
+}
+```
+
+**Relationships**:
+- 1 Command → N Operations
+- N Commands → 1 CommandStack
+
+**Validation Rules**:
+- `operations` must not be empty
+- All operations must be valid
+- `description` must be non-empty
+
+**State Transitions**:
+- **Created** → **Executed**: Command.execute() applies all operations
+- **Executed** → **Undone**: Command.undo() reverses all operations (in reverse order)
+- **Undone** → **Executed**: Command.redo() reapplies all operations
+
+---
+
+### Domain Entity: Operation
+
+**Purpose**: Atomic, reversible mutation on World, ProcessTree, or ViewState
+
+**Base Interface**:
+```typescript
+interface OperationBase {
+  type: string;                     // Operation type identifier
+  parameters: Record<string, any>;  // Contains both "before" and "after" state for reversibility
+}
+
+type Operation = 
+  | WorldOperation 
+  | ProcessTreeOperation 
+  | ViewStateOperation;
+```
+
+**World Operations** (manipulate geometric domain):
+```typescript
+type WorldOperation =
+  | AddElementOp
+  | RemoveElementOp
+  | UpdateElementOp
+  | AddDependencyEdgesOp
+  | RemoveDependencyEdgesOp;
+
+interface AddElementOp extends OperationBase {
+  type: "AddElement";
+  parameters: {
+    element: Element2D | Element3D;  // Element to add
+    beforeState: null;               // Element didn't exist (for consistency)
+  };
+}
+
+interface RemoveElementOp extends OperationBase {
+  type: "RemoveElement";
+  parameters: {
+    elementId: ElementId;
+    beforeState: Element2D | Element3D;  // Element state before removal (for undo)
+  };
+}
+
+interface UpdateElementOp extends OperationBase {
+  type: "UpdateElement";
+  parameters: {
+    elementId: ElementId;
+    beforeState: Partial<Element2D | Element3D>;  // Fields before change
+    afterState: Partial<Element2D | Element3D>;   // Fields after change
+  };
+}
+
+// Example: Move point
+{
+  type: "UpdateElement",
+  parameters: {
+    elementId: "p1",
+    beforeState: { x: 100, y: 200 },
+    afterState: { x: 150, y: 250 }
+  }
+}
+
+interface AddDependencyEdgesOp extends OperationBase {
+  type: "AddDependencyEdges";
+  parameters: {
+    edges: Array<{ from: ElementId | ActionId; to: ElementId | ActionId }>;
+  };
+}
+
+interface RemoveDependencyEdgesOp extends OperationBase {
+  type: "RemoveDependencyEdges";
+  parameters: {
+    edges: Array<{ from: ElementId | ActionId; to: ElementId | ActionId }>;
+  };
+}
+```
+
+**ProcessTree Operations** (manipulate construction history):
+```typescript
+type ProcessTreeOperation =
+  | AddSubprocessOp
+  | RemoveSubprocessOp
+  | AddActionGroupOp
+  | RemoveActionGroupOp
+  | AddActionToGroupOp
+  | RemoveActionFromGroupOp
+  | UpdateSubprocessOp;
+
+interface AddSubprocessOp extends OperationBase {
+  type: "AddSubprocess";
+  parameters: {
+    parentId: SubprocessId;           // Where to add
+    subprocess: Subprocess;           // Subprocess to add
+    position: number;                 // Index in children array
+  };
+}
+
+interface RemoveSubprocessOp extends OperationBase {
+  type: "RemoveSubprocess";
+  parameters: {
+    subprocessId: SubprocessId;
+    beforeState: Subprocess;          // Full subprocess state (for undo)
+    parentId: SubprocessId;
+    position: number;
+  };
+}
+
+interface AddActionGroupOp extends OperationBase {
+  type: "AddActionGroup";
+  parameters: {
+    parentId: SubprocessId;
+    actionGroup: ActionGroup;
+    position: number;
+  };
+}
+
+interface AddActionToGroupOp extends OperationBase {
+  type: "AddActionToGroup";
+  parameters: {
+    actionGroupId: ActionGroupId;
+    action: ConstructiveAction;
+    position: number;                 // Index in children array
+  };
+}
+
+interface UpdateSubprocessOp extends OperationBase {
+  type: "UpdateSubprocess";
+  parameters: {
+    subprocessId: SubprocessId;
+    beforeState: Partial<Subprocess>;  // Fields before change (e.g., visible, name)
+    afterState: Partial<Subprocess>;   // Fields after change
+  };
+}
+```
+
+**ViewState Operations** (manipulate UI state):
+```typescript
+type ViewStateOperation =
+  | SetActivePlaneOp
+  | UpdateView2DOp
+  | UpdateView3DOp
+  | TogglePlaneVisibilityOp
+  | UpdatePanelCollapseOp;
+
+interface SetActivePlaneOp extends OperationBase {
+  type: "SetActivePlane";
+  parameters: {
+    beforePlane: PlaneId;             // Previously active plane
+    afterPlane: PlaneId;              // New active plane
+  };
+}
+
+interface UpdateView2DOp extends OperationBase {
+  type: "UpdateView2D";
+  parameters: {
+    beforeState: Partial<ViewState["view2D"]>;
+    afterState: Partial<ViewState["view2D"]>;
+  };
+}
+
+interface TogglePlaneVisibilityOp extends OperationBase {
+  type: "TogglePlaneVisibility";
+  parameters: {
+    planeId: PlaneId;
+    beforeVisible: boolean;
+    afterVisible: boolean;
+  };
+}
+
+interface UpdatePanelCollapseOp extends OperationBase {
+  type: "UpdatePanelCollapse";
+  parameters: {
+    nodeId: SubprocessId | ActionGroupId;
+    nodeType: "subprocess" | "actionGroup";
+    beforeCollapsed: boolean;
+    afterCollapsed: boolean;
+  };
+}
+```
+
+**Operation Execution**:
+```typescript
+interface IOperation {
+  apply(project: Project): void;    // Apply operation (use afterState)
+  undo(project: Project): void;     // Reverse operation (use beforeState)
+}
+
+// Example implementation
+class UpdateElementOperation implements IOperation {
+  constructor(private params: UpdateElementOp["parameters"]) {}
+  
+  apply(project: Project): void {
+    const element = project.world.elements2D.find(e => e.id === this.params.elementId);
+    Object.assign(element, this.params.afterState);
+  }
+  
+  undo(project: Project): void {
+    const element = project.world.elements2D.find(e => e.id === this.params.elementId);
+    Object.assign(element, this.params.beforeState);
+  }
+}
+```
+
+**Validation Rules**:
+- `beforeState` and `afterState` must contain all fields needed for reversibility
+- Operations must be idempotent (applying twice = applying once)
+- Operations must validate inputs before execution
+
+---
+
+### Persistence Entity: CommandStack
+
+**Purpose**: Maintains history of executed commands for undo/redo functionality
+
+**Fields**:
+```typescript
+interface CommandStack {
+  commands: Command[];              // All commands in chronological order
+  currentIndex: number;             // Points to last executed command (-1 if empty)
+  maxSize: number;                  // Maximum commands to keep (e.g., 100)
+}
+```
+
+**Operations**:
+```typescript
+class CommandStack {
+  // Execute a new command
+  execute(command: Command): void {
+    // 1. Remove any commands after currentIndex (from redo history)
+    this.commands = this.commands.slice(0, this.currentIndex + 1);
+    
+    // 2. Execute command operations
+    command.operations.forEach(op => op.apply(project));
+    command.executed = true;
+    
+    // 3. Add to stack
+    this.commands.push(command);
+    this.currentIndex++;
+    
+    // 4. Enforce max size
+    if (this.commands.length > this.maxSize) {
+      this.commands.shift();
+      this.currentIndex--;
+    }
+  }
+  
+  // Undo last command
+  undo(): void {
+    if (this.currentIndex < 0) return; // Nothing to undo
+    
+    const command = this.commands[this.currentIndex];
+    
+    // Execute operations in reverse order
+    for (let i = command.operations.length - 1; i >= 0; i--) {
+      command.operations[i].undo(project);
+    }
+    
+    command.executed = false;
+    this.currentIndex--;
+  }
+  
+  // Redo next command
+  redo(): void {
+    if (this.currentIndex >= this.commands.length - 1) return; // Nothing to redo
+    
+    this.currentIndex++;
+    const command = this.commands[this.currentIndex];
+    
+    // Execute operations in forward order
+    command.operations.forEach(op => op.apply(project));
+    command.executed = true;
+  }
+  
+  // Check if undo/redo available
+  canUndo(): boolean { return this.currentIndex >= 0; }
+  canRedo(): boolean { return this.currentIndex < this.commands.length - 1; }
+  
+  // Clear all history
+  clear(): void {
+    this.commands = [];
+    this.currentIndex = -1;
+  }
+}
+```
+
+**Relationships**:
+- 1 Project → 1 CommandStack
+- 1 CommandStack → N Commands
+
+**Validation Rules**:
+- `currentIndex` must be in range [-1, commands.length - 1]
+- All commands at index <= currentIndex must have `executed = true`
+- All commands at index > currentIndex must have `executed = false`
+
+**State Tracking**:
+```typescript
+interface CommandStackState {
+  totalCommands: number;            // commands.length
+  executedCommands: number;         // currentIndex + 1
+  undoAvailable: boolean;           // currentIndex >= 0
+  redoAvailable: boolean;           // currentIndex < commands.length - 1
+  lastCommandDescription: string;   // commands[currentIndex]?.description
+  nextCommandDescription: string;   // commands[currentIndex + 1]?.description
+}
+```
+
+**Example Usage**:
+```typescript
+// User creates a segment
+const createSegmentCmd = new Command({
+  description: "Create segment s1",
+  operations: [
+    new AddElementOp({ element: point1, beforeState: null }),
+    new AddElementOp({ element: point2, beforeState: null }),
+    new AddElementOp({ element: segment1, beforeState: null }),
+    new AddActionToGroupOp({ actionGroupId, action }),
+    new AddDependencyEdgesOp({ edges })
+  ]
+});
+
+commandStack.execute(createSegmentCmd);
+
+// User moves a point
+const movePointCmd = new Command({
+  description: "Move point a",
+  operations: [
+    new UpdateElementOp({
+      elementId: "p1",
+      beforeState: { x: 100, y: 200 },
+      afterState: { x: 150, y: 250 }
+    })
+  ]
+});
+
+commandStack.execute(movePointCmd);
+
+// User presses Ctrl+Z (undo)
+commandStack.undo(); // Point moves back to (100, 200)
+
+// User presses Ctrl+Y (redo)
+commandStack.redo(); // Point moves to (150, 250) again
+```
+
+**Persistence**:
+- CommandStack is NOT serialized to storage by default (too large, ephemeral)
+- Only current project state (World, ProcessTree, ViewState) is saved
+- For advanced features (session replay), commands can be optionally logged
+
+---
+
 ## Entity Relationships Diagram
 
 ```
@@ -1148,7 +1594,9 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
               │                     └── ConstructiveAction ──── Element outputs (World)
               │                                               (inputs derived from outputs' construction rules)
               │
-              └── (1) ViewState
+              ├── (1) ViewState
+              │
+              └── (1) CommandStack ──── (N) Command ──── (N) Operation
 ```
 
 ---
