@@ -149,26 +149,30 @@ type ProcessNode = Subprocess | ActionGroup | ConstructiveAction;
 **Tree Structure**:
 - **Process** (root): Special Subprocess containing all construction history
 - **Subprocess** nodes: can contain Subprocess or ActionGroup children (mixed, ordered by creation time)
-- **ActionGroup** nodes: can contain Action children only
-- **Action** nodes: leaf nodes (no children)
+- **ActionGroup** nodes: can contain Action children only (one or more)
+- **Action** nodes: leaf nodes (no children, MUST be inside ActionGroup)
 
 **Traversal**:
 - Depth-first traversal gives execution order
 - Children are ordered by creation time (immutable history)
 - Actions are executed in tree order
+- ALL actions must be inside an ActionGroup (even if it's the only action in the group)
 
 **Example Tree**:
 ```
 ProcessTree.root (Process)
 ├─ Subprocess "Construction Phase 1"
-│  ├─ Action "Create segment s1"
+│  ├─ ActionGroup "Create segment s1"
+│  │  └─ Action "Create segment s1"
 │  ├─ ActionGroup "Auxiliary for s1"
 │  │  ├─ Action "Create free point a"
 │  │  └─ Action "Create free point b"
-│  └─ Action "Create circle c1"
+│  └─ ActionGroup "Create circle c1"
+│     └─ Action "Create circle c1"
 └─ Subprocess "Transport Operations"
    ├─ Subprocess "Guide Setup" (nested)
-   │  └─ Action "Create guide g1"
+   │  └─ ActionGroup "Create guide g1"
+   │     └─ Action "Create guide g1"
    └─ ActionGroup "Auxiliary for transport"
       └─ Action "Create intersection point"
 ```
@@ -176,8 +180,8 @@ ProcessTree.root (Process)
 **Relationships**:
 - 1 ProcessTree → 1 Process (root)
 - 1 Process → N (Subprocess | ActionGroup) (children, mixed and ordered)
-- 1 Subprocess → N (Subprocess | ActionGroup) (children, mixed and ordered)
-- 1 ActionGroup → N Action (children, ordered)
+- 1 Subprocess → N (Subprocess | ActionGroup) (children, mixed and ordered - NO direct Action children)
+- 1 ActionGroup → N Action (children, ordered - at least 1)
 - ProcessNodes form a single unified tree
 
 **Validation Rules**:
@@ -186,7 +190,9 @@ ProcessTree.root (Process)
 - Action execution order determined by depth-first tree traversal
 - Children ordered by creation time (immutable)
 - ActionGroups can only contain Actions (no nesting of containers)
-- Subprocesses can contain Subprocesses or ActionGroups (mixed)
+- ActionGroups must contain at least one Action
+- Subprocesses can contain Subprocesses or ActionGroups (mixed) - NEVER direct Actions
+- ALL Actions must be inside an ActionGroup
 
 ---
 
@@ -658,7 +664,7 @@ const primitive: PathPrimitive = {
 interface Subprocess extends ProcessNodeBase {
   type: "subprocess";
   name: string;                     // User-defined name
-  children: ProcessNode[];          // Can contain: Subprocess, ActionGroup, or Action
+  children: (Subprocess | ActionGroup)[];  // ONLY Subprocess or ActionGroup, NEVER direct Actions
   
   // Visual properties
   defaultStyle?: VisualStyle;       // Default style inherited by contained elements
@@ -667,8 +673,9 @@ interface Subprocess extends ProcessNodeBase {
 ```
 
 **Tree Position**:
-- Can be at root level or nested within other Subprocesses
-- Can contain: other Subprocesses (nesting), ActionGroups, or Actions
+- Can be root (Process) or nested within other Subprocesses
+- Children: Subprocesses or ActionGroups ONLY (never direct Actions)
+- All actions must be wrapped in ActionGroups
 - Forms organizational hierarchy
 
 **Two Types of Visibility**:
@@ -810,33 +817,49 @@ enum ActionType {
 
 ### Domain Entity: ActionGroup
 
-**Purpose**: Groups auxiliary actions (auto-created elements) with their triggering main action
+**Purpose**: Groups one or more actions together; can be auxiliary (auto-created) or regular (user-created)
 
 **Fields**:
 ```typescript
 interface ActionGroup extends ProcessContainer {
   type: "actionGroup";
-  children: ConstructiveAction[];   // Auxiliary actions only (ordered by creation time)
-  mainAction: ActionId;             // Reference to the primary action that triggered this group
+  children: ConstructiveAction[];   // One or more actions (ordered by creation time)
+  mainAction?: ActionId;            // Reference to primary action (for auxiliary groups only)
 }
 ```
 
+**ActionGroup Types**:
+
+1. **Regular ActionGroup**: User-created container for normal actions
+   - Created when user performs an action
+   - `mainAction` is undefined
+   - Name can be user-defined or auto-generated from first action
+   - Can contain single action or multiple related actions
+
+2. **Auxiliary ActionGroup**: Auto-created for auxiliary actions
+   - Created when a main action needs auxiliary actions (e.g., auto-created free points)
+   - `mainAction` references the triggering action
+   - Name auto-generated (e.g., "Auxiliary for segment s1")
+   - Properties locked (user cannot edit)
+
 **ActionGroup Pattern**:
-- When a main action needs auxiliary actions (e.g., auto-created free points for a segment), an ActionGroup is automatically created
-- The ActionGroup is inserted as a sibling to the main action in the parent Subprocess
+- ALL actions must be inside an ActionGroup (even if it's the only action)
+- ActionGroup is inserted as a sibling to the main action in the parent Subprocess (for auxiliary)
 - **Element Visibility**: Elements created by actions in ActionGroup inherit visibility from parent Subprocess
   - ActionGroup does NOT have independent visibility control
   - Visibility is determined by walking up tree to find parent Subprocess
 - **UI Display**: ActionGroup and its actions are shown in construction panel
-  - Displayed with special visual treatment (lighter color, gear icon ⚙)
-  - Actions grouped together distinctly from regular actions
+  - Regular groups: displayed normally
+  - Auxiliary groups: special visual treatment (lighter color, gear icon ⚙)
+  - Actions grouped together distinctly
   - Can be collapsed/expanded independently (state stored in ViewState)
-- **Properties locked**: User cannot edit name or delete ActionGroup directly
+- **Properties**: Regular groups editable, auxiliary groups locked
 
 **Tree Position**:
-- Must be child of a Subprocess (same parent as main action)
-- Children: Actions only (no nesting of containers)
-- Automatically created and managed by system
+- Must be child of a Subprocess
+- Children: Actions only (at least one, no nesting of containers)
+- Regular ActionGroups: user-created
+- Auxiliary ActionGroups: automatically created and managed by system
 
 **Two Types of Visibility for ActionGroups**:
 
@@ -857,9 +880,11 @@ interface ActionGroup extends ProcessContainer {
 
 **Validation Rules**:
 - `children` must all be ConstructiveAction nodes
+- Must contain at least one Action
 - Cannot contain other ActionGroups or Subprocesses
 - Children ordered by creation time (immutable)
-- `mainAction` must exist in tree
+- If `mainAction` is set, must exist in tree (auxiliary group)
+- If `mainAction` is undefined, it's a regular group
 
 **UI Presentation in Construction Panel**:
 
@@ -878,33 +903,37 @@ The construction panel shows two different visibility concepts:
 **Regular Subprocess Display**:
 ```
 ▼ 👁 Construction Phase 1         ← visibility toggle, collapse/expand
-  ○ Create segment s1
-  ▶ ⚙ Auxiliary (2 actions)       ← no visibility toggle, collapse/expand only  
-  ○ Create circle c1
+  ▶ ActionGroup "Create segment s1"
+  ▶ ⚙ Auxiliary (2 actions)       ← auxiliary group, no visibility toggle
+  ▶ ActionGroup "Create circle c1"
   ▼ 👁 Nested Subprocess          ← nested subprocess with visibility control
-    ○ Create guide g1
+    ▶ ActionGroup "Create guide g1"
 ```
 
 **ActionGroup Display** (different visual treatment):
 ```
 ▼ 👁 Construction Phase 1
-  ○ Create segment s1
+  ▼ ActionGroup "Create segment s1"  ← regular action group
+    ○ Create segment s1
   ┌─────────────────────────────┐
-  │ ⚙ Auxiliary (2 actions)    │  ← boxed/indented, lighter color, no eye icon
+  │ ⚙ Auxiliary (2 actions)    │  ← auxiliary group: boxed/indented, lighter color, gear icon
   │   ○ Create free point a    │
   │   ○ Create free point b    │
   └─────────────────────────────┘
-  ○ Create circle c1
+  ▼ ActionGroup "Create circle c1"
+    ○ Create circle c1
 ```
 
 Or with icons:
 ```
 ▼ 👁 Construction Phase 1
-  ○ Create segment s1
-  ▼ ⚙ Auxiliary (2 actions)       ← gear icon, lighter text, no eye icon
-    ⋅ Create free point a         ← bullet instead of circle to show auxiliary
+  ▼ ActionGroup "Create segment s1"  ← regular group
+    ○ Create segment s1
+  ▼ ⚙ Auxiliary (2 actions)           ← auxiliary group: gear icon, lighter text
+    ⋅ Create free point a             ← bullet instead of circle
     ⋅ Create free point b
-  ○ Create circle c1
+  ▼ ActionGroup "Create circle c1"
+    ○ Create circle c1
 ```
 
 **State Transitions**:
@@ -915,19 +944,21 @@ Or with icons:
 **UI Presentation for ActionGroups**:
 ```
 ▼ Construction Phase 1
-  ○ Create segment s1
-  ▶ ⚙ Auxiliary (2 actions)  ← special icon/styling, collapsed by default
-  ○ Create circle c1
+  ▶ ActionGroup "Create segment s1"  ← regular action group, collapsed
+  ▶ ⚙ Auxiliary (2 actions)           ← auxiliary group, collapsed
+  ▶ ActionGroup "Create circle c1"
 ```
 
 When expanded:
 ```
 ▼ Construction Phase 1
-  ○ Create segment s1
-  ▼ ⚙ Auxiliary (2 actions)  ← grayed out, properties not editable
+  ▼ ActionGroup "Create segment s1"
+    └─ Create segment s1
+  ▼ ⚙ Auxiliary (2 actions)           ← grayed out, properties not editable
     └─ Create free point a
     └─ Create free point b
-  ○ Create circle c1
+  ▼ ActionGroup "Create circle c1"
+    └─ Create circle c1
 ```
 
 **Special Treatment for ActionGroups**:
