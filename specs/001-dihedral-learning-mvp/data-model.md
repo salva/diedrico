@@ -549,28 +549,26 @@ const primitive: PathPrimitive = {
 
 ### Domain Entity: Subprocess
 
-**Purpose**: Hierarchical grouping of actions with default visual properties and visibility control
+**Purpose**: User-created hierarchical grouping of actions with default visual properties and visibility control
 
 **Fields**:
 ```typescript
 interface Subprocess {
   id: SubprocessId;                 // UUID
-  name: string;                     // User-defined name or auto-generated
+  name: string;                     // User-defined name
   parent?: SubprocessId;            // Parent subprocess (for nesting)
   children: SubprocessId[];         // Child subprocesses (tree structure)
   actions: ActionId[];              // Actions directly in this subprocess (not in children)
+  actionGroups: ActionGroupId[];    // Action groups in this subprocess
   
   // Visual properties
   defaultStyle?: VisualStyle;       // Default style inherited by contained elements
   visible: boolean;                 // Controls element visibility in drawing (cascades to children)
-                                    // For auxiliary subprocesses: visible has no effect (inherit from parent)
   
   // UI state
   collapsed: boolean;               // Whether subprocess is collapsed in construction panel UI
   
   // Metadata
-  isAuxiliary: boolean;             // True for auto-generated auxiliary action containers
-                                    // Auxiliary subprocesses: properties not editable, special display
   created: Date;
 }
 ```
@@ -580,7 +578,7 @@ interface Subprocess {
 Root (Project)
 ├─ Subprocess "Construction Phase 1"
 │  ├─ Action "Create segment s1"
-│  ├─ AuxiliarySubprocess (isAuxiliary: true, displayed differently)
+│  ├─ ActionGroup (for auxiliary actions of s1)
 │  │  ├─ Action "Create free point a" (auxiliary)
 │  │  └─ Action "Create free point b" (auxiliary)
 │  └─ Action "Create circle c1"
@@ -594,37 +592,20 @@ Root (Project)
 - 1 Subprocess → 0..1 Subprocess (parent, for nesting)
 - 1 Subprocess → N Subprocess (children)
 - 1 Subprocess → N Actions (directly contained)
+- 1 Subprocess → N ActionGroups (directly contained)
 - 1 Subprocess → 0..1 VisualStyle (default style)
-
-**Auxiliary Subprocess Pattern**:
-- When a main action needs auxiliary actions (auto-created points), an auxiliary subprocess is automatically created
-- The auxiliary subprocess has `isAuxiliary: true`
-- **Element Visibility**: Auxiliary subprocesses do NOT have independent visibility control
-  - `visible` field is ignored for auxiliary subprocesses
-  - Elements in auxiliary subprocess inherit visibility from parent subprocess only
-  - No UI toggle for auxiliary subprocess visibility
-- **UI Display**: Auxiliary subprocess and its actions are shown in construction panel
-  - Displayed with special visual treatment (lighter color, special icon)
-  - Actions grouped together differently from regular subprocesses
-  - Can be collapsed/expanded independently
-- **Properties locked**: User cannot edit name, defaultStyle, or visibility of auxiliary subprocesses
-- **Always grouped with main action**: The auxiliary subprocess is a child of the main action's parent subprocess
-- Structure: MainAction's subprocess → contains → AuxiliarySubprocess → contains → AuxiliaryActions
-- The main action's `subprocess` field points to its parent subprocess
-- The main action's `auxiliarySubprocess` field points to the auxiliary subprocess
 
 **Two Types of Visibility**:
 
 1. **Element Visibility** (in the drawing workspace):
-   - Controlled by subprocess.visible for regular subprocesses
-   - For auxiliary subprocesses: always inherit from parent, no independent toggle
+   - Controlled by subprocess.visible
    - Determines whether geometric elements are rendered in the 2D/3D view
+   - Cascades to all child subprocesses
 
 2. **UI Visibility** (in the construction panel):
    - Controlled by subprocess.collapsed
    - Determines whether subprocess content is shown/hidden in the action list
-   - Both regular and auxiliary subprocesses can be collapsed/expanded
-   - Auxiliary subprocesses use different visual grouping (see UI Presentation below)
+   - Independent from element visibility
 
 **Visibility Cascade for Elements**:
 ```typescript
@@ -632,12 +613,18 @@ function isElementVisible(element: Element2D | Element3D): boolean {
   // 1. Element must not be infeasible
   if (element.infeasible) return false;
   
-  // 2. Get element's subprocess via action
+  // 2. Get element's subprocess/action group via action
   const action = actions[element.createdBy];
-  const subprocess = subprocesses[action.subprocess];
   
-  // 3. Check subprocess visibility (cascades up tree, skips auxiliary)
-  if (!isSubprocessVisible(subprocess)) return false;
+  // 3. Check visibility based on container type
+  if (action.subprocess) {
+    const subprocess = subprocesses[action.subprocess];
+    if (!isSubprocessVisible(subprocess)) return false;
+  } else if (action.actionGroup) {
+    const actionGroup = actionGroups[action.actionGroup];
+    const subprocess = subprocesses[actionGroup.subprocess];
+    if (!isSubprocessVisible(subprocess)) return false;
+  }
   
   // 4. Check plane visibility (for 2D elements)
   if (element instanceof Element2D) {
@@ -650,12 +637,6 @@ function isElementVisible(element: Element2D | Element3D): boolean {
 }
 
 function isSubprocessVisible(subprocess: Subprocess): boolean {
-  // Auxiliary subprocesses don't control visibility - skip to parent
-  if (subprocess.isAuxiliary && subprocess.parent) {
-    return isSubprocessVisible(subprocesses[subprocess.parent]);
-  }
-  
-  // Regular subprocess visibility check
   if (!subprocess.visible) return false;
   if (subprocess.parent) {
     return isSubprocessVisible(subprocesses[subprocess.parent]);
@@ -701,9 +682,9 @@ interface ConstructiveAction {
   outputs: ElementId[];             // Results (what this action produces)
   parameters: Record<string, any>;  // Tool-specific params (e.g., radius, angle)
   
-  // Hierarchical grouping
-  subprocess?: SubprocessId;        // Parent subprocess (for organizational grouping)
-  auxiliarySubprocess?: SubprocessId; // Auto-created subprocess for auxiliary actions
+  // Hierarchical grouping (mutually exclusive)
+  subprocess?: SubprocessId;        // Parent subprocess (for regular actions)
+  actionGroup?: ActionGroupId;      // Parent action group (for auxiliary actions)
   
   // Validation
   infeasible: boolean;              // Computed from validation
@@ -748,6 +729,62 @@ enum ActionType {
 **Relationships**:
 - 1 Action → N Elements (inputs)
 - 1 Action → N Elements (outputs)
+- 1 Action → 0..1 Subprocess (parent subprocess, for regular actions)
+- 1 Action → 0..1 ActionGroup (parent action group, for auxiliary actions)
+
+---
+
+### Domain Entity: ActionGroup
+
+**Purpose**: Groups auxiliary actions (auto-created elements) with their triggering main action
+
+**Fields**:
+```typescript
+interface ActionGroup {
+  id: ActionGroupId;                // UUID
+  name: string;                     // Auto-generated descriptive name (e.g., "Auxiliary for segment s1")
+  subprocess: SubprocessId;         // Parent subprocess (same as main action's subprocess)
+  mainAction: ActionId;             // The primary action that triggered auxiliary actions
+  actions: ActionId[];              // Auxiliary actions in this group
+  
+  // UI state
+  collapsed: boolean;               // Whether group is collapsed in construction panel UI
+  
+  // Metadata
+  created: Date;
+}
+```
+
+**ActionGroup Pattern**:
+- When a main action needs auxiliary actions (e.g., auto-created free points for a segment), an ActionGroup is automatically created
+- The ActionGroup is contained in the same subprocess as the main action
+- **Element Visibility**: Elements in ActionGroup inherit visibility from parent subprocess
+  - ActionGroup does NOT have independent visibility control
+  - Visibility is determined solely by the subprocess.visible cascade
+- **UI Display**: ActionGroup and its actions are shown in construction panel
+  - Displayed with special visual treatment (lighter color, gear icon ⚙)
+  - Actions grouped together distinctly from regular subprocess actions
+  - Can be collapsed/expanded independently via `collapsed` field
+- **Properties locked**: User cannot edit name or delete ActionGroup directly
+- **Always grouped with main action**: The ActionGroup is in the same subprocess as its main action
+- Structure: MainAction (in subprocess) + ActionGroup (in same subprocess) → contains → AuxiliaryActions
+
+**Two Types of Visibility for ActionGroups**:
+
+1. **Element Visibility** (in the drawing workspace):
+   - ActionGroups do NOT control visibility
+   - Elements in ActionGroup inherit visibility from parent subprocess only
+   - No visibility toggle for ActionGroups
+
+2. **UI Visibility** (in the construction panel):
+   - Controlled by actionGroup.collapsed
+   - Determines whether group content is shown/hidden in the action list
+   - Independent from element visibility
+
+**Relationships**:
+- 1 ActionGroup → 1 Subprocess (parent subprocess)
+- 1 ActionGroup → 1 Action (main action that triggered this group)
+- 1 ActionGroup → N Actions (auxiliary actions contained)
 - 1 Action → 0..1 Subprocess (parent subprocess)
 - 1 Action → 0..1 Subprocess (auxiliary subprocess, auto-created)
 - N Actions → 1 Subprocess (via subprocess field)
@@ -800,7 +837,7 @@ The construction panel shows two different visibility concepts:
     ○ Create guide g1
 ```
 
-**Auxiliary Subprocess Display** (different visual treatment):
+**ActionGroup Display** (different visual treatment):
 ```
 ▼ 👁 Construction Phase 1
   ○ Create segment s1
@@ -826,15 +863,14 @@ Or with icons:
 - `inputs` must all exist (or action is infeasible)
 - `type` must match a known ActionType
 - `outputs` are created by executing the action's command
-- If `auxiliarySubprocess` exists, it must be a valid subprocess with `isAuxiliary: true`
-- `subprocess` and `auxiliarySubprocess` must not be the same
+- `subprocess` and `actionGroup` are mutually exclusive (one must be set)
 
 **State Transitions**:
 - **Executable** → **Executed**: Command validates and executes successfully
 - **Executed** → **Infeasible**: Upstream input changes, validation fails during recomputation
 - **Infeasible** → **Executed**: Upstream input corrected, validation passes
 
-**UI Presentation**:
+**UI Presentation for ActionGroups**:
 ```
 ▼ Construction Phase 1
   ○ Create segment s1
@@ -852,13 +888,13 @@ When expanded:
   ○ Create circle c1
 ```
 
-**Special Treatment for Auxiliary Subprocesses**:
+**Special Treatment for ActionGroups**:
 - Displayed with special icon (e.g., ⚙ gear icon)
 - Rendered with different styling (e.g., lighter color, italics)
 - Name and properties cannot be edited by user
-- `defaultStyle` cannot be set (inherits from parent)
-- Can be collapsed/expanded like normal subprocesses
+- Can be collapsed/expanded like subprocesses
 - Visible alongside regular actions in the subprocess tree
+- No visibility toggle (inherits visibility from parent subprocess)
 
 ---
 
