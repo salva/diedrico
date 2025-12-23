@@ -45,6 +45,43 @@ Project-level container and metadata:
 
 ## Layer 1: Domain Entities
 
+### Domain Entity: World
+
+**Purpose**: Contains all problem domain data - the geometric construction and its defining actions
+
+**Fields**:
+```typescript
+interface World {
+  planes: ProjectionPlane[];        // Projection planes (min 2: P_H, P_V)
+  hingeLines: HingeLine[];          // Hinge lines connecting planes (min 1: HL_HV)
+  elements2D: Element2D[];          // 2D geometric elements on projection planes
+  elements3D: Element3D[];          // 3D elements derived from 2D projections
+  subprocesses: Subprocess[];       // Hierarchical grouping of actions
+  actionGroups: ActionGroup[];      // Auxiliary action containers
+  actions: ConstructiveAction[];    // Command history (ordered, immutable)
+  dependencyGraph: DependencyGraph; // DAG of element/action dependencies
+}
+```
+
+**Relationships**:
+- 1 World → N ProjectionPlanes (min 2)
+- 1 World → N HingeLines (min 1) 
+- 1 World → N Element2D
+- 1 World → N Element3D
+- 1 World → N Subprocesses
+- 1 World → N ActionGroups
+- 1 World → N ConstructiveActions (ordered list)
+- 1 World → 1 DependencyGraph
+
+**Validation Rules**:
+- Must have at least 2 `planes` (H and V for MVP)
+- Must have at least 1 `hingeLine` connecting those planes
+- `actions` order defines command history (immutable past)
+- `dependencyGraph` must be acyclic (DAG)
+- Exactly one plane must have `isActive = true`
+
+---
+
 ### Persistence Entity: Project
 
 **Purpose**: Root aggregate containing all user work for one dihedral drawing exercise
@@ -57,32 +94,22 @@ interface Project {
   schemaVersion: string;            // "1.0.0" (semantic versioning)
   created: Date;                    // ISO 8601 timestamp
   modified: Date;                   // ISO 8601 timestamp, auto-updated
-  planes: ProjectionPlane[];        // At least 2 (P_H, P_V)
-  hingeLines: HingeLine[];          // At least 1 (HL_HV)
-  elements2D: Element2D[];          // User-created 2D geometry
-  elements3D: Element3D[];          // Derived 3D geometry
-  actions: ConstructiveAction[];    // Command history (ordered)
+  world: World;                     // All domain/construction data
   viewState: ViewState;             // UI state (zoom, camera, visibility)
 }
 ```
 
 **Relationships**:
-- 1 Project → N ProjectionPlanes (min 2)
-- 1 Project → N HingeLines (min 1)
-- 1 Project → N Element2D
-- 1 Project → N Element3D
-- 1 Project → N ConstructiveActions (ordered list)
+- 1 Project → 1 World
 - 1 Project → 1 ViewState
 
 **Validation Rules**:
 - `name` must be non-empty, max 100 characters
-- Must have at least 2 `planes` (H and V for MVP)
-- Must have at least 1 `hingeLine` connecting those planes
 - `schemaVersion` must match current or migrateable version
-- `actions` order defines command history (immutable past)
+- `world` must satisfy World validation rules (see above)
 
 **State Transitions**:
-- **New** → **Active**: Created with default P_H, P_V, HL_HV
+- **New** → **Active**: Created with default World (P_H, P_V, HL_HV)
 - **Active** → **Saved**: Persisted to storage (autosave every 500ms after edit)
 - **Active** → **Closed**: User closes project, discards unsaved (no unsaved in MVP due to autosave)
 
@@ -1040,25 +1067,35 @@ interface ViewState {
 ## Entity Relationships Diagram
 
 ```
-Project (1) ──┬── (N) ProjectionPlane
-              │       │
-              │       └─ (1) Element2D (N)
-              │
-              ├── (N) HingeLine ── (2) ProjectionPlane
-              │       │
-              │       └── (N) Guide ── (1) Point2D
-              │
-              ├── (N) Element2D ──┬── (N) ConstructiveAction (inputs)
-              │                   └── (1) ConstructiveAction (createdBy)
-              │
-              ├── (N) Element3D ──┬── (N) Element2D (projections)
-              │                   └── (1) ConstructiveAction (createdBy)
-              │
-              ├── (N) ConstructiveAction ──┬── (N) Element (inputs)
-              │                            ├── (N) Element (outputs)
-              │                            └── (N) ConstructiveAction (auxiliary)
-              │
-              ├── (1) DependencyGraph ── (N) Element + Action
+Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
+              │               │       │
+              │               │       └─ (N) Element2D
+              │               │
+              │               ├── (N) HingeLine ── (2) ProjectionPlane
+              │               │       │
+              │               │       └── (N) Guide ── (1) Point2D
+              │               │
+              │               ├── (N) Element2D ──┬── (N) ConstructiveAction (inputs)
+              │               │                   └── (1) ConstructiveAction (createdBy)
+              │               │
+              │               ├── (N) Element3D ──┬── (N) Element2D (projections)
+              │               │                   └── (1) ConstructiveAction (createdBy)
+              │               │
+              │               ├── (N) Subprocess ──┬── (0..1) Subprocess (parent)
+              │               │                    ├── (N) Subprocess (children)
+              │               │                    ├── (N) ConstructiveAction
+              │               │                    └── (N) ActionGroup
+              │               │
+              │               ├── (N) ActionGroup ──┬── (1) Subprocess
+              │               │                     ├── (1) ConstructiveAction (main)
+              │               │                     └── (N) ConstructiveAction (auxiliary)
+              │               │
+              │               ├── (N) ConstructiveAction ──┬── (N) Element (inputs)
+              │               │                            ├── (N) Element (outputs)
+              │               │                            ├── (0..1) Subprocess
+              │               │                            └── (0..1) ActionGroup
+              │               │
+              │               └── (1) DependencyGraph ── (N) Element + Action
               │
               └── (1) ViewState
 ```
@@ -1069,10 +1106,10 @@ Project (1) ──┬── (N) ProjectionPlane
 
 ### Global Invariants
 
-1. **Single Active Plane**: Exactly one `ProjectionPlane.isActive = true` per project
-2. **Acyclic Dependencies**: `DependencyGraph` must be DAG (no circular dependencies)
+1. **Single Active Plane**: Exactly one `ProjectionPlane.isActive = true` per World
+2. **Acyclic Dependencies**: `World.dependencyGraph` must be DAG (no circular dependencies)
 3. **Element Ownership**: Each `Element2D` belongs to exactly one `ProjectionPlane`
-4. **Action History**: `Project.actions` is append-only ordered list (immutable past)
+4. **Action History**: `World.actions` is append-only ordered list (immutable past)
 
 ### Per-Entity Constraints
 
