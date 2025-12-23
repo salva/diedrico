@@ -695,7 +695,7 @@ All panels are located on the left side and are stackable and collapsible.
    - Regular subprocesses: controlled by eye icon toggle (subprocess.visible)
    - ActionGroups: no toggle, always inherit from parent subprocess
 2. **Panel visibility**: Whether content is shown/hidden in the action list
-   - Both subprocesses and ActionGroups: controlled by collapse/expand triangle (collapsed field)
+   - Both subprocesses and ActionGroups: controlled by collapse/expand triangle (state stored in ViewState)
 
 - Allows expanding/collapsing subprocesses and individual actions to show/hide content.
 - Hover behavior uses unified hover highlighting (focus element, direct ancestors, direct descendants).

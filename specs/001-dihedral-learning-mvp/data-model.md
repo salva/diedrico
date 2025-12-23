@@ -565,9 +565,6 @@ interface Subprocess {
   defaultStyle?: VisualStyle;       // Default style inherited by contained elements
   visible: boolean;                 // Controls element visibility in drawing (cascades to children)
   
-  // UI state
-  collapsed: boolean;               // Whether subprocess is collapsed in construction panel UI
-  
   // Metadata
   created: Date;
 }
@@ -603,7 +600,7 @@ Root (Project)
    - Cascades to all child subprocesses
 
 2. **UI Visibility** (in the construction panel):
-   - Controlled by subprocess.collapsed
+   - Controlled by ViewState (panelCollapseState)
    - Determines whether subprocess content is shown/hidden in the action list
    - Independent from element visibility
 
@@ -661,7 +658,6 @@ function isSubprocessVisible(subprocess: Subprocess): boolean {
 - Root-level subprocesses have `parent === undefined`
 
 **State Transitions**:
-- **Expanded** ↔ **Collapsed**: UI toggle, affects visibility of nested content
 - **Visible** ↔ **Hidden**: Affects rendering of all contained elements
 - **Empty** → **Populated**: Actions added
 - **Populated** → **Empty**: All actions moved/deleted
@@ -747,9 +743,6 @@ interface ActionGroup {
   mainAction: ActionId;             // The primary action that triggered auxiliary actions
   actions: ActionId[];              // Auxiliary actions in this group
   
-  // UI state
-  collapsed: boolean;               // Whether group is collapsed in construction panel UI
-  
   // Metadata
   created: Date;
 }
@@ -764,7 +757,7 @@ interface ActionGroup {
 - **UI Display**: ActionGroup and its actions are shown in construction panel
   - Displayed with special visual treatment (lighter color, gear icon ⚙)
   - Actions grouped together distinctly from regular subprocess actions
-  - Can be collapsed/expanded independently via `collapsed` field
+  - Can be collapsed/expanded independently (state stored in ViewState)
 - **Properties locked**: User cannot edit name or delete ActionGroup directly
 - **Always grouped with main action**: The ActionGroup is in the same subprocess as its main action
 - Structure: MainAction (in subprocess) + ActionGroup (in same subprocess) → contains → AuxiliaryActions
@@ -777,7 +770,7 @@ interface ActionGroup {
    - No visibility toggle for ActionGroups
 
 2. **UI Visibility** (in the construction panel):
-   - Controlled by actionGroup.collapsed
+   - Controlled by ViewState (panelCollapseState)
    - Determines whether group content is shown/hidden in the action list
    - Independent from element visibility
 
@@ -805,13 +798,12 @@ The old `auxiliaryActions: ConstructiveAction[]` field is replaced with `auxilia
 
 // The auxiliary subprocess is a sibling in the same parent subprocess
 {
-  id: "subprocess-aux-seg-1",
+  id: "actiongroup-aux-seg-1",
   name: "Auxiliary for segment s1",
-  parent: "subprocess-construction", // Same parent as main action
-  isAuxiliary: true,
-  collapsed: true,
-  visible: true, // Note: This field is ignored - visibility inherited from parent
-  actions: ["action-point-a", "action-point-b"]
+  subprocess: "subprocess-construction", // Same subprocess as main action
+  mainAction: "action-create-seg-1",
+  actions: ["action-point-a", "action-point-b"],
+  created: new Date()
 }
 ```
 
@@ -819,12 +811,14 @@ The old `auxiliaryActions: ConstructiveAction[]` field is replaced with `auxilia
 
 The construction panel shows two different visibility concepts:
 
-1. **Panel Collapse State** (subprocess.collapsed):
-   - Controls whether subprocess content is shown in the panel
-   - Both regular and auxiliary subprocesses can be collapsed/expanded
+1. **Panel Collapse State** (ViewState.panelCollapseState):
+   - Controls whether subprocess/ActionGroup content is shown in the panel
+   - Both subprocesses and ActionGroups can be collapsed/expanded
+   - State stored in ViewState, not in domain entities
 
-2. **Drawing Visibility** (subprocess.visible for regular, inherited for auxiliary):
-   - Regular subprocesses have eye icon to toggle element visibility in drawing
+2. **Drawing Visibility** (subprocess.visible):
+   - Subprocesses have eye icon to toggle element visibility in drawing
+   - ActionGroups do NOT have visibility control (inherit from parent subprocess)
    - Auxiliary subprocesses have NO visibility toggle (always inherit from parent)
 
 **Regular Subprocess Display**:
@@ -1022,6 +1016,12 @@ interface ViewState {
   ui: {
     dependencyHoverEnabled: boolean;   // FR-036: toggle hover highlighting
     snapRadius: number;                // FR-038: point snapping radius (pixels)
+  };
+  
+  // Panel state
+  panelCollapseState: {
+    subprocesses: Map<SubprocessId, boolean>;  // true = collapsed, false = expanded
+    actionGroups: Map<ActionGroupId, boolean>; // true = collapsed, false = expanded
   };
 }
 ```
