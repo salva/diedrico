@@ -98,21 +98,21 @@
 
 ### Tasks
 
-- [ ] T051 [US1] Create backend/src/models/Project.ts with Project DTO interface
-- [ ] T052 [US1] Create backend/src/storage/FileStorage.ts with JSON file read/write operations in backend/data/projects/
-- [ ] T053 [US1] Create backend/src/storage/ProjectRepository.ts with CRUD operations using FileStorage
-- [ ] T054 [US1] Create backend/src/api/projects.ts with GET /api/projects endpoint to list all projects
-- [ ] T055 [US1] Implement POST /api/projects endpoint to create new project with default planes (P_H, P_V, HL_HV) in backend/src/api/projects.ts
-- [ ] T056 [US1] Implement GET /api/projects/:id endpoint to load project by ID in backend/src/api/projects.ts
-- [ ] T057 [US1] Implement PUT /api/projects/:id endpoint to save project with updated timestamp in backend/src/api/projects.ts
-- [ ] T058 [US1] Implement DELETE /api/projects/:id endpoint in backend/src/api/projects.ts
-- [ ] T059 [US1] Create frontend/src/services/ProjectService.ts with methods calling backend API
-- [ ] T060 [US1] Implement debounced autosave (500ms) in ProjectService.ts
-- [ ] T061 [US1] Implement project deserialization and domain object reconstruction in ProjectService.ts
-- [ ] T062 [US1] Create frontend/src/components/dialogs/NewProjectDialog.vue with project name input
-- [ ] T063 [US1] Create frontend/src/components/dialogs/OpenProjectDialog.vue with project list
-- [ ] T064 [US1] Implement "New Project" action that creates project with default planes and HL_HV
-- [ ] T065 [US1] Implement "Open Project" action that loads and deserializes project state
+- [X] T051 [US1] Create backend/src/models/Project.ts with Project DTO interface
+- [X] T052 [US1] Create backend/src/storage/FileStorage.ts with JSON file read/write operations in backend/data/projects/
+- [X] T053 [US1] Create backend/src/storage/ProjectRepository.ts with CRUD operations using FileStorage
+- [X] T054 [US1] Create backend/src/api/projects.ts with GET /api/projects endpoint to list all projects
+- [X] T055 [US1] Implement POST /api/projects endpoint to create new project with default planes (P_H, P_V, HL_HV) in backend/src/api/projects.ts
+- [X] T056 [US1] Implement GET /api/projects/:id endpoint to load project by ID in backend/src/api/projects.ts
+- [X] T057 [US1] Implement PUT /api/projects/:id endpoint to save project with updated timestamp in backend/src/api/projects.ts
+- [X] T058 [US1] Implement DELETE /api/projects/:id endpoint in backend/src/api/projects.ts
+- [X] T059 [US1] Create frontend/src/services/ProjectService.ts with methods calling backend API
+- [X] T060 [US1] Implement debounced autosave (500ms) in ProjectService.ts
+- [X] T061 [US1] Implement project deserialization and domain object reconstruction in ProjectService.ts
+- [X] T062 [US1] Create frontend/src/components/dialogs/NewProjectDialog.vue with project name input
+- [X] T063 [US1] Create frontend/src/components/dialogs/OpenProjectDialog.vue with project list
+- [X] T064 [US1] Implement "New Project" action that creates project with default planes and HL_HV
+- [X] T065 [US1] Implement "Open Project" action that loads and deserializes project state
 - [ ] T066 [US1] Write integration test for POST /api/projects in backend/tests/integration/projects.spec.ts
 - [ ] T067 [US1] Write integration test for GET /api/projects/:id in backend/tests/integration/projects.spec.ts
 - [ ] T068 [US1] Write integration test for PUT /api/projects/:id in backend/tests/integration/projects.spec.ts
