@@ -69,8 +69,11 @@ import { useToolStore } from '@/stores/toolStore';
 import ElementRenderer from './ElementRenderer.vue';
 import type { Element2D } from '@/types/ElementTypes';
 import { CreateFreePointCommand } from '@/commands/CreateFreePointCommand';
+import { CreatePointOnElementCommand } from '@/commands/CreatePointOnElementCommand';
+import { CreateIntersectionPointCommand } from '@/commands/CreateIntersectionPointCommand';
 import { useSnapping } from '@/composables/useSnapping';
 import { useToolFeedback } from '@/composables/useToolFeedback';
+import { useElementGeometry } from '@/composables/useElementGeometry';
 
 const worldStore = useWorldStore();
 const viewStore = useViewStore();
@@ -78,6 +81,7 @@ const toolStore = useToolStore();
 
 const { snapToPoint } = useSnapping();
 const { feedback: toolFeedback, showFeedback, clearFeedback } = useToolFeedback();
+const { findNearestElement, closestPointOnElement, findIntersectingElements } = useElementGeometry();
 
 // Component refs
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -135,7 +139,12 @@ const handleCanvasClick = (event: MouseEvent) => {
     case 'point-free':
       handleFreePointTool(workspaceX, workspaceY);
       break;
-    // Other tools will be handled in later tasks
+    case 'point-on-element':
+      handlePointOnElementTool(workspaceX, workspaceY);
+      break;
+    case 'point-intersection':
+      handleIntersectionPointTool(workspaceX, workspaceY);
+      break;
     default:
       break;
   }
@@ -177,6 +186,113 @@ const handleFreePointTool = (x: number, y: number) => {
     setTimeout(clearFeedback, 1500);
   } else {
     showFeedback('error', result.error || 'Failed to create point');
+    setTimeout(clearFeedback, 2000);
+  }
+};
+
+/**
+ * Handle point-on-element tool - create a point constrained to an element
+ */
+const handlePointOnElementTool = (x: number, y: number) => {
+  // Find nearest element
+  const nearestElement = findNearestElement(x, y, 20);
+  
+  if (!nearestElement) {
+    showFeedback('warning', 'No element found nearby. Click near a segment, line, or circle.');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+  
+  // Calculate closest point on element
+  const closestPoint = closestPointOnElement(x, y, nearestElement);
+  
+  if (!closestPoint) {
+    showFeedback('error', 'Could not calculate point on element');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+  
+  // Get active plane
+  const activePlaneId = viewStore.activePlaneId;
+  if (!activePlaneId) {
+    showFeedback('error', 'No active plane selected');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+  
+  // Create command
+  const command = new CreatePointOnElementCommand(
+    {
+      hostElementId: nearestElement.id,
+      parameter: closestPoint.parameter,
+      planeId: activePlaneId,
+      actionId: 'user-action-001'  // TODO: Get from current action context
+    },
+    worldStore
+  );
+  
+  // Execute command
+  const result = command.execute();
+  
+  if (result.success) {
+    showFeedback('success', `Point created on ${nearestElement.name}`);
+    setTimeout(clearFeedback, 1500);
+  } else {
+    showFeedback('error', result.error || 'Failed to create point on element');
+    setTimeout(clearFeedback, 2000);
+  }
+};
+
+/**
+ * Handle intersection point tool - create points at element intersections
+ * (FR-023: Automatic intersection point creation)
+ */
+const handleIntersectionPointTool = (x: number, y: number) => {
+  // Find intersecting elements near the click point
+  const intersections = findIntersectingElements(x, y, 20);
+  
+  if (intersections.length === 0) {
+    showFeedback('warning', 'No intersecting elements found. Click near an intersection.');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+  
+  // Use the first intersection found
+  const { element1, element2 } = intersections[0];
+  
+  // Get active plane
+  const activePlaneId = viewStore.activePlaneId;
+  if (!activePlaneId) {
+    showFeedback('error', 'No active plane selected');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+  
+  // Create intersection point (index 0 for first intersection)
+  const command = new CreateIntersectionPointCommand(
+    {
+      element1Id: element1.id,
+      element2Id: element2.id,
+      intersectionIndex: 0,
+      planeId: activePlaneId,
+      actionId: 'user-action-001'  // TODO: Get from current action context
+    },
+    worldStore
+  );
+  
+  // Execute command
+  const result = command.execute();
+  
+  if (result.success) {
+    const infeasible = result.outputs.infeasible;
+    if (infeasible) {
+      showFeedback('warning', `Intersection point created but infeasible (no intersection exists)`);
+    } else {
+      showFeedback('success', `Intersection point created`);
+    }
+    setTimeout(clearFeedback, 2000);
+  } else {
+    showFeedback('error', result.error || 'Failed to create intersection point');
     setTimeout(clearFeedback, 2000);
   }
 };
