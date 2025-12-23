@@ -153,13 +153,13 @@
 
 ### Segment/Line Tools
 
-- [ ] T089 [P] [US2] Create CreateSegmentCommand in frontend/src/commands/CreateSegmentCommand.ts
-- [ ] T090 [P] [US2] Implement segment tool: click two points → addAndExecute AddElementOp for Segment2D
-- [ ] T091 [P] [US2] Create CreateLineCommand in frontend/src/commands/CreateLineCommand.ts
-- [ ] T092 [P] [US2] Implement line tool variants: by two points, parallel through point, perpendicular through point
-- [ ] T093 [P] [US2] Add validation for coincident points (infeasible segment) in CreateSegmentCommand
-- [ ] T094 [P] [US2] Write unit tests for CreateSegmentCommand validation in frontend/tests/unit/commands/createSegment.spec.ts
-- [ ] T095 [P] [US2] Write unit tests for CreateLineCommand variants in frontend/tests/unit/commands/createLine.spec.ts
+- [X] T089 [P] [US2] Create CreateSegmentCommand in frontend/src/commands/CreateSegmentCommand.ts
+- [X] T090 [P] [US2] Implement segment tool: click two points → addAndExecute AddElementOp for Segment2D
+- [X] T091 [P] [US2] Create CreateLineCommand in frontend/src/commands/CreateLineCommand.ts
+- [X] T092 [P] [US2] Implement line tool variants: by two points, parallel through point, perpendicular through point
+- [X] T093 [P] [US2] Add validation for coincident points (infeasible segment) in CreateSegmentCommand
+- [X] T094 [P] [US2] Write unit tests for CreateSegmentCommand validation in frontend/tests/unit/commands/createSegment.spec.ts
+- [X] T095 [P] [US2] Write unit tests for CreateLineCommand variants in frontend/tests/unit/commands/createLine.spec.ts
 
 ### Circle/Arc Tools
 
