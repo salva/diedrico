@@ -1127,93 +1127,205 @@ interface ViewState {
 
 ### Domain Entity: Command
 
-**Purpose**: Represents a user action that can be executed and undone; composed of atomic operations
+**Purpose**: Represents a user action that can be executed and undone; operations are added and executed incrementally
 
 **Fields**:
 ```typescript
 interface Command {
   id: CommandId;                    // UUID
-  timestamp: Date;                  // When command was executed
+  timestamp: Date;                  // When command was created
   description: string;              // Human-readable description (e.g., "Create segment s1")
-  operations: Operation[];          // List of atomic operations (executed in order)
-  executed: boolean;                // Whether command has been executed
+  operations: Operation[];          // List of operations (added incrementally as executed)
+  status: CommandStatus;            // "building" | "committed" | "undone"
+}
+
+enum CommandStatus {
+  Building = "building",            // Operations being added/executed
+  Committed = "committed",          // Command complete, in undo stack
+  Undone = "undone"                 // Command has been undone
 }
 ```
 
 **Key Concepts**:
-- **Atomic**: All operations in a command succeed or fail together
-- **Reversible**: Every operation stores both "before" and "after" state
-- **Composable**: Commands are built from multiple operations
-- **Ordered**: Operations execute in sequence during apply, reverse during undo
+- **Incremental Execution**: Operations are executed immediately as they're added to the command
+- **Dependency Resolution**: Later operations can use outputs (e.g., IDs) from earlier operations
+- **Atomic Rollback**: If command fails or is undone, all operations are reversed in order
+- **Transaction Pattern**: Command acts like a transaction - building → committed → undone
+
+**Execution Flow**:
+```typescript
+// 1. Create command (status = "building")
+const cmd = new Command({ description: "Create segment s1" });
+
+// 2. Add and execute operations incrementally
+const p1 = cmd.addAndExecute(new AddElementOp({ 
+  element: { type: "Point2D", x: 100, y: 200, ... }
+}));
+// p1 now has generated ID, exists in World
+
+const p2 = cmd.addAndExecute(new AddElementOp({
+  element: { type: "Point2D", x: 300, y: 400, ... }
+}));
+// p2 now has generated ID, exists in World
+
+const segment = cmd.addAndExecute(new AddElementOp({
+  element: { type: "Segment2D", point1: p1.id, point2: p2.id, ... }
+}));
+// segment references p1 and p2 IDs (available from previous operations)
+
+// 3. Commit command to stack (status = "committed")
+commandStack.commit(cmd);
+// Now available for undo
+
+// 4. Later, user undoes
+commandStack.undo();
+// All operations reversed in reverse order: segment removed, p2 removed, p1 removed
+```
 
 **Example Command**:
 ```typescript
-// "Create Segment" command
-{
-  id: "cmd-123",
-  timestamp: new Date(),
-  description: "Create segment s1",
-  operations: [
-    // 1. Add two points to World
-    {
-      type: "AddElement",
-      parameters: {
-        element: { id: "p1", type: "Point2D", x: 100, y: 200, ... },
-        beforeState: null  // Element didn't exist
-      }
+// Creating a segment with incremental execution
+const cmd = new Command({ description: "Create segment s1" });
+
+try {
+  // Each operation executes immediately and can fail
+  const p1Result = cmd.addAndExecute(new AddElementOp({
+    element: { id: generateId(), type: "Point2D", x: 100, y: 200, ... },
+    beforeState: null
+  }));
+  
+  const p2Result = cmd.addAndExecute(new AddElementOp({
+    element: { id: generateId(), type: "Point2D", x: 300, y: 400, ... },
+    beforeState: null
+  }));
+  
+  // Segment operation can use IDs from previous operations
+  const segmentResult = cmd.addAndExecute(new AddElementOp({
+    element: { 
+      id: generateId(), 
+      type: "Segment2D", 
+      point1: p1Result.element.id,  // Available from previous operation
+      point2: p2Result.element.id,  // Available from previous operation
+      ... 
     },
-    {
-      type: "AddElement",
-      parameters: {
-        element: { id: "p2", type: "Point2D", x: 300, y: 400, ... },
-        beforeState: null
-      }
+    beforeState: null
+  }));
+  
+  // Add action to ProcessTree
+  cmd.addAndExecute(new AddActionToGroupOp({
+    actionGroupId: currentActionGroup.id,
+    action: { 
+      id: generateId(), 
+      actionType: "CreateSegment", 
+      outputs: [p1Result.element.id, p2Result.element.id, segmentResult.element.id],
+      ...
     },
-    // 2. Add segment to World
-    {
-      type: "AddElement",
-      parameters: {
-        element: { id: "s1", type: "Segment2D", point1: "p1", point2: "p2", ... },
-        beforeState: null
-      }
-    },
-    // 3. Add action to ProcessTree
-    {
-      type: "AddActionToGroup",
-      parameters: {
-        actionGroupId: "ag-456",
-        action: { id: "act-789", actionType: "CreateSegment", outputs: ["p1", "p2", "s1"], ... }
-      }
-    },
-    // 4. Update DependencyGraph
-    {
-      type: "AddDependencyEdges",
-      parameters: {
-        edges: [
-          { from: "p1", to: "act-789" },
-          { from: "p2", to: "act-789" },
-          { from: "act-789", to: "s1" }
-        ]
-      }
-    }
-  ],
-  executed: true
+    position: currentActionGroup.children.length
+  }));
+  
+  // Update dependency graph
+  cmd.addAndExecute(new AddDependencyEdgesOp({
+    edges: [
+      { from: p1Result.element.id, to: action.id },
+      { from: p2Result.element.id, to: action.id },
+      { from: action.id, to: segmentResult.element.id }
+    ]
+  }));
+  
+  // All operations succeeded, commit to stack
+  commandStack.commit(cmd);
+  
+} catch (error) {
+  // Any operation failed, rollback all executed operations
+  cmd.rollback();
+  throw error;
 }
 ```
 
 **Relationships**:
-- 1 Command → N Operations
+- 1 Command → N Operations (added incrementally)
 - N Commands → 1 CommandStack
 
 **Validation Rules**:
-- `operations` must not be empty
+- `operations` can be empty while status = "building"
+- `operations` must not be empty when status = "committed"
 - All operations must be valid
 - `description` must be non-empty
 
 **State Transitions**:
-- **Created** → **Executed**: Command.execute() applies all operations
-- **Executed** → **Undone**: Command.undo() reverses all operations (in reverse order)
-- **Undone** → **Executed**: Command.redo() reapplies all operations
+- **Created** → **Building**: Command created, operations being added
+- **Building** → **Committed**: Command.commit() finalizes and adds to stack
+- **Building** → **Rolled Back**: Command.rollback() reverses all operations (discarded)
+- **Committed** → **Undone**: CommandStack.undo() reverses all operations
+- **Undone** → **Committed**: CommandStack.redo() reapplies all operations
+
+**Command Interface**:
+```typescript
+class Command {
+  private operations: Operation[] = [];
+  private status: CommandStatus = CommandStatus.Building;
+  
+  // Add and immediately execute an operation
+  addAndExecute<T extends Operation>(operation: T): OperationResult {
+    if (this.status !== CommandStatus.Building) {
+      throw new Error("Cannot add operations to non-building command");
+    }
+    
+    try {
+      // Execute operation immediately
+      const result = operation.apply(project);
+      
+      // Store operation for undo
+      this.operations.push(operation);
+      
+      return result;
+    } catch (error) {
+      // Operation failed, rollback entire command
+      this.rollback();
+      throw error;
+    }
+  }
+  
+  // Finalize command and add to stack
+  commit(): void {
+    if (this.operations.length === 0) {
+      throw new Error("Cannot commit empty command");
+    }
+    this.status = CommandStatus.Committed;
+  }
+  
+  // Rollback all executed operations (for failed commands)
+  rollback(): void {
+    for (let i = this.operations.length - 1; i >= 0; i--) {
+      this.operations[i].undo(project);
+    }
+    this.operations = [];
+    this.status = CommandStatus.Building;
+  }
+  
+  // Undo committed command
+  undo(): void {
+    if (this.status !== CommandStatus.Committed) {
+      throw new Error("Can only undo committed commands");
+    }
+    
+    for (let i = this.operations.length - 1; i >= 0; i--) {
+      this.operations[i].undo(project);
+    }
+    this.status = CommandStatus.Undone;
+  }
+  
+  // Redo undone command
+  redo(): void {
+    if (this.status !== CommandStatus.Undone) {
+      throw new Error("Can only redo undone commands");
+    }
+    
+    this.operations.forEach(op => op.apply(project));
+    this.status = CommandStatus.Committed;
+  }
+}
+```
 
 ---
 
@@ -1399,22 +1511,42 @@ interface UpdatePanelCollapseOp extends OperationBase {
 **Operation Execution**:
 ```typescript
 interface IOperation {
-  apply(project: Project): void;    // Apply operation (use afterState)
-  undo(project: Project): void;     // Reverse operation (use beforeState)
+  apply(project: Project): OperationResult;  // Apply operation, return result with generated IDs
+  undo(project: Project): void;              // Reverse operation (use beforeState)
+}
+
+interface OperationResult {
+  success: boolean;
+  data?: any;                                // Operation-specific result (e.g., created element)
+  error?: string;
 }
 
 // Example implementation
-class UpdateElementOperation implements IOperation {
-  constructor(private params: UpdateElementOp["parameters"]) {}
+class AddElementOperation implements IOperation {
+  constructor(private params: AddElementOp["parameters"]) {}
   
-  apply(project: Project): void {
-    const element = project.world.elements2D.find(e => e.id === this.params.elementId);
-    Object.assign(element, this.params.afterState);
+  apply(project: Project): OperationResult {
+    // Add element to world
+    const element = this.params.element;
+    
+    if (element.type === "Point2D" || element.type === "Segment2D" || ...) {
+      project.world.elements2D.push(element);
+    } else {
+      project.world.elements3D.push(element);
+    }
+    
+    return { 
+      success: true, 
+      data: { element }  // Return element with its ID for next operations
+    };
   }
   
   undo(project: Project): void {
-    const element = project.world.elements2D.find(e => e.id === this.params.elementId);
-    Object.assign(element, this.params.beforeState);
+    const elementId = this.params.element.id;
+    
+    // Remove from world
+    project.world.elements2D = project.world.elements2D.filter(e => e.id !== elementId);
+    project.world.elements3D = project.world.elements3D.filter(e => e.id !== elementId);
   }
 }
 ```
@@ -1442,20 +1574,23 @@ interface CommandStack {
 **Operations**:
 ```typescript
 class CommandStack {
-  // Execute a new command
-  execute(command: Command): void {
-    // 1. Remove any commands after currentIndex (from redo history)
+  // Commit a built command to the stack
+  commit(command: Command): void {
+    if (command.status !== CommandStatus.Building) {
+      throw new Error("Can only commit building commands");
+    }
+    
+    // Finalize command
+    command.commit();
+    
+    // Remove any commands after currentIndex (from redo history)
     this.commands = this.commands.slice(0, this.currentIndex + 1);
     
-    // 2. Execute command operations
-    command.operations.forEach(op => op.apply(project));
-    command.executed = true;
-    
-    // 3. Add to stack
+    // Add to stack
     this.commands.push(command);
     this.currentIndex++;
     
-    // 4. Enforce max size
+    // Enforce max size
     if (this.commands.length > this.maxSize) {
       this.commands.shift();
       this.currentIndex--;
@@ -1467,13 +1602,8 @@ class CommandStack {
     if (this.currentIndex < 0) return; // Nothing to undo
     
     const command = this.commands[this.currentIndex];
+    command.undo();
     
-    // Execute operations in reverse order
-    for (let i = command.operations.length - 1; i >= 0; i--) {
-      command.operations[i].undo(project);
-    }
-    
-    command.executed = false;
     this.currentIndex--;
   }
   
@@ -1483,10 +1613,7 @@ class CommandStack {
     
     this.currentIndex++;
     const command = this.commands[this.currentIndex];
-    
-    // Execute operations in forward order
-    command.operations.forEach(op => op.apply(project));
-    command.executed = true;
+    command.redo();
   }
   
   // Check if undo/redo available
@@ -1507,8 +1634,8 @@ class CommandStack {
 
 **Validation Rules**:
 - `currentIndex` must be in range [-1, commands.length - 1]
-- All commands at index <= currentIndex must have `executed = true`
-- All commands at index > currentIndex must have `executed = false`
+- All commands at index <= currentIndex must have `status = "committed"`
+- All commands at index > currentIndex must have `status = "undone"`
 
 **State Tracking**:
 ```typescript
@@ -1524,36 +1651,50 @@ interface CommandStackState {
 
 **Example Usage**:
 ```typescript
-// User creates a segment
-const createSegmentCmd = new Command({
-  description: "Create segment s1",
-  operations: [
-    new AddElementOp({ element: point1, beforeState: null }),
-    new AddElementOp({ element: point2, beforeState: null }),
-    new AddElementOp({ element: segment1, beforeState: null }),
-    new AddActionToGroupOp({ actionGroupId, action }),
-    new AddDependencyEdgesOp({ edges })
-  ]
-});
+// User creates a segment (incremental execution)
+const cmd = new Command({ description: "Create segment s1" });
 
-commandStack.execute(createSegmentCmd);
+try {
+  const p1 = cmd.addAndExecute(new AddElementOp({ 
+    element: { id: generateId(), type: "Point2D", x: 100, y: 200, ... }
+  }));
+  
+  const p2 = cmd.addAndExecute(new AddElementOp({ 
+    element: { id: generateId(), type: "Point2D", x: 300, y: 400, ... }
+  }));
+  
+  const segment = cmd.addAndExecute(new AddElementOp({ 
+    element: { 
+      id: generateId(), 
+      type: "Segment2D", 
+      point1: p1.data.element.id,  // Use ID from previous operation
+      point2: p2.data.element.id,  // Use ID from previous operation
+      ... 
+    }
+  }));
+  
+  cmd.addAndExecute(new AddActionToGroupOp({ /* ... */ }));
+  cmd.addAndExecute(new AddDependencyEdgesOp({ /* ... */ }));
+  
+  // All operations succeeded, commit to stack
+  commandStack.commit(cmd);
+  
+} catch (error) {
+  // Some operation failed, rollback already occurred in addAndExecute
+  console.error("Command failed:", error);
+}
 
 // User moves a point
-const movePointCmd = new Command({
-  description: "Move point a",
-  operations: [
-    new UpdateElementOp({
-      elementId: "p1",
-      beforeState: { x: 100, y: 200 },
-      afterState: { x: 150, y: 250 }
-    })
-  ]
-});
-
-commandStack.execute(movePointCmd);
+const moveCmd = new Command({ description: "Move point a" });
+moveCmd.addAndExecute(new UpdateElementOp({
+  elementId: "p1",
+  beforeState: { x: 100, y: 200 },
+  afterState: { x: 150, y: 250 }
+}));
+commandStack.commit(moveCmd);
 
 // User presses Ctrl+Z (undo)
-commandStack.undo(); // Point moves back to (100, 200)
+commandStack.undo(); // Point moves back to (100, 200), segment updated
 
 // User presses Ctrl+Y (redo)
 commandStack.redo(); // Point moves to (150, 250) again
