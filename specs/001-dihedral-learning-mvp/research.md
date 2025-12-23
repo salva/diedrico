@@ -174,7 +174,76 @@ From Technical Context, we need to resolve:
 
 ---
 
-### 5. Proximity Detection & Snapping Architecture
+### 5. Hinge Lines vs Projected Plane Intersections
+
+**Critical Distinction**: A common source of confusion in dihedral projection systems is distinguishing between:
+1. **Hinge Lines (HL)**: The physical fold lines between **projection planes**
+2. **Projected Plane Intersections**: 2D lines showing where arbitrary 3D plane intersections appear on projection planes
+
+**Definition**:
+
+**Hinge Line (HL)**:
+- The intersection line between two **projection planes** (the drawing surfaces themselves)
+- Example: `HL_HV` is where the Horizontal (P_H) and Vertical (P_V) projection planes fold together (the "ground line")
+- These are structural features of the projection system itself
+- Used to create guides for transporting points and distances
+
+**Projected Plane Intersection**:
+- When two arbitrary 3D planes intersect, their intersection line exists in 3D space
+- This 3D line is **projected** onto each projection plane as a regular 2D line (Element2D)
+- These projected lines are NOT stored as HingeLines—they're regular line elements
+
+**Example with Three Planes (A, B, C)**:
+
+Consider working with three auxiliary planes A, B, and C:
+
+1. **HL_AB**: Hinge line between projection plane A and B (if A and B are projection planes)
+2. **HL_AC**: Hinge line between projection plane A and C (if A and C are projection planes)
+3. **BC intersection**: The 3D line where planes B and C intersect
+   - This is **NOT** represented as `HL_BC`
+   - Instead, it appears as:
+     - One Element2D line on projection plane B (showing where the BC intersection projects onto B)
+     - One Element2D line on projection plane C (showing where the BC intersection projects onto C)
+
+**Distance Transport Between Projected Intersections**:
+
+The classical dihedral technique:
+1. Find the projections of the BC intersection on both planes B and C
+2. These projections are regular 2D line elements (not hinge lines)
+3. Transport distances **between these projected lines** using guides
+4. The guides are perpendicular to the relevant hinge lines (HL_AB or HL_AC)
+
+**Data Model Implications**:
+
+```typescript
+// ✓ Correct: Hinge lines only for projection plane folds
+interface Project {
+  planes: ProjectionPlane[];        // P_H, P_V, maybe P_A1
+  hingeLines: HingeLine[];          // HL_HV, HL_HA1, HL_VA1
+  elements2D: Element2D[];          // Includes projected intersections
+}
+
+// ✗ Wrong: Don't create hinge lines for arbitrary plane intersections
+// The BC intersection is stored as Element2D lines, not as HL_BC
+```
+
+**Why This Matters**:
+
+1. **Correct modeling**: HingeLine represents a specific geometric relationship (fold between projection planes)
+2. **Transport operations**: Most distance transport in practice occurs between **projected plane intersections** (Element2D lines), not between hinge lines
+3. **Scalability**: With N projection planes, you have N(N-1)/2 hinge lines, but potentially hundreds of projected plane intersections
+4. **Tool design**: "Chained transport" tool must accept generic Element2D lines, not just HingeLines
+
+**Implementation Note**:
+
+When implementing the "Chained Transport" tool or similar operations:
+- Don't restrict the tool to only work with HingeLine entities
+- Allow selection of any Element2D line (could be a projection, a guide, or a hinge line representation)
+- The geometric operation (perpendicular transport) works identically regardless of the semantic meaning
+
+---
+
+### 6. Proximity Detection & Snapping Architecture
 
 **Challenge**: Implementing FR-037 (hover feedback) and FR-038 (point snapping) requires:
 1. Detecting when cursor is near elements (not just hovering directly over them)

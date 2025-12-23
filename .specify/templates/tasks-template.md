@@ -8,9 +8,15 @@ description: "Task list template for feature implementation"
 **Input**: Design documents from `/specs/[###-feature-name]/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: The examples below include test tasks. Per Diedrico Constitution (Principle V: Test-Driven Development), tests are MANDATORY unless explicitly waived for the feature. Tests MUST be written BEFORE implementation.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+
+**Constitution Compliance**: All tasks MUST respect:
+- Layered Architecture (Principle I) - No cross-layer violations
+- Command Pattern (Principle II) - User actions as commands
+- Frontend-First (Principle III) - Separation of concerns
+- Technology Discipline (Principle IV) - Approved tech stack only
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -21,9 +27,9 @@ description: "Task list template for feature implementation"
 ## Path Conventions
 
 - **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
+- **Web app** (DIEDRICO DEFAULT): `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- Paths shown below assume web app structure - adjust based on plan.md structure
 
 <!-- 
   ============================================================================
@@ -62,12 +68,14 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Setup frontend/backend folder structure per constitution architecture constraints
+- [ ] T005 [P] Configure TypeScript for frontend and backend (Principle IV: Technology Discipline)
+- [ ] T006 [P] Setup Vue.js 3 with Vite in frontend/ (Principle IV)
+- [ ] T007 [P] Setup Node.js with Express/Fastify in backend/ (Principle IV)
+- [ ] T008 [P] Create base Command interface/class (Principle II: Command Pattern)
+- [ ] T009 Configure error handling and logging infrastructure
+- [ ] T010 Setup API routing structure in backend/src/routes/
+- [ ] T011 Setup Vitest for unit testing (frontend and backend)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -79,21 +87,32 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 (Per Constitution Principle V: TDD) ⚠️
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T012 [P] [US1] Unit test for [Command] in frontend/tests/unit/commands/test_[name].spec.ts
+- [ ] T013 [P] [US1] Integration test for [API endpoint] in backend/tests/integration/test_[name].spec.ts
+- [ ] T014 [P] [US1] E2E test for [user journey] in frontend/tests/e2e/[name].spec.ts
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+**Frontend Tasks** (Presentation & Application Layers):
+
+- [ ] T015 [P] [US1] Create [Entity] model interface in frontend/src/models/[entity].ts (Domain Layer)
+- [ ] T016 [P] [US1] Create [Command] class in frontend/src/commands/[command].ts (Application Layer - Principle II)
+- [ ] T017 [US1] Create [Component] in frontend/src/components/[component].vue (Presentation Layer)
+- [ ] T018 [US1] Create API service client in frontend/src/services/[service].ts
+- [ ] T019 [US1] Wire command to component and test undo/redo functionality
+
+**Backend Tasks** (Data Layer):
+
+- [ ] T020 [P] [US1] Create [Entity] schema in backend/src/models/[entity].ts
+- [ ] T021 [P] [US1] Create [Command] handler in backend/src/commands/[command].ts (Principle II)
+- [ ] T022 [US1] Implement storage service in backend/src/storage/[entity]-storage.ts
+- [ ] T023 [US1] Create API route in backend/src/routes/[resource].ts
+- [ ] T024 [US1] Add validation and error handling
+- [ ] T025 [US1] Verify layered architecture compliance (no cross-layer violations)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -105,17 +124,18 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 2 (Per Constitution Principle V: TDD) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T026 [P] [US2] Unit test for [Command] in frontend/tests/unit/commands/test_[name].spec.ts
+- [ ] T027 [P] [US2] Integration test for [API endpoint] in backend/tests/integration/test_[name].spec.ts
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T028 [P] [US2] Create [Entity] model in frontend/src/models/[entity].ts
+- [ ] T029 [P] [US2] Create [Command] in frontend/src/commands/[command].ts (Principle II)
+- [ ] T030 [US2] Create [Component] in frontend/src/components/[component].vue
+- [ ] T031 [US2] Implement backend storage and API route
+- [ ] T032 [US2] Integrate with User Story 1 components (if needed)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -127,16 +147,17 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 3 (Per Constitution Principle V: TDD) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T033 [P] [US3] Unit test for [Command] in frontend/tests/unit/commands/test_[name].spec.ts
+- [ ] T034 [P] [US3] Integration test for [API endpoint] in backend/tests/integration/test_[name].spec.ts
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T035 [P] [US3] Create [Entity] model in frontend/src/models/[entity].ts
+- [ ] T036 [P] [US3] Create [Command] in frontend/src/commands/[command].ts (Principle II)
+- [ ] T037 [US3] Create [Component] in frontend/src/components/[component].vue
+- [ ] T038 [US3] Implement backend storage and API route
 
 **Checkpoint**: All user stories should now be independently functional
 

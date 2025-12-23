@@ -31,7 +31,13 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] **Layered Architecture**: Does this feature maintain clear separation between Presentation, Application, Domain, and Data layers?
+- [ ] **Command Pattern**: Are all user actions and state changes encapsulated as commands with execute/undo/validate?
+- [ ] **Frontend-First**: Is presentation logic in frontend? Is backend limited to storage/API? Are API contracts defined?
+- [ ] **Technology Discipline**: Does it use approved stack (Vue.js, Node.js, TypeScript, Vite, Vitest/Playwright)?
+- [ ] **Test-Driven Development**: Are acceptance tests defined? Is test strategy documented?
+
+**Notes**: Document any deviations in Complexity Tracking section below.
 
 ## Project Structure
 

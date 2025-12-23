@@ -89,7 +89,15 @@ interface ProjectionPlane {
 
 #### 3. HingeLine
 
-**Purpose**: Intersection line shared by two projection planes; used for guide creation
+**Purpose**: Intersection line shared by two **projection planes** (the physical fold line); used for guide creation
+
+**Important**: A HingeLine represents the fold between two **projection planes** (like P_H and P_V). It is NOT used to represent intersections between arbitrary 3D planes. Those intersections are **projected** onto the projection planes as regular Element2D lines.
+
+**Example**: With planes A, B, C:
+- HL_AB and HL_AC are HingeLines (actual folds between projection planes)
+- The BC intersection is NOT stored as a HingeLine
+- Instead, BC appears as two separate Element2D lines (one on plane B, one on plane C)
+- Distance transport occurs between these Element2D projected lines
 
 **Fields**:
 ```typescript
@@ -113,7 +121,8 @@ interface HingeLine {
 - For geometry, HL acts like a regular line (can compute intersections, perpendiculars)
 
 **Invariants**:
-- Each pair of planes shares at most one HL (in MVP, exactly one: HL_HV)
+- Each pair of projection planes shares at most one HL (in MVP, exactly one: HL_HV)
+- Only used for folds between projection planes, not for general plane intersections
 
 ---
 
