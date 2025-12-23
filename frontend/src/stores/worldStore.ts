@@ -2,25 +2,7 @@ import { defineStore } from 'pinia';
 import type { Element2D, Element3D } from '../types/ElementTypes';
 import { DependencyGraph } from '../domain/world/DependencyGraph';
 
-export interface ProjectionPlane {
-  id: string;
-  label: string;      // "P_H", "P_V", etc.
-  name: string;       // Display name
-  isActive: boolean;
-  isVisible: boolean;
-}
-
-export interface HingeLine {
-  id: string;
-  label: string;      // "HL_HV", etc.
-  name: string;       // Display name
-  plane1Id: string;
-  plane2Id: string;
-}
-
 interface WorldState {
-  planes: ProjectionPlane[];
-  hingeLines: HingeLine[];
   elements2D: Map<string, Element2D>;
   elements3D: Map<string, Element3D>;
   dependencyGraph: DependencyGraph;
@@ -28,8 +10,6 @@ interface WorldState {
 
 export const useWorldStore = defineStore('world', {
   state: (): WorldState => ({
-    planes: [],
-    hingeLines: [],
     elements2D: new Map(),
     elements3D: new Map(),
     dependencyGraph: new DependencyGraph()

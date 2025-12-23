@@ -87,8 +87,8 @@ const activePlaneName = computed(() => {
   const activePlaneId = viewStore.activePlaneId;
   if (!activePlaneId) return '';
   
-  const plane = worldStore.planes.find((p: any) => p.id === activePlaneId);
-  return plane ? plane.label : '';
+  const plane = viewStore.planes.find((p: any) => p.id === activePlaneId);
+  return plane ? plane.name : '';
 });
 
 // Handle window resize
