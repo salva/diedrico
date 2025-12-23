@@ -186,6 +186,105 @@ From Technical Context, we need to resolve:
 
 ---
 
+#### Coordinate System Transformation
+
+**Critical foundation**: All spatial queries operate in **world coordinates** (the drawing's coordinate system), not screen pixels.
+
+**Screen to World Conversion** using SVG's built-in transformation:
+
+```typescript
+function screenToWorld(
+  event: MouseEvent, 
+  svgElement: SVGSVGElement
+): { x: number; y: number } {
+  // 1. Get screen coordinates (pixels relative to viewport)
+  const screenX = event.clientX;
+  const screenY = event.clientY;
+  
+  // 2. Create SVG point in screen space
+  const point = svgElement.createSVGPoint();
+  point.x = screenX;
+  point.y = screenY;
+  
+  // 3. Get Current Transformation Matrix (CTM) from SVG
+  // This matrix includes ALL transforms: pan, zoom, nested groups, rotation
+  const ctm = svgElement.getScreenCTM();
+  
+  // 4. Invert and apply to convert screen → world
+  const worldPoint = point.matrixTransform(ctm.inverse());
+  
+  return { x: worldPoint.x, y: worldPoint.y };
+}
+```
+
+**Why this is precise**:
+- `getScreenCTM()` returns the **complete transformation matrix** from world coordinates to screen coordinates
+- Accounts for: zoom, pan, nested SVG groups, rotations, skews
+- `.inverse()` gives the exact reverse transformation: screen → world
+- **Sub-pixel accuracy**: Uses floating-point math (no rounding until final render)
+- **Standard SVG feature**: Not something we implement; browser does it natively
+
+**Example with zoom/pan**:
+
+```
+// Initial state: no zoom, no pan
+Screen (500, 300) → World (500, 300)
+
+// After zoom 2x (zoom into center)
+Screen (500, 300) → World (250, 150)  ✓ Correct!
+
+// After pan (+100, +50) then zoom 2x
+Screen (500, 300) → World (200, 125)  ✓ Still correct!
+```
+
+**Integration with spatial grid**:
+
+```typescript
+function onMouseMove(event: MouseEvent) {
+  // 1. Convert to world coordinates
+  const world = screenToWorld(event, svgRef.value);
+  
+  // 2. Query spatial grid (grid uses world coordinates)
+  const snapRadiusWorld = adaptiveSnapRadius / currentZoom; // Convert radius too
+  const nearby = spatialGrid.queryPoint(world.x, world.y, snapRadiusWorld);
+  
+  // 3. Calculate distances (all in world coordinates)
+  const distances = nearby.map(el => ({
+    element: el,
+    distance: calculateDistance(world, el) // world units
+  }));
+  
+  // 4. Find closest target
+  const closest = distances.reduce((min, curr) => 
+    curr.distance < min.distance ? curr : min
+  );
+  
+  // 5. Snap if within threshold
+  if (closest.distance < snapRadiusWorld) {
+    snapCursorTo(closest.element); // Renders in world, SVG transforms to screen
+  }
+}
+```
+
+**Key insight**: 
+- **Domain models store world coordinates**: `point.x = 100` means "100 units in drawing space"
+- **Spatial grid uses world coordinates**: Cell (2, 4) contains region [100-150, 200-250] in world space
+- **SVG handles screen rendering**: Browser automatically transforms world → screen for display
+- **User interactions convert back**: `getScreenCTM().inverse()` converts screen clicks → world coordinates
+
+**Performance**: 
+- Transformation is O(1) matrix multiplication (4x4 matrix × 2D point = ~10 floating-point ops)
+- Negligible compared to spatial queries (<0.01ms)
+- No precision loss: coordinates remain floating-point until final pixel rendering
+
+**Implementation notes**:
+- Store `svgElement` reference in component (via `ref`)
+- Create helper composable: `useCoordinateTransform(svgRef)`
+- All distance/intersection calculations work in world coordinates
+- Only convert at boundaries: screen events → world, world rendering → screen (SVG does this)
+
+---
+
 #### Spatial Indexing Strategy
 
 **Why spatial indexing is needed**:
