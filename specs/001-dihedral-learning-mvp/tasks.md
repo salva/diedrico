@@ -113,9 +113,9 @@
 - [X] T063 [US1] Create frontend/src/components/dialogs/OpenProjectDialog.vue with project list
 - [X] T064 [US1] Implement "New Project" action that creates project with default planes and HL_HV
 - [X] T065 [US1] Implement "Open Project" action that loads and deserializes project state
-- [ ] T066 [US1] Write integration test for POST /api/projects in backend/tests/integration/projects.spec.ts
-- [ ] T067 [US1] Write integration test for GET /api/projects/:id in backend/tests/integration/projects.spec.ts
-- [ ] T068 [US1] Write integration test for PUT /api/projects/:id in backend/tests/integration/projects.spec.ts
+- [X] T066 [US1] Write integration test for POST /api/projects in backend/tests/integration/projects.spec.ts
+- [X] T067 [US1] Write integration test for GET /api/projects/:id in backend/tests/integration/projects.spec.ts
+- [X] T068 [US1] Write integration test for PUT /api/projects/:id in backend/tests/integration/projects.spec.ts
 - [ ] T069 [US1] Write E2E test for create/save/reload cycle in frontend/tests/e2e/persistence.spec.ts
 - [ ] T070 [US1] Verify autosave triggers after 500ms of inactivity
 
