@@ -133,9 +133,9 @@ In both cases, the application does not “fix” inputs automatically; the lear
 
 Every operation performed through a tool creates a **constructive action** that:
 
-- has explicit inputs and outputs,
-- participates in dependency recomputation,
-- can be browsed in the UI (action history).
+- records what was created and what it depends on,
+- updates automatically when its inputs change,
+- can be reviewed in the action history panel.
 
 Actions may be grouped into **subprocesses** (collapsible groups) to reflect reasoning steps and improve readability.
 

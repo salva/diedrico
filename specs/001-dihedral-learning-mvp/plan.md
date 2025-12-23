@@ -119,7 +119,10 @@ frontend/
 │   │   ├── CommandStack.ts         # History management, undo/redo
 │   │   ├── OperationResult.ts      # Result interface for operation chaining
 │   │   │
-│   │   └── operations/             # Operation implementations
+│   │   └── operations/             # Operation implementations (low-level mutations)
+│   │       # Note: Operations are mutation primitives, distinct from ProcessTree Actions
+│   │       # - Operations: Incremental mutations within a Command (AddElementOp, UpdateElementOp)
+│   │       # - Actions: ProcessTree nodes that record construction history (ConstructiveAction)
 │   │       ├── WorldOperations.ts         # AddElement, RemoveElement, UpdateElement
 │   │       ├── ProcessTreeOperations.ts   # AddSubprocess, AddActionGroup, AddAction
 │   │       ├── ViewStateOperations.ts     # SetActivePlane, UpdateView2D
@@ -447,13 +450,24 @@ The MVP is built in **incremental phases**, each delivering a testable, working 
 
 #### Phase 9: Dihedral Tools (Guides & Transport) (Week 7-8)
 
-**Goal**: Enable inter-plane operations
+**Goal**: Enable inter-plane operations including Broken Hinge Lines (BHL)
 
 **Deliverables**:
+- **Hinge Lines (HL)**:
+  - Hardcoded HL_HV between P_H and P_V (from Phase 8)
+  - Represented as line on both planes
+  - Used for guide creation (perpendicular constructions)
+- **Broken Hinge Lines (BHL)**:
+  - BHL projections created when 3D planes are defined
+  - Unlike regular HLs (fold lines), BHLs are geometric constructs
+  - Appear as separate Element2D lines on relevant projection planes
+  - Used for distance transport operations (most common in real exercises)
+  - Guide created on one BHL projection auto-transports to the other
 - **Guide creation** (FR-007):
-  - `CreateGuideCommand`: Takes HL + point on active plane
+  - `CreateGuideCommand`: Takes HL or BHL projection + point on active plane
   - Computes perpendicular line in both planes
   - Guide belongs to both planes, rendered on both
+  - For BHL: automatically appears on both planes' BHL projections
 - **Transport commands** (FR-008, FR-009):
   - `TransportPointCommand`: Given guide + point on plane1 → creates derived point on plane2
   - `TransportDistanceCommand`: Given guide + two points (distance) → creates distance on other plane
