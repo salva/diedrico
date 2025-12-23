@@ -163,10 +163,10 @@
 
 ### Circle/Arc Tools
 
-- [ ] T096 [P] [US2] Create CreateCircleCommand in frontend/src/commands/CreateCircleCommand.ts
-- [ ] T097 [P] [US2] Implement circle tool variants: center+radius, center+point, three points
-- [ ] T098 [P] [US2] Add validation for collinear points (infeasible circle from 3 points) in CreateCircleCommand
-- [ ] T099 [P] [US2] Write unit tests for CreateCircleCommand validation in frontend/tests/unit/commands/createCircle.spec.ts
+- [X] T096 [P] [US2] Create CreateCircleCommand in frontend/src/commands/CreateCircleCommand.ts
+- [X] T097 [P] [US2] Implement circle tool variants: center+radius, center+point, three points
+- [X] T098 [P] [US2] Add validation for collinear points (infeasible circle from 3 points) in CreateCircleCommand
+- [X] T099 [P] [US2] Write unit tests for CreateCircleCommand validation in frontend/tests/unit/commands/createCircle.spec.ts
 
 ### Dependency & Recomputation
 
