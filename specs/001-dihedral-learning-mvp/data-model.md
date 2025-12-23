@@ -804,9 +804,9 @@ enum ActionType {
 ```
 
 **Relationships**:
-- 1 Action → N Elements in World (inputs)
 - 1 Action → N Elements in World (outputs)
 - 1 Action → 1 ProcessNode (parent in tree)
+- Action inputs (dependencies) are derived from outputs' construction rules (e.g., segment references its two points)
 
 **Tree Position**:
 - Leaf node in ProcessTree (no children)
@@ -993,6 +993,15 @@ interface GraphNode {
 - `topologicalSort()`: Order for recomputation
 - `propagateInfeasibility(id)`: Mark all descendants as infeasible
 
+**Building the Graph**:
+- When an action creates elements, add nodes for action and outputs
+- Determine input dependencies from outputs' construction rules:
+  - Segment2D: depends on point1, point2
+  - Circle2D: depends on center (and possibly 3 points)
+  - Point3D: depends on projectionH, projectionV
+  - etc.
+- Add edges from input elements → action → output elements
+
 **Recomputation Algorithm**:
 1. Element changes (e.g., point moved)
 2. Mark element as changed
@@ -1122,8 +1131,7 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
               │               │       │
               │               │       └── (N) Guide ── (1) Point2D
               │               │
-              │               ├── (N) Element2D ──┬── (N) ConstructiveAction (inputs)
-              │               │                   └── (1) ConstructiveAction (createdBy)
+              │               ├── (N) Element2D ──── (1) ConstructiveAction (createdBy)
               │               │
               │               ├── (N) Element3D ──┬── (N) Element2D (projections)
               │               │                   └── (1) ConstructiveAction (createdBy)
@@ -1137,8 +1145,8 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
               │                     │
               │                     ├── ActionGroup ──── ConstructiveAction children
               │                     │
-              │                     └── ConstructiveAction ──┬── Element inputs (World)
-              │                                               └── Element outputs (World)
+              │                     └── ConstructiveAction ──── Element outputs (World)
+              │                                               (inputs derived from outputs' construction rules)
               │
               └── (1) ViewState
 ```
@@ -1164,7 +1172,7 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
 | Circle2D | Radius > 0 or 3 non-collinear points | Infeasible at creation |
 | Guide | Perpendicular to HL | Computed, cannot fail if HL valid |
 | Point3D | Compatible projections | Infeasible at creation (FR-022) |
-| ConstructiveAction | All inputs exist and valid | Infeasible if inputs change (FR-012) |
+| ConstructiveAction | All inputs exist and valid (derived from outputs) | Infeasible if inputs change (FR-012) |
 
 ---
 
@@ -1258,7 +1266,7 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
 - Parse JSON
 - Validate schema version
 - Reconstruct domain objects
-- Rebuild `DependencyGraph` from action inputs/outputs
+- Rebuild `DependencyGraph` from element construction rules (element references)
 - Validate global invariants
 
 **Optimizations**:
