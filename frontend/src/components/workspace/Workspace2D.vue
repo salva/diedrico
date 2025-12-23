@@ -71,6 +71,8 @@ import type { Element2D } from '@/types/ElementTypes';
 import { CreateFreePointCommand } from '@/commands/CreateFreePointCommand';
 import { CreatePointOnElementCommand } from '@/commands/CreatePointOnElementCommand';
 import { CreateIntersectionPointCommand } from '@/commands/CreateIntersectionPointCommand';
+import { CreateSegmentCommand } from '@/commands/CreateSegmentCommand';
+import { CreateLineCommand } from '@/commands/CreateLineCommand';
 import { useSnapping } from '@/composables/useSnapping';
 import { useToolFeedback } from '@/composables/useToolFeedback';
 import { useElementGeometry } from '@/composables/useElementGeometry';
@@ -90,6 +92,9 @@ const mainGroupRef = ref<SVGGElement | null>(null);
 
 // Zoom behavior reference
 let zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> | null = null;
+
+// Multi-click selection state (for segment/line tools)
+const selectedPoints = ref<string[]>([]);
 
 // Dimensions
 const width = ref(800);
@@ -144,6 +149,12 @@ const handleCanvasClick = (event: MouseEvent) => {
       break;
     case 'point-intersection':
       handleIntersectionPointTool(workspaceX, workspaceY);
+      break;
+    case 'segment':
+      handleSegmentTool(workspaceX, workspaceY);
+      break;
+    case 'line':
+      handleLineTool(workspaceX, workspaceY);
       break;
     default:
       break;
@@ -294,6 +305,151 @@ const handleIntersectionPointTool = (x: number, y: number) => {
   } else {
     showFeedback('error', result.error || 'Failed to create intersection point');
     setTimeout(clearFeedback, 2000);
+  }
+};
+
+/**
+ * Handle segment tool - create a segment between two points
+ * Requires two clicks to select endpoints
+ */
+const handleSegmentTool = (x: number, y: number) => {
+  // Find nearest point to click
+  const snapped = snapToPoint(x, y);
+  const nearestPoint = worldStore.allElements2D.find((el: any) => {
+    if (!el.kind.startsWith('Point2D')) return false;
+    if (el.kind === 'Point2DFree' || el.kind === 'Point2DDerived') {
+      const dx = el.x - snapped.x;
+      const dy = el.y - snapped.y;
+      return Math.sqrt(dx * dx + dy * dy) < 10;
+    }
+    return false;
+  });
+
+  if (!nearestPoint) {
+    showFeedback('warning', 'Click on a point to select endpoint');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+
+  // Add to selected points
+  selectedPoints.value.push(nearestPoint.id);
+
+  if (selectedPoints.value.length === 1) {
+    showFeedback('info', `Point ${nearestPoint.name} selected. Click second point.`);
+    return;
+  }
+
+  if (selectedPoints.value.length === 2) {
+    // Create segment
+    const activePlaneId = viewStore.activePlaneId;
+    if (!activePlaneId) {
+      showFeedback('error', 'No active plane selected');
+      setTimeout(clearFeedback, 2000);
+      selectedPoints.value = [];
+      return;
+    }
+
+    const command = new CreateSegmentCommand(
+      {
+        point1Id: selectedPoints.value[0],
+        point2Id: selectedPoints.value[1],
+        planeId: activePlaneId,
+        actionId: 'user-action-001'
+      },
+      worldStore
+    );
+
+    const result = command.execute();
+
+    if (result.success) {
+      const infeasible = result.outputs.infeasible;
+      if (infeasible) {
+        showFeedback('warning', 'Segment created but infeasible (coincident points)');
+      } else {
+        showFeedback('success', 'Segment created');
+      }
+      setTimeout(clearFeedback, 1500);
+    } else {
+      showFeedback('error', result.error || 'Failed to create segment');
+      setTimeout(clearFeedback, 2000);
+    }
+
+    // Reset selection
+    selectedPoints.value = [];
+  }
+};
+
+/**
+ * Handle line tool - create a line through two points
+ * Requires two clicks to select points
+ */
+const handleLineTool = (x: number, y: number) => {
+  // Find nearest point to click
+  const snapped = snapToPoint(x, y);
+  const nearestPoint = worldStore.allElements2D.find((el: any) => {
+    if (!el.kind.startsWith('Point2D')) return false;
+    if (el.kind === 'Point2DFree' || el.kind === 'Point2DDerived') {
+      const dx = el.x - snapped.x;
+      const dy = el.y - snapped.y;
+      return Math.sqrt(dx * dx + dy * dy) < 10;
+    }
+    return false;
+  });
+
+  if (!nearestPoint) {
+    showFeedback('warning', 'Click on a point to select line point');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+
+  // Add to selected points
+  selectedPoints.value.push(nearestPoint.id);
+
+  if (selectedPoints.value.length === 1) {
+    showFeedback('info', `Point ${nearestPoint.name} selected. Click second point.`);
+    return;
+  }
+
+  if (selectedPoints.value.length === 2) {
+    // Create line by two points
+    const activePlaneId = viewStore.activePlaneId;
+    if (!activePlaneId) {
+      showFeedback('error', 'No active plane selected');
+      setTimeout(clearFeedback, 2000);
+      selectedPoints.value = [];
+      return;
+    }
+
+    const command = new CreateLineCommand(
+      {
+        method: {
+          type: 'by-two-points',
+          point1Id: selectedPoints.value[0],
+          point2Id: selectedPoints.value[1]
+        },
+        planeId: activePlaneId,
+        actionId: 'user-action-001'
+      },
+      worldStore
+    );
+
+    const result = command.execute();
+
+    if (result.success) {
+      const infeasible = result.outputs.infeasible;
+      if (infeasible) {
+        showFeedback('warning', 'Line created but infeasible (coincident points)');
+      } else {
+        showFeedback('success', 'Line created');
+      }
+      setTimeout(clearFeedback, 1500);
+    } else {
+      showFeedback('error', result.error || 'Failed to create line');
+      setTimeout(clearFeedback, 2000);
+    }
+
+    // Reset selection
+    selectedPoints.value = [];
   }
 };
 
