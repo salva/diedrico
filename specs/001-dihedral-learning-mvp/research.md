@@ -600,6 +600,343 @@ function getAdaptiveSnapRadius(baseRadius: number, zoomLevel: number): number {
 
 ---
 
+#### Visual Feedback System for Snapping
+
+**Requirement** (FR-037): As cursor moves, highlight valid snap targets to guide user interaction.
+
+**Types of snap targets**:
+1. **Existing points**: Real point entities in the drawing
+2. **Intersections**: Where two elements cross (computed on-demand)
+3. **Reference elements**: Lines for perpendicular/parallel, circles for tangent, etc.
+4. **Empty space**: Indicates free point will be created
+
+---
+
+**Visual States & Rendering**:
+
+```typescript
+enum SnapTargetType {
+  ExistingPoint = 'existing-point',
+  Intersection = 'intersection',
+  ReferenceElement = 'reference-element',
+  EmptySpace = 'empty-space'
+}
+
+interface SnapTarget {
+  type: SnapTargetType;
+  position?: { x: number; y: number }; // World coordinates
+  elements?: Element2D[];                // Reference elements for intersection/perpendicular
+  distance: number;                      // Distance to cursor
+}
+```
+
+**Visual feedback by type**:
+
+1. **Existing Point** (within snap radius):
+   ```vue
+   <!-- Highlight point with larger radius + glow -->
+   <circle 
+     :cx="point.x" 
+     :cy="point.y" 
+     :r="8"
+     class="snap-highlight"
+     stroke="blue"
+     stroke-width="2"
+     fill="none"
+   />
+   <!-- Original point remains visible underneath -->
+   <circle :cx="point.x" :cy="point.y" :r="3" fill="black" />
+   ```
+
+2. **Intersection** (where two elements cross):
+   ```vue
+   <!-- Highlight BOTH intersecting elements near intersection -->
+   <line 
+     v-if="snapTarget.type === 'intersection'"
+     :x1="element1.x1" :y1="element1.y1" 
+     :x2="element1.x2" :y2="element1.y2"
+     class="snap-highlight-element"
+     stroke="orange"
+     stroke-width="3"
+     opacity="0.6"
+   />
+   <line 
+     :x1="element2.x1" :y1="element2.y1" 
+     :x2="element2.x2" :y2="element2.y2"
+     class="snap-highlight-element"
+     stroke="orange"
+     stroke-width="3"
+     opacity="0.6"
+   />
+   
+   <!-- Show intersection marker (crosshair or circle) -->
+   <g :transform="`translate(${snapTarget.position.x}, ${snapTarget.position.y})`">
+     <circle r="6" stroke="red" stroke-width="2" fill="white" />
+     <line x1="-8" y1="0" x2="8" y2="0" stroke="red" stroke-width="1" />
+     <line x1="0" y1="-8" x2="0" y2="8" stroke="red" stroke-width="1" />
+   </g>
+   ```
+
+3. **Reference Element** (e.g., line for perpendicular tool):
+   ```vue
+   <!-- Highlight the reference line -->
+   <line 
+     v-if="activeTool === 'perpendicular-line'"
+     :x1="referenceLine.x1" :y1="referenceLine.y1"
+     :x2="referenceLine.x2" :y2="referenceLine.y2"
+     class="snap-highlight-reference"
+     stroke="green"
+     stroke-width="3"
+     opacity="0.5"
+   />
+   
+   <!-- Show preview of perpendicular result -->
+   <line 
+     :x1="throughPoint.x" :y1="throughPoint.y"
+     :x2="previewEnd.x" :y2="previewEnd.y"
+     class="construction-preview"
+     stroke="gray"
+     stroke-width="1"
+     stroke-dasharray="5,5"
+   />
+   ```
+
+4. **Empty Space** (will create free point):
+   ```vue
+   <!-- Change cursor appearance -->
+   <circle 
+     :cx="cursorWorld.x" 
+     :cy="cursorWorld.y" 
+     :r="3"
+     class="free-point-cursor"
+     stroke="gray"
+     stroke-width="1"
+     fill="lightgray"
+     opacity="0.7"
+     pointer-events="none"
+   />
+   ```
+
+---
+
+**Cursor Snapping Behavior**:
+
+When snap target is found, **visually move cursor** to snap position:
+
+```typescript
+function snapCursorTo(target: SnapTarget | null) {
+  if (!target || target.type === SnapTargetType.EmptySpace) {
+    // No snapping, cursor follows mouse naturally
+    cursorIndicator.style.display = 'none';
+    return;
+  }
+  
+  // Snap cursor to target position
+  const screenPos = worldToScreen(target.position);
+  cursorIndicator.style.left = `${screenPos.x}px`;
+  cursorIndicator.style.top = `${screenPos.y}px`;
+  cursorIndicator.style.display = 'block';
+  
+  // Visual feedback based on type
+  if (target.type === SnapTargetType.ExistingPoint) {
+    cursorIndicator.className = 'cursor-snap-point';
+  } else if (target.type === SnapTargetType.Intersection) {
+    cursorIndicator.className = 'cursor-snap-intersection';
+  }
+}
+```
+
+**Alternative approach** (CSS-only, simpler):
+- Don't move cursor visually
+- Highlight snap target intensely
+- Show tooltip: "Click to select point A" / "Click to create intersection"
+
+---
+
+**Multi-stage highlighting priority**:
+
+When multiple snap targets are near cursor, prioritize:
+
+1. **Existing points** (highest priority) - within snap radius
+2. **Intersections** (medium) - slightly larger radius
+3. **Reference elements** (low) - highlight on hover, no snap
+
+```typescript
+function selectSnapTarget(
+  existingPoints: SnapTarget[],
+  intersections: SnapTarget[],
+  referenceElements: SnapTarget[]
+): SnapTarget | null {
+  
+  // 1. Check for existing points first (smallest snap radius)
+  const nearestPoint = findNearest(existingPoints);
+  if (nearestPoint && nearestPoint.distance < snapRadius) {
+    return nearestPoint;
+  }
+  
+  // 2. Check for intersections (slightly larger radius)
+  const nearestIntersection = findNearest(intersections);
+  if (nearestIntersection && nearestIntersection.distance < snapRadius * 1.5) {
+    return nearestIntersection;
+  }
+  
+  // 3. Check for reference elements (hover only, no snap)
+  const nearestReference = findNearest(referenceElements);
+  if (nearestReference && nearestReference.distance < hoverRadius) {
+    return nearestReference;
+  }
+  
+  // 4. Empty space (default)
+  return { type: SnapTargetType.EmptySpace };
+}
+```
+
+---
+
+**Performance considerations**:
+
+**Rendering updates**:
+- Mousemove fires at ~60fps (every 16ms)
+- Re-rendering highlight overlays must be fast
+
+**Optimization strategies**:
+1. **Separate SVG layers**:
+   ```vue
+   <svg>
+     <!-- Base layer: actual drawing elements (rarely changes) -->
+     <g id="base-layer">
+       <circle v-for="point in points" ... />
+       <line v-for="segment in segments" ... />
+     </g>
+     
+     <!-- Highlight layer: snap targets (changes on mousemove) -->
+     <g id="highlight-layer">
+       <circle v-if="snapTarget" :cx="snapTarget.x" :cy="snapTarget.y" ... />
+     </g>
+     
+     <!-- Cursor layer: cursor indicator (changes on mousemove) -->
+     <g id="cursor-layer" pointer-events="none">
+       <circle v-if="cursorVisible" :cx="cursor.x" :cy="cursor.y" ... />
+     </g>
+   </svg>
+   ```
+   - Vue only diffs/updates changed layers
+   - Base layer remains untouched during mousemove
+
+2. **Throttle highlight updates** (if needed):
+   ```typescript
+   const debouncedHighlight = throttle((target: SnapTarget) => {
+     currentSnapTarget.value = target;
+   }, 16); // Max 60fps
+   ```
+
+3. **CSS transitions for smooth feedback**:
+   ```css
+   .snap-highlight {
+     transition: opacity 0.1s ease-in-out, r 0.1s ease-in-out;
+   }
+   ```
+   - Smooth appearance/disappearance
+   - Reduces jarring visual changes
+
+---
+
+**Tool-specific feedback examples**:
+
+**Segment tool** (needs two points):
+- **Step 1** (first point):
+  - Hover over point → highlight point (blue glow)
+  - Hover over intersection → highlight both elements + marker
+  - Hover empty space → show gray dot preview
+- **Step 2** (second point, after first selected):
+  - Show preview line from first point to cursor
+  - Highlight valid second point candidates
+  - Preview updates in real-time as cursor moves
+
+**Perpendicular line tool** (needs reference line + point):
+- **Step 1** (select reference line):
+  - Hover over line → highlight line (green)
+  - Show tooltip: "Select reference line"
+- **Step 2** (select point):
+  - Hover over point → highlight point + show perpendicular preview
+  - Preview line extends from point perpendicular to reference
+  - Updates in real-time
+
+**Circle by three points**:
+- **Steps 1-3** (selecting points):
+  - Highlight available points
+  - Show partial circle preview after 2 points selected
+  - Preview updates as cursor moves (dynamic radius)
+  - Gray out if points are collinear (infeasible)
+
+---
+
+**Accessibility considerations**:
+
+1. **Color is not the only indicator**:
+   - Combine color with shape changes (thicker lines, larger radius)
+   - Use patterns (dashed vs solid) for different states
+
+2. **Tooltips for clarity**:
+   - Show what will happen on click
+   - "Click to select point A"
+   - "Click to create intersection of line r1 and circle c1"
+   - "Click to create free point"
+
+3. **Keyboard navigation** (future):
+   - Tab to cycle through snap targets
+   - Enter to select
+   - Escape to cancel tool
+
+---
+
+**Implementation phases**:
+
+**Phase 1** (Week 4): Basic element highlighting
+- Highlight elements on mouseover (DOM events)
+- CSS hover states
+
+**Phase 2** (Week 6): Proximity-based highlighting
+- Highlight existing points within snap radius
+- Show "snap glow" effect
+- Adaptive radius based on zoom
+
+**Phase 3** (Week 7): Intersection highlighting
+- Compute nearby intersections
+- Highlight both intersecting elements
+- Show intersection marker (crosshair)
+
+**Phase 4** (Week 8): Full visual feedback
+- Tool-specific previews (segment preview, perpendicular preview)
+- Multi-stage priority system
+- Cursor snapping visual indicator
+- Empty space indicator
+
+**Phase 5** (Week 9): Polish
+- Smooth CSS transitions
+- Tooltips for snap targets
+- Performance optimization (separate SVG layers)
+
+---
+
+**Key implementation files**:
+
+```
+frontend/src/
+├── composables/
+│   ├── useSnapFeedback.ts         # Main snap feedback logic
+│   └── useToolPreview.ts          # Tool-specific preview rendering
+├── components/
+│   ├── workspace/
+│   │   ├── HighlightLayer.vue     # Snap target highlights
+│   │   ├── CursorIndicator.vue    # Cursor snap visual
+│   │   └── ToolPreview.vue        # Dynamic preview (segment, perpendicular, etc.)
+└── styles/
+    └── snap-feedback.css          # Highlight animations and transitions
+```
+
+---
+
 #### Implementation Phases
 
 **Phase 1** (Week 3-4): Basic hover without snapping
