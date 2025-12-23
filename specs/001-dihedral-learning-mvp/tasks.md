@@ -70,13 +70,13 @@
 - [X] T031 [P] Write unit tests for intersections.ts in frontend/tests/unit/calculations/intersections.spec.ts
 - [X] T032 [P] Write unit tests for perpendiculars.ts in frontend/tests/unit/calculations/perpendiculars.spec.ts
 - [X] T033 [P] Write unit tests for distances.ts in frontend/tests/unit/calculations/distances.spec.ts
-- [ ] T034 [P] Create frontend/src/commands/OperationResult.ts with outputs: Record<string, any> interface
-- [ ] T035 [P] Create frontend/src/commands/Command.ts with addAndExecute(), commit(), rollback() methods
-- [ ] T036 [P] Create frontend/src/commands/CommandStack.ts with undo/redo history management
-- [ ] T037 [P] Create frontend/src/commands/operations/WorldOperations.ts with AddElementOp, RemoveElementOp, UpdateElementOp
-- [ ] T038 [P] Create frontend/src/commands/operations/ProcessTreeOperations.ts with AddSubprocessOp, AddActionGroupOp, AddActionToGroupOp
-- [ ] T039 [P] Create frontend/src/commands/operations/ViewStateOperations.ts with SetActivePlaneOp, UpdateView2DOp
-- [ ] T040 [P] Create frontend/src/commands/operations/DependencyOperations.ts with AddDependencyEdgesOp, RemoveDependencyEdgesOp
+- [X] T034 [P] Create frontend/src/commands/OperationResult.ts with outputs: Record<string, any> interface
+- [X] T035 [P] Create frontend/src/commands/Command.ts with addAndExecute(), commit(), rollback() methods
+- [X] T036 [P] Create frontend/src/commands/CommandStack.ts with undo/redo history management
+- [X] T037 [P] Create frontend/src/commands/operations/WorldOperations.ts with AddElementOp, RemoveElementOp, UpdateElementOp
+- [X] T038 [P] Create frontend/src/commands/operations/ProcessTreeOperations.ts with AddSubprocessOp, AddActionGroupOp, AddActionToGroupOp
+- [X] T039 [P] Create frontend/src/commands/operations/ViewStateOperations.ts with SetActivePlaneOp, UpdateView2DOp
+- [X] T040 [P] Create frontend/src/commands/operations/DependencyOperations.ts with AddDependencyEdgesOp, RemoveDependencyEdgesOp
 - [ ] T041 [P] Write unit tests for Command.ts incremental execution in frontend/tests/unit/commands.spec.ts
 - [ ] T042 [P] Write unit tests for CommandStack.ts undo/redo in frontend/tests/unit/commandStack.spec.ts
 - [ ] T043 [P] Create frontend/src/stores/worldStore.ts with elements2D, elements3D, dependencyGraph state
