@@ -18,13 +18,12 @@ Contains the pure geometric definitions and construction rules:
 **Key characteristic**: Domain entities store **how** elements are defined, not **how** they're rendered. They contain:
 - Geometric parameters (coordinates, references to defining elements)
 - Dependency relationships (which action created this, which elements it depends on)
-- Metadata (name, subprocess membership, visual style properties)
+- Metadata (name, visual style properties)
 - Validation state (infeasible flag)
 
 **What domain entities contain**:
 - Construction rules and defining parameters
-- Pointers to generating action (`createdBy: ActionId`)
-- Subprocess membership (`subprocess?: SubprocessId`)
+- Pointers to generating action (`createdBy: ActionId`) - subprocess membership obtained through action
 - Visual style properties (`visualStyle: VisualStyle`) - note: inheritance resolved in presentation layer
 - Geometric coordinates/references (defining elements, not rendering coordinates)
 
@@ -222,8 +221,7 @@ interface Point2D {
   y: number;
   
   // Metadata and relationships (Domain Layer concerns)
-  createdBy: ActionId;              // Which action created this
-  subprocess?: SubprocessId;        // Optional grouping
+  createdBy: ActionId;              // Which action created this (action contains subprocess)
   visualStyle: VisualStyle;         // Style properties (inheritance not resolved yet)
   infeasible: boolean;              // Validation state
 }
@@ -236,8 +234,7 @@ interface Segment2D {
   point2: Point2DId;                // End point (defining reference)
   
   // Metadata and relationships
-  createdBy: ActionId;
-  subprocess?: SubprocessId;
+  createdBy: ActionId;              // Action contains subprocess membership
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
@@ -252,7 +249,6 @@ interface Line2D {
   
   // Metadata and relationships
   createdBy: ActionId;
-  subprocess?: SubprocessId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
@@ -266,7 +262,6 @@ interface Circle2D {
   
   // Metadata and relationships
   createdBy: ActionId;
-  subprocess?: SubprocessId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
@@ -332,7 +327,6 @@ interface Point3D {
   
   // Metadata and relationships
   createdBy: ActionId;
-  subprocess?: SubprocessId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
@@ -345,7 +339,6 @@ interface Line3D {
   
   // Metadata and relationships
   createdBy: ActionId;
-  subprocess?: SubprocessId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
@@ -358,7 +351,6 @@ interface Segment3D {
   
   // Metadata and relationships
   createdBy: ActionId;
-  subprocess?: SubprocessId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
@@ -371,7 +363,6 @@ interface Plane3D {
   
   // Metadata and relationships
   createdBy: ActionId;
-  subprocess?: SubprocessId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
