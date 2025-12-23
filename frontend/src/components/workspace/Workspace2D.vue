@@ -73,6 +73,7 @@ import { CreatePointOnElementCommand } from '@/commands/CreatePointOnElementComm
 import { CreateIntersectionPointCommand } from '@/commands/CreateIntersectionPointCommand';
 import { CreateSegmentCommand } from '@/commands/CreateSegmentCommand';
 import { CreateLineCommand } from '@/commands/CreateLineCommand';
+import { CreateCircleCommand } from '@/commands/CreateCircleCommand';
 import { useSnapping } from '@/composables/useSnapping';
 import { useToolFeedback } from '@/composables/useToolFeedback';
 import { useElementGeometry } from '@/composables/useElementGeometry';
@@ -155,6 +156,9 @@ const handleCanvasClick = (event: MouseEvent) => {
       break;
     case 'line':
       handleLineTool(workspaceX, workspaceY);
+      break;
+    case 'circle-center-radius':
+      handleCircleCenterPointTool(workspaceX, workspaceY);
       break;
     default:
       break;
@@ -445,6 +449,80 @@ const handleLineTool = (x: number, y: number) => {
       setTimeout(clearFeedback, 1500);
     } else {
       showFeedback('error', result.error || 'Failed to create line');
+      setTimeout(clearFeedback, 2000);
+    }
+
+    // Reset selection
+    selectedPoints.value = [];
+  }
+};
+
+/**
+ * Handle circle center-point tool - create a circle through center and circumference point
+ * Requires two clicks to select center and circumference points
+ */
+const handleCircleCenterPointTool = (x: number, y: number) => {
+  // Find nearest point to click
+  const snapped = snapToPoint(x, y);
+  const nearestPoint = worldStore.allElements2D.find((el: any) => {
+    if (!el.kind.startsWith('Point2D')) return false;
+    if (el.kind === 'Point2DFree' || el.kind === 'Point2DDerived') {
+      const dx = el.x - snapped.x;
+      const dy = el.y - snapped.y;
+      return Math.sqrt(dx * dx + dy * dy) < 10;
+    }
+    return false;
+  });
+
+  if (!nearestPoint) {
+    showFeedback('warning', 'Click on a point to select circle center');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+
+  // Add to selected points
+  selectedPoints.value.push(nearestPoint.id);
+
+  if (selectedPoints.value.length === 1) {
+    showFeedback('info', `Center point ${nearestPoint.name} selected. Click circumference point.`);
+    return;
+  }
+
+  if (selectedPoints.value.length === 2) {
+    // Create circle by center and point
+    const activePlaneId = viewStore.activePlaneId;
+    if (!activePlaneId) {
+      showFeedback('error', 'No active plane selected');
+      setTimeout(clearFeedback, 2000);
+      selectedPoints.value = [];
+      return;
+    }
+
+    const command = new CreateCircleCommand(
+      {
+        method: {
+          type: 'center-point',
+          centerPointId: selectedPoints.value[0],
+          circumferencePointId: selectedPoints.value[1]
+        },
+        planeId: activePlaneId,
+        actionId: 'user-action-001'
+      },
+      worldStore
+    );
+
+    const result = command.execute();
+
+    if (result.success) {
+      const infeasible = result.outputs.infeasible;
+      if (infeasible) {
+        showFeedback('warning', 'Circle created but infeasible (coincident points)');
+      } else {
+        showFeedback('success', 'Circle created');
+      }
+      setTimeout(clearFeedback, 1500);
+    } else {
+      showFeedback('error', result.error || 'Failed to create circle');
       setTimeout(clearFeedback, 2000);
     }
 
