@@ -569,6 +569,7 @@ interface Subprocess {
   
   // Metadata
   isAuxiliary: boolean;             // True for auto-generated auxiliary action containers
+                                    // Auxiliary subprocesses: displayed differently, properties not editable
   created: Date;
 }
 ```
@@ -578,9 +579,9 @@ interface Subprocess {
 Root (Project)
 ├─ Subprocess "Construction Phase 1"
 │  ├─ Action "Create segment s1"
-│  │  └─ AuxiliarySubprocess (hidden, auto-created)
-│  │     ├─ Action "Create free point a" (auxiliary)
-│  │     └─ Action "Create free point b" (auxiliary)
+│  ├─ AuxiliarySubprocess (isAuxiliary: true, displayed differently)
+│  │  ├─ Action "Create free point a" (auxiliary)
+│  │  └─ Action "Create free point b" (auxiliary)
 │  └─ Action "Create circle c1"
 ├─ Subprocess "Transport Operations"
 │  ├─ Subprocess "Guide Setup" (nested)
@@ -596,10 +597,13 @@ Root (Project)
 
 **Auxiliary Subprocess Pattern**:
 - When a main action needs auxiliary actions (auto-created points), an auxiliary subprocess is automatically created
-- The auxiliary subprocess has `isAuxiliary: true` and is collapsed by default
-- Structure: MainAction → AuxiliarySubprocess → AuxiliaryActions
-- The main action's `subprocess` field points to its parent subprocess, not the auxiliary one
-- The auxiliary subprocess is a child of the main action's subprocess
+- The auxiliary subprocess has `isAuxiliary: true`
+- **Not hidden**: Auxiliary subprocesses are visible but displayed differently in UI (e.g., lighter color, special icon)
+- **Properties locked**: User cannot edit name, defaultStyle, or other properties of auxiliary subprocesses
+- **Always grouped with main action**: The auxiliary subprocess is a child of the main action's parent subprocess
+- Structure: MainAction's subprocess → contains → AuxiliarySubprocess → contains → AuxiliaryActions
+- The main action's `subprocess` field points to its parent subprocess
+- The main action's `auxiliarySubprocess` field points to the auxiliary subprocess
 
 **Visibility Cascade**:
 ```typescript
@@ -735,11 +739,11 @@ The old `auxiliaryActions: ConstructiveAction[]` field is replaced with `auxilia
   outputs: ["segment-s1"]
 }
 
-// The auxiliary subprocess contains the point-creation actions
+// The auxiliary subprocess is a sibling in the same parent subprocess
 {
   id: "subprocess-aux-seg-1",
   name: "Auxiliary for segment s1",
-  parent: "subprocess-construction",
+  parent: "subprocess-construction", // Same parent as main action
   isAuxiliary: true,
   collapsed: true,
   visible: true,
@@ -762,20 +766,28 @@ The old `auxiliaryActions: ConstructiveAction[]` field is replaced with `auxilia
 **UI Presentation**:
 ```
 ▼ Construction Phase 1
-  ▼ Create segment s1
-    ▶ Auxiliary (2 actions)  ← collapsed by default
-  ▶ Create circle c1
+  ○ Create segment s1
+  ▶ ⚙ Auxiliary (2 actions)  ← special icon/styling, collapsed by default
+  ○ Create circle c1
 ```
 
 When expanded:
 ```
 ▼ Construction Phase 1
-  ▼ Create segment s1
-    ▼ Auxiliary (2 actions)
-      └─ Create free point a
-      └─ Create free point b
-  ▶ Create circle c1
+  ○ Create segment s1
+  ▼ ⚙ Auxiliary (2 actions)  ← grayed out, properties not editable
+    └─ Create free point a
+    └─ Create free point b
+  ○ Create circle c1
 ```
+
+**Special Treatment for Auxiliary Subprocesses**:
+- Displayed with special icon (e.g., ⚙ gear icon)
+- Rendered with different styling (e.g., lighter color, italics)
+- Name and properties cannot be edited by user
+- `defaultStyle` cannot be set (inherits from parent)
+- Can be collapsed/expanded like normal subprocesses
+- Visible alongside regular actions in the subprocess tree
 
 ---
 
