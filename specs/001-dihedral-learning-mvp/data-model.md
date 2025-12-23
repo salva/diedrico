@@ -137,9 +137,9 @@ interface ProcessNodeBase {
   created: Date;
 }
 
-// Common ancestor for nodes that can contain children
+// Common ancestor for nodes that can contain children and need a name
 interface ProcessContainer extends ProcessNodeBase {
-  name: string;                     // User-defined or auto-generated
+  name: string;                     // User-defined or auto-generated (for Subprocess)
 }
 
 // All possible node types
@@ -821,7 +821,7 @@ enum ActionType {
 
 **Fields**:
 ```typescript
-interface ActionGroup extends ProcessContainer {
+interface ActionGroup extends ProcessNodeBase {
   type: "actionGroup";
   children: ConstructiveAction[];   // One or more actions (ordered by creation time)
 }
@@ -832,14 +832,12 @@ interface ActionGroup extends ProcessContainer {
 ActionGroups can be created in two ways:
 
 1. **User-initiated**: When user performs an action, an ActionGroup is created to contain it
-   - Name can be user-defined or auto-generated from the action
    - Can contain single action or multiple related actions
-   - User can edit name and properties
+   - Displayed normally in UI
 
 2. **Auto-created (auxiliary)**: When an action needs auxiliary elements (e.g., auto-created free points for a segment)
    - System automatically creates an ActionGroup for the auxiliary actions
-   - Name auto-generated (e.g., "Auxiliary for segment s1")
-   - Displayed with special visual treatment in UI
+   - Displayed with special visual treatment in UI (bounding box, vertical line, lighter color, gear icon ⚙)
    - Properties typically locked from editing
 
 **Important**: Once created, all elements become first-class objects in the World. The grouping is purely informative to help users understand construction history.
@@ -900,37 +898,39 @@ The construction panel shows two different visibility concepts:
 **Regular Subprocess Display**:
 ```
 ▼ 👁 Construction Phase 1         ← visibility toggle, collapse/expand
-  ▶ ActionGroup "Create segment s1"
-  ▶ ⚙ Auxiliary (2 actions)       ← auxiliary group, no visibility toggle
-  ▶ ActionGroup "Create circle c1"
+  ▶ Create segment s1
+  ▶ ⚙ [Auxiliary actions]          ← auxiliary group indicator, no name
+  ▶ Create circle c1
   ▼ 👁 Nested Subprocess          ← nested subprocess with visibility control
-    ▶ ActionGroup "Create guide g1"
+    ▶ Create guide g1
 ```
 
-**ActionGroup Display** (different visual treatment):
+**ActionGroup Display** (visual grouping without names):
 ```
 ▼ 👁 Construction Phase 1
-  ▼ ActionGroup "Create segment s1"  ← regular action group
-    ○ Create segment s1
+  ▼ ○ Create segment s1            ← regular action in group (expandable to show group)
   ┌─────────────────────────────┐
-  │ ⚙ Auxiliary (2 actions)    │  ← auxiliary group: boxed/indented, lighter color, gear icon
-  │   ○ Create free point a    │
-  │   ○ Create free point b    │
+  │ ⚙ ⋅ Create free point a    │  ← auxiliary group: boxed, lighter color, gear icon
+  │   ⋅ Create free point b    │  ← no group name needed
   └─────────────────────────────┘
-  ▼ ActionGroup "Create circle c1"
-    ○ Create circle c1
+  ▼ ○ Create circle c1
 ```
 
-Or with icons:
+Or with vertical line grouping:
 ```
 ▼ 👁 Construction Phase 1
-  ▼ ActionGroup "Create segment s1"  ← regular group
-    ○ Create segment s1
-  ▼ ⚙ Auxiliary (2 actions)           ← auxiliary group: gear icon, lighter text
-    ⋅ Create free point a             ← bullet instead of circle
-    ⋅ Create free point b
-  ▼ ActionGroup "Create circle c1"
-    ○ Create circle c1
+  ○ Create segment s1
+  │ ⚙ ⋅ Create free point a       ← auxiliary: vertical line, gear icon, lighter text
+  │   ⋅ Create free point b       ← bullet instead of circle
+  ○ Create circle c1
+```
+
+Collapsed auxiliary group:
+```
+▼ 👁 Construction Phase 1
+  ○ Create segment s1
+  ▶ ⚙ [2 auxiliary actions]        ← collapsed, shows count
+  ○ Create circle c1
 ```
 
 **State Transitions**:
@@ -941,29 +941,27 @@ Or with icons:
 **UI Presentation for ActionGroups**:
 ```
 ▼ Construction Phase 1
-  ▶ ActionGroup "Create segment s1"  ← regular action group, collapsed
-  ▶ ⚙ Auxiliary (2 actions)           ← auxiliary group, collapsed
-  ▶ ActionGroup "Create circle c1"
+  ▶ Create segment s1              ← regular action, collapsed
+  ▶ ⚙ [2 auxiliary actions]        ← auxiliary group, collapsed (shows count)
+  ▶ Create circle c1
 ```
 
 When expanded:
 ```
 ▼ Construction Phase 1
-  ▼ ActionGroup "Create segment s1"
-    └─ Create segment s1
-  ▼ ⚙ Auxiliary (2 actions)           ← grayed out, properties not editable
-    └─ Create free point a
-    └─ Create free point b
-  ▼ ActionGroup "Create circle c1"
-    └─ Create circle c1
+  ▼ Create segment s1
+  │ ⚙ ⋅ Create free point a       ← grayed out, vertical line grouping
+  │   ⋅ Create free point b
+  ▼ Create circle c1
 ```
 
-**Special Treatment for ActionGroups**:
+**Special Treatment for Auxiliary ActionGroups**:
 - Displayed with special icon (e.g., ⚙ gear icon)
+- Rendered with visual grouping (bounding box or vertical line)
 - Rendered with different styling (e.g., lighter color, italics)
-- Name and properties cannot be edited by user
+- Properties locked (user cannot modify grouping)
 - Can be collapsed/expanded like subprocesses
-- Visible alongside regular actions in the subprocess tree
+- When collapsed, shows count of contained actions
 - No visibility toggle (inherits visibility from parent subprocess)
 
 ---
