@@ -213,13 +213,13 @@
 
 ### Transport Operations
 
-- [ ] T123 [P] [US3] Create TransportPointCommand in frontend/src/commands/TransportPointCommand.ts
-- [ ] T124 [P] [US3] Implement transport point: given guide + point on plane1 → create derived point on plane2
-- [ ] T125 [P] [US3] Mark transported point as derived (lighter color, 50% opacity) in VisualStyle
-- [ ] T126 [P] [US3] Create TransportDistanceCommand in frontend/src/commands/TransportDistanceCommand.ts
-- [ ] T127 [P] [US3] Implement transport distance: given guide + two points → create distance on other plane
-- [ ] T128 [P] [US3] Write unit tests for TransportPointCommand in frontend/tests/unit/commands/transportPoint.spec.ts
-- [ ] T129 [P] [US3] Write unit tests for TransportDistanceCommand in frontend/tests/unit/commands/transportDistance.spec.ts
+- [X] T123 [P] [US3] Create TransportPointCommand in frontend/src/commands/TransportPointCommand.ts
+- [X] T124 [P] [US3] Implement transport point: given guide + point on plane1 → create derived point on plane2
+- [X] T125 [P] [US3] Mark transported point as derived (lighter color, 50% opacity) in VisualStyle
+- [X] T126 [P] [US3] Create TransportDistanceCommand in frontend/src/commands/TransportDistanceCommand.ts
+- [X] T127 [P] [US3] Implement transport distance: given guide + two points → create distance on other plane
+- [X] T128 [P] [US3] Write unit tests for TransportPointCommand in frontend/tests/unit/commands/transportPoint.spec.ts
+- [X] T129 [P] [US3] Write unit tests for TransportDistanceCommand in frontend/tests/unit/commands/transportDistance.spec.ts
 
 ### E2E Tests
 
