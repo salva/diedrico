@@ -62,11 +62,13 @@ A **hinge line** (HL) is the intersection line shared by two **projection planes
 A **guide** is a key dihedral learning construct:
 
 - Created from:
-  - a hinge line (HL), and
+  - a hinge line (HL or BHL projection), and
   - a point on the active plane.
 - Result:
-  - a line **perpendicular** to the selected HL,
-  - belonging to **both** planes associated with that HL.
+  - a line **perpendicular** to the selected HL/BHL,
+  - belonging to **both** planes associated with that HL/BHL.
+
+**Important behavior with BHLs**: When a guide is created perpendicular to a BHL projection on one plane, it is **automatically transported** to the other plane's BHL projection. This establishes immediate geometric correspondence between the two projections.
 
 Guides enable transporting points and distances between planes in an explicit, traceable way.
 
@@ -557,19 +559,20 @@ Contains dihedral-specific tools related to hinge lines (HL), guides, and transp
 
 **Guide** tool:
 
-- **Create guide from HL and point**:
-  - **Description**: Creates a guide line perpendicular to a hinge line and passing through a point on the active plane.
+- **Create guide from HL/BHL and point**:
+  - **Description**: Creates a guide line perpendicular to a hinge line (HL) or BHL projection, passing through a point on the active plane.
   - **Steps**:
     1. Activate the create-guide tool.
-    2. Select a hinge line (HL).
+    2. Select a hinge line (HL) or BHL projection (any line element).
     3. Specify a point on the active plane (click on existing point, intersection, or empty space).
   - **Result**: A new guide entity is created that:
-    - is perpendicular to the selected HL,
+    - is perpendicular to the selected HL/BHL,
     - passes through the specified point,
-    - belongs to both projection planes associated with the HL.
+    - belongs to both projection planes associated with the HL/BHL.
+  - **Special case for BHLs**: When created from a BHL projection, the guide is **automatically transported** to appear on both planes where the BHL exists. This happens immediately upon guide creation.
   - Any automatically created point is recorded as an auxiliary action.
   - **Purpose**: Guides enable explicit transport of geometric information between planes.
-  - **Dependency**: The guide updates if the HL or the defining point moves.
+  - **Dependency**: The guide updates if the HL/BHL or the defining point moves.
 
 **Transport** tool family:
 

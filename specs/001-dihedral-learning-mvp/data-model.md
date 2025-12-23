@@ -130,35 +130,40 @@ interface HingeLine {
 
 #### 4. Guide
 
-**Purpose**: Line perpendicular to HL used for transporting points/distances between planes
+**Purpose**: Line perpendicular to HL/BHL used for transporting points/distances between planes
 
 **Fields**:
 ```typescript
 interface Guide {
   id: GuideId;                      // UUID
   name: string;                     // Auto-generated "g1", "g2", etc.
-  hingeLine: HingeLineId;           // Reference to source HL
+  referenceLineId: ElementId;       // Reference to HL or BHL projection (any line element)
   sourcePoint: Point2DId;           // Point on one plane that defines guide
-  line2DInPlane1: Line2D;           // Perpendicular to HL in plane1
-  line2DInPlane2: Line2D;           // Perpendicular to HL in plane2 (same line)
+  line2DInPlane1: Line2D;           // Perpendicular to reference line in plane1
+  line2DInPlane2: Line2D;           // Perpendicular to reference line in plane2
   visualStyle: VisualStyle;         // Inherited or overridden
 }
 ```
 
 **Relationships**:
-- 1 Guide → 1 HingeLine
+- 1 Guide → 1 Element2D (reference line: HL representation or BHL projection)
 - 1 Guide → 1 Point2D (source point)
 - N Elements → 1 Guide (elements created via guide transport)
 
 **Validation Rules**:
-- `line2DInPlane1` and `line2DInPlane2` must be perpendicular to `hingeLine`
-- `sourcePoint` must belong to one of the planes associated with `hingeLine`
-- Guide belongs to **both** planes associated with the HL
+- `line2DInPlane1` and `line2DInPlane2` must be perpendicular to the reference line
+- `sourcePoint` must belong to one of the planes where the reference line exists
+- Guide belongs to **both** planes associated with the reference line
 
 **Computation**:
-- Given: HL and point P on plane1
-- Compute: Line through P perpendicular to HL
+- Given: Reference line (HL or BHL projection) and point P on plane1
+- Compute: Line through P perpendicular to reference line
 - Result: Guide represented in both plane1 and plane2 coordinate systems
+
+**BHL Behavior**:
+- When guide is created from a BHL projection on plane1, it is **automatically transported** to plane2
+- This establishes immediate correspondence between the BHL projections on both planes
+- The guide update is atomic (both projections appear simultaneously)
 
 ---
 
