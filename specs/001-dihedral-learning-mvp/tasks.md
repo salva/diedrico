@@ -223,9 +223,9 @@
 
 ### E2E Tests
 
-- [ ] T130 [US3] Write E2E test for guide creation from HL and point in frontend/tests/e2e/guide-creation.spec.ts
-- [ ] T131 [US3] Write E2E test for point transport via guide in frontend/tests/e2e/point-transport.spec.ts
-- [ ] T132 [US3] Verify transported elements have derived visual style
+- [X] T130 [US3] Write E2E test for guide creation from HL and point in frontend/tests/e2e/guide-creation.spec.ts
+- [X] T131 [US3] Write E2E test for point transport via guide in frontend/tests/e2e/point-transport.spec.ts
+- [X] T132 [US3] Verify transported elements have derived visual style
 
 ---
 
