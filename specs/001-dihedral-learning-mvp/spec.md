@@ -810,7 +810,24 @@ As a learner, I want to create hinge lines and guides and use them to transport 
 
 ---
 
-### User Story 4 - Define 3D Elements from 2D Projections (Priority: P3)
+### User Story 4 - Work with Broken Hinge Lines (BHL) (Priority: P2)
+
+As a learner, I want to create 3D planes and see their broken hinge line (BHL) projections automatically appear on relevant projection planes, and create guides perpendicular to BHL projections that automatically transport across both planes, so that I can perform distance transports between arbitrary plane intersections.
+
+**Why this priority**: BHLs are fundamental to dihedral projection practice. Most transport operations in real exercises occur between BHL projections, not between regular hinge lines. The automatic guide transport across BHL projections streamlines the classical workflow.
+
+**Independent Test**: Can be tested by creating a 3D plane from traces, verifying its BHL projections appear on both projection planes, creating a guide perpendicular to one BHL projection, and verifying the guide automatically appears on the other plane's BHL projection.
+
+**Acceptance Scenarios**:
+
+1. **Given** two trace lines on different projection planes, **When** I create a 3D plane from those traces, **Then** the BHL projections (the plane's intersection lines with the projection planes) are automatically created as Element2D lines on the relevant projection planes.
+2. **Given** a BHL projection visible on one projection plane, **When** I create a guide perpendicular to that BHL projection and passing through a point, **Then** the guide automatically appears on both planes where the BHL exists, perpendicular to the respective BHL projections.
+3. **Given** guides created from a BHL, **When** I transport a point or distance using those guides, **Then** the transported geometry appears as derived elements with full dependency tracking, just like transport via regular hinge lines.
+4. **Given** a 3D plane with BHL projections and guides, **When** I modify one of the defining traces, **Then** the 3D plane updates, the BHL projections recompute, and any guides perpendicular to the BHL automatically adjust on both planes.
+
+---
+
+### User Story 5 - Define 3D Elements from 2D Projections (Priority: P3)
 
 As a learner, I want to define 3D points/lines/segments/planes from compatible 2D projections and view them in an auxiliary 3D view so that I can build spatial understanding while keeping 2D construction as the source of truth.
 
@@ -826,7 +843,7 @@ As a learner, I want to define 3D points/lines/segments/planes from compatible 2
 
 ---
 
-### User Story 5 - Inspect the Process and Dependencies (Priority: P4)
+### User Story 6 - Inspect the Process and Dependencies (Priority: P4)
 
 As a learner, I want to review a clear history of constructive actions and explore dependencies by hover highlighting so that I can understand how each step depends on prior steps.
 
