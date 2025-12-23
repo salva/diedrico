@@ -2,76 +2,34 @@ import { defineStore } from 'pinia';
 import type { Element2D, Element3D } from '../types/ElementTypes';
 import { DependencyGraph } from '../domain/world/DependencyGraph';
 
+export interface ProjectionPlane {
+  id: string;
+  label: string;      // "P_H", "P_V", etc.
+  name: string;       // Display name
+  isActive: boolean;
+  isVisible: boolean;
+}
+
+export interface HingeLine {
+  id: string;
+  label: string;      // "HL_HV", etc.
+  name: string;       // Display name
+  plane1Id: string;
+  plane2Id: string;
+}
+
 interface WorldState {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}  counters = {};export function resetCounters(): void { */ * Reset all counters (for testing)/**}  return generateElementId('op_');export function generateOperationId(): string { */ * Generate an operation ID/**}  return generateElementId('cmd_');export function generateCommandId(): string { */ * Generate a command ID/**}  return generateElementId('ag_');export function generateActionGroupId(): string { */ * Generate an action group ID/**}  return generateElementId('sp_');export function generateSubprocessId(): string { */ * Generate a subprocess ID/**}  return generateElementId('action_');export function generateActionId(): string { */ * Generate an action ID/**}  return id;  counters[prefix]++;  const id = `${prefix}${counters[prefix]}`;  }    counters[prefix] = 1;  if (!counters[prefix]) {export function generateElementId(prefix: string): string {let counters: Record<string, number> = {}; */ * Generate a sequential ID with prefix/**}  return crypto.randomUUID();export function generateId(): string { */ * Generate a UUID v4  elements2D: Map<string, Element2D>;
+  planes: ProjectionPlane[];
+  hingeLines: HingeLine[];
+  elements2D: Map<string, Element2D>;
   elements3D: Map<string, Element3D>;
   dependencyGraph: DependencyGraph;
 }
 
 export const useWorldStore = defineStore('world', {
   state: (): WorldState => ({
+    planes: [],
+    hingeLines: [],
     elements2D: new Map(),
     elements3D: new Map(),
     dependencyGraph: new DependencyGraph()
