@@ -127,31 +127,39 @@ The process tree manipulates the world through actions that create/modify elemen
 **Fields**:
 ```typescript
 interface ProcessTree {
-  root: ProcessNode[];              // Root-level nodes (typically subprocesses)
+  root: Process;                    // Single root process (logically a Subprocess)
 }
 
-type ProcessNode = Subprocess | ActionGroup | ConstructiveAction;
-
+// Base interface for all nodes in the tree
 interface ProcessNodeBase {
   id: string;                       // UUID
   type: "subprocess" | "actionGroup" | "action";
-  children: ProcessNode[];          // Child nodes (empty for action leaves)
   created: Date;
 }
+
+// Common ancestor for nodes that can contain children
+interface ProcessContainer extends ProcessNodeBase {
+  name: string;                     // User-defined or auto-generated
+}
+
+// All possible node types
+type ProcessNode = Subprocess | ActionGroup | ConstructiveAction;
 ```
 
 **Tree Structure**:
-- **Subprocess** nodes can contain: other Subprocesses, ActionGroups, or Actions
-- **ActionGroup** nodes can contain: Actions only
-- **Action** nodes are leaves (no children)
+- **Process** (root): Special Subprocess containing all construction history
+- **Subprocess** nodes: can contain Subprocess or ActionGroup children (mixed, ordered by creation time)
+- **ActionGroup** nodes: can contain Action children only
+- **Action** nodes: leaf nodes (no children)
 
 **Traversal**:
 - Depth-first traversal gives execution order
-- Actions are executed in tree order (immutable history)
+- Children are ordered by creation time (immutable history)
+- Actions are executed in tree order
 
 **Example Tree**:
 ```
-ProcessTree.root
+ProcessTree.root (Process)
 ├─ Subprocess "Construction Phase 1"
 │  ├─ Action "Create segment s1"
 │  ├─ ActionGroup "Auxiliary for s1"
@@ -161,18 +169,24 @@ ProcessTree.root
 └─ Subprocess "Transport Operations"
    ├─ Subprocess "Guide Setup" (nested)
    │  └─ Action "Create guide g1"
-   └─ Action "Transport point"
+   └─ ActionGroup "Auxiliary for transport"
+      └─ Action "Create intersection point"
 ```
 
 **Relationships**:
-- 1 ProcessTree → N ProcessNode (tree structure)
+- 1 ProcessTree → 1 Process (root)
+- 1 Process → N (Subprocess | ActionGroup) (children, mixed and ordered)
+- 1 Subprocess → N (Subprocess | ActionGroup) (children, mixed and ordered)
+- 1 ActionGroup → N Action (children, ordered)
 - ProcessNodes form a single unified tree
 
 **Validation Rules**:
 - Tree must be valid (no cycles, each node has at most one parent)
-- Action execution order determined by tree traversal
-- ActionGroups cannot be nested (only contain Actions)
-- Subprocesses can be nested arbitrarily
+- Process is root node (single entry point)
+- Action execution order determined by depth-first tree traversal
+- Children ordered by creation time (immutable)
+- ActionGroups can only contain Actions (no nesting of containers)
+- Subprocesses can contain Subprocesses or ActionGroups (mixed)
 
 ---
 
@@ -737,7 +751,6 @@ function isProcessNodeVisible(node: ProcessNode): boolean {
 interface ConstructiveAction extends ProcessNodeBase {
   type: "action";
   actionType: ActionType;           // "CreatePoint", "CreateSegment", "CreateGuide", "TransportPoint", etc.
-  children: [];                     // Always empty (leaf node)
   timestamp: Date;                  // When action was performed
   inputs: ElementId[];              // Dependencies (what this action consumes from World)
   outputs: ElementId[];             // Results (what this action produces in World)
@@ -789,8 +802,8 @@ enum ActionType {
 - 1 Action → 1 ProcessNode (parent in tree)
 
 **Tree Position**:
-- Leaf node in ProcessTree
-- Can be child of: Subprocess or ActionGroup
+- Leaf node in ProcessTree (no children)
+- Must be child of ActionGroup
 - Execution order determined by tree traversal
 
 ---
@@ -801,17 +814,16 @@ enum ActionType {
 
 **Fields**:
 ```typescript
-interface ActionGroup extends ProcessNodeBase {
+interface ActionGroup extends ProcessContainer {
   type: "actionGroup";
-  name: string;                     // Auto-generated descriptive name (e.g., "Auxiliary for segment s1")
-  children: ConstructiveAction[];   // Auxiliary actions only (leaf nodes)
+  children: ConstructiveAction[];   // Auxiliary actions only (ordered by creation time)
   mainAction: ActionId;             // Reference to the primary action that triggered this group
 }
 ```
 
 **ActionGroup Pattern**:
 - When a main action needs auxiliary actions (e.g., auto-created free points for a segment), an ActionGroup is automatically created
-- The ActionGroup is inserted as a sibling to the main action in the tree
+- The ActionGroup is inserted as a sibling to the main action in the parent Subprocess
 - **Element Visibility**: Elements created by actions in ActionGroup inherit visibility from parent Subprocess
   - ActionGroup does NOT have independent visibility control
   - Visibility is determined by walking up tree to find parent Subprocess
@@ -823,7 +835,7 @@ interface ActionGroup extends ProcessNodeBase {
 
 **Tree Position**:
 - Must be child of a Subprocess (same parent as main action)
-- Can only contain Action nodes (no nesting)
+- Children: Actions only (no nesting of containers)
 - Automatically created and managed by system
 
 **Two Types of Visibility for ActionGroups**:
@@ -846,6 +858,7 @@ interface ActionGroup extends ProcessNodeBase {
 **Validation Rules**:
 - `children` must all be ConstructiveAction nodes
 - Cannot contain other ActionGroups or Subprocesses
+- Children ordered by creation time (immutable)
 - `mainAction` must exist in tree
 
 **UI Presentation in Construction Panel**:
@@ -893,14 +906,6 @@ Or with icons:
     ⋅ Create free point b
   ○ Create circle c1
 ```
-
-**Validation Rules**:
-- `children` must all be ConstructiveAction nodes
-- Cannot contain other ActionGroups or Subprocesses
-- `mainAction` must exist in tree
-- `inputs` of actions must all exist (or action is infeasible)
-- `actionType` must match a known ActionType
-- `outputs` are created by executing the action's command
 
 **State Transitions**:
 - **Executable** → **Executed**: Command validates and executes successfully
