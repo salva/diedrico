@@ -179,13 +179,13 @@
 
 ### Actions & Elements Panels
 
-- [ ] T106 [P] [US2] Create frontend/src/components/panels/ActionsPanel.vue to display command history
-- [ ] T107 [P] [US2] Implement action list rendering with timestamp, type, and outputs in ActionsPanel.vue
-- [ ] T108 [P] [US2] Implement collapsible auxiliary actions (ActionGroups) in ActionsPanel.vue
-- [ ] T109 [P] [US2] Create frontend/src/components/panels/ElementsPanel.vue with 2D/3D sections
-- [ ] T110 [P] [US2] Implement element grouping by type (points, segments, lines, circles) in ElementsPanel.vue
-- [ ] T111 [P] [US2] Implement element click → open properties dialog in ElementsPanel.vue
-- [ ] T112 [P] [US2] Create frontend/src/components/dialogs/ElementPropertiesDialog.vue for visual style editing
+- [X] T106 [P] [US2] Create frontend/src/components/panels/ActionsPanel.vue to display command history
+- [X] T107 [P] [US2] Implement action list rendering with timestamp, type, and outputs in ActionsPanel.vue
+- [X] T108 [P] [US2] Implement collapsible auxiliary actions (ActionGroups) in ActionsPanel.vue
+- [X] T109 [P] [US2] Create frontend/src/components/panels/ElementsPanel.vue with 2D/3D sections
+- [X] T110 [P] [US2] Implement element grouping by type (points, segments, lines, circles) in ElementsPanel.vue
+- [X] T111 [P] [US2] Implement element click → open properties dialog in ElementsPanel.vue
+- [X] T112 [P] [US2] Create frontend/src/components/dialogs/ElementPropertiesDialog.vue for visual style editing
 
 ### E2E Tests
 
