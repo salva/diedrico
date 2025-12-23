@@ -88,7 +88,6 @@ backend/
 │   ├── api/              # Express/Fastify routes
 │   │   ├── projects.ts   # GET /projects, POST /projects, GET /projects/:id, PUT /projects/:id
 │   │   └── health.ts     # GET /health
-│   ├── commands/         # Backend command pattern (if needed for persistence logic)
 │   ├── storage/          # Storage abstraction (JSON files or SQLite)
 │   │   ├── ProjectRepository.ts
 │   │   └── FileStorage.ts or SqliteStorage.ts
@@ -100,43 +99,98 @@ backend/
 
 frontend/
 ├── src/
-│   ├── components/       # Vue components
+│   ├── components/       # Vue components (Presentation Layer)
 │   │   ├── workspace/    # 2D drawing area, 3D overlay
+│   │   │   ├── Workspace2D.vue
+│   │   │   ├── Workspace3D.vue
+│   │   │   └── ElementRenderer.vue
 │   │   ├── panels/       # Actions panel, Elements panel
+│   │   │   ├── ActionsPanel.vue
+│   │   │   ├── ElementsPanel.vue
+│   │   │   └── ProcessTreePanel.vue
 │   │   ├── toolbars/     # Top toolbars
+│   │   │   ├── MainToolbar.vue
+│   │   │   └── PlaneSelector.vue
 │   │   └── dialogs/      # Element properties dialog
-│   ├── commands/         # Command pattern implementations (core of application layer)
-│   │   ├── BaseCommand.ts
-│   │   ├── CreatePointCommand.ts
-│   │   ├── CreateSegmentCommand.ts
-│   │   ├── CreateGuideCommand.ts
-│   │   ├── TransportPointCommand.ts
-│   │   └── ... (all FR-003, FR-007, FR-008, FR-009 operations)
-│   ├── domain/           # Core domain models
-│   │   ├── geometry/     # Point2D, Segment, Line, Circle, Arc
-│   │   ├── projection/   # ProjectionPlane, HingeLine, Guide
-│   │   ├── elements/     # Element2D, Element3D
-│   │   ├── dependency/   # DependencyGraph, InfeasibilityDetector
-│   │   └── style/        # VisualStyle, StyleInheritance
-│   ├── services/         # Application services
-│   │   ├── GeometryService.ts      # Intersection calculation, perpendiculars, etc.
-│   │   ├── DependencyService.ts     # Graph traversal, recomputation
-│   │   ├── ValidationService.ts     # Infeasibility checks (FR-011, FR-012)
-│   │   └── ProjectService.ts        # Calls backend API
-│   ├── stores/           # Pinia stores (state management)
-│   │   ├── workspace.ts  # Active plane, view state
-│   │   ├── elements.ts   # 2D/3D elements
-│   │   ├── actions.ts    # Command history (Constructive Actions Panel)
-│   │   └── tools.ts      # Active tool state
+│   │       └── ElementPropertiesDialog.vue
+│   │
+│   ├── commands/         # Command pattern with incremental execution
+│   │   ├── Command.ts              # Command class with addAndExecute(), commit(), rollback()
+│   │   ├── CommandStack.ts         # History management, undo/redo
+│   │   ├── OperationResult.ts      # Result interface for operation chaining
+│   │   │
+│   │   └── operations/             # Operation implementations
+│   │       ├── WorldOperations.ts         # AddElement, RemoveElement, UpdateElement
+│   │       ├── ProcessTreeOperations.ts   # AddSubprocess, AddActionGroup, AddAction
+│   │       ├── ViewStateOperations.ts     # SetActivePlane, UpdateView2D
+│   │       └── DependencyOperations.ts    # AddDependencyEdges, RemoveDependencyEdges
+│   │
+│   ├── domain/           # Core domain models (Domain Layer)
+│   │   ├── world/        # Geometric elements
+│   │   │   ├── Element2D.ts        # Point2D, Segment2D, Line2D, Circle2D, Arc2D
+│   │   │   ├── Element3D.ts        # Point3D, Line3D, Segment3D, Plane3D
+│   │   │   ├── VisualStyle.ts      # Color, lineWidth, lineStyle, visibility
+│   │   │   └── DependencyGraph.ts  # DAG, add/remove edges, traversal
+│   │   │
+│   │   ├── processTree/  # Construction history
+│   │   │   ├── Process.ts          # Root node
+│   │   │   ├── Subprocess.ts       # Container for ActionGroups
+│   │   │   ├── ActionGroup.ts      # Visual grouping (no name)
+│   │   │   └── Action.ts           # ConstructiveAction, DerivedAction
+│   │   │
+│   │   ├── viewState/    # Workspace state
+│   │   │   ├── ProjectionPlane.ts  # P_H, P_V with coordinate systems
+│   │   │   ├── HingeLine.ts        # HL_HV reference element
+│   │   │   ├── View2DState.ts      # Pan, zoom per plane
+│   │   │   └── View3DState.ts      # Camera position, orientation
+│   │   │
+│   │   └── calculations/ # Pure geometric functions
+│   │       ├── intersections.ts    # Line-line, line-circle, etc.
+│   │       ├── perpendiculars.ts   # Perpendicular construction
+│   │       ├── distances.ts        # Point-line, point-point distance
+│   │       └── transforms.ts       # Coordinate transformations
+│   │
+│   ├── services/         # Application services (Application Layer)
+│   │   ├── GeometryService.ts      # Wraps calculations, caching
+│   │   ├── DependencyService.ts    # Recomputation, topological sort
+│   │   ├── ValidationService.ts    # Infeasibility checks (FR-011, FR-012)
+│   │   ├── ProjectService.ts       # Backend communication, serialization
+│   │   └── ToolService.ts          # Tool state management, input validation
+│   │
+│   ├── stores/           # Pinia stores (State Management)
+│   │   ├── worldStore.ts       # Elements (2D/3D), dependency graph
+│   │   ├── processStore.ts     # ProcessTree, command history
+│   │   ├── viewStore.ts        # Active plane, view state, visibility toggles
+│   │   └── toolStore.ts        # Active tool, tool state
+│   │
 │   ├── composables/      # Vue composables (shared logic)
-│   │   ├── useSnapping.ts
-│   │   ├── useHoverHighlight.ts
-│   │   └── useToolFeedback.ts
+│   │   ├── useSnapping.ts          # Point snapping (FR-038)
+│   │   ├── useHoverHighlight.ts    # Dependency highlighting (FR-036)
+│   │   ├── useToolFeedback.ts      # Visual feedback during tool use
+│   │   └── useCommandExecution.ts  # Command building and commit
+│   │
+│   ├── types/            # TypeScript type definitions
+│   │   ├── ElementTypes.ts     # Union types, discriminated unions
+│   │   ├── CommandTypes.ts     # CommandStatus, OperationTypes
+│   │   └── ResultTypes.ts      # Result<T, E> for error handling
+│   │
 │   ├── utils/            # Pure utility functions
+│   │   ├── idGenerator.ts
+│   │   ├── colorUtils.ts
+│   │   └── mathUtils.ts
+│   │
 │   └── main.ts           # Entry point
+│
 ├── tests/
-│   ├── unit/             # Domain logic, geometry calculations, commands
+│   ├── unit/             # Domain logic, operations, calculations
+│   │   ├── calculations.spec.ts
+│   │   ├── dependencyGraph.spec.ts
+│   │   ├── operations.spec.ts
+│   │   └── commands.spec.ts
 │   └── e2e/              # Playwright tests (SC-001 basic exercise)
+│       ├── basic-exercise.spec.ts
+│       ├── infeasibility.spec.ts
+│       └── persistence.spec.ts
 └── package.json
 
 shared/ (optional, if types shared between frontend/backend)
@@ -144,7 +198,13 @@ shared/ (optional, if types shared between frontend/backend)
     └── Project.ts        # Shared project data structure
 ```
 
-**Structure Decision**: Web application with separate frontend and backend. Frontend contains all business logic (domain + application layers) following frontend-first principle. Backend is minimal persistence API. Shared types directory optional if we keep serialization logic simple.
+**Structure Decision**: 
+- **Frontend-first architecture**: All business logic in frontend (domain + application layers)
+- **Command Pattern**: Incremental execution model - operations execute immediately as added to command
+- **Three-tier domain**: World (geometric elements), ProcessTree (construction history), ViewState (workspace state)
+- **Operation categories**: WorldOperations, ProcessTreeOperations, ViewStateOperations for different mutation types
+- **Backend**: Minimal persistence API only (no business logic)
+- **Clear separation**: Commands orchestrate operations, operations mutate state, stores provide reactive access
 
 ## Complexity Tracking
 

@@ -1329,9 +1329,72 @@ class Command {
 
 ---
 
+## Symbolic Addressing
+
+**Purpose**: All elements in the system are addressable via symbolic paths, not direct object references
+
+**Rationale**: 
+- Operations must be serializable for persistence and undo/redo
+- Direct object references cannot be serialized
+- Symbolic paths enable stable references across save/load cycles
+- Path-based addressing provides clear hierarchical structure
+
+**Path Format**:
+```typescript
+type ElementPath = string;  // Format: "/world/elements2D/{id}" or "/world/elements3D/{id}"
+type ActionPath = string;   // Format: "/process/subprocess/{id}/actionGroup/{id}/action/{id}"
+type PlanePath = string;    // Format: "/world/planes/{id}"
+```
+
+**Examples**:
+```typescript
+// Element paths
+"/world/elements2D/p1"              // Point2D with id="p1"
+"/world/elements2D/s1"              // Segment2D with id="s1"
+"/world/elements3D/point3d_1"       // Point3D
+"/world/planes/P_H"                 // Horizontal projection plane
+"/world/hingeLines/HL_HV"           // Hinge line
+
+// Process tree paths
+"/process/root"                                    // Root Process node
+"/process/subprocess/sp1"                          // Subprocess with id="sp1"
+"/process/subprocess/sp1/actionGroup/ag1"          // ActionGroup
+"/process/subprocess/sp1/actionGroup/ag1/action/a1" // Action
+
+// ViewState paths
+"/viewState/activePlane"            // Current active plane reference
+"/viewState/view2D/P_H"             // View2D state for horizontal plane
+"/viewState/view3D"                 // 3D view state
+```
+
+**Path Resolution**:
+```typescript
+interface PathResolver {
+  resolve<T>(path: string, project: Project): Result<T, PathError>;
+  buildPath(entity: any): string;
+}
+
+// Usage example
+const resolver = new PathResolver();
+const element = resolver.resolve<Point2D>("/world/elements2D/p1", project);
+if (element.isOk()) {
+  console.log(element.value.x, element.value.y);
+}
+```
+
+**Validation Rules**:
+- All operation parameters must use symbolic paths, not direct references
+- Paths must be absolute (start with `/`)
+- Path resolution must handle missing entities gracefully (return Result type)
+- Generated paths must be deterministic (same entity → same path)
+
+---
+
 ### Domain Entity: Operation
 
 **Purpose**: Atomic, reversible mutation on World, ProcessTree, or ViewState
+
+**Key Principle**: Operations use **symbolic paths** to reference entities, never direct object references
 
 **Base Interface**:
 ```typescript
@@ -1358,7 +1421,8 @@ type WorldOperation =
 interface AddElementOp extends OperationBase {
   type: "AddElement";
   parameters: {
-    element: Element2D | Element3D;  // Element to add
+    elementPath: ElementPath;        // Where to add: "/world/elements2D/{id}" or "/world/elements3D/{id}"
+    elementData: Record<string, any>; // Element fields (type, construction params, style)
     beforeState: null;               // Element didn't exist (for consistency)
   };
 }
@@ -1366,25 +1430,25 @@ interface AddElementOp extends OperationBase {
 interface RemoveElementOp extends OperationBase {
   type: "RemoveElement";
   parameters: {
-    elementId: ElementId;
-    beforeState: Element2D | Element3D;  // Element state before removal (for undo)
+    elementPath: ElementPath;        // Symbolic path to element
+    beforeState: Record<string, any>; // Full element state before removal (for undo)
   };
 }
 
 interface UpdateElementOp extends OperationBase {
   type: "UpdateElement";
   parameters: {
-    elementId: ElementId;
-    beforeState: Partial<Element2D | Element3D>;  // Fields before change
-    afterState: Partial<Element2D | Element3D>;   // Fields after change
+    elementPath: ElementPath;        // Symbolic path to element
+    beforeState: Record<string, any>; // Fields before change
+    afterState: Record<string, any>;  // Fields after change
   };
 }
 
-// Example: Move point
+// Example: Move point (using symbolic path)
 {
   type: "UpdateElement",
   parameters: {
-    elementId: "p1",
+    elementPath: "/world/elements2D/p1",
     beforeState: { x: 100, y: 200 },
     afterState: { x: 150, y: 250 }
   }
@@ -1393,14 +1457,20 @@ interface UpdateElementOp extends OperationBase {
 interface AddDependencyEdgesOp extends OperationBase {
   type: "AddDependencyEdges";
   parameters: {
-    edges: Array<{ from: ElementId | ActionId; to: ElementId | ActionId }>;
+    edges: Array<{ 
+      from: ElementPath | ActionPath;  // Symbolic path to source
+      to: ElementPath | ActionPath;    // Symbolic path to target
+    }>;
   };
 }
 
 interface RemoveDependencyEdgesOp extends OperationBase {
   type: "RemoveDependencyEdges";
   parameters: {
-    edges: Array<{ from: ElementId | ActionId; to: ElementId | ActionId }>;
+    edges: Array<{ 
+      from: ElementPath | ActionPath;  // Symbolic path to source
+      to: ElementPath | ActionPath;    // Symbolic path to target
+    }>;
   };
 }
 ```
@@ -1419,8 +1489,8 @@ type ProcessTreeOperation =
 interface AddSubprocessOp extends OperationBase {
   type: "AddSubprocess";
   parameters: {
-    parentId: SubprocessId;           // Where to add
-    subprocess: Subprocess;           // Subprocess to add
+    parentPath: string;               // Symbolic path: "/process/subprocess/{parentId}"
+    subprocessData: Record<string, any>; // Subprocess fields (name, visible, etc.)
     position: number;                 // Index in children array
   };
 }
@@ -1428,9 +1498,9 @@ interface AddSubprocessOp extends OperationBase {
 interface RemoveSubprocessOp extends OperationBase {
   type: "RemoveSubprocess";
   parameters: {
-    subprocessId: SubprocessId;
-    beforeState: Subprocess;          // Full subprocess state (for undo)
-    parentId: SubprocessId;
+    subprocessPath: string;           // Symbolic path: "/process/subprocess/{id}"
+    beforeState: Record<string, any>; // Full subprocess state (for undo)
+    parentPath: string;               // Parent subprocess path
     position: number;
   };
 }
@@ -1438,8 +1508,8 @@ interface RemoveSubprocessOp extends OperationBase {
 interface AddActionGroupOp extends OperationBase {
   type: "AddActionGroup";
   parameters: {
-    parentId: SubprocessId;
-    actionGroup: ActionGroup;
+    parentPath: string;               // Subprocess path: "/process/subprocess/{id}"
+    actionGroupData: Record<string, any>; // ActionGroup fields
     position: number;
   };
 }
@@ -1447,8 +1517,8 @@ interface AddActionGroupOp extends OperationBase {
 interface AddActionToGroupOp extends OperationBase {
   type: "AddActionToGroup";
   parameters: {
-    actionGroupId: ActionGroupId;
-    action: ConstructiveAction;
+    actionGroupPath: ActionPath;      // "/process/subprocess/{id}/actionGroup/{id}"
+    actionData: Record<string, any>;  // Action fields (type, timestamp, outputs)
     position: number;                 // Index in children array
   };
 }
@@ -1456,9 +1526,9 @@ interface AddActionToGroupOp extends OperationBase {
 interface UpdateSubprocessOp extends OperationBase {
   type: "UpdateSubprocess";
   parameters: {
-    subprocessId: SubprocessId;
-    beforeState: Partial<Subprocess>;  // Fields before change (e.g., visible, name)
-    afterState: Partial<Subprocess>;   // Fields after change
+    subprocessPath: string;           // "/process/subprocess/{id}"
+    beforeState: Record<string, any>; // Fields before change (e.g., visible, name)
+    afterState: Record<string, any>;  // Fields after change
   };
 }
 ```
@@ -1475,23 +1545,24 @@ type ViewStateOperation =
 interface SetActivePlaneOp extends OperationBase {
   type: "SetActivePlane";
   parameters: {
-    beforePlane: PlaneId;             // Previously active plane
-    afterPlane: PlaneId;              // New active plane
+    beforePlanePath: PlanePath;       // "/world/planes/{beforeId}"
+    afterPlanePath: PlanePath;        // "/world/planes/{afterId}"
   };
 }
 
 interface UpdateView2DOp extends OperationBase {
   type: "UpdateView2D";
   parameters: {
-    beforeState: Partial<ViewState["view2D"]>;
-    afterState: Partial<ViewState["view2D"]>;
+    planePath: PlanePath;             // Which plane's view to update
+    beforeState: Record<string, any>; // Pan, zoom values before
+    afterState: Record<string, any>;  // Pan, zoom values after
   };
 }
 
 interface TogglePlaneVisibilityOp extends OperationBase {
   type: "TogglePlaneVisibility";
   parameters: {
-    planeId: PlaneId;
+    planePath: PlanePath;             // "/world/planes/{id}"
     beforeVisible: boolean;
     afterVisible: boolean;
   };
@@ -1500,7 +1571,7 @@ interface TogglePlaneVisibilityOp extends OperationBase {
 interface UpdatePanelCollapseOp extends OperationBase {
   type: "UpdatePanelCollapse";
   parameters: {
-    nodeId: SubprocessId | ActionGroupId;
+    nodePath: string;                 // Subprocess or ActionGroup path
     nodeType: "subprocess" | "actionGroup";
     beforeCollapsed: boolean;
     afterCollapsed: boolean;
@@ -1526,27 +1597,46 @@ class AddElementOperation implements IOperation {
   constructor(private params: AddElementOp["parameters"]) {}
   
   apply(project: Project): OperationResult {
-    // Add element to world
-    const element = this.params.element;
+    // Parse path to determine collection
+    const path = this.params.elementPath;
+    const elementData = this.params.elementData;
     
-    if (element.type === "Point2D" || element.type === "Segment2D" || ...) {
-      project.world.elements2D.push(element);
+    // Create element from data
+    const element = this.createElementFromData(elementData);
+    
+    if (path.startsWith("/world/elements2D/")) {
+      project.world.elements2D.push(element as Element2D);
+    } else if (path.startsWith("/world/elements3D/")) {
+      project.world.elements3D.push(element as Element3D);
     } else {
-      project.world.elements3D.push(element);
+      return { success: false, error: `Invalid element path: ${path}` };
     }
     
     return { 
       success: true, 
-      data: { element }  // Return element with its ID for next operations
+      data: { 
+        element,           // Created element
+        path: this.params.elementPath  // Symbolic path for next operations
+      }
     };
   }
   
   undo(project: Project): void {
-    const elementId = this.params.element.id;
+    const path = this.params.elementPath;
+    const elementId = path.split("/").pop();  // Extract ID from path
     
-    // Remove from world
-    project.world.elements2D = project.world.elements2D.filter(e => e.id !== elementId);
-    project.world.elements3D = project.world.elements3D.filter(e => e.id !== elementId);
+    // Remove from world using symbolic path
+    if (path.startsWith("/world/elements2D/")) {
+      project.world.elements2D = project.world.elements2D.filter(e => e.id !== elementId);
+    } else if (path.startsWith("/world/elements3D/")) {
+      project.world.elements3D = project.world.elements3D.filter(e => e.id !== elementId);
+    }
+  }
+  
+  private createElementFromData(data: Record<string, any>): Element2D | Element3D {
+    // Factory method to construct element from data
+    // Uses data.type to determine which constructor to call
+    // ...
   }
 }
 ```
@@ -1651,30 +1741,62 @@ interface CommandStackState {
 
 **Example Usage**:
 ```typescript
-// User creates a segment (incremental execution)
+// User creates a segment (incremental execution with symbolic paths)
 const cmd = new Command({ description: "Create segment s1" });
 
 try {
-  const p1 = cmd.addAndExecute(new AddElementOp({ 
-    element: { id: generateId(), type: "Point2D", x: 100, y: 200, ... }
+  // Generate IDs upfront for symbolic paths
+  const p1Id = generateId();  // e.g., "p1"
+  const p2Id = generateId();  // e.g., "p2"
+  const segmentId = generateId();  // e.g., "s1"
+  
+  // Create first point using symbolic path
+  const p1Result = cmd.addAndExecute(new AddElementOp({ 
+    elementPath: `/world/elements2D/${p1Id}`,
+    elementData: { id: p1Id, type: "Point2D", x: 100, y: 200, plane: "P_H", ... },
+    beforeState: null
   }));
   
-  const p2 = cmd.addAndExecute(new AddElementOp({ 
-    element: { id: generateId(), type: "Point2D", x: 300, y: 400, ... }
+  // Create second point using symbolic path
+  const p2Result = cmd.addAndExecute(new AddElementOp({ 
+    elementPath: `/world/elements2D/${p2Id}`,
+    elementData: { id: p2Id, type: "Point2D", x: 300, y: 400, plane: "P_H", ... },
+    beforeState: null
   }));
   
-  const segment = cmd.addAndExecute(new AddElementOp({ 
-    element: { 
-      id: generateId(), 
+  // Create segment referencing points via their IDs (not paths)
+  const segmentResult = cmd.addAndExecute(new AddElementOp({ 
+    elementPath: `/world/elements2D/${segmentId}`,
+    elementData: { 
+      id: segmentId, 
       type: "Segment2D", 
-      point1: p1.data.element.id,  // Use ID from previous operation
-      point2: p2.data.element.id,  // Use ID from previous operation
+      point1: p1Id,  // Reference by ID (stored in element data)
+      point2: p2Id,  // Reference by ID (stored in element data)
+      plane: "P_H",
       ... 
-    }
+    },
+    beforeState: null
   }));
   
-  cmd.addAndExecute(new AddActionToGroupOp({ /* ... */ }));
-  cmd.addAndExecute(new AddDependencyEdgesOp({ /* ... */ }));
+  // Add action to process tree using symbolic paths
+  cmd.addAndExecute(new AddActionToGroupOp({ 
+    actionGroupPath: "/process/subprocess/sp1/actionGroup/ag1",
+    actionData: { 
+      id: generateId(),
+      type: "ConstructiveAction",
+      timestamp: new Date(),
+      outputs: [segmentId]  // References element by ID
+    },
+    position: 0
+  }));
+  
+  // Add dependency edges using symbolic paths
+  cmd.addAndExecute(new AddDependencyEdgesOp({ 
+    edges: [
+      { from: `/world/elements2D/${p1Id}`, to: `/world/elements2D/${segmentId}` },
+      { from: `/world/elements2D/${p2Id}`, to: `/world/elements2D/${segmentId}` }
+    ]
+  }));
   
   // All operations succeeded, commit to stack
   commandStack.commit(cmd);
@@ -1684,10 +1806,10 @@ try {
   console.error("Command failed:", error);
 }
 
-// User moves a point
+// User moves a point using symbolic path
 const moveCmd = new Command({ description: "Move point a" });
 moveCmd.addAndExecute(new UpdateElementOp({
-  elementId: "p1",
+  elementPath: "/world/elements2D/p1",
   beforeState: { x: 100, y: 200 },
   afterState: { x: 150, y: 250 }
 }));
