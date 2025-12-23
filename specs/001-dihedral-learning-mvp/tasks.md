@@ -142,8 +142,8 @@
 
 ### Point Tools
 
-- [ ] T081 [P] [US2] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
-- [ ] T082 [P] [US2] Implement free point tool handler that builds command with AddElementOp for Point2D
+- [X] T081 [P] [US2] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
+- [X] T082 [P] [US2] Implement free point tool handler that builds command with AddElementOp for Point2D
 - [ ] T083 [P] [US2] Create CreatePointOnElementCommand in frontend/src/commands/CreatePointOnElementCommand.ts
 - [ ] T084 [P] [US2] Implement point-on-element tool with closest point projection calculation
 - [ ] T085 [P] [US2] Create CreateIntersectionPointCommand in frontend/src/commands/CreateIntersectionPointCommand.ts
