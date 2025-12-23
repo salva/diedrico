@@ -5,11 +5,37 @@
 
 ---
 
-## Entity Catalog
+## Architecture Overview
 
-### Core Domain Entities
+The data model is organized into three distinct layers:
 
-#### 1. Project
+### 1. **Domain Layer** (Geometric Truth)
+Contains the pure geometric definitions and construction rules:
+- **3D Entities**: 3D points, lines, segments, planes defined by their construction rules
+- **2D Entities**: 2D geometric elements on projection planes with their defining rules
+- **Construction Metadata**: Hinge lines, guides, projection planes, actions
+
+**Key characteristic**: Domain entities store **how** elements are defined, not **how** they're rendered. They contain geometric parameters and dependency relationships.
+
+### 2. **Presentation Layer** (Rendering Primitives)
+Low-level representation ready for direct SVG conversion:
+- **Render Primitives**: Points, paths, circles, arcs with concrete screen-space or world-space coordinates
+- **Source References**: Each primitive points back to its source domain entity
+- **Visual Attributes**: Stroke, fill, width, style, visibility state
+
+**Key characteristic**: Presentation entities are computed from domain entities and contain all information needed for rendering (coordinates, styles, visibility).
+
+### 3. **Persistence Layer** (Project State)
+Project-level container and metadata:
+- Project info, schema version, timestamps
+- View state (zoom, pan, camera)
+- Collections of domain entities
+
+---
+
+## Layer 1: Domain Entities
+
+### Persistence Entity: Project
 
 **Purpose**: Root aggregate containing all user work for one dihedral drawing exercise
 
@@ -52,7 +78,9 @@ interface Project {
 
 ---
 
-#### 2. ProjectionPlane
+## Layer 1: Domain Entities
+
+### Domain Entity: ProjectionPlane
 
 **Purpose**: Named 2D surface where 2D elements exist
 
@@ -87,7 +115,7 @@ interface ProjectionPlane {
 
 ---
 
-#### 3. HingeLine
+### Domain Entity: HingeLine
 
 **Purpose**: Intersection line shared by two **projection planes** (the physical fold line); used for guide creation
 
@@ -128,7 +156,7 @@ interface HingeLine {
 
 ---
 
-#### 4. Guide
+### Domain Entity: Guide
 
 **Purpose**: Line perpendicular to HL/BHL used for transporting points/distances between planes
 
@@ -167,7 +195,7 @@ interface Guide {
 
 ---
 
-#### 5. Element2D
+### Domain Entity: Element2D
 
 **Purpose**: 2D geometric entity on a projection plane
 
@@ -254,7 +282,7 @@ interface Arc2D {
 
 ---
 
-#### 6. Element3D
+### Domain Entity: Element3D
 
 **Purpose**: 3D geometric entity derived from compatible 2D projections
 
@@ -322,6 +350,164 @@ interface Plane3D {
 - Visual distinction: generative rendered normally, derived de-emphasized (lighter color, dashed)
 
 ---
+
+## Layer 2: Presentation Entities (Rendering Primitives)
+
+**Purpose**: Low-level representation optimized for SVG rendering, computed from domain entities
+
+### RenderPrimitive
+
+All presentation entities derive from a base RenderPrimitive:
+
+```typescript
+interface RenderPrimitive {
+  id: PrimitiveId;                  // Unique ID for this render primitive
+  sourceEntity: ElementId;          // Reference to domain entity (Element2D or Element3D)
+  layer: RenderLayer;               // Which SVG layer to render in
+  visible: boolean;                 // Computed from element visibility, plane visibility, etc.
+  style: ComputedStyle;             // Resolved visual style (no inheritance, fully computed)
+  infeasible: boolean;              // Copied from source entity
+}
+
+enum RenderLayer {
+  HingeLines = "hinge-lines",       // Physical fold lines between projection planes
+  Guides = "guides",                // Transport guides
+  Elements = "elements",            // Regular geometric elements
+  BHLProjections = "bhl-projections", // Broken hinge line projections (may be dashed)
+  Highlights = "highlights",        // Hover/selection highlights
+  Snap = "snap",                    // Snap indicators
+  Cursor = "cursor"                 // Cursor feedback
+}
+
+interface ComputedStyle {
+  stroke: string;                   // Hex color, fully resolved
+  strokeWidth: number;              // Pixels
+  strokeStyle: "solid" | "dashed" | "dotted";
+  fill: string;                     // Hex color for closed shapes
+  opacity: number;                  // 0.0 - 1.0
+  zIndex: number;                   // Within layer
+}
+```
+
+### Presentation Primitives by Type
+
+```typescript
+type PresentationPrimitive = 
+  | PointPrimitive 
+  | PathPrimitive 
+  | CirclePrimitive 
+  | ArcPrimitive
+  | TextPrimitive;
+
+interface PointPrimitive extends RenderPrimitive {
+  type: "point";
+  x: number;                        // World coordinates (for 2D) or screen coordinates
+  y: number;
+  radius: number;                   // Display radius in pixels
+}
+
+interface PathPrimitive extends RenderPrimitive {
+  type: "path";
+  points: Array<{x: number, y: number}>; // Line segments, polylines
+  closed: boolean;                  // Connect last to first?
+}
+
+interface CirclePrimitive extends RenderPrimitive {
+  type: "circle";
+  cx: number;                       // Center X (world coordinates)
+  cy: number;                       // Center Y
+  r: number;                        // Radius (world units)
+}
+
+interface ArcPrimitive extends RenderPrimitive {
+  type: "arc";
+  cx: number;
+  cy: number;
+  r: number;
+  startAngle: number;               // Radians
+  endAngle: number;
+  largeArc: boolean;                // SVG large-arc-flag
+  sweep: boolean;                   // SVG sweep-flag
+}
+
+interface TextPrimitive extends RenderPrimitive {
+  type: "text";
+  x: number;
+  y: number;
+  text: string;                     // Element name label
+  fontSize: number;                 // Pixels
+  anchor: "start" | "middle" | "end";
+}
+```
+
+### Presentation Conversion
+
+Domain entities are converted to presentation primitives by the **PresentationService**:
+
+```typescript
+class PresentationService {
+  // Convert a single domain entity to one or more render primitives
+  entityToPrimitives(entity: Element2D | Element3D, context: RenderContext): PresentationPrimitive[];
+  
+  // Rebuild entire presentation layer from domain
+  rebuildPresentationLayer(project: Project): PresentationPrimitive[];
+  
+  // Incremental update when entity changes
+  updatePrimitives(entityId: ElementId): PresentationPrimitive[];
+}
+
+interface RenderContext {
+  viewState: ViewState;             // Current zoom, pan
+  highlightedEntities: Set<ElementId>; // Hover/selection state
+  activeSnap?: SnapTarget;          // Current snap target
+}
+```
+
+**Key behaviors**:
+- **Domain entity changes** → recompute affected primitives
+- **Style inheritance resolved** → primitives contain final computed style
+- **Visibility computed** → from element.visible && plane.visible && !infeasible
+- **Coordinates finalized** → primitives have exact rendering coordinates
+
+**Example conversion**:
+
+```typescript
+// Domain: Segment2D connecting two points
+const segment: Segment2D = {
+  id: "seg-123",
+  plane: "plane-H",
+  point1: "p1",
+  point2: "p2",
+  visualStyle: { strokeWidth: 2 } // Inherits color from subprocess
+};
+
+// Presentation: PathPrimitive for SVG <line>
+const primitive: PathPrimitive = {
+  id: "prim-seg-123",
+  sourceEntity: "seg-123",
+  layer: RenderLayer.Elements,
+  visible: true,
+  style: {
+    stroke: "#000000",              // Resolved from inheritance
+    strokeWidth: 2,
+    strokeStyle: "solid",
+    fill: "none",
+    opacity: 1.0,
+    zIndex: 10
+  },
+  infeasible: false,
+  type: "path",
+  points: [
+    { x: 100, y: 200 },             // Computed from point1 position
+    { x: 300, y: 400 }              // Computed from point2 position
+  ],
+  closed: false
+};
+```
+
+---
+
+## Layer 3: Persistence Entities
 
 #### 7. ConstructiveAction
 
@@ -404,7 +590,7 @@ enum ActionType {
 
 ---
 
-#### 8. DependencyGraph
+### Domain Entity: DependencyGraph
 
 **Purpose**: Directed acyclic graph (DAG) of element/action relationships for recomputation
 
@@ -450,7 +636,7 @@ interface GraphNode {
 
 ---
 
-#### 9. VisualStyle
+### Domain Entity: VisualStyle
 
 **Purpose**: Non-geometric styling properties with inheritance
 
@@ -492,7 +678,7 @@ type LineStyle = "solid" | "dashed" | "dotted";
 
 ---
 
-#### 10. ViewState
+### Persistence Entity: ViewState
 
 **Purpose**: UI state for pan/zoom/camera/visibility (non-geometric, per-project)
 
@@ -693,14 +879,100 @@ Project (1) ──┬── (N) ProjectionPlane
 
 ---
 
+## Data Flow and Layer Interactions
+
+### User Action → Domain → Presentation Pipeline
+
+```
+1. User Action (e.g., "Create Segment")
+   ↓
+2. Command Execution
+   - Creates Domain Entities (Element2D)
+   - Updates DependencyGraph
+   - Records ConstructiveAction
+   ↓
+3. Domain Layer Update
+   - New Element2D added to Project
+   - Dependencies computed
+   - Validation performed
+   ↓
+4. Presentation Layer Rebuild (affected entities only)
+   - PresentationService converts Element2D → PresentationPrimitive
+   - Resolves style inheritance
+   - Computes visibility
+   - Generates coordinates
+   ↓
+5. Rendering (Vue + SVG)
+   - PresentationPrimitives → SVG elements
+   - Direct 1:1 mapping to <circle>, <line>, <path>
+   - No computation in render layer
+```
+
+### Recomputation Flow (Parametric Update)
+
+```
+1. Base element changes (e.g., point moves)
+   ↓
+2. DependencyGraph traversal
+   - Find all dependent actions
+   - Topological sort for execution order
+   ↓
+3. Reexecute dependent actions
+   - Update derived domain entities
+   - Mark infeasible if validation fails
+   ↓
+4. Incremental presentation update
+   - Only rebuild primitives for changed entities
+   - Preserve unchanged primitives (optimization)
+   ↓
+5. Vue reactivity triggers re-render
+   - Only affected SVG elements update
+```
+
+### Layer Responsibilities
+
+| Layer | Responsibilities | Does NOT Handle |
+|-------|-----------------|-----------------|
+| **Domain** | Geometric truth, construction rules, dependencies, validation | Rendering, coordinates resolution, SVG generation |
+| **Presentation** | SVG-ready data, resolved styles, visibility computation, coordinates | Geometric logic, validation, user actions |
+| **Persistence** | Serialization, storage, project metadata | Real-time computation, rendering |
+
+### Benefits of Layered Architecture
+
+1. **Separation of Concerns**: Geometric logic separate from rendering concerns
+2. **Testability**: Domain entities testable without UI/SVG
+3. **Performance**: Incremental presentation updates; only rebuild what changed
+4. **Reusability**: Domain layer could support multiple rendering backends (Canvas, WebGL)
+5. **Clarity**: Each layer has single responsibility
+
+---
+
 ## Summary
 
-This data model defines 10 core entities with clear relationships, validation rules, and state transitions. Key design decisions:
+This data model defines entities across three clear layers:
+
+**Domain Layer** (geometric truth):
+- ProjectionPlane, HingeLine, Guide
+- Element2D (Point, Segment, Line, Circle, Arc)
+- Element3D (Point, Line, Segment, Plane)
+- ConstructiveAction, DependencyGraph, VisualStyle
+
+**Presentation Layer** (rendering):
+- RenderPrimitive (base)
+- PointPrimitive, PathPrimitive, CirclePrimitive, ArcPrimitive, TextPrimitive
+- PresentationService (conversion logic)
+
+**Persistence Layer** (storage):
+- Project (root aggregate)
+- ViewState (UI state)
+
+Key design principles:
 
 1. **Explicit creation**: No implicit entities; all geometry traceable to actions
 2. **Dependency graph**: Enables parametric recomputation and hover highlighting
 3. **Infeasibility as state**: Temporary condition, not deletion; aids learning
-4. **Style inheritance**: Separates visual from geometric concerns
+4. **Style inheritance**: Separates visual from geometric concerns (resolved in presentation layer)
 5. **Frontend-owned**: All domain logic in frontend; backend stores JSON
+6. **Layered separation**: Domain defines "what", Presentation defines "how to render"
 
 **Next**: Generate API contracts for backend persistence endpoints.
