@@ -5,6 +5,7 @@
       class="workspace-svg"
       :width="width"
       :height="height"
+      @click="handleCanvasClick"
     >
       <!-- Background grid -->
       <defs>
@@ -50,25 +51,41 @@
     <div class="plane-indicator">
       {{ activePlaneName }}
     </div>
+    
+    <!-- Tool feedback overlay -->
+    <div v-if="toolFeedback" class="tool-feedback" :class="`feedback-${toolFeedback.type}`">
+      {{ toolFeedback.message }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { select } from 'd3-selection';
-import { zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
+import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from 'd3-zoom';
 import { useWorldStore } from '@/stores/worldStore';
 import { useViewStore } from '@/stores/viewStore';
+import { useToolStore } from '@/stores/toolStore';
 import ElementRenderer from './ElementRenderer.vue';
 import type { Element2D } from '@/types/ElementTypes';
+import { CreateFreePointCommand } from '@/commands/CreateFreePointCommand';
+import { useSnapping } from '@/composables/useSnapping';
+import { useToolFeedback } from '@/composables/useToolFeedback';
 
 const worldStore = useWorldStore();
 const viewStore = useViewStore();
+const toolStore = useToolStore();
+
+const { snapToPoint } = useSnapping();
+const { feedback: toolFeedback, showFeedback, clearFeedback } = useToolFeedback();
 
 // Component refs
 const containerRef = ref<HTMLDivElement | null>(null);
 const svgRef = ref<SVGSVGElement | null>(null);
 const mainGroupRef = ref<SVGGElement | null>(null);
+
+// Zoom behavior reference
+let zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> | null = null;
 
 // Dimensions
 const width = ref(800);
@@ -91,6 +108,79 @@ const activePlaneName = computed(() => {
   return plane ? plane.name : '';
 });
 
+/**
+ * Handle canvas click for tool interactions
+ */
+const handleCanvasClick = (event: MouseEvent) => {
+  if (!svgRef.value || !mainGroupRef.value) return;
+  
+  // Get the active tool
+  const activeTool = toolStore.activeTool;
+  if (!activeTool) return;
+  
+  // Get click coordinates in SVG space
+  const svg = svgRef.value;
+  const point = svg.createSVGPoint();
+  point.x = event.clientX;
+  point.y = event.clientY;
+  
+  // Parse transform to get actual coordinates
+  // For now, using client coordinates relative to SVG
+  const rect = svg.getBoundingClientRect();
+  const workspaceX = event.clientX - rect.left;
+  const workspaceY = event.clientY - rect.top;
+  
+  // Handle different tool types
+  switch (activeTool) {
+    case 'point-free':
+      handleFreePointTool(workspaceX, workspaceY);
+      break;
+    // Other tools will be handled in later tasks
+    default:
+      break;
+  }
+};
+
+/**
+ * Handle free point tool - create a point at click location
+ */
+const handleFreePointTool = (x: number, y: number) => {
+  // Apply snapping
+  const snapped = snapToPoint(x, y);
+  const finalX = snapped.x;
+  const finalY = snapped.y;
+  
+  // Get active plane
+  const activePlaneId = viewStore.activePlaneId;
+  if (!activePlaneId) {
+    showFeedback('error', 'No active plane selected');
+    setTimeout(clearFeedback, 2000);
+    return;
+  }
+  
+  // Create command
+  const command = new CreateFreePointCommand(
+    {
+      x: finalX,
+      y: finalY,
+      planeId: activePlaneId,
+      actionId: 'user-action-001'  // TODO: Get from current action context
+    },
+    worldStore
+  );
+  
+  // Execute command
+  const result = command.execute();
+  
+  if (result.success) {
+    showFeedback('success', `Point created at (${finalX.toFixed(1)}, ${finalY.toFixed(1)})`);
+    setTimeout(clearFeedback, 1500);
+  } else {
+    showFeedback('error', result.error || 'Failed to create point');
+    setTimeout(clearFeedback, 2000);
+  }
+};
+
 // Handle window resize
 const updateDimensions = () => {
   if (containerRef.value) {
@@ -107,7 +197,7 @@ const setupZoom = () => {
   const mainGroup = select(mainGroupRef.value);
   
   // Create zoom behavior
-  const zoomBehavior = zoom<SVGSVGElement, unknown>()
+  zoomBehavior = zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.1, 10])  // Min and max zoom levels
     .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
       // Only apply zoom if not panning (Shift key not pressed)
@@ -167,5 +257,40 @@ onUnmounted(() => {
   font-weight: 500;
   color: #333;
   pointer-events: none;
+}
+
+.tool-feedback {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transition: all 0.2s ease;
+}
+
+.feedback-info {
+  background-color: #2196f3;
+  color: white;
+}
+
+.feedback-success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.feedback-warning {
+  background-color: #ff9800;
+  color: white;
+}
+
+.feedback-error {
+  background-color: #f44336;
+  color: white;
 }
 </style>
