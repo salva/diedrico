@@ -13,9 +13,20 @@ The data model is organized into three distinct layers:
 Contains the pure geometric definitions and construction rules:
 - **3D Entities**: 3D points, lines, segments, planes defined by their construction rules
 - **2D Entities**: 2D geometric elements on projection planes with their defining rules
-- **Construction Metadata**: Hinge lines, guides, projection planes, actions
+- **Construction Metadata**: Hinge lines, guides, projection planes, actions, subprocesses
 
-**Key characteristic**: Domain entities store **how** elements are defined, not **how** they're rendered. They contain geometric parameters and dependency relationships.
+**Key characteristic**: Domain entities store **how** elements are defined, not **how** they're rendered. They contain:
+- Geometric parameters (coordinates, references to defining elements)
+- Dependency relationships (which action created this, which elements it depends on)
+- Metadata (name, subprocess membership, visual style properties)
+- Validation state (infeasible flag)
+
+**What domain entities contain**:
+- Construction rules and defining parameters
+- Pointers to generating action (`createdBy: ActionId`)
+- Subprocess membership (`subprocess?: SubprocessId`)
+- Visual style properties (`visualStyle: VisualStyle`) - note: inheritance resolved in presentation layer
+- Geometric coordinates/references (defining elements, not rendering coordinates)
 
 ### 2. **Presentation Layer** (Rendering Primitives)
 Low-level representation ready for direct SVG conversion:
@@ -197,7 +208,7 @@ interface Guide {
 
 ### Domain Entity: Element2D
 
-**Purpose**: 2D geometric entity on a projection plane
+**Purpose**: 2D geometric entity on a projection plane with full construction and metadata
 
 **Subtypes**:
 ```typescript
@@ -207,20 +218,28 @@ interface Point2D {
   id: ElementId;
   name: string;                     // "a", "b", "p1", etc.
   plane: PlaneId;                   // Belongs to exactly one plane
-  x: number;                        // Coordinate in plane's 2D space
+  x: number;                        // Coordinate in plane's 2D space (defining, not rendering)
   y: number;
-  visualStyle: VisualStyle;
+  
+  // Metadata and relationships (Domain Layer concerns)
   createdBy: ActionId;              // Which action created this
+  subprocess?: SubprocessId;        // Optional grouping
+  visualStyle: VisualStyle;         // Style properties (inheritance not resolved yet)
+  infeasible: boolean;              // Validation state
 }
 
 interface Segment2D {
   id: ElementId;
   name: string;                     // "s1", "s2", etc.
   plane: PlaneId;
-  point1: Point2DId;                // Start point
-  point2: Point2DId;                // End point
-  visualStyle: VisualStyle;
+  point1: Point2DId;                // Start point (defining reference)
+  point2: Point2DId;                // End point (defining reference)
+  
+  // Metadata and relationships
   createdBy: ActionId;
+  subprocess?: SubprocessId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 
 interface Line2D {
@@ -230,8 +249,12 @@ interface Line2D {
   point1: Point2DId;                // Two points define infinite line
   point2: Point2DId;
   // Alternatively: pointOnLine + directionVector
-  visualStyle: VisualStyle;
+  
+  // Metadata and relationships
   createdBy: ActionId;
+  subprocess?: SubprocessId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 
 interface Circle2D {
@@ -240,8 +263,12 @@ interface Circle2D {
   plane: PlaneId;
   center: Point2DId;
   radius: number;                   // Or: defined by 3 points
-  visualStyle: VisualStyle;
+  
+  // Metadata and relationships
   createdBy: ActionId;
+  subprocess?: SubprocessId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 
 interface Arc2D {
@@ -252,8 +279,12 @@ interface Arc2D {
   startPoint: Point2DId;
   endPoint: Point2DId;
   // Or: center + radius + startAngle + endAngle
-  visualStyle: VisualStyle;
+  
+  // Metadata and relationships
   createdBy: ActionId;
+  subprocess?: SubprocessId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 ```
 
@@ -293,40 +324,56 @@ type Element3D = Point3D | Line3D | Segment3D | Plane3D;
 interface Point3D {
   id: ElementId;
   name: string;                     // "A", "B", etc. (uppercase)
-  projectionH: Point2DId;           // Projection on P_H
-  projectionV: Point2DId;           // Projection on P_V
+  projectionH: Point2DId;           // Projection on P_H (defining reference)
+  projectionV: Point2DId;           // Projection on P_V (defining reference)
   x: number;                        // Computed 3D coordinates
   y: number;
   z: number;
-  visualStyle: VisualStyle;
+  
+  // Metadata and relationships
   createdBy: ActionId;
+  subprocess?: SubprocessId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 
 interface Line3D {
   id: ElementId;
   name: string;                     // "L1", "L2", etc.
-  projectionH: Line2DId;            // Projection on P_H
-  projectionV: Line2DId;            // Projection on P_V
-  visualStyle: VisualStyle;
+  projectionH: Line2DId;            // Projection on P_H (defining reference)
+  projectionV: Line2DId;            // Projection on P_V (defining reference)
+  
+  // Metadata and relationships
   createdBy: ActionId;
+  subprocess?: SubprocessId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 
 interface Segment3D {
   id: ElementId;
   name: string;                     // "S1", "S2", etc.
-  point1: Point3DId;                // 3D endpoints
+  point1: Point3DId;                // 3D endpoints (defining references)
   point2: Point3DId;
-  visualStyle: VisualStyle;
+  
+  // Metadata and relationships
   createdBy: ActionId;
+  subprocess?: SubprocessId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 
 interface Plane3D {
   id: ElementId;
   name: string;                     // "Pi1", "Pi2", etc.
-  traceH: Line2DId;                 // Horizontal trace (plane's intersection with P_H)
-  traceV: Line2DId;                 // Vertical trace (plane's intersection with P_V)
-  visualStyle: VisualStyle;
+  traceH: Line2DId;                 // Horizontal trace (defining reference)
+  traceV: Line2DId;                 // Vertical trace (defining reference)
+  
+  // Metadata and relationships
   createdBy: ActionId;
+  subprocess?: SubprocessId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 ```
 
