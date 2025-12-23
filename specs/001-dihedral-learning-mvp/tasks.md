@@ -189,11 +189,11 @@
 
 ### E2E Tests
 
-- [ ] T113 [US2] Write E2E test for basic construction: create points, segment, verify in panel in frontend/tests/e2e/basic-construction.spec.ts
-- [ ] T114 [US2] Write E2E test for parametric update: move point, verify segment updates in frontend/tests/e2e/parametric-update.spec.ts
-- [ ] T115 [US2] Write E2E test for infeasibility: create infeasible segment, verify not drawn in frontend/tests/e2e/infeasibility.spec.ts
-- [ ] T116 [US2] Write E2E test for navigation during tool: pan/zoom doesn't cancel tool in frontend/tests/e2e/navigation.spec.ts
-- [ ] T117 [US2] Verify performance: navigation <200ms for 200 elements (SC-002)
+- [X] T113 [US2] Write E2E test for basic construction: create points, segment, verify in panel in frontend/tests/e2e/basic-construction.spec.ts
+- [X] T114 [US2] Write E2E test for parametric update: move point, verify segment updates in frontend/tests/e2e/parametric-update.spec.ts
+- [X] T115 [US2] Write E2E test for infeasibility: create infeasible segment, verify not drawn in frontend/tests/e2e/infeasibility.spec.ts
+- [X] T116 [US2] Write E2E test for navigation during tool: pan/zoom doesn't cancel tool in frontend/tests/e2e/navigation.spec.ts
+- [X] T117 [US2] Verify performance: navigation <200ms for 200 elements (SC-002)
 
 ---
 
