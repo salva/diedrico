@@ -116,8 +116,8 @@
 - [X] T066 [US1] Write integration test for POST /api/projects in backend/tests/integration/projects.spec.ts
 - [X] T067 [US1] Write integration test for GET /api/projects/:id in backend/tests/integration/projects.spec.ts
 - [X] T068 [US1] Write integration test for PUT /api/projects/:id in backend/tests/integration/projects.spec.ts
-- [ ] T069 [US1] Write E2E test for create/save/reload cycle in frontend/tests/e2e/persistence.spec.ts
-- [ ] T070 [US1] Verify autosave triggers after 500ms of inactivity
+- [X] T069 [US1] Write E2E test for create/save/reload cycle in frontend/tests/e2e/persistence.spec.ts
+- [X] T070 [US1] Verify autosave triggers after 500ms of inactivity
 
 ---
 
