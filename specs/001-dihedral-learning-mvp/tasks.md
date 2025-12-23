@@ -170,12 +170,12 @@
 
 ### Dependency & Recomputation
 
-- [ ] T100 [US2] Implement dependency graph edge creation when elements are constructed
-- [ ] T101 [US2] Implement parametric recomputation in DependencyService.ts with topological sort
-- [ ] T102 [US2] Implement infeasibility propagation in ValidationService.ts
-- [ ] T103 [US2] Implement infeasible element rendering (red dashed lines, not drawn) in ElementRenderer.vue
-- [ ] T104 [US2] Write unit tests for dependency graph traversal in frontend/tests/unit/dependencyGraph.spec.ts
-- [ ] T105 [US2] Write unit tests for recomputation logic in frontend/tests/unit/dependencyService.spec.ts
+- [X] T100 [US2] Implement dependency graph edge creation when elements are constructed
+- [X] T101 [US2] Implement parametric recomputation in DependencyService.ts with topological sort
+- [X] T102 [US2] Implement infeasibility propagation in ValidationService.ts
+- [X] T103 [US2] Implement infeasible element rendering (red dashed lines, not drawn) in ElementRenderer.vue
+- [X] T104 [US2] Write unit tests for dependency graph traversal in frontend/tests/unit/dependencyGraph.spec.ts
+- [X] T105 [US2] Write unit tests for recomputation logic in frontend/tests/unit/dependencyService.spec.ts
 
 ### Actions & Elements Panels
 
