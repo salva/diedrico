@@ -48,6 +48,19 @@
       :opacity="element.visualStyle?.opacity || 1.0"
     />
 
+    <!-- Guide2D (perpendicular to hinge line, rendered as extended line) -->
+    <line
+      v-if="element.kind === 'Guide2DPerpendicularToLine'"
+      :x1="getGuidePoint1X(element)"
+      :y1="getGuidePoint1Y(element)"
+      :x2="getGuidePoint2X(element)"
+      :y2="getGuidePoint2Y(element)"
+      :stroke="element.visualStyle?.color || '#00aa00'"
+      :stroke-width="element.visualStyle?.lineWidth || 1"
+      :stroke-dasharray="element.visualStyle?.lineStyle === 'dashed' ? '5,5' : 'none'"
+      :opacity="element.visualStyle?.opacity || 1.0"
+    />
+
     <!-- Circle2D -->
     <circle
       v-if="element.kind.startsWith('Circle2D')"
@@ -186,6 +199,44 @@ function getLinePoint2Y(element: any): number {
     if (length === 0) return y2;
     
     return y2 + (dy / length) * 2000;
+  }
+  return 0;
+}
+
+// Get guide endpoints (perpendicular to hinge line through point)
+// For MVP, HL_HV is horizontal (y=0), so guide is vertical
+function getGuidePoint1X(element: any): number {
+  if (element.kind === 'Guide2DPerpendicularToLine') {
+    const point = getElement(element.throughPointId) as Point2D;
+    if (!point) return 0;
+    // Guide is vertical through the point
+    return getPointX(point);
+  }
+  return 0;
+}
+
+function getGuidePoint1Y(element: any): number {
+  if (element.kind === 'Guide2DPerpendicularToLine') {
+    // Extend upward
+    return -2000;
+  }
+  return 0;
+}
+
+function getGuidePoint2X(element: any): number {
+  if (element.kind === 'Guide2DPerpendicularToLine') {
+    const point = getElement(element.throughPointId) as Point2D;
+    if (!point) return 0;
+    // Guide is vertical through the point
+    return getPointX(point);
+  }
+  return 0;
+}
+
+function getGuidePoint2Y(element: any): number {
+  if (element.kind === 'Guide2DPerpendicularToLine') {
+    // Extend downward
+    return 2000;
   }
   return 0;
 }

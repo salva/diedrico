@@ -205,11 +205,11 @@
 
 ### Guide Creation
 
-- [ ] T118 [US3] Create CreateGuideCommand in frontend/src/commands/CreateGuideCommand.ts
-- [ ] T119 [US3] Implement guide creation: select HL + point → compute perpendicular on both planes
-- [ ] T120 [US3] Store guide as belonging to both planes in worldStore.ts
-- [ ] T121 [US3] Render guide on both planes in ElementRenderer.vue
-- [ ] T122 [US3] Write unit tests for CreateGuideCommand in frontend/tests/unit/commands/createGuide.spec.ts
+- [X] T118 [US3] Create CreateGuideCommand in frontend/src/commands/CreateGuideCommand.ts
+- [X] T119 [US3] Implement guide creation: select HL + point → compute perpendicular on both planes
+- [X] T120 [US3] Store guide as belonging to both planes in worldStore.ts
+- [X] T121 [US3] Render guide on both planes in ElementRenderer.vue
+- [X] T122 [US3] Write unit tests for CreateGuideCommand in frontend/tests/unit/commands/createGuide.spec.ts
 
 ### Transport Operations
 

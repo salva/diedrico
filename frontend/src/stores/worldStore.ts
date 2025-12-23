@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia';
 import type { Element2D, Element3D } from '../types/ElementTypes';
+import type { Guide } from '../domain/world/Guide';
 import { DependencyGraph } from '../domain/world/DependencyGraph';
 
 interface WorldState {
   elements2D: Map<string, Element2D>;
   elements3D: Map<string, Element3D>;
+  guides: Map<string, Guide>;
   dependencyGraph: DependencyGraph;
 }
 
@@ -12,6 +14,7 @@ export const useWorldStore = defineStore('world', {
   state: (): WorldState => ({
     elements2D: new Map(),
     elements3D: new Map(),
+    guides: new Map(),
     dependencyGraph: new DependencyGraph()
   }),
 
@@ -48,6 +51,27 @@ export const useWorldStore = defineStore('world', {
     visibleElements3D: (state) => {
       return Array.from(state.elements3D.values()).filter(
         el => el.visualStyle.visible
+      );
+    },
+
+    /**
+     * Get all guides as array
+     */
+    allGuides: (state) => Array.from(state.guides.values()),
+
+    /**
+     * Get guide by ID
+     */
+    getGuideById: (state) => (id: string): Guide | undefined => {
+      return state.guides.get(id);
+    },
+
+    /**
+     * Get guides for a specific plane
+     */
+    getGuidesForPlane: (state) => (planeId: string): Guide[] => {
+      return Array.from(state.guides.values()).filter(
+        guide => guide.plane1Id === planeId || guide.plane2Id === planeId
       );
     },
 
@@ -137,11 +161,33 @@ export const useWorldStore = defineStore('world', {
     },
 
     /**
+     * Add a guide
+     */
+    addGuide(guide: Guide): void {
+      this.guides.set(guide.id, guide);
+    },
+
+    /**
+     * Get guide by ID
+     */
+    getGuide(id: string): Guide | undefined {
+      return this.guides.get(id);
+    },
+
+    /**
+     * Remove a guide
+     */
+    removeGuide(id: string): void {
+      this.guides.delete(id);
+    },
+
+    /**
      * Clear all elements (for testing or reset)
      */
     clear(): void {
       this.elements2D.clear();
       this.elements3D.clear();
+      this.guides.clear();
       this.dependencyGraph = new DependencyGraph();
     }
   }

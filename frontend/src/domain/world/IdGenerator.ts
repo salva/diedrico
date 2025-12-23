@@ -7,6 +7,7 @@ let pointCounter = 0;
 let segmentCounter = 0;
 let lineCounter = 0;
 let circleCounter = 0;
+let guideCounter = 0;
 let commandCounter = 0;
 let operationCounter = 0;
 
@@ -18,6 +19,7 @@ export function resetCounters(): void {
   segmentCounter = 0;
   lineCounter = 0;
   circleCounter = 0;
+  guideCounter = 0;
   commandCounter = 0;
   operationCounter = 0;
 }
@@ -48,6 +50,13 @@ export function generateLineId(): string {
  */
 export function generateCircleId(): string {
   return `C${String(++circleCounter).padStart(3, '0')}`;
+}
+
+/**
+ * Generate unique ID for a guide
+ */
+export function generateGuideId(): string {
+  return `G${String(++guideCounter).padStart(3, '0')}`;
 }
 
 /**
