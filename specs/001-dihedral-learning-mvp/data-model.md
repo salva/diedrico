@@ -547,7 +547,116 @@ const primitive: PathPrimitive = {
 
 ## Layer 3: Persistence Entities
 
-#### 7. ConstructiveAction
+### Domain Entity: Subprocess
+
+**Purpose**: Hierarchical grouping of actions with default visual properties and visibility control
+
+**Fields**:
+```typescript
+interface Subprocess {
+  id: SubprocessId;                 // UUID
+  name: string;                     // User-defined name or auto-generated
+  parent?: SubprocessId;            // Parent subprocess (for nesting)
+  children: SubprocessId[];         // Child subprocesses (tree structure)
+  actions: ActionId[];              // Actions directly in this subprocess (not in children)
+  
+  // Visual properties
+  defaultStyle?: VisualStyle;       // Default style inherited by contained elements
+  visible: boolean;                 // Visibility cascades to children and elements
+  
+  // UI state
+  collapsed: boolean;               // Whether subprocess is collapsed in UI
+  
+  // Metadata
+  isAuxiliary: boolean;             // True for auto-generated auxiliary action containers
+  created: Date;
+}
+```
+
+**Hierarchical Structure**:
+```
+Root (Project)
+├─ Subprocess "Construction Phase 1"
+│  ├─ Action "Create segment s1"
+│  │  └─ AuxiliarySubprocess (hidden, auto-created)
+│  │     ├─ Action "Create free point a" (auxiliary)
+│  │     └─ Action "Create free point b" (auxiliary)
+│  └─ Action "Create circle c1"
+├─ Subprocess "Transport Operations"
+│  ├─ Subprocess "Guide Setup" (nested)
+│  │  └─ Action "Create guide g1"
+│  └─ Action "Transport point"
+```
+
+**Relationships**:
+- 1 Subprocess → 0..1 Subprocess (parent, for nesting)
+- 1 Subprocess → N Subprocess (children)
+- 1 Subprocess → N Actions (directly contained)
+- 1 Subprocess → 0..1 VisualStyle (default style)
+
+**Auxiliary Subprocess Pattern**:
+- When a main action needs auxiliary actions (auto-created points), an auxiliary subprocess is automatically created
+- The auxiliary subprocess has `isAuxiliary: true` and is collapsed by default
+- Structure: MainAction → AuxiliarySubprocess → AuxiliaryActions
+- The main action's `subprocess` field points to its parent subprocess, not the auxiliary one
+- The auxiliary subprocess is a child of the main action's subprocess
+
+**Visibility Cascade**:
+```typescript
+function isElementVisible(element: Element2D | Element3D): boolean {
+  // 1. Element must not be infeasible
+  if (element.infeasible) return false;
+  
+  // 2. Get element's subprocess via action
+  const action = actions[element.createdBy];
+  const subprocess = subprocesses[action.subprocess];
+  
+  // 3. Check subprocess visibility (cascades up tree)
+  if (!isSubprocessVisible(subprocess)) return false;
+  
+  // 4. Check plane visibility (for 2D elements)
+  if (element instanceof Element2D) {
+    const plane = planes[element.plane];
+    if (!plane.isVisible) return false;
+  }
+  
+  // 5. Element's own visibility (if implemented per-element)
+  return true;
+}
+
+function isSubprocessVisible(subprocess: Subprocess): boolean {
+  if (!subprocess.visible) return false;
+  if (subprocess.parent) {
+    return isSubprocessVisible(subprocesses[subprocess.parent]);
+  }
+  return true;
+}
+```
+
+**Default Style Inheritance**:
+- Subprocess defines `defaultStyle` (e.g., color, line width)
+- Elements in subprocess inherit these defaults unless explicitly overridden
+- Style resolution happens in presentation layer:
+  1. Element's explicit `visualStyle` properties (highest priority)
+  2. Subprocess's `defaultStyle` properties (walk up tree)
+  3. Global defaults (lowest priority)
+
+**Validation Rules**:
+- `parent` must exist if specified
+- No cycles allowed (parent chain must terminate)
+- `children` must all exist and have this subprocess as parent
+- `actions` must all exist and have this subprocess in their `subprocess` field
+- Root-level subprocesses have `parent === undefined`
+
+**State Transitions**:
+- **Expanded** ↔ **Collapsed**: UI toggle, affects visibility of nested content
+- **Visible** ↔ **Hidden**: Affects rendering of all contained elements
+- **Empty** → **Populated**: Actions added
+- **Populated** → **Empty**: All actions moved/deleted
+
+---
+
+### Domain Entity: ConstructiveAction
 
 **Purpose**: Records one user operation; builds command history; defines dependencies
 
@@ -560,10 +669,16 @@ interface ConstructiveAction {
   inputs: ElementId[];              // Dependencies (what this action consumes)
   outputs: ElementId[];             // Results (what this action produces)
   parameters: Record<string, any>;  // Tool-specific params (e.g., radius, angle)
-  auxiliaryActions: ConstructiveAction[]; // Nested actions (e.g., auto-created points)
-  subprocess?: SubprocessId;        // Optional grouping for collapsible sections
+  
+  // Hierarchical grouping
+  subprocess?: SubprocessId;        // Parent subprocess (for organizational grouping)
+  auxiliarySubprocess?: SubprocessId; // Auto-created subprocess for auxiliary actions
+  
+  // Validation
   infeasible: boolean;              // Computed from validation
   infeasibilityReason?: string;     // Human-readable explanation
+  
+  // Style
   visualStyle?: VisualStyle;        // Style applied to outputs (inherited by elements)
 }
 
@@ -602,29 +717,65 @@ enum ActionType {
 **Relationships**:
 - 1 Action → N Elements (inputs)
 - 1 Action → N Elements (outputs)
-- 1 Action → N Actions (auxiliary actions, nested)
-- N Actions → 1 Subprocess (optional grouping)
+- 1 Action → 0..1 Subprocess (parent subprocess)
+- 1 Action → 0..1 Subprocess (auxiliary subprocess, auto-created)
+- N Actions → 1 Subprocess (via subprocess field)
+
+**Auxiliary Actions Structure**:
+The old `auxiliaryActions: ConstructiveAction[]` field is replaced with `auxiliarySubprocess?: SubprocessId`:
+
+```typescript
+// Example: User creates segment by clicking two empty locations
+{
+  id: "action-seg-1",
+  type: "CreateSegment",
+  subprocess: "subprocess-construction", // Parent subprocess
+  auxiliarySubprocess: "subprocess-aux-seg-1", // Auto-created
+  inputs: ["point-a", "point-b"], // Created by auxiliary actions
+  outputs: ["segment-s1"]
+}
+
+// The auxiliary subprocess contains the point-creation actions
+{
+  id: "subprocess-aux-seg-1",
+  name: "Auxiliary for segment s1",
+  parent: "subprocess-construction",
+  isAuxiliary: true,
+  collapsed: true,
+  visible: true,
+  actions: ["action-point-a", "action-point-b"]
+}
+```
 
 **Validation Rules**:
 - `inputs` must all exist (or action is infeasible)
 - `type` must match a known ActionType
 - `outputs` are created by executing the action's command
-- `auxiliaryActions` execute before main action, provide inputs
+- If `auxiliarySubprocess` exists, it must be a valid subprocess with `isAuxiliary: true`
+- `subprocess` and `auxiliarySubprocess` must not be the same
 
 **State Transitions**:
 - **Executable** → **Executed**: Command validates and executes successfully
 - **Executed** → **Infeasible**: Upstream input changes, validation fails during recomputation
 - **Infeasible** → **Executed**: Upstream input corrected, validation passes
 
-**Auxiliary Actions Pattern**:
-- When user clicks intersection → action creates intersection point as auxiliary
-- When user clicks empty space → action creates free point as auxiliary
-- UI shows main action with expandable nested actions:
-  ```
+**UI Presentation**:
+```
+▼ Construction Phase 1
   ▼ Create segment s1
-    └─ Create free point a (auxiliary)
-    └─ Create free point b (auxiliary)
-  ```
+    ▶ Auxiliary (2 actions)  ← collapsed by default
+  ▶ Create circle c1
+```
+
+When expanded:
+```
+▼ Construction Phase 1
+  ▼ Create segment s1
+    ▼ Auxiliary (2 actions)
+      └─ Create free point a
+      └─ Create free point b
+  ▶ Create circle c1
+```
 
 ---
 
