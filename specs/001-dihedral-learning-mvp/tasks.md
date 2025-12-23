@@ -51,25 +51,25 @@
 
 ### Tasks
 
-- [ ] T015 [P] Create frontend/src/types/ElementTypes.ts with Element2D and Element3D union types
-- [ ] T016 [P] Create frontend/src/types/CommandTypes.ts with CommandStatus enum and OperationResult interface
-- [ ] T017 [P] Create frontend/src/types/ResultTypes.ts with Result<T, E> type for error handling
+- [X] T015 [P] Create frontend/src/types/ElementTypes.ts with Element2D and Element3D union types
+- [X] T016 [P] Create frontend/src/types/CommandTypes.ts with CommandStatus enum and OperationResult interface
+- [X] T017 [P] Create frontend/src/types/ResultTypes.ts with Result<T, E> type for error handling
 - [ ] T018 [P] Create frontend/src/domain/world/Element2D.ts with Point2D, Segment2D, Line2D, Circle2D interfaces
 - [ ] T019 [P] Create frontend/src/domain/world/Element3D.ts with Point3D, Line3D, Segment3D interfaces
-- [ ] T020 [P] Create frontend/src/domain/world/VisualStyle.ts with color, lineWidth, lineStyle properties
-- [ ] T021 [P] Create frontend/src/domain/viewState/ProjectionPlane.ts with plane definition and coordinate system
-- [ ] T022 [P] Create frontend/src/domain/viewState/HingeLine.ts with hinge line entity
-- [ ] T023 [P] Create frontend/src/domain/world/DependencyGraph.ts with DAG structure and traversal methods
-- [ ] T024 [P] Create frontend/src/domain/processTree/Process.ts with root process node
-- [ ] T025 [P] Create frontend/src/domain/processTree/Subprocess.ts with subprocess container
-- [ ] T026 [P] Create frontend/src/domain/processTree/ActionGroup.ts with action group (no name field)
-- [ ] T027 [P] Create frontend/src/domain/processTree/Action.ts with ConstructiveAction and DerivedAction
-- [ ] T028 [P] Create frontend/src/domain/calculations/intersections.ts with line-line intersection functions
-- [ ] T029 [P] Create frontend/src/domain/calculations/perpendiculars.ts with perpendicular construction functions
-- [ ] T030 [P] Create frontend/src/domain/calculations/distances.ts with point-line, point-point distance functions
-- [ ] T031 [P] Write unit tests for intersections.ts in frontend/tests/unit/calculations/intersections.spec.ts
-- [ ] T032 [P] Write unit tests for perpendiculars.ts in frontend/tests/unit/calculations/perpendiculars.spec.ts
-- [ ] T033 [P] Write unit tests for distances.ts in frontend/tests/unit/calculations/distances.spec.ts
+- [X] T020 [P] Create frontend/src/domain/world/VisualStyle.ts with color, lineWidth, lineStyle properties
+- [X] T021 [P] Create frontend/src/domain/viewState/ProjectionPlane.ts with plane definition and coordinate system
+- [X] T022 [P] Create frontend/src/domain/viewState/HingeLine.ts with hinge line entity
+- [X] T023 [P] Create frontend/src/domain/world/DependencyGraph.ts with DAG structure and traversal methods
+- [X] T024 [P] Create frontend/src/domain/processTree/Process.ts with root process node
+- [X] T025 [P] Create frontend/src/domain/processTree/Subprocess.ts with subprocess container
+- [X] T026 [P] Create frontend/src/domain/processTree/ActionGroup.ts with action group (no name field)
+- [X] T027 [P] Create frontend/src/domain/processTree/Action.ts with ConstructiveAction and DerivedAction
+- [X] T028 [P] Create frontend/src/domain/calculations/intersections.ts with line-line intersection functions
+- [X] T029 [P] Create frontend/src/domain/calculations/perpendiculars.ts with perpendicular construction functions
+- [X] T030 [P] Create frontend/src/domain/calculations/distances.ts with point-line, point-point distance functions
+- [X] T031 [P] Write unit tests for intersections.ts in frontend/tests/unit/calculations/intersections.spec.ts
+- [X] T032 [P] Write unit tests for perpendiculars.ts in frontend/tests/unit/calculations/perpendiculars.spec.ts
+- [X] T033 [P] Write unit tests for distances.ts in frontend/tests/unit/calculations/distances.spec.ts
 - [ ] T034 [P] Create frontend/src/commands/OperationResult.ts with outputs: Record<string, any> interface
 - [ ] T035 [P] Create frontend/src/commands/Command.ts with addAndExecute(), commit(), rollback() methods
 - [ ] T036 [P] Create frontend/src/commands/CommandStack.ts with undo/redo history management
