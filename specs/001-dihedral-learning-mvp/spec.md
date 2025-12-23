@@ -40,7 +40,7 @@ A **projection plane** is a named 2D surface where the user draws 2D geometry.
 - The system may include additional projection planes later (auxiliary, profile, etc.).
 - The active plane affects only *where new elements are created*; changing the active plane does not modify existing geometry.
 
-### Hinge Lines (HL)
+### Hinge Lines (HL) and Broken Hinge Lines (BHL)
 
 A **hinge line** (HL) is the intersection line shared by two **projection planes** (the actual drawing planes themselves).
 
@@ -49,11 +49,13 @@ A **hinge line** (HL) is the intersection line shared by two **projection planes
 - Hinge lines are the **physical fold lines** between projection planes.
 - For geometric reasoning, hinge lines behave like regular 2D lines.
 
-**Important distinction**: A hinge line is NOT the same as the projection of an intersection between two arbitrary 3D planes. For example, if working with three planes A, B, C:
-- `HL_AB` and `HL_AC` are hinge lines (folds between projection planes)
-- The intersection BC between planes B and C is NOT a hinge line
-- Instead, the BC intersection is **projected** onto planes B and C as regular 2D lines
-- Distance transport occurs between these **projected intersection lines**, not between hinge lines
+**Broken Hinge Lines (BHL)**: When two arbitrary 3D planes intersect (not projection planes), their intersection line is called a **broken hinge line**. For example, with three planes A, B, C:
+- `HL_AB` and `HL_AC` are regular hinge lines (folds between projection planes)
+- `BHL_BC` is the broken hinge line (intersection of planes B and C in 3D space)
+- The BHL_BC appears as **projected lines** on planes B and C (two separate 2D Element lines)
+- Distance transport typically occurs between these BHL projections, not between regular HLs
+
+**Key difference**: Regular HLs are structural (fold lines). BHLs are geometric constructs whose projections are used for transport operations.
 
 ### Guides
 
@@ -1029,7 +1031,8 @@ These use cases cover primitive user actions and micro-interactions. They are in
 
 - **Project**: A saved workspace containing planes, elements, actions, dependencies, and view settings.
 - **ProjectionPlane**: A named 2D drawing surface that can be active/inactive and visible/hidden.
-- **HingeLine (HL)**: The physical fold line (intersection) shared by two **projection planes**. Note: NOT used for general plane intersections—those appear as projected Element2D lines.
+- **HingeLine (HL)**: The physical fold line (intersection) shared by two **projection planes**.
+- **Broken HingeLine (BHL)**: The intersection line between two arbitrary 3D planes (not projection planes). Appears as projected Element2D lines on the relevant projection planes.
 - **Guide**: A line perpendicular to an HL used for transports; belongs to both planes.
 - **Element2D**: Point, segment, line, circle (and optionally arc) that belongs to one plane.
 - **Element3D**: Derived 3D point/line/segment/plane defined explicitly from compatible 2D inputs.

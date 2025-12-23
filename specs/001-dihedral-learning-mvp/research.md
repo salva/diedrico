@@ -174,11 +174,11 @@ From Technical Context, we need to resolve:
 
 ---
 
-### 5. Hinge Lines vs Projected Plane Intersections
+### 5. Hinge Lines (HL) vs Broken Hinge Lines (BHL)
 
 **Critical Distinction**: A common source of confusion in dihedral projection systems is distinguishing between:
 1. **Hinge Lines (HL)**: The physical fold lines between **projection planes**
-2. **Projected Plane Intersections**: 2D lines showing where arbitrary 3D plane intersections appear on projection planes
+2. **Broken Hinge Lines (BHL)**: Intersection lines between arbitrary 3D planes, appearing as projections on projection planes
 
 **Definition**:
 
@@ -188,10 +188,11 @@ From Technical Context, we need to resolve:
 - These are structural features of the projection system itself
 - Used to create guides for transporting points and distances
 
-**Projected Plane Intersection**:
-- When two arbitrary 3D planes intersect, their intersection line exists in 3D space
-- This 3D line is **projected** onto each projection plane as a regular 2D line (Element2D)
-- These projected lines are NOT stored as HingeLines—they're regular line elements
+**Broken Hinge Line (BHL)**:
+- When two arbitrary 3D planes intersect, their intersection line is called a broken hinge line
+- This 3D line is **projected** onto each relevant projection plane as a 2D line (Element2D)
+- The "broken" terminology reflects that it's not a physical fold, but a geometric construct
+- BHL projections are stored as regular Element2D lines, not as HingeLine entities
 
 **Example with Three Planes (A, B, C)**:
 
@@ -199,47 +200,48 @@ Consider working with three auxiliary planes A, B, and C:
 
 1. **HL_AB**: Hinge line between projection plane A and B (if A and B are projection planes)
 2. **HL_AC**: Hinge line between projection plane A and C (if A and C are projection planes)
-3. **BC intersection**: The 3D line where planes B and C intersect
-   - This is **NOT** represented as `HL_BC`
-   - Instead, it appears as:
-     - One Element2D line on projection plane B (showing where the BC intersection projects onto B)
-     - One Element2D line on projection plane C (showing where the BC intersection projects onto C)
+3. **BHL_BC**: Broken hinge line (the 3D line where planes B and C intersect)
+   - This is **NOT** stored as a HingeLine entity
+   - Instead, BHL_BC appears as:
+     - One Element2D line on projection plane B (the projection of BHL_BC onto B)
+     - One Element2D line on projection plane C (the projection of BHL_BC onto C)
 
-**Distance Transport Between Projected Intersections**:
+**Distance Transport Between BHL Projections**:
 
 The classical dihedral technique:
-1. Find the projections of the BC intersection on both planes B and C
-2. These projections are regular 2D line elements (not hinge lines)
-3. Transport distances **between these projected lines** using guides
+1. Find the projections of BHL_BC on both planes B and C
+2. These projections are regular 2D line elements (Element2D, not HingeLine entities)
+3. Transport distances **between these BHL projections** using guides
 4. The guides are perpendicular to the relevant hinge lines (HL_AB or HL_AC)
 
 **Data Model Implications**:
 
 ```typescript
-// ✓ Correct: Hinge lines only for projection plane folds
+// ✓ Correct: HingeLine entities only for projection plane folds
 interface Project {
   planes: ProjectionPlane[];        // P_H, P_V, maybe P_A1
   hingeLines: HingeLine[];          // HL_HV, HL_HA1, HL_VA1
-  elements2D: Element2D[];          // Includes projected intersections
+  elements2D: Element2D[];          // Includes BHL projections
 }
 
-// ✗ Wrong: Don't create hinge lines for arbitrary plane intersections
-// The BC intersection is stored as Element2D lines, not as HL_BC
+// ✗ Wrong: Don't create HingeLine entities for BHLs
+// BHL_BC projections are stored as Element2D lines, not as HingeLine entities
 ```
 
 **Why This Matters**:
 
-1. **Correct modeling**: HingeLine represents a specific geometric relationship (fold between projection planes)
-2. **Transport operations**: Most distance transport in practice occurs between **projected plane intersections** (Element2D lines), not between hinge lines
-3. **Scalability**: With N projection planes, you have N(N-1)/2 hinge lines, but potentially hundreds of projected plane intersections
-4. **Tool design**: "Chained transport" tool must accept generic Element2D lines, not just HingeLines
+1. **Correct modeling**: HingeLine entities represent physical folds. BHL projections are geometric constructs.
+2. **Transport operations**: Most distance transport in practice occurs between **BHL projections** (Element2D lines), not between regular HLs
+3. **Scalability**: With N projection planes, you have N(N-1)/2 hinge lines, but potentially hundreds of BHL projections
+4. **Tool design**: "Chained transport" tool must accept generic Element2D lines (BHL projections, guides, or HL representations), not just HingeLine entities
 
 **Implementation Note**:
 
 When implementing the "Chained Transport" tool or similar operations:
 - Don't restrict the tool to only work with HingeLine entities
-- Allow selection of any Element2D line (could be a projection, a guide, or a hinge line representation)
-- The geometric operation (perpendicular transport) works identically regardless of the semantic meaning
+- Allow selection of any Element2D line (could be a BHL projection, a guide, or an HL representation)
+- The geometric operation (perpendicular transport) works identically regardless of the semantic type
+- Optionally: Add metadata to Element2D to tag BHL projections for visual distinction (e.g., dashed lines)
 
 ---
 

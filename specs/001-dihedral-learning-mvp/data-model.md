@@ -91,13 +91,15 @@ interface ProjectionPlane {
 
 **Purpose**: Intersection line shared by two **projection planes** (the physical fold line); used for guide creation
 
-**Important**: A HingeLine represents the fold between two **projection planes** (like P_H and P_V). It is NOT used to represent intersections between arbitrary 3D planes. Those intersections are **projected** onto the projection planes as regular Element2D lines.
+**Important**: A HingeLine entity represents the fold between two **projection planes** (like P_H and P_V). It is NOT used to represent **broken hinge lines (BHLs)**—intersections between arbitrary 3D planes.
+
+**Broken Hinge Lines (BHL)**: When two arbitrary 3D planes intersect, the intersection is called a broken hinge line. BHLs are **projected** onto the projection planes as regular Element2D lines.
 
 **Example**: With planes A, B, C:
-- HL_AB and HL_AC are HingeLines (actual folds between projection planes)
-- The BC intersection is NOT stored as a HingeLine
-- Instead, BC appears as two separate Element2D lines (one on plane B, one on plane C)
-- Distance transport occurs between these Element2D projected lines
+- HL_AB and HL_AC are HingeLine entities (actual folds between projection planes)
+- BHL_BC (intersection of planes B and C) is NOT stored as a HingeLine entity
+- Instead, BHL_BC appears as two separate Element2D lines (projections on planes B and C)
+- Distance transport occurs between these BHL projections (Element2D lines)
 
 **Fields**:
 ```typescript
