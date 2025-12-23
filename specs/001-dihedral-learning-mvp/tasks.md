@@ -144,12 +144,12 @@
 
 - [X] T081 [P] [US2] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
 - [X] T082 [P] [US2] Implement free point tool handler that builds command with AddElementOp for Point2D
-- [ ] T083 [P] [US2] Create CreatePointOnElementCommand in frontend/src/commands/CreatePointOnElementCommand.ts
-- [ ] T084 [P] [US2] Implement point-on-element tool with closest point projection calculation
-- [ ] T085 [P] [US2] Create CreateIntersectionPointCommand in frontend/src/commands/CreateIntersectionPointCommand.ts
-- [ ] T086 [P] [US2] Implement automatic intersection point creation on element click (FR-023)
-- [ ] T087 [P] [US2] Write unit tests for CreateFreePointCommand in frontend/tests/unit/commands/createFreePoint.spec.ts
-- [ ] T088 [P] [US2] Write unit tests for CreateIntersectionPointCommand in frontend/tests/unit/commands/createIntersectionPoint.spec.ts
+- [X] T083 [P] [US2] Create CreatePointOnElementCommand in frontend/src/commands/CreatePointOnElementCommand.ts
+- [X] T084 [P] [US2] Implement point-on-element tool with closest point projection calculation
+- [X] T085 [P] [US2] Create CreateIntersectionPointCommand in frontend/src/commands/CreateIntersectionPointCommand.ts
+- [X] T086 [P] [US2] Implement automatic intersection point creation on element click (FR-023)
+- [X] T087 [P] [US2] Write unit tests for CreateFreePointCommand in frontend/tests/unit/commands/createFreePoint.spec.ts
+- [X] T088 [P] [US2] Write unit tests for CreateIntersectionPointCommand in frontend/tests/unit/commands/createIntersectionPoint.spec.ts
 
 ### Segment/Line Tools
 
