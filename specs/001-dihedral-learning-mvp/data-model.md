@@ -47,7 +47,7 @@ Project-level container and metadata:
 
 ### Domain Entity: World
 
-**Purpose**: Contains all problem domain data - the geometric construction and its defining actions
+**Purpose**: Contains all problem domain data - the geometric construction (the "what" that is being built)
 
 **Fields**:
 ```typescript
@@ -56,9 +56,6 @@ interface World {
   hingeLines: HingeLine[];          // Hinge lines connecting planes (min 1: HL_HV)
   elements2D: Element2D[];          // 2D geometric elements on projection planes
   elements3D: Element3D[];          // 3D elements derived from 2D projections
-  subprocesses: Subprocess[];       // Hierarchical grouping of actions
-  actionGroups: ActionGroup[];      // Auxiliary action containers
-  actions: ConstructiveAction[];    // Command history (ordered, immutable)
   dependencyGraph: DependencyGraph; // DAG of element/action dependencies
 }
 ```
@@ -68,15 +65,11 @@ interface World {
 - 1 World → N HingeLines (min 1) 
 - 1 World → N Element2D
 - 1 World → N Element3D
-- 1 World → N Subprocesses
-- 1 World → N ActionGroups
-- 1 World → N ConstructiveActions (ordered list)
 - 1 World → 1 DependencyGraph
 
 **Validation Rules**:
 - Must have at least 2 `planes` (H and V for MVP)
 - Must have at least 1 `hingeLine` connecting those planes
-- `actions` order defines command history (immutable past)
 - `dependencyGraph` must be acyclic (DAG)
 - Exactly one plane must have `isActive = true`
 
@@ -94,24 +87,92 @@ interface Project {
   schemaVersion: string;            // "1.0.0" (semantic versioning)
   created: Date;                    // ISO 8601 timestamp
   modified: Date;                   // ISO 8601 timestamp, auto-updated
-  world: World;                     // All domain/construction data
+  world: World;                     // All domain/construction data (the "what")
+  processTree: ProcessTree;         // The process that builds/manipulates the world (the "how")
   viewState: ViewState;             // UI state (zoom, camera, visibility)
 }
 ```
 
+**Conceptual Model**:
+- **World**: The geometric construction - planes, elements, dependencies
+- **ProcessTree**: The construction process - actions organized in subprocesses/groups
+- **ViewState**: UI presentation state
+
+The process tree manipulates the world through actions that create/modify elements.
+
 **Relationships**:
 - 1 Project → 1 World
+- 1 Project → 1 ProcessTree
 - 1 Project → 1 ViewState
 
 **Validation Rules**:
 - `name` must be non-empty, max 100 characters
 - `schemaVersion` must match current or migrateable version
-- `world` must satisfy World validation rules (see above)
+- `world` must satisfy World validation rules
+- `processTree` must satisfy ProcessTree validation rules
 
 **State Transitions**:
-- **New** → **Active**: Created with default World (P_H, P_V, HL_HV)
+- **New** → **Active**: Created with default World (P_H, P_V, HL_HV) and empty ProcessTree
 - **Active** → **Saved**: Persisted to storage (autosave every 500ms after edit)
 - **Active** → **Closed**: User closes project, discards unsaved (no unsaved in MVP due to autosave)
+
+---
+
+## Process Layer (Construction History)
+
+### Domain Entity: ProcessTree
+
+**Purpose**: Unified tree structure representing the construction process - how the world was built
+
+**Fields**:
+```typescript
+interface ProcessTree {
+  root: ProcessNode[];              // Root-level nodes (typically subprocesses)
+}
+
+type ProcessNode = Subprocess | ActionGroup | ConstructiveAction;
+
+interface ProcessNodeBase {
+  id: string;                       // UUID
+  type: "subprocess" | "actionGroup" | "action";
+  children: ProcessNode[];          // Child nodes (empty for action leaves)
+  created: Date;
+}
+```
+
+**Tree Structure**:
+- **Subprocess** nodes can contain: other Subprocesses, ActionGroups, or Actions
+- **ActionGroup** nodes can contain: Actions only
+- **Action** nodes are leaves (no children)
+
+**Traversal**:
+- Depth-first traversal gives execution order
+- Actions are executed in tree order (immutable history)
+
+**Example Tree**:
+```
+ProcessTree.root
+├─ Subprocess "Construction Phase 1"
+│  ├─ Action "Create segment s1"
+│  ├─ ActionGroup "Auxiliary for s1"
+│  │  ├─ Action "Create free point a"
+│  │  └─ Action "Create free point b"
+│  └─ Action "Create circle c1"
+└─ Subprocess "Transport Operations"
+   ├─ Subprocess "Guide Setup" (nested)
+   │  └─ Action "Create guide g1"
+   └─ Action "Transport point"
+```
+
+**Relationships**:
+- 1 ProcessTree → N ProcessNode (tree structure)
+- ProcessNodes form a single unified tree
+
+**Validation Rules**:
+- Tree must be valid (no cycles, each node has at most one parent)
+- Action execution order determined by tree traversal
+- ActionGroups cannot be nested (only contain Actions)
+- Subprocesses can be nested arbitrarily
 
 ---
 
@@ -576,55 +637,32 @@ const primitive: PathPrimitive = {
 
 ### Domain Entity: Subprocess
 
-**Purpose**: User-created hierarchical grouping of actions with default visual properties and visibility control
+**Purpose**: User-created hierarchical grouping of process nodes with default visual properties and visibility control
 
 **Fields**:
 ```typescript
-interface Subprocess {
-  id: SubprocessId;                 // UUID
+interface Subprocess extends ProcessNodeBase {
+  type: "subprocess";
   name: string;                     // User-defined name
-  parent?: SubprocessId;            // Parent subprocess (for nesting)
-  children: SubprocessId[];         // Child subprocesses (tree structure)
-  actions: ActionId[];              // Actions directly in this subprocess (not in children)
-  actionGroups: ActionGroupId[];    // Action groups in this subprocess
+  children: ProcessNode[];          // Can contain: Subprocess, ActionGroup, or Action
   
   // Visual properties
   defaultStyle?: VisualStyle;       // Default style inherited by contained elements
   visible: boolean;                 // Controls element visibility in drawing (cascades to children)
-  
-  // Metadata
-  created: Date;
 }
 ```
 
-**Hierarchical Structure**:
-```
-Root (Project)
-├─ Subprocess "Construction Phase 1"
-│  ├─ Action "Create segment s1"
-│  ├─ ActionGroup (for auxiliary actions of s1)
-│  │  ├─ Action "Create free point a" (auxiliary)
-│  │  └─ Action "Create free point b" (auxiliary)
-│  └─ Action "Create circle c1"
-├─ Subprocess "Transport Operations"
-│  ├─ Subprocess "Guide Setup" (nested)
-│  │  └─ Action "Create guide g1"
-│  └─ Action "Transport point"
-```
-
-**Relationships**:
-- 1 Subprocess → 0..1 Subprocess (parent, for nesting)
-- 1 Subprocess → N Subprocess (children)
-- 1 Subprocess → N Actions (directly contained)
-- 1 Subprocess → N ActionGroups (directly contained)
-- 1 Subprocess → 0..1 VisualStyle (default style)
+**Tree Position**:
+- Can be at root level or nested within other Subprocesses
+- Can contain: other Subprocesses (nesting), ActionGroups, or Actions
+- Forms organizational hierarchy
 
 **Two Types of Visibility**:
 
 1. **Element Visibility** (in the drawing workspace):
    - Controlled by subprocess.visible
    - Determines whether geometric elements are rendered in the 2D/3D view
-   - Cascades to all child subprocesses
+   - Cascades to all child nodes in tree
 
 2. **UI Visibility** (in the construction panel):
    - Controlled by ViewState (panelCollapseState)
@@ -637,34 +675,35 @@ function isElementVisible(element: Element2D | Element3D): boolean {
   // 1. Element must not be infeasible
   if (element.infeasible) return false;
   
-  // 2. Get element's subprocess/action group via action
-  const action = actions[element.createdBy];
+  // 2. Get element's process node via action
+  const action = findActionInProcessTree(element.createdBy);
+  const parentNode = findParentNode(action);
   
-  // 3. Check visibility based on container type
-  if (action.subprocess) {
-    const subprocess = subprocesses[action.subprocess];
-    if (!isSubprocessVisible(subprocess)) return false;
-  } else if (action.actionGroup) {
-    const actionGroup = actionGroups[action.actionGroup];
-    const subprocess = subprocesses[actionGroup.subprocess];
-    if (!isSubprocessVisible(subprocess)) return false;
-  }
+  // 3. Walk up tree to check subprocess visibility
+  if (!isProcessNodeVisible(parentNode)) return false;
   
   // 4. Check plane visibility (for 2D elements)
   if (element instanceof Element2D) {
-    const plane = planes[element.plane];
+    const plane = world.planes.find(p => p.id === element.plane);
     if (!plane.isVisible) return false;
   }
   
-  // 5. Element's own visibility (if implemented per-element)
   return true;
 }
 
-function isSubprocessVisible(subprocess: Subprocess): boolean {
-  if (!subprocess.visible) return false;
-  if (subprocess.parent) {
-    return isSubprocessVisible(subprocesses[subprocess.parent]);
+function isProcessNodeVisible(node: ProcessNode): boolean {
+  if (node.type === "action" || node.type === "actionGroup") {
+    // Actions and ActionGroups don't control visibility - check parent
+    const parent = findParentNode(node);
+    return parent ? isProcessNodeVisible(parent) : true;
   }
+  
+  if (node.type === "subprocess") {
+    if (!node.visible) return false;
+    const parent = findParentNode(node);
+    return parent ? isProcessNodeVisible(parent) : true;
+  }
+  
   return true;
 }
 ```
@@ -678,36 +717,31 @@ function isSubprocessVisible(subprocess: Subprocess): boolean {
   3. Global defaults (lowest priority)
 
 **Validation Rules**:
-- `parent` must exist if specified
-- No cycles allowed (parent chain must terminate)
-- `children` must all exist and have this subprocess as parent
-- `actions` must all exist and have this subprocess in their `subprocess` field
-- Root-level subprocesses have `parent === undefined`
+- `children` must form valid tree structure
+- Cannot create cycles in tree
+- All child nodes must be valid ProcessNodes
 
 **State Transitions**:
-- **Visible** ↔ **Hidden**: Affects rendering of all contained elements
-- **Empty** → **Populated**: Actions added
-- **Populated** → **Empty**: All actions moved/deleted
+- **Visible** ↔ **Hidden**: Affects rendering of all elements created by descendant actions
+- **Empty** → **Populated**: Child nodes added
+- **Populated** → **Empty**: All child nodes moved/deleted
 
 ---
 
 ### Domain Entity: ConstructiveAction
 
-**Purpose**: Records one user operation; builds command history; defines dependencies
+**Purpose**: Records one user operation; leaf node in process tree; manipulates World
 
 **Fields**:
 ```typescript
-interface ConstructiveAction {
-  id: ActionId;                     // UUID
-  type: ActionType;                 // "CreatePoint", "CreateSegment", "CreateGuide", "TransportPoint", etc.
+interface ConstructiveAction extends ProcessNodeBase {
+  type: "action";
+  actionType: ActionType;           // "CreatePoint", "CreateSegment", "CreateGuide", "TransportPoint", etc.
+  children: [];                     // Always empty (leaf node)
   timestamp: Date;                  // When action was performed
-  inputs: ElementId[];              // Dependencies (what this action consumes)
-  outputs: ElementId[];             // Results (what this action produces)
+  inputs: ElementId[];              // Dependencies (what this action consumes from World)
+  outputs: ElementId[];             // Results (what this action produces in World)
   parameters: Record<string, any>;  // Tool-specific params (e.g., radius, angle)
-  
-  // Hierarchical grouping (mutually exclusive)
-  subprocess?: SubprocessId;        // Parent subprocess (for regular actions)
-  actionGroup?: ActionGroupId;      // Parent action group (for auxiliary actions)
   
   // Validation
   infeasible: boolean;              // Computed from validation
@@ -750,10 +784,14 @@ enum ActionType {
 ```
 
 **Relationships**:
-- 1 Action → N Elements (inputs)
-- 1 Action → N Elements (outputs)
-- 1 Action → 0..1 Subprocess (parent subprocess, for regular actions)
-- 1 Action → 0..1 ActionGroup (parent action group, for auxiliary actions)
+- 1 Action → N Elements in World (inputs)
+- 1 Action → N Elements in World (outputs)
+- 1 Action → 1 ProcessNode (parent in tree)
+
+**Tree Position**:
+- Leaf node in ProcessTree
+- Can be child of: Subprocess or ActionGroup
+- Execution order determined by tree traversal
 
 ---
 
@@ -763,31 +801,30 @@ enum ActionType {
 
 **Fields**:
 ```typescript
-interface ActionGroup {
-  id: ActionGroupId;                // UUID
+interface ActionGroup extends ProcessNodeBase {
+  type: "actionGroup";
   name: string;                     // Auto-generated descriptive name (e.g., "Auxiliary for segment s1")
-  subprocess: SubprocessId;         // Parent subprocess (same as main action's subprocess)
-  mainAction: ActionId;             // The primary action that triggered auxiliary actions
-  actions: ActionId[];              // Auxiliary actions in this group
-  
-  // Metadata
-  created: Date;
+  children: ConstructiveAction[];   // Auxiliary actions only (leaf nodes)
+  mainAction: ActionId;             // Reference to the primary action that triggered this group
 }
 ```
 
 **ActionGroup Pattern**:
 - When a main action needs auxiliary actions (e.g., auto-created free points for a segment), an ActionGroup is automatically created
-- The ActionGroup is contained in the same subprocess as the main action
-- **Element Visibility**: Elements in ActionGroup inherit visibility from parent subprocess
+- The ActionGroup is inserted as a sibling to the main action in the tree
+- **Element Visibility**: Elements created by actions in ActionGroup inherit visibility from parent Subprocess
   - ActionGroup does NOT have independent visibility control
-  - Visibility is determined solely by the subprocess.visible cascade
+  - Visibility is determined by walking up tree to find parent Subprocess
 - **UI Display**: ActionGroup and its actions are shown in construction panel
   - Displayed with special visual treatment (lighter color, gear icon ⚙)
-  - Actions grouped together distinctly from regular subprocess actions
+  - Actions grouped together distinctly from regular actions
   - Can be collapsed/expanded independently (state stored in ViewState)
 - **Properties locked**: User cannot edit name or delete ActionGroup directly
-- **Always grouped with main action**: The ActionGroup is in the same subprocess as its main action
-- Structure: MainAction (in subprocess) + ActionGroup (in same subprocess) → contains → AuxiliaryActions
+
+**Tree Position**:
+- Must be child of a Subprocess (same parent as main action)
+- Can only contain Action nodes (no nesting)
+- Automatically created and managed by system
 
 **Two Types of Visibility for ActionGroups**:
 
@@ -802,37 +839,14 @@ interface ActionGroup {
    - Independent from element visibility
 
 **Relationships**:
-- 1 ActionGroup → 1 Subprocess (parent subprocess)
-- 1 ActionGroup → 1 Action (main action that triggered this group)
-- 1 ActionGroup → N Actions (auxiliary actions contained)
-- 1 Action → 0..1 Subprocess (parent subprocess)
-- 1 Action → 0..1 Subprocess (auxiliary subprocess, auto-created)
-- N Actions → 1 Subprocess (via subprocess field)
+- 1 ActionGroup → 1 Subprocess (parent in tree)
+- 1 ActionGroup → 1 Action (main action reference)
+- 1 ActionGroup → N Actions (auxiliary actions as children)
 
-**Auxiliary Actions Structure**:
-The old `auxiliaryActions: ConstructiveAction[]` field is replaced with `auxiliarySubprocess?: SubprocessId`:
-
-```typescript
-// Example: User creates segment by clicking two empty locations
-{
-  id: "action-seg-1",
-  type: "CreateSegment",
-  subprocess: "subprocess-construction", // Parent subprocess
-  auxiliarySubprocess: "subprocess-aux-seg-1", // Auto-created
-  inputs: ["point-a", "point-b"], // Created by auxiliary actions
-  outputs: ["segment-s1"]
-}
-
-// The auxiliary subprocess is a sibling in the same parent subprocess
-{
-  id: "actiongroup-aux-seg-1",
-  name: "Auxiliary for segment s1",
-  subprocess: "subprocess-construction", // Same subprocess as main action
-  mainAction: "action-create-seg-1",
-  actions: ["action-point-a", "action-point-b"],
-  created: new Date()
-}
-```
+**Validation Rules**:
+- `children` must all be ConstructiveAction nodes
+- Cannot contain other ActionGroups or Subprocesses
+- `mainAction` must exist in tree
 
 **UI Presentation in Construction Panel**:
 
@@ -881,10 +895,12 @@ Or with icons:
 ```
 
 **Validation Rules**:
-- `inputs` must all exist (or action is infeasible)
-- `type` must match a known ActionType
+- `children` must all be ConstructiveAction nodes
+- Cannot contain other ActionGroups or Subprocesses
+- `mainAction` must exist in tree
+- `inputs` of actions must all exist (or action is infeasible)
+- `actionType` must match a known ActionType
 - `outputs` are created by executing the action's command
-- `subprocess` and `actionGroup` are mutually exclusive (one must be set)
 
 **State Transitions**:
 - **Executable** → **Executed**: Command validates and executes successfully
@@ -1081,21 +1097,18 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
               │               ├── (N) Element3D ──┬── (N) Element2D (projections)
               │               │                   └── (1) ConstructiveAction (createdBy)
               │               │
-              │               ├── (N) Subprocess ──┬── (0..1) Subprocess (parent)
-              │               │                    ├── (N) Subprocess (children)
-              │               │                    ├── (N) ConstructiveAction
-              │               │                    └── (N) ActionGroup
-              │               │
-              │               ├── (N) ActionGroup ──┬── (1) Subprocess
-              │               │                     ├── (1) ConstructiveAction (main)
-              │               │                     └── (N) ConstructiveAction (auxiliary)
-              │               │
-              │               ├── (N) ConstructiveAction ──┬── (N) Element (inputs)
-              │               │                            ├── (N) Element (outputs)
-              │               │                            ├── (0..1) Subprocess
-              │               │                            └── (0..1) ActionGroup
-              │               │
               │               └── (1) DependencyGraph ── (N) Element + Action
+              │
+              ├── (1) ProcessTree ──┬── (N) ProcessNode (tree structure)
+              │                     │
+              │                     ├── Subprocess ──┬── ProcessNode children
+              │                     │                └── VisualStyle
+              │                     │
+              │                     ├── ActionGroup ──┬── ConstructiveAction children
+              │                     │                 └── mainAction reference
+              │                     │
+              │                     └── ConstructiveAction ──┬── Element inputs (World)
+              │                                               └── Element outputs (World)
               │
               └── (1) ViewState
 ```
@@ -1109,7 +1122,8 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
 1. **Single Active Plane**: Exactly one `ProjectionPlane.isActive = true` per World
 2. **Acyclic Dependencies**: `World.dependencyGraph` must be DAG (no circular dependencies)
 3. **Element Ownership**: Each `Element2D` belongs to exactly one `ProjectionPlane`
-4. **Action History**: `World.actions` is append-only ordered list (immutable past)
+4. **Process Tree Structure**: `ProcessTree` must be valid tree (no cycles, proper parent-child relationships)
+5. **Action Order**: Depth-first traversal of ProcessTree defines action execution order (immutable history)
 
 ### Per-Entity Constraints
 
