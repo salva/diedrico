@@ -824,36 +824,36 @@ enum ActionType {
 interface ActionGroup extends ProcessContainer {
   type: "actionGroup";
   children: ConstructiveAction[];   // One or more actions (ordered by creation time)
-  mainAction?: ActionId;            // Reference to primary action (for auxiliary groups only)
 }
 ```
 
-**ActionGroup Types**:
+**Creation Patterns**:
 
-1. **Regular ActionGroup**: User-created container for normal actions
-   - Created when user performs an action
-   - `mainAction` is undefined
-   - Name can be user-defined or auto-generated from first action
+ActionGroups can be created in two ways:
+
+1. **User-initiated**: When user performs an action, an ActionGroup is created to contain it
+   - Name can be user-defined or auto-generated from the action
    - Can contain single action or multiple related actions
+   - User can edit name and properties
 
-2. **Auxiliary ActionGroup**: Auto-created for auxiliary actions
-   - Created when a main action needs auxiliary actions (e.g., auto-created free points)
-   - `mainAction` references the triggering action
+2. **Auto-created (auxiliary)**: When an action needs auxiliary elements (e.g., auto-created free points for a segment)
+   - System automatically creates an ActionGroup for the auxiliary actions
    - Name auto-generated (e.g., "Auxiliary for segment s1")
-   - Properties locked (user cannot edit)
+   - Displayed with special visual treatment in UI
+   - Properties typically locked from editing
+
+**Important**: Once created, all elements become first-class objects in the World. The grouping is purely informative to help users understand construction history.
 
 **ActionGroup Pattern**:
 - ALL actions must be inside an ActionGroup (even if it's the only action)
-- ActionGroup is inserted as a sibling to the main action in the parent Subprocess (for auxiliary)
 - **Element Visibility**: Elements created by actions in ActionGroup inherit visibility from parent Subprocess
   - ActionGroup does NOT have independent visibility control
   - Visibility is determined by walking up tree to find parent Subprocess
 - **UI Display**: ActionGroup and its actions are shown in construction panel
-  - Regular groups: displayed normally
-  - Auxiliary groups: special visual treatment (lighter color, gear icon ⚙)
+  - User-created groups: displayed normally
+  - Auto-created (auxiliary) groups: special visual treatment (lighter color, gear icon ⚙)
   - Actions grouped together distinctly
   - Can be collapsed/expanded independently (state stored in ViewState)
-- **Properties**: Regular groups editable, auxiliary groups locked
 
 **Tree Position**:
 - Must be child of a Subprocess
@@ -875,16 +875,13 @@ interface ActionGroup extends ProcessContainer {
 
 **Relationships**:
 - 1 ActionGroup → 1 Subprocess (parent in tree)
-- 1 ActionGroup → 1 Action (main action reference)
-- 1 ActionGroup → N Actions (auxiliary actions as children)
+- 1 ActionGroup → N Actions (children, at least one)
 
 **Validation Rules**:
 - `children` must all be ConstructiveAction nodes
 - Must contain at least one Action
 - Cannot contain other ActionGroups or Subprocesses
 - Children ordered by creation time (immutable)
-- If `mainAction` is set, must exist in tree (auxiliary group)
-- If `mainAction` is undefined, it's a regular group
 
 **UI Presentation in Construction Panel**:
 
@@ -1140,8 +1137,7 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
               │                     ├── Subprocess ──┬── ProcessNode children
               │                     │                └── VisualStyle
               │                     │
-              │                     ├── ActionGroup ──┬── ConstructiveAction children
-              │                     │                 └── mainAction reference
+              │                     ├── ActionGroup ──── ConstructiveAction children
               │                     │
               │                     └── ConstructiveAction ──┬── Element inputs (World)
               │                                               └── Element outputs (World)
