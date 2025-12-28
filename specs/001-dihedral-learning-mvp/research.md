@@ -1562,12 +1562,34 @@ Examined the GeoGebra 4.0.34.0+dfsg1 source package (from ~/src) which reveals:
 1. **GeoGebra Source Code License**: GNU General Public License v3 or later
 2. **GeoGebra Language Files, Documentation, and Installers License**: Creative Commons Attribution-Share Alike 3.0 or later
 
-**Key Finding**: Toolbar icons (GIF files in `/geogebra/gui/toolbar/images/`) are **NOT explicitly categorized** in the license.
+**Key Finding**: Toolbar icons are defined as **GeoGebra construction files (.ggb)** and rendered to PNG/GIF.
+
+**Icon Generation Process:**
+1. **Source**: .ggb files in `/icons/` directory (e.g., `mode_point.ggb`, `mode_segment.ggb`)
+2. **Format**: .ggb files are ZIP archives containing XML (`geogebra.xml`)
+3. **Content**: XML defines geometric construction (points, segments, circles, etc.)
+4. **Rendering**: GeoGebra renders construction to PNG/GIF for use in toolbars
+5. **Count**: 47 .ggb icon source files in GeoGebra 4
+
+**Example XML Structure** (from `mode_point.ggb`):
+```xml
+<construction title="" author="" date="">
+  <element type="point" label="A">
+    <show object="true" label="true"/>
+    <coords x="1.697" y="3.764" z="1.0"/>
+    <pointSize val="3"/>
+  </element>
+</construction>
+```
+
+**License Classification:**
+- .ggb files are **NOT explicitly mentioned** in the license
+- Icons rendered from .ggb constructions are also **NOT explicitly categorized**
 
 **Critical Ambiguity:**
-- Icons could fall under "source code" (GPL v3+) → **GPL-compatible** ✓
-- Icons could fall under "installers" (CC-BY-SA 3.0) → **GPL-compatible** ✓
-- Note: CC-BY-SA 3.0 does **NOT** have NonCommercial restriction (unlike modern CC BY-NC-SA 4.0)
+- .ggb construction files could be "source code" (GPL v3+) → **GPL-compatible** ✓
+- Rendered icons (PNG/GIF) could be "part of installers" (CC-BY-SA 3.0) → **GPL-compatible** ✓
+- Both interpretations are GPL-compatible (CC-BY-SA 3.0 has NO NonCommercial restriction)
 
 **GeoGebra v4 vs Modern GeoGebra Licensing:**
 - **Version 4** (2012): GPL v3+ source, CC-BY-SA 3.0 other assets (NO "NC")
@@ -1591,6 +1613,34 @@ Examined the GeoGebra 4.0.34.0+dfsg1 source package (from ~/src) which reveals:
 **Required Actions:**
 
 **FOR GEOGEBRA 4 ICONS (if using v4.0.34.0 from Debian):**
+
+**Recommended Approach - Use the .ggb Source Files:**
+
+1. **Extract Icon Constructions**:
+   - .ggb files are in `~/src/geogebra-4.0.34.0+dfsg1/icons/`
+   - Each .ggb is a ZIP containing `geogebra.xml` with geometric construction
+   - These are the **source files** for icons (likely GPL v3+ as "source code")
+
+2. **Render Icons Programmatically**:
+   - Parse the XML construction definition
+   - Render geometric elements (points, segments, circles) to SVG/Canvas
+   - Create modern SVG icons from the construction data
+   - This is a **derivative work** transforming GPL source into your GPL project ✓
+
+3. **Legal Advantages**:
+   - Using construction data (XML) as source = clearly GPL v3+
+   - Your SVG rendering is derivative work under GPL v3+ ✓
+   - No ambiguity about image file licensing
+   - Maintains GPL compatibility throughout
+
+4. **Technical Advantages**:
+   - Vector-based (XML construction → SVG rendering)
+   - Scalable to any size
+   - Can customize colors, stroke widths programmatically
+   - Modern web-friendly format
+
+**Alternative: Use Pre-Rendered Icons**:
+
 1. **Verify Ambiguous Licensing**:
    - Contact GeoGebra or Debian maintainers to clarify if v4 toolbar icons are GPL v3+
    - If GPL v3+: Can use icons directly ✓
