@@ -905,7 +905,7 @@ Elements are stored separately from their computed geometric state:
    - Computed from element's defining relations
    - Stored in separate realization caches (not in element objects)
    - Invalidated and recomputed when dependencies change
-   - Example: Line realization contains `a`, `b`, `c` (line equation coefficients)
+   - Example: Line realization contains point + direction vector (not equation)
 
 **Realization Cache Structure**:
 ```typescript
@@ -929,9 +929,10 @@ interface Point2DRealization {
 }
 
 interface Line2DRealization {
-  a: number;                        // Line equation: ax + by + c = 0
-  b: number;
-  c: number;
+  pointX: number;                   // Point on line (u-coordinate)
+  pointY: number;                   // Point on line (v-coordinate)
+  dirX: number;                     // Direction vector (normalized)
+  dirY: number;
 }
 
 interface Segment2DRealization {
