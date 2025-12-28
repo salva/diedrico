@@ -1,0 +1,553 @@
+# Implementation Plan: Diedrico Dihedral Learning MVP
+
+**Branch**: `001-dihedral-learning-mvp` | **Date**: 2025-12-29 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/001-dihedral-learning-mvp/spec.md`
+
+## Summary
+
+An educational web application for learning dihedral/orthographic projection using a constructive, step-by-step approach. The application emphasizes the construction process over final results, with explicit dependency tracking, infeasibility detection, and dual 2D/3D visualization.
+
+**Core Technical Approach**: Vue.js 3 frontend with TypeScript, SVG-based 2D rendering, command pattern for undoable operations, process tree for dependency tracking, and file-based JSON persistence via Node.js backend.
+
+## Technical Context
+
+**Language/Version**: TypeScript 5.x (frontend and backend), Node.js 18+ LTS  
+**Primary Dependencies**: Vue.js 3 (Composition API), Vite, Express  
+**Storage**: File-based JSON (MVP scope)  
+**Testing**: Vitest (unit), Playwright (E2E)  
+**Target Platform**: Modern web browsers (Chrome, Firefox, Safari)  
+**Project Type**: Web application (frontend + backend)  
+**Performance Goals**: Smooth rendering for 200+ geometric elements, <100ms hover response  
+**Constraints**: Client-side geometry calculations, no backend computation, offline-capable after load  
+**Scale/Scope**: MVP with 6 user stories, ~30 geometric operations, educational focus
+
+## Constitution Check
+
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+
+- [x] **Layered Architecture**: Yes - Clear separation with Domain (World, ProcessTree), Application (Commands, Services), Presentation (Vue components), and Data (FileStorage) layers
+- [x] **Command Pattern**: Yes - All user actions encapsulated as commands (CreatePointCommand, CreateLineCommand, etc.) with execute/undo/validate
+- [x] **Frontend-First**: Yes - All geometric calculations and UI logic in frontend, backend only provides REST API for file persistence
+- [x] **Technology Discipline**: Yes - Uses approved stack: Vue.js 3, TypeScript, Vite, Vitest, Playwright, Node.js, Express
+- [x] **Test-Driven Development**: Yes - Acceptance criteria defined in spec.md, unit tests for domain logic, E2E tests for user workflows
+
+**Notes**: No deviations from constitution principles.
+
+## Project Structure
+
+### Documentation (this feature)
+
+```text
+specs/001-dihedral-learning-mvp/
+├── plan.md              # This file (implementation plan with phases)
+├── spec.md              # Feature specification (existing)
+├── data-model.md        # Data model definition (existing)
+├── research.md          # Technical research (existing)
+├── quickstart.md        # Developer quickstart (existing)
+├── contracts/           # API contracts (existing)
+│   └── api.yaml
+└── tasks.md             # Detailed task breakdown (existing)
+```
+
+### Source Code (repository root)
+
+```text
+backend/
+├── src/
+│   ├── api/
+│   │   ├── health.ts
+│   │   └── projects.ts
+│   ├── models/
+│   │   └── Project.ts
+│   ├── storage/
+│   │   ├── FileStorage.ts
+│   │   └── ProjectRepository.ts
+│   └── server.ts
+├── tests/
+│   └── integration/
+│       └── projects.spec.ts
+├── package.json
+└── tsconfig.json
+
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── canvas/          # SVG rendering components
+│   │   ├── panels/          # Side panels (Actions, Elements)
+│   │   ├── toolbars/        # Tool selection UI
+│   │   ├── dialogs/         # Modals (Properties, Settings)
+│   │   └── workspace/       # Main workspace layout
+│   ├── composables/         # Vue composables for reusable logic
+│   │   ├── useCommandExecution.ts
+│   │   ├── useElementGeometry.ts
+│   │   ├── useHoverHighlight.ts
+│   │   ├── useSnapping.ts
+│   │   └── useToolFeedback.ts
+│   ├── domain/              # Core business logic
+│   │   ├── world/           # World, Plane, geometric elements
+│   │   ├── processTree/     # Dependency tracking
+│   │   ├── calculations/    # Geometry calculations
+│   │   └── viewState/       # View transformation state
+│   ├── commands/            # Command pattern implementations
+│   │   ├── Command.ts
+│   │   ├── CommandStack.ts
+│   │   ├── CreateFreePointCommand.ts
+│   │   ├── CreateLineCommand.ts
+│   │   └── operations/      # Dependency operations
+│   ├── services/            # Application services
+│   │   ├── DependencyService.ts
+│   │   ├── GeometryService.ts
+│   │   ├── ProjectService.ts
+│   │   └── ValidationService.ts
+│   ├── stores/              # State management (Pinia/composables)
+│   │   ├── worldStore.ts
+│   │   ├── processStore.ts
+│   │   ├── toolStore.ts
+│   │   └── viewStore.ts
+│   ├── types/               # TypeScript type definitions
+│   │   ├── ElementTypes.ts
+│   │   ├── CommandTypes.ts
+│   │   └── ResultTypes.ts
+│   ├── App.vue
+│   └── main.ts
+├── tests/
+│   ├── unit/
+│   │   ├── commands/
+│   │   ├── calculations/
+│   │   └── domain/
+│   └── e2e/
+│       ├── basic-construction.spec.ts
+│       ├── guide-creation.spec.ts
+│       ├── point-transport.spec.ts
+│       ├── distance-transport.spec.ts
+│       ├── infeasibility.spec.ts
+│       └── persistence.spec.ts
+├── index.html
+├── package.json
+├── vite.config.ts
+├── vitest.config.ts
+└── playwright.config.ts
+```
+
+**Structure Decision**: Web application with separate frontend and backend projects. Frontend handles all geometric calculations and rendering (adhering to Frontend-First principle). Backend provides only file persistence API.
+
+## Complexity Tracking
+
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+No violations - this section is empty.
+
+---
+
+## Implementation Phases
+
+This plan follows an incremental, layer-by-layer approach. Each phase adds one small capability, building on previous phases. Implementation starts with minimal data structures and progressively adds geometry types, tools, and UI features.
+
+### Phase 1: Basic World Data Structures
+
+**Implement minimal data model to store points**
+
+- World class to hold geometric elements
+- Basic 2D Point class with x, y coordinates
+- Point storage in World (array or map)
+
+**Dependencies**: None (foundation phase)  
+**Outputs**: `frontend/src/domain/world/World.ts`, `frontend/src/domain/world/Point.ts`
+
+---
+
+### Phase 2: Minimal UI Skeleton
+
+**Create basic Vue.js application**
+
+- Vue.js 3 + TypeScript setup
+- App.vue with simple layout
+- SVG canvas component (empty for now)
+- Basic styling
+
+**Dependencies**: Phase 1  
+**Outputs**: `frontend/src/App.vue`, `frontend/src/components/canvas/SvgCanvas.vue`
+
+---
+
+### Phase 3: Render Fixed Elements
+
+**Display the two projection planes and coordinate system**
+
+- Add fixed plane boundaries to World (P_V, P_H)
+- Render P_V and P_H as rectangles/lines in SVG
+- Show origin point (O)
+- Show hinge line (HL_HV)
+- Basic coordinate transformation (world → SVG coordinates)
+
+**Dependencies**: Phase 2  
+**Outputs**: `frontend/src/domain/world/Plane.ts`, rendering logic in SvgCanvas
+
+---
+
+### Phase 4: Render Points
+
+**Display points on the canvas**
+
+- Render Point objects as SVG circles
+- Apply basic styling (color, radius)
+
+**Dependencies**: Phase 3  
+**Outputs**: Point rendering component/logic
+
+---
+
+### Phase 5: Create Free Points
+
+**Add tool to place points on canvas**
+
+- Toolbar with single "Point" tool button
+- Click handler on canvas
+- Create Point at click coordinates
+- Add Point to World
+- Point appears immediately on canvas
+
+**Dependencies**: Phase 4  
+**Outputs**: `frontend/src/components/toolbars/Toolbar.vue`, point creation logic  
+**User Story**: US1 - Place point on active plane (partial)
+
+---
+
+### Phase 6: Basic Viewport Pan/Zoom
+
+**Navigate the canvas**
+
+- Pan with mouse drag
+- Zoom with mouse wheel
+- Update coordinate transformation
+
+**Dependencies**: Phase 5  
+**Outputs**: `frontend/src/composables/useViewport.ts`, `frontend/src/stores/viewStore.ts`  
+**User Story**: US6 - Viewport manipulation (partial)
+
+---
+
+### Phase 7: Add 2D Lines
+
+**Support line geometry**
+
+- Line class (2D) with two endpoints
+- Render lines as SVG line elements
+- Store lines in World
+
+**Dependencies**: Phase 6  
+**Outputs**: `frontend/src/domain/world/Line.ts`, line rendering logic
+
+---
+
+### Phase 8: Line Creation Tool
+
+**Tool to create lines between points**
+
+- "Line" tool button in toolbar
+- Select two existing points
+- Create Line connecting them
+- Point snapping (highlight nearby points)
+
+**Dependencies**: Phase 7  
+**Outputs**: Line tool implementation, `frontend/src/composables/useSnapping.ts`  
+**User Story**: US2 - Create line/segment (partial)
+
+---
+
+### Phase 9: Add Process Tree
+
+**Track construction history**
+
+- ProcessTree data structure
+- Action nodes for each operation (CreatePoint, CreateLine)
+- Store actions in tree when operations execute
+
+**Dependencies**: Phase 8  
+**Outputs**: `frontend/src/domain/processTree/ProcessTree.ts`, Action types
+
+---
+
+### Phase 10: Command Pattern
+
+**Make operations undoable**
+
+- Command interface
+- CreatePointCommand, CreateLineCommand
+- CommandStack for undo/redo
+- Undo/Redo buttons and shortcuts (Ctrl+Z, Ctrl+Y)
+
+**Dependencies**: Phase 9  
+**Outputs**: `frontend/src/commands/Command.ts`, `frontend/src/commands/CommandStack.ts`, specific command implementations  
+**Constitution**: Command Pattern principle implemented
+
+---
+
+### Phase 11: Add Segments
+
+**Support segment geometry**
+
+- Segment class (finite line with endpoints)
+- Render as SVG path
+- Segment creation tool
+
+**Dependencies**: Phase 10  
+**Outputs**: `frontend/src/domain/world/Segment.ts`, segment tool  
+**User Story**: US2 - Create segment (complete)
+
+---
+
+### Phase 12: Add Circles
+
+**Support circle geometry**
+
+- Circle class with center point and radius
+- Render as SVG circle
+- "Circle" tool (center + radius via drag or second point)
+
+**Dependencies**: Phase 11  
+**Outputs**: `frontend/src/domain/world/Circle.ts`, circle tool  
+**User Story**: US2 - Create circle (complete)
+
+---
+
+### Phase 13: Add Guides
+
+**Support guide lines perpendicular to hinge**
+
+- Guide class
+- Guide creation tool (from HL and a point)
+- Render guides as dashed lines
+- Extend guides across viewport
+
+**Dependencies**: Phase 12  
+**Outputs**: `frontend/src/domain/world/Guide.ts`, guide tool  
+**User Story**: US3 - Create guide (complete)
+
+---
+
+### Phase 14: Line-Line Intersections
+
+**Create intersection points**
+
+- Intersection tool
+- Select two lines
+- Calculate intersection point
+- Create point at intersection
+- Handle parallel lines (no intersection)
+
+**Dependencies**: Phase 13  
+**Outputs**: `frontend/src/domain/calculations/Intersections.ts`, intersection tool  
+**User Story**: US2 - Intersection points (partial)
+
+---
+
+### Phase 15: Point Transport via Guides
+
+**Transport points between planes**
+
+- Point transport tool
+- Select source point and guide
+- Calculate target point on opposite plane
+- Create transported point
+
+**Dependencies**: Phase 14  
+**Outputs**: `frontend/src/commands/TransportPointCommand.ts`, transport calculations  
+**User Story**: US4 - Point transport (complete)
+
+---
+
+### Phase 16: Distance Transport
+
+**Transport distances along guides**
+
+- Distance transport tool
+- Select segment (distance), guide, and target point
+- Create point at transported distance
+
+**Dependencies**: Phase 15  
+**Outputs**: `frontend/src/commands/TransportDistanceCommand.ts`  
+**User Story**: US5 - Distance transport (complete)
+
+---
+
+### Phase 17: More Intersection Types
+
+**Expand intersection capabilities**
+
+- Line-Circle intersections
+- Circle-Circle intersections
+- Handle multiple intersection points
+
+**Dependencies**: Phase 16  
+**Outputs**: Extended `frontend/src/domain/calculations/Intersections.ts`  
+**User Story**: US2 - All intersection types (complete)
+
+---
+
+### Phase 18: Actions Panel
+
+**Show construction history in UI**
+
+- Left sidebar panel
+- List actions from ProcessTree
+- Show action type and parameters
+- Click action to highlight related objects
+
+**Dependencies**: Phase 17  
+**Outputs**: `frontend/src/components/panels/ActionsPanel.vue`
+
+---
+
+### Phase 19: Elements Panel
+
+**Show all geometric objects**
+
+- Right sidebar panel
+- List points, lines, circles, guides
+- Filter by type
+- Click element to highlight on canvas
+
+**Dependencies**: Phase 18  
+**Outputs**: `frontend/src/components/panels/ElementsPanel.vue`
+
+---
+
+### Phase 20: Object Selection
+
+**Select objects on canvas**
+
+- Click to select objects
+- Highlight selected objects
+- Selection state management
+- Multi-select with Ctrl+click
+
+**Dependencies**: Phase 19  
+**Outputs**: Selection logic, `frontend/src/stores/selectionStore.ts`
+
+---
+
+### Phase 21: Hover Highlighting
+
+**Visual feedback on hover**
+
+- Highlight objects under cursor
+- Show object label on hover
+- Different style from selection highlight
+
+**Dependencies**: Phase 20  
+**Outputs**: `frontend/src/composables/useHoverHighlight.ts`  
+**User Story**: US6 - Hover highlighting (complete)
+
+---
+
+### Phase 22: Element Properties
+
+**View and edit object properties**
+
+- Properties panel/dialog
+- Show coordinates, labels, visual styles
+- Edit colors, stroke width, line style
+- Apply changes to selected objects
+
+**Dependencies**: Phase 21  
+**Outputs**: `frontend/src/components/dialogs/PropertiesDialog.vue`  
+**User Story**: US6 - Visual style editing (complete)
+
+---
+
+### Phase 23: Dependency Tracking
+
+**Track which objects depend on others**
+
+- Store dependencies in ProcessTree
+- Update dependent objects when sources change
+- Show dependencies in UI (arrows/tree links)
+
+**Dependencies**: Phase 22  
+**Outputs**: `frontend/src/services/DependencyService.ts`, `frontend/src/domain/processTree/operations/DependencyOperations.ts`
+
+---
+
+### Phase 24: Infeasibility Detection
+
+**Detect impossible operations**
+
+- Check for invalid operations (e.g., parallel lines intersection)
+- Mark infeasible actions in ProcessTree (red indicator)
+- Cascade infeasibility to dependent objects
+- Show error messages
+
+**Dependencies**: Phase 23  
+**Outputs**: `frontend/src/services/ValidationService.ts`, infeasibility marking in UI  
+**User Story**: US2, US4, US5 - Infeasibility handling (complete)
+
+---
+
+### Phase 25: 3D View Panel
+
+**Show 3D reconstruction**
+
+- 3D view panel (simple isometric or Three.js)
+- Display both planes in 3D
+- Show 3D objects derived from projections
+- Basic 3D rotation
+
+**Dependencies**: Phase 24  
+**Outputs**: `frontend/src/components/panels/ThreeDView.vue`, 3D derivation logic  
+**User Story**: US6 - 3D view (complete)
+
+---
+
+### Phase 26: File Save/Load
+
+**Persist projects**
+
+- Serialize World to JSON
+- Backend API for file storage
+- Save/Load buttons
+- Auto-save
+
+**Dependencies**: Phase 25  
+**Outputs**: `backend/src/api/projects.ts`, `frontend/src/services/ProjectService.ts`  
+**User Story**: US1 - Persistence (complete)
+
+---
+
+### Phase 27: Additional UI Polish
+
+**Improve user experience**
+
+- Settings dialog (snap radius, grid, etc.)
+- Keyboard shortcuts
+- Fit-to-view
+- Grid display
+- Status bar with coordinate display
+
+**Dependencies**: Phase 26  
+**Outputs**: `frontend/src/components/dialogs/SettingsDialog.vue`, keyboard handling  
+**User Story**: All - Polish and refinement
+
+---
+
+## Phase Summary
+
+**Total Phases**: 27  
+**Approach**: Incremental layer-by-layer development  
+**Testing**: Unit tests added alongside each phase, E2E tests after Phase 26
+
+### Phase Grouping
+
+- **Phases 1-6**: Foundation (data model, UI skeleton, fixed elements, points, viewport)
+- **Phases 7-13**: Basic geometry (lines, segments, circles, guides)
+- **Phases 14-17**: Advanced geometry (intersections, transport operations)
+- **Phases 18-22**: UI features (panels, selection, properties)
+- **Phases 23-25**: Advanced features (dependencies, infeasibility, 3D view)
+- **Phases 26-27**: Persistence and polish
+
+### Constitution Alignment
+
+- **Layered Architecture**: Maintained throughout all phases with clear domain/application/presentation separation
+- **Command Pattern**: Introduced in Phase 10, extended in subsequent phases
+- **Frontend-First**: Backend only introduced in Phase 26 for persistence
+- **Incremental Development**: Each phase adds one focused capability
