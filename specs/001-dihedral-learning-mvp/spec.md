@@ -165,7 +165,7 @@ The application uses **Monge projection** (descriptive geometry) with the follow
   - **k** = (0, 0, 1) - Z-axis (vertical, pointing up)
 - **Viewer position**: Located at (0, -∞, 0), looking toward origin along +Y direction
 
-**⚠️ Coordinate System Handedness**: This is a **left-handed coordinate system** following Monge projection conventions. The viewer looks along +Y toward the origin, with X to the right and Z upward. When rendering in Three.js (which uses a right-handed coordinate system), the Y-axis must be inverted: `threeY = -domainY`.
+**⚠️ Coordinate System Handedness**: This is a **left-handed coordinate system** following Monge projection conventions. The viewer looks along +Y toward the origin, with X to the right and Z upward.
 
 #### Projection Planes in 3D
 
@@ -433,7 +433,7 @@ The UI is organized into four main areas:
 
 ### Tool Families and Interaction Rules
 
-The full UI structure, tool groupings, and interaction rules are defined in **User Interface (Detailed)** below; that section is the source of truth.
+**For comprehensive UI interaction patterns, toolbar organization, cursor feedback, and viewport interaction modes, see [ui-spec.md](/ui-spec.md).**
 
 At a conceptual level, the UI is designed so that:
 
@@ -455,7 +455,9 @@ The application uses consistent naming to support learning:
 
 ## User Interface (Detailed)
 
-This section describes what the user sees and how they interact with the UI. It is derived from `pre-spec-ui.md` and focuses on user-visible components and behaviors.
+**For comprehensive UI architecture, layout, interaction patterns, and component specifications, see [ui-spec.md](/ui-spec.md).**
+
+This section describes user-visible components and behaviors at a functional level, focusing on what tools do and how they fulfill learning objectives. For detailed interaction flows, cursor feedback, panel structures, and visual design, refer to ui-spec.md.
 
 ### Overall Layout
 
@@ -466,9 +468,11 @@ The interface is organized into four main areas:
 3. **Auxiliary 3D view overlay** (read-only, for spatial understanding)
 4. **Left-side stacked panels** (actions, elements)
 
-The application is designed for mouse + keyboard use.
+The application is designed for mouse + keyboard use. Detailed layout architecture and responsive behavior are documented in ui-spec.md.
 
 ### Central 2D Drawing Area
+
+**Also called**: Main Viewport in ui-spec.md
 
 The 2D view is the main work area where all constructive operations are performed.
 
@@ -507,179 +511,62 @@ Navigation:
 
 ### Auxiliary 3D View Overlay
 
-The 3D view is displayed as a rectangular overlay on top of the 2D view (typically in a corner; positioning may be configurable).
+The 3D view is a read-only overlay providing spatial understanding (see ui-spec.md for positioning, resizing, and visual design).
 
-Its purpose is exclusively visual:
+**Purpose**: Exclusively visual; helps learners understand 3D spatial relationships.
 
-- Allowed: rotate (drag), pan (`Shift` + drag), zoom (mouse wheel).
-- Not allowed: select elements for editing; create or modify geometry.
+**Interaction**:
+- Allowed: rotate (drag), pan (`Shift` + drag), zoom (mouse wheel)
+- Not allowed: select elements for editing; create or modify geometry
 
-**3D display options**:
-
-The user can toggle (within the 3D overlay controls):
-
-- showing 2D constructive elements on projection planes in the 3D view,
-- showing linking visuals between 3D elements and their 2D projections (e.g., dashed connectors).
-
-The 3D overlay controls are also where the user manages projection plane visibility (and related visibility such as hinge lines and plane-associated 2D elements).
+**Display Options** (toggles within 3D overlay controls):
+- Show 2D constructive elements on projection planes in 3D view
+- Show linking visuals between 3D elements and their 2D projections (dashed connectors)
+- Manage projection plane visibility and associated elements
 
 ### Top Toolbars
 
 The top toolbars contain the primary user controls, grouped by operation type.
 
-#### Toolbar Interaction Model
+**For detailed toolbar interaction patterns, sequential flows, cursor feedback, and visual design, see [ui-spec.md](/ui-spec.md#top-toolbar-system).**
 
-The toolbars follow a structured interaction model designed to make geometric reasoning explicit and unambiguous:
+#### Toolbar Interaction Model (Summary)
 
-**Single active tool**:
+The toolbars follow a structured interaction model designed to make geometric reasoning explicit:
 
-- At any moment, exactly **one tool is active**.
-- The active tool determines:
-  - how mouse clicks are interpreted,
-  - which element types can be selected,
-  - which actions are allowed.
-- While a tool is active, clicks are **not interpreted as generic selection**, but as inputs to complete the tool's operation.
-- The active tool state must be:
-  - clearly visible,
-  - persistent until the operation is completed or cancelled.
+**Core Principles**:
+- **Single active tool**: Exactly one tool is active at any time, determining how clicks are interpreted
+- **Tool families**: Tools grouped into functional families with sub-tool variants
+- **Sequential flow**: Each tool defines explicit steps that must be completed in order
+- **Valid input restriction**: Only elements valid for the current step can be selected
+- **Continuous feedback**: Constant visual feedback via highlighting, snapping, previews, and cursor changes
+- **Explicit results**: All constructions explicitly recorded as traceable actions
+- **Navigation separation**: Pan/zoom available at any time without canceling active tool
+- **No hidden inferences**: Every entity used as input must exist explicitly
 
-**Tool families and organization**:
+**Constructive Interaction Constraints**:
+- Tools do not accept arbitrary point-on-element input unless that point exists explicitly
+- **Automatic auxiliary actions** (recorded as nested actions):
+  - **Intersection points**: Clicking on visible intersection auto-creates intersection point
+  - **Free points**: Clicking empty space (when tool expects point) auto-creates free point
+- **Point snapping**: Cursor snaps to existing points and intersections within snap radius
+- Visual aids (highlighting, snapping, intersection markers, cursor changes) guide user choices
 
-- Tools are grouped into **functional families**, each represented by a primary button.
-- Each family contains multiple **sub-tools** that are conceptually related.
-- Sub-tools are accessed via a dropdown menu associated with the button.
-- The last sub-tool used may remain as the default for subsequent use.
-- This approach keeps the toolbar compact while grouping similar operations and making user intent explicit.
-
-**Sequential interaction flow**:
-
-- Each tool defines an **explicit sequential flow** of steps.
-- Each step expects a specific type of input:
-  - selection of a point,
-  - selection of a line,
-  - numeric value entry,
-  - etc.
-- The system always knows:
-  - the current step of the tool,
-  - which inputs are valid at that step.
-- The user cannot advance to the next step without correctly completing the previous one.
-
-**Valid input restriction**:
-
-- While a tool is active, only elements **valid** for the current step can be selected.
-- Valid elements may be visually highlighted.
-- Invalid elements are ignored or do not react to clicks.
-- This behavior reduces errors and reinforces understanding of the geometric process.
-
-**Continuous visual feedback**:
-
-During interaction, the system provides **constant visual feedback**, including:
-
-- **Hover highlighting of valid inputs**: When a tool is active and waiting for input, as the user moves the cursor over the drawing:
-  - Elements that are valid inputs for the current step are visually highlighted (e.g., with a colored outline or glow).
-  - **Point snapping**: When the cursor moves within a nearby area (snap radius) of an existing point, the cursor visually "snaps" to that point (e.g., the cursor jumps to the exact point location, and the point is highlighted more intensely). This allows the user to select the point without requiring exact cursor positioning.
-  - **For intersections**: When the cursor approaches an intersection between elements, both intersecting elements are highlighted near the intersection point, and a visual marker (small circle or crosshair) appears at the intersection location, indicating it can be clicked to automatically create an intersection point. Snapping also applies to intersection markers.
-  - **For empty space**: When the cursor is over empty space (not near any element or snap target), the cursor may change to indicate that clicking will create a free point at that location.
-- Clear indication of the current step (e.g., "Select first point", "Select second point").
-- Preview of the result when possible (e.g., a dynamic line preview following the cursor after the first point is selected; the preview snaps to follow snap targets).
-- Brief status messages.
-
-The feedback guides the user without automating decisions.
-
-**Explicit result creation**:
-
-Upon successfully completing all steps of a tool:
-
-- the construction is created explicitly,
-- it is recorded as a coherent and traceable action,
-- corresponding dependencies are established.
-
-No implicit entities are created, and no ambiguous constructions are completed.
-
-**Completion and repetition**:
-
-After completing an operation:
-
-- the tool may remain active to allow repeating the same action,
-- or it may return to a neutral state.
-
-The behavior must be consistent and predictable for the user.
-
-**Operation cancellation**:
-
-The user can cancel a tool at any time:
-
-- via an explicit cancellation action (e.g., a dedicated key),
-- or by selecting a different tool.
-
-When cancelled:
-
-- partial selections are discarded,
-- no entities are created,
-- the system returns to a coherent state.
-
-**Separation of navigation and construction**:
-
-Navigation actions (pan, zoom) are conceptually separate from construction tools.
-
-- Navigation can be available at any time.
-- Using navigation does not cancel or alter the active tool.
-
-This allows working with complex drawings without interrupting the construction flow.
-
-**Absence of hidden inferences**:
-
-The toolbar system **does not introduce implicit inferences**:
-
-- No automatic points are created from approximate clicks.
-- No arbitrary positions are combined with geometric constraints.
-- Every entity used as input must exist explicitly.
-
-Each construction reflects exactly the decisions made by the user.
-
-**Pedagogical objective**:
-
-This toolbar model is designed to:
-
-- make geometric reasoning explicit,
-- avoid ambiguities in interaction,
-- reinforce the relationship between action and result,
-- allow the user to mentally reconstruct the process followed.
-
-The toolbars constitute an **interaction language**, not just a set of buttons.
-
-**Constructive interaction constraint (key)**:
-
-- Tools must not accept an arbitrary point-on-element as input unless that point already exists as an explicit 2D point entity.
-- If a point on a segment/line/circle is needed (not at an intersection), the user must first create it via an explicit tool variant (e.g., point-on-element).
-- **Point snapping**: When the cursor is within a snap radius of an existing point or intersection marker, the system snaps the cursor to that location, providing visual feedback that the point will be selected. This enhances usability without introducing implicit geometry.
-- **Exception for intersections**: When a tool requires a point input and the user clicks on a visible intersection between two elements, the system automatically creates an explicit intersection point at that location and uses it for the tool. This point is recorded as an auxiliary action within the main action.
-- **Exception for free points during construction**: When a tool requires a point input and the user clicks on empty space (not on or near any existing element or snap target), the system automatically creates a free point at that location and uses it for the tool. This point is recorded as an auxiliary action within the main action.
-- The UI provides visual aids (highlighting of valid elements, snapping behavior, intersection indicators, cursor changes) to help users understand what will happen when they click.
-- When a tool description states "Select a point" or "Click to place", this means:
-  - **Select existing point**: Click on or near an existing point entity (snapping assists selection).
-  - **Click on intersection**: Click on a visible intersection; the system creates an intersection point automatically as an auxiliary action.
-  - **Click on empty space**: Click away from any element or snap target; the system creates a free point automatically as an auxiliary action.
-  - It does NOT mean "click near an element to implicitly create a point on it" (except for intersections as noted above).
+**Pedagogical Objective**: Make geometric reasoning explicit, avoid ambiguities, reinforce action-result relationships, enable mental reconstruction of the construction process.
 
 #### Active Plane Selector
 
-- Shows available planes (e.g., P_H, P_V).
-- Click a plane to make it the active plane.
-- **All planes remain visible** regardless of which is active.
+- Dropdown showing available planes (e.g., P_H, P_V, auxiliary planes)
+- Click a plane to make it the active plane
+- **All planes remain visible** regardless of which is active
 
-Visual behavior:
+**Behavior**:
+- Changing active plane does not hide/show planes or modify geometry
+- Only affects where new 2D elements are created
+- Updates visual emphasis (active plane full intensity, others de-emphasized)
+- Hinge lines always visible regardless of active plane
 
-- Elements on the active plane are rendered at full intensity/opacity (e.g., 100%).
-- Elements on non-active planes are visually de-emphasized (e.g., 50% opacity, lighter colors) but remain fully visible.
-- Hinge lines are always visible regardless of active plane.
-
-Changing the active plane:
-
-- does not hide or show any planes (all planes always visible),
-- does not modify existing geometry,
-- updates visual emphasis (active plane to full intensity, previous active plane to de-emphasized),
-- only affects where new 2D elements are created.
+(See ui-spec.md for visual styling details)
 
 #### Navigation Toolbar
 
@@ -948,49 +835,52 @@ If the selection does not define a valid 3D element:
 
 ### Left-Side Stacked Panels
 
+**For detailed panel architecture, tree structures, interaction patterns, and visual design, see [ui-spec.md](/ui-spec.md#left-panel-stack).**
+
 All panels are located on the left side and are stackable and collapsible.
 
-#### Constructive Actions Panel
+#### Constructive Actions Panel (Process Tree)
 
-- Shows the history of performed actions, organized hierarchically by subprocesses.
-- **ActionGroups**: When a tool automatically creates supporting geometry (e.g., free points or intersection points during segment creation), these are grouped in ActionGroups. ActionGroups are displayed with special visual treatment:
-  - **No visibility toggle**: ActionGroups do not have an eye icon for toggling visibility. Elements in ActionGroups inherit visibility from the parent subprocess.
-  - **Special styling**: Displayed with lighter color/gray text, special icon (⚙ gear), or boxed/indented layout
-  - **Collapsible**: Can be collapsed/expanded like subprocesses to show/hide auxiliary actions
-  - **Properties locked**: User cannot edit name or properties of ActionGroups
-  
-**Example display**:
-```
-▼ 👁 Construction Phase 1          ← regular subprocess with visibility toggle
-  ○ Create segment s1
-  ▼ ⚙ Auxiliary (2 actions)        ← ActionGroup, no eye icon, gear icon
-    ⋅ Create free point a          ← auxiliary actions with different bullet
-    ⋅ Create free point b
-  ○ Create circle c1
-```
+**Also called**: Process Tree Panel in ui-spec.md
+
+Shows the history of performed actions, organized hierarchically:
+
+- **Subprocesses**: Named containers for logically grouped actions, with visibility toggle (👁 eye icon)
+- **ActionGroups**: Visual containers for auxiliary actions (auto-created points during construction)
+  - No visibility toggle (inherit from parent subprocess)
+  - Special visual treatment (gear icon ⚙, lighter styling, boxed layout)
+  - Collapsible to show/hide auxiliary actions
+  - Properties locked (no user editing)
+- **Actions**: Individual construction operations
 
 **Two types of visibility**:
-1. **Drawing visibility**: Whether geometric elements appear in the 2D/3D workspace
-   - Regular subprocesses: controlled by eye icon toggle (subprocess.visible)
-   - ActionGroups: no toggle, always inherit from parent subprocess
-2. **Panel visibility**: Whether content is shown/hidden in the action list
-   - Both subprocesses and ActionGroups: controlled by collapse/expand triangle (state stored in ViewState)
+1. **Drawing visibility**: Whether geometric elements appear in viewport (controlled by eye icon on subprocesses)
+2. **Panel visibility**: Whether content is shown/hidden in action list (controlled by collapse/expand for both subprocesses and ActionGroups)
 
-- Allows expanding/collapsing subprocesses and individual actions to show/hide content.
-- Hover behavior uses unified hover highlighting (focus element, direct ancestors, direct descendants).
-- Auxiliary actions can be hovered and inspected individually, but are visually distinguished from primary actions (lighter styling, different bullet/icon).
+**Interaction** (see ui-spec.md for details):
+- Hover triggers unified dependency highlighting
+- Auxiliary actions can be inspected individually
+- Visual distinction between primary and auxiliary actions
 
 #### Elements Panel
 
-- Lists items in two main sections:
-  - **2D**: constructed 2D elements, grouped by nature (e.g., points, lines, segments, circles, guides).
-  - **3D**: derived 3D elements, grouped by nature (e.g., points, lines, segments, planes), plus **projection planes**.
-  - Types that do not make sense in 2D (notably planes and projection planes) MUST appear only under **3D**.
-- Hover behavior is identical to the actions panel (unified hover highlighting).
-- Hovering a plane entry highlights the corresponding plane representation.
-- Clicking an item opens the element properties dialog.
+Lists items in two main sections:
+
+- **2D Elements**: Constructed 2D elements, grouped by projection plane and element type
+  - Points, segments, lines, circles, guides
+  - Grouped under their projection plane (P_H, P_V, etc.)
+- **3D Elements**: Derived 3D elements, grouped by type
+  - Points, lines, segments, planes
+  - Includes projection planes (P_H, P_V, auxiliary planes)
+
+**Interaction** (see ui-spec.md for tree structure and details):
+- Hover triggers unified dependency highlighting
+- Hovering a plane highlights its representation in both 2D and 3D views
+- Click element to open properties dialog
 
 ### Dialogs and Controls
+
+**For detailed dialog layouts, component specifications, and visual design, see [ui-spec.md](/ui-spec.md#dialogs-and-modals).**
 
 #### Element Properties Dialog
 
@@ -1013,6 +903,8 @@ Default and inheritance behavior:
 
 ### Visual Highlighting and Feedback
 
+**For comprehensive cursor feedback, viewport interaction modes, and visual styling details, see [ui-spec.md](/ui-spec.md#viewport-interaction-modes).**
+
 The UI uses visual cues to communicate structure and validity:
 
 - focus element,
@@ -1034,6 +926,8 @@ When hover highlighting is active, it is:
 - The user corrects geometry directly by adjusting inputs.
 
 ### Accessibility and Usability Expectations
+
+**For detailed interaction patterns, cursor conventions, tooltips, and responsive design, see [ui-spec.md](/ui-spec.md#responsive-design-considerations).**
 
 - Clear iconography.
 - Continuous visual feedback.

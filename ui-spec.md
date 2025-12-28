@@ -11,8 +11,9 @@
 This document specifies the user interface architecture, layout, and interaction patterns for the Diedrico application. It describes the visual structure, component organization, and behavioral patterns that govern how users interact with the system.
 
 **Relationship to Other Documents**:
-- **spec.md**: Provides detailed tool behaviors, functional requirements, and user scenarios. This document references spec.md for specifics while focusing on UI structure and interaction patterns.
-- **constitution.md**: Establishes architectural principles including pedagogical transparency and principle-based rendering, which directly influence UI design decisions.
+- **[specs/001-dihedral-learning-mvp/spec.md](/specs/001-dihedral-learning-mvp/spec.md)**: Provides detailed tool behaviors, functional requirements, geometric definitions, and user scenarios. This document references spec.md for functional specifics while focusing on UI structure and interaction patterns.
+- **[.specify/memory/constitution.md](/.specify/memory/constitution.md)**: Establishes architectural principles including pedagogical transparency and principle-based rendering, which directly influence UI design decisions.
+- **[specs/001-dihedral-learning-mvp/data-model.md](/specs/001-dihedral-learning-mvp/data-model.md)**: Defines world data structures that the UI dynamically renders.
 
 **Key Architectural Principle**: The UI presents a **dynamic view** of the world data structures. All geometric elements, projection planes, guides, and relationships are rendered using geometric first principles derived from the world model. There is NO special-case rendering logic for specific planes or elements (except for initial world elements: P_H, P_V, origin O, which are created during initialization but thereafter treated as regular world elements).
 
