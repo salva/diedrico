@@ -976,17 +976,23 @@ interface Plane3DRealization {
 ```
 
 **Homogeneous Coordinates**:
-- **2D Points**: `[x, y, w]` where actual coordinates are `(x/w, y/w)`
-- **2D Vectors/Directions**: `[dx, dy, 0]` with `w=0` to distinguish from points
-- **3D Points**: `[x, y, z, w]` where actual coordinates are `(x/w, y/w, z/w)`
-- **3D Vectors/Directions**: `[dx, dy, dz, 0]` with `w=0`
-- **Normalized w=1**: For efficiency, typically store points with `w=1`
+- **2D Points**: `[x, y, 1]` - regular points with `w=1`
+- **2D Vectors/Directions**: `[dx, dy, 0]` - with `w=0` to distinguish from points
+- **3D Points**: `[x, y, z, 1]` - regular points with `w=1`
+- **3D Vectors/Directions**: `[dx, dy, dz, 0]` - with `w=0` to distinguish from points
+- **Special cases**: Points at infinity use `w=0` (e.g., ideal points)
+
+**Conventions**:
+- Regular geometric points: **always use w=1**
+- Direction vectors: **always use w=0**
+- Actual Cartesian coordinates from homogeneous: divide by w (x/w, y/w) or (x/w, y/w, z/w)
+- For w=1, no division needed: `[x, y, 1]` represents point (x, y)
 
 **Benefits**:
 - Unified treatment of points and vectors
 - Matrix transformations handle translation and linear operations uniformly
 - Intersection/projection calculations simplified
-- Points at infinity represented naturally (w=0)
+- Points at infinity represented naturally when needed
 
 **Why Separate?**
 - **Elements**: Persistent data, saved to disk, define construction history
