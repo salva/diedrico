@@ -11,9 +11,9 @@
 This document specifies the user interface architecture, layout, and interaction patterns for the Diedrico application. It describes the visual structure, component organization, and behavioral patterns that govern how users interact with the system.
 
 **Relationship to Other Documents**:
-- **[specs/001-dihedral-learning-mvp/spec.md](/specs/001-dihedral-learning-mvp/spec.md)**: Provides detailed tool behaviors, functional requirements, geometric definitions, and user scenarios. This document references spec.md for functional specifics while focusing on UI structure and interaction patterns.
+- **[specs/001-dihedral-learning-mvp/spec.md](spec.md)**: Provides detailed tool behaviors, functional requirements, geometric definitions, and user scenarios. This document references spec.md for functional specifics while focusing on UI structure and interaction patterns.
 - **[.specify/memory/constitution.md](/.specify/memory/constitution.md)**: Establishes architectural principles including pedagogical transparency and principle-based rendering, which directly influence UI design decisions.
-- **[specs/001-dihedral-learning-mvp/data-model.md](/specs/001-dihedral-learning-mvp/data-model.md)**: Defines world data structures that the UI dynamically renders.
+- **[specs/001-dihedral-learning-mvp/data-model.md](data-model.md)**: Defines world data structures that the UI dynamically renders.
 
 **Key Architectural Principle**: The UI presents a **dynamic view** of the world data structures. All geometric elements, projection planes, guides, and relationships are rendered using geometric first principles derived from the world model. There is NO special-case rendering logic for specific planes or elements (except for initial world elements: P_H, P_V, origin O, which are created during initialization but thereafter treated as regular world elements).
 
@@ -1172,9 +1172,9 @@ The following UI state is saved per project and restored on project load:
 
 ## References and Related Documents
 
-- **specs/001-dihedral-learning-mvp/spec.md**: Functional requirements, detailed tool behaviors, user scenarios
-- **specs/001-dihedral-learning-mvp/data-model.md**: World data structures, element definitions, realization cache architecture
-- **.specify/memory/constitution.md**: Architectural principles, including Principle VIII (Principle-Based Rendering)
+- **[spec.md](spec.md)**: Functional requirements, detailed tool behaviors, user scenarios
+- **[data-model.md](data-model.md)**: World data structures, element definitions, realization cache architecture
+- **[constitution.md](/.specify/memory/constitution.md)**: Architectural principles, including Principle VIII (Principle-Based Rendering)
 
 ---
 
