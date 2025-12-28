@@ -1373,25 +1373,42 @@ class ProjectService {
 
 ### Compatibility Assessment
 
-**COMPATIBLE ✓** - With conditions:
+**CRITICAL FINDINGS:**
 
-1. **License Compatibility**:
-   - CC BY-NC-SA 4.0 permits use in non-commercial projects
-   - Our GPL 3+ license is compatible when used for non-commercial purposes
-   - **Attribution required**: Must credit GeoGebra® with copyright notice and link to https://www.geogebra.org/
+**1. EUPL v1.2 IS GPL-Compatible ✓**
+- GeoGebra source code is licensed under **EUPL v1.2**
+- EUPL v1.2 **explicitly includes GPL v2 and GPL v3** in its downstream compatibility list (Appendix)
+- According to the [EU EUPL compatibility matrix](https://interoperable-europe.ec.europa.eu/collection/eupl/matrix-eupl-compatible-open-source-licences): "the EUPL v1.2 is compatible with the GPLv3... you may distribute under the GPLv3 a larger derivative work integrating components covered by the EUPL and by the GPLv3"
+- **Conclusion**: EUPL-licensed source code CAN be used in GPL 3+ projects
 
-2. **Non-Commercial Restriction**:
-   - GeoGebra's language files and icons are restricted to **non-commercial use only**
-   - Our project is educational and non-commercial: **COMPLIANT ✓**
-   - If project ever becomes commercial, icons would need to be:
-     - Replaced with custom icons, OR
-     - Licensed through commercial agreement with GeoGebra GmbH
+**2. Icons Are NOT Under EUPL - They're CC BY-NC-SA 4.0 ✗**
+- GeoGebra's license explicitly states: "all GeoGebra user interface image and style files **(including logos, icons and style sheets)** (together 'the Language Files') are licensed to you under the terms of the Creative Commons Attribution-NonCommercial-ShareAlike license (version 4.0)"
+- Toolbar icons are classified as **"user interface image files"**, NOT source code
+- Therefore icons fall under **CC BY-NC-SA 4.0**, not EUPL v1.2
 
-3. **ShareAlike Requirement**:
-   - CC BY-NC-SA 4.0 requires derivative works be shared under same license
-   - We are NOT modifying the icons themselves (using as-is)
-   - Icons are separate resources, not integrated into our GPL code
-   - **Interpretation**: ShareAlike applies to icon modifications, not to applications that merely use the icons
+**3. CC BY-NC-SA 4.0 is NOT GPL-Compatible ✗**
+- The **NonCommercial (NC)** restriction is incompatible with GPL
+- GPL requires freedom to use software commercially
+- CC licenses with NC restrictions cannot be combined with GPL-licensed works
+- Even for non-commercial projects, mixing GPL with NC-licensed assets creates licensing conflicts
+
+**FINAL VERDICT: CANNOT USE GEOGEBRA ICONS IN GPL 3+ PROJECT ✗**
+
+**Reasoning:**
+1. Icons are under CC BY-NC-SA 4.0 (not EUPL)
+2. CC BY-NC-SA 4.0 is incompatible with GPL due to NonCommercial restriction
+3. GPL requires all components allow commercial use
+4. Mixing GPL code with NC-licensed assets violates GPL terms
+
+**Alternative Solutions:**
+1. **Create original icons** - Design custom toolbar icons for Diedrico
+2. **Use GPL-compatible icon sets**: MIT, Apache 2.0, CC-BY (without NC/SA)
+3. **Use public domain icons**: CC0, Unlicense
+4. **For inspiration only**: Study GeoGebra's icon design but create original artwork
+
+**Attribution NOT Sufficient:**
+- Proper attribution to GeoGebra does NOT resolve the license incompatibility
+- The NC restriction fundamentally conflicts with GPL freedoms
 
 ### Icon Location in GeoGebra Repository
 
@@ -1535,26 +1552,47 @@ Based on our spec.md tool requirements:
 
 ### Legal Summary
 
-**✓ APPROVED FOR USE** with these requirements:
+**✗ NOT APPROVED FOR USE in GPL 3+ Project**
 
-1. **Attribution**:
-   - Display "Made with GeoGebra®" or similar credit
-   - Include link to https://www.geogebra.org/
-   - Add copyright notice in documentation and about dialog
+**License Incompatibility:**
+- GeoGebra toolbar icons are under **CC BY-NC-SA 4.0**
+- GPL 3+ requires all components allow commercial use
+- **NonCommercial restriction is incompatible with GPL**
+- Cannot legally combine GPL code with NC-licensed assets
 
-2. **Non-Commercial Use Only**:
-   - Current educational use: ✓ Compliant
-   - Future commercial use: Would require replacing icons or licensing
+**Required Actions:**
 
-3. **No Modifications** (recommended):
-   - Use icons as-is to avoid ShareAlike complications
-   - Custom icons for tools not in GeoGebra
+1. **Create Original Icons**:
+   - Design custom SVG toolbar icons for Diedrico
+   - License under GPL 3+ or compatible license (MIT, Apache 2.0, CC-BY)
+   - Can study GeoGebra's design for inspiration (visual reference)
 
-4. **License File**:
-   - Include `attribution.md` in icon directory
-   - Document CC BY-NC-SA 4.0 license in project README
+2. **Alternative Icon Sources**:
+   - **Material Design Icons** (Apache 2.0): https://materialdesignicons.com/
+   - **Font Awesome Free** (CC BY 4.0): https://fontawesome.com/
+   - **Feather Icons** (MIT): https://feathericons.com/
+   - **Heroicons** (MIT): https://heroicons.com/
+   - Search for "geometric construction icons" on icon repositories
 
-**Contact for Questions**: office@geogebra.org (if unsure about specific use cases)
+3. **What You CAN Do**:
+   - Study GeoGebra's icon design principles
+   - Use similar visual metaphors (point as dot, line as stroke, circle as outline)
+   - Match the general style (minimalist, geometric, clear)
+   - Create original artwork that serves the same function
+
+4. **What You CANNOT Do**:
+   - Copy, trace, or directly use GeoGebra SVG files
+   - Modify GeoGebra icons and claim they're derivative
+   - Include GeoGebra icons in GPL-licensed distribution
+
+**Why EUPL Compatibility Doesn't Help:**
+- While EUPL v1.2 (source code license) IS compatible with GPL 3+
+- Icons are explicitly **NOT** under EUPL - they're under CC BY-NC-SA 4.0
+- License compatibility applies to source code, not to icon assets
+
+**Contact for Questions**: office@geogebra.org (for commercial licensing only)
+
+**Updated Decision**: Remove Section 6 recommendation to use GeoGebra icons. Icons must be created from scratch or sourced from GPL-compatible icon libraries.
 
 ---
 
@@ -1568,7 +1606,7 @@ Based on our spec.md tool requirements:
 | Geometry library | Native + math.js | Simple domain, 500 LOC, full control over infeasibility |
 | Storage format | JSON files | Portable, human-readable, no DB needed for single-user |
 | Schema versioning | Embedded version number | Enables future migrations |
-| Icon resources | GeoGebra Classic icons | GPL-compatible for non-commercial use, requires attribution |
+| Icon resources | **GPL-compatible icon libraries** | ✗ GeoGebra icons are CC BY-NC-SA 4.0 (incompatible with GPL). Use Material Design Icons (Apache 2.0), Font Awesome (CC BY 4.0), or create original icons |
 
 **Next steps**: Proceed to Phase 1 (data model, contracts, quickstart)
 
