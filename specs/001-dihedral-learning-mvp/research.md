@@ -1355,6 +1355,209 @@ class ProjectService {
 
 ---
 
+## 6. Icon Resources: GeoGebra Classic Icons
+
+**Research Date**: 2025-12-28  
+**Question**: Can we use GeoGebra's toolbar icon imagery in our GPL 3+ application?
+
+### License Compatibility Analysis
+
+**GeoGebra Licensing**:
+- **Source code**: Licensed under EUPL v1.2 (European Union Public License)
+- **UI image files, icons, and style sheets**: Licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0** (CC BY-NC-SA 4.0)
+- **Language files**: Also CC BY-NC-SA 4.0
+
+**Our Project**:
+- Licensed under **GPL 3+**
+- Intended use: **Non-commercial educational tool**
+
+### Compatibility Assessment
+
+**COMPATIBLE ✓** - With conditions:
+
+1. **License Compatibility**:
+   - CC BY-NC-SA 4.0 permits use in non-commercial projects
+   - Our GPL 3+ license is compatible when used for non-commercial purposes
+   - **Attribution required**: Must credit GeoGebra® with copyright notice and link to https://www.geogebra.org/
+
+2. **Non-Commercial Restriction**:
+   - GeoGebra's language files and icons are restricted to **non-commercial use only**
+   - Our project is educational and non-commercial: **COMPLIANT ✓**
+   - If project ever becomes commercial, icons would need to be:
+     - Replaced with custom icons, OR
+     - Licensed through commercial agreement with GeoGebra GmbH
+
+3. **ShareAlike Requirement**:
+   - CC BY-NC-SA 4.0 requires derivative works be shared under same license
+   - We are NOT modifying the icons themselves (using as-is)
+   - Icons are separate resources, not integrated into our GPL code
+   - **Interpretation**: ShareAlike applies to icon modifications, not to applications that merely use the icons
+
+### Icon Location in GeoGebra Repository
+
+**GitHub Repository**: https://github.com/geogebra/geogebra
+
+**Icon Paths**:
+```
+source/web/web/src/main/java/org/geogebra/web/full/css/ToolbarSvgResources.java
+  → References: org/geogebra/common/icons/svg/web/toolIcons/*.svg
+
+Actual SVG files located at:
+  source/[platform]/[module]/src/main/resources/org/geogebra/common/icons/svg/web/toolIcons/
+```
+
+**Key Directories**:
+- **Toolbar icons (SVG)**: `org/geogebra/common/icons/svg/web/toolIcons/`
+  - Example files:
+    - `mode_point.svg` - Point tool icon
+    - `mode_segment.svg` - Segment tool icon
+    - `mode_circle2.svg` - Circle (center + point) icon
+    - `mode_parallel.svg` - Parallel line icon
+    - `mode_perpendicular.svg` - Perpendicular line icon
+    - `mode_intersect.svg` - Intersection icon
+    - `mode_polygon.svg` - Polygon tool icon
+- **Menu icons**: `org/geogebra/common/icons/svg/web/menuIcons*/`
+- **Material Design icons**: `org/geogebra/common/icons/svg/web/matDesignIcons/`
+- **PNG fallbacks (deprecated)**: `org/geogebra/common/icons_toolbar/p32/` and `/p64/`
+
+**Resource Bundle Files** (for reference):
+- `ToolbarSvgResources.java` - Maps mode constants to SVG file paths
+- `ToolbarResources.java` - Interface defining all toolbar icon resource methods
+- SVG files are loaded via GWT `@Resource` and `@Source` annotations
+
+### How to Download Icons
+
+**Option 1: Clone Repository**
+```bash
+git clone https://github.com/geogebra/geogebra.git
+cd geogebra
+# Icons located in various modules under source/*/src/main/resources/
+find . -path "*/org/geogebra/common/icons/svg/web/toolIcons/*.svg"
+```
+
+**Option 2: Direct GitHub Download**
+Navigate to specific icon files:
+```
+https://github.com/geogebra/geogebra/tree/main/source/web/web/src/main/resources/org/geogebra/common/icons/svg/web/toolIcons/
+```
+Download individual SVG files by viewing raw content.
+
+**Option 3: Selective Extraction**
+Use sparse checkout to get only icons:
+```bash
+git clone --filter=blob:none --sparse https://github.com/geogebra/geogebra.git
+cd geogebra
+git sparse-checkout add "source/*/src/main/resources/org/geogebra/common/icons"
+```
+
+### Integration Recommendation
+
+**Best Approach for Our Project**:
+
+1. **Create Icon Asset Directory**:
+   ```
+   frontend/src/assets/icons/geogebra/
+     ├── attribution.md        # Required: Credit and license info
+     ├── tools/               # Toolbar icons
+     │   ├── point.svg
+     │   ├── segment.svg
+     │   ├── circle.svg
+     │   ├── parallel.svg
+     │   └── ...
+     └── ui/                  # Menu/UI icons (if needed)
+   ```
+
+2. **Attribution File** (`attribution.md`):
+   ```markdown
+   # GeoGebra® Icon Attribution
+   
+   Icons in this directory are from GeoGebra Classic
+   Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+   
+   © GeoGebra GmbH
+   https://www.geogebra.org/
+   
+   These icons are used for non-commercial educational purposes only.
+   ```
+
+3. **Import in Vue Components**:
+   ```typescript
+   import pointIcon from '@/assets/icons/geogebra/tools/point.svg?raw';
+   // Use inline in <svg> element or as background-image
+   ```
+
+4. **Alternative: Icon Component Wrapper**:
+   ```vue
+   <template>
+     <span class="geogebra-icon" v-html="iconSvg"></span>
+   </template>
+   <script setup lang="ts">
+   import pointSvg from '@/assets/icons/geogebra/tools/point.svg?raw';
+   const iconSvg = ref(pointSvg);
+   </script>
+   ```
+
+5. **UI Attribution** (in app footer or about dialog):
+   ```
+   "Toolbar icons © GeoGebra® (https://www.geogebra.org/), 
+    used under CC BY-NC-SA 4.0 license"
+   ```
+
+### Icons Needed for Diedrico MVP
+
+Based on our spec.md tool requirements:
+
+**Essential Toolbar Icons**:
+- `mode_point.svg` - Free point tool (or variants: point on object, intersection)
+- `mode_segment.svg` - Segment tool
+- `mode_join.svg` - Line tool (line through 2 points)
+- `mode_circle2.svg` - Circle (center + point on circumference)
+- `mode_circlepointradius.svg` - Circle (center + radius)
+- `mode_parallel.svg` - Parallel line tool
+- `mode_orthogonal.svg` - Perpendicular line tool
+- `mode_intersect.svg` - Intersection point tool
+- `mode_midpoint.svg` - Midpoint tool (if used)
+
+**Dihedral-Specific** (may need custom icons):
+- Guide creation (perpendicular to HL)
+- Point transport via guide
+- Distance transport
+- 3D element creation from projections
+
+**Navigation/UI Icons**:
+- `mode_translateview.svg` - Pan tool
+- `mode_zoomin.svg` - Zoom in
+- `mode_zoomout.svg` - Zoom out
+- `mode_delete.svg` - Delete tool
+- Undo/redo icons from Material Design set
+
+**Recommendation**: Start with exact GeoGebra icons for standard geometric operations. Create custom SVG icons only for dihedral-specific tools not present in GeoGebra (guides, transports, 3D derivation).
+
+### Legal Summary
+
+**✓ APPROVED FOR USE** with these requirements:
+
+1. **Attribution**:
+   - Display "Made with GeoGebra®" or similar credit
+   - Include link to https://www.geogebra.org/
+   - Add copyright notice in documentation and about dialog
+
+2. **Non-Commercial Use Only**:
+   - Current educational use: ✓ Compliant
+   - Future commercial use: Would require replacing icons or licensing
+
+3. **No Modifications** (recommended):
+   - Use icons as-is to avoid ShareAlike complications
+   - Custom icons for tools not in GeoGebra
+
+4. **License File**:
+   - Include `attribution.md` in icon directory
+   - Document CC BY-NC-SA 4.0 license in project README
+
+**Contact for Questions**: office@geogebra.org (if unsure about specific use cases)
+
+---
+
 ## Summary of Decisions
 
 | Question | Decision | Rationale |
@@ -1365,5 +1568,7 @@ class ProjectService {
 | Geometry library | Native + math.js | Simple domain, 500 LOC, full control over infeasibility |
 | Storage format | JSON files | Portable, human-readable, no DB needed for single-user |
 | Schema versioning | Embedded version number | Enables future migrations |
+| Icon resources | GeoGebra Classic icons | GPL-compatible for non-commercial use, requires attribution |
 
 **Next steps**: Proceed to Phase 1 (data model, contracts, quickstart)
+
