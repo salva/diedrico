@@ -924,33 +924,26 @@ type Element2DRealization =
   | Arc2DRealization;
 
 interface Point2DRealization {
-  x: number;                        // u-coordinate in plane's intrinsic basis
-  y: number;                        // v-coordinate in plane's intrinsic basis
+  point: number[];                  // [x, y, w] - homogeneous coordinates in plane's intrinsic basis
 }
 
 interface Line2DRealization {
-  pointX: number;                   // Point on line (u-coordinate)
-  pointY: number;                   // Point on line (v-coordinate)
-  dirX: number;                     // Direction vector (normalized)
-  dirY: number;
+  point: number[];                  // [x, y, w] - point on line (homogeneous)
+  direction: number[];              // [dx, dy, 0] - direction vector (normalized, w=0)
 }
 
 interface Segment2DRealization {
-  x1: number;                       // Start point
-  y1: number;
-  x2: number;                       // End point
-  y2: number;
+  startPoint: number[];             // [x1, y1, w1] - start point (homogeneous)
+  endPoint: number[];               // [x2, y2, w2] - end point (homogeneous)
 }
 
 interface Circle2DRealization {
-  cx: number;                       // Center
-  cy: number;
+  center: number[];                 // [cx, cy, w] - center point (homogeneous)
   radius: number;
 }
 
 interface Arc2DRealization {
-  cx: number;                       // Center
-  cy: number;
+  center: number[];                 // [cx, cy, w] - center point (homogeneous)
   radius: number;
   startAngle: number;               // Radians
   endAngle: number;
@@ -964,36 +957,36 @@ type Element3DRealization =
   | Plane3DRealization;
 
 interface Point3DRealization {
-  x: number;
-  y: number;
-  z: number;
+  point: number[];                  // [x, y, z, w] - homogeneous coordinates
 }
 
 interface Line3DRealization {
-  pointX: number;                   // Point on line
-  pointY: number;
-  pointZ: number;
-  dirX: number;                     // Direction vector (normalized)
-  dirY: number;
-  dirZ: number;
+  point: number[];                  // [x, y, z, w] - point on line (homogeneous)
+  direction: number[];              // [dx, dy, dz, 0] - direction vector (normalized, w=0)
 }
 
 interface Segment3DRealization {
-  x1: number;                       // Start point
-  y1: number;
-  z1: number;
-  x2: number;                       // End point
-  y2: number;
-  z2: number;
+  startPoint: number[];             // [x1, y1, z1, w1] - start point (homogeneous)
+  endPoint: number[];               // [x2, y2, z2, w2] - end point (homogeneous)
 }
 
 interface Plane3DRealization {
-  a: number;                        // Plane equation: ax + by + cz + d = 0
-  b: number;
-  c: number;
-  d: number;
+  normal: number[];                 // [a, b, c, d] - plane equation: ax + by + cz + d = 0
 }
 ```
+
+**Homogeneous Coordinates**:
+- **2D Points**: `[x, y, w]` where actual coordinates are `(x/w, y/w)`
+- **2D Vectors/Directions**: `[dx, dy, 0]` with `w=0` to distinguish from points
+- **3D Points**: `[x, y, z, w]` where actual coordinates are `(x/w, y/w, z/w)`
+- **3D Vectors/Directions**: `[dx, dy, dz, 0]` with `w=0`
+- **Normalized w=1**: For efficiency, typically store points with `w=1`
+
+**Benefits**:
+- Unified treatment of points and vectors
+- Matrix transformations handle translation and linear operations uniformly
+- Intersection/projection calculations simplified
+- Points at infinity represented naturally (w=0)
 
 **Why Separate?**
 - **Elements**: Persistent data, saved to disk, define construction history
