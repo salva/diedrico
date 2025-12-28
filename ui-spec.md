@@ -88,19 +88,32 @@ The left side of the interface contains a vertical stack of two panels. These pa
 
 **Purpose**: Lists all geometric entities in the world, organized by type and dimensionality.
 
+**Naming Convention Note**: Throughout this document, underscores in element names indicate subscript notation. For example:
+- `a_H` represents "a subscript H" (point a on horizontal plane)
+- `P_V` represents "P subscript V" (vertical projection plane)
+- `HL_HV` represents "HL subscript HV" (hinge line between H and V planes)
+
 **Tree Structure**:
 ```
 ▼ 2D Elements
-  ▼ Points (5)
-    • a_H, b_H, c_H, d_V, e_V
-  ▼ Lines (3)
-    • r1, r2, r3
-  ▼ Segments (2)
-    • s1, s2
-  ▼ Circles (1)
-    • c1
-  ▼ Guides (2)
-    • g1, g2
+  ▼ P_H (Horizontal Projection Plane)
+    ▼ Points (3)
+      • a_H, b_H, c_H
+    ▼ Lines (2)
+      • r1, r2
+    ▼ Segments (1)
+      • s1
+    ▼ Hinge Lines (1)
+      • HL_HV (shared with P_V)
+  ▼ P_V (Vertical Projection Plane)
+    ▼ Points (2)
+      • d_V, e_V
+    ▼ Lines (1)
+      • r3
+    ▼ Guides (2)
+      • g1, g2
+    ▼ Hinge Lines (1)
+      • HL_HV (shared with P_H)
 ▼ 3D Elements
   ▼ Points (2)
     • A, B
@@ -109,16 +122,23 @@ The left side of the interface contains a vertical stack of two panels. These pa
   ▼ Segments (1)
     • S1
   ▼ Planes (4)
-    • P_H (horizontal projection plane)
-    • P_V (vertical projection plane)
-    • Pi1 (auxiliary plane)
-    • Pi2 (auxiliary plane)
+    • P_H [Projection Plane]        ← Tag indicating this is also a projection plane
+    • P_V [Projection Plane]
+    • P_1
+    • P_2
 ```
 
 **Organization Rules**:
 - **Two Main Sections**: 2D Elements, 3D Elements
-- **Grouping by Nature**: Within each section, elements are grouped by type (points, lines, segments, circles, arcs, guides for 2D; points, lines, segments, planes for 3D)
-- **Projection Planes**: Listed ONLY under 3D section (they are 3D geometric planes, even though they host 2D constructions)
+- **2D Elements Grouping**:
+  - **First level**: Grouped by projection plane (P_H, P_V, additional planes, etc.)
+  - **Second level**: Within each plane, grouped by element type (points, lines, segments, circles, arcs, guides, hinge lines)
+  - **Hinge Lines**: Appear under BOTH planes they connect (with indicator showing shared status)
+  - **BHLs (Broken Hinge Lines)**: Also appear as projections under the planes they intersect
+- **3D Elements Grouping**: 
+  - Grouped by type (points, lines, segments, planes)
+  - ALL planes appear here (they are 3D geometric entities)
+  - Projection planes tagged/marked to distinguish them from regular 3D planes
 - **Dynamic Counts**: Each group shows element count in parentheses
 - **Alphabetical/Creation Order**: Within each group, elements sorted by creation time or alphabetically by name
 
@@ -129,11 +149,13 @@ The left side of the interface contains a vertical stack of two panels. These pa
 - **Drag** (future): Reorder or organize elements
 
 **Visual Indicators**:
-- **Infeasible elements**: Strikethrough text or red icon
-- **Hidden elements**: Lighter/grayed text or eye-closed icon
+- **Infeasible elements**: Red icon
+- **Hidden elements**: Lighter/grayed text.
 - **Active plane elements**: May be marked with subtle badge or emphasis
+- **Shared elements**: May include clickable references to other elements.
+- **Projection planes**: Tag or badge "[Projection Plane]" in 3D Planes section
 
-**Rendering Principle**: This panel reflects the current state of `world.elements2D[]` and `world.elements3D[]`. All elements are displayed dynamically based on their existence in the world model. There is no hard-coded list of what appears here.
+**Rendering Principle**: This panel reflects the current state of the world. All elements are displayed dynamically based on their existence in the world model.
 
 ### Process Tree Panel (Constructive Actions)
 
@@ -143,17 +165,30 @@ The left side of the interface contains a vertical stack of two panels. These pa
 ```
 ▼ 👁 Root Process
   ▼ 👁 Construction Phase 1
-    ○ Create segment s1
-    ▼ ⚙ Auxiliary (2 actions)       ← ActionGroup with special styling
-      ⋅ Create free point a
-      ⋅ Create free point b
-    ○ Create circle c1
+    ┌─────────────────────────────┐
+    │ ○ Create segment s1         │  ← Regular ActionGroup (visual box)
+    └─────────────────────────────┘
+    ┌─────────────────────────────┐
+    │ ⚙ ⋅ Create free point a     │  ← Auxiliary ActionGroup (gear icon, lighter color)
+    │   ⋅ Create free point b     │
+    └─────────────────────────────┘
+    ┌─────────────────────────────┐
+    │ ○ Create circle c1          │
+    └─────────────────────────────┘
   ▼ 👁 Guide Setup
-    ○ Create guide g1
-    ○ Transport point via guide
+    ┌─────────────────────────────┐
+    │ ○ Create guide g1           │
+    └─────────────────────────────┘
+    ┌─────────────────────────────┐
+    │ ○ Transport point via guide │
+    └─────────────────────────────┘
   ▼ 👁 3D Elements
-    ○ Create 3D point A
-    ○ Create 3D line L1
+    ┌─────────────────────────────┐
+    │ ○ Create 3D point A         │
+    └─────────────────────────────┘
+    ┌─────────────────────────────┐
+    │ ○ Create 3D line L1         │
+    └─────────────────────────────┘
 ```
 
 **Node Types**:
@@ -165,13 +200,16 @@ The left side of the interface contains a vertical stack of two panels. These pa
    - Can be renamed by user
    - Defines default visual style inherited by contained elements
 
-2. **ActionGroup** (container without user-visible name):
+2. **ActionGroup** (visual grouping container, NO name):
+   - **No text label or name**: ActionGroups are purely visual grouping elements
+   - Displayed as boxes, borders, vertical lines, or background shading around contained actions
    - NO visibility toggle (inherits visibility from parent Subprocess)
    - Can contain only Actions (at least one)
-   - Has collapse/expand triangle (controls panel visibility)
+   - May have collapse/expand control (triangle or +/- on the box border)
    - Two variants:
-     - **Regular**: User-created groups, displayed with normal bullet (○)
-     - **Auxiliary**: Auto-created for supporting geometry, displayed with gear icon (⚙), lighter color, possibly indented or boxed
+     - **Regular**: Normal visual treatment (simple box or line grouping)
+     - **Auxiliary**: Special visual treatment - gear icon (⚙), lighter background color, distinct border style
+   - When collapsed, may show count: Box with "⚙ (2 actions)" or similar indicator
 
 3. **Action** (leaf node):
    - Represents single user operation or automatically-created supporting action
@@ -188,20 +226,20 @@ The left side of the interface contains a vertical stack of two panels. These pa
   - User-editable name
   
 - **ActionGroup (Regular)**:
-  - Normal font weight
-  - Simple bullet (○)
-  - Collapse triangle
-  - No name displayed (contents define the group)
+  - NO text label - purely visual container
+  - Box border or vertical line grouping actions
+  - May have collapse control on border
+  - Actions inside use normal styling
   
 - **ActionGroup (Auxiliary)**:
-  - Lighter text color (#666 vs #000)
-  - Gear icon (⚙) or special bullet
-  - Collapse triangle
-  - May show count when collapsed: "⚙ Auxiliary (2 actions)"
-  - Visual grouping: subtle border, indentation, or background color
+  - NO text label - purely visual container
+  - Lighter background color (#F5F5F5 or similar)
+  - Gear icon (⚙) in corner or on border
+  - Distinct border style (dashed or lighter color)
+  - Actions inside use lighter text color (#666)
+  - When collapsed: Shows gear icon with action count "⚙ (2)"
   - Properties locked (cannot edit or reorganize)
 
-  - Visual grouping: subtle border, indentation, or background color
   - Properties locked (cannot edit or reorganize)
 
 **Two Types of Visibility**:
@@ -214,7 +252,7 @@ The left side of the interface contains a vertical stack of two panels. These pa
    - State stored in: `subprocess.visible` field
 
 2. **Panel Visibility** (in this panel UI):
-   - Controlled by collapse/expand triangle (▼/▶)
+   - Controlled by collapse/expand control (for ActionGroups: +/- on box border, or similar)
    - Shows/hides nested content in this panel only
    - Independent from drawing visibility
    - Both Subprocesses and ActionGroups can collapse/expand
@@ -222,7 +260,7 @@ The left side of the interface contains a vertical stack of two panels. These pa
 
 **Interactions**:
 - **Click eye icon**: Toggle drawing visibility (Subprocess only)
-- **Click triangle**: Toggle panel collapse/expand
+- **Click collapse control**: Toggle panel collapse/expand (triangle for Subprocess, +/- or similar for ActionGroup box)
 - **Click name/description**: Select/focus that node
 - **Hover**: Triggers unified hover highlighting
 - **Double-click** (future): Rename Subprocess
@@ -534,7 +572,7 @@ The main viewport is the primary work surface where all geometric constructions 
 
 **After initialization, these are treated like any other element**: same rendering pipeline, same geometric computations, no hard-coded paths.
 
-**Scalability**: When auxiliary planes, profile planes, or custom projection planes are added, they work automatically through this architecture. No code changes required.
+**Scalability**: When additional planes, profile planes, or custom projection planes are added, they work automatically through this architecture. No code changes required.
 
 ### Projection Plane Layout
 
@@ -556,7 +594,7 @@ The main viewport is the primary work surface where all geometric constructions 
 - P_H positioned above hinge line (unfolded upward)
 - P_V positioned below hinge line (unfolded downward)
 - Transforms ensure proper spacing and prevent overlap
-- Auxiliary planes positioned according to their geometric relationships
+- Additional planes positioned according to their geometric relationships
 
 **Dynamic Addition of Planes**:
 - When new projection plane created (auxiliary, profile), system computes `transform_to_canvas` based on:
@@ -631,6 +669,128 @@ The main viewport is the primary work surface where all geometric constructions 
 - Minimum zoom: Show all planes and elements (auto-computed)
 - Maximum zoom: Close inspection level (e.g., 10,000% of default scale)
 
+### Viewport Interaction Modes
+
+The viewport has distinct interaction behaviors depending on whether a construction tool is active. Mouse cursor changes provide constant visual feedback about the current interaction mode.
+
+#### Mode 1: No Tool Active (Selection/Navigation Mode)
+
+When no construction tool is active, the viewport operates in **selection and navigation mode**:
+
+**Click on Empty Area**:
+- **Behavior**: Pan/drag the viewport
+- **Cursor**: Open hand (before drag) → Closed hand (during drag)
+- **Action**: Click and drag to move the entire view
+- **Effect**: Updates viewport transform, all content moves together
+
+**Click on Directly-Defined Point**:
+- **Behavior**: Move the point (if the point is directly defined, not derived)
+- **Cursor**: Four-way arrow or crosshair when hovering over movable point
+- **Action**: Click and drag to reposition the point
+- **Effect**: Point's coordinates updated, dependent elements recalculated automatically
+- **Restriction**: Only **directly-defined points** can be moved (free points, not intersection points or other derived points)
+- **Visual Feedback**: Point highlights on hover to indicate it's movable
+
+**Click on Other Elements**:
+- **Behavior**: Select the element
+- **Cursor**: Default pointer arrow
+- **Action**: Single click selects, Shift+click adds to selection
+- **Effect**: Element highlights, properties panel updates
+
+**Shift + Click/Drag (Override)**:
+- **Behavior**: Always pans the viewport, even if clicking on element
+- **Cursor**: Open/closed hand
+- **Action**: Shift+drag anywhere pans the view
+- **Effect**: Provides guaranteed way to navigate without accidental selection
+
+#### Mode 2: Tool Active (Construction Input Mode)
+
+When a construction tool is active, the viewport operates in **construction input mode**:
+
+**General Behavior**:
+- All clicks are interpreted as **input for the active tool**
+- System provides **automatic snapping** and **smart point creation**
+- Cursor changes to reflect expected input type and snap state
+
+**Click on or Near Existing Point**:
+- **Behavior**: Snap to the existing point, use as tool input
+- **Cursor**: Crosshair with snap indicator (orange circle around point)
+- **Action**: Click selects the snapped point as input
+- **Effect**: Tool advances to next step using the snapped point
+- **Snap Radius**: Small radius around point (e.g., 10-15 pixels)
+
+**Click on or Near Intersection**:
+- **Behavior**: Snap to intersection, automatically create intersection point, use as tool input
+- **Cursor**: Crosshair with intersection marker (orange crosshair or circle)
+- **Action**: Click selects the intersection point
+- **Effect**: 
+  - Intersection point created automatically as **auxiliary action** (if not already existing)
+  - Tool advances to next step using the intersection point
+  - Auxiliary action recorded in ProcessTree under current action's ActionGroup
+- **Snap Radius**: Small radius around intersection (e.g., 10-15 pixels)
+
+**Click on Empty Area (Tool Expects 2D Point)**:
+- **Behavior**: Create new free point at cursor location, use as tool input
+- **Cursor**: Crosshair (no snap indicator)
+- **Action**: Click creates a new free point at the exact cursor coordinates
+- **Effect**: 
+  - Free point created automatically as **auxiliary action**
+  - Tool advances to next step using the new point
+  - Auxiliary action recorded in ProcessTree under current action's ActionGroup
+- **Coordinates**: Uses active plane's intrinsic (u,v) coordinate system
+
+**Click on Empty Area (Tool Does NOT Expect 2D Point)**:
+- **Behavior**: Invalid input, show error feedback
+- **Cursor**: Crosshair with error indicator (red circle with slash, or similar)
+- **Action**: Click is ignored or brief error animation shown
+- **Effect**: 
+  - Tool remains at current step
+  - Status message: "This tool requires [expected input type]. Click a [valid element type]."
+  - Optional: Brief shake animation or red flash on viewport border
+
+**Click on Valid Element (for current tool step)**:
+- **Behavior**: Select the element as tool input
+- **Cursor**: Crosshair or pointer with valid indicator (green highlight on element)
+- **Action**: Click selects the element
+- **Effect**: Tool advances to next step using the element
+
+**Click on Invalid Element (for current tool step)**:
+- **Behavior**: Element is ignored, no effect
+- **Cursor**: Crosshair with no highlight on element (element doesn't respond to hover)
+- **Action**: Click has no effect on the tool
+- **Effect**: Tool remains at current step, click treated like clicking empty area
+
+**Shift + Click/Drag (Navigation Override)**:
+- **Behavior**: Always pans the viewport, **even during active tool operation**
+- **Cursor**: Open/closed hand
+- **Action**: Shift+drag anywhere pans the view
+- **Effect**: 
+  - Navigation does NOT cancel the active tool
+  - Tool state preserved (current step, previous inputs retained)
+  - After navigation, user continues construction where they left off
+- **Pedagogical Value**: Allows adjusting view during complex multi-step constructions without losing progress
+
+#### Cursor Feedback Reference
+
+The system uses distinct cursor styles to provide constant feedback about the current interaction mode:
+
+| Context | Cursor | Meaning |
+|---------|--------|---------|
+| No tool, empty area | Open hand | Can pan viewport by dragging |
+| No tool, panning | Closed hand | Currently panning viewport |
+| No tool, movable point | Four-way arrow/crosshair | Can drag to move point |
+| No tool, selectable element | Default pointer | Can click to select |
+| Tool active, empty (valid) | Crosshair | Can click to create free point |
+| Tool active, empty (invalid) | Crosshair + error indicator | Invalid input location |
+| Tool active, snap to point | Crosshair + snap circle | Will snap to existing point |
+| Tool active, snap to intersection | Crosshair + intersection marker | Will snap to intersection |
+| Tool active, valid element hover | Crosshair + green highlight | Valid element for tool |
+| Tool active, invalid element hover | Crosshair (no highlight) | Element ignored by tool |
+| Shift held (any mode) | Open/closed hand | Navigation override active |
+| Zoom operation | Magnifying glass | Zoom in/out mode |
+
+**Implementation Note**: Cursor changes should be instantaneous (no delay) to provide immediate feedback. CSS cursor properties are sufficient for most cases. Custom cursor images may be used for snap indicators and special states.
+
 ### Element Interaction
 
 **Selection** (when no tool active):
@@ -650,10 +810,10 @@ The main viewport is the primary work surface where all geometric constructions 
 - Right-click element: Context menu with common actions
 
 **During Tool Operation**:
-- Selection behavior determined by active tool
+- Selection behavior determined by active tool (see Viewport Interaction Modes above)
 - Valid elements highlighted on hover
 - Invalid elements ignored
-- Snap feedback provided (see Toolbar Interaction Model section)
+- Snap feedback provided with distinct cursor states
 
 ### Status and Feedback Overlays
 
