@@ -461,6 +461,9 @@ This section describes user-visible components and behaviors at a functional lev
 
 ### Overall Layout
 
+**UI Details**: For complete layout architecture with ASCII diagrams, component positioning, responsive behavior, and visual hierarchy, see:\n- [ui-spec.md - Overall Layout Architecture](/ui-spec.md#overall-layout-architecture)
+- [ui-spec.md - Layout Principles](/ui-spec.md#layout-principles)
+
 The interface is organized into four main areas:
 
 1. **Top toolbars** (primary controls)
@@ -468,7 +471,7 @@ The interface is organized into four main areas:
 3. **Auxiliary 3D view overlay** (read-only, for spatial understanding)
 4. **Left-side stacked panels** (actions, elements)
 
-The application is designed for mouse + keyboard use. Detailed layout architecture and responsive behavior are documented in ui-spec.md.
+The application is designed for mouse + keyboard use.
 
 ### Central 2D Drawing Area
 
@@ -511,7 +514,14 @@ Navigation:
 
 ### Auxiliary 3D View Overlay
 
-The 3D view is a read-only overlay providing spatial understanding (see ui-spec.md for positioning, resizing, and visual design).
+**UI Details**: For complete 3D view specifications including positioning, resizing, movement, controls, camera settings, display options, and visual styling, see:
+- [ui-spec.md - 3D View Overlay](/ui-spec.md#3d-view-overlay)
+- [ui-spec.md - Positioning and Layout](/ui-spec.md#positioning-and-layout)
+- [ui-spec.md - Resizing and Movement](/ui-spec.md#resizing-and-movement)
+- [ui-spec.md - 3D View Controls](/ui-spec.md#3d-view-controls)
+- [ui-spec.md - Display Options](/ui-spec.md#display-options)
+
+The 3D view is a read-only overlay providing spatial understanding.
 
 **Purpose**: Exclusively visual; helps learners understand 3D spatial relationships.
 
@@ -556,6 +566,10 @@ The toolbars follow a structured interaction model designed to make geometric re
 
 #### Active Plane Selector
 
+**UI Details**: For dropdown design, plane list display, visual emphasis animations, color schemes, and toolbar positioning, see:
+- [ui-spec.md - Top Toolbar System](/ui-spec.md#top-toolbar-system)
+- [ui-spec.md - Active Plane System](/ui-spec.md#active-plane-system)
+
 - Dropdown showing available planes (e.g., P_H, P_V, auxiliary planes)
 - Click a plane to make it the active plane
 - **All planes remain visible** regardless of which is active
@@ -566,8 +580,6 @@ The toolbars follow a structured interaction model designed to make geometric re
 - Updates visual emphasis (active plane full intensity, others de-emphasized)
 - Hinge lines always visible regardless of active plane
 
-(See ui-spec.md for visual styling details)
-
 #### Navigation Toolbar
 
 Provides explicit navigation controls (complementary to the always-available shortcuts):
@@ -576,6 +588,11 @@ Provides explicit navigation controls (complementary to the always-available sho
 - optional “fit/reset view”.
 
 #### 2D Drawing Toolbar (Primitives + Explicit Variants)
+
+**UI Details**: For toolbar organization, tool family dropdowns, sequential interaction flow, cursor feedback during tool use, and visual styling, see:
+- [ui-spec.md - Top Toolbar System](/ui-spec.md#top-toolbar-system)
+- [ui-spec.md - Toolbar Interaction Model](/ui-spec.md#toolbar-interaction-model)
+- [ui-spec.md - Viewport Interaction Modes](/ui-spec.md#viewport-interaction-modes)
 
 Contains tools for creating 2D primitives on the active plane. Tools may expose explicit variants (e.g., via a dropdown), and variants are never automatic: the user deliberately chooses the intended construction.
 
@@ -721,6 +738,10 @@ Contains tools for creating 2D primitives on the active plane. Tools may expose 
 
 #### Guides and Transport Toolbar (Dihedral Tools)
 
+**UI Details**: For toolbar layout, tool activation, sequential steps with visual feedback, and cursor states, see:
+- [ui-spec.md - Top Toolbar System](/ui-spec.md#top-toolbar-system)
+- [ui-spec.md - Toolbar Interaction Model](/ui-spec.md#toolbar-interaction-model)
+
 Contains dihedral-specific tools related to hinge lines (HL), guides, and transport operations between projection planes.
 
 **Guide** tool:
@@ -768,6 +789,10 @@ Contains dihedral-specific tools related to hinge lines (HL), guides, and transp
 These tools operate on 2D planes, HL, guides, and explicit 2D entities; they do not directly edit 3D geometry.
 
 #### 3D Creation Toolbar (Derived from 2D)
+
+**UI Details**: For toolbar structure, tool interaction patterns, error feedback for invalid 3D selections, and visual indicators, see:
+- [ui-spec.md - Top Toolbar System](/ui-spec.md#top-toolbar-system)
+- [ui-spec.md - Toolbar Interaction Model](/ui-spec.md#toolbar-interaction-model)
 
 Contains tools to define 3D elements from existing 2D constructions. All operations require explicit selection of the required compatible projections/traces. These tools produce derived 3D geometry for spatial visualization; the 2D projections remain the source of truth.
 
@@ -843,6 +868,14 @@ All panels are located on the left side and are stackable and collapsible.
 
 **Also called**: Process Tree Panel in ui-spec.md
 
+**UI Details**: For complete panel architecture, tree structure with visual examples, node types (Subprocess/ActionGroup/Action), visibility controls, collapse/expand behavior, styling (gear icons, boxes, colors), and interaction patterns, see:
+- [ui-spec.md - Process Tree Panel (Constructive Actions)](/ui-spec.md#process-tree-panel-constructive-actions)
+- [ui-spec.md - Panel Management](/ui-spec.md#panel-management)
+- [ui-spec.md - Tree Structure](/ui-spec.md#tree-structure-1) (in Process Tree Panel section)
+- [ui-spec.md - Node Types](/ui-spec.md#node-types) (detailed Subprocess/ActionGroup/Action descriptions)
+- [ui-spec.md - Visual Treatment](/ui-spec.md#visual-treatment) (gear icons, boxes, color schemes)
+- [ui-spec.md - Interactions](/ui-spec.md#interactions-1) (in Process Tree Panel section)
+
 Shows the history of performed actions, organized hierarchically:
 
 - **Subprocesses**: Named containers for logically grouped actions, with visibility toggle (👁 eye icon)
@@ -857,12 +890,18 @@ Shows the history of performed actions, organized hierarchically:
 1. **Drawing visibility**: Whether geometric elements appear in viewport (controlled by eye icon on subprocesses)
 2. **Panel visibility**: Whether content is shown/hidden in action list (controlled by collapse/expand for both subprocesses and ActionGroups)
 
-**Interaction** (see ui-spec.md for details):
+**Interaction**:
 - Hover triggers unified dependency highlighting
 - Auxiliary actions can be inspected individually
 - Visual distinction between primary and auxiliary actions
 
 #### Elements Panel
+
+**UI Details**: For complete panel structure, tree hierarchy, grouping by planes, collapse/expand behavior, icons, styling, and interaction patterns, see:
+- [ui-spec.md - World Elements Panel](/ui-spec.md#world-elements-panel-geometric-entities)
+- [ui-spec.md - Panel Management](/ui-spec.md#panel-management)
+- [ui-spec.md - Tree Structure](/ui-spec.md#tree-structure) (in World Elements Panel section)
+- [ui-spec.md - Interactions](/ui-spec.md#interactions) (in World Elements Panel section)
 
 Lists items in two main sections:
 
@@ -873,14 +912,18 @@ Lists items in two main sections:
   - Points, lines, segments, planes
   - Includes projection planes (P_H, P_V, auxiliary planes)
 
-**Interaction** (see ui-spec.md for tree structure and details):
+**Interaction**:
 - Hover triggers unified dependency highlighting
 - Hovering a plane highlights its representation in both 2D and 3D views
 - Click element to open properties dialog
 
 ### Dialogs and Controls
 
-**For detailed dialog layouts, component specifications, and visual design, see [ui-spec.md](/ui-spec.md#dialogs-and-modals).**
+**UI Details**: For complete dialog specifications including layouts, field designs, button placements, modal behavior, keyboard shortcuts, and visual styling, see:
+- [ui-spec.md - Dialogs and Modals](/ui-spec.md#dialogs-and-modals)
+- [ui-spec.md - Element Properties Dialog](/ui-spec.md#element-properties-dialog)
+- [ui-spec.md - Subprocess Properties Dialog](/ui-spec.md#subprocess-properties-dialog)
+- [ui-spec.md - Project Settings Dialog](/ui-spec.md#project-settings-dialog)
 
 #### Element Properties Dialog
 
@@ -903,7 +946,12 @@ Default and inheritance behavior:
 
 ### Visual Highlighting and Feedback
 
-**For comprehensive cursor feedback, viewport interaction modes, and visual styling details, see [ui-spec.md](/ui-spec.md#viewport-interaction-modes).**
+**UI Details**: For comprehensive specifications of cursor states, hover highlighting patterns, snap indicators, infeasibility markers, color schemes, animation timing, and all visual feedback mechanisms, see:
+- [ui-spec.md - Viewport Interaction Modes](/ui-spec.md#viewport-interaction-modes) (cursor feedback reference table)
+- [ui-spec.md - Continuous Visual Feedback](/ui-spec.md#continuous-visual-feedback) (in Toolbar Interaction Model)
+- [ui-spec.md - Status and Feedback Overlays](/ui-spec.md#status-and-feedback-overlays)
+- [ui-spec.md - Unified Hover Highlighting](/ui-spec.md#unified-hover-highlighting) (in World Elements Panel)
+- [ui-spec.md - Visual Design Guidelines](/ui-spec.md#visual-design-guidelines) (color palette, highlighting colors)
 
 The UI uses visual cues to communicate structure and validity:
 
@@ -921,13 +969,23 @@ When hover highlighting is active, it is:
 
 ### Error Handling (Non-Modal)
 
+**UI Details**: For specific error message formats, infeasibility indicators in panels and viewport, status bar messaging, tooltip content, and visual styling of invalid states, see:
+- [ui-spec.md - Error Handling](/ui-spec.md#error-handling) (in Keyboard Shortcuts section)
+- [ui-spec.md - Status and Feedback Overlays](/ui-spec.md#status-and-feedback-overlays)
+- [ui-spec.md - Infeasibility Indicators](/ui-spec.md#infeasibility-indicators) (in Status and Feedback Overlays)
+
 - No modal error dialogs.
 - Invalid/infeasible actions are reflected visually in panels and highlighting.
 - The user corrects geometry directly by adjusting inputs.
 
 ### Accessibility and Usability Expectations
 
-**For detailed interaction patterns, cursor conventions, tooltips, and responsive design, see [ui-spec.md](/ui-spec.md#responsive-design-considerations).**
+**UI Details**: For complete specifications of responsive behavior, minimum window sizes, panel collapse patterns, keyboard navigation, cursor conventions, tooltip design, and accessibility features, see:
+- [ui-spec.md - Responsive Design Considerations](/ui-spec.md#responsive-design-considerations)
+- [ui-spec.md - Keyboard Shortcuts](/ui-spec.md#keyboard-shortcuts)
+- [ui-spec.md - Mouse/Cursor Conventions](/ui-spec.md#mousecursor-conventions)
+- [ui-spec.md - Tooltips](/ui-spec.md#tooltips)
+- [ui-spec.md - State Persistence](/ui-spec.md#state-persistence)
 
 - Clear iconography.
 - Continuous visual feedback.
