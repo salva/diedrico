@@ -1,10 +1,20 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.3.0 → 1.4.0
-Change Type: MINOR (Added pedagogical transparency principle)
+Version Change: 1.5.0 → 1.6.0
+Change Type: MINOR (Added homogeneous coordinates principle)
 
 Changes Made:
+- Added Principle IX: Homogeneous Coordinate System
+- Established array-based homogeneous coordinates as standard for all geometric data
+- Mandated consistent representation: points [x,y,1] or [x,y,z,1], vectors [dx,dy,0] or [dx,dy,dz,0]
+
+Previous Changes (v1.5.0):
+- Added Principle VIII: Principle-Based Rendering and Data Handling
+- Established that rendering must derive from world data structures using geometric first principles
+- Documented exceptions for initial world elements (P_H, P_V, origin O)
+
+Previous Changes (v1.4.0):
 - Added Principle VII: Pedagogical Transparency Over Convenience
 - Formalized design philosophy prioritizing visible construction process
 - Established guidelines for balancing UX automation with learning objectives
@@ -175,6 +185,72 @@ Diedrico prioritizes making the constructive process visible and traceable over 
 
 **Rationale**: The educational value lies in understanding *how* projections are constructed, not just *what* the final result is. Making every step explicit and traceable ensures students understand the geometric reasoning process. This principle distinguishes Diedrico from productivity CAD tools—we're optimizing for learning, not speed.
 
+### VIII. Principle-Based Rendering and Data Handling
+
+The rendering and manipulation of world data structures MUST be performed according to geometric first principles, NOT using special-case or hard-coded rendering logic:
+
+- **Dynamic Derivation**: All viewport rendering MUST be derived dynamically from the world data structures using geometric principles
+- **No Special Cases**: Projection planes, elements, guides, and all geometric entities MUST be rendered using the same geometric computation engine
+- **First Principles Only**: Coordinate transformations, projections, intersections, and all geometric operations MUST follow mathematical first principles
+
+**Exceptions (Initial World Elements Only)**:
+- The following elements MAY have special handling at initialization time ONLY:
+  - Projection planes P_H and P_V (added during world initialization)
+  - Origin point O (0, 0, 0)
+  - Hinge line HL_HV between P_H and P_V
+- After initialization, these elements MUST be treated like any other world element
+
+**Rules**:
+- NO hard-coded rendering paths for specific planes or element types (beyond initial setup)
+- ALL geometric calculations MUST use general-purpose geometry algorithms
+- Coordinate transformations MUST use matrix-based operations consistently
+- New projection planes (auxiliary, profile, etc.) MUST work without code changes
+- Element rendering MUST derive from element definitions and realization cache
+
+**Rationale**: Hard-coding special cases for specific planes or elements creates brittleness and prevents the system from scaling to arbitrary projections. A principle-based approach ensures that auxiliary planes, custom projections, and future geometric constructions work automatically through the same mathematical foundation. This also serves the educational mission—the code itself embodies the geometric principles being taught.
+
+### IX. Homogeneous Coordinate System
+
+All geometric data manipulations MUST be performed using homogeneous coordinates with array-based representations:
+
+- **Homogeneous Coordinates**: ALL geometric calculations MUST use homogeneous coordinate representation
+- **Array-Based Storage**: Points, vectors, and transformations MUST be represented as JavaScript/TypeScript arrays
+- **Consistent Convention**:
+  - 2D points: `[x, y, 1]` (w=1 for regular points)
+  - 2D vectors/directions: `[dx, dy, 0]` (w=0 to distinguish from points)
+  - 3D points: `[x, y, z, 1]` (w=1 for regular points)
+  - 3D vectors/directions: `[dx, dy, dz, 0]` (w=0 to distinguish from points)
+  - 2D transformations: `[a, b, c, d, tx, ty]` (affine 2D matrix, 6 numbers)
+  - 3D transformations: 16-element array (Matrix4, column-major order)
+
+**Rules**:
+- NO separate x, y, z fields for point storage in geometric computations (use arrays)
+- ALL coordinate transformations MUST use matrix multiplication on homogeneous coordinates
+- Geometric algorithms (intersection, projection, parallel construction) MUST operate on homogeneous coordinates
+- Conversion to Cartesian coordinates (when needed for display) MUST divide by w component
+- w=1 is MANDATORY for regular geometric points (not optional or "typically")
+- w=0 is MANDATORY for direction vectors and vectors at infinity
+
+**Rationale**: Homogeneous coordinates provide a unified mathematical framework that:
+- Simplifies transformations (translation, rotation, projection all use matrix multiplication)
+- Enables elegant handling of points at infinity (parallel lines, ideal points)
+- Reduces code complexity (single code path for all geometric operations)
+- Improves numerical stability in many geometric calculations
+- Aligns with computer graphics best practices (Three.js, WebGL use homogeneous coordinates)
+- Makes the code more maintainable and mathematically rigorous
+
+**Examples**:
+```typescript
+// CORRECT: Homogeneous coordinate representation
+const point2D: number[] = [100, 200, 1];           // Point at (100, 200)
+const direction2D: number[] = [1, 0, 0];           // Unit vector in X direction
+const point3D: number[] = [50, 75, 100, 1];        // 3D point at (50, 75, 100)
+const transform2D: number[] = [1, 0, 0, 1, 10, 20]; // Translation by (10, 20)
+
+// INCORRECT: Separate coordinate fields
+const point = { x: 100, y: 200 };                  // ❌ Not allowed in geometric calculations
+```
+
 ## Architecture Constraints
 
 ### Layer Communication Rules
@@ -226,7 +302,7 @@ When you need to update this constitution:
 
 ### Compliance
 
-- The 7 core principles (Layered Architecture, Command Pattern, Frontend-First, Tech Discipline, Pragmatic Testing, English-Only, Pedagogical Transparency) are the foundation
+- The 9 core principles (Layered Architecture, Command Pattern, Frontend-First, Tech Discipline, Pragmatic Testing, English-Only, Pedagogical Transparency, Principle-Based Rendering, Homogeneous Coordinate System) are the foundation
 - If you need to violate a principle, document why in your spec or plan
 - When in doubt, prefer simplicity but respect the architecture
 
@@ -235,4 +311,4 @@ When you need to update this constitution:
 - Feature templates: `.specify/templates/*.md`
 - Agent workflows: `.github/agents/speckit.*.agent.md`
 
-**Version**: 1.4.0 | **Ratified**: 2025-12-22 | **Last Amended**: 2025-12-22
+**Version**: 1.6.0 | **Ratified**: 2025-12-22 | **Last Amended**: 2025-12-28

@@ -957,17 +957,17 @@ type Element3DRealization =
   | Plane3DRealization;
 
 interface Point3DRealization {
-  point: number[];                  // [x, y, z, w] - homogeneous coordinates
+  point: number[];                  // [x, y, z, 1] - homogeneous coordinates
 }
 
 interface Line3DRealization {
-  point: number[];                  // [x, y, z, w] - point on line (homogeneous)
+  point: number[];                  // [x, y, z, 1] - point on line (homogeneous)
   direction: number[];              // [dx, dy, dz, 0] - direction vector (normalized, w=0)
 }
 
 interface Segment3DRealization {
-  startPoint: number[];             // [x1, y1, z1, w1] - start point (homogeneous)
-  endPoint: number[];               // [x2, y2, z2, w2] - end point (homogeneous)
+  startPoint: number[];             // [x1, y1, z1, 1] - start point (homogeneous)
+  endPoint: number[];               // [x2, y2, z2, 1] - end point (homogeneous)
 }
 
 interface Plane3DRealization {
