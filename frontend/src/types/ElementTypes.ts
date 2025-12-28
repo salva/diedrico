@@ -31,15 +31,6 @@ export interface Point2DFree extends Element2DBase {
 }
 
 /**
- * Point constrained to lie on an element
- */
-export interface Point2DOnElement extends Element2DBase {
-  kind: 'Point2DOnElement';
-  hostElementId: string;         // Line, segment, or circle
-  parameter: number;             // Position along element (0-1 for segments, angle for circles)
-}
-
-/**
  * Point at intersection of two elements
  */
 export interface Point2DFromIntersection extends Element2DBase {
@@ -64,7 +55,6 @@ export interface Point2DDerived extends Element2DBase {
  */
 export type Point2D = 
   | Point2DFree 
-  | Point2DOnElement 
   | Point2DFromIntersection 
   | Point2DDerived;
 
@@ -229,6 +219,18 @@ export interface Element3DBase {
 }
 
 /**
+ * 3D point from explicit coordinates (e.g., origin point O)
+ */
+export interface Point3DByCoordinates extends Element3DBase {
+  kind: 'Point3DByCoordinates';
+  x: number;
+  y: number;
+  z: number;
+  projectionHId: string;         // Computed Point2D on horizontal plane
+  projectionVId: string;         // Computed Point2D on vertical plane
+}
+
+/**
  * 3D point from two 2D projections
  */
 export interface Point3DFromProjections extends Element3DBase {
@@ -237,7 +239,7 @@ export interface Point3DFromProjections extends Element3DBase {
   projectionVId: string;         // Point2D on vertical plane
 }
 
-export type Point3D = Point3DFromProjections;
+export type Point3D = Point3DByCoordinates | Point3DFromProjections;
 
 /**
  * 3D line from two 2D line projections
@@ -248,7 +250,18 @@ export interface Line3DFromProjections extends Element3DBase {
   projectionVId: string;         // Line2D on vertical plane
 }
 
-export type Line3D = Line3DFromProjections;
+/**
+ * 3D line from intersection of two planes (e.g., hinge lines)
+ */
+export interface Line3DFromPlaneIntersection extends Element3DBase {
+  kind: 'Line3DFromPlaneIntersection';
+  plane1Id: string;              // First Plane3D
+  plane2Id: string;              // Second Plane3D
+  projectionHId: string;         // Line2D representation on horizontal plane
+  projectionVId: string;         // Line2D representation on vertical plane
+}
+
+export type Line3D = Line3DFromProjections | Line3DFromPlaneIntersection;
 
 /**
  * 3D segment from two 3D points
@@ -270,7 +283,20 @@ export interface Plane3DByTraces extends Element3DBase {
   traceVId: string;              // Line2D vertical trace
 }
 
-export type Plane3D = Plane3DByTraces;
+/**
+ * 3D plane from point and normal vector (e.g., projection planes P_H, P_V)
+ */
+export interface Plane3DByPointAndNormal extends Element3DBase {
+  kind: 'Plane3DByPointAndNormal';
+  originPointId: string;         // Point3D on the plane
+  normalVector: {                // Normal vector to the plane
+    x: number;
+    y: number;
+    z: number;
+  };
+}
+
+export type Plane3D = Plane3DByTraces | Plane3DByPointAndNormal;
 
 /**
  * Union of all 3D element types
@@ -298,7 +324,6 @@ export interface VisualStyle {
  */
 export function isPoint2D(element: Element2D): element is Point2D {
   return element.kind === 'Point2DFree' 
-    || element.kind === 'Point2DOnElement' 
     || element.kind === 'Point2DFromIntersection' 
     || element.kind === 'Point2DDerived';
 }
@@ -335,11 +360,13 @@ export function isBHLProjection(element: Element2D): element is BHLProjection {
  * Type guards for 3D elements
  */
 export function isPoint3D(element: Element3D): element is Point3D {
-  return element.kind === 'Point3DFromProjections';
+  return element.kind === 'Point3DByCoordinates'
+    || element.kind === 'Point3DFromProjections';
 }
 
 export function isLine3D(element: Element3D): element is Line3D {
-  return element.kind === 'Line3DFromProjections';
+  return element.kind === 'Line3DFromProjections' 
+    || element.kind === 'Line3DFromPlaneIntersection';
 }
 
 export function isSegment3D(element: Element3D): element is Segment3D {
@@ -347,5 +374,6 @@ export function isSegment3D(element: Element3D): element is Segment3D {
 }
 
 export function isPlane3D(element: Element3D): element is Plane3D {
-  return element.kind === 'Plane3DByTraces';
+  return element.kind === 'Plane3DByTraces' 
+    || element.kind === 'Plane3DByPointAndNormal';
 }

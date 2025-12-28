@@ -95,7 +95,7 @@ function getPointX(point: Point2D): number {
   if (point.kind === 'Point2DFree' || point.kind === 'Point2DDerived') {
     return (point as any).x;
   }
-  // For Point2DOnElement and Point2DFromIntersection, would need to compute
+  // For Point2DFromIntersection and Point2DFromIntersection, would need to compute
   // For now return 0 as placeholder
   return 0;
 }
@@ -107,7 +107,7 @@ function getPointY(point: Point2D): number {
   if (point.kind === 'Point2DFree' || point.kind === 'Point2DDerived') {
     return (point as any).y;
   }
-  // For Point2DOnElement and Point2DFromIntersection, would need to compute
+  // For Point2DFromIntersection and Point2DFromIntersection, would need to compute
   // For now return 0 as placeholder
   return 0;
 }

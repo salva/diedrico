@@ -204,7 +204,7 @@ export class CreateCircleCommand extends Command {
       case 'Point2DFree':
       case 'Point2DDerived':
         return { x: point.x, y: point.y };
-      case 'Point2DOnElement':
+      case 'Point2DFromIntersection':
       case 'Point2DFromIntersection':
         // For non-free points, coordinates need to be computed during recomputation
         // For now, use placeholder values (will be implemented in recomputation phase)

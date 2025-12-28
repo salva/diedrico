@@ -8,12 +8,92 @@ import { resetCounters } from '../../../src/domain/world/IdGenerator';
 // Mock worldStore with points, lines, and guides
 const createMockWorldStore = () => {
   const elements2D = new Map();
+  const elements3D = new Map();
   const guides = new Map();
   const dependencyGraph = {
     addNode: () => {},
     addEdge: () => {},
     hasNode: () => false
   };
+  
+  // Add auxiliary points for HL_HV line
+  elements2D.set('HL_HV_H_p1', {
+    id: 'HL_HV_H_p1',
+    kind: 'Point2DFree',
+    planeId: 'P_H',
+    x: -1000,
+    y: -200,
+    createdBy: 'system:init',
+    infeasible: false,
+    visualStyle: { visible: false }
+  });
+  
+  elements2D.set('HL_HV_H_p2', {
+    id: 'HL_HV_H_p2',
+    kind: 'Point2DFree',
+    planeId: 'P_H',
+    x: 1000,
+    y: -200,
+    createdBy: 'system:init',
+    infeasible: false,
+    visualStyle: { visible: false }
+  });
+  
+  elements2D.set('HL_HV_V_p1', {
+    id: 'HL_HV_V_p1',
+    kind: 'Point2DFree',
+    planeId: 'P_V',
+    x: -1000,
+    y: 200,
+    createdBy: 'system:init',
+    infeasible: false,
+    visualStyle: { visible: false }
+  });
+  
+  elements2D.set('HL_HV_V_p2', {
+    id: 'HL_HV_V_p2',
+    kind: 'Point2DFree',
+    planeId: 'P_V',
+    x: 1000,
+    y: 200,
+    createdBy: 'system:init',
+    infeasible: false,
+    visualStyle: { visible: false }
+  });
+  
+  // Add HL_HV Line2D projections
+  elements2D.set('HL_HV_H', {
+    id: 'HL_HV_H',
+    kind: 'Line2DByTwoPoints',
+    planeId: 'P_H',
+    point1Id: 'HL_HV_H_p1',
+    point2Id: 'HL_HV_H_p2',
+    createdBy: 'system:init',
+    infeasible: false,
+    visualStyle: {}
+  });
+  
+  elements2D.set('HL_HV_V', {
+    id: 'HL_HV_V',
+    kind: 'Line2DByTwoPoints',
+    planeId: 'P_V',
+    point1Id: 'HL_HV_V_p1',
+    point2Id: 'HL_HV_V_p2',
+    createdBy: 'system:init',
+    infeasible: false,
+    visualStyle: {}
+  });
+  
+  // Add HL_HV as 3D Line
+  elements3D.set('HL_HV', {
+    id: 'HL_HV',
+    kind: 'Line3DFromProjections',
+    projectionHId: 'HL_HV_H',
+    projectionVId: 'HL_HV_V',
+    createdBy: 'system:init',
+    infeasible: false,
+    visualStyle: {}
+  });
   
   // Add mock points
   elements2D.set('P001', {
@@ -51,6 +131,7 @@ const createMockWorldStore = () => {
   
   return {
     elements2D,
+    elements3D,
     guides,
     dependencyGraph,
     get allGuides() {
@@ -62,6 +143,9 @@ const createMockWorldStore = () => {
     removeElement2D: (id: string) => {
       elements2D.delete(id);
     },
+    addElement3D: (element: any) => {
+      elements3D.set(element.id, element);
+    },
     addGuide: (guide: any) => {
       guides.set(guide.id, guide);
     },
@@ -72,20 +156,14 @@ const createMockWorldStore = () => {
   };
 };
 
-// Mock viewStore with hinge lines
+// Mock viewStore (simplified, no longer needs hinge lines)
 const createMockViewStore = () => {
-  const hingeLines = [
-    {
-      id: 'HL_HV',
-      name: 'Hinge Line H-V',
-      plane1Id: 'P_H',
-      plane2Id: 'P_V'
-    }
-  ];
-  
   return {
-    hingeLines,
-    getHingeLineById: (id: string) => hingeLines.find(hl => hl.id === id)
+    activePlaneId: 'P_H',
+    planes: [
+      { id: 'P_H', name: 'Horizontal Plane', isVisible: true },
+      { id: 'P_V', name: 'Vertical Plane', isVisible: true }
+    ]
   };
 };
 
@@ -103,7 +181,7 @@ describe('CreateGuideCommand', () => {
     it('should create a guide from HL_HV through point P001', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -122,7 +200,7 @@ describe('CreateGuideCommand', () => {
     it('should create two Guide2D elements (one per plane)', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -143,7 +221,7 @@ describe('CreateGuideCommand', () => {
     it('should store Guide entity in worldStore', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -165,7 +243,7 @@ describe('CreateGuideCommand', () => {
     it('should create guides on correct planes', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -187,7 +265,7 @@ describe('CreateGuideCommand', () => {
     it('should set guide visual style (green, dashed)', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -208,7 +286,7 @@ describe('CreateGuideCommand', () => {
     it('should reference the through point in guide elements', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -231,7 +309,7 @@ describe('CreateGuideCommand', () => {
     it('should generate auto-incremented names (g1, g2, ...)', () => {
       const command1 = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -245,7 +323,7 @@ describe('CreateGuideCommand', () => {
 
       const command2 = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P002',
           actionId: 'action-2'
         },
@@ -261,7 +339,7 @@ describe('CreateGuideCommand', () => {
     it('should accept custom name', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1',
           name: 'myGuide'
@@ -280,7 +358,7 @@ describe('CreateGuideCommand', () => {
     it('should fail if hinge line not found', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_INVALID',
+          referenceLineId: 'HL_INVALID',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -291,13 +369,13 @@ describe('CreateGuideCommand', () => {
       const result = command.execute();
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Hinge line not found');
+      expect(result.error).toContain('Reference line not found');
     });
 
     it('should fail if point not found', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P999',
           actionId: 'action-1'
         },
@@ -322,7 +400,7 @@ describe('CreateGuideCommand', () => {
 
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },
@@ -344,7 +422,7 @@ describe('CreateGuideCommand', () => {
     it('should return both guide element IDs', () => {
       const command = new CreateGuideCommand(
         {
-          hingeLineId: 'HL_HV',
+          referenceLineId: 'HL_HV',
           throughPointId: 'P001',
           actionId: 'action-1'
         },

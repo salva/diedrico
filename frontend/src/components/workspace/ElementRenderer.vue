@@ -1,6 +1,6 @@
 <template>
-  <!-- Do not render infeasible elements at all (per spec: "draw no infeasible outputs") -->
-  <g v-if="!element.infeasible" :class="['element', element.kind]">
+  <!-- Do not render infeasible or invisible elements -->
+  <g v-if="!element.infeasible && (element.visualStyle?.visible !== false)" :class="['element', element.kind]">
     <!-- Point2D -->
     <circle
       v-if="element.kind.startsWith('Point2D')"
@@ -19,7 +19,13 @@
       class="element-label"
       :fill="element.visualStyle?.color || 'black'"
     >
-      {{ element.name }}
+      <template v-if="element.name.includes('_')">
+        <tspan>{{ element.name.split('_')[0] }}</tspan>
+        <tspan baseline-shift="sub" font-size="10">{{ element.name.split('_').slice(1).join('_') }}</tspan>
+      </template>
+      <template v-else>
+        {{ element.name }}
+      </template>
     </text>
 
     <!-- Segment2D -->
@@ -61,6 +67,19 @@
       :opacity="element.visualStyle?.opacity || 1.0"
     />
 
+    <!-- BHLProjection2D (Broken Hinge Line projection, rendered as orange dashed line) -->
+    <line
+      v-if="element.kind === 'BHLProjection2D'"
+      :x1="getBHLPoint1X(element)"
+      :y1="getBHLPoint1Y(element)"
+      :x2="getBHLPoint2X(element)"
+      :y2="getBHLPoint2Y(element)"
+      :stroke="'#ff8800'"
+      :stroke-width="2"
+      stroke-dasharray="8,4"
+      :opacity="element.visualStyle?.opacity || 1.0"
+    />
+
     <!-- Circle2D -->
     <circle
       v-if="element.kind.startsWith('Circle2D')"
@@ -77,8 +96,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Element2D, Point2D, Point2DFree, Point2DDerived, Segment2DByPoints, Line2D, Circle2D } from '@/types/ElementTypes';
+import type { Element2D, Point2D, Point2DFree, Point2DDerived, Segment2DByPoints, Line2D, Circle2D, BHLProjection2D, Plane3D } from '@/types/ElementTypes';
 import { useWorldStore } from '@/stores/worldStore';
+import { tracesToPlane3D, computeBHLProjections, type Line2DGeometry } from '@/domain/calculations/bhlProjections';
 
 interface Props {
   element: Element2D;
@@ -100,7 +120,7 @@ function getPointX(point: Point2D): number {
   if (point.kind === 'Point2DFree' || point.kind === 'Point2DDerived') {
     return (point as Point2DFree | Point2DDerived).x;
   }
-  // For Point2DOnElement and Point2DFromIntersection, we need to compute
+  // For Point2DFromIntersection and Point2DFromIntersection, we need to compute
   // For now, return 0 as placeholder
   return 0;
 }
@@ -110,7 +130,7 @@ function getPointY(point: Point2D): number {
   if (point.kind === 'Point2DFree' || point.kind === 'Point2DDerived') {
     return (point as Point2DFree | Point2DDerived).y;
   }
-  // For Point2DOnElement and Point2DFromIntersection, we need to compute
+  // For Point2DFromIntersection and Point2DFromIntersection, we need to compute
   // For now, return 0 as placeholder
   return 0;
 }
@@ -289,6 +309,97 @@ function getCircleRadius(element: any): number {
   if (element.kind === 'Circle2DByThreePoints') {
     // TODO: Calculate circumradius of three points
     return 0;
+  }
+  return 0;
+}
+
+// Get BHL projection endpoints
+function getBHLGeometry(element: BHLProjection2D): Line2DGeometry | null {
+  // Get the parent 3D plane
+  const plane3D = worldStore.getElement3D(element.sourcePlane3DId) as Plane3D | undefined;
+  if (!plane3D || plane3D.kind !== 'Plane3DByTraces') {
+    return null;
+  }
+
+  // Get the trace lines
+  const traceH = worldStore.getElement2D(plane3D.traceHId) as Line2D | undefined;
+  const traceV = worldStore.getElement2D(plane3D.traceVId) as Line2D | undefined;
+  if (!traceH || !traceV) {
+    return null;
+  }
+
+  // Convert traces to geometry
+  const traceHGeom = lineToGeometry(traceH);
+  const traceVGeom = lineToGeometry(traceV);
+  if (!traceHGeom || !traceVGeom) {
+    return null;
+  }
+
+  // Compute 3D plane equation
+  const plane3DEquation = tracesToPlane3D(traceHGeom, traceVGeom);
+  if (!plane3DEquation) {
+    return null;
+  }
+
+  // Compute BHL projections
+  const bhlProjections = computeBHLProjections(plane3DEquation);
+  if (!bhlProjections) {
+    return null;
+  }
+
+  // Return the appropriate projection based on the element's plane
+  if (element.planeId === 'P_H') {
+    return bhlProjections.projectionH;
+  } else if (element.planeId === 'P_V') {
+    return bhlProjections.projectionV;
+  }
+
+  return null;
+}
+
+function lineToGeometry(line: Line2D): Line2DGeometry | null {
+  if (line.kind === 'Line2DByTwoPoints') {
+    const point1 = getElement(line.point1Id) as Point2D;
+    const point2 = getElement(line.point2Id) as Point2D;
+    
+    if (!point1 || !point2) return null;
+    
+    return {
+      point1: { x: getPointX(point1), y: getPointY(point1) },
+      point2: { x: getPointX(point2), y: getPointY(point2) }
+    };
+  }
+  return null;
+}
+
+function getBHLPoint1X(element: any): number {
+  if (element.kind === 'BHLProjection2D') {
+    const geom = getBHLGeometry(element as BHLProjection2D);
+    return geom?.point1.x ?? 0;
+  }
+  return 0;
+}
+
+function getBHLPoint1Y(element: any): number {
+  if (element.kind === 'BHLProjection2D') {
+    const geom = getBHLGeometry(element as BHLProjection2D);
+    return geom?.point1.y ?? 0;
+  }
+  return 0;
+}
+
+function getBHLPoint2X(element: any): number {
+  if (element.kind === 'BHLProjection2D') {
+    const geom = getBHLGeometry(element as BHLProjection2D);
+    return geom?.point2.x ?? 0;
+  }
+  return 0;
+}
+
+function getBHLPoint2Y(element: any): number {
+  if (element.kind === 'BHLProjection2D') {
+    const geom = getBHLGeometry(element as BHLProjection2D);
+    return geom?.point2.y ?? 0;
   }
   return 0;
 }

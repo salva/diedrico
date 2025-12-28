@@ -12,6 +12,7 @@
       
       <main class="app-workspace">
         <Workspace2D />
+        <Workspace3D class="workspace-3d-overlay" />
       </main>
     </div>
   </div>
@@ -19,6 +20,7 @@
 
 <script setup lang="ts">
 import Workspace2D from './components/workspace/Workspace2D.vue';
+import Workspace3D from './components/workspace/Workspace3D.vue';
 import MainToolbar from './components/toolbars/MainToolbar.vue';
 import PlaneSelector from './components/toolbars/PlaneSelector.vue';
 </script>
@@ -73,5 +75,17 @@ import PlaneSelector from './components/toolbars/PlaneSelector.vue';
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.workspace-3d-overlay {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 800px;
+  height: 600px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
 }
 </style>

@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia';
 import type { ProjectionPlane } from '../domain/viewState/ProjectionPlane';
-import type { HingeLine } from '../domain/viewState/HingeLine';
 import { PLANE_H, PLANE_V } from '../domain/viewState/ProjectionPlane';
-import { HL_HV } from '../domain/viewState/HingeLine';
 
 interface View2DState {
   panX: number;
@@ -13,7 +11,6 @@ interface View2DState {
 interface ViewState {
   activePlaneId: string;
   planes: ProjectionPlane[];
-  hingeLines: HingeLine[];
   view2D: View2DState;
 }
 
@@ -21,7 +18,6 @@ export const useViewStore = defineStore('view', {
   state: (): ViewState => ({
     activePlaneId: 'P_H',
     planes: [PLANE_H, PLANE_V],
-    hingeLines: [HL_HV],
     view2D: {
       panX: 0,
       panY: 0,
@@ -49,22 +45,6 @@ export const useViewStore = defineStore('view', {
      */
     getPlaneById: (state) => (id: string): ProjectionPlane | undefined => {
       return state.planes.find(p => p.id === id);
-    },
-
-    /**
-     * Get hinge line by ID
-     */
-    getHingeLineById: (state) => (id: string): HingeLine | undefined => {
-      return state.hingeLines.find(hl => hl.id === id);
-    },
-
-    /**
-     * Get hinge lines connected to a plane
-     */
-    getHingeLinesForPlane: (state) => (planeId: string): HingeLine[] => {
-      return state.hingeLines.filter(
-        hl => hl.plane1Id === planeId || hl.plane2Id === planeId
-      );
     }
   },
 
@@ -119,23 +99,6 @@ export const useViewStore = defineStore('view', {
     },
 
     /**
-     * Add a new hinge line
-     */
-    addHingeLine(hingeLine: HingeLine): void {
-      this.hingeLines.push(hingeLine);
-    },
-
-    /**
-     * Remove a hinge line
-     */
-    removeHingeLine(hingeLineId: string): void {
-      const index = this.hingeLines.findIndex(hl => hl.id === hingeLineId);
-      if (index !== -1) {
-        this.hingeLines.splice(index, 1);
-      }
-    },
-
-    /**
      * Reset view to default (center, zoom 1.0)
      */
     resetView(): void {
@@ -152,7 +115,6 @@ export const useViewStore = defineStore('view', {
     clear(): void {
       this.activePlaneId = 'P_H';
       this.planes = [PLANE_H, PLANE_V];
-      this.hingeLines = [HL_HV];
       this.resetView();
     }
   }

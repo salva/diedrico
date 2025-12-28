@@ -19,7 +19,7 @@ function getPointCoordinates(point: Point2D): { x: number; y: number } | null {
   if (point.kind === 'Point2DFree' || point.kind === 'Point2DDerived') {
     return { x: point.x, y: point.y };
   }
-  // For Point2DOnElement and Point2DFromIntersection, coordinates need to be computed
+  // For Point2DFromIntersection and Point2DFromIntersection, coordinates need to be computed
   // This is a placeholder - will be computed during recomputation
   return { x: 0, y: 0 };
 }

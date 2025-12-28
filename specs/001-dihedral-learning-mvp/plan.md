@@ -300,28 +300,35 @@ The MVP is built in **incremental phases**, each delivering a testable, working 
 
 #### Phase 3: 2D Workspace & Basic Tools (Week 3-4)
 
-**Goal**: Render 2D workspace with pan/zoom and basic tool interaction
+**Goal**: Render 2D workspace with ALL projection planes visible simultaneously, plus pan/zoom and basic tool interaction
 
 **Deliverables**:
 - **2D Workspace component** (`frontend/src/components/workspace/Workspace2D.vue`):
-  - SVG canvas
+  - SVG canvas displaying ALL projection planes simultaneously in dihedral layout
+  - All planes (P_H, P_V) visible at once with appropriate positioning
+  - Active plane elements at full opacity, non-active planes at reduced opacity (e.g., 50%)
+  - Hinge lines visible between planes
   - D3.js zoom/pan behavior (FR-005)
-  - Render points as circles, segments as lines
+  - Render points as circles, segments as lines on their respective planes
 - **Toolbar components**:
   - Tool selector buttons
+  - Active plane selector (changes emphasis, not visibility)
   - Active tool state in `toolsStore`
 - **Tool implementations**:
-  - Free point tool: Click empty space → create point
-  - Segment tool: Click two points → create segment
+  - Free point tool: Click empty space → create point on active plane
+  - Segment tool: Click two points → create segment on active plane
 - **Visual feedback**:
   - Hover highlights valid inputs
   - Cursor changes for different tools
 
 **Acceptance**:
+- [ ] ALL projection planes visible simultaneously in dihedral layout
+- [ ] Can switch active plane - changes opacity/emphasis, all planes remain visible
 - [ ] Can pan (Shift+drag) and zoom (wheel) without tools canceling
-- [ ] Can select "Point" tool, click canvas → point appears
-- [ ] Can select "Segment" tool, click 2 points → segment appears
-- [ ] Points and segments render correctly at all zoom levels
+- [ ] Can select "Point" tool, click canvas → point appears on active plane
+- [ ] Can select "Segment" tool, click 2 points → segment appears on active plane
+- [ ] Points and segments render correctly on their planes at all zoom levels
+- [ ] Elements on non-active planes visible but de-emphasized
 - [ ] SC-002: Navigation feedback <200ms for 50 elements
 
 ---

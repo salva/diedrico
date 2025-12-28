@@ -1,29 +1,33 @@
 /**
- * CreateGuideCommand - Create a guide perpendicular to a hinge line
+ * CreateGuideCommand - Create a guide perpendicular to a hinge line or BHL projection
  * 
- * A guide is a line perpendicular to a hinge line (HL) that spans both
- * projection planes associated with that HL. Guides are used for transporting
+ * A guide is a line perpendicular to a reference line (HL or BHL projection) that spans both
+ * projection planes associated with that line. Guides are used for transporting
  * points and distances between planes.
  * 
- * MVP: Only supports guides from HingeLine (HL_HV), not BHL projections yet.
+ * Supports:
+ * - HingeLine (HL_HV) - structural fold between projection planes
+ * - BHL projections - with automatic transport to paired projection
  */
 
 import { Command } from './Command';
 import { AddElementOp } from './operations/WorldOperations';
 import { AddDependencyEdgesOp } from './operations/DependencyOperations';
-import type { Guide2DPerpendicularToLine, Point2D } from '../types/ElementTypes';
+import type { Guide2DPerpendicularToLine, Point2D, Line2D, BHLProjection2D, Line2DByTwoPoints, Line3D } from '../types/ElementTypes';
 import type { OperationResult } from '../types/CommandTypes';
-import type { HingeLine } from '../domain/viewState/HingeLine';
+import type { BrokenHingeLine } from '../domain/world/BrokenHingeLine';
 import { generateGuideId, generateCommandId, generateOperationId } from '../domain/world/IdGenerator';
 import { createGuide } from '../domain/world/Guide';
 import { perpendicularThroughPoint } from '../domain/calculations/perpendiculars';
 import { defaultVisualStyle } from '../domain/world/VisualStyle';
 
 export interface CreateGuideParams {
-  hingeLineId: string;      // HingeLine ID (e.g., "HL_HV")
+  referenceLineId: string;  // HingeLine ID (e.g., "HL_HV") or BHL projection element ID
   throughPointId: string;   // Point on one of the planes
   actionId: string;         // The action that is creating this guide
   name?: string;            // Optional custom name (auto-generated if not provided)
+  // Legacy support
+  hingeLineId?: string;     // Deprecated: use referenceLineId instead
 }
 
 export class CreateGuideCommand extends Command {
@@ -35,11 +39,13 @@ export class CreateGuideCommand extends Command {
   private guide2DPlane2Id: string;
 
   constructor(params: CreateGuideParams, worldStore: any, viewStore: any) {
+    // Support legacy hingeLineId parameter
+    const refLineId = params.referenceLineId || params.hingeLineId || '';
     super(
       generateCommandId(),
-      `Create guide perpendicular to ${params.hingeLineId} through ${params.throughPointId}`
+      `Create guide perpendicular to ${refLineId} through ${params.throughPointId}`
     );
-    this.params = params;
+    this.params = { ...params, referenceLineId: refLineId };
     this.worldStore = worldStore;
     this.viewStore = viewStore;
     this.guideId = generateGuideId();
@@ -59,25 +65,68 @@ export class CreateGuideCommand extends Command {
   }
 
   /**
-   * Get line representation of hinge line on a plane
-   * For HL_HV, the hinge line is horizontal (y=0)
+   * Get line geometry from a Line2D element
    */
-  private getHingeLineOnPlane(_hingeLine: HingeLine, _planeId: string): { x1: number; y1: number; x2: number; y2: number } {
-    // For MVP, HL_HV is always horizontal at y=0
-    // In future, would compute based on plane geometry
-    // For now, return a horizontal line
-    return { x1: -1000, y1: 0, x2: 1000, y2: 0 };
+  private getLineGeometry(line: Line2DByTwoPoints): { x1: number; y1: number; x2: number; y2: number } {
+    const p1 = this.worldStore.elements2D.get(line.point1Id) as Point2D;
+    const p2 = this.worldStore.elements2D.get(line.point2Id) as Point2D;
+    
+    if (!p1 || !p2) {
+      // Fallback if points not found
+      return { x1: -1000, y1: 0, x2: 1000, y2: 0 };
+    }
+    
+    const coords1 = this.getPointCoordinates(p1);
+    const coords2 = this.getPointCoordinates(p2);
+    
+    if (!coords1 || !coords2) {
+      return { x1: -1000, y1: 0, x2: 1000, y2: 0 };
+    }
+    
+    return { x1: coords1.x, y1: coords1.y, x2: coords2.x, y2: coords2.y };
+  }
+
+  /**
+   * Find the BrokenHingeLine entity for a given BHL projection
+   */
+  private findBHLForProjection(projection: BHLProjection2D): BrokenHingeLine | null {
+    if (!this.worldStore.brokenHingeLines) {
+      return null;
+    }
+
+    // Search through all BHLs to find one that references this projection
+    for (const bhl of this.worldStore.brokenHingeLines.values()) {
+      if (bhl.projectionOnPlane1Id === projection.id || bhl.projectionOnPlane2Id === projection.id) {
+        return bhl;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Get line geometry for a BHL projection
+   * For now, returns a placeholder line - full implementation would compute actual geometry
+   */
+  private getBHLLineGeometry(_projection: BHLProjection2D): { x1: number; y1: number; x2: number; y2: number } {
+    // TODO: Compute actual BHL line geometry from 3D plane intersection
+    // For now, return a diagonal line as placeholder
+    return { x1: -500, y1: -500, x2: 500, y2: 500 };
   }
 
   execute(): OperationResult {
     try {
-      // 1. Get hinge line
-      const hingeLine = this.viewStore.getHingeLineById(this.params.hingeLineId);
-      if (!hingeLine) {
+      // 1. Determine if reference is a 3D Line (HL_HV or other) or BHL projection
+      const refElement3D = this.worldStore.elements3D.get(this.params.referenceLineId);
+      const is3DLine = refElement3D?.kind === 'Line3DFromProjections' 
+                       || refElement3D?.kind === 'Line3DFromPlaneIntersection';
+      const isBHLProjection = !is3DLine && this.worldStore.elements2D.has(this.params.referenceLineId);
+      
+      if (!is3DLine && !isBHLProjection) {
         return {
           success: false,
           outputs: {},
-          error: `Hinge line not found: ${this.params.hingeLineId}`
+          error: `Reference line not found: ${this.params.referenceLineId}`
         };
       }
 
@@ -100,9 +149,57 @@ export class CreateGuideCommand extends Command {
         };
       }
 
-      // 3. Compute perpendicular line on plane 1
-      const hlLine1 = this.getHingeLineOnPlane(hingeLine, hingeLine.plane1Id);
-      const perpResult1 = perpendicularThroughPoint(hlLine1, pointCoords);
+      // 3. Get plane information and reference lines based on type
+      let plane1Id: string;
+      let plane2Id: string;
+      let refLine1: { x1: number; y1: number; x2: number; y2: number };
+      let refLine2: { x1: number; y1: number; x2: number; y2: number };
+
+      if (is3DLine) {
+        // 3D Line case (HL_HV)
+        const line3D = refElement3D as Line3D;
+        const projH = this.worldStore.elements2D.get(line3D.projectionHId) as Line2DByTwoPoints;
+        const projV = this.worldStore.elements2D.get(line3D.projectionVId) as Line2DByTwoPoints;
+        
+        if (!projH || !projV) {
+          return {
+            success: false,
+            outputs: {},
+            error: `Could not find 2D projections for 3D line: ${this.params.referenceLineId}`
+          };
+        }
+        
+        plane1Id = projH.planeId;
+        plane2Id = projV.planeId;
+        refLine1 = this.getLineGeometry(projH);
+        refLine2 = this.getLineGeometry(projV);
+      } else {
+        // BHL projection case
+        const bhlProjection = this.worldStore.elements2D.get(this.params.referenceLineId) as BHLProjection2D;
+        
+        // Find the paired BHL projection
+        const bhl = this.findBHLForProjection(bhlProjection);
+        if (!bhl) {
+          return {
+            success: false,
+            outputs: {},
+            error: `Could not find BHL metadata for projection: ${this.params.referenceLineId}`
+          };
+        }
+
+        plane1Id = bhl.plane1Id;
+        plane2Id = bhl.plane2Id;
+        
+        // Get line geometry for the BHL projections
+        const bhlProj1 = this.worldStore.elements2D.get(bhl.projectionOnPlane1Id) as BHLProjection2D;
+        const bhlProj2 = this.worldStore.elements2D.get(bhl.projectionOnPlane2Id) as BHLProjection2D;
+        
+        refLine1 = this.getBHLLineGeometry(bhlProj1);
+        refLine2 = this.getBHLLineGeometry(bhlProj2);
+      }
+
+      // 4. Compute perpendicular lines
+      const perpResult1 = perpendicularThroughPoint(refLine1, pointCoords);
       if (!perpResult1.ok) {
         return {
           success: false,
@@ -111,9 +208,7 @@ export class CreateGuideCommand extends Command {
         };
       }
 
-      // 4. Compute perpendicular line on plane 2
-      const hlLine2 = this.getHingeLineOnPlane(hingeLine, hingeLine.plane2Id);
-      const perpResult2 = perpendicularThroughPoint(hlLine2, pointCoords);
+      const perpResult2 = perpendicularThroughPoint(refLine2, pointCoords);
       if (!perpResult2.ok) {
         return {
           success: false,
@@ -130,8 +225,8 @@ export class CreateGuideCommand extends Command {
         id: this.guide2DPlane1Id,
         kind: 'Guide2DPerpendicularToLine',
         name: `${guideName}_P1`,
-        planeId: hingeLine.plane1Id,
-        referenceLineId: this.params.hingeLineId,
+        planeId: plane1Id,
+        referenceLineId: this.params.referenceLineId,
         throughPointId: this.params.throughPointId,
         createdBy: this.params.actionId,
         infeasible: false,
@@ -142,8 +237,8 @@ export class CreateGuideCommand extends Command {
         id: this.guide2DPlane2Id,
         kind: 'Guide2DPerpendicularToLine',
         name: `${guideName}_P2`,
-        planeId: hingeLine.plane2Id,
-        referenceLineId: this.params.hingeLineId,
+        planeId: plane2Id,
+        referenceLineId: this.params.referenceLineId,
         throughPointId: this.params.throughPointId,
         createdBy: this.params.actionId,
         infeasible: false,
@@ -154,12 +249,12 @@ export class CreateGuideCommand extends Command {
       const guide = createGuide(
         this.guideId,
         guideName,
-        this.params.hingeLineId,
+        this.params.referenceLineId,
         this.params.throughPointId,
         this.guide2DPlane1Id,
         this.guide2DPlane2Id,
-        hingeLine.plane1Id,
-        hingeLine.plane2Id
+        plane1Id,
+        plane2Id
       );
 
       // 8. Add Guide2D elements

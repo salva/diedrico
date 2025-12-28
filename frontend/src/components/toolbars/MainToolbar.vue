@@ -34,7 +34,6 @@ interface Tool {
 const tools: Tool[] = [
   { id: 'select', name: 'Select', icon: '↖', category: 'basic' },
   { id: 'point-free', name: 'Point', icon: '●', category: 'point' },
-  { id: 'point-on-element', name: 'Point on Element', icon: '◉', category: 'point' },
   { id: 'point-intersection', name: 'Intersection Point', icon: '⊗', category: 'point' },
   { id: 'segment', name: 'Segment', icon: '─', category: 'line' },
   { id: 'line', name: 'Line', icon: '↔', category: 'line' },

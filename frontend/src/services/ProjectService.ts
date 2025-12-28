@@ -40,8 +40,14 @@ export class ProjectService {
     }
     
     const project = await response.json();
-    this.currentProjectId = project.id;
-    return project;
+    this.currentProjectId = project.id;    
+    // Initialize workspace with origin point O
+    const worldStore = useWorldStore();
+    worldStore.initializeWorkspace();
+    
+    // Save initial state
+    await this.saveProject();
+        return project;
   }
 
   /**
@@ -149,7 +155,6 @@ export class ProjectService {
       },
       activePlaneId: viewStore.activePlaneId,
       planes: viewStore.planes,
-      hingeLines: viewStore.hingeLines,
       view2D: viewStore.view2D,
       processTree: {
         root: processStore.root
@@ -179,6 +184,11 @@ export class ProjectService {
       worldStore.addElement3D(el);
     });
 
+    // If project doesn't have origin point O, initialize it
+    if (!worldStore.getElement3D('O')) {
+      worldStore.initializeWorkspace();
+    }
+
     // Restore dependency graph
     project.dependencyGraph.nodes.forEach(node => {
       worldStore.dependencyGraph.addNode(node.id, node.type as 'element' | 'action');
@@ -191,7 +201,6 @@ export class ProjectService {
     // Restore view state
     viewStore.activePlaneId = project.activePlaneId;
     viewStore.planes = project.planes;
-    viewStore.hingeLines = project.hingeLines;
     viewStore.view2D = project.view2D;
 
     // Restore process tree

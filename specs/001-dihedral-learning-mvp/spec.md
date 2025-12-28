@@ -35,10 +35,16 @@ From the user’s perspective, the workspace has two synchronized views:
 A **projection plane** is a named 2D surface where the user draws 2D geometry.
 
 - Default planes:
-  - `P_H`: Horizontal plane
-  - `P_V`: Vertical plane
+  - `P_H`: Horizontal plane (typically displayed horizontally in the 2D view)
+  - `P_V`: Vertical plane (typically displayed vertically in the 2D view)
+- **All projection planes are displayed simultaneously** in the 2D workspace, arranged in dihedral configuration around their shared hinge lines.
 - The system may include additional projection planes later (auxiliary, profile, etc.).
-- The active plane affects only *where new elements are created*; changing the active plane does not modify existing geometry.
+- The **active plane** determines only *where new elements are created*; it does NOT control visibility.
+- Changing the active plane:
+  - does not hide or show planes,
+  - does not modify existing geometry,
+  - only changes which plane receives new constructions,
+  - updates visual emphasis (active plane elements at full intensity, others de-emphasized).
 
 ### Hinge Lines (HL) and Broken Hinge Lines (BHL)
 
@@ -99,6 +105,269 @@ Guides enable transporting points and distances between planes in an explicit, t
 - are not edited directly,
 - exist as a consequence of 2D constructions,
 - are visualized in the 3D view to support learning.
+
+**Origin Point O** (special 3D element):
+
+Every workspace contains a special **origin point** named `O`:
+
+- `O` is a **3D element** defined by hardcoded coordinates (0, 0, 0) in 3D space.
+- Type: `Point3DByCoordinates` (not derived from projections)
+- Geometrically, it sits at the intersection of projection planes `P_H` and `P_V` (on the hinge line `HL_HV`).
+- Its 2D projections (`O_H`, `O_V`) are computed from the 3D coordinates:
+  - `O_H` on `P_H`: local coordinates (0, -200) — on the hinge line
+  - `O_V` on `P_V`: local coordinates (0, 200) — on the hinge line
+- The origin point is **always present** from the moment a workspace is created.
+- It is always visible and cannot be deleted or moved.
+- It can be used as a reference point in constructions like any other 3D point.
+- Visual appearance: regular point rendering (not a special crosshair), distinguishable by color (#FF6B35 orange).
+
+**Projection Planes P_H and P_V** (special 3D elements):
+
+Every workspace contains two fundamental **projection planes** defined by point + normal vector:
+
+- `P_H`: Horizontal projection plane
+  - Type: `Plane3DByPointAndNormal`
+  - Origin: point `O` (0, 0, 0)
+  - Normal vector: (0, 0, 1) — pointing upward along Z-axis
+  - The plane where "top views" are drawn
+- `P_V`: Vertical projection plane
+  - Type: `Plane3DByPointAndNormal`
+  - Origin: point `O` (0, 0, 0)
+  - Normal vector: (0, 1, 0) — pointing toward viewer along Y-axis
+  - The plane where "front views" are drawn
+
+These planes are **always present**, cannot be deleted, and serve as the fundamental reference surfaces for dihedral projection.
+
+**Hinge Line HL_HV** (special 3D element):
+
+The hinge line between `P_H` and `P_V`:
+
+- `HL_HV` is a **3D element** defined as the intersection of two planes.
+- Type: `Line3DFromPlaneIntersection`
+- Defined by: intersection of `P_H` and `P_V`
+- Its 2D projections (`HL_HV_H`, `HL_HV_V`) appear as horizontal lines on each plane:
+  - `HL_HV_H` on `P_H`: horizontal line at y = -200
+  - `HL_HV_V` on `P_V`: horizontal line at y = 200
+- Visual appearance: dashed gray line (#333333)
+- The hinge line is the "fold line" or "ground line" in traditional dihedral drawings
+- It is **always present** and cannot be deleted
+
+### Coordinate System (Monge Projection)
+
+The application uses **Monge projection** (descriptive geometry) with the following coordinate system conventions:
+
+#### 3D Space Definition
+
+- **Origin**: O at (0, 0, 0)
+- **Basis vectors**:
+  - **i** = (1, 0, 0) - X-axis (horizontal, pointing right)
+  - **j** = (0, 1, 0) - Y-axis (depth, pointing away from viewer)
+  - **k** = (0, 0, 1) - Z-axis (vertical, pointing up)
+- **Viewer position**: Located at (0, -∞, 0), looking toward origin along +Y direction
+
+**⚠️ Coordinate System Handedness**: This is a **left-handed coordinate system** following Monge projection conventions. The viewer looks along +Y toward the origin, with X to the right and Z upward. When rendering in Three.js (which uses a right-handed coordinate system), the Y-axis must be inverted: `threeY = -domainY`.
+
+#### Projection Planes in 3D
+
+- **P_V (Vertical plane)**: XZ plane at Y = 0
+  - Basis vectors: **<i, k>** = {(1,0,0), (0,0,1)}
+  - Normal vector: **j** = (0,1,0) pointing toward viewer
+  - What the viewer sees directly (front view)
+
+- **P_H (Horizontal plane)**: XY plane at Z = 0
+  - Basis vectors: **<i, j>** = {(1,0,0), (0,1,0)}
+  - Normal vector: **k** = (0,0,1) pointing up
+  - Top view (perpendicular to viewer's line of sight)
+
+- **HL_HV (Hinge Line)**: X-axis
+  - Direction: **i** = (1,0,0)
+  - The intersection line between P_H and P_V
+  - Horizontal axis shared by both plane drawings
+
+#### 2D Coordinate Systems on Projection Planes
+
+Each projection plane has its own 2D coordinate system defined by the plane's basis vectors:
+
+**P_V (Vertical Plane) - Front View**:
+- 2D basis: **<i, k>** where:
+  - **u-axis** (horizontal on paper) = **i** = (1,0,0) → X in 3D
+  - **v-axis** (vertical on paper) = **k** = (0,0,1) → Z in 3D
+- Transformation: 2D point (u, v) → 3D point **(u, 0, v)**
+- Example: (5, 4) on P_V paper = 3D point (5, 0, 4)
+
+**P_H (Horizontal Plane) - Top View**:
+- 2D basis: **<i, j>** where:
+  - **u-axis** (horizontal on paper) = **i** = (1,0,0) → X in 3D
+  - **v-axis** (downward on paper) = **j** = (0,1,0) → Y in 3D
+- Transformation: 2D point (u, v) → 3D point **(u, v, 0)**
+- Example: (5, 3) on P_H paper = 3D point (5, 3, 0)
+- **Note**: Y increases downward on the P_H paper (away from viewer in 3D)
+
+#### 2D Paper Layout (Unfolded Monge Representation)
+
+```
+     ┌─────────────────────────┐
+     │  P_V (Vertical/Front)   │
+     │                         │
+     │      Z ↑                │
+     │        |                │
+     │        O────→ X         │
+     │                         │
+     └─────────────────────────┘
+     ══════════════════════════ HL_HV (X-axis, y=200 on P_V paper)
+     ┌─────────────────────────┐
+     │        O────→ X         │
+     │        |                │
+     │        ↓ Y              │
+     │                         │
+     │  P_H (Horizontal/Top)   │
+     │  (rotated down 90°)     │
+     └─────────────────────────┘
+                                  (y=-200 on P_H paper is the HL)
+```
+
+#### Y Coordinate Behavior on P_H Paper
+
+Relative to the hinge line on P_H:
+- **Above HL** (y < -200 on paper): Y < 0 in 3D (closer to viewer)
+- **At HL** (y = -200 on paper): Y = 0 in 3D (on hinge line)
+- **Below HL** (y > -200 on paper): Y > 0 in 3D (farther from viewer)
+
+#### Reconstructing 3D from 2D Projections
+
+Given compatible projections:
+- Point A_H at (x_h, y_h) on P_H
+- Point A_V at (x_v, z_v) on P_V
+- Both representing the same 3D point A
+
+The 3D coordinates are:
+- **A_3D = (x_h, y_h, z_v)** if **x_h === x_v** (compatibility requirement)
+
+The X-coordinate must match because the hinge line (X-axis) is shared between both planes.
+
+#### General Algorithm for Projection Plane Coordinate Systems
+
+For any 3D plane that needs to be represented as a projection plane, the 2D coordinate system is computed using the following algorithm:
+
+##### Rule 1: Base Planes (Hardcoded)
+
+**P_H** and **P_V** use predefined coordinate systems:
+
+- **P_H**:
+  - Origin: **O** = (0, 0, 0)
+  - U-axis: **i** = (1, 0, 0)
+  - V-axis: **j** = (0, 1, 0)
+  - Transformation: (u, v) → (u, v, 0)
+
+- **P_V**:
+  - Origin: **O** = (0, 0, 0)
+  - U-axis: **i** = (1, 0, 0)
+  - V-axis: **k** = (0, 0, 1)
+  - Transformation: (u, v) → (u, 0, v)
+
+##### Rule 2: Auxiliary Planes (Computed from Geometry)
+
+For any other 3D plane α (e.g., auxiliary planes from BHL constructions):
+
+**Step 1: Compute Origin**
+
+The origin is placed at the intersection of plane α with the X-axis (the line y=0, z=0):
+
+```
+Plane equation: n·(P - P₀) = 0, where n is the normal and P₀ is a point on the plane
+X-axis: (t, 0, 0) for t ∈ ℝ
+
+Solve: n·((t, 0, 0) - P₀) = 0
+       nx·(t - P₀.x) + ny·(0 - P₀.y) + nz·(0 - P₀.z) = 0
+       nx·t = nx·P₀.x + ny·P₀.y + nz·P₀.z
+       t = P₀.x + (ny·P₀.y + nz·P₀.z) / nx
+
+Origin = (t, 0, 0)
+```
+
+**Note**: This only works if the plane intersects the X-axis (nx ≠ 0). Planes parallel to the X-axis are not valid projection planes in this system.
+
+**Step 2: Compute U-axis (from trace on P_H)**
+
+The U-axis is determined by the **trace of plane α on P_H** (the horizontal trace):
+
+1. Compute the intersection line between plane α and P_H (z=0 plane)
+2. This line has direction vector **t** = (tx, ty, 0)
+3. Normalize: **u** = **t** / ||**t**||
+4. **Disambiguate direction**: Choose the orientation with positive X component
+   - If tx > 0: use **u**
+   - If tx < 0: use **-u**
+   - If tx ≈ 0 and ty > 0: use **u**
+   - If tx ≈ 0 and ty < 0: use **-u**
+
+**Rationale**: The trace on P_H provides a natural geometric reference that ensures consistency with the horizontal projection view.
+
+**Step 3: Compute V-axis (perpendicular, oriented upward)**
+
+The V-axis is perpendicular to U-axis and lies on plane α:
+
+1. Compute: **v_candidate** = **n** × **u** (cross product of normal and U-axis)
+2. Normalize: **v** = **v_candidate** / ||**v_candidate**||
+3. **Ensure upward orientation**: Check that **u** × **v** points toward +Z
+   ```
+   cross_product = u × v
+   if cross_product.z > 0:
+       V-axis = v
+   else:
+       V-axis = -v  (flip to ensure upward)
+   ```
+
+**Rationale**: This ensures that when viewing the plane in 2D, the V-axis points "upward" on the paper, consistent with the convention that Z is up in the 3D space.
+
+##### Summary: Coordinate System Properties
+
+For any projection plane (P_H, P_V, or auxiliary):
+
+1. **Origin**: At intersection with X-axis (y=0, z=0)
+   - For P_H and P_V: origin = (0, 0, 0)
+   - For auxiliary plane: origin = (t, 0, 0) computed from plane equation
+
+2. **U-axis**: Along the horizontal trace (trace on P_H)
+   - For P_H and P_V: u = **i** = (1, 0, 0)
+   - For auxiliary plane: computed from trace direction
+
+3. **V-axis**: Perpendicular to U-axis, on the plane, oriented toward +Z
+   - For P_H: v = **j** = (0, 1, 0)
+   - For P_V: v = **k** = (0, 0, 1)
+   - For auxiliary plane: v = **n** × **u**, disambiguated for upward orientation
+
+4. **Transformation**: 2D (u, v) → 3D = origin + u·**u** + v·**v**
+
+##### Example: Auxiliary Plane
+
+Given a 3D plane α with equation **2x + y + z = 6**:
+
+**Step 1: Origin**
+- Normal: **n** = (2, 1, 1)
+- Point on plane: P₀ = (3, 0, 0) (satisfies equation)
+- Intersection with X-axis (y=0, z=0):
+  ```
+  2x = 6 → x = 3
+  Origin = (3, 0, 0)
+  ```
+
+**Step 2: U-axis**
+- Trace on P_H (z=0): 2x + y = 6 → y = 6 - 2x
+- Direction: parallel to (-2, 1, 0) / ||(−2, 1, 0)|| = (0, 1, 0) when parametrized
+- Actually the line passes through (3, 0, 0) with direction along y
+- Trace direction: perpendicular to (2, 1, 0) in XY plane = (-1, 2, 0)
+- Normalized: **u** = (-1, 2, 0) / √5 = (-0.447, 0.894, 0)
+- Check: u.x < 0, so flip: **u** = (0.447, -0.894, 0)
+
+**Step 3: V-axis**
+- **v_candidate** = **n** × **u** = (2, 1, 1) × (0.447, -0.894, 0)
+- Result: **v** = (0.894, 0.447, -2.236) / ||...|| (normalized)
+- Check: (**u** × **v**) · **k** > 0 to ensure upward orientation
+
+**Resulting coordinate system for plane α**:
+- Origin: (3, 0, 0)
+- U-axis: computed from horizontal trace
+- V-axis: perpendicular, pointing generally upward
 
 ### Projections: Generative vs Derived
 
@@ -203,8 +472,23 @@ The application is designed for mouse + keyboard use.
 
 The 2D view is the main work area where all constructive operations are performed.
 
-- The 2D view is where constructions are performed on the active plane; projection plane surfaces are visualized in the 3D overlay.
-- Exactly one plane is the **active plane** at all times.
+- **All projection planes are displayed simultaneously** in a dihedral layout (e.g., P_H and P_V arranged around their shared hinge line HL_HV).
+- All elements on all planes are visible at all times, creating a complete multi-plane dihedral drawing.
+- Exactly one plane is the **active plane** at all times (determines where new elements are created).
+- Elements on the active plane are rendered at full intensity/opacity.
+- Elements on non-active planes are de-emphasized (reduced opacity, softer colors) but remain fully visible and interactive.
+- Hinge lines between planes are always visible.
+
+**Measurable Background Grid**:
+
+- The 2D view includes an optional **background grid** that can be toggled on/off.
+- When enabled, the grid provides a measurable reference:
+  - Regular grid spacing (e.g., 10, 20, or 50 units depending on zoom level).
+  - Grid lines are visually subtle (light gray or similar) to avoid interfering with geometry.
+  - Major grid lines (e.g., every 5 or 10 intervals) may be slightly emphasized.
+  - Grid labels or tick marks may display coordinate values at regular intervals.
+- The grid serves as a **visual reference only** and does not affect geometric constructions or snapping behavior.
+- Grid visibility preference is saved with the project.
 
 **Navigation (always available)**:
 
@@ -380,17 +664,21 @@ The toolbars constitute an **interaction language**, not just a set of buttons.
 
 #### Active Plane Selector
 
-- Shows available planes.
+- Shows available planes (e.g., P_H, P_V).
 - Click a plane to make it the active plane.
+- **All planes remain visible** regardless of which is active.
 
 Visual behavior:
 
-- Elements on the active plane are rendered with higher intensity.
-- Elements on other planes (when shown) are visually de-emphasized.
+- Elements on the active plane are rendered at full intensity/opacity (e.g., 100%).
+- Elements on non-active planes are visually de-emphasized (e.g., 50% opacity, lighter colors) but remain fully visible.
+- Hinge lines are always visible regardless of active plane.
 
 Changing the active plane:
 
+- does not hide or show any planes (all planes always visible),
 - does not modify existing geometry,
+- updates visual emphasis (active plane to full intensity, previous active plane to de-emphasized),
 - only affects where new 2D elements are created.
 
 #### Navigation Toolbar
@@ -412,15 +700,6 @@ Contains tools for creating 2D primitives on the active plane. Tools may expose 
     1. Activate the free point tool.
     2. Click at the desired location in the 2D view.
   - **Result**: A new point entity is created at the clicked coordinates on the active plane.
-
-- **Point on element**:
-  - **Description**: Creates a point constrained to lie on an existing element (line, segment, or circle).
-  - **Steps**:
-    1. Activate the point-on-element tool.
-    2. Select the host element (line/segment/circle).
-    3. Click at the desired position along the element.
-  - **Result**: A new point entity is created, constrained to remain on the host element.
-  - **Dependency**: The point moves with the host element but can slide along it.
 
 - **Intersection point**:
   - **Description**: Creates a point at the intersection of two elements.
@@ -899,7 +1178,7 @@ This section documents how typical dihedral drawing operations are performed usi
 
 **Creating a segment on a line**:
 - **Option 1 (using intersections)**: Activate "Segment between existing points" and click on the intersections where the line crosses other elements. Intersection points are created automatically.
-- **Option 2 (explicit points first)**: Use "Intersection point" tool to create points where the line intersects with other elements (or use "Point on element" to create points directly on the line), then use "Segment between existing points" tool to connect them.
+- **Option 2 (explicit points first)**: Use "Intersection point" tool to create points where the line intersects with other elements, then use "Segment between existing points" tool to connect them.
 - The resulting segment is parametrically linked to the line through its endpoints.
 
 **Finding the projection of a point on a line**:
@@ -1008,8 +1287,8 @@ These use cases cover primitive user actions and micro-interactions. They are in
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST provide a primary 2D workspace where multiple projection planes can be displayed.
-- **FR-002**: The system MUST allow selecting exactly one active projection plane; new 2D elements MUST be created on the active plane.
+- **FR-001**: The system MUST provide a primary 2D workspace where ALL projection planes are displayed SIMULTANEOUSLY in a dihedral configuration, with all elements on all planes visible at all times.
+- **FR-002**: The system MUST allow selecting exactly one active projection plane; new 2D elements MUST be created on the active plane. The active plane MUST be visually emphasized (full intensity) while non-active planes MUST be de-emphasized (reduced opacity) but remain fully visible.
 - **FR-003**: The system MUST support creating explicit 2D primitives on the active plane: point, segment, line, circle (arcs are optional).
 - **FR-004**: The system MUST provide explicit tool variants for constrained constructions (e.g., perpendicular/parallel line through a point) without implicit geometry.
 - **FR-005**: The system MUST support plane navigation in the 2D view: pan and zoom, always available even during an active tool.

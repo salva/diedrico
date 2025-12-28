@@ -84,6 +84,14 @@ The frontend will start on `http://localhost:5173` (Vite default).
 
 Open your browser and navigate to **http://localhost:5173**.
 
+**What You'll See**:
+- **2D Workspace**: ALL projection planes (P_H horizontal, P_V vertical) displayed simultaneously in dihedral layout
+- All planes visible at once - active plane at full opacity, non-active planes de-emphasized
+- Hinge line (HL_HV) visible where planes meet
+- Top toolbar with plane selector and drawing tools
+- Left panel for Constructive Actions
+- Right panel for Elements list
+
 ### Option 2: Run with Concurrently (if configured)
 
 If a root-level `package.json` with `concurrently` is set up:

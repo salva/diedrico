@@ -7,6 +7,169 @@
 
 ## Architecture Overview
 
+**⚠️ Coordinate System Note**: The domain model uses a **left-handed coordinate system** following Monge projection conventions where the viewer is at (0, -∞, 0) looking along +Y toward the origin. When converting to Three.js rendering (which uses a right-handed coordinate system), the Y-axis direction must be inverted: `threeY = -domainY`.
+
+---
+
+## Coordinate Systems and Transformations
+
+### **Critical Architecture Principle**
+
+The application uses **three distinct coordinate spaces**:
+
+1. **Plane Intrinsic Coordinates <u,v>** (Storage & Calculation Layer)
+   - Each projection plane defines its own 2D coordinate system with basis vectors <u,v>
+   - **ALL Element2D coordinates are stored in their plane's <u,v> basis**
+   - **ALL geometric calculations (distance, intersection, perpendicular) operate in <u,v> space**
+   - This is the "source of truth" - element data is independent of visualization
+
+2. **2D Canvas Coordinates (x_canvas, y_canvas)** (2D Visualization Layer)
+   - SVG pixel coordinates on the 2D drawing workspace
+   - Each plane's <u,v> space is mapped to canvas via `transform_to_canvas` matrix
+   - Multiple planes positioned on canvas without overlap (e.g., P_H at top, P_V below)
+   - User mouse clicks in canvas space → converted to <u,v> for storage
+
+3. **3D World Coordinates (x, y, z)** (3D Visualization Layer)
+   - Three.js 3D space (right-handed, Y inverted from domain)
+   - Each plane's <u,v> space mapped to 3D via `transform_to_3d` matrix
+   - Enables 3D visualization of dihedral constructions
+
+### **Transformation Flow**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  USER INPUT (Mouse Click)                                   │
+│  Canvas Space: (x_canvas, y_canvas)                         │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ INVERSE(transform_to_canvas)
+                     │ Required for: point creation, element placement
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  STORAGE (Element2D)                                         │
+│  Plane Intrinsic Space: (u, v)                              │
+│  Point2DFree { x: u, y: v, planeId }                        │
+└─────────────┬─────────────────────────┬─────────────────────┘
+              │                         │
+              │ All geometry            │
+              │ calculations            │
+              │ in <u,v>                │
+              │                         │
+              │                         │
+   ┌──────────▼──────────┐   ┌─────────▼──────────┐
+   │  2D RENDERING       │   │  3D RENDERING      │
+   │  (SVG/Canvas)       │   │  (Three.js)        │
+   └──────────┬──────────┘   └─────────┬──────────┘
+              │                         │
+              │ FORWARD                 │ FORWARD
+              │ transform_to_canvas     │ transform_to_3d
+              ↓                         ↓
+   ┌──────────────────────┐   ┌──────────────────────┐
+   │  Canvas Display      │   │  3D Display          │
+   │  (x_canvas, y_canvas)│   │  (x_3d, y_3d, z_3d)  │
+   └──────────────────────┘   └──────────────────────┘
+```
+
+**Bidirectional Transformations**:
+
+1. **Forward (for rendering)**: Plane intrinsic (u,v) → Display coordinates
+   - Used when: Drawing elements on canvas, rendering in 3D view
+   - Formula: display_coords = transform × [u, v]
+
+2. **Inverse (for input)**: Display coordinates → Plane intrinsic (u,v)
+   - Used when: Mouse clicks, drag operations, element creation
+   - Formula: [u, v] = inverse(transform) × display_coords
+   - **Critical**: Must be computed for user interaction to work
+
+### **Matrix Representations**
+
+**2D Canvas Transform** (6 numbers: affine transform)
+```
+Forward:  [a, b, c, d, e, f]
+  x_canvas = a*u + c*v + e
+  y_canvas = b*u + d*v + f
+
+Inverse: [a', b', c', d', e', f']  (computed and cached)
+  u = a'*x_canvas + c'*y_canvas + e'
+  v = b'*x_canvas + d'*y_canvas + f'
+
+Determinant: det = a*d - b*c  (must be ≠ 0 for invertibility)
+
+Inverse computation (for 2×2 affine):
+  det = a*d - b*c
+  a' = d/det
+  b' = -b/det
+  c' = -c/det
+  d' = a/det
+  e' = (c*f - d*e) / det
+  f' = (b*e - a*f) / det
+```
+
+**Storage Strategy**:
+- **Store both forward and inverse matrices** in ProjectionPlane
+- Inverse is computed once when plane is created/modified
+- Cached inverse avoids recomputation on every mouse event (performance optimization)
+- When `transform_to_canvas` is updated, `inverse_transform_to_canvas` must be recomputed atomically
+
+### Viewport Transformation (2D Display Layer)
+
+The **viewport transformation** is a global affine matrix that applies to the entire 2D canvas workspace:
+
+**Purpose**:
+- Handles pan (translation) and zoom (uniform scaling) of the display
+- Applied AFTER plane transformations (composition: `viewport * transform_to_canvas`)
+- Affects ALL projection planes uniformly
+- Allows users to navigate the workspace without modifying plane data
+
+**Matrix Representation**:
+```
+viewport_transform: [scale, 0, 0, scale, pan_x, pan_y]  (6 numbers)
+inverse_viewport_transform: [1/scale, 0, 0, 1/scale, -pan_x/scale, -pan_y/scale]
+```
+
+**Composition for Rendering** (2D workspace):
+```
+screen_coords = viewport_transform * transform_to_canvas * plane_coords
+screen_coords = viewport_transform * (transform_to_canvas * [u, v, 1])
+```
+
+**Composition for Input** (mouse clicks):
+```
+plane_coords = inverse_transform_to_canvas * inverse_viewport_transform * screen_coords
+plane_coords = inverse_transform_to_canvas * (inverse_viewport_transform * [x_screen, y_screen, 1])
+```
+
+**Storage Location**:
+- Viewport transform is NOT stored in ProjectionPlane (it's global)
+- Stored in 2D workspace component state (e.g., `Workspace2D.vue`)
+- Updated by pan/zoom gestures (mouse wheel, drag, pinch)
+
+**Benefits**:
+- Pan/zoom does NOT require recalculating plane transformations
+- ProjectionPlane data remains unchanged during navigation
+- Single matrix update affects all planes simultaneously
+- Separation of concerns: plane layout vs. viewport navigation
+```
+- Can be converted to SVG: `matrix(a,b,c,d,e,f)`
+- **Inverse required for mouse input processing**
+
+**3D World Transform** (16 numbers: 4×4 matrix, column-major)
+```
+Forward: Matrix4 transforms [u, v, 0, 1]ᵀ → [x, y, z, 1]ᵀ
+```
+- Encodes origin + u_axis + v_axis in single matrix
+- Used by Three.js for rendering
+- **Inverse NOT typically needed** (3D is read-only visualization)
+
+### **Why This Architecture?**
+
+✅ **Geometric calculations stay simple**: Distance between points is `√((u₂-u₁)² + (v₂-v₁)²)` directly  
+✅ **Transformation independence**: Element data doesn't change when adjusting canvas layout or 3D view  
+✅ **Future-proof**: Auxiliary planes can have arbitrary orientations without affecting stored data  
+✅ **Standard approach**: Matches how CAD/geometry systems work (intrinsic coords + view transforms)  
+
+---
+
 The data model is organized into three distinct layers:
 
 ### 1. **Domain Layer** (Geometric Truth)
@@ -203,7 +366,12 @@ ProcessTree.root (Process)
 
 ### Domain Entity: ProjectionPlane
 
-**Purpose**: Named 2D surface where 2D elements exist
+**Purpose**: Named 2D surface where 2D elements exist. Defines the plane's intrinsic coordinate system <u,v> and how it maps to both 3D space and 2D canvas display.
+
+**Critical Coordinate System Principle**:
+- **All Element2D coordinates are stored in the plane's intrinsic <u,v> basis**
+- **All geometric calculations (distance, intersection, etc.) operate in <u,v> space**
+- **Transformations are ONLY for visualization (3D view and 2D canvas rendering)**
 
 **Fields**:
 ```typescript
@@ -212,27 +380,170 @@ interface ProjectionPlane {
   name: string;                     // "P_H", "P_V", "P_A1", etc.
   isActive: boolean;                // Exactly one plane is active at a time
   isVisible: boolean;               // Toggle visibility in UI
-  transform2DTo3D: Matrix4x4;       // Position/orientation in 3D space for 3D view
-  color: Color;                     // Base color for plane representation in 3D
+  color: Color;                     // Base color for plane representation
+  plane_3d_id: string;              // Reference to Plane3D element (geometric definition)
+  
+  // 3D transformation matrix: (u,v) → 3D space (x,y,z)
+  // Stored as 4×4 matrix (16 numbers, column-major order)
+  // Usage: For rendering plane elements in 3D visualization (Three.js)
+  transform_to_3d: number[];        // Matrix4: point_3d = M × [u, v, 0, 1]ᵀ
+  
+  // 2D canvas transformation matrix: (u,v) → canvas pixel coords
+  // Stored as 2D affine transform (6 numbers: [a, b, c, d, e, f])
+  // Represents: x' = a*u + c*v + e, y' = b*u + d*v + f
+  // Usage: For rendering plane elements on 2D drawing workspace (SVG)
+  transform_to_canvas: number[];    // Forward: [a, b, c, d, tx, ty]
+  
+  // Inverse transformation matrix: canvas pixel coords → (u,v)
+  // Stored as 2D affine transform (6 numbers: [a', b', c', d', e', f'])
+  // Computed from transform_to_canvas, but cached for performance
+  // Usage: For converting mouse clicks to plane coordinates
+  // Note: Could be computed on-demand, but caching avoids recomputation on every mouse event
+  inverse_transform_to_canvas: number[];  // Inverse: [a', b', c', d', tx', ty']
 }
 ```
+
+**Coordinate System Flow**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   STORAGE & CALCULATION LAYER                    │
+│                                                                   │
+│  Element2D coordinates stored in plane's <u, v> basis           │
+│  All geometry calculations (distance, intersection) in <u, v>   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ (for visualization only)
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+              ▼                               ▼
+┌──────────────────────────┐   ┌──────────────────────────┐
+│   2D RENDERING PATH      │   │   3D RENDERING PATH      │
+│                          │   │                          │
+│  Step 1:                 │   │  Step 1:                 │
+│  transform_to_canvas     │   │  transform_to_3d         │
+│  (u,v) → canvas coords   │   │  (u,v) → (x, y, z)      │
+│                          │   │                          │
+│  Step 2:                 │   │  Step 2:                 │
+│  viewport_transform      │   │  Three.js camera         │
+│  canvas → screen pixels  │   │  (built-in viewport)     │
+│  (handles pan/zoom)      │   │                          │
+│                          │   │  Final: Three.js canvas  │
+│  Final: SVG rendering    │   │                          │
+└──────────────────────────┘   └──────────────────────────┘
+              │
+              │ (inverse for input)
+              ▼
+┌──────────────────────────┐
+│  USER INPUT HANDLING     │
+│  (2D workspace only)     │
+│                          │
+│  Step 1: Screen click →  │
+│  inverse_viewport_transform │
+│  → canvas coordinates    │
+│                          │
+│  Step 2: Canvas coords → │
+│  inverse_transform_to_canvas │
+│  → plane <u, v>         │
+└──────────────────────────┘
+```
+
+**Matrix Representations**:
+
+For P_H (horizontal plane):
+- `transform_to_3d`: Maps (u,v) to (u, v, 0) in 3D
+- `transform_to_canvas`: Identity with offset [1, 0, 0, 1, 0, 0]
+
+For P_V (vertical plane):
+- `transform_to_3d`: Maps (u,v) to (u, 0, v) in 3D  
+- `transform_to_canvas`: Identity with offset [1, 0, 0, 1, 0, -400]
+
+For auxiliary planes:
+- `transform_to_3d`: Computed from plane normal and trace using spec algorithm
+- `transform_to_canvas`: Positioned/rotated on canvas to avoid overlap
+
+### Viewport Transformation (2D Display Layer)
+
+The **viewport transformation** is a global affine matrix that applies to the entire 2D canvas workspace:
+
+**Purpose**:
+- Handles pan (translation) and zoom (uniform scaling) of the display
+- Applied AFTER plane transformations (composition: `viewport * transform_to_canvas`)
+- Affects ALL projection planes uniformly
+- Allows users to navigate the workspace without modifying plane data
+
+**Matrix Representation**:
+```
+viewport_transform: [scale, 0, 0, scale, pan_x, pan_y]  (6 numbers)
+inverse_viewport_transform: [1/scale, 0, 0, 1/scale, -pan_x/scale, -pan_y/scale]
+```
+
+**Composition for Rendering** (2D workspace):
+```
+screen_coords = viewport_transform * transform_to_canvas * plane_coords
+screen_coords = viewport_transform * (transform_to_canvas * [u, v, 1])
+```
+
+**Composition for Input** (mouse clicks):
+```
+plane_coords = inverse_transform_to_canvas * inverse_viewport_transform * screen_coords
+plane_coords = inverse_transform_to_canvas * (inverse_viewport_transform * [x_screen, y_screen, 1])
+```
+
+**Storage Location**:
+- Viewport transform is NOT stored in ProjectionPlane (it's global)
+- Stored in 2D workspace component state (e.g., `Workspace2D.vue`)
+- **Both forward and inverse must be stored** (same caching strategy as plane transforms)
+- Inverse is needed for every mouse event to convert screen → canvas coordinates
+- Updated by pan/zoom gestures (mouse wheel, drag, pinch)
+- When viewport updates, inverse must be recomputed atomically
+
+**Storage Strategy**:
+```typescript
+// In Workspace2D.vue or viewStore
+{
+  viewport_transform: number[];          // [scale, 0, 0, scale, pan_x, pan_y]
+  inverse_viewport_transform: number[];  // [1/scale, 0, 0, 1/scale, -pan_x/scale, -pan_y/scale]
+}
+```
+
+**Benefits**:
+- Pan/zoom does NOT require recalculating plane transformations
+- ProjectionPlane data remains unchanged during navigation
+- Single matrix update affects all planes simultaneously
+- Separation of concerns: plane layout vs. viewport navigation
+- Cached inverse avoids recomputation on every mouse event (performance)
 
 **Relationships**:
 - 1 ProjectionPlane → N Element2D (elements belong to one plane)
 - 2 ProjectionPlanes → 1 HingeLine (shared intersection)
+- 1 ProjectionPlane → 1 Plane3D (geometric definition reference)
 
 **Validation Rules**:
 - `name` must follow naming convention: "P_{identifier}"
 - Exactly one plane in project must have `isActive = true`
-- `transform2DTo3D` defines how 2D coordinates map to 3D space
+- `transform_to_3d` must be invertible (det ≠ 0) for correct 3D visualization
+- **`transform_to_canvas` MUST be invertible** (det = ad - bc ≠ 0) **for user input processing**
+  - Without invertible canvas transform, mouse clicks cannot be converted to plane coordinates
+  - Application MUST validate invertibility before storing transformation matrix
+
+**Invariants**:
+- Element2D coordinates are ALWAYS in plane's intrinsic (u,v) basis
+- Canvas transform inverse is computable at all times (no singular matrices)
+- Changing canvas layout (repositioning planes) does NOT change Element2D data
+- User interactions always follow: canvas click → inverse transform → (u,v) storage
 
 **State Transitions**:
 - **Inactive** ↔ **Active**: Clicking plane selector makes it active, previous active becomes inactive
-- **Visible** ↔ **Hidden**: Toggle visibility (does not affect active state)
+- **Visual Emphasis**: Active plane elements render at full opacity (100%), non-active at reduced opacity (e.g., 50%)
+- **Note**: In MVP, all projection planes are ALWAYS visible. Plane visibility toggles may be added in future versions.
 
 **Invariants**:
 - Global invariant: Exactly 1 active plane per project
+- Global invariant (MVP): All projection planes are always visible simultaneously
 - Changing active plane does not mutate existing geometry
+- Changing active plane only updates visual emphasis (opacity), not visibility
 
 ---
 
@@ -320,78 +631,220 @@ interface Guide {
 
 **Purpose**: 2D geometric entity on a projection plane with full construction and metadata
 
-**Subtypes**:
-```typescript
-type Element2D = Point2D | Segment2D | Line2D | Circle2D | Arc2D;
+**Coordinate System**: All Element2D coordinates (x, y) are stored in the **plane's intrinsic <u,v> basis**, NOT in canvas pixels or 3D space. This ensures:
+- Geometry calculations (distance, intersections) work directly with stored coordinates
+- Plane transformations do not affect stored element data
+- Elements remain independent of visualization choices (canvas layout, 3D orientation)
 
-interface Point2D {
+**Subtypes** (discriminated unions by construction method):
+```typescript
+type Element2D = Point2D | Segment2D | Line2D | Circle2D | Arc2D | Guide2D | BHLProjection;
+
+// === POINT 2D CONSTRUCTIONS ===
+
+// Free point - placed at arbitrary location
+interface Point2DFree {
+  kind: 'Point2DFree';              // Discriminator
   id: ElementId;
   name: string;                     // "a", "b", "p1", etc.
-  plane: PlaneId;                   // Belongs to exactly one plane
-  x: number;                        // Coordinate in plane's 2D space (defining, not rendering)
-  y: number;
-  
-  // Metadata and relationships (Domain Layer concerns)
-  createdBy: ActionId;              // Which action created this (action contains subprocess)
-  visualStyle: VisualStyle;         // Style properties (inheritance not resolved yet)
-  infeasible: boolean;              // Validation state
+  planeId: PlaneId;                 // Belongs to exactly one plane
+  x: number;                        // u-coordinate in plane's intrinsic basis
+  y: number;                        // v-coordinate in plane's intrinsic basis
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
 }
 
-interface Segment2D {
+// Point at intersection of two elements
+interface Point2DFromIntersection {
+  kind: 'Point2DFromIntersection';  // Discriminator
+  id: ElementId;
+  name: string;
+  planeId: PlaneId;
+  element1Id: ElementId;            // First intersecting element
+  element2Id: ElementId;            // Second intersecting element
+  intersectionIndex: number;        // Which intersection (0 or 1 for line-circle)
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+// Derived point (e.g., transported from another plane)
+interface Point2DDerived {
+  kind: 'Point2DDerived';           // Discriminator
+  id: ElementId;
+  name: string;
+  planeId: PlaneId;
+  x: number;
+  y: number;
+  sourceActionId: ActionId;         // Action that derived this point
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+type Point2D = Point2DFree | Point2DFromIntersection | Point2DDerived;
+
+// === SEGMENT 2D CONSTRUCTIONS ===
+
+// Segment defined by two endpoints
+interface Segment2DByPoints {
+  kind: 'Segment2DByPoints';        // Discriminator
   id: ElementId;
   name: string;                     // "s1", "s2", etc.
-  plane: PlaneId;
-  point1: Point2DId;                // Start point (defining reference)
-  point2: Point2DId;                // End point (defining reference)
-  
-  // Metadata and relationships
-  createdBy: ActionId;              // Action contains subprocess membership
+  planeId: PlaneId;
+  point1Id: ElementId;              // Start point (defining reference)
+  point2Id: ElementId;              // End point (defining reference)
+  createdBy: ActionId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
 
-interface Line2D {
+type Segment2D = Segment2DByPoints;
+
+// === LINE 2D CONSTRUCTIONS ===
+
+// Line through two points
+interface Line2DByTwoPoints {
+  kind: 'Line2DByTwoPoints';        // Discriminator
   id: ElementId;
   name: string;                     // "r1", "r2", etc.
-  plane: PlaneId;
-  point1: Point2DId;                // Two points define infinite line
-  point2: Point2DId;
-  // Alternatively: pointOnLine + directionVector
-  
-  // Metadata and relationships
+  planeId: PlaneId;
+  point1Id: ElementId;              // First point on line
+  point2Id: ElementId;              // Second point on line
   createdBy: ActionId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
 
-interface Circle2D {
+// Line parallel to another line through a point
+interface Line2DParallelThroughPoint {
+  kind: 'Line2DParallelThroughPoint'; // Discriminator
+  id: ElementId;
+  name: string;
+  planeId: PlaneId;
+  referenceLineId: ElementId;       // Line to be parallel to
+  throughPointId: ElementId;        // Point the new line passes through
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+// Line perpendicular to another line through a point
+interface Line2DPerpendicularThroughPoint {
+  kind: 'Line2DPerpendicularThroughPoint'; // Discriminator
+  id: ElementId;
+  name: string;
+  planeId: PlaneId;
+  referenceLineId: ElementId;       // Line to be perpendicular to
+  throughPointId: ElementId;        // Point the new line passes through
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+type Line2D = 
+  | Line2DByTwoPoints 
+  | Line2DParallelThroughPoint 
+  | Line2DPerpendicularThroughPoint;
+
+// === CIRCLE 2D CONSTRUCTIONS ===
+
+// Circle by center point and radius value
+interface Circle2DByCenterAndRadius {
+  kind: 'Circle2DByCenterAndRadius'; // Discriminator
   id: ElementId;
   name: string;                     // "c1", "c2", etc.
-  plane: PlaneId;
-  center: Point2DId;
-  radius: number;                   // Or: defined by 3 points
-  
-  // Metadata and relationships
+  planeId: PlaneId;
+  centerPointId: ElementId;
+  radius: number;
   createdBy: ActionId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
 
-interface Arc2D {
+// Circle by center point and point on circumference
+interface Circle2DByCenterAndPoint {
+  kind: 'Circle2DByCenterAndPoint'; // Discriminator
   id: ElementId;
-  name: string;                     // "arc1", "arc2", etc.
-  plane: PlaneId;
-  center: Point2DId;
-  startPoint: Point2DId;
-  endPoint: Point2DId;
-  // Or: center + radius + startAngle + endAngle
-  
-  // Metadata and relationships
+  name: string;
+  planeId: PlaneId;
+  centerPointId: ElementId;
+  circumferencePointId: ElementId;
   createdBy: ActionId;
-  subprocess?: SubprocessId;
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
+
+// Circle through three points
+interface Circle2DByThreePoints {
+  kind: 'Circle2DByThreePoints';    // Discriminator
+  id: ElementId;
+  name: string;
+  planeId: PlaneId;
+  point1Id: ElementId;
+  point2Id: ElementId;
+  point3Id: ElementId;
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+type Circle2D = 
+  | Circle2DByCenterAndRadius 
+  | Circle2DByCenterAndPoint 
+  | Circle2DByThreePoints;
+
+// === ARC 2D CONSTRUCTIONS ===
+
+// Arc by center, start point, end point
+interface Arc2DByCenterAndPoints {
+  kind: 'Arc2DByCenterAndPoints';   // Discriminator
+  id: ElementId;
+  name: string;                     // "arc1", "arc2", etc.
+  planeId: PlaneId;
+  centerPointId: ElementId;
+  startPointId: ElementId;
+  endPointId: ElementId;
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+type Arc2D = Arc2DByCenterAndPoints;
+
+// === GUIDE 2D ===
+
+// Guide perpendicular to hinge line or BHL projection
+interface Guide2DPerpendicularToLine {
+  kind: 'Guide2DPerpendicularToLine'; // Discriminator
+  id: ElementId;
+  name: string;                     // Auto-generated "g1", "g2", etc.
+  planeId: PlaneId;
+  referenceLineId: ElementId;       // HL or BHL projection
+  throughPointId: ElementId;        // Point on one plane that defines guide
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+type Guide2D = Guide2DPerpendicularToLine;
+
+// === BHL PROJECTION ===
+
+// Broken hinge line projection (computed from 3D plane)
+interface BHLProjection2D {
+  kind: 'BHLProjection2D';          // Discriminator
+  id: ElementId;
+  name: string;
+  planeId: PlaneId;
+  sourcePlane3DId: ElementId;       // Parent 3D plane
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+type BHLProjection = BHLProjection2D;
 ```
 
 **Relationships**:
@@ -421,13 +874,32 @@ interface Arc2D {
 
 ### Domain Entity: Element3D
 
-**Purpose**: 3D geometric entity derived from compatible 2D projections
+**Purpose**: 3D geometric entity derived from compatible 2D projections or defined by geometric rules
 
 **Subtypes**:
 ```typescript
 type Element3D = Point3D | Line3D | Segment3D | Plane3D;
 
-interface Point3D {
+// Point defined by explicit 3D coordinates (e.g., origin O)
+interface Point3DByCoordinates {
+  kind: 'Point3DByCoordinates';
+  id: ElementId;
+  name: string;                     // "O" for origin
+  x: number;                        // 3D coordinates (hardcoded)
+  y: number;
+  z: number;
+  projectionH: Point2DId;           // Computed projection on P_H
+  projectionV: Point2DId;           // Computed projection on P_V
+  
+  // Metadata and relationships
+  createdBy: ActionId;              // "system:init" for O
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+// Point derived from two 2D projections
+interface Point3DFromProjections {
+  kind: 'Point3DFromProjections';
   id: ElementId;
   name: string;                     // "A", "B", etc. (uppercase)
   projectionH: Point2DId;           // Projection on P_H (defining reference)
@@ -442,7 +914,11 @@ interface Point3D {
   infeasible: boolean;
 }
 
-interface Line3D {
+type Point3D = Point3DByCoordinates | Point3DFromProjections;
+
+// Line derived from two 2D line projections
+interface Line3DFromProjections {
+  kind: 'Line3DFromProjections';
   id: ElementId;
   name: string;                     // "L1", "L2", etc.
   projectionH: Line2DId;            // Projection on P_H (defining reference)
@@ -453,6 +929,24 @@ interface Line3D {
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
+
+// Line defined as intersection of two planes (e.g., hinge lines)
+interface Line3DFromPlaneIntersection {
+  kind: 'Line3DFromPlaneIntersection';
+  id: ElementId;
+  name: string;                     // "HL_HV", "BHL_AB", etc.
+  plane1: Plane3DId;                // First plane (e.g., P_H)
+  plane2: Plane3DId;                // Second plane (e.g., P_V)
+  projectionH: Line2DId;            // Computed projection on P_H
+  projectionV: Line2DId;            // Computed projection on P_V
+  
+  // Metadata and relationships
+  createdBy: ActionId;              // "system:init" for HL_HV
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+type Line3D = Line3DFromProjections | Line3DFromPlaneIntersection;
 
 interface Segment3D {
   id: ElementId;
@@ -466,7 +960,9 @@ interface Segment3D {
   infeasible: boolean;
 }
 
-interface Plane3D {
+// Plane from two trace lines (user-constructed planes)
+interface Plane3DByTraces {
+  kind: 'Plane3DByTraces';
   id: ElementId;
   name: string;                     // "Pi1", "Pi2", etc.
   traceH: Line2DId;                 // Horizontal trace (defining reference)
@@ -477,20 +973,69 @@ interface Plane3D {
   visualStyle: VisualStyle;
   infeasible: boolean;
 }
+
+// Plane defined by point and normal vector (projection planes)
+interface Plane3DByPointAndNormal {
+  kind: 'Plane3DByPointAndNormal';
+  id: ElementId;
+  name: string;                     // "P_H", "P_V", etc.
+  origin: Point3DId;                // Point on plane (e.g., O)
+  normal: Vector3D;                 // Normal vector
+  
+  // Metadata and relationships
+  createdBy: ActionId;              // "system:init" for P_H, P_V
+  visualStyle: VisualStyle;
+  infeasible: boolean;
+}
+
+type Plane3D = Plane3DByTraces | Plane3DByPointAndNormal;
+
+interface Vector3D {
+  x: number;
+  y: number;
+  z: number;
+}
 ```
+
+**Special System Elements**:
+
+The following elements are always present from workspace initialization (`createdBy: "system:init"`):
+
+1. **Origin Point O** (`Point3DByCoordinates`):
+   - Coordinates: (0, 0, 0)
+   - Projections: O_H on P_H, O_V on P_V
+   - Cannot be deleted or moved
+
+2. **Horizontal Plane P_H** (`Plane3DByPointAndNormal`):
+   - Origin: O (0, 0, 0)
+   - Normal: (0, 0, 1) — Z-axis
+   - The plane for "top views"
+
+3. **Vertical Plane P_V** (`Plane3DByPointAndNormal`):
+   - Origin: O (0, 0, 0)
+   - Normal: (0, 1, 0) — Y-axis
+   - The plane for "front views"
+
+4. **Hinge Line HL_HV** (`Line3DFromPlaneIntersection`):
+   - Intersection of P_H and P_V
+   - Projections: HL_HV_H on P_H, HL_HV_V on P_V
+   - The "ground line" or "fold line"
 
 **Relationships**:
 - 1 Element3D → N Element2D (projections)
 - 1 Element3D → 1 ConstructiveAction (createdBy)
 
 **Validation Rules**:
-- **Point3D**: `projectionH` and `projectionV` must exist, must be compatible (transportable via guide or geometrically consistent)
-- **Line3D**: `projectionH` and `projectionV` must exist, must be compatible projections of same 3D line
+- **Point3DByCoordinates**: Coordinates must be valid numbers
+- **Point3DFromProjections**: `projectionH` and `projectionV` must exist, must be compatible (transportable via guide or geometrically consistent)
+- **Line3DFromProjections**: `projectionH` and `projectionV` must exist, must be compatible projections of same 3D line
+- **Line3DFromPlaneIntersection**: `plane1` and `plane2` must exist and intersect (not parallel)
 - **Segment3D**: `point1` and `point2` must exist, must not be coincident
-- **Plane3D**: `traceH` and `traceV` must exist, must not be parallel (define unique plane)
+- **Plane3DByTraces**: `traceH` and `traceV` must exist, must not be parallel (define unique plane)
+- **Plane3DByPointAndNormal**: `origin` must exist, `normal` must be non-zero vector
 
 **Compatibility Check**:
-- For Point3D: projections must align via guide transport or geometric constraints
+- For Point3DFromProjections: projections must align via guide transport or geometric constraints
 - If incompatible inputs selected, creation fails (FR-022)
 
 **Derived vs Generative**:
@@ -1077,7 +1622,7 @@ interface ViewState {
   view2D: {
     pan: { x: number; y: number };    // Pan offset
     zoom: number;                      // Zoom level (1.0 = 100%)
-    activePlane: PlaneId;              // Currently active plane
+    activePlane: PlaneId;              // Currently active plane (determines where new elements created + visual emphasis)
   };
   
   // 3D view
@@ -1092,8 +1637,10 @@ interface ViewState {
   };
   
   // Visibility toggles
+  // NOTE: In MVP, all projection planes are ALWAYS visible (planes map not used)
+  // Visual emphasis (opacity) is controlled by activePlane, not visibility flags
   visibility: {
-    planes: Map<PlaneId, boolean>;     // Per-plane visibility
+    planes: Map<PlaneId, boolean>;     // Per-plane visibility (future feature, MVP=all true)
     hingeLines: Map<HingeLineId, boolean>;
     guides: Map<GuideId, boolean>;
   };

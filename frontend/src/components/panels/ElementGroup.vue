@@ -15,7 +15,7 @@
         }"
         @click="handleElementClick(element)"
       >
-        <span class="element-name">{{ element.name || element.id }}</span>
+        <span class="element-name"><SubscriptText :text="element.name || element.id" /></span>
         <span v-if="element.infeasible" class="infeasible-badge" title="Infeasible constraint">!</span>
       </div>
     </div>
@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { Element2D } from '../../types/ElementTypes';
+import SubscriptText from '../common/SubscriptText.vue';
 
 interface Props {
   title: string;

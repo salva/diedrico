@@ -8,8 +8,8 @@
         :class="['plane-button', { active: isActivePlane(plane.id) }]"
         @click="selectPlane(plane.id)"
       >
-        <span class="plane-label">{{ plane.id }}</span>
-        <span class="plane-name">{{ plane.name }}</span>
+        <span class="plane-label"><SubscriptText :text="plane.id" /></span>
+        <span class="plane-name"><SubscriptText :text="plane.name" /></span>
       </button>
     </div>
   </div>
@@ -18,6 +18,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useViewStore } from '@/stores/viewStore';
+import SubscriptText from '../common/SubscriptText.vue';
 
 const viewStore = useViewStore();
 
