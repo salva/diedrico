@@ -652,7 +652,6 @@ interface Point2DFree {
   y: number;                        // v-coordinate in plane's intrinsic basis
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Point at intersection of two elements
@@ -666,7 +665,6 @@ interface Point2DFromIntersection {
   intersectionIndex: number;        // Which intersection (0 or 1 for line-circle)
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Derived point (e.g., transported from another plane)
@@ -680,7 +678,6 @@ interface Point2DDerived {
   sourceActionId: ActionId;         // Action that derived this point
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Point2D = Point2DFree | Point2DFromIntersection | Point2DDerived;
@@ -697,7 +694,6 @@ interface Segment2DByPoints {
   point2Id: ElementId;              // End point (defining reference)
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Segment2D = Segment2DByPoints;
@@ -714,7 +710,6 @@ interface Line2DByTwoPoints {
   point2Id: ElementId;              // Second point on line
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Line parallel to another line through a point
@@ -727,7 +722,6 @@ interface Line2DParallelThroughPoint {
   throughPointId: ElementId;        // Point the new line passes through
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Line perpendicular to another line through a point
@@ -740,7 +734,6 @@ interface Line2DPerpendicularThroughPoint {
   throughPointId: ElementId;        // Point the new line passes through
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Line2D = 
@@ -760,7 +753,6 @@ interface Circle2DByCenterAndRadius {
   radius: number;
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Circle by center point and point on circumference
@@ -773,7 +765,6 @@ interface Circle2DByCenterAndPoint {
   circumferencePointId: ElementId;
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Circle through three points
@@ -787,7 +778,6 @@ interface Circle2DByThreePoints {
   point3Id: ElementId;
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Circle2D = 
@@ -808,7 +798,6 @@ interface Arc2DByCenterAndPoints {
   endPointId: ElementId;
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Arc2D = Arc2DByCenterAndPoints;
@@ -825,7 +814,6 @@ interface Guide2DPerpendicularToLine {
   throughPointId: ElementId;        // Point on one plane that defines guide
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Guide2D = Guide2DPerpendicularToLine;
@@ -841,7 +829,6 @@ interface BHLProjection2D {
   sourcePlane3DId: ElementId;       // Parent 3D plane
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type BHLProjection = BHLProjection2D;
@@ -864,11 +851,14 @@ type BHLProjection = BHLProjection2D;
 - Lowercase for 2D elements: `a`, `b`, `s1`, `r1`, `c1`
 - Suffixes for projections: `A_H`, `A_V` (3D point A projected onto H/V planes)
 
-**Infeasibility**:
-- An Element2D becomes infeasible if:
-  - Its defining inputs become infeasible (e.g., segment's points)
+**Infeasibility** (computed during rendering, not stored):
+- An Element2D is considered infeasible if:
+  - Its defining inputs are infeasible (e.g., segment's points)
   - Computation fails (e.g., circle from 3 collinear points)
-- Infeasible elements are not rendered, marked in panels
+  - Validation fails (e.g., parallel lines don't intersect)
+- Infeasibility is determined dynamically by traversing the dependency graph
+- Infeasible elements are not rendered, marked visually in panels
+- Not persisted as a field in the element data structure
 
 ---
 
@@ -894,7 +884,6 @@ interface Point3DByCoordinates {
   // Metadata and relationships
   createdBy: ActionId;              // "system:init" for O
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Point derived from two 2D projections
@@ -911,7 +900,6 @@ interface Point3DFromProjections {
   // Metadata and relationships
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Point3D = Point3DByCoordinates | Point3DFromProjections;
@@ -927,7 +915,6 @@ interface Line3DFromProjections {
   // Metadata and relationships
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Line defined as intersection of two planes (e.g., hinge lines)
@@ -943,7 +930,6 @@ interface Line3DFromPlaneIntersection {
   // Metadata and relationships
   createdBy: ActionId;              // "system:init" for HL_HV
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Line3D = Line3DFromProjections | Line3DFromPlaneIntersection;
@@ -957,7 +943,6 @@ interface Segment3D {
   // Metadata and relationships
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Plane from two trace lines (user-constructed planes)
@@ -971,7 +956,6 @@ interface Plane3DByTraces {
   // Metadata and relationships
   createdBy: ActionId;
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 // Plane defined by point and normal vector (projection planes)
@@ -985,7 +969,6 @@ interface Plane3DByPointAndNormal {
   // Metadata and relationships
   createdBy: ActionId;              // "system:init" for P_H, P_V
   visualStyle: VisualStyle;
-  infeasible: boolean;
 }
 
 type Plane3D = Plane3DByTraces | Plane3DByPointAndNormal;
@@ -1060,7 +1043,6 @@ interface RenderPrimitive {
   layer: RenderLayer;               // Which SVG layer to render in
   visible: boolean;                 // Computed from element visibility, plane visibility, etc.
   style: ComputedStyle;             // Resolved visual style (no inheritance, fully computed)
-  infeasible: boolean;              // Copied from source entity
 }
 
 enum RenderLayer {
@@ -1189,7 +1171,6 @@ const primitive: PathPrimitive = {
     opacity: 1.0,
     zIndex: 10
   },
-  infeasible: false,
   type: "path",
   points: [
     { x: 100, y: 200 },             // Computed from point1 position
@@ -1241,8 +1222,8 @@ interface Subprocess extends ProcessNodeBase {
 **Visibility Cascade for Elements**:
 ```typescript
 function isElementVisible(element: Element2D | Element3D): boolean {
-  // 1. Element must not be infeasible
-  if (element.infeasible) return false;
+  // 1. Element must not be infeasible (computed dynamically)
+  if (isInfeasible(element)) return false;
   
   // 2. Get element's process node via action
   const action = findActionInProcessTree(element.createdBy);
@@ -1310,10 +1291,6 @@ interface ConstructiveAction extends ProcessNodeBase {
   inputs: ElementId[];              // Dependencies (what this action consumes from World)
   outputs: ElementId[];             // Results (what this action produces in World)
   parameters: Record<string, any>;  // Tool-specific params (e.g., radius, angle)
-  
-  // Validation
-  infeasible: boolean;              // Computed from validation
-  infeasibilityReason?: string;     // Human-readable explanation
   
   // Style
   visualStyle?: VisualStyle;        // Style applied to outputs (inherited by elements)
@@ -1528,7 +1505,6 @@ interface DependencyGraph {
 interface GraphNode {
   id: ElementId | ActionId;
   type: "element" | "action";
-  infeasible: boolean;
 }
 ```
 
