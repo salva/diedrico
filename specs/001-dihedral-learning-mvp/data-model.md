@@ -648,8 +648,11 @@ interface Point2DFree {
   id: ElementId;
   name: string;                     // "a", "b", "p1", etc.
   planeId: PlaneId;                 // Belongs to exactly one plane
+  
+  // Defining data (user-specified position)
   x: number;                        // u-coordinate in plane's intrinsic basis
   y: number;                        // v-coordinate in plane's intrinsic basis
+  
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
@@ -661,14 +664,10 @@ interface Point2DFromIntersection {
   name: string;
   planeId: PlaneId;
   
-  // Defining relations (how to compute the point)
+  // Defining relations
   element1Id: ElementId;            // First intersecting element
   element2Id: ElementId;            // Second intersecting element
   intersectionIndex: number;        // Which intersection (0 or 1 for line-circle)
-  
-  // Current realization (computed from defining relations)
-  x: number;                        // u-coordinate in plane's intrinsic basis
-  y: number;                        // v-coordinate in plane's intrinsic basis
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -680,9 +679,12 @@ interface Point2DDerived {
   id: ElementId;
   name: string;
   planeId: PlaneId;
-  x: number;
-  y: number;
+  
+  // Defining data
+  x: number;                        // u-coordinate (transported result)
+  y: number;                        // v-coordinate (transported result)
   sourceActionId: ActionId;         // Action that derived this point
+  
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
@@ -701,12 +703,6 @@ interface Segment2DByPoints {
   // Defining relations
   point1Id: ElementId;              // Start point
   point2Id: ElementId;              // End point
-  
-  // Current realization (computed from point positions)
-  x1: number;                       // Start point u-coordinate
-  y1: number;                       // Start point v-coordinate
-  x2: number;                       // End point u-coordinate
-  y2: number;                       // End point v-coordinate
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -727,11 +723,6 @@ interface Line2DByTwoPoints {
   point1Id: ElementId;              // First point on line
   point2Id: ElementId;              // Second point on line
   
-  // Current realization (computed line equation: ax + by + c = 0)
-  a: number;                        // Line equation coefficient
-  b: number;                        // Line equation coefficient
-  c: number;                        // Line equation coefficient
-  
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
@@ -747,11 +738,6 @@ interface Line2DParallelThroughPoint {
   referenceLineId: ElementId;       // Line to be parallel to
   throughPointId: ElementId;        // Point the new line passes through
   
-  // Current realization (computed line equation: ax + by + c = 0)
-  a: number;                        // Line equation coefficient (parallel to reference)
-  b: number;                        // Line equation coefficient (parallel to reference)
-  c: number;                        // Line equation coefficient (through point)
-  
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
@@ -766,11 +752,6 @@ interface Line2DPerpendicularThroughPoint {
   // Defining relations
   referenceLineId: ElementId;       // Line to be perpendicular to
   throughPointId: ElementId;        // Point the new line passes through
-  
-  // Current realization (computed line equation: ax + by + c = 0)
-  a: number;                        // Line equation coefficient (perpendicular to reference)
-  b: number;                        // Line equation coefficient (perpendicular to reference)
-  c: number;                        // Line equation coefficient (through point)
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -789,8 +770,11 @@ interface Circle2DByCenterAndRadius {
   id: ElementId;
   name: string;                     // "c1", "c2", etc.
   planeId: PlaneId;
+  
+  // Defining data
   centerPointId: ElementId;
-  radius: number;
+  radius: number;                   // User-specified radius
+  
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
@@ -805,11 +789,6 @@ interface Circle2DByCenterAndPoint {
   // Defining relations
   centerPointId: ElementId;
   circumferencePointId: ElementId;
-  
-  // Current realization (computed from points)
-  cx: number;                       // Center u-coordinate
-  cy: number;                       // Center v-coordinate
-  radius: number;                   // Computed distance to circumference point
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -826,11 +805,6 @@ interface Circle2DByThreePoints {
   point1Id: ElementId;
   point2Id: ElementId;
   point3Id: ElementId;
-  
-  // Current realization (computed circumcircle)
-  cx: number;                       // Center u-coordinate (computed)
-  cy: number;                       // Center v-coordinate (computed)
-  radius: number;                   // Computed radius
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -855,13 +829,6 @@ interface Arc2DByCenterAndPoints {
   startPointId: ElementId;
   endPointId: ElementId;
   
-  // Current realization (computed from points)
-  cx: number;                       // Center u-coordinate
-  cy: number;                       // Center v-coordinate
-  radius: number;                   // Computed radius
-  startAngle: number;               // Computed start angle (radians)
-  endAngle: number;                 // Computed end angle (radians)
-  
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
@@ -881,11 +848,6 @@ interface Guide2DPerpendicularToLine {
   referenceLineId: ElementId;       // HL or BHL projection
   throughPointId: ElementId;        // Point on one plane that defines guide
   
-  // Current realization (computed line perpendicular to reference)
-  a: number;                        // Line equation coefficient
-  b: number;                        // Line equation coefficient
-  c: number;                        // Line equation coefficient
-  
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
@@ -903,11 +865,6 @@ interface BHLProjection2D {
   
   // Defining relations
   sourcePlane3DId: ElementId;       // Parent 3D plane
-  
-  // Current realization (computed projection of 3D plane intersection)
-  a: number;                        // Line equation coefficient
-  b: number;                        // Line equation coefficient
-  c: number;                        // Line equation coefficient
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -935,24 +892,113 @@ type BHLProjection = BHLProjection2D;
 
 **Defining Relations vs. Current Realization**:
 
-Each element stores two kinds of data:
+Elements are stored separately from their computed geometric state:
 
-1. **Defining Relations** (how to compute the element):
-   - References to other elements (IDs)
-   - Construction parameters (e.g., intersectionIndex, radius for Circle2DByCenterAndRadius)
-   - These define the element's dependencies in the dependency graph
-   - Example: `Line2DByTwoPoints` stores `point1Id` and `point2Id`
+1. **Elements** (persistent, stored in world state):
+   - Store only **defining relations** (element IDs, construction parameters)
+   - Define dependencies in the dependency graph
+   - Never contain computed geometric coordinates or equations
+   - Example: `Line2DByTwoPoints` stores only `point1Id` and `point2Id`
 
-2. **Current Realization** (computed geometric state):
+2. **Realizations** (computed, stored in cache):
    - Concrete geometric data needed for rendering and calculations
-   - Cached result of evaluating the defining relations
-   - Updated when dependencies change (parametric recomputation)
-   - Example: `Line2DByTwoPoints` also stores `a`, `b`, `c` (line equation coefficients)
+   - Computed from element's defining relations
+   - Stored in separate realization caches (not in element objects)
+   - Invalidated and recomputed when dependencies change
+   - Example: Line realization contains `a`, `b`, `c` (line equation coefficients)
 
-**Why Both?**
-- **Relations**: Enable parametric updates when dependencies change
-- **Realization**: Provide fast access for rendering without recomputing from dependencies
-- **Example**: When a point moves, its dependent line's realization (a,b,c) is recomputed from the relation (point1Id, point2Id)
+**Realization Cache Structure**:
+```typescript
+// Separate caches for 2D and 3D realizations
+interface RealizationCache {
+  element2D: Map<ElementId, Element2DRealization>;
+  element3D: Map<ElementId, Element3DRealization>;
+}
+
+// Realization types for 2D elements
+type Element2DRealization = 
+  | Point2DRealization
+  | Line2DRealization
+  | Segment2DRealization
+  | Circle2DRealization
+  | Arc2DRealization;
+
+interface Point2DRealization {
+  x: number;                        // u-coordinate in plane's intrinsic basis
+  y: number;                        // v-coordinate in plane's intrinsic basis
+}
+
+interface Line2DRealization {
+  a: number;                        // Line equation: ax + by + c = 0
+  b: number;
+  c: number;
+}
+
+interface Segment2DRealization {
+  x1: number;                       // Start point
+  y1: number;
+  x2: number;                       // End point
+  y2: number;
+}
+
+interface Circle2DRealization {
+  cx: number;                       // Center
+  cy: number;
+  radius: number;
+}
+
+interface Arc2DRealization {
+  cx: number;                       // Center
+  cy: number;
+  radius: number;
+  startAngle: number;               // Radians
+  endAngle: number;
+}
+
+// Realization types for 3D elements
+type Element3DRealization =
+  | Point3DRealization
+  | Line3DRealization
+  | Segment3DRealization
+  | Plane3DRealization;
+
+interface Point3DRealization {
+  x: number;
+  y: number;
+  z: number;
+}
+
+interface Line3DRealization {
+  pointX: number;                   // Point on line
+  pointY: number;
+  pointZ: number;
+  dirX: number;                     // Direction vector (normalized)
+  dirY: number;
+  dirZ: number;
+}
+
+interface Segment3DRealization {
+  x1: number;                       // Start point
+  y1: number;
+  z1: number;
+  x2: number;                       // End point
+  y2: number;
+  z2: number;
+}
+
+interface Plane3DRealization {
+  a: number;                        // Plane equation: ax + by + cz + d = 0
+  b: number;
+  c: number;
+  d: number;
+}
+```
+
+**Why Separate?**
+- **Elements**: Persistent data, saved to disk, define construction history
+- **Realizations**: Ephemeral data, recomputed on load, optimized for rendering
+- **Cache invalidation**: When element changes, only its realization is marked stale
+- **Memory efficiency**: Realizations can be cleared and regenerated without affecting world state
 
 **Recomputation**:
 - When an element's defining inputs change, its realization is marked as stale
@@ -984,11 +1030,15 @@ interface Point3DByCoordinates {
   kind: 'Point3DByCoordinates';
   id: ElementId;
   name: string;                     // "O" for origin
-  x: number;                        // 3D coordinates (hardcoded)
+  
+  // Defining data (hardcoded coordinates)
+  x: number;
   y: number;
   z: number;
-  projectionH: Point2DId;           // Computed projection on P_H
-  projectionV: Point2DId;           // Computed projection on P_V
+  
+  // Computed projections (element IDs, not geometric data)
+  projectionH: Point2DId;           // Projection on P_H
+  projectionV: Point2DId;           // Projection on P_V
   
   // Metadata and relationships
   createdBy: ActionId;              // "system:init" for O
@@ -1004,11 +1054,6 @@ interface Point3DFromProjections {
   // Defining relations
   projectionH: Point2DId;           // Projection on P_H
   projectionV: Point2DId;           // Projection on P_V
-  
-  // Current realization (computed 3D coordinates from projections)
-  x: number;
-  y: number;
-  z: number;
   
   // Metadata and relationships
   createdBy: ActionId;
@@ -1027,14 +1072,6 @@ interface Line3DFromProjections {
   projectionH: Line2DId;            // Projection on P_H
   projectionV: Line2DId;            // Projection on P_V
   
-  // Current realization (computed 3D line: point + direction)
-  pointX: number;                   // Point on line (3D)
-  pointY: number;
-  pointZ: number;
-  dirX: number;                     // Direction vector (3D, normalized)
-  dirY: number;
-  dirZ: number;
-  
   // Metadata and relationships
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -1050,15 +1087,9 @@ interface Line3DFromPlaneIntersection {
   plane1: Plane3DId;                // First plane (e.g., P_H)
   plane2: Plane3DId;                // Second plane (e.g., P_V)
   
-  // Current realization (computed 3D line + projections)
-  pointX: number;                   // Point on line (3D)
-  pointY: number;
-  pointZ: number;
-  dirX: number;                     // Direction vector (3D, normalized)
-  dirY: number;
-  dirZ: number;
-  projectionH: Line2DId;            // Computed projection on P_H
-  projectionV: Line2DId;            // Computed projection on P_V
+  // Computed projections (element IDs, not geometric data)
+  projectionH: Line2DId;            // Projection on P_H
+  projectionV: Line2DId;            // Projection on P_V
   
   // Metadata and relationships
   createdBy: ActionId;              // "system:init" for HL_HV
@@ -1075,14 +1106,6 @@ interface Segment3D {
   point1: Point3DId;                // 3D endpoints
   point2: Point3DId;
   
-  // Current realization (computed from point positions)
-  x1: number;                       // Start point (3D)
-  y1: number;
-  z1: number;
-  x2: number;                       // End point (3D)
-  y2: number;
-  z2: number;
-  
   // Metadata and relationships
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -1097,12 +1120,6 @@ interface Plane3DByTraces {
   // Defining relations
   traceH: Line2DId;                 // Horizontal trace
   traceV: Line2DId;                 // Vertical trace
-  
-  // Current realization (computed plane equation: ax + by + cz + d = 0)
-  a: number;                        // Plane normal x-component
-  b: number;                        // Plane normal y-component
-  c: number;                        // Plane normal z-component
-  d: number;                        // Plane offset
   
   // Metadata and relationships
   createdBy: ActionId;
