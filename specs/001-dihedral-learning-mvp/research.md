@@ -1552,16 +1552,57 @@ Based on our spec.md tool requirements:
 
 ### Legal Summary
 
-**✗ NOT APPROVED FOR USE in GPL 3+ Project**
+**CRITICAL UPDATE - GeoGebra 4 License Investigation**
 
-**License Incompatibility:**
-- GeoGebra toolbar icons are under **CC BY-NC-SA 4.0**
+**GeoGebra 4.0.34.0 (Debian Package) License Analysis:**
+
+Examined the GeoGebra 4.0.34.0+dfsg1 source package (from ~/src) which reveals:
+
+**From _LICENSE.txt (GeoGebra 4):**
+1. **GeoGebra Source Code License**: GNU General Public License v3 or later
+2. **GeoGebra Language Files, Documentation, and Installers License**: Creative Commons Attribution-Share Alike 3.0 or later
+
+**Key Finding**: Toolbar icons (GIF files in `/geogebra/gui/toolbar/images/`) are **NOT explicitly categorized** in the license.
+
+**Critical Ambiguity:**
+- Icons could fall under "source code" (GPL v3+) → **GPL-compatible** ✓
+- Icons could fall under "installers" (CC-BY-SA 3.0) → **GPL-compatible** ✓
+- Note: CC-BY-SA 3.0 does **NOT** have NonCommercial restriction (unlike modern CC BY-NC-SA 4.0)
+
+**GeoGebra v4 vs Modern GeoGebra Licensing:**
+- **Version 4** (2012): GPL v3+ source, CC-BY-SA 3.0 other assets (NO "NC")
+- **Modern GeoGebra** (2025): EUPL 1.2 source, CC BY-NC-SA 4.0 icons (WITH "NC")
+- **License Change**: GeoGebra added NonCommercial restriction sometime after v4
+
+**README.txt also mentions**: "Tango Icon Gallery, http://tango.freedesktop.org (Public Domain)"
+
+**Version 4 Icon Verdict: POTENTIALLY GPL-COMPATIBLE** ✓
+
+**However:**
+
+**✗ NOT APPROVED FOR USE in GPL 3+ Project (Modern GeoGebra)**
+
+**Modern GeoGebra License Incompatibility:**
+- Current GeoGebra toolbar icons are under **CC BY-NC-SA 4.0**
 - GPL 3+ requires all components allow commercial use
 - **NonCommercial restriction is incompatible with GPL**
 - Cannot legally combine GPL code with NC-licensed assets
 
 **Required Actions:**
 
+**FOR GEOGEBRA 4 ICONS (if using v4.0.34.0 from Debian):**
+1. **Verify Ambiguous Licensing**:
+   - Contact GeoGebra or Debian maintainers to clarify if v4 toolbar icons are GPL v3+
+   - If GPL v3+: Can use icons directly ✓
+   - If CC-BY-SA 3.0 (without NC): Can use with attribution ✓
+   - Document license determination in project
+
+2. **If Using GeoGebra 4 Icons**:
+   - Maintain attribution: "Toolbar icons from GeoGebra 4.0.34.0 (GPL v3+)"
+   - Include copy of GPL v3 license
+   - Ensure dfsg1 package used (Debian Free Software Guidelines compliant)
+
+**FOR MODERN GEOGEBRA OR IF V4 UNCLEAR:**
 1. **Create Original Icons**:
    - Design custom SVG toolbar icons for Diedrico
    - License under GPL 3+ or compatible license (MIT, Apache 2.0, CC-BY)
