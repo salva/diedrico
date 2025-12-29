@@ -2,11 +2,20 @@
  * PaperService - Converts domain entities and realizations to Paper primitives
  * 
  * This service builds the intermediate Paper representation from domain entities.
- * Primitives are in plane intrinsic <u,v> coordinates and contain all resolved
- * visual attributes, ready for viewport transformation and SVG rendering.
+ * Each projection plane has a transformation matrix to convert from its intrinsic
+ * <u,v> coordinates to the unified paper coordinate system.
+ * 
+ * Pipeline:
+ * 1. Get entity realization (<u,v> coordinates in plane space)
+ * 2. Apply plane-to-paper transformation matrix
+ * 3. Generate primitive with paper coordinates + resolved styles
+ * 
+ * Primitives contain all resolved visual attributes and are ready for viewport
+ * transformation and SVG rendering.
  * 
  * Responsibilities:
  * - Convert domain entities + realizations → drawing primitives
+ * - Apply plane-to-paper transformations
  * - Resolve style inheritance from process tree
  * - Compute visibility from subprocess visibility + infeasibility
  * - Generate primitives for all element types
@@ -25,10 +34,38 @@ import {
 } from '../domain/presentation/Paper';
 
 /**
+ * Plane-to-paper transformation matrix (3x3 for 2D homogeneous coordinates)
+ * Converts from plane intrinsic <u,v> space to paper coordinate system
+ */
+export interface PlaneTransform {
+  matrix: [
+    number, number, number,  // [m11, m12, m13]
+    number, number, number,  // [m21, m22, m23]
+    number, number, number   // [m31, m32, m33]
+  ];
+}
+
+/**
+ * Apply plane-to-paper transformation to a point
+ */
+function transformPoint(u: number, v: number, transform: PlaneTransform): [number, number] {
+  const [m11, m12, m13, m21, m22, m23, m31, m32, m33] = transform.matrix;
+  
+  // Matrix multiplication: [x, y, w]^T = M * [u, v, 1]^T
+  const x = m11 * u + m12 * v + m13;
+  const y = m21 * u + m22 * v + m23;
+  const w = m31 * u + m32 * v + m33;
+  
+  // Convert from homogeneous to Cartesian
+  return [x / w, y / w];
+}
+
+/**
  * Context for primitive generation
  */
 export interface PrimitiveContext {
   world: World;
+  planeTransforms: Map<string, PlaneTransform>;  // planeId → transform matrix
   highlightedEntityIds?: Set<string>;  // Hover/selection state
   activeSnapTargetId?: string;         // Current snap target
 }
@@ -38,22 +75,19 @@ export interface PrimitiveContext {
  */
 export class PaperService {
   /**
-   * Generate primitives for all entities in a plane
+   * Generate primitives for all entities
    */
-  generatePrimitivesForPlane(
-    planeId: string,
-    context: PrimitiveContext
-  ): Primitive[] {
+  generatePrimitives(context: PrimitiveContext): Primitive[] {
     const primitives: Primitive[] = [];
 
     // Generate primitives for each point
     for (const point of context.world.points.values()) {
-      if (point.planeId === planeId) {
-        const realization = context.world.getPointRealization(point.id!);
-        if (realization) {
-          const primitive = this.pointToPrimitive(point, realization, context);
-          primitives.push(primitive);
-        }
+      const realization = context.world.getPointRealization(point.id!);
+      const transform = context.planeTransforms.get(point.planeId!);
+      
+      if (realization && transform) {
+        const primitive = this.pointToPrimitive(point, realization, transform, context);
+        primitives.push(primitive);
       }
     }
 
@@ -64,14 +98,19 @@ export class PaperService {
 
   /**
    * Convert a Point2D + realization to a PointPrimitive
+   * Applies plane-to-paper transformation
    */
   private pointToPrimitive(
     point: Point2D,
     realization: Point2DRealization,
+    planeTransform: PlaneTransform,
     context: PrimitiveContext
   ): PointPrimitive {
     const isHighlighted = context.highlightedEntityIds?.has(point.id!) || false;
     const isSnapTarget = context.activeSnapTargetId === point.id;
+
+    // Transform from plane <u,v> to paper coordinates
+    const [x, y] = transformPoint(realization.u, realization.v, planeTransform);
 
     // Resolve visual style
     const style = this.resolvePointStyle(point, isHighlighted, isSnapTarget);
@@ -83,8 +122,8 @@ export class PaperService {
       layer: isSnapTarget ? RenderLayer.Highlights : RenderLayer.Elements,
       visible: true, // TODO: Compute from subprocess visibility + infeasibility
       style,
-      u: realization.u,
-      v: realization.v,
+      x,
+      y,
       radius: point.type === 'free' ? 5 : 4,
     };
   }
@@ -127,11 +166,11 @@ export class PaperService {
    * Update paper with current primitives
    */
   updatePaper(paper: Paper, context: PrimitiveContext): void {
-    // Clear existing primitives for this plane
+    // Clear existing primitives
     paper.clear();
 
-    // Generate new primitives
-    const primitives = this.generatePrimitivesForPlane(paper.planeId, context);
+    // Generate new primitives for all planes
+    const primitives = this.generatePrimitives(context);
 
     // Add to paper
     paper.setPrimitives(primitives);
@@ -150,10 +189,12 @@ export class PaperService {
 
     // Find the entity and generate new primitives
     const point = context.world.points.get(entityId);
-    if (point && point.planeId === paper.planeId) {
+    if (point) {
       const realization = context.world.getPointRealization(entityId);
-      if (realization) {
-        const primitive = this.pointToPrimitive(point, realization, context);
+      const transform = context.planeTransforms.get(point.planeId!);
+      
+      if (realization && transform) {
+        const primitive = this.pointToPrimitive(point, realization, transform, context);
         paper.setPrimitive(primitive);
       }
     }

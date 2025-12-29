@@ -2,10 +2,13 @@
  * SVGRenderer - Converts Paper primitives to SVG elements
  * 
  * This renderer applies viewport transformation (pan/zoom) to primitives
- * in plane intrinsic <u,v> space and generates final SVG elements.
+ * in paper coordinate system and generates final SVG elements.
  * 
  * Pipeline:
- * Paper primitives (u,v coords) → Viewport transform → Canvas coords → SVG
+ * Paper primitives (paper coords) → Viewport transform → Canvas coords → SVG
+ * 
+ * Note: Plane-to-paper transformation is already applied when generating primitives.
+ * This renderer only handles viewport transformation (pan/zoom).
  * 
  * Responsibilities:
  * - Apply viewport transformation to primitive coordinates
@@ -36,18 +39,8 @@ export interface SVGAttributes {
  */
 export interface ViewportTransform {
   zoom: number;                     // Zoom level (1.0 = 100%)
-  panX: number;                     // Pan offset X
-  panY: number;                     // Pan offset Y
-}
-
-/**
- * Transform parameters for a projection plane
- */
-export interface PlaneTransform {
-  originX: number;                  // Canvas origin X for this plane
-  originY: number;                  // Canvas origin Y for this plane
-  scaleU: number;                   // Scale factor for U axis (default 1.0)
-  scaleV: number;                   // Scale factor for V axis (default -1.0, flipped)
+  panX: number;                     // Pan offset X in paper space
+  panY: number;                     // Pan offset Y in paper space
 }
 
 /**
@@ -55,21 +48,17 @@ export interface PlaneTransform {
  */
 export class SVGRenderer {
   /**
-   * Transform a point from plane <u,v> space to canvas coordinates
+   * Transform a point from paper space to canvas coordinates
+   * Applies viewport transformation (pan + zoom)
    */
   private transformPoint(
-    u: number,
-    v: number,
-    planeTransform: PlaneTransform,
+    x: number,
+    y: number,
     viewport: ViewportTransform
   ): [number, number] {
-    // Step 1: Plane intrinsic → canvas base coordinates
-    const baseX = planeTransform.originX + u * planeTransform.scaleU;
-    const baseY = planeTransform.originY + v * planeTransform.scaleV;
-
-    // Step 2: Apply viewport transformation (pan + zoom)
-    const finalX = (baseX + viewport.panX) * viewport.zoom;
-    const finalY = (baseY + viewport.panY) * viewport.zoom;
+    // Apply viewport transformation: pan then zoom
+    const finalX = (x + viewport.panX) * viewport.zoom;
+    const finalY = (y + viewport.panY) * viewport.zoom;
 
     return [finalX, finalY];
   }
@@ -79,13 +68,11 @@ export class SVGRenderer {
    */
   private renderPoint(
     primitive: PointPrimitive,
-    planeTransform: PlaneTransform,
     viewport: ViewportTransform
   ): SVGAttributes {
     const [cx, cy] = this.transformPoint(
-      primitive.u,
-      primitive.v,
-      planeTransform,
+      primitive.x,
+      primitive.y,
       viewport
     );
 
@@ -107,7 +94,6 @@ export class SVGRenderer {
    */
   private renderPath(
     primitive: PathPrimitive,
-    planeTransform: PlaneTransform,
     viewport: ViewportTransform
   ): SVGAttributes {
     if (primitive.points.length === 0) {
@@ -115,8 +101,8 @@ export class SVGRenderer {
     }
 
     // Transform all points
-    const transformedPoints = primitive.points.map(([u, v]) =>
-      this.transformPoint(u, v, planeTransform, viewport)
+    const transformedPoints = primitive.points.map(([x, y]) =>
+      this.transformPoint(x, y, viewport)
     );
 
     // Build SVG path data
@@ -145,23 +131,21 @@ export class SVGRenderer {
    */
   private renderCircle(
     primitive: CirclePrimitive,
-    planeTransform: PlaneTransform,
     viewport: ViewportTransform
   ): SVGAttributes {
     const [cx, cy] = this.transformPoint(
-      primitive.cu,
-      primitive.cv,
-      planeTransform,
+      primitive.cx,
+      primitive.cy,
       viewport
     );
 
-    // Transform radius (affected by zoom and plane scale)
-    const radiusX = primitive.radius * Math.abs(planeTransform.scaleU) * viewport.zoom;
+    // Transform radius (affected by zoom)
+    const radius = primitive.radius * viewport.zoom;
 
     return {
       cx,
       cy,
-      r: radiusX,
+      r: radius,
       fill: primitive.style.fill,
       stroke: primitive.style.stroke,
       'stroke-width': primitive.style.strokeWidth,
@@ -177,18 +161,16 @@ export class SVGRenderer {
    */
   private renderArc(
     primitive: ArcPrimitive,
-    planeTransform: PlaneTransform,
     viewport: ViewportTransform
   ): SVGAttributes {
     const [cx, cy] = this.transformPoint(
-      primitive.cu,
-      primitive.cv,
-      planeTransform,
+      primitive.cx,
+      primitive.cy,
       viewport
     );
 
     // Transform radius
-    const radius = primitive.radius * Math.abs(planeTransform.scaleU) * viewport.zoom;
+    const radius = primitive.radius * viewport.zoom;
 
     // Calculate start and end points
     const startX = cx + radius * Math.cos(primitive.startAngle);
@@ -218,13 +200,11 @@ export class SVGRenderer {
    */
   private renderText(
     primitive: TextPrimitive,
-    planeTransform: PlaneTransform,
     viewport: ViewportTransform
   ): SVGAttributes {
     const [x, y] = this.transformPoint(
-      primitive.u,
-      primitive.v,
-      planeTransform,
+      primitive.x,
+      primitive.y,
       viewport
     );
 
@@ -260,20 +240,19 @@ export class SVGRenderer {
    */
   renderPrimitive(
     primitive: Primitive,
-    planeTransform: PlaneTransform,
     viewport: ViewportTransform
   ): { element: string; attributes: SVGAttributes } {
     switch (primitive.type) {
       case 'point':
-        return { element: 'circle', attributes: this.renderPoint(primitive, planeTransform, viewport) };
+        return { element: 'circle', attributes: this.renderPoint(primitive, viewport) };
       case 'path':
-        return { element: 'path', attributes: this.renderPath(primitive, planeTransform, viewport) };
+        return { element: 'path', attributes: this.renderPath(primitive, viewport) };
       case 'circle':
-        return { element: 'circle', attributes: this.renderCircle(primitive, planeTransform, viewport) };
+        return { element: 'circle', attributes: this.renderCircle(primitive, viewport) };
       case 'arc':
-        return { element: 'path', attributes: this.renderArc(primitive, planeTransform, viewport) };
+        return { element: 'path', attributes: this.renderArc(primitive, viewport) };
       case 'text':
-        return { element: 'text', attributes: this.renderText(primitive, planeTransform, viewport) };
+        return { element: 'text', attributes: this.renderText(primitive, viewport) };
     }
   }
 
@@ -282,11 +261,10 @@ export class SVGRenderer {
    */
   renderPaper(
     primitives: Primitive[],
-    planeTransform: PlaneTransform,
     viewport: ViewportTransform
   ): Array<{ element: string; attributes: SVGAttributes }> {
     return primitives
       .filter(p => p.visible)
-      .map(p => this.renderPrimitive(p, planeTransform, viewport));
+      .map(p => this.renderPrimitive(p, viewport));
   }
 }

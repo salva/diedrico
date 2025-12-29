@@ -1,18 +1,25 @@
 /**
  * Paper - Intermediate drawing representation
  * 
- * Paper provides a virtual drawing surface with primitives in "paper coordinates"
- * (plane intrinsic <u,v> space). These primitives only need viewport transformation
- * (pan/zoom) to generate final SVG.
+ * Paper provides a virtual drawing surface with primitives in a unified "paper coordinate system".
+ * Each projection plane has a transformation matrix that converts from its intrinsic <u,v> space
+ * to the shared paper coordinates. Paper primitives only need viewport transformation (pan/zoom)
+ * to generate final SVG.
  * 
  * Architecture:
- * Domain (rules) → Realization (geometry) → Paper (primitives) → Viewport transform → SVG
+ * Domain (rules) → Realization (<u,v> geometry) → Plane transform → Paper (paper coords) → Viewport transform → SVG
+ * 
+ * Coordinate Systems:
+ * - Plane intrinsic: <u,v> coordinates in each plane's local basis
+ * - Paper: Unified 2D coordinate system where all planes are laid out
+ * - Canvas: Paper coordinates after viewport transformation (pan/zoom)
+ * - Screen: Final pixel coordinates for SVG rendering
  * 
  * Benefits:
- * - Geometry computation separate from viewport transformation
- * - Primitives can be cached and reused across renders
- * - Multiple viewports can share same paper
- * - Easy to implement culling and optimization
+ * - Multiple planes can coexist on same paper
+ * - Geometry computation separate from layout and viewport
+ * - Primitives cached and reused across renders
+ * - Easy culling and optimization
  * 
  * @see specs/001-dihedral-learning-mvp/data-model.md#presentation-layer
  */
@@ -54,45 +61,45 @@ export interface DrawingPrimitive {
 
 /**
  * Point primitive - rendered as a circle
- * Coordinates in plane intrinsic <u,v> space
+ * Coordinates in paper coordinate system
  */
 export interface PointPrimitive extends DrawingPrimitive {
   type: 'point';
-  u: number;                        // U coordinate in plane space
-  v: number;                        // V coordinate in plane space
+  x: number;                        // X coordinate in paper space
+  y: number;                        // Y coordinate in paper space
   radius: number;                   // Display radius in pixels
 }
 
 /**
  * Path primitive - rendered as polyline or polygon
- * All coordinates in plane intrinsic <u,v> space
+ * All coordinates in paper coordinate system
  */
 export interface PathPrimitive extends DrawingPrimitive {
   type: 'path';
-  points: Array<[number, number]>; // Array of [u, v] coordinates
+  points: Array<[number, number]>; // Array of [x, y] coordinates in paper space
   closed: boolean;                  // Connect last to first point?
 }
 
 /**
  * Circle primitive
- * Coordinates in plane intrinsic <u,v> space
+ * Coordinates in paper coordinate system
  */
 export interface CirclePrimitive extends DrawingPrimitive {
   type: 'circle';
-  cu: number;                       // Center U coordinate
-  cv: number;                       // Center V coordinate
-  radius: number;                   // Radius in plane space units
+  cx: number;                       // Center X coordinate in paper space
+  cy: number;                       // Center Y coordinate in paper space
+  radius: number;                   // Radius in paper space units
 }
 
 /**
  * Arc primitive
- * Coordinates in plane intrinsic <u,v> space
+ * Coordinates in paper coordinate system
  */
 export interface ArcPrimitive extends DrawingPrimitive {
   type: 'arc';
-  cu: number;                       // Center U coordinate
-  cv: number;                       // Center V coordinate
-  radius: number;                   // Radius in plane space units
+  cx: number;                       // Center X coordinate in paper space
+  cy: number;                       // Center Y coordinate in paper space
+  radius: number;                   // Radius in paper space units
   startAngle: number;               // Start angle in radians
   endAngle: number;                 // End angle in radians
   largeArc: boolean;                // SVG large-arc-flag
@@ -101,12 +108,12 @@ export interface ArcPrimitive extends DrawingPrimitive {
 
 /**
  * Text primitive for labels
- * Coordinates in plane intrinsic <u,v> space
+ * Coordinates in paper coordinate system
  */
 export interface TextPrimitive extends DrawingPrimitive {
   type: 'text';
-  u: number;                        // U coordinate
-  v: number;                        // V coordinate
+  x: number;                        // X coordinate in paper space
+  y: number;                        // Y coordinate in paper space
   text: string;                     // Text content
   fontSize: number;                 // Font size in pixels
   anchor: 'start' | 'middle' | 'end'; // Text alignment
@@ -123,18 +130,17 @@ export type Primitive =
   | TextPrimitive;
 
 /**
- * Paper - Collection of drawing primitives for a projection plane
+ * Paper - Collection of drawing primitives in unified paper coordinate system
  * 
- * Each projection plane has its own Paper instance.
- * Primitives are in the plane's intrinsic <u,v> coordinate system.
+ * Paper contains primitives from all projection planes in a shared coordinate system.
+ * Each plane has a transformation matrix (stored elsewhere) that converts from
+ * its intrinsic <u,v> coordinates to paper coordinates when generating primitives.
  */
 export class Paper {
-  readonly planeId: string;
   private primitives: Map<string, Primitive>;
   private dirtyPrimitiveIds: Set<string>;
 
-  constructor(planeId: string) {
-    this.planeId = planeId;
+  constructor() {
     this.primitives = new Map();
     this.dirtyPrimitiveIds = new Set();
   }
