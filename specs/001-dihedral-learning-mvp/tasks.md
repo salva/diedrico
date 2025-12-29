@@ -22,7 +22,8 @@
 
 ## Phase 1: Basic World Data Structures
 
-**Purpose**: Minimal data model foundation
+**Purpose**: Minimal data model foundation  
+**Reference**: [spec.md](./spec.md#conceptual-model-user-pov) - Conceptual Model, [data-model.md](./data-model.md) - World structure
 
 - [ ] T001 [P] Create World class in frontend/src/domain/world/World.ts with array storage for elements
 - [ ] T002 [P] Create Point class in frontend/src/domain/world/Point.ts with x, y coordinates and unique ID
@@ -36,7 +37,8 @@
 
 ## Phase 2: Minimal UI Skeleton
 
-**Purpose**: Basic Vue.js application structure
+**Purpose**: Basic Vue.js application structure  
+**Reference**: [ui-spec.md](./ui-spec.md#application-layout) - UI Layout and Components
 
 - [ ] T006 Setup Vue.js 3 + TypeScript + Vite configuration in frontend/
 - [ ] T007 Create App.vue with basic layout structure (header, main workspace, footer)
@@ -50,7 +52,8 @@
 
 ## Phase 3: Render Fixed Elements
 
-**Purpose**: Display projection planes and coordinate system
+**Purpose**: Display projection planes and coordinate system  
+**Reference**: [spec.md](./spec.md#projection-planes) - Projection Planes P_V and P_H, [spec.md](./spec.md#hinge-lines-hl-and-broken-hinge-lines-bhl) - Hinge Lines
 
 - [ ] T011 [P] Create Plane class in frontend/src/domain/world/Plane.ts with boundaries and normal vector
 - [ ] T012 Add P_V and P_H fixed planes to World initialization
@@ -69,7 +72,8 @@
 
 ## Phase 4: Render Points
 
-**Purpose**: Display user-created points
+**Purpose**: Display user-created points  
+**Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Points)
 
 - [ ] T021 Add point rendering to SvgCanvas.vue (loop through World.points, create SVG circles)
 - [ ] T022 [P] Apply point styling (color, radius) from Point properties
@@ -81,7 +85,8 @@
 
 ## Phase 5: Create Free Points (US1 - Partial)
 
-**Purpose**: First user interaction - placing points
+**Purpose**: First user interaction - placing points  
+**Reference**: [spec.md](./spec.md#us1-place-point-on-active-plane) - US1 Place Point on Active Plane
 
 - [ ] T024 [P] Create Toolbar.vue component in frontend/src/components/toolbars/
 - [ ] T025 Add "Point" tool button to Toolbar
@@ -98,7 +103,8 @@
 
 ## Phase 6: Basic Viewport Pan/Zoom (US6 - Partial)
 
-**Purpose**: Canvas navigation
+**Purpose**: Canvas navigation  
+**Reference**: [spec.md](./spec.md#workspace-and-views) - Workspace Navigation (Pan: Shift+drag, Zoom: mouse wheel)
 
 - [ ] T032 Create useViewport composable in frontend/src/composables/useViewport.ts
 - [ ] T033 Create viewStore in frontend/src/stores/viewStore.ts for pan/zoom state
@@ -115,7 +121,8 @@
 
 ## Phase 7: Add 2D Lines
 
-**Purpose**: Support line geometry
+**Purpose**: Support line geometry  
+**Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Lines)
 
 - [ ] T040 [P] Create Line class in frontend/src/domain/world/Line.ts with two Point endpoints
 - [ ] T041 Add line storage to World class
@@ -129,7 +136,8 @@
 
 ## Phase 8: Line Creation Tool (US2 - Partial)
 
-**Purpose**: Create lines between points
+**Purpose**: Create lines between points  
+**Reference**: [spec.md](./spec.md#us2-create-points-lines-circles) - US2 Create Points, Lines, Circles
 
 - [ ] T045 Add "Line" tool button to Toolbar
 - [ ] T046 Create useSnapping composable in frontend/src/composables/useSnapping.ts
@@ -146,7 +154,8 @@
 
 ## Phase 9: Add Process Tree
 
-**Purpose**: Track construction history
+**Purpose**: Track construction history  
+**Reference**: [spec.md](./spec.md#process-tree) - Process Tree structure, [data-model.md](./data-model.md#process-tree) - ProcessTree data model
 
 - [ ] T053 [P] Create ProcessTree class in frontend/src/domain/processTree/ProcessTree.ts
 - [ ] T054 [P] Create Action interface in frontend/src/domain/processTree/Action.ts
@@ -164,7 +173,8 @@
 
 ## Phase 10: Command Pattern
 
-**Purpose**: Undoable operations
+**Purpose**: Undoable operations  
+**Reference**: [constitution.md](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-all-user-actions) - Command Pattern Principle
 
 - [ ] T062 [P] Create Command interface in frontend/src/commands/Command.ts with execute/undo/validate
 - [ ] T063 [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
@@ -186,7 +196,8 @@
 
 ## Phase 11: Add Segments (US2 - Partial)
 
-**Purpose**: Finite line segments
+**Purpose**: Finite line segments  
+**Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Segments)
 
 - [ ] T075 [P] Create Segment class in frontend/src/domain/world/Segment.ts with start/end points
 - [ ] T076 Add segment storage to World
@@ -203,7 +214,8 @@
 
 ## Phase 12: Add Circles (US2 - Complete)
 
-**Purpose**: Circle geometry
+**Purpose**: Circle geometry  
+**Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Circles), [spec.md](./spec.md#us2-create-points-lines-circles) - US2
 
 - [ ] T083 [P] Create Circle class in frontend/src/domain/world/Circle.ts with center point and radius
 - [ ] T084 Add circle storage to World
@@ -221,7 +233,8 @@
 
 ## Phase 13: Add Guides (US3 - Complete)
 
-**Purpose**: Guide lines perpendicular to hinge lines
+**Purpose**: Guide lines perpendicular to hinge lines  
+**Reference**: [spec.md](./spec.md#guides) - Guides definition, [spec.md](./spec.md#us3-create-guide-perpendicular-to-hinge-line) - US3 Create Guide
 
 - [ ] T092 [P] Create Guide class in frontend/src/domain/world/Guide.ts (line perpendicular to HL through point)
 - [ ] T093 Add guide storage to World
@@ -242,7 +255,8 @@
 
 ## Phase 14: Line-Line Intersections (US2 - Partial)
 
-**Purpose**: Create intersection points
+**Purpose**: Create intersection points  
+**Reference**: [spec.md](./spec.md#us2-create-points-lines-circles) - US2 includes intersection points
 
 - [ ] T102 [P] Implement line-line intersection calculation in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
 - [ ] T103 Handle parallel lines (no intersection, return null)
@@ -264,7 +278,8 @@
 
 ## Phase 15: Point Transport via Guides (US4 - Complete)
 
-**Purpose**: Transport points between planes using guides
+**Purpose**: Transport points between planes using guides  
+**Reference**: [spec.md](./spec.md#us4-transport-point-via-guide-between-planes) - US4 Point Transport via Guides
 
 - [ ] T113 [P] Implement point transport calculation in frontend/src/domain/calculations/Transport.ts using geometric principles
 - [ ] T114 [P] Transport MUST use homogeneous coordinates and matrix transformations (Principle V)
@@ -288,7 +303,8 @@
 
 ## Phase 16: Distance Transport (US5 - Complete)
 
-**Purpose**: Transport distances along guides
+**Purpose**: Transport distances along guides  
+**Reference**: [spec.md](./spec.md#us5-transport-distance-via-guide) - US5 Distance Transport via Guides
 
 - [ ] T126 [P] Implement distance transport calculation in frontend/src/domain/calculations/Transport.ts
 - [ ] T127 [P] Use homogeneous coordinates for distance vector representation (Principle V)
@@ -313,7 +329,8 @@
 
 ## Phase 17: More Intersection Types (US2 - Complete)
 
-**Purpose**: Expand intersection capabilities
+**Purpose**: Expand intersection capabilities  
+**Reference**: [spec.md](./spec.md#us2-create-points-lines-circles) - US2 all intersection types
 
 - [ ] T140 [P] Implement line-circle intersection in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
 - [ ] T141 Handle 0, 1, or 2 intersection points for line-circle
@@ -333,7 +350,8 @@
 
 ## Phase 18: Actions Panel
 
-**Purpose**: Display construction history in UI
+**Purpose**: Display construction history in UI  
+**Reference**: [ui-spec.md](./ui-spec.md#actions-panel-left-sidebar) - Actions Panel specification
 
 - [ ] T149 [P] Create ActionsPanel.vue component in frontend/src/components/panels/
 - [ ] T150 Retrieve actions from ProcessTree and display as list
@@ -351,7 +369,8 @@
 
 ## Phase 19: Elements Panel
 
-**Purpose**: Display all geometric objects
+**Purpose**: Display all geometric objects  
+**Reference**: [ui-spec.md](./ui-spec.md#elements-panel-right-sidebar) - Elements Panel specification
 
 - [ ] T158 [P] Create ElementsPanel.vue component in frontend/src/components/panels/
 - [ ] T159 Retrieve all elements from World and display as list
@@ -370,7 +389,8 @@
 
 ## Phase 20: Object Selection
 
-**Purpose**: Select objects on canvas
+**Purpose**: Select objects on canvas  
+**Reference**: [ui-spec.md](./ui-spec.md#interactions) - Selection behavior
 
 - [ ] T168 [P] Create selectionStore in frontend/src/stores/selectionStore.ts
 - [ ] T169 Implement click detection for objects on SVG canvas
@@ -389,7 +409,8 @@
 
 ## Phase 21: Hover Highlighting (US6 - Partial)
 
-**Purpose**: Visual feedback on hover
+**Purpose**: Visual feedback on hover  
+**Reference**: [spec.md](./spec.md#us6-hover-highlighting-visual-style-editing-3d-view) - US6 Hover Highlighting
 
 - [ ] T178 [P] Create useHoverHighlight composable in frontend/src/composables/useHoverHighlight.ts
 - [ ] T179 Implement mouseover detection for objects on canvas
@@ -407,7 +428,8 @@
 
 ## Phase 22: Element Properties (US6 - Complete)
 
-**Purpose**: View and edit object properties
+**Purpose**: View and edit object properties  
+**Reference**: [spec.md](./spec.md#us6-hover-highlighting-visual-style-editing-3d-view) - US6 Visual Style Editing, [ui-spec.md](./ui-spec.md#visual-style-inheritance) - Style Inheritance
 
 - [ ] T187 [P] Create PropertiesDialog.vue component in frontend/src/components/dialogs/
 - [ ] T188 Show dialog when user double-clicks object or clicks "Properties" button
@@ -434,7 +456,8 @@
 
 ## Phase 23: Dependency Tracking
 
-**Purpose**: Track which objects depend on others
+**Purpose**: Track which objects depend on others  
+**Reference**: [spec.md](./spec.md#process-tree) - Process Tree tracks dependencies
 
 - [ ] T201 [P] Create DependencyService in frontend/src/services/DependencyService.ts
 - [ ] T202 [P] Store dependencies in ProcessTree when actions are executed
@@ -454,7 +477,8 @@
 
 ## Phase 24: Infeasibility Detection
 
-**Purpose**: Detect and handle geometrically impossible operations
+**Purpose**: Detect and handle geometrically impossible operations  
+**Reference**: [spec.md](./spec.md#infeasibility) - Infeasibility concept and handling, [spec.md](./spec.md#us2-create-points-lines-circles) - US2 intersection infeasibility
 
 - [ ] T212 [P] Create ValidationService in frontend/src/services/ValidationService.ts
 - [ ] T213 Implement validation for line-line intersection: detect parallel lines (return infeasible)
@@ -479,7 +503,8 @@
 
 ## Phase 25: 3D View Panel (US6 - Complete)
 
-**Purpose**: Display 3D reconstruction of dihedral geometry
+**Purpose**: Display 3D reconstruction of dihedral geometry  
+**Reference**: [spec.md](./spec.md#workspace-and-views) - 3D View (Auxiliary, Read-Only), [spec.md](./spec.md#3d-elements-derived-not-edited) - 3D element derivation
 
 - [ ] T226 [P] Create ThreeDView.vue component in frontend/src/components/panels/
 - [ ] T227 Choose 3D rendering approach: CSS 3D transforms (simple) or Three.js (full-featured)
@@ -506,7 +531,8 @@
 
 ## Phase 26: File Save/Load (US1 - Complete)
 
-**Purpose**: Persist projects to files
+**Purpose**: Persist projects to files  
+**Reference**: [spec.md](./spec.md#us1-place-point-on-active-plane) - US1 includes persistence requirement, [contracts/api.yaml](./contracts/api.yaml) - API contracts
 
 - [ ] T242 [P] Create ProjectService in frontend/src/services/ProjectService.ts
 - [ ] T243 Implement World serialization to JSON (serialize all elements, ProcessTree, view state)
@@ -535,7 +561,8 @@
 
 ## Phase 27: Additional UI Polish
 
-**Purpose**: Improve overall user experience
+**Purpose**: Improve overall user experience  
+**Reference**: [ui-spec.md](./ui-spec.md#settings) - Settings and preferences, [spec.md](./spec.md#workspace-and-views) - Navigation shortcuts
 
 - [ ] T262 [P] Create SettingsDialog.vue component in frontend/src/components/dialogs/
 - [ ] T263 Add settings for snap radius (configurable distance for point snapping)
