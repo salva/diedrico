@@ -28,7 +28,7 @@ describe('World', () => {
 
   describe('addPoint', () => {
     it('should add a point to the world', () => {
-      const point = new Point(10, 20, 'free');
+      const point = new Point([10, 20, 1], 'free');
       world.addPoint(point);
 
       expect(world.getPointCount()).toBe(3);
@@ -36,7 +36,7 @@ describe('World', () => {
     });
 
     it('should assign an ID to a point without one', () => {
-      const point = new Point(10, 20, 'free');
+      const point = new Point([10, 20, 1], 'free');
       expect(point.id).toBeUndefined();
 
       world.addPoint(point);
@@ -46,7 +46,7 @@ describe('World', () => {
     });
 
     it('should not override existing ID', () => {
-      const point = new Point(10, 20, 'free');
+      const point = new Point([10, 20, 1], 'free');
       point.id = 'custom_id';
 
       world.addPoint(point);
@@ -55,8 +55,8 @@ describe('World', () => {
     });
 
     it('should assign sequential IDs to multiple points', () => {
-      const point1 = new Point(10, 20, 'free');
-      const point2 = new Point(30, 40, 'free');
+      const point1 = new Point([10, 20, 1], 'free');
+      const point2 = new Point([30, 40, 1], 'free');
 
       world.addPoint(point1);
       world.addPoint(point2);
@@ -68,7 +68,7 @@ describe('World', () => {
 
   describe('removePoint', () => {
     it('should remove a point by ID', () => {
-      const point = new Point(10, 20, 'free');
+      const point = new Point([10, 20, 1], 'free');
       point.id = 'test_point';
       world.addPoint(point);
 
@@ -88,7 +88,7 @@ describe('World', () => {
 
   describe('getPointById', () => {
     it('should retrieve a point by ID', () => {
-      const point = new Point(10, 20, 'free');
+      const point = new Point([10, 20, 1], 'free');
       point.id = 'test_point';
       world.addPoint(point);
 
@@ -115,9 +115,9 @@ describe('World', () => {
     });
 
     it('should return all points', () => {
-      const point1 = new Point(10, 20, 'free');
-      const point2 = new Point(30, 40, 'free');
-      const point3 = new Point(50, 60, 'derived');
+      const point1 = new Point([10, 20, 1], 'free');
+      const point2 = new Point([30, 40, 1], 'free');
+      const point3 = new Point([50, 60, 1], 'derived');
 
       world.addPoint(point1);
       world.addPoint(point2);
@@ -134,8 +134,8 @@ describe('World', () => {
 
   describe('clear', () => {
     it('should remove all user points but keep origin points', () => {
-      world.addPoint(new Point(10, 20, 'free'));
-      world.addPoint(new Point(30, 40, 'free'));
+      world.addPoint(new Point([10, 20, 1], 'free'));
+      world.addPoint(new Point([30, 40, 1], 'free'));
 
       expect(world.getPointCount()).toBe(4);
 
@@ -148,12 +148,12 @@ describe('World', () => {
     });
 
     it('should reset ID counter', () => {
-      world.addPoint(new Point(10, 20, 'free'));
-      world.addPoint(new Point(30, 40, 'free'));
+      world.addPoint(new Point([10, 20, 1], 'free'));
+      world.addPoint(new Point([30, 40, 1], 'free'));
 
       world.clear();
 
-      const newPoint = new Point(50, 60, 'free');
+      const newPoint = new Point([50, 60, 1], 'free');
       world.addPoint(newPoint);
 
       expect(newPoint.id).toBe('point_1');
@@ -166,17 +166,17 @@ describe('World', () => {
     });
 
     it('should return correct count after additions', () => {
-      world.addPoint(new Point(10, 20, 'free'));
+      world.addPoint(new Point([10, 20, 1], 'free'));
       expect(world.getPointCount()).toBe(3);
 
-      world.addPoint(new Point(30, 40, 'free'));
+      world.addPoint(new Point([30, 40, 1], 'free'));
       expect(world.getPointCount()).toBe(4);
     });
 
     it('should return correct count after removals', () => {
-      const point = new Point(10, 20, 'free');
+      const point = new Point([10, 20, 1], 'free');
       world.addPoint(point);
-      world.addPoint(new Point(30, 40, 'free'));
+      world.addPoint(new Point([30, 40, 1], 'free'));
 
       world.removePoint(point.id!);
 

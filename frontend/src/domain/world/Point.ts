@@ -22,13 +22,12 @@ export class Point {
   locked?: boolean;  // If true, point cannot be moved or deleted
 
   constructor(
-    u: number,
-    v: number,
+    coordinates: [number, number, number],  // Homogeneous [u, v, 1]
     type: PointType = 'free',
     plane?: { id?: string },
     label?: string
   ) {
-    this.coordinates = [u, v, 1];
+    this.coordinates = coordinates;
     this.type = type;
     this.label = label;
     this.planeId = plane?.id;
@@ -46,9 +45,8 @@ export class Point {
   /**
    * Update point coordinates
    */
-  setCoordinates(u: number, v: number): void {
-    this.coordinates[0] = u;
-    this.coordinates[1] = v;
+  setCoordinates(coords: [number, number, number]): void {
+    this.coordinates = coords;
   }
 
   /**
@@ -56,8 +54,7 @@ export class Point {
    */
   clone(): Point {
     const cloned = new Point(
-      this.coordinates[0],
-      this.coordinates[1],
+      [...this.coordinates] as [number, number, number],
       this.type,
       this.planeId ? { id: this.planeId } : undefined,
       this.label

@@ -95,44 +95,44 @@ describe('CoordinateTransform', () => {
   describe('planeTo3D', () => {
     it('should transform plane coordinates to 3D for P_H', () => {
       const coordinateSystem = {
-        origin: { x: 0, y: 0, z: 0 },
-        uAxis: { x: 1, y: 0, z: 0 },  // X-axis
-        vAxis: { x: 0, y: 1, z: 0 }   // Y-axis
+        origin: [0, 0, 0, 1],
+        uAxis: [1, 0, 0, 1],  // X-axis
+        vAxis: [0, 1, 0, 1]   // Y-axis
       };
       
       const point3D = planeTo3D(100, 50, coordinateSystem);
       
-      expect(point3D.x).toBe(100);
-      expect(point3D.y).toBe(50);
-      expect(point3D.z).toBe(0);  // On Z=0 plane
+      expect(point3D[0]).toBe(100);
+      expect(point3D[1]).toBe(50);
+      expect(point3D[2]).toBe(0);  // On Z=0 plane
     });
 
     it('should transform plane coordinates to 3D for P_V', () => {
       const coordinateSystem = {
-        origin: { x: 0, y: 0, z: 0 },
-        uAxis: { x: 1, y: 0, z: 0 },  // X-axis
-        vAxis: { x: 0, y: 0, z: 1 }   // Z-axis
+        origin: [0, 0, 0, 1],
+        uAxis: [1, 0, 0, 1],  // X-axis
+        vAxis: [0, 0, 1, 1]   // Z-axis
       };
       
       const point3D = planeTo3D(100, 50, coordinateSystem);
       
-      expect(point3D.x).toBe(100);
-      expect(point3D.y).toBe(0);  // On Y=0 plane
-      expect(point3D.z).toBe(50);
+      expect(point3D[0]).toBe(100);
+      expect(point3D[1]).toBe(0);  // On Y=0 plane
+      expect(point3D[2]).toBe(50);
     });
 
     it('should handle non-origin plane', () => {
       const coordinateSystem = {
-        origin: { x: 10, y: 20, z: 30 },
-        uAxis: { x: 1, y: 0, z: 0 },
-        vAxis: { x: 0, y: 1, z: 0 }
+        origin: [10, 20, 30, 1],
+        uAxis: [1, 0, 0, 1],
+        vAxis: [0, 1, 0, 1]
       };
       
       const point3D = planeTo3D(5, 3, coordinateSystem);
       
-      expect(point3D.x).toBe(15);  // 10 + 5*1
-      expect(point3D.y).toBe(23);  // 20 + 3*1
-      expect(point3D.z).toBe(30);  // 30 + 0
+      expect(point3D[0]).toBe(15);  // 10 + 5*1
+      expect(point3D[1]).toBe(23);  // 20 + 3*1
+      expect(point3D[2]).toBe(30);  // 30 + 0
     });
   });
 

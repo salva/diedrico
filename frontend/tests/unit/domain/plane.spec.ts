@@ -17,40 +17,40 @@ describe('Plane', () => {
   describe('constructor', () => {
     it('should create a plane with point and normal', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 }
+        [0, 0, 0, 1],
+        [0, 0, 1, 1]
       );
 
-      expect(plane.point).toEqual({ x: 0, y: 0, z: 0 });
-      expect(plane.normal).toEqual({ x: 0, y: 0, z: 1 });
+      expect(plane.point).toEqual([0, 0, 0, 1]);
+      expect(plane.normal).toEqual([0, 0, 1, 1]);
       expect(plane.type).toBe('auxiliary');
     });
 
     it('should normalize the normal vector', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 3, y: 0, z: 4 }  // Length 5
+        [0, 0, 0, 1],
+        [3, 0, 4, 1]  // Length 5
       );
 
       // Normal should be normalized to unit length
-      expect(plane.normal.x).toBeCloseTo(0.6);  // 3/5
-      expect(plane.normal.y).toBeCloseTo(0);
-      expect(plane.normal.z).toBeCloseTo(0.8);  // 4/5
+      expect(plane.normal[0]).toBeCloseTo(0.6);  // 3/5
+      expect(plane.normal[1]).toBeCloseTo(0);
+      expect(plane.normal[2]).toBeCloseTo(0.8);  // 4/5
     });
 
     it('should throw error for zero normal vector', () => {
       expect(() => {
         new Plane(
-          { x: 0, y: 0, z: 0 },
-          { x: 0, y: 0, z: 0 }  // Zero vector
+          [0, 0, 0, 1],
+          [0, 0, 0, 1]  // Zero vector
         );
       }).toThrow('Cannot normalize zero vector');
     });
 
     it('should accept optional label', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 },
+        [0, 0, 0, 1],
+        [0, 0, 1, 1],
         'projection',
         'Test Plane'
       );
@@ -64,8 +64,8 @@ describe('Plane', () => {
     it('should create P_H horizontal projection plane', () => {
       const planeH = Plane.createPH();
 
-      expect(planeH.point).toEqual({ x: 0, y: 0, z: 0 });
-      expect(planeH.normal).toEqual({ x: 0, y: 0, z: 1 });
+      expect(planeH.point).toEqual([0, 0, 0, 1]);
+      expect(planeH.normal).toEqual([0, 0, 1, 1]);
       expect(planeH.label).toBe('P_H');
       expect(planeH.type).toBe('projection');
     });
@@ -83,9 +83,9 @@ describe('Plane', () => {
       const planeH = Plane.createPH();
 
       expect(planeH.coordinateSystem).toBeDefined();
-      expect(planeH.coordinateSystem?.origin).toEqual({ x: 0, y: 0, z: 0 });
-      expect(planeH.coordinateSystem?.uAxis).toEqual({ x: 1, y: 0, z: 0 });
-      expect(planeH.coordinateSystem?.vAxis).toEqual({ x: 0, y: 1, z: 0 });
+      expect(planeH.coordinateSystem?.origin).toEqual([0, 0, 0, 1]);
+      expect(planeH.coordinateSystem?.uAxis).toEqual([1, 0, 0, 1]);
+      expect(planeH.coordinateSystem?.vAxis).toEqual([0, 1, 0, 1]);
     });
   });
 
@@ -93,8 +93,8 @@ describe('Plane', () => {
     it('should create P_V vertical projection plane', () => {
       const planeV = Plane.createPV();
 
-      expect(planeV.point).toEqual({ x: 0, y: 0, z: 0 });
-      expect(planeV.normal).toEqual({ x: 0, y: 1, z: 0 });
+      expect(planeV.point).toEqual([0, 0, 0, 1]);
+      expect(planeV.normal).toEqual([0, 1, 0, 1]);
       expect(planeV.label).toBe('P_V');
       expect(planeV.type).toBe('projection');
     });
@@ -112,17 +112,17 @@ describe('Plane', () => {
       const planeV = Plane.createPV();
 
       expect(planeV.coordinateSystem).toBeDefined();
-      expect(planeV.coordinateSystem?.origin).toEqual({ x: 0, y: 0, z: 0 });
-      expect(planeV.coordinateSystem?.uAxis).toEqual({ x: 1, y: 0, z: 0 });
-      expect(planeV.coordinateSystem?.vAxis).toEqual({ x: 0, y: 0, z: 1 });
+      expect(planeV.coordinateSystem?.origin).toEqual([0, 0, 0, 1]);
+      expect(planeV.coordinateSystem?.uAxis).toEqual([1, 0, 0, 1]);
+      expect(planeV.coordinateSystem?.vAxis).toEqual([0, 0, 1, 1]);
     });
   });
 
   describe('setBoundaries', () => {
     it('should set and get boundaries', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 }
+        [0, 0, 0, 1],
+        [0, 0, 1, 1]
       );
 
       plane.setBoundaries(-100, 200, -150, 250);
@@ -135,8 +135,8 @@ describe('Plane', () => {
 
     it('should return default boundaries if not set', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 }
+        [0, 0, 0, 1],
+        [0, 0, 1, 1]
       );
 
       // Default boundaries are -400 to 400
@@ -150,51 +150,51 @@ describe('Plane', () => {
   describe('setCoordinateSystem', () => {
     it('should set coordinate system', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 }
+        [0, 0, 0, 1],
+        [0, 0, 1, 1]
       );
 
       plane.setCoordinateSystem({
-        origin: { x: 1, y: 2, z: 3 },
-        uAxis: { x: 1, y: 0, z: 0 },
-        vAxis: { x: 0, y: 1, z: 0 }
+        origin: [1, 2, 3, 1],
+        uAxis: [1, 0, 0, 1],
+        vAxis: [0, 1, 0, 1]
       });
 
-      expect(plane.coordinateSystem?.origin).toEqual({ x: 1, y: 2, z: 3 });
-      expect(plane.coordinateSystem?.uAxis).toEqual({ x: 1, y: 0, z: 0 });
-      expect(plane.coordinateSystem?.vAxis).toEqual({ x: 0, y: 1, z: 0 });
+      expect(plane.coordinateSystem?.origin).toEqual([1, 2, 3, 1]);
+      expect(plane.coordinateSystem?.uAxis).toEqual([1, 0, 0, 1]);
+      expect(plane.coordinateSystem?.vAxis).toEqual([0, 1, 0, 1]);
     });
   });
 
   describe('containsPoint', () => {
     it('should return true for point on plane', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 }  // Z = 0 plane
+        [0, 0, 0, 1],
+        [0, 0, 1, 1]  // Z = 0 plane
       );
 
-      expect(plane.containsPoint({ x: 5, y: 3, z: 0 })).toBe(true);
-      expect(plane.containsPoint({ x: -10, y: 20, z: 0 })).toBe(true);
+      expect(plane.containsPoint([5, 3, 0, 1])).toBe(true);
+      expect(plane.containsPoint([-10, 20, 0, 1])).toBe(true);
     });
 
     it('should return false for point not on plane', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 }  // Z = 0 plane
+        [0, 0, 0, 1],
+        [0, 0, 1, 1]  // Z = 0 plane
       );
 
-      expect(plane.containsPoint({ x: 0, y: 0, z: 1 })).toBe(false);
-      expect(plane.containsPoint({ x: 5, y: 3, z: -2 })).toBe(false);
+      expect(plane.containsPoint([0, 0, 1, 1])).toBe(false);
+      expect(plane.containsPoint([5, 3, -2, 1])).toBe(false);
     });
 
     it('should use tolerance for near-plane points', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 }  // Z = 0 plane
+        [0, 0, 0, 1],
+        [0, 0, 1, 1]  // Z = 0 plane
       );
 
       // Point very close to plane (within default tolerance)
-      expect(plane.containsPoint({ x: 0, y: 0, z: 0.0000001 })).toBe(true);
+      expect(plane.containsPoint([0, 0, 0.0000001, 1])).toBe(true);
 
       // Point outside tolerance
       expect(plane.containsPoint({ x: 0, y: 0, z: 0.001 }, 0.0001)).toBe(false);
@@ -204,17 +204,17 @@ describe('Plane', () => {
   describe('clone', () => {
     it('should create deep copy of plane', () => {
       const plane = new Plane(
-        { x: 1, y: 2, z: 3 },
-        { x: 0, y: 1, z: 0 },
+        [1, 2, 3, 1],
+        [0, 1, 0, 1],
         'projection',
         'Test'
       );
       plane.id = 'plane_1';
       plane.setBoundaries(-100, 100, -50, 50);
       plane.setCoordinateSystem({
-        origin: { x: 0, y: 0, z: 0 },
-        uAxis: { x: 1, y: 0, z: 0 },
-        vAxis: { x: 0, y: 0, z: 1 }
+        origin: [0, 0, 0, 1],
+        uAxis: [1, 0, 0, 1],
+        vAxis: [0, 0, 1, 1]
       });
 
       const cloned = plane.clone();
@@ -229,8 +229,8 @@ describe('Plane', () => {
 
     it('should create independent copy', () => {
       const plane = new Plane(
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 1 }
+        [0, 0, 0, 1],
+        [0, 0, 1, 1]
       );
       plane.setBoundaries(-100, 100, -100, 100);
 

@@ -118,7 +118,7 @@ export function canvasToPlane(
  * @param u Plane intrinsic u coordinate
  * @param v Plane intrinsic v coordinate
  * @param coordinateSystem Plane's coordinate system
- * @returns 3D world coordinates {x, y, z}
+ * @returns 3D world coordinates [x, y, z, 1]
  */
 export function planeTo3D(
   u: number,
@@ -127,11 +127,12 @@ export function planeTo3D(
 ): Vector3 {
   const { origin, uAxis, vAxis } = coordinateSystem;
   
-  return {
-    x: origin.x + u * uAxis.x + v * vAxis.x,
-    y: origin.y + u * uAxis.y + v * vAxis.y,
-    z: origin.z + u * uAxis.z + v * vAxis.z
-  };
+  return [
+    origin[0] + u * uAxis[0] + v * vAxis[0],
+    origin[1] + u * uAxis[1] + v * vAxis[1],
+    origin[2] + u * uAxis[2] + v * vAxis[2],
+    1
+  ];
 }
 
 /**

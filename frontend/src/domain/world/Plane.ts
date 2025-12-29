@@ -12,11 +12,8 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
  */
 
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
+// 3D homogeneous coordinates [x, y, z, 1]
+export type Vector3 = [number, number, number, number];
 
 export interface PlaneCoordinateSystem {
   origin: Vector3;     // Origin point on the plane
@@ -52,7 +49,7 @@ export class Plane {
     type: PlaneType = 'auxiliary',
     label?: string
   ) {
-    this.point = { ...point };
+    this.point = [...point] as Vector3;
     this.normal = this.normalize(normal);
     this.type = type;
     this.label = label;
@@ -62,15 +59,16 @@ export class Plane {
    * Normalize a vector to unit length
    */
   private normalize(v: Vector3): Vector3 {
-    const length = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    const length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     if (length === 0) {
       throw new Error('Cannot normalize zero vector');
     }
-    return {
-      x: v.x / length,
-      y: v.y / length,
-      z: v.z / length
-    };
+    return [
+      v[0] / length,
+      v[1] / length,
+      v[2] / length,
+      1
+    ];
   }
 
   /**
@@ -93,11 +91,11 @@ export class Plane {
    */
   containsPoint(p: Vector3, tolerance: number = 1e-6): boolean {
     // Calculate n·(P - P₀)
-    const dx = p.x - this.point.x;
-    const dy = p.y - this.point.y;
-    const dz = p.z - this.point.z;
+    const dx = p[0] - this.point[0];
+    const dy = p[1] - this.point[1];
+    const dz = p[2] - this.point[2];
     
-    const dot = this.normal.x * dx + this.normal.y * dy + this.normal.z * dz;
+    const dot = this.normal[0] * dx + this.normal[1] * dy + this.normal[2] * dz;
     
     return Math.abs(dot) < tolerance;
   }
@@ -112,9 +110,9 @@ export class Plane {
     }
     if (this.coordinateSystem) {
       cloned.coordinateSystem = {
-        origin: { ...this.coordinateSystem.origin },
-        uAxis: { ...this.coordinateSystem.uAxis },
-        vAxis: { ...this.coordinateSystem.vAxis }
+        origin: [...this.coordinateSystem.origin] as Vector3,
+        uAxis: [...this.coordinateSystem.uAxis] as Vector3,
+        vAxis: [...this.coordinateSystem.vAxis] as Vector3
       };
     }
     if (this.boundaries) {
@@ -129,17 +127,17 @@ export class Plane {
    */
   static createPH(): Plane {
     const plane = new Plane(
-      { x: 0, y: 0, z: 0 },           // Origin
-      { x: 0, y: 0, z: 1 },           // Normal: +Z
+      [0, 0, 0, 1],           // Origin
+      [0, 0, 1, 1],           // Normal: +Z
       'projection',
       'P_H'
     );
     
     // Set coordinate system per spec.md
     plane.setCoordinateSystem({
-      origin: { x: 0, y: 0, z: 0 },
-      uAxis: { x: 1, y: 0, z: 0 },    // i = (1,0,0) → X in 3D
-      vAxis: { x: 0, y: 1, z: 0 }     // j = (0,1,0) → Y in 3D
+      origin: [0, 0, 0, 1],
+      uAxis: [1, 0, 0, 1],    // i = (1,0,0) → X in 3D
+      vAxis: [0, 1, 0, 1]     // j = (0,1,0) → Y in 3D
     });
     
     // Default boundaries
@@ -154,17 +152,17 @@ export class Plane {
    */
   static createPV(): Plane {
     const plane = new Plane(
-      { x: 0, y: 0, z: 0 },           // Origin
-      { x: 0, y: 1, z: 0 },           // Normal: +Y
+      [0, 0, 0, 1],           // Origin
+      [0, 1, 0, 1],           // Normal: +Y
       'projection',
       'P_V'
     );
     
     // Set coordinate system per spec.md
     plane.setCoordinateSystem({
-      origin: { x: 0, y: 0, z: 0 },
-      uAxis: { x: 1, y: 0, z: 0 },    // i = (1,0,0) → X in 3D
-      vAxis: { x: 0, y: 0, z: 1 }     // k = (0,0,1) → Z in 3D
+      origin: [0, 0, 0, 1],
+      uAxis: [1, 0, 0, 1],    // i = (1,0,0) → X in 3D
+      vAxis: [0, 0, 1, 1]     // k = (0,0,1) → Z in 3D
     });
     
     // Default boundaries
