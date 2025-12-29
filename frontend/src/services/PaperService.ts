@@ -47,6 +47,7 @@ export interface PlaneTransform {
 
 /**
  * Apply plane-to-paper transformation to a point
+ * Forward: <u,v> in plane space → <x,y> in paper space
  */
 function transformPoint(u: number, v: number, transform: PlaneTransform): [number, number] {
   const [m11, m12, m13, m21, m22, m23, m31, m32, m33] = transform.matrix;
@@ -61,6 +62,43 @@ function transformPoint(u: number, v: number, transform: PlaneTransform): [numbe
 }
 
 /**
+ * Apply inverse plane-to-paper transformation
+ * Inverse: <x,y> in paper space → <u,v> in plane space
+ * Used for mouse input processing
+ */
+function inverseTransformPoint(x: number, y: number, transform: PlaneTransform): [number, number] {
+  const [m11, m12, m13, m21, m22, m23, m31, m32, m33] = transform.matrix;
+  
+  // Compute inverse matrix using cofactor method for 3x3
+  const det = m11 * (m22 * m33 - m23 * m32) -
+              m12 * (m21 * m33 - m23 * m31) +
+              m13 * (m21 * m32 - m22 * m31);
+  
+  if (Math.abs(det) < 1e-10) {
+    throw new Error('PlaneTransform matrix is singular (not invertible)');
+  }
+  
+  // Inverse matrix elements
+  const inv11 = (m22 * m33 - m23 * m32) / det;
+  const inv12 = (m13 * m32 - m12 * m33) / det;
+  const inv13 = (m12 * m23 - m13 * m22) / det;
+  const inv21 = (m23 * m31 - m21 * m33) / det;
+  const inv22 = (m11 * m33 - m13 * m31) / det;
+  const inv23 = (m13 * m21 - m11 * m23) / det;
+  const inv31 = (m21 * m32 - m22 * m31) / det;
+  const inv32 = (m12 * m31 - m11 * m32) / det;
+  const inv33 = (m11 * m22 - m12 * m21) / det;
+  
+  // Apply inverse transformation: [u, v, w]^T = M^-1 * [x, y, 1]^T
+  const u = inv11 * x + inv12 * y + inv13;
+  const v = inv21 * x + inv22 * y + inv23;
+  const w = inv31 * x + inv32 * y + inv33;
+  
+  // Convert from homogeneous to Cartesian
+  return [u / w, v / w];
+}
+
+/**
  * Context for primitive generation
  */
 export interface PrimitiveContext {
@@ -68,6 +106,17 @@ export interface PrimitiveContext {
   planeTransforms: Map<string, PlaneTransform>;  // planeId → transform matrix
   highlightedEntityIds?: Set<string>;  // Hover/selection state
   activeSnapTargetId?: string;         // Current snap target
+}
+
+/**
+ * Convert paper coordinates to plane coordinates (for mouse input)
+ */
+export function paperToPlane(
+  x: number,
+  y: number,
+  planeTransform: PlaneTransform
+): [number, number] {
+  return inverseTransformPoint(x, y, planeTransform);
 }
 
 /**

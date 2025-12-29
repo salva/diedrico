@@ -49,6 +49,7 @@ export interface ViewportTransform {
 export class SVGRenderer {
   /**
    * Transform a point from paper space to canvas coordinates
+   * Forward: paper coords → screen coords
    * Applies viewport transformation (pan + zoom)
    */
   private transformPoint(
@@ -61,6 +62,23 @@ export class SVGRenderer {
     const finalY = (y + viewport.panY) * viewport.zoom;
 
     return [finalX, finalY];
+  }
+
+  /**
+   * Transform a point from canvas coordinates to paper space
+   * Inverse: screen coords → paper coords
+   * Used for mouse input processing
+   */
+  inverseTransformPoint(
+    screenX: number,
+    screenY: number,
+    viewport: ViewportTransform
+  ): [number, number] {
+    // Reverse viewport transformation: un-zoom then un-pan
+    const paperX = screenX / viewport.zoom - viewport.panX;
+    const paperY = screenY / viewport.zoom - viewport.panY;
+
+    return [paperX, paperY];
   }
 
   /**
