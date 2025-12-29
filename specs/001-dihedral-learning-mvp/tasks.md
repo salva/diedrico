@@ -1,522 +1,629 @@
 # Tasks: Diedrico Dihedral Learning MVP
 
-**Input**: Design documents from `/specs/001-dihedral-learning-mvp/`
-**Prerequisites**: plan.md, spec.md, data-model.md, contracts/, research.md
+**Input**: Design documents from `/specs/001-dihedral-learning-mvp/`  
+**Prerequisites**: plan.md, spec.md, data-model.md, contracts/, research.md, quickstart.md
 
-**Tests**: Per Diedrico Constitution (Principle V: Test-Driven Development), tests are MANDATORY for this feature.
+**Tests**: Per Diedrico Constitution (Principle V: Test-Driven Development), tests are MANDATORY and must be written BEFORE implementation.
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**Organization**: Tasks follow the 27 incremental phases from plan.md, organized to enable layer-by-layer development.
 
-**Constitution Compliance**: All tasks MUST respect:
-- Layered Architecture (Principle I) - No cross-layer violations
-- Command Pattern (Principle II) - User actions as commands with incremental execution
-- Frontend-First (Principle III) - All business logic in frontend
-- Technology Discipline (Principle IV) - Vue.js 3, TypeScript, Node.js backend
+**Constitution Compliance**: All tasks respect:
+- Layered Architecture (Principle I) - Domain → Application → Presentation → Data
+- Command Pattern (Principle II) - All user actions as commands
+- Frontend-First (Principle III) - Backend only for persistence
+- Technology Discipline (Principle IV) - Vue.js 3, TypeScript, Node.js, Vite, Vitest, Playwright
 
----
-
-## Format: `- [ ] [ID] [P?] [Story] Description with file path`
+## Format: `- [ ] [ID] [P?] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- Include exact file paths in descriptions
 
 ---
 
-## Phase 1: Setup & Infrastructure
+## Phase 1: Basic World Data Structures
 
-**Goal**: Establish project structure, development environment, and architectural foundation
+**Purpose**: Minimal data model foundation
 
-### Tasks
+- [ ] T001 [P] Create World class in frontend/src/domain/world/World.ts with array storage for elements
+- [ ] T002 [P] Create Point class in frontend/src/domain/world/Point.ts with x, y coordinates and unique ID
+- [ ] T003 [P] Add point storage methods to World (add, remove, getById)
+- [ ] T004 [P] Unit test for World class in frontend/tests/unit/domain/world.spec.ts
+- [ ] T005 [P] Unit test for Point class in frontend/tests/unit/domain/point.spec.ts
 
-- [X] T001 [P] Create repository structure with frontend/, backend/, specs/ directories
-- [X] T002 [P] Initialize frontend package.json with Vue 3, Vite, TypeScript, Pinia dependencies in frontend/
-- [X] T003 [P] Initialize backend package.json with Express, TypeScript dependencies in backend/
-- [X] T004 [P] Create frontend/tsconfig.json with ES2020+ target and strict mode
-- [X] T005 [P] Create backend/tsconfig.json with Node 18+ target
-- [X] T006 [P] Create frontend/vite.config.ts with Vue plugin configuration
-- [X] T007 [P] Create backend/src/server.ts with Express app initialization
-- [X] T008 [P] Create backend/src/api/health.ts with GET /api/health endpoint
-- [X] T009 [P] Create frontend/src/main.ts with Vue app initialization
-- [X] T010 [P] Create frontend/src/App.vue with empty workspace shell
-- [X] T011 Create npm scripts for dev, build, test in root package.json using workspaces
-- [X] T012 [P] Create Vitest configuration in frontend/vitest.config.ts
-- [X] T013 [P] Create first smoke test in frontend/tests/unit/smoke.spec.ts
-- [X] T014 Verify `npm run dev` starts both frontend and backend successfully
+**Checkpoint**: Basic data structures ready for rendering
 
 ---
 
-## Phase 2: Foundational Tasks (Blocking Prerequisites)
+## Phase 2: Minimal UI Skeleton
 
-**Goal**: Implement core domain models, geometry calculations, and command pattern infrastructure that all user stories depend on
+**Purpose**: Basic Vue.js application structure
 
-### Tasks
+- [ ] T006 Setup Vue.js 3 + TypeScript + Vite configuration in frontend/
+- [ ] T007 Create App.vue with basic layout structure (header, main workspace, footer)
+- [ ] T008 [P] Create SvgCanvas.vue component in frontend/src/components/canvas/ (empty SVG for now)
+- [ ] T009 [P] Add basic CSS styling in frontend/src/assets/styles/
+- [ ] T010 Mount SvgCanvas in App.vue main workspace area
 
-- [X] T015 [P] Create frontend/src/types/ElementTypes.ts with Element2D and Element3D union types
-- [X] T016 [P] Create frontend/src/types/CommandTypes.ts with CommandStatus enum and OperationResult interface
-- [X] T017 [P] Create frontend/src/types/ResultTypes.ts with Result<T, E> type for error handling
-- [X] T018 [P] Create frontend/src/domain/world/Element2D.ts with Point2D, Segment2D, Line2D, Circle2D interfaces (implemented in ElementTypes.ts)
-- [X] T019 [P] Create frontend/src/domain/world/Element3D.ts with Point3D, Line3D, Segment3D interfaces (implemented in ElementTypes.ts)
-- [X] T020 [P] Create frontend/src/domain/world/VisualStyle.ts with color, lineWidth, lineStyle properties
-- [X] T021 [P] Create frontend/src/domain/viewState/ProjectionPlane.ts with plane definition and coordinate system
-- [X] T022 [P] Create frontend/src/domain/viewState/HingeLine.ts with hinge line entity
-- [X] T023 [P] Create frontend/src/domain/world/DependencyGraph.ts with DAG structure and traversal methods
-- [X] T024 [P] Create frontend/src/domain/processTree/Process.ts with root process node
-- [X] T025 [P] Create frontend/src/domain/processTree/Subprocess.ts with subprocess container
-- [X] T026 [P] Create frontend/src/domain/processTree/ActionGroup.ts with action group (no name field)
-- [X] T027 [P] Create frontend/src/domain/processTree/Action.ts with ConstructiveAction and DerivedAction
-- [X] T028 [P] Create frontend/src/domain/calculations/intersections.ts with line-line intersection functions
-- [X] T029 [P] Create frontend/src/domain/calculations/perpendiculars.ts with perpendicular construction functions
-- [X] T030 [P] Create frontend/src/domain/calculations/distances.ts with point-line, point-point distance functions
-- [X] T031 [P] Write unit tests for intersections.ts in frontend/tests/unit/calculations/intersections.spec.ts
-- [X] T032 [P] Write unit tests for perpendiculars.ts in frontend/tests/unit/calculations/perpendiculars.spec.ts
-- [X] T033 [P] Write unit tests for distances.ts in frontend/tests/unit/calculations/distances.spec.ts
-- [X] T034 [P] Create frontend/src/commands/OperationResult.ts with outputs: Record<string, any> interface
-- [X] T035 [P] Create frontend/src/commands/Command.ts with addAndExecute(), commit(), rollback() methods
-- [X] T036 [P] Create frontend/src/commands/CommandStack.ts with undo/redo history management
-- [X] T037 [P] Create frontend/src/commands/operations/WorldOperations.ts with AddElementOp, RemoveElementOp, UpdateElementOp
-- [X] T038 [P] Create frontend/src/commands/operations/ProcessTreeOperations.ts with AddSubprocessOp, AddActionGroupOp, AddActionToGroupOp
-- [X] T039 [P] Create frontend/src/commands/operations/ViewStateOperations.ts with SetActivePlaneOp, UpdateView2DOp
-- [X] T040 [P] Create frontend/src/commands/operations/DependencyOperations.ts with AddDependencyEdgesOp, RemoveDependencyEdgesOp
-- [X] T041 [P] Write unit tests for Command.ts incremental execution in frontend/tests/unit/commands.spec.ts
-- [X] T042 [P] Write unit tests for CommandStack.ts undo/redo in frontend/tests/unit/commandStack.spec.ts
-- [X] T043 [P] Create frontend/src/stores/worldStore.ts with elements2D, elements3D, dependencyGraph state
-- [X] T044 [P] Create frontend/src/stores/processStore.ts with ProcessTree and command history state
-- [X] T045 [P] Create frontend/src/stores/viewStore.ts with active plane and view state
-- [X] T046 [P] Create frontend/src/stores/toolStore.ts with active tool state
-- [X] T047 [P] Create frontend/src/utils/idGenerator.ts with ID generation utilities
-- [X] T048 [P] Create frontend/src/services/GeometryService.ts wrapping calculation functions
-- [X] T049 [P] Create frontend/src/services/DependencyService.ts with recomputation and topological sort
-- [X] T050 [P] Create frontend/src/services/ValidationService.ts with infeasibility checks
+**Checkpoint**: Application loads and displays empty canvas
 
 ---
 
-## Phase 3: User Story 1 - Project Lifecycle (Priority P1)
+## Phase 3: Render Fixed Elements
 
-**Story Goal**: Create, save, and reopen projects with persistence
+**Purpose**: Display projection planes and coordinate system
 
-**Independent Test Criteria**: Can create a new drawing, add elements, save, reopen, and verify all planes/elements/actions and view settings are restored.
+- [ ] T011 [P] Create Plane class in frontend/src/domain/world/Plane.ts with boundaries and normal vector
+- [ ] T012 Add P_V and P_H fixed planes to World initialization
+- [ ] T013 Add origin point (O) and hinge line (HL_HV) to World
+- [ ] T014 [P] Create coordinate transformation utilities in frontend/src/domain/calculations/CoordinateTransform.ts (world → SVG)
+- [ ] T015 Render P_V and P_H as SVG rectangles in SvgCanvas.vue
+- [ ] T016 Render origin point (O) as SVG circle
+- [ ] T017 Render hinge line (HL_HV) as SVG line
+- [ ] T018 [P] Apply distinct visual styles to fixed elements (colors, stroke widths)
+- [ ] T019 [P] Unit test for Plane class in frontend/tests/unit/domain/plane.spec.ts
+- [ ] T020 [P] Unit test for CoordinateTransform in frontend/tests/unit/calculations/transform.spec.ts
 
-### Tasks
-
-- [X] T051 [US1] Create backend/src/models/Project.ts with Project DTO interface
-- [X] T052 [US1] Create backend/src/storage/FileStorage.ts with JSON file read/write operations in backend/data/projects/
-- [X] T053 [US1] Create backend/src/storage/ProjectRepository.ts with CRUD operations using FileStorage
-- [X] T054 [US1] Create backend/src/api/projects.ts with GET /api/projects endpoint to list all projects
-- [X] T055 [US1] Implement POST /api/projects endpoint to create new project with default planes (P_H, P_V, HL_HV) in backend/src/api/projects.ts
-- [X] T056 [US1] Implement GET /api/projects/:id endpoint to load project by ID in backend/src/api/projects.ts
-- [X] T057 [US1] Implement PUT /api/projects/:id endpoint to save project with updated timestamp in backend/src/api/projects.ts
-- [X] T058 [US1] Implement DELETE /api/projects/:id endpoint in backend/src/api/projects.ts
-- [X] T059 [US1] Create frontend/src/services/ProjectService.ts with methods calling backend API
-- [X] T060 [US1] Implement debounced autosave (500ms) in ProjectService.ts
-- [X] T061 [US1] Implement project deserialization and domain object reconstruction in ProjectService.ts
-- [X] T062 [US1] Create frontend/src/components/dialogs/NewProjectDialog.vue with project name input
-- [X] T063 [US1] Create frontend/src/components/dialogs/OpenProjectDialog.vue with project list
-- [X] T064 [US1] Implement "New Project" action that creates project with default planes and HL_HV
-- [X] T065 [US1] Implement "Open Project" action that loads and deserializes project state
-- [X] T066 [US1] Write integration test for POST /api/projects in backend/tests/integration/projects.spec.ts
-- [X] T067 [US1] Write integration test for GET /api/projects/:id in backend/tests/integration/projects.spec.ts
-- [X] T068 [US1] Write integration test for PUT /api/projects/:id in backend/tests/integration/projects.spec.ts
-- [X] T069 [US1] Write E2E test for create/save/reload cycle in frontend/tests/e2e/persistence.spec.ts
-- [X] T070 [US1] Verify autosave triggers after 500ms of inactivity
+**Checkpoint**: Fixed elements visible on canvas (US1 partial - workspace initialized)
 
 ---
 
-## Phase 4: User Story 2 - Build 2D Dihedral Construction (Priority P1)
+## Phase 4: Render Points
 
-**Story Goal**: Create explicit 2D geometric constructions on projection planes with parametric updates
+**Purpose**: Display user-created points
 
-**Independent Test Criteria**: Can create points/segments/lines/circles on active plane, modify base elements, and verify dependent elements update or become infeasible.
+- [ ] T021 Add point rendering to SvgCanvas.vue (loop through World.points, create SVG circles)
+- [ ] T022 [P] Apply point styling (color, radius) from Point properties
+- [ ] T023 [P] Create visual style types in frontend/src/types/StyleTypes.ts
 
-### Workspace & Basic Tools
-
-- [X] T071 [US2] Create frontend/src/components/workspace/Workspace2D.vue with SVG canvas
-- [X] T072 [US2] Implement D3.js zoom/pan behavior in Workspace2D.vue (Shift+drag pan, wheel zoom)
-- [X] T073 [US2] Create frontend/src/components/workspace/ElementRenderer.vue to render Point2D, Segment2D as SVG
-- [X] T074 [US2] Create frontend/src/components/toolbars/MainToolbar.vue with tool selector buttons
-- [X] T075 [US2] Create frontend/src/components/toolbars/PlaneSelector.vue with active plane toggle (P_H, P_V)
-- [X] T076 [US2] Implement active plane selection logic in viewStore.ts
-- [X] T077 [US2] Create frontend/src/composables/useSnapping.ts for point snapping within radius
-- [X] T078 [US2] Create frontend/src/composables/useHoverHighlight.ts for dependency highlighting
-- [X] T079 [US2] Create frontend/src/composables/useToolFeedback.ts for visual feedback during tool use
-- [X] T080 [US2] Create frontend/src/composables/useCommandExecution.ts for command building and commit
-
-### Point Tools
-
-- [X] T081 [P] [US2] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
-- [X] T082 [P] [US2] Implement free point tool handler that builds command with AddElementOp for Point2D
-- [X] T083 [P] [US2] Create CreatePointOnElementCommand in frontend/src/commands/CreatePointOnElementCommand.ts
-- [X] T084 [P] [US2] Implement point-on-element tool with closest point projection calculation
-- [X] T085 [P] [US2] Create CreateIntersectionPointCommand in frontend/src/commands/CreateIntersectionPointCommand.ts
-- [X] T086 [P] [US2] Implement automatic intersection point creation on element click (FR-023)
-- [X] T087 [P] [US2] Write unit tests for CreateFreePointCommand in frontend/tests/unit/commands/createFreePoint.spec.ts
-- [X] T088 [P] [US2] Write unit tests for CreateIntersectionPointCommand in frontend/tests/unit/commands/createIntersectionPoint.spec.ts
-
-### Segment/Line Tools
-
-- [X] T089 [P] [US2] Create CreateSegmentCommand in frontend/src/commands/CreateSegmentCommand.ts
-- [X] T090 [P] [US2] Implement segment tool: click two points → addAndExecute AddElementOp for Segment2D
-- [X] T091 [P] [US2] Create CreateLineCommand in frontend/src/commands/CreateLineCommand.ts
-- [X] T092 [P] [US2] Implement line tool variants: by two points, parallel through point, perpendicular through point
-- [X] T093 [P] [US2] Add validation for coincident points (infeasible segment) in CreateSegmentCommand
-- [X] T094 [P] [US2] Write unit tests for CreateSegmentCommand validation in frontend/tests/unit/commands/createSegment.spec.ts
-- [X] T095 [P] [US2] Write unit tests for CreateLineCommand variants in frontend/tests/unit/commands/createLine.spec.ts
-
-### Circle/Arc Tools
-
-- [X] T096 [P] [US2] Create CreateCircleCommand in frontend/src/commands/CreateCircleCommand.ts
-- [X] T097 [P] [US2] Implement circle tool variants: center+radius, center+point, three points
-- [X] T098 [P] [US2] Add validation for collinear points (infeasible circle from 3 points) in CreateCircleCommand
-- [X] T099 [P] [US2] Write unit tests for CreateCircleCommand validation in frontend/tests/unit/commands/createCircle.spec.ts
-
-### Dependency & Recomputation
-
-- [X] T100 [US2] Implement dependency graph edge creation when elements are constructed
-- [X] T101 [US2] Implement parametric recomputation in DependencyService.ts with topological sort
-- [X] T102 [US2] Implement infeasibility propagation in ValidationService.ts
-- [X] T103 [US2] Implement infeasible element rendering (red dashed lines, not drawn) in ElementRenderer.vue
-- [X] T104 [US2] Write unit tests for dependency graph traversal in frontend/tests/unit/dependencyGraph.spec.ts
-- [X] T105 [US2] Write unit tests for recomputation logic in frontend/tests/unit/dependencyService.spec.ts
-
-### Actions & Elements Panels
-
-- [X] T106 [P] [US2] Create frontend/src/components/panels/ActionsPanel.vue to display command history
-- [X] T107 [P] [US2] Implement action list rendering with timestamp, type, and outputs in ActionsPanel.vue
-- [X] T108 [P] [US2] Implement collapsible auxiliary actions (ActionGroups) in ActionsPanel.vue
-- [X] T109 [P] [US2] Create frontend/src/components/panels/ElementsPanel.vue with 2D/3D sections
-- [X] T110 [P] [US2] Implement element grouping by type (points, segments, lines, circles) in ElementsPanel.vue
-- [X] T111 [P] [US2] Implement element click → open properties dialog in ElementsPanel.vue
-- [X] T112 [P] [US2] Create frontend/src/components/dialogs/ElementPropertiesDialog.vue for visual style editing
-
-### E2E Tests
-
-- [X] T113 [US2] Write E2E test for basic construction: create points, segment, verify in panel in frontend/tests/e2e/basic-construction.spec.ts
-- [X] T114 [US2] Write E2E test for parametric update: move point, verify segment updates in frontend/tests/e2e/parametric-update.spec.ts
-- [X] T115 [US2] Write E2E test for infeasibility: create infeasible segment, verify not drawn in frontend/tests/e2e/infeasibility.spec.ts
-- [X] T116 [US2] Write E2E test for navigation during tool: pan/zoom doesn't cancel tool in frontend/tests/e2e/navigation.spec.ts
-- [X] T117 [US2] Verify performance: navigation <200ms for 200 elements (SC-002)
+**Checkpoint**: Points from World data structure render on canvas
 
 ---
 
-## Phase 5: User Story 3 - Dihedral Guides and Transports (Priority P2)
+## Phase 5: Create Free Points (US1 - Partial)
 
-**Story Goal**: Create guides perpendicular to hinge lines and transport points/distances between planes
+**Purpose**: First user interaction - placing points
 
-**Independent Test Criteria**: Can create guide from HL and point, transport point via guide, verify transported result is derived and tracked as action.
+- [ ] T024 [P] Create Toolbar.vue component in frontend/src/components/toolbars/
+- [ ] T025 Add "Point" tool button to Toolbar
+- [ ] T026 Create tool store in frontend/src/stores/toolStore.ts for active tool tracking
+- [ ] T027 Add click handler to SvgCanvas for point creation
+- [ ] T028 Transform SVG click coordinates to world coordinates
+- [ ] T029 Create Point instance and add to World on canvas click
+- [ ] T030 Trigger canvas re-render when point added
+- [ ] T031 [P] E2E test for point creation in frontend/tests/e2e/create-point.spec.ts
 
-### Guide Creation
-
-- [X] T118 [US3] Create CreateGuideCommand in frontend/src/commands/CreateGuideCommand.ts
-- [X] T119 [US3] Implement guide creation: select HL + point → compute perpendicular on both planes
-- [X] T120 [US3] Store guide as belonging to both planes in worldStore.ts
-- [X] T121 [US3] Render guide on both planes in ElementRenderer.vue
-- [X] T122 [US3] Write unit tests for CreateGuideCommand in frontend/tests/unit/commands/createGuide.spec.ts
-
-### Transport Operations
-
-- [X] T123 [P] [US3] Create TransportPointCommand in frontend/src/commands/TransportPointCommand.ts
-- [X] T124 [P] [US3] Implement transport point: given guide + point on plane1 → create derived point on plane2
-- [X] T125 [P] [US3] Mark transported point as derived (lighter color, 50% opacity) in VisualStyle
-- [X] T126 [P] [US3] Create TransportDistanceCommand in frontend/src/commands/TransportDistanceCommand.ts
-- [X] T127 [P] [US3] Implement transport distance: given guide + two points → create distance on other plane
-- [X] T128 [P] [US3] Write unit tests for TransportPointCommand in frontend/tests/unit/commands/transportPoint.spec.ts
-- [X] T129 [P] [US3] Write unit tests for TransportDistanceCommand in frontend/tests/unit/commands/transportDistance.spec.ts
-
-### E2E Tests
-
-- [X] T130 [US3] Write E2E test for guide creation from HL and point in frontend/tests/e2e/guide-creation.spec.ts
-- [X] T131 [US3] Write E2E test for point transport via guide in frontend/tests/e2e/point-transport.spec.ts
-- [X] T132 [US3] Verify transported elements have derived visual style
+**Checkpoint**: User can click Point tool and place points on canvas (US1 partial)
 
 ---
 
-## Phase 6: User Story 4 - Broken Hinge Lines (BHL) (Priority P2)
+## Phase 6: Basic Viewport Pan/Zoom (US6 - Partial)
 
-**Story Goal**: Create 3D planes, see BHL projections auto-appear, create guides on BHL that auto-transport
+**Purpose**: Canvas navigation
 
-**Independent Test Criteria**: Can create 3D plane from traces, verify BHL projections appear on both projection planes, create guide on BHL, verify auto-transport to other plane.
+- [ ] T032 Create useViewport composable in frontend/src/composables/useViewport.ts
+- [ ] T033 Create viewStore in frontend/src/stores/viewStore.ts for pan/zoom state
+- [ ] T034 Add mouse drag handler for panning (Shift + drag or Space + drag)
+- [ ] T035 Add mouse wheel handler for zooming
+- [ ] T036 Update CoordinateTransform to apply view transformation
+- [ ] T037 Apply transform to SVG rendering in SvgCanvas
+- [ ] T038 [P] Unit test for viewStore in frontend/tests/unit/stores/viewStore.spec.ts
+- [ ] T039 [P] E2E test for pan/zoom in frontend/tests/e2e/viewport.spec.ts
 
-### BHL Infrastructure
-
-- [X] T133 [US4] Extend Element2D types to include BHL projection line type in frontend/src/domain/world/Element2D.ts
-- [X] T134 [US4] Create BrokenHingeLine entity in frontend/src/domain/world/BrokenHingeLine.ts
-- [X] T135 [US4] Implement BHL projection calculation in frontend/src/domain/calculations/bhlProjections.ts
-- [X] T136 [US4] Write unit tests for BHL projection calculations in frontend/tests/unit/calculations/bhlProjections.spec.ts
-
-### 3D Plane Creation with BHL
-
-- [X] T137 [US4] Create Create3DPlaneCommand in frontend/src/commands/Create3DPlaneCommand.ts
-- [X] T138 [US4] Implement 3D plane creation from two trace lines on different planes
-- [X] T139 [US4] Auto-create BHL projections as Element2D lines when 3D plane is created
-- [X] T140 [US4] Store BHL projections in worldStore and link to parent 3D plane
-- [X] T141 [US4] Render BHL projections on both planes in ElementRenderer.vue
-- [X] T142 [US4] Write unit tests for Create3DPlaneCommand in frontend/tests/unit/commands/create3DPlane.spec.ts
-
-### Guide on BHL with Auto-Transport
-
-- [X] T143 [US4] Extend CreateGuideCommand to support BHL projection as input
-- [X] T144 [US4] Implement auto-transport: guide created on one BHL projection appears on other
-- [X] T145 [US4] Ensure guide perpendicular to both BHL projections
-- [X] T146 [US4] Update parametric recomputation: when trace changes, BHL updates, guides adjust (Infrastructure complete: dependency edges trace→plane3D→BHL→guides, topological sort in DependencyService. Full recomputation requires MoveFreePointCommand + RecomputationEngine - deferred to later phase)
-- [X] T147 [US4] Write unit tests for BHL guide auto-transport in frontend/tests/unit/commands/bhlGuide.spec.ts
-
-### E2E Tests
-
-- [X] T148 [US4] Write E2E test for 3D plane creation and BHL projection appearance in frontend/tests/e2e/bhl-creation.spec.ts
-- [X] T149 [US4] Write E2E test for guide on BHL with auto-transport in frontend/tests/e2e/bhl-guide.spec.ts
-- [X] T150 [US4] Write E2E test for trace modification triggering BHL update in frontend/tests/e2e/bhl-parametric.spec.ts
+**Checkpoint**: User can navigate canvas (US6 partial - viewport manipulation)
 
 ---
 
-## Phase 7: User Story 5 - 3D Elements and Visualization (Priority P3)
+## Phase 7: Add 2D Lines
 
-**Story Goal**: Define 3D points/lines/segments from 2D projections, view in read-only 3D overlay
+**Purpose**: Support line geometry
 
-**Independent Test Criteria**: Can select compatible 2D projections to create 3D point, observe in 3D view, verify 3D elements cannot be edited directly.
+- [ ] T040 [P] Create Line class in frontend/src/domain/world/Line.ts with two Point endpoints
+- [ ] T041 Add line storage to World class
+- [ ] T042 Render lines as SVG line elements in SvgCanvas.vue
+- [ ] T043 [P] Apply line styling (color, stroke width)
+- [ ] T044 [P] Unit test for Line class in frontend/tests/unit/domain/line.spec.ts
 
-### 3D Element Creation
-
-- [X] T151 [US5] Create Create3DPointCommand in frontend/src/commands/Create3DPointCommand.ts
-- [X] T152 [US5] Implement 3D point creation: select projectionH + projectionV → compute 3D coordinates
-- [X] T153 [US5] Add compatibility validation (FR-022): check projections are transportable
-- [X] T154 [US5] Create Create3DLineCommand in frontend/src/commands/Create3DLineCommand.ts
-- [X] T155 [US5] Implement 3D line creation from compatible 2D projections
-- [X] T156 [US5] Create Create3DSegmentCommand in frontend/src/commands/Create3DSegmentCommand.ts
-- [X] T157 [US5] Implement 3D segment creation from two compatible 2D segments
-- [X] T158 [US5] Write unit tests for Create3DPointCommand validation in frontend/tests/unit/commands/create3DPoint.spec.ts
-
-### 3D Workspace
-
-- [X] T159 [P] [US5] Create frontend/src/components/workspace/Workspace3D.vue with Three.js scene
-- [X] T160 [P] [US5] Initialize Three.js scene, camera, renderer in Workspace3D.vue
-- [X] T161 [P] [US5] Implement OrbitControls for rotate/pan/zoom in Workspace3D.vue
-- [X] T162 [P] [US5] Render projection planes as translucent surfaces in Workspace3D.vue
-- [X] T163 [P] [US5] Render 3D points as spheres in Workspace3D.vue
-- [X] T164 [P] [US5] Render 3D lines/segments as line primitives in Workspace3D.vue
-- [X] T165 [P] [US5] Implement read-only enforcement: disable selection/editing in 3D view
-- [X] T166 [P] [US5] Add toggle: show 2D elements on planes in 3D view
-- [X] T167 [P] [US5] Add toggle: show linking visuals (dashed lines from 2D projections to 3D elements)
-
-### E2E Tests
-
-- [X] T168 [US5] Write E2E test for 3D point creation from compatible projections in frontend/tests/e2e/3d-creation.spec.ts
-- [X] T169 [US5] Write E2E test for incompatible projection rejection in frontend/tests/e2e/3d-incompatible.spec.ts
-- [X] T170 [US5] Write E2E test for read-only 3D view interaction in frontend/tests/e2e/3d-readonly.spec.ts
-- [X] T171 [US5] Verify 3D view maintains 30+ fps with 50 elements
+**Checkpoint**: Lines can be stored and rendered
 
 ---
 
-## Phase 8: User Story 6 - Inspect Process and Dependencies (Priority P4)
+## Phase 8: Line Creation Tool (US2 - Partial)
 
-**Story Goal**: Review construction history, explore dependencies via hover highlighting
+**Purpose**: Create lines between points
 
-**Independent Test Criteria**: Can hover actions/elements in panels and verify focus/ancestors/descendants highlights are consistent.
+- [ ] T045 Add "Line" tool button to Toolbar
+- [ ] T046 Create useSnapping composable in frontend/src/composables/useSnapping.ts
+- [ ] T047 Implement point snapping logic (detect nearby points within radius)
+- [ ] T048 Add visual feedback for snapped point (highlight)
+- [ ] T049 Implement two-point selection for line tool
+- [ ] T050 Create Line instance from two selected points
+- [ ] T051 Add line to World and re-render
+- [ ] T052 [P] E2E test for line creation in frontend/tests/e2e/create-line.spec.ts
 
-### Hover Highlighting
-
-- [ ] T172 [US6] Implement hover highlighting in ActionsPanel: hover action → highlight focus/inputs/outputs in workspace
-- [ ] T173 [US6] Implement hover highlighting in ElementsPanel: hover element → highlight focus/ancestors/descendants
-- [ ] T174 [US6] Apply CSS classes: .focus, .ancestor, .descendant, .infeasible in ElementRenderer.vue
-- [ ] T175 [US6] Implement temporary highlighting: clear on mouseleave
-- [ ] T176 [US6] Add toggle: "Enable dependency hover" checkbox in settings
-- [ ] T177 [US6] Add slider: "Snap radius" control in settings
-- [ ] T178 [US6] Write unit tests for dependency highlighting logic in frontend/tests/unit/hoverHighlight.spec.ts
-
-### Visual Styles
-
-- [ ] T179 [P] [US6] Implement visual style editing in ElementPropertiesDialog.vue (color, lineWidth, lineStyle)
-- [ ] T180 [P] [US6] Implement style inheritance from subprocess in VisualStyle computation
-- [ ] T181 [P] [US6] Add "Reset to inherited" button for each style property
-- [ ] T182 [P] [US6] Implement explicit override indicator (bold label when overridden)
-- [ ] T183 [P] [US6] Write unit tests for style inheritance in frontend/tests/unit/visualStyle.spec.ts
-
-### E2E Tests
-
-- [ ] T184 [US6] Write E2E test for hover highlighting in action panel in frontend/tests/e2e/hover-action.spec.ts
-- [ ] T185 [US6] Write E2E test for hover highlighting in element panel in frontend/tests/e2e/hover-element.spec.ts
-- [ ] T186 [US6] Write E2E test for visual style editing in frontend/tests/e2e/style-editing.spec.ts
-- [ ] T187 [US6] Verify hover highlighting response time <200ms for 200 elements (SC-002)
+**Checkpoint**: User can create lines between points with snapping (US2 partial)
 
 ---
 
-## Phase 9: Polish & Cross-Cutting Concerns
+## Phase 9: Add Process Tree
 
-**Goal**: Address edge cases, performance optimization, and final polish
+**Purpose**: Track construction history
 
-### Edge Case Handling
+- [ ] T053 [P] Create ProcessTree class in frontend/src/domain/processTree/ProcessTree.ts
+- [ ] T054 [P] Create Action interface in frontend/src/domain/processTree/Action.ts
+- [ ] T055 [P] Create CreatePointAction class in frontend/src/domain/processTree/actions/CreatePointAction.ts
+- [ ] T056 [P] Create CreateLineAction class in frontend/src/domain/processTree/actions/CreateLineAction.ts
+- [ ] T057 Add ProcessTree instance to World
+- [ ] T058 Record CreatePointAction when point created
+- [ ] T059 Record CreateLineAction when line created
+- [ ] T060 [P] Unit test for ProcessTree in frontend/tests/unit/processTree/processTree.spec.ts
+- [ ] T061 [P] Unit test for Action classes in frontend/tests/unit/processTree/actions.spec.ts
 
-- [ ] T188 [P] Implement cascading infeasibility: base change makes multiple downstream actions infeasible
-- [ ] T189 [P] Handle switching active plane mid-operation: complete/cancel deterministically
-- [ ] T190 [P] Handle opening drawing with infeasible actions: clearly indicate in panels
-- [ ] T191 [P] Handle toggling plane visibility while tool is active: maintain tool state
-- [ ] T192 [P] Write E2E test for cascading infeasibility in frontend/tests/e2e/cascading-infeasibility.spec.ts
-
-### Performance Optimization
-
-- [ ] T193 [P] Profile 2D navigation with 200 elements, optimize if >200ms
-- [ ] T194 [P] Implement spatial indexing (R-tree) if intersection detection slow
-- [ ] T195 [P] Implement virtual scrolling in panels if >1000 elements
-- [ ] T196 [P] Add memoization for expensive geometry calculations in GeometryService.ts
-- [ ] T197 [P] Optimize recomputation: only recompute affected subgraph, not entire graph
-
-### Documentation
-
-- [ ] T198 [P] Update README with screenshots and setup instructions
-- [ ] T199 [P] Create user guide in docs/user-guide.md with basic usage examples
-- [ ] T200 [P] Document developer onboarding in docs/developer-guide.md
-- [ ] T201 [P] Add code comments for complex algorithms (recomputation, BHL projections)
+**Checkpoint**: Construction actions tracked in process tree (US6 partial - history tracking)
 
 ---
 
-## Dependencies
+## Phase 10: Command Pattern
 
-### User Story Completion Order
+**Purpose**: Undoable operations
 
-```mermaid
-graph TD
-    Setup[Phase 1: Setup]
-    Foundation[Phase 2: Foundation]
-    US1[Phase 3: US1 - Project Lifecycle]
-    US2[Phase 4: US2 - 2D Construction]
-    US3[Phase 5: US3 - Guides & Transport]
-    US4[Phase 6: US4 - Broken Hinge Lines]
-    US5[Phase 7: US5 - 3D Elements]
-    US6[Phase 8: US6 - Inspect Process]
-    Polish[Phase 9: Polish]
-    
-    Setup --> Foundation
-    Foundation --> US1
-    Foundation --> US2
-    US1 --> US3
-    US2 --> US3
-    US2 --> US4
-    US2 --> US5
-    US3 --> US4
-    US4 --> US5
-    US2 --> US6
-    US5 --> Polish
-    US6 --> Polish
-```
+- [ ] T062 [P] Create Command interface in frontend/src/commands/Command.ts with execute/undo/validate
+- [ ] T063 [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
+- [ ] T064 [P] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
+- [ ] T065 [P] Create CreateLineCommand in frontend/src/commands/CreateLineCommand.ts
+- [ ] T066 Refactor point creation to use CreateFreePointCommand
+- [ ] T067 Refactor line creation to use CreateLineCommand
+- [ ] T068 Add Undo button to toolbar
+- [ ] T069 Add Redo button to toolbar
+- [ ] T070 Implement Ctrl+Z keyboard shortcut for undo
+- [ ] T071 Implement Ctrl+Y keyboard shortcut for redo
+- [ ] T072 [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+- [ ] T073 [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePoint.spec.ts
+- [ ] T074 [P] E2E test for undo/redo in frontend/tests/e2e/undo-redo.spec.ts
 
-**Critical Path**: Setup → Foundation → US2 (2D Construction) → US3 (Guides) → US4 (BHL) → US5 (3D) → Polish
-
-**Independent Stories**: US1 (Project Lifecycle) can be developed in parallel with US2 after Foundation is complete.
+**Checkpoint**: All operations undoable/redoable (Constitution Principle II satisfied)
 
 ---
 
-## Parallel Execution Opportunities
+## Phase 11: Add Segments (US2 - Partial)
 
-### Phase 1: Setup & Infrastructure
-- Tasks T001-T010 can all run in parallel (different configuration files)
-- T013 depends on T012 (Vitest config must exist)
+**Purpose**: Finite line segments
 
-### Phase 2: Foundational Tasks
-- Domain model tasks (T015-T027) can run in parallel
-- Calculation functions (T028-T030) can run in parallel
-- Unit tests (T031-T033) can run in parallel after their implementations
-- Command infrastructure (T034-T040) can run in parallel
-- Store creation (T043-T046) can run in parallel
-- Service creation (T047-T050) can run in parallel
+- [ ] T075 [P] Create Segment class in frontend/src/domain/world/Segment.ts with start/end points
+- [ ] T076 Add segment storage to World
+- [ ] T077 Render segments as SVG path elements in SvgCanvas.vue
+- [ ] T078 Add "Segment" tool button to Toolbar
+- [ ] T079 [P] Create CreateSegmentCommand in frontend/src/commands/CreateSegmentCommand.ts
+- [ ] T080 Implement segment creation tool (two-point selection)
+- [ ] T081 [P] Unit test for Segment class in frontend/tests/unit/domain/segment.spec.ts
+- [ ] T082 [P] E2E test for segment creation in frontend/tests/e2e/create-segment.spec.ts
 
-### Phase 3: User Story 1
-- Backend API endpoints (T054-T058) can run in parallel after T053
-- Frontend service and dialogs (T059-T063) can run in parallel
-- Integration tests (T066-T068) can run in parallel after implementations
-
-### Phase 4: User Story 2
-- Point tool commands (T081, T083, T085) can run in parallel
-- Segment/Line commands (T089, T091) can run in parallel
-- Tests for commands (T087, T088, T094, T095, T099) can run in parallel
-- Panel components (T106, T109) can run in parallel
-
-### Phase 5: User Story 3
-- Transport commands (T123, T126) can run in parallel after T122
-- Tests (T128, T129) can run in parallel after implementations
-
-### Phase 6: User Story 4
-- BHL infrastructure tasks (T133-T136) can run in parallel
-
-### Phase 7: User Story 5
-- 3D workspace rendering tasks (T159-T167) can run in parallel after T160
-
-### Phase 8: User Story 6
-- Visual style tasks (T179-T183) can run in parallel with hover highlighting tasks (T172-T177)
-
-### Phase 9: Polish
-- Edge case handling (T188-T191) can run in parallel
-- Performance optimization (T193-T197) can run in parallel
-- Documentation (T198-T201) can run in parallel
+**Checkpoint**: User can create segments (US2 partial - more geometry types)
 
 ---
 
-## Implementation Strategy
+## Phase 12: Add Circles (US2 - Complete)
 
-### MVP First (Minimum Viable Product)
-**Scope**: Phase 1-4 (Setup + Foundation + US1 + US2)
-- Establishes core infrastructure
-- Delivers basic 2D construction capability
-- Enables project persistence
-- Provides foundation for advanced features
+**Purpose**: Circle geometry
 
-**Timeline**: ~5-6 weeks
-**Outcome**: Working application where users can create, save, and manipulate 2D constructions
+- [ ] T083 [P] Create Circle class in frontend/src/domain/world/Circle.ts with center point and radius
+- [ ] T084 Add circle storage to World
+- [ ] T085 Render circles as SVG circle elements in SvgCanvas.vue
+- [ ] T086 Add "Circle" tool button to Toolbar
+- [ ] T087 [P] Create CreateCircleCommand in frontend/src/commands/CreateCircleCommand.ts
+- [ ] T088 Implement circle center selection
+- [ ] T089 Implement radius specification (drag or click second point)
+- [ ] T090 [P] Unit test for Circle class in frontend/tests/unit/domain/circle.spec.ts
+- [ ] T091 [P] E2E test for circle creation in frontend/tests/e2e/create-circle.spec.ts
 
-### Incremental Delivery
-
-1. **MVP Release** (Phases 1-4)
-   - Users can create 2D constructions
-   - Projects persist across sessions
-   - Parametric updates work
-   - Infeasibility is detected
-
-2. **Dihedral Tools Release** (Phases 5-6)
-   - Add guide and transport operations
-   - Add broken hinge line support
-   - Enables classical dihedral workflows
-
-3. **3D Visualization Release** (Phase 7)
-   - Add read-only 3D view
-   - Create 3D elements from projections
-   - Improve spatial understanding
-
-4. **Polish Release** (Phases 8-9)
-   - Add dependency inspection
-   - Visual style customization
-   - Performance optimization
-   - Edge case handling
+**Checkpoint**: User can create circles (US2 complete for basic geometry)
 
 ---
 
-## Format Validation
+## Phase 13: Add Guides (US3 - Complete)
 
-✅ **All tasks follow required format**: `- [ ] [TaskID] [P?] [Story?] Description with file path`
+**Purpose**: Guide lines perpendicular to hinge lines
 
-**Task Statistics**:
-- Total tasks: 201
-- Setup & Infrastructure: 14 tasks
-- Foundational: 36 tasks
-- User Story 1 (P1): 20 tasks
-- User Story 2 (P1): 47 tasks
-- User Story 3 (P2): 15 tasks
-- User Story 4 (P2): 18 tasks
-- User Story 5 (P3): 21 tasks
-- User Story 6 (P4): 16 tasks
-- Polish: 14 tasks
+- [ ] T092 [P] Create Guide class in frontend/src/domain/world/Guide.ts (line perpendicular to HL through point)
+- [ ] T093 Add guide storage to World
+- [ ] T094 [P] Implement guide calculation using homogeneous coordinates - perpendicular to HL
+- [ ] T095 Render guides as dashed SVG lines in SvgCanvas.vue (extend to viewport edges)
+- [ ] T096 Add "Guide" tool button to Toolbar
+- [ ] T097 [P] Create CreateGuideCommand in frontend/src/commands/CreateGuideCommand.ts
+- [ ] T098 Implement guide creation: select HL, then select point
+- [ ] T099 Apply guide on both planes sharing the HL (guide appears in both)
+- [ ] T100 [P] Unit test for guide calculations in frontend/tests/unit/calculations/guides.spec.ts
+- [ ] T101 [P] E2E test for guide creation in frontend/tests/e2e/guide-creation.spec.ts
 
-**Parallelizable tasks**: 94 tasks marked with [P]
+**Checkpoint**: User can create guides (US3 complete)
 
-**Suggested MVP Scope**: Phases 1-4 (117 tasks, ~40% parallelizable)
-
----
-
-## Success Criteria Mapping
-
-| Success Criterion | Related Tasks |
-|-------------------|---------------|
-| SC-001: Basic exercise <10 min | T113-T117, T130-T132 (E2E tests) |
-| SC-002: Navigation <200ms for 200 elements | T117, T187, T193 (performance tests) |
-| SC-003: 90% infeasibility identifiable | T103, T115, T192 (infeasibility handling) |
-| SC-004: 100% restoration on test set | T069, T070 (persistence tests) |
+**Constitution Note**: Guide calculations MUST use general geometric algorithms, not hardcoded for specific planes (Principle IV)
 
 ---
 
-**End of Tasks Document**
+## Phase 14: Line-Line Intersections (US2 - Partial)
+
+**Purpose**: Create intersection points
+
+- [ ] T102 [P] Implement line-line intersection calculation in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
+- [ ] T103 Handle parallel lines (no intersection, return null)
+- [ ] T104 Handle coincident lines (infinite intersections, return null or special case)
+- [ ] T105 Add "Intersection" tool button to Toolbar
+- [ ] T106 [P] Create CreateIntersectionPointCommand in frontend/src/commands/CreateIntersectionPointCommand.ts
+- [ ] T107 Implement intersection tool: select first line
+- [ ] T108 Implement intersection tool: select second line
+- [ ] T109 Calculate and create point at intersection
+- [ ] T110 Show error message if lines are parallel (infeasibility preview)
+- [ ] T111 [P] Unit test for line-line intersection in frontend/tests/unit/calculations/intersections.spec.ts
+- [ ] T112 [P] E2E test for line-line intersection in frontend/tests/e2e/intersections.spec.ts
+
+**Checkpoint**: User can create intersection points (US2 partial)
+
+**Constitution Note**: Intersection calculations MUST use homogeneous coordinates (Principle V) and work for any lines, not hardcoded cases (Principle IV)
+
+---
+
+## Phase 15: Point Transport via Guides (US4 - Complete)
+
+**Purpose**: Transport points between planes using guides
+
+- [ ] T113 [P] Implement point transport calculation in frontend/src/domain/calculations/Transport.ts using geometric principles
+- [ ] T114 [P] Transport MUST use homogeneous coordinates and matrix transformations (Principle V)
+- [ ] T115 Validate that guide is perpendicular to hinge line
+- [ ] T116 Validate that source point and target plane are compatible
+- [ ] T117 Add "Transport Point" tool button to Toolbar
+- [ ] T118 [P] Create TransportPointCommand in frontend/src/commands/TransportPointCommand.ts
+- [ ] T119 Implement transport tool: select source point
+- [ ] T120 Implement transport tool: select guide
+- [ ] T121 Calculate transported point on opposite plane
+- [ ] T122 Create new point at transported location
+- [ ] T123 Record dependency: transported point depends on source + guide (ProcessTree)
+- [ ] T124 [P] Unit test for point transport calculations in frontend/tests/unit/calculations/transport.spec.ts
+- [ ] T125 [P] E2E test for point transport in frontend/tests/e2e/point-transport.spec.ts
+
+**Checkpoint**: User can transport points between planes (US4 complete)
+
+**Constitution Note**: Transport calculations MUST be principle-based, working for any guide/plane combination (Principle IV), using homogeneous coordinates (Principle V)
+
+---
+
+## Phase 16: Distance Transport (US5 - Complete)
+
+**Purpose**: Transport distances along guides
+
+- [ ] T126 [P] Implement distance transport calculation in frontend/src/domain/calculations/Transport.ts
+- [ ] T127 [P] Use homogeneous coordinates for distance vector representation (Principle V)
+- [ ] T128 Validate that segment and target point are on different planes
+- [ ] T129 Validate that guide passes through target point
+- [ ] T130 Add "Transport Distance" tool button to Toolbar
+- [ ] T131 [P] Create TransportDistanceCommand in frontend/src/commands/TransportDistanceCommand.ts
+- [ ] T132 Implement distance transport tool: select source segment (defines distance)
+- [ ] T133 Implement distance transport tool: select guide
+- [ ] T134 Implement distance transport tool: select target point
+- [ ] T135 Calculate new point at transported distance from target along guide
+- [ ] T136 Handle bidirectional distance (both directions from target)
+- [ ] T137 Record dependency: new point depends on segment + guide + target (ProcessTree)
+- [ ] T138 [P] Unit test for distance transport in frontend/tests/unit/calculations/transport.spec.ts
+- [ ] T139 [P] E2E test for distance transport in frontend/tests/e2e/distance-transport.spec.ts
+
+**Checkpoint**: User can transport distances (US5 complete)
+
+**Constitution Note**: Distance transport MUST be derived from geometric principles, not hardcoded (Principle IV)
+
+---
+
+## Phase 17: More Intersection Types (US2 - Complete)
+
+**Purpose**: Expand intersection capabilities
+
+- [ ] T140 [P] Implement line-circle intersection in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
+- [ ] T141 Handle 0, 1, or 2 intersection points for line-circle
+- [ ] T142 [P] Implement circle-circle intersection using homogeneous coordinates
+- [ ] T143 Handle 0, 1, or 2 intersection points for circle-circle
+- [ ] T144 Extend "Intersection" tool to support line-circle selection
+- [ ] T145 Extend "Intersection" tool to support circle-circle selection
+- [ ] T146 When multiple intersection points exist, allow user to choose which to create
+- [ ] T147 [P] Unit tests for line-circle and circle-circle intersections in frontend/tests/unit/calculations/intersections.spec.ts
+- [ ] T148 [P] E2E tests for all intersection types in frontend/tests/e2e/intersections.spec.ts
+
+**Checkpoint**: All intersection types supported (US2 complete for intersections)
+
+**Constitution Note**: All intersection algorithms MUST use homogeneous coordinates (Principle V) and general geometric algorithms (Principle IV)
+
+---
+
+## Phase 18: Actions Panel
+
+**Purpose**: Display construction history in UI
+
+- [ ] T149 [P] Create ActionsPanel.vue component in frontend/src/components/panels/
+- [ ] T150 Retrieve actions from ProcessTree and display as list
+- [ ] T151 Show action type, parameters, and dependencies for each action
+- [ ] T152 Add filter dropdown to filter by action type
+- [ ] T153 Add search input to search actions by name/parameters
+- [ ] T154 Implement click handler to highlight related objects on canvas when action selected
+- [ ] T155 Add icon/indicator for action status (complete, infeasible, pending)
+- [ ] T156 Mount ActionsPanel in App.vue left sidebar
+- [ ] T157 [P] Unit test for ActionsPanel in frontend/tests/unit/components/actionsPanel.spec.ts
+
+**Checkpoint**: Construction history visible and interactive
+
+---
+
+## Phase 19: Elements Panel
+
+**Purpose**: Display all geometric objects
+
+- [ ] T158 [P] Create ElementsPanel.vue component in frontend/src/components/panels/
+- [ ] T159 Retrieve all elements from World and display as list
+- [ ] T160 Organize elements by type (Points, Lines, Segments, Circles, Guides)
+- [ ] T161 Show element labels, IDs, and key properties (coordinates, etc.)
+- [ ] T162 Add filter to show/hide element types
+- [ ] T163 Add search to find elements by label or ID
+- [ ] T164 Implement click handler to highlight element on canvas when selected
+- [ ] T165 Add visibility toggle for each element (show/hide)
+- [ ] T166 Mount ElementsPanel in App.vue right sidebar
+- [ ] T167 [P] Unit test for ElementsPanel in frontend/tests/unit/components/elementsPanel.spec.ts
+
+**Checkpoint**: All geometric objects visible in panel
+
+---
+
+## Phase 20: Object Selection
+
+**Purpose**: Select objects on canvas
+
+- [ ] T168 [P] Create selectionStore in frontend/src/stores/selectionStore.ts
+- [ ] T169 Implement click detection for objects on SVG canvas
+- [ ] T170 Add selected object ID to selectionStore on click
+- [ ] T171 Apply selection highlight style to selected objects (different stroke/fill)
+- [ ] T172 Implement Ctrl+click for multi-select (add to selection)
+- [ ] T173 Implement click on empty area to clear selection
+- [ ] T174 Sync selection between canvas and ElementsPanel (bidirectional)
+- [ ] T175 Sync selection between canvas and ActionsPanel (show related actions)
+- [ ] T176 [P] Unit test for selectionStore in frontend/tests/unit/stores/selectionStore.spec.ts
+- [ ] T177 [P] E2E test for object selection in frontend/tests/e2e/selection.spec.ts
+
+**Checkpoint**: Objects can be selected on canvas and panels
+
+---
+
+## Phase 21: Hover Highlighting (US6 - Partial)
+
+**Purpose**: Visual feedback on hover
+
+- [ ] T178 [P] Create useHoverHighlight composable in frontend/src/composables/useHoverHighlight.ts
+- [ ] T179 Implement mouseover detection for objects on canvas
+- [ ] T180 Apply hover highlight style (different from selection, e.g., lighter stroke)
+- [ ] T181 Show object label/tooltip on hover
+- [ ] T182 Clear hover highlight on mouseout
+- [ ] T183 Ensure hover highlight doesn't interfere with selection highlight
+- [ ] T184 Show snap preview when hovering near points (for snapping feedback)
+- [ ] T185 [P] Unit test for useHoverHighlight in frontend/tests/unit/composables/hoverHighlight.spec.ts
+- [ ] T186 [P] E2E test for hover highlighting in frontend/tests/e2e/hover.spec.ts
+
+**Checkpoint**: User can see visual feedback on hover (US6 partial)
+
+---
+
+## Phase 22: Element Properties (US6 - Complete)
+
+**Purpose**: View and edit object properties
+
+- [ ] T187 [P] Create PropertiesDialog.vue component in frontend/src/components/dialogs/
+- [ ] T188 Show dialog when user double-clicks object or clicks "Properties" button
+- [ ] T189 Display all editable properties based on element type:
+  - Point: x, y, label, visibility
+  - Line/Segment: color, stroke width, line style (solid/dashed)
+  - Circle: color, stroke width, fill color, fill opacity
+  - Guide: color, dash pattern
+- [ ] T190 [P] Create color picker component for color selection
+- [ ] T191 Create stroke width slider input
+- [ ] T192 Create line style selector (solid, dashed, dotted)
+- [ ] T193 Apply property changes to selected object(s) immediately (or on "Apply" button)
+- [ ] T194 Implement style inheritance system (objects inherit from tool defaults)
+- [ ] T195 Add "Override inherited style" checkbox for each property
+- [ ] T196 Add "Reset to inherited" button to restore default styles
+- [ ] T197 Show indicator for which styles are overridden
+- [ ] T198 Validate property changes (e.g., coordinates must keep point on same plane)
+- [ ] T199 [P] Unit test for PropertiesDialog in frontend/tests/unit/components/propertiesDialog.spec.ts
+- [ ] T200 [P] E2E test for property editing in frontend/tests/e2e/properties.spec.ts
+
+**Checkpoint**: User can edit element properties and visual styles (US6 complete for styling)
+
+---
+
+## Phase 23: Dependency Tracking
+
+**Purpose**: Track which objects depend on others
+
+- [ ] T201 [P] Create DependencyService in frontend/src/services/DependencyService.ts
+- [ ] T202 [P] Store dependencies in ProcessTree when actions are executed
+- [ ] T203 Implement dependency recording: when creating derived object, record its dependencies
+- [ ] T204 [P] Implement getDependents(elementId) to find all objects that depend on given element
+- [ ] T205 [P] Implement getDependencies(elementId) to find all elements that given object depends on
+- [ ] T206 When element changes (e.g., point moved), update all dependent objects
+- [ ] T207 Add visual indicators in ActionsPanel showing dependencies (arrows/tree links)
+- [ ] T208 Add visual indicators in ElementsPanel showing which elements have dependencies
+- [ ] T209 Prevent circular dependencies during validation
+- [ ] T210 [P] Unit test for DependencyService in frontend/tests/unit/services/dependencyService.spec.ts
+- [ ] T211 [P] E2E test for dependency tracking in frontend/tests/e2e/dependencies.spec.ts
+
+**Checkpoint**: Dependencies tracked and objects update when sources change
+
+---
+
+## Phase 24: Infeasibility Detection
+
+**Purpose**: Detect and handle geometrically impossible operations
+
+- [ ] T212 [P] Create ValidationService in frontend/src/services/ValidationService.ts
+- [ ] T213 Implement validation for line-line intersection: detect parallel lines (return infeasible)
+- [ ] T214 Implement validation for point transport: verify guide is perpendicular to hinge
+- [ ] T215 Implement validation for distance transport: verify all geometric constraints
+- [ ] T216 [P] Add infeasibility status to Action nodes in ProcessTree (feasible/infeasible)
+- [ ] T217 Mark action as infeasible in ProcessTree when validation fails
+- [ ] T218 Cascade infeasibility to dependent objects (if parent infeasible, children infeasible)
+- [ ] T219 Display infeasible actions in ActionsPanel with red indicator
+- [ ] T220 Display infeasible elements in ElementsPanel with red color/warning icon
+- [ ] T221 Show error message/tooltip explaining why operation is infeasible
+- [ ] T222 Prevent execution of operations that depend on infeasible objects
+- [ ] T223 Dynamically revalidate when dependencies change (infeasibility may resolve)
+- [ ] T224 [P] Unit test for ValidationService in frontend/tests/unit/services/validationService.spec.ts
+- [ ] T225 [P] E2E test for infeasibility detection in frontend/tests/e2e/infeasibility.spec.ts
+
+**Checkpoint**: Infeasible operations detected and marked (US2, US4, US5 complete for error handling)
+
+**Constitution Note**: Validation MUST be based on geometric principles, not hardcoded cases (Principle IV)
+
+---
+
+## Phase 25: 3D View Panel (US6 - Complete)
+
+**Purpose**: Display 3D reconstruction of dihedral geometry
+
+- [ ] T226 [P] Create ThreeDView.vue component in frontend/src/components/panels/
+- [ ] T227 Choose 3D rendering approach: CSS 3D transforms (simple) or Three.js (full-featured)
+- [ ] T228 Set up 3D scene with projection planes (P_V and P_H) in 3D space
+- [ ] T229 Render hinge line (HL_HV) in 3D
+- [ ] T230 [P] Implement 3D point derivation: calculate 3D coordinates from 2D projections using homogeneous coordinates (Principle V)
+- [ ] T231 [P] Implement 3D line derivation: construct 3D lines from 2D projections
+- [ ] T232 Render 3D objects derived from 2D projections in 3D view
+- [ ] T233 [P] 3D derivation MUST use geometric principles, not hardcoded for specific planes (Principle IV)
+- [ ] T234 Implement 3D rotation with mouse drag
+- [ ] T235 Implement 3D pan and zoom
+- [ ] T236 Color-code planes and objects (match 2D colors)
+- [ ] T237 Add toggle controls for plane visibility (show/hide P_V, P_H)
+- [ ] T238 Highlight 3D objects when corresponding 2D objects selected
+- [ ] T239 Mount ThreeDView panel in App.vue (floating overlay or docked panel)
+- [ ] T240 [P] Unit test for 3D derivation calculations in frontend/tests/unit/calculations/derivation3D.spec.ts
+- [ ] T241 [P] E2E test for 3D view in frontend/tests/e2e/3d-view.spec.ts
+
+**Checkpoint**: 3D reconstruction visible (US6 complete)
+
+**Constitution Note**: 3D derivation MUST use homogeneous coordinates (Principle V) and work for any plane configuration (Principle IV)
+
+---
+
+## Phase 26: File Save/Load (US1 - Complete)
+
+**Purpose**: Persist projects to files
+
+- [ ] T242 [P] Create ProjectService in frontend/src/services/ProjectService.ts
+- [ ] T243 Implement World serialization to JSON (serialize all elements, ProcessTree, view state)
+- [ ] T244 Implement World deserialization from JSON (reconstruct all objects)
+- [ ] T245 Add version number to JSON format for future compatibility
+- [ ] T246 Validate loaded JSON data (check structure, types, required fields)
+- [ ] T247 Create backend API endpoint: POST /api/projects (create new project file)
+- [ ] T248 Create backend API endpoint: GET /api/projects (list all project files)
+- [ ] T249 Create backend API endpoint: GET /api/projects/:id (load project by ID)
+- [ ] T250 Create backend API endpoint: PUT /api/projects/:id (update existing project)
+- [ ] T251 Create backend API endpoint: DELETE /api/projects/:id (delete project)
+- [ ] T252 Implement file storage in backend/src/storage/FileStorage.ts (write/read JSON files)
+- [ ] T253 Add "Save" button to toolbar/menu
+- [ ] T254 Add "Load" button to toolbar/menu
+- [ ] T255 Add "New" button to clear workspace and start fresh
+- [ ] T256 Implement auto-save every N seconds (configurable, default 60s)
+- [ ] T257 Store unsaved changes indicator in UI (show "modified" status)
+- [ ] T258 Prompt user to save before closing/navigating away (if unsaved changes)
+- [ ] T259 [P] Unit test for serialization/deserialization in frontend/tests/unit/services/projectService.spec.ts
+- [ ] T260 [P] Integration test for backend API in backend/tests/integration/projects.spec.ts
+- [ ] T261 [P] E2E test for save/load in frontend/tests/e2e/persistence.spec.ts
+
+**Checkpoint**: Projects can be saved and loaded (US1 complete)
+
+---
+
+## Phase 27: Additional UI Polish
+
+**Purpose**: Improve overall user experience
+
+- [ ] T262 [P] Create SettingsDialog.vue component in frontend/src/components/dialogs/
+- [ ] T263 Add settings for snap radius (configurable distance for point snapping)
+- [ ] T264 Add settings for grid (enabled, spacing, color, snap-to-grid option)
+- [ ] T265 Add settings for default object styles (default colors, stroke widths)
+- [ ] T266 Add settings for auto-save interval
+- [ ] T267 Add keyboard shortcuts customization panel
+- [ ] T268 Implement Ctrl+S keyboard shortcut for Save
+- [ ] T269 Implement Ctrl+O keyboard shortcut for Open
+- [ ] T270 Implement Ctrl+N keyboard shortcut for New project
+- [ ] T271 Implement Ctrl+A keyboard shortcut for Select All
+- [ ] T272 Implement Delete/Backspace key for deleting selected objects
+- [ ] T273 Implement Esc key to cancel current operation/deselect
+- [ ] T274 Implement tool keyboard shortcuts (P for Point, L for Line, S for Segment, C for Circle, G for Guide)
+- [ ] T275 Add "Fit to View" button and Ctrl+0 shortcut (zoom to show all objects)
+- [ ] T276 Implement grid display with zoom-adaptive spacing
+- [ ] T277 Add grid toggle button (show/hide grid)
+- [ ] T278 Create StatusBar.vue component showing current mouse coordinates in world space
+- [ ] T279 Show active plane indicator in status bar
+- [ ] T280 Show active tool name in status bar
+- [ ] T281 Persist user preferences to localStorage
+- [ ] T282 Load preferences on application startup
+- [ ] T283 [P] Unit test for settings persistence in frontend/tests/unit/stores/settingsStore.spec.ts
+- [ ] T284 [P] E2E test for keyboard shortcuts in frontend/tests/e2e/keyboard-shortcuts.spec.ts
+
+**Checkpoint**: Polished user experience with keyboard shortcuts, settings, and grid (All user stories refined)
+
+---
+
+## Testing & Documentation (Phase 28)
+
+**Purpose**: Ensure quality and document the system
+
+- [ ] T285 Review all unit tests ([P] priority tasks) - ensure coverage >80%
+- [ ] T286 Review all E2E tests - ensure all user workflows covered
+- [ ] T287 Create user documentation in docs/user-guide.md
+- [ ] T288 Document all tools and operations
+- [ ] T289 Create example constructions for documentation
+- [ ] T290 Create developer documentation in docs/developer-guide.md
+- [ ] T291 Document architecture and layers
+- [ ] T292 Document data model and ProcessTree
+- [ ] T293 Document coordinate systems and transformations
+- [ ] T294 Document homogeneous coordinate usage (Constitution Principle V)
+- [ ] T295 Add JSDoc comments to all classes and public methods
+- [ ] T296 Create architecture diagrams (layers, data flow)
+- [ ] T297 Update README.md with project overview and setup instructions
+- [ ] T298 [P] Run full test suite and verify 100% passing
+- [ ] T299 [P] Performance test: verify smooth rendering with 200+ elements
+- [ ] T300 [P] Performance test: verify hover response <100ms
+
+**Checkpoint**: All testing complete, documentation ready
+
+---
+
+## Summary
+
+**Total Tasks**: 300  
+**Priority Tasks ([P])**: ~120 (40%)  
+**Constitution-Critical Tasks**: ~40 tasks explicitly reference constitution principles
+
+### Task Distribution by Phase
+
+- Phases 1-6 (Foundation): T001-T039 (39 tasks)
+- Phases 7-13 (Basic Geometry): T040-T101 (62 tasks)
+- Phases 14-17 (Advanced Geometry): T102-T148 (47 tasks)
+- Phases 18-22 (UI Features): T149-T200 (52 tasks)
+- Phases 23-25 (Advanced Features): T201-T241 (41 tasks)
+- Phase 26 (Persistence): T242-T261 (20 tasks)
+- Phase 27 (Polish): T262-T284 (23 tasks)
+- Phase 28 (Testing/Docs): T285-T300 (16 tasks)
+
+### Constitution Compliance Notes
+
+Throughout all tasks, the following constitutional principles are enforced:
+
+- **Principle I (Layered Architecture)**: Domain, Application, Presentation, and Data layers maintained
+- **Principle II (Command Pattern)**: All user actions as undoable commands (Phase 10+)
+- **Principle III (Frontend-First)**: All geometry calculations in frontend, backend only for persistence
+- **Principle IV (Principle-Based Rendering)**: NO hardcoded special cases, all calculations from geometric principles
+- **Principle V (Homogeneous Coordinates)**: Mandatory for all geometric calculations, explicitly noted in T094, T102, T114, T127, T140, T142, T230, T233
+
+### Testing Strategy
+
+- **Unit Tests**: All [P] priority tasks include unit tests (~120 tests)
+- **E2E Tests**: Key user workflows covered (construction, transport, infeasibility, persistence)
+- **Constitution Tests**: Verify no hardcoded cases, homogeneous coordinates used, layers maintained
+
+### Ready for Implementation
+
+All 300 tasks are defined with clear deliverables and dependencies. Implementation can proceed incrementally, phase by phase, with each phase building on the previous one.
+
