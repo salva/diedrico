@@ -12,24 +12,26 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
  */
 
-import { Point2D, FreePoint2D } from './Point';
+import { Point2D, FreePoint2D, Point2DRealization } from './Point';
 import { Plane3D } from './Plane';
 
 export class World {
   private points: Map<string, Point2D>;
   private planes: Map<string, Plane3D>;
+  private pointRealizations: Map<string, Point2DRealization>;  // Cache of computed coordinates
   private nextId: number;
 
   // Fixed elements (always present)
-  originPoint?: Vector3D;  // O at (0,0,0)
+  originPoint?: [number, number, number, number];  // O at (0,0,0) [x, y, z, 1]
   hingeLineHV?: {         // HL_HV along X-axis
-    start: Vector3D;
-    end: Vector3D;
+    start: [number, number, number, number];
+    end: [number, number, number, number];
   };
 
   constructor() {
     this.points = new Map();
     this.planes = new Map();
+    this.pointRealizations = new Map();
     this.nextId = 1;
     
     // Initialize fixed elements
@@ -76,7 +78,7 @@ export class World {
   }
 
   /**
-   * Add a point to the world
+   * Add a point to the world and compute its initial realization
    * @param point Point to add
    * @returns The added point with assigned ID if it didn't have one
    */
@@ -85,7 +87,44 @@ export class World {
       point.id = `point_${this.nextId++}`;
     }
     this.points.set(point.id, point);
+    
+    // Create initial realization
+    this.realizePoint(point);
+    
     return point;
+  }
+
+  /**
+   * Compute and cache the realization (coordinates) for a point
+   */
+  private realizePoint(point: Point2D): void {
+    if (!point.id) return;
+    
+    let coordinates: [number, number, number];
+    
+    if (point instanceof FreePoint2D) {
+      // Free point: coordinates are directly from its position
+      coordinates = point.position;
+    } else {
+      // Intersection point: would need to compute intersection
+      // For now, return origin (this will be implemented properly later)
+      coordinates = [0, 0, 1];
+    }
+    
+    const realization = new Point2DRealization(
+      point.id,
+      coordinates,
+      point.planeId
+    );
+    
+    this.pointRealizations.set(point.id, realization);
+  }
+
+  /**
+   * Get the realization (computed coordinates) for a point
+   */
+  getPointRealization(pointId: string): Point2DRealization | undefined {
+    return this.pointRealizations.get(pointId);
   }
 
   /**
@@ -94,6 +133,7 @@ export class World {
    * @returns true if point was removed, false if not found
    */
   removePoint(id: string): boolean {
+    this.pointRealizations.delete(id);  // Remove cached realization
     return this.points.delete(id);
   }
 

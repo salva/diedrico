@@ -12,7 +12,7 @@
  * Reference: specs/001-dihedral-learning-mvp/data-model.md - Coordinate Transformations
  */
 
-import type { Point } from '../domain/world/Point';
+import type { Point2D, Point2DRealization } from '../domain/world/Point';
 import type { Plane3D } from '../domain/world/Plane3D';
 import { planeToCanvas } from '../domain/calculations/CoordinateTransform';
 
