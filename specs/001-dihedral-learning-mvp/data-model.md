@@ -48,7 +48,8 @@ The application uses **three distinct coordinate spaces**:
 ┌─────────────────────────────────────────────────────────────┐
 │  STORAGE (Element2D)                                         │
 │  Plane Intrinsic Space: (u, v)                              │
-│  Point2DFree { x: u, y: v, planeId }                        │
+│  FreePoint2D { position: [u, v, 1], planeId }               │
+│  IntersectionPoint2D { element1Id, element2Id, index }      │
 └─────────────┬─────────────────────────┬─────────────────────┘
               │                         │
               │ All geometry            │
@@ -642,54 +643,42 @@ type Element2D = Point2D | Segment2D | Line2D | Circle2D | Arc2D | Guide2D | BHL
 
 // === POINT 2D CONSTRUCTIONS ===
 
-// Free point - placed at arbitrary location
-interface Point2DFree {
-  kind: 'Point2DFree';              // Discriminator
+// IMPORTANT: Points store their DEFINITION/RULE, not coordinates
+// Actual coordinates are computed and cached in Point2DRealization objects
+
+// Free point - defined by user-specified position
+interface FreePoint2D {
+  kind: 'FreePoint2D';              // Discriminator
   id: ElementId;
   name: string;                     // "a", "b", "p1", etc.
   planeId: PlaneId;                 // Belongs to exactly one plane
+  locked?: boolean;                 // If true, cannot be moved or deleted
   
-  // Defining data (user-specified position)
-  x: number;                        // u-coordinate in plane's intrinsic basis
-  y: number;                        // v-coordinate in plane's intrinsic basis
+  // THE RULE: "User placed it at this position"
+  position: [number, number, number];  // [u, v, 1] in plane's intrinsic basis (homogeneous)
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
 
 // Point at intersection of two elements
-interface Point2DFromIntersection {
-  kind: 'Point2DFromIntersection';  // Discriminator
+interface IntersectionPoint2D {
+  kind: 'IntersectionPoint2D';      // Discriminator
   id: ElementId;
   name: string;
   planeId: PlaneId;
   
-  // Defining relations
+  // THE RULE: "Intersection of element1 and element2 at index"
+  // No coordinates stored - computed from the two elements
   element1Id: ElementId;            // First intersecting element
   element2Id: ElementId;            // Second intersecting element
-  intersectionIndex: number;        // Which intersection (0 or 1 for line-circle)
+  intersectionIndex: number;        // Which intersection (0 or 1 for line-circle, 0 or 1 for circle-circle)
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
 
-// Derived point (e.g., transported from another plane)
-interface Point2DDerived {
-  kind: 'Point2DDerived';           // Discriminator
-  id: ElementId;
-  name: string;
-  planeId: PlaneId;
-  
-  // Defining data
-  x: number;                        // u-coordinate (transported result)
-  y: number;                        // v-coordinate (transported result)
-  sourceActionId: ActionId;         // Action that derived this point
-  
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
-}
-
-type Point2D = Point2DFree | Point2DFromIntersection | Point2DDerived;
+type Point2D = FreePoint2D | IntersectionPoint2D;
 
 // === SEGMENT 2D CONSTRUCTIONS ===
 
@@ -923,27 +912,44 @@ type Element2DRealization =
   | Circle2DRealization
   | Arc2DRealization;
 
+// CRITICAL ARCHITECTURE: Rule vs Realization Separation
+// 
+// Elements store RULES (how to construct), not computed values
+// Realizations store COMPUTED VALUES (evaluated geometry)
+//
+// Example for Points:
+//   - FreePoint2D stores position [u, v, 1] - the rule is "use this position"
+//   - IntersectionPoint2D stores element1Id, element2Id, index - the rule is "compute intersection"
+//   - Point2DRealization stores coordinates [u, v, 1] - the result after applying the rule
+//
+// All point types share the SAME realization class because:
+//   - The rule determines HOW to get coordinates
+//   - The realization is just the coordinates themselves
+//   - Rendering doesn't care about the rule, only the coordinates
+
 interface Point2DRealization {
-  point: number[];                  // [x, y, w] - homogeneous coordinates in plane's intrinsic basis
+  pointId: ElementId;               // Which point this realizes
+  coordinates: [number, number, number];  // [u, v, 1] - homogeneous coordinates in plane's intrinsic basis
+  planeId?: PlaneId;                // Cached from point definition
 }
 
 interface Line2DRealization {
-  point: number[];                  // [x, y, w] - point on line (homogeneous)
-  direction: number[];              // [dx, dy, 0] - direction vector (normalized, w=0)
+  point: [number, number, number];  // [x, y, 1] - point on line (homogeneous)
+  direction: [number, number, number]; // [dx, dy, 0] - direction vector (normalized, w=0)
 }
 
 interface Segment2DRealization {
-  startPoint: number[];             // [x1, y1, w1] - start point (homogeneous)
-  endPoint: number[];               // [x2, y2, w2] - end point (homogeneous)
+  startPoint: [number, number, number]; // [x1, y1, 1] - start point (homogeneous)
+  endPoint: [number, number, number];   // [x2, y2, 1] - end point (homogeneous)
 }
 
 interface Circle2DRealization {
-  center: number[];                 // [cx, cy, w] - center point (homogeneous)
+  center: [number, number, number]; // [cx, cy, 1] - center point (homogeneous)
   radius: number;
 }
 
 interface Arc2DRealization {
-  center: number[];                 // [cx, cy, w] - center point (homogeneous)
+  center: [number, number, number]; // [cx, cy, 1] - center point (homogeneous)
   radius: number;
   startAngle: number;               // Radians
   endAngle: number;
@@ -957,26 +963,26 @@ type Element3DRealization =
   | Plane3DRealization;
 
 interface Point3DRealization {
-  point: number[];                  // [x, y, z, 1] - homogeneous coordinates
+  point: [number, number, number, number]; // [x, y, z, 1] - homogeneous coordinates
 }
 
 interface Line3DRealization {
-  point: number[];                  // [x, y, z, 1] - point on line (homogeneous)
-  direction: number[];              // [dx, dy, dz, 0] - direction vector (normalized, w=0)
+  point: [number, number, number, number];     // [x, y, z, 1] - point on line (homogeneous)
+  direction: [number, number, number, number]; // [dx, dy, dz, 0] - direction vector (normalized, w=0)
 }
 
 interface Segment3DRealization {
-  startPoint: number[];             // [x1, y1, z1, 1] - start point (homogeneous)
-  endPoint: number[];               // [x2, y2, z2, 1] - end point (homogeneous)
+  startPoint: [number, number, number, number]; // [x1, y1, z1, 1] - start point (homogeneous)
+  endPoint: [number, number, number, number];   // [x2, y2, z2, 1] - end point (homogeneous)
 }
 
 interface Plane3DRealization {
-  normal: number[];                 // [a, b, c, d] - plane equation: ax + by + cz + d = 0
+  normal: [number, number, number, number]; // [a, b, c, d] - plane equation: ax + by + cz + d = 0
 }
 ```
 
 **Homogeneous Coordinates**:
-- **2D Points**: `[x, y, 1]` - regular points with `w=1`
+- **2D Points**: `[u, v, 1]` - regular points with `w=1`
 - **2D Vectors/Directions**: `[dx, dy, 0]` - with `w=0` to distinguish from points
 - **3D Points**: `[x, y, z, 1]` - regular points with `w=1`
 - **3D Vectors/Directions**: `[dx, dy, dz, 0]` - with `w=0` to distinguish from points
@@ -994,10 +1000,12 @@ interface Plane3DRealization {
 - Intersection/projection calculations simplified
 - Points at infinity represented naturally when needed
 
-**Why Separate?**
-- **Elements**: Persistent data, saved to disk, define construction history
-- **Realizations**: Ephemeral data, recomputed on load, optimized for rendering
-- **Cache invalidation**: When element changes, only its realization is marked stale
+**Why Separate Elements from Realizations?**
+- **Elements**: Persistent data, saved to disk, define construction rules and dependencies
+- **Realizations**: Ephemeral data, recomputed on load or when dependencies change
+- **Cache invalidation**: When element changes, mark its realization and dependent realizations as stale
+- **Parametric geometry**: Intersection points automatically update when parent elements move
+- **Memory efficiency**: Only store rules, not redundant computed coordinates
 - **Memory efficiency**: Realizations can be cleared and regenerated without affecting world state
 
 **Recomputation**:
