@@ -1040,9 +1040,7 @@ interface Point3DByCoordinates {
   name: string;                     // "O" for origin
   
   // Defining data (hardcoded coordinates)
-  x: number;
-  y: number;
-  z: number;
+  coordinates: [number, number, number, number];  // [x, y, z, 1] - homogeneous 3D coordinates
   
   // Computed projections (element IDs, not geometric data)
   projectionH: Point2DId;           // Projection on P_H
@@ -1140,7 +1138,7 @@ interface Plane3DByPointAndNormal {
   id: ElementId;
   name: string;                     // "P_H", "P_V", etc.
   origin: Point3DId;                // Point on plane (e.g., O)
-  normal: Vector3D;                 // Normal vector
+  normal: [number, number, number, number];  // Normal vector [nx, ny, nz, 0] - homogeneous
   
   // Metadata and relationships
   createdBy: ActionId;              // "system:init" for P_H, P_V
@@ -1148,12 +1146,6 @@ interface Plane3DByPointAndNormal {
 }
 
 type Plane3D = Plane3DByTraces | Plane3DByPointAndNormal;
-
-interface Vector3D {
-  x: number;
-  y: number;
-  z: number;
-}
 ```
 
 **Special System Elements**:
@@ -1161,18 +1153,18 @@ interface Vector3D {
 The following elements are always present from workspace initialization (`createdBy: "system:init"`):
 
 1. **Origin Point O** (`Point3DByCoordinates`):
-   - Coordinates: (0, 0, 0)
+   - Coordinates: [0, 0, 0, 1]
    - Projections: O_H on P_H, O_V on P_V
    - Cannot be deleted or moved
 
 2. **Horizontal Plane P_H** (`Plane3DByPointAndNormal`):
-   - Origin: O (0, 0, 0)
-   - Normal: (0, 0, 1) — Z-axis
+   - Origin: O with coordinates [0, 0, 0, 1]
+   - Normal: [0, 0, 1, 0] — Z-axis direction vector
    - The plane for "top views"
 
 3. **Vertical Plane P_V** (`Plane3DByPointAndNormal`):
-   - Origin: O (0, 0, 0)
-   - Normal: (0, 1, 0) — Y-axis
+   - Origin: O with coordinates [0, 0, 0, 1]
+   - Normal: [0, 1, 0, 0] — Y-axis direction vector
    - The plane for "front views"
 
 4. **Hinge Line HL_HV** (`Line3DFromPlaneIntersection`):
@@ -1858,12 +1850,12 @@ const cmd = new Command({ description: "Create segment s1" });
 
 // 2. Add and execute operations incrementally
 const p1 = cmd.addAndExecute(new AddElementOp({ 
-  element: { type: "Point2D", x: 100, y: 200, ... }
+  element: { type: "FreePoint2D", position: [100, 200, 1], ... }
 }));
 // p1 now has generated ID, exists in World
 
 const p2 = cmd.addAndExecute(new AddElementOp({
-  element: { type: "Point2D", x: 300, y: 400, ... }
+  element: { type: "FreePoint2D", position: [300, 400, 1], ... }
 }));
 // p2 now has generated ID, exists in World
 
@@ -1889,12 +1881,12 @@ const cmd = new Command({ description: "Create segment s1" });
 try {
   // Each operation executes immediately and can fail
   const p1Result = cmd.addAndExecute(new AddElementOp({
-    element: { id: generateId(), type: "Point2D", x: 100, y: 200, ... },
+    element: { id: generateId(), type: "FreePoint2D", position: [100, 200, 1], ... },
     beforeState: null
   }));
   
   const p2Result = cmd.addAndExecute(new AddElementOp({
-    element: { id: generateId(), type: "Point2D", x: 300, y: 400, ... },
+    element: { id: generateId(), type: "FreePoint2D", position: [300, 400, 1], ... },
     beforeState: null
   }));
   
@@ -2075,9 +2067,10 @@ interface PathResolver {
 
 // Usage example
 const resolver = new PathResolver();
-const element = resolver.resolve<Point2D>("/world/elements2D/p1", project);
-if (element.isOk()) {
-  console.log(element.value.x, element.value.y);
+const point = resolver.resolve<Point2D>("/world/elements2D/p1", project);
+if (point.isOk()) {
+  const realization = world.getPointRealization(point.value.id);
+  console.log(realization.u, realization.v);
 }
 ```
 
@@ -2331,7 +2324,7 @@ class AddElementOperation implements IOperation {
       elementPath: this.params.elementPath,      // Symbolic path
       elementId: element.id,                      // ID for convenience
       elementType: element.type,                  // Type for reference
-      ...(element.type === "Point2D" ? { x: element.x, y: element.y } : {}),
+      // Note: Coordinates not included - use Point2DRealization for computed coordinates
       ...(element.type === "Segment2D" ? { length: this.computeLength(element) } : {})
     };
     
@@ -2476,18 +2469,18 @@ try {
   // Create first point using symbolic path
   const p1Result = cmd.addAndExecute(new AddElementOp({ 
     elementPath: `/world/elements2D/${p1Id}`,
-    elementData: { id: p1Id, type: "Point2D", x: 100, y: 200, plane: "P_H", ... },
+    elementData: { id: p1Id, kind: "FreePoint2D", position: [100, 200, 1], planeId: "P_H", ... },
     beforeState: null
   }));
-  // p1Result.outputs = { elementPath: "/world/elements2D/p1", elementId: "p1", x: 100, y: 200 }
+  // p1Result.outputs = { elementPath: "/world/elements2D/p1", elementId: "p1", elementType: "FreePoint2D" }
   
   // Create second point using symbolic path
   const p2Result = cmd.addAndExecute(new AddElementOp({ 
     elementPath: `/world/elements2D/${p2Id}`,
-    elementData: { id: p2Id, type: "Point2D", x: 300, y: 400, plane: "P_H", ... },
+    elementData: { id: p2Id, kind: "FreePoint2D", position: [300, 400, 1], planeId: "P_H", ... },
     beforeState: null
   }));
-  // p2Result.outputs = { elementPath: "/world/elements2D/p2", elementId: "p2", x: 300, y: 400 }
+  // p2Result.outputs = { elementPath: "/world/elements2D/p2", elementId: "p2", elementType: "FreePoint2D" }
   
   // Create segment using outputs from previous operations
   const segmentResult = cmd.addAndExecute(new AddElementOp({ 
@@ -2538,16 +2531,16 @@ try {
 const moveCmd = new Command({ description: "Move point a" });
 moveCmd.addAndExecute(new UpdateElementOp({
   elementPath: "/world/elements2D/p1",
-  beforeState: { x: 100, y: 200 },
-  afterState: { x: 150, y: 250 }
+  beforeState: { position: [100, 200, 1] },
+  afterState: { position: [150, 250, 1] }
 }));
 commandStack.commit(moveCmd);
 
 // User presses Ctrl+Z (undo)
-commandStack.undo(); // Point moves back to (100, 200), segment updated
+commandStack.undo(); // Point moves back to [100, 200, 1], segment updated
 
 // User presses Ctrl+Y (redo)
-commandStack.redo(); // Point moves to (150, 250) again
+commandStack.redo(); // Point moves to [150, 250, 1] again
 ```
 
 **Persistence**:
