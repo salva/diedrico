@@ -15,16 +15,18 @@ describe('Point', () => {
     it('should create a free point with coordinates', () => {
       const point = new Point(10, 20, 'free');
 
-      expect(point.coordinates.u).toBe(10);
-      expect(point.coordinates.v).toBe(20);
+      expect(point.coordinates[0]).toBe(10);
+      expect(point.coordinates[1]).toBe(20);
+      expect(point.coordinates[2]).toBe(1);
       expect(point.type).toBe('free');
     });
 
     it('should create a derived point', () => {
       const point = new Point(30, 40, 'derived');
 
-      expect(point.coordinates.u).toBe(30);
-      expect(point.coordinates.v).toBe(40);
+      expect(point.coordinates[0]).toBe(30);
+      expect(point.coordinates[1]).toBe(40);
+      expect(point.coordinates[2]).toBe(1);
       expect(point.type).toBe('derived');
     });
 
@@ -93,8 +95,9 @@ describe('Point', () => {
 
       point.setCoordinates(30, 40);
 
-      expect(point.coordinates.u).toBe(30);
-      expect(point.coordinates.v).toBe(40);
+      expect(point.coordinates[0]).toBe(30);
+      expect(point.coordinates[1]).toBe(40);
+      expect(point.coordinates[2]).toBe(1);
     });
 
     it('should preserve other properties', () => {
@@ -118,9 +121,9 @@ describe('Point', () => {
       const clone = original.clone();
 
       expect(clone).not.toBe(original);
-      expect(clone.coordinates).not.toBe(original.coordinates);
-      expect(clone.coordinates.u).toBe(10);
-      expect(clone.coordinates.v).toBe(20);
+      expect(clone.coordinates[0]).toBe(10);
+      expect(clone.coordinates[1]).toBe(20);
+      expect(clone.coordinates[2]).toBe(1);
       expect(clone.type).toBe('free');
       expect(clone.label).toBe('Point A');
       expect(clone.planeId).toBe('plane_H');
@@ -133,8 +136,8 @@ describe('Point', () => {
       const clone = original.clone();
 
       expect(clone.id).toBeUndefined();
-      expect(clone.coordinates.u).toBe(10);
-      expect(clone.coordinates.v).toBe(20);
+      expect(clone.coordinates[0]).toBe(10);
+      expect(clone.coordinates[1]).toBe(20);
     });
 
     it('should allow modifying clone without affecting original', () => {
@@ -144,22 +147,21 @@ describe('Point', () => {
       clone.setCoordinates(30, 40);
       clone.label = 'Modified';
 
-      expect(original.coordinates.u).toBe(10);
-      expect(original.coordinates.v).toBe(20);
+      expect(original.coordinates[0]).toBe(10);
+      expect(original.coordinates[1]).toBe(20);
       expect(original.label).toBeUndefined();
     });
   });
 
   describe('coordinate system validation', () => {
-    it('should store coordinates in plane intrinsic space', () => {
-      // As per Constitution Principle V and data-model.md,
-      // points MUST be stored in plane intrinsic <u,v> coordinates
+    it('should store coordinates as homogeneous coordinates [u, v, 1]', () => {
+      // As per Constitution Principle V,
+      // points MUST be stored in homogeneous coordinates [u, v, 1]
       const point = new Point(100, 200, 'free');
 
-      expect(point.coordinates).toHaveProperty('u');
-      expect(point.coordinates).toHaveProperty('v');
-      expect(point.coordinates.u).toBe(100);
-      expect(point.coordinates.v).toBe(200);
+      expect(point.coordinates).toEqual([100, 200, 1]);
+      expect(point.coordinates).toHaveLength(3);
+      expect(point.coordinates[2]).toBe(1); // homogeneous coordinate
     });
   });
 });

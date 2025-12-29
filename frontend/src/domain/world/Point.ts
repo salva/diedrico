@@ -11,16 +11,11 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
  */
 
-export interface PointCoordinates {
-  u: number;  // Plane intrinsic u-coordinate
-  v: number;  // Plane intrinsic v-coordinate
-}
-
 export type PointType = 'free' | 'derived';
 
 export class Point {
   id?: string;
-  coordinates: PointCoordinates;
+  coordinates: [number, number, number];  // Homogeneous coordinates [u, v, 1]
   type: PointType;
   label?: string;
   planeId?: string;  // Which projection plane this point belongs to
@@ -33,7 +28,7 @@ export class Point {
     plane?: { id?: string },
     label?: string
   ) {
-    this.coordinates = { u, v };
+    this.coordinates = [u, v, 1];
     this.type = type;
     this.label = label;
     this.planeId = plane?.id;
@@ -45,15 +40,15 @@ export class Point {
    * Required by Constitution Principle V
    */
   getHomogeneousCoords(): [number, number, number] {
-    return [this.coordinates.u, this.coordinates.v, 1];
+    return this.coordinates;
   }
 
   /**
    * Update point coordinates
    */
   setCoordinates(u: number, v: number): void {
-    this.coordinates.u = u;
-    this.coordinates.v = v;
+    this.coordinates[0] = u;
+    this.coordinates[1] = v;
   }
 
   /**
@@ -61,8 +56,8 @@ export class Point {
    */
   clone(): Point {
     const cloned = new Point(
-      this.coordinates.u,
-      this.coordinates.v,
+      this.coordinates[0],
+      this.coordinates[1],
       this.type,
       this.planeId ? { id: this.planeId } : undefined,
       this.label
@@ -80,13 +75,13 @@ export class Point {
    * Getter for u coordinate (convenience accessor)
    */
   get u(): number {
-    return this.coordinates.u;
+    return this.coordinates[0];
   }
 
   /**
    * Getter for v coordinate (convenience accessor)
    */
   get v(): number {
-    return this.coordinates.v;
+    return this.coordinates[1];
   }
 }

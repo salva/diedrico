@@ -95,8 +95,8 @@ describe('World', () => {
       const retrieved = world.getPointById('test_point');
 
       expect(retrieved).toBe(point);
-      expect(retrieved?.coordinates.u).toBe(10);
-      expect(retrieved?.coordinates.v).toBe(20);
+      expect(retrieved?.coordinates[0]).toBe(10);
+      expect(retrieved?.coordinates[1]).toBe(20);
     });
 
     it('should return undefined for non-existent ID', () => {
