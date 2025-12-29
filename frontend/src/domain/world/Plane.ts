@@ -172,4 +172,23 @@ export class Plane {
     
     return plane;
   }
+
+  /**
+   * Getters for boundaries (convenience accessors)
+   */
+  get minU(): number {
+    return this.boundaries?.minU ?? -400;
+  }
+
+  get maxU(): number {
+    return this.boundaries?.maxU ?? 400;
+  }
+
+  get minV(): number {
+    return this.boundaries?.minV ?? -400;
+  }
+
+  get maxV(): number {
+    return this.boundaries?.maxV ?? 400;
+  }
 }

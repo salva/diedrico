@@ -70,4 +70,18 @@ export class Point {
     }
     return cloned;
   }
+
+  /**
+   * Getter for u coordinate (convenience accessor)
+   */
+  get u(): number {
+    return this.coordinates.u;
+  }
+
+  /**
+   * Getter for v coordinate (convenience accessor)
+   */
+  get v(): number {
+    return this.coordinates.v;
+  }
 }

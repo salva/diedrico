@@ -80,18 +80,21 @@
 
 **⚠️ CRITICAL**: Study [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations) diagrams to understand the three coordinate spaces before implementing transformations.
 
-- [ ] T011 [P] Create Plane class in frontend/src/domain/world/Plane.ts with boundaries and normal vector
-- [ ] T012 Add P_V and P_H fixed planes to World initialization
-- [ ] T013 Add origin point (O) and hinge line (HL_HV) to World
-- [ ] T014 [P] Create coordinate transformation utilities in frontend/src/domain/calculations/CoordinateTransform.ts (world → SVG)
-- [ ] T015 Render P_V and P_H as SVG rectangles in SvgCanvas.vue
-- [ ] T016 Render origin point (O) as SVG circle
-- [ ] T017 Render hinge line (HL_HV) as SVG line
-- [ ] T018 [P] Apply distinct visual styles to fixed elements (colors, stroke widths)
-- [ ] T019 [P] Unit test for Plane class in frontend/tests/unit/domain/plane.spec.ts
-- [ ] T020 [P] Unit test for CoordinateTransform in frontend/tests/unit/calculations/transform.spec.ts
+- [X] T011 [P] Create Plane class in frontend/src/domain/world/Plane.ts with boundaries and normal vector
+- [X] T012 Add P_V and P_H fixed planes to World initialization
+- [X] T013 Add origin point (O) and hinge line (HL_HV) to World as regular Point/Line elements
+- [X] T014 [P] Create coordinate transformation utilities in frontend/src/domain/calculations/CoordinateTransform.ts (plane <u,v> ↔ canvas)
+- [X] T015 [P] Create generic SVG rendering service in frontend/src/services/RenderService.ts
+- [X] T016 Implement generic plane rendering (uses Plane boundaries to render as SVG rect)
+- [X] T017 Implement generic point rendering (uses Point coordinates to render as SVG circle)
+- [X] T018 Implement generic line rendering (uses Line endpoints to render as SVG line element)
+- [X] T019 [P] Unit test for Plane class in frontend/tests/unit/domain/plane.spec.ts
+- [X] T020 [P] Unit test for CoordinateTransform in frontend/tests/unit/calculations/transform.spec.ts
+- [X] T021 [P] Unit test for RenderService in frontend/tests/unit/services/renderService.spec.ts
 
-**Checkpoint**: Fixed elements visible on canvas (US1 partial - workspace initialized)
+**Checkpoint**: Fixed elements visible on canvas using generic rendering (US1 partial - workspace initialized)
+
+**Constitution Note**: Rendering MUST use general geometric algorithms (Principle IV) - P_H, P_V, O, HL_HV are rendered using the same logic as user-created elements, no special cases.
 
 ---
 
@@ -108,9 +111,10 @@
 
 **⚠️ CRITICAL**: Points MUST store coordinates in plane intrinsic space, not canvas space. Read [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations) to avoid confusion.
 
-- [ ] T021 Add point rendering to SvgCanvas.vue (loop through World.points, create SVG circles)
-- [ ] T022 [P] Apply point styling (color, radius) from Point properties
-- [ ] T023 [P] Create visual style types in frontend/src/types/StyleTypes.ts
+- [ ] T022 Add point rendering to SvgCanvas.vue (loop through World.points, create SVG circles)
+- [ ] T023 [P] Apply point styling (color, radius) from Point properties
+- [ ] T024 [P] Create visual style types in frontend/src/types/StyleTypes.ts
+- [ ] T025 [P] Unit test for point rendering logic in frontend/tests/unit/components/svgCanvas.spec.ts
 
 **Checkpoint**: Points from World data structure render on canvas
 
@@ -130,14 +134,15 @@
 
 **⚠️ CRITICAL**: Read [spec.md §US1](./spec.md#us1-create-2d-free-point-and-view-3d-projection) completely to understand the full free point workflow including 3D reconstruction.
 
-- [ ] T024 [P] Create Toolbar.vue component in frontend/src/components/toolbars/
-- [ ] T025 Add "Point" tool button to Toolbar
-- [ ] T026 Create tool store in frontend/src/stores/toolStore.ts for active tool tracking
-- [ ] T027 Add click handler to SvgCanvas for point creation
-- [ ] T028 Transform SVG click coordinates to world coordinates
-- [ ] T029 Create Point instance and add to World on canvas click
-- [ ] T030 Trigger canvas re-render when point added
-- [ ] T031 [P] E2E test for point creation in frontend/tests/e2e/create-point.spec.ts
+- [ ] T026 [P] Create Toolbar.vue component in frontend/src/components/toolbars/
+- [ ] T027 Add "Point" tool button to Toolbar
+- [ ] T028 Create tool store in frontend/src/stores/toolStore.ts for active tool tracking
+- [ ] T029 Add click handler to SvgCanvas for point creation
+- [ ] T030 Transform SVG click coordinates to world coordinates
+- [ ] T031 Create Point instance and add to World on canvas click
+- [ ] T032 Trigger canvas re-render when point added
+- [ ] T033 [P] Unit test for toolStore in frontend/tests/unit/stores/toolStore.spec.ts
+- [ ] T034 [P] E2E test for point creation in frontend/tests/e2e/create-point.spec.ts
 
 **Checkpoint**: User can click Point tool and place points on canvas (US1 partial)
 
@@ -157,14 +162,15 @@
 
 **⚠️ CRITICAL**: Review [data-model.md §Transformation Flow](./data-model.md#transformation-flow) diagram to understand how viewport transform fits into the coordinate pipeline.
 
-- [ ] T032 Create useViewport composable in frontend/src/composables/useViewport.ts
-- [ ] T033 Create viewStore in frontend/src/stores/viewStore.ts for pan/zoom state
-- [ ] T034 Add mouse drag handler for panning (Shift + drag or Space + drag)
-- [ ] T035 Add mouse wheel handler for zooming
-- [ ] T036 Update CoordinateTransform to apply view transformation
-- [ ] T037 Apply transform to SVG rendering in SvgCanvas
-- [ ] T038 [P] Unit test for viewStore in frontend/tests/unit/stores/viewStore.spec.ts
-- [ ] T039 [P] E2E test for pan/zoom in frontend/tests/e2e/viewport.spec.ts
+- [ ] T035 Create useViewport composable in frontend/src/composables/useViewport.ts
+- [ ] T036 Create viewStore in frontend/src/stores/viewStore.ts for pan/zoom state
+- [ ] T037 Add mouse drag handler for panning (Shift + drag or Space + drag)
+- [ ] T038 Add mouse wheel handler for zooming
+- [ ] T039 Update CoordinateTransform to apply view transformation
+- [ ] T040 Apply transform to SVG rendering in SvgCanvas
+- [ ] T041 [P] Unit test for viewStore in frontend/tests/unit/stores/viewStore.spec.ts
+- [ ] T042 [P] Unit test for useViewport composable in frontend/tests/unit/composables/useViewport.spec.ts
+- [ ] T043 [P] E2E test for pan/zoom in frontend/tests/e2e/viewport.spec.ts
 
 **Checkpoint**: User can navigate canvas (US6 partial - viewport manipulation)
 

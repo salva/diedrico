@@ -40,7 +40,7 @@ export class World {
    * Initialize fixed elements: P_V, P_H, origin O, and hinge line HL_HV
    * These are always present and cannot be deleted.
    */
-  private initializeFixedElements(): void {
+  initializeFixedElements(): void {
     // Create P_H and P_V projection planes
     const planeH = Plane.createPH();
     planeH.id = 'plane_H';
