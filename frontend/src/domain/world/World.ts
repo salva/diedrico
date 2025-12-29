@@ -13,7 +13,7 @@
  */
 
 import { Point2D, FreePoint2D } from './Point';
-import { Plane3D, Vector3D } from './Plane';
+import { Plane3D } from './Plane';
 
 export class World {
   private points: Map<string, Point2D>;

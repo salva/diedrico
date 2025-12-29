@@ -12,13 +12,10 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
  */
 
-// 3D homogeneous coordinates [x, y, z, 1]
-export type Vector3D = [number, number, number, number];
-
 export interface PlaneCoordinateSystem {
-  origin: Vector3D;     // Origin point on the plane
-  uAxis: Vector3D;      // U-axis direction (normalized)
-  vAxis: Vector3D;      // V-axis direction (normalized)
+  origin: [number, number, number, number];     // Origin point on the plane [x, y, z, 1]
+  uAxis: [number, number, number, number];      // U-axis direction (normalized) [x, y, z, 0]
+  vAxis: [number, number, number, number];      // V-axis direction (normalized) [x, y, z, 0]
 }
 
 export type PlaneType = 'projection' | 'auxiliary';
@@ -58,7 +55,7 @@ export class Plane3D {
   /**
    * Normalize a vector to unit length
    */
-  private normalize(v: Vector3D): Vector3D {
+  private normalize(v: [number, number, number, number]): [number, number, number, number] {
     const length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     if (length === 0) {
       throw new Error('Cannot normalize zero vector');
@@ -88,8 +85,10 @@ export class Plane3D {
 
   /**
    * Check if a 3D point lies on this plane (within tolerance)
+   * @param p Point in 3D space (homogeneous coordinates [x, y, z, 1])
+   * @param tolerance Distance tolerance (default: 1e-6)
    */
-  containsPoint(p: Vector3D, tolerance: number = 1e-6): boolean {
+  containsPoint(p: [number, number, number, number], tolerance: number = 1e-6): boolean {
     // Calculate n·(P - P₀)
     const dx = p[0] - this.point[0];
     const dy = p[1] - this.point[1];

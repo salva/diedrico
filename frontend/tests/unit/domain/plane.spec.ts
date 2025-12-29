@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Plane3D, Vector3D } from "@/domain/world/Plane";
+import { Plane3D } from "@/domain/world/Plane";
 
 describe('Plane3D', () => {
   describe('constructor', () => {
