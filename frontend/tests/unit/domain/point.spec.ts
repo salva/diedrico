@@ -22,12 +22,12 @@ describe('Point', () => {
     });
 
     it('should create a derived point', () => {
-      const point = new Point([30, 40, 1], 'derived');
+      const point = new Point([30, 40, 1], 'intersection');
 
       expect(point.coordinates[0]).toBe(30);
       expect(point.coordinates[1]).toBe(40);
       expect(point.coordinates[2]).toBe(1);
-      expect(point.type).toBe('derived');
+      expect(point.type).toBe('intersection');
     });
 
     it('should default to free type', () => {

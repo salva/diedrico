@@ -4,14 +4,23 @@
  * Points are the fundamental building blocks of the dihedral system.
  * All points MUST be stored in plane intrinsic coordinates <u,v> as per Constitution Principle V.
  * 
+ * Two types of 2D points:
+ * - Free points: defined by their position inside the projection plane
+ * - Intersection points: defined as intersection of two objects, with index for multiple intersections
+ * 
  * Design principles:
  * - Principle V: Use homogeneous coordinates [x, y, 1] for all transformations
- * - Points can be Free (user-placed) or Derived (calculated from other elements)
  * 
  * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
  */
 
-export type PointType = 'free' | 'derived';
+export type PointType = 'free' | 'intersection';
+
+export interface IntersectionDefinition {
+  element1Id: string;  // ID of first intersecting element
+  element2Id: string;  // ID of second intersecting element
+  index: number;       // Index to identify which intersection (0, 1, 2...) when multiple exist
+}
 
 export class Point {
   id?: string;
@@ -20,18 +29,23 @@ export class Point {
   label?: string;
   planeId?: string;  // Which projection plane this point belongs to
   locked?: boolean;  // If true, point cannot be moved or deleted
+  
+  // For intersection points only
+  intersection?: IntersectionDefinition;
 
   constructor(
     coordinates: [number, number, number],  // Homogeneous [u, v, 1]
     type: PointType = 'free',
     plane?: { id?: string },
-    label?: string
+    label?: string,
+    intersection?: IntersectionDefinition
   ) {
     this.coordinates = coordinates;
     this.type = type;
     this.label = label;
     this.planeId = plane?.id;
     this.locked = false;
+    this.intersection = intersection;
   }
 
   /**
@@ -57,7 +71,8 @@ export class Point {
       [...this.coordinates] as [number, number, number],
       this.type,
       this.planeId ? { id: this.planeId } : undefined,
-      this.label
+      this.label,
+      this.intersection ? { ...this.intersection } : undefined
     );
     if (this.id) {
       cloned.id = this.id;
@@ -80,5 +95,26 @@ export class Point {
    */
   get v(): number {
     return this.coordinates[1];
+  }
+
+  /**
+   * Create an intersection point
+   * Static factory method for creating points defined by intersection of two elements
+   */
+  static createIntersection(
+    coordinates: [number, number, number],
+    element1Id: string,
+    element2Id: string,
+    index: number,
+    plane?: { id?: string },
+    label?: string
+  ): Point {
+    return new Point(
+      coordinates,
+      'intersection',
+      plane,
+      label,
+      { element1Id, element2Id, index }
+    );
   }
 }

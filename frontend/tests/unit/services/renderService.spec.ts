@@ -39,7 +39,7 @@ describe('RenderService', () => {
     });
 
     it('should render derived point with different styling', () => {
-      const point = new Point([100, 50, 1], 'derived');
+      const point = new Point([100, 50, 1], 'intersection');
       point.id = 'point_2';
       
       const attrs = renderPoint(point);

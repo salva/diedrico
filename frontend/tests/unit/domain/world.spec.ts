@@ -117,7 +117,7 @@ describe('World', () => {
     it('should return all points', () => {
       const point1 = new Point([10, 20, 1], 'free');
       const point2 = new Point([30, 40, 1], 'free');
-      const point3 = new Point([50, 60, 1], 'derived');
+      const point3 = new Point([50, 60, 1], 'intersection');
 
       world.addPoint(point1);
       world.addPoint(point2);
