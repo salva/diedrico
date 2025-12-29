@@ -50,9 +50,21 @@ export class World {
     planeV.id = 'plane_V';
     this.planes.set('plane_V', planeV);
 
-    // Origin point O at (0,0,0) in 3D space
-    // Note: 3D elements have their own rendering path and don't require
-    // their projections to be stored as separate 2D Point objects
+    // Origin projections O_H and O_V
+    // These are the 2D projections of the 3D origin point O
+    // O_H on P_H: local coordinates (0, -200) — on the hinge line
+    // O_V on P_V: local coordinates (0, 200) — on the hinge line
+    const pointOH = new Point(0, -200, 'free', planeH);
+    pointOH.id = 'O_H';
+    pointOH.locked = true;
+    this.points.set('O_H', pointOH);
+
+    const pointOV = new Point(0, 200, 'free', planeV);
+    pointOV.id = 'O_V';
+    pointOV.locked = true;
+    this.points.set('O_V', pointOV);
+
+    // Origin point O at (0,0,0) in 3D space is defined by O_H and O_V
     this.originPoint = { x: 0, y: 0, z: 0 };
 
     // Hinge line HL_HV along X-axis

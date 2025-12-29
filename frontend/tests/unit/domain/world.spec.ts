@@ -18,9 +18,11 @@ describe('World', () => {
   });
 
   describe('constructor', () => {
-    it('should create an empty world', () => {
-      expect(world.getPointCount()).toBe(0);
-      expect(world.getAllPoints()).toEqual([]);
+    it('should create a world with origin points O_H and O_V', () => {
+      expect(world.getPointCount()).toBe(2);
+      const points = world.getAllPoints();
+      expect(points.some(p => p.id === 'O_H')).toBe(true);
+      expect(points.some(p => p.id === 'O_V')).toBe(true);
     });
   });
 
@@ -29,7 +31,7 @@ describe('World', () => {
       const point = new Point(10, 20, 'free');
       world.addPoint(point);
 
-      expect(world.getPointCount()).toBe(1);
+      expect(world.getPointCount()).toBe(3);
       expect(world.getAllPoints()).toContain(point);
     });
 
@@ -73,7 +75,7 @@ describe('World', () => {
       const removed = world.removePoint('test_point');
 
       expect(removed).toBe(true);
-      expect(world.getPointCount()).toBe(0);
+      expect(world.getPointCount()).toBe(2);
       expect(world.getPointById('test_point')).toBeUndefined();
     });
 
@@ -105,8 +107,11 @@ describe('World', () => {
   });
 
   describe('getAllPoints', () => {
-    it('should return empty array for empty world', () => {
-      expect(world.getAllPoints()).toEqual([]);
+    it('should return origin points for new world', () => {
+      const points = world.getAllPoints();
+      expect(points.length).toBe(2);
+      expect(points.some(p => p.id === 'O_H')).toBe(true);
+      expect(points.some(p => p.id === 'O_V')).toBe(true);
     });
 
     it('should return all points', () => {
@@ -120,7 +125,7 @@ describe('World', () => {
 
       const allPoints = world.getAllPoints();
 
-      expect(allPoints).toHaveLength(3);
+      expect(allPoints).toHaveLength(5);
       expect(allPoints).toContain(point1);
       expect(allPoints).toContain(point2);
       expect(allPoints).toContain(point3);
@@ -128,16 +133,18 @@ describe('World', () => {
   });
 
   describe('clear', () => {
-    it('should remove all points', () => {
+    it('should remove all user points but keep origin points', () => {
       world.addPoint(new Point(10, 20, 'free'));
       world.addPoint(new Point(30, 40, 'free'));
 
-      expect(world.getPointCount()).toBe(2);
+      expect(world.getPointCount()).toBe(4);
 
       world.clear();
 
-      expect(world.getPointCount()).toBe(0);
-      expect(world.getAllPoints()).toEqual([]);
+      expect(world.getPointCount()).toBe(2);
+      const points = world.getAllPoints();
+      expect(points.some(p => p.id === 'O_H')).toBe(true);
+      expect(points.some(p => p.id === 'O_V')).toBe(true);
     });
 
     it('should reset ID counter', () => {
@@ -154,16 +161,16 @@ describe('World', () => {
   });
 
   describe('getPointCount', () => {
-    it('should return 0 for empty world', () => {
-      expect(world.getPointCount()).toBe(0);
+    it('should return 2 for world with origin points O_H and O_V', () => {
+      expect(world.getPointCount()).toBe(2);
     });
 
     it('should return correct count after additions', () => {
       world.addPoint(new Point(10, 20, 'free'));
-      expect(world.getPointCount()).toBe(1);
+      expect(world.getPointCount()).toBe(3);
 
       world.addPoint(new Point(30, 40, 'free'));
-      expect(world.getPointCount()).toBe(2);
+      expect(world.getPointCount()).toBe(4);
     });
 
     it('should return correct count after removals', () => {
@@ -173,7 +180,7 @@ describe('World', () => {
 
       world.removePoint(point.id!);
 
-      expect(world.getPointCount()).toBe(1);
+      expect(world.getPointCount()).toBe(3);
     });
   });
 });

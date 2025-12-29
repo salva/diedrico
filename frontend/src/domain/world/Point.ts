@@ -24,18 +24,20 @@ export class Point {
   type: PointType;
   label?: string;
   planeId?: string;  // Which projection plane this point belongs to
+  locked?: boolean;  // If true, point cannot be moved or deleted
 
   constructor(
     u: number,
     v: number,
     type: PointType = 'free',
-    label?: string,
-    planeId?: string
+    plane?: { id?: string },
+    label?: string
   ) {
     this.coordinates = { u, v };
     this.type = type;
     this.label = label;
-    this.planeId = planeId;
+    this.planeId = plane?.id;
+    this.locked = false;
   }
 
   /**
@@ -62,11 +64,14 @@ export class Point {
       this.coordinates.u,
       this.coordinates.v,
       this.type,
-      this.label,
-      this.planeId
+      this.planeId ? { id: this.planeId } : undefined,
+      this.label
     );
     if (this.id) {
       cloned.id = this.id;
+    }
+    if (this.locked !== undefined) {
+      cloned.locked = this.locked;
     }
     return cloned;
   }

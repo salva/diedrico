@@ -113,15 +113,14 @@ Every workspace contains a special **origin point** named `O`:
 - `O` is a **3D element** defined by hardcoded coordinates (0, 0, 0) in 3D space.
 - Type: `Point3DByCoordinates` (not derived from projections)
 - Geometrically, it sits at the intersection of projection planes `P_H` and `P_V` (on the hinge line `HL_HV`).
-- Its 2D projections (`O_H`, `O_V`) are computed from the 3D coordinates:
-  - `O_H` on `P_H`: local coordinates (0, -200) — on the hinge line
-  - `O_V` on `P_V`: local coordinates (0, 200) — on the hinge line
+- Its 2D projections are **stored as 2D Point objects** in the World:
+  - `O_H` on `P_H`: locked Point with local coordinates (0, -200) — on the hinge line
+  - `O_V` on `P_V`: locked Point with local coordinates (0, 200) — on the hinge line
+- The 3D point `O` is **defined by** its two projections `O_H` and `O_V` (standard dihedral geometry).
 - The origin point is **always present** from the moment a workspace is created.
-- It is always visible and cannot be deleted or moved.
+- It is always visible and cannot be deleted or moved (points are locked).
 - It can be used as a reference point in constructions like any other 3D point.
 - Visual appearance: regular point rendering (not a special crosshair), distinguishable by color (#FF6B35 orange).
-
-**IMPORTANT**: 3D elements (including origin O and hinge lines) follow their own rendering path in the 3D view. Their projections (`O_H`, `O_V`) are computed dynamically for visualization purposes and do NOT need to be stored as separate 2D Point objects in the World data structure. Only user-created 2D elements are stored in the 2D points collection.
 
 **Projection Planes P_H and P_V** (special 3D elements):
 

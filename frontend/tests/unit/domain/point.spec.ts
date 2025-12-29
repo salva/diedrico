@@ -35,13 +35,13 @@ describe('Point', () => {
     });
 
     it('should accept optional label', () => {
-      const point = new Point(10, 20, 'free', 'Point A');
+      const point = new Point(10, 20, 'free', undefined, 'Point A');
 
       expect(point.label).toBe('Point A');
     });
 
     it('should accept optional planeId', () => {
-      const point = new Point(10, 20, 'free', undefined, 'plane_H');
+      const point = new Point(10, 20, 'free', { id: 'plane_H' });
 
       expect(point.planeId).toBe('plane_H');
     });
@@ -98,7 +98,7 @@ describe('Point', () => {
     });
 
     it('should preserve other properties', () => {
-      const point = new Point(10, 20, 'free', 'Point A', 'plane_H');
+      const point = new Point(10, 20, 'free', { id: 'plane_H' }, 'Point A');
       point.id = 'point_1';
 
       point.setCoordinates(30, 40);
@@ -112,7 +112,7 @@ describe('Point', () => {
 
   describe('clone', () => {
     it('should create a deep copy of the point', () => {
-      const original = new Point(10, 20, 'free', 'Point A', 'plane_H');
+      const original = new Point(10, 20, 'free', { id: 'plane_H' }, 'Point A');
       original.id = 'point_1';
 
       const clone = original.clone();
