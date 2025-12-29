@@ -50,7 +50,9 @@ export class World {
     planeV.id = 'plane_V';
     this.planes.set('plane_V', planeV);
 
-    // Origin point O at (0,0,0)
+    // Origin point O at (0,0,0) in 3D space
+    // Note: 3D elements have their own rendering path and don't require
+    // their projections to be stored as separate 2D Point objects
     this.originPoint = { x: 0, y: 0, z: 0 };
 
     // Hinge line HL_HV along X-axis

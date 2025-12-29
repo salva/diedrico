@@ -121,6 +121,8 @@ Every workspace contains a special **origin point** named `O`:
 - It can be used as a reference point in constructions like any other 3D point.
 - Visual appearance: regular point rendering (not a special crosshair), distinguishable by color (#FF6B35 orange).
 
+**IMPORTANT**: 3D elements (including origin O and hinge lines) follow their own rendering path in the 3D view. Their projections (`O_H`, `O_V`) are computed dynamically for visualization purposes and do NOT need to be stored as separate 2D Point objects in the World data structure. Only user-created 2D elements are stored in the 2D points collection.
+
 **Projection Planes P_H and P_V** (special 3D elements):
 
 Every workspace contains two fundamental **projection planes** defined by point + normal vector:
