@@ -25,6 +25,14 @@
 **Purpose**: Minimal data model foundation  
 **Reference**: [spec.md](./spec.md#conceptual-model-user-pov) - Conceptual Model, [data-model.md](./data-model.md) - World structure
 
+**Implementation Requirements**:
+- **World Container**: Must store all geometric elements in a single root entity per [data-model.md §World Entity](./data-model.md#world-entity). World contains: projection planes, 2D elements, 3D elements, and process tree.
+- **Point Storage**: Points must use homogeneous coordinates [x, y, 1] per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system). Store points with unique IDs and plane association.
+- **Plane Intrinsic Coordinates**: ALL point coordinates MUST be stored in plane-local <u,v> coordinates, NOT canvas pixels per [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations).
+- **No Implicit Logic**: Follow [spec.md §No Implicit Entities Rule](./spec.md#2d-elements-explicit-entities) - only create entities explicitly requested by user, no automatic inference.
+
+**⚠️ CRITICAL**: Read [data-model.md §Architecture Overview](./data-model.md#architecture-overview) to understand the three coordinate spaces (plane intrinsic, canvas, 3D) before implementing.
+
 - [ ] T001 [P] Create World class in frontend/src/domain/world/World.ts with array storage for elements
 - [ ] T002 [P] Create Point class in frontend/src/domain/world/Point.ts with x, y coordinates and unique ID
 - [ ] T003 [P] Add point storage methods to World (add, remove, getById)
@@ -40,6 +48,14 @@
 **Purpose**: Basic Vue.js application structure  
 **Reference**: [ui-spec.md](./ui-spec.md#application-layout) - UI Layout and Components
 
+**Implementation Requirements**:
+- **Application Layout**: Follow [ui-spec.md §Application Layout](./ui-spec.md#application-layout) exactly - header (toolbar), main workspace (canvas), left sidebar (actions), right sidebar (elements), status bar.
+- **Component Structure**: Use Vue 3 Composition API per [constitution.md](../../.specify/memory/constitution.md#principle-iv-technology-discipline). All components must be .vue single-file components.
+- **SVG Canvas**: Main workspace MUST use SVG element (not HTML5 Canvas) for geometric rendering per [ui-spec.md §Canvas Component](./ui-spec.md#canvas-component). SVG enables precise coordinate mapping and CSS styling.
+- **Responsive Layout**: Canvas must fill available space, sidebars collapsible per [ui-spec.md §Layout Behavior](./ui-spec.md#layout-behavior).
+
+**⚠️ CRITICAL**: Review [ui-spec.md](./ui-spec.md) in full to understand component hierarchy and interaction patterns before coding.
+
 - [ ] T006 Setup Vue.js 3 + TypeScript + Vite configuration in frontend/
 - [ ] T007 Create App.vue with basic layout structure (header, main workspace, footer)
 - [ ] T008 [P] Create SvgCanvas.vue component in frontend/src/components/canvas/ (empty SVG for now)
@@ -54,6 +70,15 @@
 
 **Purpose**: Display projection planes and coordinate system  
 **Reference**: [spec.md](./spec.md#projection-planes) - Projection Planes P_V and P_H, [spec.md](./spec.md#hinge-lines-hl-and-broken-hinge-lines-bhl) - Hinge Lines
+
+**Implementation Requirements**:
+- **Fixed Elements**: Must create per [spec.md §3D Elements](./spec.md#3d-elements-derived-not-edited): Origin point O at (0,0,0), planes P_V and P_H, hinge line HL_HV. These are ALWAYS present and cannot be deleted.
+- **Plane Definitions**: P_V (vertical, XZ plane at Y=0) and P_H (horizontal, XY plane at Z=0) per [spec.md §Coordinate System](./spec.md#coordinate-system-monge-projection). Must use point+normal representation from [data-model.md §Plane3DByPointAndNormal](./data-model.md#plane3dbypointandnormal).
+- **Coordinate Transformation**: Implement [data-model.md §Transformation Flow](./data-model.md#transformation-flow). Must support bidirectional transforms: plane intrinsic <u,v> ↔ canvas (x,y) for EACH plane.
+- **Visual Rendering**: Origin O = orange (#FF6B35), HL_HV = dashed gray (#333333) per [spec.md §Origin Point O](./spec.md#3d-elements-derived-not-edited).
+- **Homogeneous Coordinates**: ALL transformations MUST use 3x3 matrices with homogeneous coordinates [x,y,1] per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
+
+**⚠️ CRITICAL**: Study [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations) diagrams to understand the three coordinate spaces before implementing transformations.
 
 - [ ] T011 [P] Create Plane class in frontend/src/domain/world/Plane.ts with boundaries and normal vector
 - [ ] T012 Add P_V and P_H fixed planes to World initialization
@@ -75,6 +100,14 @@
 **Purpose**: Display user-created points  
 **Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Points)
 
+**Implementation Requirements**:
+- **Point Representation**: Use [data-model.md §Point2D](./data-model.md#point2d) structure with plane intrinsic <u,v> coordinates. Display as SVG circles per [ui-spec.md §Visual Hierarchy](./ui-spec.md#visual-hierarchy).
+- **Coordinate Transformation**: Transform plane intrinsic <u,v> → canvas (x,y) using [data-model.md §Transformation Flow](./data-model.md#transformation-flow). Apply homogeneous coordinate matrices.
+- **Visual States**: Free points = circles, derived points = squares per [spec.md §2D Elements](./spec.md#2d-elements-edited-in-projection-views). Apply hover/selection states from [ui-spec.md §Visual Feedback](./ui-spec.md#visual-feedback-hover-and-selection).
+- **Naming Convention**: Use subscript notation (a_H, b_V) per [spec.md §Naming Conventions](./spec.md#coordinate-system-monge-projection).
+
+**⚠️ CRITICAL**: Points MUST store coordinates in plane intrinsic space, not canvas space. Read [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations) to avoid confusion.
+
 - [ ] T021 Add point rendering to SvgCanvas.vue (loop through World.points, create SVG circles)
 - [ ] T022 [P] Apply point styling (color, radius) from Point properties
 - [ ] T023 [P] Create visual style types in frontend/src/types/StyleTypes.ts
@@ -87,6 +120,15 @@
 
 **Purpose**: First user interaction - placing points  
 **Reference**: [spec.md](./spec.md#us1-place-point-on-active-plane) - US1 Place Point on Active Plane
+
+**Implementation Requirements**:
+- **User Story**: Implement [spec.md §US1](./spec.md#us1-create-2d-free-point-and-view-3d-projection) - User clicks canvas → creates 2D point on active plane → automatically creates 3D point → shows other projection.
+- **Command Pattern**: ALL creation operations MUST use Command pattern per [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability). Execute/undo/redo must maintain world consistency.
+- **Canvas to Plane Coordinates**: Convert click (x_canvas, y_canvas) → plane intrinsic <u,v> using inverse transformation from [data-model.md §Transformation Flow](./data-model.md#transformation-flow).
+- **No Implicit Entities**: Follow [spec.md §No Implicit Entities Rule](./spec.md#parametric-behavior-and-dependencies) - User must explicitly create points, system creates no automatic helpers.
+- **Active Plane**: Only create points on the currently active projection plane per [spec.md §Active Projection Plane](./spec.md#coordinate-system-monge-projection).
+
+**⚠️ CRITICAL**: Read [spec.md §US1](./spec.md#us1-create-2d-free-point-and-view-3d-projection) completely to understand the full free point workflow including 3D reconstruction.
 
 - [ ] T024 [P] Create Toolbar.vue component in frontend/src/components/toolbars/
 - [ ] T025 Add "Point" tool button to Toolbar
@@ -106,6 +148,15 @@
 **Purpose**: Canvas navigation  
 **Reference**: [spec.md](./spec.md#workspace-and-views) - Workspace Navigation (Pan: Shift+drag, Zoom: mouse wheel)
 
+**Implementation Requirements**:
+- **Transformation Hierarchy**: Implement [data-model.md §View Transformation](./data-model.md#coordinate-systems-and-transformations) - Plane intrinsic → canvas → viewport. Must compose three transformation matrices.
+- **Pan Control**: Middle-click drag or spacebar+drag per [ui-spec.md §Viewport Navigation](./ui-spec.md#viewport-navigation). Update viewport offset in ViewportTransform.
+- **Zoom Control**: Mouse wheel or pinch per [ui-spec.md §Viewport Navigation](./ui-spec.md#viewport-navigation). Zoom toward cursor position, not canvas origin.
+- **Homogeneous Coordinates**: Pan/zoom MUST use 3x3 transformation matrices with homogeneous coordinates per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
+- **Persistent State**: Store viewport transform in viewStore per [data-model.md §View State](./data-model.md#view-state).
+
+**⚠️ CRITICAL**: Review [data-model.md §Transformation Flow](./data-model.md#transformation-flow) diagram to understand how viewport transform fits into the coordinate pipeline.
+
 - [ ] T032 Create useViewport composable in frontend/src/composables/useViewport.ts
 - [ ] T033 Create viewStore in frontend/src/stores/viewStore.ts for pan/zoom state
 - [ ] T034 Add mouse drag handler for panning (Shift + drag or Space + drag)
@@ -124,6 +175,15 @@
 **Purpose**: Support line geometry  
 **Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Lines)
 
+**Implementation Requirements**:
+- **Line Definition**: Lines MUST use point+direction representation [data-model.md §Line2D](./data-model.md#line2d-and-segment2d). Store in plane intrinsic coordinates, NOT canvas coordinates.
+- **Rendering**: Lines extend infinitely (clip to viewport bounds) per [spec.md §2D Elements](./spec.md#2d-elements-edited-in-projection-views). Use SVG line with proper clipping.
+- **Dependencies**: Lines depend on defining points. Must update when points move per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
+- **General Algorithms**: Use principle-based geometric calculations per [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases). No special cases for horizontal/vertical lines.
+- **Visual States**: Apply hover/selection states from [ui-spec.md §Visual Feedback](./ui-spec.md#visual-feedback-hover-and-selection).
+
+**⚠️ CRITICAL**: Study [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases) - ALL geometry must use general algorithms, not hardcoded special cases.
+
 - [ ] T040 [P] Create Line class in frontend/src/domain/world/Line.ts with two Point endpoints
 - [ ] T041 Add line storage to World class
 - [ ] T042 Render lines as SVG line elements in SvgCanvas.vue
@@ -138,6 +198,15 @@
 
 **Purpose**: Create lines between points  
 **Reference**: [spec.md](./spec.md#us2-create-points-lines-circles) - US2 Create Points, Lines, Circles
+
+**Implementation Requirements**:
+- **User Story**: Implement [spec.md §US2](./spec.md#us2-create-points-lines-circles) workflow - Select Line tool → click two points (with snapping) → create line.
+- **Command Pattern**: Line creation MUST use Command pattern per [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability).
+- **Point Snapping**: Implement [ui-spec.md §Snapping](./ui-spec.md#snapping-behavior) - Detect nearby points within snap radius, provide visual feedback.
+- **Two-Click Workflow**: First click selects start point, second click selects end point, line created immediately.
+- **Active Plane**: Only create lines on currently active projection plane per [spec.md §Active Projection Plane](./spec.md#coordinate-system-monge-projection).
+
+**⚠️ CRITICAL**: Read [ui-spec.md §Tool Interactions](./ui-spec.md#tool-interactions) to understand standard tool workflow patterns.
 
 - [ ] T045 Add "Line" tool button to Toolbar
 - [ ] T046 Create useSnapping composable in frontend/src/composables/useSnapping.ts
@@ -157,6 +226,15 @@
 **Purpose**: Track construction history  
 **Reference**: [spec.md](./spec.md#process-tree) - Process Tree structure, [data-model.md](./data-model.md#process-tree) - ProcessTree data model
 
+**Implementation Requirements**:
+- **Process Tree Structure**: Follow [data-model.md §ProcessTree](./data-model.md#process-tree) - Sequential list of Actions with inputs/outputs/dependencies.
+- **Action Recording**: EVERY geometric construction MUST create Action in process tree per [spec.md §Process Tree](./spec.md#process-tree). Actions record: type, inputs, outputs, parameters.
+- **Dependency Tracking**: Actions must track element dependencies per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies). When input changes, dependent actions recalculate.
+- **Infeasibility Handling**: Follow [spec.md §Infeasibility](./spec.md#parametric-behavior-and-dependencies) - Case A (blocked immediately) vs Case B (mark infeasible, keep in history).
+- **Pedagogical Transparency**: Process tree visible to user per [constitution.md Principle VIII](../../.specify/memory/constitution.md#principle-viii-pedagogical-transparency).
+
+**⚠️ CRITICAL**: Study [spec.md §Process Tree](./spec.md#process-tree) thoroughly - this is central to the application's parametric and pedagogical design.
+
 - [ ] T053 [P] Create ProcessTree class in frontend/src/domain/processTree/ProcessTree.ts
 - [ ] T054 [P] Create Action interface in frontend/src/domain/processTree/Action.ts
 - [ ] T055 [P] Create CreatePointAction class in frontend/src/domain/processTree/actions/CreatePointAction.ts
@@ -175,6 +253,15 @@
 
 **Purpose**: Undoable operations  
 **Reference**: [constitution.md](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-all-user-actions) - Command Pattern Principle
+
+**Implementation Requirements**:
+- **Constitutional Requirement**: ALL user actions MUST use Command pattern per [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability). No direct World mutations.
+- **Command Interface**: Commands must implement execute(), undo(), validate() methods per [data-model.md §Command Pattern](./data-model.md#command-pattern).
+- **CommandStack**: Maintain undo/redo stacks. Execute pushes to undo stack, clears redo stack. Undo pops from undo, pushes to redo.
+- **World Consistency**: Undo/redo MUST maintain World + ProcessTree consistency. When undoing, remove corresponding Action from process tree.
+- **Keyboard Shortcuts**: Ctrl+Z (undo), Ctrl+Shift+Z or Ctrl+Y (redo) per [ui-spec.md §Keyboard Shortcuts](./ui-spec.md#keyboard-shortcuts).
+
+**⚠️ CRITICAL**: Read [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability) - Command pattern is MANDATORY for ALL user actions.
 
 - [ ] T062 [P] Create Command interface in frontend/src/commands/Command.ts with execute/undo/validate
 - [ ] T063 [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
@@ -199,6 +286,15 @@
 **Purpose**: Finite line segments  
 **Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Segments)
 
+**Implementation Requirements**:
+- **Segment Definition**: Segments defined by two Point2D references per [data-model.md §Segment2D](./data-model.md#line2d-and-segment2d). Length calculated in plane intrinsic space.
+- **Rendering**: Segments render ONLY between endpoints (unlike infinite lines) per [spec.md §2D Elements](./spec.md#2d-elements-edited-in-projection-views).
+- **Dependencies**: Segments depend on both endpoints. Must update when either point moves per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
+- **Command Pattern**: CreateSegmentCommand MUST follow [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability).
+- **Visual Distinction**: Use different stroke style vs lines per [ui-spec.md §Visual Hierarchy](./ui-spec.md#visual-hierarchy).
+
+**⚠️ CRITICAL**: Segments vs Lines - understand difference in [spec.md §Lines and Segments](./spec.md#lines-and-segments).
+
 - [ ] T075 [P] Create Segment class in frontend/src/domain/world/Segment.ts with start/end points
 - [ ] T076 Add segment storage to World
 - [ ] T077 Render segments as SVG path elements in SvgCanvas.vue
@@ -216,6 +312,15 @@
 
 **Purpose**: Circle geometry  
 **Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Circles), [spec.md](./spec.md#us2-create-points-lines-circles) - US2
+
+**Implementation Requirements**:
+- **Circle Definition**: Center (Point2D) + radius (scalar) per [data-model.md §Circle2D](./data-model.md#circle2d). Radius stored in plane intrinsic units.
+- **User Story**: Complete [spec.md §US2](./spec.md#us2-create-points-lines-circles) - Create circles by center+radius workflow.
+- **Two-Click Workflow**: First click selects center point, second click (or drag) sets radius.
+- **Dependencies**: Circle depends on center point. Radius is fixed parameter per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
+- **Command Pattern**: CreateCircleCommand follows [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability).
+
+**⚠️ CRITICAL**: Study [spec.md §US2](./spec.md#us2-create-points-lines-circles) for complete circle creation workflow.
 
 - [ ] T083 [P] Create Circle class in frontend/src/domain/world/Circle.ts with center point and radius
 - [ ] T084 Add circle storage to World
@@ -235,6 +340,15 @@
 
 **Purpose**: Guide lines perpendicular to hinge lines  
 **Reference**: [spec.md](./spec.md#guides) - Guides definition, [spec.md](./spec.md#us3-create-guide-perpendicular-to-hinge-line) - US3 Create Guide
+
+**Implementation Requirements**:
+- **Guide Definition**: Line perpendicular to hinge line passing through user-specified point per [spec.md §Guides](./spec.md#guides). Always perpendicular to HL, not arbitrary angles.
+- **User Story**: Implement [spec.md §US3](./spec.md#us3-create-guide-perpendicular-to-hinge-line) - Select Guide tool → click point on hinge line → guide created perpendicular to HL.
+- **Homogeneous Coordinates**: Guide perpendicular calculation MUST use homogeneous coordinates per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
+- **Rendering**: Guides render as dashed lines extending to viewport edges per [ui-spec.md §Guide Rendering](./ui-spec.md#guide-rendering). Visual distinction from regular lines.
+- **Dependencies**: Guide depends on intersection point with HL per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
+
+**⚠️ CRITICAL**: Study [spec.md §Guides](./spec.md#guides) - Guides are ALWAYS perpendicular to hinge lines, not general angle specification.
 
 - [ ] T092 [P] Create Guide class in frontend/src/domain/world/Guide.ts (line perpendicular to HL through point)
 - [ ] T093 Add guide storage to World
@@ -257,6 +371,15 @@
 
 **Purpose**: Create intersection points  
 **Reference**: [spec.md](./spec.md#us2-create-points-lines-circles) - US2 includes intersection points
+
+**Implementation Requirements**:
+- **Homogeneous Coordinates**: Intersection calculation MUST use homogeneous coordinates per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system). Use cross product of line representations.
+- **Edge Cases**: Handle parallel lines (no intersection), coincident lines (infinite intersections) per [data-model.md §Intersection Validation](./data-model.md#validation-and-error-handling). Return null or special indicator.
+- **Infeasibility Preview**: Show immediate feedback if lines parallel per [spec.md §Infeasibility Case A](./spec.md#parametric-behavior-and-dependencies) - block creation, no modal.
+- **General Algorithms**: Use principle-based calculations per [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases). No special cases for horizontal/vertical lines.
+- **Dependencies**: Intersection point depends on both lines. Must recalculate when either line changes per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
+
+**⚠️ CRITICAL**: Study [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system) - ALL intersection calculations use homogeneous coordinate cross products.
 
 - [ ] T102 [P] Implement line-line intersection calculation in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
 - [ ] T103 Handle parallel lines (no intersection, return null)
@@ -281,6 +404,15 @@
 **Purpose**: Transport points between planes using guides  
 **Reference**: [spec.md](./spec.md#us4-transport-point-via-guide-between-planes) - US4 Point Transport via Guides
 
+**Implementation Requirements**:
+- **User Story**: Implement [spec.md §US4](./spec.md#us4-transport-point-via-guide-between-planes) - Select source point → select guide (perpendicular to HL) → transported point created on opposite plane.
+- **Geometric Principle**: Guide intersects HL, provides axis for transporting point from one plane to other per [spec.md §Guides](./spec.md#guides).
+- **Homogeneous Coordinates**: Transport calculation MUST use homogeneous coordinates per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
+- **Dependencies**: Transported point depends on source point AND guide. Must recalculate when either changes per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
+- **General Algorithms**: Transport MUST work for any guide/plane combination per [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases). No hardcoded P_H/P_V cases.
+
+**⚠️ CRITICAL**: Read [spec.md §US4](./spec.md#us4-transport-point-via-guide-between-planes) thoroughly - point transport is fundamental dihedral operation.
+
 - [ ] T113 [P] Implement point transport calculation in frontend/src/domain/calculations/Transport.ts using geometric principles
 - [ ] T114 [P] Transport MUST use homogeneous coordinates and matrix transformations (Principle V)
 - [ ] T115 Validate that guide is perpendicular to hinge line
@@ -304,6 +436,18 @@
 ## Phase 16: Distance Transport (US5 - Complete)
 
 **Purpose**: Transport distances along guides  
+**Reference**: [spec.md](./spec.md#us5-transport-distance-along-guide) - US5 Distance Transport
+
+**Implementation Requirements**:
+- **User Story**: Implement [spec.md §US5](./spec.md#us5-transport-distance-along-guide) - Select reference segment → select guide → select base point → new point created at distance along guide.
+- **Distance Calculation**: Measure segment length in plane intrinsic coordinates using [data-model.md §Segment2D](./data-model.md#line2d-and-segment2d). Apply along guide direction.
+- **Homogeneous Coordinates**: Distance transport MUST use homogeneous coordinate transformations per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
+- **Dependencies**: Transported point depends on reference segment (for length) AND guide (for direction) AND base point per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
+- **General Algorithms**: Transport works for any guide/segment/point combination per [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases).
+
+**⚠️ CRITICAL**: Study [spec.md §US5](./spec.md#us5-transport-distance-along-guide) - distance transport enables complex constructions.
+
+- [ ] T126 [P] Implement distance transport calculation in frontend/src/domain/calculations/Transport.ts
 **Reference**: [spec.md](./spec.md#us5-transport-distance-via-guide) - US5 Distance Transport via Guides
 
 - [ ] T126 [P] Implement distance transport calculation in frontend/src/domain/calculations/Transport.ts
@@ -332,6 +476,15 @@
 **Purpose**: Expand intersection capabilities  
 **Reference**: [spec.md](./spec.md#us2-create-points-lines-circles) - US2 all intersection types
 
+**Implementation Requirements**:
+- **Intersection Types**: Implement line-circle, circle-circle per [spec.md §US2](./spec.md#us2-create-points-lines-circles). Already have line-line from Phase 14.
+- **Homogeneous Coordinates**: ALL intersection algorithms MUST use homogeneous coordinates per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
+- **Multiple Solutions**: Handle 0, 1, or 2 intersections per [data-model.md §Intersection Validation](./data-model.md#validation-and-error-handling). Let user choose which point to create.
+- **General Algorithms**: Use principle-based calculations per [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases). No special-case geometry.
+- **Dependencies**: Intersection points depend on source elements. Recalculate when sources change per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
+
+**⚠️ CRITICAL**: Study [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system) for intersection calculation techniques.
+
 - [ ] T140 [P] Implement line-circle intersection in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
 - [ ] T141 Handle 0, 1, or 2 intersection points for line-circle
 - [ ] T142 [P] Implement circle-circle intersection using homogeneous coordinates
@@ -353,6 +506,15 @@
 **Purpose**: Display construction history in UI  
 **Reference**: [ui-spec.md](./ui-spec.md#actions-panel-left-sidebar) - Actions Panel specification
 
+**Implementation Requirements**:
+- **Panel Structure**: Follow [ui-spec.md §Left Panel Stack](./ui-spec.md#left-panel-stack) - Actions Panel in left sidebar, vertically stacked with Process Panel.
+- **Action Display**: Show process tree actions per [ui-spec.md §Actions Panel](./ui-spec.md#actions-panel-left-sidebar) - List with type, parameters, dependencies, status.
+- **Interactive**: Click action → highlight related elements on canvas per [ui-spec.md §Unified Hover Highlighting](./ui-spec.md#visual-feedback-hover-and-selection).
+- **Filtering**: Filter by action type, search by name/parameters per [ui-spec.md §Actions Panel](./ui-spec.md#actions-panel-left-sidebar).
+- **Pedagogical Transparency**: Actions Panel exposes construction logic per [constitution.md Principle VIII](../../.specify/memory/constitution.md#principle-viii-pedagogical-transparency).
+
+**⚠️ CRITICAL**: Review [ui-spec.md §Actions Panel](./ui-spec.md#actions-panel-left-sidebar) for complete panel specification including visual hierarchy.
+
 - [ ] T149 [P] Create ActionsPanel.vue component in frontend/src/components/panels/
 - [ ] T150 Retrieve actions from ProcessTree and display as list
 - [ ] T151 Show action type, parameters, and dependencies for each action
@@ -371,6 +533,15 @@
 
 **Purpose**: Display all geometric objects  
 **Reference**: [ui-spec.md](./ui-spec.md#elements-panel-right-sidebar) - Elements Panel specification
+
+**Implementation Requirements**:
+- **Panel Structure**: Follow [ui-spec.md §World Elements Panel](./ui-spec.md#world-elements-panel) - Hierarchical tree: 2D Elements (by plane) and 3D Elements (by type).
+- **Organization**: Group 2D elements by projection plane (P_H, P_V), then by type (points, lines, etc.) per [ui-spec.md §Organization Rules](./ui-spec.md#world-elements-panel).
+- **Naming Convention**: Use subscript notation (a_H, b_V) per [spec.md §Naming Conventions](./spec.md#coordinate-system-monge-projection) and [ui-spec.md §Naming Convention Note](./ui-spec.md#world-elements-panel).
+- **Interactive**: Click element → open properties dialog; hover element → highlight on canvas per [ui-spec.md §Interactions](./ui-spec.md#world-elements-panel).
+- **Dynamic Counts**: Show element counts in parentheses per [ui-spec.md §Organization Rules](./ui-spec.md#world-elements-panel).
+
+**⚠️ CRITICAL**: Study [ui-spec.md §World Elements Panel](./ui-spec.md#world-elements-panel) tree structure carefully - hierarchical organization is key.
 
 - [ ] T158 [P] Create ElementsPanel.vue component in frontend/src/components/panels/
 - [ ] T159 Retrieve all elements from World and display as list
@@ -392,6 +563,15 @@
 **Purpose**: Select objects on canvas  
 **Reference**: [ui-spec.md](./ui-spec.md#interactions) - Selection behavior
 
+**Implementation Requirements**:
+- **Selection Model**: Single-select (click) and multi-select (Ctrl+click) per [ui-spec.md §Selection Interactions](./ui-spec.md#interactions).
+- **Visual Feedback**: Apply selection highlight per [ui-spec.md §Visual Feedback](./ui-spec.md#visual-feedback-hover-and-selection) - Distinct from hover state.
+- **Bidirectional Sync**: Selection syncs between canvas, Elements Panel, and Actions Panel per [ui-spec.md §Unified Hover Highlighting](./ui-spec.md#visual-feedback-hover-and-selection).
+- **Clear Selection**: Click empty canvas area clears selection per [ui-spec.md §Interactions](./ui-spec.md#interactions).
+- **Store Pattern**: Use selectionStore to manage selection state globally per [data-model.md §View State](./data-model.md#view-state).
+
+**⚠️ CRITICAL**: Review [ui-spec.md §Visual Feedback](./ui-spec.md#visual-feedback-hover-and-selection) for selection vs hover visual states.
+
 - [ ] T168 [P] Create selectionStore in frontend/src/stores/selectionStore.ts
 - [ ] T169 Implement click detection for objects on SVG canvas
 - [ ] T170 Add selected object ID to selectionStore on click
@@ -412,6 +592,15 @@
 **Purpose**: Visual feedback on hover  
 **Reference**: [spec.md](./spec.md#us6-hover-highlighting-visual-style-editing-3d-view) - US6 Hover Highlighting
 
+**Implementation Requirements**:
+- **User Story**: Implement [spec.md §US6](./spec.md#us6-hover-highlighting-visual-style-editing-3d-view) hover feedback - Mouse over element → element highlights, label shows.
+- **Unified Highlighting**: Follow [ui-spec.md §Unified Hover Highlighting](./ui-spec.md#visual-feedback-hover-and-selection) - Hover in panel highlights canvas element, hover on canvas highlights panel entry.
+- **Visual States**: Hover highlight distinct from selection highlight per [ui-spec.md §Visual Feedback](./ui-spec.md#visual-feedback-hover-and-selection). Use lighter stroke or glow.
+- **Tooltips**: Show element label/ID on hover per [ui-spec.md §Hover Behavior](./ui-spec.md#visual-feedback-hover-and-selection).
+- **Snap Preview**: Show snap visual when hovering near points per [ui-spec.md §Snapping Behavior](./ui-spec.md#snapping-behavior).
+
+**⚠️ CRITICAL**: Study [ui-spec.md §Unified Hover Highlighting](./ui-spec.md#visual-feedback-hover-and-selection) - hover must work across all UI components.
+
 - [ ] T178 [P] Create useHoverHighlight composable in frontend/src/composables/useHoverHighlight.ts
 - [ ] T179 Implement mouseover detection for objects on canvas
 - [ ] T180 Apply hover highlight style (different from selection, e.g., lighter stroke)
@@ -430,6 +619,15 @@
 
 **Purpose**: View and edit object properties  
 **Reference**: [spec.md](./spec.md#us6-hover-highlighting-visual-style-editing-3d-view) - US6 Visual Style Editing, [ui-spec.md](./ui-spec.md#visual-style-inheritance) - Style Inheritance
+
+**Implementation Requirements**:
+- **User Story**: Complete [spec.md §US6](./spec.md#us6-hover-highlighting-visual-style-editing-3d-view) - Double-click element → properties dialog → edit visual styles (color, stroke, etc.).
+- **Properties Dialog**: Follow [ui-spec.md §Element Properties Dialog](./ui-spec.md#element-properties-dialog) - Show all editable properties based on element type.
+- **Style Inheritance**: Implement [ui-spec.md §Visual Style Inheritance](./ui-spec.md#visual-style-inheritance) - Elements inherit tool defaults, can override individually.
+- **Property Types**: Point (coordinates, label), Line/Segment (color, stroke), Circle (color, stroke, fill), Guide (dash pattern) per [ui-spec.md §Element Properties Dialog](./ui-spec.md#element-properties-dialog).
+- **Validation**: Property changes must maintain element validity per [data-model.md §Validation](./data-model.md#validation-and-error-handling).
+
+**⚠️ CRITICAL**: Read [ui-spec.md §Visual Style Inheritance](./ui-spec.md#visual-style-inheritance) to understand inheritance vs override system.
 
 - [ ] T187 [P] Create PropertiesDialog.vue component in frontend/src/components/dialogs/
 - [ ] T188 Show dialog when user double-clicks object or clicks "Properties" button
@@ -459,6 +657,15 @@
 **Purpose**: Track which objects depend on others  
 **Reference**: [spec.md](./spec.md#process-tree) - Process Tree tracks dependencies
 
+**Implementation Requirements**:
+- **Process Tree Dependencies**: Follow [spec.md §Process Tree](./spec.md#process-tree) - Every Action records input/output dependencies.
+- **Parametric Updates**: When base element changes, recalculate ALL dependent elements per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies). Cascading updates.
+- **Dependency Graph**: Implement bidirectional lookup: getDependents() and getDependencies() per [data-model.md §ProcessTree](./data-model.md#process-tree).
+- **Circular Dependency Prevention**: Validate no circular dependencies during command execution per [data-model.md §Validation](./data-model.md#validation-and-error-handling).
+- **Visual Indicators**: Show dependency relationships in panels per [ui-spec.md §Actions Panel](./ui-spec.md#actions-panel-left-sidebar).
+
+**⚠️ CRITICAL**: Study [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies) - dependency tracking enables parametric drawing.
+
 - [ ] T201 [P] Create DependencyService in frontend/src/services/DependencyService.ts
 - [ ] T202 [P] Store dependencies in ProcessTree when actions are executed
 - [ ] T203 Implement dependency recording: when creating derived object, record its dependencies
@@ -479,6 +686,16 @@
 
 **Purpose**: Detect and handle geometrically impossible operations  
 **Reference**: [spec.md](./spec.md#infeasibility) - Infeasibility concept and handling, [spec.md](./spec.md#us2-create-points-lines-circles) - US2 intersection infeasibility
+
+**Implementation Requirements**:
+- **Infeasibility Types**: Follow [spec.md §Infeasibility](./spec.md#parametric-behavior-and-dependencies) - Case A (block immediately) vs Case B (mark infeasible, keep in history).
+- **Case A**: New construction invalid at creation → report immediately, create NO element, ignore action per [spec.md §Infeasibility Case A](./spec.md#parametric-behavior-and-dependencies).
+- **Case B**: Previously valid construction becomes infeasible → keep in history, mark infeasible, hide outputs, show visual indicators per [spec.md §Infeasibility Case B](./spec.md#parametric-behavior-and-dependencies).
+- **Validation Rules**: Parallel lines (no intersection), perpendicularity checks, geometric constraints per [data-model.md §Validation](./data-model.md#validation-and-error-handling).
+- **Cascading**: If parent infeasible, all children infeasible per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies). Dynamic revalidation when dependencies change.
+- **Non-Modal Feedback**: NO modal dialogs. Use visual indicators (red highlights, warnings) per [spec.md §Infeasibility](./spec.md#parametric-behavior-and-dependencies).
+
+**⚠️ CRITICAL**: Read [spec.md §Infeasibility](./spec.md#parametric-behavior-and-dependencies) completely - distinction between Case A and Case B is essential.
 
 - [ ] T212 [P] Create ValidationService in frontend/src/services/ValidationService.ts
 - [ ] T213 Implement validation for line-line intersection: detect parallel lines (return infeasible)
@@ -505,6 +722,16 @@
 
 **Purpose**: Display 3D reconstruction of dihedral geometry  
 **Reference**: [spec.md](./spec.md#workspace-and-views) - 3D View (Auxiliary, Read-Only), [spec.md](./spec.md#3d-elements-derived-not-edited) - 3D element derivation
+
+**Implementation Requirements**:
+- **3D View Purpose**: Auxiliary, read-only view per [spec.md §Workspace and Views](./spec.md#workspace-and-views). Helps understanding, NOT for construction.
+- **3D Derivation**: Calculate 3D coordinates from 2D projections per [spec.md §3D Elements](./spec.md#3d-elements-derived-not-edited). Use [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations) transformations.
+- **Homogeneous Coordinates**: 3D derivation MUST use homogeneous coordinates per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
+- **General Algorithms**: 3D reconstruction MUST work for any projection plane, not hardcoded for P_H/P_V per [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases).
+- **Rendering Technology**: Use Three.js for full 3D capabilities or CSS 3D transforms for simpler approach per [ui-spec.md §3D View](./ui-spec.md#3d-view-overlay).
+- **Interaction**: Orbit camera, pan, zoom. No editing. Selection sync with 2D view per [ui-spec.md §3D View](./ui-spec.md#3d-view-overlay).
+
+**⚠️ CRITICAL**: Study [spec.md §3D Elements](./spec.md#3d-elements-derived-not-edited) - 3D elements are DERIVED from 2D projections, not direct edits.
 
 - [ ] T226 [P] Create ThreeDView.vue component in frontend/src/components/panels/
 - [ ] T227 Choose 3D rendering approach: CSS 3D transforms (simple) or Three.js (full-featured)
@@ -533,6 +760,16 @@
 
 **Purpose**: Persist projects to files  
 **Reference**: [spec.md](./spec.md#us1-place-point-on-active-plane) - US1 includes persistence requirement, [contracts/api.yaml](./contracts/api.yaml) - API contracts
+
+**Implementation Requirements**:
+- **REST API**: Follow [contracts/api.yaml](./contracts/api.yaml) - Implement POST/GET/PUT/DELETE endpoints for project CRUD operations.
+- **Serialization**: Serialize complete World state (elements, ProcessTree, view state) to JSON per [data-model.md §Project Serialization](./data-model.md#project-serialization).
+- **Version Compatibility**: Include version number in JSON format for future compatibility per [data-model.md §Project Serialization](./data-model.md#project-serialization).
+- **Auto-Save**: Implement configurable auto-save (default 60s) per [ui-spec.md §Settings](./ui-spec.md#settings).
+- **File Storage**: Backend stores projects as JSON files in backend/data/projects/ directory per [contracts/api.yaml](./contracts/api.yaml).
+- **Unsaved Changes**: Track modified state, prompt before closing per [ui-spec.md §Application Lifecycle](./ui-spec.md#application-lifecycle).
+
+**⚠️ CRITICAL**: Read [contracts/api.yaml](./contracts/api.yaml) for exact API endpoint specifications and data formats.
 
 - [ ] T242 [P] Create ProjectService in frontend/src/services/ProjectService.ts
 - [ ] T243 Implement World serialization to JSON (serialize all elements, ProcessTree, view state)
@@ -563,6 +800,16 @@
 
 **Purpose**: Improve overall user experience  
 **Reference**: [ui-spec.md](./ui-spec.md#settings) - Settings and preferences, [spec.md](./spec.md#workspace-and-views) - Navigation shortcuts
+
+**Implementation Requirements**:
+- **Settings Dialog**: Follow [ui-spec.md §Settings](./ui-spec.md#settings) - Configure snap radius, grid, default styles, auto-save interval, keyboard shortcuts.
+- **Keyboard Shortcuts**: Implement [ui-spec.md §Keyboard Shortcuts](./ui-spec.md#keyboard-shortcuts) - Standard shortcuts (Ctrl+S, Ctrl+Z, etc.) and tool shortcuts (P, L, C, G).
+- **Grid Display**: Implement zoom-adaptive grid per [ui-spec.md §Grid](./ui-spec.md#grid-display). Grid spacing adjusts with zoom level.
+- **Status Bar**: Show current coordinates, active plane, active tool per [ui-spec.md §Status Bar](./ui-spec.md#status-bar).
+- **Preferences Persistence**: Store settings in localStorage per [ui-spec.md §Settings](./ui-spec.md#settings). Load on startup.
+- **Fit to View**: Implement zoom-to-fit functionality per [ui-spec.md §Viewport Navigation](./ui-spec.md#viewport-navigation).
+
+**⚠️ CRITICAL**: Review [ui-spec.md §Keyboard Shortcuts](./ui-spec.md#keyboard-shortcuts) for complete shortcut specification.
 
 - [ ] T262 [P] Create SettingsDialog.vue component in frontend/src/components/dialogs/
 - [ ] T263 Add settings for snap radius (configurable distance for point snapping)
@@ -595,6 +842,16 @@
 ## Testing & Documentation (Phase 28)
 
 **Purpose**: Ensure quality and document the system
+
+**Implementation Requirements**:
+- **Test Coverage**: Achieve >80% code coverage per [constitution.md Principle IX](../../.specify/memory/constitution.md#principle-ix-test-driven-quality). All [P] priority tasks include unit/E2E tests.
+- **E2E Coverage**: Test all user stories (US1-US6) end-to-end per [spec.md §User Stories](./spec.md#user-stories). Verify complete workflows.
+- **Documentation Standards**: Follow [constitution.md Principle VIII](../../.specify/memory/constitution.md#principle-viii-pedagogical-transparency) - Document for learning and understanding.
+- **Architecture Documentation**: Document layered architecture per [constitution.md Principle I](../../.specify/memory/constitution.md#principle-i-layered-architecture), coordinate systems per [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations).
+- **User Guide**: Create comprehensive user documentation covering all tools, workflows, concepts per [spec.md](./spec.md).
+- **Performance Targets**: Smooth rendering with 200+ elements, hover response <100ms per [ui-spec.md §Performance](./ui-spec.md#performance-requirements).
+
+**⚠️ CRITICAL**: Review ALL constitutional principles in [constitution.md](../../.specify/memory/constitution.md) - ensure implementation compliance.
 
 - [ ] T285 Review all unit tests ([P] priority tasks) - ensure coverage >80%
 - [ ] T286 Review all E2E tests - ensure all user workflows covered
