@@ -33,11 +33,11 @@
 
 **⚠️ CRITICAL**: Read [data-model.md §Architecture Overview](./data-model.md#architecture-overview) to understand the three coordinate spaces (plane intrinsic, canvas, 3D) before implementing.
 
-- [ ] T001 [P] Create World class in frontend/src/domain/world/World.ts with array storage for elements
-- [ ] T002 [P] Create Point class in frontend/src/domain/world/Point.ts with x, y coordinates and unique ID
-- [ ] T003 [P] Add point storage methods to World (add, remove, getById)
-- [ ] T004 [P] Unit test for World class in frontend/tests/unit/domain/world.spec.ts
-- [ ] T005 [P] Unit test for Point class in frontend/tests/unit/domain/point.spec.ts
+- [X] T001 [P] Create World class in frontend/src/domain/world/World.ts with array storage for elements
+- [X] T002 [P] Create Point class in frontend/src/domain/world/Point.ts with x, y coordinates and unique ID
+- [X] T003 [P] Add point storage methods to World (add, remove, getById)
+- [X] T004 [P] Unit test for World class in frontend/tests/unit/domain/world.spec.ts
+- [X] T005 [P] Unit test for Point class in frontend/tests/unit/domain/point.spec.ts
 
 **Checkpoint**: Basic data structures ready for rendering
 
