@@ -13,7 +13,7 @@
  */
 
 import type { Point } from '../domain/world/Point';
-import type { Plane } from '../domain/world/Plane';
+import type { Plane3D } from '../domain/world/Plane3D';
 import { planeToCanvas } from '../domain/calculations/CoordinateTransform';
 
 /**
@@ -33,7 +33,7 @@ export interface SVGElementAttributes {
  * @returns SVG circle attributes
  */
 export function renderPoint(
-  point: Point,
+  point: Point2D,
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): SVGElementAttributes {
@@ -72,13 +72,13 @@ export function renderPoint(
  * Planes are rendered as rectangles defined by their boundaries.
  * Works for ANY plane (P_H, P_V, or auxiliary planes) - no special cases.
  * 
- * @param plane - Plane instance to render
+ * @param plane - Plane3D instance to render
  * @param canvasOriginX - Canvas origin X coordinate (default 400)
  * @param canvasOriginY - Canvas origin Y coordinate (default 400)
  * @returns SVG rect attributes
  */
 export function renderPlane(
-  plane: Plane,
+  plane: Plane3D,
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): SVGElementAttributes {

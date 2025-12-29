@@ -1,5 +1,5 @@
 /**
- * Point - Geometric point in 2D or 3D space
+ * Point2D - Geometric point in 2D projection plane
  * 
  * Points are the fundamental building blocks of the dihedral system.
  * All points MUST be stored in plane intrinsic coordinates <u,v> as per Constitution Principle V.
@@ -17,15 +17,14 @@
 export type PointType = 'free' | 'intersection';
 
 /**
- * Base Point class with common fields for all point types
+ * Base Point2D class with common fields for all point types
  */
-export abstract class Point {
+export abstract class Point2D {
   id?: string;
   coordinates: [number, number, number];  // Homogeneous coordinates [u, v, 1]
   abstract readonly type: PointType;
   label?: string;
   planeId?: string;  // Which projection plane this point belongs to
-  locked?: boolean;  // If true, point cannot be moved or deleted
 
   constructor(
     coordinates: [number, number, number],  // Homogeneous [u, v, 1]
@@ -35,7 +34,6 @@ export abstract class Point {
     this.coordinates = coordinates;
     this.label = label;
     this.planeId = plane?.id;
-    this.locked = false;
   }
 
   /**
@@ -56,7 +54,7 @@ export abstract class Point {
   /**
    * Clone this point
    */
-  abstract clone(): Point;
+  abstract clone(): Point2D;
 
   /**
    * Getter for u coordinate (convenience accessor)
@@ -74,10 +72,11 @@ export abstract class Point {
 }
 
 /**
- * Free Point - defined by its position inside the projection plane
+ * Free Point2D - defined by its position inside the projection plane
  */
-export class FreePoint extends Point {
+export class FreePoint2D extends Point2D {
   readonly type: 'free' = 'free';
+  locked?: boolean;  // If true, point cannot be moved or deleted
 
   constructor(
     coordinates: [number, number, number],
@@ -85,10 +84,11 @@ export class FreePoint extends Point {
     label?: string
   ) {
     super(coordinates, plane, label);
+    this.locked = false;
   }
 
-  clone(): FreePoint {
-    const cloned = new FreePoint(
+  clone(): FreePoint2D {
+    const cloned = new FreePoint2D(
       [...this.coordinates] as [number, number, number],
       this.planeId ? { id: this.planeId } : undefined,
       this.label
@@ -104,9 +104,9 @@ export class FreePoint extends Point {
 }
 
 /**
- * Intersection Point - defined as intersection of two objects
+ * Intersection Point2D - defined as intersection of two objects
  */
-export class IntersectionPoint extends Point {
+export class IntersectionPoint2D extends Point2D {
   readonly type: 'intersection' = 'intersection';
   element1Id: string;  // ID of first intersecting element
   element2Id: string;  // ID of second intersecting element
@@ -126,8 +126,8 @@ export class IntersectionPoint extends Point {
     this.index = index;
   }
 
-  clone(): IntersectionPoint {
-    const cloned = new IntersectionPoint(
+  clone(): IntersectionPoint2D {
+    const cloned = new IntersectionPoint2D(
       [...this.coordinates] as [number, number, number],
       this.element1Id,
       this.element2Id,
@@ -137,9 +137,6 @@ export class IntersectionPoint extends Point {
     );
     if (this.id) {
       cloned.id = this.id;
-    }
-    if (this.locked !== undefined) {
-      cloned.locked = this.locked;
     }
     return cloned;
   }

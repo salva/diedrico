@@ -1,9 +1,9 @@
 /**
  * plane.spec.ts
- * Unit tests for Plane class
+ * Unit tests for Plane3D class
  * 
  * Tests cover:
- * - Plane construction with point and normal
+ * - Plane3D construction with point and normal
  * - P_H and P_V factory methods
  * - Boundary setting and getters
  * - Coordinate system setup
@@ -11,12 +11,12 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Plane } from '@/domain/world/Plane';
+import { Plane3D, Vector3D } from "@/domain/world/Plane";
 
-describe('Plane', () => {
+describe('Plane3D', () => {
   describe('constructor', () => {
     it('should create a plane with point and normal', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1]
       );
@@ -27,7 +27,7 @@ describe('Plane', () => {
     });
 
     it('should normalize the normal vector', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [3, 0, 4, 1]  // Length 5
       );
@@ -40,7 +40,7 @@ describe('Plane', () => {
 
     it('should throw error for zero normal vector', () => {
       expect(() => {
-        new Plane(
+        new Plane3D(
           [0, 0, 0, 1],
           [0, 0, 0, 1]  // Zero vector
         );
@@ -48,21 +48,21 @@ describe('Plane', () => {
     });
 
     it('should accept optional label', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1],
         'projection',
-        'Test Plane'
+        'Test Plane3D'
       );
 
-      expect(plane.label).toBe('Test Plane');
+      expect(plane.label).toBe('Test Plane3D');
       expect(plane.type).toBe('projection');
     });
   });
 
   describe('createPH', () => {
     it('should create P_H horizontal projection plane', () => {
-      const planeH = Plane.createPH();
+      const planeH = Plane3D.createPH();
 
       expect(planeH.point).toEqual([0, 0, 0, 1]);
       expect(planeH.normal).toEqual([0, 0, 1, 1]);
@@ -71,7 +71,7 @@ describe('Plane', () => {
     });
 
     it('should set default boundaries for P_H', () => {
-      const planeH = Plane.createPH();
+      const planeH = Plane3D.createPH();
 
       expect(planeH.minU).toBe(-400);
       expect(planeH.maxU).toBe(400);
@@ -80,7 +80,7 @@ describe('Plane', () => {
     });
 
     it('should set coordinate system for P_H', () => {
-      const planeH = Plane.createPH();
+      const planeH = Plane3D.createPH();
 
       expect(planeH.coordinateSystem).toBeDefined();
       expect(planeH.coordinateSystem?.origin).toEqual([0, 0, 0, 1]);
@@ -91,7 +91,7 @@ describe('Plane', () => {
 
   describe('createPV', () => {
     it('should create P_V vertical projection plane', () => {
-      const planeV = Plane.createPV();
+      const planeV = Plane3D.createPV();
 
       expect(planeV.point).toEqual([0, 0, 0, 1]);
       expect(planeV.normal).toEqual([0, 1, 0, 1]);
@@ -100,7 +100,7 @@ describe('Plane', () => {
     });
 
     it('should set default boundaries for P_V', () => {
-      const planeV = Plane.createPV();
+      const planeV = Plane3D.createPV();
 
       expect(planeV.minU).toBe(-400);
       expect(planeV.maxU).toBe(400);
@@ -109,7 +109,7 @@ describe('Plane', () => {
     });
 
     it('should set coordinate system for P_V', () => {
-      const planeV = Plane.createPV();
+      const planeV = Plane3D.createPV();
 
       expect(planeV.coordinateSystem).toBeDefined();
       expect(planeV.coordinateSystem?.origin).toEqual([0, 0, 0, 1]);
@@ -120,7 +120,7 @@ describe('Plane', () => {
 
   describe('setBoundaries', () => {
     it('should set and get boundaries', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1]
       );
@@ -134,7 +134,7 @@ describe('Plane', () => {
     });
 
     it('should return default boundaries if not set', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1]
       );
@@ -149,7 +149,7 @@ describe('Plane', () => {
 
   describe('setCoordinateSystem', () => {
     it('should set coordinate system', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1]
       );
@@ -168,7 +168,7 @@ describe('Plane', () => {
 
   describe('containsPoint', () => {
     it('should return true for point on plane', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1]  // Z = 0 plane
       );
@@ -178,7 +178,7 @@ describe('Plane', () => {
     });
 
     it('should return false for point not on plane', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1]  // Z = 0 plane
       );
@@ -188,7 +188,7 @@ describe('Plane', () => {
     });
 
     it('should use tolerance for near-plane points', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1]  // Z = 0 plane
       );
@@ -203,7 +203,7 @@ describe('Plane', () => {
 
   describe('clone', () => {
     it('should create deep copy of plane', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [1, 2, 3, 1],
         [0, 1, 0, 1],
         'projection',
@@ -228,7 +228,7 @@ describe('Plane', () => {
     });
 
     it('should create independent copy', () => {
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 0, 1],
         [0, 0, 1, 1]
       );

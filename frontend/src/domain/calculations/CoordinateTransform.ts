@@ -2,7 +2,7 @@
  * CoordinateTransform - Transformation utilities for coordinate systems
  * 
  * Handles transformations between three coordinate spaces:
- * 1. Plane intrinsic <u,v> - stored coordinates
+ * 1. Plane3D intrinsic <u,v> - stored coordinates
  * 2. Canvas (x_canvas, y_canvas) - 2D rendering
  * 3. 3D world (x,y,z) - 3D visualization
  * 
@@ -10,13 +10,13 @@
  * per Constitution Principle V.
  * 
  * Transformation flow:
- * Plane intrinsic <u,v> ↔ Canvas (x,y) ↔ Viewport
- * Plane intrinsic <u,v> → 3D world (x,y,z)
+ * Plane3D intrinsic <u,v> ↔ Canvas (x,y) ↔ Viewport
+ * Plane3D intrinsic <u,v> → 3D world (x,y,z)
  * 
  * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
  */
 
-import type { PlaneCoordinateSystem, Vector3 } from '../world/Plane';
+import type { PlaneCoordinateSystem, Vector3 } from '../world/Plane3D';
 
 /**
  * 3x3 matrix for 2D homogeneous transformations
@@ -35,8 +35,8 @@ export type Matrix3 = [
  * For P_H: u → x_canvas, v → y_canvas
  * For P_V: u → x_canvas, v → -y_canvas (flip because Z is up, canvas Y is down)
  * 
- * @param u Plane intrinsic u coordinate
- * @param v Plane intrinsic v coordinate
+ * @param u Plane3D intrinsic u coordinate
+ * @param v Plane3D intrinsic v coordinate
  * @param planeId Which plane ('plane_H' or 'plane_V')
  * @param canvasOriginX Canvas origin X (default 400)
  * @param canvasOriginY Canvas origin Y (default 400)
@@ -115,16 +115,16 @@ export function canvasToPlane(
  * Uses the plane's coordinate system to compute 3D position:
  * P_3D = origin + u * uAxis + v * vAxis
  * 
- * @param u Plane intrinsic u coordinate
- * @param v Plane intrinsic v coordinate
- * @param coordinateSystem Plane's coordinate system
+ * @param u Plane3D intrinsic u coordinate
+ * @param v Plane3D intrinsic v coordinate
+ * @param coordinateSystem Plane3D's coordinate system
  * @returns 3D world coordinates [x, y, z, 1]
  */
 export function planeTo3D(
   u: number,
   v: number,
   coordinateSystem: PlaneCoordinateSystem
-): Vector3 {
+): Vector3D {
   const { origin, uAxis, vAxis } = coordinateSystem;
   
   return [

@@ -3,8 +3,8 @@
  * Unit tests for CoordinateTransform utilities
  * 
  * Tests cover:
- * - Plane intrinsic <u,v> ↔ Canvas (x,y) transformations
- * - Plane intrinsic → 3D transformations
+ * - Plane3D intrinsic <u,v> ↔ Canvas (x,y) transformations
+ * - Plane3D intrinsic → 3D transformations
  * - Matrix operations (translation, scale, viewport)
  * - Homogeneous coordinate operations per Constitution Principle V
  */
@@ -299,10 +299,10 @@ describe('CoordinateTransform', () => {
       const originalX = 567;
       const originalY = 234;
       
-      // Canvas → Plane
+      // Canvas → Plane3D
       const [u, v] = canvasToPlane(originalX, originalY, 'plane_H', 400, 400);
       
-      // Plane → Canvas
+      // Plane3D → Canvas
       const [x, y] = planeToCanvas(u, v, 'plane_H', 400, 400);
       
       expect(x).toBe(originalX);

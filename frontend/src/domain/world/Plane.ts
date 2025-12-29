@@ -1,5 +1,5 @@
 /**
- * Plane - 3D plane representation
+ * Plane3D - 3D plane representation
  * 
  * Represents a 3D plane defined by a point and normal vector.
  * Used for projection planes (P_V, P_H) and auxiliary planes.
@@ -7,33 +7,33 @@
  * Per data-model.md §Plane3DByPointAndNormal:
  * - Point on plane (P₀)
  * - Normal vector (n)
- * - Plane equation: n·(P - P₀) = 0
+ * - Plane3D equation: n·(P - P₀) = 0
  * 
  * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
  */
 
 // 3D homogeneous coordinates [x, y, z, 1]
-export type Vector3 = [number, number, number, number];
+export type Vector3D = [number, number, number, number];
 
 export interface PlaneCoordinateSystem {
-  origin: Vector3;     // Origin point on the plane
-  uAxis: Vector3;      // U-axis direction (normalized)
-  vAxis: Vector3;      // V-axis direction (normalized)
+  origin: Vector3D;     // Origin point on the plane
+  uAxis: Vector3D;      // U-axis direction (normalized)
+  vAxis: Vector3D;      // V-axis direction (normalized)
 }
 
 export type PlaneType = 'projection' | 'auxiliary';
 
-export class Plane {
+export class Plane3D {
   id?: string;
-  type: PlaneType;
+  type: Plane3DType;
   label?: string;
   
-  // Plane definition: point + normal
-  point: Vector3;      // Point on the plane
-  normal: Vector3;     // Normal vector (should be normalized)
+  // Plane3D definition: point + normal
+  point: Vector3D;      // Point on the plane
+  normal: Vector3D;     // Normal vector (should be normalized)
   
   // Coordinate system for 2D representation
-  coordinateSystem?: PlaneCoordinateSystem;
+  coordinateSystem?: Plane3DCoordinateSystem;
   
   // Visual boundaries (for rendering)
   boundaries?: {
@@ -44,9 +44,9 @@ export class Plane {
   };
 
   constructor(
-    point: Vector3,
-    normal: Vector3,
-    type: PlaneType = 'auxiliary',
+    point: Vector3D,
+    normal: Vector3D,
+    type: Plane3DType = 'auxiliary',
     label?: string
   ) {
     this.point = [...point] as Vector3;
@@ -58,7 +58,7 @@ export class Plane {
   /**
    * Normalize a vector to unit length
    */
-  private normalize(v: Vector3): Vector3 {
+  private normalize(v: Vector3D): Vector3D {
     const length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     if (length === 0) {
       throw new Error('Cannot normalize zero vector');
@@ -75,7 +75,7 @@ export class Plane {
    * Set the 2D coordinate system for this plane
    * Used to convert between 3D and plane intrinsic <u,v> coordinates
    */
-  setCoordinateSystem(system: PlaneCoordinateSystem): void {
+  setCoordinateSystem(system: Plane3DCoordinateSystem): void {
     this.coordinateSystem = system;
   }
 
@@ -89,7 +89,7 @@ export class Plane {
   /**
    * Check if a 3D point lies on this plane (within tolerance)
    */
-  containsPoint(p: Vector3, tolerance: number = 1e-6): boolean {
+  containsPoint(p: Vector3D, tolerance: number = 1e-6): boolean {
     // Calculate n·(P - P₀)
     const dx = p[0] - this.point[0];
     const dy = p[1] - this.point[1];
@@ -103,8 +103,8 @@ export class Plane {
   /**
    * Clone this plane
    */
-  clone(): Plane {
-    const cloned = new Plane(this.point, this.normal, this.type, this.label);
+  clone(): Plane3D {
+    const cloned = new Plane3D(this.point, this.normal, this.type, this.label);
     if (this.id) {
       cloned.id = this.id;
     }
@@ -125,8 +125,8 @@ export class Plane {
    * Create P_H (horizontal projection plane)
    * Z = 0 plane with origin at (0,0,0)
    */
-  static createPH(): Plane {
-    const plane = new Plane(
+  static createPH(): Plane3D {
+    const plane = new Plane3D(
       [0, 0, 0, 1],           // Origin
       [0, 0, 1, 1],           // Normal: +Z
       'projection',
@@ -150,8 +150,8 @@ export class Plane {
    * Create P_V (vertical projection plane)
    * Y = 0 plane with origin at (0,0,0)
    */
-  static createPV(): Plane {
-    const plane = new Plane(
+  static createPV(): Plane3D {
+    const plane = new Plane3D(
       [0, 0, 0, 1],           // Origin
       [0, 1, 0, 1],           // Normal: +Y
       'projection',

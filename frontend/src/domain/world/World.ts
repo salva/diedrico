@@ -12,19 +12,19 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
  */
 
-import { Point, FreePoint } from './Point';
-import { Plane, Vector3 } from './Plane';
+import { Point2D, FreePoint2D } from './Point';
+import { Plane3D, Vector3D } from './Plane';
 
 export class World {
-  private points: Map<string, Point>;
-  private planes: Map<string, Plane>;
+  private points: Map<string, Point2D>;
+  private planes: Map<string, Plane3D>;
   private nextId: number;
 
   // Fixed elements (always present)
-  originPoint?: Vector3;  // O at (0,0,0)
+  originPoint?: Vector3D;  // O at (0,0,0)
   hingeLineHV?: {         // HL_HV along X-axis
-    start: Vector3;
-    end: Vector3;
+    start: Vector3D;
+    end: Vector3D;
   };
 
   constructor() {
@@ -42,11 +42,11 @@ export class World {
    */
   initializeFixedElements(): void {
     // Create P_H and P_V projection planes
-    const planeH = Plane.createPH();
+    const planeH = Plane3D.createPH();
     planeH.id = 'plane_H';
     this.planes.set('plane_H', planeH);
 
-    const planeV = Plane.createPV();
+    const planeV = Plane3D.createPV();
     planeV.id = 'plane_V';
     this.planes.set('plane_V', planeV);
 
@@ -54,12 +54,12 @@ export class World {
     // These are the 2D projections of the 3D origin point O
     // O_H on P_H: local coordinates (0, -200) — on the hinge line
     // O_V on P_V: local coordinates (0, 200) — on the hinge line
-    const pointOH = new FreePoint([0, -200, 1], planeH);
+    const pointOH = new FreePoint2D([0, -200, 1], planeH);
     pointOH.id = 'O_H';
     pointOH.locked = true;
     this.points.set('O_H', pointOH);
 
-    const pointOV = new FreePoint([0, 200, 1], planeV);
+    const pointOV = new FreePoint2D([0, 200, 1], planeV);
     pointOV.id = 'O_V';
     pointOV.locked = true;
     this.points.set('O_V', pointOV);
@@ -80,7 +80,7 @@ export class World {
    * @param point Point to add
    * @returns The added point with assigned ID if it didn't have one
    */
-  addPoint(point: Point): Point {
+  addPoint(point: Point2D): Point2D {
     if (!point.id) {
       point.id = `point_${this.nextId++}`;
     }
@@ -102,7 +102,7 @@ export class World {
    * @param id Point ID
    * @returns Point if found, undefined otherwise
    */
-  getPointById(id: string): Point | undefined {
+  getPointById(id: string): Point2D | undefined {
     return this.points.get(id);
   }
 
@@ -135,7 +135,7 @@ export class World {
   /**
    * Add a plane to the world
    */
-  addPlane(plane: Plane): Plane {
+  addPlane(plane: Plane3D): Plane3D {
     if (!plane.id) {
       plane.id = `plane_${this.nextId++}`;
     }
@@ -146,28 +146,28 @@ export class World {
   /**
    * Get a plane by ID
    */
-  getPlaneById(id: string): Plane | undefined {
+  getPlaneById(id: string): Plane3D | undefined {
     return this.planes.get(id);
   }
 
   /**
    * Get all planes
    */
-  getAllPlanes(): Plane[] {
+  getAllPlanes(): Plane3D[] {
     return Array.from(this.planes.values());
   }
 
   /**
    * Get P_H plane
    */
-  getPH(): Plane | undefined {
+  getPH(): Plane3D | undefined {
     return this.planes.get('plane_H');
   }
 
   /**
    * Get P_V plane
    */
-  getPV(): Plane | undefined {
+  getPV(): Plane3D | undefined {
     return this.planes.get('plane_V');
   }
 }

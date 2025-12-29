@@ -8,12 +8,12 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { FreePoint, IntersectionPoint } from '@/domain/world/Point';
+import { FreePoint2D, IntersectionPoint2D } from '@/domain/world/Point';
 
-describe('Point', () => {
+describe('Point2D', () => {
   describe('constructor', () => {
     it('should create a free point with coordinates', () => {
-      const point = new FreePoint([10, 20, 1]);
+      const point = new FreePoint2D([10, 20, 1]);
 
       expect(point.coordinates[0]).toBe(10);
       expect(point.coordinates[1]).toBe(20);
@@ -22,7 +22,7 @@ describe('Point', () => {
     });
 
     it('should create an intersection point', () => {
-      const point = new IntersectionPoint([30, 40, 1], 'line_1', 'circle_2', 0);
+      const point = new IntersectionPoint2D([30, 40, 1], 'line_1', 'circle_2', 0);
 
       expect(point.coordinates[0]).toBe(30);
       expect(point.coordinates[1]).toBe(40);
@@ -31,25 +31,25 @@ describe('Point', () => {
     });
 
     it('should default to free type', () => {
-      const point = new FreePoint([10, 20, 1]);
+      const point = new FreePoint2D([10, 20, 1]);
 
       expect(point.type).toBe('free');
     });
 
     it('should accept optional label', () => {
-      const point = new FreePoint([10, 20, 1], undefined, 'Point A');
+      const point = new FreePoint2D([10, 20, 1], undefined, 'Point A');
 
       expect(point.label).toBe('Point A');
     });
 
     it('should accept optional planeId', () => {
-      const point = new FreePoint([10, 20, 1], { id: 'plane_H' });
+      const point = new FreePoint2D([10, 20, 1], { id: 'plane_H' });
 
       expect(point.planeId).toBe('plane_H');
     });
 
     it('should not have an ID initially', () => {
-      const point = new FreePoint([10, 20, 1]);
+      const point = new FreePoint2D([10, 20, 1]);
 
       expect(point.id).toBeUndefined();
     });
@@ -57,7 +57,7 @@ describe('Point', () => {
 
   describe('getHomogeneousCoords', () => {
     it('should return homogeneous coordinates [u, v, 1]', () => {
-      const point = new FreePoint([10, 20, 1]);
+      const point = new FreePoint2D([10, 20, 1]);
 
       const homogeneous = point.getHomogeneousCoords();
 
@@ -65,7 +65,7 @@ describe('Point', () => {
     });
 
     it('should work with negative coordinates', () => {
-      const point = new FreePoint([-5, -15, 1]);
+      const point = new FreePoint2D([-5, -15, 1]);
 
       const homogeneous = point.getHomogeneousCoords();
 
@@ -73,7 +73,7 @@ describe('Point', () => {
     });
 
     it('should work with zero coordinates', () => {
-      const point = new FreePoint([0, 0, 1]);
+      const point = new FreePoint2D([0, 0, 1]);
 
       const homogeneous = point.getHomogeneousCoords();
 
@@ -81,7 +81,7 @@ describe('Point', () => {
     });
 
     it('should work with decimal coordinates', () => {
-      const point = new FreePoint([10.5, 20.75, 1]);
+      const point = new FreePoint2D([10.5, 20.75, 1]);
 
       const homogeneous = point.getHomogeneousCoords();
 
@@ -91,7 +91,7 @@ describe('Point', () => {
 
   describe('setCoordinates', () => {
     it('should update coordinates', () => {
-      const point = new FreePoint([10, 20, 1]);
+      const point = new FreePoint2D([10, 20, 1]);
 
       point.setCoordinates([30, 40, 1]);
 
@@ -101,7 +101,7 @@ describe('Point', () => {
     });
 
     it('should preserve other properties', () => {
-      const point = new FreePoint([10, 20, 1], { id: 'plane_H' }, 'Point A');
+      const point = new FreePoint2D([10, 20, 1], { id: 'plane_H' }, 'Point A');
       point.id = 'point_1';
 
       point.setCoordinates([30, 40, 1]);
@@ -115,7 +115,7 @@ describe('Point', () => {
 
   describe('clone', () => {
     it('should create a deep copy of the point', () => {
-      const original = new FreePoint([10, 20, 1], { id: 'plane_H' }, 'Point A');
+      const original = new FreePoint2D([10, 20, 1], { id: 'plane_H' }, 'Point A');
       original.id = 'point_1';
 
       const clone = original.clone();
@@ -132,7 +132,7 @@ describe('Point', () => {
     });
 
     it('should clone point without ID', () => {
-      const original = new FreePoint([10, 20, 1]);
+      const original = new FreePoint2D([10, 20, 1]);
 
       const clone = original.clone();
 
@@ -142,7 +142,7 @@ describe('Point', () => {
     });
 
     it('should allow modifying clone without affecting original', () => {
-      const original = new FreePoint([10, 20, 1]);
+      const original = new FreePoint2D([10, 20, 1]);
       const clone = original.clone();
 
       clone.setCoordinates([30, 40, 1]);
@@ -158,7 +158,7 @@ describe('Point', () => {
     it('should store coordinates as homogeneous coordinates [u, v, 1]', () => {
       // As per Constitution Principle V,
       // points MUST be stored in homogeneous coordinates [u, v, 1]
-      const point = new FreePoint([100, 200, 1]);
+      const point = new FreePoint2D([100, 200, 1]);
 
       expect(point.coordinates).toEqual([100, 200, 1]);
       expect(point.coordinates).toHaveLength(3);

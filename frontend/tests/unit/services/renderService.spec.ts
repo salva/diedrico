@@ -18,13 +18,13 @@ import {
   applyHoverState,
   applySelectionState
 } from '@/services/RenderService';
-import { Point, FreePoint, IntersectionPoint } from '@/domain/world/Point';
-import { Plane } from '@/domain/world/Plane';
+import { Point2D, FreePoint2D, IntersectionPoint2D } from '@/domain/world/Point';
+import { Plane3D } from "@/domain/world/Plane";
 
 describe('RenderService', () => {
   describe('renderPoint', () => {
     it('should render free point as SVG circle attributes', () => {
-      const point = new FreePoint([100, 50, 1]);
+      const point = new FreePoint2D([100, 50, 1]);
       point.id = 'point_1';
       point.planeId = 'plane_H';
       
@@ -39,7 +39,7 @@ describe('RenderService', () => {
     });
 
     it('should render derived point with different styling', () => {
-      const point = new IntersectionPoint([100, 50, 1], 'line_1', 'circle_2', 0);
+      const point = new IntersectionPoint2D([100, 50, 1], 'line_1', 'circle_2', 0);
       point.id = 'point_2';
       
       const attrs = renderPoint(point);
@@ -49,7 +49,7 @@ describe('RenderService', () => {
     });
 
     it('should handle negative coordinates', () => {
-      const point = new FreePoint([-50, -30, 1]);
+      const point = new FreePoint2D([-50, -30, 1]);
       point.planeId = 'plane_H';
       
       const attrs = renderPoint(point, 400, 400);
@@ -59,7 +59,7 @@ describe('RenderService', () => {
     });
 
     it('should handle custom canvas origin', () => {
-      const point = new FreePoint([10, 20, 1]);
+      const point = new FreePoint2D([10, 20, 1]);
       
       const attrs = renderPoint(point, 200, 300);
       
@@ -68,7 +68,7 @@ describe('RenderService', () => {
     });
 
     it('should handle point without ID', () => {
-      const point = new FreePoint([0, 0, 1]);
+      const point = new FreePoint2D([0, 0, 1]);
       
       const attrs = renderPoint(point);
       
@@ -78,7 +78,7 @@ describe('RenderService', () => {
 
   describe('renderPlane', () => {
     it('should render P_H plane as SVG rectangle attributes', () => {
-      const planeH = Plane.createPH();
+      const planeH = Plane3D.createPH();
       planeH.id = 'plane_H';
       
       const attrs = renderPlane(planeH, 400, 400);
@@ -95,7 +95,7 @@ describe('RenderService', () => {
     });
 
     it('should render P_V plane with different color', () => {
-      const planeV = Plane.createPV();
+      const planeV = Plane3D.createPV();
       planeV.id = 'plane_V';
       
       const attrs = renderPlane(planeV, 400, 400);
@@ -104,7 +104,7 @@ describe('RenderService', () => {
     });
 
     it('should handle custom plane boundaries', () => {
-      const plane = Plane.createPH();
+      const plane = Plane3D.createPH();
       plane.setBoundaries(-100, 200, -150, 250);
       
       const attrs = renderPlane(plane, 400, 400);
@@ -120,7 +120,7 @@ describe('RenderService', () => {
 
     it('should work for any plane without special-case logic', () => {
       // Test with arbitrary auxiliary plane
-      const plane = new Plane(
+      const plane = new Plane3D(
         [0, 0, 5, 1],
         [0, 0, 1, 1],
         'auxiliary'
@@ -214,7 +214,7 @@ describe('RenderService', () => {
 
   describe('applyHoverState', () => {
     it('should apply hover styling to point attributes', () => {
-      const point = new FreePoint([0, 0, 1]);
+      const point = new FreePoint2D([0, 0, 1]);
       point.id = 'point_1';
       const baseAttrs = renderPoint(point);
       
@@ -225,7 +225,7 @@ describe('RenderService', () => {
     });
 
     it('should apply hover styling to plane attributes', () => {
-      const plane = Plane.createPH();
+      const plane = Plane3D.createPH();
       const baseAttrs = renderPlane(plane);
       
       const hoverAttrs = applyHoverState(baseAttrs);
@@ -235,7 +235,7 @@ describe('RenderService', () => {
     });
 
     it('should preserve other attributes', () => {
-      const point = new FreePoint([50, 50, 1]);
+      const point = new FreePoint2D([50, 50, 1]);
       point.id = 'point_1';
       const baseAttrs = renderPoint(point);
       
@@ -250,7 +250,7 @@ describe('RenderService', () => {
 
   describe('applySelectionState', () => {
     it('should apply selection styling to point attributes', () => {
-      const point = new FreePoint([0, 0, 1]);
+      const point = new FreePoint2D([0, 0, 1]);
       point.id = 'point_1';
       const baseAttrs = renderPoint(point);
       
@@ -272,7 +272,7 @@ describe('RenderService', () => {
     });
 
     it('should distinguish from hover state', () => {
-      const point = new FreePoint([0, 0, 1]);
+      const point = new FreePoint2D([0, 0, 1]);
       const baseAttrs = renderPoint(point);
       
       const hoverAttrs = applyHoverState(baseAttrs);
@@ -289,7 +289,7 @@ describe('RenderService', () => {
   describe('Constitution Principle IV compliance', () => {
     it('should render fixed elements using same logic as user elements', () => {
       // Origin point O - should use generic point rendering
-      const originPoint = new FreePoint([0, 0, 1]);
+      const originPoint = new FreePoint2D([0, 0, 1]);
       originPoint.id = 'O';
       originPoint.label = 'Origin';
       
@@ -303,8 +303,8 @@ describe('RenderService', () => {
     });
 
     it('should render P_H using same logic as auxiliary planes', () => {
-      const planeH = Plane.createPH();
-      const auxiliaryPlane = new Plane(
+      const planeH = Plane3D.createPH();
+      const auxiliaryPlane = new Plane3D(
         [0, 0, 10, 1],
         [0, 0, 1, 1]
       );
