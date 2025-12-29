@@ -56,11 +56,11 @@
 
 **⚠️ CRITICAL**: Review [ui-spec.md](./ui-spec.md) in full to understand component hierarchy and interaction patterns before coding.
 
-- [ ] T006 Setup Vue.js 3 + TypeScript + Vite configuration in frontend/
-- [ ] T007 Create App.vue with basic layout structure (header, main workspace, footer)
-- [ ] T008 [P] Create SvgCanvas.vue component in frontend/src/components/canvas/ (empty SVG for now)
-- [ ] T009 [P] Add basic CSS styling in frontend/src/assets/styles/
-- [ ] T010 Mount SvgCanvas in App.vue main workspace area
+- [X] T006 Setup Vue.js 3 + TypeScript + Vite configuration in frontend/
+- [X] T007 Create App.vue with basic layout structure (header, main workspace, footer)
+- [X] T008 [P] Create SvgCanvas.vue component in frontend/src/components/canvas/ (empty SVG for now)
+- [X] T009 [P] Add basic CSS styling in frontend/src/assets/styles/
+- [X] T010 Mount SvgCanvas in App.vue main workspace area
 
 **Checkpoint**: Application loads and displays empty canvas
 
