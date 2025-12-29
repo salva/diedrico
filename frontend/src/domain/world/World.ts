@@ -13,14 +13,52 @@
  */
 
 import { Point } from './Point';
+import { Plane, Vector3 } from './Plane';
 
 export class World {
   private points: Map<string, Point>;
+  private planes: Map<string, Plane>;
   private nextId: number;
+
+  // Fixed elements (always present)
+  originPoint?: Vector3;  // O at (0,0,0)
+  hingeLineHV?: {         // HL_HV along X-axis
+    start: Vector3;
+    end: Vector3;
+  };
 
   constructor() {
     this.points = new Map();
+    this.planes = new Map();
     this.nextId = 1;
+    
+    // Initialize fixed elements
+    this.initializeFixedElements();
+  }
+
+  /**
+   * Initialize fixed elements: P_V, P_H, origin O, and hinge line HL_HV
+   * These are always present and cannot be deleted.
+   */
+  private initializeFixedElements(): void {
+    // Create P_H and P_V projection planes
+    const planeH = Plane.createPH();
+    planeH.id = 'plane_H';
+    this.planes.set('plane_H', planeH);
+
+    const planeV = Plane.createPV();
+    planeV.id = 'plane_V';
+    this.planes.set('plane_V', planeV);
+
+    // Origin point O at (0,0,0)
+    this.originPoint = { x: 0, y: 0, z: 0 };
+
+    // Hinge line HL_HV along X-axis
+    // Extends from -∞ to +∞, but we'll use large finite values for rendering
+    this.hingeLineHV = {
+      start: { x: -10000, y: 0, z: 0 },
+      end: { x: 10000, y: 0, z: 0 }
+    };
   }
 
   /**
@@ -67,7 +105,10 @@ export class World {
    */
   clear(): void {
     this.points.clear();
+    this.planes.clear();
     this.nextId = 1;
+    // Reinitialize fixed elements
+    this.initializeFixedElements();
   }
 
   /**
@@ -75,5 +116,44 @@ export class World {
    */
   getPointCount(): number {
     return this.points.size;
+  }
+
+  /**
+   * Add a plane to the world
+   */
+  addPlane(plane: Plane): Plane {
+    if (!plane.id) {
+      plane.id = `plane_${this.nextId++}`;
+    }
+    this.planes.set(plane.id, plane);
+    return plane;
+  }
+
+  /**
+   * Get a plane by ID
+   */
+  getPlaneById(id: string): Plane | undefined {
+    return this.planes.get(id);
+  }
+
+  /**
+   * Get all planes
+   */
+  getAllPlanes(): Plane[] {
+    return Array.from(this.planes.values());
+  }
+
+  /**
+   * Get P_H plane
+   */
+  getPH(): Plane | undefined {
+    return this.planes.get('plane_H');
+  }
+
+  /**
+   * Get P_V plane
+   */
+  getPV(): Plane | undefined {
+    return this.planes.get('plane_V');
   }
 }
