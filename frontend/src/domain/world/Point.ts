@@ -16,36 +16,26 @@
 
 export type PointType = 'free' | 'intersection';
 
-export interface IntersectionDefinition {
-  element1Id: string;  // ID of first intersecting element
-  element2Id: string;  // ID of second intersecting element
-  index: number;       // Index to identify which intersection (0, 1, 2...) when multiple exist
-}
-
-export class Point {
+/**
+ * Base Point class with common fields for all point types
+ */
+export abstract class Point {
   id?: string;
   coordinates: [number, number, number];  // Homogeneous coordinates [u, v, 1]
-  type: PointType;
+  abstract readonly type: PointType;
   label?: string;
   planeId?: string;  // Which projection plane this point belongs to
   locked?: boolean;  // If true, point cannot be moved or deleted
-  
-  // For intersection points only
-  intersection?: IntersectionDefinition;
 
   constructor(
     coordinates: [number, number, number],  // Homogeneous [u, v, 1]
-    type: PointType = 'free',
     plane?: { id?: string },
-    label?: string,
-    intersection?: IntersectionDefinition
+    label?: string
   ) {
     this.coordinates = coordinates;
-    this.type = type;
     this.label = label;
     this.planeId = plane?.id;
     this.locked = false;
-    this.intersection = intersection;
   }
 
   /**
@@ -66,22 +56,7 @@ export class Point {
   /**
    * Clone this point
    */
-  clone(): Point {
-    const cloned = new Point(
-      [...this.coordinates] as [number, number, number],
-      this.type,
-      this.planeId ? { id: this.planeId } : undefined,
-      this.label,
-      this.intersection ? { ...this.intersection } : undefined
-    );
-    if (this.id) {
-      cloned.id = this.id;
-    }
-    if (this.locked !== undefined) {
-      cloned.locked = this.locked;
-    }
-    return cloned;
-  }
+  abstract clone(): Point;
 
   /**
    * Getter for u coordinate (convenience accessor)
@@ -96,25 +71,76 @@ export class Point {
   get v(): number {
     return this.coordinates[1];
   }
+}
 
-  /**
-   * Create an intersection point
-   * Static factory method for creating points defined by intersection of two elements
-   */
-  static createIntersection(
+/**
+ * Free Point - defined by its position inside the projection plane
+ */
+export class FreePoint extends Point {
+  readonly type: 'free' = 'free';
+
+  constructor(
+    coordinates: [number, number, number],
+    plane?: { id?: string },
+    label?: string
+  ) {
+    super(coordinates, plane, label);
+  }
+
+  clone(): FreePoint {
+    const cloned = new FreePoint(
+      [...this.coordinates] as [number, number, number],
+      this.planeId ? { id: this.planeId } : undefined,
+      this.label
+    );
+    if (this.id) {
+      cloned.id = this.id;
+    }
+    if (this.locked !== undefined) {
+      cloned.locked = this.locked;
+    }
+    return cloned;
+  }
+}
+
+/**
+ * Intersection Point - defined as intersection of two objects
+ */
+export class IntersectionPoint extends Point {
+  readonly type: 'intersection' = 'intersection';
+  element1Id: string;  // ID of first intersecting element
+  element2Id: string;  // ID of second intersecting element
+  index: number;       // Index to identify which intersection (0, 1, 2...) when multiple exist
+
+  constructor(
     coordinates: [number, number, number],
     element1Id: string,
     element2Id: string,
     index: number,
     plane?: { id?: string },
     label?: string
-  ): Point {
-    return new Point(
-      coordinates,
-      'intersection',
-      plane,
-      label,
-      { element1Id, element2Id, index }
+  ) {
+    super(coordinates, plane, label);
+    this.element1Id = element1Id;
+    this.element2Id = element2Id;
+    this.index = index;
+  }
+
+  clone(): IntersectionPoint {
+    const cloned = new IntersectionPoint(
+      [...this.coordinates] as [number, number, number],
+      this.element1Id,
+      this.element2Id,
+      this.index,
+      this.planeId ? { id: this.planeId } : undefined,
+      this.label
     );
+    if (this.id) {
+      cloned.id = this.id;
+    }
+    if (this.locked !== undefined) {
+      cloned.locked = this.locked;
+    }
+    return cloned;
   }
 }

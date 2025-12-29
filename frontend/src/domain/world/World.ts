@@ -12,7 +12,7 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
  */
 
-import { Point } from './Point';
+import { Point, FreePoint } from './Point';
 import { Plane, Vector3 } from './Plane';
 
 export class World {
@@ -54,12 +54,12 @@ export class World {
     // These are the 2D projections of the 3D origin point O
     // O_H on P_H: local coordinates (0, -200) — on the hinge line
     // O_V on P_V: local coordinates (0, 200) — on the hinge line
-    const pointOH = new Point([0, -200, 1], 'free', planeH);
+    const pointOH = new FreePoint([0, -200, 1], planeH);
     pointOH.id = 'O_H';
     pointOH.locked = true;
     this.points.set('O_H', pointOH);
 
-    const pointOV = new Point([0, 200, 1], 'free', planeV);
+    const pointOV = new FreePoint([0, 200, 1], planeV);
     pointOV.id = 'O_V';
     pointOV.locked = true;
     this.points.set('O_V', pointOV);

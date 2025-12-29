@@ -18,13 +18,13 @@ import {
   applyHoverState,
   applySelectionState
 } from '@/services/RenderService';
-import { Point } from '@/domain/world/Point';
+import { Point, FreePoint, IntersectionPoint } from '@/domain/world/Point';
 import { Plane } from '@/domain/world/Plane';
 
 describe('RenderService', () => {
   describe('renderPoint', () => {
     it('should render free point as SVG circle attributes', () => {
-      const point = new Point([100, 50, 1], 'free');
+      const point = new FreePoint([100, 50, 1]);
       point.id = 'point_1';
       point.planeId = 'plane_H';
       
@@ -39,7 +39,7 @@ describe('RenderService', () => {
     });
 
     it('should render derived point with different styling', () => {
-      const point = new Point([100, 50, 1], 'intersection');
+      const point = new IntersectionPoint([100, 50, 1], 'line_1', 'circle_2', 0);
       point.id = 'point_2';
       
       const attrs = renderPoint(point);
@@ -49,7 +49,7 @@ describe('RenderService', () => {
     });
 
     it('should handle negative coordinates', () => {
-      const point = new Point([-50, -30, 1], 'free');
+      const point = new FreePoint([-50, -30, 1]);
       point.planeId = 'plane_H';
       
       const attrs = renderPoint(point, 400, 400);
@@ -59,7 +59,7 @@ describe('RenderService', () => {
     });
 
     it('should handle custom canvas origin', () => {
-      const point = new Point([10, 20, 1], 'free');
+      const point = new FreePoint([10, 20, 1]);
       
       const attrs = renderPoint(point, 200, 300);
       
@@ -68,7 +68,7 @@ describe('RenderService', () => {
     });
 
     it('should handle point without ID', () => {
-      const point = new Point([0, 0, 1], 'free');
+      const point = new FreePoint([0, 0, 1]);
       
       const attrs = renderPoint(point);
       
@@ -214,7 +214,7 @@ describe('RenderService', () => {
 
   describe('applyHoverState', () => {
     it('should apply hover styling to point attributes', () => {
-      const point = new Point([0, 0, 1], 'free');
+      const point = new FreePoint([0, 0, 1]);
       point.id = 'point_1';
       const baseAttrs = renderPoint(point);
       
@@ -235,7 +235,7 @@ describe('RenderService', () => {
     });
 
     it('should preserve other attributes', () => {
-      const point = new Point([50, 50, 1], 'free');
+      const point = new FreePoint([50, 50, 1]);
       point.id = 'point_1';
       const baseAttrs = renderPoint(point);
       
@@ -250,7 +250,7 @@ describe('RenderService', () => {
 
   describe('applySelectionState', () => {
     it('should apply selection styling to point attributes', () => {
-      const point = new Point([0, 0, 1], 'free');
+      const point = new FreePoint([0, 0, 1]);
       point.id = 'point_1';
       const baseAttrs = renderPoint(point);
       
@@ -272,7 +272,7 @@ describe('RenderService', () => {
     });
 
     it('should distinguish from hover state', () => {
-      const point = new Point([0, 0, 1], 'free');
+      const point = new FreePoint([0, 0, 1]);
       const baseAttrs = renderPoint(point);
       
       const hoverAttrs = applyHoverState(baseAttrs);
@@ -289,7 +289,7 @@ describe('RenderService', () => {
   describe('Constitution Principle IV compliance', () => {
     it('should render fixed elements using same logic as user elements', () => {
       // Origin point O - should use generic point rendering
-      const originPoint = new Point([0, 0, 1], 'free');
+      const originPoint = new FreePoint([0, 0, 1]);
       originPoint.id = 'O';
       originPoint.label = 'Origin';
       
