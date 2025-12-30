@@ -185,6 +185,50 @@
 
 ---
 
+## Phase 6.5: Refactor Point Creation to Command Pattern (URGENT - Constitution Compliance)
+
+**Purpose**: Enforce constitutional requirement for command pattern  
+**Reference**: [constitution.md](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-all-user-actions) - Command Pattern Principle (MANDATORY)
+
+**Current Issue**: 
+- ⚠️ **VIOLATION**: Point creation in SvgCanvas.vue directly mutates World without using Command pattern
+- This violates Constitution Principle II which is MANDATORY for ALL user actions
+- Must be fixed before proceeding with additional features
+
+**Implementation Requirements**:
+- **Constitutional Requirement**: ALL user actions MUST use Command pattern per [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability)
+- **Command Interface**: Commands must implement execute(), undo(), validate() methods per [data-model.md §Command Pattern](./data-model.md#command-pattern)
+- **Incremental Execution**: Per data-model.md, operations execute immediately as added to command (not deferred)
+- **CommandStack**: Implement undo/redo stack infrastructure for future undo/redo UI (Phase 10)
+- **World Consistency**: Commands must maintain World state consistency
+- **No UI Changes Yet**: Focus on architecture - undo/redo buttons come in Phase 10
+
+**⚠️ CRITICAL**: This phase must be completed before adding more features. All future features will use this command infrastructure.
+
+- [ ] T062a [P] Create Command interface in frontend/src/commands/Command.ts with execute/undo/validate methods
+- [ ] T063a [P] Create CommandStack class in frontend/src/commands/CommandStack.ts (basic implementation, UI in Phase 10)
+- [ ] T064a [P] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
+  - Implements Command interface
+  - execute(): Generates point ID, creates FreePoint2D, adds to World
+  - undo(): Removes point from World
+  - validate(): Checks coordinate validity, plane exists
+- [ ] T066a Refactor point creation in SvgCanvas.vue to use CreateFreePointCommand instead of direct World mutation
+  - Replace direct `world.addPoint(newPoint)` with `commandStack.execute(new CreateFreePointCommand(...))`
+  - Keep same user interaction (click to create)
+  - No UI changes - purely architectural refactor
+- [ ] T072a [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+  - Test execute, undo, redo operations
+  - Test stack state management
+- [ ] T073a [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePointCommand.spec.ts
+  - Test command execution creates point
+  - Test command undo removes point
+  - Test validation rules
+- [ ] T074a [P] Integration test: Point creation through command pattern works end-to-end
+
+**Checkpoint**: ✅ Point creation uses Command pattern (Constitution Principle II satisfied for points). Ready to add undo/redo UI in Phase 10.
+
+---
+
 ## Phase 7: Add 2D Lines
 
 **Purpose**: Support line geometry  
