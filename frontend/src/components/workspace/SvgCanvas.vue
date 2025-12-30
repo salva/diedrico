@@ -88,6 +88,8 @@ import { PaperService, type PrimitiveContext } from '@/services/PaperService';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
 import { useToolStore } from '@/stores/toolStore';
+import { useViewStore } from '@/stores/viewStore';
+import { useViewport } from '@/composables/useViewport';
 
 const svgElement = ref<SVGSVGElement | null>(null);
 
@@ -99,12 +101,11 @@ const canvasWidth = ref(1600);
 const canvasHeight = ref(1000);
 
 // Viewport transformation (pan/zoom)
-// For Phase 3, we use identity transform (no pan/zoom yet)
-const viewport: ViewportTransform = {
-  zoom: 1.0,
-  panX: 0,
-  panY: 0
-};
+const viewStore = useViewStore();
+const viewport = computed<ViewportTransform>(() => viewStore.viewportState.value);
+
+// Setup viewport interactions (pan/zoom)
+useViewport({ element: svgElement });
 
 // Services
 const paperService = new PaperService();
@@ -208,7 +209,7 @@ const renderedPoints = computed(() => {
   return primitives.value
     .filter(p => p.type === 'point')
     .map(p => {
-      const result = svgRenderer.renderPrimitive(p, viewport);
+      const result = svgRenderer.renderPrimitive(p, viewport.value);
       console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
@@ -259,7 +260,7 @@ function handleCanvasClick(event: MouseEvent) {
     canvasPoint.x,
     canvasPoint.y,
     planeTransform,
-    viewport
+    viewport.value
   );
   
   if (!planePos) {
