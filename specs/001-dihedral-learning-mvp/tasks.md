@@ -218,11 +218,11 @@ User clicks → SvgCanvas (coordinate conversion)
 
 ### Sublayer 1: Operations (Atomic Mutations)
 
-- [ ] T062a [P] Create Operation base types in frontend/src/commands/operations/
+- [X] T062a [P] Create Operation base types in frontend/src/commands/operations/
   - IOperation interface with apply(project) and undo(project) methods
   - OperationResult type with success, outputs, error
   - Create operations/ subdirectory for operation implementations
-- [ ] T062b [P] Create World operations in frontend/src/commands/operations/WorldOperations.ts
+- [X] T062b [P] Create World operations in frontend/src/commands/operations/WorldOperations.ts
   - AddElementOp: Adds element to World (stores element data)
   - RemoveElementOp: Removes element from World (stores beforeState for undo)
   - UpdateElementOp: Updates element properties (stores before/after state)
@@ -230,12 +230,12 @@ User clicks → SvgCanvas (coordinate conversion)
 
 ### Sublayer 2: Commands (Operation Composition)
 
-- [ ] T063a [P] Create Command base class in frontend/src/commands/Command.ts
+- [X] T063a [P] Create Command base class in frontend/src/commands/Command.ts
   - Properties: id, timestamp, description, operations[], status
   - CommandStatus enum: Building, Committed, Undone
   - Methods: addAndExecute(operation), commit(), rollback(), undo(), redo()
   - Incremental execution pattern: operations execute immediately when added
-- [ ] T063b [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
+- [X] T063b [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
   - Manages undoStack and redoStack arrays
   - Methods: execute(command), undo(), redo(), canUndo(), canRedo()
   - Clears redo stack when new command executed
@@ -243,24 +243,24 @@ User clicks → SvgCanvas (coordinate conversion)
 
 ### Sublayer 3: Tools (User Interaction Controllers)
 
-- [ ] T065a [P] Create ITool interface in frontend/src/tools/ITool.ts
+- [X] T065a [P] Create ITool interface in frontend/src/tools/ITool.ts
   - handleClick(coords, context): Called by SvgCanvas with plane coordinates
   - context contains: planeId, commandStack, world
   - Tools create and execute commands, return success/failure
-- [ ] T065b [P] Create BaseTool abstract class in frontend/src/tools/BaseTool.ts
+- [X] T065b [P] Create BaseTool abstract class in frontend/src/tools/BaseTool.ts
   - Implements common tool functionality
   - Helper methods for coordinate validation, element lookup
   - Subclasses override handleClick() to implement specific behavior
 
 ### Sublayer 4: Specific Implementations
 
-- [ ] T064a Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
+- [X] T064a Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
   - Extends Command base class
   - Constructor takes: planePos (Vector3), planeId (string), world (World)
   - Composes AddElementOp to add point to World
   - execute() generates point ID, creates operation, calls addAndExecute()
   - undo() inherited from Command base (reverses operations)
-- [ ] T065c Create PointTool in frontend/src/tools/PointTool.ts
+- [X] T065c Create PointTool in frontend/src/tools/PointTool.ts
   - Extends BaseTool
   - handleClick() creates and executes CreateFreePointCommand
   - Validates coordinates, plane existence
@@ -268,7 +268,7 @@ User clicks → SvgCanvas (coordinate conversion)
 
 ### Sublayer 5: Integration
 
-- [ ] T066a Refactor SvgCanvas.vue to delegate to tool system
+- [X] T066a Refactor SvgCanvas.vue to delegate to tool system
   - Remove direct World manipulation from handleCanvasClick
   - Import ITool and tool implementations
   - Get active tool from toolStore, map to tool instance
