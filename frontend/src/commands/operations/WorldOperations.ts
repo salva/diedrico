@@ -10,6 +10,33 @@
 import type { IOperation, OperationResult } from './IOperation';
 import type { World } from '@/domain/world/World';
 import type { Point2D } from '@/domain/world/Point';
+import { FreePoint2D, IntersectionPoint2D } from '@/domain/world/Point';
+import { Vector3 } from 'three';
+
+/**
+ * Helper: Create Point2D from serialized data
+ */
+function createPointFromData(data: Record<string, any>): Point2D {
+  if (data.type === 'free') {
+    return new FreePoint2D(
+      data.id,
+      new Vector3(data.position.x, data.position.y, data.position.z),
+      data.planeId,
+      data.label
+    );
+  } else if (data.type === 'intersection') {
+    return new IntersectionPoint2D(
+      data.id,
+      data.element1Id,
+      data.element2Id,
+      data.index,
+      data.planeId,
+      data.label
+    );
+  }
+  
+  throw new Error(`Unknown point type: ${data.type}`);
+}
 
 /**
  * AddElementOp - Adds a new element to the World
@@ -40,7 +67,7 @@ export class AddElementOp implements IOperation {
       
       if (elementType === 'point') {
         // Create point from data
-        const point = this.createPointFromData(elementData);
+        const point = createPointFromData(elementData);
         
         // Add to world
         world.addPoint(point);
@@ -84,32 +111,6 @@ export class AddElementOp implements IOperation {
     if (elementType === 'point') {
       world.removePoint(elementId);
     }
-  }
-
-  private createPointFromData(data: Record<string, any>): Point2D {
-    // Import dynamically to avoid circular dependencies
-    const { FreePoint2D, IntersectionPoint2D } = require('@/domain/world/Point');
-    const { Vector3 } = require('three');
-    
-    if (data.type === 'free') {
-      return new FreePoint2D(
-        data.id,
-        new Vector3(data.position.x, data.position.y, data.position.z),
-        data.planeId,
-        data.label
-      );
-    } else if (data.type === 'intersection') {
-      return new IntersectionPoint2D(
-        data.id,
-        data.element1Id,
-        data.element2Id,
-        data.index,
-        data.planeId,
-        data.label
-      );
-    }
-    
-    throw new Error(`Unknown point type: ${data.type}`);
   }
 }
 
@@ -173,35 +174,9 @@ export class RemoveElementOp implements IOperation {
     
     if (elementType === 'point') {
       // Recreate point from beforeState
-      const point = this.createPointFromData(beforeState);
+      const point = createPointFromData(beforeState);
       world.addPoint(point);
     }
-  }
-
-  private createPointFromData(data: Record<string, any>): Point2D {
-    // Same as AddElementOp
-    const { FreePoint2D, IntersectionPoint2D } = require('@/domain/world/Point');
-    const { Vector3 } = require('three');
-    
-    if (data.type === 'free') {
-      return new FreePoint2D(
-        data.id,
-        new Vector3(data.position.x, data.position.y, data.position.z),
-        data.planeId,
-        data.label
-      );
-    } else if (data.type === 'intersection') {
-      return new IntersectionPoint2D(
-        data.id,
-        data.element1Id,
-        data.element2Id,
-        data.index,
-        data.planeId,
-        data.label
-      );
-    }
-    
-    throw new Error(`Unknown point type: ${data.type}`);
   }
 }
 
