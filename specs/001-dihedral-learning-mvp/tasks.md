@@ -241,16 +241,17 @@ commandStack.commit(cmd);
   - execute() generates point ID, creates operation, calls addAndExecute()
   - undo() inherited from Command base (reverses operations)
   - validate() checks coordinate validity, plane exists
-- [ ] T066a Refactor point creation in SvgCanvas.vue to use CreateFreePointCommand
-  - Import CommandStack and CreateFreePointCommand
-  - Create commandStack instance (or inject from store)
-  - Replace direct `world.addPoint(newPoint)` with:
-    ```typescript
-    const command = new CreateFreePointCommand(planePos, activePlaneId);
-    commandStack.execute(command);
-    ```
-  - Remove manual `worldVersion.value++` (operation handles this)
-  - Keep same user interaction (click to create)
+- [ ] T065a Create tool interaction system in frontend/src/tools/
+  - Create ITool interface with handleClick(coords, context) method
+  - Create PointTool class that creates CreateFreePointCommand
+  - Tools are responsible for translating user input into commands
+  - SvgCanvas delegates to active tool, doesn't create commands itself
+- [ ] T066a Refactor SvgCanvas.vue to delegate to tool system
+  - Remove direct World manipulation from handleCanvasClick
+  - Get active tool from toolStore
+  - Delegate click to active tool: `activeTool.handleClick(planePos, { planeId, commandStack })`
+  - Tool creates and executes command
+  - SvgCanvas only handles: coordinate conversion, tool delegation, rendering
   - No UI changes - purely architectural refactor
 - [ ] T072a [P] Unit test for Operations in frontend/tests/unit/commands/operations.spec.ts
   - Test AddElementOp: apply adds element, undo removes it
