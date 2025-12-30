@@ -25,6 +25,7 @@ import type {
   Primitive,
   PointPrimitive,
   PathPrimitive,
+  LinePrimitive,
   CirclePrimitive,
   ArcPrimitive,
   TextPrimitive,
@@ -174,6 +175,109 @@ export class SVGRenderer {
   }
 
   /**
+   * Render a LinePrimitive to SVG line element
+   * 
+   * Line equation: ax + by + c = 0 (in paper space)
+   * Clip line to viewport bounds and render as SVG line segment
+   * 
+   * Algorithm:
+   * 1. Apply viewport transform to line equation
+   * 2. Compute viewport bounding box
+   * 3. Find intersection points with viewport edges
+   * 4. Render line segment between intersection points
+   */
+  private renderLine(
+    primitive: LinePrimitive,
+    viewport: ViewportTransform
+  ): SVGAttributes {
+    // Transform line equation from paper space to canvas space
+    // Line in paper: a·x_p + b·y_p + c = 0
+    // With viewport transform: x_c = (x_p + panX) * zoom, y_c = (y_p + panY) * zoom
+    // Inverse: x_p = x_c/zoom - panX, y_p = y_c/zoom - panY
+    // Substitute into line equation:
+    // a·(x_c/zoom - panX) + b·(y_c/zoom - panY) + c = 0
+    // (a/zoom)·x_c + (b/zoom)·y_c + (c - a·panX - b·panY) = 0
+    // Multiply by zoom: a·x_c + b·y_c + zoom·(c - a·panX - b·panY) = 0
+    
+    const a = primitive.a;
+    const b = primitive.b;
+    const c_canvas = viewport.zoom * (primitive.c - primitive.a * viewport.panX - primitive.b * viewport.panY);
+
+    // Get viewport bounds (assume canvas size, will be clipped by SVG viewBox)
+    // For now, use large bounds - TODO: get actual canvas dimensions
+    const viewportBounds = {
+      xMin: -5000,
+      xMax: 5000,
+      yMin: -5000,
+      yMax: 5000,
+    };
+
+    // Find intersection points with viewport edges
+    // Line: a·x + b·y + c = 0
+    // Solve for intersections with each edge
+    const intersections: Array<[number, number]> = [];
+
+    // Check if line is more horizontal or vertical
+    if (Math.abs(a) > Math.abs(b)) {
+      // More vertical - intersect with top and bottom edges
+      // Top edge (y = yMin): x = -(b·yMin + c) / a
+      if (Math.abs(a) > 1e-10) {
+        const xTop = -(b * viewportBounds.yMin + c_canvas) / a;
+        if (xTop >= viewportBounds.xMin && xTop <= viewportBounds.xMax) {
+          intersections.push([xTop, viewportBounds.yMin]);
+        }
+        // Bottom edge (y = yMax)
+        const xBottom = -(b * viewportBounds.yMax + c_canvas) / a;
+        if (xBottom >= viewportBounds.xMin && xBottom <= viewportBounds.xMax) {
+          intersections.push([xBottom, viewportBounds.yMax]);
+        }
+      }
+    } else {
+      // More horizontal - intersect with left and right edges
+      // Left edge (x = xMin): y = -(a·xMin + c) / b
+      if (Math.abs(b) > 1e-10) {
+        const yLeft = -(a * viewportBounds.xMin + c_canvas) / b;
+        if (yLeft >= viewportBounds.yMin && yLeft <= viewportBounds.yMax) {
+          intersections.push([viewportBounds.xMin, yLeft]);
+        }
+        // Right edge (x = xMax)
+        const yRight = -(a * viewportBounds.xMax + c_canvas) / b;
+        if (yRight >= viewportBounds.yMin && yRight <= viewportBounds.yMax) {
+          intersections.push([viewportBounds.xMax, yRight]);
+        }
+      }
+    }
+
+    // Need at least 2 intersection points
+    if (intersections.length < 2) {
+      // Line doesn't intersect viewport - return invisible line
+      return {
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+        stroke: 'none',
+        'data-primitive-id': primitive.id,
+        'data-entity-id': primitive.sourceEntityId || 'unknown',
+      };
+    }
+
+    // Render line segment between first two intersection points
+    return {
+      x1: intersections[0][0],
+      y1: intersections[0][1],
+      x2: intersections[1][0],
+      y2: intersections[1][1],
+      stroke: primitive.style.stroke,
+      'stroke-width': primitive.style.strokeWidth,
+      'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+      opacity: primitive.style.opacity,
+      'data-primitive-id': primitive.id,
+      'data-entity-id': primitive.sourceEntityId || 'unknown',
+    };
+  }
+
+  /**
    * Render an ArcPrimitive to SVG path attributes
    */
   private renderArc(
@@ -262,6 +366,8 @@ export class SVGRenderer {
         return { element: 'circle', attributes: this.renderPoint(primitive, viewport) };
       case 'path':
         return { element: 'path', attributes: this.renderPath(primitive, viewport) };
+      case 'line':
+        return { element: 'line', attributes: this.renderLine(primitive, viewport) };
       case 'circle':
         return { element: 'circle', attributes: this.renderCircle(primitive, viewport) };
       case 'arc':

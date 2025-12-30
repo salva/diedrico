@@ -31,11 +31,13 @@
 
 import { Matrix3 } from 'three';
 import type { Point2D, Point2DRealization } from '../domain/world/Point';
+import type { Line2D, Line2DRealization } from '../domain/world/Line';
 import type { World } from '../domain/world/World';
 import {
   Paper,
   type Primitive,
   type PointPrimitive,
+  type LinePrimitive,
   type ResolvedStyle,
   RenderLayer,
 } from '../domain/presentation/Paper';
@@ -79,7 +81,21 @@ export class PaperService {
       }
     }
 
-    // TODO: Add primitives for other element types (lines, segments, circles, etc.)
+    // WALK: Iterate over all lines in the world
+    for (const line of context.world.getAllLines()) {
+      // REALIZE: Get computed line equation (numeric data)
+      const realization = context.world.getLine2DRealization(line.id!);
+      // Get plane transformation matrix
+      const transform = context.planeTransforms.get(line.planeId!);
+      
+      if (realization && transform) {
+        // RENDER: Generate primitive using realization (numeric) + line (structural)
+        const primitive = this.lineToPrimitive(line, realization, transform, context);
+        primitives.push(primitive);
+      }
+    }
+
+    // TODO: Add primitives for other element types (segments, circles, etc.)
 
     return primitives;
   }
@@ -147,6 +163,85 @@ export class PaperService {
       fill,
       opacity: 1.0,
       zIndex: 10,
+    };
+  }
+
+  /**
+   * Convert a Line2D + realization to a LinePrimitive
+   * Applies plane-to-paper transformation to line equation
+   * 
+   * Line equation transformation:
+   * - Plane space: a_p·u + b_p·v + c_p = 0
+   * - Paper space: a·x + b·y + c = 0
+   * 
+   * The transformation from plane <u,v> to paper <x,y> is:
+   *   [x]   [m11 m12 m13] [u]
+   *   [y] = [m21 m22 m23] [v]
+   *   [1]   [m31 m32 m33] [1]
+   * 
+   * To transform line equation, we apply inverse transpose:
+   *   [a]       [m11 m21 m31]^-1 [a_p]
+   *   [b]   =   [m12 m22 m32]    [b_p]
+   *   [c]       [m13 m23 m33]    [c_p]
+   */
+  private lineToPrimitive(
+    line: Line2D,
+    realization: Line2DRealization,
+    planeToPaperMatrix: Matrix3,
+    context: PrimitiveContext
+  ): LinePrimitive {
+    const isHighlighted = context.highlightedEntityIds?.has(line.id!) || false;
+
+    // Transform line equation from plane to paper coordinates
+    // For line equation transformation, we need inverse transpose of the matrix
+    const invTranspose = planeToPaperMatrix.clone().invert().transpose();
+    
+    // Apply transformation to line coefficients [a, b, c]
+    const planeCoeffs = [realization.a, realization.b, realization.c];
+    const paperA = invTranspose.elements[0] * planeCoeffs[0] + 
+                   invTranspose.elements[1] * planeCoeffs[1] + 
+                   invTranspose.elements[2] * planeCoeffs[2];
+    const paperB = invTranspose.elements[3] * planeCoeffs[0] + 
+                   invTranspose.elements[4] * planeCoeffs[1] + 
+                   invTranspose.elements[5] * planeCoeffs[2];
+    const paperC = invTranspose.elements[6] * planeCoeffs[0] + 
+                   invTranspose.elements[7] * planeCoeffs[1] + 
+                   invTranspose.elements[8] * planeCoeffs[2];
+
+    // Resolve visual style
+    const style = this.resolveLineStyle(line, isHighlighted);
+
+    return {
+      type: 'line',
+      id: `line-${line.id}`,
+      sourceEntityId: line.id,
+      layer: RenderLayer.Elements,
+      visible: true, // TODO: Compute from subprocess visibility + infeasibility
+      style,
+      a: paperA,
+      b: paperB,
+      c: paperC,
+    };
+  }
+
+  /**
+   * Resolve visual style for a line
+   * TODO: Implement style inheritance from process tree
+   */
+  private resolveLineStyle(
+    line: Line2D,
+    isHighlighted: boolean
+  ): ResolvedStyle {
+    const stroke = isHighlighted ? '#6BB6FF' : '#333333';
+    const strokeWidth = isHighlighted ? 2 : 1.5;
+
+    return {
+      stroke,
+      strokeWidth,
+      strokeStyle: 'solid',
+      fill: 'none',
+      opacity: 1.0,
+      zIndex: 5, // Lines render below points
     };
   }
 

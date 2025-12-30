@@ -47,6 +47,13 @@
       <line x1="0" :y1="canvasHeight / 2" :x2="canvasWidth" :y2="canvasHeight / 2" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5" />
       <line :x1="canvasWidth / 2" y1="0" :x2="canvasWidth / 2" :y2="canvasHeight" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5" />
       
+      <!-- Render all lines through Paper pipeline -->
+      <line
+        v-for="{ primitive, attrs } in renderedLines"
+        :key="primitive.id"
+        v-bind="attrs"
+      />
+      
       <!-- Render all points through Paper pipeline -->
       <circle
         v-for="{ primitive, attrs } in renderedPoints"
@@ -222,6 +229,19 @@ const renderedPoints = computed(() => {
     .map(p => {
       const result = svgRenderer.renderPrimitive(p, viewport.value);
       console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+      return {
+        primitive: p,
+        attrs: result.attributes
+      };
+    });
+});
+
+const renderedLines = computed(() => {
+  return primitives.value
+    .filter(p => p.type === 'line')
+    .map(p => {
+      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      console.log('Rendering line primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
         attrs: result.attributes

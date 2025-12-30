@@ -81,6 +81,18 @@ export interface PathPrimitive extends DrawingPrimitive {
 }
 
 /**
+ * Line primitive - infinite line (clipped to viewport bounds)
+ * Line equation: ax + by + c = 0
+ * All coefficients in paper coordinate system
+ */
+export interface LinePrimitive extends DrawingPrimitive {
+  type: 'line';
+  a: number;                        // Coefficient for x in line equation
+  b: number;                        // Coefficient for y in line equation
+  c: number;                        // Constant term in line equation
+}
+
+/**
  * Circle primitive
  * Coordinates in paper coordinate system
  */
@@ -124,7 +136,8 @@ export interface TextPrimitive extends DrawingPrimitive {
  */
 export type Primitive = 
   | PointPrimitive 
-  | PathPrimitive 
+  | PathPrimitive
+  | LinePrimitive
   | CirclePrimitive 
   | ArcPrimitive 
   | TextPrimitive;

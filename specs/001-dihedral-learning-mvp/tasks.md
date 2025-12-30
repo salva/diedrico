@@ -325,10 +325,10 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: Study [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases) - ALL geometry must use general algorithms, not hardcoded special cases.
 
-- [ ] T040 [P] Create Line class in frontend/src/domain/world/Line.ts with two Point endpoints
-- [ ] T041 Add line storage to World class
-- [ ] T042 Render lines as SVG line elements in SvgCanvas.vue
-- [ ] T043 [P] Apply line styling (color, stroke width)
+- [X] T040 [P] Create Line class in frontend/src/domain/world/Line.ts with two Point endpoints
+- [X] T041 Add line storage to World class
+- [X] T042 Render lines as SVG line elements in SvgCanvas.vue
+- [X] T043 [P] Apply line styling (color, stroke width)
 - [ ] T044 [P] Unit test for Line class in frontend/tests/unit/domain/line.spec.ts
 
 **Checkpoint**: Lines can be stored and rendered

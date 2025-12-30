@@ -14,20 +14,23 @@
 
 import { Vector3, Vector4 } from 'three';
 import { Point2D, FreePoint2D, Point2DRealization, Point3DRealization } from './Point';
+import { Line2D, Line2DRealization } from './Line';
 import { Plane3D } from './Plane';
 import { ProjectionPlane, BaseProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
 
 export class World {
   private points: Map<string, Point2D>;
+  private lines: Map<string, Line2D>;
   private planes: Map<string, Plane3D>;
   projectionPlanes: Map<string, ProjectionPlane>;  // 2D projection planes (public for rendering)
   
   // Realization caches - organized by object type for extensibility
   private pointRealizations2D: Map<string, Point2DRealization>;  // Computed 2D point positions
   private pointRealizations3D: Map<string, Point3DRealization>;  // Computed 3D point positions
+  private lineRealizations2D: Map<string, Line2DRealization>;    // Computed 2D line equations
   private projectionPlaneRealizations2D: Map<string, ProjectionPlaneRealization2D>;  // Computed plane 2D transforms
   private projectionPlaneRealizations3D: Map<string, ProjectionPlaneRealization3D>;  // Computed plane 3D transforms
-  // Future: lineRealizations2D, circleRealizations2D, etc.
+  // Future: circleRealizations2D, etc.
   
   private nextId: number;
 
@@ -40,10 +43,12 @@ export class World {
 
   constructor() {
     this.points = new Map();
+    this.lines = new Map();
     this.planes = new Map();
     this.projectionPlanes = new Map();
     this.pointRealizations2D = new Map();
     this.pointRealizations3D = new Map();
+    this.lineRealizations2D = new Map();
     this.projectionPlaneRealizations2D = new Map();
     this.projectionPlaneRealizations3D = new Map();
     this.nextId = 1;
@@ -293,10 +298,12 @@ export class World {
    */
   clear(): void {
     this.points.clear();
+    this.lines.clear();
     this.planes.clear();
     this.projectionPlanes.clear();
     this.pointRealizations2D.clear();
     this.pointRealizations3D.clear();
+    this.lineRealizations2D.clear();
     this.nextId = 1;
     // Reinitialize fixed elements
     this.initializeFixedElements();
@@ -307,6 +314,113 @@ export class World {
    */
   getPointCount(): number {
     return this.points.size;
+  }
+
+  // ========================================
+  // Line management
+  // ========================================
+
+  /**
+   * Add a line to the world
+   * @param line Line to add
+   * @returns The added line
+   */
+  addLine(line: Line2D): Line2D {
+    this.lines.set(line.id, line);
+    // Realization will be computed lazily on first access via getLine2DRealization()
+    return line;
+  }
+
+  /**
+   * Get 2D realization (line equation) for a line
+   * Computes and caches the line equation in 2D plane coordinates
+   * 
+   * @param lineId ID of line to get realization for
+   * @returns Line2DRealization if line exists and can be computed, undefined otherwise
+   */
+  getLine2DRealization(lineId: string): Line2DRealization | undefined {
+    // Check cache first
+    if (this.lineRealizations2D.has(lineId)) {
+      return this.lineRealizations2D.get(lineId);
+    }
+
+    // Get line definition
+    const line = this.lines.get(lineId);
+    if (!line) {
+      return undefined;
+    }
+
+    // Helper to get point position - lines need 2D point positions
+    const getPoint = (pointId: string): Vector3 | null => {
+      const pointRealization = this.getPoint2DRealization(pointId);
+      if (!pointRealization) {
+        return null;
+      }
+      return new Vector3(pointRealization.x, pointRealization.y, 1);
+    };
+
+    // Compute realization from line definition
+    const realization = line.realize2D(getPoint);
+    if (!realization) {
+      return undefined;  // Cannot compute (e.g., missing dependency points)
+    }
+
+    // Cache for future use
+    this.lineRealizations2D.set(lineId, realization);
+    return realization;
+  }
+
+  /**
+   * Invalidate line realization cache for a specific line
+   * Call this when the line's dependencies change
+   */
+  invalidateLineRealization(lineId: string): void {
+    this.lineRealizations2D.delete(lineId);
+    // TODO: Also invalidate dependent elements (points on line, etc.)
+  }
+
+  /**
+   * Remove a line from the world
+   * @param id ID of line to remove
+   * @returns true if line was removed, false if not found
+   */
+  removeLine(id: string): boolean {
+    const removed = this.lines.delete(id);
+    if (removed) {
+      this.lineRealizations2D.delete(id);
+    }
+    return removed;
+  }
+
+  /**
+   * Get a line by ID
+   * @param id Line ID
+   * @returns Line if found, undefined otherwise
+   */
+  getLineById(id: string): Line2D | undefined {
+    return this.lines.get(id);
+  }
+
+  /**
+   * Get all lines in the world
+   * @returns Array of all lines
+   */
+  getAllLines(): Line2D[] {
+    return Array.from(this.lines.values());
+  }
+
+  /**
+   * Get total number of lines
+   */
+  getLineCount(): number {
+    return this.lines.size;
+  }
+
+  /**
+   * Generate a unique line ID
+   */
+  generateLineId(): string {
+    return `line_${this.nextId++}`;
   }
 
   /**
