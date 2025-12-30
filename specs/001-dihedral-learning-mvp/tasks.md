@@ -185,35 +185,38 @@
 
 ---
 
-## Phase 6.5: Refactor Point Creation to Command Pattern (URGENT - Constitution Compliance)
+## Phase 6.5: Establish Command/Operation/Tool Infrastructure (URGENT - Constitution Compliance)
 
-**Purpose**: Enforce constitutional requirement for command pattern using Operation composition  
+**Purpose**: Build proper architectural layers before adding more features  
 **Reference**: [constitution.md](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-all-user-actions) - Command Pattern Principle (MANDATORY)
 
 **Current Issue**: 
 - ⚠️ **VIOLATION**: Point creation in SvgCanvas.vue directly mutates World without using Command pattern
 - This violates Constitution Principle II which is MANDATORY for ALL user actions
-- Must be fixed before proceeding with additional features
+- Must establish Operations → Commands → Tools → View layers before proceeding
 
 **Implementation Requirements**:
-- **Constitutional Requirement**: ALL user actions MUST use Command pattern per [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability)
+- **Layered Architecture**: Operations (atomic mutations) → Commands (composed operations) → Tools (user interaction controllers) → View (SvgCanvas rendering)
 - **Command Composition**: Commands are composed from atomic Operations (AddElementOp, RemoveElementOp, etc.) per [data-model.md §Command Pattern](./data-model.md#command-pattern)
 - **Incremental Execution**: Operations execute immediately via `command.addAndExecute(operation)` pattern - not deferred
-- **Operation Types**: World operations (AddElementOp, RemoveElementOp, UpdateElementOp), ProcessTree operations (AddActionToGroupOp), ViewState operations
+- **Tool Pattern**: Tools translate user input into commands. SvgCanvas delegates to tools, doesn't create commands.
 - **Symbolic Addressing**: Operations use symbolic paths to reference entities, not direct object references (enables serialization)
 - **CommandStack**: Implement undo/redo stack infrastructure for future undo/redo UI (Phase 10)
-- **World Consistency**: Commands must maintain World state consistency
-- **No UI Changes Yet**: Focus on architecture - undo/redo buttons come in Phase 10
+- **No UI Changes**: Focus on architecture - undo/redo buttons come in Phase 10
 
-**Architecture Pattern**:
+**Architecture Flow**:
 ```typescript
-// Commands are built from operations that execute incrementally
-const cmd = new Command({ description: "Create point" });
-const result = cmd.addAndExecute(new AddElementOp({ element: {...} }));
-commandStack.commit(cmd);
+User clicks → SvgCanvas (coordinate conversion) 
+           → Tool.handleClick() (business logic)
+           → Command.addAndExecute(Operation) (composition)
+           → Operation.apply() (atomic mutation)
+           → World (domain model)
+           → SvgCanvas reactive render
 ```
 
-**⚠️ CRITICAL**: This phase must be completed before adding more features. All future features will use this command infrastructure.
+**⚠️ CRITICAL**: This phase establishes foundation for ALL future features. Every geometric operation will use this pattern.
+
+### Sublayer 1: Operations (Atomic Mutations)
 
 - [ ] T062a [P] Create Operation base types in frontend/src/commands/operations/
   - IOperation interface with apply(project) and undo(project) methods
@@ -224,6 +227,9 @@ commandStack.commit(cmd);
   - RemoveElementOp: Removes element from World (stores beforeState for undo)
   - UpdateElementOp: Updates element properties (stores before/after state)
   - Each operation implements IOperation interface
+
+### Sublayer 2: Commands (Operation Composition)
+
 - [ ] T063a [P] Create Command base class in frontend/src/commands/Command.ts
   - Properties: id, timestamp, description, operations[], status
   - CommandStatus enum: Building, Committed, Undone
@@ -234,25 +240,44 @@ commandStack.commit(cmd);
   - Methods: execute(command), undo(), redo(), canUndo(), canRedo()
   - Clears redo stack when new command executed
   - Basic implementation, UI controls added in Phase 10
+
+### Sublayer 3: Tools (User Interaction Controllers)
+
+- [ ] T065a [P] Create ITool interface in frontend/src/tools/ITool.ts
+  - handleClick(coords, context): Called by SvgCanvas with plane coordinates
+  - context contains: planeId, commandStack, world
+  - Tools create and execute commands, return success/failure
+- [ ] T065b [P] Create BaseTool abstract class in frontend/src/tools/BaseTool.ts
+  - Implements common tool functionality
+  - Helper methods for coordinate validation, element lookup
+  - Subclasses override handleClick() to implement specific behavior
+
+### Sublayer 4: Specific Implementations
+
 - [ ] T064a Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
   - Extends Command base class
-  - Constructor takes: planePos (Vector3), planeId (string)
+  - Constructor takes: planePos (Vector3), planeId (string), world (World)
   - Composes AddElementOp to add point to World
   - execute() generates point ID, creates operation, calls addAndExecute()
   - undo() inherited from Command base (reverses operations)
-  - validate() checks coordinate validity, plane exists
-- [ ] T065a Create tool interaction system in frontend/src/tools/
-  - Create ITool interface with handleClick(coords, context) method
-  - Create PointTool class that creates CreateFreePointCommand
-  - Tools are responsible for translating user input into commands
-  - SvgCanvas delegates to active tool, doesn't create commands itself
+- [ ] T065c Create PointTool in frontend/src/tools/PointTool.ts
+  - Extends BaseTool
+  - handleClick() creates and executes CreateFreePointCommand
+  - Validates coordinates, plane existence
+  - Returns operation result to caller
+
+### Sublayer 5: Integration
+
 - [ ] T066a Refactor SvgCanvas.vue to delegate to tool system
   - Remove direct World manipulation from handleCanvasClick
-  - Get active tool from toolStore
-  - Delegate click to active tool: `activeTool.handleClick(planePos, { planeId, commandStack })`
-  - Tool creates and executes command
+  - Import ITool and tool implementations
+  - Get active tool from toolStore, map to tool instance
+  - Delegate click: `tool.handleClick(planePos, { planeId, commandStack, world })`
   - SvgCanvas only handles: coordinate conversion, tool delegation, rendering
   - No UI changes - purely architectural refactor
+
+### Testing
+
 - [ ] T072a [P] Unit test for Operations in frontend/tests/unit/commands/operations.spec.ts
   - Test AddElementOp: apply adds element, undo removes it
   - Test RemoveElementOp: apply removes, undo restores (uses beforeState)
@@ -272,14 +297,17 @@ commandStack.commit(cmd);
 - [ ] T075a [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePointCommand.spec.ts
   - Test command execution creates point in World
   - Test command undo removes point
-  - Test validation rejects invalid coordinates
-  - Test validation rejects non-existent planeId
-- [ ] T076a [P] Integration test: Point creation through command pattern works end-to-end
-  - Verify complete flow: user click → command → operation → point in World
+  - Test validation via command
+- [ ] T075b [P] Unit test for PointTool in frontend/tests/unit/tools/pointTool.spec.ts
+  - Test handleClick creates command
+  - Test coordinate validation in tool
+  - Test plane existence validation
+- [ ] T076a [P] Integration test: Point creation through full stack
+  - Verify: SvgCanvas click → PointTool → CreateFreePointCommand → AddElementOp → World
   - Verify undo removes point, redo restores it
   - Verify World reactivity (worldVersion) triggers correctly
 
-**Checkpoint**: ✅ Point creation uses Command pattern composed from Operations (Constitution Principle II satisfied for points). Ready to add undo/redo UI in Phase 10.
+**Checkpoint**: ✅ Operations → Commands → Tools → View architecture established. Point creation follows proper pattern. Ready for additional geometric features.
 
 ---
 
