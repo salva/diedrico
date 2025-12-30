@@ -83,13 +83,15 @@
 import { ref, computed, onMounted } from 'vue';
 import { Matrix3 } from 'three';
 import { World } from '@/domain/world/World';
-import { FreePoint2D } from '@/domain/world/Point';
 import { PaperService, type PrimitiveContext } from '@/services/PaperService';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { useViewport } from '@/composables/useViewport';
+import { CommandStack } from '@/commands/CommandStack';
+import { PointTool } from '@/tools/PointTool';
+import type { ITool } from '@/tools/ITool';
 
 const svgElement = ref<SVGSVGElement | null>(null);
 
@@ -115,6 +117,15 @@ const toolStore = useToolStore();
 
 // World instance (will be managed by store in later phases)
 const world = new World();
+
+// Command infrastructure (Phase 6.5)
+const commandStack = new CommandStack();
+
+// Tool registry - map tool names to tool instances
+const tools: Record<string, ITool> = {
+  'point': new PointTool(),
+  // Future tools: 'line', 'circle', 'segment', etc.
+};
 
 // Reactivity trigger - increment this to force re-render after World changes
 const worldVersion = ref(0);
@@ -270,23 +281,30 @@ function handleCanvasClick(event: MouseEvent) {
   
   console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
   
-  // T031: Create Point and add to World
-  const pointId = world.generatePointId();
-  const newPoint = new FreePoint2D(
-    pointId,
-    planePos, // <u, v, 1> in plane intrinsic coordinates
-    activePlaneId
-  );
+  // Phase 6.5: Delegate to active tool instead of direct World mutation
+  const activeToolName = toolStore.currentTool.value;
+  const activeTool = tools[activeToolName];
   
-  console.log('[SvgCanvas] Created point:', { id: pointId, position: planePos, plane: activePlaneId });
+  if (!activeTool) {
+    console.warn(`[SvgCanvas] No tool implementation for: ${activeToolName}`);
+    return;
+  }
   
-  world.addPoint(newPoint);
+  // Delegate to tool with context
+  const result = activeTool.handleClick(planePos, {
+    planeId: activePlaneId,
+    commandStack,
+    world
+  });
   
-  console.log('[SvgCanvas] Point added to world. Total points:', world.getAllPoints().length);
-  
-  // T032: Trigger reactivity by incrementing worldVersion
-  worldVersion.value++;
-  console.log('[SvgCanvas] Reactivity triggered, worldVersion:', worldVersion.value);
+  if (result.success) {
+    console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+    // Trigger reactivity - World was mutated via command
+    worldVersion.value++;
+    console.log('[SvgCanvas] Reactivity triggered, worldVersion:', worldVersion.value);
+  } else {
+    console.error('[SvgCanvas] Tool operation failed:', result.message);
+  }
 }
 
 </script>
