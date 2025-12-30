@@ -187,7 +187,7 @@
 
 ## Phase 6.5: Refactor Point Creation to Command Pattern (URGENT - Constitution Compliance)
 
-**Purpose**: Enforce constitutional requirement for command pattern  
+**Purpose**: Enforce constitutional requirement for command pattern using Operation composition  
 **Reference**: [constitution.md](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-all-user-actions) - Command Pattern Principle (MANDATORY)
 
 **Current Issue**: 
@@ -197,35 +197,88 @@
 
 **Implementation Requirements**:
 - **Constitutional Requirement**: ALL user actions MUST use Command pattern per [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability)
-- **Command Interface**: Commands must implement execute(), undo(), validate() methods per [data-model.md §Command Pattern](./data-model.md#command-pattern)
-- **Incremental Execution**: Per data-model.md, operations execute immediately as added to command (not deferred)
+- **Command Composition**: Commands are composed from atomic Operations (AddElementOp, RemoveElementOp, etc.) per [data-model.md §Command Pattern](./data-model.md#command-pattern)
+- **Incremental Execution**: Operations execute immediately via `command.addAndExecute(operation)` pattern - not deferred
+- **Operation Types**: World operations (AddElementOp, RemoveElementOp, UpdateElementOp), ProcessTree operations (AddActionToGroupOp), ViewState operations
+- **Symbolic Addressing**: Operations use symbolic paths to reference entities, not direct object references (enables serialization)
 - **CommandStack**: Implement undo/redo stack infrastructure for future undo/redo UI (Phase 10)
 - **World Consistency**: Commands must maintain World state consistency
 - **No UI Changes Yet**: Focus on architecture - undo/redo buttons come in Phase 10
 
+**Architecture Pattern**:
+```typescript
+// Commands are built from operations that execute incrementally
+const cmd = new Command({ description: "Create point" });
+const result = cmd.addAndExecute(new AddElementOp({ element: {...} }));
+commandStack.commit(cmd);
+```
+
 **⚠️ CRITICAL**: This phase must be completed before adding more features. All future features will use this command infrastructure.
 
-- [ ] T062a [P] Create Command interface in frontend/src/commands/Command.ts with execute/undo/validate methods
-- [ ] T063a [P] Create CommandStack class in frontend/src/commands/CommandStack.ts (basic implementation, UI in Phase 10)
-- [ ] T064a [P] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
-  - Implements Command interface
-  - execute(): Generates point ID, creates FreePoint2D, adds to World
-  - undo(): Removes point from World
-  - validate(): Checks coordinate validity, plane exists
-- [ ] T066a Refactor point creation in SvgCanvas.vue to use CreateFreePointCommand instead of direct World mutation
-  - Replace direct `world.addPoint(newPoint)` with `commandStack.execute(new CreateFreePointCommand(...))`
+- [ ] T062a [P] Create Operation base types in frontend/src/commands/operations/
+  - IOperation interface with apply(project) and undo(project) methods
+  - OperationResult type with success, outputs, error
+  - Create operations/ subdirectory for operation implementations
+- [ ] T062b [P] Create World operations in frontend/src/commands/operations/WorldOperations.ts
+  - AddElementOp: Adds element to World (stores element data)
+  - RemoveElementOp: Removes element from World (stores beforeState for undo)
+  - UpdateElementOp: Updates element properties (stores before/after state)
+  - Each operation implements IOperation interface
+- [ ] T063a [P] Create Command base class in frontend/src/commands/Command.ts
+  - Properties: id, timestamp, description, operations[], status
+  - CommandStatus enum: Building, Committed, Undone
+  - Methods: addAndExecute(operation), commit(), rollback(), undo(), redo()
+  - Incremental execution pattern: operations execute immediately when added
+- [ ] T063b [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
+  - Manages undoStack and redoStack arrays
+  - Methods: execute(command), undo(), redo(), canUndo(), canRedo()
+  - Clears redo stack when new command executed
+  - Basic implementation, UI controls added in Phase 10
+- [ ] T064a Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
+  - Extends Command base class
+  - Constructor takes: planePos (Vector3), planeId (string)
+  - Composes AddElementOp to add point to World
+  - execute() generates point ID, creates operation, calls addAndExecute()
+  - undo() inherited from Command base (reverses operations)
+  - validate() checks coordinate validity, plane exists
+- [ ] T066a Refactor point creation in SvgCanvas.vue to use CreateFreePointCommand
+  - Import CommandStack and CreateFreePointCommand
+  - Create commandStack instance (or inject from store)
+  - Replace direct `world.addPoint(newPoint)` with:
+    ```typescript
+    const command = new CreateFreePointCommand(planePos, activePlaneId);
+    commandStack.execute(command);
+    ```
+  - Remove manual `worldVersion.value++` (operation handles this)
   - Keep same user interaction (click to create)
   - No UI changes - purely architectural refactor
-- [ ] T072a [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
-  - Test execute, undo, redo operations
-  - Test stack state management
-- [ ] T073a [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePointCommand.spec.ts
-  - Test command execution creates point
+- [ ] T072a [P] Unit test for Operations in frontend/tests/unit/commands/operations.spec.ts
+  - Test AddElementOp: apply adds element, undo removes it
+  - Test RemoveElementOp: apply removes, undo restores (uses beforeState)
+  - Test UpdateElementOp: apply updates, undo restores beforeState
+  - Test operation outputs and error handling
+- [ ] T073a [P] Unit test for Command base class in frontend/tests/unit/commands/command.spec.ts
+  - Test addAndExecute() pattern with mock operations
+  - Test incremental execution (operations run immediately)
+  - Test rollback on operation failure
+  - Test status transitions: Building → Committed → Undone
+  - Test undo/redo reverses operations in correct order
+- [ ] T074a [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+  - Test execute adds to undo stack, clears redo stack
+  - Test undo moves command to redo stack
+  - Test redo moves command back to undo stack
+  - Test canUndo/canRedo return correct booleans
+- [ ] T075a [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePointCommand.spec.ts
+  - Test command execution creates point in World
   - Test command undo removes point
-  - Test validation rules
-- [ ] T074a [P] Integration test: Point creation through command pattern works end-to-end
+  - Test validation rejects invalid coordinates
+  - Test validation rejects non-existent planeId
+- [ ] T076a [P] Integration test: Point creation through command pattern works end-to-end
+  - Verify complete flow: user click → command → operation → point in World
+  - Verify undo removes point, redo restores it
+  - Verify World reactivity (worldVersion) triggers correctly
 
-**Checkpoint**: ✅ Point creation uses Command pattern (Constitution Principle II satisfied for points). Ready to add undo/redo UI in Phase 10.
+**Checkpoint**: ✅ Point creation uses Command pattern composed from Operations (Constitution Principle II satisfied for points). Ready to add undo/redo UI in Phase 10.
 
 ---
 
