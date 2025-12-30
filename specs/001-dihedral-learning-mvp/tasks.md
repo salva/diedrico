@@ -150,8 +150,8 @@
 - [X] T030 Transform SVG click coordinates to world coordinates
 - [X] T031 Create Point instance and add to World on canvas click
 - [X] T032 Trigger canvas re-render when point added
-- [ ] T033 [P] Unit test for toolStore in frontend/tests/unit/stores/toolStore.spec.ts
-- [ ] T034 [P] E2E test for point creation in frontend/tests/e2e/create-point.spec.ts
+- [X] T033 [P] Unit test for toolStore in frontend/tests/unit/stores/toolStore.spec.ts
+- [X] T034 [P] E2E test for point creation in frontend/tests/e2e/create-point.spec.ts
 
 **Checkpoint**: User can click Point tool and place points on canvas (US1 partial)
 
