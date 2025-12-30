@@ -11,6 +11,175 @@
 
 ---
 
+## **CRITICAL: Realization Layer Boundary**
+
+### **Architectural Principle: All Numeric Data Flows Through Realizations**
+
+This is a **MANDATORY architectural constraint** that enforces separation between definition (what) and computation (how):
+
+**Three-Layer Architecture**:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  DOMAIN LAYER (Definitions/Rules)                        │
+│  - Point2D, Line2D, Circle2D domain objects             │
+│  - Store WHAT the element is, not WHERE it is           │
+│  - Example: IntersectionPoint2D stores element IDs      │
+│  - Properties are IMMUTABLE (readonly position)         │
+│  ❌ Other layers MUST NOT access domain properties      │
+└─────────────────────┬────────────────────────────────────┘
+                      │
+                      │ realize(context) method
+                      │ Called lazily when needed
+                      │
+                      ↓
+┌──────────────────────────────────────────────────────────┐
+│  REALIZATION LAYER (Computed Results)                    │
+│  - Point2DRealization, Line2DRealization, etc.          │
+│  - Store ONLY NUMERIC data (coordinates, vectors)       │
+│  - Example: Point2DRealization { position: Vector3 }    │
+│  - NO structural data (id, planeId) - that's in domain  │
+│  - Cached in World maps (key = pointId)                 │
+│  ✅ Other layers MUST ONLY access realizations          │
+└─────────────────────┬────────────────────────────────────┘
+                      │
+                      │ Read-only access
+                      │
+                      ↓
+┌──────────────────────────────────────────────────────────┐
+│  CONSUMING LAYERS (Services, Rendering, Calculations)    │
+│  - PaperService, RenderService, GeometryService         │
+│  - Access numeric data ONLY through realizations        │
+│  - Never instanceof checks or domain property access    │
+│  ✅ Correct: realization.position                       │
+│  ❌ Incorrect: point.position (violates boundary!)      │
+└──────────────────────────────────────────────────────────┘
+```
+
+### **Enforcement Rules**
+
+**✅ CORRECT PATTERNS:**
+
+```typescript
+// ✅ Domain layer: Store definition only
+class FreePoint2D extends Point2D {
+  readonly position: Vector3;  // IMMUTABLE - the defining rule
+  
+  realize(context: RealizationContext): Point2DRealization {
+    return new Point2DRealization(this.position);  // Only numeric data
+  }
+}
+
+// ✅ Realization layer: Store ONLY numeric data
+class Point2DRealization {
+  position: Vector3;  // Computed position - THIS is what other layers use
+  // NO pointId, NO planeId - that's structural info in domain objects
+}
+
+// ✅ Service layer: Access numeric data from realization, structural from point
+class PaperService {
+  pointToPrimitive(point: Point2D, realization: Point2DRealization, transform: Matrix3) {
+    const paperPos = applyMatrix3(realization.position, transform);  // ✅ Numeric from realization
+    const planeTransform = context.planeTransforms.get(point.planeId);  // ✅ Structural from point
+    return { x: paperPos.x, y: paperPos.y, ... };
+  }
+}
+
+// ✅ Rendering: Numeric from realization, structural from point
+function renderPoint(point: Point2D, realization: Point2DRealization) {
+  const [cx, cy] = planeToCanvas(
+    realization.position.x,    // ✅ Numeric from realization
+    realization.position.y,
+    point.planeId              // ✅ Structural from point
+  );
+  // ...
+}
+```
+
+**❌ INCORRECT PATTERNS (VIOLATIONS):**
+
+```typescript
+// ❌ VIOLATION: Service accessing domain property directly
+class RenderService {
+  render(point: FreePoint2D) {
+    const pos = point.position;  // ❌ WRONG! Bypasses realization layer
+    // Should be: realization.position
+  }
+}
+
+// ❌ VIOLATION: instanceof checks to access properties
+function render(point: Point2D) {
+  if (point instanceof FreePoint2D) {
+    const pos = point.position;  // ❌ WRONG! Type discrimination to bypass boundary
+  }
+  // Should require realization parameter instead
+}
+
+// ❌ VIOLATION: Rendering without realization
+function renderPoint(point: Point2D) {  // ❌ Missing realization parameter
+  // Cannot access position without violating boundary
+}
+```
+
+### **Exception: Fixed Elements**
+
+For **fixed elements** (origin, hinge line, plane boundaries) that don't change:
+
+```typescript
+// ✅ Plain coordinate objects OK for constants
+const hingeLineStart = { u: -500, v: 0, planeId: 'plane_H' };
+const hingeLineEnd = { u: 500, v: 0, planeId: 'plane_H' };
+
+// These are passed to functions expecting realizations or coordinate objects
+renderLine(hingeLineStart, hingeLineEnd, 'HL_HV', ...);
+```
+
+### **Transformation Flow**
+
+Even for elements defined by coordinates (like FreePoint2D), transformations follow this flow:
+
+```
+1. DOMAIN: FreePoint2D stores { id, position: Vector3(100, 50, 1), planeId: 'plane_H' }
+   ↓
+2. REALIZE: Create Point2DRealization { position: Vector3(100, 50, 1) }  // ONLY numeric
+   ↓
+3. CACHE: Store in world.pointRealizations2D map  (key='point_id' → value=realization)
+   ↓
+4. ACCESS: Other layers get realization from world + point from world
+   ↓
+5. TRANSFORM: Apply matrices to realization.position, use point.planeId for context
+   ↓
+6. RENDER: Use transformed coordinates for display
+```
+
+**Key insight**: Structural info (id, planeId) stays in domain Point2D object. Numeric data (position) goes in realization. World caches use pointId as map key, so no need to duplicate it in the value.
+- **Consistent architecture** across all element types
+- **Cache invalidation** works uniformly
+- **No special cases** in consuming code
+- **Future extensibility** (can add transformation to realizations without changing consumers)
+
+### **Benefits**
+
+1. **Clear Separation**: Domain = rules, Realization = numbers
+2. **Type Safety**: Functions requiring numeric data explicitly declare it via realization parameters
+3. **Performance**: Caching prevents redundant calculations
+4. **Consistency**: Same pattern for simple (FreePoint2D) and complex (IntersectionPoint2D) elements
+5. **Maintainability**: Easy to find all numeric access points (they all go through realizations)
+6. **Extensibility**: Can add new properties to realizations without changing domain objects
+
+### **Validation**
+
+**Anti-pattern detection**:
+- Search for: `point.position` in service/rendering code → Should use `realization.position`
+- Search for: `instanceof FreePoint2D` to access properties → Should require realization parameter
+- Functions with Point2D parameter but no realization → Missing realization parameter
+
+**Test coverage**:
+- Architecture tests should verify services never access domain properties directly
+- Mock realizations for testing to ensure proper boundary
+
+---
+
 ## Coordinate Systems and Transformations
 
 ### **Critical Architecture Principle**
@@ -84,26 +253,55 @@ The application uses **three distinct coordinate spaces**:
 
 ### **Matrix Representations**
 
-**2D Canvas Transform** (6 numbers: affine transform)
+**Implementation**: All matrices use Three.js types:
+- **2D transforms**: `Matrix3` (3×3 for homogeneous 2D coordinates)
+- **3D transforms**: `Matrix4` (4×4 for homogeneous 3D coordinates)
+- **2D→3D transforms**: `Matrix4x3` (custom - 4×3 matrix, Vector3→Vector4)
+- **3D→2D transforms**: `Matrix3x4` (custom - 3×4 matrix, Vector4→Vector3)
+
+**2D Canvas Transform** (Three.js Matrix3)
 ```
-Forward:  [a, b, c, d, e, f]
-  x_canvas = a*u + c*v + e
-  y_canvas = b*u + d*v + f
+Forward: Matrix3
+  x_canvas = m11*u + m12*v + m13
+  y_canvas = m21*u + m22*v + m23
 
-Inverse: [a', b', c', d', e', f']  (computed and cached)
-  u = a'*x_canvas + c'*y_canvas + e'
-  v = b'*x_canvas + d'*y_canvas + f'
+Inverse: Matrix3 (computed via matrix.invert())
+  u = m11'*x_canvas + m12'*y_canvas + m13'
+  v = m21'*x_canvas + m22'*y_canvas + m23'
 
-Determinant: det = a*d - b*c  (must be ≠ 0 for invertibility)
+Application (non-destructive):
+  import { applyMatrix3 } from '@/utils/threeUtils';
+  const canvasPos = applyMatrix3(planePos, planeToPaperMatrix);
+```
 
-Inverse computation (for 2×2 affine):
-  det = a*d - b*c
-  a' = d/det
-  b' = -b/det
-  c' = -c/det
-  d' = a/det
-  e' = (c*f - d*e) / det
-  f' = (b*e - a*f) / det
+**2D→3D Reconstruction** (Custom Matrix4x3)
+```
+Forward: Matrix4x3 (4 rows, 3 columns)
+  Transforms Vector3 (u, v, 1) → Vector4 (x, y, z, w)
+  
+  [x]   [m11 m12 m13] [u]
+  [y] = [m21 m22 m23] [v]
+  [z]   [m31 m32 m33] [1]
+  [w]   [m41 m42 m43]
+
+Application (non-destructive):
+  import { applyMatrix4x3, Matrix4x3 } from '@/utils/threeUtils';
+  const point3D = applyMatrix4x3(point2D, reconstructionMatrix);
+```
+
+**3D→2D Projection** (Custom Matrix3x4)
+```
+Forward: Matrix3x4 (3 rows, 4 columns)
+  Transforms Vector4 (x, y, z, w) → Vector3 (u, v, 1)
+  
+  [u]   [m11 m12 m13 m14] [x]
+  [v] = [m21 m22 m23 m24] [y]
+  [1]   [m31 m32 m33 m34] [z]
+                           [w]
+
+Application (non-destructive):
+  import { applyMatrix3x4, Matrix3x4 } from '@/utils/threeUtils';
+  const point2D = applyMatrix3x4(point3D, projectionMatrix);
 ```
 
 **Storage Strategy**:
@@ -192,12 +390,33 @@ Contains the pure geometric definitions and construction rules:
 - Geometric coordinates/references (defining elements, not rendering coordinates)
 
 ### 2. **Presentation Layer** (Rendering Primitives)
-Low-level representation ready for direct SVG conversion:
-- **Render Primitives**: Points, paths, circles, arcs with concrete screen-space or world-space coordinates
-- **Source References**: Each primitive points back to its source domain entity
-- **Visual Attributes**: Stroke, fill, width, style, visibility state
 
-**Key characteristic**: Presentation entities are computed from domain entities and contain all information needed for rendering (coordinates, styles, visibility).
+The presentation layer provides an intermediate drawing representation called **Paper** that sits between domain geometry and final SVG rendering.
+
+**Architecture**: Domain → Realization → Paper → SVG
+
+**Paper Abstraction**:
+- Unified coordinate system (not per-plane u,v coordinates)
+- All projection planes transform their elements into this common paper space
+- Primitives ready for direct SVG conversion with viewport transform
+
+**Coordinate Flow**:
+```
+Plane <u,v> → PlaneTransform (3x3 matrix) → Paper <x,y> → ViewportTransform → Canvas → SVG
+```
+
+**Components**:
+- **Render Primitives**: Points, paths, circles, arcs in paper coordinates
+- **Source References**: Each primitive points back to its source domain entity
+- **Visual Attributes**: Stroke, fill, width, style, visibility state (fully resolved, no inheritance)
+- **Transformation System**:
+  - **PlaneTransform**: 3x3 homogeneous matrix transforming plane u,v → paper x,y
+    - For P_H, P_V: Hardcoded constant matrices
+    - For auxiliary planes: Computed from geometric unfolding (see ProjectionPlane section)
+  - **ViewportTransform**: Pan/zoom transformation: paper x,y → canvas pixels
+  - Both transforms provide inverse operations for mouse input (canvas → paper → plane u,v)
+
+**Key characteristic**: Presentation entities are computed from domain entities and contain all information needed for rendering (coordinates in paper space, resolved styles, visibility state).
 
 ### 3. **Persistence Layer** (Project State)
 Project-level container and metadata:
@@ -452,17 +671,48 @@ interface ProjectionPlane {
 
 **Matrix Representations**:
 
-For P_H (horizontal plane):
+**For P_H (horizontal plane) - Hardcoded**:
+- Fixed position in paper coordinate system
 - `transform_to_3d`: Maps (u,v) to (u, v, 0) in 3D
-- `transform_to_canvas`: Identity with offset [1, 0, 0, 1, 0, 0]
+- Plane-to-paper transformation: Predetermined constant matrix
 
-For P_V (vertical plane):
+**For P_V (vertical plane) - Hardcoded**:
+- Fixed position in paper coordinate system
 - `transform_to_3d`: Maps (u,v) to (u, 0, v) in 3D  
-- `transform_to_canvas`: Identity with offset [1, 0, 0, 1, 0, -400]
+- Plane-to-paper transformation: Predetermined constant matrix
 
-For auxiliary planes:
-- `transform_to_3d`: Computed from plane normal and trace using spec algorithm
-- `transform_to_canvas`: Positioned/rotated on canvas to avoid overlap
+**For auxiliary planes - Geometrically Derived**:
+
+Auxiliary planes are positioned through a deterministic geometric unfolding process:
+
+1. **Traces**: Auxiliary plane intersects both P_H and P_V
+   - `traceH`: Intersection line on P_H
+   - `traceV`: Intersection line on P_V
+
+2. **Hinge Selection**: User selects which trace to use as hinge line (HL)
+   - If `traceH` is chosen → auxiliary plane unfolds onto P_H
+   - If `traceV` is chosen → auxiliary plane unfolds onto P_V
+
+3. **Unfolding**: 180° rotation around chosen hinge line
+   - **Direction rule**: Rotate away from origin O
+   - Prevents overlap with central construction area
+
+4. **Coordinate System** for auxiliary plane:
+   - **u-axis**: Aligned with hinge line
+     - Direction: Choose alignment that best matches base plane's coordinate system
+   - **v-axis**: Perpendicular to hinge line
+     - Direction: Grows away from hinge line (outward into unfolded plane)
+
+5. **Transformation Computation**:
+   - `transform_to_3d`: Computed from plane normal and 3D position
+   - Plane-to-paper transformation: Derived from:
+     - Which trace is the HL (determines base plane)
+     - HL position and orientation in base plane
+     - u-axis aligned with HL (proper direction)
+     - v-axis perpendicular to HL, growing away from it
+     - Base plane's transformation to paper
+
+**Key Principle**: Auxiliary plane positioning is NOT arbitrary - it's completely determined by the plane's geometric definition and user's choice of hinge line.
 
 ### Viewport Transformation (2D Display Layer)
 
@@ -648,34 +898,36 @@ type Element2D = Point2D | Segment2D | Line2D | Circle2D | Arc2D | Guide2D | BHL
 
 // Free point - defined by user-specified position
 interface FreePoint2D {
-  kind: 'FreePoint2D';              // Discriminator
-  id: ElementId;
-  name: string;                     // "a", "b", "p1", etc.
-  planeId: PlaneId;                 // Belongs to exactly one plane
+  kind: 'FreePoint2D';              // Discriminator (TypeScript: type: 'free')
+  id: string;                       // REQUIRED - unique identifier
+  label?: string;                   // Optional display label ("a", "b", "p1", etc.)
+  planeId: string;                  // REQUIRED - belongs to exactly one plane
   locked?: boolean;                 // If true, cannot be moved or deleted
   
   // THE RULE: "User placed it at this position"
-  position: [number, number, number];  // [u, v, 1] in plane's intrinsic basis (homogeneous)
+  position: Vector3;                // Position in plane's intrinsic basis (u, v, 1) - Three.js Vector3
   
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
+  // Implementation: TypeScript class
+  // constructor(id: string, position: Vector3, planeId: string, label?: string)
+  // realize(context: RealizationContext): Point2DRealization
 }
 
 // Point at intersection of two elements
 interface IntersectionPoint2D {
-  kind: 'IntersectionPoint2D';      // Discriminator
-  id: ElementId;
-  name: string;
-  planeId: PlaneId;
+  kind: 'IntersectionPoint2D';      // Discriminator (TypeScript: type: 'intersection')
+  id: string;                       // REQUIRED - unique identifier
+  label?: string;                   // Optional display label
+  planeId: string;                  // REQUIRED - belongs to exactly one plane
   
   // THE RULE: "Intersection of element1 and element2 at index"
   // No coordinates stored - computed from the two elements
-  element1Id: ElementId;            // First intersecting element
-  element2Id: ElementId;            // Second intersecting element
-  intersectionIndex: number;        // Which intersection (0 or 1 for line-circle, 0 or 1 for circle-circle)
+  element1Id: string;               // First intersecting element
+  element2Id: string;               // Second intersecting element
+  index: number;                    // Which intersection (0 or 1 for line-circle, 0 or 1 for circle-circle)
   
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
+  // Implementation: TypeScript class
+  // constructor(id: string, element1Id: string, element2Id: string, index: number, planeId: string, label?: string)
+  // realize(context: RealizationContext): Point2DRealization
 }
 
 type Point2D = FreePoint2D | IntersectionPoint2D;
@@ -898,11 +1150,28 @@ Elements are stored separately from their computed geometric state:
 
 **Realization Cache Structure**:
 ```typescript
-// Separate caches for 2D and 3D realizations
+// Separate caches organized by object type for extensibility
+// World class manages these caches and provides RealizationContext interface
 interface RealizationCache {
-  element2D: Map<ElementId, Element2DRealization>;
-  element3D: Map<ElementId, Element3DRealization>;
+  // 2D realizations
+  pointRealizations2D: Map<string, Point2DRealization>;
+  // Future: lineRealizations2D, circleRealizations2D, etc.
+  
+  // 3D realizations
+  pointRealizations3D: Map<string, Point3DRealization>;
+  // Future: lineRealizations3D, planeRealizations3D, etc.
 }
+
+// World implements RealizationContext for lazy evaluation
+interface RealizationContext {
+  getPoint2DRealization(pointId: string): Point2DRealization | undefined;
+  getPoint3DRealization(pointId: string): Point3DRealization | undefined;
+  // Future: getLine2DRealization, getCircle2DRealization, etc.
+}
+
+// Implementation in World class:
+// - getPoint2DRealization(): Check cache → Compute via point.realize(this) → Cache → Return
+// - invalidateRealization(pointId): Clear cache for point and dependents
 
 // Realization types for 2D elements
 type Element2DRealization = 
@@ -926,11 +1195,18 @@ type Element2DRealization =
 //   - The rule determines HOW to get coordinates
 //   - The realization is just the coordinates themselves
 //   - Rendering doesn't care about the rule, only the coordinates
+//   - Structural info (pointId, planeId) stays in domain Point2D object
+//   - World cache uses pointId as key: Map<string, Point2DRealization>
 
 interface Point2DRealization {
-  pointId: ElementId;               // Which point this realizes
-  coordinates: [number, number, number];  // [u, v, 1] - homogeneous coordinates in plane's intrinsic basis
-  planeId?: PlaneId;                // Cached from point definition
+  position: Vector3;                // Position in plane coordinates (u, v, 1) - ONLY NUMERIC DATA
+  
+  // NO pointId - that's the map key in world.pointRealizations2D
+  // NO planeId - that's in the Point2D domain object
+  
+  // Implementation: TypeScript class
+  // constructor(position: Vector3)
+  // getPosition(): Vector3
 }
 
 interface Line2DRealization {
@@ -963,7 +1239,15 @@ type Element3DRealization =
   | Plane3DRealization;
 
 interface Point3DRealization {
-  point: [number, number, number, number]; // [x, y, z, 1] - homogeneous coordinates
+  position: Vector4;                // Position in 3D space (x, y, z, 1) - ONLY NUMERIC DATA
+  
+  // NO pointId - that's the map key in world.pointRealizations3D
+  
+  // Implementation: TypeScript class
+  // constructor(position: Vector4)
+  // getPosition(): Vector4
+  
+  // Computed from 2D projections using 3D reconstruction
 }
 
 interface Line3DRealization {
@@ -987,6 +1271,418 @@ interface Plane3DRealization {
 - **3D Points**: `[x, y, z, 1]` - regular points with `w=1`
 - **3D Vectors/Directions**: `[dx, dy, dz, 0]` - with `w=0` to distinguish from points
 - **Special cases**: Points at infinity use `w=0` (e.g., ideal points)
+
+---
+
+## Realization System: Lazy Evaluation with Caching
+
+### Overview
+
+The realization system implements a **lazy evaluation with caching** pattern that separates geometric *definitions* (rules) from *computed results* (coordinates). This architecture enables:
+
+- **Performance**: Expensive calculations done once and cached
+- **Recursive dependencies**: Intersection of intersections handled automatically
+- **Clear separation**: Domain objects define "what", realizations compute "how"
+- **Extensibility**: Easy to add new element types with custom realization logic
+
+### Architecture Pattern
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  DOMAIN LAYER (What)                                        │
+│  Point2D stores RULE/DEFINITION                             │
+│  - FreePoint2D: "position is Vector3(100, 50, 1)"          │
+│  - IntersectionPoint2D: "intersection of line1 & line2"    │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ realize(context) method
+                     │ Called on-demand, not at construction
+                     │
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  REALIZATION LAYER (Computed Results)                       │
+│  Point2DRealization stores COMPUTED COORDINATES             │
+│  - Cached in World.pointRealizations2D Map                  │
+│  - Same realization class for all point types               │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ Used by rendering
+                     │
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  PRESENTATION LAYER                                          │
+│  Paper primitives, SVG rendering                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Lazy Evaluation Flow
+
+**1. Domain Object Creation** (no computation):
+```typescript
+// FreePoint2D: stores position directly as the rule
+const pointA = new FreePoint2D(
+  'point_a',                    // id (required)
+  new Vector3(100, 50, 1),     // position - the rule
+  'plane_H'                    // planeId (required)
+);
+world.addPoint(pointA);         // No realization computed yet
+
+// IntersectionPoint2D: stores dependency relationship as the rule
+const pointB = new IntersectionPoint2D(
+  'point_b',                   // id (required)
+  'line_1',                    // element1Id
+  'line_2',                    // element2Id
+  0,                          // index (which intersection)
+  'plane_H'
+);
+world.addPoint(pointB);        // No realization computed yet
+```
+
+**2. On-Demand Realization** (first access):
+```typescript
+// Rendering needs coordinates
+const realization = world.getPoint2DRealization('point_b');
+
+// Inside world.getPoint2DRealization():
+// 1. Check cache: pointRealizations2D.get('point_b') → undefined (not cached)
+// 2. Get point: points.get('point_b') → IntersectionPoint2D
+// 3. Call realize: point.realize(this) → computes intersection
+// 4. Cache result: pointRealizations2D.set('point_b', realization)
+// 5. Return: realization with position Vector3(x, y, 1)
+```
+
+**3. Cached Access** (subsequent accesses):
+```typescript
+// Same request again
+const realization2 = world.getPoint2DRealization('point_b');
+
+// Inside world.getPoint2DRealization():
+// 1. Check cache: pointRealizations2D.get('point_b') → found!
+// 2. Return immediately: realization (same object as before)
+// No computation, instant return
+```
+
+### Implementation: World as RealizationContext
+
+**World class implements RealizationContext interface**:
+
+```typescript
+export class World implements RealizationContext {
+  private pointRealizations2D: Map<string, Point2DRealization>;
+  private pointRealizations3D: Map<string, Point3DRealization>;
+  
+  /**
+   * Get 2D realization - cache-first pattern
+   */
+  getPoint2DRealization(pointId: string): Point2DRealization | undefined {
+    // 1. CHECK CACHE FIRST (fast path)
+    let realization = this.pointRealizations2D.get(pointId);
+    if (realization) {
+      return realization;  // Already computed, return immediately
+    }
+
+    // 2. NOT CACHED - COMPUTE IT (slow path)
+    const point = this.points.get(pointId);
+    if (!point) return undefined;  // Point doesn't exist
+
+    // 3. ASK POINT TO REALIZE ITSELF
+    // Pass "this" as context so point can access other realizations
+    realization = point.realize(this);
+    
+    // 4. CACHE THE RESULT
+    this.pointRealizations2D.set(pointId, realization);
+    
+    return realization;
+  }
+  
+  /**
+   * Invalidate cache when definition changes
+   */
+  invalidateRealization(pointId: string): void {
+    this.pointRealizations2D.delete(pointId);
+    this.pointRealizations3D.delete(pointId);
+    
+    // TODO: Also invalidate dependent objects
+    // Need dependency graph to know which objects depend on this one
+  }
+}
+```
+
+### Object-Specific Realization Methods
+
+Each element type implements `realize(context)` with its own logic:
+
+**FreePoint2D - Direct Access**:
+```typescript
+class FreePoint2D extends Point2D {
+  position: Vector3;  // The rule: "it's at this position"
+  
+  realize(context: RealizationContext): Point2DRealization {
+    // Simple case: position is directly available, no computation needed
+    return new Point2DRealization(this.position);  // Only numeric data
+  }
+}
+```
+
+**IntersectionPoint2D - Recursive Computation**:
+```typescript
+class IntersectionPoint2D extends Point2D {
+  element1Id: string;
+  element2Id: string;
+  index: number;       // The rule: "intersection of elem1 & elem2 at index"
+  
+  realize(context: RealizationContext): Point2DRealization {
+    // 1. GET REALIZATIONS OF DEFINING ELEMENTS
+    //    This may recursively trigger THEIR realization if not cached
+    const line1Realization = context.getLine2DRealization(this.element1Id);
+    const line2Realization = context.getLine2DRealization(this.element2Id);
+    
+    if (!line1Realization || !line2Realization) {
+      throw new Error('Cannot realize intersection: defining elements not found');
+    }
+    
+    // 2. COMPUTE INTERSECTION GEOMETRY
+    const intersections = computeLineLineIntersection(
+      line1Realization,
+      line2Realization
+    );
+    
+    if (intersections.length <= this.index) {
+      throw new Error(`Intersection index ${this.index} out of bounds`);
+    }
+    
+    // 3. RETURN REALIZATION WITH COMPUTED POSITION (only numeric data)
+    return new Point2DRealization(
+      intersections[this.index]  // Computed intersection point (Vector3)
+    );
+  }
+}
+```
+
+### Recursive Dependency Example
+
+**Scenario**: Point C is intersection of Line 1 and Line 2, where Line 1 passes through Point A and Point B (both free), and Line 2 passes through Point D and Point E (both free).
+
+```
+Point A (free) ────┐
+                   ├─→ Line 1 ────┐
+Point B (free) ────┘               │
+                                   ├─→ Point C (intersection)
+Point D (free) ────┐               │
+                   ├─→ Line 2 ────┘
+Point E (free) ────┘
+```
+
+**First call to `world.getPoint2DRealization('point_c')`**:
+
+```
+1. world.getPoint2DRealization('point_c')
+   → Cache miss, call pointC.realize(world)
+
+2. pointC.realize(world)
+   → Needs line1Realization
+   
+3. world.getLine2DRealization('line_1')
+   → Cache miss, call line1.realize(world)
+   
+4. line1.realize(world)
+   → Needs pointA.realize() and pointB.realize()
+   
+5. world.getPoint2DRealization('point_a')
+   → Cache miss, call pointA.realize(world)
+   
+6. pointA.realize(world)
+   → Returns Vector3(10, 20, 1) immediately (free point)
+   → Cached in pointRealizations2D
+   
+7. world.getPoint2DRealization('point_b')
+   → Cache miss, call pointB.realize(world)
+   
+8. pointB.realize(world)
+   → Returns Vector3(100, 80, 1) immediately (free point)
+   → Cached in pointRealizations2D
+   
+9. Back to line1.realize()
+   → Computes line from points A and B
+   → Returns Line2DRealization
+   → Cached in lineRealizations2D
+   
+10. Similar process for line2 (points D and E)
+    → Cached in lineRealizations2D
+    
+11. Back to pointC.realize()
+    → Has both line realizations
+    → Computes intersection
+    → Returns Point2DRealization(pointC, Vector3(55, 50, 1), 'plane_H')
+    → Cached in pointRealizations2D
+    
+12. Returns realization to caller
+```
+
+**Second call to `world.getPoint2DRealization('point_c')`**:
+
+```
+1. world.getPoint2DRealization('point_c')
+   → Cache hit!
+   → Returns cached Point2DRealization immediately
+   → No computation, instant return
+```
+
+**Third call for any dependent object**:
+```
+1. world.getPoint2DRealization('point_a')
+   → Cache hit! Returns immediately
+2. world.getLine2DRealization('line_1')
+   → Cache hit! Returns immediately
+```
+
+### Cache Invalidation
+
+When a definition changes, caches must be cleared:
+
+```typescript
+// User drags Point A to new position
+pointA.position = new Vector3(200, 100, 1);
+
+// Invalidate Point A's realization
+world.invalidateRealization('point_a');
+
+// TODO: Also invalidate dependents:
+// - Line 1 realization (depends on A)
+// - Point C realization (depends on Line 1)
+// - Any other objects depending on C...
+
+// Next render will recompute affected objects
+const realization = world.getPoint2DRealization('point_a');
+// → Cache miss → Recompute → Cache → Return
+```
+
+### Cache Organization
+
+Caches are organized **by object type** for extensibility:
+
+```typescript
+interface World {
+  // 2D realizations by type
+  pointRealizations2D: Map<string, Point2DRealization>;
+  lineRealizations2D: Map<string, Line2DRealization>;        // Future
+  circleRealizations2D: Map<string, Circle2DRealization>;    // Future
+  
+  // 3D realizations by type  
+  pointRealizations3D: Map<string, Point3DRealization>;
+  lineRealizations3D: Map<string, Line3DRealization>;        // Future
+  planeRealizations3D: Map<string, Plane3DRealization>;      // Future
+}
+```
+
+**Benefits**:
+- Clear organization by geometry type
+- Easy to add new element types
+- Separate concerns (2D vs 3D)
+- Explicit about what's cached
+
+### Usage in Rendering Pipeline
+
+**RENDERING PATTERN: Walk → Realize → Render**
+
+The rendering pipeline follows a simple three-step pattern:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. WALK: Iterate domain objects in World                    │
+│    for (const point of world.points.values())              │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 2. REALIZE: Get numeric data from cache                     │
+│    const realization = world.getPoint2DRealization(point.id)│
+│    → Returns Point2DRealization { position: Vector3 }       │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 3. RENDER: Generate primitives/SVG using:                   │
+│    - Numeric data from realization (position)               │
+│    - Structural data from point (id, type, planeId)         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Paper Service** (transforms domain → primitives):
+
+```typescript
+class PaperService {
+  generatePrimitives(context: PrimitiveContext): Primitive[] {
+    const primitives: Primitive[] = [];
+    
+    // 1. WALK: Iterate over all points in the world
+    for (const point of context.world.points.values()) {
+      
+      // 2. REALIZE: Get computed position (numeric data)
+      const realization = context.world.getPoint2DRealization(point.id);
+      if (!realization) continue;  // Skip if realization failed
+      
+      // Get plane transformation matrix (from structural context)
+      const planeToPaperMatrix = context.planeTransforms.get(point.planeId);
+      
+      // 3. RENDER: Generate primitive using:
+      //    - realization.position (numeric data)
+      //    - point.id, point.type, point.planeId (structural data)
+      const paperPos = applyMatrix3(realization.position, planeToPaperMatrix);
+      
+      primitives.push({
+        type: 'point',
+        id: `point-${point.id}`,        // From domain object
+        x: paperPos.x,                   // From realization
+        y: paperPos.y,                   // From realization
+        radius: point.type === 'free' ? 5 : 4,  // Styling from domain
+        style: this.resolvePointStyle(point, ...),  // From domain
+        sourceEntityId: point.id         // From domain
+      });
+    }
+    
+    return primitives;
+  }
+}
+```
+
+**Key Insight**: Rendering never accesses domain object properties for numeric data (like `point.position`). It always goes through the realization layer. This ensures:
+- Consistent architecture across all element types
+- Cache invalidation works uniformly
+- No special cases for FreePoint2D vs IntersectionPoint2D
+
+### Key Design Principles
+
+1. **Lazy Evaluation**: Don't compute until needed
+2. **Cache Everything**: Once computed, never compute again (until invalidated)
+3. **Recursive Safe**: Objects can depend on other objects' realizations
+4. **Context Passing**: World passed as context to enable realization lookup
+5. **Type Organization**: Separate caches by geometry type for clarity
+6. **Same Realization Class**: All point types use Point2DRealization (definition determines how to compute, realization just stores result)
+
+### Benefits Summary
+
+**Performance**:
+- Expensive calculations (intersections, transformations) done once
+- Subsequent accesses are O(1) Map lookups
+- No redundant computation
+
+**Correctness**:
+- Recursive dependencies handled automatically
+- No risk of stale data (explicit invalidation)
+- Clear contract via RealizationContext interface
+
+**Maintainability**:
+- Clean separation: rules in domain, results in realizations
+- Easy to add new element types (just implement realize())
+- Explicit caching strategy (no hidden state)
+
+**Extensibility**:
+- Pattern works for any element type (points, lines, circles, etc.)
+- Easy to add new realization types (2D, 3D, projections)
+- Future: dependency tracking for smart invalidation
+
+---
 
 **Conventions**:
 - Regular geometric points: **always use w=1**
@@ -1245,29 +1941,29 @@ type PresentationPrimitive =
 
 interface PointPrimitive extends RenderPrimitive {
   type: "point";
-  x: number;                        // World coordinates (for 2D) or screen coordinates
-  y: number;
+  x: number;                        // Paper coordinates (unified coordinate system)
+  y: number;                        // Paper coordinates
   radius: number;                   // Display radius in pixels
 }
 
 interface PathPrimitive extends RenderPrimitive {
   type: "path";
-  points: Array<{x: number, y: number}>; // Line segments, polylines
+  points: Array<{x: number, y: number}>; // Paper coordinates, for line segments, polylines
   closed: boolean;                  // Connect last to first?
 }
 
 interface CirclePrimitive extends RenderPrimitive {
   type: "circle";
-  cx: number;                       // Center X (world coordinates)
-  cy: number;                       // Center Y
-  r: number;                        // Radius (world units)
+  cx: number;                       // Center X (paper coordinates)
+  cy: number;                       // Center Y (paper coordinates)
+  r: number;                        // Radius (paper units)
 }
 
 interface ArcPrimitive extends RenderPrimitive {
   type: "arc";
-  cx: number;
-  cy: number;
-  r: number;
+  cx: number;                       // Center X (paper coordinates)
+  cy: number;                       // Center Y (paper coordinates)
+  r: number;                        // Radius (paper units)
   startAngle: number;               // Radians
   endAngle: number;
   largeArc: boolean;                // SVG large-arc-flag
@@ -1276,8 +1972,8 @@ interface ArcPrimitive extends RenderPrimitive {
 
 interface TextPrimitive extends RenderPrimitive {
   type: "text";
-  x: number;
-  y: number;
+  x: number;                        // Paper coordinates
+  y: number;                        // Paper coordinates
   text: string;                     // Element name label
   fontSize: number;                 // Pixels
   anchor: "start" | "middle" | "end";

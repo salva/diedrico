@@ -4,15 +4,24 @@
  * Generic SVG rendering service following Constitution Principle IV:
  * "Principle-Based Rendering - No Hardcoded Cases"
  * 
- * This service provides generic rendering algorithms that work for ALL geometric elements,
- * including fixed elements (P_H, P_V, O, HL_HV) and user-created elements.
- * NO special-case rendering logic.
+ * This service provides low-level rendering functions used by PaperService.
+ * Each function takes domain object (structural) + realization (numeric) and
+ * returns SVG attributes.
+ * 
+ * **RENDERING PATTERN**: Always require both domain object and realization:
+ * - Domain object: structural/metadata (id, type, planeId, styling rules)
+ * - Realization: numeric data (position, computed coordinates)
+ * 
+ * This service works for ALL geometric elements, including fixed elements
+ * (P_H, P_V, O, HL_HV) and user-created elements. NO special-case logic.
  * 
  * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Visual Hierarchy
  * Reference: specs/001-dihedral-learning-mvp/data-model.md - Coordinate Transformations
  */
 
+import { Vector3 } from 'three';
 import type { Point2D, Point2DRealization } from '../domain/world/Point';
+import { FreePoint2D } from '../domain/world/Point';
 import type { Plane3D } from '../domain/world/Plane3D';
 import { planeToCanvas } from '../domain/calculations/CoordinateTransform';
 
@@ -27,21 +36,34 @@ export interface SVGElementAttributes {
  * Render a point as an SVG circle element
  * Uses generic point-to-circle rendering algorithm
  * 
- * @param point - Point instance to render
+ * **ARCHITECTURAL PRINCIPLE**: All numeric data flows through realizations.
+ * This function receives:
+ * - point: Domain object with structural/metadata (id, type for styling, planeId)
+ * - realization: Numeric data (computed position)
+ * 
+ * Separation of concerns:
+ * - Numeric data: realization.position
+ * - Structural data: point.id, point.type, point.planeId
+ * - Styling rules: Based on point.type
+ * 
+ * @param point - Point domain object (for metadata: id, type, label, planeId)
+ * @param realization - Point2DRealization with computed position (numeric data)
  * @param canvasOriginX - Canvas origin X coordinate (default 400)
  * @param canvasOriginY - Canvas origin Y coordinate (default 400)
  * @returns SVG circle attributes
  */
 export function renderPoint(
   point: Point2D,
+  realization: Point2DRealization,
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): SVGElementAttributes {
   // Transform plane intrinsic coordinates to canvas coordinates
+  // Numeric data (position) from REALIZATION, structural data (planeId) from POINT
   const [cx, cy] = planeToCanvas(
-    point.u,
-    point.v,
-    point.planeId || 'plane_H',
+    realization.position.x,
+    realization.position.y,
+    point.planeId,
     canvasOriginX,
     canvasOriginY
   );
@@ -123,8 +145,11 @@ export function renderPlane(
  * Lines are rendered from start point to end point.
  * Works for ANY line (including hinge lines, guides, user-created lines) - no special cases.
  * 
- * @param startPoint - Line start point
- * @param endPoint - Line end point
+ * **ARCHITECTURAL PRINCIPLE**: All numeric data flows through realizations.
+ * Accepts realization objects or plain coordinate objects (for fixed elements like hinge line).
+ * 
+ * @param startPoint - Start point realization or plain coordinates { u, v, planeId }
+ * @param endPoint - End point realization or plain coordinates { u, v, planeId }
  * @param lineId - Line identifier
  * @param style - Optional line styling (color, width, dash pattern)
  * @param canvasOriginX - Canvas origin X coordinate (default 400)
@@ -132,8 +157,8 @@ export function renderPlane(
  * @returns SVG line attributes
  */
 export function renderLine(
-  startPoint: { u: number; v: number; planeId?: string },
-  endPoint: { u: number; v: number; planeId?: string },
+  startPoint: Point2DRealization | { u: number; v: number; planeId: string },
+  endPoint: Point2DRealization | { u: number; v: number; planeId: string },
   lineId: string,
   style?: {
     color?: string;
@@ -144,17 +169,32 @@ export function renderLine(
   canvasOriginY: number = 400
 ): SVGElementAttributes {
   // Transform start and end points to canvas coordinates
+  // Handle both Point2DRealization objects and plain { u, v, planeId } objects
+  const startPos = 'position' in startPoint
+    ? startPoint.position
+    : new Vector3(startPoint.u, startPoint.v, 1);
+  const endPos = 'position' in endPoint
+    ? endPoint.position
+    : new Vector3(endPoint.u, endPoint.v, 1);
+  
+  const startPlaneId = 'planeId' in startPoint
+    ? startPoint.planeId
+    : 'plane_H';
+  const endPlaneId = 'planeId' in endPoint
+    ? endPoint.planeId
+    : 'plane_H';
+  
   const [x1, y1] = planeToCanvas(
-    startPoint.u,
-    startPoint.v,
-    startPoint.planeId || 'plane_H',
+    startPos.x,
+    startPos.y,
+    startPlaneId,
     canvasOriginX,
     canvasOriginY
   );
   const [x2, y2] = planeToCanvas(
-    endPoint.u,
-    endPoint.v,
-    endPoint.planeId || 'plane_H',
+    endPos.x,
+    endPos.y,
+    endPlaneId,
     canvasOriginX,
     canvasOriginY
   );

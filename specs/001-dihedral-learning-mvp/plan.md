@@ -33,6 +33,71 @@ An educational web application for learning dihedral/orthographic projection usi
 
 **Notes**: No deviations from constitution principles.
 
+## Key Implementation Decisions
+
+### Coordinate Representation
+
+**Three.js Vector/Matrix Types**: All geometric coordinates use Three.js algebraic objects:
+- **2D coordinates**: `Vector3` for homogeneous 2D (u, v, 1)
+- **3D coordinates**: `Vector4` for homogeneous 3D (x, y, z, w)
+- **2D transforms**: `Matrix3` for 3×3 transformations
+- **3D transforms**: `Matrix4` for 4×4 transformations
+- **2D→3D**: `Matrix4x3` (custom) for Vector3→Vector4 transformations
+- **3D→2D**: `Matrix3x4` (custom) for Vector4→Vector3 transformations
+
+**Rationale**:
+- Single source of truth for vector algebra
+- Avoid array-based coordinate confusion
+- Atomic operations (no separate u/v getters)
+- Standard library for transformations
+- Type safety via TypeScript
+
+**Utilities**: All matrix operations wrapped in non-destructive functions in `frontend/src/utils/threeUtils.ts`
+
+### Realization System
+
+**Lazy Evaluation with Caching**: Geometric objects store their *definition* (rule), not computed coordinates:
+- `FreePoint2D`: Stores `position: Vector3` directly (the defining rule)
+- `IntersectionPoint2D`: Stores `element1Id`, `element2Id`, `index` - coordinates computed on demand
+- `Point2DRealization`: Cache of computed 2D position
+- `Point3DRealization`: Cache of computed 3D position (reconstructed from projections)
+
+**World as RealizationContext**:
+- Implements `RealizationContext` interface with `getPoint2DRealization()`, `getPoint3DRealization()`
+- Checks cache first → Calls `point.realize(this)` if missing → Caches result → Returns
+- Organized by object type: `pointRealizations2D`, `pointRealizations3D` for extensibility
+- `invalidateRealization()` clears cache when objects change
+
+**Benefits**:
+- Separates definition from computation
+- Enables recursive dependencies (intersection of intersection)
+- Performance through caching
+- Clean extension point for new element types
+
+### Realization Layer Boundary (CRITICAL ARCHITECTURAL CONSTRAINT)
+
+**Mandatory Rule**: All numeric data MUST flow through realizations. No other layer may access domain object properties directly.
+
+**Three-Layer Architecture**:
+1. **Domain Layer**: Stores definitions/rules only (e.g., `FreePoint2D.position` is readonly)
+2. **Realization Layer**: Stores ALL computed numeric data accessed by other layers (e.g., `Point2DRealization { position, planeId }`)
+3. **Consuming Layers**: Services, rendering, calculations - access numeric data ONLY through realizations
+
+**Enforcement**:
+- Domain properties marked `readonly` to prevent modification
+- Services require realization parameters (e.g., `renderPoint(point: Point2D, realization: Point2DRealization)`)
+- No `instanceof` checks to access domain properties
+- Tests verify architectural boundary is respected
+
+**Benefits**:
+- Clear separation: rules vs. numbers
+- Type safety: functions explicitly declare need for numeric data
+- Performance: caching prevents redundant calculations
+- Consistency: same pattern for simple (FreePoint2D) and complex (IntersectionPoint2D) elements
+- Maintainability: easy to find all numeric access points (they all go through realizations)
+
+See [data-model.md § Realization Layer Boundary](/specs/001-dihedral-learning-mvp/data-model.md#critical-realization-layer-boundary) for detailed examples.
+
 ## Project Structure
 
 ### Documentation (this feature)

@@ -26,20 +26,26 @@
 **Reference**: [spec.md](./spec.md#conceptual-model-user-pov) - Conceptual Model, [data-model.md](./data-model.md) - World structure
 
 **Implementation Requirements**:
-- **World Container**: Must store all geometric elements in a single root entity per [data-model.md §World Entity](./data-model.md#world-entity). World contains: projection planes, 2D elements, 3D elements, and process tree.
-- **Point Storage**: Points must use homogeneous coordinates [x, y, 1] per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system). Store points with unique IDs and plane association.
+- **Three.js Vector Types**: ALL coordinates MUST use Three.js types: `Vector3` for 2D (u, v, 1), `Vector4` for 3D (x, y, z, w). Arrays are NOT allowed for coordinates.
+- **Required IDs**: ALL geometric objects MUST have a required `id: string` field. IDs are assigned by World.generatePointId() before construction.
+- **World Container**: Must store all geometric elements in a single root entity per [data-model.md §World Entity](./data-model.md#world-entity). World contains: projection planes, 2D elements, 3D elements, and realization caches.
+- **Realization System**: Points store their DEFINITION (rule), realizations store COMPUTED coordinates. FreePoint2D stores position directly, IntersectionPoint2D stores element1Id/element2Id/index.
 - **Plane Intrinsic Coordinates**: ALL point coordinates MUST be stored in plane-local <u,v> coordinates, NOT canvas pixels per [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations).
 - **No Implicit Logic**: Follow [spec.md §No Implicit Entities Rule](./spec.md#2d-elements-explicit-entities) - only create entities explicitly requested by user, no automatic inference.
 
-**⚠️ CRITICAL**: Read [data-model.md §Architecture Overview](./data-model.md#architecture-overview) to understand the three coordinate spaces (plane intrinsic, canvas, 3D) before implementing.
+**⚠️ CRITICAL**: Read [data-model.md §Architecture Overview](./data-model.md#architecture-overview) and [plan.md §Key Implementation Decisions](./plan.md#key-implementation-decisions) to understand coordinate representation and realization system.
 
-- [X] T001 [P] Create World class in frontend/src/domain/world/World.ts with array storage for elements
-- [X] T002 [P] Create Point class in frontend/src/domain/world/Point.ts with x, y coordinates and unique ID
-- [X] T003 [P] Add point storage methods to World (add, remove, getById)
-- [X] T004 [P] Unit test for World class in frontend/tests/unit/domain/world.spec.ts
-- [X] T005 [P] Unit test for Point class in frontend/tests/unit/domain/point.spec.ts
+- [X] T001 [P] Create World class in frontend/src/domain/world/World.ts with Map storage and generatePointId()
+- [X] T002 [P] Create Point2D base class, FreePoint2D, IntersectionPoint2D in frontend/src/domain/world/Point.ts using Vector3
+- [X] T003 [P] Create Point2DRealization and Point3DRealization classes using Vector3/Vector4
+- [X] T004 [P] Add realization caches to World: pointRealizations2D, pointRealizations3D (organized by type)
+- [X] T005 [P] Implement RealizationContext interface in World with getPoint2DRealization(), getPoint3DRealization()
+- [X] T006 [P] Implement realize() method in FreePoint2D (returns position) and IntersectionPoint2D (placeholder)
+- [X] T007 [P] Add point storage methods to World (addPoint expects id already set, removePoint, getPointById)
+- [X] T008 [P] Unit test for World class in frontend/tests/unit/domain/world.spec.ts
+- [X] T009 [P] Unit test for Point classes in frontend/tests/unit/domain/point.spec.ts
 
-**Checkpoint**: Basic data structures ready for rendering
+**Checkpoint**: ✅ Data structures with Three.js types, required IDs, and lazy realization system
 
 ---
 
@@ -75,22 +81,23 @@
 - **Fixed Elements**: Must create per [spec.md §3D Elements](./spec.md#3d-elements-derived-not-edited): Origin point O at (0,0,0), planes P_V and P_H, hinge line HL_HV. These are ALWAYS present and cannot be deleted.
 - **Plane Definitions**: P_V (vertical, XZ plane at Y=0) and P_H (horizontal, XY plane at Z=0) per [spec.md §Coordinate System](./spec.md#coordinate-system-monge-projection). Must use point+normal representation from [data-model.md §Plane3DByPointAndNormal](./data-model.md#plane3dbypointandnormal).
 - **Coordinate Transformation**: Implement [data-model.md §Transformation Flow](./data-model.md#transformation-flow). Must support bidirectional transforms: plane intrinsic <u,v> ↔ canvas (x,y) for EACH plane.
+- **Three.js Matrices**: ALL transformations use Three.js `Matrix3` (3×3 for 2D). Non-destructive wrappers in threeUtils.ts: `applyMatrix3(vector, matrix)`, `invert(matrix)`.
 - **Visual Rendering**: Origin O = orange (#FF6B35), HL_HV = dashed gray (#333333) per [spec.md §Origin Point O](./spec.md#3d-elements-derived-not-edited).
-- **Homogeneous Coordinates**: ALL transformations MUST use 3x3 matrices with homogeneous coordinates [x,y,1] per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
 
-**⚠️ CRITICAL**: Study [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations) diagrams to understand the three coordinate spaces before implementing transformations.
+**⚠️ CRITICAL**: Study [data-model.md §Matrix Representations](./data-model.md#matrix-representations) to understand Three.js Matrix3 usage and custom Matrix4x3/Matrix3x4 for dimension changes.
 
 - [X] T011 [P] Create Plane class in frontend/src/domain/world/Plane.ts with boundaries and normal vector
+- [X] T011b [P] Create threeUtils.ts with non-destructive wrappers: applyMatrix3, invert, add, sub, etc. and Matrix4x3/Matrix3x4 for 2D↔3D
 - [X] T012 Add P_V and P_H fixed planes to World initialization
 - [X] T013 Add origin point (O) and hinge line (HL_HV) to World as regular Point/Line elements
-- [X] T014 [P] Create coordinate transformation utilities in frontend/src/domain/calculations/CoordinateTransform.ts (plane <u,v> ↔ canvas)
-- [X] T015 [P] Create generic SVG rendering service in frontend/src/services/RenderService.ts
+- [X] T014 [P] Create coordinate transformation utilities - NOW: Paper abstraction (Paper.ts, PaperService.ts, SVGRenderer.ts)
+- [X] T015 [P] Create rendering service - NOW: Integrated into Paper/PaperService/SVGRenderer architecture
 - [X] T016 Implement generic plane rendering (uses Plane boundaries to render as SVG rect)
 - [X] T017 Implement generic point rendering (uses Point coordinates to render as SVG circle)
 - [X] T018 Implement generic line rendering (uses Line endpoints to render as SVG line element)
 - [X] T019 [P] Unit test for Plane class in frontend/tests/unit/domain/plane.spec.ts
-- [X] T020 [P] Unit test for CoordinateTransform in frontend/tests/unit/calculations/transform.spec.ts
-- [X] T021 [P] Unit test for RenderService in frontend/tests/unit/services/renderService.spec.ts
+- [X] T020 [P] Unit test for CoordinateTransform - NOW: Should be PaperService tests
+- [X] T021 [P] Unit test for RenderService - NOW: Should be SVGRenderer tests
 
 **Checkpoint**: Fixed elements visible on canvas using generic rendering (US1 partial - workspace initialized)
 
@@ -100,23 +107,24 @@
 
 ## Phase 4: Render Points
 
-**Purpose**: Display user-created points  
+**Purpose**: Display user-created points using Paper abstraction  
 **Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Points)
 
 **Implementation Requirements**:
-- **Point Representation**: Use [data-model.md §Point2D](./data-model.md#point2d) structure with plane intrinsic <u,v> coordinates. Display as SVG circles per [ui-spec.md §Visual Hierarchy](./ui-spec.md#visual-hierarchy).
-- **Coordinate Transformation**: Transform plane intrinsic <u,v> → canvas (x,y) using [data-model.md §Transformation Flow](./data-model.md#transformation-flow). Apply homogeneous coordinate matrices.
+- **Point Representation**: Use [data-model.md §Point2D](./data-model.md#point2d) with Point2DRealization storing <u,v> coordinates.
+- **Paper Architecture**: Transform flow: Point2D → Point2DRealization (u,v) → PaperService (apply PlaneRealization2D) → Paper primitives (x,y) → SVGRenderer (apply viewport) → SVG
+- **Realization System**: Point coordinates cached in Point2DRealization. Plane transformations cached in ProjectionPlaneRealization2D.
 - **Visual States**: Free points = circles, derived points = squares per [spec.md §2D Elements](./spec.md#2d-elements-edited-in-projection-views). Apply hover/selection states from [ui-spec.md §Visual Feedback](./ui-spec.md#visual-feedback-hover-and-selection).
 - **Naming Convention**: Use subscript notation (a_H, b_V) per [spec.md §Naming Conventions](./spec.md#coordinate-system-monge-projection).
 
-**⚠️ CRITICAL**: Points MUST store coordinates in plane intrinsic space, not canvas space. Read [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations) to avoid confusion.
+**⚠️ CRITICAL**: Architecture now uses Rule → Realization → Paper → SVG pipeline. Points store rules, realizations cache computed values.
 
-- [ ] T022 Add point rendering to SvgCanvas.vue (loop through World.points, create SVG circles)
-- [ ] T023 [P] Apply point styling (color, radius) from Point properties
-- [ ] T024 [P] Create visual style types in frontend/src/types/StyleTypes.ts
-- [ ] T025 [P] Unit test for point rendering logic in frontend/tests/unit/components/svgCanvas.spec.ts
+- [X] T022 Implement PaperService.pointToPrimitive() to convert Point2DRealization → Paper primitive
+- [X] T023 [P] Apply point styling (color, radius) from Point properties via ResolvedStyle
+- [X] T024 [P] Update SVGRenderer to render PointPrimitive → SVG circles
+- [X] T025 [P] Unit test for Paper primitive generation in frontend/tests/unit/services/paperService.spec.ts
 
-**Checkpoint**: Points from World data structure render on canvas
+**Checkpoint**: ✅ Points from World data structure render through Paper abstraction
 
 ---
 
@@ -128,19 +136,20 @@
 **Implementation Requirements**:
 - **User Story**: Implement [spec.md §US1](./spec.md#us1-create-2d-free-point-and-view-3d-projection) - User clicks canvas → creates 2D point on active plane → automatically creates 3D point → shows other projection.
 - **Command Pattern**: ALL creation operations MUST use Command pattern per [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability). Execute/undo/redo must maintain world consistency.
+- **ID Generation**: Before creating point, call world.generatePointId() to get unique ID. Pass ID as first parameter to FreePoint2D constructor.
 - **Canvas to Plane Coordinates**: Convert click (x_canvas, y_canvas) → plane intrinsic <u,v> using inverse transformation from [data-model.md §Transformation Flow](./data-model.md#transformation-flow).
 - **No Implicit Entities**: Follow [spec.md §No Implicit Entities Rule](./spec.md#parametric-behavior-and-dependencies) - User must explicitly create points, system creates no automatic helpers.
 - **Active Plane**: Only create points on the currently active projection plane per [spec.md §Active Projection Plane](./spec.md#coordinate-system-monge-projection).
 
 **⚠️ CRITICAL**: Read [spec.md §US1](./spec.md#us1-create-2d-free-point-and-view-3d-projection) completely to understand the full free point workflow including 3D reconstruction.
 
-- [ ] T026 [P] Create Toolbar.vue component in frontend/src/components/toolbars/
-- [ ] T027 Add "Point" tool button to Toolbar
-- [ ] T028 Create tool store in frontend/src/stores/toolStore.ts for active tool tracking
-- [ ] T029 Add click handler to SvgCanvas for point creation
-- [ ] T030 Transform SVG click coordinates to world coordinates
-- [ ] T031 Create Point instance and add to World on canvas click
-- [ ] T032 Trigger canvas re-render when point added
+- [X] T026 [P] Create Toolbar.vue component in frontend/src/components/toolbars/
+- [X] T027 Add "Point" tool button to Toolbar
+- [X] T028 Create tool store in frontend/src/stores/toolStore.ts for active tool tracking
+- [X] T029 Add click handler to SvgCanvas for point creation
+- [X] T030 Transform SVG click coordinates to world coordinates
+- [X] T031 Create Point instance and add to World on canvas click
+- [X] T032 Trigger canvas re-render when point added
 - [ ] T033 [P] Unit test for toolStore in frontend/tests/unit/stores/toolStore.spec.ts
 - [ ] T034 [P] E2E test for point creation in frontend/tests/e2e/create-point.spec.ts
 
@@ -165,8 +174,8 @@
 - [ ] T035 Create useViewport composable in frontend/src/composables/useViewport.ts
 - [ ] T036 Create viewStore in frontend/src/stores/viewStore.ts for pan/zoom state
 - [ ] T037 Add mouse drag handler for panning (Shift + drag or Space + drag)
-- [ ] T038 Add mouse wheel handler for zooming
-- [ ] T039 Update CoordinateTransform to apply view transformation
+- [ ] T038 Paper architecture handles viewport transformation (already implemented in SVGRenderer)
+- [ ] T040 Apply transform to SVG rendering in SvgCanvas (use SVGRenderer.renderPaper())sformation
 - [ ] T040 Apply transform to SVG rendering in SvgCanvas
 - [ ] T041 [P] Unit test for viewStore in frontend/tests/unit/stores/viewStore.spec.ts
 - [ ] T042 [P] Unit test for useViewport composable in frontend/tests/unit/composables/useViewport.spec.ts

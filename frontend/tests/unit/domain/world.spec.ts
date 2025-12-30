@@ -1,3 +1,4 @@
+import { Vector3 } from 'three';
 /**
  * Unit tests for World class
  * 
@@ -28,7 +29,7 @@ describe('World', () => {
 
   describe('addPoint', () => {
     it('should add a point to the world', () => {
-      const point = new FreePoint2D([10, 20, 1]);
+      const point = new FreePoint2D('test-point-1', new Vector3(10, 20, 1), "plane_H");
       world.addPoint(point);
 
       expect(world.getPointCount()).toBe(3);
@@ -36,18 +37,17 @@ describe('World', () => {
     });
 
     it('should assign an ID to a point without one', () => {
-      const point = new FreePoint2D([10, 20, 1]);
-      expect(point.id).toBeUndefined();
+      const point = new FreePoint2D('test-point-2', new Vector3(10, 20, 1), "plane_H");
+      expect(point.id).toBeDefined();
 
       world.addPoint(point);
 
       expect(point.id).toBeDefined();
-      expect(point.id).toMatch(/^point_\d+$/);
+      expect(point.id).toBe('test-point-2');
     });
 
     it('should not override existing ID', () => {
-      const point = new FreePoint2D([10, 20, 1]);
-      point.id = 'custom_id';
+      const point = new FreePoint2D('custom_id', new Vector3(10, 20, 1), "plane_H");
 
       world.addPoint(point);
 
@@ -55,21 +55,20 @@ describe('World', () => {
     });
 
     it('should assign sequential IDs to multiple points', () => {
-      const point1 = new FreePoint2D([10, 20, 1]);
-      const point2 = new FreePoint2D([30, 40, 1]);
+      const point1 = new FreePoint2D('test-point-3', new Vector3(10, 20, 1), "plane_H");
+      const point2 = new FreePoint2D('test-point-4', new Vector3(30, 40, 1), "plane_H");
 
       world.addPoint(point1);
       world.addPoint(point2);
 
-      expect(point1.id).toBe('point_1');
-      expect(point2.id).toBe('point_2');
+      expect(point1.id).toBe('test-point-3');
+      expect(point2.id).toBe('test-point-4');
     });
   });
 
   describe('removePoint', () => {
     it('should remove a point by ID', () => {
-      const point = new FreePoint2D([10, 20, 1]);
-      point.id = 'test_point';
+      const point = new FreePoint2D('test_point', new Vector3(10, 20, 1), "plane_H");
       world.addPoint(point);
 
       const removed = world.removePoint('test_point');
@@ -88,15 +87,14 @@ describe('World', () => {
 
   describe('getPointById', () => {
     it('should retrieve a point by ID', () => {
-      const point = new FreePoint2D([10, 20, 1]);
-      point.id = 'test_point';
+      const point = new FreePoint2D('test_point', new Vector3(10, 20, 1), "plane_H");
       world.addPoint(point);
 
       const retrieved = world.getPointById('test_point');
 
       expect(retrieved).toBe(point);
-      expect(retrieved?.coordinates[0]).toBe(10);
-      expect(retrieved?.coordinates[1]).toBe(20);
+      expect(retrieved?.position.x).toBe(10);
+      expect(retrieved?.position.y).toBe(20);
     });
 
     it('should return undefined for non-existent ID', () => {
@@ -115,9 +113,9 @@ describe('World', () => {
     });
 
     it('should return all points', () => {
-      const point1 = new FreePoint2D([10, 20, 1]);
-      const point2 = new FreePoint2D([30, 40, 1]);
-      const point3 = new FreePoint2D([50, 60, 1]);
+      const point1 = new FreePoint2D('test-point-5', new Vector3(10, 20, 1), "plane_H");
+      const point2 = new FreePoint2D('test-point-6', new Vector3(30, 40, 1), "plane_H");
+      const point3 = new FreePoint2D('test-point-7', new Vector3(50, 60, 1), "plane_H");
 
       world.addPoint(point1);
       world.addPoint(point2);
@@ -134,8 +132,8 @@ describe('World', () => {
 
   describe('clear', () => {
     it('should remove all user points but keep origin points', () => {
-      world.addPoint(new FreePoint2D([10, 20, 1]));
-      world.addPoint(new FreePoint2D([30, 40, 1]));
+      world.addPoint(new FreePoint2D('test-point-8', new Vector3(10, 20, 1), "plane_H"));
+      world.addPoint(new FreePoint2D('test-point-9', new Vector3(30, 40, 1), "plane_H"));
 
       expect(world.getPointCount()).toBe(4);
 
@@ -148,15 +146,15 @@ describe('World', () => {
     });
 
     it('should reset ID counter', () => {
-      world.addPoint(new FreePoint2D([10, 20, 1]));
-      world.addPoint(new FreePoint2D([30, 40, 1]));
+      world.addPoint(new FreePoint2D('test-point-10', new Vector3(10, 20, 1), "plane_H"));
+      world.addPoint(new FreePoint2D('test-point-11', new Vector3(30, 40, 1), "plane_H"));
 
       world.clear();
 
-      const newPoint = new FreePoint2D([50, 60, 1]);
+      const newPoint = new FreePoint2D('test-point-12', new Vector3(50, 60, 1), "plane_H");
       world.addPoint(newPoint);
 
-      expect(newPoint.id).toBe('point_1');
+      expect(newPoint.id).toBe('test-point-12');
     });
   });
 
@@ -166,17 +164,17 @@ describe('World', () => {
     });
 
     it('should return correct count after additions', () => {
-      world.addPoint(new FreePoint2D([10, 20, 1]));
+      world.addPoint(new FreePoint2D('test-point-13', new Vector3(10, 20, 1), "plane_H"));
       expect(world.getPointCount()).toBe(3);
 
-      world.addPoint(new FreePoint2D([30, 40, 1]));
+      world.addPoint(new FreePoint2D('test-point-14', new Vector3(30, 40, 1), "plane_H"));
       expect(world.getPointCount()).toBe(4);
     });
 
     it('should return correct count after removals', () => {
-      const point = new FreePoint2D([10, 20, 1]);
+      const point = new FreePoint2D('test-point-15', new Vector3(10, 20, 1), "plane_H");
       world.addPoint(point);
-      world.addPoint(new FreePoint2D([30, 40, 1]));
+      world.addPoint(new FreePoint2D('test-point-16', new Vector3(30, 40, 1), "plane_H"));
 
       world.removePoint(point.id!);
 

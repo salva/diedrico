@@ -1,3 +1,4 @@
+import { Vector3, Vector4 } from 'three';
 /**
  * renderService.spec.ts
  * Unit tests for RenderService
@@ -18,17 +19,16 @@ import {
   applyHoverState,
   applySelectionState
 } from '@/services/RenderService';
-import { Point2D, FreePoint2D, IntersectionPoint2D } from '@/domain/world/Point';
+import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization } from '@/domain/world/Point';
 import { Plane3D } from "@/domain/world/Plane";
 
 describe('RenderService', () => {
   describe('renderPoint', () => {
     it('should render free point as SVG circle attributes', () => {
-      const point = new FreePoint2D([100, 50, 1]);
-      point.id = 'point_1';
-      point.planeId = 'plane_H';
+      const point = new FreePoint2D('point_1', new Vector3(100, 50, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(100, 50, 1));
       
-      const attrs = renderPoint(point, 400, 400);
+      const attrs = renderPoint(point, realization, 400, 400);
       
       expect(attrs.cx).toBe(500);  // 400 + 100
       expect(attrs.cy).toBe(450);  // 400 + 50
@@ -39,40 +39,42 @@ describe('RenderService', () => {
     });
 
     it('should render derived point with different styling', () => {
-      const point = new IntersectionPoint2D([100, 50, 1], 'line_1', 'circle_2', 0);
-      point.id = 'point_2';
+      const point = new IntersectionPoint2D('point_2', 'line_1', 'circle_2', 0, "plane_H");
+      const realization = new Point2DRealization(new Vector3(0, 0, 1));
       
-      const attrs = renderPoint(point);
+      const attrs = renderPoint(point, realization);
       
       expect(attrs.r).toBe(4);  // Smaller radius
       expect(attrs.fill).toBe('#E94E77');  // Derived point color
     });
 
     it('should handle negative coordinates', () => {
-      const point = new FreePoint2D([-50, -30, 1]);
-      point.planeId = 'plane_H';
+      const point = new FreePoint2D('test-point-1', new Vector3(-50, -30, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(-50, -30, 1));
       
-      const attrs = renderPoint(point, 400, 400);
+      const attrs = renderPoint(point, realization, 400, 400);
       
       expect(attrs.cx).toBe(350);  // 400 - 50
       expect(attrs.cy).toBe(370);  // 400 - 30
     });
 
     it('should handle custom canvas origin', () => {
-      const point = new FreePoint2D([10, 20, 1]);
+      const point = new FreePoint2D('test-point-2', new Vector3(10, 20, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(10, 20, 1));
       
-      const attrs = renderPoint(point, 200, 300);
+      const attrs = renderPoint(point, realization, 200, 300);
       
       expect(attrs.cx).toBe(210);
       expect(attrs.cy).toBe(320);
     });
 
     it('should handle point without ID', () => {
-      const point = new FreePoint2D([0, 0, 1]);
+      const point = new FreePoint2D('test-point-3', new Vector3(0, 0, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(0, 0, 1));
       
-      const attrs = renderPoint(point);
+      const attrs = renderPoint(point, realization);
       
-      expect(attrs['data-element-id']).toBe('unknown');
+      expect(attrs['data-element-id']).toBe('test-point-3');
     });
   });
 
@@ -121,8 +123,8 @@ describe('RenderService', () => {
     it('should work for any plane without special-case logic', () => {
       // Test with arbitrary auxiliary plane
       const plane = new Plane3D(
-        [0, 0, 5, 1],
-        [0, 0, 1, 1],
+        new Vector4(0, 0, 5, 1),
+        new Vector4(0, 0, 1, 0),
         'auxiliary'
       );
       plane.id = 'custom_plane';
@@ -214,9 +216,9 @@ describe('RenderService', () => {
 
   describe('applyHoverState', () => {
     it('should apply hover styling to point attributes', () => {
-      const point = new FreePoint2D([0, 0, 1]);
-      point.id = 'point_1';
-      const baseAttrs = renderPoint(point);
+      const point = new FreePoint2D('point_1', new Vector3(0, 0, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const baseAttrs = renderPoint(point, realization);
       
       const hoverAttrs = applyHoverState(baseAttrs);
       
@@ -235,9 +237,9 @@ describe('RenderService', () => {
     });
 
     it('should preserve other attributes', () => {
-      const point = new FreePoint2D([50, 50, 1]);
-      point.id = 'point_1';
-      const baseAttrs = renderPoint(point);
+      const point = new FreePoint2D('point_1', new Vector3(50, 50, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(50, 50, 1));
+      const baseAttrs = renderPoint(point, realization);
       
       const hoverAttrs = applyHoverState(baseAttrs);
       
@@ -250,9 +252,9 @@ describe('RenderService', () => {
 
   describe('applySelectionState', () => {
     it('should apply selection styling to point attributes', () => {
-      const point = new FreePoint2D([0, 0, 1]);
-      point.id = 'point_1';
-      const baseAttrs = renderPoint(point);
+      const point = new FreePoint2D('point_1', new Vector3(0, 0, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const baseAttrs = renderPoint(point, realization);
       
       const selectionAttrs = applySelectionState(baseAttrs);
       
@@ -272,8 +274,9 @@ describe('RenderService', () => {
     });
 
     it('should distinguish from hover state', () => {
-      const point = new FreePoint2D([0, 0, 1]);
-      const baseAttrs = renderPoint(point);
+      const point = new FreePoint2D('test-point-4', new Vector3(0, 0, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const baseAttrs = renderPoint(point, realization);
       
       const hoverAttrs = applyHoverState(baseAttrs);
       const selectionAttrs = applySelectionState(baseAttrs);
@@ -289,11 +292,11 @@ describe('RenderService', () => {
   describe('Constitution Principle IV compliance', () => {
     it('should render fixed elements using same logic as user elements', () => {
       // Origin point O - should use generic point rendering
-      const originPoint = new FreePoint2D([0, 0, 1]);
-      originPoint.id = 'O';
+      const originPoint = new FreePoint2D('O', new Vector3(0, 0, 1), "plane_H");
+      const realization = new Point2DRealization(new Vector3(0, 0, 1));
       originPoint.label = 'Origin';
       
-      const originAttrs = renderPoint(originPoint);
+      const originAttrs = renderPoint(originPoint, realization);
       
       // Should have same structure as any other point
       expect(originAttrs).toHaveProperty('cx');
@@ -305,8 +308,8 @@ describe('RenderService', () => {
     it('should render P_H using same logic as auxiliary planes', () => {
       const planeH = Plane3D.createPH();
       const auxiliaryPlane = new Plane3D(
-        [0, 0, 10, 1],
-        [0, 0, 1, 1]
+        new Vector4(0, 0, 10, 1),
+        new Vector4(0, 0, 1, 0)
       );
       auxiliaryPlane.setBoundaries(-400, 400, -400, 400);
       

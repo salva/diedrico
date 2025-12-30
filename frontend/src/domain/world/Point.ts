@@ -15,46 +15,46 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
  */
 
-export type PointType = 'free' | 'intersection';
+import { Vector3, Vector4 } from 'three';
+
+export type Point2DType = 'free' | 'intersection';
 
 /**
- * Point2DRealization - Stores computed coordinates for a Point2D
- * This is the cache of evaluated point positions.
+ * Point2DRealization - Stores computed 2D position for a Point2D
+ * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
 export class Point2DRealization {
-  pointId: string;
-  coordinates: [number, number, number];  // Homogeneous coordinates [u, v, 1]
-  planeId?: string;
+  position: Vector3;  // Position in plane coordinates (u, v, 1) - ONLY NUMERIC DATA
 
-  constructor(
-    pointId: string,
-    coordinates: [number, number, number],
-    planeId?: string
-  ) {
-    this.pointId = pointId;
-    this.coordinates = coordinates;
-    this.planeId = planeId;
+  constructor(position: Vector3) {
+    this.position = position;
   }
 
   /**
-   * Get homogeneous coordinate representation [u, v, 1]
+   * Get position as Vector3
    */
-  getHomogeneousCoords(): [number, number, number] {
-    return this.coordinates;
+  getPosition(): Vector3 {
+    return this.position;
+  }
+}
+
+/**
+ * Point3DRealization - Stores computed 3D position for a point
+ * Reconstructed from 2D projections or defined directly in 3D space.
+ * Contains ONLY numeric data. Structural information (id) stays in domain objects.
+ */
+export class Point3DRealization {
+  position: Vector4;  // Position in 3D space (x, y, z, 1) - ONLY NUMERIC DATA
+
+  constructor(position: Vector4) {
+    this.position = position;
   }
 
   /**
-   * Getter for u coordinate (convenience accessor)
+   * Get position as Vector4
    */
-  get u(): number {
-    return this.coordinates[0];
-  }
-
-  /**
-   * Getter for v coordinate (convenience accessor)
-   */
-  get v(): number {
-    return this.coordinates[1];
+  getPosition(): Vector4 {
+    return this.position;
   }
 }
 
@@ -62,23 +62,32 @@ export class Point2DRealization {
  * Base Point2D class - represents the rule/definition of a point
  */
 export abstract class Point2D {
-  id?: string;
-  abstract readonly type: PointType;
+  id: string;  // Unique identifier (required)
+  abstract readonly type: Point2DType;
   label?: string;
-  planeId?: string;  // Which projection plane this point belongs to
+  planeId: string;  // Which projection plane this point belongs to
 
   constructor(
-    plane?: { id?: string },
+    id: string,
+    planeId: string,
     label?: string
   ) {
+    this.id = id;
     this.label = label;
-    this.planeId = plane?.id;
+    this.planeId = planeId;
   }
 
   /**
    * Clone this point
    */
   abstract clone(): Point2D;
+
+  /**
+   * Calculate the 2D realization (position) for this point
+   * Returns position in the projection plane's intrinsic coordinates
+   * Does not need context - calculates from local data only
+   */
+  abstract realize2D(): Point2DRealization;
 }
 
 /**
@@ -87,32 +96,38 @@ export abstract class Point2D {
  */
 export class FreePoint2D extends Point2D {
   readonly type: 'free' = 'free';
-  position: [number, number, number];  // The defining position [u, v, 1]
+  readonly position: Vector3;  // The defining position in plane coordinates (u, v, 1) - IMMUTABLE RULE
   locked?: boolean;  // If true, point cannot be moved or deleted
 
   constructor(
-    position: [number, number, number],
-    plane?: { id?: string },
+    id: string,
+    position: Vector3,
+    planeId: string,
     label?: string
   ) {
-    super(plane, label);
+    super(id, planeId, label);
     this.position = position;
     this.locked = false;
   }
 
   clone(): FreePoint2D {
     const cloned = new FreePoint2D(
-      [...this.position] as [number, number, number],
-      this.planeId ? { id: this.planeId } : undefined,
+      this.id,
+      this.position.clone(),
+      this.planeId,
       this.label
     );
-    if (this.id) {
-      cloned.id = this.id;
-    }
     if (this.locked !== undefined) {
       cloned.locked = this.locked;
     }
     return cloned;
+  }
+
+  /**
+   * Calculate 2D realization - for free points, just return the stored position
+   */
+  realize2D(): Point2DRealization {
+    return new Point2DRealization(this.position);
   }
 }
 
@@ -128,13 +143,14 @@ export class IntersectionPoint2D extends Point2D {
   index: number;       // Index to identify which intersection (0, 1, 2...) when multiple exist
 
   constructor(
+    id: string,
     element1Id: string,
     element2Id: string,
     index: number,
-    plane?: { id?: string },
+    planeId: string,
     label?: string
   ) {
-    super(plane, label);
+    super(id, planeId, label);
     this.element1Id = element1Id;
     this.element2Id = element2Id;
     this.index = index;
@@ -142,15 +158,29 @@ export class IntersectionPoint2D extends Point2D {
 
   clone(): IntersectionPoint2D {
     const cloned = new IntersectionPoint2D(
+      this.id,
       this.element1Id,
       this.element2Id,
       this.index,
-      this.planeId ? { id: this.planeId } : undefined,
+      this.planeId,
       this.label
     );
-    if (this.id) {
-      cloned.id = this.id;
-    }
     return cloned;
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of two geometric objects
+   * Intersection is calculated in the plane's intrinsic coordinate system
+   * TODO: Implement intersection calculation from element1Id and element2Id
+   */
+  realize2D(): Point2DRealization {
+    // TODO: Get realizations of element1 and element2, compute intersection
+    // For now, return origin as placeholder
+    // Real implementation will:
+    // 1. Access element1 and element2 definitions (not realizations)
+    // 2. Compute their intersection points in this plane's coordinates
+    // 3. Return the point at this.index
+    
+    return new Point2DRealization(new Vector3(0, 0, 1));
   }
 }

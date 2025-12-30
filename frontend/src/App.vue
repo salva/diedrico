@@ -3,9 +3,7 @@
     <!-- Header: Top toolbar area -->
     <header class="app-header">
       <h1 class="app-title">Diedrico - Dihedral Learning MVP</h1>
-      <div class="header-actions">
-        <!-- Toolbar buttons will be added in later phases -->
-      </div>
+      <Toolbar />
     </header>
 
     <!-- Main Workspace: Canvas area -->
@@ -36,6 +34,7 @@
  */
 
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
+import Toolbar from './components/toolbars/Toolbar.vue';
 </script>
 
 <style scoped>

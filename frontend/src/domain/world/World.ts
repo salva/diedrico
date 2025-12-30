@@ -12,26 +12,40 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
  */
 
-import { Point2D, FreePoint2D, Point2DRealization } from './Point';
+import { Vector3, Vector4 } from 'three';
+import { Point2D, FreePoint2D, Point2DRealization, Point3DRealization } from './Point';
 import { Plane3D } from './Plane';
+import { ProjectionPlane, BaseProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
 
 export class World {
   private points: Map<string, Point2D>;
   private planes: Map<string, Plane3D>;
-  private pointRealizations: Map<string, Point2DRealization>;  // Cache of computed coordinates
+  projectionPlanes: Map<string, ProjectionPlane>;  // 2D projection planes (public for rendering)
+  
+  // Realization caches - organized by object type for extensibility
+  private pointRealizations2D: Map<string, Point2DRealization>;  // Computed 2D point positions
+  private pointRealizations3D: Map<string, Point3DRealization>;  // Computed 3D point positions
+  private projectionPlaneRealizations2D: Map<string, ProjectionPlaneRealization2D>;  // Computed plane 2D transforms
+  private projectionPlaneRealizations3D: Map<string, ProjectionPlaneRealization3D>;  // Computed plane 3D transforms
+  // Future: lineRealizations2D, circleRealizations2D, etc.
+  
   private nextId: number;
 
   // Fixed elements (always present)
-  originPoint?: [number, number, number, number];  // O at (0,0,0) [x, y, z, 1]
+  originPoint?: Vector4;  // O at (0,0,0) in 3D space
   hingeLineHV?: {         // HL_HV along X-axis
-    start: [number, number, number, number];
-    end: [number, number, number, number];
+    start: Vector4;
+    end: Vector4;
   };
 
   constructor() {
     this.points = new Map();
     this.planes = new Map();
-    this.pointRealizations = new Map();
+    this.projectionPlanes = new Map();
+    this.pointRealizations2D = new Map();
+    this.pointRealizations3D = new Map();
+    this.projectionPlaneRealizations2D = new Map();
+    this.projectionPlaneRealizations3D = new Map();
     this.nextId = 1;
     
     // Initialize fixed elements
@@ -43,7 +57,7 @@ export class World {
    * These are always present and cannot be deleted.
    */
   initializeFixedElements(): void {
-    // Create P_H and P_V projection planes
+    // Create P_H and P_V 3D planes
     const planeH = Plane3D.createPH();
     planeH.id = 'plane_H';
     this.planes.set('plane_H', planeH);
@@ -52,79 +66,197 @@ export class World {
     planeV.id = 'plane_V';
     this.planes.set('plane_V', planeV);
 
+    // Create base projection planes for P_H and P_V
+    const projPlaneH = BaseProjectionPlane.createPH();
+    projPlaneH.id = 'proj_plane_H';
+    projPlaneH.plane3DId = 'plane_H';
+    this.projectionPlanes.set('proj_plane_H', projPlaneH);
+
+    const projPlaneV = BaseProjectionPlane.createPV();
+    projPlaneV.id = 'proj_plane_V';
+    projPlaneV.plane3DId = 'plane_V';
+    this.projectionPlanes.set('proj_plane_V', projPlaneV);
+
     // Origin projections O_H and O_V
     // These are the 2D projections of the 3D origin point O
     // O_H on P_H: local coordinates (0, -200) — on the hinge line
     // O_V on P_V: local coordinates (0, 200) — on the hinge line
-    const pointOH = new FreePoint2D([0, -200, 1], planeH);
-    pointOH.id = 'O_H';
+    const pointOH = new FreePoint2D('O_H', new Vector3(0, -200, 1), planeH.id!);
     pointOH.locked = true;
     this.points.set('O_H', pointOH);
 
-    const pointOV = new FreePoint2D([0, 200, 1], planeV);
-    pointOV.id = 'O_V';
+    const pointOV = new FreePoint2D('O_V', new Vector3(0, 200, 1), planeV.id!);
     pointOV.locked = true;
     this.points.set('O_V', pointOV);
 
     // Origin point O at (0,0,0) in 3D space is defined by O_H and O_V
-    this.originPoint = [0, 0, 0, 1];
+    this.originPoint = new Vector4(0, 0, 0, 1);
 
     // Hinge line HL_HV along X-axis
     // Extends from -∞ to +∞, but we'll use large finite values for rendering
     this.hingeLineHV = {
-      start: [-10000, 0, 0, 1],
-      end: [10000, 0, 0, 1]
+      start: new Vector4(-10000, 0, 0, 1),
+      end: new Vector4(10000, 0, 0, 1)
     };
   }
 
   /**
-   * Add a point to the world and compute its initial realization
+   * Generate a unique ID for a new point
+   */
+  generatePointId(): string {
+    return `point_${this.nextId++}`;
+  }
+
+  /**
+   * Add a point to the world
+   * Point must already have an ID assigned
    * @param point Point to add
-   * @returns The added point with assigned ID if it didn't have one
+   * @returns The added point
    */
   addPoint(point: Point2D): Point2D {
-    if (!point.id) {
-      point.id = `point_${this.nextId++}`;
-    }
     this.points.set(point.id, point);
     
-    // Create initial realization
-    this.realizePoint(point);
+    // Realization will be computed lazily on first access via getPoint2DRealization()
     
     return point;
   }
 
   /**
-   * Compute and cache the realization (coordinates) for a point
+   * Get the 2D realization for a point (cached or computed on-demand)
+   * Implements RealizationContext interface for recursive realization lookup
    */
-  private realizePoint(point: Point2D): void {
-    if (!point.id) return;
-    
-    let coordinates: [number, number, number];
-    
-    if (point instanceof FreePoint2D) {
-      // Free point: coordinates are directly from its position
-      coordinates = point.position;
-    } else {
-      // Intersection point: would need to compute intersection
-      // For now, return origin (this will be implemented properly later)
-      coordinates = [0, 0, 1];
+  getPoint2DRealization(pointId: string): Point2DRealization | undefined {
+    // Check cache first
+    let realization = this.pointRealizations2D.get(pointId);
+    if (realization) {
+      return realization;
     }
+
+    // Not cached - compute it
+    const point = this.points.get(pointId);
+    if (!point) {
+      return undefined;
+    }
+
+    // Call realize2D() on the point
+    // 2D realization only calculates intrinsic plane coordinates, doesn't need context
+    realization = point.realize2D();
     
-    const realization = new Point2DRealization(
-      point.id,
-      coordinates,
-      point.planeId
-    );
+    // Cache the result
+    this.pointRealizations2D.set(pointId, realization);
     
-    this.pointRealizations.set(point.id, realization);
+    return realization;
   }
 
   /**
-   * Get the realization (computed coordinates) for a point
+   * Get the 3D realization for a point (cached or computed on-demand)
+   * Computes 3D position by transforming the 2D realization using the projection plane's 3D transform
    */
-  getPointRealization(pointId: string): Point2DRealization | undefined {
-    return this.pointRealizations.get(pointId);
+  getPoint3DRealization(pointId: string): Point3DRealization | undefined {
+    // Check cache first
+    let realization = this.pointRealizations3D.get(pointId);
+    if (realization) {
+      return realization;
+    }
+
+    // Not cached - compute it
+    const point = this.points.get(pointId);
+    if (!point) {
+      return undefined;
+    }
+
+    // Get the point's 2D realization (intrinsic plane coordinates)
+    const realization2D = this.getPoint2DRealization(pointId);
+    if (!realization2D) {
+      return undefined;
+    }
+
+    // Get the projection plane's 3D transformation
+    const planeRealization3D = this.getProjectionPlane3DRealization(point.planeId!);
+    if (!planeRealization3D) {
+      return undefined;
+    }
+
+    // Transform 2D plane coordinates to 3D space coordinates
+    // [x, y, z, 1] = planeTo3D * [u, v, 1]
+    const pos3D = realization2D.position.clone().applyMatrix3(planeRealization3D.planeTo3D);
+    const position3D = new Vector4(pos3D.x, pos3D.y, pos3D.z, 1);
+    
+    realization = new Point3DRealization(position3D);
+    
+    // Cache the result
+    this.pointRealizations3D.set(pointId, realization);
+    
+    return realization;
+  }
+
+  /**
+   * Get the 2D realization for a projection plane (cached or computed on-demand)
+   * Consistent pattern with getPoint2DRealization()
+   */
+  getProjectionPlane2DRealization(planeId: string): ProjectionPlaneRealization2D | undefined {
+    // Check cache first
+    let realization = this.projectionPlaneRealizations2D.get(planeId);
+    if (realization) {
+      return realization;
+    }
+
+    // Not cached - compute it
+    const plane = this.projectionPlanes.get(planeId);
+    if (!plane) {
+      return undefined;
+    }
+
+    // Call realize2D() on the plane (same pattern as points)
+    realization = plane.realize2D();
+    
+    // Cache the result
+    this.projectionPlaneRealizations2D.set(planeId, realization);
+    
+    return realization;
+  }
+
+  /**
+   * Get the 3D realization for a projection plane (cached or computed on-demand)
+   * Returns the 3D transformation matrix for converting plane coordinates to 3D space
+   */
+  getProjectionPlane3DRealization(planeId: string): ProjectionPlaneRealization3D | undefined {
+    // Check cache first
+    let realization = this.projectionPlaneRealizations3D.get(planeId);
+    if (realization) {
+      return realization;
+    }
+
+    // Not cached - compute it
+    const plane = this.projectionPlanes.get(planeId);
+    if (!plane) {
+      return undefined;
+    }
+
+    // Call realize3D() on the plane
+    try {
+      realization = plane.realize3D();
+      
+      // Cache the result
+      this.projectionPlaneRealizations3D.set(planeId, realization);
+      
+      return realization;
+    } catch (error) {
+      // 3D realization not yet implemented for this plane type
+      return undefined;
+    }
+  }
+
+  /**
+   * Invalidate cached realizations for a point and all dependent points
+   * Call this when a point's definition changes (e.g., user moves a point)
+   */
+  invalidateRealization(pointId: string): void {
+    this.pointRealizations2D.delete(pointId);
+    this.pointRealizations3D.delete(pointId);
+    
+    // TODO: Also invalidate dependent points
+    // Need to track dependency graph to know which points depend on this one
   }
 
   /**
@@ -133,7 +265,9 @@ export class World {
    * @returns true if point was removed, false if not found
    */
   removePoint(id: string): boolean {
-    this.pointRealizations.delete(id);  // Remove cached realization
+    // Remove cached realizations
+    this.pointRealizations2D.delete(id);
+    this.pointRealizations3D.delete(id);
     return this.points.delete(id);
   }
 
@@ -150,7 +284,7 @@ export class World {
    * Get all points in the world
    * @returns Array of all points
    */
-  getAllPoints(): Point[] {
+  getAllPoints(): Point2D[] {
     return Array.from(this.points.values());
   }
 
@@ -160,6 +294,9 @@ export class World {
   clear(): void {
     this.points.clear();
     this.planes.clear();
+    this.projectionPlanes.clear();
+    this.pointRealizations2D.clear();
+    this.pointRealizations3D.clear();
     this.nextId = 1;
     // Reinitialize fixed elements
     this.initializeFixedElements();

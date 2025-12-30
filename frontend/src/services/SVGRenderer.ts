@@ -18,6 +18,9 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-transformations
  */
 
+import { Vector3 } from 'three';
+import { vec3 } from '../utils/threeUtils';
+
 import type {
   Primitive,
   PointPrimitive,
@@ -52,16 +55,15 @@ export class SVGRenderer {
    * Forward: paper coords → screen coords
    * Applies viewport transformation (pan + zoom)
    */
-  private transformPoint(
-    x: number,
-    y: number,
+  transformPoint(
+    point: Vector3,
     viewport: ViewportTransform
-  ): [number, number] {
+  ): Vector3 {
     // Apply viewport transformation: pan then zoom
-    const finalX = (x + viewport.panX) * viewport.zoom;
-    const finalY = (y + viewport.panY) * viewport.zoom;
+    const finalX = (point.x + viewport.panX) * viewport.zoom;
+    const finalY = (point.y + viewport.panY) * viewport.zoom;
 
-    return [finalX, finalY];
+    return vec3(finalX, finalY);
   }
 
   /**
@@ -70,15 +72,14 @@ export class SVGRenderer {
    * Used for mouse input processing
    */
   inverseTransformPoint(
-    screenX: number,
-    screenY: number,
+    point: Vector3,
     viewport: ViewportTransform
-  ): [number, number] {
+  ): Vector3 {
     // Reverse viewport transformation: un-zoom then un-pan
-    const paperX = screenX / viewport.zoom - viewport.panX;
-    const paperY = screenY / viewport.zoom - viewport.panY;
+    const paperX = point.x / viewport.zoom - viewport.panX;
+    const paperY = point.y / viewport.zoom - viewport.panY;
 
-    return [paperX, paperY];
+    return vec3(paperX, paperY);
   }
 
   /**
@@ -88,15 +89,14 @@ export class SVGRenderer {
     primitive: PointPrimitive,
     viewport: ViewportTransform
   ): SVGAttributes {
-    const [cx, cy] = this.transformPoint(
-      primitive.x,
-      primitive.y,
+    const canvasPos = this.transformPoint(
+      vec3(primitive.x, primitive.y),
       viewport
     );
 
     return {
-      cx,
-      cy,
+      cx: canvasPos.x,
+      cy: canvasPos.y,
       r: primitive.radius,
       fill: primitive.style.fill,
       stroke: primitive.style.stroke,
@@ -120,13 +120,13 @@ export class SVGRenderer {
 
     // Transform all points
     const transformedPoints = primitive.points.map(([x, y]) =>
-      this.transformPoint(x, y, viewport)
+      this.transformPoint(vec3(x, y), viewport)
     );
 
     // Build SVG path data
-    let pathData = `M ${transformedPoints[0][0]} ${transformedPoints[0][1]}`;
+    let pathData = `M ${transformedPoints[0].x} ${transformedPoints[0].y}`;
     for (let i = 1; i < transformedPoints.length; i++) {
-      pathData += ` L ${transformedPoints[i][0]} ${transformedPoints[i][1]}`;
+      pathData += ` L ${transformedPoints[i].x} ${transformedPoints[i].y}`;
     }
     if (primitive.closed) {
       pathData += ' Z';
@@ -151,9 +151,8 @@ export class SVGRenderer {
     primitive: CirclePrimitive,
     viewport: ViewportTransform
   ): SVGAttributes {
-    const [cx, cy] = this.transformPoint(
-      primitive.cx,
-      primitive.cy,
+    const canvasPos = this.transformPoint(
+      vec3(primitive.cx, primitive.cy),
       viewport
     );
 
@@ -161,8 +160,8 @@ export class SVGRenderer {
     const radius = primitive.radius * viewport.zoom;
 
     return {
-      cx,
-      cy,
+      cx: canvasPos.x,
+      cy: canvasPos.y,
       r: radius,
       fill: primitive.style.fill,
       stroke: primitive.style.stroke,
@@ -181,9 +180,8 @@ export class SVGRenderer {
     primitive: ArcPrimitive,
     viewport: ViewportTransform
   ): SVGAttributes {
-    const [cx, cy] = this.transformPoint(
-      primitive.cx,
-      primitive.cy,
+    const center = this.transformPoint(
+      vec3(primitive.cx, primitive.cy),
       viewport
     );
 
@@ -191,10 +189,10 @@ export class SVGRenderer {
     const radius = primitive.radius * viewport.zoom;
 
     // Calculate start and end points
-    const startX = cx + radius * Math.cos(primitive.startAngle);
-    const startY = cy + radius * Math.sin(primitive.startAngle);
-    const endX = cx + radius * Math.cos(primitive.endAngle);
-    const endY = cy + radius * Math.sin(primitive.endAngle);
+    const startX = center.x + radius * Math.cos(primitive.startAngle);
+    const startY = center.y + radius * Math.sin(primitive.startAngle);
+    const endX = center.x + radius * Math.cos(primitive.endAngle);
+    const endY = center.y + radius * Math.sin(primitive.endAngle);
 
     // Build SVG arc path
     const largeArcFlag = primitive.largeArc ? 1 : 0;
@@ -220,15 +218,14 @@ export class SVGRenderer {
     primitive: TextPrimitive,
     viewport: ViewportTransform
   ): SVGAttributes {
-    const [x, y] = this.transformPoint(
-      primitive.x,
-      primitive.y,
+    const canvasPos = this.transformPoint(
+      vec3(primitive.x, primitive.y),
       viewport
     );
 
     return {
-      x,
-      y,
+      x: canvasPos.x,
+      y: canvasPos.y,
       'text-anchor': primitive.anchor,
       'font-size': primitive.fontSize,
       fill: primitive.style.fill,
