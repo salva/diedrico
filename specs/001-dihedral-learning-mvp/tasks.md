@@ -349,13 +349,13 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: Read [ui-spec.md §Tool Interactions](./ui-spec.md#tool-interactions) to understand standard tool workflow patterns.
 
-- [ ] T045 Add "Line" tool button to Toolbar
+- [X] T045 Add "Line" tool button to Toolbar
 - [ ] T046 Create useSnapping composable in frontend/src/composables/useSnapping.ts
-- [ ] T047 Implement point snapping logic (detect nearby points within radius)
+- [X] T047 Implement point snapping logic (detect nearby points within radius)
 - [ ] T048 Add visual feedback for snapped point (highlight)
-- [ ] T049 Implement two-point selection for line tool
-- [ ] T050 Create Line instance from two selected points
-- [ ] T051 Add line to World and re-render
+- [X] T049 Implement two-point selection for line tool
+- [X] T050 Create Line instance from two selected points
+- [X] T051 Add line to World and re-render
 - [ ] T052 [P] E2E test for line creation in frontend/tests/e2e/create-line.spec.ts
 
 **Checkpoint**: User can create lines between points with snapping (US2 partial)

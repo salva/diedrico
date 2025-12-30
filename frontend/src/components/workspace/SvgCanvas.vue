@@ -98,6 +98,7 @@ import { useViewStore } from '@/stores/viewStore';
 import { useViewport } from '@/composables/useViewport';
 import { CommandStack } from '@/commands/CommandStack';
 import { PointTool } from '@/tools/PointTool';
+import { LineTool } from '@/tools/LineTool';
 import type { ITool } from '@/tools/ITool';
 
 const svgElement = ref<SVGSVGElement | null>(null);
@@ -131,7 +132,8 @@ const commandStack = new CommandStack();
 // Tool registry - map tool names to tool instances
 const tools: Record<string, ITool> = {
   'point': new PointTool(),
-  // Future tools: 'line', 'circle', 'segment', etc.
+  'line': new LineTool(),
+  // Future tools: 'circle', 'segment', etc.
 };
 
 // Reactivity trigger - increment this to force re-render after World changes

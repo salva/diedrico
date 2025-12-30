@@ -10,7 +10,9 @@
 import type { IOperation, OperationResult } from './IOperation';
 import type { World } from '@/domain/world/World';
 import type { Point2D } from '@/domain/world/Point';
+import type { Line2D } from '@/domain/world/Line';
 import { FreePoint2D, IntersectionPoint2D } from '@/domain/world/Point';
+import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicular } from '@/domain/world/Line';
 import { Vector3 } from 'three';
 
 /**
@@ -39,6 +41,40 @@ function createPointFromData(data: Record<string, any>): Point2D {
 }
 
 /**
+ * Helper function to create Line2D from element data
+ * Used by both AddElementOp and RemoveElementOp for consistency
+ */
+function createLineFromData(data: Record<string, any>): Line2D {
+  if (data.type === 'by-two-points') {
+    return new Line2DByTwoPoints(
+      data.id,
+      data.point1Id,
+      data.point2Id,
+      data.planeId,
+      data.label
+    );
+  } else if (data.type === 'parallel') {
+    return new Line2DParallel(
+      data.id,
+      data.referenceLineId,
+      data.throughPointId,
+      data.planeId,
+      data.label
+    );
+  } else if (data.type === 'perpendicular') {
+    return new Line2DPerpendicular(
+      data.id,
+      data.referenceLineId,
+      data.throughPointId,
+      data.planeId,
+      data.label
+    );
+  }
+  
+  throw new Error(`Unknown line type: ${data.type}`);
+}
+
+/**
  * AddElementOp - Adds a new element to the World
  * 
  * Use for creating new points, lines, circles, etc.
@@ -47,13 +83,13 @@ function createPointFromData(data: Record<string, any>): Point2D {
 export class AddElementOp implements IOperation {
   readonly type = 'AddElement';
   parameters: {
-    elementType: 'point';  // Extensible: 'line' | 'circle' | 'segment'
+    elementType: 'point' | 'line';  // Extensible: 'circle' | 'segment'
     elementData: Record<string, any>;  // Full element definition
     beforeState: null;  // Element didn't exist before
   };
   outputs: Record<string, any> = {};
 
-  constructor(elementType: 'point', elementData: Record<string, any>) {
+  constructor(elementType: 'point' | 'line', elementData: Record<string, any>) {
     this.parameters = {
       elementType,
       elementData,
@@ -77,6 +113,26 @@ export class AddElementOp implements IOperation {
           elementId: point.id,
           elementType: 'point',
           planeId: point.planeId
+        };
+        
+        return {
+          success: true,
+          outputs: this.outputs
+        };
+      }
+      
+      if (elementType === 'line') {
+        // Create line from data
+        const line = createLineFromData(elementData);
+        
+        // Add to world
+        world.addLine(line);
+        
+        // Store outputs
+        this.outputs = {
+          elementId: line.id,
+          elementType: 'line',
+          planeId: line.planeId
         };
         
         return {
@@ -110,6 +166,8 @@ export class AddElementOp implements IOperation {
     
     if (elementType === 'point') {
       world.removePoint(elementId);
+    } else if (elementType === 'line') {
+      world.removeLine(elementId);
     }
   }
 }

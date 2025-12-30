@@ -11,6 +11,18 @@
       </svg>
       <span>Point</span>
     </button>
+    
+    <button
+      class="tool-button"
+      :class="{ active: toolStore.isToolActive('line') }"
+      @click="selectTool('line')"
+      title="Line Tool (L)"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <line x1="2" y1="18" x2="18" y2="2" stroke="currentColor" stroke-width="2" />
+      </svg>
+      <span>Line</span>
+    </button>
   </div>
 </template>
 
