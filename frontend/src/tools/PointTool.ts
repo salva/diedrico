@@ -18,11 +18,11 @@ export class PointTool extends BaseTool {
   /**
    * Handle click to create a free point
    */
-  handleClick(coords: Vector3, context: ToolContext): ToolResult {
-    const { planeId, commandStack, world } = context;
+  handleClick(context: ToolContext): ToolResult {
+    const { planeId, planeCoords, commandStack, world } = context;
 
     // Validate coordinates
-    if (!this.validateCoordinates(coords)) {
+    if (!this.validateCoordinates(planeCoords)) {
       return this.failure('Invalid coordinates');
     }
 
@@ -33,7 +33,7 @@ export class PointTool extends BaseTool {
 
     try {
       // Create and execute command
-      const command = new CreateFreePointCommand(coords, planeId, world);
+      const command = new CreateFreePointCommand(planeCoords, planeId, world);
       commandStack.execute(command);
 
       const pointId = command.getPointId();

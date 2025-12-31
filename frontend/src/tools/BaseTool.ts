@@ -19,7 +19,7 @@ export abstract class BaseTool implements ITool {
   /**
    * Abstract method: subclasses implement specific tool behavior
    */
-  abstract handleClick(coords: Vector3, context: ToolContext): ToolResult;
+  abstract handleClick(context: ToolContext): ToolResult;
 
   /**
    * Validate that coordinates are within reasonable bounds

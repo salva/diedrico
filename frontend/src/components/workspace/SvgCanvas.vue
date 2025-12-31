@@ -307,9 +307,11 @@ function handleCanvasClick(event: MouseEvent) {
     return;
   }
   
-  // Delegate to tool with context
-  const result = activeTool.handleClick(planePos, {
+  // Delegate to tool with context including both canvas and plane coordinates
+  const result = activeTool.handleClick({
     planeId: activePlaneId,
+    planeCoords: planePos,
+    canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
     commandStack,
     world
   });

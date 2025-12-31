@@ -22,6 +22,8 @@ import type { World } from '@/domain/world/World';
  */
 export interface ToolContext {
   planeId: string;          // Which projection plane the click occurred on
+  planeCoords: Vector3;     // Click position in plane intrinsic coordinates (u, v, 1)
+  canvasCoords: { x: number; y: number }; // Click position in canvas/screen pixels
   commandStack: CommandStack;  // Stack for executing commands
   world: World;             // World for validation and queries
 }
@@ -46,11 +48,10 @@ export interface ITool {
   /**
    * Handle a click event on the canvas
    * 
-   * @param coords - Plane intrinsic coordinates (u, v, 1)
-   * @param context - Tool context with planeId, commandStack, world
+   * @param context - Tool context with planeId, coords (plane+canvas), commandStack, world
    * @returns Result indicating success/failure and optional message
    */
-  handleClick(coords: Vector3, context: ToolContext): ToolResult;
+  handleClick(context: ToolContext): ToolResult;
   
   /**
    * Optional: Cancel ongoing multi-step operation
