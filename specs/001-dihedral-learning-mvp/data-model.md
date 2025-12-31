@@ -2044,6 +2044,257 @@ const primitive: PathPrimitive = {
 };
 ```
 
+### Paper Layer: Spatial Query Engine
+
+**Purpose**: Paper provides spatial query services (hit testing, snapping) by leveraging its unified coordinate system and knowledge of all primitives.
+
+**Architecture Principle**: Paper becomes the **spatial query engine** rather than just a rendering intermediate. Tools and UI components query Paper for element selection and proximity detection instead of directly querying World.
+
+**Why Paper for Hit Testing?**
+
+Paper is the ideal layer for spatial queries because:
+1. **Unified coordinate system** - All primitives transformed to common paper space
+2. **Knows all primitives** - Has complete scene with element IDs
+3. **Has transform pipeline** - Can apply inverse transforms (canvas → paper → plane)
+4. **Snap radius handling** - Can transform radius vector through same inverse pipeline
+5. **Extensibility** - Easy to add new primitive types (lines, circles) in one place
+
+**Coordinate Flow for Hit Testing**:
+```
+User Click (canvas pixels)
+  ↓
+Paper.hitTest(canvasPos: Vector2, snapRadius: number)
+  ↓
+1. Inverse viewport transform: canvas → paper
+   paperPos = (canvasPos / zoom) - pan
+   paperRadius = snapRadius / zoom
+  ↓
+2. Search primitives in paper space
+   For each primitive:
+     distance = distanceToPrimitive(primitive, paperPos)
+     if distance <= paperRadius: record hit
+  ↓
+3. Return closest hit
+   HitResult { elementId, type, distance }
+  ↓
+Tool uses elementId to create command
+```
+
+**Hit Testing API**:
+
+```typescript
+interface HitResult {
+  elementId: string;      // Source domain element ID ("point_1", "line_2")
+  elementType: string;    // "point" | "line" | "circle" | "segment"
+  primitiveId: string;    // Primitive ID ("point-point_1")
+  distance: number;       // Distance in canvas pixels (for UI feedback)
+  snapPoint?: Vector2;    // Exact snap position (paper coordinates)
+}
+
+class Paper {
+  private primitives: Primitive[] = [];
+  private viewportTransform: ViewportTransform;
+  private planeTransforms: Map<string, Matrix3>;
+  private hoveredElementId?: string;  // For visual feedback
+  
+  /**
+   * Find nearest element within snap radius.
+   * Uses Vector2 for coordinates (never separate x,y parameters).
+   * 
+   * @param canvasPos - Click position in canvas pixel coordinates
+   * @param snapRadius - Snap threshold in canvas pixels
+   * @returns HitResult if element found within radius, null otherwise
+   */
+  hitTest(canvasPos: Vector2, snapRadius: number): HitResult | null {
+    // Transform canvas → paper using inverse viewport
+    const paperPos = this.canvasToPaper(canvasPos);
+    const paperRadius = snapRadius / this.viewportTransform.zoom;
+    
+    // Search primitives for closest within radius
+    let closestHit: HitResult | null = null;
+    let minDistance = paperRadius;
+    
+    for (const primitive of this.primitives) {
+      const distance = this.distanceToPrimitive(paperPos, primitive);
+      
+      if (distance < minDistance) {
+        closestHit = {
+          elementId: primitive.sourceEntityId,
+          elementType: primitive.type,
+          primitiveId: primitive.id,
+          distance: distance * this.viewportTransform.zoom, // Convert to canvas pixels
+          snapPoint: this.getSnapPoint(primitive)
+        };
+        minDistance = distance;
+      }
+    }
+    
+    return closestHit;
+  }
+  
+  /**
+   * Set which element should be visually highlighted (hover feedback).
+   * This triggers re-generation of primitives with hover styling.
+   */
+  setHoveredElement(elementId: string | undefined): void {
+    if (this.hoveredElementId !== elementId) {
+      this.hoveredElementId = elementId;
+      // Mark as needing re-render
+    }
+  }
+  
+  getHoveredElement(): string | undefined {
+    return this.hoveredElementId;
+  }
+  
+  private canvasToPaper(canvasPos: Vector2): Vector2 {
+    // Inverse viewport transform
+    return new Vector2(
+      canvasPos.x / this.viewportTransform.zoom - this.viewportTransform.panX,
+      canvasPos.y / this.viewportTransform.zoom - this.viewportTransform.panY
+    );
+  }
+  
+  private distanceToPrimitive(paperPos: Vector2, primitive: Primitive): number {
+    switch (primitive.type) {
+      case 'point':
+        return this.distanceToPoint(paperPos, primitive as PointPrimitive);
+      case 'line':
+        return this.distanceToLine(paperPos, primitive as LinePrimitive);
+      case 'circle':
+        return this.distanceToCircle(paperPos, primitive as CirclePrimitive);
+      default:
+        return Infinity;
+    }
+  }
+  
+  private distanceToPoint(pos: Vector2, primitive: PointPrimitive): number {
+    const dx = primitive.x - pos.x;
+    const dy = primitive.y - pos.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  
+  private distanceToLine(pos: Vector2, primitive: LinePrimitive): number {
+    // Parametric line: P(t) = point + t * direction
+    const lineStart = new Vector2(primitive.point.x, primitive.point.y);
+    const lineDir = new Vector2(primitive.direction.x, primitive.direction.y);
+    
+    // Project pos onto infinite line
+    const toPos = pos.clone().sub(lineStart);
+    const t = toPos.dot(lineDir); // lineDir is normalized
+    
+    // Closest point on line
+    const closest = lineStart.clone().add(lineDir.multiplyScalar(t));
+    
+    // Distance to infinite line
+    return pos.distanceTo(closest);
+  }
+  
+  private distanceToCircle(pos: Vector2, primitive: CirclePrimitive): number {
+    // Distance to circle perimeter (not center)
+    const dx = pos.x - primitive.cx;
+    const dy = pos.y - primitive.cy;
+    const distToCenter = Math.sqrt(dx * dx + dy * dy);
+    return Math.abs(distToCenter - primitive.r);
+  }
+}
+```
+
+**Tool Usage Pattern**:
+
+```typescript
+// OLD (INCORRECT): Tools query World directly with coordinate transform issues
+class LineTool {
+  handleClick(context: ToolContext): ToolResult {
+    const SNAP_RADIUS = 20; // pixels - but comparing in WRONG space!
+    for (const point of world.getAllPoints()) {
+      const planePos = world.getPoint2DRealization(point.id);
+      const distance = /* compare plane coords with pixel radius - WRONG! */
+      if (distance < SNAP_RADIUS) { /* ... */ }
+    }
+  }
+}
+
+// NEW (CORRECT): Tools use Paper.hitTest() with proper transforms
+class LineTool {
+  handleClick(context: ToolContext): ToolResult {
+    const hit = paper.hitTest(
+      new Vector2(context.canvasCoords.x, context.canvasCoords.y),
+      20 // snap radius in pixels - correctly transformed by Paper
+    );
+    
+    if (!hit || hit.elementType !== 'point') {
+      return this.failure('Click near a point to select it');
+    }
+    
+    // Use hit.elementId directly - no coordinate calculations needed
+    if (this.state === 'waiting-first') {
+      this.firstPointId = hit.elementId;
+      this.state = 'waiting-second';
+      return this.success(`Selected point: ${hit.elementId}`);
+    } else {
+      // Create line from firstPointId to hit.elementId
+      const command = new CreateLineCommand(this.firstPointId, hit.elementId, ...);
+      context.commandStack.execute(command);
+      return this.success('Line created');
+    }
+  }
+}
+```
+
+**Hover Feedback Integration**:
+
+```typescript
+// In SvgCanvas.vue
+function handleMouseMove(event: MouseEvent) {
+  if (!svgElement.value || !paper) return;
+  
+  const canvasPos = screenToCanvas(event.clientX, event.clientY);
+  const hit = paper.hitTest(new Vector2(canvasPos.x, canvasPos.y), 20);
+  
+  // Update hover state - triggers primitive re-generation with highlight style
+  paper.setHoveredElement(hit?.elementId);
+  
+  // Re-render to show hover feedback
+  worldVersion.value++;
+}
+
+// In PaperService.generatePrimitives()
+generatePrimitives(context: PrimitiveContext): Primitive[] {
+  const hoveredId = this.paper.getHoveredElement();
+  
+  for (const point of context.world.getAllPoints()) {
+    const isHovered = point.id === hoveredId;
+    const style = this.resolvePointStyle(point, context, isHovered);
+    // Apply hover styling: orange fill, thicker stroke
+  }
+}
+```
+
+**Benefits**:
+
+1. **Correct Coordinate Spaces** - All distance checks in paper space with properly scaled snap radius
+2. **Tool Simplification** - Tools just call `paper.hitTest()`, no coordinate math required
+3. **Extensibility** - Easy to add line/circle snapping by adding distance functions to Paper
+4. **Performance** - Single pass through primitives, efficient spatial queries
+5. **Separation of Concerns** - Paper handles rendering AND selection, tools handle logic
+6. **Testability** - Paper.hitTest() can be unit tested independently
+7. **Consistent Architecture** - Same pattern for all tools (point, line, circle, etc.)
+
+**Vector-First Design Principle**:
+
+Always use `Vector2` or `Vector3` for coordinates, never separate `x, y` parameters:
+
+```typescript
+// ✓ GOOD - Type-safe, explicit transformations
+hitTest(canvasPos: Vector2, snapRadius: number): HitResult | null
+
+// ✗ BAD - Easy to confuse parameter order, unclear intent
+hitTest(x: number, y: number, snapRadius: number): HitResult | null
+```
+
+This ensures type safety, makes coordinate transforms explicit, and prevents mixing coordinate spaces.
+
 ---
 
 ## Layer 3: Persistence Entities

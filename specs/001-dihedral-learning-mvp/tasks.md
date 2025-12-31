@@ -346,13 +346,29 @@ User clicks → SvgCanvas (coordinate conversion)
 - **Point Snapping**: Implement [ui-spec.md §Snapping](./ui-spec.md#snapping-behavior) - Detect nearby points within snap radius, provide visual feedback.
 - **Two-Click Workflow**: First click selects start point, second click selects end point, line created immediately.
 - **Active Plane**: Only create lines on currently active projection plane per [spec.md §Active Projection Plane](./spec.md#coordinate-system-monge-projection).
+- **Paper-Level Hit Testing**: Snapping/selection handled by Paper layer, not tools. Paper applies inverse transforms for correct coordinate space matching.
 
 **⚠️ CRITICAL**: Read [ui-spec.md §Tool Interactions](./ui-spec.md#tool-interactions) to understand standard tool workflow patterns.
 
 - [X] T045 Add "Line" tool button to Toolbar
-- [ ] T046 Create useSnapping composable in frontend/src/composables/useSnapping.ts
+- [X] T046 Implement Paper.hitTest() for spatial queries
+  - Add HitResult interface with elementId, type, distance
+  - Add Paper.hitTest(canvasPos: Vector3, snapRadius: number) method (homogeneous coords)
+  - Transform snap radius through inverse viewport/plane transforms
+  - Search primitives in paper space, return closest within radius
+  - Support point primitives (distance to point)
+  - Support line primitives (distance to infinite line)
+  - Support circle primitives (distance to perimeter)
 - [X] T047 Implement point snapping logic (detect nearby points within radius)
+  - DONE: Temporary solution in LineTool.findNearestPoint()
+  - TODO: Refactor to use Paper.hitTest() when T046 complete
 - [ ] T048 Add visual feedback for snapped point (highlight)
+  - Add hoveredElementId to Paper state
+  - Track mouse movement in SvgCanvas
+  - Call Paper.hitTest() on mousemove
+  - Pass hoveredElementId to PaperService when generating primitives
+  - PaperService applies highlight style to hovered elements
+  - SVG renders with hover styling (orange fill, thicker stroke)
 - [X] T049 Implement two-point selection for line tool
 - [X] T050 Create Line instance from two selected points
 - [X] T051 Add line to World and re-render
