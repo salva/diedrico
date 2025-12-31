@@ -112,7 +112,12 @@ const canvasHeight = ref(1000);
 
 // Viewport transformation (pan/zoom)
 const viewStore = useViewStore();
-const viewport = computed<ViewportTransform>(() => viewStore.viewportState.value);
+const viewport = computed<ViewportTransform>(() => {
+  const vp = viewStore.viewportState.value;
+  // Update Paper's viewport transform when it changes
+  paper.setViewportTransform(vp);
+  return vp;
+});
 
 // Setup viewport interactions (pan/zoom)
 useViewport({ element: svgElement });
@@ -125,6 +130,9 @@ const toolStore = useToolStore();
 
 // World instance (will be managed by store in later phases)
 const world = new World();
+
+// Paper instance for spatial queries and rendering
+const paper = new Paper();
 
 // Command infrastructure (Phase 6.5)
 const commandStack = new CommandStack();
@@ -221,6 +229,10 @@ const primitives = computed(() => {
   
   const prims = paperService.generatePrimitives(context);
   console.log('Generated primitives:', prims.length, prims);
+  
+  // Update Paper with primitives for spatial queries (hit testing)
+  paper.setPrimitives(prims);
+  
   return prims;
 });
 
@@ -313,7 +325,8 @@ function handleCanvasClick(event: MouseEvent) {
     planeCoords: planePos,
     canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
     commandStack,
-    world
+    world,
+    paper
   });
   
   if (result.success) {

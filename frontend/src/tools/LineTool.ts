@@ -32,7 +32,7 @@ export class LineTool extends BaseTool {
    * 2. Second click: Create line
    */
   handleClick(context: ToolContext): ToolResult {
-    const { planeId, planeCoords, canvasCoords, commandStack, world } = context;
+    const { planeId, planeCoords, canvasCoords, commandStack, world, paper } = context;
     
     // Validate coordinates
     if (!this.validateCoordinates(planeCoords)) {
@@ -44,23 +44,26 @@ export class LineTool extends BaseTool {
       return this.failure(`Plane not found: ${planeId}`);
     }
 
-    // Find nearest point to click position (in CANVAS space for correct pixel snapping)
-    const nearestPoint = this.findNearestPoint(canvasCoords, planeId, world, context);
+    // Use Paper.hitTest() for spatial queries with correct coordinate transforms
+    // Convert canvas coordinates to homogeneous Vector3
+    const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
+    const hit = paper.hitTest(canvasPos, 20); // 20px snap radius
     
-    if (!nearestPoint) {
+    // Filter for points only (for now, line tool only snaps to points)
+    if (!hit || hit.elementType !== 'point') {
       return this.failure('No point found at click position. Please click near an existing point.');
     }
 
     // State machine
     if (this.state === 'waiting-first') {
       // First click: Record start point
-      this.firstPointId = nearestPoint.id;
+      this.firstPointId = hit.elementId;
       this.state = 'waiting-second';
-      return this.success(`Selected first point: ${nearestPoint.id}`);
+      return this.success(`Selected first point: ${hit.elementId}`);
       
     } else {
       // Second click: Create line
-      const secondPointId = nearestPoint.id;
+      const secondPointId = hit.elementId;
       
       // Validate different points
       if (secondPointId === this.firstPointId) {
@@ -119,63 +122,5 @@ export class LineTool extends BaseTool {
   private reset(): void {
     this.state = 'waiting-first';
     this.firstPointId = undefined;
-  }
-
-  /**
-   * Find nearest point to click position within snap radius
-   * 
-   * Snapping happens in CANVAS (screen) space, not plane space!
-   * This ensures SNAP_RADIUS is always in screen pixels regardless of zoom/pan.
-   * 
-   * TODO: Replace with useSnapping composable when implemented
-   */
-  private findNearestPoint(
-    clickCanvasPos: { x: number; y: number },
-    planeId: string,
-    world: any,
-    context: ToolContext
-  ): { id: string } | null {
-    const SNAP_RADIUS = 20; // pixels in screen space
-    let nearestPoint: { id: string; distance: number } | null = null;
-
-    // Get all points on this plane
-    for (const point of world.getAllPoints()) {
-      if (point.planeId !== planeId) continue;
-
-      // Get point realization (2D position in PLANE coordinates)
-      const planeRealization = world.getPoint2DRealization(point.id);
-      if (!planeRealization) continue;
-
-      // Convert point from plane space to canvas space for distance check
-      // We need to apply the same transformations that were used for rendering:
-      // Plane → Paper → Canvas
-      // For now, use a simpler approach: get the rendered position from primitives
-      // TODO: This is a hack - should use proper coordinate transformation
-      
-      // Actually, let's compute canvas position properly:
-      // We have the plane coords, we need canvas coords
-      // This requires: planeToCanvas transformation
-      // For now, use the InputService backwards (canvas is available in context)
-      
-      // TEMPORARY FIX: Just use plane distance with a much smaller radius
-      // This works but is zoom-dependent (will be fixed with useSnapping composable)
-      const planeClickPos = context.planeCoords;
-      const dx = planeRealization.x - planeClickPos.x;
-      const dy = planeRealization.y - planeClickPos.y;
-      const planeDistance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Use a small plane-space threshold (will work for typical zoom levels)
-      // TODO: Calculate proper screen-space distance
-      const PLANE_SPACE_THRESHOLD = 50; // Generous threshold in plane units
-
-      // Check if within snap radius and closer than current nearest
-      if (planeDistance <= PLANE_SPACE_THRESHOLD) {
-        if (!nearestPoint || planeDistance < nearestPoint.distance) {
-          nearestPoint = { id: point.id, distance: planeDistance };
-        }
-      }
-    }
-
-    return nearestPoint;
   }
 }

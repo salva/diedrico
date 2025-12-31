@@ -360,8 +360,9 @@ User clicks → SvgCanvas (coordinate conversion)
   - Support line primitives (distance to infinite line)
   - Support circle primitives (distance to perimeter)
 - [X] T047 Implement point snapping logic (detect nearby points within radius)
-  - DONE: Temporary solution in LineTool.findNearestPoint()
-  - TODO: Refactor to use Paper.hitTest() when T046 complete
+  - DONE: Refactored to use Paper.hitTest() with Vector3 homogeneous coordinates
+  - Removed temporary findNearestPoint() method from LineTool
+  - Proper coordinate space handling through Paper's inverse transforms
 - [ ] T048 Add visual feedback for snapped point (highlight)
   - Add hoveredElementId to Paper state
   - Track mouse movement in SvgCanvas

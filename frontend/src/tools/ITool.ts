@@ -16,6 +16,7 @@
 import type { Vector3 } from 'three';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { World } from '@/domain/world/World';
+import type { Paper } from '@/domain/presentation/Paper';
 
 /**
  * Context provided to tools when handling user input
@@ -26,6 +27,7 @@ export interface ToolContext {
   canvasCoords: { x: number; y: number }; // Click position in canvas/screen pixels
   commandStack: CommandStack;  // Stack for executing commands
   world: World;             // World for validation and queries
+  paper: Paper;             // Paper for spatial queries (hit testing, snapping)
 }
 
 /**
