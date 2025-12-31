@@ -252,15 +252,10 @@ const renderedLines = computed(() => {
 });
 
 /**
- * Handle canvas click for point creation
- * T029-T032: Click handler → coordinate transform → create point → reactivity
+ * Handle canvas click - delegate to active tool
+ * Phase 6.5: Unified tool delegation for all tools (point, line, circle, etc.)
  */
 function handleCanvasClick(event: MouseEvent) {
-  // T029: Only handle clicks when Point tool is active
-  if (!toolStore.isToolActive('point')) {
-    return;
-  }
-  
   // Get SVG element for coordinate conversion
   if (!svgElement.value) return;
   
