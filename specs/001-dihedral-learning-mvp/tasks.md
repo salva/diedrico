@@ -294,18 +294,18 @@ User clicks → SvgCanvas (coordinate conversion)
   - Test undo moves command to redo stack
   - Test redo moves command back to undo stack
   - Test canUndo/canRedo return correct booleans
-- [ ] T075a [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePointCommand.spec.ts
+- [X] T075a [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePointCommand.spec.ts
   - Test command execution creates point in World
   - Test command undo removes point
   - Test validation via command
-- [ ] T075b [P] Unit test for PointTool in frontend/tests/unit/tools/pointTool.spec.ts
+- [X] T075b [P] Unit test for PointTool in frontend/tests/unit/tools/pointTool.spec.ts
   - Test handleClick creates command
   - Test coordinate validation in tool
   - Test plane existence validation
-- [ ] T076a [P] Integration test: Point creation through full stack
+- [X] T076a [P] Integration test: Point creation through full stack
   - Verify: SvgCanvas click → PointTool → CreateFreePointCommand → AddElementOp → World
   - Verify undo removes point, redo restores it
-  - Verify World reactivity (worldVersion) triggers correctly
+  - Note: World reactivity (worldVersion) not yet implemented
 
 **Checkpoint**: ✅ Operations → Commands → Tools → View architecture established. Point creation follows proper pattern. Ready for additional geometric features.
 

@@ -43,7 +43,7 @@ export abstract class BaseTool implements ITool {
    */
   protected validatePlane(planeId: string, world: World): boolean {
     const plane = world.getPlaneById(planeId);
-    return plane !== null;
+    return plane !== undefined;
   }
 
   /**
