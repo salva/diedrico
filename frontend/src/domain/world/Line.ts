@@ -21,46 +21,42 @@ import { Vector3 } from 'three';
 export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular';
 
 /**
- * Line2DRealization - Stores computed line equation in 2D
+ * Line2DRealization - Stores computed line in parametric form
  * 
- * Line equation in implicit form: ax + by + c = 0
+ * Parametric form: P(t) = point + t * direction
+ * This is MUCH easier to transform than implicit equation!
+ * 
+ * Transformation is simple:
+ * - point' = M * point (with translation)
+ * - direction' = M * direction (without translation - direction is invariant)
+ * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
 export class Line2DRealization {
-  a: number;  // Coefficient for x
-  b: number;  // Coefficient for y
-  c: number;  // Constant term
+  point: Vector3;      // A point on the line (x, y, 1) in homogeneous coords
+  direction: Vector3;  // Direction vector (dx, dy, 0) - normalized
   
-  constructor(a: number, b: number, c: number) {
-    this.a = a;
-    this.b = b;
-    this.c = c;
+  constructor(point: Vector3, direction: Vector3) {
+    this.point = point;
+    // Normalize direction for consistency
+    const length = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
+    this.direction = new Vector3(
+      direction.x / length,
+      direction.y / length,
+      0  // Direction vector has z=0 (no translation component)
+    );
   }
   
   /**
-   * Get direction vector (perpendicular to normal (a, b))
-   * Returns normalized direction
+   * Get a point at parameter t along the line
+   * P(t) = point + t * direction
    */
-  getDirection(): Vector3 {
-    // Direction is perpendicular to normal (a, b)
-    // If normal is (a, b), direction is (-b, a) or (b, -a)
-    const length = Math.sqrt(this.b * this.b + this.a * this.a);
-    return new Vector3(-this.b / length, this.a / length, 0);
-  }
-  
-  /**
-   * Get a point on the line
-   * Returns any point that satisfies ax + by + c = 0
-   */
-  getPointOnLine(): Vector3 {
-    // Find a point on the line by setting one coordinate
-    if (Math.abs(this.a) > Math.abs(this.b)) {
-      // Use y = 0, solve for x: ax + c = 0 → x = -c/a
-      return new Vector3(-this.c / this.a, 0, 1);
-    } else {
-      // Use x = 0, solve for y: by + c = 0 → y = -c/b
-      return new Vector3(0, -this.c / this.b, 1);
-    }
+  getPointAt(t: number): Vector3 {
+    return new Vector3(
+      this.point.x + t * this.direction.x,
+      this.point.y + t * this.direction.y,
+      1
+    );
   }
 }
 
@@ -127,15 +123,10 @@ export class Line2DByTwoPoints extends Line2D {
   }
   
   /**
-   * Calculate 2D realization - compute line equation from two points
-   * Line equation: ax + by + c = 0
+   * Calculate 2D realization - compute line in parametric form from two points
+   * Parametric form: P(t) = p1 + t * (p2 - p1)
    * 
-   * Given two points P1(x1, y1) and P2(x2, y2):
-   * Direction vector: (dx, dy) = (x2 - x1, y2 - y1)
-   * Normal vector: (a, b) = (-dy, dx) = (y1 - y2, x2 - x1)
-   * Line equation: a(x - x1) + b(y - y1) = 0
-   *                ax + by - ax1 - by1 = 0
-   *                ax + by + c = 0  where c = -ax1 - by1
+   * Much simpler than implicit equation and easier to transform!
    */
   realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization | null {
     // Get both points
@@ -146,7 +137,7 @@ export class Line2DByTwoPoints extends Line2D {
       return null;  // Cannot compute line without both points
     }
     
-    // Check points are distinct
+    // Compute direction vector
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     const distSq = dx * dx + dy * dy;
@@ -155,13 +146,9 @@ export class Line2DByTwoPoints extends Line2D {
       return null;  // Points are too close (degenerate line)
     }
     
-    // Compute line equation: ax + by + c = 0
-    // Normal vector (perpendicular to direction): (-dy, dx)
-    const a = p1.y - p2.y;  // -dy
-    const b = p2.x - p1.x;  // dx
-    const c = -a * p1.x - b * p1.y;
-    
-    return new Line2DRealization(a, b, c);
+    // Create parametric representation: point + direction
+    const direction = new Vector3(dx, dy, 0);
+    return new Line2DRealization(p1.clone(), direction);
   }
 }
 

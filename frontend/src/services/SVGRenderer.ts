@@ -177,34 +177,33 @@ export class SVGRenderer {
   /**
    * Render a LinePrimitive to SVG line element
    * 
-   * Line equation: ax + by + c = 0 (in paper space)
-   * Clip line to viewport bounds and render as SVG line segment
+   * Line in parametric form: P(t) = point + t * direction (in paper space)
+   * Clip line to viewport bounds by finding t values where line intersects viewport edges
    * 
    * Algorithm:
-   * 1. Apply viewport transform to line equation
+   * 1. Apply viewport transform to point and direction
    * 2. Compute viewport bounding box
-   * 3. Find intersection points with viewport edges
+   * 3. Find t values where line intersects viewport edges
    * 4. Render line segment between intersection points
    */
   private renderLine(
     primitive: LinePrimitive,
     viewport: ViewportTransform
   ): SVGAttributes {
-    // Transform line equation from paper space to canvas space
-    // Line in paper: a·x_p + b·y_p + c = 0
-    // With viewport transform: x_c = (x_p + panX) * zoom, y_c = (y_p + panY) * zoom
-    // Inverse: x_p = x_c/zoom - panX, y_p = y_c/zoom - panY
-    // Substitute into line equation:
-    // a·(x_c/zoom - panX) + b·(y_c/zoom - panY) + c = 0
-    // (a/zoom)·x_c + (b/zoom)·y_c + (c - a·panX - b·panY) = 0
-    // Multiply by zoom: a·x_c + b·y_c + zoom·(c - a·panX - b·panY) = 0
+    // Transform point from paper space to canvas space
+    const canvasPoint = this.transformPoint(
+      new Vector3(primitive.point.x, primitive.point.y, 1),
+      viewport
+    );
     
-    const a = primitive.a;
-    const b = primitive.b;
-    const c_canvas = viewport.zoom * (primitive.c - primitive.a * viewport.panX - primitive.b * viewport.panY);
+    // Transform direction vector (scale by zoom, no pan offset)
+    // Direction is invariant under translation
+    const canvasDirection = {
+      x: primitive.direction.x * viewport.zoom,
+      y: primitive.direction.y * viewport.zoom
+    };
 
-    // Get viewport bounds (assume canvas size, will be clipped by SVG viewBox)
-    // For now, use large bounds - TODO: get actual canvas dimensions
+    // Get viewport bounds (TODO: get actual canvas dimensions)
     const viewportBounds = {
       xMin: -5000,
       xMax: 5000,
@@ -212,44 +211,52 @@ export class SVGRenderer {
       yMax: 5000,
     };
 
-    // Find intersection points with viewport edges
-    // Line: a·x + b·y + c = 0
-    // Solve for intersections with each edge
-    const intersections: Array<[number, number]> = [];
-
-    // Check if line is more horizontal or vertical
-    if (Math.abs(a) > Math.abs(b)) {
-      // More vertical - intersect with top and bottom edges
-      // Top edge (y = yMin): x = -(b·yMin + c) / a
-      if (Math.abs(a) > 1e-10) {
-        const xTop = -(b * viewportBounds.yMin + c_canvas) / a;
-        if (xTop >= viewportBounds.xMin && xTop <= viewportBounds.xMax) {
-          intersections.push([xTop, viewportBounds.yMin]);
-        }
-        // Bottom edge (y = yMax)
-        const xBottom = -(b * viewportBounds.yMax + c_canvas) / a;
-        if (xBottom >= viewportBounds.xMin && xBottom <= viewportBounds.xMax) {
-          intersections.push([xBottom, viewportBounds.yMax]);
-        }
+    // Find t values where line intersects viewport edges
+    // Line: P(t) = point + t * direction
+    // For each edge, solve for t
+    const tValues: number[] = [];
+    
+    // Avoid division by zero
+    const eps = 1e-10;
+    
+    // Left edge (x = xMin): xMin = point.x + t * direction.x
+    if (Math.abs(canvasDirection.x) > eps) {
+      const t = (viewportBounds.xMin - canvasPoint.x) / canvasDirection.x;
+      const y = canvasPoint.y + t * canvasDirection.y;
+      if (y >= viewportBounds.yMin && y <= viewportBounds.yMax) {
+        tValues.push(t);
       }
-    } else {
-      // More horizontal - intersect with left and right edges
-      // Left edge (x = xMin): y = -(a·xMin + c) / b
-      if (Math.abs(b) > 1e-10) {
-        const yLeft = -(a * viewportBounds.xMin + c_canvas) / b;
-        if (yLeft >= viewportBounds.yMin && yLeft <= viewportBounds.yMax) {
-          intersections.push([viewportBounds.xMin, yLeft]);
-        }
-        // Right edge (x = xMax)
-        const yRight = -(a * viewportBounds.xMax + c_canvas) / b;
-        if (yRight >= viewportBounds.yMin && yRight <= viewportBounds.yMax) {
-          intersections.push([viewportBounds.xMax, yRight]);
-        }
+    }
+    
+    // Right edge (x = xMax)
+    if (Math.abs(canvasDirection.x) > eps) {
+      const t = (viewportBounds.xMax - canvasPoint.x) / canvasDirection.x;
+      const y = canvasPoint.y + t * canvasDirection.y;
+      if (y >= viewportBounds.yMin && y <= viewportBounds.yMax) {
+        tValues.push(t);
+      }
+    }
+    
+    // Top edge (y = yMin)
+    if (Math.abs(canvasDirection.y) > eps) {
+      const t = (viewportBounds.yMin - canvasPoint.y) / canvasDirection.y;
+      const x = canvasPoint.x + t * canvasDirection.x;
+      if (x >= viewportBounds.xMin && x <= viewportBounds.xMax) {
+        tValues.push(t);
+      }
+    }
+    
+    // Bottom edge (y = yMax)
+    if (Math.abs(canvasDirection.y) > eps) {
+      const t = (viewportBounds.yMax - canvasPoint.y) / canvasDirection.y;
+      const x = canvasPoint.x + t * canvasDirection.x;
+      if (x >= viewportBounds.xMin && x <= viewportBounds.xMax) {
+        tValues.push(t);
       }
     }
 
     // Need at least 2 intersection points
-    if (intersections.length < 2) {
+    if (tValues.length < 2) {
       // Line doesn't intersect viewport - return invisible line
       return {
         x1: 0,
@@ -262,12 +269,27 @@ export class SVGRenderer {
       };
     }
 
-    // Render line segment between first two intersection points
+    // Sort t values and use first two (handles case where line intersects corners)
+    tValues.sort((a, b) => a - b);
+    const t1 = tValues[0];
+    const t2 = tValues[tValues.length - 1];
+    
+    // Compute endpoints
+    const p1 = {
+      x: canvasPoint.x + t1 * canvasDirection.x,
+      y: canvasPoint.y + t1 * canvasDirection.y
+    };
+    const p2 = {
+      x: canvasPoint.x + t2 * canvasDirection.x,
+      y: canvasPoint.y + t2 * canvasDirection.y
+    };
+
+    // Render line segment
     return {
-      x1: intersections[0][0],
-      y1: intersections[0][1],
-      x2: intersections[1][0],
-      y2: intersections[1][1],
+      x1: p1.x,
+      y1: p1.y,
+      x2: p2.x,
+      y2: p2.y,
       stroke: primitive.style.stroke,
       'stroke-width': primitive.style.strokeWidth,
       'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),

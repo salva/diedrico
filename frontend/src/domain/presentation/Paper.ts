@@ -81,15 +81,14 @@ export interface PathPrimitive extends DrawingPrimitive {
 }
 
 /**
- * Line primitive - infinite line (clipped to viewport bounds)
- * Line equation: ax + by + c = 0
- * All coefficients in paper coordinate system
+ * Line primitive - infinite line in parametric form (clipped to viewport bounds)
+ * Parametric form: P(t) = point + t * direction
+ * All coordinates in paper coordinate system
  */
 export interface LinePrimitive extends DrawingPrimitive {
   type: 'line';
-  a: number;                        // Coefficient for x in line equation
-  b: number;                        // Coefficient for y in line equation
-  c: number;                        // Constant term in line equation
+  point: { x: number; y: number };    // Point on the line (paper coords)
+  direction: { x: number; y: number }; // Direction vector (normalized, paper coords)
 }
 
 /**

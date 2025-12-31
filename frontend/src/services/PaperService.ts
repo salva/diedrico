@@ -168,21 +168,13 @@ export class PaperService {
 
   /**
    * Convert a Line2D + realization to a LinePrimitive
-   * Applies plane-to-paper transformation to line equation
+   * Applies plane-to-paper transformation - MUCH SIMPLER with parametric form!
    * 
-   * Line equation transformation:
-   * - Plane space: a_p·u + b_p·v + c_p = 0
-   * - Paper space: a·x + b·y + c = 0
+   * Parametric form transformation:
+   * - Transform point: point' = M * point (includes translation)
+   * - Transform direction: direction' = M * direction (NO translation - just rotation/scale)
    * 
-   * The transformation from plane <u,v> to paper <x,y> is:
-   *   [x]   [m11 m12 m13] [u]
-   *   [y] = [m21 m22 m23] [v]
-   *   [1]   [m31 m32 m33] [1]
-   * 
-   * To transform line equation, we apply inverse transpose:
-   *   [a]       [m11 m21 m31]^-1 [a_p]
-   *   [b]   =   [m12 m22 m32]    [b_p]
-   *   [c]       [m13 m23 m33]    [c_p]
+   * This is WAY simpler than transforming implicit line equations!
    */
   private lineToPrimitive(
     line: Line2D,
@@ -192,21 +184,12 @@ export class PaperService {
   ): LinePrimitive {
     const isHighlighted = context.highlightedEntityIds?.has(line.id!) || false;
 
-    // Transform line equation from plane to paper coordinates
-    // For line equation transformation, we need inverse transpose of the matrix
-    const invTranspose = planeToPaperMatrix.clone().invert().transpose();
+    // Transform point on line (includes translation)
+    const paperPoint = realization.point.clone().applyMatrix3(planeToPaperMatrix);
     
-    // Apply transformation to line coefficients [a, b, c]
-    const planeCoeffs = [realization.a, realization.b, realization.c];
-    const paperA = invTranspose.elements[0] * planeCoeffs[0] + 
-                   invTranspose.elements[1] * planeCoeffs[1] + 
-                   invTranspose.elements[2] * planeCoeffs[2];
-    const paperB = invTranspose.elements[3] * planeCoeffs[0] + 
-                   invTranspose.elements[4] * planeCoeffs[1] + 
-                   invTranspose.elements[5] * planeCoeffs[2];
-    const paperC = invTranspose.elements[6] * planeCoeffs[0] + 
-                   invTranspose.elements[7] * planeCoeffs[1] + 
-                   invTranspose.elements[8] * planeCoeffs[2];
+    // Transform direction vector (NO translation - direction is invariant under translation)
+    // For direction vectors, we only apply rotation/scale part of matrix
+    const paperDirection = realization.direction.clone().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style
     const style = this.resolveLineStyle(line, isHighlighted);
@@ -218,9 +201,8 @@ export class PaperService {
       layer: RenderLayer.Elements,
       visible: true, // TODO: Compute from subprocess visibility + infeasibility
       style,
-      a: paperA,
-      b: paperB,
-      c: paperC,
+      point: { x: paperPoint.x, y: paperPoint.y },
+      direction: { x: paperDirection.x, y: paperDirection.y },
     };
   }
 
