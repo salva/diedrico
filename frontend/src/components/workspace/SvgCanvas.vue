@@ -316,6 +316,12 @@ function handleCanvasClick(event: MouseEvent) {
   
   console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
   
+  // Debug: Check what Paper.hitTest() would return for this click
+  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  const hit = paper.hitTest(canvasPos, 20);
+  console.log('[SvgCanvas] Paper.hitTest() result:', hit);
+  console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+  
   // Phase 6.5: Delegate to active tool instead of direct World mutation
   const activeToolName = toolStore.currentTool.value;
   const activeTool = tools[activeToolName];
