@@ -84,19 +84,19 @@ export class Plane3D {
 
   /**
    * Check if a 3D point lies on this plane (within tolerance)
+   * Uses vector algebra: n·(P - P₀)
    * @param p Point in 3D space (homogeneous coordinates)
    * @param tolerance Distance tolerance (default: 1e-6)
    */
   containsPoint(p: Vector4, tolerance: number = 1e-6): boolean {
-    // Calculate n·(P - P₀) using Three.js
-    const normal = new Vector3(this.normal.x, this.normal.y, this.normal.z);
-    const diff = new Vector3(
-      p.x - this.point.x,
-      p.y - this.point.y,
-      p.z - this.point.z
-    );
+    // Convert Vector4 to Vector3 for computation
+    const point3 = new Vector3(p.x, p.y, p.z);
+    const planePoint3 = new Vector3(this.point.x, this.point.y, this.point.z);
+    const normal3 = new Vector3(this.normal.x, this.normal.y, this.normal.z);
     
-    const dot = normal.dot(diff);
+    // Calculate n·(P - P₀) using vector subtraction and dot product
+    const diff = point3.sub(planePoint3);
+    const dot = normal3.dot(diff);
     
     return Math.abs(dot) < tolerance;
   }

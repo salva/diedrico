@@ -90,8 +90,9 @@ export class SVGRenderer {
     primitive: PointPrimitive,
     viewport: ViewportTransform
   ): SVGAttributes {
+    // Transform Vector3 position from paper space to canvas space
     const canvasPos = this.transformPoint(
-      vec3(primitive.x, primitive.y),
+      primitive.position,
       viewport
     );
 
@@ -190,9 +191,9 @@ export class SVGRenderer {
     primitive: LinePrimitive,
     viewport: ViewportTransform
   ): SVGAttributes {
-    // Transform point from paper space to canvas space
+    // Transform point from paper space to canvas space (Vector3 stays as Vector3)
     const canvasPoint = this.transformPoint(
-      new Vector3(primitive.point.x, primitive.point.y, 1),
+      primitive.point,
       viewport
     );
     

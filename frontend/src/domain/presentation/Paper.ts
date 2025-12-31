@@ -9,6 +9,9 @@
  * Architecture:
  * Domain (rules) → Realization (<u,v> geometry) → Plane transform → Paper (paper coords) → Viewport transform → SVG
  * 
+ * IMPORTANT: All coordinates are stored as Vector3 (homogeneous) throughout the pipeline.
+ * Only SVGRenderer extracts .x and .y components when generating final SVG attributes.
+ * 
  * Coordinate Systems (all homogeneous):
  * - Plane intrinsic: Vector3(u, v, 1) in each plane's local basis
  * - Paper: Vector3(x, y, 1) in unified 2D coordinate system where all planes are laid out
@@ -30,7 +33,7 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#paper-layer-spatial-query-engine
  */
 
-import { Vector3 } from 'three';
+import { Vector3, Matrix3 } from 'three';
 
 /**
  * Visual style attributes resolved and ready for rendering
@@ -73,8 +76,7 @@ export interface DrawingPrimitive {
  */
 export interface PointPrimitive extends DrawingPrimitive {
   type: 'point';
-  x: number;                        // X coordinate in paper space
-  y: number;                        // Y coordinate in paper space
+  position: Vector3;                // Position in paper space (homogeneous coordinates)
   radius: number;                   // Display radius in pixels
 }
 
@@ -95,8 +97,8 @@ export interface PathPrimitive extends DrawingPrimitive {
  */
 export interface LinePrimitive extends DrawingPrimitive {
   type: 'line';
-  point: { x: number; y: number };    // Point on the line (paper coords)
-  direction: { x: number; y: number }; // Direction vector (normalized, paper coords)
+  point: Vector3;                     // Point on the line (paper coords, homogeneous)
+  direction: Vector3;                 // Direction vector (paper coords, homogeneous)
 }
 
 /**
@@ -185,11 +187,14 @@ export class Paper {
   private dirtyPrimitiveIds: Set<string>;
   private hoveredElementId?: string;
   private viewportTransform: ViewportTransform;
+  private canvasToPaperMatrix: Matrix3;  // Cached inverse viewport transform matrix
 
   constructor() {
     this.primitives = new Map();
     this.dirtyPrimitiveIds = new Set();
     this.viewportTransform = { zoom: 1.0, panX: 0, panY: 0 };
+    this.canvasToPaperMatrix = new Matrix3(); // Identity
+    this.updateTransformMatrix();
   }
 
   /**
@@ -198,6 +203,52 @@ export class Paper {
    */
   setViewportTransform(viewport: ViewportTransform): void {
     this.viewportTransform = viewport;
+    this.updateTransformMatrix();
+  }
+
+  /**
+   * Build the inverse viewport transformation matrix
+   * 
+   * Forward transform (paper → canvas):
+   *   canvas = zoom * (paper + pan)
+   *   Matrices: S(zoom) * T(pan) where T applies first
+   * 
+   * Inverse transform (canvas → paper):
+   *   paper = (canvas / zoom) - pan
+   *   Matrices: T(-pan) * S(1/zoom) = (S * T)^-1
+   * 
+   * Result in homogeneous 2D:
+   * | 1/zoom    0      -panX |
+   * |   0     1/zoom  -panY |
+   * |   0       0        1   |
+   * 
+   * CRITICAL: Three.js Matrix3.set() argument order
+   * ================================================
+   * Three.js stores matrices in COLUMN-MAJOR order internally (OpenGL style),
+   * but set() takes arguments in ROW-MAJOR order for convenience:
+   * 
+   *   set(n11, n12, n13,   ← row 1
+   *       n21, n22, n23,   ← row 2  
+   *       n31, n32, n33)   ← row 3
+   * 
+   * When applyMatrix3() is called, it computes: result = M × v (column vector)
+   * 
+   * Verification with our matrix:
+   *   | 1/z   0   -pX |   | cx |   | cx/z - pX |
+   *   |  0   1/z  -pY | × | cy | = | cy/z - pY | ✓
+   *   |  0    0    1  |   | 1  |   |     1     |
+   */
+  private updateTransformMatrix(): void {
+    const s = 1 / this.viewportTransform.zoom;
+    const tx = -this.viewportTransform.panX;
+    const ty = -this.viewportTransform.panY;
+    
+    // Arguments to set() are in ROW-MAJOR order: (r1c1, r1c2, r1c3, r2c1, r2c2, r2c3, r3c1, r3c2, r3c3)
+    this.canvasToPaperMatrix.set(
+      s,  0,  tx,   // Row 1: [1/zoom,    0,    -panX]
+      0,  s,  ty,   // Row 2: [  0,    1/zoom, -panY]
+      0,  0,  1     // Row 3: [  0,      0,      1  ]
+    );
   }
 
   /**
@@ -270,15 +321,11 @@ export class Paper {
 
   /**
    * Transform canvas coordinates to paper coordinates
-   * Inverse viewport transform: (canvas - pan) / zoom → paper
-   * Uses homogeneous coordinates: Vector3(x, y, 1)
+   * Uses the inverse viewport transformation matrix
+   * This is why we use homogeneous coordinates - matrix multiplication!
    */
   private canvasToPaper(canvasPos: Vector3): Vector3 {
-    return new Vector3(
-      canvasPos.x / this.viewportTransform.zoom - this.viewportTransform.panX,
-      canvasPos.y / this.viewportTransform.zoom - this.viewportTransform.panY,
-      1  // Homogeneous coordinate
-    );
+    return canvasPos.clone().applyMatrix3(this.canvasToPaperMatrix);
   }
 
   /**
@@ -299,51 +346,41 @@ export class Paper {
 
   /**
    * Distance from point to point primitive
+   * Uses Vector3.distanceTo() - no coordinate decomposition
    */
   private distanceToPoint(pos: Vector3, primitive: PointPrimitive): number {
-    const dx = primitive.x - pos.x;
-    const dy = primitive.y - pos.y;
-    return Math.sqrt(dx * dx + dy * dy);
+    return pos.distanceTo(primitive.position);
   }
 
   /**
    * Distance from point to infinite line (parametric form)
    * Line: P(t) = point + t * direction
+   * Uses vector algebra: subtraction, dot product, scalar multiplication
    */
   private distanceToLine(pos: Vector3, primitive: LinePrimitive): number {
-    const linePoint = new Vector3(primitive.point.x, primitive.point.y, 1);
-    const lineDir = new Vector3(primitive.direction.x, primitive.direction.y, 0);
+    const linePoint = primitive.point;
+    const lineDir = primitive.direction;
     
-    // Vector from line point to query point
-    const toPos = new Vector3(
-      pos.x - linePoint.x,
-      pos.y - linePoint.y,
-      0  // Direction vector, no translation
-    );
+    // Vector from line point to query point (vector subtraction)
+    const toPos = pos.clone().sub(linePoint);
     
-    // Project toPos onto lineDir (lineDir is normalized)
+    // Project toPos onto lineDir (dot product)
     const t = toPos.dot(lineDir);
     
-    // Closest point on line: point + t * direction
-    const closest = new Vector3(
-      linePoint.x + t * lineDir.x,
-      linePoint.y + t * lineDir.y,
-      1
-    );
+    // Closest point on line: point + t * direction (vector addition and scalar multiply)
+    const closest = linePoint.clone().addScaledVector(lineDir, t);
     
-    // Distance from pos to closest point
-    const dx = pos.x - closest.x;
-    const dy = pos.y - closest.y;
-    return Math.sqrt(dx * dx + dy * dy);
+    // Distance from pos to closest point (vector distance)
+    return pos.distanceTo(closest);
   }
 
   /**
    * Distance from point to circle perimeter
+   * Uses Vector3.distanceTo() - no coordinate decomposition
    */
   private distanceToCircle(pos: Vector3, primitive: CirclePrimitive): number {
-    const dx = pos.x - primitive.cx;
-    const dy = pos.y - primitive.cy;
-    const distToCenter = Math.sqrt(dx * dx + dy * dy);
+    const center = new Vector3(primitive.cx, primitive.cy, 1);
+    const distToCenter = pos.distanceTo(center);
     return Math.abs(distToCenter - primitive.radius);
   }
 
@@ -355,51 +392,42 @@ export class Paper {
     switch (primitive.type) {
       case 'point':
         // Snap to exact point position
-        return new Vector3(
-          (primitive as PointPrimitive).x,
-          (primitive as PointPrimitive).y,
-          1
-        );
+        return (primitive as PointPrimitive).position.clone();
       
       case 'line': {
-        // Snap to closest point on line
+        // Snap to closest point on line using vector algebra
         const line = primitive as LinePrimitive;
-        const linePoint = new Vector3(line.point.x, line.point.y, 1);
-        const lineDir = new Vector3(line.direction.x, line.direction.y, 0);
+        const linePoint = line.point;
+        const lineDir = line.direction;
         
-        const toPos = new Vector3(
-          queryPos.x - linePoint.x,
-          queryPos.y - linePoint.y,
-          0
-        );
+        // Vector from line point to query point (vector subtraction)
+        const toPos = queryPos.clone().sub(linePoint);
         
+        // Project onto line direction (dot product)
         const t = toPos.dot(lineDir);
         
-        return new Vector3(
-          linePoint.x + t * lineDir.x,
-          linePoint.y + t * lineDir.y,
-          1
-        );
+        // Closest point: point + t * direction (vector addition)
+        return linePoint.clone().addScaledVector(lineDir, t);
       }
       
       case 'circle': {
-        // Snap to closest point on circle perimeter
+        // Snap to closest point on circle perimeter using vector algebra
         const circle = primitive as CirclePrimitive;
-        const dx = queryPos.x - circle.cx;
-        const dy = queryPos.y - circle.cy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const center = new Vector3(circle.cx, circle.cy, 1);
+        
+        // Vector from center to query point
+        const toQuery = queryPos.clone().sub(center);
+        const dist = toQuery.length();
         
         if (dist === 0) {
-          // Query point is at center, return arbitrary point on circle
-          return new Vector3(circle.cx + circle.radius, circle.cy, 1);
+          // Query point is at center, return arbitrary point on circle (right side)
+          const offset = new Vector3(circle.radius, 0, 0);
+          return center.clone().add(offset);
         }
         
-        // Normalize and scale to radius
-        return new Vector3(
-          circle.cx + (dx / dist) * circle.radius,
-          circle.cy + (dy / dist) * circle.radius,
-          1
-        );
+        // Normalize direction and scale to radius (vector operations)
+        toQuery.normalize().multiplyScalar(circle.radius);
+        return center.clone().add(toQuery);
       }
       
       default:

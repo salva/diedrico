@@ -87,11 +87,12 @@ export class LineTool extends BaseTool {
         commandStack.execute(command);
         
         const lineId = command.getLineId();
+        const firstPointId = this.firstPointId; // Save before reset
         
         // Reset state for next line
         this.reset();
         
-        return this.success(`Created line ${lineId} between ${this.firstPointId} and ${secondPointId}`);
+        return this.success(`Created line ${lineId} between ${firstPointId} and ${secondPointId}`);
         
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

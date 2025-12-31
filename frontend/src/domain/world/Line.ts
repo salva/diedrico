@@ -38,13 +38,8 @@ export class Line2DRealization {
   
   constructor(point: Vector3, direction: Vector3) {
     this.point = point;
-    // Normalize direction for consistency
-    const length = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
-    this.direction = new Vector3(
-      direction.x / length,
-      direction.y / length,
-      0  // Direction vector has z=0 (no translation component)
-    );
+    // Normalize direction for consistency using vector operations
+    this.direction = direction.clone().normalize();
   }
   
   /**
@@ -52,11 +47,8 @@ export class Line2DRealization {
    * P(t) = point + t * direction
    */
   getPointAt(t: number): Vector3 {
-    return new Vector3(
-      this.point.x + t * this.direction.x,
-      this.point.y + t * this.direction.y,
-      1
-    );
+    // Vector addition: point + t * direction
+    return this.point.clone().addScaledVector(this.direction, t);
   }
 }
 
@@ -137,17 +129,16 @@ export class Line2DByTwoPoints extends Line2D {
       return null;  // Cannot compute line without both points
     }
     
-    // Compute direction vector
-    const dx = p2.x - p1.x;
-    const dy = p2.y - p1.y;
-    const distSq = dx * dx + dy * dy;
+    // Compute direction vector using vector subtraction
+    const direction = p2.clone().sub(p1);
+    direction.z = 0;  // Direction vector, no translation
     
-    if (distSq < 1e-10) {
+    // Check for degenerate line using vector lengthSq
+    if (direction.lengthSq() < 1e-10) {
       return null;  // Points are too close (degenerate line)
     }
     
     // Create parametric representation: point + direction
-    const direction = new Vector3(dx, dy, 0);
     return new Line2DRealization(p1.clone(), direction);
   }
 }

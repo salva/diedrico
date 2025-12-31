@@ -329,7 +329,7 @@ User clicks → SvgCanvas (coordinate conversion)
 - [X] T041 Add line storage to World class
 - [X] T042 Render lines as SVG line elements in SvgCanvas.vue
 - [X] T043 [P] Apply line styling (color, stroke width)
-- [ ] T044 [P] Unit test for Line class in frontend/tests/unit/domain/line.spec.ts
+- [X] T044 [P] Unit test for Line class in frontend/tests/unit/domain/line.spec.ts
 
 **Checkpoint**: Lines can be stored and rendered
 

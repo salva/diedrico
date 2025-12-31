@@ -339,34 +339,44 @@ export class World {
    * @returns Line2DRealization if line exists and can be computed, undefined otherwise
    */
   getLine2DRealization(lineId: string): Line2DRealization | undefined {
+    console.log('[World] getLine2DRealization called for:', lineId);
     // Check cache first
     if (this.lineRealizations2D.has(lineId)) {
+      console.log('[World] Returning cached realization');
       return this.lineRealizations2D.get(lineId);
     }
 
     // Get line definition
     const line = this.lines.get(lineId);
+    console.log('[World] Line from map:', line);
     if (!line) {
+      console.log('[World] Line not found in map');
       return undefined;
     }
 
-    // Helper to get point position - lines need 2D point positions
+    // Helper to get point position - lines need 2D point positions as Vector3
     const getPoint = (pointId: string): Vector3 | null => {
       const pointRealization = this.getPoint2DRealization(pointId);
+      console.log('[World] getPoint2DRealization for', pointId, ':', pointRealization);
       if (!pointRealization) {
         return null;
       }
-      return new Vector3(pointRealization.x, pointRealization.y, 1);
+      // Return position Vector3 directly - no coordinate decomposition
+      return pointRealization.position;
     };
 
     // Compute realization from line definition
+    console.log('[World] Calling line.realize2D...');
     const realization = line.realize2D(getPoint);
+    console.log('[World] line.realize2D returned:', realization);
     if (!realization) {
+      console.log('[World] Cannot compute realization');
       return undefined;  // Cannot compute (e.g., missing dependency points)
     }
 
     // Cache for future use
     this.lineRealizations2D.set(lineId, realization);
+    console.log('[World] Cached realization');
     return realization;
   }
 

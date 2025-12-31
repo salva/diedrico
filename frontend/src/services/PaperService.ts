@@ -82,16 +82,24 @@ export class PaperService {
     }
 
     // WALK: Iterate over all lines in the world
-    for (const line of context.world.getAllLines()) {
+    const allLines = context.world.getAllLines();
+    console.log('[PaperService] getAllLines() returned:', allLines.length, 'lines');
+    for (const line of allLines) {
+      console.log('[PaperService] Processing line:', line.id, 'planeId:', line.planeId);
       // REALIZE: Get computed line equation (numeric data)
       const realization = context.world.getLine2DRealization(line.id!);
+      console.log('[PaperService] Line realization:', realization);
       // Get plane transformation matrix
       const transform = context.planeTransforms.get(line.planeId!);
+      console.log('[PaperService] Transform for plane:', line.planeId, ':', !!transform);
       
       if (realization && transform) {
         // RENDER: Generate primitive using realization (numeric) + line (structural)
         const primitive = this.lineToPrimitive(line, realization, transform, context);
+        console.log('[PaperService] Created line primitive:', primitive);
         primitives.push(primitive);
+      } else {
+        console.warn('[PaperService] Skipping line - missing realization or transform');
       }
     }
 
@@ -126,8 +134,7 @@ export class PaperService {
       layer: isSnapTarget ? RenderLayer.Highlights : RenderLayer.Elements,
       visible: true, // TODO: Compute from subprocess visibility + infeasibility
       style,
-      x: paperPos.x,
-      y: paperPos.y,
+      position: paperPos,           // Keep as Vector3 - SVGRenderer extracts x/y
       radius: point.type === 'free' ? 5 : 4,
     };
   }
@@ -201,8 +208,8 @@ export class PaperService {
       layer: RenderLayer.Elements,
       visible: true, // TODO: Compute from subprocess visibility + infeasibility
       style,
-      point: { x: paperPoint.x, y: paperPoint.y },
-      direction: { x: paperDirection.x, y: paperDirection.y },
+      point: paperPoint,            // Keep as Vector3 - SVGRenderer extracts x/y
+      direction: paperDirection,    // Keep as Vector3 - SVGRenderer extracts x/y
     };
   }
 
@@ -211,7 +218,7 @@ export class PaperService {
    * TODO: Implement style inheritance from process tree
    */
   private resolveLineStyle(
-    line: Line2D,
+    _line: Line2D,  // Reserved for future style inheritance
     isHighlighted: boolean
   ): ResolvedStyle {
     const stroke = isHighlighted ? '#6BB6FF' : '#333333';
