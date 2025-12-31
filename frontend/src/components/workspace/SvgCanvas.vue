@@ -24,6 +24,7 @@
       :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
       preserveAspectRatio="xMidYMid meet"
       @click="handleCanvasClick"
+      @mousemove="handleMouseMove"
     >
       <!-- Background grid -->
       <defs>
@@ -88,7 +89,7 @@
  */
 
 import { ref, computed, onMounted } from 'vue';
-import { Matrix3 } from 'three';
+import { Matrix3, Vector3 } from 'three';
 import { World } from '@/domain/world/World';
 import { PaperService, type PrimitiveContext } from '@/services/PaperService';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
@@ -221,10 +222,14 @@ const primitives = computed(() => {
   // PaperService uses plane-to-paper transforms for rendering
   const planeTransforms = getPlaneTransformsForRendering();
   
+  // Get hovered element from Paper for highlight styling
+  const hoveredId = paper.getHoveredElement();
+  const highlightedEntityIds = hoveredId ? new Set([hoveredId]) : undefined;
+  
   const context: PrimitiveContext = {
     world,
     planeTransforms,
-    // TODO: Add highlighted/snap state from stores
+    highlightedEntityIds,
   };
   
   const prims = paperService.generatePrimitives(context);
@@ -337,6 +342,36 @@ function handleCanvasClick(event: MouseEvent) {
   } else {
     console.error('[SvgCanvas] Tool operation failed:', result.message);
   }
+}
+
+/**
+ * Handle mouse movement for hover feedback
+ * Uses Paper.hitTest() to detect elements near cursor
+ */
+function handleMouseMove(event: MouseEvent) {
+  if (!svgElement.value) return;
+  
+  // Get canvas position (in SVG user space)
+  const svg = svgElement.value;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return;
+  
+  const canvasPoint = pt.matrixTransform(ctm.inverse());
+  
+  // Use Paper.hitTest() to find element near cursor
+  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  const hit = paper.hitTest(canvasPos, 20); // 20px snap radius
+  
+  // Update hover state in Paper
+  paper.setHoveredElement(hit?.elementId);
+  
+  // Trigger re-render to show hover effect
+  // Note: This is efficient because only the hovered primitive changes style
+  worldVersion.value++;
 }
 
 </script>

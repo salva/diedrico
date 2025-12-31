@@ -363,13 +363,11 @@ User clicks → SvgCanvas (coordinate conversion)
   - DONE: Refactored to use Paper.hitTest() with Vector3 homogeneous coordinates
   - Removed temporary findNearestPoint() method from LineTool
   - Proper coordinate space handling through Paper's inverse transforms
-- [ ] T048 Add visual feedback for snapped point (highlight)
-  - Add hoveredElementId to Paper state
-  - Track mouse movement in SvgCanvas
-  - Call Paper.hitTest() on mousemove
-  - Pass hoveredElementId to PaperService when generating primitives
-  - PaperService applies highlight style to hovered elements
-  - SVG renders with hover styling (orange fill, thicker stroke)
+- [X] T048 Add visual feedback for snapped point (highlight)
+  - Added mousemove handler in SvgCanvas calling Paper.hitTest()
+  - Update Paper.setHoveredElement() based on hit result
+  - Pass hoveredElementId to PaperService via highlightedEntityIds
+  - PaperService applies hover styling (light blue #6BB6FF for free points, pink #FF6B9D for intersections, thicker stroke)
 - [X] T049 Implement two-point selection for line tool
 - [X] T050 Create Line instance from two selected points
 - [X] T051 Add line to World and re-render
