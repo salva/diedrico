@@ -278,18 +278,18 @@ User clicks → SvgCanvas (coordinate conversion)
 
 ### Testing
 
-- [ ] T072a [P] Unit test for Operations in frontend/tests/unit/commands/operations.spec.ts
+- [X] T072a [P] Unit test for Operations in frontend/tests/unit/commands/operations.spec.ts
   - Test AddElementOp: apply adds element, undo removes it
   - Test RemoveElementOp: apply removes, undo restores (uses beforeState)
   - Test UpdateElementOp: apply updates, undo restores beforeState
   - Test operation outputs and error handling
-- [ ] T073a [P] Unit test for Command base class in frontend/tests/unit/commands/command.spec.ts
+- [X] T073a [P] Unit test for Command base class in frontend/tests/unit/commands/command.spec.ts
   - Test addAndExecute() pattern with mock operations
   - Test incremental execution (operations run immediately)
   - Test rollback on operation failure
   - Test status transitions: Building → Committed → Undone
   - Test undo/redo reverses operations in correct order
-- [ ] T074a [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+- [X] T074a [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
   - Test execute adds to undo stack, clears redo stack
   - Test undo moves command to redo stack
   - Test redo moves command back to undo stack
@@ -371,7 +371,7 @@ User clicks → SvgCanvas (coordinate conversion)
 - [X] T049 Implement two-point selection for line tool
 - [X] T050 Create Line instance from two selected points
 - [X] T051 Add line to World and re-render
-- [ ] T052 [P] E2E test for line creation in frontend/tests/e2e/create-line.spec.ts
+- [X] T052 [P] E2E test for line creation in frontend/tests/e2e/line-creation.spec.ts
 
 **Checkpoint**: User can create lines between points with snapping (US2 partial)
 
