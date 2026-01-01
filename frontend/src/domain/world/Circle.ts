@@ -1,0 +1,305 @@
+/**
+ * Circle2D - Geometric circle in 2D projection plane
+ * 
+ * Circles can be defined by:
+ * - Center point + radius (most common)
+ * - Center point + point on circumference
+ * - Three points on circumference
+ * 
+ * Design principles:
+ * - Principle V: Circle stores DEFINITION (point IDs, radius), realization stores computed geometry
+ * - Dependencies: Circle depends on center point (and optionally other points)
+ * 
+ * @see specs/001-dihedral-learning-mvp/data-model.md#circle2d
+ */
+
+import { Vector3 } from 'three';
+
+export type Circle2DType = 'by-center-and-radius' | 'by-center-and-point' | 'by-three-points';
+
+/**
+ * Circle2DRealization - Stores computed geometry for a Circle2D
+ * Contains ONLY numeric data. Structural information (id, planeId, pointIds) stays in domain objects.
+ */
+export class Circle2DRealization {
+  center: Vector3;  // Center in plane coordinates (u, v, 1)
+  radius: number;   // Radius in plane intrinsic units
+
+  constructor(center: Vector3, radius: number) {
+    this.center = center;
+    this.radius = radius;
+  }
+
+  /**
+   * Get center position
+   */
+  getCenter(): Vector3 {
+    return this.center;
+  }
+
+  /**
+   * Get radius
+   */
+  getRadius(): number {
+    return this.radius;
+  }
+
+  /**
+   * Calculate circumference
+   */
+  getCircumference(): number {
+    return 2 * Math.PI * this.radius;
+  }
+
+  /**
+   * Calculate area
+   */
+  getArea(): number {
+    return Math.PI * this.radius * this.radius;
+  }
+}
+
+/**
+ * Base Circle2D class - represents the rule/definition of a circle
+ */
+export abstract class Circle2D {
+  readonly id: string;
+  readonly planeId: string;
+  readonly label?: string;
+  abstract readonly type: Circle2DType;
+
+  constructor(id: string, planeId: string, label?: string) {
+    this.id = id;
+    this.planeId = planeId;
+    this.label = label;
+  }
+
+  abstract clone(): Circle2D;
+
+  /**
+   * Calculate 2D realization - compute center and radius
+   * @param getPoint Function to retrieve point positions by ID
+   */
+  abstract realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization | null;
+}
+
+/**
+ * Circle2DByCenterAndRadius - Circle defined by center point and explicit radius value
+ * The rule is: "circle with center at centerId and radius r"
+ */
+export class Circle2DByCenterAndRadius extends Circle2D {
+  readonly type: 'by-center-and-radius' = 'by-center-and-radius';
+  readonly centerPointId: string;  // ID of center point
+  readonly radius: number;         // Radius in plane intrinsic units
+
+  constructor(
+    id: string,
+    centerPointId: string,
+    radius: number,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.centerPointId = centerPointId;
+    this.radius = radius;
+  }
+
+  clone(): Circle2DByCenterAndRadius {
+    return new Circle2DByCenterAndRadius(
+      this.id,
+      this.centerPointId,
+      this.radius,
+      this.planeId,
+      this.label
+    );
+  }
+
+  /**
+   * Calculate 2D realization - get center position from point, use stored radius
+   */
+  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization | null {
+    // Get center position
+    const center = getPoint(this.centerPointId);
+
+    if (!center) {
+      return null;  // Cannot compute circle without center
+    }
+
+    // Check for invalid radius
+    if (this.radius <= 0) {
+      console.warn(`Circle ${this.id}: radius must be positive, got ${this.radius}`);
+      return null;  // Degenerate circle
+    }
+
+    return new Circle2DRealization(center.clone(), this.radius);
+  }
+}
+
+/**
+ * Circle2DByCenterAndPoint - Circle defined by center and point on circumference
+ * The rule is: "circle with center at centerId passing through pointId"
+ * Radius is computed as distance from center to circumference point.
+ */
+export class Circle2DByCenterAndPoint extends Circle2D {
+  readonly type: 'by-center-and-point' = 'by-center-and-point';
+  readonly centerPointId: string;        // ID of center point
+  readonly circumferencePointId: string; // ID of point on circumference
+
+  constructor(
+    id: string,
+    centerPointId: string,
+    circumferencePointId: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.centerPointId = centerPointId;
+    this.circumferencePointId = circumferencePointId;
+  }
+
+  clone(): Circle2DByCenterAndPoint {
+    return new Circle2DByCenterAndPoint(
+      this.id,
+      this.centerPointId,
+      this.circumferencePointId,
+      this.planeId,
+      this.label
+    );
+  }
+
+  /**
+   * Calculate 2D realization - compute radius from center to circumference point
+   */
+  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization | null {
+    // Get both point positions
+    const center = getPoint(this.centerPointId);
+    const circumferencePoint = getPoint(this.circumferencePointId);
+
+    if (!center || !circumferencePoint) {
+      return null;  // Cannot compute circle without both points
+    }
+
+    // Check for degenerate circle (center coincides with circumference point)
+    const radius = center.distanceTo(circumferencePoint);
+    if (radius < 1e-10) {
+      console.warn(`Circle ${this.id}: center and circumference point are coincident`);
+      return null;  // Degenerate circle (zero radius)
+    }
+
+    return new Circle2DRealization(center.clone(), radius);
+  }
+}
+
+/**
+ * Circle2DByThreePoints - Circle passing through three points
+ * The rule is: "circle through point1Id, point2Id, and point3Id"
+ * Center and radius computed from circumcircle of the three points.
+ * 
+ * Note: This is a more complex construction and may be implemented in a future phase.
+ * For MVP, we focus on simpler circle definitions.
+ */
+export class Circle2DByThreePoints extends Circle2D {
+  readonly type: 'by-three-points' = 'by-three-points';
+  readonly point1Id: string;
+  readonly point2Id: string;
+  readonly point3Id: string;
+
+  constructor(
+    id: string,
+    point1Id: string,
+    point2Id: string,
+    point3Id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.point1Id = point1Id;
+    this.point2Id = point2Id;
+    this.point3Id = point3Id;
+  }
+
+  clone(): Circle2DByThreePoints {
+    return new Circle2DByThreePoints(
+      this.id,
+      this.point1Id,
+      this.point2Id,
+      this.point3Id,
+      this.planeId,
+      this.label
+    );
+  }
+
+  /**
+   * Calculate 2D realization - compute circumcircle through three points
+   * 
+   * Algorithm:
+   * 1. Find perpendicular bisectors of two sides
+   * 2. Find intersection = center
+   * 3. Radius = distance from center to any point
+   */
+  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization | null {
+    // Get all three point positions
+    const p1 = getPoint(this.point1Id);
+    const p2 = getPoint(this.point2Id);
+    const p3 = getPoint(this.point3Id);
+
+    if (!p1 || !p2 || !p3) {
+      return null;  // Cannot compute circle without all three points
+    }
+
+    // Check for collinearity (degenerate case)
+    // Use cross product: if (p2-p1) × (p3-p1) ≈ 0, points are collinear
+    const v12 = p2.clone().sub(p1);
+    const v13 = p3.clone().sub(p1);
+    
+    // In 2D, cross product magnitude is |x1*y2 - x2*y1|
+    const crossMag = Math.abs(v12.x * v13.y - v12.y * v13.x);
+    if (crossMag < 1e-10) {
+      console.warn(`Circle ${this.id}: three points are collinear`);
+      return null;  // Cannot define circle through collinear points
+    }
+
+    // Calculate circumcenter using perpendicular bisectors
+    // Midpoint of p1-p2: m12 = (p1 + p2) / 2
+    const m12 = p1.clone().add(p2).multiplyScalar(0.5);
+    // Midpoint of p2-p3: m23 = (p2 + p3) / 2
+    const m23 = p2.clone().add(p3).multiplyScalar(0.5);
+
+    // Direction perpendicular to p1-p2: rotate 90° = (-dy, dx)
+    const dir12 = new Vector3(-v12.y, v12.x, 0);
+    
+    // Direction p2-p3
+    const v23 = p3.clone().sub(p2);
+    // Direction perpendicular to p2-p3
+    const dir23 = new Vector3(-v23.y, v23.x, 0);
+
+    // Find intersection of two perpendicular bisectors
+    // Line 1: m12 + t * dir12
+    // Line 2: m23 + s * dir23
+    // Solve: m12 + t * dir12 = m23 + s * dir23
+    
+    // This becomes: t * dir12 - s * dir23 = m23 - m12
+    // In matrix form: [dir12 -dir23] * [t; s] = [m23 - m12]
+    
+    const diff = m23.clone().sub(m12);
+    
+    // Solve 2x2 system using Cramer's rule
+    const det = dir12.x * (-dir23.y) - dir12.y * (-dir23.x);
+    
+    if (Math.abs(det) < 1e-10) {
+      // Lines are parallel (should not happen if points are not collinear)
+      console.warn(`Circle ${this.id}: perpendicular bisectors are parallel`);
+      return null;
+    }
+    
+    const t = (diff.x * (-dir23.y) - diff.y * (-dir23.x)) / det;
+    
+    // Calculate center
+    const center = m12.clone().add(dir12.clone().multiplyScalar(t));
+    
+    // Calculate radius
+    const radius = center.distanceTo(p1);
+    
+    return new Circle2DRealization(center, radius);
+  }
+}

@@ -16,6 +16,8 @@
  */
 
 import { Vector3, Vector4 } from 'three';
+import type { Line2DRealization } from './Line';
+import { intersectLineLine } from '../calculations/Intersections';
 
 export type Point2DType = 'free' | 'intersection';
 
@@ -85,9 +87,10 @@ export abstract class Point2D {
   /**
    * Calculate the 2D realization (position) for this point
    * Returns position in the projection plane's intrinsic coordinates
-   * Does not need context - calculates from local data only
+   * 
+   * @param getLine Optional callback to get line realizations (needed for intersection points)
    */
-  abstract realize2D(): Point2DRealization;
+  abstract realize2D(getLine?: (id: string) => Line2DRealization | null): Point2DRealization;
 }
 
 /**
@@ -171,16 +174,46 @@ export class IntersectionPoint2D extends Point2D {
   /**
    * Calculate 2D realization - compute intersection of two geometric objects
    * Intersection is calculated in the plane's intrinsic coordinate system
-   * TODO: Implement intersection calculation from element1Id and element2Id
+   * 
+   * Currently supports:
+   * - Line-Line intersection (index must be 0, as there's only one intersection point)
+   * 
+   * @param getLine Callback to get line realizations
+   * @returns Point2DRealization with intersection point, or origin if computation fails
    */
-  realize2D(): Point2DRealization {
-    // TODO: Get realizations of element1 and element2, compute intersection
-    // For now, return origin as placeholder
-    // Real implementation will:
-    // 1. Access element1 and element2 definitions (not realizations)
-    // 2. Compute their intersection points in this plane's coordinates
-    // 3. Return the point at this.index
+  realize2D(getLine?: (id: string) => Line2DRealization | null): Point2DRealization {
+    // Validate getLine callback
+    if (!getLine) {
+      console.warn('[IntersectionPoint2D] realize2D called without getLine callback');
+      return new Point2DRealization(new Vector3(0, 0, 1));
+    }
     
-    return new Point2DRealization(new Vector3(0, 0, 1));
+    // Get realizations of both elements
+    const line1 = getLine(this.element1Id);
+    const line2 = getLine(this.element2Id);
+    
+    if (!line1 || !line2) {
+      console.warn(
+        '[IntersectionPoint2D] Cannot compute intersection: missing line realization',
+        { element1Id: this.element1Id, element2Id: this.element2Id, line1, line2 }
+      );
+      return new Point2DRealization(new Vector3(0, 0, 1));
+    }
+    
+    // Compute line-line intersection using homogeneous coordinates
+    const result = intersectLineLine(line1, line2);
+    
+    if (result.type !== 'point' || !result.point) {
+      console.warn(
+        '[IntersectionPoint2D] Lines do not intersect:',
+        result.type,
+        result.message
+      );
+      // Return origin as fallback (infeasible construction)
+      return new Point2DRealization(new Vector3(0, 0, 1));
+    }
+    
+    // Return the intersection point
+    return new Point2DRealization(result.point);
   }
 }

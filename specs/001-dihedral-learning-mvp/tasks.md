@@ -391,15 +391,15 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: Study [spec.md §Process Tree](./spec.md#process-tree) thoroughly - this is central to the application's parametric and pedagogical design.
 
-- [ ] T053 [P] Create ProcessTree class in frontend/src/domain/processTree/ProcessTree.ts
-- [ ] T054 [P] Create Action interface in frontend/src/domain/processTree/Action.ts
-- [ ] T055 [P] Create CreatePointAction class in frontend/src/domain/processTree/actions/CreatePointAction.ts
-- [ ] T056 [P] Create CreateLineAction class in frontend/src/domain/processTree/actions/CreateLineAction.ts
-- [ ] T057 Add ProcessTree instance to World
-- [ ] T058 Record CreatePointAction when point created
-- [ ] T059 Record CreateLineAction when line created
-- [ ] T060 [P] Unit test for ProcessTree in frontend/tests/unit/processTree/processTree.spec.ts
-- [ ] T061 [P] Unit test for Action classes in frontend/tests/unit/processTree/actions.spec.ts
+- [X] T053 [P] Create Action interface in frontend/src/domain/processTree/Action.ts
+- [X] T054 [P] Create ProcessTree class in frontend/src/domain/processTree/ProcessTree.ts
+- [X] T055 [P] Create CreatePointAction factory in frontend/src/domain/processTree/actions/CreatePointAction.ts
+- [X] T056 [P] Create CreateLineAction factory in frontend/src/domain/processTree/actions/CreateLineAction.ts
+- [X] T057 Add ProcessTree instance to World
+- [X] T058 Record CreatePointAction when point created
+- [X] T059 Record CreateLineAction when line created
+- [X] T060 [P] Unit test for ProcessTree in frontend/tests/unit/processTree.spec.ts - 18 tests passing
+- [X] T061 [P] Unit test for action factories included in processTree.spec.ts
 
 **Checkpoint**: Construction actions tracked in process tree (US6 partial - history tracking)
 
@@ -419,21 +419,31 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: Read [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability) - Command pattern is MANDATORY for ALL user actions.
 
-- [ ] T062 [P] Create Command interface in frontend/src/commands/Command.ts with execute/undo/validate
-- [ ] T063 [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
-- [ ] T064 [P] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
-- [ ] T065 [P] Create CreateLineCommand in frontend/src/commands/CreateLineCommand.ts
-- [ ] T066 Refactor point creation to use CreateFreePointCommand
-- [ ] T067 Refactor line creation to use CreateLineCommand
-- [ ] T068 Add Undo button to toolbar
-- [ ] T069 Add Redo button to toolbar
-- [ ] T070 Implement Ctrl+Z keyboard shortcut for undo
-- [ ] T071 Implement Ctrl+Y keyboard shortcut for redo
-- [ ] T072 [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
-- [ ] T073 [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePoint.spec.ts
-- [ ] T074 [P] E2E test for undo/redo in frontend/tests/e2e/undo-redo.spec.ts
+**NOTE**: Core command pattern infrastructure implemented in Phase 6.5. UI controls (buttons/shortcuts) still pending:
 
-**Checkpoint**: All operations undoable/redoable (Constitution Principle II satisfied)
+- [X] T062 [P] Create Command interface in frontend/src/commands/Command.ts with execute/undo/validate
+  - **DONE in Phase 6.5**: Command base class with addAndExecute(), commit(), rollback(), undo(), redo()
+- [X] T063 [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
+  - **DONE in Phase 6.5**: CommandStack with execute(), undo(), redo(), canUndo(), canRedo()
+- [X] T064 [P] Create CreateFreePointCommand in frontend/src/commands/CreateFreePointCommand.ts
+  - **DONE in Phase 6.5**: CreateFreePointCommand with full test coverage
+- [X] T065 [P] Create CreateLineCommand in frontend/src/commands/CreateLineCommand.ts
+  - **DONE in Phase 8**: CreateLineCommand already implemented with line creation tool
+- [X] T066 Refactor point creation to use CreateFreePointCommand
+  - **DONE in Phase 6.5**: SvgCanvas uses PointTool → CreateFreePointCommand
+- [X] T067 Refactor line creation to use CreateLineCommand
+  - **DONE in Phase 8**: LineTool uses CreateLineCommand
+- [X] T068 Add Undo button to toolbar
+- [X] T069 Add Redo button to toolbar
+- [X] T070 Implement Ctrl+Z keyboard shortcut for undo
+- [X] T071 Implement Ctrl+Y keyboard shortcut for redo
+- [X] T072 [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+  - **DONE in Phase 6.5**: T074a - Comprehensive CommandStack tests
+- [X] T073 [P] Unit test for CreateFreePointCommand in frontend/tests/unit/commands/createFreePoint.spec.ts
+  - **DONE in Phase 6.5**: T075a - CreateFreePointCommand unit tests
+- [X] T074 [P] E2E test for undo/redo in frontend/tests/e2e/undo-redo.spec.ts
+
+**Checkpoint**: ✅ Command pattern complete with UI controls. All user actions undoable.
 
 ---
 
@@ -451,14 +461,14 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: Segments vs Lines - understand difference in [spec.md §Lines and Segments](./spec.md#lines-and-segments).
 
-- [ ] T075 [P] Create Segment class in frontend/src/domain/world/Segment.ts with start/end points
-- [ ] T076 Add segment storage to World
-- [ ] T077 Render segments as SVG path elements in SvgCanvas.vue
-- [ ] T078 Add "Segment" tool button to Toolbar
-- [ ] T079 [P] Create CreateSegmentCommand in frontend/src/commands/CreateSegmentCommand.ts
-- [ ] T080 Implement segment creation tool (two-point selection)
-- [ ] T081 [P] Unit test for Segment class in frontend/tests/unit/domain/segment.spec.ts
-- [ ] T082 [P] E2E test for segment creation in frontend/tests/e2e/create-segment.spec.ts
+- [X] T075 [P] Create Segment class in frontend/src/domain/world/Segment.ts with start/end points
+- [X] T076 Add segment storage to World
+- [X] T077 Render segments as SVG path elements in SvgCanvas.vue
+- [X] T078 Add "Segment" tool button to Toolbar
+- [X] T079 [P] Create CreateSegmentCommand in frontend/src/commands/CreateSegmentCommand.ts
+- [X] T080 Implement segment creation tool (two-point selection)
+- [X] T081 [P] Unit test for Segment class in frontend/tests/unit/domain/segment.spec.ts
+- [X] T082 [P] E2E test for segment creation in frontend/tests/e2e/create-segment.spec.ts
 
 **Checkpoint**: User can create segments (US2 partial - more geometry types)
 
@@ -478,15 +488,15 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: Study [spec.md §US2](./spec.md#us2-create-points-lines-circles) for complete circle creation workflow.
 
-- [ ] T083 [P] Create Circle class in frontend/src/domain/world/Circle.ts with center point and radius
-- [ ] T084 Add circle storage to World
-- [ ] T085 Render circles as SVG circle elements in SvgCanvas.vue
-- [ ] T086 Add "Circle" tool button to Toolbar
-- [ ] T087 [P] Create CreateCircleCommand in frontend/src/commands/CreateCircleCommand.ts
-- [ ] T088 Implement circle center selection
-- [ ] T089 Implement radius specification (drag or click second point)
-- [ ] T090 [P] Unit test for Circle class in frontend/tests/unit/domain/circle.spec.ts
-- [ ] T091 [P] E2E test for circle creation in frontend/tests/e2e/create-circle.spec.ts
+- [X] T083 [P] Create Circle class in frontend/src/domain/world/Circle.ts with center point and radius
+- [X] T084 Add circle storage to World
+- [X] T085 Render circles as SVG circle elements in SvgCanvas.vue
+- [X] T086 Add "Circle" tool button to Toolbar
+- [X] T087 [P] Create CreateCircleCommand in frontend/src/commands/CreateCircleCommand.ts
+- [X] T088 Implement circle center selection
+- [X] T089 Implement radius specification (drag or click second point)
+- [X] T090 [P] Unit test for Circle class in frontend/tests/unit/domain/circle.spec.ts
+- [X] T091 [P] E2E test for circle creation in frontend/tests/e2e/create-circle.spec.ts
 
 **Checkpoint**: User can create circles (US2 complete for basic geometry)
 
@@ -506,16 +516,16 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: Study [spec.md §Guides](./spec.md#guides) - Guides are ALWAYS perpendicular to hinge lines, not general angle specification.
 
-- [ ] T092 [P] Create Guide class in frontend/src/domain/world/Guide.ts (line perpendicular to HL through point)
-- [ ] T093 Add guide storage to World
-- [ ] T094 [P] Implement guide calculation using homogeneous coordinates - perpendicular to HL
-- [ ] T095 Render guides as dashed SVG lines in SvgCanvas.vue (extend to viewport edges)
-- [ ] T096 Add "Guide" tool button to Toolbar
-- [ ] T097 [P] Create CreateGuideCommand in frontend/src/commands/CreateGuideCommand.ts
-- [ ] T098 Implement guide creation: select HL, then select point
-- [ ] T099 Apply guide on both planes sharing the HL (guide appears in both)
-- [ ] T100 [P] Unit test for guide calculations in frontend/tests/unit/calculations/guides.spec.ts
-- [ ] T101 [P] E2E test for guide creation in frontend/tests/e2e/guide-creation.spec.ts
+- [X] T092 [P] Create Guide class in frontend/src/domain/world/Guide.ts (line perpendicular to HL through point)
+- [X] T093 Add guide storage to World
+- [X] T094 [P] Implement guide calculation using homogeneous coordinates - perpendicular to HL
+- [X] T095 Render guides as dashed SVG lines in SvgCanvas.vue (extend to viewport edges)
+- [X] T096 Add "Guide" tool button to Toolbar
+- [X] T097 [P] Create CreateGuideCommand in frontend/src/commands/CreateGuideCommand.ts
+- [X] T098 Implement guide creation: select HL, then select point
+- [X] T099 Apply guide on both planes sharing the HL (guide appears in both)
+- [X] T100 [P] Unit test for guide calculations in frontend/tests/unit/domain/guide.spec.ts
+- [X] T101 [P] E2E test for guide creation in frontend/tests/e2e/guide-creation.spec.ts
 
 **Checkpoint**: User can create guides (US3 complete)
 
@@ -537,17 +547,17 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: Study [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system) - ALL intersection calculations use homogeneous coordinate cross products.
 
-- [ ] T102 [P] Implement line-line intersection calculation in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
-- [ ] T103 Handle parallel lines (no intersection, return null)
-- [ ] T104 Handle coincident lines (infinite intersections, return null or special case)
-- [ ] T105 Add "Intersection" tool button to Toolbar
-- [ ] T106 [P] Create CreateIntersectionPointCommand in frontend/src/commands/CreateIntersectionPointCommand.ts
-- [ ] T107 Implement intersection tool: select first line
-- [ ] T108 Implement intersection tool: select second line
-- [ ] T109 Calculate and create point at intersection
-- [ ] T110 Show error message if lines are parallel (infeasibility preview)
-- [ ] T111 [P] Unit test for line-line intersection in frontend/tests/unit/calculations/intersections.spec.ts
-- [ ] T112 [P] E2E test for line-line intersection in frontend/tests/e2e/intersections.spec.ts
+- [X] T102 [P] Implement line-line intersection calculation in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
+- [X] T103 Handle parallel lines (no intersection, return null)
+- [X] T104 Handle coincident lines (infinite intersections, return null or special case)
+- [X] T105 Add "Intersection" tool button to Toolbar
+- [X] T106 [P] Create CreateIntersectionPointCommand in frontend/src/commands/CreateIntersectionPointCommand.ts
+- [X] T107 Implement intersection tool: select first line
+- [X] T108 Implement intersection tool: select second line
+- [X] T109 Calculate and create point at intersection
+- [X] T110 Show error message if lines are parallel (infeasibility preview)
+- [X] T111 [P] Unit test for line-line intersection in frontend/tests/unit/calculations/intersections.spec.ts
+- [X] T112 [P] E2E test for line-line intersection in frontend/tests/e2e/intersections.spec.ts
 
 **Checkpoint**: User can create intersection points (US2 partial)
 

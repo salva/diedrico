@@ -32,12 +32,17 @@
 import { Matrix3 } from 'three';
 import type { Point2D, Point2DRealization } from '../domain/world/Point';
 import type { Line2D, Line2DRealization } from '../domain/world/Line';
+import type { Segment2D, Segment2DRealization } from '../domain/world/Segment';
+import type { Circle2D, Circle2DRealization } from '../domain/world/Circle';
+import type { Guide2D, Guide2DRealization } from '../domain/world/Guide';
 import type { World } from '../domain/world/World';
 import {
   Paper,
   type Primitive,
   type PointPrimitive,
   type LinePrimitive,
+  type SegmentPrimitive,
+  type CirclePrimitive,
   type ResolvedStyle,
   RenderLayer,
 } from '../domain/presentation/Paper';
@@ -103,7 +108,52 @@ export class PaperService {
       }
     }
 
-    // TODO: Add primitives for other element types (segments, circles, etc.)
+    // WALK: Iterate over all segments in the world
+    const allSegments = context.world.getAllSegments();
+    for (const segment of allSegments) {
+      // REALIZE: Get computed segment endpoints (numeric data)
+      const realization = context.world.getSegment2DRealization(segment.id!);
+      // Get plane transformation matrix
+      const transform = context.planeTransforms.get(segment.planeId!);
+      
+      if (realization && transform) {
+        // RENDER: Generate primitive using realization (numeric) + segment (structural)
+        const primitive = this.segmentToPrimitive(segment, realization, transform, context);
+        primitives.push(primitive);
+      }
+    }
+
+    // WALK: Iterate over all circles in the world
+    const allCircles = context.world.getAllCircles();
+    for (const circle of allCircles) {
+      // REALIZE: Get computed circle geometry (numeric data)
+      const realization = context.world.getCircle2DRealization(circle.id!);
+      // Get plane transformation matrix
+      const transform = context.planeTransforms.get(circle.planeId!);
+      
+      if (realization && transform) {
+        // RENDER: Generate primitive using realization (numeric) + circle (structural)
+        const primitive = this.circleToPrimitive(circle, realization, transform, context);
+        primitives.push(primitive);
+      }
+    }
+
+    // WALK: Iterate over all guides in the world
+    const allGuides = context.world.getAllGuides();
+    for (const guide of allGuides) {
+      // REALIZE: Get computed guide line geometry (numeric data)
+      const realization = context.world.getGuide2DRealization(guide.id!);
+      // Get plane transformation matrix
+      const transform = context.planeTransforms.get(guide.planeId!);
+      
+      if (realization && transform) {
+        // RENDER: Generate primitive using realization (numeric) + guide (structural)
+        const primitive = this.guideToPrimitive(guide, realization, transform, context);
+        primitives.push(primitive);
+      }
+    }
+
+    // TODO: Add primitives for other element types (arcs, etc.)
 
     return primitives;
   }
@@ -231,6 +281,178 @@ export class PaperService {
       fill: 'none',
       opacity: 1.0,
       zIndex: 5, // Lines render below points
+    };
+  }
+
+  /**
+   * Convert a Segment2D + realization to a SegmentPrimitive
+   * Applies plane-to-paper transformation
+   * 
+   * Segments are finite line segments between two endpoints
+   */
+  private segmentToPrimitive(
+    segment: Segment2D,
+    realization: Segment2DRealization,
+    planeToPaperMatrix: Matrix3,
+    context: PrimitiveContext
+  ): SegmentPrimitive {
+    const isHighlighted = context.highlightedEntityIds?.has(segment.id!) || false;
+
+    // Transform both endpoints from plane <u,v> to paper coordinates
+    const paperPoint1 = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
+    const paperPoint2 = realization.point2.clone().applyMatrix3(planeToPaperMatrix);
+
+    // Resolve visual style
+    const style = this.resolveSegmentStyle(segment, isHighlighted);
+
+    return {
+      type: 'segment',
+      id: `segment-${segment.id}`,
+      sourceEntityId: segment.id,
+      layer: RenderLayer.Elements,
+      visible: true, // TODO: Compute from subprocess visibility + infeasibility
+      style,
+      point1: paperPoint1,    // Keep as Vector3 - SVGRenderer extracts x/y
+      point2: paperPoint2,    // Keep as Vector3 - SVGRenderer extracts x/y
+    };
+  }
+
+  /**
+   * Resolve visual style for a segment
+   * Segments have slightly different styling than infinite lines
+   * TODO: Implement style inheritance from process tree
+   */
+  private resolveSegmentStyle(
+    _segment: Segment2D,  // Reserved for future style inheritance
+    isHighlighted: boolean
+  ): ResolvedStyle {
+    const stroke = isHighlighted ? '#6BB6FF' : '#2C3E50';
+    const strokeWidth = isHighlighted ? 2.5 : 2;
+
+    return {
+      stroke,
+      strokeWidth,
+      strokeStyle: 'solid',
+      fill: 'none',
+      opacity: 1.0,
+      zIndex: 5, // Segments render at same level as lines
+    };
+  }
+
+  /**
+   * Convert a Circle2D + realization to a CirclePrimitive
+   * Applies plane-to-paper transformation
+   */
+  private circleToPrimitive(
+    circle: Circle2D,
+    realization: Circle2DRealization,
+    planeToPaperMatrix: Matrix3,
+    context: PrimitiveContext
+  ): CirclePrimitive {
+    const isHighlighted = context.highlightedEntityIds?.has(circle.id!) || false;
+
+    // Transform center from plane <u,v> to paper coordinates
+    const paperCenter = realization.center.clone().applyMatrix3(planeToPaperMatrix);
+
+    // Transform radius: extract scale from transformation matrix
+    // Use average of x and y scale factors for uniform scaling approximation
+    const scaleX = Math.sqrt(planeToPaperMatrix.elements[0] * planeToPaperMatrix.elements[0] + 
+                             planeToPaperMatrix.elements[1] * planeToPaperMatrix.elements[1]);
+    const scaleY = Math.sqrt(planeToPaperMatrix.elements[3] * planeToPaperMatrix.elements[3] + 
+                             planeToPaperMatrix.elements[4] * planeToPaperMatrix.elements[4]);
+    const avgScale = (scaleX + scaleY) / 2;
+    const paperRadius = realization.radius * avgScale;
+
+    // Resolve visual style
+    const style = this.resolveCircleStyle(circle, isHighlighted);
+
+    return {
+      type: 'circle',
+      id: `circle-${circle.id}`,
+      sourceEntityId: circle.id!,
+      layer: RenderLayer.Elements,
+      visible: true,
+      style,
+      cx: paperCenter.x,
+      cy: paperCenter.y,
+      radius: paperRadius,
+    };
+  }
+
+  /**
+   * Resolve visual style for a circle
+   * TODO: Implement style inheritance from process tree
+   */
+  private resolveCircleStyle(
+    _circle: Circle2D,  // Reserved for future style inheritance
+    isHighlighted: boolean
+  ): ResolvedStyle {
+    const stroke = isHighlighted ? '#6BB6FF' : '#1E88E5';  // Blue for circles
+    const strokeWidth = isHighlighted ? 2.5 : 2;
+
+    return {
+      stroke,
+      strokeWidth,
+      strokeStyle: 'solid',
+      fill: 'none',
+      opacity: 1.0,
+      zIndex: 5, // Circles render at same level as lines/segments
+    };
+  }
+
+  /**
+   * Convert a Guide2D + realization to a LinePrimitive
+   * Guides are rendered as dashed lines extending to viewport edges
+   * Applies plane-to-paper transformation
+   */
+  private guideToPrimitive(
+    guide: Guide2D,
+    realization: Guide2DRealization,
+    planeToPaperMatrix: Matrix3,
+    context: PrimitiveContext
+  ): LinePrimitive {
+    const isHighlighted = context.highlightedEntityIds?.has(guide.id!) || false;
+
+    // Transform point on guide (includes translation)
+    const paperPoint = realization.point.clone().applyMatrix3(planeToPaperMatrix);
+    
+    // Transform direction vector (NO translation - direction is invariant under translation)
+    const paperDirection = realization.direction.clone().applyMatrix3(planeToPaperMatrix);
+
+    // Resolve visual style (dashed line)
+    const style = this.resolveGuideStyle(guide, isHighlighted);
+
+    return {
+      type: 'line',
+      id: `guide-${guide.id}`,
+      sourceEntityId: guide.id,
+      layer: RenderLayer.Guides,  // Guides render on their own layer (below elements)
+      visible: true, // TODO: Compute from subprocess visibility + infeasibility
+      style,
+      point: paperPoint,            // Keep as Vector3 - SVGRenderer extracts x/y
+      direction: paperDirection,    // Keep as Vector3 - SVGRenderer extracts x/y
+    };
+  }
+
+  /**
+   * Resolve visual style for a guide
+   * Guides render as dashed lines with distinct color
+   * TODO: Implement style inheritance from process tree
+   */
+  private resolveGuideStyle(
+    _guide: Guide2D,  // Reserved for future style inheritance
+    isHighlighted: boolean
+  ): ResolvedStyle {
+    const stroke = isHighlighted ? '#6BB6FF' : '#9C27B0';  // Purple for guides
+    const strokeWidth = isHighlighted ? 2 : 1.5;
+
+    return {
+      stroke,
+      strokeWidth,
+      strokeStyle: 'dashed',  // Dashed style distinguishes guides from lines
+      fill: 'none',
+      opacity: 0.8,  // Slightly transparent
+      zIndex: 3, // Guides render below regular lines
     };
   }
 

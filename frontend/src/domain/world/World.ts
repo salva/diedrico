@@ -15,22 +15,34 @@
 import { Vector3, Vector4 } from 'three';
 import { Point2D, FreePoint2D, Point2DRealization, Point3DRealization } from './Point';
 import { Line2D, Line2DRealization } from './Line';
+import { Segment2D, Segment2DRealization } from './Segment';
+import { Circle2D, Circle2DRealization } from './Circle';
+import { Guide2D, Guide2DRealization } from './Guide';
 import { Plane3D } from './Plane';
 import { ProjectionPlane, BaseProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
+import { ProcessTree } from '../processTree/ProcessTree';
 
 export class World {
   private points: Map<string, Point2D>;
   private lines: Map<string, Line2D>;
+  private segments: Map<string, Segment2D>;
+  private circles: Map<string, Circle2D>;
+  private guides: Map<string, Guide2D>;
   private planes: Map<string, Plane3D>;
   projectionPlanes: Map<string, ProjectionPlane>;  // 2D projection planes (public for rendering)
+  
+  // Construction history
+  private processTree: ProcessTree;
   
   // Realization caches - organized by object type for extensibility
   private pointRealizations2D: Map<string, Point2DRealization>;  // Computed 2D point positions
   private pointRealizations3D: Map<string, Point3DRealization>;  // Computed 3D point positions
   private lineRealizations2D: Map<string, Line2DRealization>;    // Computed 2D line equations
+  private segmentRealizations2D: Map<string, Segment2DRealization>;  // Computed 2D segment endpoints
+  private circleRealizations2D: Map<string, Circle2DRealization>;  // Computed 2D circle geometry
+  private guideRealizations2D: Map<string, Guide2DRealization>;  // Computed 2D guide line geometry
   private projectionPlaneRealizations2D: Map<string, ProjectionPlaneRealization2D>;  // Computed plane 2D transforms
   private projectionPlaneRealizations3D: Map<string, ProjectionPlaneRealization3D>;  // Computed plane 3D transforms
-  // Future: circleRealizations2D, etc.
   
   private nextId: number;
 
@@ -44,14 +56,21 @@ export class World {
   constructor() {
     this.points = new Map();
     this.lines = new Map();
+    this.segments = new Map();
+    this.circles = new Map();
+    this.guides = new Map();
     this.planes = new Map();
     this.projectionPlanes = new Map();
     this.pointRealizations2D = new Map();
     this.pointRealizations3D = new Map();
     this.lineRealizations2D = new Map();
+    this.segmentRealizations2D = new Map();
+    this.circleRealizations2D = new Map();
+    this.guideRealizations2D = new Map();
     this.projectionPlaneRealizations2D = new Map();
     this.projectionPlaneRealizations3D = new Map();
     this.nextId = 1;
+    this.processTree = new ProcessTree();
     
     // Initialize fixed elements
     this.initializeFixedElements();
@@ -143,9 +162,14 @@ export class World {
       return undefined;
     }
 
-    // Call realize2D() on the point
-    // 2D realization only calculates intrinsic plane coordinates, doesn't need context
-    realization = point.realize2D();
+    // Helper to get line realizations for intersection points
+    const getLine = (lineId: string): Line2DRealization | null => {
+      const lineRealization = this.getLine2DRealization(lineId);
+      return lineRealization || null;
+    };
+
+    // Call realize2D() on the point with getLine callback
+    realization = point.realize2D(getLine);
     
     // Cache the result
     this.pointRealizations2D.set(pointId, realization);
@@ -434,6 +458,261 @@ export class World {
   }
 
   /**
+   * Add a segment to the world
+   * @param segment Segment to add (must have ID already set)
+   * @returns The added segment
+   */
+  addSegment(segment: Segment2D): Segment2D {
+    this.segments.set(segment.id, segment);
+    return segment;
+  }
+
+  /**
+   * Remove a segment from the world
+   * @param id ID of segment to remove
+   * @returns true if segment was removed, false if not found
+   */
+  removeSegment(id: string): boolean {
+    const removed = this.segments.delete(id);
+    if (removed) {
+      this.segmentRealizations2D.delete(id);
+    }
+    return removed;
+  }
+
+  /**
+   * Get a segment by ID
+   * @param id Segment ID
+   * @returns Segment if found, undefined otherwise
+   */
+  getSegmentById(id: string): Segment2D | undefined {
+    return this.segments.get(id);
+  }
+
+  /**
+   * Get all segments in the world
+   * @returns Array of all segments
+   */
+  getAllSegments(): Segment2D[] {
+    return Array.from(this.segments.values());
+  }
+
+  /**
+   * Get total number of segments
+   */
+  getSegmentCount(): number {
+    return this.segments.size;
+  }
+
+  /**
+   * Generate a unique segment ID
+   */
+  generateSegmentId(): string {
+    return `segment_${this.nextId++}`;
+  }
+
+  /**
+   * Get the 2D realization for a segment (cached or computed on-demand)
+   * Computes segment endpoints from point realizations
+   */
+  getSegment2DRealization(segmentId: string): Segment2DRealization | undefined {
+    // Check cache first
+    let realization = this.segmentRealizations2D.get(segmentId);
+    if (realization) {
+      return realization;
+    }
+
+    // Not cached - compute it
+    const segment = this.segments.get(segmentId);
+    if (!segment) {
+      return undefined;
+    }
+
+    // Get point positions for segment realization
+    const getPointPosition = (pointId: string): Vector3 | null => {
+      const pointRealization = this.getPoint2DRealization(pointId);
+      return pointRealization ? pointRealization.position : null;
+    };
+
+    // Call realize2D() on the segment
+    realization = segment.realize2D(getPointPosition);
+    
+    if (realization) {
+      // Cache the result
+      this.segmentRealizations2D.set(segmentId, realization);
+    }
+    
+    return realization;
+  }
+
+  // ========================================
+  // CIRCLE METHODS
+  // ========================================
+
+  /**
+   * Add a circle to the world
+   */
+  addCircle(circle: Circle2D): Circle2D {
+    this.circles.set(circle.id, circle);
+    // Invalidate cached realization
+    this.circleRealizations2D.delete(circle.id);
+    return circle;
+  }
+
+  /**
+   * Remove a circle from the world
+   */
+  removeCircle(circleId: string): Circle2D | undefined {
+    const circle = this.circles.get(circleId);
+    if (circle) {
+      this.circles.delete(circleId);
+      this.circleRealizations2D.delete(circleId);
+    }
+    return circle;
+  }
+
+  /**
+   * Get a circle by ID
+   */
+  getCircleById(circleId: string): Circle2D | undefined {
+    return this.circles.get(circleId);
+  }
+
+  /**
+   * Get all circles
+   */
+  getAllCircles(): Circle2D[] {
+    return Array.from(this.circles.values());
+  }
+
+  /**
+   * Generate a unique circle ID
+   */
+  generateCircleId(): string {
+    return `circle-${this.nextId++}`;
+  }
+
+  /**
+   * Get the 2D realization of a circle (with caching)
+   * Returns circle geometry (center and radius) in plane coordinates
+   */
+  getCircle2DRealization(circleId: string): Circle2DRealization | undefined {
+    // Check cache first
+    let realization = this.circleRealizations2D.get(circleId);
+    if (realization) {
+      return realization;
+    }
+
+    // Not cached - compute it
+    const circle = this.circles.get(circleId);
+    if (!circle) {
+      return undefined;
+    }
+
+    // Get point positions for circle realization
+    const getPointPosition = (pointId: string): Vector3 | null => {
+      const pointRealization = this.getPoint2DRealization(pointId);
+      return pointRealization ? pointRealization.position : null;
+    };
+
+    // Call realize2D() on the circle
+    realization = circle.realize2D(getPointPosition) ?? undefined;
+    
+    if (realization) {
+      // Cache the result
+      this.circleRealizations2D.set(circleId, realization);
+    }
+    
+    return realization;
+  }
+
+  // ========================================
+  // Guide Methods
+  // ========================================
+
+  /**
+   * Add a guide to the world
+   */
+  addGuide(guide: Guide2D): Guide2D {
+    this.guides.set(guide.id, guide);
+    // Invalidate cached realization
+    this.guideRealizations2D.delete(guide.id);
+    return guide;
+  }
+
+  /**
+   * Remove a guide from the world
+   */
+  removeGuide(guideId: string): Guide2D | undefined {
+    const guide = this.guides.get(guideId);
+    if (guide) {
+      this.guides.delete(guideId);
+      this.guideRealizations2D.delete(guideId);
+    }
+    return guide;
+  }
+
+  /**
+   * Get a guide by ID
+   */
+  getGuideById(guideId: string): Guide2D | undefined {
+    return this.guides.get(guideId);
+  }
+
+  /**
+   * Get all guides
+   */
+  getAllGuides(): Guide2D[] {
+    return Array.from(this.guides.values());
+  }
+
+  /**
+   * Generate a unique guide ID
+   */
+  generateGuideId(): string {
+    return `guide-${this.nextId++}`;
+  }
+
+  /**
+   * Get the 2D realization of a guide (with caching)
+   * Returns guide line geometry in plane coordinates
+   */
+  getGuide2DRealization(guideId: string): Guide2DRealization | undefined {
+    // Check cache first
+    let realization = this.guideRealizations2D.get(guideId);
+    if (realization) {
+      return realization;
+    }
+
+    // Not cached - compute it
+    const guide = this.guides.get(guideId);
+    if (!guide) {
+      return undefined;
+    }
+
+    // Get line and point realizations for guide computation
+    const getLineRealization = (lineId: string): Line2DRealization | null => {
+      const lineRealization = this.getLine2DRealization(lineId);
+      return lineRealization ?? null;
+    };
+
+    const getPointPosition = (pointId: string): Vector3 | null => {
+      const pointRealization = this.getPoint2DRealization(pointId);
+      return pointRealization ? pointRealization.position : null;
+    };
+
+    // Call realize2D() on the guide
+    realization = guide.realize2D(getLineRealization, getPointPosition) ?? undefined;
+    
+    if (realization) {
+      // Cache the result
+      this.guideRealizations2D.set(guideId, realization);
+    }
+    
+    return realization;
+  }
+
+  /**
    * Add a plane to the world
    */
   addPlane(plane: Plane3D): Plane3D {
@@ -470,5 +749,12 @@ export class World {
    */
   getPV(): Plane3D | undefined {
     return this.planes.get('plane_V');
+  }
+
+  /**
+   * Get the process tree (construction history)
+   */
+  getProcessTree(): ProcessTree {
+    return this.processTree;
   }
 }

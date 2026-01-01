@@ -23,6 +23,12 @@ class MockCommand extends Command {
   redoCalled = false;
 
   execute(): void {
+    // Add a mock operation to satisfy commit() requirement
+    const mockOp = {
+      apply: () => ({ success: true }),
+      undo: () => ({ success: true })
+    };
+    this.addAndExecute(mockOp as any);
     this.executeCalled = true;
   }
 
@@ -221,8 +227,9 @@ describe('CommandStack', () => {
       commandStack.redo();
       commandStack.redo();
       
-      // Should redo in order they were undone: 2, then 1
-      expect(redoOrder).toEqual(['Command 2', 'Command 1']);
+      // After undoing [1, 2], redo stack is [2, 1]
+      // Redoing pops from redo stack, so we get 1 first, then 2
+      expect(redoOrder).toEqual(['Command 1', 'Command 2']);
     });
 
     it('should throw error when redo stack is empty', () => {

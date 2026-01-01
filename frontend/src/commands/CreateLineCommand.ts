@@ -10,6 +10,7 @@
 import { Command } from './Command';
 import { AddElementOp } from './operations/WorldOperations';
 import type { World } from '@/domain/world/World';
+import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
 
 export class CreateLineCommand extends Command {
   private point1Id: string;
@@ -62,6 +63,10 @@ export class CreateLineCommand extends Command {
     if (!result.success) {
       throw new Error(`Failed to create line: ${result.error}`);
     }
+    
+    // Record action in process tree
+    const action = createLineAction(this.lineId, this.planeId, this.point1Id, this.point2Id);
+    this.world.getProcessTree().addAction(action);
   }
 
   /**

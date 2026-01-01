@@ -102,6 +102,17 @@ export interface LinePrimitive extends DrawingPrimitive {
 }
 
 /**
+ * Segment primitive - finite line segment between two points
+ * Endpoints are stored as Vector3 for compatibility with Three.js
+ * Coordinates in paper coordinate system
+ */
+export interface SegmentPrimitive extends DrawingPrimitive {
+  type: 'segment';
+  point1: Vector3;                    // First endpoint in paper space (homogeneous coordinates)
+  point2: Vector3;                    // Second endpoint in paper space (homogeneous coordinates)
+}
+
+/**
  * Circle primitive
  * Coordinates in paper coordinate system
  */
@@ -147,6 +158,7 @@ export type Primitive =
   | PointPrimitive 
   | PathPrimitive
   | LinePrimitive
+  | SegmentPrimitive
   | CirclePrimitive 
   | ArcPrimitive 
   | TextPrimitive;

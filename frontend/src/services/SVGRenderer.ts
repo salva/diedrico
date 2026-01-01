@@ -26,6 +26,7 @@ import type {
   PointPrimitive,
   PathPrimitive,
   LinePrimitive,
+  SegmentPrimitive,
   CirclePrimitive,
   ArcPrimitive,
   TextPrimitive,
@@ -301,6 +302,33 @@ export class SVGRenderer {
   }
 
   /**
+   * Render a SegmentPrimitive to SVG line attributes
+   * Unlike lines (infinite), segments are finite between two endpoints
+   */
+  private renderSegment(
+    primitive: SegmentPrimitive,
+    viewport: ViewportTransform
+  ): SVGAttributes {
+    // Transform both endpoints to canvas coordinates
+    const p1Canvas = this.transformPoint(primitive.point1, viewport);
+    const p2Canvas = this.transformPoint(primitive.point2, viewport);
+
+    // Render segment as line between endpoints (no clipping needed - finite segment)
+    return {
+      x1: p1Canvas.x,
+      y1: p1Canvas.y,
+      x2: p2Canvas.x,
+      y2: p2Canvas.y,
+      stroke: primitive.style.stroke,
+      'stroke-width': primitive.style.strokeWidth,
+      'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+      opacity: primitive.style.opacity,
+      'data-primitive-id': primitive.id,
+      'data-entity-id': primitive.sourceEntityId || 'unknown',
+    };
+  }
+
+  /**
    * Render an ArcPrimitive to SVG path attributes
    */
   private renderArc(
@@ -391,6 +419,8 @@ export class SVGRenderer {
         return { element: 'path', attributes: this.renderPath(primitive, viewport) };
       case 'line':
         return { element: 'line', attributes: this.renderLine(primitive, viewport) };
+      case 'segment':
+        return { element: 'line', attributes: this.renderSegment(primitive, viewport) };
       case 'circle':
         return { element: 'circle', attributes: this.renderCircle(primitive, viewport) };
       case 'arc':

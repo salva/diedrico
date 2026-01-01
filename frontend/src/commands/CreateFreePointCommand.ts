@@ -11,6 +11,7 @@ import { Vector3 } from 'three';
 import { Command } from './Command';
 import { AddElementOp } from './operations/WorldOperations';
 import type { World } from '@/domain/world/World';
+import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
 
 export class CreateFreePointCommand extends Command {
   private planePos: Vector3;
@@ -50,6 +51,10 @@ export class CreateFreePointCommand extends Command {
     if (!result.success) {
       throw new Error(`Failed to create point: ${result.error}`);
     }
+    
+    // Record action in process tree
+    const action = createPointAction(this.pointId, this.planeId, this.planePos);
+    this.world.getProcessTree().addAction(action);
     
     // Trigger World reactivity
     // Note: World should have a version counter that increments on mutations

@@ -33,8 +33,51 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#overall-layout-architecture
  */
 
+import { provide, onMounted, onUnmounted } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
+import { CommandStack } from './commands/CommandStack';
+
+// Create command stack and provide to all child components
+const commandStack = new CommandStack();
+provide('commandStack', commandStack);
+
+/**
+ * Handle keyboard shortcuts for undo/redo
+ * Ctrl+Z: Undo
+ * Ctrl+Y or Ctrl+Shift+Z: Redo
+ */
+function handleKeyDown(event: KeyboardEvent) {
+  // Check for Ctrl (Windows/Linux) or Cmd (Mac)
+  const isModifier = event.ctrlKey || event.metaKey;
+  
+  if (!isModifier) return;
+  
+  // Undo: Ctrl+Z (without Shift)
+  if (event.key === 'z' && !event.shiftKey && commandStack.canUndo()) {
+    event.preventDefault();
+    commandStack.undo();
+    return;
+  }
+  
+  // Redo: Ctrl+Shift+Z or Ctrl+Y
+  if ((event.key === 'z' && event.shiftKey) || event.key === 'y') {
+    if (commandStack.canRedo()) {
+      event.preventDefault();
+      commandStack.redo();
+    }
+    return;
+  }
+}
+
+// Setup keyboard listeners
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 </script>
 
 <style scoped>

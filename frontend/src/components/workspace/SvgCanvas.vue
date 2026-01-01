@@ -88,19 +88,23 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
  */
 
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, inject } from 'vue';
 import { Matrix3, Vector3 } from 'three';
 import { World } from '@/domain/world/World';
 import { Paper } from '@/domain/presentation/Paper';
 import { PaperService, type PrimitiveContext } from '@/services/PaperService';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
-import { useToolStore } from '@/stores/toolStore';
-import { useViewStore } from '@/stores/viewStore';
-import { useViewport } from '@/composables/useViewport';
 import { CommandStack } from '@/commands/CommandStack';
 import { PointTool } from '@/tools/PointTool';
 import { LineTool } from '@/tools/LineTool';
+import { SegmentTool } from '@/tools/SegmentTool';
+import { CircleTool } from '@/tools/CircleTool';
+import { GuideTool } from '@/tools/GuideTool';
+import { IntersectionTool } from '@/tools/IntersectionTool';
+import { useToolStore } from '@/stores/toolStore';
+import { useViewStore } from '@/stores/viewStore';
+import { useViewport } from '@/composables/useViewport';
 import type { ITool } from '@/tools/ITool';
 
 const svgElement = ref<SVGSVGElement | null>(null);
@@ -136,14 +140,21 @@ const world = new World();
 // Paper instance for spatial queries and rendering
 const paper = new Paper();
 
-// Command infrastructure (Phase 6.5)
-const commandStack = new CommandStack();
+// Command infrastructure - injected from App.vue
+const commandStack = inject<CommandStack>('commandStack')!;
+if (!commandStack) {
+  throw new Error('CommandStack not provided');
+}
 
 // Tool registry - map tool names to tool instances
 const tools: Record<string, ITool> = {
   'point': new PointTool(),
   'line': new LineTool(),
-  // Future tools: 'circle', 'segment', etc.
+  'segment': new SegmentTool(),
+  'circle': new CircleTool(),
+  'guide': new GuideTool(),
+  'intersection': new IntersectionTool(),
+  // Future tools: etc.
 };
 
 // Reactivity trigger - increment this to force re-render after World changes
