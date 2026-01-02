@@ -6,7 +6,7 @@
  * 
  * Implementation:
  * - Requires two existing point IDs
- * - Creates segment with unique ID
+ * - Creates segment with unique ID using World factory method
  * - Records action in process tree for parametric behavior
  * - Supports undo/redo via Command Pattern
  * 
@@ -14,48 +14,39 @@
  */
 
 import { Command } from './Command';
-import { World } from '@/domain/world/World';
-import { Segment2DByPoints } from '@/domain/world/Segment';
-import { AddElementOp } from './operations/WorldOperations';
-import type { Action } from '@/domain/processTree/Action';
+import type { World } from '@/domain/world/World';
+import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+import { AddSegment2DByPointsOp } from './operations/AddSegmentOp';
 
 export class CreateSegmentCommand extends Command {
-  private segmentId: string;
+  private segmentId!: string;
 
   constructor(
     private point1Id: string,
     private point2Id: string,
     private planeId: string,
-    private world: World
+    world: World
   ) {
-    super();
-    this.segmentId = world.generateSegmentId();
+    super(`Create segment between points`, world);
   }
 
   execute(): void {
-    // Create segment entity
-    const segment = new Segment2DByPoints(
-      this.segmentId,
-      this.point1Id,
-      this.point2Id,
-      this.planeId
-    );
+    // Add operation - it executes immediately and is stored for undo
+    const op = new AddSegment2DByPointsOp(this.planeId, this.point1Id, this.point2Id);
+    this.addAndExecute(op);
+    
+    // Get the generated ID from operation outputs
+    this.segmentId = op.outputs.segmentId;
 
     // Record action in process tree
-    const action: Action = {
-      id: `action-${Date.now()}`,
-      type: 'construct-segment',
-      inputs: [this.point1Id, this.point2Id],
-      outputs: [this.segmentId],
-      timestamp: Date.now(),
-    };
+    const action = createSegmentAction(
+      this.segmentId,
+      this.planeId,
+      this.point1Id,
+      this.point2Id
+    );
 
-    // Compose operation
-    const op = new AddElementOp(segment, action, this.world);
-    this.operations.push(op);
-
-    // Commit operation
-    this.commit();
+    this.world.getProcessTree().addAction(action);
   }
 
   getSegmentId(): string {

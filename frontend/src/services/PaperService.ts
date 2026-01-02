@@ -30,11 +30,11 @@
  */
 
 import { Matrix3 } from 'three';
-import type { Point2D, Point2DRealization } from '../domain/world/Point';
-import type { Line2D, Line2DRealization } from '../domain/world/Line';
-import type { Segment2D, Segment2DRealization } from '../domain/world/Segment';
-import type { Circle2D, Circle2DRealization } from '../domain/world/Circle';
-import type { Guide2D, Guide2DRealization } from '../domain/world/Guide';
+import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
+import type { Line2D, Line2DRealization2D } from '../domain/world/Line';
+import type { Segment2D, Segment2DRealization2D } from '../domain/world/Segment';
+import type { Circle2D, Circle2DRealization2D } from '../domain/world/Circle';
+import type { Guide2D, Guide2DRealization2D } from '../domain/world/Guide';
 import type { World } from '../domain/world/World';
 import {
   Paper,
@@ -73,7 +73,7 @@ export class PaperService {
     const primitives: Primitive[] = [];
 
     // WALK: Iterate over all points in the world
-    for (const point of context.world.getAllPoints()) {
+    for (const point of context.world.getAllPoints2D()) {
       // REALIZE: Get computed position (numeric data)
       const realization = context.world.getPoint2DRealization(point.id!);
       // Get plane transformation matrix
@@ -87,21 +87,16 @@ export class PaperService {
     }
 
     // WALK: Iterate over all lines in the world
-    const allLines = context.world.getAllLines();
-    console.log('[PaperService] getAllLines() returned:', allLines.length, 'lines');
+    const allLines = context.world.getAllLines2D();
     for (const line of allLines) {
-      console.log('[PaperService] Processing line:', line.id, 'planeId:', line.planeId);
       // REALIZE: Get computed line equation (numeric data)
       const realization = context.world.getLine2DRealization(line.id!);
-      console.log('[PaperService] Line realization:', realization);
       // Get plane transformation matrix
       const transform = context.planeTransforms.get(line.planeId!);
-      console.log('[PaperService] Transform for plane:', line.planeId, ':', !!transform);
       
       if (realization && transform) {
         // RENDER: Generate primitive using realization (numeric) + line (structural)
         const primitive = this.lineToPrimitive(line, realization, transform, context);
-        console.log('[PaperService] Created line primitive:', primitive);
         primitives.push(primitive);
       } else {
         console.warn('[PaperService] Skipping line - missing realization or transform');
@@ -109,7 +104,7 @@ export class PaperService {
     }
 
     // WALK: Iterate over all segments in the world
-    const allSegments = context.world.getAllSegments();
+    const allSegments = context.world.getAllSegments2D();
     for (const segment of allSegments) {
       // REALIZE: Get computed segment endpoints (numeric data)
       const realization = context.world.getSegment2DRealization(segment.id!);
@@ -120,11 +115,13 @@ export class PaperService {
         // RENDER: Generate primitive using realization (numeric) + segment (structural)
         const primitive = this.segmentToPrimitive(segment, realization, transform, context);
         primitives.push(primitive);
+      } else {
+        console.warn('[PaperService] Skipping segment - missing realization or transform');
       }
     }
 
     // WALK: Iterate over all circles in the world
-    const allCircles = context.world.getAllCircles();
+    const allCircles = context.world.getAllCircles2D();
     for (const circle of allCircles) {
       // REALIZE: Get computed circle geometry (numeric data)
       const realization = context.world.getCircle2DRealization(circle.id!);
@@ -139,7 +136,7 @@ export class PaperService {
     }
 
     // WALK: Iterate over all guides in the world
-    const allGuides = context.world.getAllGuides();
+    const allGuides = context.world.getAllGuides2D();
     for (const guide of allGuides) {
       // REALIZE: Get computed guide line geometry (numeric data)
       const realization = context.world.getGuide2DRealization(guide.id!);
@@ -164,7 +161,7 @@ export class PaperService {
    */
   private pointToPrimitive(
     point: Point2D,
-    realization: Point2DRealization,
+    realization: Point2DRealization2D,
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): PointPrimitive {
@@ -235,7 +232,7 @@ export class PaperService {
    */
   private lineToPrimitive(
     line: Line2D,
-    realization: Line2DRealization,
+    realization: Line2DRealization2D,
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): LinePrimitive {
@@ -292,11 +289,16 @@ export class PaperService {
    */
   private segmentToPrimitive(
     segment: Segment2D,
-    realization: Segment2DRealization,
+    realization: Segment2DRealization2D,
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): SegmentPrimitive {
-    const isHighlighted = context.highlightedEntityIds?.has(segment.id!) || false;
+    if (!segment.id) {
+      console.error('[PaperService] Segment missing ID:', segment);
+      throw new Error('Segment must have an ID');
+    }
+    
+    const isHighlighted = context.highlightedEntityIds?.has(segment.id) || false;
 
     // Transform both endpoints from plane <u,v> to paper coordinates
     const paperPoint1 = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
@@ -345,7 +347,7 @@ export class PaperService {
    */
   private circleToPrimitive(
     circle: Circle2D,
-    realization: Circle2DRealization,
+    realization: Circle2DRealization2D,
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): CirclePrimitive {
@@ -407,7 +409,7 @@ export class PaperService {
    */
   private guideToPrimitive(
     guide: Guide2D,
-    realization: Guide2DRealization,
+    realization: Guide2DRealization2D,
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): LinePrimitive {
@@ -482,7 +484,7 @@ export class PaperService {
     paper.removePrimitivesByEntity(entityId);
 
     // Find the entity and generate new primitives
-    const point = context.world.getPointById(entityId);
+    const point = context.world.getPoint2DById(entityId);
     if (point) {
       const realization = context.world.getPoint2DRealization(entityId);
       const transform = context.planeTransforms.get(point.planeId!);

@@ -3,7 +3,7 @@
  * 
  * Lines are infinite straight lines defined by their construction method.
  * This class represents the DEFINITION/RULE of a line, not its coordinates.
- * Actual geometric data is computed in Line2DRealization objects.
+ * Actual geometric data is computed in Line2DRealization2D objects.
  * 
  * Types of 2D lines:
  * - Line through two points: defined by two point IDs
@@ -21,7 +21,7 @@ import { Vector3 } from 'three';
 export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular';
 
 /**
- * Line2DRealization - Stores computed line in parametric form
+ * Line2DRealization2D - Stores computed line in parametric form
  * 
  * Parametric form: P(t) = point + t * direction
  * This is MUCH easier to transform than implicit equation!
@@ -32,7 +32,7 @@ export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular';
  * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
-export class Line2DRealization {
+export class Line2DRealization2D {
   point: Vector3;      // A point on the line (x, y, 1) in homogeneous coords
   direction: Vector3;  // Direction vector (dx, dy, 0) - normalized
   
@@ -80,7 +80,7 @@ export abstract class Line2D {
    * Calculate the 2D realization (line equation) for this line
    * Returns line equation in the projection plane's intrinsic coordinates
    */
-  abstract realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization | null;
+  abstract realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization2D | null;
 }
 
 /**
@@ -120,7 +120,7 @@ export class Line2DByTwoPoints extends Line2D {
    * 
    * Much simpler than implicit equation and easier to transform!
    */
-  realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization | null {
+  realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization2D | null {
     // Get both points
     const p1 = getPoint(this.point1Id);
     const p2 = getPoint(this.point2Id);
@@ -139,7 +139,7 @@ export class Line2DByTwoPoints extends Line2D {
     }
     
     // Create parametric representation: point + direction
-    return new Line2DRealization(p1.clone(), direction);
+    return new Line2DRealization2D(p1.clone(), direction);
   }
 }
 
@@ -176,7 +176,7 @@ export class Line2DParallel extends Line2D {
     );
   }
   
-  realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization | null {
+  realize2D(_getPoint: (id: string) => Vector3 | null): Line2DRealization2D | null {
     // TODO: Implement parallel line realization
     // Need access to reference line's realization
     return null;
@@ -216,7 +216,7 @@ export class Line2DPerpendicular extends Line2D {
     );
   }
   
-  realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization | null {
+  realize2D(_getPoint: (id: string) => Vector3 | null): Line2DRealization2D | null {
     // TODO: Implement perpendicular line realization
     // Need access to reference line's realization
     return null;

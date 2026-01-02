@@ -4,10 +4,11 @@
  * Creates an IntersectionPoint2D at the intersection of two lines.
  * Follows Command Pattern for undo/redo support.
  * Records construction in process tree for dependency tracking.
+ * Uses World factory method with built-in parallel line validation.
  * 
  * Validation:
- * - Both lines must exist
- * - Lines must not be parallel (checked at tool level, not here)
+ * - Both lines must exist (checked by factory method)
+ * - Lines must not be parallel (checked by factory method)
  * 
  * @see specs/001-dihedral-learning-mvp/plan.md#intersection-points
  * @see specs/001-dihedral-learning-mvp/tasks.md#phase-14-line-line-intersections
@@ -15,9 +16,8 @@
 
 import { Command } from './Command';
 import type { World } from '@/domain/world/World';
-import { IntersectionPoint2D } from '@/domain/world/Point';
-import { AddElementOp } from './operations/WorldOperations';
-import type { Action } from '@/domain/processTree/Action';
+import { createIntersectionPointAction } from '@/domain/processTree/actions/CreateIntersectionPointAction';
+import { AddIntersectionPoint2DOp } from './operations/AddIntersectionPointOp';
 
 export interface CreateIntersectionPointCommandParams {
   line1Id: string;
@@ -27,7 +27,7 @@ export interface CreateIntersectionPointCommandParams {
 }
 
 export class CreateIntersectionPointCommand extends Command {
-  private pointId: string;
+  private pointId!: string;
   private params: CreateIntersectionPointCommandParams;
 
   constructor(
@@ -36,35 +36,31 @@ export class CreateIntersectionPointCommand extends Command {
   ) {
     super(`Create intersection point between lines`, world);
     this.params = params;
-    this.pointId = world.generatePointId();
   }
 
   execute(): void {
-    // Create intersection point entity (index 0 - line-line has only one intersection)
-    const point = new IntersectionPoint2D(
-      this.pointId,
+    // Add operation - it executes immediately and is stored for undo
+    const op = new AddIntersectionPoint2DOp(
+      this.params.planeId,
       this.params.line1Id,
       this.params.line2Id,
-      0, // index: line-line intersection has single point
-      this.params.planeId,
-      this.params.label
+      0 // index: line-line intersection has single point
     );
+    this.addAndExecute(op);
+    
+    // Get the generated ID from operation outputs
+    this.pointId = op.outputs.pointId;
 
     // Record action in process tree
-    const action: Action = {
-      id: `action-${Date.now()}`,
-      type: 'construct-intersection',
-      inputs: [this.params.line1Id, this.params.line2Id],
-      outputs: [this.pointId],
-      timestamp: Date.now(),
-    };
+    const action = createIntersectionPointAction(
+      this.pointId,
+      this.params.planeId,
+      this.params.line1Id,
+      this.params.line2Id,
+      0 // index: line-line intersection has single point
+    );
 
-    // Compose operation
-    const op = new AddElementOp(point, action, this.world);
-    this.operations.push(op);
-
-    // Commit operation
-    this.commit();
+    this.world.getProcessTree().addAction(action);
   }
 
   getPointId(): string {

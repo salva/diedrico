@@ -142,7 +142,7 @@ const canRedo = computed(() => commandStack.canRedo());
 /**
  * Select a tool
  */
-function selectTool(tool: 'point' | 'line' | 'circle' | 'segment') {
+function selectTool(tool: 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection') {
   console.log('Selecting tool:', tool);
   toolStore.setTool(tool);
   console.log('Tool set. Current tool:', toolStore.currentTool);

@@ -16,7 +16,7 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
  */
 
-import type { PlaneCoordinateSystem, Vector3 } from '../world/Plane3D';
+import type { Plane3DCoordinateSystem } from '../world/Plane';
 
 /**
  * 3x3 matrix for 2D homogeneous transformations
@@ -28,6 +28,12 @@ export type Matrix3 = [
   number, number, number,  // Row 1: a, c, e
   number, number, number   // Row 2: b, d, f
 ];
+
+/**
+ * 4D homogeneous coordinates [x, y, z, w]
+ * Used for 3D world space transformations
+ */
+export type Vector3D = [number, number, number, number];
 
 /**
  * Transform plane intrinsic coordinates <u,v> to canvas coordinates
@@ -123,14 +129,14 @@ export function canvasToPlane(
 export function planeTo3D(
   u: number,
   v: number,
-  coordinateSystem: PlaneCoordinateSystem
+  coordinateSystem: Plane3DCoordinateSystem
 ): Vector3D {
   const { origin, uAxis, vAxis } = coordinateSystem;
   
   return [
-    origin[0] + u * uAxis[0] + v * vAxis[0],
-    origin[1] + u * uAxis[1] + v * vAxis[1],
-    origin[2] + u * uAxis[2] + v * vAxis[2],
+    origin.x + u * uAxis.x + v * vAxis.x,
+    origin.y + u * uAxis.y + v * vAxis.y,
+    origin.z + u * uAxis.z + v * vAxis.z,
     1
   ];
 }

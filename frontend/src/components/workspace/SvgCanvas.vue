@@ -4,14 +4,14 @@
     <div class="plane-selector">
       <label>Active Plane:</label>
       <button 
-        :class="{ active: activePlane === 'plane_H' }"
-        @click="activePlane = 'plane_H'"
+        :class="{ active: activePlane === 'proj_plane_H' }"
+        @click="activePlane = 'proj_plane_H'"
       >
         P_H (Horizontal)
       </button>
       <button 
-        :class="{ active: activePlane === 'plane_V' }"
-        @click="activePlane = 'plane_V'"
+        :class="{ active: activePlane === 'proj_plane_V' }"
+        @click="activePlane = 'proj_plane_V'"
       >
         P_V (Vertical)
       </button>
@@ -51,6 +51,34 @@
       <!-- Render all lines through Paper pipeline -->
       <line
         v-for="{ primitive, attrs } in renderedLines"
+        :key="primitive.id"
+        v-bind="attrs"
+      />
+      
+      <!-- Render all segments through Paper pipeline -->
+      <line
+        v-for="{ primitive, attrs } in renderedSegments"
+        :key="primitive.id"
+        v-bind="attrs"
+      />
+      
+      <!-- Render all guides through Paper pipeline -->
+      <line
+        v-for="{ primitive, attrs } in renderedGuides"
+        :key="primitive.id"
+        v-bind="attrs"
+      />
+      
+      <!-- Render all circles through Paper pipeline -->
+      <circle
+        v-for="{ primitive, attrs } in renderedCircles"
+        :key="primitive.id"
+        v-bind="attrs"
+      />
+      
+      <!-- Render all arcs through Paper pipeline -->
+      <path
+        v-for="{ primitive, attrs } in renderedArcs"
         :key="primitive.id"
         v-bind="attrs"
       />
@@ -110,7 +138,7 @@ import type { ITool } from '@/tools/ITool';
 const svgElement = ref<SVGSVGElement | null>(null);
 
 // Active plane selection
-const activePlane = ref<'plane_H' | 'plane_V'>('plane_H');
+const activePlane = ref<'proj_plane_H' | 'proj_plane_V'>('proj_plane_H');
 
 // Dynamic canvas dimensions - updated based on container size
 const canvasWidth = ref(1600);
@@ -200,10 +228,10 @@ function getPlaneTransformsForInput(): Map<string, Matrix3> {
   const realizationV = world.getProjectionPlane2DRealization('proj_plane_V');
   
   if (realizationH) {
-    transforms.set('plane_H', realizationH.paperToPlane);  // paperToPlane for input
+    transforms.set('proj_plane_H', realizationH.paperToPlane);  // paperToPlane for input
   }
   if (realizationV) {
-    transforms.set('plane_V', realizationV.paperToPlane);  // paperToPlane for input
+    transforms.set('proj_plane_V', realizationV.paperToPlane);  // paperToPlane for input
   }
   
   return transforms;
@@ -217,10 +245,10 @@ function getPlaneTransformsForRendering(): Map<string, Matrix3> {
   const realizationV = world.getProjectionPlane2DRealization('proj_plane_V');
   
   if (realizationH) {
-    transforms.set('plane_H', realizationH.planeToPaper);  // planeToPaper for rendering
+    transforms.set('proj_plane_H', realizationH.planeToPaper);  // planeToPaper for rendering
   }
   if (realizationV) {
-    transforms.set('plane_V', realizationV.planeToPaper);  // planeToPaper for rendering
+    transforms.set('proj_plane_V', realizationV.planeToPaper);  // planeToPaper for rendering
   }
   
   return transforms;
@@ -259,7 +287,7 @@ const renderedPoints = computed(() => {
     .filter(p => p.type === 'point')
     .map(p => {
       const result = svgRenderer.renderPrimitive(p, viewport.value);
-      console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+      // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
         attrs: result.attributes
@@ -273,6 +301,56 @@ const renderedLines = computed(() => {
     .map(p => {
       const result = svgRenderer.renderPrimitive(p, viewport.value);
       console.log('Rendering line primitive:', p, '→ SVG attrs:', result.attributes);
+      return {
+        primitive: p,
+        attrs: result.attributes
+      };
+    });
+});
+
+const renderedSegments = computed(() => {
+  return primitives.value
+    .filter(p => p.type === 'segment')
+    .map(p => {
+      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+      return {
+        primitive: p,
+        attrs: result.attributes
+      };
+    });
+});
+
+const renderedCircles = computed(() => {
+  return primitives.value
+    .filter(p => p.type === 'circle')
+    .map(p => {
+      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+      return {
+        primitive: p,
+        attrs: result.attributes
+      };
+    });
+});
+
+const renderedGuides = computed(() => {
+  return primitives.value
+    .filter(p => p.type === 'guide')
+    .map(p => {
+      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      return {
+        primitive: p,
+        attrs: result.attributes
+      };
+    });
+});
+
+const renderedArcs = computed(() => {
+  return primitives.value
+    .filter(p => p.type === 'arc')
+    .map(p => {
+      const result = svgRenderer.renderPrimitive(p, viewport.value);
       return {
         primitive: p,
         attrs: result.attributes

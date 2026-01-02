@@ -12,7 +12,7 @@
  * 3. Circle is created and recorded in process tree
  * 
  * Implementation:
- * - Creates Circle2DByCenterAndRadius with center point ID and radius
+ * - Creates Circle2DByCenterAndRadius using World factory method
  * - Records action in process tree for parametric behavior
  * - Supports undo/redo via Command Pattern
  * 
@@ -20,53 +20,39 @@
  */
 
 import { Command } from './Command';
-import { World } from '@/domain/world/World';
-import { Circle2DByCenterAndRadius } from '@/domain/world/Circle';
-import { AddElementOp } from './operations/WorldOperations';
-import type { Action } from '@/domain/processTree/Action';
+import type { World } from '@/domain/world/World';
+import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
+import { AddCircle2DByCenterAndRadiusOp } from './operations/AddCircleOp';
 
 export class CreateCircleCommand extends Command {
-  private circleId: string;
+  private circleId!: string;
 
   constructor(
     private centerPointId: string,
     private radius: number,
     private planeId: string,
-    private world: World
+    world: World
   ) {
-    super();
-    this.circleId = world.generateCircleId();
+    super(`Create circle with center and radius`, world);
   }
 
   execute(): void {
-    // Validate radius is positive
-    if (this.radius <= 0) {
-      throw new Error(`Invalid radius: ${this.radius}. Radius must be positive.`);
-    }
-
-    // Create circle entity
-    const circle = new Circle2DByCenterAndRadius(
-      this.circleId,
-      this.centerPointId,
-      this.radius,
-      this.planeId
-    );
+    // Add operation - it executes immediately and is stored for undo
+    const op = new AddCircle2DByCenterAndRadiusOp(this.planeId, this.centerPointId, this.radius);
+    this.addAndExecute(op);
+    
+    // Get the generated ID from operation outputs
+    this.circleId = op.outputs.circleId;
 
     // Record action in process tree
-    const action: Action = {
-      id: `action-${Date.now()}`,
-      type: 'construct-circle',
-      inputs: [this.centerPointId],
-      outputs: [this.circleId],
-      timestamp: Date.now(),
-    };
+    const action = createCircleAction(
+      this.circleId,
+      this.planeId,
+      this.centerPointId,
+      this.radius
+    );
 
-    // Compose operation
-    const op = new AddElementOp(circle, action, this.world);
-    this.operations.push(op);
-
-    // Commit operation
-    this.commit();
+    this.world.getProcessTree().addAction(action);
   }
 
   getCircleId(): string {

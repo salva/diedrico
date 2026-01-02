@@ -20,7 +20,7 @@
  */
 
 import { Vector3 } from 'three';
-import type { Line2DRealization } from '../world/Line';
+import type { Line2DRealization2D } from '../world/Line';
 
 /**
  * Result of a line-line intersection calculation
@@ -63,7 +63,7 @@ export interface LineLineIntersectionResult {
  * @param line Line in parametric form
  * @returns Line in implicit form [a, b, c] where ax + by + c = 0
  */
-function lineToImplicitForm(line: Line2DRealization): Vector3 {
+function lineToImplicitForm(line: Line2DRealization2D): Vector3 {
   const { point, direction } = line;
   const x0 = point.x;
   const y0 = point.y;
@@ -100,8 +100,8 @@ function lineToImplicitForm(line: Line2DRealization): Vector3 {
  * @returns Intersection result with point (if exists) and type
  */
 export function intersectLineLine(
-  line1: Line2DRealization,
-  line2: Line2DRealization
+  line1: Line2DRealization2D,
+  line2: Line2DRealization2D
 ): LineLineIntersectionResult {
   // Convert to implicit form
   const L1 = lineToImplicitForm(line1);
@@ -176,8 +176,8 @@ export function intersectLineLine(
  * @returns True if lines are parallel
  */
 export function areLinesParallel(
-  line1: Line2DRealization,
-  line2: Line2DRealization
+  line1: Line2DRealization2D,
+  line2: Line2DRealization2D
 ): boolean {
   const d1 = line1.direction;
   const d2 = line2.direction;

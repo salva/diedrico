@@ -447,6 +447,134 @@ User clicks → SvgCanvas (coordinate conversion)
 
 ---
 
+## Phase 10.5: World Factory Methods Refactoring (URGENT - Fix Architectural Issues)
+
+**Purpose**: Replace fragile AddElementOp type detection with World factory methods following Factory Pattern  
+**Reference**: [constitution.md Principle I, II, IV](../../.specify/memory/constitution.md), [data-model.md §World Entity](./data-model.md#world-entity)
+
+**Current Issues**:
+- AddElementOp uses fragile string matching (`constructor.name.includes('Point')`) to detect element types
+- **BUG**: Line2DByTwoPoints matched as "Point" because name contains "Point" substring → added to wrong Map
+- Violates encapsulation - Operations shouldn't know about all domain class constructors
+- No explicit validation of construction parameters before object creation
+
+**Solution - Factory Pattern**:
+- World acts as Factory for its own domain objects with intent-revealing method names
+- Methods like `addLine2DBetweenTwoPoints(planeId, id, point1Id, point2Id)` instead of generic `addLine(element)`
+- Makes planeId explicit as first parameter (elements belong to planes)
+- Built-in validation: World validates parameters, constructs objects, adds to Maps
+- Commands call factory methods directly, no type detection needed
+
+**Constitution Compliance**:
+- ✅ Layered Architecture (Principle I): World (Domain) provides factory interface to Application layer
+- ✅ Command Pattern (Principle II): Commands simplified, still use execute/undo pattern
+- ✅ Principle-Based (Principle IV): Removes special-case type detection logic
+
+**Factory Method API Design**:
+```typescript
+class World {
+  // Points
+  addFreePoint2D(planeId, id, position): FreePoint2D
+  addIntersectionPoint2D(planeId, id, line1Id, line2Id, index): IntersectionPoint2D
+  
+  // Lines
+  addLine2DBetweenTwoPoints(planeId, id, point1Id, point2Id): Line2DByTwoPoints
+  addLine2DParallel(planeId, id, refLineId, pointId): Line2DParallel
+  addLine2DPerpendicular(planeId, id, refLineId, pointId): Line2DPerpendicular
+  
+  // Segments, Circles, Guides
+  addSegment2DBetweenPoints(planeId, id, point1Id, point2Id): Segment2DByPoints
+  addCircle2DByCenter(planeId, id, centerId, radius): Circle2DByCenterRadius
+  addGuide2D(planeId, id, guideType, params): Guide2D
+  
+  // Removal (returns element for undo)
+  removePoint2D(planeId, id): Point2D | null
+  removeLine2D(planeId, id): Line2D | null
+  // ... etc
+}
+```
+
+**Benefits**: Type-safe, explicit validation, intent-revealing names, no fragile string matching, undo support via removal methods
+
+### Subtasks
+
+- [X] T074a: Implement Point2D factory methods in World
+  - `addFreePoint2D(planeId, id, position)`: Validate plane, create, add to Map
+  - `addIntersectionPoint2D(planeId, id, line1Id, line2Id, index)`: Validate lines exist, same plane, not parallel
+  - `addPointOnElement2D(planeId, id, elementId, parameter)`
+  - Location: frontend/src/domain/world/World.ts
+
+- [X] T074b: Implement Line2D factory methods in World
+  - `addLine2DBetweenTwoPoints(planeId, id, point1Id, point2Id)`: Validate points exist, same plane, distinct
+  - `addLine2DParallel(planeId, id, refLineId, pointId)`: Validate reference line and point
+  - `addLine2DPerpendicular(planeId, id, refLineId, pointId)`
+  - Update realization cache after each add
+  - Location: frontend/src/domain/world/World.ts
+
+- [X] T074c: Implement Segment2D, Circle2D, Guide2D factory methods
+  - `addSegment2DBetweenPoints(planeId, id, point1Id, point2Id)`
+  - `addCircle2DByCenter(planeId, id, centerId, radius)`: Validate radius > 0
+  - `addCircle2DByThreePoints(planeId, id, p1Id, p2Id, p3Id)`: Validate not collinear
+  - `addGuide2D(planeId, id, guideType, params)`
+  - Location: frontend/src/domain/world/World.ts
+
+- [X] T074d: Implement removal factory methods
+  - `removePoint2D(planeId, id)`: Check dependents, throw if has dependents, clean caches, return for undo
+  - `removeLine2D(planeId, id)`, `removeSegment2D`, `removeCircle2D`, `removeGuide2D`
+  - Location: frontend/src/domain/world/World.ts
+
+- [X] T074e: Update CreateFreePointCommand to use factory method
+  - Replace: `new FreePoint2D(...)` + AddElementOp
+  - With: `world.addFreePoint2D(planeId, id, position)`
+  - Update execute() and undo() using removal method
+  - Location: frontend/src/commands/CreateFreePointCommand.ts
+
+- [X] T074f: Update CreateLineCommand to use factory method
+  - Replace: `new Line2DByTwoPoints(...)` + AddElementOp
+  - With: `world.addLine2DBetweenTwoPoints(planeId, id, point1Id, point2Id)`
+  - Location: frontend/src/commands/CreateLineCommand.ts
+
+- [X] T074g: Update CreateSegmentCommand, CreateCircleCommand, CreateGuideCommand
+  - Migrate to use factory methods
+  - Remove AddElementOp usage
+  - Locations: frontend/src/commands/Create{Segment,Circle,Guide}Command.ts
+
+- [X] T074h: Update CreateIntersectionPointCommand to use factory method
+  - Use `world.addIntersectionPoint2D(planeId, id, line1Id, line2Id, index)`
+  - Factory method validates lines not parallel
+  - Location: frontend/src/commands/CreateIntersectionPointCommand.ts
+
+- [X] T074i: Deprecate AddElementOp
+  - Add `@deprecated` JSDoc comment
+  - Add console warning when old API used
+  - Keep temporarily for backward compatibility
+  - Plan removal after migration complete
+  - Location: frontend/src/commands/operations/WorldOperations.ts
+
+- [ ] T074j: Unit tests for World factory methods
+  - Test validation: invalid planeId, missing referenced elements, parallel lines, collinear points
+  - Test creation: element added to correct Map, realization cache updated
+  - Test removal: element removed, caches cleaned, returned for undo, error if has dependents
+  - Location: frontend/tests/unit/domain/world.spec.ts
+
+- [ ] T074k: Update Command unit tests
+  - Test Commands use factory methods with correct params
+  - Test execute() creates via factory, undo() removes via removal method
+  - Test validation errors propagate
+  - Locations: frontend/tests/unit/commands/*.spec.ts
+
+- [ ] T074l: Update integration and E2E tests
+  - Test workflows use factory methods
+  - Test undo/redo with factory methods
+  - Test validation errors in UI
+  - Locations: frontend/tests/integration/*.spec.ts, frontend/tests/e2e/*.spec.ts
+
+**Checkpoint**: ✅ Commands use World factory methods, no type detection bugs, validation at construction time
+
+**Follow-up**: After migration, remove AddElementOp completely and clean up debug logs
+
+---
+
 ## Phase 11: Add Segments (US2 - Partial)
 
 **Purpose**: Finite line segments  

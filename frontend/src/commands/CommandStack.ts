@@ -13,7 +13,7 @@
  * - redo(): Pops from redo stack, pushes back to undo stack
  */
 
-import { Command, CommandStatus } from './Command';
+import { Command } from './Command';
 
 export class CommandStack {
   private undoStack: Command[] = [];

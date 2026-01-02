@@ -18,10 +18,10 @@ import { Vector3 } from 'three';
 export type Circle2DType = 'by-center-and-radius' | 'by-center-and-point' | 'by-three-points';
 
 /**
- * Circle2DRealization - Stores computed geometry for a Circle2D
+ * Circle2DRealization2D - Stores computed geometry for a Circle2D
  * Contains ONLY numeric data. Structural information (id, planeId, pointIds) stays in domain objects.
  */
-export class Circle2DRealization {
+export class Circle2DRealization2D {
   center: Vector3;  // Center in plane coordinates (u, v, 1)
   radius: number;   // Radius in plane intrinsic units
 
@@ -80,7 +80,7 @@ export abstract class Circle2D {
    * Calculate 2D realization - compute center and radius
    * @param getPoint Function to retrieve point positions by ID
    */
-  abstract realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization | null;
+  abstract realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization2D | null;
 }
 
 /**
@@ -117,7 +117,7 @@ export class Circle2DByCenterAndRadius extends Circle2D {
   /**
    * Calculate 2D realization - get center position from point, use stored radius
    */
-  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization | null {
+  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization2D | null {
     // Get center position
     const center = getPoint(this.centerPointId);
 
@@ -131,7 +131,7 @@ export class Circle2DByCenterAndRadius extends Circle2D {
       return null;  // Degenerate circle
     }
 
-    return new Circle2DRealization(center.clone(), this.radius);
+    return new Circle2DRealization2D(center.clone(), this.radius);
   }
 }
 
@@ -170,7 +170,7 @@ export class Circle2DByCenterAndPoint extends Circle2D {
   /**
    * Calculate 2D realization - compute radius from center to circumference point
    */
-  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization | null {
+  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization2D | null {
     // Get both point positions
     const center = getPoint(this.centerPointId);
     const circumferencePoint = getPoint(this.circumferencePointId);
@@ -186,7 +186,7 @@ export class Circle2DByCenterAndPoint extends Circle2D {
       return null;  // Degenerate circle (zero radius)
     }
 
-    return new Circle2DRealization(center.clone(), radius);
+    return new Circle2DRealization2D(center.clone(), radius);
   }
 }
 
@@ -237,7 +237,7 @@ export class Circle2DByThreePoints extends Circle2D {
    * 2. Find intersection = center
    * 3. Radius = distance from center to any point
    */
-  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization | null {
+  realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization2D | null {
     // Get all three point positions
     const p1 = getPoint(this.point1Id);
     const p2 = getPoint(this.point2Id);
@@ -300,6 +300,6 @@ export class Circle2DByThreePoints extends Circle2D {
     // Calculate radius
     const radius = center.distanceTo(p1);
     
-    return new Circle2DRealization(center, radius);
+    return new Circle2DRealization2D(center, radius);
   }
 }

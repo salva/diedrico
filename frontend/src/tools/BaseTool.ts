@@ -42,7 +42,7 @@ export abstract class BaseTool implements ITool {
    * Validate that a plane exists in the world
    */
   protected validatePlane(planeId: string, world: World): boolean {
-    const plane = world.getPlaneById(planeId);
+    const plane = world.getProjectionPlaneById(planeId);
     return plane !== undefined;
   }
 

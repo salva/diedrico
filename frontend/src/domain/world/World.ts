@@ -13,11 +13,11 @@
  */
 
 import { Vector3, Vector4 } from 'three';
-import { Point2D, FreePoint2D, Point2DRealization, Point3DRealization } from './Point';
-import { Line2D, Line2DRealization } from './Line';
-import { Segment2D, Segment2DRealization } from './Segment';
-import { Circle2D, Circle2DRealization } from './Circle';
-import { Guide2D, Guide2DRealization } from './Guide';
+import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization2D, Point3DRealization3D } from './Point';
+import { Line2D, Line2DByTwoPoints, Line2DRealization2D } from './Line';
+import { Segment2D, Segment2DByPoints, Segment2DRealization2D } from './Segment';
+import { Circle2D, Circle2DByCenterAndRadius, Circle2DRealization2D } from './Circle';
+import { Guide2D, Guide2DPerpendicularToLine, Guide2DRealization2D } from './Guide';
 import { Plane3D } from './Plane';
 import { ProjectionPlane, BaseProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
@@ -35,12 +35,12 @@ export class World {
   private processTree: ProcessTree;
   
   // Realization caches - organized by object type for extensibility
-  private pointRealizations2D: Map<string, Point2DRealization>;  // Computed 2D point positions
-  private pointRealizations3D: Map<string, Point3DRealization>;  // Computed 3D point positions
-  private lineRealizations2D: Map<string, Line2DRealization>;    // Computed 2D line equations
-  private segmentRealizations2D: Map<string, Segment2DRealization>;  // Computed 2D segment endpoints
-  private circleRealizations2D: Map<string, Circle2DRealization>;  // Computed 2D circle geometry
-  private guideRealizations2D: Map<string, Guide2DRealization>;  // Computed 2D guide line geometry
+  private pointRealizations2D: Map<string, Point2DRealization2D>;  // Computed 2D point positions
+  private pointRealizations3D: Map<string, Point3DRealization3D>;  // Computed 3D point positions
+  private lineRealizations2D: Map<string, Line2DRealization2D>;    // Computed 2D line equations
+  private segmentRealizations2D: Map<string, Segment2DRealization2D>;  // Computed 2D segment endpoints
+  private circleRealizations2D: Map<string, Circle2DRealization2D>;  // Computed 2D circle geometry
+  private guideRealizations2D: Map<string, Guide2DRealization2D>;  // Computed 2D guide line geometry
   private projectionPlaneRealizations2D: Map<string, ProjectionPlaneRealization2D>;  // Computed plane 2D transforms
   private projectionPlaneRealizations3D: Map<string, ProjectionPlaneRealization3D>;  // Computed plane 3D transforms
   
@@ -127,8 +127,8 @@ export class World {
   /**
    * Generate a unique ID for a new point
    */
-  generatePointId(): string {
-    return `point_${this.nextId++}`;
+  generatePoint2DId(): string {
+    return `point2d_${this.nextId++}`;
   }
 
   /**
@@ -137,7 +137,7 @@ export class World {
    * @param point Point to add
    * @returns The added point
    */
-  addPoint(point: Point2D): Point2D {
+  addPoint2D(point: Point2D): Point2D {
     this.points.set(point.id, point);
     
     // Realization will be computed lazily on first access via getPoint2DRealization()
@@ -149,7 +149,7 @@ export class World {
    * Get the 2D realization for a point (cached or computed on-demand)
    * Implements RealizationContext interface for recursive realization lookup
    */
-  getPoint2DRealization(pointId: string): Point2DRealization | undefined {
+  getPoint2DRealization(pointId: string): Point2DRealization2D | undefined {
     // Check cache first
     let realization = this.pointRealizations2D.get(pointId);
     if (realization) {
@@ -163,7 +163,7 @@ export class World {
     }
 
     // Helper to get line realizations for intersection points
-    const getLine = (lineId: string): Line2DRealization | null => {
+    const getLine = (lineId: string): Line2DRealization2D | null => {
       const lineRealization = this.getLine2DRealization(lineId);
       return lineRealization || null;
     };
@@ -181,7 +181,7 @@ export class World {
    * Get the 3D realization for a point (cached or computed on-demand)
    * Computes 3D position by transforming the 2D realization using the projection plane's 3D transform
    */
-  getPoint3DRealization(pointId: string): Point3DRealization | undefined {
+  getPoint3DRealization(pointId: string): Point3DRealization3D | undefined {
     // Check cache first
     let realization = this.pointRealizations3D.get(pointId);
     if (realization) {
@@ -211,7 +211,7 @@ export class World {
     const pos3D = realization2D.position.clone().applyMatrix3(planeRealization3D.planeTo3D);
     const position3D = new Vector4(pos3D.x, pos3D.y, pos3D.z, 1);
     
-    realization = new Point3DRealization(position3D);
+    realization = new Point3DRealization3D(position3D);
     
     // Cache the result
     this.pointRealizations3D.set(pointId, realization);
@@ -289,11 +289,11 @@ export class World {
   }
 
   /**
-   * Remove a point from the world
+   * Remove a point from the world (generic version - prefer removePoint2D factory method)
    * @param id Point ID to remove
    * @returns true if point was removed, false if not found
    */
-  removePoint(id: string): boolean {
+  removePoint2DGeneric(id: string): boolean {
     // Remove cached realizations
     this.pointRealizations2D.delete(id);
     this.pointRealizations3D.delete(id);
@@ -305,7 +305,7 @@ export class World {
    * @param id Point ID
    * @returns Point if found, undefined otherwise
    */
-  getPointById(id: string): Point2D | undefined {
+  getPoint2DById(id: string): Point2D | undefined {
     return this.points.get(id);
   }
 
@@ -313,7 +313,7 @@ export class World {
    * Get all points in the world
    * @returns Array of all points
    */
-  getAllPoints(): Point2D[] {
+  getAllPoints2D(): Point2D[] {
     return Array.from(this.points.values());
   }
 
@@ -336,7 +336,7 @@ export class World {
   /**
    * Get total number of points
    */
-  getPointCount(): number {
+  getPoint2DCount(): number {
     return this.points.size;
   }
 
@@ -349,7 +349,7 @@ export class World {
    * @param line Line to add
    * @returns The added line
    */
-  addLine(line: Line2D): Line2D {
+  addLine2D(line: Line2D): Line2D {
     this.lines.set(line.id, line);
     // Realization will be computed lazily on first access via getLine2DRealization()
     return line;
@@ -360,28 +360,23 @@ export class World {
    * Computes and caches the line equation in 2D plane coordinates
    * 
    * @param lineId ID of line to get realization for
-   * @returns Line2DRealization if line exists and can be computed, undefined otherwise
+   * @returns Line2DRealization2D if line exists and can be computed, undefined otherwise
    */
-  getLine2DRealization(lineId: string): Line2DRealization | undefined {
-    console.log('[World] getLine2DRealization called for:', lineId);
+  getLine2DRealization(lineId: string): Line2DRealization2D | undefined {
     // Check cache first
     if (this.lineRealizations2D.has(lineId)) {
-      console.log('[World] Returning cached realization');
       return this.lineRealizations2D.get(lineId);
     }
 
     // Get line definition
     const line = this.lines.get(lineId);
-    console.log('[World] Line from map:', line);
     if (!line) {
-      console.log('[World] Line not found in map');
       return undefined;
     }
 
     // Helper to get point position - lines need 2D point positions as Vector3
     const getPoint = (pointId: string): Vector3 | null => {
       const pointRealization = this.getPoint2DRealization(pointId);
-      console.log('[World] getPoint2DRealization for', pointId, ':', pointRealization);
       if (!pointRealization) {
         return null;
       }
@@ -390,17 +385,13 @@ export class World {
     };
 
     // Compute realization from line definition
-    console.log('[World] Calling line.realize2D...');
     const realization = line.realize2D(getPoint);
-    console.log('[World] line.realize2D returned:', realization);
     if (!realization) {
-      console.log('[World] Cannot compute realization');
       return undefined;  // Cannot compute (e.g., missing dependency points)
     }
 
     // Cache for future use
     this.lineRealizations2D.set(lineId, realization);
-    console.log('[World] Cached realization');
     return realization;
   }
 
@@ -414,11 +405,11 @@ export class World {
   }
 
   /**
-   * Remove a line from the world
+   * Remove a line from the world (generic version - prefer removeLine2D factory method)
    * @param id ID of line to remove
    * @returns true if line was removed, false if not found
    */
-  removeLine(id: string): boolean {
+  removeLine2DGeneric(id: string): boolean {
     const removed = this.lines.delete(id);
     if (removed) {
       this.lineRealizations2D.delete(id);
@@ -431,7 +422,7 @@ export class World {
    * @param id Line ID
    * @returns Line if found, undefined otherwise
    */
-  getLineById(id: string): Line2D | undefined {
+  getLine2DById(id: string): Line2D | undefined {
     return this.lines.get(id);
   }
 
@@ -439,40 +430,40 @@ export class World {
    * Get all lines in the world
    * @returns Array of all lines
    */
-  getAllLines(): Line2D[] {
+  getAllLines2D(): Line2D[] {
     return Array.from(this.lines.values());
   }
 
   /**
    * Get total number of lines
    */
-  getLineCount(): number {
+  getLine2DCount(): number {
     return this.lines.size;
   }
 
   /**
    * Generate a unique line ID
    */
-  generateLineId(): string {
-    return `line_${this.nextId++}`;
+  generateLine2DId(): string {
+    return `line2d_${this.nextId++}`;
   }
 
   /**
-   * Add a segment to the world
+   * Add a segment to the world (generic version - prefer addSegment2DBetweenPoints factory method)
    * @param segment Segment to add (must have ID already set)
    * @returns The added segment
    */
-  addSegment(segment: Segment2D): Segment2D {
+  addSegment2D(segment: Segment2D): Segment2D {
     this.segments.set(segment.id, segment);
     return segment;
   }
 
   /**
-   * Remove a segment from the world
+   * Remove a segment from the world (generic version - prefer removeSegment2D factory method)
    * @param id ID of segment to remove
    * @returns true if segment was removed, false if not found
    */
-  removeSegment(id: string): boolean {
+  removeSegment2DGeneric(id: string): boolean {
     const removed = this.segments.delete(id);
     if (removed) {
       this.segmentRealizations2D.delete(id);
@@ -485,7 +476,7 @@ export class World {
    * @param id Segment ID
    * @returns Segment if found, undefined otherwise
    */
-  getSegmentById(id: string): Segment2D | undefined {
+  getSegment2DById(id: string): Segment2D | undefined {
     return this.segments.get(id);
   }
 
@@ -493,29 +484,29 @@ export class World {
    * Get all segments in the world
    * @returns Array of all segments
    */
-  getAllSegments(): Segment2D[] {
+  getAllSegments2D(): Segment2D[] {
     return Array.from(this.segments.values());
   }
 
   /**
    * Get total number of segments
    */
-  getSegmentCount(): number {
+  getSegment2DCount(): number {
     return this.segments.size;
   }
 
   /**
    * Generate a unique segment ID
    */
-  generateSegmentId(): string {
-    return `segment_${this.nextId++}`;
+  generateSegment2DId(): string {
+    return `segment2d_${this.nextId++}`;
   }
 
   /**
    * Get the 2D realization for a segment (cached or computed on-demand)
    * Computes segment endpoints from point realizations
    */
-  getSegment2DRealization(segmentId: string): Segment2DRealization | undefined {
+  getSegment2DRealization(segmentId: string): Segment2DRealization2D | undefined {
     // Check cache first
     let realization = this.segmentRealizations2D.get(segmentId);
     if (realization) {
@@ -535,7 +526,7 @@ export class World {
     };
 
     // Call realize2D() on the segment
-    realization = segment.realize2D(getPointPosition);
+    realization = segment.realize2D(getPointPosition) ?? undefined;
     
     if (realization) {
       // Cache the result
@@ -552,7 +543,7 @@ export class World {
   /**
    * Add a circle to the world
    */
-  addCircle(circle: Circle2D): Circle2D {
+  addCircle2D(circle: Circle2D): Circle2D {
     this.circles.set(circle.id, circle);
     // Invalidate cached realization
     this.circleRealizations2D.delete(circle.id);
@@ -560,9 +551,9 @@ export class World {
   }
 
   /**
-   * Remove a circle from the world
+   * Remove a circle from the world (generic version - prefer removeCircle2D factory method)
    */
-  removeCircle(circleId: string): Circle2D | undefined {
+  removeCircle2DGeneric(circleId: string): Circle2D | undefined {
     const circle = this.circles.get(circleId);
     if (circle) {
       this.circles.delete(circleId);
@@ -574,29 +565,29 @@ export class World {
   /**
    * Get a circle by ID
    */
-  getCircleById(circleId: string): Circle2D | undefined {
+  getCircle2DById(circleId: string): Circle2D | undefined {
     return this.circles.get(circleId);
   }
 
   /**
    * Get all circles
    */
-  getAllCircles(): Circle2D[] {
+  getAllCircles2D(): Circle2D[] {
     return Array.from(this.circles.values());
   }
 
   /**
    * Generate a unique circle ID
    */
-  generateCircleId(): string {
-    return `circle-${this.nextId++}`;
+  generateCircle2DId(): string {
+    return `circle2d_${this.nextId++}`;
   }
 
   /**
    * Get the 2D realization of a circle (with caching)
    * Returns circle geometry (center and radius) in plane coordinates
    */
-  getCircle2DRealization(circleId: string): Circle2DRealization | undefined {
+  getCircle2DRealization(circleId: string): Circle2DRealization2D | undefined {
     // Check cache first
     let realization = this.circleRealizations2D.get(circleId);
     if (realization) {
@@ -631,9 +622,9 @@ export class World {
   // ========================================
 
   /**
-   * Add a guide to the world
+   * Add a guide to the world (generic version - prefer addGuide2D factory method)
    */
-  addGuide(guide: Guide2D): Guide2D {
+  addGuide2DGeneric(guide: Guide2D): Guide2D {
     this.guides.set(guide.id, guide);
     // Invalidate cached realization
     this.guideRealizations2D.delete(guide.id);
@@ -641,9 +632,9 @@ export class World {
   }
 
   /**
-   * Remove a guide from the world
+   * Remove a guide from the world (generic version - prefer removeGuide2D factory method)
    */
-  removeGuide(guideId: string): Guide2D | undefined {
+  removeGuide2DGeneric(guideId: string): Guide2D | undefined {
     const guide = this.guides.get(guideId);
     if (guide) {
       this.guides.delete(guideId);
@@ -655,29 +646,29 @@ export class World {
   /**
    * Get a guide by ID
    */
-  getGuideById(guideId: string): Guide2D | undefined {
+  getGuide2DById(guideId: string): Guide2D | undefined {
     return this.guides.get(guideId);
   }
 
   /**
    * Get all guides
    */
-  getAllGuides(): Guide2D[] {
+  getAllGuides2D(): Guide2D[] {
     return Array.from(this.guides.values());
   }
 
   /**
    * Generate a unique guide ID
    */
-  generateGuideId(): string {
-    return `guide-${this.nextId++}`;
+  generateGuide2DId(): string {
+    return `guide2d_${this.nextId++}`;
   }
 
   /**
    * Get the 2D realization of a guide (with caching)
    * Returns guide line geometry in plane coordinates
    */
-  getGuide2DRealization(guideId: string): Guide2DRealization | undefined {
+  getGuide2DRealization(guideId: string): Guide2DRealization2D | undefined {
     // Check cache first
     let realization = this.guideRealizations2D.get(guideId);
     if (realization) {
@@ -691,7 +682,7 @@ export class World {
     }
 
     // Get line and point realizations for guide computation
-    const getLineRealization = (lineId: string): Line2DRealization | null => {
+    const getLineRealization = (lineId: string): Line2DRealization2D | null => {
       const lineRealization = this.getLine2DRealization(lineId);
       return lineRealization ?? null;
     };
@@ -731,6 +722,13 @@ export class World {
   }
 
   /**
+   * Get projection plane by ID
+   */
+  getProjectionPlaneById(id: string): ProjectionPlane | undefined {
+    return this.projectionPlanes.get(id);
+  }
+
+  /**
    * Get all planes
    */
   getAllPlanes(): Plane3D[] {
@@ -756,5 +754,516 @@ export class World {
    */
   getProcessTree(): ProcessTree {
     return this.processTree;
+  }
+
+  // ========================================
+  // Factory Methods for Point2D
+  // ========================================
+
+  /**
+   * Factory method to create and add a FreePoint2D to the world
+   * 
+   * @param planeId ID of the projection plane this point belongs to
+   * @param position Position in plane intrinsic coordinates (u, v, 1)
+   * @param id Optional ID for redo operations. If not provided, generates a new one.
+   * @returns The created FreePoint2D
+   * @throws Error if planeId is invalid
+   */
+  addFreePoint2D(planeId: string, position: Vector3, id?: string): FreePoint2D {
+    // Validate plane exists
+    if (!this.projectionPlanes.has(planeId)) {
+      throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generatePoint2DId();
+    }
+
+    // Create the point
+    const point = new FreePoint2D(id, position, planeId);
+    
+    // Add to world storage
+    this.points.set(id, point);
+    
+    // Realization will be computed lazily on first access
+    
+    return point;
+  }
+
+  /**
+   * Factory method to create and add an IntersectionPoint2D to the world
+   * 
+   * @param planeId ID of the projection plane this point belongs to
+   * @param line1Id ID of the first line
+   * @param line2Id ID of the second line
+   * @param index Index to identify which intersection (0 for first, 1 for second, etc.)
+   * @param id Optional ID for redo operations. If not provided, generates a new one.
+   * @returns The created IntersectionPoint2D
+   * @throws Error if validation fails (invalid plane, missing lines, lines not on same plane, lines parallel)
+   */
+  addIntersectionPoint2D(
+    planeId: string,
+    line1Id: string,
+    line2Id: string,
+    index: number,
+    id?: string
+  ): IntersectionPoint2D {
+    // Validate plane exists
+    if (!this.projectionPlanes.has(planeId)) {
+      throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
+    }
+
+    // Validate lines exist
+    const line1 = this.lines.get(line1Id);
+    const line2 = this.lines.get(line2Id);
+    
+    if (!line1) {
+      throw new Error(`Invalid line1Id: ${line1Id}. Line does not exist.`);
+    }
+    if (!line2) {
+      throw new Error(`Invalid line2Id: ${line2Id}. Line does not exist.`);
+    }
+
+    // Validate lines are on the same plane
+    if (line1.planeId !== line2.planeId) {
+      throw new Error(`Lines must be on the same plane. Line1 is on ${line1.planeId}, Line2 is on ${line2.planeId}.`);
+    }
+
+    // Validate lines are on the specified plane
+    if (line1.planeId !== planeId) {
+      throw new Error(`Lines are on plane ${line1.planeId}, but intersection point is being created on plane ${planeId}.`);
+    }
+
+    // Validate lines are not parallel (check if intersection can be computed)
+    const line1Realization = this.getLine2DRealization(line1Id);
+    const line2Realization = this.getLine2DRealization(line2Id);
+    
+    if (!line1Realization || !line2Realization) {
+      throw new Error(`Cannot compute line realizations. Lines may depend on missing elements.`);
+    }
+
+    // Check if lines are parallel using cross product of directions
+    const cross = line1Realization.direction.clone().cross(line2Realization.direction);
+    if (Math.abs(cross.z) < 1e-10) {
+      throw new Error(`Lines ${line1Id} and ${line2Id} are parallel. Cannot create intersection point.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generatePoint2DId();
+    }
+
+    // Create the intersection point
+    const point = new IntersectionPoint2D(id, line1Id, line2Id, index, planeId);
+    
+    // Add to world storage
+    this.points.set(id, point);
+    
+    // Realization will be computed lazily on first access
+    
+    return point;
+  }
+
+  // ========================================
+  // Factory Methods for Line2D
+  // ========================================
+
+  /**
+   * Factory method to create and add a Line2DByTwoPoints to the world
+   * 
+   * @param planeId ID of the projection plane this line belongs to
+   * @param point1Id ID of the first point
+   * @param point2Id ID of the second point
+   * @param id Optional ID for redo operations. If not provided, generates a new one.
+   * @returns The created Line2DByTwoPoints
+   * @throws Error if validation fails (invalid plane, missing points, points not on same plane, points identical)
+   */
+  addLine2DBetweenTwoPoints(
+    planeId: string,
+    point1Id: string,
+    point2Id: string,
+    id?: string
+  ): Line2DByTwoPoints {
+    // Validate plane exists
+    if (!this.projectionPlanes.has(planeId)) {
+      throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
+    }
+
+    // Validate points exist
+    const point1 = this.points.get(point1Id);
+    const point2 = this.points.get(point2Id);
+    
+    if (!point1) {
+      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist.`);
+    }
+    if (!point2) {
+      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist.`);
+    }
+
+    // Validate points are on the same plane
+    if (point1.planeId !== point2.planeId) {
+      throw new Error(`Points must be on the same plane. Point1 is on ${point1.planeId}, Point2 is on ${point2.planeId}.`);
+    }
+
+    // Validate points are on the specified plane
+    if (point1.planeId !== planeId) {
+      throw new Error(`Points are on plane ${point1.planeId}, but line is being created on plane ${planeId}.`);
+    }
+
+    // Validate points are distinct (not the same point)
+    if (point1Id === point2Id) {
+      throw new Error(`Cannot create line from a point to itself. point1Id and point2Id must be different.`);
+    }
+
+    // Validate points have distinct positions
+    const point1Realization = this.getPoint2DRealization(point1Id);
+    const point2Realization = this.getPoint2DRealization(point2Id);
+    
+    if (!point1Realization || !point2Realization) {
+      throw new Error(`Cannot compute point realizations. Points may depend on missing elements.`);
+    }
+
+    const distance = point1Realization.position.distanceTo(point2Realization.position);
+    if (distance < 1e-10) {
+      throw new Error(`Points ${point1Id} and ${point2Id} are too close (distance: ${distance}). Cannot create line.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId();
+    }
+
+    // Create the line
+    const line = new Line2DByTwoPoints(id, point1Id, point2Id, planeId);
+    
+    // Add to world storage
+    this.lines.set(id, line);
+    
+    // Invalidate line realization cache (will be recomputed on next access)
+    this.lineRealizations2D.delete(id);
+    
+    return line;
+  }
+
+  // ========================================
+  // Factory Methods for Segment2D
+  // ========================================
+
+  /**
+   * Factory method to create and add a Segment2DByPoints to the world
+   * 
+   * @param planeId ID of the projection plane this segment belongs to
+   * @param point1Id ID of the first endpoint
+   * @param point2Id ID of the second endpoint
+   * @param id Optional ID for redo operations. If not provided, generates a new one.
+   * @returns The created Segment2DByPoints
+   * @throws Error if validation fails (same validation as lines)
+   */
+  addSegment2DBetweenPoints(
+    planeId: string,
+    point1Id: string,
+    point2Id: string,
+    id?: string
+  ): Segment2DByPoints {
+    // Validate plane exists
+    if (!this.projectionPlanes.has(planeId)) {
+      throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
+    }
+
+    // Validate points exist
+    const point1 = this.points.get(point1Id);
+    const point2 = this.points.get(point2Id);
+    
+    if (!point1) {
+      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist.`);
+    }
+    if (!point2) {
+      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist.`);
+    }
+
+    // Validate points are on the same plane
+    if (point1.planeId !== point2.planeId) {
+      throw new Error(`Points must be on the same plane. Point1 is on ${point1.planeId}, Point2 is on ${point2.planeId}.`);
+    }
+
+    // Validate points are on the specified plane
+    if (point1.planeId !== planeId) {
+      throw new Error(`Points are on plane ${point1.planeId}, but segment is being created on plane ${planeId}.`);
+    }
+
+    // Validate points are distinct
+    if (point1Id === point2Id) {
+      throw new Error(`Cannot create segment from a point to itself. point1Id and point2Id must be different.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateSegment2DId();
+    }
+
+    // Create the segment
+    const segment = new Segment2DByPoints(id, point1Id, point2Id, planeId);
+    
+    // Add to world storage
+    this.segments.set(id, segment);
+    
+    // Realization will be computed lazily on first access
+    
+    return segment;
+  }
+
+  // ========================================
+  // Factory Methods for Circle2D
+  // ========================================
+
+  /**
+   * Factory method to create and add a Circle2DByCenterAndRadius to the world
+   * 
+   * @param planeId ID of the projection plane this circle belongs to
+   * @param centerPointId ID of the center point
+   * @param radius Radius in plane intrinsic units
+   * @param id Optional ID for redo operations. If not provided, generates a new one.
+   * @returns The created Circle2DByCenterAndRadius
+   * @throws Error if validation fails (invalid plane, missing center point, invalid radius)
+   */
+  addCircle2DByCenter(
+    planeId: string,
+    centerPointId: string,
+    radius: number,
+    id?: string
+  ): Circle2DByCenterAndRadius {
+    // Validate plane exists
+    if (!this.projectionPlanes.has(planeId)) {
+      throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
+    }
+
+    // Validate center point exists
+    const centerPoint = this.points.get(centerPointId);
+    if (!centerPoint) {
+      throw new Error(`Invalid centerPointId: ${centerPointId}. Point does not exist.`);
+    }
+
+    // Validate center point is on the specified plane
+    if (centerPoint.planeId !== planeId) {
+      throw new Error(`Center point is on plane ${centerPoint.planeId}, but circle is being created on plane ${planeId}.`);
+    }
+
+    // Validate radius is positive
+    if (radius <= 0) {
+      throw new Error(`Radius must be positive. Got: ${radius}`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateCircle2DId();
+    }
+
+    // Create the circle
+    const circle = new Circle2DByCenterAndRadius(id, centerPointId, radius, planeId);
+    
+    // Add to world storage
+    this.circles.set(id, circle);
+    
+    // Realization will be computed lazily on first access
+    
+    return circle;
+  }
+
+  // ========================================
+  // Factory Methods for Guide2D
+  // ========================================
+
+  /**
+   * Factory method to create and add a Guide2DPerpendicularToLine to the world
+   * 
+   * @param planeId ID of the projection plane this guide belongs to
+   * @param referenceLineId ID of the line to be perpendicular to
+   * @param throughPointId ID of the point the guide passes through
+   * @param id Optional ID for redo operations. If not provided, generates a new one.
+   * @returns The created Guide2DPerpendicularToLine
+   * @throws Error if validation fails (invalid plane, missing line/point)
+   */
+  addGuide2D(
+    planeId: string,
+    referenceLineId: string,
+    throughPointId: string,
+    id?: string
+  ): Guide2DPerpendicularToLine {
+    // Validate plane exists
+    if (!this.projectionPlanes.has(planeId)) {
+      throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
+    }
+
+    // Validate reference line exists
+    const referenceLine = this.lines.get(referenceLineId);
+    if (!referenceLine) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+
+    // Validate through point exists
+    const throughPoint = this.points.get(throughPointId);
+    if (!throughPoint) {
+      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist.`);
+    }
+
+    // Validate point is on the specified plane
+    if (throughPoint.planeId !== planeId) {
+      throw new Error(`Through point is on plane ${throughPoint.planeId}, but guide is being created on plane ${planeId}.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateGuide2DId();
+    }
+
+    // Create the guide
+    const guide = new Guide2DPerpendicularToLine(id, referenceLineId, throughPointId, planeId);
+    
+    // Add to world storage
+    this.guides.set(id, guide);
+    
+    // Realization will be computed lazily on first access
+    
+    return guide;
+  }
+
+  // ========================================
+  // Removal Factory Methods
+  // ========================================
+
+  /**
+   * Factory method to remove a Point2D from the world
+   * 
+   * @param planeId ID of the projection plane (for consistency with add methods)
+   * @param id ID of the point to remove
+   * @returns The removed point (for undo), or null if not found
+   * @throws Error if point has dependents
+   */
+  removePoint2D(planeId: string, id: string): Point2D | null {
+    const point = this.points.get(id);
+    if (!point) {
+      return null;
+    }
+
+    // Validate planeId matches
+    if (point.planeId !== planeId) {
+      throw new Error(`Point ${id} is on plane ${point.planeId}, not ${planeId}.`);
+    }
+
+    // TODO: Check for dependents
+    // For now, we'll allow removal. In the future, should check:
+    // - Lines that reference this point
+    // - Segments that reference this point
+    // - Circles that reference this point
+    // - Other points that depend on this point (intersection points)
+
+    // Remove from storage
+    this.points.delete(id);
+    
+    // Clean caches
+    this.pointRealizations2D.delete(id);
+    this.pointRealizations3D.delete(id);
+    
+    return point;
+  }
+
+  /**
+   * Factory method to remove a Line2D from the world
+   * 
+   * @param planeId ID of the projection plane (for consistency)
+   * @param id ID of the line to remove
+   * @returns The removed line (for undo), or null if not found
+   * @throws Error if line has dependents
+   */
+  removeLine2D(planeId: string, id: string): Line2D | null {
+    const line = this.lines.get(id);
+    if (!line) {
+      return null;
+    }
+
+    // Validate planeId matches
+    if (line.planeId !== planeId) {
+      throw new Error(`Line ${id} is on plane ${line.planeId}, not ${planeId}.`);
+    }
+
+    // TODO: Check for dependents (intersection points, parallel/perpendicular lines, guides)
+
+    // Remove from storage
+    this.lines.delete(id);
+    
+    // Clean caches
+    this.lineRealizations2D.delete(id);
+    
+    return line;
+  }
+
+  /**
+   * Factory method to remove a Segment2D from the world
+   */
+  removeSegment2D(planeId: string, id: string): Segment2D | null {
+    const segment = this.segments.get(id);
+    if (!segment) {
+      return null;
+    }
+
+    // Validate planeId matches
+    if (segment.planeId !== planeId) {
+      throw new Error(`Segment ${id} is on plane ${segment.planeId}, not ${planeId}.`);
+    }
+
+    // Remove from storage
+    this.segments.delete(id);
+    
+    // Clean caches
+    this.segmentRealizations2D.delete(id);
+    
+    return segment;
+  }
+
+  /**
+   * Factory method to remove a Circle2D from the world
+   */
+  removeCircle2D(planeId: string, id: string): Circle2D | null {
+    const circle = this.circles.get(id);
+    if (!circle) {
+      return null;
+    }
+
+    // Validate planeId matches
+    if (circle.planeId !== planeId) {
+      throw new Error(`Circle ${id} is on plane ${circle.planeId}, not ${planeId}.`);
+    }
+
+    // Remove from storage
+    this.circles.delete(id);
+    
+    // Clean caches
+    this.circleRealizations2D.delete(id);
+    
+    return circle;
+  }
+
+  /**
+   * Factory method to remove a Guide2D from the world
+   */
+  removeGuide2D(planeId: string, id: string): Guide2D | null {
+    const guide = this.guides.get(id);
+    if (!guide) {
+      return null;
+    }
+
+    // Validate planeId matches
+    if (guide.planeId !== planeId) {
+      throw new Error(`Guide ${id} is on plane ${guide.planeId}, not ${planeId}.`);
+    }
+
+    // Remove from storage
+    this.guides.delete(id);
+    
+    // Clean caches
+    this.guideRealizations2D.delete(id);
+    
+    return guide;
   }
 }

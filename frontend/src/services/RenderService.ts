@@ -20,9 +20,9 @@
  */
 
 import { Vector3 } from 'three';
-import type { Point2D, Point2DRealization } from '../domain/world/Point';
-import { FreePoint2D } from '../domain/world/Point';
-import type { Plane3D } from '../domain/world/Plane3D';
+import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
+
+import type { Plane3D } from '../domain/world/Plane';
 import { planeToCanvas } from '../domain/calculations/CoordinateTransform';
 
 /**
@@ -47,14 +47,14 @@ export interface SVGElementAttributes {
  * - Styling rules: Based on point.type
  * 
  * @param point - Point domain object (for metadata: id, type, label, planeId)
- * @param realization - Point2DRealization with computed position (numeric data)
+ * @param realization - Point2DRealization2D with computed position (numeric data)
  * @param canvasOriginX - Canvas origin X coordinate (default 400)
  * @param canvasOriginY - Canvas origin Y coordinate (default 400)
  * @returns SVG circle attributes
  */
 export function renderPoint(
   point: Point2D,
-  realization: Point2DRealization,
+  realization: Point2DRealization2D,
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): SVGElementAttributes {
@@ -157,8 +157,8 @@ export function renderPlane(
  * @returns SVG line attributes
  */
 export function renderLine(
-  startPoint: Point2DRealization | { u: number; v: number; planeId: string },
-  endPoint: Point2DRealization | { u: number; v: number; planeId: string },
+  startPoint: Point2DRealization2D | { u: number; v: number; planeId: string },
+  endPoint: Point2DRealization2D | { u: number; v: number; planeId: string },
   lineId: string,
   style?: {
     color?: string;
@@ -169,7 +169,7 @@ export function renderLine(
   canvasOriginY: number = 400
 ): SVGElementAttributes {
   // Transform start and end points to canvas coordinates
-  // Handle both Point2DRealization objects and plain { u, v, planeId } objects
+  // Handle both Point2DRealization2D objects and plain { u, v, planeId } objects
   const startPos = 'position' in startPoint
     ? startPoint.position
     : new Vector3(startPoint.u, startPoint.v, 1);

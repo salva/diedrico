@@ -3,7 +3,7 @@
  * 
  * Points are the fundamental building blocks of the dihedral system.
  * This class represents the DEFINITION/RULE of a point, not its coordinates.
- * Actual coordinates are stored in Point2DRealization objects.
+ * Actual coordinates are stored in Point2DRealization2D objects.
  * 
  * Two types of 2D points:
  * - Free points: defined by their position inside the projection plane
@@ -16,16 +16,16 @@
  */
 
 import { Vector3, Vector4 } from 'three';
-import type { Line2DRealization } from './Line';
+import type { Line2DRealization2D } from './Line';
 import { intersectLineLine } from '../calculations/Intersections';
 
 export type Point2DType = 'free' | 'intersection';
 
 /**
- * Point2DRealization - Stores computed 2D position for a Point2D
+ * Point2DRealization2D - Stores computed 2D position for a Point2D
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
-export class Point2DRealization {
+export class Point2DRealization2D {
   position: Vector3;  // Position in plane coordinates (u, v, 1) - ONLY NUMERIC DATA
 
   constructor(position: Vector3) {
@@ -41,11 +41,11 @@ export class Point2DRealization {
 }
 
 /**
- * Point3DRealization - Stores computed 3D position for a point
+ * Point3DRealization3D - Stores computed 3D position for a point
  * Reconstructed from 2D projections or defined directly in 3D space.
  * Contains ONLY numeric data. Structural information (id) stays in domain objects.
  */
-export class Point3DRealization {
+export class Point3DRealization3D {
   position: Vector4;  // Position in 3D space (x, y, z, 1) - ONLY NUMERIC DATA
 
   constructor(position: Vector4) {
@@ -90,7 +90,7 @@ export abstract class Point2D {
    * 
    * @param getLine Optional callback to get line realizations (needed for intersection points)
    */
-  abstract realize2D(getLine?: (id: string) => Line2DRealization | null): Point2DRealization;
+  abstract realize2D(getLine?: (id: string) => Line2DRealization2D | null): Point2DRealization2D;
 }
 
 /**
@@ -129,15 +129,15 @@ export class FreePoint2D extends Point2D {
   /**
    * Calculate 2D realization - for free points, just return the stored position
    */
-  realize2D(): Point2DRealization {
-    return new Point2DRealization(this.position);
+  realize2D(): Point2DRealization2D {
+    return new Point2DRealization2D(this.position);
   }
 }
 
 /**
  * Intersection Point2D - defined as intersection of two objects
  * The rule is: "intersection of element1 and element2 at index"
- * Coordinates are computed and cached in Point2DRealization.
+ * Coordinates are computed and cached in Point2DRealization2D.
  */
 export class IntersectionPoint2D extends Point2D {
   readonly type: 'intersection' = 'intersection';
@@ -179,13 +179,13 @@ export class IntersectionPoint2D extends Point2D {
    * - Line-Line intersection (index must be 0, as there's only one intersection point)
    * 
    * @param getLine Callback to get line realizations
-   * @returns Point2DRealization with intersection point, or origin if computation fails
+   * @returns Point2DRealization2D with intersection point, or origin if computation fails
    */
-  realize2D(getLine?: (id: string) => Line2DRealization | null): Point2DRealization {
+  realize2D(getLine?: (id: string) => Line2DRealization2D | null): Point2DRealization2D {
     // Validate getLine callback
     if (!getLine) {
       console.warn('[IntersectionPoint2D] realize2D called without getLine callback');
-      return new Point2DRealization(new Vector3(0, 0, 1));
+      return new Point2DRealization2D(new Vector3(0, 0, 1));
     }
     
     // Get realizations of both elements
@@ -197,7 +197,7 @@ export class IntersectionPoint2D extends Point2D {
         '[IntersectionPoint2D] Cannot compute intersection: missing line realization',
         { element1Id: this.element1Id, element2Id: this.element2Id, line1, line2 }
       );
-      return new Point2DRealization(new Vector3(0, 0, 1));
+      return new Point2DRealization2D(new Vector3(0, 0, 1));
     }
     
     // Compute line-line intersection using homogeneous coordinates
@@ -210,10 +210,10 @@ export class IntersectionPoint2D extends Point2D {
         result.message
       );
       // Return origin as fallback (infeasible construction)
-      return new Point2DRealization(new Vector3(0, 0, 1));
+      return new Point2DRealization2D(new Vector3(0, 0, 1));
     }
     
     // Return the intersection point
-    return new Point2DRealization(result.point);
+    return new Point2DRealization2D(result.point);
   }
 }

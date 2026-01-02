@@ -2,15 +2,15 @@
  * CreateLineCommand - Command for creating a line through two points
  * 
  * Creates a Line2DByTwoPoints from two existing points on a projection plane.
- * Composed from AddElementOp operation.
+ * Uses World factory method for type-safe creation with built-in validation.
  * 
  * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
  */
 
 import { Command } from './Command';
-import { AddElementOp } from './operations/WorldOperations';
 import type { World } from '@/domain/world/World';
 import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
+import { AddLine2DByTwoPointsOp } from './operations/AddLineOp';
 
 export class CreateLineCommand extends Command {
   private point1Id: string;
@@ -26,46 +26,20 @@ export class CreateLineCommand extends Command {
   }
 
   /**
-   * Execute the command by composing AddElementOp
+   * Execute the command using addAndExecute pattern
    */
   execute(): void {
-    // Validate that points exist and are on the same plane
-    const point1 = this.world.getPointById(this.point1Id);
-    const point2 = this.world.getPointById(this.point2Id);
+    // Add operation - it executes immediately and is stored for undo
+    const op = new AddLine2DByTwoPointsOp(this.planeId, this.point1Id, this.point2Id);
+    this.addAndExecute(op);
     
-    if (!point1) {
-      throw new Error(`Point ${this.point1Id} not found`);
-    }
-    if (!point2) {
-      throw new Error(`Point ${this.point2Id} not found`);
-    }
-    if (point1.planeId !== this.planeId || point2.planeId !== this.planeId) {
-      throw new Error(`Points must be on plane ${this.planeId}`);
-    }
-    
-    // Generate unique line ID
-    this.lineId = this.world.generateLineId();
-    
-    // Create element data for the line
-    const elementData = {
-      id: this.lineId,
-      type: 'by-two-points',  // Line2DByTwoPoints
-      point1Id: this.point1Id,
-      point2Id: this.point2Id,
-      planeId: this.planeId,
-      label: undefined  // No label by default
-    };
-    
-    // Create and execute AddElementOp
-    const operation = new AddElementOp('line', elementData);
-    const result = this.addAndExecute(operation);
-    
-    if (!result.success) {
-      throw new Error(`Failed to create line: ${result.error}`);
-    }
+    // Get the generated ID from operation outputs
+    this.lineId = op.outputs.lineId;
+
+    // Create action for process tree
+    const action = createLineAction(this.lineId!, this.planeId, this.point1Id, this.point2Id);
     
     // Record action in process tree
-    const action = createLineAction(this.lineId, this.planeId, this.point1Id, this.point2Id);
     this.world.getProcessTree().addAction(action);
   }
 

@@ -19,19 +19,19 @@
  */
 
 import { Vector3 } from 'three';
-import { Line2DRealization } from './Line';
+import { Line2DRealization2D } from './Line';
 
 export type Guide2DType = 'perpendicular-to-line';
 
 /**
- * Guide2DRealization - Stores computed guide line in parametric form
+ * Guide2DRealization2D - Stores computed guide line in parametric form
  * 
- * Same structure as Line2DRealization - guides are lines with special rendering.
+ * Same structure as Line2DRealization2D - guides are lines with special rendering.
  * Parametric form: P(t) = point + t * direction
  * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
-export class Guide2DRealization extends Line2DRealization {
+export class Guide2DRealization2D extends Line2DRealization2D {
   constructor(point: Vector3, direction: Vector3) {
     super(point, direction);
   }
@@ -60,9 +60,9 @@ export abstract class Guide2D {
    * @param getPoint Function to retrieve point positions by ID
    */
   abstract realize2D(
-    getLine: (id: string) => Line2DRealization | null,
+    getLine: (id: string) => Line2DRealization2D | null,
     getPoint: (id: string) => Vector3 | null
-  ): Guide2DRealization | null;
+  ): Guide2DRealization2D | null;
 }
 
 /**
@@ -117,9 +117,9 @@ export class Guide2DPerpendicularToLine extends Guide2D {
    * - Works correctly with homogeneous coords (z=0 for direction vectors)
    */
   realize2D(
-    getLine: (id: string) => Line2DRealization | null,
+    getLine: (id: string) => Line2DRealization2D | null,
     getPoint: (id: string) => Vector3 | null
-  ): Guide2DRealization | null {
+  ): Guide2DRealization2D | null {
     // Get reference line realization
     const referenceLine = getLine(this.referenceLineId);
     if (!referenceLine) {
@@ -148,6 +148,6 @@ export class Guide2DPerpendicularToLine extends Guide2D {
     }
 
     // Create guide realization: line through throughPoint with perpendicular direction
-    return new Guide2DRealization(throughPoint.clone(), perpendicularDirection);
+    return new Guide2DRealization2D(throughPoint.clone(), perpendicularDirection);
   }
 }

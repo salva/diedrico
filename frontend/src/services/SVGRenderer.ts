@@ -412,22 +412,30 @@ export class SVGRenderer {
     primitive: Primitive,
     viewport: ViewportTransform
   ): { element: string; attributes: SVGAttributes } {
-    switch (primitive.type) {
-      case 'point':
-        return { element: 'circle', attributes: this.renderPoint(primitive, viewport) };
-      case 'path':
-        return { element: 'path', attributes: this.renderPath(primitive, viewport) };
-      case 'line':
-        return { element: 'line', attributes: this.renderLine(primitive, viewport) };
-      case 'segment':
-        return { element: 'line', attributes: this.renderSegment(primitive, viewport) };
-      case 'circle':
-        return { element: 'circle', attributes: this.renderCircle(primitive, viewport) };
-      case 'arc':
-        return { element: 'path', attributes: this.renderArc(primitive, viewport) };
-      case 'text':
-        return { element: 'text', attributes: this.renderText(primitive, viewport) };
+    if (primitive.type === 'point') {
+      return { element: 'circle', attributes: this.renderPoint(primitive, viewport) };
     }
+    if (primitive.type === 'path') {
+      return { element: 'path', attributes: this.renderPath(primitive, viewport) };
+    }
+    if (primitive.type === 'line') {
+      return { element: 'line', attributes: this.renderLine(primitive, viewport) };
+    }
+    if (primitive.type === 'segment') {
+      return { element: 'line', attributes: this.renderSegment(primitive, viewport) };
+    }
+    if (primitive.type === 'circle') {
+      return { element: 'circle', attributes: this.renderCircle(primitive, viewport) };
+    }
+    if (primitive.type === 'arc') {
+      return { element: 'path', attributes: this.renderArc(primitive, viewport) };
+    }
+    if (primitive.type === 'text') {
+      return { element: 'text', attributes: this.renderText(primitive, viewport) };
+    }
+    
+    const _exhaustive: never = primitive;
+    throw new Error(`Unhandled primitive type: ${(_exhaustive as any).type}`);
   }
 
   /**

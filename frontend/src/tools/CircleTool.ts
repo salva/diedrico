@@ -82,7 +82,7 @@ export class CircleTool extends BaseTool {
       // Second click: Set radius and create circle
       
       // Calculate radius as distance from center to click position
-      const clickPos = new Vector3(planeCoords.u, planeCoords.v, 1);
+      const clickPos = new Vector3(planeCoords.x, planeCoords.y, planeCoords.z);
       const radius = this.centerPosition!.distanceTo(clickPos);
       
       // Validate minimum radius

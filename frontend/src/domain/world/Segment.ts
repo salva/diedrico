@@ -16,10 +16,10 @@ import { Vector3 } from 'three';
 export type Segment2DType = 'by-points';
 
 /**
- * Segment2DRealization - Stores computed endpoints for a Segment2D
+ * Segment2DRealization2D - Stores computed endpoints for a Segment2D
  * Contains ONLY numeric data. Structural information (id, planeId, pointIds) stays in domain objects.
  */
-export class Segment2DRealization {
+export class Segment2DRealization2D {
   point1: Vector3;  // First endpoint in plane coordinates (u, v, 1)
   point2: Vector3;  // Second endpoint in plane coordinates (u, v, 1)
 
@@ -79,7 +79,7 @@ export abstract class Segment2D {
    * Returns endpoints in the projection plane's intrinsic coordinates
    * @param getPoint Function to retrieve point positions by ID
    */
-  abstract realize2D(getPoint: (id: string) => Vector3 | null): Segment2DRealization | null;
+  abstract realize2D(getPoint: (id: string) => Vector3 | null): Segment2DRealization2D | null;
 }
 
 /**
@@ -116,7 +116,7 @@ export class Segment2DByPoints extends Segment2D {
   /**
    * Calculate 2D realization - get endpoints from point realizations
    */
-  realize2D(getPoint: (id: string) => Vector3 | null): Segment2DRealization | null {
+  realize2D(getPoint: (id: string) => Vector3 | null): Segment2DRealization2D | null {
     // Get both endpoint positions
     const p1 = getPoint(this.point1Id);
     const p2 = getPoint(this.point2Id);
@@ -131,6 +131,6 @@ export class Segment2DByPoints extends Segment2D {
       return null;  // Degenerate segment
     }
 
-    return new Segment2DRealization(p1.clone(), p2.clone());
+    return new Segment2DRealization2D(p1.clone(), p2.clone());
   }
 }

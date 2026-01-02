@@ -11,7 +11,7 @@
  * 4. Guide appears on both planes associated with the reference line
  * 
  * Implementation:
- * - Creates Guide2DPerpendicularToLine with reference line ID and through-point ID
+ * - Creates Guide2DPerpendicularToLine using World factory method
  * - Records action in process tree for parametric behavior
  * - Supports undo/redo via Command Pattern
  * 
@@ -21,48 +21,39 @@
  */
 
 import { Command } from './Command';
-import { World } from '@/domain/world/World';
-import { Guide2DPerpendicularToLine } from '@/domain/world/Guide';
-import { AddElementOp } from './operations/WorldOperations';
-import type { Action } from '@/domain/processTree/Action';
+import type { World } from '@/domain/world/World';
+import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+import { AddGuide2DPerpendicularToLineOp } from './operations/AddGuideOp';
 
 export class CreateGuideCommand extends Command {
-  private guideId: string;
+  private guideId!: string;
 
   constructor(
     private referenceLineId: string,
     private throughPointId: string,
     private planeId: string,
-    private world: World
+    world: World
   ) {
-    super();
-    this.guideId = world.generateGuideId();
+    super(`Create guide perpendicular to line`, world);
   }
 
   execute(): void {
-    // Create guide entity
-    const guide = new Guide2DPerpendicularToLine(
-      this.guideId,
-      this.referenceLineId,
-      this.throughPointId,
-      this.planeId
-    );
+    // Add operation - it executes immediately and is stored for undo
+    const op = new AddGuide2DPerpendicularToLineOp(this.planeId, this.referenceLineId, this.throughPointId);
+    this.addAndExecute(op);
+    
+    // Get the generated ID from operation outputs
+    this.guideId = op.outputs.guideId;
 
     // Record action in process tree
-    const action: Action = {
-      id: `action-${Date.now()}`,
-      type: 'construct-guide',
-      inputs: [this.referenceLineId, this.throughPointId],
-      outputs: [this.guideId],
-      timestamp: Date.now(),
-    };
+    const action = createGuideAction(
+      this.guideId,
+      this.planeId,
+      this.referenceLineId,
+      this.throughPointId
+    );
 
-    // Compose operation
-    const op = new AddElementOp(guide, action, this.world);
-    this.operations.push(op);
-
-    // Commit operation
-    this.commit();
+    this.world.getProcessTree().addAction(action);
   }
 
   getGuideId(): string {
