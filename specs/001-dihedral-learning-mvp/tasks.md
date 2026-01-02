@@ -551,11 +551,12 @@ class World {
   - Plan removal after migration complete
   - Location: frontend/src/commands/operations/WorldOperations.ts
 
-- [ ] T074j: Unit tests for World factory methods
+- [X] T074j: Unit tests for World factory methods
   - Test validation: invalid planeId, missing referenced elements, parallel lines, collinear points
   - Test creation: element added to correct Map, realization cache updated
   - Test removal: element removed, caches cleaned, returned for undo, error if has dependents
   - Location: frontend/tests/unit/domain/world.spec.ts
+  - **COMPLETED**: 32 tests passing covering all factory methods
 
 - [ ] T074k: Update Command unit tests
   - Test Commands use factory methods with correct params
