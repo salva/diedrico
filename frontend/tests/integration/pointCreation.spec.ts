@@ -27,7 +27,6 @@ describe('Integration: Point Creation Full Stack', () => {
   beforeEach(() => {
     tool = new PointTool();
     world = new World();
-    world.initializeFixedElements();
     commandStack = new CommandStack();
   });
 
@@ -35,7 +34,7 @@ describe('Integration: Point Creation Full Stack', () => {
     it('should complete full flow: Tool → Command → Operation → World', () => {
       // Simulate SvgCanvas click providing context
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(100, 200, 1),
         commandStack,
         world
@@ -52,10 +51,10 @@ describe('Integration: Point Creation Full Stack', () => {
       expect(commandStack.canUndo()).toBe(true);
 
       // 4. Operation modifies World
-      const allPoints = world.getAllPoints();
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point_'));
+      const allPoints = world.getAllPoints2D();
+      const userPoints = allPoints.filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(1);
-      expect(userPoints[0].planeId).toBe('plane_H');
+      expect(userPoints[0].planeId).toBe('proj_plane_H');
 
       // Verify point data matches input
       const createdPoint = userPoints[0];
@@ -67,7 +66,7 @@ describe('Integration: Point Creation Full Stack', () => {
 
     it('should flow through all architectural layers', () => {
       const context: ToolContext = {
-        planeId: 'plane_V',
+        planeId: 'proj_plane_V',
         planeCoords: new Vector3(300, 400, 1),
         commandStack,
         world
@@ -85,14 +84,14 @@ describe('Integration: Point Creation Full Stack', () => {
       // Operation executed as part of command
 
       // Layer 4: World (domain model layer)
-      const userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(1);
-      expect(userPoints[0].planeId).toBe('plane_V');
+      expect(userPoints[0].planeId).toBe('proj_plane_V');
     });
 
     it('should maintain referential integrity through stack', () => {
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(100, 200, 1),
         commandStack,
         world
@@ -102,12 +101,12 @@ describe('Integration: Point Creation Full Stack', () => {
       const result = tool.handleClick(context);
       
       // Extract point ID from result message
-      const match = result.message?.match(/point_\d+/);
+      const match = result.message?.match(/point2d_\d+/);
       expect(match).toBeTruthy();
       const pointId = match![0];
 
       // Verify same point exists in World
-      const worldPoint = world.getPointById(pointId);
+      const worldPoint = world.getPoint2DById(pointId);
       expect(worldPoint).toBeDefined();
       expect(worldPoint?.id).toBe(pointId);
     });
@@ -116,7 +115,7 @@ describe('Integration: Point Creation Full Stack', () => {
   describe('Undo/Redo Integration', () => {
     it('should undo point creation (remove from World)', () => {
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(100, 200, 1),
         commandStack,
         world
@@ -125,20 +124,20 @@ describe('Integration: Point Creation Full Stack', () => {
       // Create point
       tool.handleClick(context);
       
-      let userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(1);
 
       // Undo via CommandStack
       commandStack.undo();
 
       // Point should be removed from World
-      userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(0);
     });
 
     it('should redo point creation (restore to World)', () => {
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(100, 200, 1),
         commandStack,
         world
@@ -146,18 +145,18 @@ describe('Integration: Point Creation Full Stack', () => {
 
       // Create point
       const result = tool.handleClick(context);
-      const match = result.message?.match(/point_\d+/);
+      const match = result.message?.match(/point2d_\d+/);
       const pointId = match![0];
 
       // Undo
       commandStack.undo();
-      expect(world.getPointById(pointId)).toBeUndefined();
+      expect(world.getPoint2DById(pointId)).toBeUndefined();
 
       // Redo via CommandStack
       commandStack.redo();
 
       // Point should be restored to World
-      const restoredPoint = world.getPointById(pointId);
+      const restoredPoint = world.getPoint2DById(pointId);
       expect(restoredPoint).toBeDefined();
       expect(restoredPoint?.id).toBe(pointId);
       expect(restoredPoint?.type).toBe('free');
@@ -165,7 +164,7 @@ describe('Integration: Point Creation Full Stack', () => {
 
     it('should handle multiple undo/redo cycles', () => {
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(100, 200, 1),
         commandStack,
         world
@@ -177,11 +176,11 @@ describe('Integration: Point Creation Full Stack', () => {
       // Multiple undo/redo cycles
       for (let i = 0; i < 3; i++) {
         commandStack.undo();
-        let userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+        let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
         expect(userPoints.length).toBe(0);
 
         commandStack.redo();
-        userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+        userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
         expect(userPoints.length).toBe(1);
       }
     });
@@ -197,49 +196,49 @@ describe('Integration: Point Creation Full Stack', () => {
       const pointIds: string[] = [];
       positions.forEach(pos => {
         const context: ToolContext = {
-          planeId: 'plane_H',
+          planeId: 'proj_plane_H',
           planeCoords: pos,
           commandStack,
           world
         };
         const result = tool.handleClick(context);
-        const match = result.message?.match(/point_\d+/);
+        const match = result.message?.match(/point2d_\d+/);
         pointIds.push(match![0]);
       });
 
-      expect(world.getAllPoints().filter(p => p.id?.startsWith('point_')).length).toBe(3);
+      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/)).length).toBe(3);
 
       // Undo in LIFO order (last created removed first)
       commandStack.undo();
-      expect(world.getPointById(pointIds[2])).toBeUndefined(); // Last created removed
-      expect(world.getPointById(pointIds[1])).toBeDefined();
-      expect(world.getPointById(pointIds[0])).toBeDefined();
+      expect(world.getPoint2DById(pointIds[2])).toBeUndefined(); // Last created removed
+      expect(world.getPoint2DById(pointIds[1])).toBeDefined();
+      expect(world.getPoint2DById(pointIds[0])).toBeDefined();
 
       commandStack.undo();
-      expect(world.getPointById(pointIds[1])).toBeUndefined();
-      expect(world.getPointById(pointIds[0])).toBeDefined();
+      expect(world.getPoint2DById(pointIds[1])).toBeUndefined();
+      expect(world.getPoint2DById(pointIds[0])).toBeDefined();
 
       commandStack.undo();
-      expect(world.getPointById(pointIds[0])).toBeUndefined();
+      expect(world.getPoint2DById(pointIds[0])).toBeUndefined();
 
       // Redo restores in reverse LIFO (FIFO)
       commandStack.redo();
-      expect(world.getPointById(pointIds[0])).toBeDefined();
-      expect(world.getPointById(pointIds[1])).toBeUndefined();
+      expect(world.getPoint2DById(pointIds[0])).toBeDefined();
+      expect(world.getPoint2DById(pointIds[1])).toBeUndefined();
 
       commandStack.redo();
-      expect(world.getPointById(pointIds[1])).toBeDefined();
-      expect(world.getPointById(pointIds[2])).toBeUndefined();
+      expect(world.getPoint2DById(pointIds[1])).toBeDefined();
+      expect(world.getPoint2DById(pointIds[2])).toBeUndefined();
 
       commandStack.redo();
-      expect(world.getPointById(pointIds[2])).toBeDefined();
+      expect(world.getPoint2DById(pointIds[2])).toBeDefined();
     });
   });
 
   describe('World State Management', () => {
     it('should maintain consistent World state after operations', () => {
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(100, 200, 1),
         commandStack,
         world
@@ -248,19 +247,19 @@ describe('Integration: Point Creation Full Stack', () => {
       // Create point
       tool.handleClick(context);
       
-      const pointsAfterCreate = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      const pointsAfterCreate = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(pointsAfterCreate.length).toBe(1);
 
       // Undo
       commandStack.undo();
       
-      const pointsAfterUndo = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      const pointsAfterUndo = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(pointsAfterUndo.length).toBe(0);
 
       // Redo
       commandStack.redo();
       
-      const pointsAfterRedo = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      const pointsAfterRedo = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(pointsAfterRedo.length).toBe(1);
     });
 
@@ -268,7 +267,7 @@ describe('Integration: Point Creation Full Stack', () => {
       // Create 3 points
       for (let i = 0; i < 3; i++) {
         const context: ToolContext = {
-          planeId: 'plane_H',
+          planeId: 'proj_plane_H',
           planeCoords: new Vector3(100 * i, 100 * i, 1),
           commandStack,
           world
@@ -276,7 +275,7 @@ describe('Integration: Point Creation Full Stack', () => {
         tool.handleClick(context);
       }
 
-      let userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(3);
 
       // Undo all
@@ -284,7 +283,7 @@ describe('Integration: Point Creation Full Stack', () => {
       commandStack.undo();
       commandStack.undo();
 
-      userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(0);
 
       // Redo all
@@ -292,7 +291,7 @@ describe('Integration: Point Creation Full Stack', () => {
       commandStack.redo();
       commandStack.redo();
 
-      userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(3);
     });
   });
@@ -314,7 +313,7 @@ describe('Integration: Point Creation Full Stack', () => {
       expect(result.message).toContain('Plane not found');
 
       // World remains unchanged
-      const userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(0);
 
       // Command stack remains empty
@@ -323,7 +322,7 @@ describe('Integration: Point Creation Full Stack', () => {
 
     it('should handle coordinate validation errors', () => {
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(NaN, 200, 1),
         commandStack,
         world
@@ -335,7 +334,7 @@ describe('Integration: Point Creation Full Stack', () => {
       expect(result.message).toContain('Invalid coordinates');
 
       // No side effects
-      const userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(0);
       expect(commandStack.canUndo()).toBe(false);
     });
@@ -344,7 +343,7 @@ describe('Integration: Point Creation Full Stack', () => {
   describe('Architecture Compliance', () => {
     it('should follow Command Pattern principles', () => {
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(100, 200, 1),
         commandStack,
         world
@@ -358,15 +357,15 @@ describe('Integration: Point Creation Full Stack', () => {
 
       // Command can be undone/redone (reversible operations)
       commandStack.undo();
-      expect(world.getAllPoints().filter(p => p.id?.startsWith('point_')).length).toBe(0);
+      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/)).length).toBe(0);
       
       commandStack.redo();
-      expect(world.getAllPoints().filter(p => p.id?.startsWith('point_')).length).toBe(1);
+      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/)).length).toBe(1);
     });
 
     it('should maintain layer separation', () => {
       const context: ToolContext = {
-        planeId: 'plane_H',
+        planeId: 'proj_plane_H',
         planeCoords: new Vector3(100, 200, 1),
         commandStack,
         world
@@ -380,7 +379,7 @@ describe('Integration: Point Creation Full Stack', () => {
       // (CommandStack holds command instances)
 
       // Domain layer: stores data
-      const userPoints = world.getAllPoints().filter(p => p.id?.startsWith('point_'));
+      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
       expect(userPoints.length).toBe(1);
 
       // Each layer communicates only with adjacent layers
@@ -392,7 +391,7 @@ describe('Integration: Point Creation Full Stack', () => {
   describe('Data Consistency', () => {
     it('should maintain consistent point data through full cycle', () => {
       const originalCoords = new Vector3(123, 456, 1);
-      const originalPlane = 'plane_V';
+      const originalPlane = 'proj_plane_V';
       
       const context: ToolContext = {
         planeId: originalPlane,
@@ -403,22 +402,22 @@ describe('Integration: Point Creation Full Stack', () => {
 
       // Create
       const result = tool.handleClick(context);
-      const match = result.message?.match(/point_\d+/);
+      const match = result.message?.match(/point2d_\d+/);
       const pointId = match![0];
 
-      const createdPoint = world.getPointById(pointId) as any;
+      const createdPoint = world.getPoint2DById(pointId) as any;
       expect(createdPoint.position.x).toBe(123);
       expect(createdPoint.position.y).toBe(456);
-      expect(createdPoint.planeId).toBe('plane_V');
+      expect(createdPoint.planeId).toBe('proj_plane_V');
 
       // Undo and redo
       commandStack.undo();
       commandStack.redo();
 
-      const restoredPoint = world.getPointById(pointId) as any;
+      const restoredPoint = world.getPoint2DById(pointId) as any;
       expect(restoredPoint.position.x).toBe(123);
       expect(restoredPoint.position.y).toBe(456);
-      expect(restoredPoint.planeId).toBe('plane_V');
+      expect(restoredPoint.planeId).toBe('proj_plane_V');
     });
   });
 });

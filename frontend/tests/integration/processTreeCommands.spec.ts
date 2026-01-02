@@ -2,6 +2,7 @@
  * Integration test: ProcessTree with Commands
  * 
  * Verifies that commands properly record actions in the process tree
+ * using World factory methods.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -21,19 +22,19 @@ describe('ProcessTree Integration', () => {
   });
 
   it('should record point creation in process tree', () => {
-    const command = new CreateFreePointCommand(new Vector3(10, 20, 1), 'plane_H', world);
+    const command = new CreateFreePointCommand(new Vector3(10, 20, 1), 'proj_plane_H', world);
     commandStack.execute(command);
 
     const actions = world.getProcessTree().getAllActions();
     expect(actions).toHaveLength(1);
     expect(actions[0].actionType).toBe('CreateFreePoint');
-    expect(actions[0].parameters.planeId).toBe('plane_H');
+    expect(actions[0].parameters.planeId).toBe('proj_plane_H');
   });
 
   it('should record line creation with dependencies in process tree', () => {
     // Create two points
-    const cmd1 = new CreateFreePointCommand(new Vector3(10, 20, 1), 'plane_H', world);
-    const cmd2 = new CreateFreePointCommand(new Vector3(30, 40, 1), 'plane_H', world);
+    const cmd1 = new CreateFreePointCommand(new Vector3(10, 20, 1), 'proj_plane_H', world);
+    const cmd2 = new CreateFreePointCommand(new Vector3(30, 40, 1), 'proj_plane_H', world);
     commandStack.execute(cmd1);
     commandStack.execute(cmd2);
 
@@ -41,7 +42,7 @@ describe('ProcessTree Integration', () => {
     const point2Id = cmd2.getPointId()!;
 
     // Create line
-    const lineCmd = new CreateLineCommand(point1Id, point2Id, 'plane_H', world);
+    const lineCmd = new CreateLineCommand(point1Id, point2Id, 'proj_plane_H', world);
     commandStack.execute(lineCmd);
 
     const actions = world.getProcessTree().getAllActions();
@@ -56,9 +57,9 @@ describe('ProcessTree Integration', () => {
 
   it('should track construction history across multiple operations', () => {
     // Create a simple construction
-    const cmd1 = new CreateFreePointCommand(new Vector3(0, 0, 1), 'plane_H', world);
-    const cmd2 = new CreateFreePointCommand(new Vector3(100, 0, 1), 'plane_H', world);
-    const cmd3 = new CreateFreePointCommand(new Vector3(0, 100, 1), 'plane_V', world);
+    const cmd1 = new CreateFreePointCommand(new Vector3(0, 0, 1), 'proj_plane_H', world);
+    const cmd2 = new CreateFreePointCommand(new Vector3(100, 0, 1), 'proj_plane_H', world);
+    const cmd3 = new CreateFreePointCommand(new Vector3(0, 100, 1), 'proj_plane_V', world);
     
     commandStack.execute(cmd1);
     commandStack.execute(cmd2);
@@ -67,7 +68,7 @@ describe('ProcessTree Integration', () => {
     const lineCmd = new CreateLineCommand(
       cmd1.getPointId()!,
       cmd2.getPointId()!,
-      'plane_H',
+      'proj_plane_H',
       world
     );
     commandStack.execute(lineCmd);
@@ -83,15 +84,15 @@ describe('ProcessTree Integration', () => {
   });
 
   it('should query actions by element dependencies', () => {
-    const cmd1 = new CreateFreePointCommand(new Vector3(10, 20, 1), 'plane_H', world);
-    const cmd2 = new CreateFreePointCommand(new Vector3(30, 40, 1), 'plane_H', world);
+    const cmd1 = new CreateFreePointCommand(new Vector3(10, 20, 1), 'proj_plane_H', world);
+    const cmd2 = new CreateFreePointCommand(new Vector3(30, 40, 1), 'proj_plane_H', world);
     commandStack.execute(cmd1);
     commandStack.execute(cmd2);
 
     const point1Id = cmd1.getPointId()!;
     const point2Id = cmd2.getPointId()!;
 
-    const lineCmd = new CreateLineCommand(point1Id, point2Id, 'plane_H', world);
+    const lineCmd = new CreateLineCommand(point1Id, point2Id, 'proj_plane_H', world);
     commandStack.execute(lineCmd);
 
     const tree = world.getProcessTree();
