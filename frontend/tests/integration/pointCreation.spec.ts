@@ -84,7 +84,7 @@ describe('Integration: Point Creation Full Stack', () => {
       // Operation executed as part of command
 
       // Layer 4: World (domain model layer)
-      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(1);
       expect(userPoints[0].planeId).toBe('proj_plane_V');
     });
@@ -124,14 +124,14 @@ describe('Integration: Point Creation Full Stack', () => {
       // Create point
       tool.handleClick(context);
       
-      let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(1);
 
       // Undo via CommandStack
       commandStack.undo();
 
       // Point should be removed from World
-      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(0);
     });
 
@@ -176,11 +176,11 @@ describe('Integration: Point Creation Full Stack', () => {
       // Multiple undo/redo cycles
       for (let i = 0; i < 3; i++) {
         commandStack.undo();
-        let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+        let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
         expect(userPoints.length).toBe(0);
 
         commandStack.redo();
-        userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+        userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
         expect(userPoints.length).toBe(1);
       }
     });
@@ -206,7 +206,7 @@ describe('Integration: Point Creation Full Stack', () => {
         pointIds.push(match![0]);
       });
 
-      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/)).length).toBe(3);
+      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/)).length).toBe(3);
 
       // Undo in LIFO order (last created removed first)
       commandStack.undo();
@@ -247,19 +247,19 @@ describe('Integration: Point Creation Full Stack', () => {
       // Create point
       tool.handleClick(context);
       
-      const pointsAfterCreate = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      const pointsAfterCreate = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(pointsAfterCreate.length).toBe(1);
 
       // Undo
       commandStack.undo();
       
-      const pointsAfterUndo = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      const pointsAfterUndo = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(pointsAfterUndo.length).toBe(0);
 
       // Redo
       commandStack.redo();
       
-      const pointsAfterRedo = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      const pointsAfterRedo = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(pointsAfterRedo.length).toBe(1);
     });
 
@@ -275,7 +275,7 @@ describe('Integration: Point Creation Full Stack', () => {
         tool.handleClick(context);
       }
 
-      let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      let userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(3);
 
       // Undo all
@@ -283,7 +283,7 @@ describe('Integration: Point Creation Full Stack', () => {
       commandStack.undo();
       commandStack.undo();
 
-      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(0);
 
       // Redo all
@@ -291,7 +291,7 @@ describe('Integration: Point Creation Full Stack', () => {
       commandStack.redo();
       commandStack.redo();
 
-      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(3);
     });
   });
@@ -313,7 +313,7 @@ describe('Integration: Point Creation Full Stack', () => {
       expect(result.message).toContain('Plane not found');
 
       // World remains unchanged
-      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(0);
 
       // Command stack remains empty
@@ -334,7 +334,7 @@ describe('Integration: Point Creation Full Stack', () => {
       expect(result.message).toContain('Invalid coordinates');
 
       // No side effects
-      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(0);
       expect(commandStack.canUndo()).toBe(false);
     });
@@ -357,10 +357,10 @@ describe('Integration: Point Creation Full Stack', () => {
 
       // Command can be undone/redone (reversible operations)
       commandStack.undo();
-      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/)).length).toBe(0);
+      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/)).length).toBe(0);
       
       commandStack.redo();
-      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/)).length).toBe(1);
+      expect(world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/)).length).toBe(1);
     });
 
     it('should maintain layer separation', () => {
@@ -379,7 +379,7 @@ describe('Integration: Point Creation Full Stack', () => {
       // (CommandStack holds command instances)
 
       // Domain layer: stores data
-      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\\d+$/));
+      const userPoints = world.getAllPoints2D().filter(p => p.id?.match(/^point2d_\d+$/));
       expect(userPoints.length).toBe(1);
 
       // Each layer communicates only with adjacent layers
