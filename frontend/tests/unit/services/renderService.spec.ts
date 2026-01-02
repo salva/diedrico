@@ -19,14 +19,14 @@ import {
   applyHoverState,
   applySelectionState
 } from '@/services/RenderService';
-import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization } from '@/domain/world/Point';
+import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization2D } from '@/domain/world/Point';
 import { Plane3D } from "@/domain/world/Plane";
 
 describe('RenderService', () => {
   describe('renderPoint', () => {
     it('should render free point as SVG circle attributes', () => {
       const point = new FreePoint2D('point_1', new Vector3(100, 50, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(100, 50, 1));
+      const realization = new Point2DRealization2D(new Vector3(100, 50, 1));
       
       const attrs = renderPoint(point, realization, 400, 400);
       
@@ -40,7 +40,7 @@ describe('RenderService', () => {
 
     it('should render derived point with different styling', () => {
       const point = new IntersectionPoint2D('point_2', 'line_1', 'circle_2', 0, "plane_H");
-      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       
       const attrs = renderPoint(point, realization);
       
@@ -50,7 +50,7 @@ describe('RenderService', () => {
 
     it('should handle negative coordinates', () => {
       const point = new FreePoint2D('test-point-1', new Vector3(-50, -30, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(-50, -30, 1));
+      const realization = new Point2DRealization2D(new Vector3(-50, -30, 1));
       
       const attrs = renderPoint(point, realization, 400, 400);
       
@@ -60,7 +60,7 @@ describe('RenderService', () => {
 
     it('should handle custom canvas origin', () => {
       const point = new FreePoint2D('test-point-2', new Vector3(10, 20, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(10, 20, 1));
+      const realization = new Point2DRealization2D(new Vector3(10, 20, 1));
       
       const attrs = renderPoint(point, realization, 200, 300);
       
@@ -70,7 +70,7 @@ describe('RenderService', () => {
 
     it('should handle point without ID', () => {
       const point = new FreePoint2D('test-point-3', new Vector3(0, 0, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       
       const attrs = renderPoint(point, realization);
       
@@ -81,7 +81,7 @@ describe('RenderService', () => {
   describe('renderPlane', () => {
     it('should render P_H plane as SVG rectangle attributes', () => {
       const planeH = Plane3D.createPH();
-      planeH.id = 'plane_H';
+      planeH.id = 'proj_plane_H';
       
       const attrs = renderPlane(planeH, 400, 400);
       
@@ -92,13 +92,13 @@ describe('RenderService', () => {
       expect(attrs.height).toBe(800);
       expect(attrs.fill).toBe('#F0F4F8');  // P_H color
       expect(attrs.opacity).toBe(0.3);
-      expect(attrs['data-element-id']).toBe('plane_H');
+      expect(attrs['data-element-id']).toBe('proj_plane_H');
       expect(attrs['data-element-type']).toBe('plane');
     });
 
     it('should render P_V plane with different color', () => {
       const planeV = Plane3D.createPV();
-      planeV.id = 'plane_V';
+      planeV.id = 'proj_plane_V';
       
       const attrs = renderPlane(planeV, 400, 400);
       
@@ -141,8 +141,8 @@ describe('RenderService', () => {
 
   describe('renderLine', () => {
     it('should render line as SVG line attributes', () => {
-      const start = { u: 0, v: 0, planeId: 'plane_H' };
-      const end = { u: 100, v: 50, planeId: 'plane_H' };
+      const start = { u: 0, v: 0, planeId: 'proj_plane_H' };
+      const end = { u: 100, v: 50, planeId: 'proj_plane_H' };
       
       const attrs = renderLine(start, end, 'line_1', undefined, 400, 400);
       
@@ -157,8 +157,8 @@ describe('RenderService', () => {
     });
 
     it('should apply custom line styling', () => {
-      const start = { u: 0, v: 0, planeId: 'plane_H' };
-      const end = { u: 100, v: 100, planeId: 'plane_H' };
+      const start = { u: 0, v: 0, planeId: 'proj_plane_H' };
+      const end = { u: 100, v: 100, planeId: 'proj_plane_H' };
       const style = {
         color: '#FF0000',
         width: 3,
@@ -173,8 +173,8 @@ describe('RenderService', () => {
     });
 
     it('should handle negative coordinates', () => {
-      const start = { u: -50, v: -30, planeId: 'plane_H' };
-      const end = { u: 50, v: 30, planeId: 'plane_H' };
+      const start = { u: -50, v: -30, planeId: 'proj_plane_H' };
+      const end = { u: 50, v: 30, planeId: 'proj_plane_H' };
       
       const attrs = renderLine(start, end, 'line_3', undefined, 400, 400);
       
@@ -185,8 +185,8 @@ describe('RenderService', () => {
     });
 
     it('should render hinge line with dashed style', () => {
-      const start = { u: -300, v: 0, planeId: 'plane_H' };
-      const end = { u: 300, v: 0, planeId: 'plane_H' };
+      const start = { u: -300, v: 0, planeId: 'proj_plane_H' };
+      const end = { u: 300, v: 0, planeId: 'proj_plane_H' };
       const style = { 
         color: '#666666', 
         width: 2, 
@@ -217,7 +217,7 @@ describe('RenderService', () => {
   describe('applyHoverState', () => {
     it('should apply hover styling to point attributes', () => {
       const point = new FreePoint2D('point_1', new Vector3(0, 0, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       const baseAttrs = renderPoint(point, realization);
       
       const hoverAttrs = applyHoverState(baseAttrs);
@@ -238,7 +238,7 @@ describe('RenderService', () => {
 
     it('should preserve other attributes', () => {
       const point = new FreePoint2D('point_1', new Vector3(50, 50, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(50, 50, 1));
+      const realization = new Point2DRealization2D(new Vector3(50, 50, 1));
       const baseAttrs = renderPoint(point, realization);
       
       const hoverAttrs = applyHoverState(baseAttrs);
@@ -253,7 +253,7 @@ describe('RenderService', () => {
   describe('applySelectionState', () => {
     it('should apply selection styling to point attributes', () => {
       const point = new FreePoint2D('point_1', new Vector3(0, 0, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       const baseAttrs = renderPoint(point, realization);
       
       const selectionAttrs = applySelectionState(baseAttrs);
@@ -275,7 +275,7 @@ describe('RenderService', () => {
 
     it('should distinguish from hover state', () => {
       const point = new FreePoint2D('test-point-4', new Vector3(0, 0, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       const baseAttrs = renderPoint(point, realization);
       
       const hoverAttrs = applyHoverState(baseAttrs);
@@ -293,7 +293,7 @@ describe('RenderService', () => {
     it('should render fixed elements using same logic as user elements', () => {
       // Origin point O - should use generic point rendering
       const originPoint = new FreePoint2D('O', new Vector3(0, 0, 1), "plane_H");
-      const realization = new Point2DRealization(new Vector3(0, 0, 1));
+      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       originPoint.label = 'Origin';
       
       const originAttrs = renderPoint(originPoint, realization);
@@ -332,12 +332,12 @@ describe('RenderService', () => {
     });
 
     it('should render hinge line using same logic as user lines', () => {
-      const hlStart = { u: -300, v: 0, planeId: 'plane_H' };
-      const hlEnd = { u: 300, v: 0, planeId: 'plane_H' };
+      const hlStart = { u: -300, v: 0, planeId: 'proj_plane_H' };
+      const hlEnd = { u: 300, v: 0, planeId: 'proj_plane_H' };
       const hlStyle = { color: '#666666', width: 2, dashArray: '8,4' };
       
-      const userStart = { u: 10, v: 20, planeId: 'plane_H' };
-      const userEnd = { u: 50, v: 60, planeId: 'plane_H' };
+      const userStart = { u: 10, v: 20, planeId: 'proj_plane_H' };
+      const userEnd = { u: 50, v: 60, planeId: 'proj_plane_H' };
       const userStyle = { color: '#FF0000', width: 2, dashArray: 'none' };
       
       const hlAttrs = renderLine(hlStart, hlEnd, 'HL_HV', hlStyle);
