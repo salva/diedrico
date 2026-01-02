@@ -2,7 +2,7 @@
  * Unit tests for Line2D classes
  * 
  * Tests:
- * - Line2DRealization parametric representation
+ * - Line2DRealization2D parametric representation
  * - Line2DByTwoPoints creation and realization
  * - Clone functionality
  * - Edge cases (degenerate lines, missing points)
@@ -13,16 +13,16 @@
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
 import {
-  Line2DRealization,
+  Line2DRealization2D,
   Line2DByTwoPoints
 } from '@/domain/world/Line';
 
-describe('Line2DRealization', () => {
+describe('Line2DRealization2D', () => {
   it('should create realization with normalized direction', () => {
     const point = new Vector3(1, 2, 1);
     const direction = new Vector3(3, 4, 0); // Length = 5
     
-    const realization = new Line2DRealization(point, direction);
+    const realization = new Line2DRealization2D(point, direction);
     
     expect(realization.point).toEqual(point);
     
@@ -38,7 +38,7 @@ describe('Line2DRealization', () => {
     const point = new Vector3(10, 20, 1);
     const direction = new Vector3(1, 0, 0); // Unit vector along x
     
-    const realization = new Line2DRealization(point, direction);
+    const realization = new Line2DRealization2D(point, direction);
     
     // At t=0, should return original point
     const p0 = realization.getPointAt(0);
@@ -63,7 +63,7 @@ describe('Line2DRealization', () => {
     const point = new Vector3(0, 0, 1);
     const direction = new Vector3(3, 4, 0); // Will be normalized to (0.6, 0.8)
     
-    const realization = new Line2DRealization(point, direction);
+    const realization = new Line2DRealization2D(point, direction);
     
     // At t=5, should move 5 units along normalized direction
     const p5 = realization.getPointAt(5);
