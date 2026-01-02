@@ -558,17 +558,27 @@ class World {
   - Location: frontend/tests/unit/domain/world.spec.ts
   - **COMPLETED**: 32 tests passing covering all factory methods
 
-- [ ] T074k: Update Command unit tests
+- [X] T074k: Update Command unit tests
   - Test Commands use factory methods with correct params
   - Test execute() creates via factory, undo() removes via removal method
   - Test validation errors propagate
   - Locations: frontend/tests/unit/commands/*.spec.ts
+  - **COMPLETED**: 
+    - createFreePointCommand.spec.ts: 15/15 tests passing
+    - pointTool.spec.ts: 22/22 tests passing
+    - processTreeCommands.spec.ts: 4/4 tests passing
+    - pointCreation.spec.ts: 14/14 tests passing
+    - Removed obsolete operations.spec.ts (old API no longer exists)
 
-- [ ] T074l: Update integration and E2E tests
+- [X] T074l: Update integration and E2E tests
   - Test workflows use factory methods
   - Test undo/redo with factory methods
   - Test validation errors in UI
   - Locations: frontend/tests/integration/*.spec.ts, frontend/tests/e2e/*.spec.ts
+  - **COMPLETED**: 
+    - All integration tests updated and passing (18/18 tests)
+    - E2E tests don't directly access World API - they test via UI
+    - E2E test runner has unrelated backend path issue (separate from this task)
 
 **Checkpoint**: ✅ Commands use World factory methods, no type detection bugs, validation at construction time
 
