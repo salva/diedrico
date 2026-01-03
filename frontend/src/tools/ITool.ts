@@ -28,6 +28,7 @@ export interface ToolContext {
   commandStack: CommandStack;  // Stack for executing commands
   world: World;             // World for validation and queries
   paper: Paper;             // Paper for spatial queries (hit testing, snapping)
+  paperToPlaneTransform: any;  // Transform matrix from paper to plane coordinates (Matrix3 | undefined)
 }
 
 /**

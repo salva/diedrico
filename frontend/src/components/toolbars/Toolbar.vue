@@ -109,6 +109,25 @@
       </svg>
       <span>Intersection</span>
     </button>
+
+    <button
+      class="tool-button"
+      :class="{ active: toolStore.isToolActive('transport') }"
+      @click="selectTool('transport')"
+      title="Transport Point Tool (T)"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <!-- Vertical guide line (dashed) -->
+        <line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2,2" />
+        <!-- Source point -->
+        <circle cx="10" cy="5" r="2" fill="currentColor" />
+        <!-- Arrow showing transport -->
+        <path d="M 10 8 L 10 14 M 7 11 L 10 14 L 13 11" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+        <!-- Transported point -->
+        <circle cx="10" cy="15" r="2" fill="currentColor" />
+      </svg>
+      <span>Transport</span>
+    </button>
   </div>
 </template>
 
@@ -142,7 +161,7 @@ const canRedo = computed(() => commandStack.canRedo());
 /**
  * Select a tool
  */
-function selectTool(tool: 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection') {
+function selectTool(tool: 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection' | 'transport') {
   console.log('Selecting tool:', tool);
   toolStore.setTool(tool);
   console.log('Tool set. Current tool:', toolStore.currentTool);

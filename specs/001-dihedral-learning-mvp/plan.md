@@ -98,6 +98,37 @@ An educational web application for learning dihedral/orthographic projection usi
 
 See [data-model.md § Realization Layer Boundary](/specs/001-dihedral-learning-mvp/data-model.md#critical-realization-layer-boundary) for detailed examples.
 
+### HingeLine/HalfHingeLine2D Architecture
+
+**Two-Level Structure for Proper Geometric Modeling**
+
+Hinge lines require a dual representation: the 3D intersection line and its 2D projections on each plane.
+
+**Architecture**:
+- **HingeLine** (3D entity): Represents the actual 3D intersection line between two projection planes
+  - Stores: id, name, plane1Id, plane2Id, optional 3D line geometry
+  - Cannot be deleted, fixed element of the system
+  - One per pair of projection planes (e.g., HL_HV between P_H and P_V)
+
+- **HalfHingeLine2D** (2D entity per plane): The 2D representation of the HL in a specific plane's (u,v) coordinates
+  - Stores: id, hingeLineId (parent reference), planeId, line2D (Line2D in plane coordinates)
+  - Each HingeLine has exactly 2 HalfHingeLine2D objects (one per plane)
+  - Owned by ProjectionPlane, not stored separately
+  - Used for both regular HL and Broken HL (BHL) representations
+
+**Rationale**:
+- **Geometric correctness**: A 3D line has different 2D projections in each plane
+- **Guide construction**: Guides are perpendicular to HalfHingeLine2D (not the 3D HingeLine) since perpendicularity is a 2D concept
+- **Hit testing**: Each plane queries only its HalfHingeLine2D objects, not filtering all HingeLines
+- **Unified infrastructure**: Same structure handles both HL (projection plane folds) and BHL (arbitrary plane intersections)
+
+**Guide Relationship**:
+- **Guide2D** (primary): Created by selecting HalfHingeLine2D + point in active plane
+- **ComplementaryGuide2D**: Automatically created in the paired plane, perpendicular to that plane's HalfHingeLine2D
+- Both guides reference their respective HalfHingeLine2D, maintaining proper geometric relationships
+
+See [data-model.md § HingeLine](/specs/001-dihedral-learning-mvp/data-model.md#domain-entity-hingeline) and [data-model.md § Guide](/specs/001-dihedral-learning-mvp/data-model.md#domain-entity-guide) for detailed specifications.
+
 ## Project Structure
 
 ### Documentation (this feature)

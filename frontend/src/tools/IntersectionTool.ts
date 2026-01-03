@@ -37,7 +37,7 @@ export class IntersectionTool extends BaseTool {
    * 2. Second click: Select second line and create intersection
    */
   handleClick(context: ToolContext): ToolResult {
-    const { planeId, planeCoords, canvasCoords, commandStack, world, paper } = context;
+    const { planeId, planeCoords, canvasCoords, commandStack, world, paper, paperToPlaneTransform } = context;
     
     // Validate coordinates
     if (!this.validateCoordinates(planeCoords)) {
@@ -55,7 +55,7 @@ export class IntersectionTool extends BaseTool {
       
       // Use Paper.hitTest() for spatial queries
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
       
       console.log('[IntersectionTool] Paper.hitTest() result for first line:', hit);
       
@@ -75,7 +75,7 @@ export class IntersectionTool extends BaseTool {
       
       // Use Paper.hitTest() to find line
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
       
       console.log('[IntersectionTool] Paper.hitTest() result for second line:', hit);
       

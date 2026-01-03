@@ -34,6 +34,10 @@
  */
 
 import { Vector3, Matrix3 } from 'three';
+import type { World } from '../world/World';
+import type { Line2DRealization2D } from '../world/Line';
+import type { Segment2DRealization2D } from '../world/Segment';
+import type { Circle2DRealization2D } from '../world/Circle';
 
 /**
  * Visual style attributes resolved and ready for rendering
@@ -52,6 +56,7 @@ export interface ResolvedStyle {
  */
 export enum RenderLayer {
   Grid = 0,           // Background grid
+  HingeLines = 5,     // Fixed hinge lines between projection planes
   Guides = 10,        // Construction guides
   Elements = 20,      // Main geometric elements
   Highlights = 30,    // Hover/selection highlights
@@ -65,6 +70,7 @@ export enum RenderLayer {
 export interface DrawingPrimitive {
   id: string;                       // Unique ID for this primitive
   sourceEntityId?: string;          // ID of domain entity that generated this primitive
+  planeId?: string;                 // Plane this element belongs to (for hit testing filter)
   layer: RenderLayer;               // Z-ordering layer
   visible: boolean;                 // Whether to render this primitive
   style: ResolvedStyle;             // Fully resolved visual attributes
@@ -291,42 +297,162 @@ export class Paper {
   /**
    * Hit test - find nearest element within snap radius
    * 
+   * ARCHITECTURAL UPDATE: This method now performs hit testing in PLANE COORDINATE SPACE
+   * rather than paper space. This is geometrically correct because:
+   * 1. Objects are defined in plane coordinates (u,v)
+   * 2. Snap radius transforms as a vector (can become elliptical with non-uniform scaling)
+   * 3. Distance calculations are accurate in the object's definition space
+   * 
+   * Transform chain: Canvas → Paper → Plane (for both position and radius vector)
+   * 
    * Uses homogeneous Vector3 coordinates for all 2D points (x, y, 1).
-   * Transforms canvas position to paper space using inverse viewport,
-   * then searches primitives for closest match within radius.
+   * Transforms canvas position through full chain to active plane space,
+   * then searches entity realizations for closest match within radius.
    * 
    * @param canvasPos - Click position in canvas coordinates (homogeneous Vector3)
    * @param snapRadiusPixels - Snap threshold in canvas pixels
+   * @param activePlaneId - ID of active plane (only elements on this plane are tested)
+   * @param paperToPlaneTransform - Transform from paper to plane coordinates
+   * @param world - World instance for accessing entity realizations
    * @returns HitResult if element found within radius, null otherwise
    */
-  hitTest(canvasPos: Vector3, snapRadiusPixels: number): HitResult | null {
+  hitTest(
+    canvasPos: Vector3,
+    snapRadiusPixels: number,
+    activePlaneId: string | undefined,
+    paperToPlaneTransform: Matrix3 | undefined,
+    world: World
+  ): HitResult | null {
+    if (!activePlaneId || !paperToPlaneTransform) {
+      // No active plane or transform - cannot perform hit testing
+      return null;
+    }
+
     // Transform canvas → paper using inverse viewport
     const paperPos = this.canvasToPaper(canvasPos);
     
-    // Transform snap radius from canvas pixels to paper space
-    const paperRadius = snapRadiusPixels / this.viewportTransform.zoom;
+    // Transform paper → plane using plane's inverse transform
+    const planePos = paperPos.clone().applyMatrix3(paperToPlaneTransform);
     
-    // Search primitives for closest within radius
+    // Transform snap radius as a VECTOR (not scalar) to handle non-uniform scaling
+    // The radius vector (snapRadiusPixels, 0, 0) in canvas space transforms through
+    // the same coordinate chain, properly accounting for scaling and rotation
+    const canvasRadiusVector = new Vector3(snapRadiusPixels, 0, 0);
+    const paperRadiusVector = canvasRadiusVector.clone().applyMatrix3(this.canvasToPaperMatrix);
+    const planeRadiusVector = paperRadiusVector.clone().applyMatrix3(paperToPlaneTransform);
+    const planeRadius = planeRadiusVector.length();
+    
+    // Search entity realizations for closest within radius
     let closestHit: HitResult | null = null;
-    let minDistance = paperRadius;
+    let minDistance = planeRadius;
     
-    for (const primitive of this.primitives.values()) {
-      if (!primitive.visible) continue;
+    // Test points (only from active plane)
+    const points = activePlaneId ? world.getPoints2DByPlane(activePlaneId) : [];
+    for (const point of points) {
       
-      const distance = this.distanceToPrimitive(paperPos, primitive);
+      const realization = world.getPoint2DRealization(point.id);
+      if (!realization) continue;
+      
+      const distance = planePos.distanceTo(realization.position);
       
       if (distance < minDistance) {
-        const snapPoint = this.getSnapPoint(primitive, paperPos);
         closestHit = {
-          elementId: primitive.sourceEntityId || primitive.id,
-          elementType: primitive.type,
-          primitiveId: primitive.id,
-          distance: distance * this.viewportTransform.zoom, // Convert to canvas pixels
-          snapPoint
+          elementId: point.id,
+          elementType: 'point',
+          primitiveId: point.id,
+          distance: distance * this.viewportTransform.zoom, // Convert to canvas pixels for consistency
+          snapPoint: realization.position.clone()  // Snap point in plane coordinates
         };
         minDistance = distance;
       }
     }
+    
+    // Test lines (includes HalfHingeLine2D on active plane)
+    const lines = activePlaneId ? world.getLines2DByPlane(activePlaneId) : [];
+    for (const line of lines) {
+      
+      const realization = world.getLine2DRealization(line.id);
+      if (!realization) continue;
+      
+      const distance = this.distanceToLineInPlaneSpace(planePos, realization);
+      
+      if (distance < minDistance) {
+        closestHit = {
+          elementId: line.id,
+          elementType: 'line',
+          primitiveId: line.id,
+          distance: distance * this.viewportTransform.zoom,
+          snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
+        };
+        minDistance = distance;
+      }
+    }
+    
+    // Test circles (only from active plane)
+    const circles = activePlaneId ? world.getCircles2DByPlane(activePlaneId) : [];
+    for (const circle of circles) {
+      
+      const realization = world.getCircle2DRealization(circle.id);
+      if (!realization) continue;
+      
+      const distance = this.distanceToCircleInPlaneSpace(planePos, realization);
+      
+      if (distance < minDistance) {
+        closestHit = {
+          elementId: circle.id,
+          elementType: 'circle',
+          primitiveId: circle.id,
+          distance: distance * this.viewportTransform.zoom,
+          snapPoint: this.snapToCircleInPlaneSpace(planePos, realization)
+        };
+        minDistance = distance;
+      }
+    }
+    
+    // Test segments (only from active plane)
+    const segments = activePlaneId ? world.getSegments2DByPlane(activePlaneId) : [];
+    for (const segment of segments) {
+      
+      const realization = world.getSegment2DRealization(segment.id);
+      if (!realization) continue;
+      
+      const distance = this.distanceToSegmentInPlaneSpace(planePos, realization);
+      
+      if (distance < minDistance) {
+        closestHit = {
+          elementId: segment.id,
+          elementType: 'segment',
+          primitiveId: segment.id,
+          distance: distance * this.viewportTransform.zoom,
+          snapPoint: this.snapToSegmentInPlaneSpace(planePos, realization)
+        };
+        minDistance = distance;
+      }
+    }
+    
+    // Test guides (always pickable - belong to both planes)
+    for (const guide of world.getAllGuides2D()) {
+      // Guides don't filter by plane - they're universal construction aids
+      
+      const realization = world.getGuide2DRealization(guide.id);
+      if (!realization) continue;
+      
+      const distance = this.distanceToLineInPlaneSpace(planePos, realization);
+      
+      if (distance < minDistance) {
+        closestHit = {
+          elementId: guide.id,
+          elementType: 'guide',
+          primitiveId: guide.id,
+          distance: distance * this.viewportTransform.zoom,
+          snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
+        };
+        minDistance = distance;
+      }
+    }
+    
+    // Test hinge lines (HalfHingeLine2D - Line2D entities with type 'half-hinge')
+    // Already included in line iteration above, no separate loop needed
     
     return closestHit;
   }
@@ -565,5 +691,109 @@ export class Paper {
    */
   get isDirty(): boolean {
     return this.dirtyPrimitiveIds.size > 0;
+  }
+
+  /**
+   * Calculate distance from a point to a line in plane space
+   * Uses plane-space realizations for accurate geometric calculations
+   * 
+   * @param planePos - Point position in plane coordinates
+   * @param lineRealization - Line geometry in plane coordinates
+   * @returns Distance in plane units
+   */
+  private distanceToLineInPlaneSpace(planePos: Vector3, lineRealization: Line2DRealization2D): number {
+    // Line in parametric form: P(t) = point + t * direction
+    // Distance from point to line is: ||pointToLine - projection|| where
+    // projection = (pointToLine · direction) * direction
+    const pointToLine = planePos.clone().sub(lineRealization.point);
+    const projection = pointToLine.dot(lineRealization.direction);
+    const closestPoint = lineRealization.point.clone().addScaledVector(lineRealization.direction, projection);
+    return planePos.distanceTo(closestPoint);
+  }
+
+  /**
+   * Get snap point on a line in plane space
+   * 
+   * @param planePos - Point position in plane coordinates
+   * @param lineRealization - Line geometry in plane coordinates
+   * @returns Closest point on line in plane coordinates
+   */
+  private snapToLineInPlaneSpace(planePos: Vector3, lineRealization: Line2DRealization2D): Vector3 {
+    const pointToLine = planePos.clone().sub(lineRealization.point);
+    const projection = pointToLine.dot(lineRealization.direction);
+    return lineRealization.point.clone().addScaledVector(lineRealization.direction, projection);
+  }
+
+  /**
+   * Calculate distance from a point to a circle in plane space
+   * 
+   * @param planePos - Point position in plane coordinates
+   * @param circleRealization - Circle geometry in plane coordinates
+   * @returns Distance to nearest point on circle in plane units
+   */
+  private distanceToCircleInPlaneSpace(planePos: Vector3, circleRealization: Circle2DRealization2D): number {
+    const centerDistance = planePos.distanceTo(circleRealization.center);
+    return Math.abs(centerDistance - circleRealization.radius);
+  }
+
+  /**
+   * Get snap point on a circle in plane space
+   * 
+   * @param planePos - Point position in plane coordinates
+   * @param circleRealization - Circle geometry in plane coordinates
+   * @returns Closest point on circle in plane coordinates
+   */
+  private snapToCircleInPlaneSpace(planePos: Vector3, circleRealization: Circle2DRealization2D): Vector3 {
+    const direction = planePos.clone().sub(circleRealization.center).normalize();
+    return circleRealization.center.clone().addScaledVector(direction, circleRealization.radius);
+  }
+
+  /**
+   * Calculate distance from a point to a segment in plane space
+   * 
+   * @param planePos - Point position in plane coordinates
+   * @param segmentRealization - Segment geometry in plane coordinates
+   * @returns Distance to nearest point on segment in plane units
+   */
+  private distanceToSegmentInPlaneSpace(planePos: Vector3, segmentRealization: Segment2DRealization2D): number {
+    // Segment is finite - need to clamp to endpoints
+    const p1 = segmentRealization.point1;
+    const p2 = segmentRealization.point2;
+    const segmentVec = p2.clone().sub(p1);
+    const pointVec = planePos.clone().sub(p1);
+    
+    const segmentLength = segmentVec.length();
+    if (segmentLength === 0) {
+      // Degenerate segment - distance to point
+      return planePos.distanceTo(p1);
+    }
+    
+    // Project onto segment and clamp to [0, 1]
+    const t = Math.max(0, Math.min(1, pointVec.dot(segmentVec) / (segmentLength * segmentLength)));
+    const closestPoint = p1.clone().addScaledVector(segmentVec, t);
+    return planePos.distanceTo(closestPoint);
+  }
+
+  /**
+   * Get snap point on a segment in plane space
+   * 
+   * @param planePos - Point position in plane coordinates
+   * @param segmentRealization - Segment geometry in plane coordinates
+   * @returns Closest point on segment in plane coordinates
+   */
+  private snapToSegmentInPlaneSpace(planePos: Vector3, segmentRealization: Segment2DRealization2D): Vector3 {
+    const p1 = segmentRealization.point1;
+    const p2 = segmentRealization.point2;
+    const segmentVec = p2.clone().sub(p1);
+    const pointVec = planePos.clone().sub(p1);
+    
+    const segmentLength = segmentVec.length();
+    if (segmentLength === 0) {
+      return p1.clone();
+    }
+    
+    // Project onto segment and clamp to [0, 1]
+    const t = Math.max(0, Math.min(1, pointVec.dot(segmentVec) / (segmentLength * segmentLength)));
+    return p1.clone().addScaledVector(segmentVec, t);
   }
 }

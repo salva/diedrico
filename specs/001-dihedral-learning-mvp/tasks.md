@@ -377,6 +377,81 @@ User clicks → SvgCanvas (coordinate conversion)
 
 ---
 
+## Phase 8.5: Active Plane Visual Emphasis & Context-Sensitive Feedback
+
+**Purpose**: Implement visual feedback for active/inactive planes and context-sensitive element highlighting  
+**Reference**: [spec.md](./spec.md#projection-planes) - FR-002 Active Plane Visual Emphasis, [ui-spec.md](./ui-spec.md#active-plane-system) - Active Plane System
+
+**Implementation Requirements**:
+- **Active Plane Visual Emphasis**: Follow [spec.md §FR-002](./spec.md#requirements) and [ui-spec.md §Active Plane System](./ui-spec.md#active-plane-system):
+  - Active plane elements: 100% opacity (full intensity)
+  - Inactive plane elements: 50% opacity + lighter colors (de-emphasized)
+  - Hinge lines: Always 100% opacity (belong to all planes)
+  - Brief transition animation (opacity fade) when changing active plane
+- **Context-Sensitive Hover Feedback**: Tools should only highlight elements they can interact with:
+  - LineTool, CircleTool, SegmentTool: Only highlight points during hover
+  - GuideTool: Highlight lines on first click, points on second click
+  - IntersectionTool: Only highlight lines during hover
+  - No tool active: Highlight all interactive elements
+- **Opacity Application**: PaperService must apply opacity based on element's plane vs active plane
+- **Filter Hit Testing**: Paper.hitTest() already returns element type, tools filter in handleClick(), but hover feedback should also respect tool context
+
+**⚠️ CRITICAL**: Active plane opacity is MANDATORY per FR-002. This affects ALL element rendering, not just new features.
+
+- [X] T052a [P] Update PaperService.resolvePointStyle() to accept activePlaneId parameter and apply 50% opacity for non-active planes
+- [X] T052b [P] Update PaperService.resolveLineStyle() to accept activePlaneId and apply opacity
+- [X] T052c [P] Update PaperService.resolveCircleStyle() to accept activePlaneId and apply opacity
+- [X] T052d [P] Update PaperService.resolveSegmentStyle() to accept activePlaneId and apply opacity
+- [X] T052e [P] Update PaperService.resolveGuideStyle() to apply 100% opacity always (guides belong to all planes)
+- [X] T052f [P] Update PaperService.resolveHingeLineStyle() to apply 100% opacity always
+- [X] T052g Update SvgCanvas.vue to pass activePlaneId to PaperService.generatePrimitives()
+- [X] T052h Add CSS transition for opacity changes (0.2s ease-in-out) in SVGRenderer
+- [X] T052i Implement context-sensitive hover filtering in SvgCanvas mousemove handler:
+  - Added planeId to DrawingPrimitive interface
+  - Updated Paper.hitTest() to filter by activePlaneId
+  - Elements on inactive planes are now non-pickable (not hoverable, not clickable)
+  - Guides and hinge lines (planeId=undefined) remain pickable on all planes
+- [X] T052j [P] Unit test for opacity application in frontend/tests/unit/services/paperService.spec.ts
+- [X] T052k [P] E2E test for active plane visual emphasis in frontend/tests/e2e/active-plane-emphasis.spec.ts
+
+**Checkpoint**: Active plane visually distinct, tools only highlight valid interaction targets
+
+---
+
+## Phase 8.6: HalfHingeLine2D Refactoring
+
+**Purpose**: Refactor hinge line architecture to properly model 2D representations per plane  
+**Reference**: [data-model.md](./data-model.md#domain-entity-hingeline) - HingeLine and HalfHingeLine2D architecture
+
+**Implementation Requirements**:
+- **Two-Level Architecture**: Per [data-model.md §HingeLine](./data-model.md#domain-entity-hingeline):
+  - **HingeLine** (3D entity): Represents the actual 3D intersection line between two projection planes
+  - **HalfHingeLine2D** (2D entity): How the HL appears in each plane's (u,v) coordinates
+  - Each HingeLine has exactly 2 HalfHingeLine2D objects (one per plane)
+- **Ownership**: HalfHingeLine2D objects belong to their projection plane, not stored separately
+- **Guide References**: Guides must reference HalfHingeLine2D (not HingeLine directly) since guides are perpendicular to the 2D representation
+- **Hit Testing**: Paper.hitTest() should iterate world.getHalfHingeLines2D(activePlaneId) not filter world.getAllHingeLines()
+- **Realization**: HalfHingeLine2D uses same realization type as Line2D (Line2DRealization2D with point + direction)
+- **Visual Rendering**: HalfHingeLine2D rendered same as current hinge lines (always 100% opacity, belong to all planes)
+
+**⚠️ CRITICAL**: This refactoring affects Guide creation workflow. Guides are now created by selecting a HalfHingeLine2D + point, not a HingeLine directly.
+
+- [ ] T053a [P] Create HalfHingeLine2D class in frontend/src/domain/world/HingeLine.ts
+- [ ] T053b [P] Add HalfHingeLine2D storage to ProjectionPlane class (each plane owns its half-hinges)
+- [ ] T053c Update HingeLine class to store only 3D metadata (id, name, plane1Id, plane2Id)
+- [ ] T053d Add getHalfHingeLines2D(planeId) method to World (returns all half-hinges for a plane)
+- [ ] T053e Update World.initializeStandardPlanes() to create HalfHingeLine2D objects for HL_HV
+- [ ] T053f Update PaperService to generate primitives from HalfHingeLine2D (not HingeLine)
+- [ ] T053g Update Paper.hitTest() to iterate world.getHalfHingeLines2D(activePlaneId)
+- [ ] T053h Update Guide2D/ComplementaryGuide2D to reference HalfHingeLine2D (halfHingeLineId field)
+- [ ] T053i Update GuideTool to select HalfHingeLine2D on first click (not HingeLine)
+- [ ] T053j [P] Unit test for HalfHingeLine2D in frontend/tests/unit/domain/hingeLine.spec.ts
+- [ ] T053k [P] Update E2E tests that reference hinge lines (guide-creation.spec.ts)
+
+**Checkpoint**: Hinge lines properly modeled as 3D entity + 2D per-plane representations, guides reference correct 2D entities
+
+---
+
 ## Phase 9: Add Process Tree
 
 **Purpose**: Track construction history  
@@ -718,23 +793,61 @@ class World {
 
 **⚠️ CRITICAL**: Read [spec.md §US4](./spec.md#us4-transport-point-via-guide-between-planes) thoroughly - point transport is fundamental dihedral operation.
 
-- [ ] T113 [P] Implement point transport calculation in frontend/src/domain/calculations/Transport.ts using geometric principles
-- [ ] T114 [P] Transport MUST use homogeneous coordinates and matrix transformations (Principle V)
-- [ ] T115 Validate that guide is perpendicular to hinge line
-- [ ] T116 Validate that source point and target plane are compatible
-- [ ] T117 Add "Transport Point" tool button to Toolbar
-- [ ] T118 [P] Create TransportPointCommand in frontend/src/commands/TransportPointCommand.ts
-- [ ] T119 Implement transport tool: select source point
-- [ ] T120 Implement transport tool: select guide
-- [ ] T121 Calculate transported point on opposite plane
-- [ ] T122 Create new point at transported location
-- [ ] T123 Record dependency: transported point depends on source + guide (ProcessTree)
-- [ ] T124 [P] Unit test for point transport calculations in frontend/tests/unit/calculations/transport.spec.ts
-- [ ] T125 [P] E2E test for point transport in frontend/tests/e2e/point-transport.spec.ts
+- [X] T113 [P] Implement point transport calculation in frontend/src/domain/calculations/Transport.ts using geometric principles
+- [X] T114 [P] Transport MUST use homogeneous coordinates and matrix transformations (Principle V)
+- [X] T115 Validate that guide is perpendicular to hinge line
+- [X] T116 Validate that source point and target plane are compatible
+- [X] T117 Add "Transport Point" tool button to Toolbar
+- [X] T118 [P] Create TransportPointCommand in frontend/src/commands/TransportPointCommand.ts
+- [X] T119 Implement transport tool: select source point
+- [X] T120 Implement transport tool: select guide
+- [X] T121 Calculate transported point on opposite plane
+- [X] T122 Create new point at transported location
+- [X] T123 Record dependency: transported point depends on source + guide (ProcessTree)
+- [X] T124 [P] Unit test for point transport calculations in frontend/tests/unit/calculations/transport.spec.ts
+- [X] T125 [P] E2E test for point transport in frontend/tests/e2e/point-transport.spec.ts
 
 **Checkpoint**: User can transport points between planes (US4 complete)
 
 **Constitution Note**: Transport calculations MUST be principle-based, working for any guide/plane combination (Principle IV), using homogeneous coordinates (Principle V)
+
+---
+
+## Phase 15.5: 3D Coordinate Display (Status Bar Enhancement)
+
+**Purpose**: Display cursor position as 3D coordinates in real-time  
+**Reference**: [ui-spec.md](./ui-spec.md#status-bar) - Status Bar Requirements
+
+**Implementation Requirements**:
+- **Coordinate Transformation Pipeline**: Implement complete transform chain per [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations):
+  1. Screen coordinates (mouse event) → SVG coordinates (viewport inverse)
+  2. SVG coordinates → Paper coordinates (viewport transform inverse)
+  3. Paper coordinates → Active plane (u,v) coordinates (ProjectionPlane.paperToPlane2D)
+  4. Plane (u,v) coordinates → 3D (x,y,z) coordinates (ProjectionPlane.planeTo3D)
+- **Status Bar Display**: Show "3D: (x, y, z)" in corner with fixed precision (2 decimal places)
+- **Performance**: Debounce updates to every 50ms to avoid excessive recalculation
+- **Out-of-Plane Handling**: Display "3D: ---" when cursor not over active plane area
+- **Homogeneous Coordinates**: Use Vector3/Vector4 throughout transformation pipeline per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system)
+
+**⚠️ CRITICAL**: This feature demonstrates the complete coordinate transformation pipeline and provides essential pedagogical feedback about the 3D geometry being constructed.
+
+- [X] T125a Create StatusBar.vue component in frontend/src/components/toolbars/StatusBar.vue
+- [X] T125b Add coordinate transformation utility in frontend/src/utils/coordinateTransform.ts:
+  - screenToSVG(screenX, screenY, svgElement): Convert mouse to SVG coords
+  - svgToPaper(svgPoint, viewport): Apply viewport transform inverse
+  - paperToPlane(paperPoint, planeId, world): Get (u,v) in plane coords
+  - planeTo3D(planePoint, planeId, world): Transform to (x,y,z) in 3D space
+- [X] T125c Implement mousemove handler in SvgCanvas that computes 3D coordinates
+- [X] T125d Add debouncing (50ms) to coordinate update to prevent performance issues
+- [X] T125e Display 3D coordinates in StatusBar with format "(x.xx, y.yy, z.zz)"
+- [X] T125f Handle out-of-plane cursor (show "---" when not over active plane)
+- [X] T125g Style StatusBar corner display (bottom-right or top-right, non-intrusive)
+- [X] T125h [P] Unit test for coordinate transformation pipeline in frontend/tests/unit/utils/coordinateTransform.spec.ts
+- [X] T125i [P] E2E test for 3D coordinate display in frontend/tests/e2e/coordinate-display.spec.ts
+
+**Checkpoint**: Real-time 3D coordinate feedback enhances spatial understanding
+
+**Constitution Note**: Coordinate transformations MUST use homogeneous coordinates (Principle V) and work for any plane configuration (Principle IV)
 
 ---
 
@@ -1181,15 +1294,17 @@ class World {
 
 ## Summary
 
-**Total Tasks**: 300  
-**Priority Tasks ([P])**: ~120 (40%)  
-**Constitution-Critical Tasks**: ~40 tasks explicitly reference constitution principles
+**Total Tasks**: 309  
+**Priority Tasks ([P])**: ~127 (41%)  
+**Constitution-Critical Tasks**: ~44 tasks explicitly reference constitution principles
 
 ### Task Distribution by Phase
 
 - Phases 1-6 (Foundation): T001-T039 (39 tasks)
-- Phases 7-13 (Basic Geometry): T040-T101 (62 tasks)
-- Phases 14-17 (Advanced Geometry): T102-T148 (47 tasks)
+- Phases 7-8.5 (Basic Geometry + Visual Feedback): T040-T052k (63 tasks)
+- Phases 9-13 (Process Tree & Geometry): T053-T101 (49 tasks)
+- Phases 14-15.5 (Advanced Geometry + 3D Coords): T102-T125i (73 tasks)
+- Phases 16-17 (More Advanced Geometry): T126-T148 (23 tasks)
 - Phases 18-22 (UI Features): T149-T200 (52 tasks)
 - Phases 23-25 (Advanced Features): T201-T241 (41 tasks)
 - Phase 26 (Persistence): T242-T261 (20 tasks)

@@ -153,46 +153,54 @@ The rendering and manipulation of world data structures MUST be performed accord
 
 **Rationale**: Hard-coding special cases for specific planes or elements creates brittleness and prevents the system from scaling to arbitrary projections. A principle-based approach ensures that auxiliary planes, custom projections, and future geometric constructions work automatically through the same mathematical foundation. This also serves the educational mission—the code itself embodies the geometric principles being taught.
 
-#### V. Homogeneous Coordinate System
+#### V. Homogeneous Coordinate System with Three.js Types
 
-All geometric data manipulations MUST be performed using homogeneous coordinates with array-based representations:
+All geometric data manipulations MUST be performed using homogeneous coordinates represented with Three.js vector and matrix types:
 
 - **Homogeneous Coordinates**: ALL geometric calculations MUST use homogeneous coordinate representation
-- **Array-Based Storage**: Points, vectors, and transformations MUST be represented as JavaScript/TypeScript arrays
+- **Three.js Vector Types**: Points, vectors, and transformations MUST use Three.js algebraic objects
 - **Consistent Convention**:
-  - 2D points: `[x, y, 1]` (w=1 for regular points)
-  - 2D vectors/directions: `[dx, dy, 0]` (w=0 to distinguish from points)
-  - 3D points: `[x, y, z, 1]` (w=1 for regular points)
-  - 3D vectors/directions: `[dx, dy, dz, 0]` (w=0 to distinguish from points)
-  - 2D transformations: `[a, b, c, d, tx, ty]` (affine 2D matrix, 6 numbers)
-  - 3D transformations: 16-element array (Matrix4, column-major order)
+  - 2D points: `Vector3(x, y, 1)` where z=1 for regular points
+  - 2D vectors/directions: `Vector3(dx, dy, 0)` where z=0 to distinguish from points
+  - 3D points: `Vector4(x, y, z, 1)` where w=1 for regular points
+  - 3D vectors/directions: `Vector4(dx, dy, dz, 0)` where w=0 to distinguish from points
+  - 2D transformations: `Matrix3` for 3×3 homogeneous transformations
+  - 3D transformations: `Matrix4` for 4×4 homogeneous transformations
+  - Custom 2D→3D: `Matrix4x3` for Vector3→Vector4 transformations
+  - Custom 3D→2D: `Matrix3x4` for Vector4→Vector3 transformations
 
 **Rules**:
-- NO separate x, y, z fields for point storage in geometric computations (use arrays)
-- ALL coordinate transformations MUST use matrix multiplication on homogeneous coordinates
-- Geometric algorithms (intersection, projection, parallel construction) MUST operate on homogeneous coordinates
-- Conversion to Cartesian coordinates (when needed for display) MUST divide by w component
-- w=1 is MANDATORY for regular geometric points (not optional or "typically")
-- w=0 is MANDATORY for direction vectors and vectors at infinity
+- ALL geometric calculations MUST use Three.js Vector3/Vector4 objects for coordinates
+- ALL coordinate transformations MUST use Three.js Matrix3/Matrix4 or custom matrix types
+- Geometric algorithms (intersection, projection, parallel construction) MUST operate on Three.js vector types
+- The z component of Vector3 is the homogeneous w coordinate for 2D (z=1 for points, z=0 for directions)
+- The w component of Vector4 is the homogeneous coordinate for 3D (w=1 for points, w=0 for directions)
+- Use non-destructive wrapper functions from `threeUtils.ts` to avoid mutating vectors
+- Conversion to Cartesian coordinates MUST divide by w component when needed
 
-**Rationale**: Homogeneous coordinates provide a unified mathematical framework that:
-- Simplifies transformations (translation, rotation, projection all use matrix multiplication)
-- Enables elegant handling of points at infinity (parallel lines, ideal points)
-- Reduces code complexity (single code path for all geometric operations)
-- Improves numerical stability in many geometric calculations
-- Aligns with computer graphics best practices (Three.js, WebGL use homogeneous coordinates)
-- Makes the code more maintainable and mathematically rigorous
+**Rationale**: Three.js types with homogeneous coordinates provide:
+- Type safety via TypeScript (compile-time error checking)
+- Single source of truth for vector algebra (avoid reimplementing operations)
+- Atomic operations (no separate x/y/z getters needed)
+- Standard library for transformations (proven, optimized implementations)
+- Seamless integration with Three.js rendering pipeline
+- Elegant handling of points at infinity (parallel lines, ideal points)
+- Unified framework for all geometric operations
+- Industry-standard approach used by WebGL and computer graphics
 
 **Examples**:
 ```typescript
-// CORRECT: Homogeneous coordinate representation
-const point2D: number[] = [100, 200, 1];           // Point at (100, 200)
-const direction2D: number[] = [1, 0, 0];           // Unit vector in X direction
-const point3D: number[] = [50, 75, 100, 1];        // 3D point at (50, 75, 100)
-const transform2D: number[] = [1, 0, 0, 1, 10, 20]; // Translation by (10, 20)
+// CORRECT: Three.js homogeneous coordinate representation
+import { Vector3, Vector4, Matrix3 } from 'three';
 
-// INCORRECT: Separate coordinate fields
-const point = { x: 100, y: 200 };                  // ❌ Not allowed in geometric calculations
+const point2D = new Vector3(100, 200, 1);           // Point at (100, 200)
+const direction2D = new Vector3(1, 0, 0);           // Unit vector in X direction
+const point3D = new Vector4(50, 75, 100, 1);        // 3D point at (50, 75, 100)
+const transform2D = new Matrix3();                   // 3×3 transformation matrix
+
+// INCORRECT: Raw arrays or plain objects
+const point = [100, 200, 1];                        // ❌ Use Vector3 instead
+const point2 = { x: 100, y: 200 };                  // ❌ Use Vector3 instead
 ```
 
 ---
@@ -291,7 +299,7 @@ The application MUST maintain clear and inviolable separation of concerns throug
 
 **Rationale**: Maintaining strict layering ensures testability, maintainability, and allows independent evolution of each layer. This is fundamental to long-term sustainability of the codebase.
 
-### II. Command Pattern (MANDATORY)
+#### II. Command Pattern (MANDATORY)
 
 All user actions and system operations MUST be implemented using the Command pattern:
 
@@ -355,46 +363,54 @@ The rendering and manipulation of world data structures MUST be performed accord
 
 **Rationale**: Hard-coding special cases for specific planes or elements creates brittleness and prevents the system from scaling to arbitrary projections. A principle-based approach ensures that auxiliary planes, custom projections, and future geometric constructions work automatically through the same mathematical foundation. This also serves the educational mission—the code itself embodies the geometric principles being taught.
 
-#### V. Homogeneous Coordinate System
+#### V. Homogeneous Coordinate System with Three.js Types
 
-All geometric data manipulations MUST be performed using homogeneous coordinates with array-based representations:
+All geometric data manipulations MUST be performed using homogeneous coordinates represented with Three.js vector and matrix types:
 
 - **Homogeneous Coordinates**: ALL geometric calculations MUST use homogeneous coordinate representation
-- **Array-Based Storage**: Points, vectors, and transformations MUST be represented as JavaScript/TypeScript arrays
+- **Three.js Vector Types**: Points, vectors, and transformations MUST use Three.js algebraic objects
 - **Consistent Convention**:
-  - 2D points: `[x, y, 1]` (w=1 for regular points)
-  - 2D vectors/directions: `[dx, dy, 0]` (w=0 to distinguish from points)
-  - 3D points: `[x, y, z, 1]` (w=1 for regular points)
-  - 3D vectors/directions: `[dx, dy, dz, 0]` (w=0 to distinguish from points)
-  - 2D transformations: `[a, b, c, d, tx, ty]` (affine 2D matrix, 6 numbers)
-  - 3D transformations: 16-element array (Matrix4, column-major order)
+  - 2D points: `Vector3(x, y, 1)` where z=1 for regular points
+  - 2D vectors/directions: `Vector3(dx, dy, 0)` where z=0 to distinguish from points
+  - 3D points: `Vector4(x, y, z, 1)` where w=1 for regular points
+  - 3D vectors/directions: `Vector4(dx, dy, dz, 0)` where w=0 to distinguish from points
+  - 2D transformations: `Matrix3` for 3×3 homogeneous transformations
+  - 3D transformations: `Matrix4` for 4×4 homogeneous transformations
+  - Custom 2D→3D: `Matrix4x3` for Vector3→Vector4 transformations
+  - Custom 3D→2D: `Matrix3x4` for Vector4→Vector3 transformations
 
 **Rules**:
-- NO separate x, y, z fields for point storage in geometric computations (use arrays)
-- ALL coordinate transformations MUST use matrix multiplication on homogeneous coordinates
-- Geometric algorithms (intersection, projection, parallel construction) MUST operate on homogeneous coordinates
-- Conversion to Cartesian coordinates (when needed for display) MUST divide by w component
-- w=1 is MANDATORY for regular geometric points (not optional or "typically")
-- w=0 is MANDATORY for direction vectors and vectors at infinity
+- ALL geometric calculations MUST use Three.js Vector3/Vector4 objects for coordinates
+- ALL coordinate transformations MUST use Three.js Matrix3/Matrix4 or custom matrix types
+- Geometric algorithms (intersection, projection, parallel construction) MUST operate on Three.js vector types
+- The z component of Vector3 is the homogeneous w coordinate for 2D (z=1 for points, z=0 for directions)
+- The w component of Vector4 is the homogeneous coordinate for 3D (w=1 for points, w=0 for directions)
+- Use non-destructive wrapper functions from `threeUtils.ts` to avoid mutating vectors
+- Conversion to Cartesian coordinates MUST divide by w component when needed
 
-**Rationale**: Homogeneous coordinates provide a unified mathematical framework that:
-- Simplifies transformations (translation, rotation, projection all use matrix multiplication)
-- Enables elegant handling of points at infinity (parallel lines, ideal points)
-- Reduces code complexity (single code path for all geometric operations)
-- Improves numerical stability in many geometric calculations
-- Aligns with computer graphics best practices (Three.js, WebGL use homogeneous coordinates)
-- Makes the code more maintainable and mathematically rigorous
+**Rationale**: Three.js types with homogeneous coordinates provide:
+- Type safety via TypeScript (compile-time error checking)
+- Single source of truth for vector algebra (avoid reimplementing operations)
+- Atomic operations (no separate x/y/z getters needed)
+- Standard library for transformations (proven, optimized implementations)
+- Seamless integration with Three.js rendering pipeline
+- Elegant handling of points at infinity (parallel lines, ideal points)
+- Unified framework for all geometric operations
+- Industry-standard approach used by WebGL and computer graphics
 
 **Examples**:
 ```typescript
-// CORRECT: Homogeneous coordinate representation
-const point2D: number[] = [100, 200, 1];           // Point at (100, 200)
-const direction2D: number[] = [1, 0, 0];           // Unit vector in X direction
-const point3D: number[] = [50, 75, 100, 1];        // 3D point at (50, 75, 100)
-const transform2D: number[] = [1, 0, 0, 1, 10, 20]; // Translation by (10, 20)
+// CORRECT: Three.js homogeneous coordinate representation
+import { Vector3, Vector4, Matrix3 } from 'three';
 
-// INCORRECT: Separate coordinate fields
-const point = { x: 100, y: 200 };                  // ❌ Not allowed in geometric calculations
+const point2D = new Vector3(100, 200, 1);           // Point at (100, 200)
+const direction2D = new Vector3(1, 0, 0);           // Unit vector in X direction
+const point3D = new Vector4(50, 75, 100, 1);        // 3D point at (50, 75, 100)
+const transform2D = new Matrix3();                   // 3×3 transformation matrix
+
+// INCORRECT: Raw arrays or plain objects
+const point = [100, 200, 1];                        // ❌ Use Vector3 instead
+const point2 = { x: 100, y: 200 };                  // ❌ Use Vector3 instead
 ```
 
 ---

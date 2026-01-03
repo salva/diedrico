@@ -13,11 +13,13 @@
  */
 
 import { Vector3, Vector4 } from 'three';
+import { applyMatrix4x3 } from '@/utils/threeUtils';
 import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization2D, Point3DRealization3D } from './Point';
 import { Line2D, Line2DByTwoPoints, Line2DRealization2D } from './Line';
 import { Segment2D, Segment2DByPoints, Segment2DRealization2D } from './Segment';
 import { Circle2D, Circle2DByCenterAndRadius, Circle2DRealization2D } from './Circle';
 import { Guide2D, Guide2DPerpendicularToLine, Guide2DRealization2D } from './Guide';
+import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D } from './Plane';
 import { ProjectionPlane, BaseProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
@@ -28,6 +30,7 @@ export class World {
   private segments: Map<string, Segment2D>;
   private circles: Map<string, Circle2D>;
   private guides: Map<string, Guide2D>;
+  private hingeLines: Map<string, HingeLine>;
   private planes: Map<string, Plane3D>;
   projectionPlanes: Map<string, ProjectionPlane>;  // 2D projection planes (public for rendering)
   
@@ -48,10 +51,6 @@ export class World {
 
   // Fixed elements (always present)
   originPoint?: Vector4;  // O at (0,0,0) in 3D space
-  hingeLineHV?: {         // HL_HV along X-axis
-    start: Vector4;
-    end: Vector4;
-  };
 
   constructor() {
     this.points = new Map();
@@ -59,6 +58,7 @@ export class World {
     this.segments = new Map();
     this.circles = new Map();
     this.guides = new Map();
+    this.hingeLines = new Map();
     this.planes = new Map();
     this.projectionPlanes = new Map();
     this.pointRealizations2D = new Map();
@@ -102,26 +102,45 @@ export class World {
     this.projectionPlanes.set('proj_plane_V', projPlaneV);
 
     // Origin projections O_H and O_V
-    // These are the 2D projections of the 3D origin point O
-    // O_H on P_H: local coordinates (0, -200) — on the hinge line
-    // O_V on P_V: local coordinates (0, 200) — on the hinge line
-    const pointOH = new FreePoint2D('O_H', new Vector3(0, -200, 1), planeH.id!);
+    // These are the 2D projections of the 3D origin point O at (0,0,0)
+    // O is at the intersection of HL_HV with the origin
+    // O_H on P_H: v=0 (where HL is), u=0 (at origin along X-axis)
+    // O_V on P_V: v=0 (where HL is), u=0 (at origin along X-axis)
+    const pointOH = new FreePoint2D('O_H', new Vector3(0, 0, 1), planeH.id!);
     pointOH.locked = true;
     this.points.set('O_H', pointOH);
 
-    const pointOV = new FreePoint2D('O_V', new Vector3(0, 200, 1), planeV.id!);
+    const pointOV = new FreePoint2D('O_V', new Vector3(0, 0, 1), planeV.id!);
     pointOV.locked = true;
     this.points.set('O_V', pointOV);
 
     // Origin point O at (0,0,0) in 3D space is defined by O_H and O_V
     this.originPoint = new Vector4(0, 0, 0, 1);
 
-    // Hinge line HL_HV along X-axis
-    // Extends from -∞ to +∞, but we'll use large finite values for rendering
-    this.hingeLineHV = {
-      start: new Vector4(-10000, 0, 0, 1),
-      end: new Vector4(10000, 0, 0, 1)
-    };
+    // Create hinge line HL_HV connecting P_H and P_V
+    const hingeLineHV = new HingeLine('HL_HV', 'HL_HV', 'proj_plane_H', 'proj_plane_V');
+    this.hingeLines.set('HL_HV', hingeLineHV);
+
+    // Create HalfHingeLine2D objects for HL_HV (one per plane)
+    // HL_HV appears at v=0 on both P_H and P_V (horizontal line)
+    // These are Line2D entities stored in World.lines
+    const halfHingeHV_onPH = new HalfHingeLine2D(
+      'half_HL_HV_on_PH',
+      'HL_HV',
+      'proj_plane_H',
+      new Vector3(0, 0, 1),      // Point at origin
+      new Vector3(1, 0, 0)       // Horizontal direction (parallel to X-axis)
+    );
+    this.lines.set(halfHingeHV_onPH.id, halfHingeHV_onPH);
+
+    const halfHingeHV_onPV = new HalfHingeLine2D(
+      'half_HL_HV_on_PV',
+      'HL_HV',
+      'proj_plane_V',
+      new Vector3(0, 0, 1),      // Point at origin
+      new Vector3(1, 0, 0)       // Horizontal direction (parallel to X-axis)
+    );
+    this.lines.set(halfHingeHV_onPV.id, halfHingeHV_onPV);
   }
 
   /**
@@ -207,11 +226,10 @@ export class World {
     }
 
     // Transform 2D plane coordinates to 3D space coordinates
-    // [x, y, z, 1] = planeTo3D * [u, v, 1]
-    const pos3D = realization2D.position.clone().applyMatrix3(planeRealization3D.planeTo3D);
-    const position3D = new Vector4(pos3D.x, pos3D.y, pos3D.z, 1);
+    // [x, y, z, w] = planeTo3D (Matrix4x3) * [u, v, 1]
+    const pos3D = applyMatrix4x3(realization2D.position, planeRealization3D.planeTo3D);
     
-    realization = new Point3DRealization3D(position3D);
+    realization = new Point3DRealization3D(pos3D);
     
     // Cache the result
     this.pointRealizations3D.set(pointId, realization);
@@ -315,6 +333,15 @@ export class World {
    */
   getAllPoints2D(): Point2D[] {
     return Array.from(this.points.values());
+  }
+
+  /**
+   * Get all points on a specific plane
+   * @param planeId Plane ID to filter by
+   * @returns Array of points on the specified plane
+   */
+  getPoints2DByPlane(planeId: string): Point2D[] {
+    return this.getAllPoints2D().filter(p => p.planeId === planeId);
   }
 
   /**
@@ -435,6 +462,15 @@ export class World {
   }
 
   /**
+   * Get all lines on a specific plane (includes HalfHingeLine2D)
+   * @param planeId Plane ID to filter by
+   * @returns Array of lines on the specified plane
+   */
+  getLines2DByPlane(planeId: string): Line2D[] {
+    return this.getAllLines2D().filter(l => l.planeId === planeId);
+  }
+
+  /**
    * Get total number of lines
    */
   getLine2DCount(): number {
@@ -486,6 +522,15 @@ export class World {
    */
   getAllSegments2D(): Segment2D[] {
     return Array.from(this.segments.values());
+  }
+
+  /**
+   * Get all segments on a specific plane
+   * @param planeId Plane ID to filter by
+   * @returns Array of segments on the specified plane
+   */
+  getSegments2DByPlane(planeId: string): Segment2D[] {
+    return this.getAllSegments2D().filter(s => s.planeId === planeId);
   }
 
   /**
@@ -574,6 +619,15 @@ export class World {
    */
   getAllCircles2D(): Circle2D[] {
     return Array.from(this.circles.values());
+  }
+
+  /**
+   * Get all circles on a specific plane
+   * @param planeId Plane ID to filter by
+   * @returns Array of circles on the specified plane
+   */
+  getCircles2DByPlane(planeId: string): Circle2D[] {
+    return this.getAllCircles2D().filter(c => c.planeId === planeId);
   }
 
   /**
@@ -1266,4 +1320,53 @@ export class World {
     
     return guide;
   }
+
+  // ========================================
+  // HingeLine Methods
+  // ========================================
+
+  /**
+   * Get a hinge line by ID
+   */
+  getHingeLineById(id: string): HingeLine | undefined {
+    return this.hingeLines.get(id);
+  }
+
+  /**
+   * Get all hinge lines
+   */
+  getAllHingeLines(): HingeLine[] {
+    return Array.from(this.hingeLines.values());
+  }
+
+  /**
+   * Get all HalfHingeLine2D for a specific projection plane
+   * Returns the 2D representations of hinge lines that belong to the specified plane.
+   * 
+   * @param planeId ID of the projection plane
+   * @returns Array of HalfHingeLine2D objects for that plane
+   */
+  getHalfHingeLines2D(planeId: string): HalfHingeLine2D[] {
+    return this.getAllLines2D()
+      .filter((line): line is HalfHingeLine2D => 
+        line.type === 'half-hinge' && line.planeId === planeId
+      );
+  }
+
+  /**
+   * Get the 2D realization of a hinge line on a specific plane
+   * @deprecated Use getLine2DRealization with HalfHingeLine2D ID instead
+   */
+  getHingeLineRealization2D(hingeLineId: string, planeId: string): Line2DRealization2D | null {
+    // Fallback: Look for HalfHingeLine2D in the plane
+    const halfHinges = this.getHalfHingeLines2D(planeId);
+    const halfHinge = halfHinges.find(hh => hh.hingeLineId === hingeLineId);
+    if (halfHinge) {
+      const result = this.getLine2DRealization(halfHinge.id);
+      return result || null;
+    }
+    
+    return null;
+  }
 }
+

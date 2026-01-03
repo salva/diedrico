@@ -37,7 +37,7 @@ export class GuideTool extends BaseTool {
    * 2. Second click: Select through-point and create guide
    */
   handleClick(context: ToolContext): ToolResult {
-    const { planeId, planeCoords, canvasCoords, commandStack, world, paper } = context;
+    const { planeId, planeCoords, canvasCoords, commandStack, world, paper, paperToPlaneTransform } = context;
     
     // Validate coordinates
     if (!this.validateCoordinates(planeCoords)) {
@@ -55,7 +55,7 @@ export class GuideTool extends BaseTool {
       
       // Use Paper.hitTest() for spatial queries
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
       
       console.log('[GuideTool] Paper.hitTest() result for reference line:', hit);
       
@@ -75,7 +75,7 @@ export class GuideTool extends BaseTool {
       
       // Use Paper.hitTest() to find existing point
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
       
       console.log('[GuideTool] Paper.hitTest() result for through-point:', hit);
       

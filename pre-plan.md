@@ -294,11 +294,3 @@
 
 ---
 
-## Phase 28: Testing & Documentation
-
-**Ensure quality and usability**
-
-- Unit tests for data model and calculations
-- E2E tests for user workflows
-- User documentation
-- Developer documentation

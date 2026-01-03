@@ -34,12 +34,12 @@ describe('Coordinate Transformation Round-Trips', () => {
       const planePos = inputService.canvasToPlaneCoordinates(
         canvasX,
         canvasY,
-        realization.paperToPlane,
+        realization.paperToPlane2D,
         viewport
       );
       
       // Reverse: Plane → Paper → Canvas → Screen
-      const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper);
+      const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper2D);
       const canvasX2 = (paperPos.x + viewport.panX) * viewport.zoom;
       const canvasY2 = (paperPos.y + viewport.panY) * viewport.zoom;
       const screenX2 = canvasX2;
@@ -71,11 +71,11 @@ describe('Coordinate Transformation Round-Trips', () => {
       testCases.forEach(({ x, y }) => {
         const planePos = inputService.canvasToPlaneCoordinates(
           x, y,
-          realization.paperToPlane,
+          realization.paperToPlane2D,
           viewport
         );
         
-        const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper);
+        const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper2D);
         const canvasX = (paperPos.x + viewport.panX) * viewport.zoom;
         const canvasY = (paperPos.y + viewport.panY) * viewport.zoom;
         
@@ -103,11 +103,11 @@ describe('Coordinate Transformation Round-Trips', () => {
       const planePos = inputService.canvasToPlaneCoordinates(
         screenX,
         screenY,
-        realization.paperToPlane,
+        realization.paperToPlane2D,
         viewport
       );
       
-      const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper);
+      const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper2D);
       const canvasX = (paperPos.x + viewport.panX) * viewport.zoom;
       const canvasY = (paperPos.y + viewport.panY) * viewport.zoom;
       
@@ -132,11 +132,11 @@ describe('Coordinate Transformation Round-Trips', () => {
         const planePos = inputService.canvasToPlaneCoordinates(
           testPoint.x,
           testPoint.y,
-          realization.paperToPlane,
+          realization.paperToPlane2D,
           viewport
         );
         
-        const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper);
+        const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper2D);
         const canvasX = (paperPos.x + viewport.panX) * viewport.zoom;
         const canvasY = (paperPos.y + viewport.panY) * viewport.zoom;
         
@@ -165,7 +165,7 @@ describe('Coordinate Transformation Round-Trips', () => {
       const planePos = inputService.canvasToPlaneCoordinates(
         canvasX,
         canvasY,
-        realization.paperToPlane,
+        realization.paperToPlane2D,
         viewport
       );
       
@@ -173,7 +173,7 @@ describe('Coordinate Transformation Round-Trips', () => {
       expect(planePos!.z).toBe(1);
       
       // Reverse transform
-      const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper);
+      const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper2D);
       expect(paperPos.z).toBe(1);
     });
     
@@ -195,11 +195,11 @@ describe('Coordinate Transformation Round-Trips', () => {
       for (let i = 0; i < 10; i++) {
         const planePos = inputService.canvasToPlaneCoordinates(
           x, y,
-          realization.paperToPlane,
+          realization.paperToPlane2D,
           viewport
         );
         
-        const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper);
+        const paperPos = planePos!.clone().applyMatrix3(realization.planeToPaper2D);
         x = (paperPos.x + viewport.panX) * viewport.zoom;
         y = (paperPos.y + viewport.panY) * viewport.zoom;
       }

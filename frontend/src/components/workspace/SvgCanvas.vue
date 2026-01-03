@@ -44,11 +44,7 @@
       </defs>
       <rect width="100%" height="100%" fill="url(#grid)" />
       
-      <!-- Reference axes (canvas center) -->
-      <line x1="0" :y1="canvasHeight / 2" :x2="canvasWidth" :y2="canvasHeight / 2" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5" />
-      <line :x1="canvasWidth / 2" y1="0" :x2="canvasWidth / 2" :y2="canvasHeight" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5" />
-      
-      <!-- Render all lines through Paper pipeline -->
+      <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
       <line
         v-for="{ primitive, attrs } in renderedLines"
         :key="primitive.id"
@@ -116,7 +112,7 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
  */
 
-import { ref, computed, onMounted, inject } from 'vue';
+import { ref, computed, watch, onMounted, inject } from 'vue';
 import { Matrix3, Vector3 } from 'three';
 import { World } from '@/domain/world/World';
 import { Paper } from '@/domain/presentation/Paper';
@@ -130,10 +126,18 @@ import { SegmentTool } from '@/tools/SegmentTool';
 import { CircleTool } from '@/tools/CircleTool';
 import { GuideTool } from '@/tools/GuideTool';
 import { IntersectionTool } from '@/tools/IntersectionTool';
+import { TransportTool } from '@/tools/TransportTool';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { useViewport } from '@/composables/useViewport';
+import { screenTo3D } from '@/utils/coordinateTransform';
 import type { ITool } from '@/tools/ITool';
+
+// Define emits
+const emit = defineEmits<{
+  'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+  'update-active-plane': [planeInfo: { id: string; name: string }];
+}>();
 
 const svgElement = ref<SVGSVGElement | null>(null);
 
@@ -182,11 +186,22 @@ const tools: Record<string, ITool> = {
   'circle': new CircleTool(),
   'guide': new GuideTool(),
   'intersection': new IntersectionTool(),
+  'transport': new TransportTool(),
   // Future tools: etc.
 };
 
 // Reactivity trigger - increment this to force re-render after World changes
 const worldVersion = ref(0);
+
+// Throttle for coordinate updates (limits update frequency)
+let lastCoordinateUpdate = 0;
+const COORDINATE_UPDATE_THROTTLE_MS = 50; // 20fps for coordinate updates
+
+// Watch active plane changes and emit to parent
+watch(activePlane, (newPlane) => {
+  const planeName = newPlane === 'proj_plane_H' ? 'P_H (Horizontal)' : 'P_V (Vertical)';
+  emit('update-active-plane', { id: newPlane, name: planeName });
+});
 
 // Update canvas dimensions based on container size
 function updateCanvasDimensions() {
@@ -211,8 +226,8 @@ onMounted(() => {
   window.addEventListener('resize', resizeHandler);
   
   console.log('World initialized');
-  console.log('Points in world:', world.getAllPoints().length);
-  console.log('Points:', world.getAllPoints().map(p => ({ id: p.id, type: p.type, planeId: p.planeId })));
+  console.log('Points in world:', world.getAllPoints2D().length);
+  console.log('Points:', world.getAllPoints2D().map(p => ({ id: p.id, type: p.type, planeId: p.planeId })));
   
   // Cleanup on unmount
   return () => {
@@ -228,10 +243,10 @@ function getPlaneTransformsForInput(): Map<string, Matrix3> {
   const realizationV = world.getProjectionPlane2DRealization('proj_plane_V');
   
   if (realizationH) {
-    transforms.set('proj_plane_H', realizationH.paperToPlane);  // paperToPlane for input
+    transforms.set('proj_plane_H', realizationH.paperToPlane2D);  // paperToPlane2D for input
   }
   if (realizationV) {
-    transforms.set('proj_plane_V', realizationV.paperToPlane);  // paperToPlane for input
+    transforms.set('proj_plane_V', realizationV.paperToPlane2D);  // paperToPlane2D for input
   }
   
   return transforms;
@@ -245,10 +260,10 @@ function getPlaneTransformsForRendering(): Map<string, Matrix3> {
   const realizationV = world.getProjectionPlane2DRealization('proj_plane_V');
   
   if (realizationH) {
-    transforms.set('proj_plane_H', realizationH.planeToPaper);  // planeToPaper for rendering
+    transforms.set('proj_plane_H', realizationH.planeToPaper2D);  // planeToPaper2D for rendering
   }
   if (realizationV) {
-    transforms.set('proj_plane_V', realizationV.planeToPaper);  // planeToPaper for rendering
+    transforms.set('proj_plane_V', realizationV.planeToPaper2D);  // planeToPaper2D for rendering
   }
   
   return transforms;
@@ -270,10 +285,19 @@ const primitives = computed(() => {
     world,
     planeTransforms,
     highlightedEntityIds,
+    activePlaneId: activePlane.value,  // FR-002: Active plane visual emphasis
   };
   
   const prims = paperService.generatePrimitives(context);
-  console.log('Generated primitives:', prims.length, prims);
+  // console.log('Generated primitives:', prims.length, prims);
+  
+  // Sort primitives by layer first, then z-index (same as Paper.getPrimitives())
+  prims.sort((a, b) => {
+    if (a.layer !== b.layer) {
+      return a.layer - b.layer;
+    }
+    return a.style.zIndex - b.style.zIndex;
+  });
   
   // Update Paper with primitives for spatial queries (hit testing)
   paper.setPrimitives(prims);
@@ -300,7 +324,7 @@ const renderedLines = computed(() => {
     .filter(p => p.type === 'line')
     .map(p => {
       const result = svgRenderer.renderPrimitive(p, viewport.value);
-      console.log('Rendering line primitive:', p, '→ SVG attrs:', result.attributes);
+      // console.log('Rendering line primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
         attrs: result.attributes
@@ -313,7 +337,7 @@ const renderedSegments = computed(() => {
     .filter(p => p.type === 'segment')
     .map(p => {
       const result = svgRenderer.renderPrimitive(p, viewport.value);
-      console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+      // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
         attrs: result.attributes
@@ -326,7 +350,7 @@ const renderedCircles = computed(() => {
     .filter(p => p.type === 'circle')
     .map(p => {
       const result = svgRenderer.renderPrimitive(p, viewport.value);
-      console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+      // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
         attrs: result.attributes
@@ -407,7 +431,8 @@ function handleCanvasClick(event: MouseEvent) {
   
   // Debug: Check what Paper.hitTest() would return for this click
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
-  const hit = paper.hitTest(canvasPos, 20);
+  const paperToPlane = planeTransforms.get(activePlane.value);
+  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);  // FR-002: Hit test in plane space
   console.log('[SvgCanvas] Paper.hitTest() result:', hit);
   console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
   
@@ -427,7 +452,8 @@ function handleCanvasClick(event: MouseEvent) {
     canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
     commandStack,
     world,
-    paper
+    paper,
+    paperToPlaneTransform: paperToPlane
   });
   
   if (result.success) {
@@ -441,8 +467,9 @@ function handleCanvasClick(event: MouseEvent) {
 }
 
 /**
- * Handle mouse movement for hover feedback
+ * Handle mouse movement for hover feedback and 3D coordinate display
  * Uses Paper.hitTest() to detect elements near cursor
+ * Computes 3D coordinates from cursor position with debouncing
  */
 function handleMouseMove(event: MouseEvent) {
   if (!svgElement.value) return;
@@ -458,9 +485,13 @@ function handleMouseMove(event: MouseEvent) {
   
   const canvasPoint = pt.matrixTransform(ctm.inverse());
   
+  // Get paperToPlane transform for active plane
+  const planeTransformsInput = getPlaneTransformsForInput();
+  const paperToPlane = planeTransformsInput.get(activePlane.value);
+  
   // Use Paper.hitTest() to find element near cursor
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
-  const hit = paper.hitTest(canvasPos, 20); // 20px snap radius
+  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world); // FR-002: Hit test in plane space
   
   // Update hover state in Paper
   paper.setHoveredElement(hit?.elementId);
@@ -468,6 +499,43 @@ function handleMouseMove(event: MouseEvent) {
   // Trigger re-render to show hover effect
   // Note: This is efficient because only the hovered primitive changes style
   worldVersion.value++;
+  
+  // Compute 3D coordinates with throttling (limits update frequency)
+  const now = Date.now();
+  if (now - lastCoordinateUpdate < COORDINATE_UPDATE_THROTTLE_MS) {
+    return; // Skip this update, too soon since last one
+  }
+  lastCoordinateUpdate = now;
+  
+  // Get viewport transform matrix
+  const viewportState = viewport.value;
+  
+  // Convert ViewportTransform to Matrix3
+  const s = 1 / viewportState.zoom;
+  const tx = -viewportState.panX;
+  const ty = -viewportState.panY;
+  const viewportMatrix = new Matrix3().set(
+    s,  0,  tx,
+    0,  s,  ty,
+    0,  0,  1
+  );
+  
+  // Compute 3D coordinates through full transformation pipeline
+  const result = screenTo3D(
+    event.clientX,
+    event.clientY,
+    svg,
+    viewportMatrix,
+    activePlane.value,
+    world
+  );
+  
+  if (result.success && result.coordinates) {
+    emit('update-3d-coordinates', result.coordinates);
+  } else {
+    // Cursor not over plane or error - emit null
+    emit('update-3d-coordinates', null);
+  }
 }
 
 </script>
@@ -522,5 +590,13 @@ function handleMouseMove(event: MouseEvent) {
   flex: 1;
   width: 100%;
   display: block;
+}
+
+/* FR-002: Smooth opacity transitions for active plane emphasis */
+.svg-canvas circle,
+.svg-canvas line,
+.svg-canvas path,
+.svg-canvas rect {
+  transition: opacity 0.2s ease-in-out;
 }
 </style>

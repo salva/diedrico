@@ -800,7 +800,7 @@ plane_coords = inverse_transform_to_canvas * (inverse_viewport_transform * [x_sc
 
 ### Domain Entity: HingeLine
 
-**Purpose**: Intersection line shared by two **projection planes** (the physical fold line); used for guide creation
+**Purpose**: 3D intersection line shared by two **projection planes** (the physical fold line); basis for guide creation
 
 **Important**: A HingeLine entity represents the fold between two **projection planes** (like P_H and P_V). It is NOT used to represent **broken hinge lines (BHLs)**—intersections between arbitrary 3D planes.
 
@@ -812,21 +812,38 @@ plane_coords = inverse_transform_to_canvas * (inverse_viewport_transform * [x_sc
 - Instead, BHL_BC appears as two separate Element2D lines (projections on planes B and C)
 - Distance transport occurs between these BHL projections (Element2D lines)
 
-**Fields**:
+**Architecture - Two-Level Structure**:
+
 ```typescript
+// 3D Entity - represents the actual 3D intersection line
 interface HingeLine {
   id: HingeLineId;                  // UUID
   name: string;                     // "HL_HV", "HL_HA1", etc.
   plane1: PlaneId;                  // Reference to first plane
   plane2: PlaneId;                  // Reference to second plane
-  line2DInPlane1: Line2D;           // Representation in plane1 coordinates
-  line2DInPlane2: Line2D;           // Representation in plane2 coordinates
+  // 3D geometry would be stored here if needed
+}
+
+// 2D Representation - how the HL appears in each projection plane
+interface HalfHingeLine2D {
+  id: string;                       // UUID
+  hingeLineId: HingeLineId;         // Reference to parent 3D HingeLine
+  planeId: PlaneId;                 // Which plane this half belongs to
+  line2D: Line2D;                   // Line representation in this plane's (u,v) coordinates
+  // Used for both regular HL and Broken HL (BHL) representations
 }
 ```
 
+**Key Insight**: Each HingeLine has **two** HalfHingeLine2D objects (one per plane). This structure:
+- Models the actual geometry: a 3D line has different 2D projections in each plane
+- Enables proper guide construction: guides are perpendicular to HalfHingeLine2D (not the 3D HL)
+- Supports both HL and BHL with the same infrastructure
+- Each projection plane "owns" its HalfHingeLine2D representation
+
 **Relationships**:
-- 1 HingeLine → 2 ProjectionPlanes
-- 1 HingeLine → N Guides (guides are perpendicular to HL)
+- 1 HingeLine → 2 HalfHingeLine2D (one per plane)
+- 1 HalfHingeLine2D → N Guides (guides are perpendicular to the half-hinge in their plane)
+- 1 ProjectionPlane → N HalfHingeLine2D (all hinges touching that plane)
 
 **Validation Rules**:
 - `plane1` and `plane2` must exist and be distinct
@@ -841,40 +858,68 @@ interface HingeLine {
 
 ### Domain Entity: Guide
 
-**Purpose**: Line perpendicular to HL/BHL used for transporting points/distances between planes
+**Purpose**: Line perpendicular to HalfHingeLine2D used for transporting points/distances between planes
 
-**Fields**:
+**Architecture - Primary and Complementary Structure**:
+
 ```typescript
-interface Guide {
+// Primary Guide - defined in the active plane
+interface Guide2D {
   id: GuideId;                      // UUID
   name: string;                     // Auto-generated "g1", "g2", etc.
-  referenceLineId: ElementId;       // Reference to HL or BHL projection (any line element)
-  sourcePoint: Point2DId;           // Point on one plane that defines guide
-  line2DInPlane1: Line2D;           // Perpendicular to reference line in plane1
-  line2DInPlane2: Line2D;           // Perpendicular to reference line in plane2
+  planeId: PlaneId;                 // The plane where this guide is defined
+  halfHingeLineId: string;          // Reference to HalfHingeLine2D in this plane
+  sourcePoint: Point2DId;           // Point on this plane that defines the guide
+  line2D: Line2D;                   // Line in this plane's (u,v) coordinates, perpendicular to half-hinge
+  complementaryGuideId?: GuideId;   // Reference to complementary guide in other plane
   visualStyle: VisualStyle;         // Inherited or overridden
+}
+
+// Complementary Guide - automatically created in the paired plane
+interface ComplementaryGuide2D {
+  id: GuideId;                      // UUID
+  name: string;                     // Same name as primary guide
+  planeId: PlaneId;                 // The OTHER plane (paired with primary)
+  halfHingeLineId: string;          // Reference to HalfHingeLine2D in this plane
+  primaryGuideId: GuideId;          // Reference to the guide that spawned this one
+  line2D: Line2D;                   // Line in this plane's (u,v) coordinates, perpendicular to half-hinge
+  visualStyle: VisualStyle;         // Same as primary guide
 }
 ```
 
+**Construction Process**:
+1. User selects a HalfHingeLine2D in the **active plane** (e.g., plane H)
+2. User picks a point P in that plane
+3. System creates Guide2D: line through P, perpendicular to the selected HalfHingeLine2D
+4. System **automatically** creates ComplementaryGuide2D in the other plane (e.g., plane V)
+5. The complementary guide is perpendicular to the corresponding HalfHingeLine2D in that plane
+6. Both guides appear simultaneously and remain geometrically linked
+
+**Key Insights**:
+- Guides are always defined relative to a **HalfHingeLine2D** (not the 3D HingeLine itself)
+- This is geometrically correct: perpendicularity is a 2D concept within each plane
+- The primary/complementary distinction captures the construction semantics:
+  - Primary = user's intentional creation
+  - Complementary = automatic geometric consequence
+- Guides always come in pairs across the two planes
+
 **Relationships**:
-- 1 Guide → 1 Element2D (reference line: HL representation or BHL projection)
-- 1 Guide → 1 Point2D (source point)
-- N Elements → 1 Guide (elements created via guide transport)
+- 1 Guide2D → 1 HalfHingeLine2D (reference in its own plane)
+- 1 Guide2D → 1 Point2D (source point in its own plane)
+- 1 Guide2D → 1 ComplementaryGuide2D (paired guide in other plane)
+- 1 ComplementaryGuide2D → 1 Guide2D (back reference to primary)
+- N Elements → 1 Guide2D | ComplementaryGuide2D (elements created via guide transport)
 
 **Validation Rules**:
-- `line2DInPlane1` and `line2DInPlane2` must be perpendicular to the reference line
-- `sourcePoint` must belong to one of the planes where the reference line exists
-- Guide belongs to **both** planes associated with the reference line
-
-**Computation**:
-- Given: Reference line (HL or BHL projection) and point P on plane1
-- Compute: Line through P perpendicular to reference line
-- Result: Guide represented in both plane1 and plane2 coordinate systems
+- `line2D` must be perpendicular to the referenced `halfHingeLineId`'s line
+- `sourcePoint` must belong to the same plane as the guide
+- Primary and complementary guides must reference HalfHingeLine2Ds from the same parent HingeLine
+- Both guides in a pair must have matching `name` and `visualStyle`
 
 **BHL Behavior**:
-- When guide is created from a BHL projection on plane1, it is **automatically transported** to plane2
+- When guide is created from a BHL's HalfHingeLine2D projection on plane1, complementary guide appears on plane2
 - This establishes immediate correspondence between the BHL projections on both planes
-- The guide update is atomic (both projections appear simultaneously)
+- The guide pair creation is atomic (both appear simultaneously)
 
 ---
 

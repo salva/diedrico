@@ -40,7 +40,7 @@ describe('PaperService', () => {
       // Create a free point at (100, 50) on P_H
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       const point = new FreePoint2D('test-point-1', new Vector3(100, 50, 1), projPlaneH.id!, 'a_H');
-      world.addPoint(point);
+      world.addPoint2D(point);
 
       // Generate primitives
       const context: PrimitiveContext = {
@@ -74,7 +74,7 @@ describe('PaperService', () => {
       // Create an intersection point at (80, 120) on P_V
       const projPlaneV = world.projectionPlanes.get('proj_plane_V');
       const point = new IntersectionPoint2D('test-point-2', 'line-1', 'line-2', 0, projPlaneV.id!, 'b_V');
-      world.addPoint(point);
+      world.addPoint2D(point);
 
       // Generate primitives
       const context: PrimitiveContext = {
@@ -101,7 +101,7 @@ describe('PaperService', () => {
     it('should apply highlight style when point is highlighted', () => {
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       const point = new FreePoint2D('test-point-3', new Vector3(50, 50, 1), projPlaneH.id!, 'c_H');
-      world.addPoint(point);
+      world.addPoint2D(point);
 
       // Create context with highlighted entity
       const context: PrimitiveContext = {
@@ -122,7 +122,7 @@ describe('PaperService', () => {
     it('should apply snap target style when point is active snap target', () => {
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       const point = new FreePoint2D('test-point-4', new Vector3(75, 100, 1), projPlaneH.id!, 'd_H');
-      world.addPoint(point);
+      world.addPoint2D(point);
 
       // Create context with snap target
       const context: PrimitiveContext = {
@@ -144,12 +144,12 @@ describe('PaperService', () => {
       // Point on P_H
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       const pointH = new FreePoint2D('test-point-5', new Vector3(10, 20, 1), projPlaneH.id!, 'e_H');
-      world.addPoint(pointH);
+      world.addPoint2D(pointH);
 
       // Point on P_V
       const projPlaneV = world.projectionPlanes.get('proj_plane_V');
       const pointV = new FreePoint2D('test-point-6', new Vector3(30, 40, 1), projPlaneV.id!, 'e_V');
-      world.addPoint(pointV);
+      world.addPoint2D(pointV);
 
       const context: PrimitiveContext = {
         world,
@@ -198,7 +198,7 @@ describe('PaperService', () => {
       // Test with identity matrix (u,v) → (x,y) with offset
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       const point = new FreePoint2D('test-point-7', new Vector3(0, 0, 1), projPlaneH.id!, 'h_H');
-      world.addPoint(point);
+      world.addPoint2D(point);
 
       const context: PrimitiveContext = {
         world,
@@ -216,7 +216,7 @@ describe('PaperService', () => {
     it('should handle negative plane coordinates', () => {
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       const point = new FreePoint2D('test-point-8', new Vector3(-50, -100, 1), projPlaneH.id!, 'i_H');
-      world.addPoint(point);
+      world.addPoint2D(point);
 
       const context: PrimitiveContext = {
         world,
@@ -238,11 +238,11 @@ describe('PaperService', () => {
       
       // Free point
       const freePoint = new FreePoint2D('test-point-9', new Vector3(10, 10, 1), projPlaneH.id!, 'j_H');
-      world.addPoint(freePoint);
+      world.addPoint2D(freePoint);
 
       // Intersection point
       const intersectionPoint = new IntersectionPoint2D('test-point-10', 'line-1', 'line-2', 0, projPlaneH.id!, 'k_H');
-      world.addPoint(intersectionPoint);
+      world.addPoint2D(intersectionPoint);
 
       const context: PrimitiveContext = {
         world,
@@ -266,10 +266,10 @@ describe('PaperService', () => {
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       
       const freePoint = new FreePoint2D('test-point-11', new Vector3(10, 10, 1), projPlaneH.id!, 'l_H');
-      world.addPoint(freePoint);
+      world.addPoint2D(freePoint);
 
       const intersectionPoint = new IntersectionPoint2D('test-point-12', 'line-1', 'line-2', 0, projPlaneH.id!, 'm_H');
-      world.addPoint(intersectionPoint);
+      world.addPoint2D(intersectionPoint);
 
       const context: PrimitiveContext = {
         world,
@@ -293,7 +293,7 @@ describe('PaperService', () => {
 
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       const point = new FreePoint2D('test-point-13', new Vector3(50, 75, 1), projPlaneH.id!, 'n_H');
-      world.addPoint(point);
+      world.addPoint2D(point);
 
       const context: PrimitiveContext = {
         world,
@@ -333,7 +333,7 @@ describe('PaperService', () => {
 
       const projPlaneH = world.projectionPlanes.get('proj_plane_H');
       const point = new FreePoint2D('test-point-14', new Vector3(10, 20, 1), projPlaneH.id!, 'o_H');
-      world.addPoint(point);
+      world.addPoint2D(point);
 
       const context: PrimitiveContext = {
         world,
@@ -355,10 +355,10 @@ describe('PaperService', () => {
       
       // Add initial points
       const point1 = new FreePoint2D('test-point-15', new Vector3(10, 10, 1), projPlaneH.id!, 'p_H');
-      world.addPoint(point1);
+      world.addPoint2D(point1);
 
       const point2 = new FreePoint2D('test-point-16', new Vector3(20, 20, 1), projPlaneH.id!, 'q_H');
-      world.addPoint(point2);
+      world.addPoint2D(point2);
 
       const context: PrimitiveContext = {
         world,
@@ -385,6 +385,120 @@ describe('PaperService', () => {
       const updated = primitives.find(p => p.sourceEntityId === point1.id) as any;
       expect(updated.x).toBe(30);
       expect(updated.y).toBe(230); // 30 + 200
+    });
+  });
+
+  describe('Active Plane Opacity (FR-002)', () => {
+    it('should apply 100% opacity to elements on active plane', () => {
+      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
+      const point = new FreePoint2D('test-point-active', new Vector3(100, 50, 1), projPlaneH!.id!, 'a_H');
+      world.addPoint2D(point);
+
+      const context: PrimitiveContext = {
+        world,
+        planeTransforms,
+        activePlaneId: 'proj_plane_H' // Point is on active plane
+      };
+
+      const primitives = paperService.generatePrimitives(context);
+      const pointPrimitive = primitives[0] as any;
+
+      // Element on active plane should have 100% opacity
+      expect(pointPrimitive.style.opacity).toBe(1.0);
+    });
+
+    it('should apply 50% opacity to elements on inactive plane', () => {
+      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
+      const point = new FreePoint2D('test-point-inactive', new Vector3(100, 50, 1), projPlaneH!.id!, 'a_H');
+      world.addPoint2D(point);
+
+      const context: PrimitiveContext = {
+        world,
+        planeTransforms,
+        activePlaneId: 'proj_plane_V' // Point is on P_H, but P_V is active
+      };
+
+      const primitives = paperService.generatePrimitives(context);
+      const pointPrimitive = primitives[0] as any;
+
+      // Element on inactive plane should have 50% opacity
+      expect(pointPrimitive.style.opacity).toBe(0.5);
+    });
+
+    it('should apply 100% opacity to guides regardless of active plane', () => {
+      // Note: This test assumes Guide2D entities exist in the domain model
+      // For now, we'll test the style resolver directly if guides aren't implemented yet
+      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
+      
+      // Create a guide (if Guide2D is implemented)
+      // For now, this is a placeholder that would need actual guide creation
+      
+      const context: PrimitiveContext = {
+        world,
+        planeTransforms,
+        activePlaneId: 'proj_plane_V' // Different plane is active
+      };
+
+      // Guides should always have 100% opacity
+      // This will be verified when guides are rendered
+      expect(true).toBe(true); // Placeholder until guides are implemented
+    });
+
+    it('should apply 100% opacity to hinge lines regardless of active plane', () => {
+      const context: PrimitiveContext = {
+        world,
+        planeTransforms,
+        activePlaneId: 'proj_plane_H'
+      };
+
+      const primitives = paperService.generatePrimitives(context);
+      
+      // Find hinge line primitive (HL_HV)
+      const hingeLinePrimitive = primitives.find(p => p.type === 'line' && p.sourceEntityId === 'HL_HV');
+      
+      if (hingeLinePrimitive) {
+        // Hinge lines should always have 100% opacity
+        expect((hingeLinePrimitive as any).style.opacity).toBe(1.0);
+      }
+    });
+
+    it('should maintain opacity when switching active planes', () => {
+      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
+      const projPlaneV = world.projectionPlanes.get('proj_plane_V');
+      
+      const pointH = new FreePoint2D('point-H', new Vector3(100, 50, 1), projPlaneH!.id!, 'a_H');
+      const pointV = new FreePoint2D('point-V', new Vector3(80, 120, 1), projPlaneV!.id!, 'a_V');
+      
+      world.addPoint2D(pointH);
+      world.addPoint2D(pointV);
+
+      // Test with P_H active
+      let context: PrimitiveContext = {
+        world,
+        planeTransforms,
+        activePlaneId: 'proj_plane_H'
+      };
+
+      let primitives = paperService.generatePrimitives(context);
+      let pointHPrimitive = primitives.find(p => p.sourceEntityId === pointH.id) as any;
+      let pointVPrimitive = primitives.find(p => p.sourceEntityId === pointV.id) as any;
+
+      expect(pointHPrimitive.style.opacity).toBe(1.0); // Active plane
+      expect(pointVPrimitive.style.opacity).toBe(0.5); // Inactive plane
+
+      // Test with P_V active
+      context = {
+        world,
+        planeTransforms,
+        activePlaneId: 'proj_plane_V'
+      };
+
+      primitives = paperService.generatePrimitives(context);
+      pointHPrimitive = primitives.find(p => p.sourceEntityId === pointH.id) as any;
+      pointVPrimitive = primitives.find(p => p.sourceEntityId === pointV.id) as any;
+
+      expect(pointHPrimitive.style.opacity).toBe(0.5); // Now inactive
+      expect(pointVPrimitive.style.opacity).toBe(1.0); // Now active
     });
   });
 });

@@ -36,7 +36,7 @@ export class CircleTool extends BaseTool {
    * 2. Second click: Calculate radius and create circle
    */
   handleClick(context: ToolContext): ToolResult {
-    const { planeId, planeCoords, canvasCoords, commandStack, world, paper } = context;
+    const { planeId, planeCoords, canvasCoords, commandStack, world, paper, paperToPlaneTransform } = context;
     
     // Validate coordinates
     if (!this.validateCoordinates(planeCoords)) {
@@ -54,7 +54,7 @@ export class CircleTool extends BaseTool {
       
       // Use Paper.hitTest() for spatial queries
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
       
       console.log('[CircleTool] Paper.hitTest() result for center:', hit);
       

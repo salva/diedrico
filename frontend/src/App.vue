@@ -8,14 +8,20 @@
 
     <!-- Main Workspace: Canvas area -->
     <main class="app-main">
-      <SvgCanvas />
+      <SvgCanvas 
+        @update-3d-coordinates="handleCoordinateUpdate"
+        @update-active-plane="handleActivePlaneUpdate"
+      />
     </main>
 
     <!-- Footer: Status bar -->
     <footer class="app-footer">
-      <div class="status-info">
-        <!-- Status information will be added in later phases -->
-      </div>
+      <StatusBar 
+        :active-plane-id="activePlaneId"
+        :active-plane-name="activePlaneName"
+        :active-tool="activeTool"
+        :coordinates3-d="coordinates3D"
+      />
     </footer>
   </div>
 </template>
@@ -33,14 +39,42 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#overall-layout-architecture
  */
 
-import { provide, onMounted, onUnmounted } from 'vue';
+import { provide, ref, onMounted, onUnmounted } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
+import StatusBar from './components/toolbars/StatusBar.vue';
 import { CommandStack } from './commands/CommandStack';
+import { useToolStore } from './stores/toolStore';
 
 // Create command stack and provide to all child components
 const commandStack = new CommandStack();
 provide('commandStack', commandStack);
+
+// Tool state
+const toolStore = useToolStore();
+const activeTool = toolStore.currentTool;
+
+// Active plane state
+const activePlaneId = ref('proj_plane_H');
+const activePlaneName = ref('P_H (Horizontal)');
+
+// 3D coordinates state
+const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
+
+/**
+ * Handle coordinate updates from canvas
+ */
+function handleCoordinateUpdate(coords: { x: number; y: number; z: number } | null) {
+  coordinates3D.value = coords;
+}
+
+/**
+ * Handle active plane changes
+ */
+function handleActivePlaneUpdate(planeInfo: { id: string; name: string }) {
+  activePlaneId.value = planeInfo.id;
+  activePlaneName.value = planeInfo.name;
+}
 
 /**
  * Handle keyboard shortcuts for undo/redo
@@ -120,16 +154,7 @@ onUnmounted(() => {
 }
 
 .app-footer {
-  padding: 0.5rem 1rem;
-  background-color: #34495e;
-  color: #ecf0f1;
-  font-size: 0.875rem;
-  border-top: 1px solid #2c3e50;
+  /* StatusBar component handles its own styling */
   flex-shrink: 0;
-}
-
-.status-info {
-  display: flex;
-  gap: 1rem;
 }
 </style>
