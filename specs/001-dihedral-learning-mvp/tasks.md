@@ -541,6 +541,180 @@ User clicks → SvgCanvas (coordinate conversion)
 
 ---
 
+## REFACTORING: Command Pattern Simplification
+
+**Purpose**: Eliminate Command subclasses, enable operation chaining pattern  
+**Priority**: HIGH - Current implementation doesn't match documented architecture
+
+**Context**: Current implementation requires Command subclasses (CreateIntersectionPointCommand, CreateFreePointCommand, etc.), but data-model.md documents a single generic Command class where tools build commands directly using operation chaining.
+
+**Current Pattern** (implemented):
+```typescript
+// Tool creates command subclass
+const cmd = new CreateIntersectionPointCommand(world, params);
+commandStack.execute(cmd);  // Calls cmd.execute() which builds operations internally
+
+// Inside command.execute():
+const op = new AddIntersectionPoint2DOp(...);
+this.addAndExecute(op);
+this.pointId = op.outputs.pointId;  // ❌ Accesses op.outputs directly
+```
+
+**Desired Pattern** (documented):
+```typescript
+// Tool builds command directly, uses return values
+const cmd = new Command("Create intersection point", world);
+const result = cmd.addAndExecute(new AddIntersectionPoint2DOp(...));
+const pointId = result.outputs.pointId;  // ✅ Uses return value
+cmd.commit();
+commandStack.push(cmd);  // No execute() call
+
+// Multi-operation example with chaining:
+const cmd = new Command("Create segment", world);
+const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
+const p1Id = p1Result.outputs.pointId;  // ← Available for next op
+const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
+const p2Id = p2Result.outputs.pointId;
+const segResult = cmd.addAndExecute(new AddSegment2DOp(planeId, p1Id, p2Id));  // ← Uses previous outputs
+cmd.commit();
+commandStack.push(cmd);
+```
+
+**Issues Identified**:
+1. **Command is abstract**: Has `abstract execute()` method forcing subclasses
+2. **Tools access op.outputs directly**: Should use `addAndExecute()` return value
+3. **CommandStack.execute() calls cmd.execute()**: Should accept pre-built commands
+4. **No operation chaining**: Current code doesn't chain outputs → args
+
+**Files Affected**:
+- Commands: Command.ts, CommandStack.ts, 6 command subclass files
+- Tools: PointTool.ts, LineTool.ts, SegmentTool.ts, CircleTool.ts, IntersectionTool.ts, GuideTool.ts
+- Operations: All *Op.ts files (verify output pattern)
+- Tests: command.spec.ts, commandStack.spec.ts, tool tests, new E2E test
+
+### Tasks
+
+**Core Architecture Changes**:
+
+- [ ] R001 Make Command concrete in frontend/src/commands/Command.ts
+  - Remove `abstract execute()` method declaration
+  - Remove abstract keyword from class
+  - Make constructor public (currently protected)
+  - Ensure addAndExecute(), commit(), rollback(), undo(), redo() work without subclasses
+
+- [ ] R002 Update CommandStack API in frontend/src/commands/CommandStack.ts
+  - Rename execute() → push() (or keep execute but remove cmd.execute() call)
+  - Method should accept pre-built Command and add to stack directly
+  - Remove cmd.execute() call - commands arrive already built
+  - Remove cmd.commit() call - tools should commit before passing
+  - Update method signature: `push(command: Command): void`
+
+- [ ] R003 Add CommandStack.push() convenience method (if execute renamed)
+  - Just calls: undoStack.push(command); redoStack = [];
+  - No execute() or commit() calls
+  - Used by tools after building command
+
+**Tool Refactoring (Simple Single-Operation Commands)**:
+
+- [ ] R004 Refactor PointTool in frontend/src/tools/PointTool.ts
+  - Remove CreateFreePointCommand import
+  - Build Command directly: `const cmd = new Command("Create free point", world);`
+  - Use return value: `const result = cmd.addAndExecute(new AddFreePoint2DOp(...));`
+  - Extract outputs: `const pointId = result.outputs.pointId;`
+  - Record ProcessTree action using pointId from outputs
+  - Commit: `cmd.commit();`
+  - Push to stack: `commandStack.push(cmd);`
+
+- [ ] R005 Refactor LineTool in frontend/src/tools/LineTool.ts
+  - Remove CreateLineCommand import
+  - Build Command directly with AddLine2DOp
+  - Use addAndExecute() return value for lineId
+  - Record ProcessTree action, commit, push
+
+- [ ] R007 Refactor CircleTool in frontend/src/tools/CircleTool.ts
+  - Remove CreateCircleCommand import
+  - Build Command directly with AddCircle2DOp
+  - Use addAndExecute() return value for circleId
+  - Record ProcessTree action, commit, push
+
+- [ ] R008 Refactor IntersectionTool in frontend/src/tools/IntersectionTool.ts
+  - Remove CreateIntersectionPointCommand import
+  - Build Command directly with AddIntersectionPoint2DOp
+  - Use addAndExecute() return value for pointId and siblingPointId
+  - Record ProcessTree action, commit, push
+
+- [ ] R009 Refactor GuideTool in frontend/src/tools/GuideTool.ts
+  - Remove CreateGuideCommand import
+  - Build Command directly with AddGuide2DOp
+  - Use addAndExecute() return value for guideId
+  - Record ProcessTree action, commit, push
+
+**Tool Refactoring (Multi-Operation with Chaining)**:
+
+- [ ] R006 Refactor SegmentTool in frontend/src/tools/SegmentTool.ts
+  - Remove CreateSegmentCommand import
+  - Build Command with THREE operations chained:
+    1. AddFreePoint2DOp → get p1Id from result.outputs.pointId
+    2. AddFreePoint2DOp → get p2Id from result.outputs.pointId
+    3. AddSegment2DOp(planeId, p1Id, p2Id) → uses IDs from previous ops
+  - Record ProcessTree action for segment (not individual points)
+  - Commit and push single atomic command
+  - This demonstrates operation chaining pattern
+
+**Cleanup (Delete Obsolete Subclasses)**:
+
+- [ ] R010 Delete frontend/src/commands/CreateFreePointCommand.ts
+- [ ] R011 Delete frontend/src/commands/CreateLineCommand.ts
+- [ ] R012 Delete frontend/src/commands/CreateSegmentCommand.ts
+- [ ] R013 Delete frontend/src/commands/CreateCircleCommand.ts
+- [ ] R014 Delete frontend/src/commands/CreateIntersectionPointCommand.ts
+- [ ] R015 Delete frontend/src/commands/CreateGuideCommand.ts
+
+**Operation Verification**:
+
+- [ ] R016 Audit all operation classes for correct output pattern
+  - Verify each has: `outputs: Record<string, any> = {};`
+  - Verify internal fields like `_pointId` for ID stability
+  - Verify apply() returns: `{ success: true, outputs: this.outputs }`
+  - Verify outputs contains all IDs/values needed by callers
+  - Files: AddFreePoint2DOp, AddIntersectionPoint2DOp, AddLine2DOp, AddSegment2DOp, AddCircle2DOp, AddGuide2DOp
+
+**Testing**:
+
+- [ ] R017 [P] Unit tests for generic Command in frontend/tests/unit/commands/command.spec.ts
+  - Test: Command is concrete (no subclass needed)
+  - Test: addAndExecute() returns OperationResult with outputs
+  - Test: Multi-operation command execution
+  - Test: Operation chaining (use outputs from op1 in op2)
+  - Test: commit(), rollback(), undo(), redo()
+  - Test: ID stability across undo/redo
+
+- [ ] R018 [P] Unit tests for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+  - Test: push() adds pre-built command to stack
+  - Test: undo() calls command.undo()
+  - Test: redo() calls command.redo()
+  - Test: canUndo(), canRedo()
+  - Test: push() clears redo stack
+
+- [ ] R019 [P] Update all tool tests in frontend/tests/unit/tools/*.spec.ts
+  - Update PointTool test to use new pattern
+  - Update LineTool test to use new pattern
+  - Update SegmentTool test to verify operation chaining
+  - Update CircleTool test to use new pattern
+  - Update IntersectionTool test to use new pattern
+  - Update GuideTool test to use new pattern
+
+- [ ] R020 [P] E2E test for operation chaining in frontend/tests/e2e/command-chaining.spec.ts
+  - Test: Create segment (3-operation command)
+  - Verify: All three elements created (2 points + segment)
+  - Test: Undo removes all three atomically
+  - Test: Redo recreates all three with same IDs
+  - Verify: Segment still references correct point IDs after redo
+
+**Checkpoint**: Single generic Command class, tools build commands directly, operation chaining works
+
+---
+
 ## Phase 9: Add Process Tree
 
 **Purpose**: Track construction history  
@@ -1489,61 +1663,3 @@ const halfHingeHV_onPV = new HalfHingeLine2D('half_HL_HV_on_PV', 'HL_HV', 'proj_
 
 ---
 
-## REFACTORING: Command Pattern Simplification
-
-### Context
-
-Current implementation requires Command subclasses (CreateIntersectionPointCommand, CreateFreePointCommand, etc.), but Command should be a single generic container. The documented pattern in data-model.md shows tools building commands directly:
-
-```typescript
-// Desired pattern (documented)
-const cmd = new Command("Create segment", world);
-const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(...));
-const p1Id = p1Result.outputs.pointId;
-const segResult = cmd.addAndExecute(new AddSegment2DOp(planeId, p1Id, ...));
-cmd.commit();
-commandStack.push(cmd);
-```
-
-Current pattern (implemented):
-```typescript
-// Tools create command subclasses
-const cmd = new CreateIntersectionPointCommand(world, params);
-commandStack.execute(cmd);  // Calls cmd.execute() internally
-```
-
-### Issues
-
-1. **Command is abstract**: Requires `abstract execute()` method, forcing subclasses
-2. **Tools access op.outputs directly**: Instead of using `addAndExecute()` return value
-3. **CommandStack.execute()**: Calls `cmd.execute()` which builds operations internally
-4. **No operation chaining**: Current code doesn't use outputs from one op to build next op
-
-### Refactoring Tasks
-
-**Phase: Command Pattern Refactoring**
-
-- [ ] R001 Make Command concrete (remove abstract execute() method) in frontend/src/commands/Command.ts
-- [ ] R002 Update CommandStack.execute() to accept pre-built Command (remove internal execute() call)
-- [ ] R003 Update CommandStack.push() method to replace execute() for pre-built commands
-- [ ] R004 Refactor PointTool: Build Command directly, use addAndExecute() return values in frontend/src/tools/PointTool.ts
-- [ ] R005 Refactor LineTool: Build Command directly in frontend/src/tools/LineTool.ts  
-- [ ] R006 Refactor SegmentTool: Build Command with operation chaining (point outputs → segment args) in frontend/src/tools/SegmentTool.ts
-- [ ] R007 Refactor CircleTool: Build Command directly in frontend/src/tools/CircleTool.ts
-- [ ] R008 Refactor IntersectionTool: Build Command directly in frontend/src/tools/IntersectionTool.ts
-- [ ] R009 Refactor GuideTool: Build Command directly in frontend/src/tools/GuideTool.ts
-- [ ] R010 Delete CreateFreePointCommand.ts (obsolete subclass)
-- [ ] R011 Delete CreateLineCommand.ts (obsolete subclass)
-- [ ] R012 Delete CreateSegmentCommand.ts (obsolete subclass)
-- [ ] R013 Delete CreateCircleCommand.ts (obsolete subclass)
-- [ ] R014 Delete CreateIntersectionPointCommand.ts (obsolete subclass)
-- [ ] R015 Delete CreateGuideCommand.ts (obsolete subclass)
-- [ ] R016 Update operation classes to expose outputs correctly (verify all use pattern: store internal _id, return outputs)
-- [ ] R017 [P] Unit tests for generic Command with operation chaining in frontend/tests/unit/commands/command.spec.ts
-- [ ] R018 [P] Unit tests for CommandStack with new push() API in frontend/tests/unit/commands/commandStack.spec.ts
-- [ ] R019 [P] Update existing tool tests to use new pattern in frontend/tests/unit/tools/*.spec.ts
-- [ ] R020 [P] E2E test for multi-operation command (segment creation) in frontend/tests/e2e/command-chaining.spec.ts
-
-**Checkpoint**: Single generic Command class, tools build commands directly using operation chaining
-
----
