@@ -3709,75 +3709,110 @@ interface UpdatePanelCollapseOp extends OperationBase {
 **Operation Execution**:
 ```typescript
 interface IOperation {
-  apply(project: Project): OperationResult;  // Apply operation, return result
-  undo(project: Project): void;              // Reverse operation (use beforeState)
-  outputs: Record<string, any>;              // Stored outputs after execution (symbolic paths or values)
+  type: string;                              // Operation type identifier
+  parameters: Record<string, any>;           // Immutable input parameters
+  outputs: Record<string, any>;              // Public outputs for other operations
+  
+  apply(world: World): OperationResult;      // Apply operation, return result
+  undo(world: World): void;                  // Reverse operation
 }
 
 interface OperationResult {
   success: boolean;
-  outputs: Record<string, any>;              // Dictionary of named outputs (symbolic paths or fixed values)
+  outputs: Record<string, any>;              // Public outputs (for chaining operations)
   error?: string;
 }
+```
 
-// Output value types
-type OutputValue = 
-  | string        // Symbolic path (e.g., "/world/elements2D/p1")
-  | number        // Numeric value (e.g., x: 100, angle: 45)
-  | boolean       // Boolean value (e.g., visible: true)
-  | null;         // Null value
+**ID Stability Pattern for Redo**:
 
-// Example outputs
-// { "elementPath": "/world/elements2D/p1", "x": 100, "y": 200 }
-// { "segmentPath": "/world/elements2D/s1", "length": 250.5 }
-// { "actionPath": "/process/subprocess/sp1/actionGroup/ag1/action/a1" }
+Operations that create elements with generated IDs must maintain **ID stability** across undo/redo cycles. This is achieved via internal state fields (not public outputs):
 
-// Example implementation
-class AddElementOperation implements IOperation {
-  outputs: Record<string, any> = {};  // Stored after execution
+```typescript
+class AddIntersectionPoint2DOp implements IOperation {
+  readonly type = 'AddIntersectionPoint2D';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};         // Public outputs (for operation chaining)
   
-  constructor(private params: AddElementOp["parameters"]) {}
+  // Internal state fields for ID stability (redo consistency)
+  private _pointId?: string;                 // Stored after first execution
+  private _siblingPointId?: string;          // Stored after first execution
   
-  apply(project: Project): OperationResult {
-    // Parse path to determine collection
-    const path = this.params.elementPath;
-    const elementData = this.params.elementData;
+  constructor(
+    private planeId: string,
+    private line1Id: string,
+    private line2Id: string,
+    private index: number
+  ) {
+    this.parameters = { planeId, line1Id, line2Id, index };
+  }
+  
+  apply(world: World): OperationResult {
+    // First execution: _pointId is undefined → World generates new ID
+    // Redo: _pointId has stored value → World reuses exact same ID
+    const result = world.addIntersectionPoint2DWithSibling(
+      this.planeId,
+      this.line1Id,
+      this.line2Id,
+      this.index,
+      this._pointId,      // undefined on first call, preserved ID on redo
+      this._siblingPointId // undefined on first call, preserved ID on redo
+    );
     
-    // Create element from data
-    const element = this.createElementFromData(elementData);
+    // Store IDs internally for redo (not public outputs)
+    this._pointId = result.primary.id;
+    this._siblingPointId = result.sibling?.id;
     
-    if (path.startsWith("/world/elements2D/")) {
-      project.world.elements2D.push(element as Element2D);
-    } else if (path.startsWith("/world/elements3D/")) {
-      project.world.elements3D.push(element as Element3D);
-    } else {
-      return { success: false, outputs: {}, error: `Invalid element path: ${path}` };
-    }
-    
-    // Build outputs dictionary with symbolic path and relevant values
-    const outputs = {
-      elementPath: this.params.elementPath,      // Symbolic path
-      elementId: element.id,                      // ID for convenience
-      elementType: element.type,                  // Type for reference
-      // Note: Coordinates not included - use Point2DRealization for computed coordinates
-      ...(element.type === "Segment2D" ? { length: this.computeLength(element) } : {})
+    // Public outputs (for operation chaining if needed)
+    this.outputs = { 
+      pointId: this._pointId,
+      siblingPointId: this._siblingPointId
     };
-    
-    // Store outputs in operation for later reference
-    this.outputs = outputs;
     
     return { 
       success: true, 
-      outputs
+      outputs: this.outputs 
     };
   }
   
-  undo(project: Project): void {
-    const path = this.params.elementPath;
-    const elementId = path.split("/").pop();  // Extract ID from path
-    
-    // Remove from world using symbolic path
-    if (path.startsWith("/world/elements2D/")) {
+  undo(world: World): void {
+    // Use stored IDs for removal
+    if (this._siblingPointId) {
+      const siblingPlaneId = this.planeId === 'proj_plane_H' ? 'proj_plane_V' : 'proj_plane_H';
+      world.removePoint2D(siblingPlaneId, this._siblingPointId);
+    }
+    if (this._pointId) {
+      world.removePoint2D(this.planeId, this._pointId);
+    }
+    // Note: IDs remain stored for potential redo
+  }
+}
+```
+
+**Key Concepts**:
+- **Internal fields** (`_pointId`, `_siblingPointId`): Optional arguments that become fixed after first execution
+- **ID stability**: Same element gets same ID across multiple undo/redo cycles
+- **World factory methods**: Accept optional ID parameter; generate new ID if undefined, reuse if provided
+- **Not public outputs**: IDs stored internally for redo consistency, optionally exposed in `outputs` for chaining
+
+**Example - ID stability across undo/redo**:
+```typescript
+// First execution
+op.apply(world);  // _pointId undefined → World generates "point_abc123"
+                  // _pointId now = "point_abc123"
+
+// Undo
+op.undo(world);   // Removes "point_abc123" from world
+                  // _pointId still = "point_abc123" (preserved)
+
+// Redo
+op.apply(world);  // _pointId = "point_abc123" → World reuses this exact ID
+                  // Element recreated with same ID
+
+// Another redo
+op.undo(world);
+op.apply(world);  // Still uses "point_abc123" - ID never changes
+```
       project.world.elements2D = project.world.elements2D.filter(e => e.id !== elementId);
     } else if (path.startsWith("/world/elements3D/")) {
       project.world.elements3D = project.world.elements3D.filter(e => e.id !== elementId);
