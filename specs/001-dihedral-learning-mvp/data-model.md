@@ -904,23 +904,59 @@ Result: Both points visible, representing same 3D position
 ```typescript
 class SiblingIntersectionPoint2D extends Point2D {
   realize(context: RealizationContext): Point2DRealization {
-    // 1. Get primary intersection point
-    const primary = context.world.getPoint2DById(this.primaryIntersectionId);
-    
-    // 2. Compute primary's 3D position
-    const primary3D = context.world.getPoint3DRealization(this.primaryIntersectionId);
-    
-    // 3. Get sibling plane's projection matrix
-    const siblingPlane = context.world.getProjectionPlane(this.planeId);
-    
-    // 4. Project 3D point onto sibling plane
-    const uvw = siblingPlane.projectPointTo2D(primary3D.position);
-    
-    // 5. Return 2D realization
-    return new Point2DRealization(new Vector3(uvw.x, uvw.y, 1));
+    // OPTIMIZED: Direct coordinate clone (see coordinate consistency constraint below)
+    const primaryRealization = context.world.getPoint2DRealization(this.primaryIntersectionId);
+    return new Point2DRealization(primaryRealization.position.clone());
   }
 }
 ```
+
+**CRITICAL: HalfHingeLine2D Coordinate Consistency Constraint**
+
+For `SiblingIntersectionPoint2D.realize2D()` to work correctly with direct coordinate cloning, both `HalfHingeLine2D` objects representing the same 3D hinge line **MUST use identical (point, direction) in their local (u,v) coordinates**.
+
+**Geometric Basis**:
+- A HingeLine in 3D is a single line shared by both projection planes
+- Each plane has its own local (u,v) coordinate system
+- For sibling points to transfer coordinates directly, both HalfHingeLine2D representations must parameterize the same 3D line identically
+
+**Current Setup (HL_HV)**:
+```typescript
+// World constructor - both HalfHingeLine2D use identical geometry
+const halfHingeHV_onPH = new HalfHingeLine2D(
+  'half_HL_HV_on_PH', 'HL_HV', 'proj_plane_H',
+  new Vector3(0, 0, 1),    // Point on hinge line
+  new Vector3(1, 0, 0)     // Direction along hinge line
+);
+
+const halfHingeHV_onPV = new HalfHingeLine2D(
+  'half_HL_HV_on_PV', 'HL_HV', 'proj_plane_V',
+  new Vector3(0, 0, 1),    // SAME point
+  new Vector3(1, 0, 0)     // SAME direction
+);
+```
+
+**Consequence**:
+- Point at parameter (u, 0, 1) on HalfHingeLine2D in P_H → same coordinates (u, 0, 1) in P_V
+- Intersection coordinates transfer directly: no 3D projection needed
+- Performance: ~3x faster than full 3D→2D projection path
+
+**MANDATORY REQUIREMENT for Future Development**:
+- If auxiliary projection planes are added
+- If additional hinge lines are created
+- If HingeLine initialization logic changes
+
+**The coordinate consistency property MUST be maintained**, otherwise:
+- `SiblingIntersectionPoint2D` will compute **incorrect positions**
+- Sibling points will not correspond to the same 3D point
+- Geometric validity breaks silently (no runtime error)
+
+**Validation Strategy** (when additional HingeLines are implemented):
+1. Add unit test verifying all HalfHingeLine2D pairs have matching point/direction
+2. Add runtime assertion in `SiblingIntersectionPoint2D.realize2D()` checking property
+3. Document constraint in HingeLine creation logic/factory methods
+
+**Reference**: See tasks.md "Future Work Requiring Clarification" section for implementation guidance.
 
 **Process Tree Recording**:
 - Primary intersection: Recorded as `CreateIntersectionPointAction` with user inputs

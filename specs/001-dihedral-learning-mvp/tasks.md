@@ -1458,3 +1458,33 @@ All 300 tasks are defined with clear deliverables and dependencies. Implementati
 
 **Tasks will be defined once design is finalized.**
 
+---
+
+## FUTURE WORK REQUIRING CLARIFICATION
+
+### Additional Hinge Lines & Coordinate Consistency
+
+**Context**: `SiblingIntersectionPoint2D.realize2D()` optimization (Phase 8.8, T055d) relies on the **HalfHingeLine2D coordinate consistency property**: both `HalfHingeLine2D` objects representing the same 3D hinge line must use identical `(point, direction)` in their local `(u,v)` coordinates.
+
+**Current Status**: Property holds for hardcoded `HL_HV` in `World` constructor:
+```typescript
+// Both use: point (0, 0, 1), direction (1, 0, 0)
+const halfHingeHV_onPH = new HalfHingeLine2D('half_HL_HV_on_PH', 'HL_HV', 'proj_plane_H', ...);
+const halfHingeHV_onPV = new HalfHingeLine2D('half_HL_HV_on_PV', 'HL_HV', 'proj_plane_V', ...);
+```
+
+**Future Requirement**: If/when auxiliary projection planes or additional hinge lines are added, creation logic **MUST maintain this geometric constraint**.
+
+**Why It Matters**:
+- Sibling points rely on coordinate correspondence: point at `(u, 0, 1)` on HHL in P_H → same `(u, 0, 1)` in P_V
+- Breaking this constraint causes sibling points to compute **incorrect positions silently**
+- No runtime error—geometric validity fails invisibly
+
+**Action Needed** (before implementing additional HingeLine creation):
+1. Add validation ensuring coordinate consistency during HingeLine setup
+2. Add unit test verifying property holds for all HingeLine instances
+3. Consider runtime assertion in `SiblingIntersectionPoint2D.realize2D()`
+
+**Reference**: See [data-model.md §HalfHingeLine2D Coordinate Consistency Constraint](./data-model.md) for detailed constraint documentation.
+
+---
