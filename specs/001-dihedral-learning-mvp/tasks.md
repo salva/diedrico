@@ -527,12 +527,12 @@ User clicks → SvgCanvas (coordinate conversion)
 - [X] T055c Update Point2D union type to include SiblingIntersectionPoint2D
 - [X] T055d Implement realize() method in SiblingIntersectionPoint2D (lookup primary, get 3D, project to plane)
 - [X] T055e Add helper method to World: addIntersectionPoint2DWithSibling() that creates both points when HHL detected
-- [ ] T055f Update CreateIntersectionPointCommand to detect HHL intersection and call addIntersectionPoint2DWithSibling()
-- [ ] T055g Update IntersectionPointTool to handle sibling creation (no UI change, automatic behavior)
-- [ ] T055h Update PaperService to render sibling points (same styling as regular intersection points)
-- [ ] T055i Implement hover highlighting for sibling pairs (hover either → both highlight)
-- [ ] T055j Add ProcessTree auxiliary action recording for sibling point creation
-- [ ] T055k Handle deletion cascading: delete primary → auto-delete sibling via dependency system
+- [X] T055f Update CreateIntersectionPointCommand to detect HHL intersection and call addIntersectionPoint2DWithSibling()
+- [X] T055g Update IntersectionPointTool to handle sibling creation (no UI change, automatic behavior)
+- [X] T055h Update PaperService to render sibling points (same styling as regular intersection points)
+- [X] T055i Implement hover highlighting for sibling pairs (hover either → both highlight)
+- [X] T055j Add ProcessTree auxiliary action recording for sibling point creation
+- [X] T055k Handle deletion cascading: delete primary → auto-delete sibling via dependency system
 - [ ] T055l [P] Unit tests for SiblingIntersectionPoint2D in frontend/tests/unit/domain/point.spec.ts
 - [ ] T055m [P] Unit tests for sibling creation logic in frontend/tests/unit/domain/hingeLine.spec.ts
 - [ ] T055n [P] E2E test for HHL intersection creating sibling points in frontend/tests/e2e/hhl-intersection.spec.ts
