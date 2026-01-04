@@ -3220,16 +3220,19 @@ interface ViewState {
 
 ### Domain Entity: Command
 
-**Purpose**: Represents a user action that can be executed and undone; operations are added and executed incrementally
+**Purpose**: Generic container for user actions; composed of one or more operations that execute incrementally
+
+**Architecture**: Single Command class (not subclasses) - the real logic is in Operation classes
 
 **Fields**:
 ```typescript
-interface Command {
-  id: CommandId;                    // UUID
-  timestamp: Date;                  // When command was created
-  description: string;              // Human-readable description (e.g., "Create segment s1")
-  operations: Operation[];          // List of operations (added incrementally as executed)
-  status: CommandStatus;            // "building" | "committed" | "undone"
+class Command {
+  readonly id: string;              // UUID
+  readonly timestamp: Date;         // When command was created
+  readonly description: string;     // Human-readable description (e.g., "Create intersection point")
+  protected operations: IOperation[]; // List of operations (stored for undo/redo)
+  protected status: CommandStatus;  // "building" | "committed" | "undone"
+  protected world: World;           // Reference to world for applying operations
 }
 
 enum CommandStatus {
@@ -3239,94 +3242,123 @@ enum CommandStatus {
 }
 ```
 
+**Core Interface**:
+```typescript
+class Command {
+  // Add and immediately execute an operation
+  // Returns operation result for accessing outputs (e.g., generated IDs)
+  addAndExecute(operation: IOperation): OperationResult;
+  
+  // Finalize command and mark as ready for undo stack
+  // Must have at least one operation
+  commit(): void;
+  
+  // Rollback all operations (used when command fails during building)
+  // Returns command to building state with no operations
+  rollback(): void;
+  
+  // Undo all operations in reverse order (for committed commands)
+  // Changes status to "undone"
+  undo(): void;
+  
+  // Redo all operations in original order (for undone commands)
+  // Changes status back to "committed"
+  redo(): void;
+}
+```
+
 **Key Concepts**:
-- **Incremental Execution**: Operations are executed immediately as they're added to the command
-- **Dependency Resolution**: Later operations can use outputs (e.g., IDs) from earlier operations
-- **Atomic Rollback**: If command fails or is undone, all operations are reversed in order
+- **Incremental Execution**: Operations execute immediately when added via `addAndExecute()`
+- **Dependency Resolution**: Later operations can use outputs (e.g., generated IDs) from earlier operations
+- **Atomic Rollback**: If any operation fails, all previous operations are reversed automatically
 - **Transaction Pattern**: Command acts like a transaction - building → committed → undone
+- **Generic Container**: Command is a single class; all domain logic is in Operation classes
+- **No Subclasses Needed**: Tools create operations directly and pass to generic Command
 
 **Execution Flow**:
 ```typescript
 // 1. Create command (status = "building")
-const cmd = new Command({ description: "Create segment s1" });
+const cmd = new Command("Create intersection point", world);
 
-// 2. Add and execute operations incrementally
-const p1 = cmd.addAndExecute(new AddElementOp({ 
-  element: { type: "FreePoint2D", position: [100, 200, 1], ... }
-}));
-// p1 now has generated ID, exists in World
+// 2. Add and execute operation incrementally
+const op = new AddIntersectionPoint2DOp(planeId, line1Id, line2Id, 0);
+const result = cmd.addAndExecute(op);
+// Operation executes immediately, point exists in World
+// result.outputs contains generated IDs: { pointId, siblingPointId? }
 
-const p2 = cmd.addAndExecute(new AddElementOp({
-  element: { type: "FreePoint2D", position: [300, 400, 1], ... }
-}));
-// p2 now has generated ID, exists in World
+// 3. Access outputs for ProcessTree recording
+const pointId = result.outputs.pointId;
+const action = createIntersectionPointAction(pointId, planeId, line1Id, line2Id, 0);
+world.getProcessTree().addAction(action);
 
-const segment = cmd.addAndExecute(new AddElementOp({
-  element: { type: "Segment2D", point1: p1.id, point2: p2.id, ... }
-}));
-// segment references p1 and p2 IDs (available from previous operations)
-
-// 3. Commit command to stack (status = "committed")
-commandStack.commit(cmd);
+// 4. Commit command to stack (status = "committed")
+cmd.commit();
+commandStack.push(cmd);
 // Now available for undo
 
-// 4. Later, user undoes
+// 5. Later, user undoes
 commandStack.undo();
-// All operations reversed in reverse order: segment removed, p2 removed, p1 removed
+// Calls cmd.undo() which reverses all operations in reverse order
 ```
 
-**Example Command**:
+**Example - Simple Single-Operation Command**:
 ```typescript
-// Creating a segment with incremental execution
-const cmd = new Command({ description: "Create segment s1" });
+// Tool creates operation and command
+const cmd = new Command("Create intersection point", world);
 
 try {
-  // Each operation executes immediately and can fail
-  const p1Result = cmd.addAndExecute(new AddElementOp({
-    element: { id: generateId(), type: "FreePoint2D", position: [100, 200, 1], ... },
-    beforeState: null
-  }));
+  // Execute operation immediately
+  const op = new AddIntersectionPoint2DOp(planeId, line1Id, line2Id, 0);
+  const result = cmd.addAndExecute(op);
   
-  const p2Result = cmd.addAndExecute(new AddElementOp({
-    element: { id: generateId(), type: "FreePoint2D", position: [300, 400, 1], ... },
-    beforeState: null
-  }));
+  // Record in ProcessTree (not part of operation)
+  const action = createIntersectionPointAction(
+    result.outputs.pointId,
+    planeId,
+    line1Id,
+    line2Id,
+    0
+  );
+  world.getProcessTree().addAction(action);
+  
+  // Finalize command
+  cmd.commit();
+  commandStack.push(cmd);
+  
+} catch (error) {
+  // Operation failed, rollback automatic
+  cmd.rollback();
+  throw error;
+}
+```
+
+**Example - Multi-Operation Command (Complex)**:
+```typescript
+// Creating a segment requires two points + segment operation
+const cmd = new Command("Create segment", world);
+
+try {
+  // Each operation executes immediately
+  const p1Op = new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1));
+  const p1Result = cmd.addAndExecute(p1Op);
+  const p1Id = p1Result.outputs.pointId;
+  
+  const p2Op = new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1));
+  const p2Result = cmd.addAndExecute(p2Op);
+  const p2Id = p2Result.outputs.pointId;
   
   // Segment operation can use IDs from previous operations
-  const segmentResult = cmd.addAndExecute(new AddElementOp({
-    element: { 
-      id: generateId(), 
-      type: "Segment2D", 
-      point1: p1Result.element.id,  // Available from previous operation
-      point2: p2Result.element.id,  // Available from previous operation
-      ... 
-    },
-    beforeState: null
-  }));
+  const segOp = new AddSegment2DOp(planeId, p1Id, p2Id);
+  const segResult = cmd.addAndExecute(segOp);
+  const segId = segResult.outputs.segmentId;
   
-  // Add action to ProcessTree
-  cmd.addAndExecute(new AddActionToGroupOp({
-    actionGroupId: currentActionGroup.id,
-    action: { 
-      id: generateId(), 
-      actionType: "CreateSegment", 
-      outputs: [p1Result.element.id, p2Result.element.id, segmentResult.element.id],
-      ...
-    },
-    position: currentActionGroup.children.length
-  }));
+  // Record in ProcessTree
+  const action = createSegmentAction(segId, planeId, p1Id, p2Id);
+  world.getProcessTree().addAction(action);
   
-  // Update dependency graph
-  cmd.addAndExecute(new AddDependencyEdgesOp({
-    edges: [
-      { from: p1Result.element.id, to: action.id },
-      { from: p2Result.element.id, to: action.id },
-      { from: action.id, to: segmentResult.element.id }
-    ]
-  }));
-  
-  // All operations succeeded, commit to stack
-  commandStack.commit(cmd);
+  // All operations succeeded, commit
+  cmd.commit();
+  commandStack.push(cmd);
   
 } catch (error) {
   // Any operation failed, rollback all executed operations
@@ -3336,20 +3368,21 @@ try {
 ```
 
 **Relationships**:
-- 1 Command → N Operations (added incrementally)
+- 1 Command → N Operations (typically 1, occasionally multiple)
 - N Commands → 1 CommandStack
 
 **Validation Rules**:
 - `operations` can be empty while status = "building"
-- `operations` must not be empty when status = "committed"
-- All operations must be valid
+- `operations` must not be empty when calling `commit()`
+- All operations must succeed (atomic execution)
 - `description` must be non-empty
 
 **State Transitions**:
 - **Created** → **Building**: Command created, operations being added
-- **Building** → **Committed**: Command.commit() finalizes and adds to stack
-- **Building** → **Rolled Back**: Command.rollback() reverses all operations (discarded)
-- **Committed** → **Undone**: CommandStack.undo() reverses all operations
+- **Building** → **Committed**: `commit()` finalizes and adds to stack
+- **Building** → **Rolled Back**: `rollback()` reverses all operations (command discarded)
+- **Committed** → **Undone**: `undo()` reverses all operations
+- **Undone** → **Committed**: `redo()` reapplies all operations
 - **Undone** → **Committed**: CommandStack.redo() reapplies all operations
 
 **Command Interface**:
