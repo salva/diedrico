@@ -3793,7 +3793,9 @@ class AddIntersectionPoint2DOp implements IOperation {
 - **Internal fields** (`_pointId`, `_siblingPointId`): Optional arguments that become fixed after first execution
 - **ID stability**: Same element gets same ID across multiple undo/redo cycles
 - **World factory methods**: Accept optional ID parameter; generate new ID if undefined, reuse if provided
-- **Not public outputs**: IDs stored internally for redo consistency, optionally exposed in `outputs` for chaining
+- **Outputs dual purpose**: 
+  1. **Operation chaining**: Returned via `OperationResult` so next operations can use generated IDs
+  2. **Redo consistency**: Stored internally so redo reuses same IDs
 
 **Example - ID stability across undo/redo**:
 ```typescript
@@ -3812,6 +3814,28 @@ op.apply(world);  // _pointId = "point_abc123" → World reuses this exact ID
 // Another redo
 op.undo(world);
 op.apply(world);  // Still uses "point_abc123" - ID never changes
+```
+
+**Example - Operation chaining using outputs**:
+```typescript
+const cmd = new Command("Create segment", world);
+
+// Op 1: Create first point
+const p1Op = new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1));
+const p1Result = cmd.addAndExecute(p1Op);
+const p1Id = p1Result.outputs.pointId;  // ← Get generated ID
+
+// Op 2: Create second point
+const p2Op = new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1));
+const p2Result = cmd.addAndExecute(p2Op);
+const p2Id = p2Result.outputs.pointId;  // ← Get generated ID
+
+// Op 3: Create segment using IDs from previous operations
+const segOp = new AddSegment2DOp(planeId, p1Id, p2Id);  // ← Uses outputs
+const segResult = cmd.addAndExecute(segOp);
+
+cmd.commit();
+// Later redo: All three operations reuse same IDs (p1Id, p2Id, segmentId)
 ```
       project.world.elements2D = project.world.elements2D.filter(e => e.id !== elementId);
     } else if (path.startsWith("/world/elements3D/")) {
