@@ -856,6 +856,92 @@ interface HalfHingeLine2D {
 
 ---
 
+### HalfHingeLine2D Intersection Sibling Behavior
+
+**Purpose**: When an element intersects with a HalfHingeLine2D, automatically create the corresponding point on the sibling plane to maintain geometric consistency.
+
+**Geometric Rationale**:
+- HalfHingeLine2D represents a 3D hinge line visible on both planes
+- Intersection with HHL occurs at a specific 3D point
+- That 3D point exists in 3D space and therefore has projections on BOTH planes
+- User explicitly creates the intersection on one plane (primary)
+- System automatically creates the projection on the sibling plane
+
+**Implementation - Two Point Types**:
+
+1. **IntersectionPoint2D** (Primary):
+   - Explicitly defined by user action: "Intersect circle with HHL"
+   - Contains `siblingPointId?: string` field
+   - Only populated when element1 or element2 is a HalfHingeLine2D
+   - Enables navigation to the sibling point
+
+2. **SiblingIntersectionPoint2D** (Derived):
+   - Automatically created when primary intersects HHL
+   - Represents the projection of the primary's 3D position onto the sibling plane
+   - Contains `primaryIntersectionId: string` field
+   - Realization computes: primary 3D position → project to sibling plane
+
+**Creation Flow Example**:
+```
+User creates: Circle ∩ HHL_on_P_H (at index 0)
+  ↓
+System creates:
+  1. IntersectionPoint2D "I1" on P_H
+     - element1Id: "circle_5"
+     - element2Id: "half_HL_HV_on_PH"
+     - index: 0
+     - siblingPointId: "I1_sibling"
+  
+  2. SiblingIntersectionPoint2D "I1_sibling" on P_V
+     - primaryIntersectionId: "I1"
+     - planeId: "proj_plane_V"
+     - label: "I1" (same as primary)
+  
+Result: Both points visible, representing same 3D position
+```
+
+**Realization Logic - SiblingIntersectionPoint2D**:
+```typescript
+class SiblingIntersectionPoint2D extends Point2D {
+  realize(context: RealizationContext): Point2DRealization {
+    // 1. Get primary intersection point
+    const primary = context.world.getPoint2DById(this.primaryIntersectionId);
+    
+    // 2. Compute primary's 3D position
+    const primary3D = context.world.getPoint3DRealization(this.primaryIntersectionId);
+    
+    // 3. Get sibling plane's projection matrix
+    const siblingPlane = context.world.getProjectionPlane(this.planeId);
+    
+    // 4. Project 3D point onto sibling plane
+    const uvw = siblingPlane.projectPointTo2D(primary3D.position);
+    
+    // 5. Return 2D realization
+    return new Point2DRealization(new Vector3(uvw.x, uvw.y, 1));
+  }
+}
+```
+
+**Process Tree Recording**:
+- Primary intersection: Recorded as `CreateIntersectionPointAction` with user inputs
+- Sibling point: Recorded as auxiliary action (nested within primary)
+- Both points have dependency on same elements (circle + HHL)
+- Sibling has additional dependency on primary for 3D→2D projection
+
+**Visual Feedback**:
+- Both points render simultaneously when primary created
+- Sibling appears automatically on the other plane
+- Both points highlight together when hovering either
+- Deletion of primary cascades to sibling (via dependency system)
+
+**Benefits**:
+1. **Geometric Correctness**: Maintains consistency between plane projections
+2. **User Convenience**: No manual creation needed for obvious projection
+3. **Pedagogical Value**: Shows relationship between 3D point and 2D projections
+4. **Parametric Update**: When primary moves (due to dependencies), sibling updates automatically
+
+---
+
 ### Domain Entity: Guide
 
 **Purpose**: Line perpendicular to HalfHingeLine2D used for transporting points/distances between planes
@@ -970,12 +1056,41 @@ interface IntersectionPoint2D {
   element2Id: string;               // Second intersecting element
   index: number;                    // Which intersection (0 or 1 for line-circle, 0 or 1 for circle-circle)
   
+  // HHL Sibling Handling: When intersecting with a HalfHingeLine2D
+  siblingPointId?: string;          // Optional reference to automatically created sibling point on other plane
+                                    // Only populated when element1 or element2 is a HalfHingeLine2D
+                                    // Enables bidirectional navigation between plane projections
+  
   // Implementation: TypeScript class
-  // constructor(id: string, element1Id: string, element2Id: string, index: number, planeId: string, label?: string)
+  // constructor(id: string, element1Id: string, element2Id: string, index: number, planeId: string, label?: string, siblingPointId?: string)
   // realize(context: RealizationContext): Point2DRealization
 }
 
-type Point2D = FreePoint2D | IntersectionPoint2D;
+// Point that represents the projection of a primary intersection onto a sibling plane
+// Used when intersecting with HalfHingeLine2D: the primary intersection happens on one plane,
+// and this type represents the projection of that 3D point onto the sibling plane.
+interface SiblingIntersectionPoint2D {
+  kind: 'SiblingIntersectionPoint2D';  // Discriminator (TypeScript: type: 'sibling-intersection')
+  id: string;                           // REQUIRED - unique identifier
+  label?: string;                       // Optional display label (usually same as primary)
+  planeId: string;                      // REQUIRED - the sibling plane (different from primary's plane)
+  
+  // THE RULE: "Projection of primary intersection's 3D position onto this plane"
+  // No direct coordinates - derived from primary intersection
+  primaryIntersectionId: string;        // Reference to the IntersectionPoint2D that defines the 3D position
+  
+  // Realization Logic:
+  // 1. Look up primary intersection point
+  // 2. Get its 3D realization (compute actual 3D position from the intersection)
+  // 3. Project that 3D point onto this plane using plane's projection matrix
+  // 4. Return Point2DRealization with projected <u,v> coordinates
+  
+  // Implementation: TypeScript class
+  // constructor(id: string, primaryIntersectionId: string, planeId: string, label?: string)
+  // realize(context: RealizationContext): Point2DRealization
+}
+
+type Point2D = FreePoint2D | IntersectionPoint2D | SiblingIntersectionPoint2D;
 
 // === SEGMENT 2D CONSTRUCTIONS ===
 
@@ -2339,6 +2454,265 @@ hitTest(x: number, y: number, snapRadius: number): HitResult | null
 ```
 
 This ensures type safety, makes coordinate transforms explicit, and prevents mixing coordinate spaces.
+
+---
+
+#### Selection Mask System
+
+**Purpose**: Enable tool-specific filtering of selectable elements based on current tool state, preventing invalid selections and providing focused hover highlighting.
+
+**Architecture**: Each tool defines which element types are valid for selection at each step. This mask filters both hit testing and hover highlighting.
+
+**Type Definitions**:
+
+```typescript
+/**
+ * Element types that can be included in selection masks.
+ * These map to domain entity types that tools can interact with.
+ */
+export type SelectableElementType = 
+  | 'point'           // Any Point2D (free, intersection, on-element)
+  | 'line'            // Any Line2D (including half-hinge lines)
+  | 'half-hinge-line' // Specifically HalfHingeLine2D only
+  | 'segment'         // Any Segment2D
+  | 'circle'          // Any Circle2D
+  | 'guide';          // Any Guide2D
+
+/**
+ * Selection mask: array of element types valid for current tool step.
+ * Empty array = nothing selectable (e.g., during preview)
+ */
+export type SelectionMask = SelectableElementType[];
+```
+
+**Tool Interface Extension**:
+
+```typescript
+interface Tool {
+  // ... existing methods ...
+  
+  /**
+   * Get the selection mask for the current tool step.
+   * Called before each hit test to filter valid elements.
+   * 
+   * @returns Array of element types that can be selected/highlighted.
+   *          Empty array means no elements are selectable.
+   * 
+   * Example implementations:
+   * - Line tool: always returns ['point']
+   * - Guide tool: returns ['half-hinge-line', 'point'] initially,
+   *              then ['point'] after picking HHL,
+   *              or ['half-hinge-line'] after picking point
+   */
+  getSelectionMask(): SelectionMask;
+}
+```
+
+**Paper.hitTest() Signature Update**:
+
+```typescript
+class Paper {
+  /**
+   * Find nearest element within snap radius, filtered by selection mask.
+   * 
+   * @param canvasPos - Click position in canvas pixel coordinates
+   * @param snapRadius - Snap threshold in canvas pixels
+   * @param activePlaneId - Active plane for FR-002 filtering
+   * @param paperToPlane - Transform for plane-space queries
+   * @param world - World instance for entity lookups
+   * @param selectionMask - Optional mask to filter by element type.
+   *                        If undefined, all element types are selectable.
+   * @returns HitResult if element found within radius and matches mask, null otherwise
+   */
+  hitTest(
+    canvasPos: Vector3,
+    snapRadius: number,
+    activePlaneId: string | undefined,
+    paperToPlane: Matrix3 | undefined,
+    world: World,
+    selectionMask?: SelectionMask
+  ): HitResult | null {
+    // ... existing coordinate transform logic ...
+    
+    // When checking each primitive for hit:
+    if (selectionMask) {
+      const elementType = this.getElementType(primitive, world);
+      if (!selectionMask.includes(elementType)) {
+        continue; // Skip this primitive - not in mask
+      }
+    }
+    
+    // ... existing distance check and closest selection logic ...
+  }
+  
+  /**
+   * Map primitive to its selectable element type.
+   * Uses sourceEntityId to query World for entity and determine type.
+   * 
+   * @param primitive - Primitive to classify
+   * @param world - World instance for entity lookups
+   * @returns SelectableElementType for this primitive
+   */
+  private getElementType(
+    primitive: Primitive,
+    world: World
+  ): SelectableElementType {
+    const entityId = primitive.sourceEntityId;
+    
+    // Primitive type provides initial hint
+    switch (primitive.type) {
+      case 'point':
+        return 'point';
+        
+      case 'line': {
+        // Need to distinguish regular lines from half-hinge lines
+        const line = world.getLine2DById(entityId);
+        if (line && line.type === 'half-hinge') {
+          return 'half-hinge-line';
+        }
+        return 'line';
+      }
+      
+      case 'segment':
+        return 'segment';
+        
+      case 'circle':
+        return 'circle';
+        
+      default:
+        // Guides, etc.
+        return primitive.type as SelectableElementType;
+    }
+  }
+}
+```
+
+**Hover Highlighting Integration**:
+
+The selection mask also filters hover highlighting to provide immediate visual feedback about which elements are selectable:
+
+```typescript
+// In SvgCanvas.vue - handleMouseMove
+function handleMouseMove(event: MouseEvent) {
+  const canvasPos = screenToCanvas(event);
+  
+  // Get active tool's selection mask
+  const activeTool = toolStore.getActiveTool();
+  const selectionMask = activeTool?.getSelectionMask();
+  
+  // Hit test with mask - only returns elements matching mask
+  const hit = paper.hitTest(
+    new Vector3(canvasPos.x, canvasPos.y, 1),
+    20,
+    activePlane.value,
+    paperToPlane,
+    world,
+    selectionMask  // Filter by tool's current mask
+  );
+  
+  // Update hover state - only masked elements will highlight
+  paper.setHoveredElement(hit?.elementId);
+  worldVersion.value++;
+}
+```
+
+**Tool Implementation Examples**:
+
+```typescript
+// Example 1: Line Tool (constant mask)
+class LineTool implements Tool {
+  private state: 'waiting-first' | 'waiting-second' = 'waiting-first';
+  
+  getSelectionMask(): SelectionMask {
+    // Always only select points, regardless of step
+    return ['point'];
+  }
+  
+  handleClick(context: ToolContext): ToolResult {
+    const hit = paper.hitTest(
+      context.canvasPos,
+      20,
+      context.activePlaneId,
+      context.paperToPlane,
+      context.world,
+      this.getSelectionMask()  // ['point']
+    );
+    
+    if (!hit) {
+      return this.failure('Click near a point');
+    }
+    // hit.elementId is guaranteed to be a point ID
+  }
+}
+
+// Example 2: Guide Tool (dynamic mask based on selection)
+class GuideTool implements Tool {
+  private state: 'initial' | 'picked-hhl' | 'picked-point' = 'initial';
+  private selectedHHL?: string;
+  private selectedPoint?: string;
+  
+  getSelectionMask(): SelectionMask {
+    switch (this.state) {
+      case 'initial':
+        // Can pick either HHL or point first
+        return ['half-hinge-line', 'point'];
+      
+      case 'picked-hhl':
+        // Already have HHL, now need point
+        return ['point'];
+      
+      case 'picked-point':
+        // Already have point, now need HHL
+        return ['half-hinge-line'];
+    }
+  }
+  
+  handleClick(context: ToolContext): ToolResult {
+    const hit = paper.hitTest(
+      context.canvasPos,
+      20,
+      context.activePlaneId,
+      context.paperToPlane,
+      context.world,
+      this.getSelectionMask()
+    );
+    
+    if (!hit) return this.failure('Select HHL or point');
+    
+    // Determine what was picked by querying element type
+    const elementType = paper.getElementType(hit.primitive, context.world);
+    
+    if (this.state === 'initial') {
+      if (elementType === 'half-hinge-line') {
+        this.selectedHHL = hit.elementId;
+        this.state = 'picked-hhl';
+        return this.success('Now select a point');
+      } else {
+        this.selectedPoint = hit.elementId;
+        this.state = 'picked-point';
+        return this.success('Now select a half-hinge line');
+      }
+    } else if (this.state === 'picked-hhl') {
+      this.selectedPoint = hit.elementId;
+      // Create guide with this.selectedHHL and this.selectedPoint
+      return this.complete();
+    } else {
+      this.selectedHHL = hit.elementId;
+      // Create guide with this.selectedHHL and this.selectedPoint
+      return this.complete();
+    }
+  }
+}
+```
+
+**Benefits**:
+
+1. **Error Prevention** - Users cannot select invalid elements (e.g., can't pick a line when tool expects a point)
+2. **Visual Clarity** - Only valid elements highlight on hover, providing immediate feedback
+3. **Learning Support** - Users discover valid inputs through hover behavior, reinforcing geometric constraints
+4. **Type Safety** - Tools receive guaranteed-valid element IDs from filtered hit testing
+5. **Flexibility** - Masks can change dynamically as tool progresses (e.g., Guide tool)
+6. **Centralized Logic** - Selection filtering happens in Paper, tools just define what's valid
 
 ---
 

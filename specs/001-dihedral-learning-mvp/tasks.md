@@ -436,19 +436,108 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: This refactoring affects Guide creation workflow. Guides are now created by selecting a HalfHingeLine2D + point, not a HingeLine directly.
 
-- [ ] T053a [P] Create HalfHingeLine2D class in frontend/src/domain/world/HingeLine.ts
-- [ ] T053b [P] Add HalfHingeLine2D storage to ProjectionPlane class (each plane owns its half-hinges)
-- [ ] T053c Update HingeLine class to store only 3D metadata (id, name, plane1Id, plane2Id)
-- [ ] T053d Add getHalfHingeLines2D(planeId) method to World (returns all half-hinges for a plane)
-- [ ] T053e Update World.initializeStandardPlanes() to create HalfHingeLine2D objects for HL_HV
-- [ ] T053f Update PaperService to generate primitives from HalfHingeLine2D (not HingeLine)
-- [ ] T053g Update Paper.hitTest() to iterate world.getHalfHingeLines2D(activePlaneId)
-- [ ] T053h Update Guide2D/ComplementaryGuide2D to reference HalfHingeLine2D (halfHingeLineId field)
-- [ ] T053i Update GuideTool to select HalfHingeLine2D on first click (not HingeLine)
-- [ ] T053j [P] Unit test for HalfHingeLine2D in frontend/tests/unit/domain/hingeLine.spec.ts
-- [ ] T053k [P] Update E2E tests that reference hinge lines (guide-creation.spec.ts)
+- [X] T053a [P] Create HalfHingeLine2D class in frontend/src/domain/world/HingeLine.ts
+- [X] T053b [P] Add HalfHingeLine2D storage to ProjectionPlane class (each plane owns its half-hinges)
+- [X] T053c Update HingeLine class to store only 3D metadata (id, name, plane1Id, plane2Id)
+- [X] T053d Add getHalfHingeLines2D(planeId) method to World (returns all half-hinges for a plane)
+- [X] T053e Update World.initializeStandardPlanes() to create HalfHingeLine2D objects for HL_HV
+- [X] T053f Update PaperService to generate primitives from HalfHingeLine2D (not HingeLine)
+- [X] T053g Update Paper.hitTest() to iterate world.getHalfHingeLines2D(activePlaneId)
+- [X] T053h Update Guide2D/ComplementaryGuide2D to reference HalfHingeLine2D (halfHingeLineId field)
+- [X] T053i Update GuideTool to select HalfHingeLine2D on first click (not HingeLine)
+- [X] T053j [P] Unit test for HalfHingeLine2D in frontend/tests/unit/domain/hingeLine.spec.ts
+- [X] T053k [P] Update E2E tests that reference hinge lines (guide-creation.spec.ts)
 
 **Checkpoint**: Hinge lines properly modeled as 3D entity + 2D per-plane representations, guides reference correct 2D entities
+
+---
+
+## Phase 8.7: Tool-Specific Selection Filtering
+
+**Purpose**: Implement selection mask system for tool-aware hover highlighting and hit testing  
+**Reference**: [ui-spec.md §Selection Mask System](./ui-spec.md#valid-input-restriction) - Tool-specific filtering, [data-model.md §Selection Mask System](./data-model.md#selection-mask-system) - Implementation details
+
+**Architecture**:
+- **Selection Mask**: Each tool defines which element types are selectable at current step
+- **Hit Test Filtering**: Paper.hitTest() filters candidates by selection mask before returning results
+- **Hover Integration**: Only masked element types highlight on hover, providing immediate visual feedback
+- **Dynamic Masks**: Masks can change as tool progresses (e.g., Guide tool allows HHL or point first, then restricts to other type)
+
+**Implementation Requirements**:
+- **Type Definitions**: Create SelectableElementType union ('point' | 'line' | 'half-hinge-line' | 'segment' | 'circle' | 'guide')
+- **Tool Interface**: Add getSelectionMask(): SelectionMask method to Tool interface
+- **Paper.hitTest() Update**: Add optional selectionMask parameter, filter primitives by element type before distance checks
+- **Element Type Mapping**: Add getElementType() helper to classify primitives by querying World
+- **Tool Implementations**: Update existing tools (LineTool, GuideTool, etc.) to return appropriate masks
+- **SvgCanvas Integration**: Query active tool's mask before calling hitTest()
+
+**Pedagogical Value**: Users learn valid inputs through hover behavior - only geometrically valid elements highlight, reinforcing constraints.
+
+**⚠️ CRITICAL**: This affects ALL tools. Review [data-model.md §Selection Mask System](./data-model.md#selection-mask-system) for complete implementation examples.
+
+- [X] T054a [P] Create SelectableElementType and SelectionMask type definitions in frontend/src/types/SelectionMask.ts
+- [X] T054b Update Tool interface to add getSelectionMask(): SelectionMask method in frontend/src/tools/ITool.ts
+- [X] T054c Add selectionMask optional parameter to Paper.hitTest() signature in frontend/src/domain/presentation/Paper.ts
+- [X] T054d [P] Implement getElementType() private method in Paper to map primitives to SelectableElementType
+- [X] T054e Add filtering logic in Paper.hitTest() to skip primitives not matching selection mask
+- [X] T054f Update SvgCanvas.vue handleMouseMove to query activeTool.getSelectionMask() and pass to hitTest()
+- [X] T054g Implement getSelectionMask() in LineTool (constant mask: ['point'])
+- [X] T054h Implement getSelectionMask() in GuideTool (dynamic mask: initial ['line', 'half-hinge-line'], then restrict to ['point'])
+- [X] T054i Implement getSelectionMask() in SegmentTool (constant mask: ['point'])
+- [X] T054j Implement getSelectionMask() in CircleTool (constant mask: ['point'])
+- [X] T054k Implement getSelectionMask() in IntersectionTool (constant mask: ['line', 'half-hinge-line'])
+- [X] T054k2 Implement getSelectionMask() in TransportTool (dynamic mask: ['point'] then ['guide'])
+- [X] T054k3 Implement getSelectionMask() in PointTool (empty mask: [])
+- [X] T054l [P] Unit tests for selection mask filtering in frontend/tests/unit/selectionMask.spec.ts
+- [X] T054m [P] E2E test for selection mask behavior (verify only valid elements highlight) in frontend/tests/e2e/selection-mask.spec.ts
+
+**Checkpoint**: All tools filter selectable elements by type, hover highlighting only shows valid targets, prevents selection errors
+
+---
+
+## Phase 8.8: HalfHingeLine Intersection Sibling Points
+
+**Purpose**: Automatically create sibling intersection points when intersecting with HalfHingeLine2D to maintain geometric consistency  
+**Reference**: [data-model.md §HalfHingeLine2D Intersection Sibling Behavior](./data-model.md#halfhingeline2d-intersection-sibling-behavior) - Sibling point architecture
+
+**Architecture**:
+- **Primary Point**: IntersectionPoint2D explicitly created by user on one plane, with optional `siblingPointId` field
+- **Sibling Point**: SiblingIntersectionPoint2D automatically created on paired plane, references `primaryIntersectionId`
+- **Realization**: Sibling computes by getting primary's 3D position, then projecting onto sibling plane
+- **Process Tree**: Sibling recorded as auxiliary action nested within primary intersection action
+
+**Geometric Rationale**:
+- HalfHingeLine2D represents a 3D hinge line visible on both planes
+- Intersection with HHL occurs at a 3D point
+- That 3D point has projections on BOTH planes
+- User creates primary on one plane, system creates sibling on other plane automatically
+
+**Implementation Requirements**:
+- **Point Type**: Create SiblingIntersectionPoint2D class extending Point2D
+- **Field Updates**: Add optional `siblingPointId?: string` to IntersectionPoint2D
+- **Creation Logic**: When creating intersection with HHL, detect HHL type and auto-create sibling
+- **Realization**: Sibling realizes by: lookup primary → get 3D position → project to sibling plane → return 2D position
+- **Dependency**: Sibling depends on primary for coordinate computation
+- **Visual Feedback**: Both points render simultaneously and highlight together
+
+**⚠️ CRITICAL**: This affects IntersectionPointTool workflow. Review [data-model.md §HalfHingeLine2D Intersection Sibling Behavior](./data-model.md#halfhingeline2d-intersection-sibling-behavior) for complete creation flow.
+
+- [ ] T055a [P] Create SiblingIntersectionPoint2D class in frontend/src/domain/world/Point.ts
+- [ ] T055b Add optional siblingPointId field to IntersectionPoint2D class
+- [ ] T055c Update Point2D union type to include SiblingIntersectionPoint2D
+- [ ] T055d Implement realize() method in SiblingIntersectionPoint2D (lookup primary, get 3D, project to plane)
+- [ ] T055e Add helper method to World: createIntersectionWithSibling() that creates both points when HHL detected
+- [ ] T055f Update CreateIntersectionPointCommand to detect HHL intersection and call createIntersectionWithSibling()
+- [ ] T055g Update IntersectionPointTool to handle sibling creation (no UI change, automatic behavior)
+- [ ] T055h Update PaperService to render sibling points (same styling as regular intersection points)
+- [ ] T055i Implement hover highlighting for sibling pairs (hover either → both highlight)
+- [ ] T055j Add ProcessTree auxiliary action recording for sibling point creation
+- [ ] T055k Handle deletion cascading: delete primary → auto-delete sibling via dependency system
+- [ ] T055l [P] Unit tests for SiblingIntersectionPoint2D in frontend/tests/unit/domain/point.spec.ts
+- [ ] T055m [P] Unit tests for sibling creation logic in frontend/tests/unit/domain/hingeLine.spec.ts
+- [ ] T055n [P] E2E test for HHL intersection creating sibling points in frontend/tests/e2e/hhl-intersection.spec.ts
+
+**Checkpoint**: Intersecting with HHL automatically creates geometrically consistent sibling points on both planes
 
 ---
 

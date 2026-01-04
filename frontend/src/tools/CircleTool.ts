@@ -16,6 +16,7 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { CreateCircleCommand } from '@/commands/CreateCircleCommand';
+import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * CircleTool state machine:
@@ -124,6 +125,13 @@ export class CircleTool extends BaseTool {
    */
   cancel(): void {
     this.reset();
+  }
+
+  /**
+   * Get selection mask - circle tool only selects points for both steps
+   */
+  getSelectionMask(): SelectionMask {
+    return ['point'];
   }
 
   /**

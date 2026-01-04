@@ -489,9 +489,14 @@ function handleMouseMove(event: MouseEvent) {
   const planeTransformsInput = getPlaneTransformsForInput();
   const paperToPlane = planeTransformsInput.get(activePlane.value);
   
-  // Use Paper.hitTest() to find element near cursor
+  // Get active tool's selection mask
+  const activeToolName = toolStore.currentTool.value;
+  const activeTool = tools[activeToolName];
+  const selectionMask = activeTool?.getSelectionMask();
+  
+  // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
-  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world); // FR-002: Hit test in plane space
+  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world, selectionMask); // FR-002: Hit test in plane space
   
   // Update hover state in Paper
   paper.setHoveredElement(hit?.elementId);

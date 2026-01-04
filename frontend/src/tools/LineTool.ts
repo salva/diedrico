@@ -13,6 +13,7 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { CreateLineCommand } from '@/commands/CreateLineCommand';
+import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * LineTool state machine:
@@ -107,6 +108,13 @@ export class LineTool extends BaseTool {
    */
   cancel(): void {
     this.reset();
+  }
+
+  /**
+   * Get selection mask - line tool only selects points
+   */
+  getSelectionMask(): SelectionMask {
+    return ['point'];
   }
 
   /**

@@ -411,10 +411,47 @@ While a tool is active:
 - Invalid elements are **ignored** (no hover effect, click has no effect)
 - This **prevents errors** and **reinforces learning** (users understand what inputs are geometrically valid)
 
-**Example**: 
-- Tool: "Parallel Line Through Point"
-- Step 1: Select reference line → Only lines/segments respond to hover/click
-- Step 2: Select point → Only points respond to hover/click
+**Selection Mask System**:
+
+Each tool maintains a **selection mask** that defines which element types can be highlighted and selected. This mask:
+- Filters hit testing: `Paper.hitTest()` only returns elements matching the current mask
+- Controls hover highlighting: Only masked element types highlight on hover
+- Updates as the tool progresses through its steps
+
+**Example: Line Tool**
+```
+Step 1: Select first point
+  mask: ['point']
+Step 2: Select second point
+  mask: ['point']
+```
+
+**Example: Guide Tool**
+```
+Initial state:
+  mask: ['half-hinge-line', 'point']
+
+User picks HHL:
+  mask: ['point']  (now only points can be selected)
+
+OR user picks point first:
+  mask: ['half-hinge-line']  (now only HHLs can be selected)
+```
+The mask enforces the constraint: guide requires exactly one HHL and one point, in any order.
+
+**Example: Parallel Line Tool**
+```
+Step 1: Select reference line
+  mask: ['line', 'segment']
+Step 2: Select point
+  mask: ['point']
+```
+
+**Implementation**:
+- Each tool defines `getSelectionMask(currentStep): ElementType[]`
+- Before hit testing, query active tool for current mask
+- Filter hit test results to match mask
+- Filter hover highlights to match mask
 
 #### Continuous Visual Feedback
 

@@ -11,6 +11,7 @@
 
 import type { Vector3 } from 'three';
 import type { ITool, ToolContext, ToolResult } from './ITool';
+import type { SelectionMask } from '@/types/SelectionMask';
 import type { World } from '@/domain/world/World';
 
 export abstract class BaseTool implements ITool {
@@ -20,6 +21,11 @@ export abstract class BaseTool implements ITool {
    * Abstract method: subclasses implement specific tool behavior
    */
   abstract handleClick(context: ToolContext): ToolResult;
+
+  /**
+   * Abstract method: subclasses implement selection mask based on tool state
+   */
+  abstract getSelectionMask(): SelectionMask;
 
   /**
    * Validate that coordinates are within reasonable bounds

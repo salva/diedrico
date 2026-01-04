@@ -17,6 +17,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
+import type { SelectionMask } from '@/types/SelectionMask';
 import { CreateGuideCommand } from '@/commands/CreateGuideCommand';
 
 /**
@@ -120,6 +121,20 @@ export class GuideTool extends BaseTool {
    */
   cancel(): void {
     this.reset();
+  }
+
+  /**
+   * Get selection mask for guide creation
+   * Dynamic mask based on tool state:
+   * - waiting-line: Allow line selection only
+   * - waiting-point: Allow point selection only
+   */
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-line') {
+      return ['line', 'half-hinge-line'];
+    } else {
+      return ['point'];
+    }
   }
 
   /**

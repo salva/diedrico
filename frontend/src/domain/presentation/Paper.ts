@@ -38,6 +38,7 @@ import type { World } from '../world/World';
 import type { Line2DRealization2D } from '../world/Line';
 import type { Segment2DRealization2D } from '../world/Segment';
 import type { Circle2DRealization2D } from '../world/Circle';
+import type { SelectionMask, SelectableElementType } from '@/types/SelectionMask';
 
 /**
  * Visual style attributes resolved and ready for rendering
@@ -314,14 +315,16 @@ export class Paper {
    * @param activePlaneId - ID of active plane (only elements on this plane are tested)
    * @param paperToPlaneTransform - Transform from paper to plane coordinates
    * @param world - World instance for accessing entity realizations
-   * @returns HitResult if element found within radius, null otherwise
+   * @param selectionMask - Optional mask to filter by element type. If undefined, all types are selectable.
+   * @returns HitResult if element found within radius and matches mask, null otherwise
    */
   hitTest(
     canvasPos: Vector3,
     snapRadiusPixels: number,
     activePlaneId: string | undefined,
     paperToPlaneTransform: Matrix3 | undefined,
-    world: World
+    world: World,
+    selectionMask?: SelectionMask
   ): HitResult | null {
     if (!activePlaneId || !paperToPlaneTransform) {
       // No active plane or transform - cannot perform hit testing
@@ -349,6 +352,10 @@ export class Paper {
     // Test points (only from active plane)
     const points = activePlaneId ? world.getPoints2DByPlane(activePlaneId) : [];
     for (const point of points) {
+      // Filter by selection mask if provided
+      if (selectionMask && !selectionMask.includes('point')) {
+        continue;
+      }
       
       const realization = world.getPoint2DRealization(point.id);
       if (!realization) continue;
@@ -370,6 +377,13 @@ export class Paper {
     // Test lines (includes HalfHingeLine2D on active plane)
     const lines = activePlaneId ? world.getLines2DByPlane(activePlaneId) : [];
     for (const line of lines) {
+      // Filter by selection mask if provided
+      if (selectionMask) {
+        const elementType = this.getElementType(line, world);
+        if (!selectionMask.includes(elementType)) {
+          continue;
+        }
+      }
       
       const realization = world.getLine2DRealization(line.id);
       if (!realization) continue;
@@ -391,6 +405,10 @@ export class Paper {
     // Test circles (only from active plane)
     const circles = activePlaneId ? world.getCircles2DByPlane(activePlaneId) : [];
     for (const circle of circles) {
+      // Filter by selection mask if provided
+      if (selectionMask && !selectionMask.includes('circle')) {
+        continue;
+      }
       
       const realization = world.getCircle2DRealization(circle.id);
       if (!realization) continue;
@@ -412,6 +430,10 @@ export class Paper {
     // Test segments (only from active plane)
     const segments = activePlaneId ? world.getSegments2DByPlane(activePlaneId) : [];
     for (const segment of segments) {
+      // Filter by selection mask if provided
+      if (selectionMask && !selectionMask.includes('segment')) {
+        continue;
+      }
       
       const realization = world.getSegment2DRealization(segment.id);
       if (!realization) continue;
@@ -432,6 +454,11 @@ export class Paper {
     
     // Test guides (always pickable - belong to both planes)
     for (const guide of world.getAllGuides2D()) {
+      // Filter by selection mask if provided
+      if (selectionMask && !selectionMask.includes('guide')) {
+        continue;
+      }
+      
       // Guides don't filter by plane - they're universal construction aids
       
       const realization = world.getGuide2DRealization(guide.id);
@@ -464,6 +491,48 @@ export class Paper {
    */
   private canvasToPaper(canvasPos: Vector3): Vector3 {
     return canvasPos.clone().applyMatrix3(this.canvasToPaperMatrix);
+  }
+
+  /**
+   * Map a domain entity to its selectable element type.
+   * Used for selection mask filtering in hit testing.
+   * 
+   * @param entity - Domain entity (Point2D, Line2D, etc.)
+   * @param world - World instance for accessing entity details
+   * @returns SelectableElementType for this entity
+   */
+  private getElementType(entity: any, world: World): SelectableElementType {
+    // Check if it's a line type (includes HalfHingeLine2D)
+    if (entity.type) {
+      if (entity.type === 'half-hinge') {
+        return 'half-hinge-line';
+      }
+      // Other line types return 'line'
+      if (entity.type === 'by-two-points' || entity.type === 'parallel' || entity.type === 'perpendicular') {
+        return 'line';
+      }
+    }
+    
+    // Fallback: check entity structure/class
+    // Note: In TypeScript with proper type guards, we'd use instanceof or discriminated unions
+    // For now, check common properties to identify entity type
+    if ('position' in entity || 'element1Id' in entity) {
+      return 'point';
+    }
+    if ('point1Id' in entity && 'point2Id' in entity && !('radius' in entity)) {
+      // Has two point IDs but no radius = segment or line
+      // This is a simplified check - real code would check entity.kind or type property
+      return 'segment';
+    }
+    if ('radius' in entity || 'centerPointId' in entity) {
+      return 'circle';
+    }
+    if ('halfHingeLineId' in entity || 'hingeLineId' in entity) {
+      return 'guide';
+    }
+    
+    // Default fallback
+    return 'point';
   }
 
   /**

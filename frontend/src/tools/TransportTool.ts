@@ -20,6 +20,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
+import type { SelectionMask } from '@/types/SelectionMask';
 import { TransportPointCommand } from '@/commands/TransportPointCommand';
 
 /**
@@ -140,6 +141,20 @@ export class TransportTool extends BaseTool {
    */
   cancel(): void {
     this.reset();
+  }
+
+  /**
+   * Get selection mask for point transport
+   * Dynamic mask based on tool state:
+   * - waiting-point: Allow point selection only
+   * - waiting-guide: Allow guide selection only
+   */
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-point') {
+      return ['point'];
+    } else {
+      return ['guide'];
+    }
   }
 
   /**

@@ -17,6 +17,7 @@ import type { Vector3 } from 'three';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { World } from '@/domain/world/World';
 import type { Paper } from '@/domain/presentation/Paper';
+import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * Context provided to tools when handling user input
@@ -55,6 +56,21 @@ export interface ITool {
    * @returns Result indicating success/failure and optional message
    */
   handleClick(context: ToolContext): ToolResult;
+  
+  /**
+   * Get the selection mask for the current tool step.
+   * Defines which element types can be selected/highlighted.
+   * 
+   * @returns Array of element types that can be selected.
+   *          Empty array means no elements are selectable.
+   * 
+   * Example implementations:
+   * - Line tool: always returns ['point']
+   * - Guide tool: returns ['half-hinge-line', 'point'] initially,
+   *              then ['point'] after picking HHL,
+   *              or ['half-hinge-line'] after picking point
+   */
+  getSelectionMask(): SelectionMask;
   
   /**
    * Optional: Cancel ongoing multi-step operation

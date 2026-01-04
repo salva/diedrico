@@ -16,6 +16,7 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { CreateSegmentCommand } from '@/commands/CreateSegmentCommand';
+import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * SegmentTool state machine:
@@ -110,6 +111,13 @@ export class SegmentTool extends BaseTool {
    */
   cancel(): void {
     this.reset();
+  }
+
+  /**
+   * Get selection mask - segment tool only selects points
+   */
+  getSelectionMask(): SelectionMask {
+    return ['point'];
   }
 
   /**

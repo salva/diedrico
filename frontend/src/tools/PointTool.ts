@@ -11,6 +11,7 @@ import type { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { CreateFreePointCommand } from '@/commands/CreateFreePointCommand';
+import type { SelectionMask } from '@/types/SelectionMask';
 
 export class PointTool extends BaseTool {
   readonly name = 'point';
@@ -43,5 +44,13 @@ export class PointTool extends BaseTool {
       const message = error instanceof Error ? error.message : String(error);
       return this.failure(`Failed to create point: ${message}`);
     }
+  }
+
+  /**
+   * Get selection mask - point tool creates new points, doesn't select existing elements
+   * Empty mask means nothing is selectable (user clicks anywhere to create)
+   */
+  getSelectionMask(): SelectionMask {
+    return []; // Nothing selectable - creates free points at click position
   }
 }

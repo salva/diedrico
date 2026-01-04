@@ -16,6 +16,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
+import type { SelectionMask } from '@/types/SelectionMask';
 import { CreateIntersectionPointCommand } from '@/commands/CreateIntersectionPointCommand';
 import { areLinesParallel } from '@/domain/calculations/Intersections';
 
@@ -132,6 +133,14 @@ export class IntersectionTool extends BaseTool {
    */
   cancel(): void {
     this.reset();
+  }
+
+  /**
+   * Get selection mask for intersection point creation
+   * Both states need to select lines (first line, then second line)
+   */
+  getSelectionMask(): SelectionMask {
+    return ['line', 'half-hinge-line'];
   }
 
   /**
