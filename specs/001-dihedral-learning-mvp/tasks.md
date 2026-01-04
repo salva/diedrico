@@ -1126,21 +1126,6 @@ class World {
 
 **Rationale**: Feature deemed unnecessary for MVP. Distance operations can be achieved through other tool combinations.
 
-~~- [ ] T126 [P] Implement distance transport calculation~~
-~~- [ ] T127 [P] Use homogeneous coordinates for distance vector representation~~
-~~- [ ] T128 Validate that segment and target point are on different planes~~
-~~- [ ] T129 Validate that guide passes through target point~~
-~~- [ ] T130 Add "Transport Distance" tool button to Toolbar~~
-~~- [ ] T131 [P] Create TransportDistanceCommand~~
-~~- [ ] T132 Implement distance transport tool: select source segment~~
-~~- [ ] T133 Implement distance transport tool: select guide~~
-~~- [ ] T134 Implement distance transport tool: select target point~~
-~~- [ ] T135 Calculate new point at transported distance~~
-~~- [ ] T136 Handle bidirectional distance~~
-~~- [ ] T137 Record dependency: new point depends on segment + guide + target~~
-~~- [ ] T138 [P] Unit test for distance transport~~
-~~- [ ] T139 [P] E2E test for distance transport~~
-
 ---
 
 ## Phase 17: More Intersection Types (US2 - Complete)
