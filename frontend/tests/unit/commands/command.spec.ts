@@ -1,29 +1,38 @@
 /**
- * Unit Tests: Command Base Class
+ * Unit Tests: Generic Command Class
  * 
- * Tests the Command pattern implementation:
- * - Incremental execution (operations execute immediately when added)
- * - Rollback on failure
+ * Tests the Command pattern implementation (R017):
+ * - Command is concrete (no subclass needed)
+ * - addAndExecute() returns OperationResult with outputs
+ * - Multi-operation command execution
+ * - Operation chaining (use outputs from op1 in op2)
+ * - commit(), rollback(), undo(), redo()
+ * - ID stability across undo/redo
  * - Status transitions: Building → Committed → Undone
- * - Undo/redo reverses operations in correct order
  * 
- * Reference: specs/001-dihedral-learning-mvp/tasks.md - T073a
+ * Reference: specs/001-dihedral-learning-mvp/tasks.md - R017
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Command, CommandStatus } from '@/commands/Command';
 import type { IOperation, OperationResult } from '@/commands/operations/IOperation';
 import { World } from '@/domain/world/World';
+import { Vector3 } from 'three';
 
 // Mock operation for testing
 class MockOperation implements IOperation {
   readonly type = 'MockOperation';
   parameters = {};
-  outputs = {};
+  outputs: Record<string, any> = {};
   
   applyCalled = false;
   undoCalled = false;
   shouldFail = false;
+  outputValue: string;
+
+  constructor(outputValue: string = 'test') {
+    this.outputValue = outputValue;
+  }
 
   apply(_world: World): OperationResult {
     this.applyCalled = true;
@@ -31,40 +40,78 @@ class MockOperation implements IOperation {
     if (this.shouldFail) {
       return {
         success: false,
+        outputs: {},
         error: 'Mock operation failed'
       };
     }
     
+    this.outputs = { mockData: this.outputValue };
     return {
       success: true,
-      outputs: { mockData: 'test' }
+      outputs: this.outputs
     };
   }
 
-  undo(_world: World): OperationResult {
+  undo(_world: World): void {
     this.undoCalled = true;
-    return { success: true };
   }
 }
 
-// Concrete command for testing
-class TestCommand extends Command {
-  executed = false;
+// Mock operation that uses input from another operation's output
+class DependentMockOperation implements IOperation {
+  readonly type = 'DependentMockOperation';
+  parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+  
+  applyCalled = false;
+  undoCalled = false;
+  inputId: string;
 
-  execute(): void {
-    this.executed = true;
-    // Subclasses would call addAndExecute() here
+  constructor(inputId: string) {
+    this.inputId = inputId;
+    this.parameters = { inputId };
+  }
+
+  apply(_world: World): OperationResult {
+    this.applyCalled = true;
+    
+    this.outputs = { 
+      resultId: `result_from_${this.inputId}`,
+      processedInput: this.inputId 
+    };
+    return {
+      success: true,
+      outputs: this.outputs
+    };
+  }
+
+  undo(_world: World): void {
+    this.undoCalled = true;
   }
 }
 
-describe('Command Base Class', () => {
+describe('Generic Command Class (R017)', () => {
   let world: World;
-  let command: TestCommand;
+  let command: Command;
 
   beforeEach(() => {
     world = new World();
     world.initializeFixedElements();
-    command = new TestCommand('Test Command', world);
+    command = new Command('Test Command', world);
+  });
+
+  describe('Concrete Command (no subclass needed)', () => {
+    it('should be instantiable without subclassing', () => {
+      const cmd = new Command('Direct instantiation', world);
+      expect(cmd).toBeInstanceOf(Command);
+      expect(cmd.description).toBe('Direct instantiation');
+    });
+
+    it('should not require execute() method', () => {
+      const cmd = new Command('No execute needed', world);
+      // Command is concrete - no execute() method required
+      expect(cmd).not.toHaveProperty('execute');
+    });
   });
 
   describe('Initialization', () => {
@@ -73,7 +120,7 @@ describe('Command Base Class', () => {
     });
 
     it('should have unique ID', () => {
-      const command2 = new TestCommand('Another Command', world);
+      const command2 = new Command('Another Command', world);
       expect(command.id).not.toBe(command2.id);
     });
 
@@ -86,7 +133,16 @@ describe('Command Base Class', () => {
     });
   });
 
-  describe('addAndExecute - Incremental Execution', () => {
+  describe('addAndExecute - Returns OperationResult with outputs', () => {
+    it('should return OperationResult with outputs', () => {
+      const operation = new MockOperation('test_value');
+      
+      const result = command.addAndExecute(operation);
+      
+      expect(result.success).toBe(true);
+      expect(result.outputs).toEqual({ mockData: 'test_value' });
+    });
+
     it('should execute operation immediately', () => {
       const operation = new MockOperation();
       
@@ -139,6 +195,130 @@ describe('Command Base Class', () => {
       expect(() => {
         command.addAndExecute(operation2);
       }).toThrow('Cannot add operations to non-building command');
+    });
+  });
+
+  describe('Multi-operation command execution', () => {
+    it('should execute multiple operations in sequence', () => {
+      const op1 = new MockOperation('value1');
+      const op2 = new MockOperation('value2');
+      const op3 = new MockOperation('value3');
+      
+      const result1 = command.addAndExecute(op1);
+      const result2 = command.addAndExecute(op2);
+      const result3 = command.addAndExecute(op3);
+      
+      expect(result1.outputs.mockData).toBe('value1');
+      expect(result2.outputs.mockData).toBe('value2');
+      expect(result3.outputs.mockData).toBe('value3');
+      
+      expect(command['operations']).toHaveLength(3);
+    });
+
+    it('should commit all operations as single atomic command', () => {
+      const op1 = new MockOperation();
+      const op2 = new MockOperation();
+      
+      command.addAndExecute(op1);
+      command.addAndExecute(op2);
+      command.commit();
+      
+      expect(command.status).toBe(CommandStatus.Committed);
+      expect(command['operations']).toHaveLength(2);
+    });
+
+    it('should undo all operations when undoing multi-op command', () => {
+      const op1 = new MockOperation();
+      const op2 = new MockOperation();
+      const op3 = new MockOperation();
+      
+      command.addAndExecute(op1);
+      command.addAndExecute(op2);
+      command.addAndExecute(op3);
+      command.commit();
+      
+      command.undo();
+      
+      expect(op1.undoCalled).toBe(true);
+      expect(op2.undoCalled).toBe(true);
+      expect(op3.undoCalled).toBe(true);
+    });
+  });
+
+  describe('Operation chaining (use outputs from op1 in op2)', () => {
+    it('should chain operations using outputs', () => {
+      // First operation produces an ID
+      const op1 = new MockOperation('first_id');
+      const result1 = command.addAndExecute(op1);
+      const generatedId = result1.outputs.mockData;
+      
+      // Second operation uses that ID as input
+      const op2 = new DependentMockOperation(generatedId);
+      const result2 = command.addAndExecute(op2);
+      
+      expect(result2.outputs.resultId).toBe('result_from_first_id');
+      expect(result2.outputs.processedInput).toBe('first_id');
+    });
+
+    it('should demonstrate real-world chaining pattern', () => {
+      // Simulates: Create 2 points, then create segment using those point IDs
+      const createPoint1 = new MockOperation('point_1');
+      const createPoint2 = new MockOperation('point_2');
+      
+      const r1 = command.addAndExecute(createPoint1);
+      const r2 = command.addAndExecute(createPoint2);
+      
+      const pointId1 = r1.outputs.mockData;
+      const pointId2 = r2.outputs.mockData;
+      
+      // Create segment using the two point IDs
+      const createSegment = new DependentMockOperation(`${pointId1},${pointId2}`);
+      const r3 = command.addAndExecute(createSegment);
+      
+      expect(r3.outputs.processedInput).toBe('point_1,point_2');
+      expect(command['operations']).toHaveLength(3);
+    });
+  });
+
+  describe('ID stability across undo/redo', () => {
+    it('should preserve IDs when undoing and redoing', () => {
+      const op = new MockOperation('stable_id');
+      
+      // Initial execution
+      const result1 = command.addAndExecute(op);
+      const originalId = result1.outputs.mockData;
+      command.commit();
+      
+      // Undo
+      command.undo();
+      
+      // Redo - ID should be preserved in outputs
+      command.redo();
+      
+      // Operation's outputs should still contain the original ID
+      expect(op.outputs.mockData).toBe(originalId);
+      expect(op.outputs.mockData).toBe('stable_id');
+    });
+
+    it('should maintain outputs across multiple undo/redo cycles', () => {
+      const op1 = new MockOperation('id_1');
+      const op2 = new MockOperation('id_2');
+      
+      command.addAndExecute(op1);
+      command.addAndExecute(op2);
+      command.commit();
+      
+      // Cycle 1
+      command.undo();
+      command.redo();
+      expect(op1.outputs.mockData).toBe('id_1');
+      expect(op2.outputs.mockData).toBe('id_2');
+      
+      // Cycle 2
+      command.undo();
+      command.redo();
+      expect(op1.outputs.mockData).toBe('id_1');
+      expect(op2.outputs.mockData).toBe('id_2');
     });
   });
 
@@ -198,6 +378,27 @@ describe('Command Base Class', () => {
     });
   });
 
+  describe('commit()', () => {
+    it('should finalize command with operations', () => {
+      const op = new MockOperation();
+      command.addAndExecute(op);
+      
+      command.commit();
+      
+      expect(command.status).toBe(CommandStatus.Committed);
+    });
+
+    it('should allow idempotent commit (no error on double commit)', () => {
+      const op = new MockOperation();
+      command.addAndExecute(op);
+      command.commit();
+      
+      // Second commit should be no-op (idempotent)
+      command.commit();
+      expect(command.status).toBe(CommandStatus.Committed);
+    });
+  });
+
   describe('Rollback', () => {
     it('should undo all operations in reverse order', () => {
       const op1 = new MockOperation();
@@ -240,19 +441,19 @@ describe('Command Base Class', () => {
       const undoOrder: number[] = [];
       
       class OrderedMockOp extends MockOperation {
-        constructor(private order: number) {
-          super();
+        constructor(private order: number, outputValue: string) {
+          super(outputValue);
         }
         
-        undo(world: World): OperationResult {
+        undo(world: World): void {
           undoOrder.push(this.order);
-          return super.undo(world);
+          super.undo(world);
         }
       }
       
-      const op1 = new OrderedMockOp(1);
-      const op2 = new OrderedMockOp(2);
-      const op3 = new OrderedMockOp(3);
+      const op1 = new OrderedMockOp(1, 'val1');
+      const op2 = new OrderedMockOp(2, 'val2');
+      const op3 = new OrderedMockOp(3, 'val3');
       
       command.addAndExecute(op1);
       command.addAndExecute(op2);
@@ -282,8 +483,8 @@ describe('Command Base Class', () => {
       const applyOrder: number[] = [];
       
       class OrderedMockOp extends MockOperation {
-        constructor(private order: number) {
-          super();
+        constructor(private order: number, outputValue: string) {
+          super(outputValue);
         }
         
         apply(world: World): OperationResult {
@@ -292,9 +493,9 @@ describe('Command Base Class', () => {
         }
       }
       
-      const op1 = new OrderedMockOp(1);
-      const op2 = new OrderedMockOp(2);
-      const op3 = new OrderedMockOp(3);
+      const op1 = new OrderedMockOp(1, 'val1');
+      const op2 = new OrderedMockOp(2, 'val2');
+      const op3 = new OrderedMockOp(3, 'val3');
       
       command.addAndExecute(op1);
       command.addAndExecute(op2);
@@ -333,13 +534,6 @@ describe('Command Base Class', () => {
       expect(() => {
         command.redo();
       }).toThrow('Redo failed');
-    });
-  });
-
-  describe('Abstract execute method', () => {
-    it('should be implemented by subclasses', () => {
-      command.execute();
-      expect(command.executed).toBe(true);
     });
   });
 });

@@ -672,29 +672,32 @@ commandStack.push(cmd);
 
 **Operation Verification**:
 
-- [ ] R016 Audit all operation classes for correct output pattern
+- [X] R016 Audit all operation classes for correct output pattern
   - Verify each has: `outputs: Record<string, any> = {};`
   - Verify internal fields like `_pointId` for ID stability
   - Verify apply() returns: `{ success: true, outputs: this.outputs }`
   - Verify outputs contains all IDs/values needed by callers
-  - Files: AddFreePoint2DOp, AddIntersectionPoint2DOp, AddLine2DOp, AddSegment2DOp, AddCircle2DOp, AddGuide2DOp
+  - Files: AddFreePoint2DOp, AddIntersectionPoint2DOp, AddLine2DByTwoPointsOp, AddSegment2DByPointsOp, AddCircle2DByCenterAndRadiusOp, AddGuide2DPerpendicularToLineOp
+  - **Status**: All 6 operations verified with correct output pattern
 
 **Testing**:
 
-- [ ] R017 [P] Unit tests for generic Command in frontend/tests/unit/commands/command.spec.ts
+- [X] R017 [P] Unit tests for generic Command in frontend/tests/unit/commands/command.spec.ts
   - Test: Command is concrete (no subclass needed)
   - Test: addAndExecute() returns OperationResult with outputs
   - Test: Multi-operation command execution
   - Test: Operation chaining (use outputs from op1 in op2)
   - Test: commit(), rollback(), undo(), redo()
   - Test: ID stability across undo/redo
+  - **Status**: 33 tests passing, comprehensive coverage
 
-- [ ] R018 [P] Unit tests for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+- [X] R018 [P] Unit tests for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
   - Test: push() adds pre-built command to stack
   - Test: undo() calls command.undo()
   - Test: redo() calls command.redo()
   - Test: canUndo(), canRedo()
   - Test: push() clears redo stack
+  - **Status**: 29 tests passing, including push() and execute() backward compatibility
 
 - [ ] R019 [P] Update all tool tests in frontend/tests/unit/tools/*.spec.ts
   - Update PointTool test to use new pattern
