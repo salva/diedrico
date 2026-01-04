@@ -11,6 +11,8 @@ import { Vector3 } from 'three';
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { World } from '@/domain/world/World';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { SiblingIntersectionPoint2D } from '@/domain/world/Point';
 
 describe('World Factory Methods', () => {
   let world: World;
@@ -115,6 +117,198 @@ describe('World Factory Methods', () => {
         expect(() => {
           world.addIntersectionPoint2D('proj_plane_H', line1.id, line2.id, 0);
         }).toThrow(/parallel/i);
+      });
+    });
+
+    // T055m: Tests for sibling creation with HalfHingeLine2D
+    describe('addIntersectionPoint2DWithSibling', () => {
+      it('should create only primary point when neither element is HHL', () => {
+        // Create two regular lines
+        const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1));
+        const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(10, 0, 1));
+        const p3 = world.addFreePoint2D('proj_plane_H', new Vector3(5, -5, 1));
+        const p4 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
+
+        const line1 = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+        const line2 = world.addLine2DBetweenTwoPoints('proj_plane_H', p3.id, p4.id);
+
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_H',
+          line1.id,
+          line2.id,
+          0
+        );
+
+        expect(result.primary).toBeDefined();
+        expect(result.primary.planeId).toBe('proj_plane_H');
+        expect(result.sibling).toBeUndefined();
+      });
+
+      it('should create sibling when element1 is HalfHingeLine2D', () => {
+        // Use the existing HalfHingeLine2D on proj_plane_H (created in World constructor)
+        const hhlId = 'half_HL_HV_on_PH';
+
+        // Create a regular line that intersects the HHL
+        const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(5, -5, 1));
+        const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
+        const verticalLine = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_H',
+          hhlId,
+          verticalLine.id,
+          0
+        );
+
+        expect(result.primary).toBeDefined();
+        expect(result.primary.planeId).toBe('proj_plane_H');
+        expect(result.sibling).toBeDefined();
+        expect(result.sibling).toBeInstanceOf(SiblingIntersectionPoint2D);
+        expect(result.sibling!.planeId).toBe('proj_plane_V');
+        expect(result.sibling!.primaryIntersectionId).toBe(result.primary.id);
+      });
+
+      it('should create sibling when element2 is HalfHingeLine2D', () => {
+        // Use the existing HalfHingeLine2D on proj_plane_V
+        const hhlId = 'half_HL_HV_on_PV';
+
+        // Create a regular line that intersects the HHL
+        const p1 = world.addFreePoint2D('proj_plane_V', new Vector3(5, -5, 1));
+        const p2 = world.addFreePoint2D('proj_plane_V', new Vector3(5, 5, 1));
+        const verticalLine = world.addLine2DBetweenTwoPoints('proj_plane_V', p1.id, p2.id);
+
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_V',
+          verticalLine.id,
+          hhlId,
+          0
+        );
+
+        expect(result.primary).toBeDefined();
+        expect(result.primary.planeId).toBe('proj_plane_V');
+        expect(result.sibling).toBeDefined();
+        expect(result.sibling!.planeId).toBe('proj_plane_H');
+        expect(result.sibling!.primaryIntersectionId).toBe(result.primary.id);
+      });
+
+      it('should establish bidirectional link between primary and sibling', () => {
+        const hhlId = 'half_HL_HV_on_PH';
+
+        const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(5, -5, 1));
+        const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
+        const verticalLine = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_H',
+          hhlId,
+          verticalLine.id,
+          0
+        );
+
+        // Primary → sibling link
+        expect(result.primary.siblingPointId).toBe(result.sibling!.id);
+        
+        // Sibling → primary link
+        expect(result.sibling!.primaryIntersectionId).toBe(result.primary.id);
+      });
+
+      it('should use provided IDs for redo operations', () => {
+        const hhlId = 'half_HL_HV_on_PH';
+
+        const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(5, -5, 1));
+        const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
+        const verticalLine = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_H',
+          hhlId,
+          verticalLine.id,
+          0,
+          'custom_primary_id',
+          'custom_sibling_id'
+        );
+
+        expect(result.primary.id).toBe('custom_primary_id');
+        expect(result.sibling!.id).toBe('custom_sibling_id');
+      });
+
+      it('should copy label from primary to sibling', () => {
+        const hhlId = 'half_HL_HV_on_PH';
+
+        const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(5, -5, 1));
+        const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
+        const verticalLine = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+
+        // Create intersection - primary has no label yet
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_H',
+          hhlId,
+          verticalLine.id,
+          0
+        );
+        
+        // Both should have no label (label is copied at creation time)
+        expect(result.primary.label).toBeUndefined();
+        expect(result.sibling!.label).toBeUndefined();
+        
+        // If we set label on primary after creation, sibling doesn't auto-update
+        // (This is expected behavior - label is copied once at creation)
+        result.primary.label = 'Point P';
+        expect(result.primary.label).toBe('Point P');
+        expect(result.sibling!.label).toBeUndefined(); // Sibling still has no label
+      });
+
+      it('should determine correct sibling plane for proj_plane_H', () => {
+        const hhlId = 'half_HL_HV_on_PH';
+
+        const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(5, -5, 1));
+        const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
+        const verticalLine = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_H',
+          hhlId,
+          verticalLine.id,
+          0
+        );
+
+        expect(result.sibling!.planeId).toBe('proj_plane_V');
+      });
+
+      it('should determine correct sibling plane for proj_plane_V', () => {
+        const hhlId = 'half_HL_HV_on_PV';
+
+        const p1 = world.addFreePoint2D('proj_plane_V', new Vector3(5, -5, 1));
+        const p2 = world.addFreePoint2D('proj_plane_V', new Vector3(5, 5, 1));
+        const verticalLine = world.addLine2DBetweenTwoPoints('proj_plane_V', p1.id, p2.id);
+
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_V',
+          hhlId,
+          verticalLine.id,
+          0
+        );
+
+        expect(result.sibling!.planeId).toBe('proj_plane_H');
+      });
+
+      it('should add sibling to world storage', () => {
+        const hhlId = 'half_HL_HV_on_PH';
+
+        const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(5, -5, 1));
+        const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
+        const verticalLine = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+
+        const result = world.addIntersectionPoint2DWithSibling(
+          'proj_plane_H',
+          hhlId,
+          verticalLine.id,
+          0
+        );
+
+        const retrievedSibling = world.getPoint2DById(result.sibling!.id);
+        expect(retrievedSibling).toBe(result.sibling);
+        expect(retrievedSibling).toBeInstanceOf(SiblingIntersectionPoint2D);
       });
     });
 
