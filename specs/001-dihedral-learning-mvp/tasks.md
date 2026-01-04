@@ -1149,8 +1149,8 @@ class World {
 - [X] T144 Extend "Intersection" tool to support line-circle selection
 - [X] T145 Extend "Intersection" tool to support circle-circle selection
 - [X] T146 When multiple intersection points exist, allow user to choose which to create
-- [ ] T147 [P] Unit tests for line-circle and circle-circle intersections in frontend/tests/unit/calculations/intersections.spec.ts
-- [ ] T148 [P] E2E tests for all intersection types in frontend/tests/e2e/intersections.spec.ts
+- [X] T147 [P] Unit tests for line-circle and circle-circle intersections in frontend/tests/unit/calculations/intersections.spec.ts
+- [X] T148 [P] E2E tests for all intersection types in frontend/tests/e2e/intersections.spec.ts
 
 **Checkpoint**: All intersection types supported (US2 complete for intersections)
 
