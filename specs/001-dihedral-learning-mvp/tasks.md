@@ -1488,3 +1488,62 @@ const halfHingeHV_onPV = new HalfHingeLine2D('half_HL_HV_on_PV', 'HL_HV', 'proj_
 **Reference**: See [data-model.md §HalfHingeLine2D Coordinate Consistency Constraint](./data-model.md) for detailed constraint documentation.
 
 ---
+
+## REFACTORING: Command Pattern Simplification
+
+### Context
+
+Current implementation requires Command subclasses (CreateIntersectionPointCommand, CreateFreePointCommand, etc.), but Command should be a single generic container. The documented pattern in data-model.md shows tools building commands directly:
+
+```typescript
+// Desired pattern (documented)
+const cmd = new Command("Create segment", world);
+const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(...));
+const p1Id = p1Result.outputs.pointId;
+const segResult = cmd.addAndExecute(new AddSegment2DOp(planeId, p1Id, ...));
+cmd.commit();
+commandStack.push(cmd);
+```
+
+Current pattern (implemented):
+```typescript
+// Tools create command subclasses
+const cmd = new CreateIntersectionPointCommand(world, params);
+commandStack.execute(cmd);  // Calls cmd.execute() internally
+```
+
+### Issues
+
+1. **Command is abstract**: Requires `abstract execute()` method, forcing subclasses
+2. **Tools access op.outputs directly**: Instead of using `addAndExecute()` return value
+3. **CommandStack.execute()**: Calls `cmd.execute()` which builds operations internally
+4. **No operation chaining**: Current code doesn't use outputs from one op to build next op
+
+### Refactoring Tasks
+
+**Phase: Command Pattern Refactoring**
+
+- [ ] R001 Make Command concrete (remove abstract execute() method) in frontend/src/commands/Command.ts
+- [ ] R002 Update CommandStack.execute() to accept pre-built Command (remove internal execute() call)
+- [ ] R003 Update CommandStack.push() method to replace execute() for pre-built commands
+- [ ] R004 Refactor PointTool: Build Command directly, use addAndExecute() return values in frontend/src/tools/PointTool.ts
+- [ ] R005 Refactor LineTool: Build Command directly in frontend/src/tools/LineTool.ts  
+- [ ] R006 Refactor SegmentTool: Build Command with operation chaining (point outputs → segment args) in frontend/src/tools/SegmentTool.ts
+- [ ] R007 Refactor CircleTool: Build Command directly in frontend/src/tools/CircleTool.ts
+- [ ] R008 Refactor IntersectionTool: Build Command directly in frontend/src/tools/IntersectionTool.ts
+- [ ] R009 Refactor GuideTool: Build Command directly in frontend/src/tools/GuideTool.ts
+- [ ] R010 Delete CreateFreePointCommand.ts (obsolete subclass)
+- [ ] R011 Delete CreateLineCommand.ts (obsolete subclass)
+- [ ] R012 Delete CreateSegmentCommand.ts (obsolete subclass)
+- [ ] R013 Delete CreateCircleCommand.ts (obsolete subclass)
+- [ ] R014 Delete CreateIntersectionPointCommand.ts (obsolete subclass)
+- [ ] R015 Delete CreateGuideCommand.ts (obsolete subclass)
+- [ ] R016 Update operation classes to expose outputs correctly (verify all use pattern: store internal _id, return outputs)
+- [ ] R017 [P] Unit tests for generic Command with operation chaining in frontend/tests/unit/commands/command.spec.ts
+- [ ] R018 [P] Unit tests for CommandStack with new push() API in frontend/tests/unit/commands/commandStack.spec.ts
+- [ ] R019 [P] Update existing tool tests to use new pattern in frontend/tests/unit/tools/*.spec.ts
+- [ ] R020 [P] E2E test for multi-operation command (segment creation) in frontend/tests/e2e/command-chaining.spec.ts
+
+**Checkpoint**: Single generic Command class, tools build commands directly using operation chaining
+
+---
