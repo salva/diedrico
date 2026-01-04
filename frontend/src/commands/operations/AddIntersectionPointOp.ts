@@ -1,7 +1,8 @@
 /**
  * AddIntersectionPoint2DOp - Operation to add an IntersectionPoint2D using World factory method
  * 
- * Wraps World.addIntersectionPoint2D() in the Operation interface.
+ * Wraps World.addIntersectionPoint2DWithSibling() to automatically create sibling points
+ * when intersecting with HalfHingeLine2D.
  */
 
 import type { IOperation, OperationResult } from './IOperation';
@@ -23,15 +24,22 @@ export class AddIntersectionPoint2DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Pass stored ID if available (for redo), otherwise let World generate new one
-      const point = world.addIntersectionPoint2D(
+      // Use sibling-aware factory method
+      // Pass stored IDs if available (for redo), otherwise let World generate new ones
+      const result = world.addIntersectionPoint2DWithSibling(
         this.planeId,
         this.line1Id,
         this.line2Id,
         this.index,
-        this.outputs.pointId
+        this.outputs.pointId,
+        this.outputs.siblingPointId
       );
-      this.outputs = { pointId: point.id };
+      
+      this.outputs = { 
+        pointId: result.primary.id,
+        siblingPointId: result.sibling?.id
+      };
+      
       return {
         success: true,
         outputs: this.outputs
@@ -46,6 +54,13 @@ export class AddIntersectionPoint2DOp implements IOperation {
   }
 
   undo(world: World): void {
+    // Remove sibling first (if exists)
+    if (this.outputs.siblingPointId) {
+      const siblingPlaneId = this.planeId === 'proj_plane_H' ? 'proj_plane_V' : 'proj_plane_H';
+      world.removePoint2D(siblingPlaneId, this.outputs.siblingPointId);
+    }
+    
+    // Remove primary
     if (this.outputs.pointId) {
       world.removePoint2D(this.planeId, this.outputs.pointId);
     }

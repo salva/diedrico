@@ -267,9 +267,15 @@ export class SiblingIntersectionPoint2D extends Point2D {
   /**
    * Calculate 2D realization - project primary's 3D position onto sibling plane
    * 
-   * @param getLine Optional callback to get line realizations (not used directly but part of interface)
-   * @param world Required: World instance to access primary point and compute 3D position
-   * @returns Point2DRealization2D with projected position
+   * OPTIMIZATION: For intersections with HalfHingeLine2D, the sibling point coordinates
+   * are identical to the primary's coordinates. This is because both HalfHingeLine2D
+   * objects (on P_H and P_V) represent the same 3D hinge line with consistent 2D
+   * representations: both at v=0, parallel to X-axis. A point at (u, 0, 1) on the
+   * HalfHingeLine2D in P_H maps to the same (u, 0, 1) in P_V.
+   * 
+   * @param getLine Optional callback to get line realizations (not used)
+   * @param world Required: World instance to access primary point
+   * @returns Point2DRealization2D with same coordinates as primary
    */
   realize2D(getLine?: (id: string) => Line2DRealization2D | null, world?: World): Point2DRealization2D {
     if (!world) {
@@ -277,31 +283,19 @@ export class SiblingIntersectionPoint2D extends Point2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1));
     }
 
-    // Get primary intersection point
-    const primary = world.getPoint2DById(this.primaryIntersectionId);
-    if (!primary) {
-      console.warn(`[SiblingIntersectionPoint2D] Primary point ${this.primaryIntersectionId} not found`);
+    // Get primary intersection point's 2D realization
+    const primaryRealization = world.getPoint2DRealization(this.primaryIntersectionId);
+    if (!primaryRealization) {
+      console.warn(`[SiblingIntersectionPoint2D] Cannot get realization for primary ${this.primaryIntersectionId}`);
       return new Point2DRealization2D(new Vector3(0, 0, 1));
     }
 
-    // Get primary's 3D position
-    const primary3D = world.getPoint3DRealization(this.primaryIntersectionId);
-    if (!primary3D) {
-      console.warn(`[SiblingIntersectionPoint2D] Cannot compute 3D position for primary ${this.primaryIntersectionId}`);
-      return new Point2DRealization2D(new Vector3(0, 0, 1));
-    }
-
-    // Get sibling plane realization for 3D projection
-    const siblingPlaneRealization = world.getProjectionPlane3DRealization(this.planeId);
-    if (!siblingPlaneRealization) {
-      console.warn(`[SiblingIntersectionPoint2D] Sibling plane realization ${this.planeId} not found`);
-      return new Point2DRealization2D(new Vector3(0, 0, 1));
-    }
-
-    // Project 3D point onto sibling plane using 3D→2D transformation
-    // threeDToPlane is a Matrix3x4 that transforms (x,y,z,w) → (u,v,1)
-    const uvw = applyMatrix3x4(primary3D.position, siblingPlaneRealization.threeDToPlane);
-    
-    return new Point2DRealization2D(new Vector3(uvw.x, uvw.y, uvw.z));
+    // For HalfHingeLine2D intersections: both planes use the same coordinate representation
+    // Point at (u, 0, 1) on hinge line in P_H → same (u, 0, 1) on hinge line in P_V
+    // This works because HalfHingeLine2D on both planes have:
+    //   - Same point: (0, 0, 1)
+    //   - Same direction: (1, 0, 0)
+    // They represent the same 3D hinge line with consistent 2D parameterization
+    return new Point2DRealization2D(primaryRealization.position.clone());
   }
 }

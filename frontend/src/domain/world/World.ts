@@ -1282,6 +1282,29 @@ export class World {
     // - Circles that reference this point
     // - Other points that depend on this point (intersection points)
 
+    // T055k: Handle sibling point deletion cascading
+    // If deleting a primary intersection point with sibling, delete sibling first
+    if ('siblingPointId' in point && point.siblingPointId) {
+      const siblingPoint = this.points.get(point.siblingPointId);
+      if (siblingPoint) {
+        const siblingPlaneId = siblingPoint.planeId;
+        this.points.delete(point.siblingPointId);
+        this.pointRealizations2D.delete(point.siblingPointId);
+        this.pointRealizations3D.delete(point.siblingPointId);
+      }
+    }
+    
+    // If deleting a sibling intersection point, also delete the primary
+    if ('primaryIntersectionId' in point && point.primaryIntersectionId) {
+      const primaryPoint = this.points.get(point.primaryIntersectionId);
+      if (primaryPoint) {
+        const primaryPlaneId = primaryPoint.planeId;
+        this.points.delete(point.primaryIntersectionId);
+        this.pointRealizations2D.delete(point.primaryIntersectionId);
+        this.pointRealizations3D.delete(point.primaryIntersectionId);
+      }
+    }
+
     // Remove from storage
     this.points.delete(id);
     

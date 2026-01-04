@@ -61,6 +61,14 @@ export class CreateIntersectionPointCommand extends Command {
     );
 
     this.world.getProcessTree().addAction(action);
+    
+    // T055j: Sibling point ProcessTree recording
+    // Decision: Sibling points are NOT recorded as separate actions.
+    // Rationale: Siblings are automatically derived (like 3D projections) and their
+    // dependencies are implicit through the primary point. If the primary is deleted,
+    // the sibling is automatically removed via World.removePoint2D().
+    // The primary action already captures all inputs (line1, line2), which fully
+    // determines both the primary and sibling positions.
   }
 
   getPointId(): string {
