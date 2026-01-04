@@ -4,7 +4,6 @@
  * Tests Phase 8.8 functionality:
  * - Creating intersection with HingeLine automatically creates sibling on other plane
  * - Both points render simultaneously
- * - Hover highlights both sibling points
  * - Delete removes both points
  * 
  * @see specs/001-dihedral-learning-mvp/tasks.md#phase-88-halfhingeline2d-intersection-sibling-points
@@ -58,33 +57,6 @@ test.describe('HalfHingeLine2D Intersection - Sibling Points', () => {
     // Should still see points (sibling is on vertical plane)
     const verticalPlanePoints = await page.locator('svg#canvas circle.point').count();
     expect(verticalPlanePoints).toBeGreaterThan(initialPoints);
-  });
-
-  test('should highlight both sibling points on hover', async ({ page }) => {
-    // Create a line intersecting the hinge line first
-    await page.click('button:has-text("Line")');
-    await page.click('svg#canvas', { position: { x: 200, y: 100 } });
-    await page.click('svg#canvas', { position: { x: 200, y: 300 } });
-    
-    // Create intersection with hinge line
-    await page.click('button:has-text("Intersection")');
-    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
-    await page.click('svg#canvas', { position: { x: 300, y: 240 } });
-    
-    // Get all points
-    const points = await page.locator('svg#canvas circle.point').all();
-    const lastPointIndex = points.length - 1;
-    
-    // Hover over the last created point (should be the primary intersection)
-    await points[lastPointIndex].hover();
-    
-    // Check if highlighting is applied (implementation may vary)
-    // The exact highlighting class or attribute depends on implementation
-    // For now, verify hovering doesn't cause errors
-    await page.waitForTimeout(100);
-    
-    // Note: Full verification of sibling highlighting requires checking both planes
-    // or inspecting the highlighted entity IDs in the application state
   });
 
   test('should delete both sibling points when deleting primary', async ({ page }) => {

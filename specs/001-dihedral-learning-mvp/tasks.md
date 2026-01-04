@@ -530,7 +530,7 @@ User clicks → SvgCanvas (coordinate conversion)
 - [X] T055f Update CreateIntersectionPointCommand to detect HHL intersection and call addIntersectionPoint2DWithSibling()
 - [X] T055g Update IntersectionPointTool to handle sibling creation (no UI change, automatic behavior)
 - [X] T055h Update PaperService to render sibling points (same styling as regular intersection points)
-- [X] T055i Implement hover highlighting for sibling pairs (hover either → both highlight)
+- [X] T055i Hover highlighting: Only the point on active plane highlights (no special sibling highlighting)
 - [X] T055j Add ProcessTree auxiliary action recording for sibling point creation
 - [X] T055k Handle deletion cascading: delete primary → auto-delete sibling via dependency system
 - [X] T055l [P] Unit tests for SiblingIntersectionPoint2D in frontend/tests/unit/domain/point.spec.ts

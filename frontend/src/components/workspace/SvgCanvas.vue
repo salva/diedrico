@@ -283,21 +283,6 @@ const primitives = computed(() => {
   
   if (hoveredId) {
     highlightedEntityIds = new Set([hoveredId]);
-    
-    // T055i: If hovering a point with a sibling, highlight both
-    const hoveredPoint = world.getPoint2DById(hoveredId);
-    if (hoveredPoint) {
-      // Check for sibling relationship (works for both IntersectionPoint2D and SiblingIntersectionPoint2D)
-      const primarySiblingId = 'siblingPointId' in hoveredPoint ? hoveredPoint.siblingPointId : undefined;
-      const secondarySiblingId = 'primaryIntersectionId' in hoveredPoint ? hoveredPoint.primaryIntersectionId : undefined;
-      
-      if (primarySiblingId) {
-        highlightedEntityIds.add(primarySiblingId);
-      }
-      if (secondarySiblingId) {
-        highlightedEntityIds.add(secondarySiblingId);
-      }
-    }
   }
   
   const context: PrimitiveContext = {
