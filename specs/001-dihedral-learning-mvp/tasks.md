@@ -596,27 +596,27 @@ commandStack.push(cmd);
 
 **Core Architecture Changes**:
 
-- [ ] R001 Make Command concrete in frontend/src/commands/Command.ts
+- [X] R001 Make Command concrete in frontend/src/commands/Command.ts
   - Remove `abstract execute()` method declaration
   - Remove abstract keyword from class
   - Make constructor public (currently protected)
   - Ensure addAndExecute(), commit(), rollback(), undo(), redo() work without subclasses
 
-- [ ] R002 Update CommandStack API in frontend/src/commands/CommandStack.ts
+- [X] R002 Update CommandStack API in frontend/src/commands/CommandStack.ts
   - Rename execute() → push() (or keep execute but remove cmd.execute() call)
   - Method should accept pre-built Command and add to stack directly
   - Remove cmd.execute() call - commands arrive already built
   - Remove cmd.commit() call - tools should commit before passing
   - Update method signature: `push(command: Command): void`
 
-- [ ] R003 Add CommandStack.push() convenience method (if execute renamed)
+- [X] R003 Add CommandStack.push() convenience method (if execute renamed)
   - Just calls: undoStack.push(command); redoStack = [];
   - No execute() or commit() calls
   - Used by tools after building command
 
 **Tool Refactoring (Simple Single-Operation Commands)**:
 
-- [ ] R004 Refactor PointTool in frontend/src/tools/PointTool.ts
+- [X] R004 Refactor PointTool in frontend/src/tools/PointTool.ts
   - Remove CreateFreePointCommand import
   - Build Command directly: `const cmd = new Command("Create free point", world);`
   - Use return value: `const result = cmd.addAndExecute(new AddFreePoint2DOp(...));`
@@ -625,25 +625,25 @@ commandStack.push(cmd);
   - Commit: `cmd.commit();`
   - Push to stack: `commandStack.push(cmd);`
 
-- [ ] R005 Refactor LineTool in frontend/src/tools/LineTool.ts
+- [X] R005 Refactor LineTool in frontend/src/tools/LineTool.ts
   - Remove CreateLineCommand import
   - Build Command directly with AddLine2DOp
   - Use addAndExecute() return value for lineId
   - Record ProcessTree action, commit, push
 
-- [ ] R007 Refactor CircleTool in frontend/src/tools/CircleTool.ts
+- [X] R007 Refactor CircleTool in frontend/src/tools/CircleTool.ts
   - Remove CreateCircleCommand import
   - Build Command directly with AddCircle2DOp
   - Use addAndExecute() return value for circleId
   - Record ProcessTree action, commit, push
 
-- [ ] R008 Refactor IntersectionTool in frontend/src/tools/IntersectionTool.ts
+- [X] R008 Refactor IntersectionTool in frontend/src/tools/IntersectionTool.ts
   - Remove CreateIntersectionPointCommand import
   - Build Command directly with AddIntersectionPoint2DOp
   - Use addAndExecute() return value for pointId and siblingPointId
   - Record ProcessTree action, commit, push
 
-- [ ] R009 Refactor GuideTool in frontend/src/tools/GuideTool.ts
+- [X] R009 Refactor GuideTool in frontend/src/tools/GuideTool.ts
   - Remove CreateGuideCommand import
   - Build Command directly with AddGuide2DOp
   - Use addAndExecute() return value for guideId
@@ -651,7 +651,7 @@ commandStack.push(cmd);
 
 **Tool Refactoring (Multi-Operation with Chaining)**:
 
-- [ ] R006 Refactor SegmentTool in frontend/src/tools/SegmentTool.ts
+- [X] R006 Refactor SegmentTool in frontend/src/tools/SegmentTool.ts
   - Remove CreateSegmentCommand import
   - Build Command with THREE operations chained:
     1. AddFreePoint2DOp → get p1Id from result.outputs.pointId
@@ -663,12 +663,12 @@ commandStack.push(cmd);
 
 **Cleanup (Delete Obsolete Subclasses)**:
 
-- [ ] R010 Delete frontend/src/commands/CreateFreePointCommand.ts
-- [ ] R011 Delete frontend/src/commands/CreateLineCommand.ts
-- [ ] R012 Delete frontend/src/commands/CreateSegmentCommand.ts
-- [ ] R013 Delete frontend/src/commands/CreateCircleCommand.ts
-- [ ] R014 Delete frontend/src/commands/CreateIntersectionPointCommand.ts
-- [ ] R015 Delete frontend/src/commands/CreateGuideCommand.ts
+- [X] R010 Delete frontend/src/commands/CreateFreePointCommand.ts
+- [X] R011 Delete frontend/src/commands/CreateLineCommand.ts
+- [X] R012 Delete frontend/src/commands/CreateSegmentCommand.ts
+- [X] R013 Delete frontend/src/commands/CreateCircleCommand.ts
+- [X] R014 Delete frontend/src/commands/CreateIntersectionPointCommand.ts
+- [X] R015 Delete frontend/src/commands/CreateGuideCommand.ts
 
 **Operation Verification**:
 
