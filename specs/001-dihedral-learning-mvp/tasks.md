@@ -522,12 +522,12 @@ User clicks → SvgCanvas (coordinate conversion)
 
 **⚠️ CRITICAL**: This affects IntersectionPointTool workflow. Review [data-model.md §HalfHingeLine2D Intersection Sibling Behavior](./data-model.md#halfhingeline2d-intersection-sibling-behavior) for complete creation flow.
 
-- [ ] T055a [P] Create SiblingIntersectionPoint2D class in frontend/src/domain/world/Point.ts
-- [ ] T055b Add optional siblingPointId field to IntersectionPoint2D class
-- [ ] T055c Update Point2D union type to include SiblingIntersectionPoint2D
-- [ ] T055d Implement realize() method in SiblingIntersectionPoint2D (lookup primary, get 3D, project to plane)
-- [ ] T055e Add helper method to World: createIntersectionWithSibling() that creates both points when HHL detected
-- [ ] T055f Update CreateIntersectionPointCommand to detect HHL intersection and call createIntersectionWithSibling()
+- [X] T055a [P] Create SiblingIntersectionPoint2D class in frontend/src/domain/world/Point.ts
+- [X] T055b Add optional siblingPointId field to IntersectionPoint2D class
+- [X] T055c Update Point2D union type to include SiblingIntersectionPoint2D
+- [X] T055d Implement realize() method in SiblingIntersectionPoint2D (lookup primary, get 3D, project to plane)
+- [X] T055e Add helper method to World: addIntersectionPoint2DWithSibling() that creates both points when HHL detected
+- [ ] T055f Update CreateIntersectionPointCommand to detect HHL intersection and call addIntersectionPoint2DWithSibling()
 - [ ] T055g Update IntersectionPointTool to handle sibling creation (no UI change, automatic behavior)
 - [ ] T055h Update PaperService to render sibling points (same styling as regular intersection points)
 - [ ] T055i Implement hover highlighting for sibling pairs (hover either → both highlight)
@@ -1419,4 +1419,42 @@ Throughout all tasks, the following constitutional principles are enforced:
 ### Ready for Implementation
 
 All 300 tasks are defined with clear deliverables and dependencies. Implementation can proceed incrementally, phase by phase, with each phase building on the previous one.
+
+---
+
+## PENDING CLARIFICATION: Replace Transport Tool with "Point on Guide at Distance" Tool
+
+**Current Tool (TransportTool)**: Transports points between planes via guides  
+**New Tool**: Create points on guides at specified distances from hinge line
+
+**⚠️ NEEDS DESIGN CLARIFICATION**
+
+**Proposed Functionality:**
+
+**Option A - Manual Distance Entry:**
+1. User selects a guide line
+2. User enters numeric distance value (via input field/dialog)
+3. Tool creates point on guide at exactly that distance from hinge line
+
+**Option B - Interactive Placement (Mouse-Driven):**
+1. User selects a guide line
+2. User moves mouse along guide → point preview follows mouse position
+3. Tool displays real-time distance from hinge line (tooltip/overlay)
+4. User clicks to place point at current mouse position
+
+**Design Questions:**
+- Should both options be supported, or just one?
+- For Option A: UI mechanism for distance input (dialog, toolbar field, command palette)?
+- For Option B: Should point snap to guide automatically, or require explicit constraint?
+- Should distance be signed (positive/negative for sides of hinge line)?
+- Point type: PointOnGuide2D (new constrained point type) or FreePoint2D with computed position?
+
+**Implementation Impact:**
+- Replace TransportTool with new PointOnGuideTool
+- Update TransportPointCommand → CreatePointOnGuideCommand
+- Add distance calculation utilities (point-to-hinge distance)
+- Update UI feedback for Option B (live preview + distance display)
+- Update selection mask for new tool workflow
+
+**Tasks will be defined once design is finalized.**
 

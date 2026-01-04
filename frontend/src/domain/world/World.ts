@@ -14,7 +14,7 @@
 
 import { Vector3, Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
-import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization2D, Point3DRealization3D } from './Point';
+import { Point2D, FreePoint2D, IntersectionPoint2D, SiblingIntersectionPoint2D, Point2DRealization2D, Point3DRealization3D } from './Point';
 import { Line2D, Line2DByTwoPoints, Line2DRealization2D } from './Line';
 import { Segment2D, Segment2DByPoints, Segment2DRealization2D } from './Segment';
 import { Circle2D, Circle2DByCenterAndRadius, Circle2DRealization2D } from './Circle';
@@ -187,8 +187,9 @@ export class World {
       return lineRealization || null;
     };
 
-    // Call realize2D() on the point with getLine callback
-    realization = point.realize2D(getLine);
+    // Call realize2D() on the point with getLine callback and world context
+    // World context is needed for SiblingIntersectionPoint2D
+    realization = point.realize2D(getLine, this);
     
     // Cache the result
     this.pointRealizations2D.set(pointId, realization);
@@ -917,6 +918,75 @@ export class World {
     // Realization will be computed lazily on first access
     
     return point;
+  }
+
+  /**
+   * Create intersection point with automatic sibling when intersecting with HalfHingeLine2D
+   * 
+   * When one of the intersecting elements is a HalfHingeLine2D, this method automatically:
+   * 1. Creates the primary IntersectionPoint2D on the specified plane
+   * 2. Creates a SiblingIntersectionPoint2D on the paired plane
+   * 3. Links them together via siblingPointId
+   * 
+   * This maintains geometric consistency: a 3D point intersecting with the hinge line
+   * has projections on BOTH planes.
+   * 
+   * @param planeId ID of the plane where primary intersection is created
+   * @param element1Id ID of first element (line, circle, etc.)
+   * @param element2Id ID of second element
+   * @param index Intersection index (for multiple intersections)
+   * @param primaryId Optional ID for primary point (for redo)
+   * @param siblingId Optional ID for sibling point (for redo)
+   * @returns Object with primary and sibling points (sibling is undefined if not HHL intersection)
+   */
+  addIntersectionPoint2DWithSibling(
+    planeId: string,
+    element1Id: string,
+    element2Id: string,
+    index: number,
+    primaryId?: string,
+    siblingId?: string
+  ): { primary: IntersectionPoint2D; sibling?: SiblingIntersectionPoint2D } {
+    // Check if either element is a HalfHingeLine2D
+    const element1 = this.lines.get(element1Id);
+    const element2 = this.lines.get(element2Id);
+    
+    const isElement1HHL = element1 instanceof HalfHingeLine2D;
+    const isElement2HHL = element2 instanceof HalfHingeLine2D;
+    const isHHLIntersection = isElement1HHL || isElement2HHL;
+
+    // Create primary intersection point using existing method
+    const primary = this.addIntersectionPoint2D(planeId, element1Id, element2Id, index, primaryId);
+
+    // If not intersecting with HHL, return just the primary
+    if (!isHHLIntersection) {
+      return { primary };
+    }
+
+    // Determine sibling plane ID
+    // For MVP: proj_plane_H ↔ proj_plane_V
+    const siblingPlaneId = planeId === 'proj_plane_H' ? 'proj_plane_V' : 'proj_plane_H';
+
+    // Generate sibling ID if not provided
+    if (!siblingId) {
+      siblingId = this.generatePoint2DId();
+    }
+
+    // Create sibling point
+    const sibling = new SiblingIntersectionPoint2D(
+      siblingId,
+      primary.id,
+      siblingPlaneId,
+      primary.label  // Use same label as primary
+    );
+
+    // Link primary to sibling
+    primary.siblingPointId = siblingId;
+
+    // Add sibling to world storage
+    this.points.set(siblingId, sibling);
+
+    return { primary, sibling };
   }
 
   // ========================================
