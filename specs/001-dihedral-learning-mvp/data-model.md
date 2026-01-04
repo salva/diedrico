@@ -4127,6 +4127,155 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
 
 ---
 
+## Deletion and Dependency Cascading
+
+### Cascading Deletion Rule
+
+**MANDATORY PRINCIPLE**: When an element is deleted, all dependent elements (direct or indirect) MUST be deleted automatically to maintain referential integrity.
+
+**Rationale**:
+- Prevents orphaned elements that reference non-existent dependencies
+- Maintains system invariants (all element references must be valid)
+- Provides predictable behavior for users (no broken constructions)
+- Enables clean undo/redo (entire dependency tree removed/restored atomically)
+
+### Implementation Requirements
+
+1. **Dependency Graph Traversal**: Use `DependencyGraph.getDescendants(elementId)` to find all dependent elements
+2. **Recursive Deletion**: Delete descendants in reverse topological order (leaves first, roots last)
+3. **Atomic Operation**: All deletions happen in a single command (atomic undo/redo)
+4. **Special Cases**: Handle sibling relationships (e.g., HalfHingeLine2D intersection siblings delete together)
+
+### Deletion Algorithm
+
+```typescript
+function deleteElement(elementId: string, world: World): string[] {
+  const deletedIds: string[] = [];
+  
+  // 1. Find all elements that depend on this element (directly or indirectly)
+  const dependents = world.dependencyGraph.getDescendants(elementId);
+  
+  // 2. Delete dependents first (reverse topological order)
+  for (const dependentId of dependents) {
+    world.removeElement(dependentId);
+    deletedIds.push(dependentId);
+  }
+  
+  // 3. Handle special cases (e.g., sibling relationships)
+  const element = world.getElementBy(elementId);
+  if ('siblingPointId' in element && element.siblingPointId) {
+    world.removeElement(element.siblingPointId);
+    deletedIds.push(element.siblingPointId);
+  }
+  if ('primaryIntersectionId' in element && element.primaryIntersectionId) {
+    world.removeElement(element.primaryIntersectionId);
+    deletedIds.push(element.primaryIntersectionId);
+  }
+  
+  // 4. Delete the target element
+  world.removeElement(elementId);
+  deletedIds.push(elementId);
+  
+  return deletedIds;
+}
+```
+
+### Examples
+
+**Example 1: Delete Point with Dependent Line**
+```
+Initial state:
+- Point A (id: p1)
+- Point B (id: p2)
+- Line AB (id: l1) depends on [p1, p2]
+
+Delete p1 →
+  1. Find dependents: [l1] (line depends on p1)
+  2. Delete l1 first
+  3. Delete p1
+  
+Result: Both p1 and l1 deleted
+```
+
+**Example 2: Delete Point with Transitive Dependencies**
+```
+Initial state:
+- Point A (id: p1)
+- Point B (id: p2)
+- Line AB (id: l1) depends on [p1, p2]
+- Point C (id: p3) intersection of l1 with another line
+- Segment BC (id: s1) depends on [p2, p3]
+
+Delete p1 →
+  1. Find dependents: [l1, p3, s1]
+     - l1 depends on p1 (direct)
+     - p3 depends on l1 (direct)
+     - s1 depends on p3 (indirect, via p3)
+  2. Delete in order: s1, p3, l1 (leaves first)
+  3. Delete p1
+  
+Result: p1, l1, p3, and s1 all deleted
+```
+
+**Example 3: Delete Intersection Point with Sibling**
+```
+Initial state:
+- Primary intersection point (id: p1) on proj_plane_H
+- Sibling intersection point (id: p2) on proj_plane_V
+- Bidirectional link: p1.siblingPointId = p2, p2.primaryIntersectionId = p1
+
+Delete p1 →
+  1. Find dependents: [] (no elements depend on p1)
+  2. Handle sibling relationship: delete p2 first
+  3. Delete p1
+  
+Result: Both p1 and p2 deleted
+
+Delete p2 (sibling) →
+  Same result: both p1 and p2 deleted
+```
+
+### Command Integration
+
+Deletion commands must:
+1. Store list of all deleted element IDs for undo
+2. Store element state before deletion (for redo reconstruction)
+3. Execute deletions atomically (single command)
+4. Support undo: restore all deleted elements in original order
+
+```typescript
+class DeleteElementCommand extends Command {
+  private deletedElements: Map<string, Element2D> = new Map();
+  private deletedOrder: string[] = [];
+  
+  execute(world: World): void {
+    const elementId = this.targetElementId;
+    const allDeleted = deleteElement(elementId, world);
+    
+    // Store for undo
+    this.deletedOrder = allDeleted;
+    for (const id of allDeleted) {
+      this.deletedElements.set(id, world.getElementById(id).clone());
+    }
+    
+    // Perform deletions
+    for (const id of allDeleted) {
+      world.removeElement(id);
+    }
+  }
+  
+  undo(world: World): void {
+    // Restore in reverse order (roots first, leaves last)
+    for (const id of this.deletedOrder.reverse()) {
+      const element = this.deletedElements.get(id)!;
+      world.addElement(element);
+    }
+  }
+}
+```
+
+---
+
 ## State Transition Diagrams
 
 ### Element Lifecycle
