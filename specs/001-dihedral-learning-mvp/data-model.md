@@ -3269,11 +3269,37 @@ class Command {
 
 **Key Concepts**:
 - **Incremental Execution**: Operations execute immediately when added via `addAndExecute()`
-- **Dependency Resolution**: Later operations can use outputs (e.g., generated IDs) from earlier operations
+- **Output-Based Chaining**: Each operation returns outputs immediately; these outputs can be used as arguments for subsequent operations
+- **Dependency Resolution**: Later operations construct their arguments using outputs (e.g., generated IDs) from earlier operations
 - **Atomic Rollback**: If any operation fails, all previous operations are reversed automatically
 - **Transaction Pattern**: Command acts like a transaction - building → committed → undone
 - **Generic Container**: Command is a single class; all domain logic is in Operation classes
 - **No Subclasses Needed**: Tools create operations directly and pass to generic Command
+
+**Operation Chaining Pattern**:
+
+The code building a command uses outputs from one operation as constructor arguments for subsequent operations:
+
+```typescript
+const cmd = new Command("Create segment", world);
+
+// 1. Execute first operation, capture outputs immediately
+const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
+const p1Id = p1Result.outputs.pointId;  // ← Generated ID available immediately
+
+// 2. Execute second operation, capture its outputs
+const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
+const p2Id = p2Result.outputs.pointId;  // ← Another generated ID
+
+// 3. Use previous outputs as arguments for next operation
+const segResult = cmd.addAndExecute(
+  new AddSegment2DOp(planeId, p1Id, p2Id)  // ← Uses outputs from ops 1 & 2
+);
+
+cmd.commit();
+```
+
+This pattern enables building complex commands where later operations depend on results from earlier operations, all within a single atomic command.
 
 **Execution Flow**:
 ```typescript
