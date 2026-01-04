@@ -533,7 +533,7 @@ User clicks → SvgCanvas (coordinate conversion)
 - [X] T055i Implement hover highlighting for sibling pairs (hover either → both highlight)
 - [X] T055j Add ProcessTree auxiliary action recording for sibling point creation
 - [X] T055k Handle deletion cascading: delete primary → auto-delete sibling via dependency system
-- [ ] T055l [P] Unit tests for SiblingIntersectionPoint2D in frontend/tests/unit/domain/point.spec.ts
+- [X] T055l [P] Unit tests for SiblingIntersectionPoint2D in frontend/tests/unit/domain/point.spec.ts
 - [ ] T055m [P] Unit tests for sibling creation logic in frontend/tests/unit/domain/hingeLine.spec.ts
 - [ ] T055n [P] E2E test for HHL intersection creating sibling points in frontend/tests/e2e/hhl-intersection.spec.ts
 
