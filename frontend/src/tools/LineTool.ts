@@ -12,7 +12,9 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
-import { CreateLineCommand } from '@/commands/CreateLineCommand';
+import { Command } from '@/commands/Command';
+import { AddLine2DByTwoPointsOp } from '@/commands/operations/AddLineOp';
+import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
 import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -76,18 +78,25 @@ export class LineTool extends BaseTool {
       }
       
       try {
-        // Create line command
-        const command = new CreateLineCommand(
-          this.firstPointId!,
-          secondPointId,
-          planeId,
-          world
-        );
+        // Build Command directly
+        const cmd = new Command("Create line", world);
         
-        // Execute via command stack (automatic undo/redo support)
-        commandStack.execute(command);
+        // Use return value from addAndExecute
+        const result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, this.firstPointId!, secondPointId));
         
-        const lineId = command.getLineId();
+        // Extract outputs
+        const lineId = result.outputs.lineId;
+        
+        // Record ProcessTree action using lineId from outputs
+        const action = createLineAction(lineId, this.firstPointId!, secondPointId, planeId);
+        world.getProcessTree().addAction(action);
+        
+        // Commit
+        cmd.commit();
+        
+        // Push to stack
+        commandStack.push(cmd);
+        
         const firstPointId = this.firstPointId; // Save before reset
         
         // Reset state for next line

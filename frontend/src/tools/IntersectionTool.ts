@@ -17,7 +17,9 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import type { SelectionMask } from '@/types/SelectionMask';
-import { CreateIntersectionPointCommand } from '@/commands/CreateIntersectionPointCommand';
+import { Command } from '@/commands/Command';
+import { AddIntersectionPoint2DOp } from '@/commands/operations/AddIntersectionPointOp';
+import { createIntersectionPointAction } from '@/domain/processTree/actions/CreateIntersectionPointAction';
 import { areLinesParallel } from '@/domain/calculations/Intersections';
 
 /**
@@ -108,23 +110,36 @@ export class IntersectionTool extends BaseTool {
         return this.failure('Lines are parallel - no intersection point exists.');
       }
 
-      // Create intersection point command
-      const command = new CreateIntersectionPointCommand(
-        world,
-        {
-          line1Id: this.firstLineId!,
-          line2Id: secondLineId,
-          planeId: planeId
-        }
-      );
-
-      // Execute command
-      commandStack.execute(command);
-      
-      // Reset state for next intersection
-      this.reset();
-      
-      return this.success('Intersection point created');
+      try {
+        // Build Command directly
+        const cmd = new Command("Create intersection point", world);
+        
+        // Use return value from addAndExecute
+        const result = cmd.addAndExecute(new AddIntersectionPoint2DOp(planeId, this.firstLineId!, secondLineId, 0));
+        
+        // Extract outputs
+        const pointId = result.outputs.pointId;
+        
+        // Record ProcessTree action using pointId from outputs
+        const action = createIntersectionPointAction(pointId, planeId, this.firstLineId!, secondLineId, 0);
+        world.getProcessTree().addAction(action);
+        
+        // Commit
+        cmd.commit();
+        
+        // Push to stack
+        commandStack.push(cmd);
+        
+        // Reset state for next intersection
+        this.reset();
+        
+        return this.success('Intersection point created');
+        
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.reset();
+        return this.failure(`Failed to create intersection: ${message}`);
+      }
     }
   }
 

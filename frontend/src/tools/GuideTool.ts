@@ -18,7 +18,9 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import type { SelectionMask } from '@/types/SelectionMask';
-import { CreateGuideCommand } from '@/commands/CreateGuideCommand';
+import { Command } from '@/commands/Command';
+import { AddGuide2DPerpendicularToLineOp } from '@/commands/operations/AddGuideOp';
+import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
 
 /**
  * GuideTool state machine:
@@ -89,18 +91,25 @@ export class GuideTool extends BaseTool {
       const throughPointId = hit.elementId;
       
       try {
-        // Create guide command
-        const command = new CreateGuideCommand(
-          this.referenceLineId!,
-          throughPointId,
-          planeId,
-          world
-        );
+        // Build Command directly
+        const cmd = new Command("Create guide", world);
         
-        // Execute via command stack (automatic undo/redo support)
-        commandStack.execute(command);
+        // Use return value from addAndExecute
+        const result = cmd.addAndExecute(new AddGuide2DPerpendicularToLineOp(planeId, this.referenceLineId!, throughPointId));
         
-        const guideId = command.getGuideId();
+        // Extract outputs
+        const guideId = result.outputs.guideId;
+        
+        // Record ProcessTree action using guideId from outputs
+        const action = createGuideAction(guideId, this.referenceLineId!, throughPointId, planeId);
+        world.getProcessTree().addAction(action);
+        
+        // Commit
+        cmd.commit();
+        
+        // Push to stack
+        commandStack.push(cmd);
+        
         const referenceLineId = this.referenceLineId; // Save before reset
         
         // Reset state for next guide

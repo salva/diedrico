@@ -15,7 +15,9 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
-import { CreateCircleCommand } from '@/commands/CreateCircleCommand';
+import { Command } from '@/commands/Command';
+import { AddCircle2DByCenterAndRadiusOp } from '@/commands/operations/AddCircleOp';
+import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
 import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -93,18 +95,25 @@ export class CircleTool extends BaseTool {
       }
       
       try {
-        // Create circle command
-        const command = new CreateCircleCommand(
-          this.centerPointId!,
-          radius,
-          planeId,
-          world
-        );
+        // Build Command directly
+        const cmd = new Command("Create circle", world);
         
-        // Execute via command stack (automatic undo/redo support)
-        commandStack.execute(command);
+        // Use return value from addAndExecute
+        const result = cmd.addAndExecute(new AddCircle2DByCenterAndRadiusOp(planeId, this.centerPointId!, radius));
         
-        const circleId = command.getCircleId();
+        // Extract outputs
+        const circleId = result.outputs.circleId;
+        
+        // Record ProcessTree action using circleId from outputs
+        const action = createCircleAction(circleId, planeId, this.centerPointId!, radius);
+        world.getProcessTree().addAction(action);
+        
+        // Commit
+        cmd.commit();
+        
+        // Push to stack
+        commandStack.push(cmd);
+        
         const centerPointId = this.centerPointId; // Save before reset
         
         // Reset state for next circle

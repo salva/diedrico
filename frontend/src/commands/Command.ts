@@ -22,7 +22,7 @@ export enum CommandStatus {
   Undone = 'undone'           // Command has been undone
 }
 
-export abstract class Command {
+export class Command {
   readonly id: string;
   readonly timestamp: Date;
   readonly description: string;
@@ -133,11 +133,6 @@ export abstract class Command {
     
     this._status = CommandStatus.Committed;
   }
-
-  /**
-   * Abstract method: subclasses implement to build and execute operations
-   */
-  abstract execute(): void;
 
   /**
    * Generate unique command ID

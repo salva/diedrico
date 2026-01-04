@@ -20,21 +20,42 @@ export class CommandStack {
   private redoStack: Command[] = [];
 
   /**
-   * Execute a command and add it to the undo stack
+   * Push a pre-built and committed command to the undo stack
    * Clears the redo stack (can't redo after new action)
+   * 
+   * Note: Commands should be built, executed, and committed by tools before pushing
    */
-  execute(command: Command): void {
-    // Execute the command
-    command.execute();
-    
-    // Commit it
-    command.commit();
+  push(command: Command): void {
+    // Verify command is committed (not building)
+    if (command.status !== 'committed') {
+      throw new Error('Can only push committed commands to stack');
+    }
     
     // Add to undo stack
     this.undoStack.push(command);
     
     // Clear redo stack (new action invalidates redo history)
     this.redoStack = [];
+  }
+
+  /**
+   * @deprecated Use push() instead. Kept for backward compatibility.
+   * Execute a command and add it to the undo stack
+   */
+  execute(command: Command): void {
+    // For backward compatibility with existing command subclasses
+    // that have execute() method
+    if ('execute' in command && typeof (command as any).execute === 'function') {
+      (command as any).execute();
+    }
+    
+    // Commit if not already committed
+    if (command.status === 'building') {
+      command.commit();
+    }
+    
+    // Push to stack
+    this.push(command);
   }
 
   /**

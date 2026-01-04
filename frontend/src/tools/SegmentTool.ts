@@ -15,7 +15,9 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
-import { CreateSegmentCommand } from '@/commands/CreateSegmentCommand';
+import { Command } from '@/commands/Command';
+import { AddSegment2DByPointsOp } from '@/commands/operations/AddSegmentOp';
+import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
 import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -79,18 +81,25 @@ export class SegmentTool extends BaseTool {
       }
       
       try {
-        // Create segment command
-        const command = new CreateSegmentCommand(
-          this.firstPointId!,
-          secondPointId,
-          planeId,
-          world
-        );
+        // Build Command directly
+        const cmd = new Command("Create segment", world);
         
-        // Execute via command stack (automatic undo/redo support)
-        commandStack.execute(command);
+        // Use return value from addAndExecute
+        const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, this.firstPointId!, secondPointId));
         
-        const segmentId = command.getSegmentId();
+        // Extract outputs
+        const segmentId = result.outputs.segmentId;
+        
+        // Record ProcessTree action using segmentId from outputs
+        const action = createSegmentAction(segmentId, this.firstPointId!, secondPointId, planeId);
+        world.getProcessTree().addAction(action);
+        
+        // Commit
+        cmd.commit();
+        
+        // Push to stack
+        commandStack.push(cmd);
+        
         const firstPointId = this.firstPointId; // Save before reset
         
         // Reset state for next segment
