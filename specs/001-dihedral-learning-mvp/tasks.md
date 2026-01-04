@@ -1117,41 +1117,29 @@ class World {
 
 ---
 
-## Phase 16: Distance Transport (US5 - Complete)
+## Phase 16: Distance Transport (US5 - REMOVED)
 
-**Purpose**: Transport distances along guides  
-**Reference**: [spec.md](./spec.md#us5-transport-distance-along-guide) - US5 Distance Transport
+**Status**: ❌ **FEATURE REMOVED** - Distance transport tool removed from scope
 
-**Implementation Requirements**:
-- **User Story**: Implement [spec.md §US5](./spec.md#us5-transport-distance-along-guide) - Select reference segment → select guide → select base point → new point created at distance along guide.
-- **Distance Calculation**: Measure segment length in plane intrinsic coordinates using [data-model.md §Segment2D](./data-model.md#line2d-and-segment2d). Apply along guide direction.
-- **Homogeneous Coordinates**: Distance transport MUST use homogeneous coordinate transformations per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
-- **Dependencies**: Transported point depends on reference segment (for length) AND guide (for direction) AND base point per [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies).
-- **General Algorithms**: Transport works for any guide/segment/point combination per [constitution.md Principle IV](../../.specify/memory/constitution.md#principle-iv-principle-based-rendering-no-hardcoded-cases).
+~~**Purpose**: Transport distances along guides~~  
+~~**Reference**: [spec.md](./spec.md#us5-transport-distance-along-guide) - US5 Distance Transport~~
 
-**⚠️ CRITICAL**: Study [spec.md §US5](./spec.md#us5-transport-distance-along-guide) - distance transport enables complex constructions.
+**Rationale**: Feature deemed unnecessary for MVP. Distance operations can be achieved through other tool combinations.
 
-- [ ] T126 [P] Implement distance transport calculation in frontend/src/domain/calculations/Transport.ts
-**Reference**: [spec.md](./spec.md#us5-transport-distance-via-guide) - US5 Distance Transport via Guides
-
-- [ ] T126 [P] Implement distance transport calculation in frontend/src/domain/calculations/Transport.ts
-- [ ] T127 [P] Use homogeneous coordinates for distance vector representation (Principle V)
-- [ ] T128 Validate that segment and target point are on different planes
-- [ ] T129 Validate that guide passes through target point
-- [ ] T130 Add "Transport Distance" tool button to Toolbar
-- [ ] T131 [P] Create TransportDistanceCommand in frontend/src/commands/TransportDistanceCommand.ts
-- [ ] T132 Implement distance transport tool: select source segment (defines distance)
-- [ ] T133 Implement distance transport tool: select guide
-- [ ] T134 Implement distance transport tool: select target point
-- [ ] T135 Calculate new point at transported distance from target along guide
-- [ ] T136 Handle bidirectional distance (both directions from target)
-- [ ] T137 Record dependency: new point depends on segment + guide + target (ProcessTree)
-- [ ] T138 [P] Unit test for distance transport in frontend/tests/unit/calculations/transport.spec.ts
-- [ ] T139 [P] E2E test for distance transport in frontend/tests/e2e/distance-transport.spec.ts
-
-**Checkpoint**: User can transport distances (US5 complete)
-
-**Constitution Note**: Distance transport MUST be derived from geometric principles, not hardcoded (Principle IV)
+~~- [ ] T126 [P] Implement distance transport calculation~~
+~~- [ ] T127 [P] Use homogeneous coordinates for distance vector representation~~
+~~- [ ] T128 Validate that segment and target point are on different planes~~
+~~- [ ] T129 Validate that guide passes through target point~~
+~~- [ ] T130 Add "Transport Distance" tool button to Toolbar~~
+~~- [ ] T131 [P] Create TransportDistanceCommand~~
+~~- [ ] T132 Implement distance transport tool: select source segment~~
+~~- [ ] T133 Implement distance transport tool: select guide~~
+~~- [ ] T134 Implement distance transport tool: select target point~~
+~~- [ ] T135 Calculate new point at transported distance~~
+~~- [ ] T136 Handle bidirectional distance~~
+~~- [ ] T137 Record dependency: new point depends on segment + guide + target~~
+~~- [ ] T138 [P] Unit test for distance transport~~
+~~- [ ] T139 [P] E2E test for distance transport~~
 
 ---
 
