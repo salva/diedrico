@@ -2,12 +2,12 @@
  * Unit Tests: PointTool
  * 
  * Tests the tool for creating free points:
- * - handleClick() creates CreateFreePointCommand
+ * - handleClick() builds generic Command with AddFreePoint2DOp
  * - Coordinate validation (Vector3 homogeneous)
  * - Plane existence validation in World
  * - Tool returns success/failure correctly
  * 
- * Reference: specs/001-dihedral-learning-mvp/tasks.md - T075b
+ * Reference: specs/001-dihedral-learning-mvp/tasks.md - R019
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -225,8 +225,8 @@ describe('PointTool', () => {
     });
 
     it('should handle command execution errors', () => {
-      // Create a spy on commandStack.execute to throw error
-      const executeSpy = vi.spyOn(commandStack, 'execute').mockImplementation(() => {
+      // Create a spy on commandStack.push to throw error
+      const pushSpy = vi.spyOn(commandStack, 'push').mockImplementation(() => {
         throw new Error('Mock execution error');
       });
 
@@ -243,7 +243,7 @@ describe('PointTool', () => {
       expect(result.message).toContain('Failed to create point');
       expect(result.message).toContain('Mock execution error');
 
-      executeSpy.mockRestore();
+      pushSpy.mockRestore();
     });
 
     it('should not pollute command stack on validation failure', () => {
