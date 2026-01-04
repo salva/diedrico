@@ -1142,13 +1142,13 @@ class World {
 
 **⚠️ CRITICAL**: Study [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system) for intersection calculation techniques.
 
-- [ ] T140 [P] Implement line-circle intersection in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
-- [ ] T141 Handle 0, 1, or 2 intersection points for line-circle
-- [ ] T142 [P] Implement circle-circle intersection using homogeneous coordinates
-- [ ] T143 Handle 0, 1, or 2 intersection points for circle-circle
-- [ ] T144 Extend "Intersection" tool to support line-circle selection
-- [ ] T145 Extend "Intersection" tool to support circle-circle selection
-- [ ] T146 When multiple intersection points exist, allow user to choose which to create
+- [X] T140 [P] Implement line-circle intersection in frontend/src/domain/calculations/Intersections.ts using homogeneous coordinates
+- [X] T141 Handle 0, 1, or 2 intersection points for line-circle
+- [X] T142 [P] Implement circle-circle intersection using homogeneous coordinates
+- [X] T143 Handle 0, 1, or 2 intersection points for circle-circle
+- [X] T144 Extend "Intersection" tool to support line-circle selection
+- [X] T145 Extend "Intersection" tool to support circle-circle selection
+- [X] T146 When multiple intersection points exist, allow user to choose which to create
 - [ ] T147 [P] Unit tests for line-circle and circle-circle intersections in frontend/tests/unit/calculations/intersections.spec.ts
 - [ ] T148 [P] E2E tests for all intersection types in frontend/tests/e2e/intersections.spec.ts
 

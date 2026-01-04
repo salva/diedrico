@@ -21,6 +21,7 @@
 
 import { Vector3 } from 'three';
 import type { Line2DRealization2D } from '../world/Line';
+import type { Circle2DRealization2D } from '../world/Circle';
 
 /**
  * Result of a line-line intersection calculation
@@ -187,4 +188,274 @@ export function areLinesParallel(
   const cross = d1.x * d2.y - d1.y * d2.x;
   
   return Math.abs(cross) < 1e-10;
+}
+
+/**
+ * Result of a line-circle intersection calculation
+ */
+export interface LineCircleIntersectionResult {
+  /**
+   * Intersection points in homogeneous coordinates (x, y, 1)
+   * Empty array if no intersections, 1 element if tangent, 2 elements if secant
+   */
+  points: Vector3[];
+  
+  /**
+   * Type of intersection result
+   * - 'none': No intersection (line misses circle)
+   * - 'tangent': One intersection point (line is tangent to circle)
+   * - 'secant': Two intersection points (line cuts through circle)
+   */
+  type: 'none' | 'tangent' | 'secant';
+  
+  /**
+   * Human-readable message describing the result
+   */
+  message?: string;
+}
+
+/**
+ * Calculate intersection points of a line and a circle using homogeneous coordinates
+ * 
+ * Algorithm:
+ * 1. Line in parametric form: P(t) = P0 + t*d where P0 is point, d is direction
+ * 2. Circle: (x - cx)² + (y - cy)² = r²
+ * 3. Substitute line equation into circle equation
+ * 4. Results in quadratic: at² + bt + c = 0
+ * 5. Solve quadratic to find t values
+ * 6. Substitute t back into line equation to get intersection points
+ * 
+ * Edge cases:
+ * - No intersection: discriminant < 0
+ * - Tangent: discriminant = 0 (one point)
+ * - Secant: discriminant > 0 (two points)
+ * 
+ * @param line Line in parametric form
+ * @param circle Circle with center and radius
+ * @returns Intersection result with 0, 1, or 2 points
+ */
+export function intersectLineCircle(
+  line: Line2DRealization2D,
+  circle: Circle2DRealization2D
+): LineCircleIntersectionResult {
+  const { point: P0, direction: d } = line;
+  const { center: C, radius: r } = circle;
+  
+  // Line: P(t) = P0 + t*d = (P0.x + t*d.x, P0.y + t*d.y)
+  // Circle: (x - C.x)² + (y - C.y)² = r²
+  //
+  // Substitute line into circle:
+  // (P0.x + t*d.x - C.x)² + (P0.y + t*d.y - C.y)² = r²
+  //
+  // Let dx = P0.x - C.x, dy = P0.y - C.y
+  // (dx + t*d.x)² + (dy + t*d.y)² = r²
+  //
+  // Expand:
+  // dx² + 2*dx*t*d.x + t²*d.x² + dy² + 2*dy*t*d.y + t²*d.y² = r²
+  //
+  // Group by powers of t:
+  // (d.x² + d.y²)*t² + 2*(dx*d.x + dy*d.y)*t + (dx² + dy² - r²) = 0
+  //
+  // This is quadratic: a*t² + b*t + c = 0
+  
+  const dx = P0.x - C.x;
+  const dy = P0.y - C.y;
+  
+  const a = d.x * d.x + d.y * d.y;  // Should be 1 if direction is normalized
+  const b = 2 * (dx * d.x + dy * d.y);
+  const c = dx * dx + dy * dy - r * r;
+  
+  // Calculate discriminant
+  const discriminant = b * b - 4 * a * c;
+  const epsilon = 1e-10;
+  
+  if (discriminant < -epsilon) {
+    // No intersection
+    return {
+      points: [],
+      type: 'none',
+      message: 'Line does not intersect circle'
+    };
+  } else if (Math.abs(discriminant) < epsilon) {
+    // Tangent - one intersection point
+    const t = -b / (2 * a);
+    const x = P0.x + t * d.x;
+    const y = P0.y + t * d.y;
+    
+    return {
+      points: [new Vector3(x, y, 1)],
+      type: 'tangent',
+      message: `Line is tangent to circle at (${x.toFixed(2)}, ${y.toFixed(2)})`
+    };
+  } else {
+    // Secant - two intersection points
+    const sqrtDisc = Math.sqrt(discriminant);
+    const t1 = (-b - sqrtDisc) / (2 * a);
+    const t2 = (-b + sqrtDisc) / (2 * a);
+    
+    const x1 = P0.x + t1 * d.x;
+    const y1 = P0.y + t1 * d.y;
+    const x2 = P0.x + t2 * d.x;
+    const y2 = P0.y + t2 * d.y;
+    
+    return {
+      points: [
+        new Vector3(x1, y1, 1),
+        new Vector3(x2, y2, 1)
+      ],
+      type: 'secant',
+      message: `Line intersects circle at (${x1.toFixed(2)}, ${y1.toFixed(2)}) and (${x2.toFixed(2)}, ${y2.toFixed(2)})`
+    };
+  }
+}
+
+/**
+ * Result of a circle-circle intersection calculation
+ */
+export interface CircleCircleIntersectionResult {
+  /**
+   * Intersection points in homogeneous coordinates (x, y, 1)
+   * Empty array if no intersections, 1 element if tangent, 2 elements if intersecting
+   */
+  points: Vector3[];
+  
+  /**
+   * Type of intersection result
+   * - 'none': No intersection (circles don't touch)
+   * - 'tangent': One intersection point (circles touch at one point)
+   * - 'secant': Two intersection points (circles overlap)
+   * - 'coincident': Circles are the same (infinite intersections)
+   */
+  type: 'none' | 'tangent' | 'secant' | 'coincident';
+  
+  /**
+   * Human-readable message describing the result
+   */
+  message?: string;
+}
+
+/**
+ * Calculate intersection points of two circles using homogeneous coordinates
+ * 
+ * Algorithm:
+ * 1. Circle 1: (x - c1x)² + (y - c1y)² = r1²
+ * 2. Circle 2: (x - c2x)² + (y - c2y)² = r2²
+ * 3. Subtract equations to get a line (radical axis)
+ * 4. Solve line-circle intersection for either circle
+ * 
+ * Edge cases:
+ * - No intersection: |c1 - c2| > r1 + r2 (circles too far apart)
+ * - No intersection: |c1 - c2| < |r1 - r2| (one circle inside the other)
+ * - Tangent: |c1 - c2| = r1 + r2 or |c1 - c2| = |r1 - r2|
+ * - Secant: otherwise (two points)
+ * - Coincident: same center and same radius
+ * 
+ * @param circle1 First circle
+ * @param circle2 Second circle
+ * @returns Intersection result with 0, 1, or 2 points
+ */
+export function intersectCircleCircle(
+  circle1: Circle2DRealization2D,
+  circle2: Circle2DRealization2D
+): CircleCircleIntersectionResult {
+  const c1 = circle1.center;
+  const r1 = circle1.radius;
+  const c2 = circle2.center;
+  const r2 = circle2.radius;
+  
+  // Distance between centers
+  const dx = c2.x - c1.x;
+  const dy = c2.y - c1.y;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  
+  const epsilon = 1e-10;
+  
+  // Check if circles are coincident (same center and same radius)
+  if (d < epsilon && Math.abs(r1 - r2) < epsilon) {
+    return {
+      points: [],
+      type: 'coincident',
+      message: 'Circles are coincident (same circle)'
+    };
+  }
+  
+  // Check if circles are too far apart
+  if (d > r1 + r2 + epsilon) {
+    return {
+      points: [],
+      type: 'none',
+      message: 'Circles are too far apart (no intersection)'
+    };
+  }
+  
+  // Check if one circle is inside the other
+  if (d < Math.abs(r1 - r2) - epsilon) {
+    return {
+      points: [],
+      type: 'none',
+      message: 'One circle is inside the other (no intersection)'
+    };
+  }
+  
+  // Check if circles are externally tangent
+  if (Math.abs(d - (r1 + r2)) < epsilon) {
+    // One point at c1 + (r1/d) * (c2 - c1)
+    const t = r1 / d;
+    const x = c1.x + t * dx;
+    const y = c1.y + t * dy;
+    
+    return {
+      points: [new Vector3(x, y, 1)],
+      type: 'tangent',
+      message: `Circles are externally tangent at (${x.toFixed(2)}, ${y.toFixed(2)})`
+    };
+  }
+  
+  // Check if circles are internally tangent
+  if (Math.abs(d - Math.abs(r1 - r2)) < epsilon) {
+    // One point at c1 + (r1/d) * (c2 - c1) or c1 - (r1/d) * (c2 - c1)
+    const t = r1 / d * (r1 > r2 ? 1 : -1);
+    const x = c1.x + t * dx;
+    const y = c1.y + t * dy;
+    
+    return {
+      points: [new Vector3(x, y, 1)],
+      type: 'tangent',
+      message: `Circles are internally tangent at (${x.toFixed(2)}, ${y.toFixed(2)})`
+    };
+  }
+  
+  // Two intersection points (secant case)
+  // Use the formula from computational geometry:
+  // a = (r1² - r2² + d²) / (2*d)
+  // h = sqrt(r1² - a²)
+  // 
+  // Point P2 = c1 + (a/d) * (c2 - c1) is on the line between centers
+  // The two intersection points are perpendicular to this line at distance h
+  
+  const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+  const h = Math.sqrt(r1 * r1 - a * a);
+  
+  // Point on line between centers
+  const p2x = c1.x + (a / d) * dx;
+  const p2y = c1.y + (a / d) * dy;
+  
+  // Perpendicular direction (rotate (dx, dy) by 90 degrees)
+  const perp_x = -dy / d;
+  const perp_y = dx / d;
+  
+  // Two intersection points
+  const x1 = p2x + h * perp_x;
+  const y1 = p2y + h * perp_y;
+  const x2 = p2x - h * perp_x;
+  const y2 = p2y - h * perp_y;
+  
+  return {
+    points: [
+      new Vector3(x1, y1, 1),
+      new Vector3(x2, y2, 1)
+    ],
+    type: 'secant',
+    message: `Circles intersect at (${x1.toFixed(2)}, ${y1.toFixed(2)}) and (${x2.toFixed(2)}, ${y2.toFixed(2)})`
+  };
 }

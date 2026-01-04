@@ -857,10 +857,20 @@ export class World {
    * @returns The created IntersectionPoint2D
    * @throws Error if validation fails (invalid plane, missing lines, lines not on same plane, lines parallel)
    */
+  /**
+   * Add an intersection point between two geometric elements (lines or circles)
+   * 
+   * @param planeId ID of the plane where intersection is created
+   * @param element1Id ID of first element (line or circle)
+   * @param element2Id ID of second element (line or circle)
+   * @param index Intersection index (0 for first/only point, 1 for second point in multiple intersections)
+   * @param id Optional ID for redo operations
+   * @returns The created IntersectionPoint2D
+   */
   addIntersectionPoint2D(
     planeId: string,
-    line1Id: string,
-    line2Id: string,
+    element1Id: string,
+    element2Id: string,
     index: number,
     id?: string
   ): IntersectionPoint2D {
@@ -869,39 +879,25 @@ export class World {
       throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
     }
 
-    // Validate lines exist
-    const line1 = this.lines.get(line1Id);
-    const line2 = this.lines.get(line2Id);
+    // Try to get elements (could be lines or circles)
+    const element1 = this.lines.get(element1Id) || this.circles.get(element1Id);
+    const element2 = this.lines.get(element2Id) || this.circles.get(element2Id);
     
-    if (!line1) {
-      throw new Error(`Invalid line1Id: ${line1Id}. Line does not exist.`);
+    if (!element1) {
+      throw new Error(`Invalid element1Id: ${element1Id}. Element does not exist.`);
     }
-    if (!line2) {
-      throw new Error(`Invalid line2Id: ${line2Id}. Line does not exist.`);
-    }
-
-    // Validate lines are on the same plane
-    if (line1.planeId !== line2.planeId) {
-      throw new Error(`Lines must be on the same plane. Line1 is on ${line1.planeId}, Line2 is on ${line2.planeId}.`);
+    if (!element2) {
+      throw new Error(`Invalid element2Id: ${element2Id}. Element does not exist.`);
     }
 
-    // Validate lines are on the specified plane
-    if (line1.planeId !== planeId) {
-      throw new Error(`Lines are on plane ${line1.planeId}, but intersection point is being created on plane ${planeId}.`);
+    // Validate elements are on the same plane
+    if (element1.planeId !== element2.planeId) {
+      throw new Error(`Elements must be on the same plane. Element1 is on ${element1.planeId}, Element2 is on ${element2.planeId}.`);
     }
 
-    // Validate lines are not parallel (check if intersection can be computed)
-    const line1Realization = this.getLine2DRealization(line1Id);
-    const line2Realization = this.getLine2DRealization(line2Id);
-    
-    if (!line1Realization || !line2Realization) {
-      throw new Error(`Cannot compute line realizations. Lines may depend on missing elements.`);
-    }
-
-    // Check if lines are parallel using cross product of directions
-    const cross = line1Realization.direction.clone().cross(line2Realization.direction);
-    if (Math.abs(cross.z) < 1e-10) {
-      throw new Error(`Lines ${line1Id} and ${line2Id} are parallel. Cannot create intersection point.`);
+    // Validate elements are on the specified plane
+    if (element1.planeId !== planeId) {
+      throw new Error(`Elements are on plane ${element1.planeId}, but intersection point is being created on plane ${planeId}.`);
     }
 
     // Generate unique ID if not provided
@@ -910,7 +906,7 @@ export class World {
     }
 
     // Create the intersection point
-    const point = new IntersectionPoint2D(id, line1Id, line2Id, index, planeId);
+    const point = new IntersectionPoint2D(id, element1Id, element2Id, index, planeId);
     
     // Add to world storage
     this.points.set(id, point);
