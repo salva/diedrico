@@ -3759,11 +3759,11 @@ class AddIntersectionPoint2DOp implements IOperation {
       this._siblingPointId // undefined on first call, preserved ID on redo
     );
     
-    // Store IDs internally for redo (not public outputs)
+    // Store IDs internally for redo (private state, not for chaining)
     this._pointId = result.primary.id;
     this._siblingPointId = result.sibling?.id;
     
-    // Public outputs (for operation chaining if needed)
+    // Expose outputs for operation chaining (public interface)
     this.outputs = { 
       pointId: this._pointId,
       siblingPointId: this._siblingPointId
@@ -3771,7 +3771,7 @@ class AddIntersectionPoint2DOp implements IOperation {
     
     return { 
       success: true, 
-      outputs: this.outputs 
+      outputs: this.outputs  // ← Returned to caller for chaining
     };
   }
   
@@ -3790,12 +3790,11 @@ class AddIntersectionPoint2DOp implements IOperation {
 ```
 
 **Key Concepts**:
-- **Internal fields** (`_pointId`, `_siblingPointId`): Optional arguments that become fixed after first execution
-- **ID stability**: Same element gets same ID across multiple undo/redo cycles
+- **Internal fields** (`_pointId`, `_siblingPointId`): Private optional arguments that become fixed after first execution
+- **ID stability**: Same element gets same ID across multiple undo/redo cycles (via internal fields)
 - **World factory methods**: Accept optional ID parameter; generate new ID if undefined, reuse if provided
-- **Outputs dual purpose**: 
-  1. **Operation chaining**: Returned via `OperationResult` so next operations can use generated IDs
-  2. **Redo consistency**: Stored internally so redo reuses same IDs
+- **Outputs**: Returned by `addAndExecute()` for operation chaining - next operations use these as constructor arguments
+- **Outputs vs Internal State**: `outputs` are the public interface; internal fields handle redo consistency privately
 
 **Example - ID stability across undo/redo**:
 ```typescript
