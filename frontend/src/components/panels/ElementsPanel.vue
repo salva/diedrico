@@ -14,6 +14,11 @@
         </div>
         
         <div v-if="!is2DSectionCollapsed" class="section-content">
+          <!-- Empty state message -->
+          <div v-if="!horizontalElements.hasElements && !verticalElements.hasElements" class="empty-state">
+            <p>No elements yet. Use the tools to create points, lines, and other geometric objects.</p>
+          </div>
+          
           <!-- Horizontal Plane -->
           <div v-if="horizontalElements.hasElements" class="plane-group">
             <div class="plane-header" @click="toggleHPlane">
@@ -224,6 +229,14 @@ const horizontalElements = computed(() => {
     .filter(c => c.planeId === 'proj_plane_H');
   const guides = world.getAllGuides2D()
     .filter(g => g.planeId === 'proj_plane_H');
+  
+  console.log('[ElementsPanel] P_H elements:', {
+    points: points.length,
+    lines: lines.length,
+    segments: segments.length,
+    circles: circles.length,
+    guides: guides.length
+  });
   
   return {
     points: points.map(formatElement),
