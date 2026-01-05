@@ -66,14 +66,17 @@ const treeVersion = computed(() => processTree.getVersion());
 // Force re-render when tree changes by polling version
 let intervalId: number | null = null;
 const forceUpdate = ref(0);
+let lastVersion = processTree.getVersion();
+
 onMounted(() => {
   intervalId = window.setInterval(() => {
-    // Check if tree version changed
+    // Check if tree version actually changed
     const currentVersion = processTree.getVersion();
-    if (currentVersion !== treeVersion.value) {
+    if (currentVersion !== lastVersion) {
+      lastVersion = currentVersion;
       forceUpdate.value++;
     }
-  }, 100); // Check more frequently for better responsiveness
+  }, 100);
 });
 
 onUnmounted(() => {
