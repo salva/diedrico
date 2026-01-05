@@ -26,7 +26,6 @@ export interface Subprocess extends ProcessNodeBase {
 
 export interface ActionGroup extends ProcessNodeBase {
   type: 'actionGroup';
-  name: string;
   children: ActionNode[];                  // Only actions, at least 1
   isAuxiliary: boolean;                    // Auxiliary actions (lighter styling)
 }
@@ -66,10 +65,10 @@ export class ProcessTree {
     };
 
     // Create action group for this action
+    // Note: groupName is ignored - ActionGroups have no names per spec
     const actionGroup: ActionGroup = {
       id: this.generateId(),
       type: 'actionGroup',
-      name: groupName || action.description,
       children: [actionNode],
       isAuxiliary: false,
       created: new Date()
