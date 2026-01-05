@@ -1229,16 +1229,16 @@ class World {
 
 **⚠️ CRITICAL**: Review [ui-spec.md §Visual Feedback](./ui-spec.md#visual-feedback-hover-and-selection) for selection vs hover visual states.
 
-- [ ] T168 [P] Create selectionStore in frontend/src/stores/selectionStore.ts
-- [ ] T169 Implement click detection for objects on SVG canvas
-- [ ] T170 Add selected object ID to selectionStore on click
-- [ ] T171 Apply selection highlight style to selected objects (different stroke/fill)
-- [ ] T172 Implement Ctrl+click for multi-select (add to selection)
-- [ ] T173 Implement click on empty area to clear selection
-- [ ] T174 Sync selection between canvas and ElementsPanel (bidirectional)
-- [ ] T175 Sync selection between canvas and ActionsPanel (show related actions)
-- [ ] T176 [P] Unit test for selectionStore in frontend/tests/unit/stores/selectionStore.spec.ts
-- [ ] T177 [P] E2E test for object selection in frontend/tests/e2e/selection.spec.ts
+- [X] T168 [P] Create selectionStore in frontend/src/stores/selectionStore.ts
+- [X] T169 Implement click detection for objects on SVG canvas
+- [X] T170 Add selected object ID to selectionStore on click
+- [X] T171 Apply selection highlight style to selected objects (different stroke/fill)
+- [X] T172 Implement Ctrl+click for multi-select (add to selection)
+- [X] T173 Implement click on empty area to clear selection
+- [X] T174 Sync selection between canvas and ElementsPanel (bidirectional)
+- [TODO] T175 Sync selection between canvas and ActionsPanel (show related actions)
+- [TODO] T176 [P] Unit test for selectionStore in frontend/tests/unit/stores/selectionStore.spec.ts
+- [TODO] T177 [P] E2E test for object selection in frontend/tests/e2e/selection.spec.ts
 
 **Checkpoint**: Objects can be selected on canvas and panels
 
