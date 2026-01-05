@@ -340,6 +340,16 @@ function formatLabel(element: any): string {
   return label;
 }
 
+function getElementType(element: any): string {
+  // Determine element type from its properties
+  if ('position' in element || 'rule' in element) return 'point';
+  if ('direction' in element && !('point1Id' in element)) return 'line';
+  if ('point1Id' in element && 'point2Id' in element) return 'segment';
+  if ('radius' in element) return 'circle';
+  if ('transportRule' in element) return 'guide';
+  return 'unknown';
+}
+
 function getElementProperties(element: any): string {
   // Format key properties for display
   if ('position' in element) {
