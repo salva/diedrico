@@ -86,16 +86,6 @@ export class PaperService {
         // RENDER: Generate primitive using realization (numeric) + point (structural)
         const primitive = this.pointToPrimitive(point, realization, transform, context);
         primitives.push(primitive);
-        
-        // Debug origin points rendering
-        if (point.id === 'O_H' || point.id === 'O_V') {
-          const paperPos = realization.position.clone().applyMatrix3(transform);
-          console.log(`[PaperService] Rendering ${point.id}:`, {
-            planePos: realization.position,
-            paperPos: paperPos,
-            primitiveId: primitive.id
-          });
-        }
       }
     }
 
