@@ -223,8 +223,10 @@ onUnmounted(() => {
 
 // Get elements from World
 const horizontalElements = computed(() => {
-  worldVersion.value; // Create dependency
-  forceUpdate.value; // Create dependency
+  const version = worldVersion.value; // Create dependency
+  const update = forceUpdate.value; // Create dependency
+  
+  console.log('[ElementsPanel] Computing P_H elements, version:', version, 'forceUpdate:', update);
   
   const points = world.getAllPoints2D()
     .filter(p => p.planeId === 'proj_plane_H');

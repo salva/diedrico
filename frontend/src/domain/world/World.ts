@@ -858,10 +858,8 @@ export class World {
     // Create the point
     const point = new FreePoint2D(id, position, planeId);
     
-    // Add to world storage
-    this.points.set(id, point);
-    
-    // Realization will be computed lazily on first access
+    // Add to world storage using addPoint2D (which calls notifyChange)
+    this.addPoint2D(point);
     
     return point;
   }
@@ -928,10 +926,8 @@ export class World {
     // Create the intersection point
     const point = new IntersectionPoint2D(id, element1Id, element2Id, index, planeId);
     
-    // Add to world storage
-    this.points.set(id, point);
-    
-    // Realization will be computed lazily on first access
+    // Add to world storage using addPoint2D (which calls notifyChange)
+    this.addPoint2D(point);
     
     return point;
   }
@@ -999,8 +995,8 @@ export class World {
     // Link primary to sibling
     primary.siblingPointId = siblingId;
 
-    // Add sibling to world storage
-    this.points.set(siblingId, sibling);
+    // Add sibling to world storage using addPoint2D (which calls notifyChange)
+    this.addPoint2D(sibling);
 
     return { primary, sibling };
   }
@@ -1077,11 +1073,8 @@ export class World {
     // Create the line
     const line = new Line2DByTwoPoints(id, point1Id, point2Id, planeId);
     
-    // Add to world storage
-    this.lines.set(id, line);
-    
-    // Invalidate line realization cache (will be recomputed on next access)
-    this.lineRealizations2D.delete(id);
+    // Add to world storage using addLine2D (which calls notifyChange)
+    this.addLine2D(line);
     
     return line;
   }
@@ -1145,10 +1138,8 @@ export class World {
     // Create the segment
     const segment = new Segment2DByPoints(id, point1Id, point2Id, planeId);
     
-    // Add to world storage
-    this.segments.set(id, segment);
-    
-    // Realization will be computed lazily on first access
+    // Add to world storage using addSegment2D (which calls notifyChange)
+    this.addSegment2D(segment);
     
     return segment;
   }
@@ -1202,10 +1193,8 @@ export class World {
     // Create the circle
     const circle = new Circle2DByCenterAndRadius(id, centerPointId, radius, planeId);
     
-    // Add to world storage
-    this.circles.set(id, circle);
-    
-    // Realization will be computed lazily on first access
+    // Add to world storage using addCircle2D (which calls notifyChange)
+    this.addCircle2D(circle);
     
     return circle;
   }
@@ -1260,10 +1249,8 @@ export class World {
     // Create the guide
     const guide = new Guide2DPerpendicularToLine(id, referenceLineId, throughPointId, planeId);
     
-    // Add to world storage
-    this.guides.set(id, guide);
-    
-    // Realization will be computed lazily on first access
+    // Add to world storage using addGuide2DGeneric (which calls notifyChange)
+    this.addGuide2DGeneric(guide);
     
     return guide;
   }
