@@ -39,6 +39,7 @@ export type ProcessNode = Subprocess | ActionGroup | ActionNode;
 
 export class ProcessTree {
   root: Subprocess;
+  private _version: number = 0;
 
   constructor() {
     // Initialize with root subprocess
@@ -50,6 +51,20 @@ export class ProcessTree {
       visible: true,
       created: new Date()
     };
+  }
+
+  /**
+   * Get current version for reactivity tracking
+   */
+  getVersion(): number {
+    return this._version;
+  }
+
+  /**
+   * Increment version to notify of changes
+   */
+  private notifyChange(): void {
+    this._version++;
   }
 
   /**
@@ -76,6 +91,7 @@ export class ProcessTree {
 
     // Add to root subprocess
     this.root.children.push(actionGroup);
+    this.notifyChange();
 
     return actionGroup;
   }
@@ -95,6 +111,7 @@ export class ProcessTree {
 
     const targetParent = parent || this.root;
     targetParent.children.push(subprocess);
+    this.notifyChange();
 
     return subprocess;
   }
@@ -106,6 +123,7 @@ export class ProcessTree {
     this.traverseSubprocesses(this.root, (subprocess) => {
       if (subprocess.id === subprocessId) {
         subprocess.visible = !subprocess.visible;
+        this.notifyChange();
       }
     });
   }

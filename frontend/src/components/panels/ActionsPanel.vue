@@ -31,7 +31,7 @@
     </div>
 
     <!-- Process Tree -->
-    <div class="process-tree">
+    <div class="process-tree" :key="treeVersion + forceUpdate">
       <ProcessTreeNode
         :node="processTree.root"
         :filter-type="filterType"
@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, onMounted, onUnmounted } from 'vue';
+import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
 import type { World } from '@/domain/world/World';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 
@@ -80,14 +80,21 @@ const filterType = ref<string>('all');
 const selectedNodeId = ref<string | null>(null);
 const showAddSubprocessDialog = ref(false);
 const newSubprocessName = ref('');
-const refreshTrigger = ref(0);
 
-// Force reactivity by polling ProcessTree changes
+// Watch ProcessTree version for reactivity
+const treeVersion = computed(() => processTree.getVersion());
+
+// Force re-render when tree changes by polling version
 let intervalId: number | null = null;
+const forceUpdate = ref(0);
 onMounted(() => {
   intervalId = window.setInterval(() => {
-    refreshTrigger.value++;
-  }, 500);
+    // Check if tree version changed
+    const currentVersion = processTree.getVersion();
+    if (currentVersion !== treeVersion.value) {
+      forceUpdate.value++;
+    }
+  }, 100); // Check more frequently for better responsiveness
 });
 
 onUnmounted(() => {
@@ -102,7 +109,6 @@ function addSubprocess() {
     processTree.addSubprocess(newSubprocessName.value.trim());
     newSubprocessName.value = '';
     showAddSubprocessDialog.value = false;
-    refreshTrigger.value++; // Force update
   }
 }
 
@@ -114,7 +120,6 @@ function handleNodeSelect(nodeId: string) {
 // Handle visibility toggle
 function handleToggleVisibility(nodeId: string) {
   processTree.toggleSubprocessVisibility(nodeId);
-  refreshTrigger.value++; // Force update
 }
 </script>
 
@@ -248,8 +253,5 @@ function handleToggleVisibility(nodeId: string) {
 
 .dialog-actions button:last-child:hover {
   background: #d1d5db;
-}
-</style>
-
 }
 </style>
