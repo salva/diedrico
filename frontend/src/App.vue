@@ -8,12 +8,28 @@
 
     <!-- Main Workspace: Sidebar + Canvas area -->
     <main class="app-main">
-      <!-- Left Sidebar: Actions Panel -->
+      <!-- Left Sidebar: Stacked Panels -->
       <aside class="left-sidebar">
-        <ActionsPanel 
-          @highlight-elements="handleHighlightElements"
-          @clear-highlight="handleClearHighlight"
-        />
+        <div class="panel-stack">
+          <!-- Elements Panel (top) -->
+          <div class="stacked-panel">
+            <ElementsPanel 
+              @highlight-elements="handleHighlightElements"
+              @clear-highlight="handleClearHighlight"
+            />
+          </div>
+          
+          <!-- Resizer -->
+          <div class="panel-resizer"></div>
+          
+          <!-- Actions Panel (bottom) -->
+          <div class="stacked-panel">
+            <ActionsPanel 
+              @highlight-elements="handleHighlightElements"
+              @clear-highlight="handleClearHighlight"
+            />
+          </div>
+        </div>
       </aside>
 
       <!-- Canvas Area -->
@@ -24,14 +40,6 @@
           @update-active-plane="handleActivePlaneUpdate"
         />
       </div>
-
-      <!-- Right Sidebar: Elements Panel -->
-      <aside class="right-sidebar">
-        <ElementsPanel 
-          @highlight-elements="handleHighlightElements"
-          @clear-highlight="handleClearHighlight"
-        />
-      </aside>
     </main>
 
     <!-- Footer: Status bar -->
@@ -206,14 +214,39 @@ onUnmounted(() => {
   overflow: hidden;
   background-color: #f8f9fa;
   border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
 }
 
-.right-sidebar {
-  width: 300px;
-  flex-shrink: 0;
+.panel-stack {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   overflow: hidden;
-  background-color: #f8f9fa;
-  border-left: 1px solid #dee2e6;
+}
+
+.stacked-panel {
+  flex: 1;
+  min-height: 150px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.stacked-panel:first-child {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.panel-resizer {
+  height: 4px;
+  background-color: #dee2e6;
+  cursor: ns-resize;
+  flex-shrink: 0;
+  transition: background-color 0.2s;
+}
+
+.panel-resizer:hover {
+  background-color: #adb5bd;
 }
 
 .canvas-area {
