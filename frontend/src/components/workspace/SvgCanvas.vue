@@ -545,12 +545,15 @@ function handleMouseMove(event: MouseEvent) {
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world, selectionMask); // FR-002: Hit test in plane space
   
-  // Update hover state in Paper
-  paper.setHoveredElement(hit?.elementId);
+  // Update hover state in Paper only if it changed
+  const previousHovered = paper.getHoveredElement();
+  const newHovered = hit?.elementId;
   
-  // Trigger re-render to show hover effect
-  // Note: This is efficient because only the hovered primitive changes style
-  worldVersion.value++;
+  if (previousHovered !== newHovered) {
+    paper.setHoveredElement(newHovered);
+    // Trigger re-render only when hover state actually changes
+    worldVersion.value++;
+  }
   
   // Compute 3D coordinates with throttling (limits update frequency)
   const now = Date.now();
