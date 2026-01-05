@@ -5,15 +5,8 @@
       <span class="action-count">({{ filteredActions.length }})</span>
     </header>
 
-    <!-- Search and Filter Controls -->
+    <!-- Filter Controls -->
     <div class="panel-controls">
-      <input
-        v-model="searchQuery"
-        type="text"
-        class="search-input"
-        placeholder="Search actions..."
-        aria-label="Search actions"
-      />
       <select
         v-model="filterType"
         class="filter-dropdown"
@@ -82,8 +75,8 @@
 
       <!-- Empty State -->
       <div v-if="filteredActions.length === 0" class="empty-state">
-        <p v-if="searchQuery || filterType !== 'all'">
-          No actions match your filters
+        <p v-if="filterType !== 'all'">
+          No actions match your filter
         </p>
         <p v-else>
           No construction actions yet. Start creating geometry!
@@ -101,14 +94,13 @@
  * - Action type and description
  * - Status indicators (complete, infeasible)
  * - Filtering by action type
- * - Search by description/parameters
  * - Click to select and highlight related elements
  * - Hover to preview highlighting
  * 
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#actions-panel-left-sidebar
  */
 
-import { ref, computed, watch, inject } from 'vue';
+import { ref, computed, watch, inject, onUnmounted } from 'vue';
 import type { Action } from '@/domain/processTree/Action';
 import type { World } from '@/domain/world/World';
 
@@ -125,20 +117,36 @@ if (!world) {
 }
 
 // Component state
-const searchQuery = ref('');
 const filterType = ref<string>('all');
 const selectedActionId = ref<string | null>(null);
 
+// Force reactivity by watching world changes
+// Since ProcessTree doesn't use Vue reactivity, we need to poll or use a version counter
+const refreshTrigger = ref(0);
+const refreshInterval = setInterval(() => {
+  refreshTrigger.value++;
+}, 500); // Check for changes every 500ms
+
+// Clean up interval on unmount
+import { onUnmounted } from 'vue';
+onUnmounted(() => {
+  clearInterval(refreshInterval);
+});
+
 /**
  * Get all actions from ProcessTree
+ * Access refreshTrigger to make this reactive to polling updates
  */
 const allActions = computed<Action[]>(() => {
+  // Access refreshTrigger to create dependency
+  refreshTrigger.value;
+  
   const processTree = world.getProcessTree();
   return processTree.getAllActions();
 });
 
 /**
- * Filter actions based on search query and type filter
+ * Filter actions based on type filter
  */
 const filteredActions = computed<Action[]>(() => {
   let actions = allActions.value;
@@ -146,23 +154,6 @@ const filteredActions = computed<Action[]>(() => {
   // Apply type filter
   if (filterType.value !== 'all') {
     actions = actions.filter(action => action.actionType === filterType.value);
-  }
-
-  // Apply search filter
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase();
-    actions = actions.filter(action => {
-      // Search in description
-      if (action.description.toLowerCase().includes(query)) {
-        return true;
-      }
-      // Search in parameters
-      const paramsString = JSON.stringify(action.parameters).toLowerCase();
-      if (paramsString.includes(query)) {
-        return true;
-      }
-      return false;
-    });
   }
 
   return actions;
@@ -306,7 +297,6 @@ watch(allActions, () => {
   border-bottom: 1px solid #dee2e6;
 }
 
-.search-input,
 .filter-dropdown {
   padding: 0.5rem;
   border: 1px solid #ced4da;
@@ -314,7 +304,6 @@ watch(allActions, () => {
   font-size: 0.875rem;
 }
 
-.search-input:focus,
 .filter-dropdown:focus {
   outline: none;
   border-color: #0d6efd;

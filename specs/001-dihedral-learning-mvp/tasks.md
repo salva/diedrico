@@ -1176,7 +1176,7 @@ class World {
 - [X] T150 Retrieve actions from ProcessTree and display as list
 - [X] T151 Show action type, parameters, and dependencies for each action
 - [X] T152 Add filter dropdown to filter by action type
-- [X] T153 Add search input to search actions by name/parameters
+- [ ] T153 Add search input to search actions by name/parameters
 - [X] T154 Implement click handler to highlight related objects on canvas when action selected
 - [X] T155 Add icon/indicator for action status (complete, infeasible, pending)
 - [X] T156 Mount ActionsPanel in App.vue left sidebar
