@@ -53,7 +53,7 @@ export class SegmentTool extends BaseTool {
     // Use Paper.hitTest() for spatial queries with correct coordinate transforms
     // Convert canvas coordinates to homogeneous Vector3
     const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-    const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
+    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
     
     console.log('[SegmentTool] Paper.hitTest() result:', hit);
     

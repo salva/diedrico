@@ -76,7 +76,7 @@ export class IntersectionTool extends BaseTool {
       
       // Use Paper.hitTest() for spatial queries
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
       
       console.log('[IntersectionTool] Paper.hitTest() result for first element:', hit);
       
@@ -98,7 +98,7 @@ export class IntersectionTool extends BaseTool {
       
       // Use Paper.hitTest() to find element
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
       
       console.log('[IntersectionTool] Paper.hitTest() result for second element:', hit);
       

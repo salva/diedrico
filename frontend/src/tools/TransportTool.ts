@@ -60,7 +60,7 @@ export class TransportTool extends BaseTool {
       
       // Use Paper.hitTest() for spatial queries
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
       
       console.log('[TransportTool] Paper.hitTest() result for source point:', hit);
       
@@ -91,7 +91,7 @@ export class TransportTool extends BaseTool {
       
       // Use Paper.hitTest() to find guide
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 20, planeId, paperToPlaneTransform, world); // 20px snap radius
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
       
       console.log('[TransportTool] Paper.hitTest() result for guide:', hit);
       
