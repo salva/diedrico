@@ -10,7 +10,7 @@
         v-for="element in elements"
         :key="element.id"
         class="element-item"
-        :class="{ 'element-selected': element.id === selectedId, 'element-hidden': !element.visible }"
+        :class="{ 'element-selected': selectionStore.isSelected(element.id), 'element-hidden': !element.visible }"
         @click="emit('select', element.id)"
         @mouseenter="handleMouseEnter(element.id)"
         @mouseleave="handleMouseLeave()"
@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useSelectionStore } from '@/stores/selectionStore';
 
 interface Element {
   id: string;
@@ -43,7 +44,7 @@ interface Element {
 const props = defineProps<{
   title: string;
   elements: Element[];
-  selectedId: string | null;
+  selectedId: string | null; // Deprecated: use selectionStore instead
 }>();
 
 const emit = defineEmits<{
@@ -51,6 +52,7 @@ const emit = defineEmits<{
   toggleVisibility: [elementId: string];
 }>();
 
+const selectionStore = useSelectionStore();
 const isCollapsed = ref(false);
 
 function toggleCollapse() {

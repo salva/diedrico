@@ -162,8 +162,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
+import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
 import type { World } from '@/domain/world/World';
+import { useSelectionStore } from '@/stores/selectionStore';
 import ElementTypeGroup from './ElementTypeGroup.vue';
 
 // Emits
@@ -175,8 +176,10 @@ const emit = defineEmits<{
 // Injected dependencies
 const world = inject<World>('world')!;
 
+// Selection store for bidirectional sync
+const selectionStore = useSelectionStore();
+
 // Local state
-const selectedElementId = ref<string | null>(null);
 const is2DSectionCollapsed = ref(false);
 const is3DSectionCollapsed = ref(false);
 const isHPlaneCollapsed = ref(false);
@@ -339,13 +342,11 @@ function toggleVPlane() {
 }
 
 function handleElementSelect(elementId: string) {
-  selectedElementId.value = elementId === selectedElementId.value ? null : elementId;
+  // Sync with selectionStore for bidirectional selection
+  selectionStore.selectSingle(elementId);
   
-  if (selectedElementId.value) {
-    emit('highlightElements', [elementId], false);
-  } else {
-    emit('clearHighlight');
-  }
+  // Emit for highlighting on canvas
+  emit('highlightElements', [elementId], false);
 }
 
 function handleVisibilityToggle(elementId: string) {
