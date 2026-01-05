@@ -41,13 +41,12 @@
       class="actiongroup-node"
       :class="{ 'auxiliary': node.isAuxiliary }"
     >
-      <div class="actiongroup-header" @click="toggleCollapse">
-        <span class="collapse-icon">{{ isCollapsed ? '▶' : '▼' }}</span>
+      <div class="actiongroup-header">
         <span v-if="node.isAuxiliary" class="auxiliary-icon" title="Auxiliary actions">⚙</span>
       </div>
 
-      <!-- Child actions (when expanded) -->
-      <div v-if="!isCollapsed" class="actiongroup-children">
+      <!-- Child actions (always shown) -->
+      <div class="actiongroup-children">
         <ProcessTreeNode
           v-for="child in filteredChildren"
           :key="child.id"
