@@ -384,6 +384,33 @@ export class World {
     return this.points.size;
   }
 
+  /**
+   * Toggle visibility of a point
+   * @param id Point ID
+   * @returns true if visibility was toggled, false if point not found
+   */
+  togglePoint2DVisibility(id: string): boolean {
+    const point = this.points.get(id);
+    if (!point) return false;
+    point.visible = !point.visible;
+    this.notifyChange();
+    return true;
+  }
+
+  /**
+   * Set visibility of a point
+   * @param id Point ID
+   * @param visible Visibility state
+   * @returns true if successful, false if point not found
+   */
+  setPoint2DVisibility(id: string, visible: boolean): boolean {
+    const point = this.points.get(id);
+    if (!point) return false;
+    point.visible = visible;
+    this.notifyChange();
+    return true;
+  }
+
   // ========================================
   // Line management
   // ========================================
@@ -496,6 +523,33 @@ export class World {
   }
 
   /**
+   * Toggle visibility of a line
+   * @param id Line ID
+   * @returns true if visibility was toggled, false if line not found
+   */
+  toggleLine2DVisibility(id: string): boolean {
+    const line = this.lines.get(id);
+    if (!line) return false;
+    line.visible = !line.visible;
+    this.notifyChange();
+    return true;
+  }
+
+  /**
+   * Set visibility of a line
+   * @param id Line ID
+   * @param visible Visibility state
+   * @returns true if successful, false if line not found
+   */
+  setLine2DVisibility(id: string, visible: boolean): boolean {
+    const line = this.lines.get(id);
+    if (!line) return false;
+    line.visible = visible;
+    this.notifyChange();
+    return true;
+  }
+
+  /**
    * Generate a unique line ID
    */
   generateLine2DId(): string {
@@ -557,6 +611,33 @@ export class World {
    */
   getSegment2DCount(): number {
     return this.segments.size;
+  }
+
+  /**
+   * Toggle visibility of a segment
+   * @param id Segment ID
+   * @returns true if visibility was toggled, false if segment not found
+   */
+  toggleSegment2DVisibility(id: string): boolean {
+    const segment = this.segments.get(id);
+    if (!segment) return false;
+    segment.visible = !segment.visible;
+    this.notifyChange();
+    return true;
+  }
+
+  /**
+   * Set visibility of a segment
+   * @param id Segment ID
+   * @param visible Visibility state
+   * @returns true if successful, false if segment not found
+   */
+  setSegment2DVisibility(id: string, visible: boolean): boolean {
+    const segment = this.segments.get(id);
+    if (!segment) return false;
+    segment.visible = visible;
+    this.notifyChange();
+    return true;
   }
 
   /**
@@ -651,6 +732,33 @@ export class World {
   }
 
   /**
+   * Toggle visibility of a circle
+   * @param id Circle ID
+   * @returns true if visibility was toggled, false if circle not found
+   */
+  toggleCircle2DVisibility(id: string): boolean {
+    const circle = this.circles.get(id);
+    if (!circle) return false;
+    circle.visible = !circle.visible;
+    this.notifyChange();
+    return true;
+  }
+
+  /**
+   * Set visibility of a circle
+   * @param id Circle ID
+   * @param visible Visibility state
+   * @returns true if successful, false if circle not found
+   */
+  setCircle2DVisibility(id: string, visible: boolean): boolean {
+    const circle = this.circles.get(id);
+    if (!circle) return false;
+    circle.visible = visible;
+    this.notifyChange();
+    return true;
+  }
+
+  /**
    * Generate a unique circle ID
    */
   generateCircle2DId(): string {
@@ -730,6 +838,33 @@ export class World {
    */
   getAllGuides2D(): Guide2D[] {
     return Array.from(this.guides.values());
+  }
+
+  /**
+   * Toggle visibility of a guide
+   * @param id Guide ID
+   * @returns true if visibility was toggled, false if guide not found
+   */
+  toggleGuide2DVisibility(id: string): boolean {
+    const guide = this.guides.get(id);
+    if (!guide) return false;
+    guide.visible = !guide.visible;
+    this.notifyChange();
+    return true;
+  }
+
+  /**
+   * Set visibility of a guide
+   * @param id Guide ID
+   * @param visible Visibility state
+   * @returns true if successful, false if guide not found
+   */
+  setGuide2DVisibility(id: string, visible: boolean): boolean {
+    const guide = this.guides.get(id);
+    if (!guide) return false;
+    guide.visible = visible;
+    this.notifyChange();
+    return true;
   }
 
   /**

@@ -45,6 +45,7 @@ export abstract class Guide2D {
   readonly planeId: string;
   readonly label?: string;
   abstract readonly type: Guide2DType;
+  visible: boolean = true;  // Whether guide is visible in the canvas
 
   constructor(id: string, planeId: string, label?: string) {
     this.id = id;

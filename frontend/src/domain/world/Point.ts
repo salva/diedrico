@@ -70,6 +70,7 @@ export abstract class Point2D {
   abstract readonly type: Point2DType;
   label?: string;
   planeId: string;  // Which projection plane this point belongs to
+  visible: boolean = true;  // Whether point is visible in the canvas
 
   constructor(
     id: string,

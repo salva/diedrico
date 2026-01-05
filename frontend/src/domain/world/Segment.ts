@@ -58,6 +58,7 @@ export abstract class Segment2D {
   abstract readonly type: Segment2DType;
   label?: string;
   planeId: string;  // Which projection plane this segment belongs to
+  visible: boolean = true;  // Whether segment is visible in the canvas
 
   constructor(
     id: string,

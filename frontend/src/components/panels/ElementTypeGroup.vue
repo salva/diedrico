@@ -44,7 +44,7 @@ interface Element {
 const props = defineProps<{
   title: string;
   elements: Element[];
-  selectedId: string | null; // Deprecated: use selectionStore instead
+  selectedId?: string | null; // Deprecated: use selectionStore instead
 }>();
 
 const emit = defineEmits<{

@@ -60,6 +60,7 @@ export abstract class Line2D {
   abstract readonly type: Line2DType;
   label?: string;
   planeId: string;  // Which projection plane this line belongs to
+  visible: boolean = true;  // Whether line is visible in the canvas
   
   constructor(
     id: string,

@@ -76,7 +76,9 @@ export class PaperService {
     const primitives: Primitive[] = [];
 
     // WALK: Iterate over all points in the world
-    for (const point of context.world.getAllPoints2D()) {
+    for (const point of context.world.getAllPoints2D()) {      // Skip invisible points
+      if (!point.visible) continue;
+      
       // REALIZE: Get computed position (numeric data)
       const realization = context.world.getPoint2DRealization(point.id!);
       // Get plane transformation matrix
@@ -93,6 +95,9 @@ export class PaperService {
     // HalfHingeLine2D are Line2D entities with type 'half-hinge'
     const allLines = context.world.getAllLines2D();
     for (const line of allLines) {
+      // Skip invisible lines
+      if (!line.visible) continue;
+      
       // REALIZE: Get computed line equation (numeric data)
       const realization = context.world.getLine2DRealization(line.id!);
       // Get plane transformation matrix
@@ -117,6 +122,9 @@ export class PaperService {
     // WALK: Iterate over all segments in the world
     const allSegments = context.world.getAllSegments2D();
     for (const segment of allSegments) {
+      // Skip invisible segments
+      if (!segment.visible) continue;
+      
       // REALIZE: Get computed segment endpoints (numeric data)
       const realization = context.world.getSegment2DRealization(segment.id!);
       // Get plane transformation matrix
@@ -134,6 +142,9 @@ export class PaperService {
     // WALK: Iterate over all circles in the world
     const allCircles = context.world.getAllCircles2D();
     for (const circle of allCircles) {
+      // Skip invisible circles
+      if (!circle.visible) continue;
+      
       // REALIZE: Get computed circle geometry (numeric data)
       const realization = context.world.getCircle2DRealization(circle.id!);
       // Get plane transformation matrix
@@ -149,6 +160,9 @@ export class PaperService {
     // WALK: Iterate over all guides in the world
     const allGuides = context.world.getAllGuides2D();
     for (const guide of allGuides) {
+      // Skip invisible guides
+      if (!guide.visible) continue;
+      
       // REALIZE: Get computed guide line geometry (numeric data)
       const realization = context.world.getGuide2DRealization(guide.id!);
       // Get plane transformation matrix

@@ -67,6 +67,7 @@ export abstract class Circle2D {
   readonly planeId: string;
   readonly label?: string;
   abstract readonly type: Circle2DType;
+  visible: boolean = true;  // Whether circle is visible in the canvas
 
   constructor(id: string, planeId: string, label?: string) {
     this.id = id;

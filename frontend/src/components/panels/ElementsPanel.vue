@@ -31,7 +31,6 @@
                 v-if="horizontalElements.points.length > 0"
                 title="Points"
                 :elements="horizontalElements.points"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -39,7 +38,6 @@
                 v-if="horizontalElements.lines.length > 0"
                 title="Lines"
                 :elements="horizontalElements.lines"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -47,7 +45,6 @@
                 v-if="horizontalElements.segments.length > 0"
                 title="Segments"
                 :elements="horizontalElements.segments"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -55,7 +52,6 @@
                 v-if="horizontalElements.circles.length > 0"
                 title="Circles"
                 :elements="horizontalElements.circles"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -63,7 +59,6 @@
                 v-if="horizontalElements.guides.length > 0"
                 title="Guides"
                 :elements="horizontalElements.guides"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -82,7 +77,6 @@
                 v-if="verticalElements.points.length > 0"
                 title="Points"
                 :elements="verticalElements.points"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -90,7 +84,6 @@
                 v-if="verticalElements.lines.length > 0"
                 title="Lines"
                 :elements="verticalElements.lines"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -98,7 +91,6 @@
                 v-if="verticalElements.segments.length > 0"
                 title="Segments"
                 :elements="verticalElements.segments"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -106,7 +98,6 @@
                 v-if="verticalElements.circles.length > 0"
                 title="Circles"
                 :elements="verticalElements.circles"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -114,7 +105,6 @@
                 v-if="verticalElements.guides.length > 0"
                 title="Guides"
                 :elements="verticalElements.guides"
-                :selected-id="selectedElementId"
                 @select="handleElementSelect"
                 @toggle-visibility="handleVisibilityToggle"
               />
@@ -135,7 +125,6 @@
             v-if="threeDElements.points.length > 0"
             title="Points"
             :elements="threeDElements.points"
-            :selected-id="selectedElementId"
             @select="handleElementSelect"
             @toggle-visibility="handleVisibilityToggle"
           />
@@ -143,7 +132,6 @@
             v-if="threeDElements.lines.length > 0"
             title="Lines"
             :elements="threeDElements.lines"
-            :selected-id="selectedElementId"
             @select="handleElementSelect"
             @toggle-visibility="handleVisibilityToggle"
           />
@@ -151,7 +139,6 @@
             v-if="threeDElements.segments.length > 0"
             title="Segments"
             :elements="threeDElements.segments"
-            :selected-id="selectedElementId"
             @select="handleElementSelect"
             @toggle-visibility="handleVisibilityToggle"
           />
@@ -167,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
 import type { World } from '@/domain/world/World';
 import { useSelectionStore } from '@/stores/selectionStore';
 import ElementTypeGroup from './ElementTypeGroup.vue';
@@ -390,8 +377,20 @@ function handleElementSelect(elementId: string) {
 }
 
 function handleVisibilityToggle(elementId: string) {
-  // TODO: Implement visibility toggle in World
-  console.log('Toggle visibility for:', elementId);
+  // Determine element type from ID prefix and call appropriate World method
+  if (elementId.startsWith('point2d_')) {
+    world.togglePoint2DVisibility(elementId);
+  } else if (elementId.startsWith('line2d_')) {
+    world.toggleLine2DVisibility(elementId);
+  } else if (elementId.startsWith('segment2d_')) {
+    world.toggleSegment2DVisibility(elementId);
+  } else if (elementId.startsWith('circle2d_')) {
+    world.toggleCircle2DVisibility(elementId);
+  } else if (elementId.startsWith('guide2d_')) {
+    world.toggleGuide2DVisibility(elementId);
+  }
+  
+  // World.notifyChange() is called internally, which will trigger UI update
 }
 </script>
 
