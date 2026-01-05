@@ -32,7 +32,7 @@ export function createLineAction(
       point1Id,
       point2Id
     },
-    description: `Create line on ${planeId}`
+    description: `Line on ${planeId}`
   };
 }
 

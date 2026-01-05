@@ -32,7 +32,7 @@ export function createCircleAction(
       centerId,
       radius
     },
-    description: `Create circle on ${planeId} with radius ${radius}`
+    description: `Circle on ${planeId} with radius ${radius}`
   };
 }
 

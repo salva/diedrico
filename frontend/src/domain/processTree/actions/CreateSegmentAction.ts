@@ -32,7 +32,7 @@ export function createSegmentAction(
       point1Id,
       point2Id
     },
-    description: `Create segment on ${planeId}`
+    description: `Segment on ${planeId}`
   };
 }
 

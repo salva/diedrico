@@ -35,7 +35,7 @@ export function createIntersectionPointAction(
       line2Id,
       intersectionIndex
     },
-    description: `Create intersection point on ${planeId}`
+    description: `Intersection point on ${planeId}`
   };
 }
 

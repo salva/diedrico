@@ -34,7 +34,7 @@ export function createPointAction(
         z: position.z
       }
     },
-    description: `Create point on ${planeId}`
+    description: `Point on ${planeId}`
   };
 }
 

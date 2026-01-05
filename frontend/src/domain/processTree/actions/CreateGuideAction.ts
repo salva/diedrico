@@ -32,7 +32,7 @@ export function createGuideAction(
       referenceLineId,
       throughPointId
     },
-    description: `Create guide on ${planeId}`
+    description: `Guide on ${planeId}`
   };
 }
 
