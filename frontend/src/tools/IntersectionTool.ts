@@ -76,12 +76,13 @@ export class IntersectionTool extends BaseTool {
       
       // Use Paper.hitTest() for spatial queries
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
+      const selectionMask = this.getSelectionMask();
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
       
       console.log('[IntersectionTool] Paper.hitTest() result for first element:', hit);
       
-      // Filter for lines and circles
-      if (!hit || (hit.elementType !== 'line' && hit.elementType !== 'circle' && hit.elementType !== 'half-hinge-line')) {
+      // Selection mask ensures only lines and circles are returned
+      if (!hit) {
         return this.failure('No line or circle found at click position. Please click near a line or circle.');
       }
 
@@ -98,12 +99,13 @@ export class IntersectionTool extends BaseTool {
       
       // Use Paper.hitTest() to find element
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
+      const selectionMask = this.getSelectionMask();
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
       
       console.log('[IntersectionTool] Paper.hitTest() result for second element:', hit);
       
-      // Filter for lines and circles
-      if (!hit || (hit.elementType !== 'line' && hit.elementType !== 'circle' && hit.elementType !== 'half-hinge-line')) {
+      // Selection mask ensures only lines and circles are returned
+      if (!hit) {
         return this.failure('No line or circle found at click position. Please click near a line or circle.');
       }
 

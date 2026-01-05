@@ -50,12 +50,13 @@ export class LineTool extends BaseTool {
     // Use Paper.hitTest() for spatial queries with correct coordinate transforms
     // Convert canvas coordinates to homogeneous Vector3
     const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
+    const selectionMask = this.getSelectionMask();
+    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
     
     console.log('[LineTool] Paper.hitTest() result:', hit);
     
-    // Filter for points only (for now, line tool only snaps to points)
-    if (!hit || hit.elementType !== 'point') {
+    // Selection mask ensures only points are returned
+    if (!hit) {
       return this.failure('No point found at click position. Please click near an existing point.');
     }
 

@@ -60,12 +60,13 @@ export class TransportTool extends BaseTool {
       
       // Use Paper.hitTest() for spatial queries
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
+      const selectionMask = this.getSelectionMask();
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
       
       console.log('[TransportTool] Paper.hitTest() result for source point:', hit);
       
-      // Filter for points only
-      if (!hit || hit.elementType !== 'point') {
+      // Selection mask ensures only points are returned (state-based mask)
+      if (!hit) {
         return this.failure('No point found at click position. Please click near a point on the active plane.');
       }
 
@@ -91,12 +92,13 @@ export class TransportTool extends BaseTool {
       
       // Use Paper.hitTest() to find guide
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
+      const selectionMask = this.getSelectionMask();
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
       
       console.log('[TransportTool] Paper.hitTest() result for guide:', hit);
       
-      // Check if we found a guide
-      if (!hit || hit.elementType !== 'guide') {
+      // Selection mask ensures only guides are returned (state-based mask)
+      if (!hit) {
         this.reset();
         return this.failure('No guide found at click position. Please click near a guide perpendicular to the hinge line.');
       }

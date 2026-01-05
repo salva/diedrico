@@ -58,11 +58,12 @@ export class GuideTool extends BaseTool {
       
       // Use Paper.hitTest() for spatial queries
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
+      const selectionMask = this.getSelectionMask();
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
       
       console.log('[GuideTool] Paper.hitTest() result for reference line:', hit);
       
-      // Filter for lines only (TODO: extend to support segments when needed)
+      // Selection mask ensures only lines are returned
       if (!hit || hit.elementType !== 'line') {
         return this.failure('No line found at click position. Please click near a hinge line or existing line.');
       }
@@ -78,12 +79,13 @@ export class GuideTool extends BaseTool {
       
       // Use Paper.hitTest() to find existing point
       const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world); // 50px snap radius for better point detection
+      const selectionMask = this.getSelectionMask();
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
       
       console.log('[GuideTool] Paper.hitTest() result for through-point:', hit);
       
-      // Check if we found a point
-      if (!hit || hit.elementType !== 'point') {
+      // Selection mask ensures only points are returned (state-based mask)
+      if (!hit) {
         this.reset();
         return this.failure('No point found at click position. Please click near an existing point.');
       }
