@@ -58,6 +58,11 @@ import StatusBar from './components/toolbars/StatusBar.vue';
 import ActionsPanel from './components/panels/ActionsPanel.vue';
 import { CommandStack } from './commands/CommandStack';
 import { useToolStore } from './stores/toolStore';
+import { World } from './domain/world/World';
+
+// Create World instance and provide to all child components
+const world = new World();
+provide('world', world);
 
 // Create command stack and provide to all child components
 const commandStack = new CommandStack();

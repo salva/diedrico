@@ -166,11 +166,11 @@ const svgRenderer = new SVGRenderer();
 const inputService = new InputService();
 const toolStore = useToolStore();
 
-// World instance (will be managed by store in later phases)
-const world = new World();
-
-// Provide World to child components (e.g., panels)
-provide('world', world);
+// World instance - injected from App.vue
+const world = inject<World>('world')!;
+if (!world) {
+  throw new Error('World not provided');
+}
 
 // Paper instance for spatial queries and rendering
 const paper = new Paper();
