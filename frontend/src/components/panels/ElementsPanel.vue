@@ -4,28 +4,6 @@
       <h2 class="panel-title">Elements</h2>
     </header>
 
-    <!-- Filter Controls -->
-    <div class="panel-controls">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search elements..."
-        class="search-input"
-      />
-      <select
-        v-model="filterType"
-        class="filter-dropdown"
-        aria-label="Filter by element type"
-      >
-        <option value="all">All Types</option>
-        <option value="points">Points</option>
-        <option value="lines">Lines</option>
-        <option value="segments">Segments</option>
-        <option value="circles">Circles</option>
-        <option value="guides">Guides</option>
-      </select>
-    </div>
-
     <!-- Elements Tree -->
     <div class="elements-tree">
       <!-- 2D Elements Section -->
@@ -198,8 +176,6 @@ const emit = defineEmits<{
 const world = inject<World>('world')!;
 
 // Local state
-const searchQuery = ref('');
-const filterType = ref('all');
 const selectedElementId = ref<string | null>(null);
 const is2DSectionCollapsed = ref(false);
 const is3DSectionCollapsed = ref(false);
@@ -226,15 +202,15 @@ const horizontalElements = computed(() => {
   forceUpdate.value; // Create dependency
   
   const points = world.getAllPoints2D()
-    .filter(p => p.planeId === 'proj_plane_H' && matchesFilter(p));
+    .filter(p => p.planeId === 'proj_plane_H');
   const lines = world.getAllLines2D()
-    .filter(l => l.planeId === 'proj_plane_H' && matchesFilter(l) && !l.id.includes('half_HL'));
+    .filter(l => l.planeId === 'proj_plane_H' && !l.id.includes('half_HL'));
   const segments = world.getAllSegments2D()
-    .filter(s => s.planeId === 'proj_plane_H' && matchesFilter(s));
+    .filter(s => s.planeId === 'proj_plane_H');
   const circles = world.getAllCircles2D()
-    .filter(c => c.planeId === 'proj_plane_H' && matchesFilter(c));
+    .filter(c => c.planeId === 'proj_plane_H');
   const guides = world.getAllGuides2D()
-    .filter(g => g.planeId === 'proj_plane_H' && matchesFilter(g));
+    .filter(g => g.planeId === 'proj_plane_H');
   
   return {
     points: points.map(formatElement),
@@ -250,15 +226,15 @@ const verticalElements = computed(() => {
   forceUpdate.value; // Create dependency
   
   const points = world.getAllPoints2D()
-    .filter(p => p.planeId === 'proj_plane_V' && matchesFilter(p));
+    .filter(p => p.planeId === 'proj_plane_V');
   const lines = world.getAllLines2D()
-    .filter(l => l.planeId === 'proj_plane_V' && matchesFilter(l) && !l.id.includes('half_HL'));
+    .filter(l => l.planeId === 'proj_plane_V' && !l.id.includes('half_HL'));
   const segments = world.getAllSegments2D()
-    .filter(s => s.planeId === 'proj_plane_V' && matchesFilter(s));
+    .filter(s => s.planeId === 'proj_plane_V');
   const circles = world.getAllCircles2D()
-    .filter(c => c.planeId === 'proj_plane_V' && matchesFilter(c));
+    .filter(c => c.planeId === 'proj_plane_V');
   const guides = world.getAllGuides2D()
-    .filter(g => g.planeId === 'proj_plane_V' && matchesFilter(g));
+    .filter(g => g.planeId === 'proj_plane_V');
   
   return {
     points: points.map(formatElement),
@@ -290,36 +266,6 @@ const hasAnyElements = computed(() => {
 });
 
 // Helper functions
-function matchesFilter(element: any): boolean {
-  // Search filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    const id = element.id.toLowerCase();
-    if (!id.includes(query)) {
-      return false;
-    }
-  }
-  
-  // Type filter
-  if (filterType.value !== 'all') {
-    const elementType = getElementType(element);
-    if (elementType !== filterType.value) {
-      return false;
-    }
-  }
-  
-  return true;
-}
-
-function getElementType(element: any): string {
-  if ('position' in element || 'rule' in element) return 'points';
-  if ('direction' in element) return 'lines';
-  if ('point1Id' in element && 'point2Id' in element) return 'segments';
-  if ('radius' in element) return 'circles';
-  if ('transportRule' in element) return 'guides';
-  return 'unknown';
-}
-
 function formatElement(element: any): any {
   return {
     id: element.id,
@@ -421,41 +367,6 @@ function handleVisibilityToggle(elementId: string) {
   font-size: 1.125rem;
   font-weight: 600;
   color: #212529;
-}
-
-.panel-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background-color: #fff;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.search-input {
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-.filter-dropdown {
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.filter-dropdown:focus {
-  outline: none;
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
 .elements-tree {

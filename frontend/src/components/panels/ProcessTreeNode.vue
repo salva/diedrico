@@ -22,10 +22,9 @@
       <!-- Child nodes (when expanded) -->
       <div v-if="!isCollapsed" class="subprocess-children">
         <ProcessTreeNode
-          v-for="child in filteredChildren"
+          v-for="child in allChildren"
           :key="child.id"
           :node="child"
-          :filter-type="filterType"
           :selected-node-id="selectedNodeId"
           @select-node="emit('selectNode', $event)"
           @toggle-visibility="emit('toggleVisibility', $event)"
@@ -48,10 +47,9 @@
       <!-- Child actions (always shown) -->
       <div class="actiongroup-children">
         <ProcessTreeNode
-          v-for="child in filteredChildren"
+          v-for="child in allChildren"
           :key="child.id"
           :node="child"
-          :filter-type="filterType"
           :selected-node-id="selectedNodeId"
           @select-node="emit('selectNode', $event)"
           @toggle-visibility="emit('toggleVisibility', $event)"
@@ -98,7 +96,6 @@ import type { ProcessNode } from '@/domain/processTree/ProcessTree';
 // Props
 const props = defineProps<{
   node: ProcessNode;
-  filterType: string;
   selectedNodeId: string | null;
 }>();
 
@@ -116,15 +113,9 @@ const isCollapsed = ref(false);
 // Computed
 const isSelected = computed(() => props.selectedNodeId === props.node.id);
 
-const filteredChildren = computed(() => {
+const allChildren = computed(() => {
   if (!('children' in props.node)) return [];
-  
-  if (props.filterType === 'all') {
-    return props.node.children;
-  }
-
-  // Filter recursively
-  return props.node.children.filter(child => matchesFilter(child, props.filterType));
+  return props.node.children;
 });
 
 const isInfeasible = computed(() => {
@@ -163,18 +154,6 @@ function handleActionHover(isHovering: boolean) {
   } else if (!isHovering && !isSelected.value) {
     emit('clearHighlight');
   }
-}
-
-function matchesFilter(node: ProcessNode, filterType: string): boolean {
-  if (node.type === 'action') {
-    return node.actionType === filterType;
-  }
-  
-  if ('children' in node) {
-    return node.children.some(child => matchesFilter(child, filterType));
-  }
-  
-  return false;
 }
 
 function formatActionType(type: string): string {

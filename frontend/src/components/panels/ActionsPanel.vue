@@ -11,30 +11,10 @@
       </button>
     </header>
 
-    <!-- Filter Controls -->
-    <div class="panel-controls">
-      <select
-        v-model="filterType"
-        class="filter-dropdown"
-        aria-label="Filter by action type"
-      >
-        <option value="all">All Types</option>
-        <option value="CreateFreePoint">Free Points</option>
-        <option value="CreatePointOnElement">Points on Element</option>
-        <option value="CreateIntersectionPoint">Intersection Points</option>
-        <option value="CreateLine">Lines</option>
-        <option value="CreateSegment">Segments</option>
-        <option value="CreateCircle">Circles</option>
-        <option value="CreateGuide">Guides</option>
-        <option value="TransportPoint">Point Transport</option>
-      </select>
-    </div>
-
     <!-- Process Tree -->
     <div class="process-tree" :key="treeVersion + forceUpdate">
       <ProcessTreeNode
         :node="processTree.root"
-        :filter-type="filterType"
         :selected-node-id="selectedNodeId"
         @select-node="handleNodeSelect"
         @toggle-visibility="handleToggleVisibility"
@@ -76,7 +56,6 @@ const world = inject<World>('world')!;
 const processTree = world.getProcessTree();
 
 // Local state
-const filterType = ref<string>('all');
 const selectedNodeId = ref<string | null>(null);
 const showAddSubprocessDialog = ref(false);
 const newSubprocessName = ref('');
@@ -165,28 +144,6 @@ function handleToggleVisibility(nodeId: string) {
 
 .add-subprocess-btn:hover {
   background: #4338ca;
-}
-
-.panel-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background-color: #fff;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.filter-dropdown {
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.filter-dropdown:focus {
-  outline: none;
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
 .process-tree {
