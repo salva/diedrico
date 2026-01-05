@@ -1258,10 +1258,10 @@ class World {
 
 **⚠️ CRITICAL**: Study [ui-spec.md §Unified Hover Highlighting](./ui-spec.md#visual-feedback-hover-and-selection) - hover must work across all UI components.
 
-- [ ] T178 [P] Create useHoverHighlight composable in frontend/src/composables/useHoverHighlight.ts
-- [ ] T179 Implement mouseover detection for objects on canvas
-- [ ] T180 Apply hover highlight style (different from selection, e.g., lighter stroke)
-- [ ] T181 Show object label/tooltip on hover
+- [X] T178 [P] Create useHoverHighlight composable in frontend/src/composables/useHoverHighlight.ts
+- [X] T179 Implement mouseover detection for objects on canvas
+- [X] T180 Apply hover highlight style (different from selection, e.g., lighter stroke)
+- [X] T181 Show object label/tooltip on hover
 - [ ] T182 Clear hover highlight on mouseout
 - [ ] T183 Ensure hover highlight doesn't interfere with selection highlight
 - [ ] T184 Show snap preview when hovering near points (for snapping feedback)

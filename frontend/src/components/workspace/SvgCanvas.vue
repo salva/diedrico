@@ -327,28 +327,19 @@ const primitives = computed(() => {
   // PaperService uses plane-to-paper transforms for rendering
   const planeTransforms = getPlaneTransformsForRendering();
   
-  // Get hovered element from Paper for hover highlight styling
+  // Get hovered and selected elements for visual highlighting
+  // Per ui-spec.md: Hover = #4A90E2 (lighter), Selection = #0066CC (bold)
   const hoveredId = paper.getHoveredElement();
-  let highlightedEntityIds: Set<string> | undefined;
+  const hoveredIds = hoveredId ? new Set([hoveredId]) : undefined;
   
-  if (hoveredId) {
-    highlightedEntityIds = new Set([hoveredId]);
-  }
-  
-  // Add selected elements to highlighted set for selection highlight
-  // Per ui-spec.md: Selection highlight uses blue outline (#0066CC, 2px)
   const selectedIds = selectionStore.selectedIdsArray;
-  if (selectedIds.length > 0) {
-    if (!highlightedEntityIds) {
-      highlightedEntityIds = new Set();
-    }
-    selectedIds.forEach(id => highlightedEntityIds!.add(id));
-  }
+  const selectedIdsSet = selectedIds.length > 0 ? new Set(selectedIds) : undefined;
   
   const context: PrimitiveContext = {
     world,
     planeTransforms,
-    highlightedEntityIds,
+    hoveredIds,              // Hover state (lighter highlight)
+    selectedIds: selectedIdsSet,  // Selection state (bold highlight)
     activePlaneId: activePlane.value,  // FR-002: Active plane visual emphasis
   };
   

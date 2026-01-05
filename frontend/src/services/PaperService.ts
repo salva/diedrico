@@ -55,7 +55,9 @@ import {
 export interface PrimitiveContext {
   world: World;
   planeTransforms: Map<string, Matrix3>;  // planeId → plane-to-paper transformation matrix
-  highlightedEntityIds?: Set<string>;  // Hover/selection state
+  highlightedEntityIds?: Set<string>;  // Hover/selection state (legacy - use hoveredIds/selectedIds instead)
+  hoveredIds?: Set<string>;            // Hovered entities (lighter highlight)
+  selectedIds?: Set<string>;           // Selected entities (bold highlight)
   activeSnapTargetId?: string;         // Current snap target
   activePlaneId?: string;              // Active plane for visual emphasis (FR-002)
 }
@@ -190,14 +192,17 @@ export class PaperService {
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): PointPrimitive {
-    const isHighlighted = context.highlightedEntityIds?.has(point.id!) || false;
+    // Check hover/selection state (prefer new fields, fallback to legacy highlightedEntityIds)
+    const isHovered = context.hoveredIds?.has(point.id!) || false;
+    const isSelected = context.selectedIds?.has(point.id!) || false;
+    const isHighlighted = isSelected || isHovered || context.highlightedEntityIds?.has(point.id!) || false;
     const isSnapTarget = context.activeSnapTargetId === point.id;
 
     // Transform from plane <u,v> to paper coordinates
     const paperPos = realization.position.clone().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style
-    const style = this.resolvePointStyle(point, isHighlighted, isSnapTarget, context.activePlaneId);
+    const style = this.resolvePointStyle(point, isSelected, isHovered, isSnapTarget, context.activePlaneId);
 
     return {
       type: 'point',
@@ -214,27 +219,39 @@ export class PaperService {
 
   /**
    * Resolve visual style for a point
-   * TODO: Implement style inheritance from process tree
+   * Per ui-spec.md: Hover = #4A90E2 glow (20% opacity), Selection = #0066CC (2px outline)
    */
   private resolvePointStyle(
     point: Point2D,
-    isHighlighted: boolean,
+    isSelected: boolean,
+    isHovered: boolean,
     isSnapTarget: boolean,
     activePlaneId?: string
   ): ResolvedStyle {
     // Base colors by point type
     let fill: string;
     let stroke: string;
+    let strokeWidth: number;
 
     if (isSnapTarget) {
       fill = '#FFA500'; // Orange for snap targets
       stroke = '#FF8C00';
-    } else if (isHighlighted) {
+      strokeWidth = 2;
+    } else if (isSelected) {
+      // Selection highlight: Bold blue outline per ui-spec.md
+      fill = point.type === 'free' ? '#4A90E2' : '#E94E77';
+      stroke = '#0066CC';
+      strokeWidth = 2;
+    } else if (isHovered) {
+      // Hover highlight: Lighter blue glow per ui-spec.md
       fill = point.type === 'free' ? '#6BB6FF' : '#FF6B9D';
-      stroke = '#000000';
+      stroke = '#4A90E2';
+      strokeWidth = 1.5;
     } else {
+      // Normal state
       fill = point.type === 'free' ? '#4A90E2' : '#E94E77';
       stroke = '#333333';
+      strokeWidth = 1.5;
     }
 
     // FR-002: Active plane visual emphasis - 50% opacity for inactive planes
@@ -245,7 +262,7 @@ export class PaperService {
 
     return {
       stroke,
-      strokeWidth: isHighlighted ? 2 : 1.5,
+      strokeWidth,
       strokeStyle: 'solid',
       fill,
       opacity,
@@ -269,7 +286,10 @@ export class PaperService {
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): LinePrimitive {
-    const isHighlighted = context.highlightedEntityIds?.has(line.id!) || false;
+    // Check hover/selection state (prefer new fields, fallback to legacy highlightedEntityIds)
+    const isHovered = context.hoveredIds?.has(line.id!) || false;
+    const isSelected = context.selectedIds?.has(line.id!) || false;
+    const isHighlighted = isSelected || isHovered || context.highlightedEntityIds?.has(line.id!) || false;
 
     // Transform point on line (includes translation)
     const paperPoint = realization.point.clone().applyMatrix3(planeToPaperMatrix);
@@ -279,7 +299,7 @@ export class PaperService {
     const paperDirection = realization.direction.clone().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style
-    const style = this.resolveLineStyle(line, isHighlighted, context.activePlaneId);
+    const style = this.resolveLineStyle(line, isSelected, isHovered, context.activePlaneId);
 
     return {
       type: 'line',
@@ -296,15 +316,27 @@ export class PaperService {
 
   /**
    * Resolve visual style for a line
-   * TODO: Implement style inheritance from process tree
+   * Per ui-spec.md: Hover = #4A90E2 glow (lighter), Selection = #0066CC (bold)
    */
   private resolveLineStyle(
     line: Line2D,
-    isHighlighted: boolean,
+    isSelected: boolean,
+    isHovered: boolean,
     activePlaneId?: string
   ): ResolvedStyle {
-    const stroke = isHighlighted ? '#6BB6FF' : '#333333';
-    const strokeWidth = isHighlighted ? 2 : 1.5;
+    let stroke: string;
+    let strokeWidth: number;
+
+    if (isSelected) {
+      stroke = '#0066CC'; // Bold blue for selection
+      strokeWidth = 2;
+    } else if (isHovered) {
+      stroke = '#4A90E2'; // Lighter blue for hover
+      strokeWidth = 1.8;
+    } else {
+      stroke = '#333333';
+      strokeWidth = 1.5;
+    }
 
     // FR-002: Active plane visual emphasis - 50% opacity for inactive planes
     const opacity = (activePlaneId && line.planeId !== activePlaneId) ? 0.5 : 1.0;
@@ -339,14 +371,16 @@ export class PaperService {
       throw new Error('Segment must have an ID');
     }
     
-    const isHighlighted = context.highlightedEntityIds?.has(segment.id) || false;
+    // Check hover/selection state
+    const isHovered = context.hoveredIds?.has(segment.id) || false;
+    const isSelected = context.selectedIds?.has(segment.id) || false;
 
     // Transform both endpoints from plane <u,v> to paper coordinates
     const paperPoint1 = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
     const paperPoint2 = realization.point2.clone().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style
-    const style = this.resolveSegmentStyle(segment, isHighlighted, context.activePlaneId);
+    const style = this.resolveSegmentStyle(segment, isSelected, isHovered, context.activePlaneId);
 
     return {
       type: 'segment',
@@ -364,15 +398,27 @@ export class PaperService {
   /**
    * Resolve visual style for a segment
    * Segments have slightly different styling than infinite lines
-   * TODO: Implement style inheritance from process tree
+   * Per ui-spec.md: Hover = #4A90E2 (lighter), Selection = #0066CC (bold)
    */
   private resolveSegmentStyle(
     segment: Segment2D,
-    isHighlighted: boolean,
+    isSelected: boolean,
+    isHovered: boolean,
     activePlaneId?: string
   ): ResolvedStyle {
-    const stroke = isHighlighted ? '#6BB6FF' : '#2C3E50';
-    const strokeWidth = isHighlighted ? 2.5 : 2;
+    let stroke: string;
+    let strokeWidth: number;
+
+    if (isSelected) {
+      stroke = '#0066CC'; // Bold blue for selection
+      strokeWidth = 2.5;
+    } else if (isHovered) {
+      stroke = '#4A90E2'; // Lighter blue for hover
+      strokeWidth = 2.2;
+    } else {
+      stroke = '#2C3E50';
+      strokeWidth = 2;
+    }
 
     // FR-002: Active plane visual emphasis - 50% opacity for inactive planes
     const opacity = (activePlaneId && segment.planeId !== activePlaneId) ? 0.5 : 1.0;
@@ -400,7 +446,9 @@ export class PaperService {
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): CirclePrimitive {
-    const isHighlighted = context.highlightedEntityIds?.has(circle.id!) || false;
+    // Check hover/selection state
+    const isHovered = context.hoveredIds?.has(circle.id!) || false;
+    const isSelected = context.selectedIds?.has(circle.id!) || false;
 
     // Transform center from plane <u,v> to paper coordinates
     const paperCenter = realization.center.clone().applyMatrix3(planeToPaperMatrix);
@@ -415,7 +463,7 @@ export class PaperService {
     const paperRadius = realization.radius * avgScale;
 
     // Resolve visual style
-    const style = this.resolveCircleStyle(circle, isHighlighted, context.activePlaneId);
+    const style = this.resolveCircleStyle(circle, isSelected, isHovered, context.activePlaneId);
 
     return {
       type: 'circle',
@@ -432,15 +480,27 @@ export class PaperService {
 
   /**
    * Resolve visual style for a circle
-   * TODO: Implement style inheritance from process tree
+   * Per ui-spec.md: Hover = #4A90E2 (lighter), Selection = #0066CC (bold)
    */
   private resolveCircleStyle(
     circle: Circle2D,
-    isHighlighted: boolean,
+    isSelected: boolean,
+    isHovered: boolean,
     activePlaneId?: string
   ): ResolvedStyle {
-    const stroke = isHighlighted ? '#6BB6FF' : '#333333';
-    const strokeWidth = isHighlighted ? 2 : 1.5;
+    let stroke: string;
+    let strokeWidth: number;
+
+    if (isSelected) {
+      stroke = '#0066CC'; // Bold blue for selection
+      strokeWidth = 2;
+    } else if (isHovered) {
+      stroke = '#4A90E2'; // Lighter blue for hover
+      strokeWidth = 1.8;
+    } else {
+      stroke = '#333333';
+      strokeWidth = 1.5;
+    }
 
     // FR-002: Active plane visual emphasis - 50% opacity for inactive planes
     const opacity = (activePlaneId && circle.planeId !== activePlaneId) ? 0.5 : 1.0;
@@ -469,7 +529,9 @@ export class PaperService {
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): LinePrimitive {
-    const isHighlighted = context.highlightedEntityIds?.has(guide.id!) || false;
+    // Check hover/selection state
+    const isHovered = context.hoveredIds?.has(guide.id!) || false;
+    const isSelected = context.selectedIds?.has(guide.id!) || false;
 
     // Transform point on guide (includes translation)
     const paperPoint = realization.point.clone().applyMatrix3(planeToPaperMatrix);
@@ -478,7 +540,7 @@ export class PaperService {
     const paperDirection = realization.direction.clone().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style (dashed line)
-    const style = this.resolveGuideStyle(guide, isHighlighted, context.activePlaneId);
+    const style = this.resolveGuideStyle(guide, isSelected, isHovered, context.activePlaneId);
 
     return {
       type: 'line',
@@ -497,15 +559,27 @@ export class PaperService {
    * Resolve visual style for a guide
    * Guides render as dashed lines with distinct color
    * FR-002: Guides always 100% opacity (belong to all planes)
-   * TODO: Implement style inheritance from process tree
+   * Per ui-spec.md: Hover = lighter purple, Selection = #0066CC
    */
   private resolveGuideStyle(
     _guide: Guide2D,  // Reserved for future style inheritance
-    isHighlighted: boolean,
+    isSelected: boolean,
+    isHovered: boolean,
     _activePlaneId?: string  // Ignored - guides always 100% opacity
   ): ResolvedStyle {
-    const stroke = isHighlighted ? '#6BB6FF' : '#9C27B0';  // Purple for guides
-    const strokeWidth = isHighlighted ? 2 : 1.5;
+    let stroke: string;
+    let strokeWidth: number;
+
+    if (isSelected) {
+      stroke = '#0066CC'; // Bold blue for selection
+      strokeWidth = 2;
+    } else if (isHovered) {
+      stroke = '#BA68C8'; // Lighter purple for hover
+      strokeWidth = 1.8;
+    } else {
+      stroke = '#9C27B0'; // Purple for guides
+      strokeWidth = 1.5;
+    }
 
     return {
       stroke,
