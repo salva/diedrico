@@ -67,18 +67,16 @@ export function screenToSVG(
  * This applies the inverse of the viewport transform (pan/zoom).
  * 
  * @param svgPoint - Point in SVG coordinates (homogeneous)
- * @param viewportTransform - Current viewport transform matrix
+ * @param viewportTransform - Inverse viewport transform matrix (canvas→paper)
  * @returns Paper coordinates as Vector3 (x, y, 1) in homogeneous coords
  */
 export function svgToPaper(
   svgPoint: Vector3,
   viewportTransform: Matrix3
 ): Vector3 {
-  // Apply inverse viewport transform
-  // viewport transform: paper → SVG (with pan/zoom)
-  // We need: SVG → paper (inverse)
-  const inverseViewport = viewportTransform.clone().invert();
-  return applyMatrix3(svgPoint, inverseViewport);
+  // The viewportTransform passed in is already the inverse (canvas→paper)
+  // So we just apply it directly without inverting again
+  return applyMatrix3(svgPoint, viewportTransform);
 }
 
 /**
