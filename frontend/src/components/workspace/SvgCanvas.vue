@@ -129,6 +129,7 @@ import { IntersectionTool } from '@/tools/IntersectionTool';
 import { TransportTool } from '@/tools/TransportTool';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
+import { useSelectionStore } from '@/stores/selectionStore';
 import { useViewport } from '@/composables/useViewport';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import type { ITool } from '@/tools/ITool';
@@ -165,6 +166,7 @@ const paperService = new PaperService();
 const svgRenderer = new SVGRenderer();
 const inputService = new InputService();
 const toolStore = useToolStore();
+const selectionStore = useSelectionStore();
 
 // World instance - injected from App.vue
 const world = inject<World>('world')!;
@@ -280,12 +282,22 @@ const primitives = computed(() => {
   // PaperService uses plane-to-paper transforms for rendering
   const planeTransforms = getPlaneTransformsForRendering();
   
-  // Get hovered element from Paper for highlight styling
+  // Get hovered element from Paper for hover highlight styling
   const hoveredId = paper.getHoveredElement();
   let highlightedEntityIds: Set<string> | undefined;
   
   if (hoveredId) {
     highlightedEntityIds = new Set([hoveredId]);
+  }
+  
+  // Add selected elements to highlighted set for selection highlight
+  // Per ui-spec.md: Selection highlight uses blue outline (#0066CC, 2px)
+  const selectedIds = selectionStore.selectedIdsArray;
+  if (selectedIds.length > 0) {
+    if (!highlightedEntityIds) {
+      highlightedEntityIds = new Set();
+    }
+    selectedIds.forEach(id => highlightedEntityIds!.add(id));
   }
   
   const context: PrimitiveContext = {
@@ -443,8 +455,36 @@ function handleCanvasClick(event: MouseEvent) {
   console.log('[SvgCanvas] Paper.hitTest() result:', hit);
   console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
   
-  // Phase 6.5: Delegate to active tool instead of direct World mutation
+  // Phase 20: Handle selection mode when 'select' tool is active
   const activeToolName = toolStore.currentTool.value;
+  
+  if (activeToolName === 'select') {
+    // Selection mode per ui-spec.md §Element Interaction
+    // Click element: Select (Shift+click: add to selection)
+    // Click empty: Deselect all
+    
+    const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+    
+    if (hit) {
+      // Element clicked - handle selection
+      if (event.shiftKey) {
+        // Shift+click: Add to selection (multi-select)
+        selectionStore.addToSelection(hit.elementId);
+        console.log('[SvgCanvas] Added to selection:', hit.elementId);
+      } else {
+        // Regular click: Single selection (replaces current selection)
+        selectionStore.selectSingle(hit.elementId);
+        console.log('[SvgCanvas] Selected:', hit.elementId);
+      }
+    } else {
+      // Clicked empty space - clear selection
+      selectionStore.clearSelection();
+      console.log('[SvgCanvas] Cleared selection');
+    }
+    return;
+  }
+  
+  // Phase 6.5: Delegate to active tool instead of direct World mutation
   const activeTool = tools[activeToolName];
   
   if (!activeTool) {

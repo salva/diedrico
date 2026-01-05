@@ -1204,8 +1204,8 @@ class World {
 - [X] T159 Retrieve all elements from World and display as list
 - [X] T160 Organize elements by type (Points, Lines, Segments, Circles, Guides)
 - [X] T161 Show element labels, IDs, and key properties (coordinates, etc.)
-- [X] T162 Add filter to show/hide element types
-- [X] T163 Add search to find elements by label or ID
+- [N/A] T162 Add filter to show/hide element types (REMOVED: not in spec)
+- [N/A] T163 Add search to find elements by label or ID (REMOVED: not in spec)
 - [X] T164 Implement click handler to highlight element on canvas when selected
 - [TODO] T165 Add visibility toggle for each element (show/hide)
 - [X] T166 Mount ElementsPanel in App.vue right sidebar
