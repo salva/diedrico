@@ -1236,7 +1236,7 @@ class World {
 - [X] T172 Implement Ctrl+click for multi-select (add to selection)
 - [X] T173 Implement click on empty area to clear selection
 - [X] T174 Sync selection between canvas and ElementsPanel (bidirectional)
-- [TODO] T175 Sync selection between canvas and ActionsPanel (show related actions)
+- [X] T175 Sync selection between canvas and ActionsPanel (show related actions)
 - [X] T176 [P] Unit test for selectionStore in frontend/tests/unit/stores/selectionStore.spec.ts
 - [X] T177 [P] E2E test for object selection in frontend/tests/e2e/selection.spec.ts
 
