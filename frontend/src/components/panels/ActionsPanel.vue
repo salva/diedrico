@@ -2,7 +2,13 @@
   <aside class="actions-panel">
     <header class="panel-header">
       <h2 class="panel-title">Construction History</h2>
-      <span class="action-count">({{ filteredActions.length }})</span>
+      <button 
+        class="add-subprocess-btn"
+        @click="showAddSubprocessDialog = true"
+        title="Add new subprocess"
+      >
+        + Subprocess
+      </button>
     </header>
 
     <!-- Filter Controls -->
@@ -24,237 +30,94 @@
       </select>
     </div>
 
-    <!-- Actions List -->
-    <div class="actions-list">
-      <div
-        v-for="action in filteredActions"
-        :key="action.id"
-        class="action-item"
-        :class="{ 
-          'action-selected': selectedActionId === action.id,
-          'action-infeasible': isInfeasible(action)
-        }"
-        @click="handleActionClick(action)"
-        @mouseenter="handleActionHover(action, true)"
-        @mouseleave="handleActionHover(action, false)"
-      >
-        <!-- Action Status Icon -->
-        <span class="action-status-icon" :title="getStatusTitle(action)">
-          {{ getStatusIcon(action) }}
-        </span>
-
-        <!-- Action Description -->
-        <div class="action-content">
-          <div class="action-description">
-            {{ action.description }}
-          </div>
-          <div class="action-metadata">
-            <span class="action-type">{{ formatActionType(action.actionType) }}</span>
-            <span class="action-time">{{ formatTime(action.timestamp) }}</span>
-          </div>
-
-          <!-- Action Details (collapsible) -->
-          <div v-if="selectedActionId === action.id" class="action-details">
-            <div v-if="action.inputs.length > 0" class="action-io">
-              <strong>Inputs:</strong> {{ action.inputs.join(', ') }}
-            </div>
-            <div v-if="action.outputs.length > 0" class="action-io">
-              <strong>Outputs:</strong> {{ action.outputs.join(', ') }}
-            </div>
-            <div v-if="Object.keys(action.parameters).length > 0" class="action-params">
-              <strong>Parameters:</strong>
-              <ul>
-                <li v-for="(value, key) in action.parameters" :key="key">
-                  {{ key }}: {{ formatParameterValue(value) }}
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-if="filteredActions.length === 0" class="empty-state">
-        <p v-if="filterType !== 'all'">
-          No actions match your filter
-        </p>
-        <p v-else>
-          No construction actions yet. Start creating geometry!
-        </p>
-      </div>
+    <!-- Process Tree -->
+    <div class="process-tree">
+      <ProcessTreeNode
+        :node="processTree.root"
+        :filter-type="filterType"
+        :selected-node-id="selectedNodeId"
+        @select-node="handleNodeSelect"
+        @toggle-visibility="handleToggleVisibility"
+        @highlight-elements="(...args) => emit('highlightElements', ...args)"
+        @clear-highlight="emit('clearHighlight')"
+      />
     </div>
+
+    <!-- Add Subprocess Dialog -->
+    <dialog v-if="showAddSubprocessDialog" class="add-subprocess-dialog" open>
+      <h3>New Subprocess</h3>
+      <input
+        v-model="newSubprocessName"
+        type="text"
+        placeholder="Subprocess name"
+        @keyup.enter="addSubprocess"
+      />
+      <div class="dialog-actions">
+        <button @click="addSubprocess">Create</button>
+        <button @click="showAddSubprocessDialog = false">Cancel</button>
+      </div>
+    </dialog>
   </aside>
 </template>
 
 <script setup lang="ts">
-/**
- * ActionsPanel - Display construction history from ProcessTree
- * 
- * Shows all construction actions in chronological order with:
- * - Action type and description
- * - Status indicators (complete, infeasible)
- * - Filtering by action type
- * - Click to select and highlight related elements
- * - Hover to preview highlighting
- * 
- * @see specs/001-dihedral-learning-mvp/ui-spec.md#actions-panel-left-sidebar
- */
-
-import { ref, computed, watch, inject, onUnmounted } from 'vue';
-import type { Action } from '@/domain/processTree/Action';
+import { ref, inject, onMounted, onUnmounted } from 'vue';
 import type { World } from '@/domain/world/World';
+import ProcessTreeNode from './ProcessTreeNode.vue';
 
-// Emit events for interaction with canvas
+// Emits
 const emit = defineEmits<{
   highlightElements: [elementIds: string[], temporary: boolean];
   clearHighlight: [];
 }>();
 
-// Inject World instance from parent (SvgCanvas provides it)
-const world = inject<World>('world');
-if (!world) {
-  throw new Error('World not provided');
-}
+// Injected dependencies
+const world = inject<World>('world')!;
+const processTree = world.getProcessTree();
 
-// Component state
+// Local state
 const filterType = ref<string>('all');
-const selectedActionId = ref<string | null>(null);
-
-// Force reactivity by watching world changes
-// Since ProcessTree doesn't use Vue reactivity, we need to poll or use a version counter
+const selectedNodeId = ref<string | null>(null);
+const showAddSubprocessDialog = ref(false);
+const newSubprocessName = ref('');
 const refreshTrigger = ref(0);
-const refreshInterval = setInterval(() => {
-  refreshTrigger.value++;
-}, 500); // Check for changes every 500ms
 
-// Clean up interval on unmount
-import { onUnmounted } from 'vue';
+// Force reactivity by polling ProcessTree changes
+let intervalId: number | null = null;
+onMounted(() => {
+  intervalId = window.setInterval(() => {
+    refreshTrigger.value++;
+  }, 500);
+});
+
 onUnmounted(() => {
-  clearInterval(refreshInterval);
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+  }
 });
 
-/**
- * Get all actions from ProcessTree
- * Access refreshTrigger to make this reactive to polling updates
- */
-const allActions = computed<Action[]>(() => {
-  // Access refreshTrigger to create dependency
-  refreshTrigger.value;
-  
-  const processTree = world.getProcessTree();
-  return processTree.getAllActions();
-});
-
-/**
- * Filter actions based on type filter
- */
-const filteredActions = computed<Action[]>(() => {
-  let actions = allActions.value;
-
-  // Apply type filter
-  if (filterType.value !== 'all') {
-    actions = actions.filter(action => action.actionType === filterType.value);
-  }
-
-  return actions;
-});
-
-/**
- * Handle action click - select and highlight related elements
- */
-function handleActionClick(action: Action) {
-  if (selectedActionId.value === action.id) {
-    // Deselect
-    selectedActionId.value = null;
-    emit('clearHighlight');
-  } else {
-    // Select
-    selectedActionId.value = action.id;
-    const elementIds = [...action.inputs, ...action.outputs];
-    emit('highlightElements', elementIds, false);
+// Handle subprocess creation
+function addSubprocess() {
+  if (newSubprocessName.value.trim()) {
+    processTree.addSubprocess(newSubprocessName.value.trim());
+    newSubprocessName.value = '';
+    showAddSubprocessDialog.value = false;
+    refreshTrigger.value++; // Force update
   }
 }
 
-/**
- * Handle action hover - temporarily highlight related elements
- */
-function handleActionHover(action: Action, isHovering: boolean) {
-  if (isHovering && selectedActionId.value !== action.id) {
-    const elementIds = [...action.inputs, ...action.outputs];
-    emit('highlightElements', elementIds, true);
-  } else if (!isHovering && selectedActionId.value !== action.id) {
-    emit('clearHighlight');
-  }
+// Handle node selection
+function handleNodeSelect(nodeId: string) {
+  selectedNodeId.value = nodeId === selectedNodeId.value ? null : nodeId;
 }
 
-/**
- * Check if action produces infeasible elements
- */
-function isInfeasible(action: Action): boolean {
-  // Check if any output element is infeasible
-  // In MVP, we don't have explicit infeasibility tracking yet
-  // This is a placeholder for future implementation
-  return false;
+// Handle visibility toggle
+function handleToggleVisibility(nodeId: string) {
+  processTree.toggleSubprocessVisibility(nodeId);
+  refreshTrigger.value++; // Force update
 }
-
-/**
- * Get status icon for action
- */
-function getStatusIcon(action: Action): string {
-  if (isInfeasible(action)) {
-    return '⚠️';
-  }
-  return '✓';
-}
-
-/**
- * Get status title (tooltip) for action
- */
-function getStatusTitle(action: Action): string {
-  if (isInfeasible(action)) {
-    return 'Infeasible construction';
-  }
-  return 'Complete';
-}
-
-/**
- * Format action type for display
- */
-function formatActionType(actionType: string): string {
-  // Convert camelCase to readable format
-  return actionType.replace(/([A-Z])/g, ' $1').trim();
-}
-
-/**
- * Format timestamp for display
- */
-function formatTime(timestamp: Date): string {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-}
-
-/**
- * Format parameter value for display
- */
-function formatParameterValue(value: any): string {
-  if (typeof value === 'object' && value !== null) {
-    return JSON.stringify(value);
-  }
-  return String(value);
-}
-
-/**
- * Clear selection when actions change
- */
-watch(allActions, () => {
-  selectedActionId.value = null;
-  emit('clearHighlight');
-});
 </script>
+
 
 <style scoped>
 .actions-panel {
@@ -270,7 +133,7 @@ watch(allActions, () => {
 .panel-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
   padding: 1rem;
   background-color: #fff;
   border-bottom: 1px solid #dee2e6;
@@ -283,9 +146,20 @@ watch(allActions, () => {
   color: #212529;
 }
 
-.action-count {
+.add-subprocess-btn {
+  padding: 0.5rem 1rem;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   font-size: 0.875rem;
-  color: #6c757d;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.add-subprocess-btn:hover {
+  background: #4338ca;
 }
 
 .panel-controls {
@@ -310,98 +184,72 @@ watch(allActions, () => {
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
-.actions-list {
+.process-tree {
   flex: 1;
   overflow-y: auto;
   padding: 0.5rem;
 }
 
-.action-item {
+.add-subprocess-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 300px;
+}
+
+.add-subprocess-dialog h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.125rem;
+}
+
+.add-subprocess-dialog input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.dialog-actions {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  background-color: #fff;
-  border: 1px solid #dee2e6;
-  border-radius: 0.25rem;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dialog-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
-.action-item:hover {
-  background-color: #e9ecef;
-  border-color: #adb5bd;
+.dialog-actions button:first-child {
+  background: #4f46e5;
+  color: white;
 }
 
-.action-item.action-selected {
-  background-color: #cfe2ff;
-  border-color: #0d6efd;
+.dialog-actions button:first-child:hover {
+  background: #4338ca;
 }
 
-.action-item.action-infeasible {
-  background-color: #fff3cd;
-  border-color: #ffc107;
+.dialog-actions button:last-child {
+  background: #e5e7eb;
+  color: #374151;
 }
 
-.action-status-icon {
-  flex-shrink: 0;
-  font-size: 1rem;
+.dialog-actions button:last-child:hover {
+  background: #d1d5db;
 }
+</style>
 
-.action-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.action-description {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #212529;
-  margin-bottom: 0.25rem;
-}
-
-.action-metadata {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-  color: #6c757d;
-}
-
-.action-type {
-  font-style: italic;
-}
-
-.action-details {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #dee2e6;
-  font-size: 0.75rem;
-}
-
-.action-io,
-.action-params {
-  margin-bottom: 0.5rem;
-  color: #495057;
-}
-
-.action-params ul {
-  margin: 0.25rem 0 0 1rem;
-  padding: 0;
-  list-style-type: disc;
-}
-
-.action-params li {
-  margin-bottom: 0.25rem;
-}
-
-.empty-state {
-  padding: 2rem;
-  text-align: center;
-  color: #6c757d;
-  font-size: 0.875rem;
-}
-
-.empty-state p {
-  margin: 0;
 }
 </style>

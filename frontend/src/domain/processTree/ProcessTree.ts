@@ -27,11 +27,16 @@ export interface Subprocess extends ProcessNodeBase {
 export interface ActionGroup extends ProcessNodeBase {
   type: 'actionGroup';
   name: string;
-  children: Action[];                      // Only actions, at least 1
+  children: ActionNode[];                  // Only actions, at least 1
   isAuxiliary: boolean;                    // Auxiliary actions (lighter styling)
 }
 
-export type ProcessNode = Subprocess | ActionGroup | Action;
+// ActionNode wraps Action to fit the tree structure
+export interface ActionNode extends ProcessNodeBase, Action {
+  type: 'action';
+}
+
+export type ProcessNode = Subprocess | ActionGroup | ActionNode;
 
 export class ProcessTree {
   root: Subprocess;
@@ -53,12 +58,19 @@ export class ProcessTree {
    * Creates an ActionGroup if needed
    */
   addAction(action: Action, groupName?: string): ActionGroup {
+    // Wrap action in ActionNode
+    const actionNode: ActionNode = {
+      ...action,
+      type: 'action',
+      created: new Date()
+    };
+
     // Create action group for this action
     const actionGroup: ActionGroup = {
       id: this.generateId(),
       type: 'actionGroup',
       name: groupName || action.description,
-      children: [action],
+      children: [actionNode],
       isAuxiliary: false,
       created: new Date()
     };
@@ -89,6 +101,17 @@ export class ProcessTree {
   }
 
   /**
+   * Toggle visibility of a subprocess
+   */
+  toggleSubprocessVisibility(subprocessId: string): void {
+    this.traverseSubprocesses(this.root, (subprocess) => {
+      if (subprocess.id === subprocessId) {
+        subprocess.visible = !subprocess.visible;
+      }
+    });
+  }
+
+  /**
    * Get all actions in execution order (depth-first traversal)
    */
   getAllActions(): Action[] {
@@ -97,6 +120,19 @@ export class ProcessTree {
       actions.push(action);
     });
     return actions;
+  }
+
+  /**
+   * Depth-first traversal of subprocesses
+   */
+  private traverseSubprocesses(node: ProcessNode, callback: (subprocess: Subprocess) => void): void {
+    if (node.type === 'subprocess') {
+      callback(node);
+      node.children.forEach(child => this.traverseSubprocesses(child, callback));
+    } else if (node.type === 'actionGroup') {
+      // Stop at action groups
+      return;
+    }
   }
 
   /**
