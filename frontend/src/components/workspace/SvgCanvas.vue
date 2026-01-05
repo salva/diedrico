@@ -131,6 +131,7 @@ import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useViewport } from '@/composables/useViewport';
+import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import type { ITool } from '@/tools/ITool';
 
@@ -167,6 +168,7 @@ const svgRenderer = new SVGRenderer();
 const inputService = new InputService();
 const toolStore = useToolStore();
 const selectionStore = useSelectionStore();
+const hoverHighlight = useGlobalHoverHighlight();
 
 // World instance - injected from App.vue
 const world = inject<World>('world')!;
@@ -551,6 +553,19 @@ function handleMouseMove(event: MouseEvent) {
   
   if (previousHovered !== newHovered) {
     paper.setHoveredElement(newHovered);
+    
+    // Update global hover state for UI feedback
+    if (newHovered && hit) {
+      hoverHighlight.setHoveredElement(
+        newHovered,
+        hit.elementType,
+        newHovered, // Use element ID as label for now
+        false // Not temporary - show tooltip
+      );
+    } else {
+      hoverHighlight.clearHover();
+    }
+    
     // Trigger re-render only when hover state actually changes
     worldVersion.value++;
   }
