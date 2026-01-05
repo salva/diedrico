@@ -26,6 +26,7 @@
           :key="child.id"
           :node="child"
           :selected-node-id="selectedNodeId"
+          :related-action-ids="relatedActionIds"
           @select-node="emit('selectNode', $event)"
           @toggle-visibility="emit('toggleVisibility', $event)"
           @highlight-elements="(...args) => emit('highlightElements', ...args)"
@@ -51,6 +52,7 @@
           :key="child.id"
           :node="child"
           :selected-node-id="selectedNodeId"
+          :related-action-ids="relatedActionIds"
           @select-node="emit('selectNode', $event)"
           @toggle-visibility="emit('toggleVisibility', $event)"
           @highlight-elements="(...args) => emit('highlightElements', ...args)"
@@ -65,7 +67,8 @@
       class="action-node"
       :class="{ 
         'node-selected': isSelected,
-        'action-infeasible': isInfeasible
+        'action-infeasible': isInfeasible,
+        'action-related': isRelated
       }"
       @click="handleActionClick"
       @mouseenter="handleActionHover(true)"
@@ -74,6 +77,7 @@
       <div class="action-main">
         <span class="action-status">{{ statusIcon }}</span>
         <span class="action-description">{{ node.description }}</span>
+        <span v-if="isRelated && !isSelected" class="related-indicator" title="Related to selected elements">🔗</span>
       </div>
 
       <!-- Action Details (when selected) -->
@@ -97,6 +101,7 @@ import type { ProcessNode } from '@/domain/processTree/ProcessTree';
 const props = defineProps<{
   node: ProcessNode;
   selectedNodeId: string | null;
+  relatedActionIds?: Set<string>;
 }>();
 
 // Emits
@@ -112,6 +117,12 @@ const isCollapsed = ref(false);
 
 // Computed
 const isSelected = computed(() => props.selectedNodeId === props.node.id);
+
+const isRelated = computed(() => {
+  if (props.node.type !== 'action') return false;
+  if (!props.relatedActionIds) return false;
+  return props.relatedActionIds.has(props.node.id);
+});
 
 const allChildren = computed(() => {
   if (!('children' in props.node)) return [];
@@ -302,6 +313,22 @@ function formatParameterValue(value: any): string {
 
 .action-node.action-infeasible {
   background: #fff3cd;
+}
+
+.action-node.action-related {
+  background: #fef3c7;
+  border-left: 2px solid #fbbf24;
+  padding-left: 4px;
+}
+
+.action-node.action-related:hover {
+  background: #fde68a;
+}
+
+.related-indicator {
+  font-size: 11px;
+  color: #d97706;
+  margin-left: auto;
 }
 
 .action-main {

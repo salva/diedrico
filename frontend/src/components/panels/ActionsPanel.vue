@@ -16,6 +16,7 @@
       <ProcessTreeNode
         :node="processTree.root"
         :selected-node-id="selectedNodeId"
+        :related-action-ids="relatedActionIds"
         @select-node="handleNodeSelect"
         @toggle-visibility="handleToggleVisibility"
         @highlight-elements="(...args) => emit('highlightElements', ...args)"
@@ -41,9 +42,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
+import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
 import type { World } from '@/domain/world/World';
 import ProcessTreeNode from './ProcessTreeNode.vue';
+import { useSelectionStore } from '@/stores/selectionStore';
 
 // Emits
 const emit = defineEmits<{
@@ -55,10 +57,14 @@ const emit = defineEmits<{
 const world = inject<World>('world')!;
 const processTree = world.getProcessTree();
 
+// Selection store
+const selectionStore = useSelectionStore();
+
 // Local state
 const selectedNodeId = ref<string | null>(null);
 const showAddSubprocessDialog = ref(false);
 const newSubprocessName = ref('');
+const relatedActionIds = ref<Set<string>>(new Set());
 
 // Watch ProcessTree version for reactivity
 const treeVersion = computed(() => processTree.getVersion());
@@ -84,6 +90,44 @@ onUnmounted(() => {
     clearInterval(intervalId);
   }
 });
+
+// Watch selection changes and find related actions
+watch(
+  () => selectionStore.selectedIdsArray,
+  (selectedIds) => {
+    if (selectedIds.length === 0) {
+      // No selection, clear related actions
+      relatedActionIds.value.clear();
+    } else {
+      // Find actions related to selected elements
+      findRelatedActions(selectedIds);
+    }
+  },
+  { immediate: true }
+);
+
+/**
+ * Find actions that have any of the selected element IDs in their inputs or outputs
+ */
+function findRelatedActions(selectedIds: string[]): void {
+  const related = new Set<string>();
+  const selectedIdSet = new Set(selectedIds);
+
+  // Get all actions from process tree
+  const allActions = processTree.getAllActions();
+
+  // Check each action's inputs and outputs
+  for (const action of allActions) {
+    const hasRelatedInput = action.inputs.some(inputId => selectedIdSet.has(inputId));
+    const hasRelatedOutput = action.outputs.some(outputId => selectedIdSet.has(outputId));
+
+    if (hasRelatedInput || hasRelatedOutput) {
+      related.add(action.id);
+    }
+  }
+
+  relatedActionIds.value = related;
+}
 
 // Handle subprocess creation
 function addSubprocess() {
