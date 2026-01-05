@@ -199,9 +199,14 @@ let intervalId: number | null = null;
 let lastVersion = world.getVersion();
 
 onMounted(() => {
+  console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
+  console.log('[ElementsPanel] Initial points:', world.getAllPoints2D().length);
+  console.log('[ElementsPanel] Initial lines:', world.getAllLines2D().length);
+  
   intervalId = window.setInterval(() => {
     const currentVersion = world.getVersion();
     if (currentVersion !== lastVersion) {
+      console.log('[ElementsPanel] World version changed:', lastVersion, '→', currentVersion);
       lastVersion = currentVersion;
       forceUpdate.value++;
     }
@@ -262,6 +267,14 @@ const verticalElements = computed(() => {
     .filter(c => c.planeId === 'proj_plane_V');
   const guides = world.getAllGuides2D()
     .filter(g => g.planeId === 'proj_plane_V');
+  
+  console.log('[ElementsPanel] P_V elements:', {
+    points: points.length,
+    lines: lines.length,
+    segments: segments.length,
+    circles: circles.length,
+    guides: guides.length
+  });
   
   return {
     points: points.map(formatElement),
