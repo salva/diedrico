@@ -1209,7 +1209,7 @@ class World {
 - [X] T164 Implement click handler to highlight element on canvas when selected
 - [X] T165 Add visibility toggle for each element (show/hide)
 - [X] T166 Mount ElementsPanel in App.vue right sidebar
-- [TODO] T167 [P] Unit test for ElementsPanel in frontend/tests/unit/components/elementsPanel.spec.ts
+- [X] T167 [P] Unit test for ElementsPanel in frontend/tests/unit/components/elementsPanel.spec.ts
 
 **Checkpoint**: All geometric objects visible in panel
 
