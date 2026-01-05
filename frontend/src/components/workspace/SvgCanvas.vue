@@ -86,6 +86,15 @@
         v-bind="attrs"
       />
     </svg>
+    
+    <!-- Hover tooltip -->
+    <div 
+      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && !hoverHighlight.temporary.value"
+      class="hover-tooltip"
+      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+    >
+      {{ hoverHighlight.hoveredElementLabel.value }}
+    </div>
   </div>
 </template>
 
@@ -169,6 +178,40 @@ const inputService = new InputService();
 const toolStore = useToolStore();
 const selectionStore = useSelectionStore();
 const hoverHighlight = useGlobalHoverHighlight();
+
+// Tooltip position (offset from cursor)
+const tooltipPosition = ref({ x: 0, y: 0 });
+
+/**
+ * Get display label for an element
+ */
+function getElementLabel(elementId: string, elementType: string): string {
+  let element: any;
+  switch (elementType) {
+    case 'point':
+      element = world.points.get(elementId);
+      break;
+    case 'line':
+      element = world.lines.get(elementId);
+      break;
+    case 'half-hinge-line':
+      element = world.lines.get(elementId);
+      break;
+    case 'segment':
+      element = world.segments.get(elementId);
+      break;
+    case 'guide':
+      element = world.guides.get(elementId);
+      break;
+    case 'circle':
+      element = world.circles.get(elementId);
+      break;
+    case 'arc':
+      element = world.arcs.get(elementId);
+      break;
+  }
+  return element?.label || elementId;
+}
 
 // World instance - injected from App.vue
 const world = inject<World>('world')!;
@@ -523,6 +566,12 @@ function handleCanvasClick(event: MouseEvent) {
 function handleMouseMove(event: MouseEvent) {
   if (!svgElement.value) return;
   
+  // Update tooltip position (offset from cursor)
+  tooltipPosition.value = {
+    x: event.clientX + 15,
+    y: event.clientY + 15
+  };
+  
   // Get canvas position (in SVG user space)
   const svg = svgElement.value;
   const pt = svg.createSVGPoint();
@@ -556,10 +605,11 @@ function handleMouseMove(event: MouseEvent) {
     
     // Update global hover state for UI feedback
     if (newHovered && hit) {
+      const label = getElementLabel(newHovered, hit.elementType);
       hoverHighlight.setHoveredElement(
         newHovered,
         hit.elementType,
-        newHovered, // Use element ID as label for now
+        label,
         false // Not temporary - show tooltip
       );
     } else {
@@ -668,5 +718,19 @@ function handleMouseMove(event: MouseEvent) {
 .svg-canvas path,
 .svg-canvas rect {
   transition: opacity 0.2s ease-in-out;
+}
+
+/* Hover tooltip */
+.hover-tooltip {
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 </style>
