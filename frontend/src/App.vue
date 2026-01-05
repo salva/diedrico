@@ -24,6 +24,14 @@
           @update-active-plane="handleActivePlaneUpdate"
         />
       </div>
+
+      <!-- Right Sidebar: Elements Panel -->
+      <aside class="right-sidebar">
+        <ElementsPanel 
+          @highlight-elements="handleHighlightElements"
+          @clear-highlight="handleClearHighlight"
+        />
+      </aside>
     </main>
 
     <!-- Footer: Status bar -->
@@ -56,6 +64,7 @@ import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
 import ActionsPanel from './components/panels/ActionsPanel.vue';
+import ElementsPanel from './components/panels/ElementsPanel.vue';
 import { CommandStack } from './commands/CommandStack';
 import { useToolStore } from './stores/toolStore';
 import { World } from './domain/world/World';
@@ -197,6 +206,14 @@ onUnmounted(() => {
   overflow: hidden;
   background-color: #f8f9fa;
   border-right: 1px solid #dee2e6;
+}
+
+.right-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  border-left: 1px solid #dee2e6;
 }
 
 .canvas-area {
