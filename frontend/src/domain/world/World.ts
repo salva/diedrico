@@ -198,9 +198,14 @@ export class World {
     }
 
     // Helper to get line realizations for intersection points
+    // Checks both lines and guides (guides return Line2DRealization2D since Guide2DRealization2D extends it)
     const getLine = (lineId: string): Line2DRealization2D | null => {
       const lineRealization = this.getLine2DRealization(lineId);
-      return lineRealization || null;
+      if (lineRealization) return lineRealization;
+      
+      // Also check guides collection (Guide2DRealization2D extends Line2DRealization2D)
+      const guideRealization = this.getGuide2DRealization(lineId);
+      return guideRealization || null;
     };
 
     // Call realize2D() on the point with getLine callback and world context
