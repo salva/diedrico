@@ -1237,7 +1237,7 @@ class World {
 - [X] T173 Implement click on empty area to clear selection
 - [X] T174 Sync selection between canvas and ElementsPanel (bidirectional)
 - [TODO] T175 Sync selection between canvas and ActionsPanel (show related actions)
-- [TODO] T176 [P] Unit test for selectionStore in frontend/tests/unit/stores/selectionStore.spec.ts
+- [X] T176 [P] Unit test for selectionStore in frontend/tests/unit/stores/selectionStore.spec.ts
 - [TODO] T177 [P] E2E test for object selection in frontend/tests/e2e/selection.spec.ts
 
 **Checkpoint**: Objects can be selected on canvas and panels
