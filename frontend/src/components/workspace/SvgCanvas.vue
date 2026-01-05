@@ -112,7 +112,7 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
  */
 
-import { ref, computed, watch, onMounted, inject } from 'vue';
+import { ref, computed, watch, onMounted, inject, provide } from 'vue';
 import { Matrix3, Vector3 } from 'three';
 import { World } from '@/domain/world/World';
 import { Paper } from '@/domain/presentation/Paper';
@@ -168,6 +168,9 @@ const toolStore = useToolStore();
 
 // World instance (will be managed by store in later phases)
 const world = new World();
+
+// Provide World to child components (e.g., panels)
+provide('world', world);
 
 // Paper instance for spatial queries and rendering
 const paper = new Paper();

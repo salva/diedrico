@@ -6,12 +6,24 @@
       <Toolbar />
     </header>
 
-    <!-- Main Workspace: Canvas area -->
+    <!-- Main Workspace: Sidebar + Canvas area -->
     <main class="app-main">
-      <SvgCanvas 
-        @update-3d-coordinates="handleCoordinateUpdate"
-        @update-active-plane="handleActivePlaneUpdate"
-      />
+      <!-- Left Sidebar: Actions Panel -->
+      <aside class="left-sidebar">
+        <ActionsPanel 
+          @highlight-elements="handleHighlightElements"
+          @clear-highlight="handleClearHighlight"
+        />
+      </aside>
+
+      <!-- Canvas Area -->
+      <div class="canvas-area">
+        <SvgCanvas 
+          ref="svgCanvasRef"
+          @update-3d-coordinates="handleCoordinateUpdate"
+          @update-active-plane="handleActivePlaneUpdate"
+        />
+      </div>
     </main>
 
     <!-- Footer: Status bar -->
@@ -43,12 +55,16 @@ import { provide, ref, onMounted, onUnmounted } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
+import ActionsPanel from './components/panels/ActionsPanel.vue';
 import { CommandStack } from './commands/CommandStack';
 import { useToolStore } from './stores/toolStore';
 
 // Create command stack and provide to all child components
 const commandStack = new CommandStack();
 provide('commandStack', commandStack);
+
+// SVG Canvas reference for accessing World and methods
+const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
 
 // Tool state
 const toolStore = useToolStore();
@@ -74,6 +90,23 @@ function handleCoordinateUpdate(coords: { x: number; y: number; z: number } | nu
 function handleActivePlaneUpdate(planeInfo: { id: string; name: string }) {
   activePlaneId.value = planeInfo.id;
   activePlaneName.value = planeInfo.name;
+}
+
+/**
+ * Handle element highlighting from ActionsPanel
+ */
+function handleHighlightElements(elementIds: string[], temporary: boolean) {
+  // TODO: Implement element highlighting in Paper/SVGRenderer
+  // For now, just log the action
+  console.log('Highlight elements:', elementIds, 'temporary:', temporary);
+}
+
+/**
+ * Handle clearing element highlights
+ */
+function handleClearHighlight() {
+  // TODO: Implement clearing highlights in Paper/SVGRenderer
+  console.log('Clear highlights');
 }
 
 /**
@@ -149,6 +182,20 @@ onUnmounted(() => {
 .app-main {
   flex: 1;
   display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.left-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+}
+
+.canvas-area {
+  flex: 1;
   overflow: hidden;
   position: relative;
 }
