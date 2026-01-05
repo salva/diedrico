@@ -200,7 +200,9 @@ let lastVersion = world.getVersion();
 
 onMounted(() => {
   console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
-  console.log('[ElementsPanel] Initial points:', world.getAllPoints2D().length);
+  const allPoints = world.getAllPoints2D();
+  console.log('[ElementsPanel] Initial points:', allPoints.length);
+  console.log('[ElementsPanel] Point planeIds:', allPoints.map(p => ({ id: p.id, planeId: p.planeId })));
   console.log('[ElementsPanel] Initial lines:', world.getAllLines2D().length);
   
   intervalId = window.setInterval(() => {

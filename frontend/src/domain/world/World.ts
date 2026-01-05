@@ -121,11 +121,11 @@ export class World {
     // O is at the intersection of HL_HV with the origin
     // O_H on P_H: v=0 (where HL is), u=0 (at origin along X-axis)
     // O_V on P_V: v=0 (where HL is), u=0 (at origin along X-axis)
-    const pointOH = new FreePoint2D('O_H', new Vector3(0, 0, 1), planeH.id!);
+    const pointOH = new FreePoint2D('O_H', new Vector3(0, 0, 1), 'proj_plane_H');
     pointOH.locked = true;
     this.points.set('O_H', pointOH);
 
-    const pointOV = new FreePoint2D('O_V', new Vector3(0, 0, 1), planeV.id!);
+    const pointOV = new FreePoint2D('O_V', new Vector3(0, 0, 1), 'proj_plane_V');
     pointOV.locked = true;
     this.points.set('O_V', pointOV);
 
