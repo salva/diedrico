@@ -74,28 +74,18 @@
       @mouseenter="handleActionHover(true)"
       @mouseleave="handleActionHover(false)"
     >
-      <span class="action-status">{{ statusIcon }}</span>
-      <span class="action-description">{{ node.description }}</span>
-      <div class="action-metadata">
-        <span class="action-type">{{ formatActionType(node.actionType) }}</span>
-        <span class="action-time">{{ formatTime(node.timestamp) }}</span>
+      <div class="action-main">
+        <span class="action-status">{{ statusIcon }}</span>
+        <span class="action-description">{{ node.description }}</span>
       </div>
 
       <!-- Action Details (when selected) -->
       <div v-if="isSelected" class="action-details">
         <div v-if="node.inputs.length > 0" class="action-io">
-          <strong>Inputs:</strong> {{ node.inputs.join(', ') }}
+          <strong>In:</strong> {{ node.inputs.join(', ') }}
         </div>
         <div v-if="node.outputs.length > 0" class="action-io">
-          <strong>Outputs:</strong> {{ node.outputs.join(', ') }}
-        </div>
-        <div v-if="Object.keys(node.parameters).length > 0" class="action-params">
-          <strong>Parameters:</strong>
-          <ul>
-            <li v-for="(value, key) in node.parameters" :key="key">
-              {{ key }}: {{ formatParameterValue(value) }}
-            </li>
-          </ul>
+          <strong>Out:</strong> {{ node.outputs.join(', ') }}
         </div>
       </div>
     </div>
@@ -222,18 +212,19 @@ function formatParameterValue(value: any): string {
 
 /* Subprocess Styling */
 .subprocess-node {
-  margin: 8px 0;
+  margin: 4px 0;
 }
 
 .subprocess-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px;
+  gap: 4px;
+  padding: 4px 6px;
   background: #f8f8f8;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   transition: background 0.2s;
+  font-size: 13px;
 }
 
 .subprocess-header:hover {
@@ -272,18 +263,18 @@ function formatParameterValue(value: any): string {
 }
 
 .subprocess-children {
-  padding-left: 16px;
-  border-left: 2px solid #ddd;
-  margin-left: 10px;
-  margin-top: 4px;
+  padding-left: 12px;
+  border-left: 1px solid #ddd;
+  margin-left: 8px;
+  margin-top: 2px;
 }
 
 /* ActionGroup Styling */
 .actiongroup-node {
-  margin: 6px 0;
-  padding: 8px;
+  margin: 3px 0;
+  padding: 4px;
   border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  border-radius: 3px;
   background: #fafafa;
 }
 
@@ -296,30 +287,29 @@ function formatParameterValue(value: any): string {
 .actiongroup-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  font-size: 11px;
 }
 
 .auxiliary-icon {
-  font-size: 14px;
+  font-size: 12px;
   color: #888;
 }
 
 .actiongroup-children {
-  padding-left: 12px;
+  padding-left: 8px;
 }
 
 /* Action Styling */
 .action-node {
-  padding: 8px;
-  margin: 2px 0;
-  border-radius: 3px;
+  padding: 4px 6px;
+  margin: 1px 0;
+  border-radius: 2px;
   cursor: pointer;
   transition: background 0.2s;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  font-size: 12px;
 }
 
 .action-node:hover {
@@ -329,57 +319,50 @@ function formatParameterValue(value: any): string {
 .action-node.node-selected {
   background: #e0e7ff;
   border-left: 3px solid #4f46e5;
+  padding-left: 3px;
 }
 
 .action-node.action-infeasible {
   background: #fff3cd;
 }
 
+.action-main {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .action-status {
-  font-size: 12px;
-  margin-right: 6px;
+  font-size: 10px;
+  flex-shrink: 0;
 }
 
 .action-description {
-  font-size: 13px;
+  font-size: 12px;
   color: #333;
-  font-weight: 500;
-}
-
-.action-metadata {
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
-  color: #666;
-}
-
-.action-type {
-  color: #4f46e5;
-  font-weight: 500;
-}
-
-.action-time {
-  color: #888;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .action-details {
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 4px;
+  padding-top: 4px;
   border-top: 1px solid #e0e0e0;
-  font-size: 12px;
+  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.action-io, .action-params {
-  margin: 4px 0;
+.action-io {
   color: #555;
 }
 
-.action-params ul {
-  margin: 4px 0 0 16px;
-  padding: 0;
-}
-
-.action-params li {
-  margin: 2px 0;
+.action-io strong {
+  color: #888;
+  font-size: 9px;
+  text-transform: uppercase;
 }
 </style>
