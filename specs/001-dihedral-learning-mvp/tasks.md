@@ -1200,16 +1200,16 @@ class World {
 
 **⚠️ CRITICAL**: Study [ui-spec.md §World Elements Panel](./ui-spec.md#world-elements-panel) tree structure carefully - hierarchical organization is key.
 
-- [ ] T158 [P] Create ElementsPanel.vue component in frontend/src/components/panels/
-- [ ] T159 Retrieve all elements from World and display as list
-- [ ] T160 Organize elements by type (Points, Lines, Segments, Circles, Guides)
-- [ ] T161 Show element labels, IDs, and key properties (coordinates, etc.)
-- [ ] T162 Add filter to show/hide element types
-- [ ] T163 Add search to find elements by label or ID
-- [ ] T164 Implement click handler to highlight element on canvas when selected
-- [ ] T165 Add visibility toggle for each element (show/hide)
-- [ ] T166 Mount ElementsPanel in App.vue right sidebar
-- [ ] T167 [P] Unit test for ElementsPanel in frontend/tests/unit/components/elementsPanel.spec.ts
+- [X] T158 [P] Create ElementsPanel.vue component in frontend/src/components/panels/
+- [X] T159 Retrieve all elements from World and display as list
+- [X] T160 Organize elements by type (Points, Lines, Segments, Circles, Guides)
+- [X] T161 Show element labels, IDs, and key properties (coordinates, etc.)
+- [X] T162 Add filter to show/hide element types
+- [X] T163 Add search to find elements by label or ID
+- [X] T164 Implement click handler to highlight element on canvas when selected
+- [TODO] T165 Add visibility toggle for each element (show/hide)
+- [X] T166 Mount ElementsPanel in App.vue right sidebar
+- [TODO] T167 [P] Unit test for ElementsPanel in frontend/tests/unit/components/elementsPanel.spec.ts
 
 **Checkpoint**: All geometric objects visible in panel
 
