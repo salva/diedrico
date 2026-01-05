@@ -48,6 +48,7 @@ export class World {
   private projectionPlaneRealizations3D: Map<string, ProjectionPlaneRealization3D>;  // Computed plane 3D transforms
   
   private nextId: number;
+  private _version: number = 0;  // For tracking changes and triggering UI updates
 
   // Fixed elements (always present)
   originPoint?: Vector4;  // O at (0,0,0) in 3D space
@@ -74,6 +75,20 @@ export class World {
     
     // Initialize fixed elements
     this.initializeFixedElements();
+  }
+
+  /**
+   * Get current version number for change tracking
+   */
+  getVersion(): number {
+    return this._version;
+  }
+
+  /**
+   * Notify that world has changed (increment version)
+   */
+  private notifyChange(): void {
+    this._version++;
   }
 
   /**
@@ -158,6 +173,7 @@ export class World {
    */
   addPoint2D(point: Point2D): Point2D {
     this.points.set(point.id, point);
+    this.notifyChange();
     
     // Realization will be computed lazily on first access via getPoint2DRealization()
     
@@ -379,6 +395,7 @@ export class World {
    */
   addLine2D(line: Line2D): Line2D {
     this.lines.set(line.id, line);
+    this.notifyChange();
     // Realization will be computed lazily on first access via getLine2DRealization()
     return line;
   }
@@ -492,6 +509,7 @@ export class World {
    */
   addSegment2D(segment: Segment2D): Segment2D {
     this.segments.set(segment.id, segment);
+    this.notifyChange();
     return segment;
   }
 
@@ -591,6 +609,7 @@ export class World {
    */
   addCircle2D(circle: Circle2D): Circle2D {
     this.circles.set(circle.id, circle);
+    this.notifyChange();
     // Invalidate cached realization
     this.circleRealizations2D.delete(circle.id);
     return circle;
@@ -681,6 +700,7 @@ export class World {
    */
   addGuide2DGeneric(guide: Guide2D): Guide2D {
     this.guides.set(guide.id, guide);
+    this.notifyChange();
     // Invalidate cached realization
     this.guideRealizations2D.delete(guide.id);
     return guide;

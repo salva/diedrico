@@ -182,12 +182,21 @@ const is3DSectionCollapsed = ref(false);
 const isHPlaneCollapsed = ref(false);
 const isVPlaneCollapsed = ref(false);
 
-// Force re-render by polling world changes
+// Track World version for reactivity
+const worldVersion = computed(() => world.getVersion());
+
+// Force re-render by polling world version changes
 const forceUpdate = ref(0);
 let intervalId: number | null = null;
+let lastVersion = world.getVersion();
+
 onMounted(() => {
   intervalId = window.setInterval(() => {
-    forceUpdate.value++;
+    const currentVersion = world.getVersion();
+    if (currentVersion !== lastVersion) {
+      lastVersion = currentVersion;
+      forceUpdate.value++;
+    }
   }, 100);
 });
 
@@ -199,6 +208,7 @@ onUnmounted(() => {
 
 // Get elements from World
 const horizontalElements = computed(() => {
+  worldVersion.value; // Create dependency
   forceUpdate.value; // Create dependency
   
   const points = world.getAllPoints2D()
@@ -223,6 +233,7 @@ const horizontalElements = computed(() => {
 });
 
 const verticalElements = computed(() => {
+  worldVersion.value; // Create dependency
   forceUpdate.value; // Create dependency
   
   const points = world.getAllPoints2D()
@@ -247,6 +258,7 @@ const verticalElements = computed(() => {
 });
 
 const threeDElements = computed(() => {
+  worldVersion.value; // Create dependency
   forceUpdate.value; // Create dependency
   
   // TODO: 3D elements not implemented yet
