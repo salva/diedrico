@@ -1032,9 +1032,9 @@ export class World {
       throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
     }
 
-    // Try to get elements (could be lines or circles)
-    const element1 = this.lines.get(element1Id) || this.circles.get(element1Id);
-    const element2 = this.lines.get(element2Id) || this.circles.get(element2Id);
+    // Try to get elements (could be lines, guides, or circles)
+    const element1 = this.lines.get(element1Id) || this.guides.get(element1Id) || this.circles.get(element1Id);
+    const element2 = this.lines.get(element2Id) || this.guides.get(element2Id) || this.circles.get(element2Id);
     
     if (!element1) {
       throw new Error(`Invalid element1Id: ${element1Id}. Element does not exist.`);
@@ -1095,6 +1095,7 @@ export class World {
     siblingId?: string
   ): { primary: IntersectionPoint2D; sibling?: SiblingIntersectionPoint2D } {
     // Check if either element is a HalfHingeLine2D
+    // Note: Only lines can be HalfHingeLine2D, not guides or circles
     const element1 = this.lines.get(element1Id);
     const element2 = this.lines.get(element2Id);
     
