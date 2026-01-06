@@ -16,10 +16,10 @@ describe('ProjectionPlane Transformations', () => {
       
       // Test point at plane origin (0, 0, 1)
       const planePos = new Vector3(0, 0, 1);
-      const paperPos = planePos.clone().applyMatrix3(realization.planeToPaper);
+      const paperPos = planePos.clone().applyMatrix3(realization.planeToPaper2D);
       
-      expect(paperPos.x).toBeCloseTo(0);
-      expect(paperPos.y).toBeCloseTo(200);  // y' = v + 200
+      expect(paperPos.x).toBeCloseTo(800);  // x' = u + 800 = 0 + 800
+      expect(paperPos.y).toBeCloseTo(500);  // y' = -v + 500 = 0 + 500
       expect(paperPos.z).toBeCloseTo(1);
     });
 
@@ -28,12 +28,12 @@ describe('ProjectionPlane Transformations', () => {
       planeH.id = 'test_plane_H';
       const realization = planeH.realize2D();
       
-      // Test point at paper (100, 300, 1)
-      const paperPos = new Vector3(100, 300, 1);
-      const planePos = paperPos.clone().applyMatrix3(realization.paperToPlane);
+      // Test point at paper (900, 400, 1) → plane (100, 100, 1)
+      const paperPos = new Vector3(900, 400, 1);
+      const planePos = paperPos.clone().applyMatrix3(realization.paperToPlane2D);
       
-      expect(planePos.x).toBeCloseTo(100);
-      expect(planePos.y).toBeCloseTo(100);  // v = y - 200
+      expect(planePos.x).toBeCloseTo(100);  // u = x' - 800 = 900 - 800
+      expect(planePos.y).toBeCloseTo(100);  // v = -(y' - 500) = -(400 - 500) = 100
       expect(planePos.z).toBeCloseTo(1);
     });
 
@@ -43,8 +43,8 @@ describe('ProjectionPlane Transformations', () => {
       const realization = planeH.realize2D();
       
       const original = new Vector3(50, 75, 1);
-      const paper = original.clone().applyMatrix3(realization.planeToPaper);
-      const roundtrip = paper.clone().applyMatrix3(realization.paperToPlane);
+      const paper = original.clone().applyMatrix3(realization.planeToPaper2D);
+      const roundtrip = paper.clone().applyMatrix3(realization.paperToPlane2D);
       
       expect(roundtrip.x).toBeCloseTo(original.x);
       expect(roundtrip.y).toBeCloseTo(original.y);
@@ -57,8 +57,8 @@ describe('ProjectionPlane Transformations', () => {
       const realization = planeH.realize2D();
       
       const original = new Vector3(200, 400, 1);
-      const plane = original.clone().applyMatrix3(realization.paperToPlane);
-      const roundtrip = plane.clone().applyMatrix3(realization.planeToPaper);
+      const plane = original.clone().applyMatrix3(realization.paperToPlane2D);
+      const roundtrip = plane.clone().applyMatrix3(realization.planeToPaper2D);
       
       expect(roundtrip.x).toBeCloseTo(original.x);
       expect(roundtrip.y).toBeCloseTo(original.y);
@@ -74,10 +74,10 @@ describe('ProjectionPlane Transformations', () => {
       
       // Test point at plane origin (0, 0, 1)
       const planePos = new Vector3(0, 0, 1);
-      const paperPos = planePos.clone().applyMatrix3(realization.planeToPaper);
+      const paperPos = planePos.clone().applyMatrix3(realization.planeToPaper2D);
       
-      expect(paperPos.x).toBeCloseTo(0);
-      expect(paperPos.y).toBeCloseTo(-200);  // y' = v - 200
+      expect(paperPos.x).toBeCloseTo(800);  // x' = u + 800 = 0 + 800
+      expect(paperPos.y).toBeCloseTo(500);  // y' = v + 500 = 0 + 500
       expect(paperPos.z).toBeCloseTo(1);
     });
 
@@ -86,12 +86,12 @@ describe('ProjectionPlane Transformations', () => {
       planeV.id = 'test_plane_V';
       const realization = planeV.realize2D();
       
-      // Test point at paper (100, -100, 1)
-      const paperPos = new Vector3(100, -100, 1);
-      const planePos = paperPos.clone().applyMatrix3(realization.paperToPlane);
+      // Test point at paper (900, 600, 1) → plane (100, 100, 1)
+      const paperPos = new Vector3(900, 600, 1);
+      const planePos = paperPos.clone().applyMatrix3(realization.paperToPlane2D);
       
-      expect(planePos.x).toBeCloseTo(100);
-      expect(planePos.y).toBeCloseTo(100);  // v = y + 200
+      expect(planePos.x).toBeCloseTo(100);  // u = x' - 800 = 900 - 800
+      expect(planePos.y).toBeCloseTo(100);  // v = y' - 500 = 600 - 500
       expect(planePos.z).toBeCloseTo(1);
     });
 
@@ -101,8 +101,8 @@ describe('ProjectionPlane Transformations', () => {
       const realization = planeV.realize2D();
       
       const original = new Vector3(50, 75, 1);
-      const paper = original.clone().applyMatrix3(realization.planeToPaper);
-      const roundtrip = paper.clone().applyMatrix3(realization.paperToPlane);
+      const paper = original.clone().applyMatrix3(realization.planeToPaper2D);
+      const roundtrip = paper.clone().applyMatrix3(realization.paperToPlane2D);
       
       expect(roundtrip.x).toBeCloseTo(original.x);
       expect(roundtrip.y).toBeCloseTo(original.y);
@@ -115,8 +115,8 @@ describe('ProjectionPlane Transformations', () => {
       const realization = planeV.realize2D();
       
       const original = new Vector3(200, -400, 1);
-      const plane = original.clone().applyMatrix3(realization.paperToPlane);
-      const roundtrip = plane.clone().applyMatrix3(realization.planeToPaper);
+      const plane = original.clone().applyMatrix3(realization.paperToPlane2D);
+      const roundtrip = plane.clone().applyMatrix3(realization.planeToPaper2D);
       
       expect(roundtrip.x).toBeCloseTo(original.x);
       expect(roundtrip.y).toBeCloseTo(original.y);
@@ -131,7 +131,7 @@ describe('ProjectionPlane Transformations', () => {
       const realization = planeH.realize2D();
       
       // Multiply planeToPaper * paperToPlane should give identity
-      const product = realization.planeToPaper.clone().multiply(realization.paperToPlane);
+      const product = realization.planeToPaper2D.clone().multiply(realization.paperToPlane2D);
       const identity = product.elements;
       
       // Should be identity matrix [1,0,0, 0,1,0, 0,0,1]
@@ -152,7 +152,7 @@ describe('ProjectionPlane Transformations', () => {
       const realization = planeV.realize2D();
       
       // Multiply planeToPaper * paperToPlane should give identity
-      const product = realization.planeToPaper.clone().multiply(realization.paperToPlane);
+      const product = realization.planeToPaper2D.clone().multiply(realization.paperToPlane2D);
       const identity = product.elements;
       
       // Should be identity matrix
