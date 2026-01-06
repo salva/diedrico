@@ -2891,7 +2891,246 @@ class GuideTool implements Tool {
 
 ## Layer 3: Persistence Entities
 
-Projects are stored in the user's Google Drive "diedrico" folder as `.diedrico` files. Persistence is automatic with 2-second debouncing after changes.
+Projects are stored in the user's Google Drive "diedrico" folder as `.diedrico.json` files. Persistence is automatic with 2-second debouncing after changes.
+
+### Project Serialization: Command-Based Format
+
+**Schema Version**: 2.0.0 (Command-based serialization)
+
+**Architecture Philosophy**:
+Projects are saved as a **sequence of commands** rather than final state snapshots. This preserves construction history and enables:
+- **Parametric updates**: Changing early commands affects later ones
+- **Undo/redo persistence**: Complete command history survives save/load
+- **Construction replay**: Step through how the drawing was built
+- **Smaller file sizes**: Commands are more compact than full state
+- **Learning transparency**: Users can see the construction process
+
+**Contrast with Previous Approach (Schema 1.0.0)**:
+- Old: Serialized final World state (all points, lines, circles, etc.)
+- New: Serializes CommandStack (sequence of user actions)
+- Old: Lost construction history on save/load
+- New: Preserves complete command stream
+
+**Data Structure**:
+
+```typescript
+interface ProjectData {
+  id: string;                    // Unique project identifier
+  name: string;                  // User-visible project name
+  schemaVersion: string;         // "2.0.0" for command-based format
+  created: string;               // ISO 8601 timestamp
+  modified: string;              // ISO 8601 timestamp (updated on each save)
+  commands: SerializedCommand[]; // Complete command history
+}
+
+interface SerializedCommand {
+  id: string;                    // Command identifier (e.g., "cmd_1704624000000_a1b2c3")
+  timestamp: string;             // ISO 8601 timestamp when command was executed
+  description: string;           // Human-readable command description
+  operations: SerializedOperation[]; // Atomic operations that comprise this command
+}
+
+interface SerializedOperation {
+  type: string;                  // Operation type identifier (e.g., "AddFreePoint2DOp")
+  parameters: Record<string, any>; // Operation-specific parameters (includes both before/after state)
+}
+```
+
+**Serialization Flow** (Save Project):
+
+1. **Capture Command History**:
+   ```typescript
+   const commands = commandStack.getCommands();  // Get committed commands from undo stack
+   ```
+
+2. **Serialize Each Command**:
+   ```typescript
+   const serializedCommands = commands.map(cmd => ({
+     id: cmd.id,
+     timestamp: cmd.timestamp.toISOString(),
+     description: cmd.description,
+     operations: cmd.operations.map(op => ({
+       type: op.type,
+       parameters: op.parameters  // Contains all data needed to replay/undo
+     }))
+   }));
+   ```
+
+3. **Create Project Data**:
+   ```typescript
+   const projectData: ProjectData = {
+     id: generateProjectId(),
+     name: projectName,
+     schemaVersion: "2.0.0",
+     created: now,
+     modified: now,
+     commands: serializedCommands
+   };
+   ```
+
+4. **Save to Google Drive**:
+   ```typescript
+   await googleDriveService.saveFile(projectName, projectData);
+   ```
+
+**Deserialization Flow** (Load Project):
+
+1. **Load and Validate**:
+   ```typescript
+   const projectData = await googleDriveService.loadFile(fileId);
+   validateProjectData(projectData);  // Check schema version, required fields
+   ```
+
+2. **Clear Current State**:
+   ```typescript
+   world.clear();         // Reset World to initial state (only fixed elements)
+   commandStack.clear();  // Clear undo/redo stacks
+   ```
+
+3. **Replay Each Command**:
+   ```typescript
+   for (const serializedCmd of projectData.commands) {
+     // Reconstruct operations from serialized data
+     const operations = serializedCmd.operations.map(serializedOp => 
+       reconstructOperation(serializedOp)  // Factory to recreate operation instances
+     );
+     
+     // Replay operations to rebuild World state
+     for (const op of operations) {
+       const result = op.apply(world);
+       if (!result.success) {
+         throw new Error(`Failed to replay: ${result.error}`);
+       }
+     }
+     
+     // Add command to stack (for undo/redo)
+     commandStack.push(command);
+   }
+   ```
+
+4. **Result**: World and CommandStack fully restored to saved state
+
+**Operation Parameters Structure**:
+
+Operations store **both "before" and "after" state** in parameters to support undo:
+
+```typescript
+// Example: AddFreePoint2DOp
+{
+  type: "AddFreePoint2DOp",
+  parameters: {
+    // "After" state (for apply):
+    pointId: "pt_123",
+    planeId: "proj_plane_H",
+    position: { x: 100, y: 200, z: 1 },
+    
+    // "Before" state (for undo):
+    // (None needed - just remove the point)
+  }
+}
+
+// Example: UpdatePointPositionOp
+{
+  type: "UpdatePointPositionOp",
+  parameters: {
+    pointId: "pt_123",
+    planeId: "proj_plane_H",
+    
+    // "After" state:
+    newPosition: { x: 150, y: 250, z: 1 },
+    
+    // "Before" state:
+    oldPosition: { x: 100, y: 200, z: 1 }  // For undo
+  }
+}
+```
+
+**Schema Versioning**:
+
+- **Version Check**: Loading enforces exact schema version match
+- **No Backwards Compatibility**: Old format (1.0.0) files cannot be loaded with 2.0.0 code
+- **Migration Strategy**: Not implemented - users must recreate projects in new format
+- **Future Versions**: When introducing 3.0.0, add migration logic: 2.0.0 → 3.0.0
+
+**Error Handling**:
+
+```typescript
+// Schema version mismatch
+if (data.schemaVersion !== "2.0.0") {
+  throw new Error(
+    `This project was created with an older version (${data.schemaVersion}) ` +
+    `and cannot be opened. Please create a new project instead.`
+  );
+}
+
+// Missing required fields
+if (!data.commands || !Array.isArray(data.commands)) {
+  throw new Error("Invalid project file - commands must be an array");
+}
+
+// Replay failure
+if (!operationResult.success) {
+  throw new Error(`Failed to replay operation ${op.type}: ${result.error}`);
+}
+```
+
+**File Format Example**:
+
+```json
+{
+  "id": "proj_1704624000000_x9y8z7",
+  "name": "drawing 1",
+  "schemaVersion": "2.0.0",
+  "created": "2026-01-07T10:30:00.000Z",
+  "modified": "2026-01-07T10:35:00.000Z",
+  "commands": [
+    {
+      "id": "cmd_1704624000123_a1b2c3",
+      "timestamp": "2026-01-07T10:30:15.000Z",
+      "description": "Create free point on P_H",
+      "operations": [
+        {
+          "type": "AddFreePoint2DOp",
+          "parameters": {
+            "pointId": "pt_001",
+            "planeId": "proj_plane_H",
+            "position": { "x": 100, "y": 200, "z": 1 }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cmd_1704624000456_d4e5f6",
+      "timestamp": "2026-01-07T10:31:00.000Z",
+      "description": "Create line between two points",
+      "operations": [
+        {
+          "type": "AddLine2DOp",
+          "parameters": {
+            "lineId": "ln_001",
+            "planeId": "proj_plane_H",
+            "point1Id": "pt_001",
+            "point2Id": "pt_002"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Benefits for Learning**:
+- Students can review construction steps
+- Teachers can share construction sequences
+- Debugging: see exact sequence that led to current state
+- Parametric: change early dimensions, see effects propagate
+
+**Implementation**:
+- `ProjectService.serializeCommands(commandStack, projectName): ProjectData`
+- `ProjectService.deserializeCommands(data, world, commandStack): void`
+- `ProjectService.validateProjectData(data): void` (throws on invalid)
+
+---
 
 ### Domain Entity: Subprocess
 

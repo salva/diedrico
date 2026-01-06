@@ -15,30 +15,6 @@
 
       <!-- Project selection (after sign in) -->
       <div v-else class="project-selection">
-        <!-- Create New Project Section -->
-        <section class="project-section">
-          <h2>Create New Project</h2>
-          <div class="create-project-form">
-            <input
-              v-model="newProjectName"
-              type="text"
-              placeholder="Enter project name..."
-              class="project-name-input"
-              @keyup.enter="handleCreateProject"
-              :disabled="loading"
-            />
-            <button 
-              @click="handleCreateProject" 
-              :disabled="loading || !newProjectName.trim()"
-              class="create-button"
-            >
-              Create
-            </button>
-          </div>
-        </section>
-
-        <div class="section-divider">or</div>
-
         <!-- Open Existing Project Section -->
         <section class="project-section">
           <h2>Open Existing Project</h2>
@@ -49,7 +25,7 @@
           
           <div v-else-if="files.length === 0" class="no-files">
             <p>No projects found in your Google Drive.</p>
-            <p class="hint">Create a new project to get started!</p>
+            <p class="hint">Use the "New" button (Ctrl+N) in the toolbar to create your first project!</p>
           </div>
           
           <div v-else class="file-list">
@@ -93,7 +69,6 @@ interface Props {
 
 interface Emits {
   (e: 'sign-in'): void;
-  (e: 'create', projectName: string): void;
   (e: 'open', fileId: string): void;
   (e: 'close'): void;
 }
@@ -101,7 +76,6 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-const newProjectName = ref('');
 const selectedFileId = ref<string | null>(null);
 const files = ref<GoogleDriveFile[]>([]);
 const loading = ref(false);
@@ -145,22 +119,6 @@ function handleSignIn() {
   loading.value = true;
   error.value = null;
   emit('sign-in');
-}
-
-async function handleCreateProject() {
-  if (!newProjectName.value.trim()) {
-    return;
-  }
-
-  loading.value = true;
-  error.value = null;
-  
-  try {
-    emit('create', newProjectName.value.trim());
-  } catch (err) {
-    error.value = `Failed to create project: ${err}`;
-    loading.value = false;
-  }
 }
 
 async function handleOpenProject() {

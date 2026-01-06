@@ -103,7 +103,7 @@
     
     <!-- Hover tooltip -->
     <div 
-      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && !hoverHighlight.temporary.value"
+      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
       class="hover-tooltip"
       :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
     >

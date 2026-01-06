@@ -97,6 +97,39 @@ export class World {
   }
 
   /**
+   * Clear all elements (for loading projects)
+   * Resets world to initial state with only fixed elements
+   */
+  clear(): void {
+    this.points.clear();
+    this.lines.clear();
+    this.segments.clear();
+    this.circles.clear();
+    this.guides.clear();
+    this.hingeLines.clear();
+    this.planes.clear();
+    this.projectionPlanes.clear();
+    this.pointRealizations2D.clear();
+    this.pointRealizations3D.clear();
+    this.lineRealizations2D.clear();
+    this.segmentRealizations2D.clear();
+    this.circleRealizations2D.clear();
+    this.guideRealizations2D.clear();
+    this.projectionPlaneRealizations2D.clear();
+    this.projectionPlaneRealizations3D.clear();
+    this.nextId = 1;
+    this._version = 0;
+    this.processTree = new ProcessTree();
+    this.dependencyService = new DependencyService(this.processTree);
+    
+    // Reinitialize fixed elements
+    this.initializeFixedElements();
+    
+    // Notify UI of change
+    this.notifyChange();
+  }
+
+  /**
    * Initialize fixed elements: P_V, P_H, origin O, and hinge line HL_HV
    * These are always present and cannot be deleted.
    */
@@ -366,22 +399,6 @@ export class World {
    */
   getPoints2DByPlane(planeId: string): Point2D[] {
     return this.getAllPoints2D().filter(p => p.planeId === planeId);
-  }
-
-  /**
-   * Clear all elements from the world
-   */
-  clear(): void {
-    this.points.clear();
-    this.lines.clear();
-    this.planes.clear();
-    this.projectionPlanes.clear();
-    this.pointRealizations2D.clear();
-    this.pointRealizations3D.clear();
-    this.lineRealizations2D.clear();
-    this.nextId = 1;
-    // Reinitialize fixed elements
-    this.initializeFixedElements();
   }
 
   /**

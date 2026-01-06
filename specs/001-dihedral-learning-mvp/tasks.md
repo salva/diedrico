@@ -1578,7 +1578,132 @@ class World {
 
 ---
 
-## Testing & Documentation (Phase 28)
+## Phase 28: File Management Operations
+
+**Purpose**: Enhanced file operations for better project management  
+**Reference**: [spec.md](./spec.md#file-operations) - File Operations, [ui-spec.md](./ui-spec.md#project-name-display) - Project Name Display, [data-model.md](./data-model.md#project-serialization) - Command-Based Serialization
+
+**Status**: Not Started (0/19 tasks)
+
+### Background
+
+Users need better control over their project files beyond basic create/open/save. This phase adds:
+- **Instant project creation**: Click "New" to create "untitled N" file immediately (no dialog)
+- **Smart project naming**: Auto-generate sequential "untitled 1", "untitled 2", etc.
+- **In-place rename**: Double-click project name to edit (no dialog needed)
+- **File switching**: Quick access to recently opened files via "Open" button
+
+**Design Decisions**:
+- New button creates project instantly with auto-generated "untitled N" name
+- Project name displayed in top-left corner of app header (always visible)
+- Double-click name to edit inline (no separate dialog - immediate feedback)
+- Find next available number by checking existing Google Drive files
+- Recent files list (5 most recent) shown in Open dialog
+- All operations go through GoogleDriveService (no local-only mode)
+
+### Subtasks
+
+#### UI Components
+
+- [X] T296 [P] Create ProjectNameDisplay component in frontend/src/components/header/
+  - Display current project name in top-left of app header
+  - Show edit mode on double-click (contenteditable or input field)
+  - Save on Enter, cancel on Escape
+  - Validate name (non-empty, reasonable length, no special chars)
+  - Show save indicator while renaming (spinner or icon)
+  - Location: frontend/src/components/header/ProjectNameDisplay.vue
+
+- [X] T297 [P] Add New and Open buttons to MainToolbar
+  - New button: Icon (+ or document), tooltip "New Project (Ctrl+N)"
+  - Open button: Icon (folder), tooltip "Open Project (Ctrl+O)"
+  - Positioned at start of toolbar (left side)
+  - Location: frontend/src/components/toolbars/Toolbar.vue
+
+- [X] T298 [P] Enhance StartupDialog to show open project only
+  - Remove "Create New Project" section from dialog
+  - Display only file list when user is authenticated
+  - Show hint to use New button if no projects exist
+  - Used by both initial startup and "Open" button (Ctrl+O)
+  - Location: frontend/src/components/dialogs/StartupDialog.vue
+
+#### Google Drive Service Extensions
+
+- [X] T299 Add generateDefaultProjectName() to GoogleDriveService
+  - List existing files in "diedrico" folder
+  - Parse names matching "untitled N" pattern
+  - Find first available N (filling gaps), or use next sequential if no gaps
+  - Example: If "untitled 1", "untitled 3" exist, returns "untitled 2"
+  - Location: frontend/src/services/GoogleDriveService.ts
+
+- [X] T300 Add renameFile(fileId, newName) to GoogleDriveService
+  - Update file metadata via Google Drive API
+  - Validate new name
+  - Update localStorage last_file_name
+  - Location: frontend/src/services/GoogleDriveService.ts
+
+- [ ] T301 Add getRecentFiles(limit) to GoogleDriveService
+  - Return files sorted by modifiedTime descending
+  - Include metadata: id, name, modifiedTime
+  - Cache results with TTL (5 minutes)
+  - Location: frontend/src/services/GoogleDriveService.ts
+
+#### App.vue Integration
+
+- [X] T304 Update handleNewProject to create project immediately
+  - Call generateDefaultProjectName() to get "untitled N" name
+  - Create project without showing dialog
+  - Clear world and command stack before creation
+  - Location: frontend/src/App.vue
+
+- [X] T305 Add handleRenameProject(newName) to App.vue
+  - Validate new name
+  - Call driveService.renameFile()
+  - Update currentProjectName ref
+  - Show success/error feedback
+  - Location: frontend/src/App.vue
+
+- [ ] T306 Update StartupDialog integration in App.vue
+  - Pass recent files list to dialog
+  - Handle file selection from recent list
+  - Location: frontend/src/App.vue
+
+#### Keyboard Shortcuts
+
+- [X] T307 Add Ctrl+R shortcut for Rename
+  - Focuses project name display in edit mode
+  - Same as double-clicking project name
+  - Location: frontend/src/App.vue
+  - Location: frontend/src/App.vue
+
+#### Testing
+
+- [ ] T308 [P] Unit tests for generateDefaultProjectName logic
+  - Test empty folder (returns "drawing 1")
+  - Test existing files (finds next number)
+  - Test gaps in sequence (uses next sequential)
+  - Test non-matching names (ignores them)
+  - Location: frontend/tests/unit/services/googleDriveService.spec.ts
+
+- [ ] T309 [P] Unit tests for file operation methods
+  - Test renameFile, getRecentFiles
+  - Mock Google Drive API responses
+  - Location: frontend/tests/unit/services/googleDriveService.spec.ts
+
+- [ ] T310 [P] E2E test for project rename workflow
+  - Create project → double-click name → enter new name → verify saved
+  - Test validation (empty name rejection)
+  - Location: frontend/tests/e2e/file-operations.spec.ts
+
+- [ ] T311 [P] E2E test for toolbar file operations
+  - Test New, Open buttons
+  - Test Recent Files list in startup dialog
+  - Location: frontend/tests/e2e/file-operations.spec.ts
+
+**Checkpoint**: ✅ File management operations complete, users have full control over projects
+
+---
+
+## Testing & Documentation (Phase 29)
 
 **Purpose**: Ensure quality and document the system
 

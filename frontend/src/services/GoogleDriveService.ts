@@ -24,7 +24,7 @@ export interface GoogleDriveFile {
 
 export interface GoogleDriveConfig {
   clientId: string;
-  apiKey: string;
+  apiKey?: string;  // Optional: recommended for quota tracking but not required for OAuth
   appId: string;
 }
 
@@ -43,71 +43,170 @@ export class GoogleDriveService {
   
   private config: GoogleDriveConfig;
   private initialized = false;
+  private initializing = false; // Prevent multiple simultaneous initializations
   private folderId: string | null = null;
+  private tokenClient: any = null;
+  private accessToken: string | null = null;
 
   constructor(config: GoogleDriveConfig) {
     this.config = config;
   }
 
   /**
-   * Initialize Google API client
+   * Initialize Google API client with new Google Identity Services
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
       return;
     }
+    
+    // Prevent multiple simultaneous initializations
+    if (this.initializing) {
+      return;
+    }
+    
+    this.initializing = true;
 
     return new Promise((resolve, reject) => {
-      gapi.load('client:auth2', async () => {
+      // Load gapi client
+      gapi.load('client', async () => {
         try {
-          await gapi.client.init({
-            apiKey: this.config.apiKey,
-            clientId: this.config.clientId,
-            discoveryDocs: GoogleDriveService.DISCOVERY_DOCS,
+          console.log('[GoogleDrive] Initializing with config:', {
+            clientId: this.config.clientId?.substring(0, 20) + '...',
+            hasApiKey: !!this.config.apiKey,
             scope: GoogleDriveService.SCOPES,
           });
-
+          
+          // Initialize gapi client (for Drive API calls)
+          const initConfig: any = {
+            discoveryDocs: GoogleDriveService.DISCOVERY_DOCS,
+          };
+          
+          if (this.config.apiKey) {
+            initConfig.apiKey = this.config.apiKey;
+          }
+          
+          await gapi.client.init(initConfig);
+          
+          // Initialize Token Client (new GIS auth)
+          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+            client_id: this.config.clientId,
+            scope: GoogleDriveService.SCOPES,
+            callback: '', // Will be set during signIn
+          });
+          
           this.initialized = true;
+          this.initializing = false;
+          console.log('[GoogleDrive] Initialization successful');
+          
+          // Try to restore previous session AFTER initialization is complete
+          await this.tryRestoreSession();
           resolve();
-        } catch (error) {
-          reject(new Error(`Failed to initialize Google API: ${error}`));
+        } catch (error: any) {
+          console.error('[GoogleDrive] Initialization failed:', error);
+          console.error('[GoogleDrive] Error details:', JSON.stringify(error, null, 2));
+          reject(new Error(`Failed to initialize Google API: ${error.error || error.message || JSON.stringify(error)}`));
         }
       });
     });
   }
 
   /**
-   * Check if user is signed in
+   * Try to restore previous session (silent sign-in)
    */
-  isSignedIn(): boolean {
-    if (!this.initialized) {
-      return false;
+  private async tryRestoreSession(): Promise<void> {
+    const wasSignedIn = localStorage.getItem('diedrico_was_signed_in');
+    if (wasSignedIn === 'true') {
+      try {
+        // Try silent sign-in (no popup if user is still signed in to Google)
+        await this.signInSilently();
+        console.log('[GoogleDrive] Session restored automatically');
+      } catch (error) {
+        console.log('[GoogleDrive] Could not restore session:', error);
+        localStorage.removeItem('diedrico_was_signed_in');
+      }
     }
-    return gapi.auth2.getAuthInstance().isSignedIn.get();
   }
 
   /**
-   * Sign in with Google
+   * Check if user is signed in (has valid access token)
+   */
+  isSignedIn(): boolean {
+    // Check if we have an access token, or if gapi client has a token
+    const token = gapi.client.getToken();
+    return this.accessToken !== null || (token !== null && token.access_token !== undefined);
+  }
+
+  /**
+   * Sign in silently (no popup) if user is already signed in to Google
+   */
+  private async signInSilently(): Promise<void> {
+    // Don't call initialize again - we should already be initialized
+    if (!this.initialized) {
+      throw new Error('Service not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        this.tokenClient.callback = (response: any) => {
+          if (response.error) {
+            reject(new Error(response.error));
+            return;
+          }
+          
+          this.accessToken = response.access_token;
+          gapi.client.setToken({ access_token: this.accessToken });
+          localStorage.setItem('diedrico_was_signed_in', 'true');
+          resolve();
+        };
+        
+        // Request access token silently (no popup if already signed in)
+        this.tokenClient.requestAccessToken({ prompt: '' });
+      } catch (error: any) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Sign in with Google using new GIS library (shows popup)
    */
   async signIn(): Promise<void> {
     if (!this.initialized) {
       await this.initialize();
     }
 
-    try {
-      await gapi.auth2.getAuthInstance().signIn();
-    } catch (error: any) {
-      if (error.error === 'popup_closed_by_user') {
-        throw new Error('Sign-in cancelled by user');
-      } else if (error.error === 'access_denied') {
-        throw new Error('Access denied. Please grant permission to access Google Drive.');
+    return new Promise((resolve, reject) => {
+      try {
+        this.tokenClient.callback = (response: any) => {
+          if (response.error) {
+            if (response.error === 'popup_closed_by_user') {
+              reject(new Error('Sign-in cancelled by user'));
+            } else if (response.error === 'access_denied') {
+              reject(new Error('Access denied. Please grant permission to access Google Drive.'));
+            } else {
+              reject(new Error(`Sign-in failed: ${response.error}`));
+            }
+            return;
+          }
+          
+          this.accessToken = response.access_token;
+          gapi.client.setToken({ access_token: this.accessToken });
+          localStorage.setItem('diedrico_was_signed_in', 'true');
+          console.log('[GoogleDrive] Sign-in successful');
+          resolve();
+        };
+        
+        // Request access token (will show popup)
+        this.tokenClient.requestAccessToken({ prompt: 'consent' });
+      } catch (error: any) {
+        reject(new Error(`Sign-in failed: ${error.message}`));
       }
-      throw new Error(`Failed to sign in: ${error.error || error}`);
-    }
+    });
   }
 
   /**
-   * Sign out from Google
+   * Sign out from Google (revoke access token)
    */
   async signOut(): Promise<void> {
     if (!this.initialized) {
@@ -115,7 +214,12 @@ export class GoogleDriveService {
     }
 
     try {
-      await gapi.auth2.getAuthInstance().signOut();
+      if (this.accessToken) {
+        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+        this.accessToken = null;
+        gapi.client.setToken(null);
+      }
+      localStorage.removeItem('diedrico_was_signed_in');
       this.folderId = null;
     } catch (error) {
       throw new Error(`Failed to sign out: ${error}`);
@@ -323,6 +427,104 @@ export class GoogleDriveService {
         throw new Error('No internet connection. Changes will be saved when you\'re back online.');
       }
       throw new Error(`Failed to save file: ${error.message || error}`);
+    }
+  }
+
+  /**
+   * Generate default project name with sequential numbering (T299)
+   * Scans existing files to find next available "untitled N" number
+   */
+  async generateDefaultProjectName(): Promise<string> {
+    if (!this.isSignedIn()) {
+      return 'untitled 1';
+    }
+
+    try {
+      // List all .diedrico files in the diedrico folder
+      const files = await this.listFiles();
+      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
+      
+      // Extract numbers from "untitled N" pattern (remove .diedrico extension first)
+      const untitledPattern = /^untitled (\d+)\.diedrico$/i;
+      const numbers: number[] = [];
+      
+      for (const file of files) {
+        const match = file.name.match(untitledPattern);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
+          numbers.push(num);
+        }
+      }
+      
+      console.log('[GoogleDrive] Extracted numbers:', numbers);
+      
+      // Find first available number (fill gaps before incrementing)
+      if (numbers.length === 0) {
+        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
+        return 'untitled 1';
+      }
+      
+      // Sort numbers to find gaps
+      numbers.sort((a, b) => a - b);
+      
+      // Check for gaps in sequence
+      for (let i = 1; i <= numbers.length; i++) {
+        if (!numbers.includes(i)) {
+          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
+          return `untitled ${i}`;
+        }
+      }
+      
+      // No gaps found, use next sequential number
+      const nextNum = numbers.length + 1;
+      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
+      return `untitled ${nextNum}`;
+    } catch (error) {
+      console.error('Failed to generate default name, using "untitled 1":', error);
+      return 'untitled 1';
+    }
+  }
+
+  /**
+   * Rename a .diedrico file (T300)
+   */
+  async renameFile(fileId: string, newName: string): Promise<void> {
+    if (!this.isSignedIn()) {
+      throw new Error('User not signed in');
+    }
+
+    // Validate new name
+    if (!newName || !newName.trim()) {
+      throw new Error('File name cannot be empty');
+    }
+
+    // File system reserved characters: / \ : * ? " < > |
+    const invalidChars = /[\/\\:*?"<>|]/;
+    if (invalidChars.test(newName)) {
+      throw new Error('File name contains invalid characters');
+    }
+
+    const fileName = newName.endsWith('.diedrico')
+      ? newName
+      : `${newName}.diedrico`;
+
+    try {
+      await gapi.client.drive.files.update({
+        fileId: fileId,
+        resource: {
+          name: fileName,
+        },
+      });
+      
+      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);
+    } catch (error: any) {
+      if (error.status === 401) {
+        throw new Error('Authentication expired. Please sign in again.');
+      } else if (error.status === 404) {
+        throw new Error('File not found. It may have been deleted.');
+      }
+      throw new Error(`Failed to rename file: ${error.message || error}`);
     }
   }
 

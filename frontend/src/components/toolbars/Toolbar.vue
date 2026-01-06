@@ -1,5 +1,34 @@
 <template>
   <div class="toolbar">
+    <!-- File operation buttons -->
+    <div class="file-controls">
+      <button
+        class="file-button"
+        @click="handleNew"
+        title="New Project (Ctrl+N)"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <rect x="4" y="2" width="12" height="16" rx="1" stroke="currentColor" stroke-width="2" fill="none" />
+          <line x1="10" y1="7" x2="10" y2="13" stroke="currentColor" stroke-width="2" />
+          <line x1="7" y1="10" x2="13" y2="10" stroke="currentColor" stroke-width="2" />
+        </svg>
+        <span>New</span>
+      </button>
+      
+      <button
+        class="file-button"
+        @click="handleOpen"
+        title="Open Project (Ctrl+O)"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <path d="M 3 7 L 3 17 C 3 17.5 3.5 18 4 18 L 16 18 C 16.5 18 17 17.5 17 17 L 17 6 C 17 5.5 16.5 5 16 5 L 9 5 L 7 3 L 4 3 C 3.5 3 3 3.5 3 4 Z" stroke="currentColor" stroke-width="1.5" fill="none" />
+        </svg>
+        <span>Open</span>
+      </button>
+    </div>
+    
+    <div class="toolbar-separator"></div>
+    
     <!-- Undo/Redo buttons -->
     <div class="history-controls">
       <button
@@ -139,12 +168,19 @@ import { CommandStack } from '@/commands/CommandStack';
 /**
  * Toolbar.vue - Tool selection toolbar
  * 
- * Provides buttons for selecting geometric construction tools (Point, Line, etc.)
- * and history controls (Undo/Redo).
+ * Provides buttons for selecting geometric construction tools (Point, Line, etc.),
+ * file operations (New, Open), and history controls (Undo/Redo).
  * Manages active tool state via tool store.
  * 
  * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
  */
+
+interface Emits {
+  (e: 'new-project'): void;
+  (e: 'open-project'): void;
+}
+
+const emit = defineEmits<Emits>();
 
 const toolStore = useToolStore();
 
@@ -184,6 +220,20 @@ function handleRedo() {
     commandStack.redo();
   }
 }
+
+/**
+ * Handle new project button
+ */
+function handleNew() {
+  emit('new-project');
+}
+
+/**
+ * Handle open project button
+ */
+function handleOpen() {
+  emit('open-project');
+}
 </script>
 
 <style scoped>
@@ -194,6 +244,39 @@ function handleRedo() {
   background-color: #f5f5f5;
   border-bottom: 1px solid #ddd;
   align-items: center;
+}
+
+.file-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.file-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-button:hover {
+  background-color: #e8e8e8;
+  border-color: #999;
+}
+
+.file-button span {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.file-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .history-controls {

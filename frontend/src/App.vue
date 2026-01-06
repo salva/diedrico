@@ -7,14 +7,21 @@
       :show="showStartupDialog"
       :is-signed-in="isSignedIn"
       @sign-in="handleSignIn"
-      @create="handleCreateProject"
       @open="handleOpenProject"
     />
 
     <!-- Header: Top toolbar area -->
     <header class="app-header">
-      <h1 class="app-title">Diedrico - Dihedral Learning MVP</h1>
-      <Toolbar />
+      <ProjectNameDisplay 
+        ref="projectNameDisplayRef"
+        :project-name="currentProjectName"
+        :is-renaming="isRenamingProject"
+        @rename="handleRenameProject"
+      />
+      <Toolbar 
+        @new-project="handleNewProject"
+        @open-project="handleOpenProjectDialog"
+      />
     </header>
 
     <!-- Main Workspace: Sidebar + Canvas area -->
@@ -92,6 +99,7 @@ import StatusBar from './components/toolbars/StatusBar.vue';
 import ActionsPanel from './components/panels/ActionsPanel.vue';
 import ElementsPanel from './components/panels/ElementsPanel.vue';
 import StartupDialog from './components/dialogs/StartupDialog.vue';
+import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
 import { CommandStack } from './commands/CommandStack';
 import { useToolStore } from './stores/toolStore';
 import { World } from './domain/world/World';
@@ -105,8 +113,18 @@ const GOOGLE_CONFIG = {
   appId: import.meta.env.VITE_GOOGLE_APP_ID || '',
 };
 
+// Debug: Log environment variable loading
+console.log('[DEBUG] Environment variables:', {
+  clientId: GOOGLE_CONFIG.clientId ? `${GOOGLE_CONFIG.clientId.substring(0, 20)}...` : 'NOT SET',
+  hasApiKey: !!GOOGLE_CONFIG.apiKey,
+  hasAppId: !!GOOGLE_CONFIG.appId,
+  allEnvVars: import.meta.env,
+});
+
 // Check if Google Drive credentials are configured
-const hasGoogleCredentials = GOOGLE_CONFIG.clientId && GOOGLE_CONFIG.apiKey;
+// Only Client ID is strictly required for OAuth; API key is optional but recommended
+const hasGoogleCredentials = GOOGLE_CONFIG.clientId;
+console.log('[DEBUG] hasGoogleCredentials:', hasGoogleCredentials);
 
 // Create World instance and provide to all child components
 const world = new World();
@@ -122,6 +140,7 @@ const driveService = hasGoogleCredentials ? new GoogleDriveService(GOOGLE_CONFIG
 // SVG Canvas reference for accessing World and methods
 const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
 const startupDialogRef = ref<InstanceType<typeof StartupDialog> | null>(null);
+const projectNameDisplayRef = ref<InstanceType<typeof ProjectNameDisplay> | null>(null);
 
 // Tool state
 const toolStore = useToolStore();
@@ -141,6 +160,7 @@ const isSignedIn = ref(false);
 // Project state
 const currentProjectName = ref<string | null>(null);
 const currentFileId = ref<string | null>(null);
+const isRenamingProject = ref(false);
 
 // Save status
 const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
@@ -165,6 +185,24 @@ async function initializeApp() {
   try {
     await driveService!.initialize();
     isSignedIn.value = driveService!.isSignedIn();
+    
+    // Try to restore last opened file
+    const lastFileId = localStorage.getItem('diedrico_last_file_id');
+    const lastFileName = localStorage.getItem('diedrico_last_file_name');
+    
+    if (isSignedIn.value && lastFileId && lastFileName) {
+      try {
+        console.log('[App] Restoring last opened file:', lastFileName);
+        await handleOpenProject(lastFileId);
+        // Successfully restored - don't show startup dialog
+        return;
+      } catch (error) {
+        console.warn('[App] Failed to restore last file:', error);
+        // Clear invalid last file references
+        localStorage.removeItem('diedrico_last_file_id');
+        localStorage.removeItem('diedrico_last_file_name');
+      }
+    }
     
     // Show startup dialog if not signed in or no project loaded
     showStartupDialog.value = true;
@@ -199,19 +237,18 @@ async function handleSignIn() {
     startupDialogRef.value?.setLoading(false);
   }
 }
-if (!driveService) {
-    startupDialogRef.value?.setError('Google Drive service not available');
-    return;
-  }
-  
-  
+
 /**
  * Handle create new project
  */
 async function handleCreateProject(projectName: string) {
+  if (!driveService) {
+    startupDialogRef.value?.setError('Google Drive service not available');
+    return;
+  }
   try {
-    // Serialize current world state
-    const projectData = ProjectService.serializeWorld(world, projectName);
+    // Serialize command history
+    const projectData = ProjectService.serializeCommands(commandStack, projectName);
     
     // Create file in Google Drive
     const fileId = await driveService.createFile(projectName, projectData);
@@ -219,6 +256,11 @@ async function handleCreateProject(projectName: string) {
     // Update state
     currentProjectName.value = projectName;
     currentFileId.value = fileId;
+    
+    // Remember last opened file
+    localStorage.setItem('diedrico_last_file_id', fileId);
+    localStorage.setItem('diedrico_last_file_name', projectName);
+    
     showStartupDialog.value = false;
     
     // Start watching for changes to enable auto-save
@@ -231,37 +273,31 @@ async function handleCreateProject(projectName: string) {
     startupDialogRef.value?.setLoading(false);
   }
 }
-if (!driveService) {
-    startupDialogRef.value?.setError('Google Drive service not available');
-    return;
-  }
-  
-  
+
 /**
  * Handle open existing project
  */
 async function handleOpenProject(fileId: string) {
+  if (!driveService) {
+    startupDialogRef.value?.setError('Google Drive service not available');
+    return;
+  }
   try {
     // Load file from Google Drive
     const projectData = await driveService.loadFile(fileId);
     
-    // Validate and deserialize
+    // Validate and deserialize commands
     ProjectService.validateProjectData(projectData);
-    const loadedWorld = ProjectService.deserializeWorld(projectData);
+    ProjectService.deserializeCommands(projectData, world, commandStack);
     
-    // Replace current world with loaded world
-    // Copy all properties from loadedWorld to world
-    world.planes = loadedWorld.planes;
-    world.hingeLines = loadedWorld.hingeLines;
-    world.points = loadedWorld.points;
-    world.lines = loadedWorld.lines;
-    world.segments = loadedWorld.segments;
-    world.guides = loadedWorld.guides;
-    world.circles = loadedWorld.circles;
+    // World and command stack are now rebuilt from command history
     
     // Update state
-    currentProjectName.value = (projectData as any).name;
-    currentFileId.value = fileId;
+    currentProjectName.value = projectData.name;
+    currentFileId.value = fileId;    
+    // Remember last opened file
+    localStorage.setItem('diedrico_last_file_id', fileId);
+    localStorage.setItem('diedrico_last_file_name', projectData.name);
     showStartupDialog.value = false;
     
     // Start watching for changes to enable auto-save
@@ -280,6 +316,11 @@ async function handleOpenProject(fileId: string) {
  * Watches for changes to World and triggers auto-save after debounce
  */
 function startAutoSave() {
+  // Clear any existing interval first
+  if ((window as any).__autoSaveInterval) {
+    clearInterval((window as any).__autoSaveInterval);
+  }
+  
   // Watch world's version property for changes
   // Whenever world changes, the version should be incremented
   let lastVersion = world.getVersion();
@@ -318,13 +359,13 @@ function scheduleAutoSave() {
  * Perform the actual auto-save operation
  */
 async function performAutoSave() {
-  if (!currentFileId.value || !currentProjectName.value) {
+  if (!driveService || !currentFileId.value || !currentProjectName.value) {
     return;
   }
   
   try {
-    // Serialize current world state
-    const projectData = ProjectService.serializeWorld(world, currentProjectName.value);
+    // Serialize command history
+    const projectData = ProjectService.serializeCommands(commandStack, currentProjectName.value);
     
     // Update file in Google Drive
     await driveService.updateFile(currentFileId.value, projectData);
@@ -398,11 +439,76 @@ function handleClearHighlight() {
 }
 
 /**
+ * Handle renaming the current project (T305)
+ */
+async function handleRenameProject(newName: string) {
+  if (!driveService || !currentFileId.value) {
+    console.error('Cannot rename: no drive service or file ID');
+    return;
+  }
+  
+  isRenamingProject.value = true;
+  
+  try {
+    // Update file name in Google Drive
+    await driveService.renameFile(currentFileId.value, newName);
+    
+    // Update local state
+    currentProjectName.value = newName;
+    localStorage.setItem('diedrico_last_file_name', newName);
+    
+    console.log(`[App] Project renamed to: ${newName}`);
+  } catch (error) {
+    console.error('Failed to rename project:', error);
+    // TODO: Show error feedback to user
+  } finally {
+    isRenamingProject.value = false;
+  }
+}
+
+/**
+ * Handle "New Project" button/shortcut (T304)
+ * Creates a new project immediately with auto-generated "untitled N" name
+ */
+async function handleNewProject() {
+  if (!driveService) {
+    console.error('Google Drive service not available');
+    return;
+  }
+
+  try {
+    // Generate default name
+    const projectName = await driveService.generateDefaultProjectName();
+    
+    // Reset world and command stack
+    world.clear();
+    commandStack.clear();
+    
+    // Create new project with auto-generated name
+    await handleCreateProject(projectName);
+    
+    console.log(`[App] New project created: ${projectName}`);
+  } catch (error) {
+    console.error('Failed to create new project:', error);
+    // Fall back to showing dialog if auto-creation fails
+    showStartupDialog.value = true;
+  }
+}
+
+/**
+ * Handle "Open Project" button/shortcut
+ */
+function handleOpenProjectDialog() {
+  showStartupDialog.value = true;
+}
+
+/**
  * Handle keyboard shortcuts
  * Ctrl+Z: Undo
  * Ctrl+Y or Ctrl+Shift+Z: Redo
  * Ctrl+N: New project (show startup dialog)
  * Ctrl+O: Open project (show startup dialog)
+ * Ctrl+R: Rename project (focus name display)
  * Esc: Cancel current operation/deselect
  * Delete/Backspace: Delete selected objects
  * P/L/S/C/G: Tool shortcuts (Point/Line/Segment/Circle/Guide)
@@ -469,17 +575,21 @@ function handleKeyDown(event: KeyboardEvent) {
   // Ctrl+N: New project (T269)
   if (event.key === 'n') {
     event.preventDefault();
-    // Reset world and show startup dialog
-    showStartupDialog.value = true;
-    currentProjectName.value = null;
-    currentFileId.value = null;
+    handleNewProject();
     return;
   }
   
   // Ctrl+O: Open project (T268)
   if (event.key === 'o') {
     event.preventDefault();
-    showStartupDialog.value = true;
+    handleOpenProjectDialog();
+    return;
+  }
+  
+  // Ctrl+R: Rename project (T307)
+  if (event.key === 'r') {
+    event.preventDefault();
+    projectNameDisplayRef.value?.startEditing();
     return;
   }
   
@@ -504,16 +614,16 @@ function handleKeyDown(event: KeyboardEvent) {
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
   
-  //if (!driveService) {
-      startupDialogRef.value?.setError('Google Drive service not available');
-      return;
-    }
-    
-     Initialize app and show startup dialog
+  // Initialize app and show startup dialog
   initializeApp();
   
   // Listen for file list requests from StartupDialog
   window.addEventListener('load-files', async () => {
+    if (!driveService) {
+      startupDialogRef.value?.setError('Google Drive service not available');
+      return;
+    }
+    
     try {
       const files = await driveService.listFiles();
       startupDialogRef.value?.setFiles(files);

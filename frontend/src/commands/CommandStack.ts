@@ -115,6 +115,13 @@ export class CommandStack {
   }
 
   /**
+   * Get commands from undo stack for serialization
+   */
+  getCommands(): Command[] {
+    return [...this.undoStack];
+  }
+
+  /**
    * Clear all history
    */
   clear(): void {

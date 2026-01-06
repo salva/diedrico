@@ -85,9 +85,9 @@ When the application is first loaded, the user is guided through authentication 
 - Required scope: `https://www.googleapis.com/auth/drive.file` (access to app-created files only)
 - After successful authentication, proceed to Step 2
 
-**Step 2: Startup Dialog**
+**Step 2: Open Existing Project Dialog**
 
-A modal dialog appears with two options:
+If the user has existing projects, a dialog displays the project list:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -95,22 +95,13 @@ A modal dialog appears with two options:
 ├─────────────────────────────────────────────────┤
 │                                                  │
 │   ┌───────────────────────────────────────┐    │
-│   │  Create New Project                   │    │
-│   │                                        │    │
-│   │  Enter project name:                  │    │
-│   │  [_______________________________]    │    │
-│   │                                        │    │
-│   │  [Create]                             │    │
-│   └───────────────────────────────────────┘    │
-│                                                  │
-│   ┌───────────────────────────────────────┐    │
 │   │  Open Existing Project                │    │
 │   │                                        │    │
 │   │  Select from your Google Drive:       │    │
 │   │  ┌─────────────────────────────┐      │    │
+│   │  │ ▶ untitled 1.diedrico       │      │    │
+│   │  │ ▶ untitled 2.diedrico       │      │    │
 │   │  │ ▶ MyConstruction.diedrico   │      │    │
-│   │  │ ▶ Exercise01.diedrico       │      │    │
-│   │  │ ▶ Practice_2025.diedrico    │      │    │
 │   │  └─────────────────────────────┘      │    │
 │   │                                        │    │
 │   │  [Open]                               │    │
@@ -119,24 +110,26 @@ A modal dialog appears with two options:
 └─────────────────────────────────────────────────┘
 ```
 
-**Create New Project**:
-1. User enters a project name
-2. Click "Create" button
-3. New `.diedrico` file is created in the user's Google Drive folder "diedrico" (created automatically if it doesn't exist)
-4. Application loads with default workspace (P_H, P_V, HL_HV, origin O)
-5. First auto-save occurs after initial user action
-
 **Open Existing Project**:
 1. Application lists all `.diedrico` files from the "diedrico" folder in user's Google Drive
 2. User selects a project from the list
-3. Click "Open" button
+3. Click "Open" button (or double-click a file)
 4. Project is loaded and workspace is restored with all geometry, action history, and UI state
+
+**Create New Project**:
+- No dialog is shown for project creation
+- User clicks the "New" button in the toolbar (Ctrl+N) to create a new project
+- Project is created instantly with auto-generated name "untitled N" (where N is the first available number, filling gaps)
+- Application loads with default workspace (P_H, P_V, HL_HV, origin O)
+- User can rename the project at any time by double-clicking the project name in the header (or Ctrl+R)
+- First auto-save occurs after initial user action
 
 **Error Handling**:
 - If Google Drive API is unavailable, display error with retry option
 - If "diedrico" folder access fails, attempt to create it
 - If project file is corrupted, display error and return to startup dialog
 - If user cancels sign-in, display "Sign in required to use Diedrico" message
+- If no projects exist on first load, user sees a hint to use the "New" button (Ctrl+N)
 
 **Auto-Save Behavior** (after project is loaded):
 - Changes are automatically saved to Google Drive 2 seconds after the last modification
@@ -369,28 +362,100 @@ When hovering over items in EITHER panel (World Elements or Process Tree), the s
 
 The toolbar region at the top of the application provides access to all primary construction and manipulation tools.
 
+### Application Header
+
+The header displays the current project name at the top-left, always visible:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  untitled 1                                                   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Project Name Display**:
+- **Location**: Top-left corner of the application, above the toolbar
+- **Display**: Shows current project name (without .diedrico extension)
+- **Default**: "Untitled Project" if no project is loaded
+- **Visual Cue**: Dashed underline on hover indicates editability
+
+**Inline Editing**:
+- **Activation Methods**:
+  - Double-click the project name
+  - Press Ctrl+R keyboard shortcut
+  - Click not supported (prevents accidental edits)
+  
+- **Edit Mode UI**:
+  ```
+  [Project Name Input Field] [✓] [✕]
+  ```
+  - Text input with current name pre-selected
+  - Checkmark button (✓) to save
+  - X button (✕) to cancel
+  - Input limited to 100 characters
+  
+- **Saving**:
+  - Press **Enter** key → Save changes
+  - Click **✓ button** → Save changes
+  - File is immediately renamed in Google Drive (updates .diedrico file name)
+  - Display updates to show new name
+  - Save indicator (💾) appears briefly during the rename operation
+  
+- **Canceling**:
+  - Press **Escape** key → Cancel and revert to original name
+  - Click **✕ button** → Cancel and revert to original name
+  
+- **Validation**:
+  - Name must not be empty (trimmed)
+  - Length: 1-100 characters
+  - No file system reserved characters: `/ \ : * ? " < > |`
+  - Invalid names disable the save button (✓)
+  - Validation occurs in real-time as user types
+  
+- **Behavior Notes**:
+  - Cannot edit while a rename operation is in progress (prevents race conditions)
+  - .diedrico extension is automatically handled (user only edits the display name)
+  - Changes are saved to both Google Drive metadata and localStorage
+  - No confirmation dialog - changes are immediate (but can be undone by renaming again)
+
+**Error Handling**:
+- Network errors: Error logged to console (TODO: show user feedback)
+- Invalid characters: Save button disabled, no error message shown
+- Empty name: Save button disabled
+- Rename in progress: Double-click/Ctrl+R are ignored until operation completes
+
 ### Toolbar Organization
 
 The toolbars are organized into distinct groups, each focused on a specific category of operations:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [File] [Active Plane: P_H ▼] │ [Point▼] [Segment▼] [Line▼]  │
-│                                [Circle▼] [Arc▼]               │
-│                                │ [Guide▼] [Transport▼]        │
-│                                │ [3D Point▼] [3D Line▼] [...]│
-│                                │ [Pan] [Zoom] [Fit]           │
+│ [+] [📁] [Undo] [Redo] │ [Active Plane: P_H ▼] │            │
+│                         │ [Point▼] [Segment▼] [Line▼]       │
+│                         │ [Circle▼] [Arc▼]                   │
+│                         │ [Guide▼] [Transport▼]              │
+│                         │ [3D Point▼] [3D Line▼] [...]      │
+│                         │ [Pan] [Zoom] [Fit]                 │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 **Groups** (left to right):
 
-1. **File/Project Controls**: New, Open, Export (projects auto-save to Google Drive)
-2. **Active Plane Selector**: Dropdown showing current active plane and list of all available planes
-3. **2D Drawing Tools**: Point, Segment, Line, Circle, Arc tools (each with sub-tool dropdowns)
-4. **Dihedral Tools**: Guide, Transport tools (specific to multi-plane operations)
-5. **3D Creation Tools**: 3D Point, 3D Line, 3D Segment, 3D Plane (derive 3D from 2D projections)
-6. **Navigation Tools**: Pan, Zoom, Fit View (explicit navigation controls)
+1. **File Operations**: 
+   - [+] New Project (Ctrl+N): Creates a new project instantly with auto-generated name "untitled N"
+   - [📁] Open Project (Ctrl+O): Shows dialog to open existing projects from Google Drive
+   - Note: Projects auto-save to Google Drive, no explicit save button needed
+   
+2. **History Controls**: Undo (Ctrl+Z), Redo (Ctrl+Y) for command history
+
+3. **Active Plane Selector**: Dropdown showing current active plane and list of all available planes
+
+4. **2D Drawing Tools**: Point, Segment, Line, Circle, Arc tools (each with sub-tool dropdowns)
+
+5. **Dihedral Tools**: Guide, Transport tools (specific to multi-plane operations)
+
+6. **3D Creation Tools**: 3D Point, 3D Line, 3D Segment, 3D Plane (derive 3D from 2D projections)
+
+7. **Navigation Tools**: Pan, Zoom, Fit View (explicit navigation controls)
 
 **Layout Behavior**:
 - Single horizontal row on wide screens
@@ -1059,6 +1124,37 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 ---
 
 ## Dialogs and Modals
+
+### Startup Dialog
+
+**Purpose**: Google Drive authentication and project selection at application launch.
+
+**Trigger**: Automatically shown when user is not authenticated, or when clicking "Open Project" button (Ctrl+O).
+
+**Layout**:
+- Modal dialog centered on screen with overlay
+- Title: "Diedrico - Project Selection"
+- Two main flows: Sign-in (if not authenticated) or Open Existing Project (if authenticated)
+
+**Sign-In Section** (when not authenticated):
+- Text: "Sign in with Google to access your projects"
+- Button: "Sign in with Google"
+- OAuth2 flow via gapi.client
+- Required scope: `https://www.googleapis.com/auth/drive.file`
+
+**Open Existing Project Section** (when authenticated):
+- Header: "Open Existing Project"
+- File list: Shows all `.diedrico` files from "diedrico" folder in Google Drive
+- Each file shows: Name (without extension), Last modified date
+- Selection: Click to select, double-click to open
+- Button: "Open" (enabled when file is selected)
+- Empty state: "No projects found in your Google Drive. Use the 'New' button (Ctrl+N) in the toolbar to create your first project!"
+
+**Behavior**:
+- Initial startup: Shows sign-in if not authenticated, shows file list if authenticated
+- Open button in toolbar: Shows only file list (no create new project option)
+- Dialog cannot be closed by clicking overlay - user must complete sign-in or select a project
+- After opening project, dialog is hidden and main application loads
 
 ### Element Properties Dialog
 

@@ -454,6 +454,123 @@ The application uses consistent naming to support learning:
 - Projections use suffixes that indicate the plane (e.g., `A_H`, `A_V`).
 - `P` and `HL` prefixes are reserved for projection planes and hinge lines.
 
+---
+
+## File Operations
+
+### Project Creation and Naming
+
+**Default Naming Convention**:
+- When users click "New Project" or press Ctrl+N, a new project is created immediately with an auto-generated name.
+- The system automatically generates names following the pattern "untitled N", where N finds the first available number (filling gaps).
+- The system scans existing projects in the user's Google Drive to find the next available number.
+- Examples: If "untitled 1" and "untitled 3" exist, creates "untitled 2" (fills gap before incrementing)
+
+**Purpose**:
+- Zero-friction project creation - no dialog needed
+- Users can start working immediately
+- Projects can be renamed later via double-click or Ctrl+R
+- Provides consistent naming convention across projects
+- Avoids duplicate names even when Google Drive allows them
+
+**User Workflow**:
+1. User clicks "New Project" button or presses Ctrl+N
+2. System queries Google Drive for existing "untitled N" files
+3. System finds first available N (checking gaps: 1, 2, 3...) or uses next sequential if no gaps
+4. Project is created immediately with auto-generated name
+5. User can start drawing right away
+6. User can rename project anytime by double-clicking the name in the header
+
+### Project Name Display and Editing
+
+**Location**: Top-left corner of application header (always visible)
+
+**Display**:
+- Shows current project name prominently
+- Uses larger font than other header elements
+- Clickable/editable indicator (subtle underline or icon on hover)
+
+**In-Place Editing**:
+- **Trigger**: Double-click the project name
+- **UI Behavior**:
+  - Project name becomes editable (inline input or contenteditable)
+  - Current name is pre-selected for easy replacement
+  - Save button appears (or just use Enter key)
+  - Cancel button appears (or just use Escape key)
+- **Validation**:
+  - Name cannot be empty
+  - Name length limit: 1-100 characters
+  - Special characters allowed: spaces, hyphens, underscores, parentheses
+  - No file system reserved characters: / \ : * ? " < > |
+- **Saving**:
+  - Press Enter or click Save → updates Google Drive file name
+  - Shows brief "Saving..." indicator
+  - Confirms success or shows error
+  - Updates app header immediately
+- **Canceling**:
+  - Press Escape or click Cancel → reverts to original name
+  - No Google Drive operation performed
+
+**Design Rationale**:
+- No separate rename dialog needed - immediate, contextual editing
+- Project name always visible - user knows what they're working on
+- Quick, low-friction renaming - encourages good organization
+
+### Toolbar Buttons
+
+**Location**: Top toolbar (alongside other tool buttons)
+
+**Available Buttons**:
+
+1. **New** (Ctrl+N)
+   - Icon: "New document" or "+" symbol
+   - Creates new empty project immediately
+   - Auto-generates name: "untitled 1", "untitled 2", etc.
+   - Scans existing projects to find next available number
+   - Does not show dialog - creates project directly
+   - Tooltip: "New Project (Ctrl+N)"
+
+2. **Open** (Ctrl+O)
+   - Icon: "Folder" or "Open" symbol
+   - Shows file picker dialog with Google Drive files
+   - Displays project name, last modified date, recent files
+   - Save current project before opening (if unsaved changes)
+   - Tooltip: "Open Project (Ctrl+O)"
+
+**Additional Operations** (via project name):
+
+3. **Rename** (Ctrl+R)
+   - No button - triggered by double-clicking project name or Ctrl+R
+   - Focuses name display in edit mode
+
+### Google Drive Integration Details
+
+**File Storage**:
+- All projects stored in "diedrico" folder in user's Google Drive
+- Files use `.diedrico.json` extension (MIME type: `application/json`)
+- File names are user-visible project names
+
+**Operations**:
+- **Create**: `files.create` with metadata + content
+- **Read**: `files.get` with `alt=media`
+- **Update**: `files.update` with new content (preserves file ID)
+- **Rename**: `files.update` with new name in metadata only
+- **Delete**: `files.update` with `trashed: true` (soft delete)
+- **List**: `files.list` with query `'diedrico' in parents and trashed = false`
+
+**Caching**:
+- File list cached for 5 minutes (reduces API calls)
+- Invalidate cache after create/rename/delete operations
+- Recent files list cached separately
+
+**Error Handling**:
+- Network errors: Show "Unable to connect" message, allow retry
+- Permission errors: Show "Access denied" message
+- Quota exceeded: Show "Storage full" message with upgrade link
+- All errors logged to console for debugging
+
+---
+
 ## User Interface (Detailed)
 
 **For comprehensive UI architecture, layout, interaction patterns, and component specifications, see [ui-spec.md](ui-spec.md).**
