@@ -1262,8 +1262,8 @@ class World {
 - [X] T179 Implement mouseover detection for objects on canvas
 - [X] T180 Apply hover highlight style (different from selection, e.g., lighter stroke)
 - [X] T181 Show object label/tooltip on hover
-- [ ] T182 Clear hover highlight on mouseout
-- [ ] T183 Ensure hover highlight doesn't interfere with selection highlight
+- [X] T182 Clear hover highlight on mouseout
+- [X] T183 Ensure hover highlight doesn't interfere with selection highlight
 - [ ] T184 Show snap preview when hovering near points (for snapping feedback)
 - [ ] T185 [P] Unit test for useHoverHighlight in frontend/tests/unit/composables/hoverHighlight.spec.ts
 - [ ] T186 [P] E2E test for hover highlighting in frontend/tests/e2e/hover.spec.ts
