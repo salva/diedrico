@@ -1556,19 +1556,19 @@ class World {
 - [ ] T265 Add settings for default object styles (default colors, stroke widths)
 - [ ] T266 Add settings for 3D view (initial camera position, display options)
 - [ ] T267 Add keyboard shortcuts customization panel
-- [ ] T268 Implement Ctrl+O keyboard shortcut for Open (shows startup dialog)
-- [ ] T269 Implement Ctrl+N keyboard shortcut for New project (shows startup dialog)
+- [X] T268 Implement Ctrl+O keyboard shortcut for Open (shows startup dialog)
+- [X] T269 Implement Ctrl+N keyboard shortcut for New project (shows startup dialog)
 - [ ] T270 Implement Ctrl+A keyboard shortcut for Select All
 - [ ] T271 Implement Delete/Backspace key for deleting selected objects
-- [ ] T272 Implement Esc key to cancel current operation/deselect
-- [ ] T273 Implement tool keyboard shortcuts (P for Point, L for Line, S for Segment, C for Circle, G for Guide)
+- [X] T272 Implement Esc key to cancel current operation/deselect
+- [X] T273 Implement tool keyboard shortcuts (P for Point, L for Line, S for Segment, C for Circle, G for Guide)
 - [ ] T274 Add "Fit to View" button and Ctrl+0 shortcut (zoom to show all objects)
 - [ ] T275 Implement grid display with zoom-adaptive spacing
 - [ ] T276 Add grid toggle button (show/hide grid)
-- [ ] T277 Create StatusBar.vue component showing current mouse coordinates in world space
-- [ ] T278 Show active plane indicator in status bar
-- [ ] T279 Show active tool name in status bar
-- [ ] T280 Show save status in status bar ("Saving..." / "All changes saved" for Google Drive)
+- [X] T277 Create StatusBar.vue component showing current mouse coordinates in world space
+- [X] T278 Show active plane indicator in status bar
+- [X] T279 Show active tool name in status bar
+- [X] T280 Show save status in status bar ("Saving..." / "All changes saved" for Google Drive)
 - [ ] T281 Persist user preferences to localStorage
 - [ ] T282 Load preferences on application startup
 - [ ] T283 [P] Unit test for settings persistence in frontend/tests/unit/stores/settingsStore.spec.ts
