@@ -91,16 +91,18 @@ describe('Coordinate Transformation Pipeline', () => {
     it('should apply inverse viewport transform (translation)', () => {
       const svgPoint = new Vector3(1000, 600, 1);
       
-      // Viewport with translation (pan by 200, 100)
-      const viewportTransform = new Matrix3().set(
-        1, 0, 200,  // x' = x + 200
-        0, 1, 100,  // y' = y + 100
+      // svgToPaper expects the INVERSE transform (canvas→paper)
+      // Forward was: x' = x + 200, y' = y + 100
+      // Inverse: x = x' - 200, y = y' - 100
+      const inverseViewportTransform = new Matrix3().set(
+        1, 0, -200,  // x = x' - 200
+        0, 1, -100,  // y = y' - 100
         0, 0, 1
       );
       
-      const result = svgToPaper(svgPoint, viewportTransform);
+      const result = svgToPaper(svgPoint, inverseViewportTransform);
       
-      // Inverse: (1000, 600) - (200, 100) = (800, 500)
+      // (1000, 600) - (200, 100) = (800, 500)
       expect(result.x).toBeCloseTo(800);
       expect(result.y).toBeCloseTo(500);
     });
@@ -108,16 +110,18 @@ describe('Coordinate Transformation Pipeline', () => {
     it('should handle zoom transformation', () => {
       const svgPoint = new Vector3(1600, 1000, 1);
       
-      // Viewport with 2x zoom
-      const viewportTransform = new Matrix3().set(
-        2, 0, 0,  // x' = 2x
-        0, 2, 0,  // y' = 2y
+      // svgToPaper expects the INVERSE transform (canvas→paper)
+      // Forward was: x' = 2x, y' = 2y (2x zoom)
+      // Inverse: x = x'/2, y = y'/2
+      const inverseViewportTransform = new Matrix3().set(
+        0.5, 0, 0,  // x = x'/2
+        0, 0.5, 0,  // y = y'/2
         0, 0, 1
       );
       
-      const result = svgToPaper(svgPoint, viewportTransform);
+      const result = svgToPaper(svgPoint, inverseViewportTransform);
       
-      // Inverse: (1600, 1000) / 2 = (800, 500)
+      // (1600, 1000) / 2 = (800, 500)
       expect(result.x).toBeCloseTo(800);
       expect(result.y).toBeCloseTo(500);
     });
