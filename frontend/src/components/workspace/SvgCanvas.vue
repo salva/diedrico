@@ -86,6 +86,19 @@
         :key="primitive.id"
         v-bind="attrs"
       />
+      
+      <!-- Snap preview indicator - orange glow around snap target point -->
+      <circle
+        v-if="snapTarget.pointId && snapTarget.position"
+        :cx="snapTarget.position.x"
+        :cy="snapTarget.position.y"
+        :r="8"
+        fill="none"
+        stroke="#FF6B35"
+        stroke-width="2"
+        opacity="0.8"
+        class="snap-indicator"
+      />
     </svg>
     
     <!-- Hover tooltip -->
@@ -197,6 +210,12 @@ const hoverHighlight = useGlobalHoverHighlight();
 
 // Tooltip position (offset from cursor)
 const tooltipPosition = ref({ x: 0, y: 0 });
+
+// Snap target tracking - shows visual indicator when hovering near a point
+const snapTarget = ref<{ pointId: string | null; position: { x: number; y: number } | null }>({
+  pointId: null,
+  position: null
+});
 
 /**
  * Get display label for an element
@@ -664,6 +683,22 @@ function handleMouseMove(event: MouseEvent) {
   // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world, selectionMask); // FR-002: Hit test in plane space
+  
+  // Update snap target if hovering over a point within snap radius
+  // Per ui-spec.md: "Point Snap: When cursor within snap radius of existing point: bright outline or glow"
+  if (hit && hit.elementType === 'point') {
+    // Point is within snap radius - show snap preview indicator
+    snapTarget.value = {
+      pointId: hit.elementId,
+      position: { x: canvasPoint.x, y: canvasPoint.y }
+    };
+  } else {
+    // No point nearby - clear snap indicator
+    snapTarget.value = {
+      pointId: null,
+      position: null
+    };
+  }
   
   // Update hover state in Paper only if it changed
   const previousHovered = paper.getHoveredElement();
