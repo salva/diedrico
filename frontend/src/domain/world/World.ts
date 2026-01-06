@@ -23,6 +23,7 @@ import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D } from './Plane';
 import { ProjectionPlane, BaseProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
+import { DependencyService } from '@/services/DependencyService';
 
 export class World {
   private points: Map<string, Point2D>;
@@ -36,6 +37,9 @@ export class World {
   
   // Construction history
   private processTree: ProcessTree;
+  
+  // Dependency tracking
+  private dependencyService: DependencyService;
   
   // Realization caches - organized by object type for extensibility
   private pointRealizations2D: Map<string, Point2DRealization2D>;  // Computed 2D point positions
@@ -72,6 +76,7 @@ export class World {
     this.projectionPlaneRealizations3D = new Map();
     this.nextId = 1;
     this.processTree = new ProcessTree();
+    this.dependencyService = new DependencyService(this.processTree);
     
     // Initialize fixed elements
     this.initializeFixedElements();
@@ -321,11 +326,19 @@ export class World {
    * Call this when a point's definition changes (e.g., user moves a point)
    */
   invalidateRealization(pointId: string): void {
-    this.pointRealizations2D.delete(pointId);
-    this.pointRealizations3D.delete(pointId);
+    // Use dependency service to cascade invalidation to all dependents
+    this.dependencyService.invalidateCascade(pointId, (id: string) => {
+      // Clear realization caches for all element types
+      this.pointRealizations2D.delete(id);
+      this.pointRealizations3D.delete(id);
+      this.lineRealizations2D.delete(id);
+      this.segmentRealizations2D.delete(id);
+      this.circleRealizations2D.delete(id);
+      this.guideRealizations2D.delete(id);
+    });
     
-    // TODO: Also invalidate dependent points
-    // Need to track dependency graph to know which points depend on this one
+    // Rebuild dependency maps to reflect any changes
+    this.dependencyService.rebuildDependencyMaps();
   }
 
   /**
@@ -477,8 +490,19 @@ export class World {
    * Call this when the line's dependencies change
    */
   invalidateLineRealization(lineId: string): void {
-    this.lineRealizations2D.delete(lineId);
-    // TODO: Also invalidate dependent elements (points on line, etc.)
+    // Use dependency service to cascade invalidation to all dependents
+    this.dependencyService.invalidateCascade(lineId, (id: string) => {
+      // Clear realization caches for all element types
+      this.pointRealizations2D.delete(id);
+      this.pointRealizations3D.delete(id);
+      this.lineRealizations2D.delete(id);
+      this.segmentRealizations2D.delete(id);
+      this.circleRealizations2D.delete(id);
+      this.guideRealizations2D.delete(id);
+    });
+    
+    // Rebuild dependency maps to reflect any changes
+    this.dependencyService.rebuildDependencyMaps();
   }
 
   /**
@@ -969,6 +993,24 @@ export class World {
    */
   getProcessTree(): ProcessTree {
     return this.processTree;
+  }
+
+  /**
+   * Get the dependency service
+   */
+  getDependencyService(): DependencyService {
+    return this.dependencyService;
+  }
+
+  /**
+   * Add an action to the process tree and update dependency tracking
+   * Use this instead of getProcessTree().addAction() directly
+   */
+  addAction(action: any, groupName?: string): any {
+    const result = this.processTree.addAction(action, groupName);
+    // Rebuild dependency maps to include the new action
+    this.dependencyService.rebuildDependencyMaps();
+    return result;
   }
 
   // ========================================

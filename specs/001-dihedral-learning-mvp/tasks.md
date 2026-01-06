@@ -1389,19 +1389,19 @@ class World {
 
 **⚠️ CRITICAL**: Study [spec.md §Parametric Behavior](./spec.md#parametric-behavior-and-dependencies) - dependency tracking enables parametric drawing.
 
-- [ ] T201 [P] Create DependencyService in frontend/src/services/DependencyService.ts
-- [ ] T202 [P] Store dependencies in ProcessTree when actions are executed
-- [ ] T203 Implement dependency recording: when creating derived object, record its dependencies
-- [ ] T204 [P] Implement getDependents(elementId) to find all objects that depend on given element
-- [ ] T205 [P] Implement getDependencies(elementId) to find all elements that given object depends on
-- [ ] T206 When element changes (e.g., point moved), update all dependent objects
-- [ ] T207 Add visual indicators in ActionsPanel showing dependencies (arrows/tree links)
-- [ ] T208 Add visual indicators in ElementsPanel showing which elements have dependencies
-- [ ] T209 Prevent circular dependencies during validation
-- [ ] T210 [P] Unit test for DependencyService in frontend/tests/unit/services/dependencyService.spec.ts
-- [ ] T211 [P] E2E test for dependency tracking in frontend/tests/e2e/dependencies.spec.ts
+- [X] T201 [P] Create DependencyService in frontend/src/services/DependencyService.ts
+- [X] T202 [P] Store dependencies in ProcessTree when actions are executed
+- [X] T203 Implement dependency recording: when creating derived object, record its dependencies
+- [X] T204 [P] Implement getDependents(elementId) to find all objects that depend on given element
+- [X] T205 [P] Implement getDependencies(elementId) to find all elements that given object depends on
+- [X] T206 When element changes (e.g., point moved), update all dependent objects
+- [ ] T207 Add visual indicators in ActionsPanel showing dependencies (arrows/tree links) **DEFERRED - UI enhancement**
+- [ ] T208 Add visual indicators in ElementsPanel showing which elements have dependencies **DEFERRED - UI enhancement**
+- [X] T209 Prevent circular dependencies during validation
+- [X] T210 [P] Unit test for DependencyService in frontend/tests/unit/services/dependencyService.spec.ts
+- [X] T211 [P] E2E test for dependency tracking in frontend/tests/e2e/dependencies.spec.ts
 
-**Checkpoint**: Dependencies tracked and objects update when sources change
+**Checkpoint**: Dependencies tracked and objects update when sources change (9/11 tasks complete, T207-T208 UI enhancements deferred)
 
 ---
 
