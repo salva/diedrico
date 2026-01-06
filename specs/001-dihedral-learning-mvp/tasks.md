@@ -1301,9 +1301,9 @@ class World {
 - [ ] T195 Add "Override inherited style" checkbox for each property
 - [ ] T196 Add "Reset to inherited" button to restore default styles
 - [ ] T197 Show indicator for which styles are overridden
-- [ ] T198 Validate property changes (e.g., coordinates must keep point on same plane)
-- [ ] T199 [P] Unit test for PropertiesDialog in frontend/tests/unit/components/propertiesDialog.spec.ts
-- [ ] T200 [P] E2E test for property editing in frontend/tests/e2e/properties.spec.ts
+- [X] T198 Validate property changes (e.g., coordinates must keep point on same plane)
+- [X] T199 [P] Unit test for PropertiesDialog in frontend/tests/unit/components/propertiesDialog.spec.ts
+- [X] T200 [P] E2E test for property editing in frontend/tests/e2e/properties.spec.ts
 
 **Checkpoint**: User can edit element properties and visual styles (US6 complete for styling)
 
