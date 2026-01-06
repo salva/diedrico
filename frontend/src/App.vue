@@ -324,10 +324,31 @@ async function performAutoSave() {
         saveStatus.value = 'idle';
       }
     }, 2000);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Auto-save failed:', error);
     saveStatus.value = 'idle';
-    // Could show a notification to the user
+    
+    // Handle specific error types
+    if (error.message?.includes('authentication') || error.message?.includes('401')) {
+      // Authentication expired - show startup dialog again
+      console.warn('Authentication expired, showing sign-in dialog');
+      showStartupDialog.value = true;
+      isSignedIn.value = false;
+      
+      // Stop auto-save
+      if ((window as any).__autoSaveInterval) {
+        clearInterval((window as any).__autoSaveInterval);
+      }
+    } else if (error.message?.includes('quota') || error.message?.includes('403')) {
+      // Quota exceeded
+      alert('Google Drive storage quota exceeded. Please free up space or upgrade your account.');
+    } else if (error.message?.includes('network') || error.message?.includes('Failed to fetch')) {
+      // Network error - retry later
+      console.warn('Network error during auto-save, will retry on next change');
+    } else {
+      // Unknown error
+      console.error('Unknown auto-save error:', error);
+    }
   }
 }
 

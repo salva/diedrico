@@ -96,8 +96,13 @@ export class GoogleDriveService {
 
     try {
       await gapi.auth2.getAuthInstance().signIn();
-    } catch (error) {
-      throw new Error(`Failed to sign in: ${error}`);
+    } catch (error: any) {
+      if (error.error === 'popup_closed_by_user') {
+        throw new Error('Sign-in cancelled by user');
+      } else if (error.error === 'access_denied') {
+        throw new Error('Access denied. Please grant permission to access Google Drive.');
+      }
+      throw new Error(`Failed to sign in: ${error.error || error}`);
     }
   }
 
@@ -177,8 +182,15 @@ export class GoogleDriveService {
         name: file.name!,
         modifiedTime: file.modifiedTime!,
       }));
-    } catch (error) {
-      throw new Error(`Failed to list files: ${error}`);
+    } catch (error: any) {
+      if (error.status === 401) {
+        throw new Error('Authentication expired. Please sign in again.');
+      } else if (error.status === 403) {
+        throw new Error('Permission denied. Please grant access to Google Drive.');
+      } else if (error.status === 404) {
+        throw new Error('Diedrico folder not found.');
+      }
+      throw new Error(`Failed to list files: ${error.message || error}`);
     }
   }
 
@@ -253,8 +265,15 @@ export class GoogleDriveService {
 
       // The response.body contains the JSON string
       return JSON.parse(response.body);
-    } catch (error) {
-      throw new Error(`Failed to load file: ${error}`);
+    } catch (error: any) {
+      if (error.status === 401) {
+        throw new Error('Authentication expired. Please sign in again.');
+      } else if (error.status === 404) {
+        throw new Error('File not found. It may have been deleted.');
+      } else if (!navigator.onLine) {
+        throw new Error('No internet connection. Please check your network.');
+      }
+      throw new Error(`Failed to load file: ${error.message || error}`);
     }
   }
 
@@ -293,8 +312,17 @@ export class GoogleDriveService {
       });
 
       await request;
-    } catch (error) {
-      throw new Error(`Failed to update file: ${error}`);
+    } catch (error: any) {
+      if (error.status === 401) {
+        throw new Error('Authentication expired. Please sign in again.');
+      } else if (error.status === 403) {
+        throw new Error('Insufficient permissions or storage quota exceeded.');
+      } else if (error.status === 404) {
+        throw new Error('File not found. It may have been deleted.');
+      } else if (!navigator.onLine) {
+        throw new Error('No internet connection. Changes will be saved when you\'re back online.');
+      }
+      throw new Error(`Failed to save file: ${error.message || error}`);
     }
   }
 
