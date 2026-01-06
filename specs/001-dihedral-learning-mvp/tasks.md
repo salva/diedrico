@@ -1309,6 +1309,72 @@ class World {
 
 ---
 
+## Phase 22.5: Data Model Refactoring - ProjectionPlane Ownership
+
+**Purpose**: Restructure data model so ProjectionPlane owns 2D elements  
+**Reference**: [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md)
+
+**Implementation Requirements**:
+- **ProjectionPlane as Container**: Move 2D element storage from World to ProjectionPlane. Each plane owns its `points`, `lines`, `circles`, `arcs` maps.
+- **Line Type Hierarchy**: Create abstract `Line2D` base class with subtypes: `InfiniteLine2D`, `Segment2D`, `Guide2D`, `HalfHingeLine2D`. All stored in single `lines` Map.
+- **Unified Line Realization**: Merge `Line2DRealization2D` and `Segment2DRealization2D`. Use homogeneous coordinates (w=0 for vectors, w=1 for points) to distinguish infinite lines from segments.
+- **Non-Breaking Migration**: Use 5-phase approach with dual storage, allowing gradual migration and rollback points.
+- **Performance**: Maintain realization caching performance. Per-plane caches improve locality.
+
+**⚠️ CRITICAL**: This is a major architectural change affecting all element access patterns. Follow migration plan strictly.
+
+### Phase 22.5.1: Add ProjectionPlane Storage (Non-Breaking)
+
+- [ ] T200a Add element maps to ProjectionPlane class (points, lines, circles, arcs)
+- [ ] T200b Add realization cache maps to ProjectionPlane (pointRealizations, lineRealizations, circleRealizations, arcRealizations)
+- [ ] T200c Implement ProjectionPlane.addPoint(), getPoint(), getPointRealization() methods
+- [ ] T200d Implement ProjectionPlane.addLine(), getLine(), getLineRealization() methods
+- [ ] T200e Implement ProjectionPlane.addCircle(), getCircle(), getCircleRealization() methods
+- [ ] T200f Keep World-level maps operational (dual storage temporarily)
+- [ ] T200g [P] Unit test ProjectionPlane element storage in frontend/tests/unit/domain/projectionPlane.spec.ts
+
+### Phase 22.5.2: Refactor Line Type Hierarchy
+
+- [ ] T200h Create abstract Line2D base class in frontend/src/domain/world/Line.ts
+- [ ] T200i Create InfiniteLine2D extending Line2D (rename from Line2DByTwoPoints)
+- [ ] T200j Refactor Segment2D to extend Line2D
+- [ ] T200k Refactor Guide2D to extend Line2D
+- [ ] T200l Refactor HalfHingeLine2D to extend Line2D
+- [ ] T200m Update Line2DRealization2D to support both infinite and bounded lines (add optional point1, point2)
+- [ ] T200n [P] Unit test Line2D hierarchy in frontend/tests/unit/domain/lineHierarchy.spec.ts
+
+### Phase 22.5.3: Migrate Write Operations
+
+- [ ] T200o Update World.addPoint2D() to delegate to ProjectionPlane
+- [ ] T200p Update World.addLine2D() to delegate to ProjectionPlane
+- [ ] T200q Update World.addCircle2D() to delegate to ProjectionPlane
+- [ ] T200r Update all CreateCommand classes to use new World API
+- [ ] T200s Update all Tool classes to use new element creation API
+- [ ] T200t [P] Unit test World delegation in frontend/tests/unit/domain/world.spec.ts
+
+### Phase 22.5.4: Migrate Read Operations
+
+- [ ] T200u Update World.getPoint2DRealization() to search all planes
+- [ ] T200v Update World.getLine2DRealization() to search all planes
+- [ ] T200w Add World.elementToPlane index for fast plane lookup (optional optimization)
+- [ ] T200x Update PaperService to get elements from ProjectionPlane
+- [ ] T200y Update SVGRenderer to use new lookup paths
+- [ ] T200z Update all Tool hit testing to use new lookup paths
+- [ ] T200aa [P] Integration test for element rendering in frontend/tests/integration/rendering.spec.ts
+
+### Phase 22.5.5: Remove Old Storage and Cleanup
+
+- [ ] T200ab Remove World-level element maps (points, lines, segments, circles, guides)
+- [ ] T200ac Remove World-level realization caches (pointRealizations2D, lineRealizations2D, etc.)
+- [ ] T200ad Remove compatibility shims and dual-storage code
+- [ ] T200ae Update all documentation references to new architecture
+- [ ] T200af [P] Run full regression test suite
+- [ ] T200ag Update data-model.md examples to reflect new architecture
+
+**Checkpoint**: ProjectionPlane owns all 2D elements, World delegates to planes, all tests passing
+
+---
+
 ## Phase 23: Dependency Tracking
 
 **Purpose**: Track which objects depend on others  

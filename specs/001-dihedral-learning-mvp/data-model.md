@@ -1,13 +1,43 @@
 # Data Model: Diedrico MVP
 
-**Date**: 2025-12-22  
+**Date**: 2025-12-22 (Updated: 2026-01-06)  
 **Purpose**: Define domain entities, relationships, validation rules, and state transitions
 
 ---
 
 ## Architecture Overview
 
+**⚠️ Refactoring in Progress**: This document reflects the **new architecture** where ProjectionPlane owns 2D elements. See [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md) for migration plan.
+
 **⚠️ Coordinate System Note**: The domain model uses a **left-handed coordinate system** following Monge projection conventions where the viewer is at (0, -∞, 0) looking along +Y toward the origin. When converting to Three.js rendering (which uses a right-handed coordinate system), the Y-axis direction must be inverted: `threeY = -domainY`.
+
+### Data Organization
+
+**NEW: ProjectionPlane as Container**
+
+2D geometric elements are now **owned by and stored in** their ProjectionPlane, not directly in World:
+
+```
+World
+├── projectionPlanes: Map<string, ProjectionPlane>
+│   ├── ProjectionPlane "proj_plane_H"
+│   │   ├── points: Map<string, Point2D>
+│   │   ├── lines: Map<string, Line2D>      // Includes segments, guides, half-hinge lines
+│   │   ├── circles: Map<string, Circle2D>
+│   │   └── arcs: Map<string, Arc2D>
+│   └── ProjectionPlane "proj_plane_V"
+│       ├── points: Map<string, Point2D>
+│       └── lines: Map<string, Line2D>
+├── hingeLines: Map<string, HingeLine>      // Cross-plane elements
+├── planes: Map<string, Plane3D>            // 3D geometric definitions
+└── processTree: ProcessTree                 // Construction history
+```
+
+**Benefits:**
+- Clear ownership: Each element belongs to exactly one plane
+- Type hierarchy: Line2D base class with InfiniteLine, Segment, Guide, HalfHingeLine subtypes
+- Unified storage: Single `lines` map for all line-like elements
+- Better encapsulation: Plane validates its own element constraints
 
 ---
 
@@ -586,7 +616,7 @@ ProcessTree.root (Process)
 
 ### Domain Entity: ProjectionPlane
 
-**Purpose**: Named 2D surface where 2D elements exist. Defines the plane's intrinsic coordinate system <u,v> and how it maps to both 3D space and 2D canvas display.
+**Purpose**: Named 2D surface where 2D elements exist. Defines the plane's intrinsic coordinate system <u,v> and how it maps to both 3D space and 2D canvas display. **NEW: ProjectionPlane now owns and stores all 2D elements that exist on it.**
 
 **Critical Coordinate System Principle**:
 - **All Element2D coordinates are stored in the plane's intrinsic <u,v> basis**
@@ -602,6 +632,20 @@ interface ProjectionPlane {
   isVisible: boolean;               // Toggle visibility in UI
   color: Color;                     // Base color for plane representation
   plane_3d_id: string;              // Reference to Plane3D element (geometric definition)
+  
+  // **NEW: 2D Element Storage**
+  // All 2D geometric elements that exist on this plane
+  points: Map<string, Point2D>;     // All point types (free, intersection, etc.)
+  lines: Map<string, Line2D>;       // All line types (infinite, segment, guide, half-hinge)
+  circles: Map<string, Circle2D>;   // All circles
+  arcs: Map<string, Arc2D>;         // All arcs
+  
+  // **NEW: Realization Caches (per-plane)**
+  // Computed geometric data cached for performance
+  pointRealizations: Map<string, Point2DRealization2D>;
+  lineRealizations: Map<string, Line2DRealization2D>;
+  circleRealizations: Map<string, Circle2DRealization2D>;
+  arcRealizations: Map<string, Arc2DRealization2D>;
   
   // 3D transformation matrix: (u,v) → 3D space (x,y,z)
   // Stored as 4×4 matrix (16 numbers, column-major order)
@@ -1042,6 +1086,98 @@ interface ComplementaryGuide2D {
 - When guide is created from a BHL's HalfHingeLine2D projection on plane1, complementary guide appears on plane2
 - This establishes immediate correspondence between the BHL projections on both planes
 - The guide pair creation is atomic (both appear simultaneously)
+
+---
+
+### Domain Entity: Line2D (Base Class)
+
+**Purpose**: **NEW unified base class** for all line-like 2D elements. Consolidates infinite lines, segments, guides, and half-hinge line projections into a single type hierarchy.
+
+**Architecture**: All line-like elements extend Line2D and are stored in ProjectionPlane's `lines` Map:
+
+```typescript
+abstract class Line2D {
+  id: string;
+  planeId: string;
+  label?: string;
+  visualStyle?: VisualStyle;
+  
+  abstract realize2D(context: RealizationContext): Line2DRealization2D;
+}
+
+// Infinite line defined by two points
+class InfiniteLine2D extends Line2D {
+  point1Id: string;
+  point2Id: string;
+  
+  realize2D(context) {
+    // Returns line realization with point + direction
+  }
+}
+
+// Bounded line segment (has endpoints)
+class Segment2D extends Line2D {
+  point1Id: string;
+  point2Id: string;
+  
+  realize2D(context) {
+    // Returns line realization with point + direction + point1 + point2
+  }
+}
+
+// Construction guide (dashed, infinite, perpendicular to hinge)
+class Guide2D extends Line2D {
+  halfHingeLineId: string;
+  sourcePointId: string;
+  complementaryGuideId?: string;
+  
+  realize2D(context) {
+    // Returns line realization with point + direction
+  }
+}
+
+// Hinge line projection on one plane
+class HalfHingeLine2D extends Line2D {
+  hingeLineId: string;
+  point: Vector3;      // Fixed point on hinge
+  direction: Vector3;  // Fixed direction
+  
+  realize2D(context) {
+    // Returns line realization with point + direction
+  }
+}
+```
+
+**Realization Structure**:
+
+All Line2D subtypes return `Line2DRealization2D`:
+
+```typescript
+class Line2DRealization2D {
+  point: Vector3;      // Point on line (u, v, 1) - homogeneous, w=1
+  direction: Vector3;  // Direction vector (u, v, 0) - homogeneous, w=0
+  
+  // Optional: For bounded lines (segments)
+  point1?: Vector3;    // Start point (u, v, 1) - w=1 indicates point
+  point2?: Vector3;    // End point (u, v, 1) - w=1 indicates point
+}
+```
+
+**Key Insight: Homogeneous Coordinates Distinguish Points from Vectors**:
+- **Point**: `(u, v, 1)` - third coordinate w=1
+- **Vector**: `(u, v, 0)` - third coordinate w=0
+- Segments include both: `direction (w=0)` for infinite line + `point1/point2 (w=1)` for bounds
+
+**Benefits**:
+- Single storage map: `ProjectionPlane.lines: Map<string, Line2D>`
+- Unified realization type: all lines use `Line2DRealization2D`
+- Polymorphic rendering: check `point1/point2` presence to distinguish segments from infinite lines
+- Type-safe hierarchy: TypeScript `instanceof` checks for specific behaviors
+
+**Storage**:
+- All Line2D subtypes stored in `ProjectionPlane.lines` Map
+- Realizations cached in `ProjectionPlane.lineRealizations` Map
+- No separate maps for segments, guides, etc.
 
 ---
 

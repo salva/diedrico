@@ -1,6 +1,6 @@
 # Implementation Plan: Diedrico Dihedral Learning MVP
 
-**Branch**: `001-dihedral-learning-mvp` | **Date**: 2025-12-29 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-dihedral-learning-mvp` | **Date**: 2025-12-29 (Updated: 2026-01-06) | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-dihedral-learning-mvp/spec.md`
 
 ## Summary
@@ -8,6 +8,8 @@
 An educational web application for learning dihedral/orthographic projection using a constructive, step-by-step approach. The application emphasizes the construction process over final results, with explicit dependency tracking, infeasibility detection, and dual 2D/3D visualization.
 
 **Core Technical Approach**: Vue.js 3 frontend with TypeScript, SVG-based 2D rendering, command pattern for undoable operations, process tree for dependency tracking, and file-based JSON persistence via Node.js backend.
+
+**⚠️ Refactoring in Progress**: The data model is being refactored to make ProjectionPlane the owner of 2D elements. See [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md) for details.
 
 ## Technical Context
 
@@ -97,6 +99,68 @@ An educational web application for learning dihedral/orthographic projection usi
 - Maintainability: easy to find all numeric access points (they all go through realizations)
 
 See [data-model.md § Realization Layer Boundary](/specs/001-dihedral-learning-mvp/data-model.md#critical-realization-layer-boundary) for detailed examples.
+
+### Data Model Refactoring: ProjectionPlane Ownership
+
+**NEW Architecture (In Progress)**: ProjectionPlane now owns and stores all 2D elements that exist on it.
+
+**Before** (Old Architecture):
+```typescript
+class World {
+  private points: Map<string, Point2D>;
+  private lines: Map<string, Line2D>;
+  private segments: Map<string, Segment2D>;
+  private guides: Map<string, Guide2D>;
+  projectionPlanes: Map<string, ProjectionPlane>;
+}
+```
+
+**After** (New Architecture):
+```typescript
+class ProjectionPlane {
+  points: Map<string, Point2D>;          // All points on this plane
+  lines: Map<string, Line2D>;            // All line types (infinite, segment, guide, half-hinge)
+  circles: Map<string, Circle2D>;
+  arcs: Map<string, Arc2D>;
+  
+  // Realization caches per-plane
+  pointRealizations: Map<string, Point2DRealization2D>;
+  lineRealizations: Map<string, Line2DRealization2D>;
+}
+
+class World {
+  projectionPlanes: Map<string, ProjectionPlane>;
+  hingeLines: Map<string, HingeLine>;    // Cross-plane elements
+  planes: Map<string, Plane3D>;
+  processTree: ProcessTree;
+}
+```
+
+**Line Type Hierarchy**: All line-like elements unified under Line2D base class:
+- `InfiniteLine2D extends Line2D` - Infinite line defined by two points
+- `Segment2D extends Line2D` - Bounded line segment
+- `Guide2D extends Line2D` - Construction guide (dashed, perpendicular to hinge)
+- `HalfHingeLine2D extends Line2D` - Hinge line projection on one plane
+
+**Unified Line Realization**: Single realization type for all lines:
+```typescript
+class Line2DRealization2D {
+  point: Vector3;      // Point on line (u, v, 1)
+  direction: Vector3;  // Direction vector (u, v, 0)
+  
+  // Optional: For bounded lines
+  point1?: Vector3;    // Start point (u, v, 1)
+  point2?: Vector3;    // End point (u, v, 1)
+}
+```
+
+**Benefits**:
+- Clear ownership: each element belongs to exactly one plane
+- Type hierarchy: polymorphic Line2D handling
+- Unified storage: single `lines` map for all line types
+- Better encapsulation: plane validates its own element constraints
+
+**Migration**: 5-phase approach with non-breaking changes, dual storage, gradual migration, cleanup. See [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md) for detailed plan.
 
 ### HingeLine/HalfHingeLine2D Architecture
 
