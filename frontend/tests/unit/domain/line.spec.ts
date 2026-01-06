@@ -16,6 +16,7 @@ import {
   Line2DRealization2D,
   Line2DByTwoPoints
 } from '@/domain/world/Line';
+import { World } from '@/domain/world/World';
 
 describe('Line2DRealization2D', () => {
   it('should create realization with normalized direction', () => {
@@ -126,21 +127,18 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should realize line from two points', () => {
+    const world = new World();
+    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'point1');
+    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(10, 0, 1), 'point2');
+    
     const line = new Line2DByTwoPoints(
       'line1',
       'point1',
       'point2',
-      'P_H'
+      'proj_plane_H'
     );
     
-    // Mock point getter
-    const getPoint = (id: string): Vector3 | null => {
-      if (id === 'point1') return new Vector3(0, 0, 1);
-      if (id === 'point2') return new Vector3(10, 0, 1);
-      return null;
-    };
-    
-    const realization = line.realize2D(getPoint);
+    const realization = line.realize2D(world);
     
     expect(realization).not.toBeNull();
     expect(realization!.point.x).toBeCloseTo(0, 10);
@@ -154,21 +152,18 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should realize line with diagonal direction', () => {
+    const world = new World();
+    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'point1');
+    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(3, 4, 1), 'point2');
+    
     const line = new Line2DByTwoPoints(
       'line1',
       'point1',
       'point2',
-      'P_H'
+      'proj_plane_H'
     );
     
-    // Two points forming 3-4-5 triangle
-    const getPoint = (id: string): Vector3 | null => {
-      if (id === 'point1') return new Vector3(0, 0, 1);
-      if (id === 'point2') return new Vector3(3, 4, 1);
-      return null;
-    };
-    
-    const realization = line.realize2D(getPoint);
+    const realization = line.realize2D(world);
     
     expect(realization).not.toBeNull();
     
@@ -179,78 +174,71 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should return null if first point is missing', () => {
+    const world = new World();
+    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(10, 0, 1), 'point2');
+    // point1 doesn't exist in world
+    
     const line = new Line2DByTwoPoints(
       'line1',
       'point1',
       'point2',
-      'P_H'
+      'proj_plane_H'
     );
     
-    // point1 is missing
-    const getPoint = (id: string): Vector3 | null => {
-      if (id === 'point2') return new Vector3(10, 0, 1);
-      return null;
-    };
-    
-    const realization = line.realize2D(getPoint);
+    const realization = line.realize2D(world);
     
     expect(realization).toBeNull();
   });
 
   it('should return null if second point is missing', () => {
+    const world = new World();
+    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'point1');
+    // point2 doesn't exist in world
+    
     const line = new Line2DByTwoPoints(
       'line1',
       'point1',
       'point2',
-      'P_H'
+      'proj_plane_H'
     );
     
-    // point2 is missing
-    const getPoint = (id: string): Vector3 | null => {
-      if (id === 'point1') return new Vector3(0, 0, 1);
-      return null;
-    };
-    
-    const realization = line.realize2D(getPoint);
+    const realization = line.realize2D(world);
     
     expect(realization).toBeNull();
   });
 
   it('should return null if both points are too close (degenerate line)', () => {
+    const world = new World();
+    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'point1');
+    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(0.0000001, 0.0000001, 1), 'point2');
+    
     const line = new Line2DByTwoPoints(
       'line1',
       'point1',
       'point2',
-      'P_H'
+      'proj_plane_H'
     );
     
-    // Points are almost identical
-    const getPoint = (id: string): Vector3 | null => {
-      if (id === 'point1') return new Vector3(0, 0, 1);
-      if (id === 'point2') return new Vector3(0.0000001, 0.0000001, 1);
-      return null;
-    };
+    const realization = line.realize2D(world);
     
-    const realization = line.realize2D(getPoint);
-    
-    expect(realization).toBeNull();
+    // Should return infeasible realization, not null (per Phase 23 infeasibility handling)
+    expect(realization).not.toBeNull();
+    expect(realization!.feasible).toBe(false);
   });
 
   it('should realize line with negative coordinates', () => {
+    const world = new World();
+    const p1 = world.addFreePoint2D('proj_plane_V', new Vector3(-10, -5, 1), 'point1');
+    const p2 = world.addFreePoint2D('proj_plane_V', new Vector3(5, 10, 1), 'point2');
+    
     const line = new Line2DByTwoPoints(
       'line1',
       'point1',
       'point2',
-      'P_V'
+      'proj_plane_V'
     );
     
-    const getPoint = (id: string): Vector3 | null => {
-      if (id === 'point1') return new Vector3(-10, -5, 1);
-      if (id === 'point2') return new Vector3(5, 10, 1);
-      return null;
-    };
-    
-    const realization = line.realize2D(getPoint);
+    const realization = line.realize2D(world);
     
     expect(realization).not.toBeNull();
     expect(realization!.point.x).toBeCloseTo(-10, 10);
@@ -263,20 +251,18 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should work with vertical line', () => {
+    const world = new World();
+    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 0, 1), 'point1');
+    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 10, 1), 'point2');
+    
     const line = new Line2DByTwoPoints(
       'line1',
       'point1',
       'point2',
-      'P_H'
+      'proj_plane_H'
     );
     
-    const getPoint = (id: string): Vector3 | null => {
-      if (id === 'point1') return new Vector3(5, 0, 1);
-      if (id === 'point2') return new Vector3(5, 10, 1);
-      return null;
-    };
-    
-    const realization = line.realize2D(getPoint);
+    const realization = line.realize2D(world);
     
     expect(realization).not.toBeNull();
     
@@ -287,20 +273,18 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should work with horizontal line', () => {
+    const world = new World();
+    const p1 = world.addFreePoint2D('proj_plane_V', new Vector3(0, 7, 1), 'point1');
+    const p2 = world.addFreePoint2D('proj_plane_V', new Vector3(20, 7, 1), 'point2');
+    
     const line = new Line2DByTwoPoints(
       'line1',
       'point1',
       'point2',
-      'P_V'
+      'proj_plane_V'
     );
     
-    const getPoint = (id: string): Vector3 | null => {
-      if (id === 'point1') return new Vector3(0, 7, 1);
-      if (id === 'point2') return new Vector3(20, 7, 1);
-      return null;
-    };
-    
-    const realization = line.realize2D(getPoint);
+    const realization = line.realize2D(world);
     
     expect(realization).not.toBeNull();
     
