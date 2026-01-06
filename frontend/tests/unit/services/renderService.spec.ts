@@ -149,7 +149,7 @@ describe('RenderService', () => {
       expect(attrs.x1).toBe(400);  // 400 + 0
       expect(attrs.y1).toBe(400);  // 400 + 0
       expect(attrs.x2).toBe(500);  // 400 + 100
-      expect(attrs.y2).toBe(350);  // P_H flips Y: v=50 -> y'=450 -> canvas=50 (below origin)
+      expect(attrs.y2).toBe(450);  // P_H: y_canvas = 400 + v = 400 + 50 = 450
       expect(attrs.stroke).toBe('#333333');  // Default color
       expect(attrs['stroke-width']).toBe(2);
       expect(attrs['data-element-id']).toBe('line_1');
@@ -179,9 +179,9 @@ describe('RenderService', () => {
       const attrs = renderLine(start, end, 'line_3', undefined, 400, 400);
       
       expect(attrs.x1).toBe(350);  // 400 - 50
-      expect(attrs.y1).toBe(430);  // P_H: v=-30 -> y'=530 -> canvas=130 (above origin flips to below)
+      expect(attrs.y1).toBe(370);  // P_H: y_canvas = 400 + (-30) = 370
       expect(attrs.x2).toBe(450);  // 400 + 50
-      expect(attrs.y2).toBe(370);  // P_H: v=30 -> y'=470 -> canvas=70 (below origin flips to above)
+      expect(attrs.y2).toBe(430);  // P_H: y_canvas = 400 + 30 = 430
     });
 
     it('should render hinge line with dashed style', () => {
