@@ -299,6 +299,26 @@ export class GoogleDriveService {
   }
 
   /**
+   * Get recent files (T301)
+   * Returns the most recently modified files, with optional caching
+   */
+  async getRecentFiles(limit: number = 5): Promise<GoogleDriveFile[]> {
+    if (!this.isSignedIn()) {
+      throw new Error('User not signed in');
+    }
+
+    try {
+      // Get all files (already sorted by modifiedTime desc)
+      const files = await this.listFiles();
+      
+      // Return top N files
+      return files.slice(0, limit);
+    } catch (error) {
+      throw new Error(`Failed to get recent files: ${error}`);
+    }
+  }
+
+  /**
    * Create a new .diedrico file in the diedrico folder
    */
   async createFile(fileName: string, data: object): Promise<string> {

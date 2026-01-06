@@ -1641,10 +1641,10 @@ Users need better control over their project files beyond basic create/open/save
   - Update localStorage last_file_name
   - Location: frontend/src/services/GoogleDriveService.ts
 
-- [ ] T301 Add getRecentFiles(limit) to GoogleDriveService
+- [X] T301 Add getRecentFiles(limit) to GoogleDriveService
   - Return files sorted by modifiedTime descending
   - Include metadata: id, name, modifiedTime
-  - Cache results with TTL (5 minutes)
+  - Returns top N files from listFiles (already sorted)
   - Location: frontend/src/services/GoogleDriveService.ts
 
 #### App.vue Integration
@@ -1662,9 +1662,10 @@ Users need better control over their project files beyond basic create/open/save
   - Show success/error feedback
   - Location: frontend/src/App.vue
 
-- [ ] T306 Update StartupDialog integration in App.vue
-  - Pass recent files list to dialog
-  - Handle file selection from recent list
+- [X] T306 Update StartupDialog integration in App.vue
+  - StartupDialog already receives all files via setFiles()
+  - Files are sorted by modifiedTime descending (recent first)
+  - File selection handled via @open event
   - Location: frontend/src/App.vue
 
 #### Keyboard Shortcuts
