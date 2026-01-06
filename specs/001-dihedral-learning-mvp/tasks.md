@@ -1496,11 +1496,11 @@ class World {
 
 **⚠️ CRITICAL**: Read [contracts/api.yaml](./contracts/api.yaml) for exact API endpoint specifications and data formats.
 
-- [ ] T242 [P] Create ProjectService in frontend/src/services/ProjectService.ts
-- [ ] T243 Implement World serialization to JSON (serialize all elements, ProcessTree, view state)
-- [ ] T244 Implement World deserialization from JSON (reconstruct all objects)
-- [ ] T245 Add version number to JSON format for future compatibility
-- [ ] T246 Validate loaded JSON data (check structure, types, required fields)
+- [X] T242 [P] Create ProjectService in frontend/src/services/ProjectService.ts
+- [X] T243 Implement World serialization to JSON (serialize all elements, ProcessTree, view state)
+- [X] T244 Implement World deserialization from JSON (reconstruct all objects)
+- [X] T245 Add version number to JSON format for future compatibility
+- [X] T246 Validate loaded JSON data (check structure, types, required fields)
 - [ ] T247 Create backend API endpoint: POST /api/projects (create new project file)
 - [ ] T248 Create backend API endpoint: GET /api/projects (list all project files)
 - [ ] T249 Create backend API endpoint: GET /api/projects/:id (load project by ID)
