@@ -1517,12 +1517,8 @@ class World {
 - [X] T256 Add "Create New Project" section with name input field
 - [X] T257 Add "Open Existing Project" section with file list from Drive
 - [X] T258 Implement "Sign in with Google" button and authentication flow
-- [ ] T259 Implement auto-save with 2-second debounce (watch World version changes)
-- [ ] T260 Add status indicator: "Saving..." and "All changes saved" in status bar
-- [ ] T261 Handle Google Drive API errors (network, quota, authentication expired)
-- [ ] T262 [P] Unit test for GoogleDriveService in frontend/tests/unit/services/googleDriveService.spec.ts
-- [ ] T263 [P] E2E test for save/load workflow in frontend/tests/e2e/persistence.spec.ts
-- [ ] T260 Add status indicator: "Saving..." and "All changes saved" in status bar
+- [X] T259 Implement auto-save with 2-second debounce (watch World version changes)
+- [X] T260 Add status indicator: "Saving..." and "All changes saved" in status bar
 - [ ] T261 Handle Google Drive API errors (network, quota, authentication expired)
 - [ ] T262 [P] Unit test for GoogleDriveService in frontend/tests/unit/services/googleDriveService.spec.ts
 - [ ] T263 [P] E2E test for save/load workflow in frontend/tests/e2e/persistence.spec.ts
