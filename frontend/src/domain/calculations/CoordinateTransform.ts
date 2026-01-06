@@ -55,22 +55,25 @@ export function planeToCanvas(
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): [number, number] {
-  if (planeId === 'plane_H') {
-    // P_H: straightforward mapping
-    // u → x, v → y (but canvas Y is down, so flip)
+  // Normalize plane ID (handle both plane_H and proj_plane_H)
+  const normalizedId = planeId.replace('proj_', '');
+  
+  if (normalizedId === 'plane_H') {
+    // P_H: horizontal plane, straightforward mapping
+    // u → x, v → y (no flip, Y is already aligned)
     return [
       canvasOriginX + u,
       canvasOriginY + v
     ];
-  } else if (planeId === 'plane_V') {
-    // P_V: u → x, v → z (which maps to -y_canvas because Z is up)
+  } else if (normalizedId === 'plane_V') {
+    // P_V: vertical plane, u → x, v → z (which maps to -y_canvas because Z is up)
     return [
       canvasOriginX + u,
       canvasOriginY - v  // Flip because Z is up, canvas Y is down
     ];
   }
   
-  // For other planes, use default mapping for now
+  // For other planes, use vertical plane mapping for now
   return [
     canvasOriginX + u,
     canvasOriginY - v
@@ -96,12 +99,15 @@ export function canvasToPlane(
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): [number, number] {
-  if (planeId === 'plane_H') {
+  // Normalize plane ID (handle both plane_H and proj_plane_H)
+  const normalizedId = planeId.replace('proj_', '');
+  
+  if (normalizedId === 'plane_H') {
     return [
       x - canvasOriginX,
       y - canvasOriginY
     ];
-  } else if (planeId === 'plane_V') {
+  } else if (normalizedId === 'plane_V') {
     return [
       x - canvasOriginX,
       -(y - canvasOriginY)  // Flip back
@@ -133,10 +139,22 @@ export function planeTo3D(
 ): Vector3D {
   const { origin, uAxis, vAxis } = coordinateSystem;
   
+  // Handle both Vector4 objects and array-like structures
+  const getCoord = (v: any, axis: 'x' | 'y' | 'z'): number => {
+    if (typeof v === 'object' && v !== null) {
+      // Check for Vector4-like object
+      if (axis in v) return v[axis];
+      // Check for array-like [x, y, z, w]
+      const idx = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
+      if (typeof v[idx] === 'number') return v[idx];
+    }
+    return 0;
+  };
+  
   return [
-    origin.x + u * uAxis.x + v * vAxis.x,
-    origin.y + u * uAxis.y + v * vAxis.y,
-    origin.z + u * uAxis.z + v * vAxis.z,
+    getCoord(origin, 'x') + u * getCoord(uAxis, 'x') + v * getCoord(vAxis, 'x'),
+    getCoord(origin, 'y') + u * getCoord(uAxis, 'y') + v * getCoord(vAxis, 'y'),
+    getCoord(origin, 'z') + u * getCoord(uAxis, 'z') + v * getCoord(vAxis, 'z'),
     1
   ];
 }

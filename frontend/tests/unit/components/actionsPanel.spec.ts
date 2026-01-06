@@ -11,6 +11,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { createPinia } from 'pinia';
 import ActionsPanel from '../../../src/components/panels/ActionsPanel.vue';
 import { World } from '../../../src/domain/world/World';
 import type { Action } from '../../../src/domain/processTree/Action';
@@ -48,8 +49,10 @@ describe('ActionsPanel', () => {
    * Helper to mount component with injected World
    */
   function mountPanel() {
+    const pinia = createPinia();
     return mount(ActionsPanel, {
       global: {
+        plugins: [pinia],
         provide: {
           world
         }

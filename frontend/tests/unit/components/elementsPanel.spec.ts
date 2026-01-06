@@ -120,8 +120,8 @@ describe('ElementsPanel', () => {
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
       
-      // World has fixed hinge lines plus our new line
-      expect(vm.horizontalElements.lines.length).toBeGreaterThan(1);
+      // Panel filters out hinge lines (half_HL), so only our line shows up
+      expect(vm.horizontalElements.lines.length).toBe(1);
     });
 
     it('should retrieve all segments from World', () => {
@@ -180,10 +180,8 @@ describe('ElementsPanel', () => {
       const throughPoint = new FreePoint2D(throughPointId, new Vector3(3, 3, 1), 'proj_plane_V');
       world.addPoint2D(throughPoint);
       
-      // Create guide
-      const guideId = world.generateGuide2DId();
-      const guide = new Guide2DPerpendicularToLine(guideId, lineId, throughPointId, 'proj_plane_V', 'G1');
-      world.addGuide2D(guide);
+      // Create guide using World factory
+      const guideId = world.addGuide2D('proj_plane_V', lineId, throughPointId);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -206,10 +204,11 @@ describe('ElementsPanel', () => {
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
       
-      expect(vm.horizontalElements.points.length).toBe(1);
-      expect(vm.horizontalElements.points[0].label).toContain('a');
-      expect(vm.verticalElements.points.length).toBe(1);
-      expect(vm.verticalElements.points[0].label).toContain('b');
+      // World has O_H and O_V default points plus our added points
+      expect(vm.horizontalElements.points.length).toBe(2); // O_H + pointH
+      expect(vm.horizontalElements.points.some((p: any) => p.label && p.label.includes('a'))).toBe(true);
+      expect(vm.verticalElements.points.length).toBe(2); // O_V + pointV
+      expect(vm.verticalElements.points.some((p: any) => p.label && p.label.includes('b'))).toBe(true);
     });
 
     it('should correctly filter elements by proj_plane_V', () => {
@@ -318,7 +317,9 @@ describe('ElementsPanel', () => {
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
       
-      const formattedLine = vm.horizontalElements.lines[0];
+      // Find our specific line (not hinge lines)
+      const formattedLine = vm.horizontalElements.lines.find((l: any) => l.id === lineId);
+      expect(formattedLine).toBeDefined();
       expect(formattedLine.type).toBe('line');
     });
 
@@ -375,9 +376,8 @@ describe('ElementsPanel', () => {
       const throughPoint = new FreePoint2D(throughPointId, new Vector3(3, 3, 1), 'proj_plane_H');
       world.addPoint2D(throughPoint);
       
-      const guideId = world.generateGuide2DId();
-      const guide = new Guide2DPerpendicularToLine(guideId, lineId, throughPointId, 'proj_plane_H');
-      world.addGuide2D(guide);
+      // Create guide using World factory
+      const guideId = world.addGuide2D('proj_plane_H', lineId, throughPointId);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -406,15 +406,17 @@ describe('ElementsPanel', () => {
       // Version should have changed
       expect(world.getVersion()).toBeGreaterThan(initialVersion);
       
-      // Component should have detected the change
-      expect(vm.horizontalElements.points.length).toBe(1);
+      // Component should have detected the change (O_H + our point)
+      expect(vm.horizontalElements.points.length).toBe(2);
     });
 
     it('should update display when elements are added', async () => {
       const wrapper = mountPanel();
+      const vm = wrapper.vm as any;
       
-      // Initially empty
-      expect(wrapper.find('.empty-state').exists()).toBe(true);
+      // World has default elements (O_H, O_V, hinge lines)
+      const initialCount = vm.horizontalElements.points.length;
+      expect(initialCount).toBeGreaterThan(0);
       
       // Add a point
       const pointId = world.generatePoint2DId();
@@ -425,8 +427,8 @@ describe('ElementsPanel', () => {
       await new Promise(resolve => setTimeout(resolve, 150));
       await nextTick();
       
-      // Empty state should be gone
-      expect(wrapper.find('.empty-state').exists()).toBe(false);
+      // Element count should have increased
+      expect(vm.horizontalElements.points.length).toBe(initialCount + 1);
     });
   });
 
@@ -454,7 +456,9 @@ describe('ElementsPanel', () => {
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
       
-      const formattedPoint = vm.horizontalElements.points[0];
+      // Find our specific point (not the default O_H)
+      const formattedPoint = vm.horizontalElements.points.find((p: any) => p.id === pointId);
+      expect(formattedPoint).toBeDefined();
       expect(formattedPoint.visible).toBe(false);
     });
 
@@ -496,8 +500,8 @@ describe('ElementsPanel', () => {
       
       // Count includes O_H origin point + our 2 points = 3
       expect(vm.horizontalElements.points.length).toBe(3);
-      // Count includes hinge lines + our line
-      expect(vm.horizontalElements.lines.length).toBeGreaterThan(1);
+      // Panel filters out hinge lines, so only our line shows up
+      expect(vm.horizontalElements.lines.length).toBe(1);
       expect(vm.horizontalElements.segments.length).toBe(0);
     });
 

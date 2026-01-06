@@ -309,15 +309,17 @@ function formatElement(element: any): any {
 }
 
 function formatLabel(element: any): string {
-  // Format element ID for display with subscript notation
-  let label = element.id;
+  // Use element label if available, otherwise format the ID
+  let label = element.label || element.id;
   
-  // Remove common prefixes
-  label = label.replace(/^point2d_/, '')
-    .replace(/^line2d_/, '')
-    .replace(/^segment2d_/, '')
-    .replace(/^circle2d_/, '')
-    .replace(/^guide2d_/, '');
+  // If using ID, remove common prefixes
+  if (!element.label) {
+    label = label.replace(/^point2d_/, '')
+      .replace(/^line2d_/, '')
+      .replace(/^segment2d_/, '')
+      .replace(/^circle2d_/, '')
+      .replace(/^guide2d_/, '');
+  }
   
   // Add subscript for plane (P_H → subscript H, P_V → subscript V)
   if (element.planeId === 'proj_plane_H') {
@@ -330,12 +332,32 @@ function formatLabel(element: any): string {
 }
 
 function getElementType(element: any): string {
-  // Determine element type from its properties
+  // Determine element type from its class type property or other identifying features
+  // Check type property first (Line2D, Guide2D have this)
+  if (element.type) {
+    // Line types: 'by-two-points', 'parallel', 'perpendicular', 'half-hinge'
+    if (element.type === 'by-two-points' || element.type === 'parallel' || 
+        element.type === 'perpendicular' || element.type === 'half-hinge') {
+      return 'line';
+    }
+    // Guide types: 'perpendicular-to-line'
+    if (element.type === 'perpendicular-to-line') {
+      return 'guide';
+    }
+    // Segment types: 'by-points'
+    if (element.type === 'by-points') {
+      return 'segment';
+    }
+    // Circle types: 'by-center-and-radius', 'by-three-points'
+    if (element.type === 'by-center-and-radius' || element.type === 'by-three-points') {
+      return 'circle';
+    }
+  }
+  
+  // Fallback to property-based detection for other elements
   if ('position' in element || 'rule' in element) return 'point';
-  if ('direction' in element && !('point1Id' in element)) return 'line';
-  if ('point1Id' in element && 'point2Id' in element) return 'segment';
   if ('radius' in element) return 'circle';
-  if ('transportRule' in element) return 'guide';
+  
   return 'unknown';
 }
 
