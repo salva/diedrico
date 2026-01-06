@@ -163,22 +163,6 @@ async function initializeApp() {
 }
 
 /**
- * Initialize Google Drive API and show startup dialog
- */
-async function initializeApp() {
-  try {
-    await driveService.initialize();
-    isSignedIn.value = driveService.isSignedIn();
-    
-    // Show startup dialog if not signed in or no project loaded
-    showStartupDialog.value = true;
-  } catch (error) {
-    console.error('Failed to initialize Google Drive:', error);
-    alert('Failed to initialize Google Drive API. Please check your API credentials.');
-  }
-}
-
-/**
  * Handle sign-in button click
  */
 async function handleSignIn() {
