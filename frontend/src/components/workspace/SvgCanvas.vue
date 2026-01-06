@@ -139,6 +139,7 @@ import { PaperService, type PrimitiveContext } from '@/services/PaperService';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
 import { CommandStack } from '@/commands/CommandStack';
+import { UpdateElementStyleCommand } from '@/commands/UpdateElementStyleCommand';
 import { PointTool } from '@/tools/PointTool';
 import { LineTool } from '@/tools/LineTool';
 import { SegmentTool } from '@/tools/SegmentTool';
@@ -605,8 +606,25 @@ function handleDoubleClick(event: MouseEvent) {
  */
 function handleSaveProperties(changes: any) {
   console.log('[SvgCanvas] Saving property changes:', changes);
-  // TODO: Implement property change command
-  // For now, just log the changes
+  
+  // Create and execute style update command
+  const styleCommand = new UpdateElementStyleCommand(
+    changes.elementId,
+    {
+      color: changes.color,
+      lineWidth: changes.lineWidth,
+      lineStyle: changes.lineStyle,
+      visible: changes.visible
+    },
+    world
+  );
+  
+  styleCommand.execute();
+  commandStack.push(styleCommand);
+  
+  // Trigger reactivity
+  worldVersion.value++;
+  console.log('[SvgCanvas] Style updated and command added to stack');
 }
 
 /**
