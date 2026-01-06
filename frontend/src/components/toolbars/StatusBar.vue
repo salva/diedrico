@@ -12,6 +12,14 @@
       </span>
     </div>
     
+    <!-- Center section: Save status -->
+    <div class="status-section status-center">
+      <span v-if="saveStatus !== 'idle'" class="status-item save-status" :class="`save-status-${saveStatus}`">
+        <span v-if="saveStatus === 'saving'">💾 Saving...</span>
+        <span v-else-if="saveStatus === 'saved'">✓ All changes saved</span>
+      </span>
+    </div>
+    
     <!-- Right section: 3D coordinates -->
     <div class="status-section status-right">
       <span class="status-item coordinates-3d">
@@ -32,13 +40,15 @@ interface Props {
   activePlaneName?: string;
   activeTool?: string;
   coordinates3D?: { x: number; y: number; z: number } | null;
+  saveStatus?: 'idle' | 'saving' | 'saved';
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activePlaneId: '',
   activePlaneName: 'None',
   activeTool: 'Select',
-  coordinates3D: null
+  coordinates3D: null,
+  saveStatus: 'idle'
 });
 
 const has3DCoordinates = computed(() => {
@@ -91,6 +101,11 @@ const formattedCoordinates = computed(() => {
   flex: 1;
 }
 
+.status-center {
+  flex: 0 0 auto;
+  justify-content: center;
+}
+
 .status-right {
   flex-shrink: 0;
 }
@@ -99,6 +114,33 @@ const formattedCoordinates = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.save-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.save-status-saving {
+  background-color: #fff3cd;
+  color: #856404;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.save-status-saved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .status-label {

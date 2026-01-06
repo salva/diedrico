@@ -1,5 +1,16 @@
 <template>
   <div id="app" class="app-container">
+    <!-- Startup Dialog for Google Drive authentication and project selection -->
+    <StartupDialog
+      v-if="showStartupDialog"
+      ref="startupDialogRef"
+      :show="showStartupDialog"
+      :is-signed-in="isSignedIn"
+      @sign-in="handleSignIn"
+      @create="handleCreateProject"
+      @open="handleOpenProject"
+    />
+
     <!-- Header: Top toolbar area -->
     <header class="app-header">
       <h1 class="app-title">Diedrico - Dihedral Learning MVP</h1>
@@ -49,6 +60,7 @@
         :active-plane-name="activePlaneName"
         :active-tool="activeTool"
         :coordinates3-d="coordinates3D"
+        :save-status="saveStatus"
       />
     </footer>
   </div>
@@ -64,18 +76,34 @@
  * - Main: Central workspace with 2D drawing canvas (SVG)
  * - Footer: Status bar showing coordinates, active tool, etc.
  * 
+ * Features Google Drive integration:
+ * - Startup dialog for authentication and project selection
+ * - Auto-save with 2-second debounce after changes
+ * - Status indicator for save operations
+ * 
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#overall-layout-architecture
+ * @see specs/001-dihedral-learning-mvp/ui-spec.md#startup-flow-and-google-drive-authentication
  */
 
-import { provide, ref, onMounted, onUnmounted } from 'vue';
+import { provide, ref, onMounted, onUnmounted, watch } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
 import ActionsPanel from './components/panels/ActionsPanel.vue';
 import ElementsPanel from './components/panels/ElementsPanel.vue';
+import StartupDialog from './components/dialogs/StartupDialog.vue';
 import { CommandStack } from './commands/CommandStack';
 import { useToolStore } from './stores/toolStore';
 import { World } from './domain/world/World';
+import { GoogleDriveService } from './services/GoogleDriveService';
+import { ProjectService } from './services/ProjectService';
+
+// Google Drive configuration (from environment variables)
+const GOOGLE_CONFIG = {
+  clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+  apiKey: import.meta.env.VITE_GOOGLE_API_KEY || '',
+  appId: import.meta.env.VITE_GOOGLE_APP_ID || '',
+};
 
 // Create World instance and provide to all child components
 const world = new World();
@@ -85,8 +113,12 @@ provide('world', world);
 const commandStack = new CommandStack();
 provide('commandStack', commandStack);
 
+// Google Drive service
+const driveService = new GoogleDriveService(GOOGLE_CONFIG);
+
 // SVG Canvas reference for accessing World and methods
 const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
+const startupDialogRef = ref<InstanceType<typeof StartupDialog> | null>(null);
 
 // Tool state
 const toolStore = useToolStore();
@@ -98,6 +130,206 @@ const activePlaneName = ref('P_H (Horizontal)');
 
 // 3D coordinates state
 const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
+
+// Startup and authentication state
+const showStartupDialog = ref(false);
+const isSignedIn = ref(false);
+
+// Project state
+const currentProjectName = ref<string | null>(null);
+const currentFileId = ref<string | null>(null);
+
+// Save status
+const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
+
+// Auto-save debounce timer
+let autoSaveTimer: NodeJS.Timeout | null = null;
+const AUTO_SAVE_DELAY_MS = 2000; // 2 seconds
+
+/**
+ * Initialize Google Drive API and show startup dialog
+ */
+async function initializeApp() {
+  try {
+    await driveService.initialize();
+    isSignedIn.value = driveService.isSignedIn();
+    
+    // Show startup dialog if not signed in or no project loaded
+    showStartupDialog.value = true;
+  } catch (error) {
+    console.error('Failed to initialize Google Drive:', error);
+    alert('Failed to initialize Google Drive API. Please check your API credentials.');
+  }
+}
+
+/**
+ * Initialize Google Drive API and show startup dialog
+ */
+async function initializeApp() {
+  try {
+    await driveService.initialize();
+    isSignedIn.value = driveService.isSignedIn();
+    
+    // Show startup dialog if not signed in or no project loaded
+    showStartupDialog.value = true;
+  } catch (error) {
+    console.error('Failed to initialize Google Drive:', error);
+    alert('Failed to initialize Google Drive API. Please check your API credentials.');
+  }
+}
+
+/**
+ * Handle sign-in button click
+ */
+async function handleSignIn() {
+  try {
+    await driveService.signIn();
+    isSignedIn.value = driveService.isSignedIn();
+    
+    // Load file list after sign-in
+    const files = await driveService.listFiles();
+    startupDialogRef.value?.setFiles(files);
+    startupDialogRef.value?.setLoading(false);
+  } catch (error) {
+    console.error('Sign-in failed:', error);
+    startupDialogRef.value?.setError(`Sign-in failed: ${error}`);
+    startupDialogRef.value?.setLoading(false);
+  }
+}
+
+/**
+ * Handle create new project
+ */
+async function handleCreateProject(projectName: string) {
+  try {
+    // Serialize current world state
+    const projectData = ProjectService.serializeWorld(world, projectName);
+    
+    // Create file in Google Drive
+    const fileId = await driveService.createFile(projectName, projectData);
+    
+    // Update state
+    currentProjectName.value = projectName;
+    currentFileId.value = fileId;
+    showStartupDialog.value = false;
+    
+    // Start watching for changes to enable auto-save
+    startAutoSave();
+    
+    saveStatus.value = 'saved';
+  } catch (error) {
+    console.error('Failed to create project:', error);
+    startupDialogRef.value?.setError(`Failed to create project: ${error}`);
+    startupDialogRef.value?.setLoading(false);
+  }
+}
+
+/**
+ * Handle open existing project
+ */
+async function handleOpenProject(fileId: string) {
+  try {
+    // Load file from Google Drive
+    const projectData = await driveService.loadFile(fileId);
+    
+    // Validate and deserialize
+    ProjectService.validateProjectData(projectData);
+    const loadedWorld = ProjectService.deserializeWorld(projectData);
+    
+    // Replace current world with loaded world
+    // Copy all properties from loadedWorld to world
+    world.planes = loadedWorld.planes;
+    world.hingeLines = loadedWorld.hingeLines;
+    world.points = loadedWorld.points;
+    world.lines = loadedWorld.lines;
+    world.segments = loadedWorld.segments;
+    world.guides = loadedWorld.guides;
+    world.circles = loadedWorld.circles;
+    
+    // Update state
+    currentProjectName.value = (projectData as any).name;
+    currentFileId.value = fileId;
+    showStartupDialog.value = false;
+    
+    // Start watching for changes to enable auto-save
+    startAutoSave();
+    
+    saveStatus.value = 'saved';
+  } catch (error) {
+    console.error('Failed to open project:', error);
+    startupDialogRef.value?.setError(`Failed to open project: ${error}`);
+    startupDialogRef.value?.setLoading(false);
+  }
+}
+
+/**
+ * Start auto-save watcher
+ * Watches for changes to World and triggers auto-save after debounce
+ */
+function startAutoSave() {
+  // Watch world's version property for changes
+  // Whenever world changes, the version should be incremented
+  let lastVersion = world.getVersion();
+  
+  const checkInterval = setInterval(() => {
+    const currentVersion = world.getVersion();
+    if (currentVersion !== lastVersion) {
+      lastVersion = currentVersion;
+      scheduleAutoSave();
+    }
+  }, 100); // Check every 100ms
+  
+  // Store interval ID for cleanup
+  (window as any).__autoSaveInterval = checkInterval;
+}
+
+/**
+ * Schedule auto-save with debounce
+ */
+function scheduleAutoSave() {
+  // Clear existing timer
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+  }
+  
+  // Set status to indicate pending save
+  saveStatus.value = 'saving';
+  
+  // Schedule new save
+  autoSaveTimer = setTimeout(async () => {
+    await performAutoSave();
+  }, AUTO_SAVE_DELAY_MS);
+}
+
+/**
+ * Perform the actual auto-save operation
+ */
+async function performAutoSave() {
+  if (!currentFileId.value || !currentProjectName.value) {
+    return;
+  }
+  
+  try {
+    // Serialize current world state
+    const projectData = ProjectService.serializeWorld(world, currentProjectName.value);
+    
+    // Update file in Google Drive
+    await driveService.updateFile(currentFileId.value, projectData);
+    
+    saveStatus.value = 'saved';
+    
+    // Reset to idle after 2 seconds
+    setTimeout(() => {
+      if (saveStatus.value === 'saved') {
+        saveStatus.value = 'idle';
+      }
+    }, 2000);
+  } catch (error) {
+    console.error('Auto-save failed:', error);
+    saveStatus.value = 'idle';
+    // Could show a notification to the user
+  }
+}
 
 /**
  * Handle coordinate updates from canvas
@@ -162,10 +394,34 @@ function handleKeyDown(event: KeyboardEvent) {
 // Setup keyboard listeners
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  
+  // Initialize app and show startup dialog
+  initializeApp();
+  
+  // Listen for file list requests from StartupDialog
+  window.addEventListener('load-files', async () => {
+    try {
+      const files = await driveService.listFiles();
+      startupDialogRef.value?.setFiles(files);
+    } catch (error) {
+      console.error('Failed to load files:', error);
+      startupDialogRef.value?.setError(`Failed to load files: ${error}`);
+    }
+  });
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  
+  // Clear auto-save interval
+  if ((window as any).__autoSaveInterval) {
+    clearInterval((window as any).__autoSaveInterval);
+  }
+  
+  // Clear auto-save timer
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+  }
 });
 </script>
 
