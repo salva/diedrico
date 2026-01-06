@@ -97,7 +97,9 @@ describe('Circle2D', () => {
       world.addCircle2D(circle);
       const realization = world.getCircle2DRealization('c1');
       
-      expect(realization).toBeUndefined();
+      // Should return infeasible realization for degenerate circle
+      expect(realization).toBeDefined();
+      expect(realization!.feasible).toBe(false);
     });
 
     it('should return null for negative radius', () => {
@@ -106,7 +108,9 @@ describe('Circle2D', () => {
       world.addCircle2D(circle);
       const realization = world.getCircle2DRealization('c1');
       
-      expect(realization).toBeUndefined();
+      // Should return infeasible realization for invalid circle
+      expect(realization).toBeDefined();
+      expect(realization!.feasible).toBe(false);
     });
   });
 
@@ -160,7 +164,8 @@ describe('Circle2D', () => {
       world.addCircle2D(circle);
       const realization = world.getCircle2DRealization('c1');
       
-      expect(realization).toBeUndefined();
+      // Should return infeasible realization for degenerate circle\n      expect(realization).toBeDefined();
+      expect(realization!.feasible).toBe(false);
     });
   });
 
@@ -211,7 +216,9 @@ describe('Circle2D', () => {
       world.addCircle2D(circle);
       const realization = world.getCircle2DRealization('c1');
       
-      expect(realization).toBeUndefined();
+      // Should return infeasible realization for collinear points (no unique circle)
+      expect(realization).toBeDefined();
+      expect(realization!.feasible).toBe(false);
     });
   });
 

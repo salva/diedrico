@@ -114,9 +114,11 @@ describe('World Factory Methods', () => {
         const line1 = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
         const line2 = world.addLine2DBetweenTwoPoints('proj_plane_H', p3.id, p4.id); // Parallel to line1
 
-        expect(() => {
-          world.addIntersectionPoint2D('proj_plane_H', line1.id, line2.id, 0);
-        }).toThrow(/parallel/i);
+        // After Phase 23, parallel lines create infeasible intersection point instead of throwing
+        const point = world.addIntersectionPoint2D('proj_plane_H', line1.id, line2.id, 0);
+        const realization = world.getPoint2DRealization(point.id);
+        expect(realization).toBeDefined();
+        expect(realization!.feasible).toBe(false);
       });
     });
 

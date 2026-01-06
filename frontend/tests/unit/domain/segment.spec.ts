@@ -104,8 +104,9 @@ describe('Segment2D', () => {
       world.addSegment2D(segment);
       const realization = world.getSegment2DRealization('seg1');
       
-      // Degenerate segments return null
-      expect(realization).toBeUndefined();
+      // Degenerate segments return infeasible realization
+      expect(realization).toBeDefined();
+      expect(realization!.feasible).toBe(false);
     });
   });
 
