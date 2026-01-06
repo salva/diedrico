@@ -105,6 +105,9 @@ const GOOGLE_CONFIG = {
   appId: import.meta.env.VITE_GOOGLE_APP_ID || '',
 };
 
+// Check if Google Drive credentials are configured
+const hasGoogleCredentials = GOOGLE_CONFIG.clientId && GOOGLE_CONFIG.apiKey;
+
 // Create World instance and provide to all child components
 const world = new World();
 provide('world', world);
@@ -113,8 +116,8 @@ provide('world', world);
 const commandStack = new CommandStack();
 provide('commandStack', commandStack);
 
-// Google Drive service
-const driveService = new GoogleDriveService(GOOGLE_CONFIG);
+// Google Drive service (only if credentials are available)
+const driveService = hasGoogleCredentials ? new GoogleDriveService(GOOGLE_CONFIG) : null;
 
 // SVG Canvas reference for accessing World and methods
 const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
@@ -150,15 +153,26 @@ const AUTO_SAVE_DELAY_MS = 2000; // 2 seconds
  * Initialize Google Drive API and show startup dialog
  */
 async function initializeApp() {
+  // Check if Google Drive credentials are configured
+  if (!hasGoogleCredentials) {
+    console.warn('Google Drive credentials not configured. Running in local-only mode.');
+    console.info('To enable Google Drive integration, create a .env file with VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_API_KEY, and VITE_GOOGLE_APP_ID');
+    // Don't show startup dialog in development mode without credentials
+    showStartupDialog.value = false;
+    return;
+  }
+  
   try {
-    await driveService.initialize();
-    isSignedIn.value = driveService.isSignedIn();
+    await driveService!.initialize();
+    isSignedIn.value = driveService!.isSignedIn();
     
     // Show startup dialog if not signed in or no project loaded
     showStartupDialog.value = true;
   } catch (error) {
     console.error('Failed to initialize Google Drive:', error);
-    alert('Failed to initialize Google Drive API. Please check your API credentials.');
+    // Don't block app startup with alert - just log and continue
+    console.warn('Running in local-only mode without Google Drive integration.');
+    showStartupDialog.value = false;
   }
 }
 
@@ -166,6 +180,11 @@ async function initializeApp() {
  * Handle sign-in button click
  */
 async function handleSignIn() {
+  if (!driveService) {
+    startupDialogRef.value?.setError('Google Drive service not available');
+    return;
+  }
+  
   try {
     await driveService.signIn();
     isSignedIn.value = driveService.isSignedIn();
@@ -180,7 +199,12 @@ async function handleSignIn() {
     startupDialogRef.value?.setLoading(false);
   }
 }
-
+if (!driveService) {
+    startupDialogRef.value?.setError('Google Drive service not available');
+    return;
+  }
+  
+  
 /**
  * Handle create new project
  */
@@ -207,7 +231,12 @@ async function handleCreateProject(projectName: string) {
     startupDialogRef.value?.setLoading(false);
   }
 }
-
+if (!driveService) {
+    startupDialogRef.value?.setError('Google Drive service not available');
+    return;
+  }
+  
+  
 /**
  * Handle open existing project
  */
@@ -475,7 +504,12 @@ function handleKeyDown(event: KeyboardEvent) {
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
   
-  // Initialize app and show startup dialog
+  //if (!driveService) {
+      startupDialogRef.value?.setError('Google Drive service not available');
+      return;
+    }
+    
+     Initialize app and show startup dialog
   initializeApp();
   
   // Listen for file list requests from StartupDialog
