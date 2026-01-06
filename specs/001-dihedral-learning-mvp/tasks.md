@@ -1505,19 +1505,23 @@ class World {
 - [X] T246 Validate loaded JSON data (check structure, types, required fields)
 
 **Google Drive Integration (To Do)**:
-- [ ] T247 Install Google API client library: `npm install @types/gapi @types/gapi.client.drive`
-- [ ] T248 Create GoogleDriveService in frontend/src/services/GoogleDriveService.ts
-- [ ] T249 Implement OAuth2 sign-in flow with Google (scope: drive.file)
-- [ ] T250 Implement createFile(folderName, fileName, data) - Create .diedrico file in "diedrico" folder
-- [ ] T251 Implement listFiles(folderName) - List all .diedrico files from "diedrico" folder
-- [ ] T252 Implement loadFile(fileId) - Download and parse .diedrico file
-- [ ] T253 Implement updateFile(fileId, data) - Update existing .diedrico file
-- [ ] T254 Implement auto-create "diedrico" folder if it doesn't exist
-- [ ] T255 Create StartupDialog.vue component in frontend/src/components/dialogs/
-- [ ] T256 Add "Create New Project" section with name input field
-- [ ] T257 Add "Open Existing Project" section with file list from Drive
-- [ ] T258 Implement "Sign in with Google" button and authentication flow
+- [X] T247 Install Google API client library: `npm install @types/gapi @types/gapi.client.drive`
+- [X] T248 Create GoogleDriveService in frontend/src/services/GoogleDriveService.ts
+- [X] T249 Implement OAuth2 sign-in flow with Google (scope: drive.file)
+- [X] T250 Implement createFile(folderName, fileName, data) - Create .diedrico file in "diedrico" folder
+- [X] T251 Implement listFiles(folderName) - List all .diedrico files from "diedrico" folder
+- [X] T252 Implement loadFile(fileId) - Download and parse .diedrico file
+- [X] T253 Implement updateFile(fileId, data) - Update existing .diedrico file
+- [X] T254 Implement auto-create "diedrico" folder if it doesn't exist
+- [X] T255 Create StartupDialog.vue component in frontend/src/components/dialogs/
+- [X] T256 Add "Create New Project" section with name input field
+- [X] T257 Add "Open Existing Project" section with file list from Drive
+- [X] T258 Implement "Sign in with Google" button and authentication flow
 - [ ] T259 Implement auto-save with 2-second debounce (watch World version changes)
+- [ ] T260 Add status indicator: "Saving..." and "All changes saved" in status bar
+- [ ] T261 Handle Google Drive API errors (network, quota, authentication expired)
+- [ ] T262 [P] Unit test for GoogleDriveService in frontend/tests/unit/services/googleDriveService.spec.ts
+- [ ] T263 [P] E2E test for save/load workflow in frontend/tests/e2e/persistence.spec.ts
 - [ ] T260 Add status indicator: "Saving..." and "All changes saved" in status bar
 - [ ] T261 Handle Google Drive API errors (network, quota, authentication expired)
 - [ ] T262 [P] Unit test for GoogleDriveService in frontend/tests/unit/services/googleDriveService.spec.ts
