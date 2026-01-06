@@ -73,6 +73,79 @@ The application interface is organized into five primary regions:
 
 ---
 
+## Startup Flow and Google Drive Authentication
+
+### Application Launch
+
+When the application is first loaded, the user is guided through authentication and project selection:
+
+**Step 1: Google Sign-In**
+- If the user is not authenticated, display a centered modal with "Sign in with Google" button
+- Use OAuth2 via Google API client library (gapi.client)
+- Required scope: `https://www.googleapis.com/auth/drive.file` (access to app-created files only)
+- After successful authentication, proceed to Step 2
+
+**Step 2: Startup Dialog**
+
+A modal dialog appears with two options:
+
+```
+┌─────────────────────────────────────────────────┐
+│   Diedrico - Project Selection                  │
+├─────────────────────────────────────────────────┤
+│                                                  │
+│   ┌───────────────────────────────────────┐    │
+│   │  Create New Project                   │    │
+│   │                                        │    │
+│   │  Enter project name:                  │    │
+│   │  [_______________________________]    │    │
+│   │                                        │    │
+│   │  [Create]                             │    │
+│   └───────────────────────────────────────┘    │
+│                                                  │
+│   ┌───────────────────────────────────────┐    │
+│   │  Open Existing Project                │    │
+│   │                                        │    │
+│   │  Select from your Google Drive:       │    │
+│   │  ┌─────────────────────────────┐      │    │
+│   │  │ ▶ MyConstruction.diedrico   │      │    │
+│   │  │ ▶ Exercise01.diedrico       │      │    │
+│   │  │ ▶ Practice_2025.diedrico    │      │    │
+│   │  └─────────────────────────────┘      │    │
+│   │                                        │    │
+│   │  [Open]                               │    │
+│   └───────────────────────────────────────┘    │
+│                                                  │
+└─────────────────────────────────────────────────┘
+```
+
+**Create New Project**:
+1. User enters a project name
+2. Click "Create" button
+3. New `.diedrico` file is created in the user's Google Drive folder "diedrico" (created automatically if it doesn't exist)
+4. Application loads with default workspace (P_H, P_V, HL_HV, origin O)
+5. First auto-save occurs after initial user action
+
+**Open Existing Project**:
+1. Application lists all `.diedrico` files from the "diedrico" folder in user's Google Drive
+2. User selects a project from the list
+3. Click "Open" button
+4. Project is loaded and workspace is restored with all geometry, action history, and UI state
+
+**Error Handling**:
+- If Google Drive API is unavailable, display error with retry option
+- If "diedrico" folder access fails, attempt to create it
+- If project file is corrupted, display error and return to startup dialog
+- If user cancels sign-in, display "Sign in required to use Diedrico" message
+
+**Auto-Save Behavior** (after project is loaded):
+- Changes are automatically saved to Google Drive 2 seconds after the last modification
+- Debouncing prevents excessive API calls during rapid construction
+- Status indicator shows "Saving..." and "All changes saved" in the status bar
+- No explicit "Save" button in the toolbar
+
+---
+
 ## Left Panel Stack
 
 The left side of the interface contains a vertical stack of two panels. These panels provide access to the world state and construction history.
@@ -312,7 +385,7 @@ The toolbars are organized into distinct groups, each focused on a specific cate
 
 **Groups** (left to right):
 
-1. **File/Project Controls**: New, Open, Save, Export (basic project management)
+1. **File/Project Controls**: New, Open, Export (projects auto-save to Google Drive)
 2. **Active Plane Selector**: Dropdown showing current active plane and list of all available planes
 3. **2D Drawing Tools**: Point, Segment, Line, Circle, Arc tools (each with sub-tool dropdowns)
 4. **Dihedral Tools**: Guide, Transport tools (specific to multi-plane operations)
@@ -1053,7 +1126,7 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 - Snap settings (enable/disable, snap radius)
 - Default styles (default colors, line widths for new elements)
 - 3D view settings (initial camera position, display options)
-- Autosave settings (interval, location)
+- Google account settings (sign out, re-authenticate)
 
 ---
 
@@ -1195,7 +1268,7 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 
 ## State Persistence
 
-The following UI state is saved per project and restored on project load:
+The following UI state is saved per project to Google Drive and restored on project load:
 
 - Active projection plane
 - Panel sizes and collapse states

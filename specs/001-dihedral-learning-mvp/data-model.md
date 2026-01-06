@@ -453,6 +453,7 @@ Project-level container and metadata:
 - Project info, schema version, timestamps
 - View state (zoom, pan, camera)
 - Collections of domain entities
+- Storage: Google Drive API, "diedrico" folder, `.diedrico` file format (JSON)
 
 ---
 
@@ -528,9 +529,9 @@ All mutations to World, ProcessTree, and ViewState happen through Commands, whic
 - `processTree` must satisfy ProcessTree validation rules
 
 **State Transitions**:
-- **New** → **Active**: Created with default World (P_H, P_V, HL_HV) and empty ProcessTree
-- **Active** → **Saved**: Persisted to storage (autosave every 500ms after edit)
-- **Active** → **Closed**: User closes project, discards unsaved (no unsaved in MVP due to autosave)
+- **New** → **Active**: Created with default World (P_H, P_V, HL_HV) and empty ProcessTree, saved to Google Drive "diedrico" folder
+- **Active** → **Saved**: Persisted to Google Drive (auto-save 2 seconds after last change)
+- **Active** → **Closed**: User closes project, all changes already saved to Google Drive
 
 ---
 
@@ -2890,6 +2891,8 @@ class GuideTool implements Tool {
 
 ## Layer 3: Persistence Entities
 
+Projects are stored in the user's Google Drive "diedrico" folder as `.diedrico` files. Persistence is automatic with 2-second debouncing after changes.
+
 ### Domain Entity: Subprocess
 
 **Purpose**: User-created hierarchical grouping of process nodes with default visual properties and visibility control
@@ -4497,18 +4500,25 @@ class DeleteElementCommand extends Command {
 - Serialize entire `Project` to JSON
 - Include `schemaVersion` for migrations
 - Embed full dependency graph (can reconstruct on load)
+- Storage: Google Drive API, "diedrico" folder, `.diedrico` file extension
 
 **Deserialization**:
-- Parse JSON
+- Parse JSON from Google Drive file
 - Validate schema version
 - Reconstruct domain objects
 - Rebuild `DependencyGraph` from element construction rules (element references)
 - Validate global invariants
 
+**Auto-Save Strategy**:
+- Watch World/ProcessTree/ViewState version changes
+- Debounce: Save 2 seconds after last modification
+- Use Google Drive API `files.update` for existing project
+- Prevents excessive API calls during rapid construction
+
 **Optimizations**:
 - Incremental save: Only serialize changed elements (future)
-- Compress JSON with gzip for storage
-- Lazy load: Load project metadata (id, name, modified) separate from full data
+- Compress JSON with gzip for storage (future)
+- Lazy load: Load project metadata (id, name, modified) separate from full data (future)
 
 ---
 

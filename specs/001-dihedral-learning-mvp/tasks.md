@@ -1264,7 +1264,7 @@ class World {
 - [X] T181 Show object label/tooltip on hover
 - [X] T182 Clear hover highlight on mouseout
 - [X] T183 Ensure hover highlight doesn't interfere with selection highlight
-- [X] T184 Show snap preview when hovering near points (for snapping feedback)
+- [X] T184 Show snap preview when hovering near points (visual indicator only - snap logic already working via hitTest)
 - [X] T185 [P] Unit test for useHoverHighlight in frontend/tests/unit/composables/hoverHighlight.spec.ts
 - [X] T186 [P] E2E test for hover highlighting in frontend/tests/e2e/hover.spec.ts
 
@@ -1481,43 +1481,49 @@ class World {
 
 ---
 
-## Phase 26: File Save/Load (US1 - Complete)
+## Phase 26: Google Drive Persistence (US1 - Complete)
 
-**Purpose**: Persist projects to files  
-**Reference**: [spec.md](./spec.md#us1-place-point-on-active-plane) - US1 includes persistence requirement, [contracts/api.yaml](./contracts/api.yaml) - API contracts
+**Purpose**: Persist projects to user's Google Drive  
+**Reference**: [spec.md](./spec.md#us1-place-point-on-active-plane) - US1 includes persistence requirement, [ui-spec.md §Startup Flow](./ui-spec.md#startup-flow-and-google-drive-authentication) - Startup dialog and authentication
 
 **Implementation Requirements**:
-- **REST API**: Follow [contracts/api.yaml](./contracts/api.yaml) - Implement POST/GET/PUT/DELETE endpoints for project CRUD operations.
+- **Google Drive API**: Use gapi.client library for direct browser-to-Drive communication. No backend server required.
+- **OAuth2 Authentication**: Implement "Sign in with Google" flow with scope `https://www.googleapis.com/auth/drive.file` (app-created files only).
+- **Folder Structure**: All projects stored in user's Google Drive "diedrico" folder (auto-created if doesn't exist). Files use `.diedrico` extension.
 - **Serialization**: Serialize complete World state (elements, ProcessTree, view state) to JSON per [data-model.md §Project Serialization](./data-model.md#project-serialization).
-- **Version Compatibility**: Include version number in JSON format for future compatibility per [data-model.md §Project Serialization](./data-model.md#project-serialization).
-- **Auto-Save**: Implement configurable auto-save (default 60s) per [ui-spec.md §Settings](./ui-spec.md#settings).
-- **File Storage**: Backend stores projects as JSON files in backend/data/projects/ directory per [contracts/api.yaml](./contracts/api.yaml).
-- **Unsaved Changes**: Track modified state, prompt before closing per [ui-spec.md §Application Lifecycle](./ui-spec.md#application-lifecycle).
+- **Auto-Save**: Implement debounced auto-save (2 seconds after last change) per [spec.md §FR-027](./spec.md#functional-requirements).
+- **Startup Dialog**: On launch, show dialog with "Create New Project" (name input) or "Open Existing Project" (list from Drive) per [ui-spec.md §Startup Flow](./ui-spec.md#startup-flow-and-google-drive-authentication).
+- **No Explicit Save**: Remove "Save" button from toolbar - all changes auto-saved per [ui-spec.md §File/Project Controls](./ui-spec.md#file-project-controls).
 
-**⚠️ CRITICAL**: Read [contracts/api.yaml](./contracts/api.yaml) for exact API endpoint specifications and data formats.
+**⚠️ CRITICAL**: Read [ui-spec.md §Startup Flow and Google Drive Authentication](./ui-spec.md#startup-flow-and-google-drive-authentication) for complete startup flow specification.
 
+**Frontend Serialization (Complete)**:
 - [X] T242 [P] Create ProjectService in frontend/src/services/ProjectService.ts
 - [X] T243 Implement World serialization to JSON (serialize all elements, ProcessTree, view state)
 - [X] T244 Implement World deserialization from JSON (reconstruct all objects)
 - [X] T245 Add version number to JSON format for future compatibility
 - [X] T246 Validate loaded JSON data (check structure, types, required fields)
-- [ ] T247 Create backend API endpoint: POST /api/projects (create new project file)
-- [ ] T248 Create backend API endpoint: GET /api/projects (list all project files)
-- [ ] T249 Create backend API endpoint: GET /api/projects/:id (load project by ID)
-- [ ] T250 Create backend API endpoint: PUT /api/projects/:id (update existing project)
-- [ ] T251 Create backend API endpoint: DELETE /api/projects/:id (delete project)
-- [ ] T252 Implement file storage in backend/src/storage/FileStorage.ts (write/read JSON files)
-- [ ] T253 Add "Save" button to toolbar/menu
-- [ ] T254 Add "Load" button to toolbar/menu
-- [ ] T255 Add "New" button to clear workspace and start fresh
-- [ ] T256 Implement auto-save every N seconds (configurable, default 60s)
-- [ ] T257 Store unsaved changes indicator in UI (show "modified" status)
-- [ ] T258 Prompt user to save before closing/navigating away (if unsaved changes)
-- [ ] T259 [P] Unit test for serialization/deserialization in frontend/tests/unit/services/projectService.spec.ts
-- [ ] T260 [P] Integration test for backend API in backend/tests/integration/projects.spec.ts
-- [ ] T261 [P] E2E test for save/load in frontend/tests/e2e/persistence.spec.ts
 
-**Checkpoint**: Projects can be saved and loaded (US1 complete)
+**Google Drive Integration (To Do)**:
+- [ ] T247 Install Google API client library: `npm install @types/gapi @types/gapi.client.drive`
+- [ ] T248 Create GoogleDriveService in frontend/src/services/GoogleDriveService.ts
+- [ ] T249 Implement OAuth2 sign-in flow with Google (scope: drive.file)
+- [ ] T250 Implement createFile(folderName, fileName, data) - Create .diedrico file in "diedrico" folder
+- [ ] T251 Implement listFiles(folderName) - List all .diedrico files from "diedrico" folder
+- [ ] T252 Implement loadFile(fileId) - Download and parse .diedrico file
+- [ ] T253 Implement updateFile(fileId, data) - Update existing .diedrico file
+- [ ] T254 Implement auto-create "diedrico" folder if it doesn't exist
+- [ ] T255 Create StartupDialog.vue component in frontend/src/components/dialogs/
+- [ ] T256 Add "Create New Project" section with name input field
+- [ ] T257 Add "Open Existing Project" section with file list from Drive
+- [ ] T258 Implement "Sign in with Google" button and authentication flow
+- [ ] T259 Implement auto-save with 2-second debounce (watch World version changes)
+- [ ] T260 Add status indicator: "Saving..." and "All changes saved" in status bar
+- [ ] T261 Handle Google Drive API errors (network, quota, authentication expired)
+- [ ] T262 [P] Unit test for GoogleDriveService in frontend/tests/unit/services/googleDriveService.spec.ts
+- [ ] T263 [P] E2E test for save/load workflow in frontend/tests/e2e/persistence.spec.ts
+
+**Checkpoint**: Projects can be saved to and loaded from Google Drive (US1 complete)
 
 ---
 
@@ -1540,21 +1546,21 @@ class World {
 - [ ] T263 Add settings for snap radius (configurable distance for point snapping)
 - [ ] T264 Add settings for grid (enabled, spacing, color, snap-to-grid option)
 - [ ] T265 Add settings for default object styles (default colors, stroke widths)
-- [ ] T266 Add settings for auto-save interval
+- [ ] T266 Add settings for 3D view (initial camera position, display options)
 - [ ] T267 Add keyboard shortcuts customization panel
-- [ ] T268 Implement Ctrl+S keyboard shortcut for Save
-- [ ] T269 Implement Ctrl+O keyboard shortcut for Open
-- [ ] T270 Implement Ctrl+N keyboard shortcut for New project
-- [ ] T271 Implement Ctrl+A keyboard shortcut for Select All
-- [ ] T272 Implement Delete/Backspace key for deleting selected objects
-- [ ] T273 Implement Esc key to cancel current operation/deselect
-- [ ] T274 Implement tool keyboard shortcuts (P for Point, L for Line, S for Segment, C for Circle, G for Guide)
-- [ ] T275 Add "Fit to View" button and Ctrl+0 shortcut (zoom to show all objects)
-- [ ] T276 Implement grid display with zoom-adaptive spacing
-- [ ] T277 Add grid toggle button (show/hide grid)
-- [ ] T278 Create StatusBar.vue component showing current mouse coordinates in world space
-- [ ] T279 Show active plane indicator in status bar
-- [ ] T280 Show active tool name in status bar
+- [ ] T268 Implement Ctrl+O keyboard shortcut for Open (shows startup dialog)
+- [ ] T269 Implement Ctrl+N keyboard shortcut for New project (shows startup dialog)
+- [ ] T270 Implement Ctrl+A keyboard shortcut for Select All
+- [ ] T271 Implement Delete/Backspace key for deleting selected objects
+- [ ] T272 Implement Esc key to cancel current operation/deselect
+- [ ] T273 Implement tool keyboard shortcuts (P for Point, L for Line, S for Segment, C for Circle, G for Guide)
+- [ ] T274 Add "Fit to View" button and Ctrl+0 shortcut (zoom to show all objects)
+- [ ] T275 Implement grid display with zoom-adaptive spacing
+- [ ] T276 Add grid toggle button (show/hide grid)
+- [ ] T277 Create StatusBar.vue component showing current mouse coordinates in world space
+- [ ] T278 Show active plane indicator in status bar
+- [ ] T279 Show active tool name in status bar
+- [ ] T280 Show save status in status bar ("Saving..." / "All changes saved" for Google Drive)
 - [ ] T281 Persist user preferences to localStorage
 - [ ] T282 Load preferences on application startup
 - [ ] T283 [P] Unit test for settings persistence in frontend/tests/unit/stores/settingsStore.spec.ts
@@ -1601,8 +1607,8 @@ class World {
 
 ## Summary
 
-**Total Tasks**: 309  
-**Priority Tasks ([P])**: ~127 (41%)  
+**Total Tasks**: 300  
+**Priority Tasks ([P])**: ~124 (41%)  
 **Constitution-Critical Tasks**: ~44 tasks explicitly reference constitution principles
 
 ### Task Distribution by Phase
@@ -1614,8 +1620,8 @@ class World {
 - Phases 16-17 (More Advanced Geometry): T126-T148 (23 tasks)
 - Phases 18-22 (UI Features): T149-T200 (52 tasks)
 - Phases 23-25 (Advanced Features): T201-T241 (41 tasks)
-- Phase 26 (Persistence): T242-T261 (20 tasks)
-- Phase 27 (Polish): T262-T284 (23 tasks)
+- Phase 26 (Google Drive Persistence): T242-T263 (22 tasks)
+- Phase 27 (Polish): T264-T284 (21 tasks)
 - Phase 28 (Testing/Docs): T285-T300 (16 tasks)
 
 ### Constitution Compliance Notes
@@ -1624,7 +1630,7 @@ Throughout all tasks, the following constitutional principles are enforced:
 
 - **Principle I (Layered Architecture)**: Domain, Application, Presentation, and Data layers maintained
 - **Principle II (Command Pattern)**: All user actions as undoable commands (Phase 10+)
-- **Principle III (Frontend-First)**: All geometry calculations in frontend, backend only for persistence
+- **Principle III (Frontend-First)**: All geometry calculations in frontend, Google Drive API for persistence (no backend server)
 - **Principle IV (Principle-Based Rendering)**: NO hardcoded special cases, all calculations from geometric principles
 - **Principle V (Homogeneous Coordinates)**: Mandatory for all geometric calculations, explicitly noted in T094, T102, T114, T127, T140, T142, T230, T233
 

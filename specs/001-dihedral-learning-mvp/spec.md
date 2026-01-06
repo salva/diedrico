@@ -1017,9 +1017,10 @@ As a learner, I want to start a new drawing and reopen a previously saved drawin
 
 **Acceptance Scenarios**:
 
-1. **Given** the application is open, **When** I create a new drawing, **Then** I get a clean workspace with at least two default projection planes and their hinge line, and one plane is clearly marked as active.
-2. **Given** I have an existing saved drawing, **When** I open it, **Then** the workspace restores its planes, elements, action history, dependency relationships, and view settings.
-3. **Given** I make changes to a drawing, **When** the changes occur, **Then** the system persists them automatically without requiring an explicit save action.
+1. **Given** the application is launched, **When** I sign in with Google, **Then** I see a startup dialog offering "Create New Project" or "Open Existing Project".
+2. **Given** I choose "Create New Project" and enter a name, **When** the project is created, **Then** I get a clean workspace with at least two default projection planes and their hinge line, one plane is clearly marked as active, and the project is saved to my Google Drive "diedrico" folder.
+3. **Given** I choose "Open Existing Project", **When** I select a project from the list, **Then** the workspace restores its planes, elements, action history, dependency relationships, and view settings from my Google Drive.
+4. **Given** I make changes to a drawing, **When** the changes occur, **Then** the system persists them automatically to Google Drive without requiring an explicit save action (debounced 2 seconds after last change).
 
 ---
 
@@ -1233,8 +1234,8 @@ These use cases cover primitive user actions and micro-interactions. They are in
 22. **3D element creation invalid selection**
   - **Given** incompatible projections are selected, **When** I run a 3D creation tool, **Then** no 3D element is created and I receive immediate non-modal feedback.
 
-23. **Autosave on change**
-  - **Given** a project is open, **When** I create or modify geometry, **Then** the project is persisted automatically without an explicit save action.
+23. **Autosave to Google Drive**
+  - **Given** a project is open, **When** I create or modify geometry, **Then** the project is persisted automatically to Google Drive without an explicit save action (debounced 2 seconds after last change).
 
 ## Requirements *(mandatory)*
 
@@ -1267,7 +1268,7 @@ These use cases cover primitive user actions and micro-interactions. They are in
 - **FR-024**: The system MUST avoid modal error dialogs for invalid constructions; invalidity/infeasibility MUST be communicated via visual indicators and panels.
 - **FR-025**: The user interface text and all documentation MUST be in English.
 - **FR-026**: The system MUST distinguish between user-created (generative) projections and derived projections and render them with different visual emphasis.
-- **FR-027**: The system MUST automatically persist project changes without requiring the user to explicitly save.
+- **FR-027**: The system MUST automatically persist project changes to Google Drive without requiring the user to explicitly save. Changes are debounced (e.g., 2 seconds after last change) to minimize API calls.
 - **FR-028**: The system MUST support opening an existing project and restoring planes, elements, actions, dependencies, and view settings.
 - **FR-029**: The system MUST support creating a new project.
 - **FR-030**: The system MUST provide a way to list available projects and choose one to open.
