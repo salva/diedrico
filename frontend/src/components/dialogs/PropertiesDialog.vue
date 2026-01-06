@@ -50,20 +50,24 @@
                 type="color"
                 v-model="editableColor"
                 :disabled="!colorOverride"
+                @blur="colorOverride && validateColor(editableColor)"
               />
               <input
                 type="text"
                 v-model="editableColor"
                 pattern="^#[0-9A-Fa-f]{6}$"
                 class="hex-input"
+                :class="{ 'input-error': colorError }"
                 :disabled="!colorOverride"
                 placeholder="#000000"
+                @blur="colorOverride && validateColor(editableColor)"
               />
               <label class="override-checkbox">
                 <input type="checkbox" v-model="colorOverride" />
                 Override
               </label>
             </div>
+            <div v-if="colorError" class="error-message">{{ colorError }}</div>
 
             <!-- Line Width (for non-point elements) -->
             <div class="control-row" v-if="elementType !== '2D Point'">
@@ -76,6 +80,7 @@
                 step="0.1"
                 v-model.number="editableLineWidth"
                 :disabled="!lineWidthOverride"
+                @change="lineWidthOverride && validateLineWidth(editableLineWidth)"
               />
               <input
                 type="number"
@@ -84,13 +89,16 @@
                 max="5.0"
                 step="0.1"
                 class="number-input"
+                :class="{ 'input-error': lineWidthError }"
                 :disabled="!lineWidthOverride"
+                @blur="lineWidthOverride && validateLineWidth(editableLineWidth)"
               />
               <label class="override-checkbox">
                 <input type="checkbox" v-model="lineWidthOverride" />
                 Override
               </label>
             </div>
+            <div v-if="lineWidthError" class="error-message">{{ lineWidthError }}</div>
 
             <!-- Line Style (for line/segment/guide elements) -->
             <div class="control-row" v-if="hasLineStyle">
@@ -98,7 +106,9 @@
               <select
                 id="style-input"
                 v-model="editableLineStyle"
+                :class="{ 'input-error': lineStyleError }"
                 :disabled="!lineStyleOverride"
+                @change="lineStyleOverride && validateLineStyle(editableLineStyle)"
               >
                 <option value="solid">Solid</option>
                 <option value="dashed">Dashed</option>
@@ -109,6 +119,7 @@
                 Override
               </label>
             </div>
+            <div v-if="lineStyleError" class="error-message">{{ lineStyleError }}</div>
 
             <!-- Visibility -->
             <div class="control-row">
@@ -183,6 +194,11 @@ const colorOverride = ref<boolean>(false);
 const lineWidthOverride = ref<boolean>(false);
 const lineStyleOverride = ref<boolean>(false);
 const visibilityOverride = ref<boolean>(false);
+
+// Validation state
+const colorError = ref<string>('');
+const lineWidthError = ref<string>('');
+const lineStyleError = ref<string>('');
 
 // Computed properties for display
 const elementLabel = computed(() => {
@@ -348,6 +364,49 @@ function loadElementProperties() {
   lineWidthOverride.value = false;
   lineStyleOverride.value = false;
   visibilityOverride.value = false;
+  
+  // Clear validation errors
+  colorError.value = '';
+  lineWidthError.value = '';
+  lineStyleError.value = '';
+}
+
+/**
+ * Validate color hex format
+ */
+function validateColor(color: string): boolean {
+  const hexPattern = /^#[0-9A-Fa-f]{6}$/;
+  if (!hexPattern.test(color)) {
+    colorError.value = 'Invalid hex color format (e.g., #000000)';
+    return false;
+  }
+  colorError.value = '';
+  return true;
+}
+
+/**
+ * Validate line width range
+ */
+function validateLineWidth(width: number): boolean {
+  if (width < 0.5 || width > 5.0) {
+    lineWidthError.value = 'Line width must be between 0.5 and 5.0';
+    return false;
+  }
+  lineWidthError.value = '';
+  return true;
+}
+
+/**
+ * Validate line style
+ */
+function validateLineStyle(style: string): boolean {
+  const validStyles = ['solid', 'dashed', 'dotted'];
+  if (!validStyles.includes(style)) {
+    lineStyleError.value = 'Invalid line style';
+    return false;
+  }
+  lineStyleError.value = '';
+  return true;
 }
 
 function handleCancel() {
@@ -356,6 +415,25 @@ function handleCancel() {
 
 function handleSave() {
   if (!props.elementId) return;
+  
+  // Validate all overridden properties
+  let isValid = true;
+  
+  if (colorOverride.value && !validateColor(editableColor.value)) {
+    isValid = false;
+  }
+  if (lineWidthOverride.value && !validateLineWidth(editableLineWidth.value)) {
+    isValid = false;
+  }
+  if (lineStyleOverride.value && !validateLineStyle(editableLineStyle.value)) {
+    isValid = false;
+  }
+  
+  // Don't save if validation failed
+  if (!isValid) {
+    console.warn('[PropertiesDialog] Validation failed');
+    return;
+  }
   
   const changes: StyleChanges = {
     elementId: props.elementId,
@@ -616,5 +694,19 @@ input:disabled,
 select:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Validation error states */
+.input-error {
+  border-color: #dc3545 !important;
+  background-color: #fff5f5;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: -8px;
+  margin-bottom: 8px;
+  margin-left: 100px;
 }
 </style>
