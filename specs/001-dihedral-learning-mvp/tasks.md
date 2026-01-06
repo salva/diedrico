@@ -1286,17 +1286,17 @@ class World {
 
 **⚠️ CRITICAL**: Read [ui-spec.md §Visual Style Inheritance](./ui-spec.md#visual-style-inheritance) to understand inheritance vs override system.
 
-- [ ] T187 [P] Create PropertiesDialog.vue component in frontend/src/components/dialogs/
-- [ ] T188 Show dialog when user double-clicks object or clicks "Properties" button
-- [ ] T189 Display all editable properties based on element type:
+- [X] T187 [P] Create PropertiesDialog.vue component in frontend/src/components/dialogs/
+- [X] T188 Show dialog when user double-clicks object or clicks "Properties" button
+- [X] T189 Display all editable properties based on element type:
   - Point: x, y, label, visibility
   - Line/Segment: color, stroke width, line style (solid/dashed)
   - Circle: color, stroke width, fill color, fill opacity
   - Guide: color, dash pattern
-- [ ] T190 [P] Create color picker component for color selection
-- [ ] T191 Create stroke width slider input
-- [ ] T192 Create line style selector (solid, dashed, dotted)
-- [ ] T193 Apply property changes to selected object(s) immediately (or on "Apply" button)
+- [X] T190 [P] Create color picker component for color selection
+- [X] T191 Create stroke width slider input
+- [X] T192 Create line style selector (solid, dashed, dotted)
+- [X] T193 Apply property changes to selected object(s) immediately (or on "Apply" button)
 - [ ] T194 Implement style inheritance system (objects inherit from tool defaults)
 - [ ] T195 Add "Override inherited style" checkbox for each property
 - [ ] T196 Add "Reset to inherited" button to restore default styles
