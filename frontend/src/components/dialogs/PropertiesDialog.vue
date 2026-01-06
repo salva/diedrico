@@ -187,7 +187,8 @@ const visibilityOverride = ref<boolean>(false);
 // Computed properties for display
 const elementLabel = computed(() => {
   if (!props.elementId || !props.world) return 'Unknown';
-  // TODO: Get element label from world
+  
+  // Get element label/ID
   return props.elementId;
 });
 
@@ -195,37 +196,125 @@ const elementType = computed(() => {
   if (!props.elementId || !props.world) return 'Unknown';
   
   // Determine element type by checking which collection contains it
-  if (props.elementId.startsWith('point2d_')) return '2D Point';
-  if (props.elementId.startsWith('line2d_')) return '2D Line';
-  if (props.elementId.startsWith('segment2d_')) return '2D Segment';
-  if (props.elementId.startsWith('circle2d_')) return '2D Circle';
-  if (props.elementId.startsWith('guide2d_')) return '2D Guide';
+  const point = props.world.getPoint2DById(props.elementId);
+  if (point) return '2D Point';
+  
+  const line = props.world.getLine2DById(props.elementId);
+  if (line) return '2D Line';
+  
+  const segment = props.world.getSegment2DById(props.elementId);
+  if (segment) return '2D Segment';
+  
+  const circle = props.world.getCircle2DById(props.elementId);
+  if (circle) return '2D Circle';
+  
+  const guide = props.world.getGuide2DById(props.elementId);
+  if (guide) return '2D Guide';
   
   return 'Unknown';
 });
 
 const planeId = computed(() => {
   if (!props.elementId || !props.world) return null;
-  // TODO: Get plane ID from element
+  
+  // Get plane ID from element
+  const point = props.world.getPoint2DById(props.elementId);
+  if (point) return point.planeId;
+  
+  const line = props.world.getLine2DById(props.elementId);
+  if (line) return line.planeId;
+  
+  const segment = props.world.getSegment2DById(props.elementId);
+  if (segment) return segment.planeId;
+  
+  const circle = props.world.getCircle2DById(props.elementId);
+  if (circle) return circle.planeId;
+  
+  const guide = props.world.getGuide2DById(props.elementId);
+  if (guide) return guide.planeId;
+  
   return null;
 });
 
 const coordinates = computed(() => {
   if (!props.elementId || !props.world) return null;
-  // TODO: Get coordinates from element realization
+  
+  // Get coordinates from realization
+  const point = props.world.getPoint2DById(props.elementId);
+  if (point) {
+    const realization = props.world.getPoint2DRealization(props.elementId);
+    if (realization) {
+      const pos = realization.getPosition();
+      return `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`;
+    }
+  }
+  
+  const circle = props.world.getCircle2DById(props.elementId);
+  if (circle) {
+    const realization = props.world.getCircle2DRealization(props.elementId);
+    if (realization) {
+      const center = realization.center;
+      return `Center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}), Radius: ${realization.radius.toFixed(2)}`;
+    }
+  }
+  
+  // Lines, segments, and guides don't show coordinates directly
   return null;
 });
 
 const dependencies = computed(() => {
   if (!props.elementId || !props.world) return [];
-  // TODO: Get dependencies from element
+  
+  // Get dependencies from element
+  const point = props.world.getPoint2DById(props.elementId);
+  if (point) {
+    // Check if it's an intersection point
+    if (point.type === 'intersection') {
+      const intersectionPoint = point as any; // Type assertion for intersection-specific properties
+      return [intersectionPoint.element1Id, intersectionPoint.element2Id].filter(Boolean);
+    }
+  }
+  
+  const line = props.world.getLine2DById(props.elementId);
+  if (line) {
+    const lineByPoints = line as any;
+    if (lineByPoints.point1Id && lineByPoints.point2Id) {
+      return [lineByPoints.point1Id, lineByPoints.point2Id];
+    }
+  }
+  
+  const segment = props.world.getSegment2DById(props.elementId);
+  if (segment) {
+    const segmentByPoints = segment as any;
+    if (segmentByPoints.point1Id && segmentByPoints.point2Id) {
+      return [segmentByPoints.point1Id, segmentByPoints.point2Id];
+    }
+  }
+  
+  const circle = props.world.getCircle2DById(props.elementId);
+  if (circle) {
+    const circleByCenterRadius = circle as any;
+    if (circleByCenterRadius.centerId) {
+      return [circleByCenterRadius.centerId];
+    }
+  }
+  
+  const guide = props.world.getGuide2DById(props.elementId);
+  if (guide) {
+    const guidePerp = guide as any;
+    if (guidePerp.lineId) {
+      return [guidePerp.lineId];
+    }
+  }
+  
   return [];
 });
 
 const createdBy = computed(() => {
   if (!props.elementId || !props.world) return null;
   // TODO: Get creation action from ProcessTree
-  return null;
+  // For now, just show placeholder
+  return 'Action in ProcessTree';
 });
 
 const hasLineStyle = computed(() => {
