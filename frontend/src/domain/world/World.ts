@@ -464,14 +464,13 @@ export class World {
       return undefined;
     }
 
-    // Helper to get point position - lines need 2D point positions as Vector3
-    const getPoint = (pointId: string): Vector3 | null => {
+    // Helper to get point realization - lines need full realization to check feasibility
+    const getPoint = (pointId: string): Point2DRealization2D | null => {
       const pointRealization = this.getPoint2DRealization(pointId);
       if (!pointRealization) {
         return null;
       }
-      // Return position Vector3 directly - no coordinate decomposition
-      return pointRealization.position;
+      return pointRealization;
     };
 
     // Compute realization from line definition

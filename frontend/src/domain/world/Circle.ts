@@ -24,10 +24,12 @@ export type Circle2DType = 'by-center-and-radius' | 'by-center-and-point' | 'by-
 export class Circle2DRealization2D {
   center: Vector3;  // Center in plane coordinates (u, v, 1)
   radius: number;   // Radius in plane intrinsic units
+  feasible: boolean;  // Whether the geometric computation succeeded
 
-  constructor(center: Vector3, radius: number) {
+  constructor(center: Vector3, radius: number, feasible: boolean = true) {
     this.center = center;
     this.radius = radius;
+    this.feasible = feasible;
   }
 
   /**
@@ -79,9 +81,9 @@ export abstract class Circle2D {
 
   /**
    * Calculate 2D realization - compute center and radius
-   * @param getPoint Function to retrieve point positions by ID
+   * @param getPoint Function to retrieve point realizations by ID
    */
-  abstract realize2D(getPoint: (id: string) => Vector3 | null): Circle2DRealization2D | null;
+  abstract realize2D(getPoint: (id: string) => import('./Point').Point2DRealization2D | null): Circle2DRealization2D | null;
 }
 
 /**

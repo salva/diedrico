@@ -32,8 +32,8 @@ export type Guide2DType = 'perpendicular-to-line';
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
 export class Guide2DRealization2D extends Line2DRealization2D {
-  constructor(point: Vector3, direction: Vector3) {
-    super(point, direction);
+  constructor(point: Vector3, direction: Vector3, feasible: boolean = true) {
+    super(point, direction, feasible);
   }
 }
 

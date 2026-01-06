@@ -35,11 +35,13 @@ export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'half-
 export class Line2DRealization2D {
   point: Vector3;      // A point on the line (x, y, 1) in homogeneous coords
   direction: Vector3;  // Direction vector (dx, dy, 0) - normalized
+  feasible: boolean;   // Whether the geometric computation succeeded
   
-  constructor(point: Vector3, direction: Vector3) {
+  constructor(point: Vector3, direction: Vector3, feasible: boolean = true) {
     this.point = point;
     // Normalize direction for consistency using vector operations
     this.direction = direction.clone().normalize();
+    this.feasible = feasible;
   }
   
   /**
@@ -81,7 +83,7 @@ export abstract class Line2D {
    * Calculate the 2D realization (line equation) for this line
    * Returns line equation in the projection plane's intrinsic coordinates
    */
-  abstract realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization2D | null;
+  abstract realize2D(getPoint: (id: string) => import('./Point').Point2DRealization2D | null): Line2DRealization2D | null;
 }
 
 /**
@@ -121,14 +123,24 @@ export class Line2DByTwoPoints extends Line2D {
    * 
    * Much simpler than implicit equation and easier to transform!
    */
-  realize2D(getPoint: (id: string) => Vector3 | null): Line2DRealization2D | null {
+  realize2D(getPoint: (id: string) => import('./Point').Point2DRealization2D | null): Line2DRealization2D | null {
     // Get both points
-    const p1 = getPoint(this.point1Id);
-    const p2 = getPoint(this.point2Id);
+    const p1Realization = getPoint(this.point1Id);
+    const p2Realization = getPoint(this.point2Id);
     
-    if (!p1 || !p2) {
+    if (!p1Realization || !p2Realization) {
       return null;  // Cannot compute line without both points
     }
+    
+    // Check if parent points are infeasible - propagate infeasibility
+    if (!p1Realization.feasible || !p2Realization.feasible) {
+      console.warn('[Line2DByTwoPoints] Parent point is infeasible, marking line as infeasible');
+      // Return infeasible line with dummy geometry
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    const p1 = p1Realization.position;
+    const p2 = p2Realization.position;
     
     // Compute direction vector using vector subtraction
     const direction = p2.clone().sub(p1);
@@ -136,11 +148,12 @@ export class Line2DByTwoPoints extends Line2D {
     
     // Check for degenerate line using vector lengthSq
     if (direction.lengthSq() < 1e-10) {
-      return null;  // Points are too close (degenerate line)
+      console.warn('[Line2DByTwoPoints] Points are too close (degenerate line)');
+      return new Line2DRealization2D(p1.clone(), new Vector3(1, 0, 0), false);
     }
     
     // Create parametric representation: point + direction
-    return new Line2DRealization2D(p1.clone(), direction);
+    return new Line2DRealization2D(p1.clone(), direction, true);
   }
 }
 

@@ -22,10 +22,12 @@ export type Segment2DType = 'by-points';
 export class Segment2DRealization2D {
   point1: Vector3;  // First endpoint in plane coordinates (u, v, 1)
   point2: Vector3;  // Second endpoint in plane coordinates (u, v, 1)
+  feasible: boolean;  // Whether the geometric computation succeeded
 
-  constructor(point1: Vector3, point2: Vector3) {
+  constructor(point1: Vector3, point2: Vector3, feasible: boolean = true) {
     this.point1 = point1;
     this.point2 = point2;
+    this.feasible = feasible;
   }
 
   /**
@@ -78,9 +80,9 @@ export abstract class Segment2D {
   /**
    * Calculate the 2D realization (endpoints) for this segment
    * Returns endpoints in the projection plane's intrinsic coordinates
-   * @param getPoint Function to retrieve point positions by ID
+   * @param getPoint Function to retrieve point realizations by ID
    */
-  abstract realize2D(getPoint: (id: string) => Vector3 | null): Segment2DRealization2D | null;
+  abstract realize2D(getPoint: (id: string) => import('./Point').Point2DRealization2D | null): Segment2DRealization2D | null;
 }
 
 /**

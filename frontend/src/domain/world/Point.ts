@@ -29,9 +29,11 @@ export type Point2DType = 'free' | 'intersection' | 'sibling-intersection';
  */
 export class Point2DRealization2D {
   position: Vector3;  // Position in plane coordinates (u, v, 1) - ONLY NUMERIC DATA
+  feasible: boolean;  // Whether the geometric computation succeeded
 
-  constructor(position: Vector3) {
+  constructor(position: Vector3, feasible: boolean = true) {
     this.position = position;
+    this.feasible = feasible;
   }
 
   /**
@@ -49,9 +51,11 @@ export class Point2DRealization2D {
  */
 export class Point3DRealization3D {
   position: Vector4;  // Position in 3D space (x, y, z, 1) - ONLY NUMERIC DATA
+  feasible: boolean;  // Whether the geometric computation succeeded
 
-  constructor(position: Vector4) {
+  constructor(position: Vector4, feasible: boolean = true) {
     this.position = position;
+    this.feasible = feasible;
   }
 
   /**
@@ -190,13 +194,13 @@ export class IntersectionPoint2D extends Point2D {
    * 
    * @param getLine Callback to get line realizations
    * @param world World instance to get circle realizations
-   * @returns Point2DRealization2D with intersection point, or origin if computation fails
+   * @returns Point2DRealization2D with intersection point, or infeasible if computation fails
    */
   realize2D(getLine?: (id: string) => Line2DRealization2D | null, world?: World): Point2DRealization2D {
     // Validate callbacks
     if (!getLine || !world) {
       console.warn('[IntersectionPoint2D] realize2D called without required callbacks');
-      return new Point2DRealization2D(new Vector3(0, 0, 1));
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
     // Try to get elements as lines
@@ -204,6 +208,52 @@ export class IntersectionPoint2D extends Point2D {
     const line2 = getLine(this.element2Id);
     
     // Try to get elements as circles
+    const circle1 = world.getCircle2DRealization(this.element1Id);
+    const circle2 = world.getCircle2DRealization(this.element2Id);
+    
+    // Check if parent elements are infeasible - propagate infeasibility
+    if ((line1 && !line1.feasible) || (line2 && !line2.feasible) || 
+        (circle1 && !circle1.feasible) || (circle2 && !circle2.feasible)) {
+      console.warn('[IntersectionPoint2D] Parent element is infeasible, marking this as infeasible');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    // Determine intersection type and compute
+    if (line1 && line2) {
+      // Line-Line intersection
+      const result = intersectLineLine(line1, line2);
+      
+      if (result.type !== 'point' || !result.point) {
+        console.warn('[IntersectionPoint2D] Lines do not intersect (parallel or coincident):', result.type, result.message);
+        return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+      }
+      
+      return new Point2DRealization2D(result.point, true);
+      
+    } else if (line1 && circle2) {
+      // Line-Circle intersection
+      const result = intersectLineCircle(line1, circle2);
+      
+      if (result.points.length === 0) {
+        console.warn('[IntersectionPoint2D] Line and circle do not intersect');
+        return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+      }
+      
+      // Return the point at the specified index
+      const point = result.points[Math.min(this.index, result.points.length - 1)];
+      return new Point2DRealization2D(point, true);
+      
+    } else if (circle1 && line2) {
+      // Circle-Line intersection (same as Line-Circle)
+      const result = intersectLineCircle(line2, circle1);
+      
+      if (result.points.length === 0) {
+        console.warn('[IntersectionPoint2D] Circle and line do not intersect');
+        return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+      }
+      
+      const point = result.points[Math.min(this.index, result.points.length - 1)];
+      return new Point2DRealization2D(point, true);
     const circle1 = world.getCircle2DRealization(this.element1Id);
     const circle2 = world.getCircle2DRealization(this.element2Id);
     
@@ -250,18 +300,18 @@ export class IntersectionPoint2D extends Point2D {
       
       if (result.points.length === 0) {
         console.warn('[IntersectionPoint2D] Circles do not intersect:', result.type);
-        return new Point2DRealization2D(new Vector3(0, 0, 1));
+        return new Point2DRealization2D(new Vector3(0, 0, 1), false);
       }
       
       const point = result.points[Math.min(this.index, result.points.length - 1)];
-      return new Point2DRealization2D(point);
+      return new Point2DRealization2D(point, true);
       
     } else {
       console.warn(
         '[IntersectionPoint2D] Cannot compute intersection: unsupported element combination or missing realizations',
         { element1Id: this.element1Id, element2Id: this.element2Id, line1, line2, circle1, circle2 }
       );
-      return new Point2DRealization2D(new Vector3(0, 0, 1));
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
   }
 }
