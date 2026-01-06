@@ -1265,8 +1265,8 @@ class World {
 - [X] T182 Clear hover highlight on mouseout
 - [X] T183 Ensure hover highlight doesn't interfere with selection highlight
 - [ ] T184 Show snap preview when hovering near points (for snapping feedback)
-- [ ] T185 [P] Unit test for useHoverHighlight in frontend/tests/unit/composables/hoverHighlight.spec.ts
-- [ ] T186 [P] E2E test for hover highlighting in frontend/tests/e2e/hover.spec.ts
+- [X] T185 [P] Unit test for useHoverHighlight in frontend/tests/unit/composables/hoverHighlight.spec.ts
+- [X] T186 [P] E2E test for hover highlighting in frontend/tests/e2e/hover.spec.ts
 
 **Checkpoint**: User can see visual feedback on hover (US6 partial)
 

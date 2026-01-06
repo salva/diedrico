@@ -24,6 +24,7 @@
       :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
       preserveAspectRatio="xMidYMid meet"
       @click="handleCanvasClick"
+      @dblclick="handleDoubleClick"
       @mousemove="handleMouseMove"
     >
       <!-- Background grid -->
@@ -95,6 +96,15 @@
     >
       {{ hoverHighlight.hoveredElementLabel.value }}
     </div>
+    
+    <!-- Properties Dialog -->
+    <PropertiesDialog
+      :is-open="showPropertiesDialog"
+      :element-id="propertiesElementId"
+      :world="world"
+      @close="showPropertiesDialog = false"
+      @save="handleSaveProperties"
+    />
   </div>
 </template>
 
@@ -142,6 +152,7 @@ import { useSelectionStore } from '@/stores/selectionStore';
 import { useViewport } from '@/composables/useViewport';
 import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
 import { screenTo3D } from '@/utils/coordinateTransform';
+import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
 import type { ITool } from '@/tools/ITool';
 
 // Define emits
@@ -158,6 +169,10 @@ const activePlane = ref<'proj_plane_H' | 'proj_plane_V'>('proj_plane_H');
 // Dynamic canvas dimensions - updated based on container size
 const canvasWidth = ref(1600);
 const canvasHeight = ref(1000);
+
+// Properties dialog state
+const showPropertiesDialog = ref(false);
+const propertiesElementId = ref<string | null>(null);
 
 // Viewport transformation (pan/zoom)
 const viewStore = useViewStore();
@@ -547,6 +562,51 @@ function handleCanvasClick(event: MouseEvent) {
   } else {
     console.error('[SvgCanvas] Tool operation failed:', result.message);
   }
+}
+
+/**
+ * Handle double-click to show properties dialog
+ * T188: Show properties dialog when user double-clicks an element
+ */
+function handleDoubleClick(event: MouseEvent) {
+  // Get SVG element for coordinate conversion
+  if (!svgElement.value) return;
+  
+  // Transform screen coordinates to SVG coordinates
+  const svg = svgElement.value;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return;
+  
+  const canvasPoint = pt.matrixTransform(ctm.inverse());
+  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  
+  // Get plane transform for hit testing
+  const planeTransforms = getPlaneTransformsForInput();
+  const paperToPlane = planeTransforms.get(activePlane.value);
+  
+  // Hit test to find element under cursor
+  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+  
+  if (hit) {
+    // Element found - show properties dialog
+    propertiesElementId.value = hit.elementId;
+    showPropertiesDialog.value = true;
+    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+  }
+}
+
+/**
+ * Handle property changes from the properties dialog
+ * T193: Apply property changes and record as command
+ */
+function handleSaveProperties(changes: any) {
+  console.log('[SvgCanvas] Saving property changes:', changes);
+  // TODO: Implement property change command
+  // For now, just log the changes
 }
 
 /**
