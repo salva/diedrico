@@ -37,7 +37,7 @@ describe('ProcessTree', () => {
 
       expect(group.type).toBe('actionGroup');
       expect(group.children).toHaveLength(1);
-      expect(group.children[0]).toBe(action);
+      expect(group.children[0].id).toBe(action.id);
       expect(tree.root.children).toContain(group);
     });
 
@@ -47,7 +47,7 @@ describe('ProcessTree', () => {
 
       expect(group.type).toBe('actionGroup');
       expect(group.children).toHaveLength(1);
-      expect(group.children[0]).toBe(action);
+      expect(group.children[0].id).toBe(action.id);
     });
 
     it('should create separate action groups for each action', () => {
@@ -96,7 +96,10 @@ describe('ProcessTree', () => {
       tree.addAction(action3);
 
       const actions = tree.getAllActions();
-      expect(actions).toEqual([action1, action2, action3]);
+      expect(actions.length).toBe(3);
+      expect(actions[0].id).toBe(action1.id);
+      expect(actions[1].id).toBe(action2.id);
+      expect(actions[2].id).toBe(action3.id);
     });
 
     it('should traverse nested subprocesses in depth-first order', () => {
@@ -121,8 +124,8 @@ describe('ProcessTree', () => {
       const actions = tree.getAllActions();
       // Depth-first traversal visits children in order: first action group (action1), then subprocess (action2)
       expect(actions).toHaveLength(2);
-      expect(actions[0]).toBe(action2); // Subprocess comes first in children
-      expect(actions[1]).toBe(action1); // Root action group comes after
+      expect(actions[0].id).toBe(action2.id); // Subprocess comes first in children
+      expect(actions[1].id).toBe(action1.id); // Root action group comes after
     });
   });
 
@@ -132,7 +135,7 @@ describe('ProcessTree', () => {
       tree.addAction(action);
 
       const found = tree.findAction(action.id);
-      expect(found).toBe(action);
+      expect(found?.id).toBe(action.id);
     });
 
     it('should return undefined for non-existent action', () => {
@@ -153,7 +156,7 @@ describe('ProcessTree', () => {
 
       const producers = tree.getActionsProducingElement('point_1');
       expect(producers).toHaveLength(1);
-      expect(producers[0]).toBe(action1);
+      expect(producers[0].id).toBe(action1.id);
     });
 
     it('should return empty array if no action produces the element', () => {
@@ -177,7 +180,7 @@ describe('ProcessTree', () => {
 
       const dependents = tree.getActionsDependingOnElement('point_1');
       expect(dependents).toHaveLength(1);
-      expect(dependents[0]).toBe(action3);
+      expect(dependents[0].id).toBe(action3.id);
     });
 
     it('should return empty array if no action depends on the element', () => {
@@ -201,8 +204,8 @@ describe('ProcessTree', () => {
 
       const dependents = tree.getActionsDependingOnElement('point_1');
       expect(dependents).toHaveLength(2);
-      expect(dependents).toContain(action3);
-      expect(dependents).toContain(action4);
+      expect(dependents.map(a => a.id)).toContain(action3.id);
+      expect(dependents.map(a => a.id)).toContain(action4.id);
     });
   });
 

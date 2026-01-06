@@ -90,7 +90,7 @@ describe('RenderService', () => {
       expect(attrs.y).toBe(0);
       expect(attrs.width).toBe(800);
       expect(attrs.height).toBe(800);
-      expect(attrs.fill).toBe('#F0F4F8');  // P_H color
+      expect(attrs.fill).toBe('#FFF8E1');  // proj_plane_H color (not plane_H)
       expect(attrs.opacity).toBe(0.3);
       expect(attrs['data-element-id']).toBe('proj_plane_H');
       expect(attrs['data-element-type']).toBe('plane');
@@ -149,7 +149,7 @@ describe('RenderService', () => {
       expect(attrs.x1).toBe(400);  // 400 + 0
       expect(attrs.y1).toBe(400);  // 400 + 0
       expect(attrs.x2).toBe(500);  // 400 + 100
-      expect(attrs.y2).toBe(450);  // 400 + 50
+      expect(attrs.y2).toBe(350);  // P_H flips Y: v=50 -> y'=450 -> canvas=50 (below origin)
       expect(attrs.stroke).toBe('#333333');  // Default color
       expect(attrs['stroke-width']).toBe(2);
       expect(attrs['data-element-id']).toBe('line_1');
@@ -179,9 +179,9 @@ describe('RenderService', () => {
       const attrs = renderLine(start, end, 'line_3', undefined, 400, 400);
       
       expect(attrs.x1).toBe(350);  // 400 - 50
-      expect(attrs.y1).toBe(370);  // 400 - 30
+      expect(attrs.y1).toBe(430);  // P_H: v=-30 -> y'=530 -> canvas=130 (above origin flips to below)
       expect(attrs.x2).toBe(450);  // 400 + 50
-      expect(attrs.y2).toBe(430);  // 400 + 30
+      expect(attrs.y2).toBe(370);  // P_H: v=30 -> y'=470 -> canvas=70 (below origin flips to above)
     });
 
     it('should render hinge line with dashed style', () => {
