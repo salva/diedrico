@@ -369,15 +369,90 @@ function handleClearHighlight() {
 }
 
 /**
- * Handle keyboard shortcuts for undo/redo
+ * Handle keyboard shortcuts
  * Ctrl+Z: Undo
  * Ctrl+Y or Ctrl+Shift+Z: Redo
+ * Ctrl+N: New project (show startup dialog)
+ * Ctrl+O: Open project (show startup dialog)
+ * Esc: Cancel current operation/deselect
+ * Delete/Backspace: Delete selected objects
+ * P/L/S/C/G: Tool shortcuts (Point/Line/Segment/Circle/Guide)
  */
 function handleKeyDown(event: KeyboardEvent) {
   // Check for Ctrl (Windows/Linux) or Cmd (Mac)
   const isModifier = event.ctrlKey || event.metaKey;
   
+  // Esc: Cancel current operation or deselect (T272)
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    toolStore.resetTool();
+    return;
+  }
+  
+  // Delete/Backspace: Delete selected objects (T271)
+  if (event.key === 'Delete' || event.key === 'Backspace') {
+    // Only if not in an input field
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      return; // Allow default behavior in input fields
+    }
+    event.preventDefault();
+    // TODO: Implement delete selected objects
+    console.log('Delete selected objects (not yet implemented)');
+    return;
+  }
+  
+  // Tool shortcuts without modifier (T273)
+  if (!isModifier && !event.shiftKey && !event.altKey) {
+    const target = event.target as HTMLElement;
+    // Only activate tool shortcuts if not in an input field
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      return;
+    }
+    
+    switch (event.key.toLowerCase()) {
+      case 'p':
+        event.preventDefault();
+        toolStore.setTool('point');
+        return;
+      case 'l':
+        event.preventDefault();
+        toolStore.setTool('line');
+        return;
+      case 's':
+        event.preventDefault();
+        toolStore.setTool('segment');
+        return;
+      case 'c':
+        event.preventDefault();
+        toolStore.setTool('circle');
+        return;
+      case 'g':
+        event.preventDefault();
+        toolStore.setTool('guide');
+        return;
+    }
+  }
+  
+  // Shortcuts with modifier key
   if (!isModifier) return;
+  
+  // Ctrl+N: New project (T269)
+  if (event.key === 'n') {
+    event.preventDefault();
+    // Reset world and show startup dialog
+    showStartupDialog.value = true;
+    currentProjectName.value = null;
+    currentFileId.value = null;
+    return;
+  }
+  
+  // Ctrl+O: Open project (T268)
+  if (event.key === 'o') {
+    event.preventDefault();
+    showStartupDialog.value = true;
+    return;
+  }
   
   // Undo: Ctrl+Z (without Shift)
   if (event.key === 'z' && !event.shiftKey && commandStack.canUndo()) {
