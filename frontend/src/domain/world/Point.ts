@@ -16,8 +16,6 @@
  */
 
 import { Vector3, Vector4 } from 'three';
-import { applyMatrix3x4 } from '@/utils/threeUtils';
-import type { Line2DRealization2D } from './Line';
 import type { World } from './World';
 import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '../calculations/Intersections';
 
@@ -95,10 +93,9 @@ export abstract class Point2D {
    * Calculate the 2D realization (position) for this point
    * Returns position in the projection plane's intrinsic coordinates
    * 
-   * @param getLine Optional callback to get line realizations (needed for intersection points)
-   * @param world Optional World instance (needed for sibling intersection points)
+   * @param world World instance to query parent realizations
    */
-  abstract realize2D(getLine?: (id: string) => Line2DRealization2D | null, world?: World): Point2DRealization2D;
+  abstract realize2D(world: World): Point2DRealization2D;
 }
 
 /**
@@ -137,8 +134,8 @@ export class FreePoint2D extends Point2D {
   /**
    * Calculate 2D realization - for free points, just return the stored position
    */
-  realize2D(getLine?: (id: string) => Line2DRealization2D | null, world?: World): Point2DRealization2D {
-    return new Point2DRealization2D(this.position);
+  realize2D(_world: World): Point2DRealization2D {
+    return new Point2DRealization2D(this.position, true);
   }
 }
 
@@ -192,20 +189,14 @@ export class IntersectionPoint2D extends Point2D {
    * - Line-Circle intersection (index 0 or 1 for two possible intersection points)
    * - Circle-Circle intersection (index 0 or 1 for two possible intersection points)
    * 
-   * @param getLine Callback to get line realizations
-   * @param world World instance to get circle realizations
+   * @param world World instance to query parent realizations
    * @returns Point2DRealization2D with intersection point, or infeasible if computation fails
    */
-  realize2D(getLine?: (id: string) => Line2DRealization2D | null, world?: World): Point2DRealization2D {
-    // Validate callbacks
-    if (!getLine || !world) {
-      console.warn('[IntersectionPoint2D] realize2D called without required callbacks');
-      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-    }
-    
-    // Try to get elements as lines
-    const line1 = getLine(this.element1Id);
-    const line2 = getLine(this.element2Id);
+  realize2D(world: World): Point2DRealization2D {
+    // Try to get elements as lines (check both lines and guides collections)
+    // Guides extend Line2DRealization2D, so they can be used as lines
+    const line1 = world.getLine2DRealization(this.element1Id) || world.getGuide2DRealization(this.element1Id);
+    const line2 = world.getLine2DRealization(this.element2Id) || world.getGuide2DRealization(this.element2Id);
     
     // Try to get elements as circles
     const circle1 = world.getCircle2DRealization(this.element1Id);
@@ -254,45 +245,6 @@ export class IntersectionPoint2D extends Point2D {
       
       const point = result.points[Math.min(this.index, result.points.length - 1)];
       return new Point2DRealization2D(point, true);
-    const circle1 = world.getCircle2DRealization(this.element1Id);
-    const circle2 = world.getCircle2DRealization(this.element2Id);
-    
-    // Determine intersection type and compute
-    if (line1 && line2) {
-      // Line-Line intersection
-      const result = intersectLineLine(line1, line2);
-      
-      if (result.type !== 'point' || !result.point) {
-        console.warn('[IntersectionPoint2D] Lines do not intersect:', result.type, result.message);
-        return new Point2DRealization2D(new Vector3(0, 0, 1));
-      }
-      
-      return new Point2DRealization2D(result.point);
-      
-    } else if (line1 && circle2) {
-      // Line-Circle intersection
-      const result = intersectLineCircle(line1, circle2);
-      
-      if (result.points.length === 0) {
-        console.warn('[IntersectionPoint2D] Line and circle do not intersect');
-        return new Point2DRealization2D(new Vector3(0, 0, 1));
-      }
-      
-      // Return the point at the specified index
-      const point = result.points[Math.min(this.index, result.points.length - 1)];
-      return new Point2DRealization2D(point);
-      
-    } else if (circle1 && line2) {
-      // Circle-Line intersection (same as Line-Circle)
-      const result = intersectLineCircle(line2, circle1);
-      
-      if (result.points.length === 0) {
-        console.warn('[IntersectionPoint2D] Circle and line do not intersect');
-        return new Point2DRealization2D(new Vector3(0, 0, 1));
-      }
-      
-      const point = result.points[Math.min(this.index, result.points.length - 1)];
-      return new Point2DRealization2D(point);
       
     } else if (circle1 && circle2) {
       // Circle-Circle intersection
@@ -363,21 +315,21 @@ export class SiblingIntersectionPoint2D extends Point2D {
    * representations: both at v=0, parallel to X-axis. A point at (u, 0, 1) on the
    * HalfHingeLine2D in P_H maps to the same (u, 0, 1) in P_V.
    * 
-   * @param getLine Optional callback to get line realizations (not used)
-   * @param world Required: World instance to access primary point
+   * @param world World instance to access primary point realization
    * @returns Point2DRealization2D with same coordinates as primary
    */
-  realize2D(getLine?: (id: string) => Line2DRealization2D | null, world?: World): Point2DRealization2D {
-    if (!world) {
-      console.warn('[SiblingIntersectionPoint2D] realize2D called without world context');
-      return new Point2DRealization2D(new Vector3(0, 0, 1));
-    }
-
+  realize2D(world: World): Point2DRealization2D {
     // Get primary intersection point's 2D realization
     const primaryRealization = world.getPoint2DRealization(this.primaryIntersectionId);
     if (!primaryRealization) {
       console.warn(`[SiblingIntersectionPoint2D] Cannot get realization for primary ${this.primaryIntersectionId}`);
-      return new Point2DRealization2D(new Vector3(0, 0, 1));
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    // Propagate infeasibility from primary
+    if (!primaryRealization.feasible) {
+      console.warn('[SiblingIntersectionPoint2D] Primary point is infeasible, marking sibling as infeasible');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
 
     // For HalfHingeLine2D intersections: both planes use the same coordinate representation

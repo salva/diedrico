@@ -202,20 +202,9 @@ export class World {
       return undefined;
     }
 
-    // Helper to get line realizations for intersection points
-    // Checks both lines and guides (guides return Line2DRealization2D since Guide2DRealization2D extends it)
-    const getLine = (lineId: string): Line2DRealization2D | null => {
-      const lineRealization = this.getLine2DRealization(lineId);
-      if (lineRealization) return lineRealization;
-      
-      // Also check guides collection (Guide2DRealization2D extends Line2DRealization2D)
-      const guideRealization = this.getGuide2DRealization(lineId);
-      return guideRealization || null;
-    };
-
-    // Call realize2D() on the point with getLine callback and world context
-    // World context is needed for SiblingIntersectionPoint2D
-    realization = point.realize2D(getLine, this);
+    // Call realize2D() on the point with world context
+    // Point will query world for parent line/circle realizations as needed
+    realization = point.realize2D(this);
     
     // Cache the result
     this.pointRealizations2D.set(pointId, realization);
@@ -464,17 +453,9 @@ export class World {
       return undefined;
     }
 
-    // Helper to get point realization - lines need full realization to check feasibility
-    const getPoint = (pointId: string): Point2DRealization2D | null => {
-      const pointRealization = this.getPoint2DRealization(pointId);
-      if (!pointRealization) {
-        return null;
-      }
-      return pointRealization;
-    };
-
     // Compute realization from line definition
-    const realization = line.realize2D(getPoint);
+    // Line will query world for parent point realizations
+    const realization = line.realize2D(this);
     if (!realization) {
       return undefined;  // Cannot compute (e.g., missing dependency points)
     }
@@ -692,14 +673,9 @@ export class World {
       return undefined;
     }
 
-    // Get point positions for segment realization
-    const getPointPosition = (pointId: string): Vector3 | null => {
-      const pointRealization = this.getPoint2DRealization(pointId);
-      return pointRealization ? pointRealization.position : null;
-    };
-
-    // Call realize2D() on the segment
-    realization = segment.realize2D(getPointPosition) ?? undefined;
+    // Call realize2D() on the segment with world context
+    // Segment will query world for parent point realizations
+    realization = segment.realize2D(this) ?? undefined;
     
     if (realization) {
       // Cache the result
@@ -810,14 +786,9 @@ export class World {
       return undefined;
     }
 
-    // Get point positions for circle realization
-    const getPointPosition = (pointId: string): Vector3 | null => {
-      const pointRealization = this.getPoint2DRealization(pointId);
-      return pointRealization ? pointRealization.position : null;
-    };
-
-    // Call realize2D() on the circle
-    realization = circle.realize2D(getPointPosition) ?? undefined;
+    // Call realize2D() on the circle with world context
+    // Circle will query world for parent point realizations
+    realization = circle.realize2D(this) ?? undefined;
     
     if (realization) {
       // Cache the result
@@ -919,19 +890,9 @@ export class World {
       return undefined;
     }
 
-    // Get line and point realizations for guide computation
-    const getLineRealization = (lineId: string): Line2DRealization2D | null => {
-      const lineRealization = this.getLine2DRealization(lineId);
-      return lineRealization ?? null;
-    };
-
-    const getPointPosition = (pointId: string): Vector3 | null => {
-      const pointRealization = this.getPoint2DRealization(pointId);
-      return pointRealization ? pointRealization.position : null;
-    };
-
-    // Call realize2D() on the guide
-    realization = guide.realize2D(getLineRealization, getPointPosition) ?? undefined;
+    // Call realize2D() on the guide with world context
+    // Guide will query world for parent line and point realizations
+    realization = guide.realize2D(this) ?? undefined;
     
     if (realization) {
       // Cache the result

@@ -252,7 +252,7 @@ describe('Point2D', () => {
           'proj_plane_V'
         );
 
-        const realization = sibling.realize2D(undefined, world);
+        const realization = sibling.realize2D(world);
 
         expect(realization.position.x).toBe(50);
         expect(realization.position.y).toBe(0);
@@ -266,23 +266,24 @@ describe('Point2D', () => {
           'proj_plane_V'
         );
 
-        const realization1 = sibling.realize2D(undefined, world);
-        const realization2 = sibling.realize2D(undefined, world);
+        const realization1 = sibling.realize2D(world);
+        const realization2 = sibling.realize2D(world);
 
         expect(realization1.position).not.toBe(realization2.position);
         expect(realization1.position.x).toBe(realization2.position.x);
         expect(realization1.position.y).toBe(realization2.position.y);
       });
 
-      it('should return fallback coordinates when world not provided', () => {
+      it('should return infeasible coordinates when primary not found', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
-          primaryPointId,
+          'nonexistent-primary',
           'proj_plane_V'
         );
 
-        const realization = sibling.realize2D();
+        const realization = sibling.realize2D(world);
 
+        expect(realization.feasible).toBe(false);
         expect(realization.position.x).toBe(0);
         expect(realization.position.y).toBe(0);
         expect(realization.position.z).toBe(1);
@@ -295,8 +296,9 @@ describe('Point2D', () => {
           'proj_plane_V'
         );
 
-        const realization = sibling.realize2D(undefined, world);
+        const realization = sibling.realize2D(world);
 
+        expect(realization.feasible).toBe(false);
         expect(realization.position.x).toBe(0);
         expect(realization.position.y).toBe(0);
         expect(realization.position.z).toBe(1);
@@ -310,7 +312,7 @@ describe('Point2D', () => {
         );
 
         // Initial realization
-        const realization1 = sibling.realize2D(undefined, world);
+        const realization1 = sibling.realize2D(world);
         expect(realization1.position.x).toBe(50);
 
         // Update primary coordinates by creating a new point at same ID
@@ -318,7 +320,7 @@ describe('Point2D', () => {
         world.pointRealizations2D.delete(primaryPointId); // Clear cache
 
         // Sibling should reflect updated coordinates
-        const realization2 = sibling.realize2D(undefined, world);
+        const realization2 = sibling.realize2D(world);
         expect(realization2.position.x).toBe(75);
         expect(realization2.position.y).toBe(0);
       });
@@ -330,7 +332,7 @@ describe('Point2D', () => {
           'proj_plane_V'
         );
 
-        const realization = sibling.realize2D(undefined, world);
+        const realization = sibling.realize2D(world);
 
         expect(realization.position.z).toBe(1);
       });
@@ -352,7 +354,7 @@ describe('Point2D', () => {
           'proj_plane_V'
         );
 
-        const realizationSibling = sibling.realize2D(undefined, world);
+        const realizationSibling = sibling.realize2D(world);
         const realizationPrimary = world.getPoint2DRealization(primary.id);
 
         expect(realizationSibling.position.x).toBe(realizationPrimary!.position.x);

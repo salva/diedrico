@@ -83,7 +83,7 @@ export abstract class Line2D {
    * Calculate the 2D realization (line equation) for this line
    * Returns line equation in the projection plane's intrinsic coordinates
    */
-  abstract realize2D(getPoint: (id: string) => import('./Point').Point2DRealization2D | null): Line2DRealization2D | null;
+  abstract realize2D(world: import('./World').World): Line2DRealization2D | null;
 }
 
 /**
@@ -123,10 +123,10 @@ export class Line2DByTwoPoints extends Line2D {
    * 
    * Much simpler than implicit equation and easier to transform!
    */
-  realize2D(getPoint: (id: string) => import('./Point').Point2DRealization2D | null): Line2DRealization2D | null {
-    // Get both points
-    const p1Realization = getPoint(this.point1Id);
-    const p2Realization = getPoint(this.point2Id);
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Get both points from world
+    const p1Realization = world.getPoint2DRealization(this.point1Id);
+    const p2Realization = world.getPoint2DRealization(this.point2Id);
     
     if (!p1Realization || !p2Realization) {
       return null;  // Cannot compute line without both points
@@ -190,7 +190,7 @@ export class Line2DParallel extends Line2D {
     );
   }
   
-  realize2D(_getPoint: (id: string) => Vector3 | null): Line2DRealization2D | null {
+  realize2D(_world: import('./World').World): Line2DRealization2D | null {
     // TODO: Implement parallel line realization
     // Need access to reference line's realization
     return null;
@@ -230,7 +230,7 @@ export class Line2DPerpendicular extends Line2D {
     );
   }
   
-  realize2D(_getPoint: (id: string) => Vector3 | null): Line2DRealization2D | null {
+  realize2D(_world: import('./World').World): Line2DRealization2D | null {
     // TODO: Implement perpendicular line realization
     // Need access to reference line's realization
     return null;

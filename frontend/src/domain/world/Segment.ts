@@ -80,9 +80,9 @@ export abstract class Segment2D {
   /**
    * Calculate the 2D realization (endpoints) for this segment
    * Returns endpoints in the projection plane's intrinsic coordinates
-   * @param getPoint Function to retrieve point realizations by ID
+   * @param world World instance to access element realizations
    */
-  abstract realize2D(getPoint: (id: string) => import('./Point').Point2DRealization2D | null): Segment2DRealization2D | null;
+  abstract realize2D(world: import('./World').World): Segment2DRealization2D | null;
 }
 
 /**
@@ -119,21 +119,30 @@ export class Segment2DByPoints extends Segment2D {
   /**
    * Calculate 2D realization - get endpoints from point realizations
    */
-  realize2D(getPoint: (id: string) => Vector3 | null): Segment2DRealization2D | null {
-    // Get both endpoint positions
-    const p1 = getPoint(this.point1Id);
-    const p2 = getPoint(this.point2Id);
+  realize2D(world: import('./World').World): Segment2DRealization2D | null {
+    // Get both endpoint realizations from world
+    const p1Realization = world.getPoint2DRealization(this.point1Id);
+    const p2Realization = world.getPoint2DRealization(this.point2Id);
 
-    if (!p1 || !p2) {
+    if (!p1Realization || !p2Realization) {
       return null;  // Cannot compute segment without both endpoints
     }
+
+    // Check if parent points are infeasible - propagate infeasibility
+    if (!p1Realization.feasible || !p2Realization.feasible) {
+      console.warn('[Segment2DByPoints] Parent point is infeasible, marking segment as infeasible');
+      return new Segment2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 1), false);
+    }
+
+    const p1 = p1Realization.position;
+    const p2 = p2Realization.position;
 
     // Check for degenerate segment (endpoints coincident)
     if (p1.distanceToSquared(p2) < 1e-10) {
       console.warn(`Segment ${this.id}: endpoints are coincident`);
-      return null;  // Degenerate segment
+      return new Segment2DRealization2D(p1.clone(), p2.clone(), false);
     }
 
-    return new Segment2DRealization2D(p1.clone(), p2.clone());
+    return new Segment2DRealization2D(p1.clone(), p2.clone(), true);
   }
 }
