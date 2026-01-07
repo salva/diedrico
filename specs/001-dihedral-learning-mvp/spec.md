@@ -445,6 +445,38 @@ At a conceptual level, the UI is designed so that:
 - Hover is a non-destructive inspection mechanism (unified dependency-hover highlighting when enabled).
 - Point snapping assists selection without introducing implicit geometry.
 
+### Delete Operations
+
+**Description**: Delete selected elements via Delete or Backspace key.
+
+**Behavior**:
+- Deletes all currently selected elements
+- Automatically includes dependent elements (cascade deletion)
+- Uses DependencyService to compute transitive closure of dependencies
+- Operation is atomic (all elements deleted together or none)
+- Fully undoable via Ctrl+Z (restores all deleted elements)
+- Cannot delete fundamental elements (P_H, P_V, HL_HV)
+
+**Cascade Deletion Logic**:
+1. User selects element(s) to delete
+2. System computes all dependent elements using DependencyService
+3. Visual feedback highlights dependent elements in different color
+4. User presses Delete/Backspace
+5. DeleteElementsCommand executes atomically:
+   - Removes all selected elements
+   - Removes all dependent elements
+   - Stores state for undo
+6. Status bar shows: "X elements deleted (Y dependencies)"
+
+**Example**: Deleting a point that defines a line:
+- User selects point P1
+- System highlights line L1 (depends on P1) in cascade preview
+- User presses Delete
+- Both P1 and L1 are deleted atomically
+- Ctrl+Z restores both P1 and L1
+
+**Architecture**: All delete operations must go through CommandStack via DeleteElementsCommand. Direct World manipulation (e.g., `world.removePoint2D()`) is forbidden to ensure undo capability and dependency integrity.
+
 ### Naming Conventions (Visible in UI)
 
 The application uses consistent naming to support learning:

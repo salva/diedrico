@@ -516,6 +516,16 @@ interface Project {
 
 All mutations to World, ProcessTree, and ViewState happen through Commands, which are composed of reversible Operations.
 
+**Critical Architectural Principle**: Every geometric modification MUST go through the CommandStack. Direct manipulation of World state (e.g., calling `world.removePoint2D()` directly) is forbidden in application code. This ensures:
+- **Undo/redo capability**: All operations are reversible via Ctrl+Z/Y
+- **Dependency cascade**: Deletion automatically removes dependent elements
+- **Atomic transactions**: Multi-element operations succeed or fail as a unit
+- **Command history**: Operations appear in Actions panel
+- **Proper serialization**: Changes are saved in command-based format
+- **Data integrity**: World state remains consistent through validated operations
+
+UI operations (keyboard shortcuts, toolbar buttons) that modify geometry must create Commands and execute them via `commandStack.execute(command)`.
+
 **Relationships**:
 - 1 Project → 1 World
 - 1 Project → 1 ProcessTree

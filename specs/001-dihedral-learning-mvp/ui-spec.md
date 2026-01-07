@@ -1304,7 +1304,13 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 - **Space**: Toggle checkboxes, expand/collapse tree nodes
 - **Ctrl+Z / Cmd+Z**: Undo
 - **Ctrl+Y / Cmd+Y**: Redo
-- **Delete**: Delete selected element(s) (if allowed)
+- **Delete / Backspace**: Delete selected element(s) with cascade deletion
+  - Deletes all selected elements and their dependencies
+  - Uses DependencyService to find cascade elements automatically
+  - Operation is undoable (Ctrl+Z restores all deleted elements)
+  - Visual feedback shows dependent elements that will be deleted
+  - Status bar message: "X elements deleted (Y dependencies)"
+  - Cannot delete fundamental elements (projection planes, hinge line)
 
 ### Mouse/Cursor Conventions
 
