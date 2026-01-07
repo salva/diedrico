@@ -1550,12 +1550,6 @@ class World {
 
 **⚠️ CRITICAL**: Review [ui-spec.md §Keyboard Shortcuts](./ui-spec.md#keyboard-shortcuts) for complete shortcut specification.
 
-- [ ] T262 [P] Create SettingsDialog.vue component in frontend/src/components/dialogs/
-- [ ] T263 Add settings for snap radius (configurable distance for point snapping)
-- [ ] T264 Add settings for grid (enabled, spacing, color, snap-to-grid option)
-- [ ] T265 Add settings for default object styles (default colors, stroke widths)
-- [ ] T266 Add settings for 3D view (initial camera position, display options)
-- [ ] T267 Add keyboard shortcuts customization panel
 - [X] T268 Implement Ctrl+O keyboard shortcut for Open (shows startup dialog)
 - [X] T269 Implement Ctrl+N keyboard shortcut for New project (shows startup dialog)
 - [X] T270 Implement Ctrl+A keyboard shortcut for Select All - Selects all elements in active plane
@@ -1574,14 +1568,13 @@ class World {
 - [ ] T283 [P] Unit test for settings persistence in frontend/tests/unit/stores/settingsStore.spec.ts
 - [ ] T284 [P] E2E test for keyboard shortcuts in frontend/tests/e2e/keyboard-shortcuts.spec.ts
 
-**Checkpoint**: Polished user experience with keyboard shortcuts, settings, and grid (All user stories refined)
+**Checkpoint**: Polished user experience with keyboard shortcuts, grid, and status bar
 
-**Phase 27 Status**: 15/19 tasks complete (79%)
+**Phase 27 Status**: 15/17 tasks complete (88%)
 - ✅ Keyboard shortcuts (T268-T274)
 - ✅ Grid display and toggle (T275-T276)
 - ✅ Status bar (T277-T280)
 - ✅ Preferences persistence (T281-T282)
-- ⏳ Settings dialog (T262-T267: Not started)
 - ⏳ Testing (T283-T284: Not started)
 
 ---
@@ -1969,3 +1962,68 @@ const halfHingeHV_onPV = new HalfHingeLine2D('half_HL_HV_on_PV', 'HL_HV', 'proj_
 
 ---
 
+## Phase 29: Settings Dialog UI
+
+**Purpose**: User interface for configuring application preferences  
+**Reference**: [ui-spec.md](./ui-spec.md#project-settings-dialog) - Settings Dialog Specification
+
+**Status**: Not Started (0/6 tasks)
+
+### Background
+
+While settings persistence is implemented via `settingsStore.ts` (Phase 27), users need a UI to configure these preferences. The settings dialog provides:
+- Visual controls for snap radius, grid configuration, default styles
+- 3D view display options
+- Keyboard shortcuts customization panel
+- Reset to defaults functionality
+
+**Design Requirements**:
+- Modal dialog triggered by menu → Settings (or keyboard shortcut)
+- Tabbed or sectioned interface for different setting categories
+- Live preview where possible (e.g., grid changes visible immediately)
+- Apply/Cancel/Reset buttons
+- Changes saved automatically to `settingsStore` which persists to localStorage
+
+### Tasks
+
+- [ ] T262 [P] Create SettingsDialog.vue component in frontend/src/components/dialogs/
+  - Modal dialog with tabs/sections for different setting categories
+  - Integrates with settingsStore for reading/writing preferences
+  - Apply, Cancel, Reset to Defaults buttons
+
+- [ ] T263 [P] Add settings panel for snap configuration
+  - Enable/disable snapping checkbox
+  - Snap radius slider (5-20 pixels range, default 12)
+  - Visual preview showing snap radius circle
+
+- [ ] T264 [P] Add settings panel for grid configuration
+  - Grid visibility toggle
+  - Grid spacing input (default 20 units)
+  - Grid color picker
+  - Snap-to-grid checkbox
+  - Live preview of grid appearance
+
+- [ ] T265 [P] Add settings panel for default element styles
+  - Color pickers for points, lines, circles, guides
+  - Width/size inputs for stroke widths and point sizes
+  - Preview of element appearance with current settings
+
+- [ ] T266 [P] Add settings panel for 3D view options
+  - Show/hide planes checkbox
+  - Show/hide projection lines checkbox
+  - Show/hide 2D elements in 3D view checkbox
+  - Initial camera distance slider
+
+- [ ] T267 [P] Add keyboard shortcuts customization panel
+  - List of all keyboard shortcuts with current bindings
+  - Click to rebind functionality
+  - Conflict detection (warn if shortcut already in use)
+  - Reset to defaults button
+
+**Checkpoint**: Users can configure all application preferences through UI
+
+**Phase 29 Status**: 0/6 tasks complete (0%)
+
+---
+
+## FUTURE WORK REQUIRING CLARIFICATION
