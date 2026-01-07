@@ -477,6 +477,8 @@ At a conceptual level, the UI is designed so that:
 
 **Architecture**: All delete operations must go through CommandStack via DeleteElementsCommand. Direct World manipulation (e.g., `world.removePoint2D()`) is forbidden to ensure undo capability and dependency integrity.
 
+**Note**: This is part of the broader architectural principle that ALL application state modifications (geometric, view, settings) should go through the CommandStack for consistent undo/redo behavior and state management.
+
 ### Naming Conventions (Visible in UI)
 
 The application uses consistent naming to support learning:

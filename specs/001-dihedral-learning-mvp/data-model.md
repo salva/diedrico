@@ -516,15 +516,45 @@ interface Project {
 
 All mutations to World, ProcessTree, and ViewState happen through Commands, which are composed of reversible Operations.
 
-**Critical Architectural Principle**: Every geometric modification MUST go through the CommandStack. Direct manipulation of World state (e.g., calling `world.removePoint2D()` directly) is forbidden in application code. This ensures:
-- **Undo/redo capability**: All operations are reversible via Ctrl+Z/Y
-- **Dependency cascade**: Deletion automatically removes dependent elements
-- **Atomic transactions**: Multi-element operations succeed or fail as a unit
-- **Command history**: Operations appear in Actions panel
-- **Proper serialization**: Changes are saved in command-based format
-- **Data integrity**: World state remains consistent through validated operations
+**Critical Architectural Principle - Command-Based State Management**: 
 
-UI operations (keyboard shortcuts, toolbar buttons) that modify geometry must create Commands and execute them via `commandStack.execute(command)`.
+ALL application state modifications MUST go through the CommandStack. Direct manipulation of state (e.g., calling `world.removePoint2D()`, `viewState.setZoom()`, or modifying stores directly) is forbidden in application code.
+
+**Scope of Command-Based Operations**:
+1. **Geometric State (World)** - Points, lines, circles, guides, dependencies
+2. **View State (ViewState)** - Zoom, pan, camera position, viewport transforms
+3. **Construction State (ProcessTree)** - Action hierarchy, subprocess organization
+4. **UI State** - Element visibility, styles, active plane, tool selection
+5. **Settings** - User preferences that affect document appearance or behavior
+
+**Benefits of Universal Command Pattern**:
+- **Undo/redo capability**: All operations are reversible via Ctrl+Z/Y
+- **Dependency cascade**: Changes automatically propagate to dependent elements/state
+- **Atomic transactions**: Multi-step operations succeed or fail as a unit
+- **Command history**: Operations appear in Actions panel with full lineage
+- **Proper serialization**: All changes are saved in command-based format
+- **Data integrity**: Application state remains consistent through validated operations
+- **Audit trail**: Complete record of how the construction and view evolved
+- **Reproducibility**: Commands can be replayed to recreate any state
+
+**What Does NOT Require Commands**:
+- **Transient UI state**: Hover effects, temporary highlights, cursor position
+- **Pure read operations**: Queries, calculations, rendering
+- **System state**: Window size, dialog positions, last-opened files
+- **Performance caches**: Realization caches, computed geometry
+
+**Implementation Pattern**:
+```typescript
+// ❌ FORBIDDEN - Direct state manipulation
+world.removePoint2D(planeId, pointId);
+viewStore.setZoom(2.0);
+settingsStore.gridVisible = false;
+
+// ✅ CORRECT - Command-based state modification
+commandStack.execute(new DeleteElementsCommand([pointId], world));
+commandStack.execute(new SetZoomCommand(2.0, viewState));
+commandStack.execute(new UpdateSettingCommand('grid.visible', false, settings));
+```
 
 **Relationships**:
 - 1 Project → 1 World

@@ -2034,29 +2034,34 @@ While settings persistence is implemented via `settingsStore.ts` (Phase 27), use
 
 ## Phase 30: Command-Based UI Operations
 
-**Purpose**: Ensure all UI operations that modify geometry are undoable through CommandStack  
+**Purpose**: Ensure all UI operations that modify application state are undoable through CommandStack  
 **Reference**: [data-model.md](./data-model.md#commands-and-operations) - Command Pattern Architecture
 
 **Status**: Not Started (0/8 tasks)
 
 ### Background
 
-Currently, some UI operations (notably Delete/Backspace) directly manipulate the World without going through the CommandStack. This violates the architectural principle that **all geometric modifications must be undoable**.
+Currently, some UI operations directly manipulate application state without going through the CommandStack. This violates the architectural principle that **all state modifications must be undoable**.
 
-**Problems with Direct World Manipulation**:
+**Problems with Direct State Manipulation**:
 1. **No undo support** - Operations cannot be reversed via Ctrl+Z
-2. **No cascade deletion** - Dependencies are not handled (e.g., deleting a point doesn't remove dependent lines)
-3. **Not atomic** - Multi-element operations are not transactional
+2. **No cascade handling** - State changes don't propagate to dependent elements
+3. **Not atomic** - Multi-step operations are not transactional
 4. **No command history** - Operations don't appear in Actions panel
 5. **No persistence** - Changes aren't saved in command-based serialization
+6. **Inconsistent UX** - Users can't undo some operations but can undo others
 
 **Affected Operations**:
 - Delete selected elements (T271) - Currently direct `world.removePoint2D()` calls
-- Any future UI shortcuts that modify geometry
+- View transformations (zoom, pan, fit-to-view) - Direct `viewStore.setZoom()` calls
+- Grid toggle - Direct `viewStore.gridVisible = true/false`
+- Settings changes - Direct `settingsStore` modifications
+- Tool selection - Direct `toolStore.setTool()` calls
+- Any future UI shortcuts that modify state
 
-**Design Principle**: Every geometric change must flow through `commandStack.execute(command)` to ensure:
+**Design Principle**: Every application state change must flow through `commandStack.execute(command)` to ensure:
 - Undo/redo capability
-- Dependency cascade handling
+- State consistency
 - Atomic transactions
 - Command history tracking
 - Proper serialization
@@ -2125,9 +2130,10 @@ Currently, some UI operations (notably Delete/Backspace) directly manipulate the
 
 **Notes**:
 - This phase fixes the TODO comment in App.vue handleDeleteSelected()
-- Applies same pattern to any future UI shortcuts that modify geometry
-- Ensures architectural consistency: World is only modified through Commands
+- Applies command pattern to all state-modifying UI operations
+- Ensures architectural consistency: All state modified through Commands only
 - Critical for data integrity and user trust in undo functionality
+- Future phases may extend command pattern to view/settings operations
 
 ---
 
