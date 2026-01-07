@@ -2032,4 +2032,103 @@ While settings persistence is implemented via `settingsStore.ts` (Phase 27), use
 
 ---
 
+## Phase 30: Command-Based UI Operations
+
+**Purpose**: Ensure all UI operations that modify geometry are undoable through CommandStack  
+**Reference**: [data-model.md](./data-model.md#commands-and-operations) - Command Pattern Architecture
+
+**Status**: Not Started (0/8 tasks)
+
+### Background
+
+Currently, some UI operations (notably Delete/Backspace) directly manipulate the World without going through the CommandStack. This violates the architectural principle that **all geometric modifications must be undoable**.
+
+**Problems with Direct World Manipulation**:
+1. **No undo support** - Operations cannot be reversed via Ctrl+Z
+2. **No cascade deletion** - Dependencies are not handled (e.g., deleting a point doesn't remove dependent lines)
+3. **Not atomic** - Multi-element operations are not transactional
+4. **No command history** - Operations don't appear in Actions panel
+5. **No persistence** - Changes aren't saved in command-based serialization
+
+**Affected Operations**:
+- Delete selected elements (T271) - Currently direct `world.removePoint2D()` calls
+- Any future UI shortcuts that modify geometry
+
+**Design Principle**: Every geometric change must flow through `commandStack.execute(command)` to ensure:
+- Undo/redo capability
+- Dependency cascade handling
+- Atomic transactions
+- Command history tracking
+- Proper serialization
+
+### Tasks
+
+**Delete Operations** (T285-T287):
+
+- [ ] T285 [D] Create DeleteElementsCommand in frontend/src/commands/DeleteElementsCommand.ts
+  - Implements Command interface with execute() and undo()
+  - Takes array of element IDs to delete
+  - Uses DependencyService.getAllDependents() to find cascade elements
+  - Stores deleted elements state for undo restoration
+  - Removes elements atomically (all or none if validation fails)
+
+- [ ] T286 [D] Create RemoveElementOperation for each element type
+  - RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp
+  - Each operation stores element data for undo
+  - Operations are reversible (can restore removed element)
+  - Location: frontend/src/commands/operations/RemoveElementOps.ts
+
+- [ ] T287 [D] Update handleDeleteSelected() in App.vue to use DeleteElementsCommand
+  - Replace direct World manipulation with command execution
+  - Change from: `world.removePoint2D(...)` loops
+  - Change to: `commandStack.execute(new DeleteElementsCommand(selectedIds, world))`
+  - Verify delete now appears in undo history
+
+**Dependency Cascade** (T288-T289):
+
+- [ ] T288 [D] Implement cascade deletion logic in DeleteElementsCommand
+  - Use DependencyService to find all elements dependent on selected elements
+  - Add dependent elements to deletion set
+  - Show warning/confirmation if cascade will delete many elements (optional)
+  - Ensure parent elements are deleted before children
+
+- [ ] T289 [D] Add visual feedback for cascade deletion
+  - When user selects elements to delete, highlight dependent elements in different color
+  - Show tooltip: "X additional elements will be deleted (dependencies)"
+  - Update status bar message during deletion operation
+
+**Testing & Validation** (T290-T292):
+
+- [ ] T290 [D] Unit test for DeleteElementsCommand
+  - Test single element deletion and undo
+  - Test multi-element deletion and undo
+  - Test cascade deletion (delete point → removes dependent line)
+  - Test undo restores all elements in correct order
+  - Location: frontend/tests/unit/commands/DeleteElementsCommand.spec.ts
+
+- [ ] T291 [D] Update E2E keyboard-shortcuts test for undo support
+  - Modify existing Delete/Backspace tests to verify undo works
+  - Test: Create point → Delete → Undo → verify point restored
+  - Test: Create line → Delete point → verify line also deleted (cascade)
+  - Test: Delete → Undo → Redo cycle
+
+- [ ] T292 [P] E2E test for cascade deletion behavior
+  - Create point with multiple dependent elements (lines, circles)
+  - Delete point via Delete key
+  - Verify all dependent elements are removed
+  - Undo and verify all elements restored
+  - Location: frontend/tests/e2e/cascade-deletion.spec.ts
+
+**Checkpoint**: All UI geometric modifications are undoable and respect dependencies
+
+**Phase 30 Status**: 0/8 tasks complete (0%)
+
+**Notes**:
+- This phase fixes the TODO comment in App.vue handleDeleteSelected()
+- Applies same pattern to any future UI shortcuts that modify geometry
+- Ensures architectural consistency: World is only modified through Commands
+- Critical for data integrity and user trust in undo functionality
+
+---
+
 ## FUTURE WORK REQUIRING CLARIFICATION
