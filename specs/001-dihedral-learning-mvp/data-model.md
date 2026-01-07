@@ -1338,7 +1338,29 @@ type Line2D =
 
 // === CIRCLE 2D CONSTRUCTIONS ===
 
-// Circle by center point and radius value
+// Circle by center point and point on circumference (PRIMARY/STANDARD)
+// This is the canonical circle definition for Diedrico geometry
+interface Circle2DByCenterAndPoint {
+  kind: 'Circle2DByCenterAndPoint'; // Discriminator
+  id: ElementId;
+  name: string;
+  planeId: PlaneId;
+  
+  // Defining relations - both points must exist as Point2D entities
+  centerPointId: ElementId;         // Center of the circle
+  circumferencePointId: ElementId;  // Point on circumference (defines radius)
+  // The vector from center to circumference point serves dual purpose:
+  // 1. Magnitude: defines the circle radius (distance between the two points)
+  // 2. Angular reference: defines angle 0 for consistent intersection point indexing
+  
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+}
+
+// Circle by center point and radius value (SPECIAL CASE)
+// Used for specific constructions where radius is a geometric parameter
+// Note: This type does NOT provide an angular reference for intersection indexing
+// For general use, prefer Circle2DByCenterAndPoint
 interface Circle2DByCenterAndRadius {
   kind: 'Circle2DByCenterAndRadius'; // Discriminator
   id: ElementId;
@@ -1348,21 +1370,6 @@ interface Circle2DByCenterAndRadius {
   // Defining data
   centerPointId: ElementId;
   radius: number;                   // User-specified radius
-  
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
-}
-
-// Circle by center point and point on circumference
-interface Circle2DByCenterAndPoint {
-  kind: 'Circle2DByCenterAndPoint'; // Discriminator
-  id: ElementId;
-  name: string;
-  planeId: PlaneId;
-  
-  // Defining relations
-  centerPointId: ElementId;
-  circumferencePointId: ElementId;
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -1385,9 +1392,9 @@ interface Circle2DByThreePoints {
 }
 
 type Circle2D = 
-  | Circle2DByCenterAndRadius 
-  | Circle2DByCenterAndPoint 
-  | Circle2DByThreePoints;
+  | Circle2DByCenterAndPoint       // Primary/standard definition
+  | Circle2DByCenterAndRadius      // Special case (no angular reference)
+  | Circle2DByThreePoints;         // Alternative construction
 
 // === ARC 2D CONSTRUCTIONS ===
 
@@ -1554,7 +1561,13 @@ interface Segment2DRealization {
 
 interface Circle2DRealization {
   center: [number, number, number]; // [cx, cy, 1] - center point (homogeneous)
-  radius: number;
+  radius: number;                   // Scalar distance from center to radius point
+  radiusVector: [number, number, number]; // [dx, dy, 0] - vector from center to radius point (w=0)
+  // The radius vector serves dual purpose:
+  // 1. Magnitude: sqrt(dx^2 + dy^2) = radius
+  // 2. Angular reference: defines angle 0 for consistent intersection indexing
+  // Angle 0 = atan2(radiusVector[1], radiusVector[0])
+  // Intersection points on circles are indexed by their angle relative to this reference
 }
 
 interface Arc2DRealization {
@@ -1563,6 +1576,35 @@ interface Arc2DRealization {
   startAngle: number;               // Radians
   endAngle: number;
 }
+
+### Intersection Point Indexing on Circles
+
+When a geometric operation produces multiple intersection points on a circle (e.g., line-circle or circle-circle intersection), the points must be indexed consistently to ensure deterministic parametric behavior. The indexing is based on angular position relative to the circle's **radius vector**.
+
+**Key Principle**: The radius vector (from center to the radius-defining point) establishes angle zero.
+
+**Algorithm**:
+1. For each intersection point `P` on circle with center `C` and radius vector `R`:
+   - Compute the angle: `θ = atan2(P.y - C.y, P.x - C.x)`
+   - Compute the reference angle: `θ₀ = atan2(R.y, R.x)`
+   - Compute the relative angle: `Δθ = θ - θ₀`
+   - Normalize `Δθ` to `[0, 2π)` range
+
+2. Sort intersection points by their normalized relative angle `Δθ`
+
+3. Assign indices: index 0 = smallest `Δθ` (closest to radius vector direction)
+
+**Example**:
+```
+Circle: center at (0, 0), radius point at (1, 0)  → angle 0 = 0°
+Line intersection produces two points:
+  - Point A at angle 45°  → Δθ = 45° - 0° = 45°  → index 0
+  - Point B at angle 135° → Δθ = 135° - 0° = 135° → index 1
+```
+
+**Rationale**: This ensures that when the defining points move parametrically, the intersection indices remain stable as long as the topology doesn't change (e.g., tangent becoming secant).
+
+**Note**: For `Circle2DByCenterAndRadius` (which lacks a radius vector), a default reference direction (e.g., +X axis) may be used, but this type does NOT guarantee consistent indexing under parametric updates.
 
 // Realization types for 3D elements
 type Element3DRealization =

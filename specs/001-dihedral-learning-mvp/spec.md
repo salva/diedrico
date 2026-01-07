@@ -788,17 +788,21 @@ Contains tools for creating 2D primitives on the active plane. Tools may expose 
 
 **Circle** tool family:
 
-- **Circle by center and point**:
-  - **Description**: Creates a circle defined by its center and a point on the circumference.
+**Geometric Principle**: In Diedrico geometry, circles are primarily defined by **two points**: a center point and a radius point on the circumference. The vector from center to radius point serves dual purpose: (1) its magnitude defines the circle radius, and (2) its direction defines angle zero for consistent intersection point indexing.
+
+- **Circle by center and point** (PRIMARY METHOD):
+  - **Description**: Creates a circle defined by its center and a point on the circumference. This is the standard circle construction method.
   - **Steps**:
     1. Activate the circle-center-point tool.
     2. Specify the center point (click on existing point, intersection, or empty space).
     3. Specify a point on the circumference (click on existing point, intersection, or empty space).
   - **Result**: A new circle entity is created with the specified center and radius (distance from center to the second point). Any automatically created points are recorded as auxiliary actions.
+  - **Radius Vector**: The vector from center to the circumference point defines angle zero for intersection indexing. This ensures deterministic behavior when intersections are computed parametrically.
   - **Dependency**: The circle updates if the center or the circumference point moves.
 
-- **Circle by center and radius**:
-  - **Description**: Creates a circle with a specified center and a numeric radius value.
+- **Circle by center and radius** (SPECIAL CASE):
+  - **Description**: Creates a circle with a specified center and a numeric radius value. This is a special case construction useful for specific geometric parameters.
+  - **Limitation**: This construction does NOT provide an angular reference for intersection indexing. For general use, prefer "Circle by center and point".
   - **Steps**:
     1. Activate the circle-center-radius tool.
     2. Specify the center point (click on existing point, intersection, or empty space).

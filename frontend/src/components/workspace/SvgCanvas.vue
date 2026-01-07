@@ -27,23 +27,19 @@
       @dblclick="handleDoubleClick"
       @mousemove="handleMouseMove"
     >
-      <!-- Background grid -->
-      <defs>
-        <pattern
-          id="grid"
-          width="50"
-          height="50"
-          patternUnits="userSpaceOnUse"
-        >
-          <path
-            d="M 50 0 L 0 0 0 50"
-            fill="none"
-            stroke="#e0e0e0"
-            stroke-width="0.5"
-          />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#grid)" />
+      <!-- Background grid (T275) - Zoom-adaptive grid display -->
+      <g v-if="viewStore.gridVisible.value" class="background-grid">
+        <line
+          v-for="line in gridLines"
+          :key="line.key"
+          :x1="line.x1"
+          :y1="line.y1"
+          :x2="line.x2"
+          :y2="line.y2"
+          :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+          :stroke-width="line.major ? 1 : 0.5"
+        />
+      </g>
       
       <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
       <line
@@ -393,6 +389,85 @@ const primitives = computed(() => {
   paper.setPrimitives(prims);
   
   return prims;
+});
+
+/**
+ * Generate grid lines for background grid (T275)
+ * 
+ * Grid adapts to zoom level:
+ * - Low zoom (< 0.5): 50 unit spacing
+ * - Medium zoom (0.5-2.0): 20 unit spacing
+ * - High zoom (> 2.0): 10 unit spacing
+ * 
+ * Every 5th line is emphasized (major line)
+ */
+const gridLines = computed(() => {
+  if (!viewStore.gridVisible.value) return [];
+  
+  const zoom = viewport.value.zoom;
+  
+  // Determine grid spacing based on zoom level
+  let spacing: number;
+  if (zoom < 0.5) {
+    spacing = 50;
+  } else if (zoom < 2.0) {
+    spacing = 20;
+  } else {
+    spacing = 10;
+  }
+  
+  const lines: Array<{
+    key: string;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    major: boolean;
+  }> = [];
+  
+  // Calculate viewport bounds in paper coordinates
+  const viewportWidth = canvasWidth.value / zoom;
+  const viewportHeight = canvasHeight.value / zoom;
+  const offsetX = -viewport.value.panX;
+  const offsetY = -viewport.value.panY;
+  
+  // Round to nearest grid spacing
+  const startX = Math.floor(offsetX / spacing) * spacing;
+  const endX = Math.ceil((offsetX + viewportWidth) / spacing) * spacing;
+  const startY = Math.floor(offsetY / spacing) * spacing;
+  const endY = Math.ceil((offsetY + viewportHeight) / spacing) * spacing;
+  
+  // Generate vertical lines
+  for (let x = startX; x <= endX; x += spacing) {
+    const isMajor = Math.abs(x % (spacing * 5)) < 0.01;
+    const screenX = (x + viewport.value.panX) * zoom;
+    
+    lines.push({
+      key: `v-${x}`,
+      x1: screenX,
+      y1: 0,
+      x2: screenX,
+      y2: canvasHeight.value,
+      major: isMajor,
+    });
+  }
+  
+  // Generate horizontal lines
+  for (let y = startY; y <= endY; y += spacing) {
+    const isMajor = Math.abs(y % (spacing * 5)) < 0.01;
+    const screenY = (y + viewport.value.panY) * zoom;
+    
+    lines.push({
+      key: `h-${y}`,
+      x1: 0,
+      y1: screenY,
+      x2: canvasWidth.value,
+      y2: screenY,
+      major: isMajor,
+    });
+  }
+  
+  return lines;
 });
 
 // Render primitives to SVG attributes
@@ -761,6 +836,99 @@ function handleMouseMove(event: MouseEvent) {
     emit('update-3d-coordinates', null);
   }
 }
+
+/**
+ * Fit to View - Zoom and pan to show all elements (T274)
+ * 
+ * Calculates bounding box of all rendered elements and adjusts viewport
+ * to fit them with 10% padding on all sides.
+ */
+function fitToView() {
+  console.log('[SvgCanvas] fitToView called');
+  
+  // Get all rendered primitives
+  const allPrimitives = primitives.value;
+  
+  if (allPrimitives.length === 0) {
+    // No elements - reset to default view
+    console.log('[SvgCanvas] No elements to fit, resetting to default view');
+    viewStore.setZoom(1.0);
+    viewStore.setPan(0, 0);
+    return;
+  }
+  
+  // Calculate bounding box of all primitives in paper coordinates
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  
+  for (const prim of allPrimitives) {
+    if (prim.type === 'point') {
+      const p = prim.geometry as { x: number; y: number };
+      minX = Math.min(minX, p.x);
+      minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x);
+      maxY = Math.max(maxY, p.y);
+    } else if (prim.type === 'line' || prim.type === 'segment') {
+      const line = prim.geometry as { p1: { x: number; y: number }; p2: { x: number; y: number } };
+      minX = Math.min(minX, line.p1.x, line.p2.x);
+      minY = Math.min(minY, line.p1.y, line.p2.y);
+      maxX = Math.max(maxX, line.p1.x, line.p2.x);
+      maxY = Math.max(maxY, line.p1.y, line.p2.y);
+    } else if (prim.type === 'circle') {
+      const circle = prim.geometry as { center: { x: number; y: number }; radius: number };
+      minX = Math.min(minX, circle.center.x - circle.radius);
+      minY = Math.min(minY, circle.center.y - circle.radius);
+      maxX = Math.max(maxX, circle.center.x + circle.radius);
+      maxY = Math.max(maxY, circle.center.y + circle.radius);
+    }
+    // Note: Guides extend to infinity, so we skip them in bounding box calculation
+  }
+  
+  // Check if we found any valid bounds
+  if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+    console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+    viewStore.setZoom(1.0);
+    viewStore.setPan(0, 0);
+    return;
+  }
+  
+  // Calculate bounding box dimensions
+  const boxWidth = maxX - minX;
+  const boxHeight = maxY - minY;
+  
+  // Add padding (10% on each side = 0.9 content fill factor)
+  const paddingFactor = 0.9;
+  
+  // Calculate zoom to fit both dimensions
+  const zoomX = (canvasWidth.value / boxWidth) * paddingFactor;
+  const zoomY = (canvasHeight.value / boxHeight) * paddingFactor;
+  const newZoom = Math.min(zoomX, zoomY, 4.0); // Cap at 4x zoom
+  
+  // Calculate pan to center the bounding box
+  const boxCenterX = (minX + maxX) / 2;
+  const boxCenterY = (minY + maxY) / 2;
+  const newPanX = (canvasWidth.value / (2 * newZoom)) - boxCenterX;
+  const newPanY = (canvasHeight.value / (2 * newZoom)) - boxCenterY;
+  
+  console.log('[SvgCanvas] Fit to view:', {
+    bounds: { minX, minY, maxX, maxY },
+    boxSize: { width: boxWidth, height: boxHeight },
+    viewport: { width: canvasWidth.value, height: canvasHeight.value },
+    newZoom,
+    newPan: { x: newPanX, y: newPanY },
+  });
+  
+  // Apply new viewport transform
+  viewStore.setZoom(newZoom);
+  viewStore.setPan(newPanX, newPanY);
+}
+
+// Expose methods to parent component
+defineExpose({
+  fitToView,
+});
 
 </script>
 

@@ -19,12 +19,14 @@ export interface ViewportState {
   zoom: number;
   panX: number;
   panY: number;
+  gridVisible: boolean;
 }
 
 // Default viewport state (identity transform)
 const zoom = ref(1.0);
 const panX = ref(0);
 const panY = ref(0);
+const gridVisible = ref(true); // Grid visible by default
 
 export function useViewStore() {
   /**
@@ -90,12 +92,27 @@ export function useViewStore() {
   }
 
   /**
+   * Toggle grid visibility (T276)
+   */
+  function toggleGrid() {
+    gridVisible.value = !gridVisible.value;
+  }
+
+  /**
+   * Set grid visibility
+   */
+  function setGridVisible(visible: boolean) {
+    gridVisible.value = visible;
+  }
+
+  /**
    * Get current viewport state as immutable object
    */
   const viewportState = computed<ViewportState>(() => ({
     zoom: zoom.value,
     panX: panX.value,
-    panY: panY.value
+    panY: panY.value,
+    gridVisible: gridVisible.value
   }));
 
   return {
@@ -103,6 +120,7 @@ export function useViewStore() {
     zoom: computed(() => zoom.value),
     panX: computed(() => panX.value),
     panY: computed(() => panY.value),
+    gridVisible: computed(() => gridVisible.value),
     viewportState,
     
     // Actions
@@ -110,6 +128,8 @@ export function useViewStore() {
     setPan,
     adjustPan,
     adjustZoom,
-    resetViewport
+    resetViewport,
+    toggleGrid,
+    setGridVisible
   };
 }

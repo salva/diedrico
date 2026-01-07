@@ -21,6 +21,7 @@
       <Toolbar 
         @new-project="handleNewProject"
         @open-project="handleOpenProjectDialog"
+        @fit-to-view="handleFitToView"
       />
     </header>
 
@@ -92,7 +93,7 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#startup-flow-and-google-drive-authentication
  */
 
-import { provide, ref, onMounted, onUnmounted, watch } from 'vue';
+import { provide, ref, onMounted, onUnmounted } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
@@ -102,6 +103,8 @@ import StartupDialog from './components/dialogs/StartupDialog.vue';
 import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
 import { CommandStack } from './commands/CommandStack';
 import { useToolStore } from './stores/toolStore';
+import { useSelectionStore } from './stores/selectionStore';
+import { useSettingsStore } from './stores/settingsStore';
 import { World } from './domain/world/World';
 import { GoogleDriveService } from './services/GoogleDriveService';
 import { ProjectService } from './services/ProjectService';
@@ -145,6 +148,14 @@ const projectNameDisplayRef = ref<InstanceType<typeof ProjectNameDisplay> | null
 // Tool state
 const toolStore = useToolStore();
 const activeTool = toolStore.currentTool;
+
+// Selection state (T271)
+const selectionStore = useSelectionStore();
+
+// Settings state (T281-T282)
+// Initialize settings store to load preferences from localStorage
+// Settings are automatically loaded on store initialization and saved on changes
+useSettingsStore();
 
 // Active plane state
 const activePlaneId = ref('proj_plane_H');
@@ -503,12 +514,139 @@ function handleOpenProjectDialog() {
 }
 
 /**
+ * Handle "Fit to View" button/shortcut (T274)
+ * Zooms and pans to show all elements in the viewport
+ */
+function handleFitToView() {
+  if (svgCanvasRef.value) {
+    svgCanvasRef.value.fitToView();
+  }
+}
+
+/**
+ * Handle delete selected elements (T271)
+ * Delete/Backspace key: Remove all selected elements
+ * 
+ * Note: This is a simplified implementation that deletes elements directly.
+ * TODO: Implement proper DeleteElementsCommand with:
+ * - Cascade deletion for dependent elements  
+ * - Proper undo/redo support
+ * - Atomic command execution
+ */
+function handleDeleteSelected() {
+  const selectedIds = selectionStore.selectedIdsArray;
+  
+  if (selectedIds.length === 0) {
+    console.log('[App] No elements selected to delete');
+    return;
+  }
+  
+  console.log('[App] Deleting selected elements:', selectedIds);
+  
+  // Delete each selected element
+  // Note: This is a direct delete without cascade or proper undo
+  // TODO: Replace with DeleteElementsCommand that handles dependencies
+  for (const elementId of selectedIds) {
+    try {
+      // Try to find element type and delete accordingly
+      const point = world.getPoint2DById(elementId);
+      if (point) {
+        world.removePoint2D(point.planeId, elementId);
+        continue;
+      }
+      
+      const line = world.getLine2DById(elementId);
+      if (line) {
+        world.removeLine2D(line.planeId, elementId);
+        continue;
+      }
+      
+      const segment = world.getSegment2DById(elementId);
+      if (segment) {
+        world.removeSegment2D(segment.planeId, elementId);
+        continue;
+      }
+      
+      const circle = world.getCircle2DById(elementId);
+      if (circle) {
+        world.removeCircle2D(circle.planeId, elementId);
+        continue;
+      }
+      
+      const guide = world.getGuide2DById(elementId);
+      if (guide) {
+        world.removeGuide2D(guide.planeId, elementId);
+        continue;
+      }
+      
+      console.warn(`[App] Unknown element type for ID: ${elementId}`);
+    } catch (error) {
+      console.error(`[App] Failed to delete element ${elementId}:`, error);
+    }
+  }
+  
+  // Clear selection after deletion
+  selectionStore.clearSelection();
+  
+  console.log('[App] Deleted elements:', selectedIds);
+}
+
+/**
+ * Select all elements in the active plane (T270)
+ */
+function handleSelectAll() {
+  const selectedIds: string[] = [];
+  
+  // Select all points in the active plane
+  for (const point of world.getAllPoints2D()) {
+    if (point.planeId === activePlaneId.value) {
+      selectedIds.push(point.id);
+    }
+  }
+  
+  // Select all lines in the active plane
+  for (const line of world.getAllLines2D()) {
+    if (line.planeId === activePlaneId.value) {
+      selectedIds.push(line.id);
+    }
+  }
+  
+  // Select all segments in the active plane
+  for (const segment of world.getAllSegments2D()) {
+    if (segment.planeId === activePlaneId.value) {
+      selectedIds.push(segment.id);
+    }
+  }
+  
+  // Select all circles in the active plane
+  for (const circle of world.getAllCircles2D()) {
+    if (circle.planeId === activePlaneId.value) {
+      selectedIds.push(circle.id);
+    }
+  }
+  
+  // Select all guides in the active plane
+  for (const guide of world.getAllGuides2D()) {
+    if (guide.planeId === activePlaneId.value) {
+      selectedIds.push(guide.id);
+    }
+  }
+  
+  // Update selection store
+  if (selectedIds.length > 0) {
+    selectionStore.selectMultiple(selectedIds);
+    console.log(`[App] Selected ${selectedIds.length} elements`);
+  }
+}
+
+/**
  * Handle keyboard shortcuts
  * Ctrl+Z: Undo
  * Ctrl+Y or Ctrl+Shift+Z: Redo
  * Ctrl+N: New project (show startup dialog)
  * Ctrl+O: Open project (show startup dialog)
  * Ctrl+R: Rename project (focus name display)
+ * Ctrl+A: Select all elements in active plane
  * Esc: Cancel current operation/deselect
  * Delete/Backspace: Delete selected objects
  * P/L/S/C/G: Tool shortcuts (Point/Line/Segment/Circle/Guide)
@@ -520,11 +658,12 @@ function handleKeyDown(event: KeyboardEvent) {
   // Esc: Cancel current operation or deselect (T272)
   if (event.key === 'Escape') {
     event.preventDefault();
-    toolStore.resetTool();
+    toolStore.setTool('select');
+    selectionStore.clearSelection();
     return;
   }
   
-  // Delete/Backspace: Delete selected objects (T271)
+  // Delete/Backspace: Delete selected elements (T271)
   if (event.key === 'Delete' || event.key === 'Backspace') {
     // Only if not in an input field
     const target = event.target as HTMLElement;
@@ -532,8 +671,7 @@ function handleKeyDown(event: KeyboardEvent) {
       return; // Allow default behavior in input fields
     }
     event.preventDefault();
-    // TODO: Implement delete selected objects
-    console.log('Delete selected objects (not yet implemented)');
+    handleDeleteSelected();
     return;
   }
   
@@ -590,6 +728,20 @@ function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'r') {
     event.preventDefault();
     projectNameDisplayRef.value?.startEditing();
+    return;
+  }
+  
+  // Ctrl+A: Select All (T270)
+  if (event.key === 'a') {
+    event.preventDefault();
+    handleSelectAll();
+    return;
+  }
+  
+  // Ctrl+0: Fit to view (T274)
+  if (event.key === '0') {
+    event.preventDefault();
+    handleFitToView();
     return;
   }
   

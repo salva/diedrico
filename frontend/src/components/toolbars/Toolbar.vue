@@ -58,6 +58,41 @@
     
     <div class="toolbar-separator"></div>
     
+    <!-- Navigation controls -->
+    <div class="navigation-controls">
+      <button
+        class="nav-button"
+        @click="handleToggleGrid"
+        :class="{ active: gridVisible }"
+        title="Toggle Grid (G)"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <line x1="5" y1="2" x2="5" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5" />
+          <line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5" />
+          <line x1="15" y1="2" x2="15" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5" />
+          <line x1="2" y1="5" x2="18" y2="5" stroke="currentColor" stroke-width="1" opacity="0.5" />
+          <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" stroke-width="1" opacity="0.5" />
+          <line x1="2" y1="15" x2="18" y2="15" stroke="currentColor" stroke-width="1" opacity="0.5" />
+        </svg>
+        <span>Grid</span>
+      </button>
+
+      <button
+        class="nav-button"
+        @click="handleFitToView"
+        title="Fit to View (Ctrl+0)"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <rect x="3" y="3" width="14" height="14" rx="1" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path d="M 6 6 L 8 8 M 6 6 L 6 8 M 6 6 L 8 6" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" />
+          <path d="M 14 14 L 12 12 M 14 14 L 14 12 M 14 14 L 12 14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" />
+        </svg>
+        <span>Fit</span>
+      </button>
+    </div>
+    
+    <div class="toolbar-separator"></div>
+    
     <!-- Tool buttons -->
     <button
       class="tool-button"
@@ -163,6 +198,7 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue';
 import { useToolStore } from '@/stores/toolStore';
+import { useViewStore } from '@/stores/viewStore';
 import { CommandStack } from '@/commands/CommandStack';
 
 /**
@@ -178,11 +214,13 @@ import { CommandStack } from '@/commands/CommandStack';
 interface Emits {
   (e: 'new-project'): void;
   (e: 'open-project'): void;
+  (e: 'fit-to-view'): void;
 }
 
 const emit = defineEmits<Emits>();
 
 const toolStore = useToolStore();
+const viewStore = useViewStore();
 
 // Inject command stack for undo/redo
 const commandStack = inject<CommandStack>('commandStack')!;
@@ -193,6 +231,9 @@ if (!commandStack) {
 // Computed properties for undo/redo availability
 const canUndo = computed(() => commandStack.canUndo());
 const canRedo = computed(() => commandStack.canRedo());
+
+// Grid visibility
+const gridVisible = computed(() => viewStore.gridVisible.value);
 
 /**
  * Select a tool
@@ -233,6 +274,20 @@ function handleNew() {
  */
 function handleOpen() {
   emit('open-project');
+}
+
+/**
+ * Toggle grid visibility (T276)
+ */
+function handleToggleGrid() {
+  viewStore.toggleGrid();
+}
+
+/**
+ * Fit viewport to show all elements (T274)
+ */
+function handleFitToView() {
+  emit('fit-to-view');
 }
 </script>
 
@@ -320,6 +375,45 @@ function handleOpen() {
 }
 
 .history-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.navigation-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-button:hover {
+  background-color: #e8e8e8;
+  border-color: #999;
+}
+
+.nav-button.active {
+  background-color: #4A90E2;
+  color: #fff;
+  border-color: #4A90E2;
+}
+
+.nav-button span {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.nav-button svg {
   width: 18px;
   height: 18px;
 }

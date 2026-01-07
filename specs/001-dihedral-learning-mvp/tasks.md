@@ -1558,23 +1558,145 @@ class World {
 - [ ] T267 Add keyboard shortcuts customization panel
 - [X] T268 Implement Ctrl+O keyboard shortcut for Open (shows startup dialog)
 - [X] T269 Implement Ctrl+N keyboard shortcut for New project (shows startup dialog)
-- [ ] T270 Implement Ctrl+A keyboard shortcut for Select All
-- [ ] T271 Implement Delete/Backspace key for deleting selected objects
+- [X] T270 Implement Ctrl+A keyboard shortcut for Select All - Selects all elements in active plane
+- [X] T271 Implement Delete/Backspace key for deleting selected objects - Basic implementation without cascade deletion or undo
 - [X] T272 Implement Esc key to cancel current operation/deselect
 - [X] T273 Implement tool keyboard shortcuts (P for Point, L for Line, S for Segment, C for Circle, G for Guide)
-- [ ] T274 Add "Fit to View" button and Ctrl+0 shortcut (zoom to show all objects)
-- [ ] T275 Implement grid display with zoom-adaptive spacing
-- [ ] T276 Add grid toggle button (show/hide grid)
+- [X] T274 Add "Fit to View" button and Ctrl+0 shortcut (zoom to show all objects) - Implemented in SvgCanvas.vue with fitToView() method
+- [X] T275 Implement grid display with zoom-adaptive spacing - Computed gridLines property generates lines based on zoom level
+- [X] T276 Add grid toggle button (show/hide grid) - Toolbar button toggles viewStore.gridVisible
 - [X] T277 Create StatusBar.vue component showing current mouse coordinates in world space
 - [X] T278 Show active plane indicator in status bar
 - [X] T279 Show active tool name in status bar
 - [X] T280 Show save status in status bar ("Saving..." / "All changes saved" for Google Drive)
-- [ ] T281 Persist user preferences to localStorage
-- [ ] T282 Load preferences on application startup
+- [X] T281 Persist user preferences to localStorage - Created settingsStore.ts with auto-save on change
+- [X] T282 Load preferences on application startup - Settings loaded automatically on store initialization
 - [ ] T283 [P] Unit test for settings persistence in frontend/tests/unit/stores/settingsStore.spec.ts
 - [ ] T284 [P] E2E test for keyboard shortcuts in frontend/tests/e2e/keyboard-shortcuts.spec.ts
 
 **Checkpoint**: Polished user experience with keyboard shortcuts, settings, and grid (All user stories refined)
+
+**Phase 27 Status**: 15/19 tasks complete (79%)
+- ✅ Keyboard shortcuts (T268-T274)
+- ✅ Grid display and toggle (T275-T276)
+- ✅ Status bar (T277-T280)
+- ✅ Preferences persistence (T281-T282)
+- ⏳ Settings dialog (T262-T267: Not started)
+- ⏳ Testing (T283-T284: Not started)
+
+---
+
+## Phase 27.5: Circle Architecture Refactoring
+
+**Purpose**: Align circle implementation with Diedrico geometric principles  
+**Reference**: [data-model.md](./data-model.md#circle-2d-constructions) - Circle Definitions, [spec.md](./spec.md#circle-tool-family) - Circle Tools
+
+**Status**: Not Started (0/13 tasks)
+
+### Background
+
+The current circle implementation uses `Circle2DByCenterAndRadius` (center point + numeric radius) as the primary construction method. However, Diedrico geometry requires circles to be defined by **two points** (center + radius point) where the radius vector serves dual purpose:
+
+1. **Magnitude**: Distance from center to radius point defines circle size
+2. **Angular Reference**: Direction of radius vector defines angle zero for consistent intersection point indexing
+
+This ensures deterministic behavior when intersections are computed parametrically—critical for maintaining stable constructions when defining points move.
+
+**Design Goals**:
+- Make `Circle2DByCenterAndPoint` the primary/standard circle construction
+- Add `radiusVector` field to `Circle2DRealization` (not just scalar radius)
+- Update intersection algorithms to index points by angle relative to radius vector
+- Refactor `CircleTool` to use two-point workflow
+- Preserve `Circle2DByCenterAndRadius` as special case for extensibility
+- Update all documentation to reflect geometric principles
+
+**Impact**: This is a foundational change affecting circle creation, realization, intersection indexing, and tools.
+
+### Tasks
+
+**Data Model Updates** (T285-T287):
+
+- [ ] T285 [D] Add radiusVector field to Circle2DRealization interface in frontend/src/domain/world/Circle.ts
+  - Add `radiusVector: Vector3` field (direction vector with w=0)
+  - Document dual purpose: magnitude and angular reference
+  - Update Circle2DRealization2D constructor to accept and store radius vector
+
+- [ ] T286 [D] Update Circle2DByCenterAndPoint.realize2D() method
+  - Compute radius vector from center and circumference point positions
+  - Store both radius (scalar) and radiusVector (Vector3) in realization
+  - Ensure radiusVector is normalized direction with w=0
+
+- [ ] T287 [D] Update Circle2DByCenterAndRadius.realize2D() for radius vector
+  - Since this type lacks a radius-defining point, use default reference direction (+X axis)
+  - Document limitation: this construction does NOT guarantee consistent intersection indexing
+  - Add JSDoc warning about using Circle2DByCenterAndPoint for general constructions
+
+**Intersection Indexing** (T288-T289):
+
+- [ ] T288 [D] Implement angle-based intersection indexing algorithm
+  - Create utility function: `sortIntersectionsByAngle(points: Vector3[], radiusVector: Vector3): Vector3[]`
+  - For each intersection point: compute angle relative to radius vector direction
+  - Sort by normalized angle in [0, 2π) range
+  - Return sorted array with index 0 = closest to radius vector angle
+
+- [ ] T289 [D] Update intersection operations to use angle-based indexing
+  - Review all intersection operations involving circles (line-circle, circle-circle)
+  - Pass circle's radiusVector to indexing algorithm
+  - Update IntersectionPoint creation to use stable indices
+  - Add tests verifying index stability under parametric updates
+
+**Tool Refactoring** (T290-T291):
+
+- [ ] T290 [D] Refactor CircleTool to use Circle2DByCenterAndPoint construction
+  - Current: Two-click workflow creates Circle2DByCenterAndRadius with computed radius distance
+  - Updated: Two-click workflow selects/creates two Point2D objects (center + radius point)
+  - Ensure second click creates actual Point2D entity (not just distance calculation)
+  - Update AddCircle operation to use Circle2DByCenterAndPoint
+
+- [ ] T291 [P] Add visual feedback for radius vector in CircleTool
+  - Show dashed line from center to radius point during construction
+  - Highlight radius point when hovering over selected circle
+  - Optional: Add "show radius vectors" toggle in settings (future enhancement)
+
+**Testing & Documentation** (T292-T297):
+
+- [ ] T292 [D] Update Circle2DRealization tests
+  - Test radiusVector is correctly computed from two points
+  - Test radiusVector magnitude equals radius scalar
+  - Test radiusVector direction defines angle zero
+
+- [ ] T293 [D] Update intersection indexing tests
+  - Create test: line-circle intersection with known angles
+  - Verify index 0 is closest to radius vector direction
+  - Test stability: move defining points, verify indices remain stable (if topology unchanged)
+
+- [ ] T294 [D] Update CircleTool tests
+  - Test two-click workflow creates Circle2DByCenterAndPoint
+  - Test both center and radius point exist as Point2D entities
+  - Test circle updates when either defining point moves
+
+- [ ] T295 [D] Add integration test for parametric circle behavior
+  - Create circle by center and point
+  - Create intersection with line
+  - Reference intersection point in subsequent construction
+  - Move radius point → verify construction updates correctly
+
+- [ ] T296 [D] Update JSDoc comments in Circle.ts
+  - Document Circle2DByCenterAndPoint as primary method
+  - Explain radius vector's dual role in all relevant locations
+  - Add usage examples showing proper circle construction
+
+- [ ] T297 [D] Update UI tooltips and help text
+  - Circle tool tooltip: "Circle by center and point (defines radius vector)"
+  - Add brief explanation of angle zero concept in help dialog
+
+**Checkpoint**: Circle architecture aligned with Diedrico principles, stable intersection indexing implemented
+
+**Phase 27.5 Status**: 0/13 tasks complete (0%)
+- ⏳ Data model updates (T285-T287: Not started)
+- ⏳ Intersection indexing (T288-T289: Not started)
+- ⏳ Tool refactoring (T290-T291: Not started)
+- ⏳ Testing & documentation (T292-T297: Not started)
 
 ---
 
