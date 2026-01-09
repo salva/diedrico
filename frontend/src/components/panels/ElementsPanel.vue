@@ -215,16 +215,24 @@ const horizontalElements = computed(() => {
   
   console.log('[ElementsPanel] Computing P_H elements, version:', version, 'forceUpdate:', update);
   
-  const points = world.getAllPoints2D()
-    .filter(p => p.planeId === 'proj_plane_H');
-  const lines = world.getAllLines2D()
-    .filter(l => l.planeId === 'proj_plane_H' && !l.id.includes('half_HL'));
-  const segments = world.getAllSegments2D()
-    .filter(s => s.planeId === 'proj_plane_H');
-  const circles = world.getAllCircles2D()
-    .filter(c => c.planeId === 'proj_plane_H');
-  const guides = world.getAllGuides2D()
-    .filter(g => g.planeId === 'proj_plane_H');
+  const plane = world.projectionPlanes.get('proj_plane_H');
+  if (!plane) {
+    return {
+      points: [],
+      lines: [],
+      segments: [],
+      circles: [],
+      guides: [],
+      hasElements: false
+    };
+  }
+  
+  const points = plane.getAllPoints();
+  const allLines = plane.getAllLines();
+  const lines = allLines.filter(l => !l.id.includes('half_HL') && l.type !== 'segment' && l.type !== 'perpendicular-to-line');
+  const segments = allLines.filter(l => l.type === 'segment');
+  const circles = plane.getAllCircles();
+  const guides = allLines.filter(l => l.type === 'perpendicular-to-line');
   
   console.log('[ElementsPanel] P_H elements:', {
     points: points.length,
@@ -248,16 +256,24 @@ const verticalElements = computed(() => {
   worldVersion.value; // Create dependency
   forceUpdate.value; // Create dependency
   
-  const points = world.getAllPoints2D()
-    .filter(p => p.planeId === 'proj_plane_V');
-  const lines = world.getAllLines2D()
-    .filter(l => l.planeId === 'proj_plane_V' && !l.id.includes('half_HL'));
-  const segments = world.getAllSegments2D()
-    .filter(s => s.planeId === 'proj_plane_V');
-  const circles = world.getAllCircles2D()
-    .filter(c => c.planeId === 'proj_plane_V');
-  const guides = world.getAllGuides2D()
-    .filter(g => g.planeId === 'proj_plane_V');
+  const plane = world.projectionPlanes.get('proj_plane_V');
+  if (!plane) {
+    return {
+      points: [],
+      lines: [],
+      segments: [],
+      circles: [],
+      guides: [],
+      hasElements: false
+    };
+  }
+  
+  const points = plane.getAllPoints();
+  const allLines = plane.getAllLines();
+  const lines = allLines.filter(l => !l.id.includes('half_HL') && l.type !== 'segment' && l.type !== 'perpendicular-to-line');
+  const segments = allLines.filter(l => l.type === 'segment');
+  const circles = plane.getAllCircles();
+  const guides = allLines.filter(l => l.type === 'perpendicular-to-line');
   
   console.log('[ElementsPanel] P_V elements:', {
     points: points.length,

@@ -155,7 +155,10 @@ export class RemoveSegment2DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      this.removedSegment = world.getSegment2DById(this.segmentId);
+      // Get from plane for undo storage
+      const plane = world.projectionPlanes.get(this.planeId);
+      const line = plane?.getLine(this.segmentId);
+      this.removedSegment = line && line.type === 'segment' ? line as Segment2D : undefined;
       
       if (!this.removedSegment) {
         return {

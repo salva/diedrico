@@ -177,7 +177,6 @@ export class Line2DByTwoPoints extends Line2D {
     
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible) {
-      console.warn('[Line2DByTwoPoints] Parent point is infeasible, marking line as infeasible');
       // Return infeasible line with dummy geometry (point and horizontal direction)
       return new Line2DRealization2D(
         new Vector3(0, 0, 1),      // point1: arbitrary point
@@ -195,7 +194,6 @@ export class Line2DByTwoPoints extends Line2D {
     
     // Check for degenerate line
     if (direction.lengthSq() < 1e-10) {
-      console.warn('[Line2DByTwoPoints] Points are too close (degenerate line)');
       return new Line2DRealization2D(
         p1.clone(),
         new Vector3(1, 0, 0),      // Fallback direction (z=0)
@@ -316,7 +314,6 @@ export class Line2DPerpendicularToLine extends Line2D {
 
     // Check if reference line is infeasible - propagate infeasibility
     if (!referenceLine.feasible) {
-      console.warn('[Line2DPerpendicularToLine] Reference line is infeasible, marking line as infeasible');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
@@ -328,7 +325,6 @@ export class Line2DPerpendicularToLine extends Line2D {
 
     // Check if through-point is infeasible - propagate infeasibility
     if (!throughPointRealization.feasible) {
-      console.warn('[Line2DPerpendicularToLine] Through-point is infeasible, marking line as infeasible');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
@@ -343,7 +339,6 @@ export class Line2DPerpendicularToLine extends Line2D {
 
     // Check for degenerate case (shouldn't happen if reference line is valid)
     if (perpendicularDirection.lengthSq() < 1e-10) {
-      console.warn(`Line ${this.id}: reference line has zero direction`);
       return new Line2DRealization2D(
         throughPointRealization.position.clone(),
         new Vector3(1, 0, 0),  // Fallback direction

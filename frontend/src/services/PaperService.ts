@@ -31,8 +31,6 @@
 
 import { Matrix3 } from 'three';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
-import { Segment2D } from '@/domain/world/Segment';
-import { Guide2D } from '@/domain/world/Guide';
 import { FreePoint2D } from '@/domain/world/Point';
 import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
 import type { Line2D, Line2DRealization2D } from '../domain/world/Line';

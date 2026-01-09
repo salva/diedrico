@@ -95,7 +95,6 @@ export class Segment2DByPoints extends Line2D {
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible) {
-      console.warn('[Segment2DByPoints] Parent point is infeasible, marking segment as infeasible');
       // Infeasible segment: arbitrary points
       const p1 = new Vector3(0, 0, 1);
       const p2 = new Vector3(1, 0, 1);
@@ -107,7 +106,6 @@ export class Segment2DByPoints extends Line2D {
 
     // Check for degenerate segment (endpoints coincident)
     if (p1.distanceToSquared(p2) < 1e-10) {
-      console.warn(`Segment ${this.id}: endpoints are coincident`);
       return new Line2DRealization2D(p1.clone(), p2.clone(), false);
     }
 

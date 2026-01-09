@@ -401,21 +401,6 @@ export class World {
     this.dependencyService.rebuildDependencyMaps();
   }
 
-  /**
-   * Remove a point from the world (generic version - prefer removePoint2D factory method)
-   * @param id Point ID to remove
-   * @returns true if point was removed, false if not found
-   */
-  removePoint2DGeneric(id: string): boolean {
-    // Phase 22.5.3: Remove from plane storage
-    const plane = this.getPlaneForElement(id);
-    if (plane) {
-      plane.removePoint(id);
-      return true;
-    }
-    return false;
-  }
-
   // ========================================
   // Line management
   // ========================================
@@ -490,21 +475,6 @@ export class World {
   }
 
   /**
-   * Remove a line from the world (generic version - prefer removeLine2D factory method)
-   * @param id ID of line to remove
-   * @returns true if line was removed, false if not found
-   */
-  removeLine2DGeneric(id: string): boolean {
-    // Phase 22.5.3: Remove from plane storage
-    const plane = this.getPlaneForElement(id);
-    if (plane) {
-      plane.removeLine(id);
-      return true;
-    }
-    return false;
-  }
-
-  /**
    * Generate a unique line ID
    */
   generateLine2DId(): string {
@@ -530,46 +500,6 @@ export class World {
     
     this.notifyChange();
     return segment;
-  }
-
-  /**
-   * Remove a segment from the world (generic version - prefer removeSegment2D factory method)
-   * @param id ID of segment to remove
-   * @returns true if segment was removed, false if not found
-   */
-  removeSegment2DGeneric(id: string): boolean {
-    // Phase 22.5.3: Segments are Line2D, remove from plane
-    const plane = this.getPlaneForElement(id);
-    if (plane) {
-      plane.removeLine(id);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Get a segment by ID
-   * @param id Segment ID
-   * @returns Segment if found, undefined otherwise
-   */
-  getSegment2DById(id: string): Segment2D | undefined {
-    // Phase 22.5.3: Segments are Line2D, search planes
-    const line = this.getLine2DFromPlanes(id);
-    return line && line.type === 'segment' ? line as Segment2D : undefined;
-  }
-
-  /**
-   * Get all segments in the world
-   * @returns Array of all segments
-   */
-  getAllSegments2D(): Segment2D[] {
-    // Phase 22.5.3: Segments are Line2D, aggregate from planes and filter
-    const allSegments: Segment2D[] = [];
-    for (const plane of this.projectionPlanes.values()) {
-      const planeLines = plane.getAllLines();
-      allSegments.push(...planeLines.filter(l => l.type === 'segment') as Segment2D[]);
-    }
-    return allSegments;
   }
 
   /**
@@ -664,33 +594,6 @@ export class World {
     
     this.notifyChange();
     return guide;
-  }
-
-  /**
-   * Remove a guide from the world (generic version - prefer removeGuide2D factory method)
-   */
-  removeGuide2DGeneric(guideId: string): Guide2D | undefined {
-    // Phase 22.5.3: Guides are Line2D, remove from plane
-    const plane = this.getPlaneForElement(guideId);
-    if (plane) {
-      const guide = plane.getLine(guideId);
-      plane.removeLine(guideId);
-      return guide && guide.type === 'perpendicular-to-line' ? guide as Guide2D : undefined;
-    }
-    return undefined;
-  }
-
-  /**
-   * Get all guides (used internally for hinge line validation)
-   */
-  getAllGuides2D(): Guide2D[] {
-    // Phase 22.5.3: Guides are Line2D, aggregate from planes and filter
-    const allGuides: Guide2D[] = [];
-    for (const plane of this.projectionPlanes.values()) {
-      const planeLines = plane.getAllLines();
-      allGuides.push(...planeLines.filter(l => l.type === 'perpendicular-to-line') as Guide2D[]);
-    }
-    return allGuides;
   }
 
   /**
@@ -1245,22 +1148,21 @@ export class World {
    * Factory method to remove a Segment2D from the world
    */
   removeSegment2D(planeId: string, id: string): Segment2D | null {
-    // Phase 22.5.3: Segments are Line2D, get from planes
-    const segment = this.getSegment2DById(id);
+    // Phase 22.5.3: Segments are Line2D, get from plane
+    const plane = this.projectionPlanes.get(planeId);
+    if (!plane) {
+      return null;
+    }
+    
+    const line = plane.getLine(id);
+    const segment = line && line.type === 'segment' ? line as Segment2D : null;
+    
     if (!segment) {
       return null;
     }
 
-    // Validate planeId matches
-    if (segment.planeId !== planeId) {
-      throw new Error(`Segment ${id} is on plane ${segment.planeId}, not ${planeId}.`);
-    }
-
     // Remove from plane storage (segments stored as lines)
-    const plane = this.projectionPlanes.get(planeId);
-    if (plane) {
-      plane.removeLine(id);
-    }
+    plane.removeLine(id);
     
     return segment;
   }
