@@ -49,8 +49,8 @@ export class TransportPointCommand extends Command {
    * Execute the transport operation
    */
   execute(): void {
-    // Get source point
-    const sourcePoint = this.world.getPoint2DById(this.sourcePointId);
+    // Get source point from planes
+    const sourcePoint = this.getPoint(this.sourcePointId);
     if (!sourcePoint) {
       throw new Error(`Source point ${this.sourcePointId} not found`);
     }

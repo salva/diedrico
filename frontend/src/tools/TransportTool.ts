@@ -71,9 +71,10 @@ export class TransportTool extends BaseTool {
       }
 
       // Verify point exists on current plane
-      const point = world.getPoint2DById(hit.elementId);
+      const plane = world.projectionPlanes.get(planeId);
+      const point = plane?.getPoint(hit.elementId);
       if (!point) {
-        return this.failure('Point not found in World');
+        return this.failure('Point not found on plane');
       }
       
       if (point.planeId !== planeId) {

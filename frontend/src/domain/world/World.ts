@@ -416,75 +416,6 @@ export class World {
     return false;
   }
 
-  /**
-   * Get a point by ID
-   * @param id Point ID
-   * @returns Point if found, undefined otherwise
-   */
-  getPoint2DById(id: string): Point2D | undefined {
-    // Phase 22.5.3: Search all planes
-    return this.getPoint2DFromPlanes(id);
-  }
-
-  /**
-   * Get all points in the world
-   * @returns Array of all points
-   */
-  getAllPoints2D(): Point2D[] {
-    // Phase 22.5.3: Aggregate from all planes
-    const allPoints: Point2D[] = [];
-    for (const plane of this.projectionPlanes.values()) {
-      allPoints.push(...plane.getAllPoints());
-    }
-    return allPoints;
-  }
-
-  /**
-   * Get all points on a specific plane
-   * @param planeId Plane ID to filter by
-   * @returns Array of points on the specified plane
-   */
-  getPoints2DByPlane(planeId: string): Point2D[] {
-    return this.getAllPoints2D().filter(p => p.planeId === planeId);
-  }
-
-  /**
-   * Get total number of points
-   */
-  getPoint2DCount(): number {
-    // Phase 22.5.3: Count across all planes
-    return this.getAllPoints2D().length;
-  }
-
-  /**
-   * Toggle visibility of a point
-   * @param id Point ID
-   * @returns true if visibility was toggled, false if point not found
-   */
-  togglePoint2DVisibility(id: string): boolean {
-    // Phase 22.5.3: Search planes
-    const point = this.getPoint2DFromPlanes(id);
-    if (!point) return false;
-    point.visible = !point.visible;
-    this.notifyChange();
-    return true;
-  }
-
-  /**
-   * Set visibility of a point
-   * @param id Point ID
-   * @param visible Visibility state
-   * @returns true if successful, false if point not found
-   */
-  setPoint2DVisibility(id: string, visible: boolean): boolean {
-    // Phase 22.5.3: Search planes
-    const point = this.getPoint2DFromPlanes(id);
-    if (!point) return false;
-    point.visible = visible;
-    this.notifyChange();
-    return true;
-  }
-
   // ========================================
   // Line management
   // ========================================
@@ -574,75 +505,6 @@ export class World {
   }
 
   /**
-   * Get a line by ID
-   * @param id Line ID
-   * @returns Line if found, undefined otherwise
-   */
-  getLine2DById(id: string): Line2D | undefined {
-    // Phase 22.5.3: Search all planes
-    return this.getLine2DFromPlanes(id);
-  }
-
-  /**
-   * Get all lines in the world
-   * @returns Array of all lines
-   */
-  getAllLines2D(): Line2D[] {
-    // Phase 22.5.3: Aggregate from all planes
-    const allLines: Line2D[] = [];
-    for (const plane of this.projectionPlanes.values()) {
-      allLines.push(...plane.getAllLines());
-    }
-    return allLines;
-  }
-
-  /**
-   * Get all lines on a specific plane (includes HalfHingeLine2D)
-   * @param planeId Plane ID to filter by
-   * @returns Array of lines on the specified plane
-   */
-  getLines2DByPlane(planeId: string): Line2D[] {
-    return this.getAllLines2D().filter(l => l.planeId === planeId);
-  }
-
-  /**
-   * Get total number of lines
-   */
-  getLine2DCount(): number {
-    // Phase 22.5.3: Count across all planes
-    return this.getAllLines2D().length;
-  }
-
-  /**
-   * Toggle visibility of a line
-   * @param id Line ID
-   * @returns true if visibility was toggled, false if line not found
-   */
-  toggleLine2DVisibility(id: string): boolean {
-    // Phase 22.5.3: Search planes
-    const line = this.getLine2DFromPlanes(id);
-    if (!line) return false;
-    line.visible = !line.visible;
-    this.notifyChange();
-    return true;
-  }
-
-  /**
-   * Set visibility of a line
-   * @param id Line ID
-   * @param visible Visibility state
-   * @returns true if successful, false if line not found
-   */
-  setLine2DVisibility(id: string, visible: boolean): boolean {
-    // Phase 22.5.3: Search planes
-    const line = this.getLine2DFromPlanes(id);
-    if (!line) return false;
-    line.visible = visible;
-    this.notifyChange();
-    return true;
-  }
-
-  /**
    * Generate a unique line ID
    */
   generateLine2DId(): string {
@@ -701,54 +563,13 @@ export class World {
    * @returns Array of all segments
    */
   getAllSegments2D(): Segment2D[] {
-    // Phase 22.5.3: Segments are Line2D, filter from all lines
-    return this.getAllLines2D().filter(l => l.type === 'segment') as Segment2D[];
-  }
-
-  /**
-   * Get all segments on a specific plane
-   * @param planeId Plane ID to filter by
-   * @returns Array of segments on the specified plane
-   */
-  getSegments2DByPlane(planeId: string): Segment2D[] {
-    return this.getAllSegments2D().filter(s => s.planeId === planeId);
-  }
-
-  /**
-   * Get total number of segments
-   */
-  getSegment2DCount(): number {
-    // Phase 22.5.3: Count segments from all lines
-    return this.getAllSegments2D().length;
-  }
-
-  /**
-   * Toggle visibility of a segment
-   * @param id Segment ID
-   * @returns true if visibility was toggled, false if segment not found
-   */
-  toggleSegment2DVisibility(id: string): boolean {
-    // Phase 22.5.3: Search planes
-    const segment = this.getSegment2DById(id);
-    if (!segment) return false;
-    segment.visible = !segment.visible;
-    this.notifyChange();
-    return true;
-  }
-
-  /**
-   * Set visibility of a segment
-   * @param id Segment ID
-   * @param visible Visibility state
-   * @returns true if successful, false if segment not found
-   */
-  setSegment2DVisibility(id: string, visible: boolean): boolean {
-    // Phase 22.5.3: Search planes
-    const segment = this.getSegment2DById(id);
-    if (!segment) return false;
-    segment.visible = visible;
-    this.notifyChange();
-    return true;
+    // Phase 22.5.3: Segments are Line2D, aggregate from planes and filter
+    const allSegments: Segment2D[] = [];
+    for (const plane of this.projectionPlanes.values()) {
+      const planeLines = plane.getAllLines();
+      allSegments.push(...planeLines.filter(l => l.type === 'segment') as Segment2D[]);
+    }
+    return allSegments;
   }
 
   /**
@@ -792,64 +613,6 @@ export class World {
       return circle;
     }
     return undefined;
-  }
-
-  /**
-   * Get a circle by ID
-   */
-  getCircle2DById(circleId: string): Circle2D | undefined {
-    // Phase 22.5.3: Search all planes
-    return this.getCircle2DFromPlanes(circleId);
-  }
-
-  /**
-   * Get all circles
-   */
-  getAllCircles2D(): Circle2D[] {
-    // Phase 22.5.3: Aggregate from all planes
-    const allCircles: Circle2D[] = [];
-    for (const plane of this.projectionPlanes.values()) {
-      allCircles.push(...plane.getAllCircles());
-    }
-    return allCircles;
-  }
-
-  /**
-   * Get all circles on a specific plane
-   * @param planeId Plane ID to filter by
-   * @returns Array of circles on the specified plane
-   */
-  getCircles2DByPlane(planeId: string): Circle2D[] {
-    return this.getAllCircles2D().filter(c => c.planeId === planeId);
-  }
-
-  /**
-   * Toggle visibility of a circle
-   * @param id Circle ID
-   * @returns true if visibility was toggled, false if circle not found
-   */
-  toggleCircle2DVisibility(id: string): boolean {
-    // Phase 22.5.3: Search planes
-    const circle = this.getCircle2DFromPlanes(id);
-    if (!circle) return false;
-    circle.visible = !circle.visible;
-    this.notifyChange();
-    return true;
-  }
-
-  /**
-   * Set visibility of a circle
-   * @param id Circle ID
-   * @param visible Visibility state
-   * @returns true if successful, false if circle not found
-   */
-  setCircle2DVisibility(id: string, visible: boolean): boolean {
-    // Phase 22.5.3: Search planes
-    const circle = this.getCircle2DFromPlanes(id);
-    if (!circle) return false;
-    circle.visible = visible;
-    this.notifyChange();
-    return true;
   }
 
   /**
@@ -918,49 +681,16 @@ export class World {
   }
 
   /**
-   * Get a guide by ID
-   */
-  getGuide2DById(guideId: string): Guide2D | undefined {
-    // Phase 22.5.3: Guides are Line2D, search planes
-    const line = this.getLine2DFromPlanes(guideId);
-    return line && line.type === 'perpendicular-to-line' ? line as Guide2D : undefined;
-  }
-
-  /**
-   * Get all guides
+   * Get all guides (used internally for hinge line validation)
    */
   getAllGuides2D(): Guide2D[] {
-    // Phase 22.5.3: Guides are Line2D, filter from all lines
-    return this.getAllLines2D().filter(l => l.type === 'perpendicular-to-line') as Guide2D[];
-  }
-
-  /**
-   * Toggle visibility of a guide
-   * @param id Guide ID
-   * @returns true if visibility was toggled, false if guide not found
-   */
-  toggleGuide2DVisibility(id: string): boolean {
-    // Phase 22.5.3: Search planes
-    const guide = this.getGuide2DById(id);
-    if (!guide) return false;
-    guide.visible = !guide.visible;
-    this.notifyChange();
-    return true;
-  }
-
-  /**
-   * Set visibility of a guide
-   * @param id Guide ID
-   * @param visible Visibility state
-   * @returns true if successful, false if guide not found
-   */
-  setGuide2DVisibility(id: string, visible: boolean): boolean {
-    // Phase 22.5.3: Search planes
-    const guide = this.getGuide2DById(id);
-    if (!guide) return false;
-    guide.visible = visible;
-    this.notifyChange();
-    return true;
+    // Phase 22.5.3: Guides are Line2D, aggregate from planes and filter
+    const allGuides: Guide2D[] = [];
+    for (const plane of this.projectionPlanes.values()) {
+      const planeLines = plane.getAllLines();
+      allGuides.push(...planeLines.filter(l => l.type === 'perpendicular-to-line') as Guide2D[]);
+    }
+    return allGuides;
   }
 
   /**
@@ -969,6 +699,10 @@ export class World {
   generateGuide2DId(): string {
     return `guide2d_${this.nextId++}`;
   }
+
+  // ========================================
+  // Plane Methods
+  // ========================================
 
   /**
    * Add a plane to the world
@@ -1560,8 +1294,13 @@ export class World {
    */
   removeGuide2D(planeId: string, id: string): Guide2D | null {
     // Phase 22.5.3: Guides are Line2D, get from planes
-    const guide = this.getGuide2DById(id);
-    if (!guide) {
+    const plane = this.projectionPlanes.get(planeId);
+    if (!plane) {
+      return null;
+    }
+    
+    const guide = plane.getLine(id);
+    if (!guide || guide.type !== 'perpendicular-to-line') {
       return null;
     }
 
@@ -1571,12 +1310,9 @@ export class World {
     }
 
     // Remove from plane storage (guides stored as lines)
-    const plane = this.projectionPlanes.get(planeId);
-    if (plane) {
-      plane.removeLine(id);
-    }
+    plane.removeLine(id);
     
-    return guide;
+    return guide as Guide2D;
   }
 
   // ========================================
@@ -1669,10 +1405,14 @@ export class World {
    * @returns Array of HalfHingeLine2D objects for that plane
    */
   getHalfHingeLines2D(planeId: string): HalfHingeLine2D[] {
-    return this.getAllLines2D()
-      .filter((line): line is HalfHingeLine2D => 
-        line.type === 'half-hinge' && line.planeId === planeId
-      );
+    // Search the specific plane for half hinge lines
+    const plane = this.projectionPlanes.get(planeId);
+    if (!plane) return [];
+    
+    const allLines = plane.getAllLines();
+    return allLines.filter((line): line is HalfHingeLine2D => 
+      line.type === 'half-hinge'
+    );
   }
 }
 

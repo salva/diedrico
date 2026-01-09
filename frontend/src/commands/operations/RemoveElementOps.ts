@@ -38,8 +38,9 @@ export class RemovePoint2DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Store element before removal for undo
-      this.removedPoint = world.getPoint2DById(this.pointId);
+      // Store element before removal for undo - get from plane
+      const plane = world.projectionPlanes.get(this.planeId);
+      this.removedPoint = plane?.getPoint(this.pointId);
       
       if (!this.removedPoint) {
         return {
@@ -98,7 +99,9 @@ export class RemoveLine2DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      this.removedLine = world.getLine2DById(this.lineId);
+      // Get from plane for undo storage
+      const plane = world.projectionPlanes.get(this.planeId);
+      this.removedLine = plane?.getLine(this.lineId);
       
       if (!this.removedLine) {
         return {
@@ -206,7 +209,9 @@ export class RemoveCircle2DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      this.removedCircle = world.getCircle2DById(this.circleId);
+      // Get from plane for undo storage
+      const plane = world.projectionPlanes.get(this.planeId);
+      this.removedCircle = plane?.getCircle(this.circleId);
       
       if (!this.removedCircle) {
         return {
