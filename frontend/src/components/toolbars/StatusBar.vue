@@ -12,9 +12,15 @@
       </span>
     </div>
     
-    <!-- Center section: Save status -->
+    <!-- Center section: Save status and cascade preview -->
     <div class="status-section status-center">
-      <span v-if="saveStatus !== 'idle'" class="status-item save-status" :class="`save-status-${saveStatus}`">
+      <!-- Cascade deletion preview (higher priority) -->
+      <span v-if="cascadeCount > 0" class="status-item cascade-warning">
+        <span class="cascade-icon">⚠️</span>
+        <span class="cascade-text">{{ cascadeCount }} element{{ cascadeCount > 1 ? 's' : '' }} will be cascade deleted</span>
+      </span>
+      <!-- Save status (lower priority) -->
+      <span v-else-if="saveStatus !== 'idle'" class="status-item save-status" :class="`save-status-${saveStatus}`">
         <span v-if="saveStatus === 'saving'">💾 Saving...</span>
         <span v-else-if="saveStatus === 'saved'">✓ All changes saved</span>
       </span>
@@ -41,6 +47,7 @@ interface Props {
   activeTool?: string;
   coordinates3D?: { x: number; y: number; z: number } | null;
   saveStatus?: 'idle' | 'saving' | 'saved';
+  cascadeCount?: number;  // Number of elements that will be cascade deleted
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -48,7 +55,8 @@ const props = withDefaults(defineProps<Props>(), {
   activePlaneName: 'None',
   activeTool: 'Select',
   coordinates3D: null,
-  saveStatus: 'idle'
+  saveStatus: 'idle',
+  cascadeCount: 0
 });
 
 const has3DCoordinates = computed(() => {
@@ -132,6 +140,26 @@ const formattedCoordinates = computed(() => {
 .save-status-saved {
   background-color: #d4edda;
   color: #155724;
+}
+
+.cascade-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cascade-icon {
+  font-size: 16px;
+}
+
+.cascade-text {
+  font-size: 13px;
 }
 
 @keyframes pulse {

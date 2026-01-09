@@ -65,7 +65,8 @@ export interface LineLineIntersectionResult {
  * @returns Line in implicit form [a, b, c] where ax + by + c = 0
  */
 function lineToImplicitForm(line: Line2DRealization2D): Vector3 {
-  const { point, direction } = line;
+  const point = line.point1;
+  const direction = line.getDirection();
   const x0 = point.x;
   const y0 = point.y;
   const dx = direction.x;
@@ -135,7 +136,7 @@ export function intersectLineLine(
   if (Math.abs(w) < epsilon) {
     // Lines are parallel or coincident
     // Check if they're coincident by testing if one point from line1 satisfies line2
-    const testPoint = line1.point;
+    const testPoint = line1.point1;
     const dist = Math.abs(a2 * testPoint.x + b2 * testPoint.y + c2);
     
     if (dist < epsilon) {
@@ -180,8 +181,8 @@ export function areLinesParallel(
   line1: Line2DRealization2D,
   line2: Line2DRealization2D
 ): boolean {
-  const d1 = line1.direction;
-  const d2 = line2.direction;
+  const d1 = line1.getDirection();
+  const d2 = line2.getDirection();
   
   // Cross product in 2D: d1.x * d2.y - d1.y * d2.x
   // If zero, directions are parallel
@@ -238,7 +239,8 @@ export function intersectLineCircle(
   line: Line2DRealization2D,
   circle: Circle2DRealization2D
 ): LineCircleIntersectionResult {
-  const { point: P0, direction: d } = line;
+  const P0 = line.point1;
+  const d = line.getDirection();
   const { center: C, radius: r } = circle;
   
   // Line: P(t) = P0 + t*d = (P0.x + t*d.x, P0.y + t*d.y)
@@ -359,9 +361,9 @@ export function intersectCircleCircle(
   circle2: Circle2DRealization2D
 ): CircleCircleIntersectionResult {
   const c1 = circle1.center;
-  const r1 = circle1.radius;
+  const r1 = circle1.getRadius();
   const c2 = circle2.center;
-  const r2 = circle2.radius;
+  const r2 = circle2.getRadius();
   
   // Distance between centers
   const dx = c2.x - c1.x;

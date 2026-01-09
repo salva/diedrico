@@ -60,9 +60,12 @@ export class HalfHingeLine2D extends Line2D {
    * Realize this half-hinge line (returns geometric data directly)
    * HalfHingeLine2D stores its geometry directly, no computation needed
    * 
+   * Returns infinite line: point1 (finite) + point2 (direction with z=0)
+   * 
    * @param _world World instance (not used for hinge lines, which store geometry directly)
    */
   realize2D(_world: import('./World').World): Line2DRealization2D {
+    // Infinite line: point1 is finite point (z=1), point2 is direction (z=0)
     return new Line2DRealization2D(this.point, this.direction);
   }
 }

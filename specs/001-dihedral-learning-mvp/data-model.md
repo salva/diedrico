@@ -22,13 +22,13 @@ World
 ├── projectionPlanes: Map<string, ProjectionPlane>
 │   ├── ProjectionPlane "proj_plane_H"
 │   │   ├── points: Map<string, Point2D>
-│   │   ├── lines: Map<string, Line2D>      // Includes segments, guides, half-hinge lines
+│   │   ├── lines: Map<string, Line2D>      // Includes segments, guides, HalfHingeLine2D (2D entities)
 │   │   ├── circles: Map<string, Circle2D>
 │   │   └── arcs: Map<string, Arc2D>
 │   └── ProjectionPlane "proj_plane_V"
 │       ├── points: Map<string, Point2D>
-│       └── lines: Map<string, Line2D>
-├── hingeLines: Map<string, HingeLine>      // Cross-plane elements
+│       └── lines: Map<string, Line2D>      // Includes HalfHingeLine2D (2D entities)
+├── hingeLines: Map<string, HingeLine>      // 3D entities (NOT HalfHingeLine2D)
 ├── planes: Map<string, Plane3D>            // 3D geometric definitions
 └── processTree: ProcessTree                 // Construction history
 ```
@@ -883,61 +883,219 @@ plane_coords = inverse_transform_to_canvas * (inverse_viewport_transform * [x_sc
 
 ---
 
-### Domain Entity: HingeLine
+## Hinge Lines Architecture
+
+### Overview: 3D Hinge Lines, 2D Half-Hinge Lines, and Broken Hinge Lines
+
+This section defines the three related but distinct concepts for modeling fold lines between projection planes:
+
+1. **HingeLine** (3D entity): The physical fold between two projection planes
+2. **HalfHingeLine2D** (2D entity): The 2D representation of a hinge line on each projection plane
+3. **Broken Hinge Line (BHL)**: Intersection between two arbitrary 3D planes (NOT a HingeLine entity)
+
+---
+
+### Domain Entity: HingeLine (3D Entity)
 
 **Purpose**: 3D intersection line shared by two **projection planes** (the physical fold line); basis for guide creation
 
-**Important**: A HingeLine entity represents the fold between two **projection planes** (like P_H and P_V). It is NOT used to represent **broken hinge lines (BHLs)**—intersections between arbitrary 3D planes.
-
-**Broken Hinge Lines (BHL)**: When two arbitrary 3D planes intersect, the intersection is called a broken hinge line. BHLs are **projected** onto the projection planes as regular Element2D lines.
-
-**Example**: With planes A, B, C:
-- HL_AB and HL_AC are HingeLine entities (actual folds between projection planes)
-- BHL_BC (intersection of planes B and C) is NOT stored as a HingeLine entity
-- Instead, BHL_BC appears as two separate Element2D lines (projections on planes B and C)
-- Distance transport occurs between these BHL projections (Element2D lines)
-
-**Architecture - Two-Level Structure**:
+**CRITICAL STORAGE RULE**: 
+- **HingeLine is a 3D entity stored ONLY in `World.hingeLines` Map**
+- **NEVER add HingeLine to `ProjectionPlane.lines` Map**
+- **HingeLine represents the 3D geometric fold, not its 2D projections**
 
 ```typescript
-// 3D Entity - represents the actual 3D intersection line
+// ✅ CORRECT: HingeLine stored at World level
+World {
+  hingeLines: Map<string, HingeLine>;  // 3D cross-plane elements
+  projectionPlanes: Map<string, ProjectionPlane>;
+}
+
+// ❌ INCORRECT: Do NOT add HingeLine to ProjectionPlane
+ProjectionPlane {
+  lines: Map<string, Line2D>;  // Only 2D lines (including HalfHingeLine2D)
+}
+```
+
+**Type Definition**:
+
+```typescript
+// 3D Entity - represents the actual 3D intersection line between projection planes
 interface HingeLine {
   id: HingeLineId;                  // UUID
   name: string;                     // "HL_HV", "HL_HA1", etc.
-  plane1: PlaneId;                  // Reference to first plane
-  plane2: PlaneId;                  // Reference to second plane
-  // 3D geometry would be stored here if needed
+  plane1: PlaneId;                  // Reference to first projection plane
+  plane2: PlaneId;                  // Reference to second projection plane
+  // 3D geometry computed from plane intersection (not stored in MVP)
+}
+```
+
+**Validation Rules**:
+- `plane1` and `plane2` must exist and be distinct projection planes
+- `name` follows convention: "HL_{id1}{id2}" (e.g., HL_HV)
+- Each pair of projection planes shares at most one HingeLine (in MVP, exactly one: HL_HV)
+
+**Relationships**:
+- 1 HingeLine → 2 HalfHingeLine2D (one per projection plane)
+- 1 World → N HingeLines (min 1: HL_HV between P_H and P_V)
+
+---
+
+### Domain Entity: HalfHingeLine2D (2D Entity)
+
+**Purpose**: 2D representation of how a HingeLine appears in each projection plane; used for guide construction and point intersection
+
+**CRITICAL STORAGE RULE**: 
+- **HalfHingeLine2D is a 2D entity (Line2D subtype) stored ONLY in `ProjectionPlane.lines` Map**
+- **NEVER add HalfHingeLine2D to `World.hingeLines` Map**
+- **Each HingeLine has exactly TWO HalfHingeLine2D objects (one per plane)**
+
+```typescript
+// ✅ CORRECT: HalfHingeLine2D stored in ProjectionPlane
+ProjectionPlane {
+  lines: Map<string, Line2D>;  // Includes HalfHingeLine2D objects
 }
 
-// 2D Representation - how the HL appears in each projection plane
-interface HalfHingeLine2D {
-  id: string;                       // UUID
-  hingeLineId: HingeLineId;         // Reference to parent 3D HingeLine
-  planeId: PlaneId;                 // Which plane this half belongs to
-  line2D: Line2D;                   // Line representation in this plane's (u,v) coordinates
-  // Used for both regular HL and Broken HL (BHL) representations
+// ❌ INCORRECT: Do NOT add HalfHingeLine2D to World.hingeLines
+World {
+  hingeLines: Map<string, HingeLine>;  // Only 3D HingeLine entities
 }
+```
+
+**Type Definition**:
+
+```typescript
+// 2D Entity - extends Line2D base class
+class HalfHingeLine2D extends Line2D {
+  type: 'half-hinge';               // Line2D type discriminator
+  hingeLineId: HingeLineId;         // Reference to parent 3D HingeLine
+  planeId: PlaneId;                 // Which projection plane this half belongs to
+  point: Vector3;                   // Point on line in plane's (u,v,1) coordinates
+  direction: Vector3;               // Direction vector in plane's (u,v,0) coordinates
+}
+```
+
+**Storage Pattern**:
+
+```typescript
+// World initialization - creates 1 HingeLine + 2 HalfHingeLine2D objects
+const hingeLineHV = new HingeLine('HL_HV', 'HL_HV', 'proj_plane_H', 'proj_plane_V');
+this.hingeLines.set('HL_HV', hingeLineHV);  // ✅ Stored in World
+
+const halfHingeHV_onPH = new HalfHingeLine2D('half_HL_HV_on_PH', 'HL_HV', 'proj_plane_H', ...);
+projPlaneH.addLine(halfHingeHV_onPH);  // ✅ Stored in ProjectionPlane
+
+const halfHingeHV_onPV = new HalfHingeLine2D('half_HL_HV_on_PV', 'HL_HV', 'proj_plane_V', ...);
+projPlaneV.addLine(halfHingeHV_onPV);  // ✅ Stored in ProjectionPlane
 ```
 
 **Key Insight**: Each HingeLine has **two** HalfHingeLine2D objects (one per plane). This structure:
 - Models the actual geometry: a 3D line has different 2D projections in each plane
 - Enables proper guide construction: guides are perpendicular to HalfHingeLine2D (not the 3D HL)
-- Supports both HL and BHL with the same infrastructure
+- Supports rendering: each plane renders its own HalfHingeLine2D representation
 - Each projection plane "owns" its HalfHingeLine2D representation
 
 **Relationships**:
-- 1 HingeLine → 2 HalfHingeLine2D (one per plane)
+- 1 HingeLine → 2 HalfHingeLine2D (one per projection plane)
 - 1 HalfHingeLine2D → N Guides (guides are perpendicular to the half-hinge in their plane)
 - 1 ProjectionPlane → N HalfHingeLine2D (all hinges touching that plane)
 
-**Validation Rules**:
-- `plane1` and `plane2` must exist and be distinct
-- `name` follows convention: "HL_{id1}{id2}" (e.g., HL_HV)
-- For geometry, HL acts like a regular line (can compute intersections, perpendiculars)
+---
 
-**Invariants**:
-- Each pair of projection planes shares at most one HL (in MVP, exactly one: HL_HV)
-- Only used for folds between projection planes, not for general plane intersections
+### CRITICAL: HalfHingeLine2D Coordinate Consistency Requirement
+
+**Purpose**: Enable direct coordinate transfer for intersection points between sibling HalfHingeLine2D objects
+
+**Geometric Requirement**: Both HalfHingeLine2D objects representing the same 3D HingeLine **MUST use identical (point, direction) in their local (u,v) coordinates**.
+
+**Why This Matters**:
+
+When an element (circle, line, etc.) intersects with a HalfHingeLine2D on one plane, the system automatically creates a sibling point on the other plane. For this to work correctly with direct coordinate cloning, both HalfHingeLine2D representations must parameterize the same 3D line identically.
+
+**Rationale**:
+- A HingeLine in 3D is a single line shared by both projection planes
+- Both planes use the same coordinate system origin and axes for the hinge line
+- Points on the hinge line have the same (u, v) coordinates in both planes
+- For sibling points to transfer coordinates directly, both HalfHingeLine2D representations must use the same parameterization
+
+**Implementation Example** (HL_HV):
+
+```typescript
+// World constructor - both HalfHingeLine2D use IDENTICAL geometry
+const halfHingeHV_onPH = new HalfHingeLine2D(
+  'half_HL_HV_on_PH',
+  'HL_HV',
+  'proj_plane_H',
+  new Vector3(0, 0, 1),      // ✅ Same point: origin (0, 0, 1)
+  new Vector3(1, 0, 0)       // ✅ Same direction: horizontal (1, 0, 0)
+);
+
+const halfHingeHV_onPV = new HalfHingeLine2D(
+  'half_HL_HV_on_PV',
+  'HL_HV',
+  'proj_plane_V',
+  new Vector3(0, 0, 1),      // ✅ Same point: origin (0, 0, 1)
+  new Vector3(1, 0, 0)       // ✅ Same direction: horizontal (1, 0, 0)
+);
+```
+
+**Result**: Point at parameter (u, 0, 1) on HalfHingeLine2D in P_H has the same coordinates (u, 0, 1) in P_V, enabling direct coordinate transfer for sibling intersection points.
+
+**Validation**:
+- Unit test verifies all HalfHingeLine2D pairs have matching point/direction
+- Constructor enforces identical parameterization for sibling pairs
+- World initialization documents this requirement in comments
+
+**Consequence**: `SiblingIntersectionPoint2D.realize2D()` can use direct coordinate cloning:
+
+```typescript
+class SiblingIntersectionPoint2D extends Point2D {
+  realize(context: RealizationContext): Point2DRealization {
+    // OPTIMIZED: Direct coordinate clone (safe due to coordinate consistency)
+    const primaryRealization = context.world.getPoint2DRealization(this.primaryIntersectionId);
+    return new Point2DRealization(primaryRealization.position.clone());
+  }
+}
+```
+
+---
+
+### Broken Hinge Lines (BHL) - NOT HingeLine Entities
+
+**Important**: A HingeLine entity represents the fold between two **projection planes** (like P_H and P_V). It is NOT used to represent **broken hinge lines (BHLs)**—intersections between arbitrary 3D planes.
+
+**Broken Hinge Lines (BHL)**: When two arbitrary 3D planes (not projection planes) intersect, the intersection is called a broken hinge line. BHLs are **projected** onto the projection planes as regular Line2D elements, NOT as HingeLine or HalfHingeLine2D entities.
+
+**Example**: With projection planes P_H, P_V and auxiliary planes A, B, C:
+- **HL_HA** and **HL_HC** are HingeLine entities (folds between projection planes P_H and auxiliary plane A/C)
+- **BHL_BC** (intersection of auxiliary planes B and C) is NOT stored as a HingeLine entity
+- Instead, BHL_BC appears as two separate Line2D elements (projections on planes B and C)
+- Distance transport occurs between these BHL projections (regular Line2D elements)
+
+**Storage Pattern for BHL**:
+
+```typescript
+// ✅ BHL represented as regular Line2D projections, NOT HingeLine
+const bhl_BC_on_B = new Line2D('bhl_BC_on_B', 'line', 'proj_plane_B', ...);
+projPlaneB.addLine(bhl_BC_on_B);  // Regular Line2D
+
+const bhl_BC_on_C = new Line2D('bhl_BC_on_C', 'line', 'proj_plane_C', ...);
+projPlaneC.addLine(bhl_BC_on_C);  // Regular Line2D
+
+// ❌ Do NOT create HingeLine for BHL
+// const wrongBHL = new HingeLine('BHL_BC', 'BHL_BC', 'proj_plane_B', 'proj_plane_C');  // WRONG!
+```
+
+**Key Differences**:
+
+| Aspect | HingeLine + HalfHingeLine2D | Broken Hinge Line (BHL) |
+|--------|------------------------------|--------------------------|
+| **3D Entity** | HingeLine stored in World.hingeLines | No 3D entity (only projections) |
+| **2D Representation** | HalfHingeLine2D (Line2D subtype) | Regular Line2D elements |
+| **Storage** | World.hingeLines + ProjectionPlane.lines | Only ProjectionPlane.lines |
+| **Between** | Two projection planes (P_H, P_V, auxiliary) | Two arbitrary 3D planes |
+| **Type** | type='half-hinge' for 2D representation | type='line' for projections |
+| **Purpose** | Fold line for projection plane system | Geometric intersection line |
 
 ---
 
@@ -989,57 +1147,15 @@ Result: Both points visible, representing same 3D position
 ```typescript
 class SiblingIntersectionPoint2D extends Point2D {
   realize(context: RealizationContext): Point2DRealization {
-    // OPTIMIZED: Direct coordinate clone (see coordinate consistency constraint below)
+    // OPTIMIZED: Direct coordinate clone
+    // See "CRITICAL: HalfHingeLine2D Coordinate Consistency Requirement" section above
     const primaryRealization = context.world.getPoint2DRealization(this.primaryIntersectionId);
     return new Point2DRealization(primaryRealization.position.clone());
   }
 }
 ```
 
-**CRITICAL: HalfHingeLine2D Coordinate Consistency Constraint**
-
-For `SiblingIntersectionPoint2D.realize2D()` to work correctly with direct coordinate cloning, both `HalfHingeLine2D` objects representing the same 3D hinge line **MUST use identical (point, direction) in their local (u,v) coordinates**.
-
-**Geometric Basis**:
-- A HingeLine in 3D is a single line shared by both projection planes
-- Each plane has its own local (u,v) coordinate system
-- For sibling points to transfer coordinates directly, both HalfHingeLine2D representations must parameterize the same 3D line identically
-
-**Current Setup (HL_HV)**:
-```typescript
-// World constructor - both HalfHingeLine2D use identical geometry
-const halfHingeHV_onPH = new HalfHingeLine2D(
-  'half_HL_HV_on_PH', 'HL_HV', 'proj_plane_H',
-  new Vector3(0, 0, 1),    // Point on hinge line
-  new Vector3(1, 0, 0)     // Direction along hinge line
-);
-
-const halfHingeHV_onPV = new HalfHingeLine2D(
-  'half_HL_HV_on_PV', 'HL_HV', 'proj_plane_V',
-  new Vector3(0, 0, 1),    // SAME point
-  new Vector3(1, 0, 0)     // SAME direction
-);
-```
-
-**Consequence**:
-- Point at parameter (u, 0, 1) on HalfHingeLine2D in P_H → same coordinates (u, 0, 1) in P_V
-- Intersection coordinates transfer directly: no 3D projection needed
-- Performance: ~3x faster than full 3D→2D projection path
-
-**MANDATORY REQUIREMENT for Future Development**:
-- If auxiliary projection planes are added
-- If additional hinge lines are created
-- If HingeLine initialization logic changes
-
-**The coordinate consistency property MUST be maintained**, otherwise:
-- `SiblingIntersectionPoint2D` will compute **incorrect positions**
-- Sibling points will not correspond to the same 3D point
-- Geometric validity breaks silently (no runtime error)
-
-**Validation Strategy** (when additional HingeLines are implemented):
-1. Add unit test verifying all HalfHingeLine2D pairs have matching point/direction
-2. Add runtime assertion in `SiblingIntersectionPoint2D.realize2D()` checking property
-3. Document constraint in HingeLine creation logic/factory methods
+**Coordinate Consistency**: For this direct coordinate cloning to work correctly, both `HalfHingeLine2D` objects representing the same 3D hinge line **MUST use identical (point, direction) in their local (u,v) coordinates**. See the **"CRITICAL: HalfHingeLine2D Coordinate Consistency Requirement"** section in the Hinge Lines Architecture above for detailed requirements and validation strategy.
 
 **Reference**: See tasks.md "Future Work Requiring Clarification" section for implementation guidance.
 
@@ -1195,19 +1311,30 @@ All Line2D subtypes return `Line2DRealization2D`:
 
 ```typescript
 class Line2DRealization2D {
-  point: Vector3;      // Point on line (u, v, 1) - homogeneous, w=1
-  direction: Vector3;  // Direction vector (u, v, 0) - homogeneous, w=0
-  
-  // Optional: For bounded lines (segments)
-  point1?: Vector3;    // Start point (u, v, 1) - w=1 indicates point
-  point2?: Vector3;    // End point (u, v, 1) - w=1 indicates point
+  point1: Vector3;     // First defining point
+  point2: Vector3;     // Second defining point
+  feasible: boolean;   // Whether geometric computation succeeded
 }
 ```
 
-**Key Insight: Homogeneous Coordinates Distinguish Points from Vectors**:
-- **Point**: `(u, v, 1)` - third coordinate w=1
-- **Vector**: `(u, v, 0)` - third coordinate w=0
-- Segments include both: `direction (w=0)` for infinite line + `point1/point2 (w=1)` for bounds
+**CRITICAL: Homogeneous Coordinates Unify Lines and Segments**:
+
+The beauty of homogeneous coordinates is that **two points always define a line**, but the `z` coordinate distinguishes the two cases:
+
+**For Infinite Lines:**
+- `point1`: Finite point on the line - `Vector3(u, v, 1)` where z=1 means "point"
+- `point2`: Point at infinity (direction vector) - `Vector3(dx, dy, 0)` where z=0 means "vector"
+- Parametric form: `P(t) = point1 + t * point2` (vector addition works directly!)
+
+**For Bounded Segments:**
+- `point1`: Start point - `Vector3(u1, v1, 1)` where z=1 means "point"
+- `point2`: End point - `Vector3(u2, v2, 1)` where z=1 means "point"
+- Bounded region between two finite points
+
+**Key Insight:**
+- Test `point2.z === 0` → Infinite line (point2 is direction vector)
+- Test `point2.z === 1` → Bounded segment (point2 is endpoint)
+- **No need for separate fields** - homogeneous coordinates handle both cases elegantly
 
 **Benefits**:
 - Single storage map: `ProjectionPlane.lines: Map<string, Line2D>`
@@ -1326,6 +1453,18 @@ type Segment2D = Segment2DByPoints;
 
 // === LINE 2D CONSTRUCTIONS ===
 
+// **LINE HIERARCHY**:
+// Line2D (base class)
+//   ├─ Line2DByTwoPoints (infinite line through 2 points)
+//   ├─ Line2DParallel (infinite line parallel to reference)
+//   ├─ Line2DPerpendicularToLine (infinite line perpendicular to reference)
+//   │   └─ Guide2D (perpendicular line with special rendering/behavior)
+//   ├─ Segment2D (finite line segment with endpoints)
+//   └─ HalfHingeLine2D (special line for hinge representation)
+//
+// All line-like elements share Line2D base class for unified treatment.
+// Use instanceof checks to distinguish types in code (most specific first).
+
 // Line through two points
 interface Line2DByTwoPoints {
   kind: 'Line2DByTwoPoints';        // Discriminator
@@ -1378,6 +1517,33 @@ type Line2D =
 
 // === CIRCLE 2D CONSTRUCTIONS ===
 
+// **DESIGN DECISION**: Circle2D DOES NOT support scalar radius parameter
+// 
+// Circles are ALWAYS defined by two points:
+// - Center point (finite, z=1)
+// - Edge point on circumference (finite, z=1)
+// 
+// The edge point serves dual purpose:
+// 1. Defines radius magnitude: distance from center to edge
+// 2. Defines angle 0: direction from center to edge point
+// 
+// Realization stores radiusVector (not scalar):
+// - radiusVector = edgePoint - centerPoint (with z=0 for vectors)
+// - Scalar radius computed on demand: radiusVector.length()
+// - Use getRadiusSquared() when possible (cheaper, no sqrt)
+// 
+// Benefits of vector representation:
+// - Preserves construction semantics (which point defined the radius)
+// - Transform-friendly: radiusVector transforms consistently with center
+// - Angle 0 always well-defined for intersection indexing
+// - No special cases for "radius without angular reference"
+// 
+// **REMOVED**: Circle2DByCenterAndRadius (scalar radius) - NOT IMPLEMENTED
+// Rationale: Scalar radius loses angular reference information needed for:
+// - Consistent intersection point ordering (which is point 0 vs point 1?)
+// - Coordinate transformations (how does radius transform?)
+// - Diedrico construction semantics (circles defined by geometric relations)
+
 // Circle by center point and point on circumference (PRIMARY/STANDARD)
 // This is the canonical circle definition for Diedrico geometry
 interface Circle2DByCenterAndPoint {
@@ -1392,24 +1558,6 @@ interface Circle2DByCenterAndPoint {
   // The vector from center to circumference point serves dual purpose:
   // 1. Magnitude: defines the circle radius (distance between the two points)
   // 2. Angular reference: defines angle 0 for consistent intersection point indexing
-  
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
-}
-
-// Circle by center point and radius value (SPECIAL CASE)
-// Used for specific constructions where radius is a geometric parameter
-// Note: This type does NOT provide an angular reference for intersection indexing
-// For general use, prefer Circle2DByCenterAndPoint
-interface Circle2DByCenterAndRadius {
-  kind: 'Circle2DByCenterAndRadius'; // Discriminator
-  id: ElementId;
-  name: string;                     // "c1", "c2", etc.
-  planeId: PlaneId;
-  
-  // Defining data
-  centerPointId: ElementId;
-  radius: number;                   // User-specified radius
   
   createdBy: ActionId;
   visualStyle: VisualStyle;
@@ -1432,9 +1580,8 @@ interface Circle2DByThreePoints {
 }
 
 type Circle2D = 
-  | Circle2DByCenterAndPoint       // Primary/standard definition
-  | Circle2DByCenterAndRadius      // Special case (no angular reference)
-  | Circle2DByThreePoints;         // Alternative construction
+  | Circle2DByCenterAndPoint       // Standard definition (center + edge point)
+  | Circle2DByThreePoints;         // Alternative construction (3 points)
 
 // === ARC 2D CONSTRUCTIONS ===
 
@@ -1458,9 +1605,26 @@ type Arc2D = Arc2DByCenterAndPoints;
 
 // === GUIDE 2D ===
 
+// **DESIGN**: Guide2D extends Line2DPerpendicularToLine
+// 
+// Guides are by definition perpendicular lines with special properties:
+// - Always perpendicular to a reference line (hinge line or BHL)
+// - Pass through a user-specified point
+// - Dual plane membership (belong to both planes of the reference line)
+// - Special rendering: dashed lines extending to viewport edges
+// - Used for transporting points/distances between planes
+//
+// Class hierarchy:
+//   Line2D (base)
+//     └─ Line2DPerpendicularToLine (generic perpendicular line)
+//         └─ Guide2D (perpendicular with transport semantics)
+//
+// Since all guides are perpendicular, the type name is simply "Guide2D"
+// (no need for "Guide2DPerpendicularToLine" - it's redundant).
+
 // Guide perpendicular to hinge line or BHL projection
-interface Guide2DPerpendicularToLine {
-  kind: 'Guide2DPerpendicularToLine'; // Discriminator
+interface Guide2D {
+  kind: 'Guide2D';                  // Discriminator (simplified from Guide2DPerpendicularToLine)
   id: ElementId;
   name: string;                     // Auto-generated "g1", "g2", etc.
   planeId: PlaneId;
@@ -1472,8 +1636,6 @@ interface Guide2DPerpendicularToLine {
   createdBy: ActionId;
   visualStyle: VisualStyle;
 }
-
-type Guide2D = Guide2DPerpendicularToLine;
 
 // === BHL PROJECTION ===
 
@@ -4593,6 +4755,12 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
 
 **MANDATORY PRINCIPLE**: When an element is deleted, all dependent elements (direct or indirect) MUST be deleted automatically to maintain referential integrity.
 
+**CRITICAL: Deletion Order**: Elements MUST be deleted in reverse topological order:
+- **Dependents BEFORE dependencies** (leaves first, roots last)
+- Example: If Line L depends on Point P, delete L first, then P
+- Rationale: Ensures references remain valid during the deletion process
+- Implementation: Sort elements by dependency depth (higher depth = more dependencies = delete first)
+
 **Rationale**:
 - Prevents orphaned elements that reference non-existent dependencies
 - Maintains system invariants (all element references must be valid)
@@ -4601,10 +4769,15 @@ Project (1) ──┬── (1) World ──┬── (N) ProjectionPlane
 
 ### Implementation Requirements
 
-1. **Dependency Graph Traversal**: Use `DependencyGraph.getDescendants(elementId)` to find all dependent elements
-2. **Recursive Deletion**: Delete descendants in reverse topological order (leaves first, roots last)
-3. **Atomic Operation**: All deletions happen in a single command (atomic undo/redo)
-4. **Special Cases**: Handle sibling relationships (e.g., HalfHingeLine2D intersection siblings delete together)
+1. **Dependency Graph Traversal**: Use `DependencyService.getElementsInDeletionOrder(elementIds)` to get elements sorted in proper deletion order
+2. **Reverse Topological Order**: Elements are sorted by dependency depth (higher depth = more dependents = delete first)
+3. **Atomic Operation**: All deletions happen in a single Command with multiple RemoveElement operations
+4. **Special Cases**: Handle sibling relationships (e.g., SiblingIntersectionPoint2D) - World.removePoint2D handles this automatically
+
+**Implementation Location**: 
+- Order computation: `frontend/src/services/DependencyService.ts` → `getElementsInDeletionOrder()`
+- Deletion logic: `frontend/src/App.vue` → `handleDeleteSelected()`
+- Operations: `frontend/src/commands/operations/RemoveElementOps.ts`
 
 ### Deletion Algorithm
 

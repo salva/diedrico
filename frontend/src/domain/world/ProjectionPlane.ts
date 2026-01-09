@@ -13,11 +13,20 @@
  * - Base planes: Transformations are constant but stored in realization cache
  * - Auxiliary planes: Transformations computed from geometric dependencies
  * 
+ * Phase 22.5 Architecture:
+ * - Each ProjectionPlane owns its 2D elements (points, lines, circles)
+ * - Element storage moved from World to ProjectionPlane for better encapsulation
+ * - Realization caches stored per-plane for locality
+ * 
  * @see specs/001-dihedral-learning-mvp/data-model.md#projectionplane
+ * @see specs/001-dihedral-learning-mvp/refactoring-projection-plane-ownership.md
  */
 
 import { Matrix3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
+import type { Point2D, Point2DRealization2D } from './Point';
+import type { Line2D, Line2DRealization2D } from './Line';
+import type { Circle2D, Circle2DRealization2D } from './Circle';
 
 export type ProjectionPlaneType = 'base' | 'auxiliary';
 
@@ -102,6 +111,11 @@ export class ProjectionPlaneRealization3D {
 
 /**
  * Base ProjectionPlane class - represents the rule/definition of a projection plane
+ * 
+ * Phase 22.5: Each plane owns its 2D elements
+ * - Element storage: points, lines, circles Maps
+ * - Realization caches: pointRealizations, lineRealizations, circleRealizations
+ * - Dual storage period: Both World and ProjectionPlane store elements during migration
  */
 export abstract class ProjectionPlane {
   id?: string;
@@ -111,6 +125,16 @@ export abstract class ProjectionPlane {
   isVisible: boolean;
   color: string;  // Hex color (#RRGGBB)
   plane3DId?: string;  // Reference to Plane3D element (geometric definition)
+
+  // Phase 22.5: Element storage (2D elements that belong to this plane)
+  private points: Map<string, Point2D>;
+  private lines: Map<string, Line2D>;
+  private circles: Map<string, Circle2D>;
+  
+  // Phase 22.5: Realization caches (computed 2D positions/equations)
+  private pointRealizations: Map<string, Point2DRealization2D>;
+  private lineRealizations: Map<string, Line2DRealization2D>;
+  private circleRealizations: Map<string, Circle2DRealization2D>;
 
   constructor(
     name: string,
@@ -124,6 +148,261 @@ export abstract class ProjectionPlane {
     this.isVisible = isVisible;
     this.color = color;
     this.plane3DId = plane3DId;
+    
+    // Initialize element storage
+    this.points = new Map();
+    this.lines = new Map();
+    this.circles = new Map();
+    
+    // Initialize realization caches
+    this.pointRealizations = new Map();
+    this.lineRealizations = new Map();
+    this.circleRealizations = new Map();
+  }
+
+  // ==================== Point Methods ====================
+
+  /**
+   * Add a point to this plane
+   */
+  addPoint(point: Point2D): void {
+    if (!point.id) {
+      throw new Error('Cannot add point without ID');
+    }
+    this.points.set(point.id, point);
+  }
+
+  /**
+   * Get a point by ID
+   */
+  getPoint(id: string): Point2D | undefined {
+    return this.points.get(id);
+  }
+
+  /**
+   * Get all points on this plane
+   */
+  getAllPoints(): Point2D[] {
+    return Array.from(this.points.values());
+  }
+
+  /**
+   * Remove a point from this plane
+   */
+  removePoint(id: string): boolean {
+    this.pointRealizations.delete(id);  // Clear cached realization
+    return this.points.delete(id);
+  }
+
+  /**
+   * Get point realization (cached 2D position)
+   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+   */
+  getPointRealization2D(id: string): Point2DRealization2D | undefined {
+    return this.pointRealizations.get(id);
+  }
+
+  /**
+   * Set/cache point realization
+   */
+  setPointRealization2D(id: string, realization: Point2DRealization2D): void {
+    this.pointRealizations.set(id, realization);
+  }
+
+  /**
+   * Clear point realization cache
+   */
+  clearPointRealization2D(id: string): void {
+    this.pointRealizations.delete(id);
+  }
+
+  // ==================== Line Methods ====================
+
+  /**
+   * Add a line to this plane
+   */
+  addLine(line: Line2D): void {
+    if (!line.id) {
+      throw new Error('Cannot add line without ID');
+    }
+    this.lines.set(line.id, line);
+  }
+
+  /**
+   * Get a line by ID
+   */
+  getLine(id: string): Line2D | undefined {
+    return this.lines.get(id);
+  }
+
+  /**
+   * Get all lines on this plane
+   */
+  getAllLines(): Line2D[] {
+    return Array.from(this.lines.values());
+  }
+
+  /**
+   * Remove a line from this plane
+   */
+  removeLine(id: string): boolean {
+    this.lineRealizations.delete(id);  // Clear cached realization
+    return this.lines.delete(id);
+  }
+
+  /**
+   * Get line realization (cached 2D equation)
+   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+   * Note: This includes segments, guides, and all Line2D subtypes
+   */
+  getLineRealization2D(id: string): Line2DRealization2D | undefined {
+    return this.lineRealizations.get(id);
+  }
+
+  /**
+   * Set/cache line realization
+   */
+  setLineRealization2D(id: string, realization: Line2DRealization2D): void {
+    this.lineRealizations.set(id, realization);
+  }
+
+  /**
+   * Clear line realization cache
+   */
+  clearLineRealization2D(id: string): void {
+    this.lineRealizations.delete(id);
+  }
+
+  // ==================== Circle Methods ====================
+
+  /**
+   * Add a circle to this plane
+   */
+  addCircle(circle: Circle2D): void {
+    if (!circle.id) {
+      throw new Error('Cannot add circle without ID');
+    }
+    this.circles.set(circle.id, circle);
+  }
+
+  /**
+   * Get a circle by ID
+   */
+  getCircle(id: string): Circle2D | undefined {
+    return this.circles.get(id);
+  }
+
+  /**
+   * Get all circles on this plane
+   */
+  getAllCircles(): Circle2D[] {
+    return Array.from(this.circles.values());
+  }
+
+  /**
+   * Remove a circle from this plane
+   */
+  removeCircle(id: string): boolean {
+    this.circleRealizations.delete(id);  // Clear cached realization
+    return this.circles.delete(id);
+  }
+
+  /**
+   * Get circle realization (cached 2D geometry)
+   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+   */
+  getCircleRealization2D(id: string): Circle2DRealization2D | undefined {
+    return this.circleRealizations.get(id);
+  }
+
+  /**
+   * Set/cache circle realization
+   */
+  setCircleRealization2D(id: string, realization: Circle2DRealization2D): void {
+    this.circleRealizations.set(id, realization);
+  }
+
+  /**
+   * Clear circle realization cache
+   */
+  clearCircleRealization2D(id: string): void {
+    this.circleRealizations.delete(id);
+  }
+
+  // ==================== Realization Computation Methods ====================
+  // Phase 22.5: Realization computation moved from World to ProjectionPlane
+  // These methods compute realizations and manage the plane-level cache
+
+  /**
+   * Compute and cache 2D realization for a point
+   * @param point Point to realize
+   * @param world World context for querying dependencies
+   * @returns Point2DRealization2D if computation succeeds, undefined otherwise
+   */
+  realizePoint2D(point: Point2D, world: import('./World').World): Point2DRealization2D | undefined {
+    // Check cache first
+    const cached = this.pointRealizations.get(point.id);
+    if (cached) {
+      return cached;
+    }
+
+    // Compute realization - point will query world for parent element realizations
+    const realization = point.realize2D(world);
+    if (!realization) {
+      return undefined;  // Cannot compute (e.g., missing dependencies)
+    }
+
+    // Cache the result
+    this.pointRealizations.set(point.id, realization);
+    return realization;
+  }
+
+  /**
+   * Compute and cache 2D realization for a line
+   * @param line Line to realize (includes segments, guides, hinge lines - all Line2D subtypes)
+   * @param world World context for querying dependencies
+   * @returns Line2DRealization2D if computation succeeds, undefined otherwise
+   */
+  realizeLine2D(line: Line2D, world: import('./World').World): Line2DRealization2D | undefined {
+    // Check cache first
+    const cached = this.lineRealizations.get(line.id);
+    if (cached) {
+      return cached;
+    }
+
+    // Compute realization - line will query world for parent point realizations
+    const realization = line.realize2D(world);
+    if (!realization) {
+      return undefined;  // Cannot compute (e.g., missing dependency points)
+    }
+
+    // Cache the result
+    this.lineRealizations.set(line.id, realization);
+    return realization;
+  }
+
+  /**
+   * Compute and cache 2D realization for a circle
+   * @param circle Circle to realize
+   * @param world World context for querying dependencies
+   * @returns Circle2DRealization2D if computation succeeds, undefined otherwise
+   */
+  realizeCircle2D(circle: Circle2D, world: import('./World').World): Circle2DRealization2D | undefined {
+    // Check cache first
+    const cached = this.circleRealizations.get(circle.id);
+    if (cached) {
+      return cached;
+    }
+
+    // Compute realization - circle will query world for parent element realizations
+    const realization = circle.realize2D(world);
+    if (!realization) {
+      return undefined;  // Cannot compute (e.g., missing dependencies)
+    }
+
+    // Cache the result
+    this.circleRealizations.set(circle.id, realization);
+    return realization;
   }
 
   /**

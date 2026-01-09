@@ -74,7 +74,7 @@ describe('Guide2D', () => {
       // Perpendicular guide should be vertical (direction: 0, 1, 0)
       const guide = world.addGuide2D('proj_plane_H', referenceLineId, throughPointId, 'g1');
       
-      const realization = world.getGuide2DRealization('g1');
+      const realization = world.getLine2DRealization('g1');
       
       expect(realization).toBeDefined();
       
@@ -107,7 +107,7 @@ describe('Guide2D', () => {
       // Create guide perpendicular to vertical line
       const guide = world.addGuide2D('proj_plane_H', 'line2', 'p6', 'g2');
       
-      const realization = world.getGuide2DRealization('g2');
+      const realization = world.getLine2DRealization('g2');
       
       expect(realization).toBeDefined();
       
@@ -141,7 +141,7 @@ describe('Guide2D', () => {
       // Create guide perpendicular to diagonal line
       const guide = world.addGuide2D('proj_plane_H', 'line2', 'p6', 'g2');
       
-      const realization = world.getGuide2DRealization('g2');
+      const realization = world.getLine2DRealization('g2');
       
       expect(realization).toBeDefined();
       
@@ -171,7 +171,7 @@ describe('Guide2D', () => {
       
       const guide = world.addGuide2D('proj_plane_H', referenceLineId, throughPointId, 'g1');
       
-      const realization = world.getGuide2DRealization('g1');
+      const realization = world.getLine2DRealization('g1');
       
       expect(realization).toBeDefined();
       

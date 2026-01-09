@@ -193,9 +193,9 @@ describe('PaperService', () => {
 
     it('should skip points with missing plane transforms', () => {
       // Create a point on a plane that doesn't have a transform
-      const point = new FreePoint2D('test-point-no-transform', new Vector3(50, 50, 1), "plane_H", 'g');
+      const point = new FreePoint2D('test-point-no-transform', new Vector3(50, 50, 1), "proj_plane_H", 'g');
       point.planeId = 'unknown-plane';
-      world.points.set(point.id!, point);
+      world.addPoint2D(point);
 
       const context: PrimitiveContext = {
         world,

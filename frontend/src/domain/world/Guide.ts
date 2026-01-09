@@ -19,9 +19,7 @@
  */
 
 import { Vector3 } from 'three';
-import { Line2DRealization2D } from './Line';
-
-export type Guide2DType = 'perpendicular-to-line';
+import { Line2DPerpendicularToLine, Line2DRealization2D } from './Line';
 
 /**
  * Guide2DRealization2D - Stores computed guide line in parametric form
@@ -32,50 +30,25 @@ export type Guide2DType = 'perpendicular-to-line';
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
 export class Guide2DRealization2D extends Line2DRealization2D {
-  constructor(point: Vector3, direction: Vector3, feasible: boolean = true) {
-    super(point, direction, feasible);
+  constructor(point1: Vector3, point2: Vector3, feasible: boolean = true) {
+    super(point1, point2, feasible);
   }
 }
 
 /**
- * Base Guide2D class - represents the rule/definition of a guide
- */
-export abstract class Guide2D {
-  readonly id: string;
-  readonly planeId: string;
-  readonly label?: string;
-  abstract readonly type: Guide2DType;
-  visible: boolean = true;  // Whether guide is visible in the canvas
-
-  constructor(id: string, planeId: string, label?: string) {
-    this.id = id;
-    this.planeId = planeId;
-    this.label = label;
-  }
-
-  abstract clone(): Guide2D;
-
-  /**
-   * Calculate 2D realization - compute guide line geometry
-   * @param world World instance to access element realizations
-   */
-  abstract realize2D(world: import('./World').World): Guide2DRealization2D | null;
-}
-
-/**
- * Guide2DPerpendicularToLine - Guide perpendicular to a reference line through a point
+ * Guide2D - Guide line perpendicular to reference line (hinge line or BHL)
  * 
- * The rule is: "guide perpendicular to referenceLineId through throughPointId"
+ * Guides are by definition perpendicular to a reference line and pass through a point.
+ * They have special properties:
+ * - Dashed rendering extending to viewport edges
+ * - Dual plane membership (belong to both planes of the reference line)
+ * - Used for transporting points and distances between planes
  * 
- * Implementation notes:
- * - Uses homogeneous coordinates for perpendicular calculation per Principle V
- * - Perpendicular direction in 2D: if line has direction (dx, dy), perpendicular is (-dy, dx)
- * - This is a 90-degree rotation, which works correctly in homogeneous coords
+ * Extends Line2DPerpendicularToLine to inherit perpendicular line computation.
  */
-export class Guide2DPerpendicularToLine extends Guide2D {
+export class Guide2D extends Line2DPerpendicularToLine {
   readonly type: 'perpendicular-to-line' = 'perpendicular-to-line';
-  readonly referenceLineId: string;  // Line to be perpendicular to (HL or BHL)
-  readonly throughPointId: string;   // Point the guide passes through
+  visible: boolean = true;  // Whether guide is visible in the canvas
 
   constructor(
     id: string,
@@ -84,13 +57,11 @@ export class Guide2DPerpendicularToLine extends Guide2D {
     planeId: string,
     label?: string
   ) {
-    super(id, planeId, label);
-    this.referenceLineId = referenceLineId;
-    this.throughPointId = throughPointId;
+    super(id, referenceLineId, throughPointId, planeId, label);
   }
 
-  clone(): Guide2DPerpendicularToLine {
-    return new Guide2DPerpendicularToLine(
+  clone(): Guide2D {
+    return new Guide2D(
       this.id,
       this.referenceLineId,
       this.throughPointId,
@@ -140,7 +111,7 @@ export class Guide2DPerpendicularToLine extends Guide2D {
 
     // Compute perpendicular direction using 90-degree rotation
     // If line direction is (dx, dy, 0), perpendicular is (-dy, dx, 0)
-    const lineDirection = referenceLine.direction;
+    const lineDirection = referenceLine.getDirection();
     const perpendicularDirection = new Vector3(
       -lineDirection.y,  // -dy
       lineDirection.x,   // dx

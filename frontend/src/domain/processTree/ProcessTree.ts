@@ -26,7 +26,7 @@ export interface Subprocess extends ProcessNodeBase {
 
 export interface ActionGroup extends ProcessNodeBase {
   type: 'actionGroup';
-  children: ActionNode[];                  // Only actions, at least 1
+  children: (ActionNode | null)[];         // Actions or tombstones (null = deleted)
   isAuxiliary: boolean;                    // Auxiliary actions (lighter styling)
 }
 
@@ -154,12 +154,17 @@ export class ProcessTree {
 
   /**
    * Depth-first traversal of actions
+   * Automatically skips null tombstones (deleted actions)
    */
   private traverseActions(node: ProcessNode, callback: (action: Action) => void): void {
     if (node.type === 'action') {
       callback(node);
     } else if (node.type === 'actionGroup') {
-      node.children.forEach(action => callback(action));
+      node.children.forEach(action => {
+        if (action !== null) {  // Skip tombstones
+          callback(action);
+        }
+      });
     } else if (node.type === 'subprocess') {
       node.children.forEach(child => this.traverseActions(child, callback));
     }
@@ -202,6 +207,70 @@ export class ProcessTree {
       }
     });
     return actions;
+  }
+
+  /**
+   * Remove an action from the tree (creates tombstone at same index)
+   * Uses stable indices - action index never changes
+   * 
+   * @param actionId - ID of action to remove
+   * @returns Object with removed action data and location, or null if not found
+   */
+  removeAction(actionId: string): { action: ActionNode, groupId: string, index: number } | null {
+    let result: { action: ActionNode, groupId: string, index: number } | null = null;
+    
+    this.traverseGroups(this.root, (group) => {
+      const index = group.children.findIndex(child => child?.id === actionId);
+      if (index !== -1 && group.children[index] !== null) {
+        const action = group.children[index]!;
+        group.children[index] = null;  // Create tombstone
+        result = { action, groupId: group.id, index };
+        this.notifyChange();
+      }
+    });
+    
+    return result;
+  }
+
+  /**
+   * Restore an action at a specific location (fills tombstone)
+   * 
+   * @param action - Action to restore
+   * @param groupId - ID of parent ActionGroup
+   * @param index - Index in children array
+   * @throws Error if location not found or not a tombstone
+   */
+  restoreAction(action: ActionNode, groupId: string, index: number): void {
+    let restored = false;
+    
+    this.traverseGroups(this.root, (group) => {
+      if (group.id === groupId) {
+        if (index < 0 || index >= group.children.length) {
+          throw new Error(`Invalid index ${index} for group ${groupId}`);
+        }
+        if (group.children[index] !== null) {
+          throw new Error(`Cannot restore: position ${index} in group ${groupId} is not empty`);
+        }
+        group.children[index] = action;  // Fill tombstone
+        restored = true;
+        this.notifyChange();
+      }
+    });
+    
+    if (!restored) {
+      throw new Error(`Group ${groupId} not found`);
+    }
+  }
+
+  /**
+   * Traverse all ActionGroups in the tree
+   */
+  private traverseGroups(node: ProcessNode, callback: (group: ActionGroup) => void): void {
+    if (node.type === 'actionGroup') {
+      callback(node);
+    } else if (node.type === 'subprocess') {
+      node.children.forEach(child => this.traverseGroups(child, callback));
+    }
   }
 
   /**

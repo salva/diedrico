@@ -18,39 +18,81 @@
 
 import { Vector3 } from 'three';
 
-export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'half-hinge';
+export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'half-hinge' | 'segment';
 
 /**
- * Line2DRealization2D - Stores computed line in parametric form
+ * Line2DRealization2D - Stores computed line using homogeneous coordinates
  * 
- * Parametric form: P(t) = point + t * direction
- * This is MUCH easier to transform than implicit equation!
+ * CRITICAL: Homogeneous coordinates elegantly unify infinite lines and bounded segments.
+ * Two points always define a line, but the z coordinate distinguishes the cases:
  * 
- * Transformation is simple:
- * - point' = M * point (with translation)
- * - direction' = M * direction (without translation - direction is invariant)
+ * For Infinite Lines:
+ *   point1: Finite point on line - Vector3(u, v, 1) where z=1 means "point"
+ *   point2: Point at infinity (direction) - Vector3(dx, dy, 0) where z=0 means "vector"
+ *   Parametric form: P(t) = point1 + t * point2 (vector addition works directly!)
+ * 
+ * For Bounded Segments:
+ *   point1: Start point - Vector3(u1, v1, 1) where z=1 means "point"
+ *   point2: End point - Vector3(u2, v2, 1) where z=1 means "point"
+ *   Bounded region between two finite points
+ * 
+ * To distinguish:
+ *   - point2.z === 0 → Infinite line (point2 is direction vector)
+ *   - point2.z === 1 → Bounded segment (point2 is endpoint)
  * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
 export class Line2DRealization2D {
-  point: Vector3;      // A point on the line (x, y, 1) in homogeneous coords
-  direction: Vector3;  // Direction vector (dx, dy, 0) - normalized
+  point1: Vector3;     // First defining point (always finite: z=1)
+  point2: Vector3;     // Second defining point (z=0 for direction, z=1 for endpoint)
   feasible: boolean;   // Whether the geometric computation succeeded
   
-  constructor(point: Vector3, direction: Vector3, feasible: boolean = true) {
-    this.point = point;
-    // Normalize direction for consistency using vector operations
-    this.direction = direction.clone().normalize();
+  constructor(
+    point1: Vector3, 
+    point2: Vector3, 
+    feasible: boolean = true
+  ) {
+    this.point1 = point1;
+    this.point2 = point2;
     this.feasible = feasible;
   }
   
   /**
-   * Get a point at parameter t along the line
-   * P(t) = point + t * direction
+   * Get direction vector (works for both lines and segments)
+   * For infinite lines: point2 is already the direction (z=0)
+   * For segments: direction = point2 - point1
+   * 
+   * NOTE: Returns NON-NORMALIZED direction to avoid expensive sqrt operation.
+   * Use lengthSq() instead of length() when possible for comparisons.
    */
-  getPointAt(t: number): Vector3 {
-    // Vector addition: point + t * direction
-    return this.point.clone().addScaledVector(this.direction, t);
+  getDirection(): Vector3 {
+    if (this.point2.z === 0) {
+      // Infinite line: point2 is already a direction vector
+      return this.point2.clone();
+    } else {
+      // Segment: compute direction from endpoints
+      const dir = this.point2.clone().sub(this.point1);
+      dir.z = 0;  // Direction vectors have z=0
+      return dir;
+    }
+  }
+  
+  /**
+   * Check if this is a bounded segment
+   * Segments have both endpoints with z=1
+   */
+  isBounded(): boolean {
+    return this.point2.z === 1;
+  }
+  
+  /**
+   * Get segment length (only for bounded segments)
+   */
+  getLength(): number | undefined {
+    if (!this.isBounded()) {
+      return undefined;
+    }
+    return this.point1.distanceTo(this.point2);
   }
 }
 
@@ -119,9 +161,10 @@ export class Line2DByTwoPoints extends Line2D {
   
   /**
    * Calculate 2D realization - compute line in parametric form from two points
-   * Parametric form: P(t) = p1 + t * (p2 - p1)
    * 
-   * Much simpler than implicit equation and easier to transform!
+   * Returns infinite line representation using homogeneous coordinates:
+   *   point1: finite point on line (z=1)
+   *   point2: direction vector (z=0)
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get both points from world
@@ -135,8 +178,12 @@ export class Line2DByTwoPoints extends Line2D {
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible) {
       console.warn('[Line2DByTwoPoints] Parent point is infeasible, marking line as infeasible');
-      // Return infeasible line with dummy geometry
-      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+      // Return infeasible line with dummy geometry (point and horizontal direction)
+      return new Line2DRealization2D(
+        new Vector3(0, 0, 1),      // point1: arbitrary point
+        new Vector3(1, 0, 0),      // point2: horizontal direction (z=0)
+        false
+      );
     }
     
     const p1 = p1Realization.position;
@@ -144,15 +191,19 @@ export class Line2DByTwoPoints extends Line2D {
     
     // Compute direction vector using vector subtraction
     const direction = p2.clone().sub(p1);
-    direction.z = 0;  // Direction vector, no translation
+    direction.z = 0;  // Direction vectors have z=0 (point at infinity)
     
-    // Check for degenerate line using vector lengthSq
+    // Check for degenerate line
     if (direction.lengthSq() < 1e-10) {
       console.warn('[Line2DByTwoPoints] Points are too close (degenerate line)');
-      return new Line2DRealization2D(p1.clone(), new Vector3(1, 0, 0), false);
+      return new Line2DRealization2D(
+        p1.clone(),
+        new Vector3(1, 0, 0),      // Fallback direction (z=0)
+        false
+      );
     }
     
-    // Create parametric representation: point + direction
+    // Return infinite line: point1 (finite) + point2 (direction)
     return new Line2DRealization2D(p1.clone(), direction, true);
   }
 }
@@ -203,8 +254,20 @@ export class Line2DParallel extends Line2D {
  * 
  * TODO: Implement in later phase when perpendicular line tool is added
  */
-export class Line2DPerpendicular extends Line2D {
-  readonly type: 'perpendicular' = 'perpendicular';
+/**
+ * Line2DPerpendicularToLine - Line perpendicular to a reference line through a point
+ * 
+ * The rule is: "line perpendicular to referenceLineId through throughPointId"
+ * 
+ * Implementation notes:
+ * - Uses homogeneous coordinates for perpendicular calculation per Principle V
+ * - Perpendicular direction in 2D: if line has direction (dx, dy), perpendicular is (-dy, dx)
+ * - This is a 90-degree rotation, which works correctly in homogeneous coords
+ * 
+ * This is the base class for Guide2D (guides are lines with special rendering/behavior).
+ */
+export class Line2DPerpendicularToLine extends Line2D {
+  readonly type: 'perpendicular-to-line' = 'perpendicular-to-line';
   readonly referenceLineId: string;  // Line to be perpendicular to
   readonly throughPointId: string;   // Point the new line passes through
   
@@ -220,8 +283,8 @@ export class Line2DPerpendicular extends Line2D {
     this.throughPointId = throughPointId;
   }
   
-  clone(): Line2DPerpendicular {
-    return new Line2DPerpendicular(
+  clone(): Line2DPerpendicularToLine {
+    return new Line2DPerpendicularToLine(
       this.id,
       this.referenceLineId,
       this.throughPointId,
@@ -230,9 +293,70 @@ export class Line2DPerpendicular extends Line2D {
     );
   }
   
-  realize2D(_world: import('./World').World): Line2DRealization2D | null {
-    // TODO: Implement perpendicular line realization
-    // Need access to reference line's realization
-    return null;
+  /**
+   * Calculate 2D realization - compute line perpendicular to reference line
+   * 
+   * Algorithm:
+   * 1. Get reference line's realization (point + direction)
+   * 2. Compute perpendicular direction using 90-degree rotation
+   * 3. Get the through-point position
+   * 4. Return line through the point with perpendicular direction
+   * 
+   * Perpendicular in 2D homogeneous coordinates:
+   * - If line has direction (dx, dy, 0), perpendicular is (-dy, dx, 0)
+   * - This is a counter-clockwise 90-degree rotation
+   * - Works correctly with homogeneous coords (z=0 for direction vectors)
+   */
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Get reference line realization from world
+    const referenceLine = world.getLine2DRealization(this.referenceLineId);
+    if (!referenceLine) {
+      return null;  // Cannot compute line without reference line
+    }
+
+    // Check if reference line is infeasible - propagate infeasibility
+    if (!referenceLine.feasible) {
+      console.warn('[Line2DPerpendicularToLine] Reference line is infeasible, marking line as infeasible');
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+
+    // Get through-point realization from world
+    const throughPointRealization = world.getPoint2DRealization(this.throughPointId);
+    if (!throughPointRealization) {
+      return null;  // Cannot compute line without through-point
+    }
+
+    // Check if through-point is infeasible - propagate infeasibility
+    if (!throughPointRealization.feasible) {
+      console.warn('[Line2DPerpendicularToLine] Through-point is infeasible, marking line as infeasible');
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+
+    // Compute perpendicular direction using 90-degree rotation
+    // If line direction is (dx, dy, 0), perpendicular is (-dy, dx, 0)
+    const lineDirection = referenceLine.getDirection();
+    const perpendicularDirection = new Vector3(
+      -lineDirection.y,  // -dy
+      lineDirection.x,   // dx
+      0                  // Direction vector, no translation
+    );
+
+    // Check for degenerate case (shouldn't happen if reference line is valid)
+    if (perpendicularDirection.lengthSq() < 1e-10) {
+      console.warn(`Line ${this.id}: reference line has zero direction`);
+      return new Line2DRealization2D(
+        throughPointRealization.position.clone(),
+        new Vector3(1, 0, 0),  // Fallback direction
+        false
+      );
+    }
+
+    // Return infinite line through point with perpendicular direction
+    // point1 = through-point (finite), point2 = direction (infinite, z=0)
+    return new Line2DRealization2D(
+      throughPointRealization.position.clone(),
+      perpendicularDirection,
+      true
+    );
   }
 }

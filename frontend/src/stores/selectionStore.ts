@@ -21,9 +21,15 @@ import { ref, computed } from 'vue';
 export const useSelectionStore = defineStore('selection', () => {
   // Selected element IDs
   const selectedIds = ref<Set<string>>(new Set());
+  
+  // Cascade highlight IDs (elements that will be deleted due to dependencies)
+  const cascadeHighlightIds = ref<Set<string>>(new Set());
 
   // Computed: Get array of selected IDs
   const selectedIdsArray = computed(() => Array.from(selectedIds.value));
+  
+  // Computed: Get array of cascade highlight IDs
+  const cascadeHighlightIdsArray = computed(() => Array.from(cascadeHighlightIds.value));
 
   // Computed: Check if any elements are selected
   const hasSelection = computed(() => selectedIds.value.size > 0);
@@ -85,13 +91,37 @@ export const useSelectionStore = defineStore('selection', () => {
     selectedIds.value.clear();
     elementIds.forEach(id => selectedIds.value.add(id));
   }
+  
+  /**
+   * Set cascade highlight elements (elements that will be deleted due to dependencies)
+   */
+  function setCascadeHighlight(elementIds: string[]): void {
+    cascadeHighlightIds.value.clear();
+    elementIds.forEach(id => cascadeHighlightIds.value.add(id));
+  }
+  
+  /**
+   * Clear cascade highlight
+   */
+  function clearCascadeHighlight(): void {
+    cascadeHighlightIds.value.clear();
+  }
+  
+  /**
+   * Check if element is cascade highlighted
+   */
+  function isCascadeHighlighted(elementId: string): boolean {
+    return cascadeHighlightIds.value.has(elementId);
+  }
 
   return {
     // State
     selectedIds,
+    cascadeHighlightIds,
     
     // Computed
     selectedIdsArray,
+    cascadeHighlightIdsArray,
     hasSelection,
     selectionCount,
     
@@ -103,5 +133,8 @@ export const useSelectionStore = defineStore('selection', () => {
     clearSelection,
     isSelected,
     selectMultiple,
+    setCascadeHighlight,
+    clearCascadeHighlight,
+    isCascadeHighlighted,
   };
 });

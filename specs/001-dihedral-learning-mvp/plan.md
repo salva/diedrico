@@ -31,7 +31,7 @@ An educational web application for learning dihedral/orthographic projection usi
 - [x] **Command Pattern**: Yes - All user actions encapsulated as commands (CreatePointCommand, CreateLineCommand, etc.) with execute/undo/validate
 - [x] **Frontend-First**: Yes - All geometric calculations and UI logic in frontend, backend only provides REST API for file persistence
 - [x] **Technology Discipline**: Yes - Uses approved stack: Vue.js 3, TypeScript, Vite, Vitest, Playwright, Node.js, Express
-- [x] **Test-Driven Development**: Yes - Acceptance criteria defined in spec.md, unit tests for domain logic, E2E tests for user workflows
+- [x] **Testing Strategy (Pragmatic)**: Yes - Acceptance scenarios defined in spec.md, unit tests for domain logic, E2E tests for critical user workflows
 
 **Notes**: No deviations from constitution principles.
 

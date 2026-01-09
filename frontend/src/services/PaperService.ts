@@ -1,11 +1,11 @@
 /**
  * PaperService - Converts domain entities and realizations to Paper primitives
  * 
- * **RENDERING PATTERN**: Walk the World structure, get realizations, render.
+ * **RENDERING PATTERN**: Iterate planes, get elements and realizations, render primitives.
  * 
- * This service implements the core rendering pattern:
- * 1. WALK: Iterate over domain objects in world.points, world.lines, etc.
- * 2. REALIZE: Get numeric data via world.getPoint2DRealization(point.id)
+ * This service implements the core rendering pattern (Phase 22.5.4):
+ * 1. WALK: Iterate projection planes, then elements (plane.getAllPoints(), etc.)
+ * 2. REALIZE: Compute numeric data via plane.realizePoint2D(point, world)
  * 3. RENDER: Use realization (numeric) + point (structural) to generate primitives
  * 
  * Each projection plane has a transformation matrix to convert from its intrinsic
@@ -30,9 +30,13 @@
  */
 
 import { Matrix3 } from 'three';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { Segment2D } from '@/domain/world/Segment';
+import { Guide2D } from '@/domain/world/Guide';
+import { FreePoint2D } from '@/domain/world/Point';
 import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
 import type { Line2D, Line2DRealization2D } from '../domain/world/Line';
-import type { Segment2D, Segment2DRealization2D } from '../domain/world/Segment';
+import type { Segment2D } from '../domain/world/Segment';
 import type { Circle2D, Circle2DRealization2D } from '../domain/world/Circle';
 import type { Guide2D, Guide2DRealization2D } from '../domain/world/Guide';
 import type { HingeLine } from '../domain/world/HingeLine';
@@ -58,6 +62,7 @@ export interface PrimitiveContext {
   highlightedEntityIds?: Set<string>;  // Hover/selection state (legacy - use hoveredIds/selectedIds instead)
   hoveredIds?: Set<string>;            // Hovered entities (lighter highlight)
   selectedIds?: Set<string>;           // Selected entities (bold highlight)
+  cascadeHighlightIds?: Set<string>;   // Elements that will be cascade deleted (orange warning)
   activeSnapTargetId?: string;         // Current snap target
   activePlaneId?: string;              // Active plane for visual emphasis (FR-002)
 }
@@ -70,110 +75,78 @@ export class PaperService {
    * Generate primitives for all entities
    * 
    * RENDERING PATTERN:
-   * 1. WALK: Iterate domain objects (world.getAllPoints())
-   * 2. REALIZE: Get numeric data (world.getPoint2DRealization(point.id))
+   * 1. WALK: Iterate planes, then domain objects (plane.getAllPoints())
+   * 2. REALIZE: Get numeric data (plane.getPointRealization2D(point.id))
    * 3. RENDER: Generate primitive using realization + point metadata
    */
   generatePrimitives(context: PrimitiveContext): Primitive[] {
     const primitives: Primitive[] = [];
 
-    // WALK: Iterate over all points in the world
-    for (const point of context.world.getAllPoints2D()) {      // Skip invisible points
-      if (!point.visible) continue;
-      
-      // REALIZE: Get computed position (numeric data)
-      const realization = context.world.getPoint2DRealization(point.id!);
-      // Get plane transformation matrix
-      const transform = context.planeTransforms.get(point.planeId!);
-      
-      if (realization && transform) {
-        // RENDER: Generate primitive using realization (numeric) + point (structural)
-        const primitive = this.pointToPrimitive(point, realization, transform, context);
-        primitives.push(primitive);
-      }
-    }
+    // WALK: Iterate over all projection planes
+    for (const plane of context.world.projectionPlanes.values()) {
+      const transform = context.planeTransforms.get(plane.id!);
+      if (!transform) continue;
 
-    // WALK: Iterate over all lines in the world (including HalfHingeLine2D)
-    // HalfHingeLine2D are Line2D entities with type 'half-hinge'
-    const allLines = context.world.getAllLines2D();
-    for (const line of allLines) {
-      // Skip invisible lines
-      if (!line.visible) continue;
-      
-      // REALIZE: Get computed line equation (numeric data)
-      const realization = context.world.getLine2DRealization(line.id!);
-      // Get plane transformation matrix
-      const transform = context.planeTransforms.get(line.planeId!);
-      
-      if (realization && transform) {
-        // HalfHingeLine2D uses special styling, other lines use normal styling
-        if (line.type === 'half-hinge') {
-          const halfHinge = line as HalfHingeLine2D;
-          const primitive = this.halfHingeLineToPrimitive(halfHinge, realization, transform, line.planeId!, context);
-          primitives.push(primitive);
-        } else {
-          // RENDER: Generate primitive using realization (numeric) + line (structural)
-          const primitive = this.lineToPrimitive(line, realization, transform, context);
+      // WALK: Iterate over all points in this plane
+      for (const point of plane.getAllPoints()) {
+        // Skip invisible points
+        if (!point.visible) continue;
+        
+        // REALIZE: Compute position (numeric data) from plane - computes and caches
+        const realization = plane.realizePoint2D(point, context.world);
+        
+        if (realization) {
+          // RENDER: Generate primitive using realization (numeric) + point (structural)
+          const primitive = this.pointToPrimitive(point, realization, transform, context);
           primitives.push(primitive);
         }
-      } else {
-        console.warn('[PaperService] Skipping line - missing realization or transform');
       }
-    }
 
-    // WALK: Iterate over all segments in the world
-    const allSegments = context.world.getAllSegments2D();
-    for (const segment of allSegments) {
-      // Skip invisible segments
-      if (!segment.visible) continue;
-      
-      // REALIZE: Get computed segment endpoints (numeric data)
-      const realization = context.world.getSegment2DRealization(segment.id!);
-      // Get plane transformation matrix
-      const transform = context.planeTransforms.get(segment.planeId!);
-      
-      if (realization && transform) {
-        // RENDER: Generate primitive using realization (numeric) + segment (structural)
-        const primitive = this.segmentToPrimitive(segment, realization, transform, context);
-        primitives.push(primitive);
-      } else {
-        console.warn('[PaperService] Skipping segment - missing realization or transform');
+      // WALK: Iterate over all lines in this plane (including HalfHingeLine2D)
+      // HalfHingeLine2D are Line2D entities with type 'half-hinge'
+      for (const line of plane.getAllLines()) {
+        // Skip invisible lines
+        if (!line.visible) continue;
+        
+        // REALIZE: Compute line equation (numeric data) from plane - computes and caches
+        const realization = plane.realizeLine2D(line, context.world);
+        
+        if (realization) {
+          // Check most specific types first (subclasses before base classes)
+          if (line instanceof HalfHingeLine2D) {
+            const primitive = this.halfHingeLineToPrimitive(line, realization, transform, line.planeId!, context);
+            primitives.push(primitive);
+          } else if (line instanceof Segment2D) {
+            // Segments are Line2D subclass with finite endpoints
+            const primitive = this.segmentToPrimitive(line, realization, transform, context);
+            primitives.push(primitive);
+          } else if (line instanceof Guide2D) {
+            // Guides are perpendicular lines with special rendering
+            const primitive = this.guideToPrimitive(line, realization, transform, context);
+            primitives.push(primitive);
+          } else {
+            // RENDER: Normal infinite lines
+            const primitive = this.lineToPrimitive(line, realization, transform, context);
+            primitives.push(primitive);
+          }
+        } else {
+          console.warn('[PaperService] Skipping line - missing realization');
+        }
       }
-    }
 
-    // WALK: Iterate over all circles in the world
-    const allCircles = context.world.getAllCircles2D();
-    for (const circle of allCircles) {
-      // Skip invisible circles
-      if (!circle.visible) continue;
-      
-      // REALIZE: Get computed circle geometry (numeric data)
-      const realization = context.world.getCircle2DRealization(circle.id!);
-      // Get plane transformation matrix
-      const transform = context.planeTransforms.get(circle.planeId!);
-      
-      if (realization && transform) {
-        // RENDER: Generate primitive using realization (numeric) + circle (structural)
-        const primitive = this.circleToPrimitive(circle, realization, transform, context);
-        primitives.push(primitive);
-      }
-    }
-
-    // WALK: Iterate over all guides in the world
-    const allGuides = context.world.getAllGuides2D();
-    for (const guide of allGuides) {
-      // Skip invisible guides
-      if (!guide.visible) continue;
-      
-      // REALIZE: Get computed guide line geometry (numeric data)
-      const realization = context.world.getGuide2DRealization(guide.id!);
-      // Get plane transformation matrix
-      const transform = context.planeTransforms.get(guide.planeId!);
-      
-      if (realization && transform) {
-        // RENDER: Generate primitive using realization (numeric) + guide (structural)
-        const primitive = this.guideToPrimitive(guide, realization, transform, context);
-        primitives.push(primitive);
+      // WALK: Iterate over all circles in this plane
+      for (const circle of plane.getAllCircles()) {
+        // Skip invisible circles
+        if (!circle.visible) continue;
+        
+        // REALIZE: Compute circle geometry (numeric data) from plane - computes and caches
+        const realization = plane.realizeCircle2D(circle, context.world);
+        
+        if (realization) {
+          // RENDER: Generate primitive using realization (numeric) + circle (structural)
+          const primitive = this.circleToPrimitive(circle, realization, transform, context);
+          primitives.push(primitive);
+        }
       }
     }
 
@@ -213,43 +186,50 @@ export class PaperService {
       visible: true, // TODO: Compute from subprocess visibility + infeasibility
       style,
       position: paperPos,           // Keep as Vector3 - SVGRenderer extracts x/y
-      radius: point.type === 'free' ? 5 : 4,
+      radius: point instanceof FreePoint2D ? 5 : 4,
     };
   }
 
   /**
    * Resolve visual style for a point
    * Per ui-spec.md: Hover = #4A90E2 glow (20% opacity), Selection = #0066CC (2px outline)
+   * Cascade highlight = #FF9800 (orange warning) for elements that will be deleted due to dependencies
    */
   private resolvePointStyle(
     point: Point2D,
     isSelected: boolean,
     isHovered: boolean,
     isSnapTarget: boolean,
-    activePlaneId?: string
+    activePlaneId?: string,
+    isCascadeHighlighted?: boolean
   ): ResolvedStyle {
     // Base colors by point type
     let fill: string;
     let stroke: string;
     let strokeWidth: number;
 
-    if (isSnapTarget) {
+    if (isCascadeHighlighted) {
+      // Cascade delete preview: Orange warning color (highest priority except snap)
+      fill = '#FF9800'; // Orange
+      stroke = '#F57C00'; // Darker orange
+      strokeWidth = 2.5;
+    } else if (isSnapTarget) {
       fill = '#FFA500'; // Orange for snap targets
       stroke = '#FF8C00';
       strokeWidth = 2;
     } else if (isSelected) {
       // Selection highlight: Bold blue outline per ui-spec.md
-      fill = point.type === 'free' ? '#4A90E2' : '#E94E77';
+      fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77';
       stroke = '#0066CC';
       strokeWidth = 2;
     } else if (isHovered) {
       // Hover highlight: Lighter blue glow per ui-spec.md
-      fill = point.type === 'free' ? '#6BB6FF' : '#FF6B9D';
+      fill = point instanceof FreePoint2D ? '#6BB6FF' : '#FF6B9D';
       stroke = '#4A90E2';
       strokeWidth = 1.5;
     } else {
       // Normal state
-      fill = point.type === 'free' ? '#4A90E2' : '#E94E77';
+      fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77';
       stroke = '#333333';
       strokeWidth = 1.5;
     }
@@ -289,17 +269,18 @@ export class PaperService {
     // Check hover/selection state (prefer new fields, fallback to legacy highlightedEntityIds)
     const isHovered = context.hoveredIds?.has(line.id!) || false;
     const isSelected = context.selectedIds?.has(line.id!) || false;
+    const isCascadeHighlighted = context.cascadeHighlightIds?.has(line.id!) || false;
     const isHighlighted = isSelected || isHovered || context.highlightedEntityIds?.has(line.id!) || false;
 
     // Transform point on line (includes translation)
-    const paperPoint = realization.point.clone().applyMatrix3(planeToPaperMatrix);
+    const paperPoint = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
     
     // Transform direction vector (NO translation - direction is invariant under translation)
     // For direction vectors, we only apply rotation/scale part of matrix
-    const paperDirection = realization.direction.clone().applyMatrix3(planeToPaperMatrix);
+    const paperDirection = realization.getDirection().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style
-    const style = this.resolveLineStyle(line, isSelected, isHovered, context.activePlaneId);
+    const style = this.resolveLineStyle(line, isSelected, isHovered, context.activePlaneId, isCascadeHighlighted);
 
     return {
       type: 'line',
@@ -322,12 +303,17 @@ export class PaperService {
     line: Line2D,
     isSelected: boolean,
     isHovered: boolean,
-    activePlaneId?: string
+    activePlaneId?: string,
+    isCascadeHighlighted?: boolean
   ): ResolvedStyle {
     let stroke: string;
     let strokeWidth: number;
 
-    if (isSelected) {
+    if (isCascadeHighlighted) {
+      // Cascade delete preview: Orange warning color
+      stroke = '#FF9800'; // Orange
+      strokeWidth = 2.5;
+    } else if (isSelected) {
       stroke = '#0066CC'; // Bold blue for selection
       strokeWidth = 2;
     } else if (isHovered) {
@@ -359,10 +345,11 @@ export class PaperService {
    * Applies plane-to-paper transformation
    * 
    * Segments are finite line segments between two endpoints
+   * Phase 22.5: Uses Line2DRealization2D with point1/point2 set
    */
   private segmentToPrimitive(
     segment: Segment2D,
-    realization: Segment2DRealization2D,
+    realization: Line2DRealization2D,
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): SegmentPrimitive {
@@ -371,16 +358,23 @@ export class PaperService {
       throw new Error('Segment must have an ID');
     }
     
+    // Phase 22.5: Verify segment realization has endpoints
+    if (!realization.point1 || !realization.point2) {
+      console.error('[PaperService] Segment realization missing endpoints:', segment.id);
+      throw new Error('Segment realization must have point1 and point2');
+    }
+    
     // Check hover/selection state
     const isHovered = context.hoveredIds?.has(segment.id) || false;
     const isSelected = context.selectedIds?.has(segment.id) || false;
+    const isCascadeHighlighted = context.cascadeHighlightIds?.has(segment.id) || false;
 
     // Transform both endpoints from plane <u,v> to paper coordinates
     const paperPoint1 = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
     const paperPoint2 = realization.point2.clone().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style
-    const style = this.resolveSegmentStyle(segment, isSelected, isHovered, context.activePlaneId);
+    const style = this.resolveSegmentStyle(segment, isSelected, isHovered, context.activePlaneId, isCascadeHighlighted);
 
     return {
       type: 'segment',
@@ -404,12 +398,16 @@ export class PaperService {
     segment: Segment2D,
     isSelected: boolean,
     isHovered: boolean,
-    activePlaneId?: string
+    activePlaneId?: string,
+    isCascadeHighlighted?: boolean
   ): ResolvedStyle {
     let stroke: string;
     let strokeWidth: number;
 
-    if (isSelected) {
+    if (isCascadeHighlighted) {
+      stroke = '#FF9800'; // Orange warning
+      strokeWidth = 3;
+    } else if (isSelected) {
       stroke = '#0066CC'; // Bold blue for selection
       strokeWidth = 2.5;
     } else if (isHovered) {
@@ -449,21 +447,18 @@ export class PaperService {
     // Check hover/selection state
     const isHovered = context.hoveredIds?.has(circle.id!) || false;
     const isSelected = context.selectedIds?.has(circle.id!) || false;
+    const isCascadeHighlighted = context.cascadeHighlightIds?.has(circle.id!) || false;
 
     // Transform center from plane <u,v> to paper coordinates
     const paperCenter = realization.center.clone().applyMatrix3(planeToPaperMatrix);
 
-    // Transform radius: extract scale from transformation matrix
-    // Use average of x and y scale factors for uniform scaling approximation
-    const scaleX = Math.sqrt(planeToPaperMatrix.elements[0] * planeToPaperMatrix.elements[0] + 
-                             planeToPaperMatrix.elements[1] * planeToPaperMatrix.elements[1]);
-    const scaleY = Math.sqrt(planeToPaperMatrix.elements[3] * planeToPaperMatrix.elements[3] + 
-                             planeToPaperMatrix.elements[4] * planeToPaperMatrix.elements[4]);
-    const avgScale = (scaleX + scaleY) / 2;
-    const paperRadius = realization.radius * avgScale;
+    // Transform radius vector to get paper-space radius
+    // Apply matrix to radius vector, then get length
+    const paperRadiusVector = realization.radiusVector.clone().applyMatrix3(planeToPaperMatrix);
+    const paperRadius = paperRadiusVector.length();
 
     // Resolve visual style
-    const style = this.resolveCircleStyle(circle, isSelected, isHovered, context.activePlaneId);
+    const style = this.resolveCircleStyle(circle, isSelected, isHovered, context.activePlaneId, isCascadeHighlighted);
 
     return {
       type: 'circle',
@@ -486,12 +481,16 @@ export class PaperService {
     circle: Circle2D,
     isSelected: boolean,
     isHovered: boolean,
-    activePlaneId?: string
+    activePlaneId?: string,
+    isCascadeHighlighted?: boolean
   ): ResolvedStyle {
     let stroke: string;
     let strokeWidth: number;
 
-    if (isSelected) {
+    if (isCascadeHighlighted) {
+      stroke = '#FF9800'; // Orange warning
+      strokeWidth = 2.5;
+    } else if (isSelected) {
       stroke = '#0066CC'; // Bold blue for selection
       strokeWidth = 2;
     } else if (isHovered) {
@@ -532,15 +531,16 @@ export class PaperService {
     // Check hover/selection state
     const isHovered = context.hoveredIds?.has(guide.id!) || false;
     const isSelected = context.selectedIds?.has(guide.id!) || false;
+    const isCascadeHighlighted = context.cascadeHighlightIds?.has(guide.id!) || false;
 
     // Transform point on guide (includes translation)
-    const paperPoint = realization.point.clone().applyMatrix3(planeToPaperMatrix);
+    const paperPoint = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
     
     // Transform direction vector (NO translation - direction is invariant under translation)
-    const paperDirection = realization.direction.clone().applyMatrix3(planeToPaperMatrix);
+    const paperDirection = realization.getDirection().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style (dashed line)
-    const style = this.resolveGuideStyle(guide, isSelected, isHovered, context.activePlaneId);
+    const style = this.resolveGuideStyle(guide, isSelected, isHovered, context.activePlaneId, isCascadeHighlighted);
 
     return {
       type: 'line',
@@ -565,12 +565,16 @@ export class PaperService {
     _guide: Guide2D,  // Reserved for future style inheritance
     isSelected: boolean,
     isHovered: boolean,
-    _activePlaneId?: string  // Ignored - guides always 100% opacity
+    _activePlaneId?: string,  // Ignored - guides always 100% opacity
+    isCascadeHighlighted?: boolean
   ): ResolvedStyle {
     let stroke: string;
     let strokeWidth: number;
 
-    if (isSelected) {
+    if (isCascadeHighlighted) {
+      stroke = '#FF9800'; // Orange warning
+      strokeWidth = 2.5;
+    } else if (isSelected) {
       stroke = '#0066CC'; // Bold blue for selection
       strokeWidth = 2;
     } else if (isHovered) {
@@ -613,10 +617,10 @@ export class PaperService {
     const isHighlighted = context.highlightedEntityIds?.has(hingeLine.id) || false;
 
     // Transform point on hinge line (includes translation)
-    const paperPoint = realization.point.clone().applyMatrix3(planeToPaperMatrix);
+    const paperPoint = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
     
     // Transform direction vector (NO translation - direction is invariant under translation)
-    const paperDirection = realization.direction.clone().applyMatrix3(planeToPaperMatrix);
+    const paperDirection = realization.getDirection().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style (dashed gray line)
     const style = this.resolveHingeLineStyle(hingeLine, isHighlighted, context.activePlaneId);
@@ -677,10 +681,10 @@ export class PaperService {
     const isHighlighted = context.highlightedEntityIds?.has(halfHinge.id) || false;
 
     // Transform point on hinge line (includes translation)
-    const paperPoint = realization.point.clone().applyMatrix3(planeToPaperMatrix);
+    const paperPoint = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
     
     // Transform direction vector (NO translation - direction is invariant under translation)
-    const paperDirection = realization.direction.clone().applyMatrix3(planeToPaperMatrix);
+    const paperDirection = realization.getDirection().applyMatrix3(planeToPaperMatrix);
 
     // Resolve visual style (dashed gray line)
     const style = this.resolveHalfHingeLineStyle(halfHinge, isHighlighted, context.activePlaneId);
@@ -749,18 +753,21 @@ export class PaperService {
     // Remove old primitives for this entity
     paper.removePrimitivesByEntity(entityId);
 
-    // Find the entity and generate new primitives
-    const point = context.world.getPoint2DById(entityId);
-    if (point) {
-      const realization = context.world.getPoint2DRealization(entityId);
-      const transform = context.planeTransforms.get(point.planeId!);
-      
-      if (realization && transform) {
-        const primitive = this.pointToPrimitive(point, realization, transform, context);
-        paper.setPrimitive(primitive);
+    // Find the entity by searching through planes
+    for (const plane of context.world.projectionPlanes.values()) {
+      const point = plane.getPoint(entityId);
+      if (point) {
+        const realization = plane.realizePoint2D(point, context.world);
+        const transform = context.planeTransforms.get(point.planeId!);
+        
+        if (realization && transform) {
+          const primitive = this.pointToPrimitive(point, realization, transform, context);
+          paper.setPrimitive(primitive);
+        }
+        return;
       }
-    }
 
-    // TODO: Handle other element types
+      // TODO: Handle other element types (lines, circles)
+    }
   }
 }

@@ -15,49 +15,47 @@
 
 import { Vector3 } from 'three';
 
-export type Circle2DType = 'by-center-and-radius' | 'by-center-and-point' | 'by-three-points';
+export type Circle2DType = 'by-center-and-point' | 'by-three-points';
 
 /**
  * Circle2DRealization2D - Stores computed geometry for a Circle2D
+ * 
+ * CRITICAL: Stores radius as a VECTOR (not scalar) pointing from center to edge point.
+ * This defines angle 0 for the circle and preserves the construction.
+ * 
+ * - center: Center point in plane coordinates (u, v, 1)
+ * - radiusVector: Vector from center to edge point (u, v, 0) - defines radius and angle 0
+ * 
+ * Benefits:
+ * - Scalar radius = radiusVector.length() (computed when needed, no normalization)
+ * - Angle 0 = direction of radiusVector (preserves construction semantics)
+ * - Transform-friendly: both center and radiusVector transform consistently
+ * 
  * Contains ONLY numeric data. Structural information (id, planeId, pointIds) stays in domain objects.
  */
 export class Circle2DRealization2D {
-  center: Vector3;  // Center in plane coordinates (u, v, 1)
-  radius: number;   // Radius in plane intrinsic units
-  feasible: boolean;  // Whether the geometric computation succeeded
+  center: Vector3;        // Center in plane coordinates (u, v, 1) - finite point
+  radiusVector: Vector3;  // Vector from center to edge point (u, v, 0) - defines radius and angle 0
+  feasible: boolean;      // Whether the geometric computation succeeded
 
-  constructor(center: Vector3, radius: number, feasible: boolean = true) {
+  constructor(center: Vector3, radiusVector: Vector3, feasible: boolean = true) {
     this.center = center;
-    this.radius = radius;
+    this.radiusVector = radiusVector;
     this.feasible = feasible;
   }
 
   /**
-   * Get center position
-   */
-  getCenter(): Vector3 {
-    return this.center;
-  }
-
-  /**
-   * Get radius
+   * Get radius as scalar (computed from vector length - not cached)
    */
   getRadius(): number {
-    return this.radius;
+    return this.radiusVector.length();
   }
 
   /**
-   * Calculate circumference
+   * Get squared radius (cheaper than getRadius() - no sqrt)
    */
-  getCircumference(): number {
-    return 2 * Math.PI * this.radius;
-  }
-
-  /**
-   * Calculate area
-   */
-  getArea(): number {
-    return Math.PI * this.radius * this.radius;
+  getRadiusSquared(): number {
+    return this.radiusVector.lengthSq();
   }
 }
 
@@ -84,64 +82,6 @@ export abstract class Circle2D {
    * @param world World instance to access element realizations
    */
   abstract realize2D(world: import('./World').World): Circle2DRealization2D | null;
-}
-
-/**
- * Circle2DByCenterAndRadius - Circle defined by center point and explicit radius value
- * The rule is: "circle with center at centerId and radius r"
- */
-export class Circle2DByCenterAndRadius extends Circle2D {
-  readonly type: 'by-center-and-radius' = 'by-center-and-radius';
-  readonly centerPointId: string;  // ID of center point
-  readonly radius: number;         // Radius in plane intrinsic units
-
-  constructor(
-    id: string,
-    centerPointId: string,
-    radius: number,
-    planeId: string,
-    label?: string
-  ) {
-    super(id, planeId, label);
-    this.centerPointId = centerPointId;
-    this.radius = radius;
-  }
-
-  clone(): Circle2DByCenterAndRadius {
-    return new Circle2DByCenterAndRadius(
-      this.id,
-      this.centerPointId,
-      this.radius,
-      this.planeId,
-      this.label
-    );
-  }
-
-  /**
-   * Calculate 2D realization - get center position from point, use stored radius
-   */
-  realize2D(world: import('./World').World): Circle2DRealization2D | null {
-    // Get center point realization from world
-    const centerRealization = world.getPoint2DRealization(this.centerPointId);
-
-    if (!centerRealization) {
-      return null;  // Cannot compute circle without center
-    }
-
-    // Check if center point is infeasible - propagate infeasibility
-    if (!centerRealization.feasible) {
-      console.warn('[Circle2DByCenterAndRadius] Center point is infeasible, marking circle as infeasible');
-      return new Circle2DRealization2D(new Vector3(0, 0, 1), 1, false);
-    }
-
-    // Check for invalid radius
-    if (this.radius <= 0) {
-      console.warn(`Circle ${this.id}: radius must be positive, got ${this.radius}`);
-      return new Circle2DRealization2D(centerRealization.position.clone(), this.radius, false);
-    }
-
-    return new Circle2DRealization2D(centerRealization.position.clone(), this.radius, true);
-  }
 }
 
 /**
@@ -177,7 +117,11 @@ export class Circle2DByCenterAndPoint extends Circle2D {
   }
 
   /**
-   * Calculate 2D realization - compute radius from center to circumference point
+   * Calculate 2D realization - compute radius vector from center to circumference point
+   * 
+   * The edge point (circumferencePointId) defines:
+   * - Radius magnitude: distance from center
+   * - Angle 0: direction from center to edge point
    */
   realize2D(world: import('./World').World): Circle2DRealization2D | null {
     // Get both point realizations from world
@@ -191,17 +135,25 @@ export class Circle2DByCenterAndPoint extends Circle2D {
     // Check if parent points are infeasible - propagate infeasibility
     if (!centerRealization.feasible || !circumferenceRealization.feasible) {
       console.warn('[Circle2DByCenterAndPoint] Parent point is infeasible, marking circle as infeasible');
-      return new Circle2DRealization2D(new Vector3(0, 0, 1), 1, false);
+      // Return infeasible circle with dummy radius vector
+      return new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
+
+    // Compute radius vector: edge_point - center
+    const radiusVector = circumferenceRealization.position.clone().sub(centerRealization.position);
+    radiusVector.z = 0;  // Vectors have z=0 in homogeneous coordinates
 
     // Check for degenerate circle (center coincides with circumference point)
-    const radius = centerRealization.position.distanceTo(circumferenceRealization.position);
-    if (radius < 1e-10) {
+    if (radiusVector.lengthSq() < 1e-20) {  // Use squared length - cheaper than length
       console.warn(`Circle ${this.id}: center and circumference point are coincident`);
-      return new Circle2DRealization2D(centerRealization.position.clone(), radius, false);
+      return new Circle2DRealization2D(
+        centerRealization.position.clone(),
+        new Vector3(1, 0, 0),  // Fallback radius vector
+        false
+      );
     }
 
-    return new Circle2DRealization2D(centerRealization.position.clone(), radius, true);
+    return new Circle2DRealization2D(centerRealization.position.clone(), radiusVector, true);
   }
 }
 
@@ -247,10 +199,12 @@ export class Circle2DByThreePoints extends Circle2D {
   /**
    * Calculate 2D realization - compute circumcircle through three points
    * 
+   * The first point (point1Id) defines angle 0 for the resulting circle.
+   * 
    * Algorithm:
    * 1. Find perpendicular bisectors of two sides
    * 2. Find intersection = center
-   * 3. Radius = distance from center to any point
+   * 3. Radius vector = point1 - center (defines both radius and angle 0)
    */
   realize2D(world: import('./World').World): Circle2DRealization2D | null {
     // Get all three point realizations from world
@@ -265,7 +219,7 @@ export class Circle2DByThreePoints extends Circle2D {
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible || !p3Realization.feasible) {
       console.warn('[Circle2DByThreePoints] Parent point is infeasible, marking circle as infeasible');
-      return new Circle2DRealization2D(new Vector3(0, 0, 1), 1, false);
+      return new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
     const p1 = p1Realization.position;
@@ -281,7 +235,7 @@ export class Circle2DByThreePoints extends Circle2D {
     const crossMag = Math.abs(v12.x * v13.y - v12.y * v13.x);
     if (crossMag < 1e-10) {
       console.warn(`Circle ${this.id}: three points are collinear`);
-      return new Circle2DRealization2D(p1.clone(), 0, false);  // Infeasible circle
+      return new Circle2DRealization2D(p1.clone(), new Vector3(1, 0, 0), false);  // Infeasible circle
     }
 
     // Calculate circumcenter using perpendicular bisectors
@@ -314,17 +268,19 @@ export class Circle2DByThreePoints extends Circle2D {
     if (Math.abs(det) < 1e-10) {
       // Lines are parallel (should not happen if points are not collinear)
       console.warn(`Circle ${this.id}: perpendicular bisectors are parallel`);
-      return new Circle2DRealization2D(p1.clone(), 0, false);
+      return new Circle2DRealization2D(p1.clone(), new Vector3(1, 0, 0), false);
     }
     
     const t = (diff.x * (-dir23.y) - diff.y * (-dir23.x)) / det;
     
     // Calculate center
     const center = m12.clone().add(dir12.clone().multiplyScalar(t));
+    center.z = 1;  // Center is a finite point
     
-    // Calculate radius
-    const radius = center.distanceTo(p1);
+    // Calculate radius vector from center to point1 (defines angle 0)
+    const radiusVector = p1.clone().sub(center);
+    radiusVector.z = 0;  // Vectors have z=0
     
-    return new Circle2DRealization2D(center, radius, true);
+    return new Circle2DRealization2D(center, radiusVector, true);
   }
 }

@@ -2,10 +2,9 @@
  * Unit tests for Circle domain entities
  * 
  * Tests the Circle2D geometry classes:
- * - Circle2DByCenterAndRadius: Defines circle by center point ID and explicit radius
  * - Circle2DByCenterAndPoint: Defines circle by center and circumference point
  * - Circle2DByThreePoints: Defines circle through three points
- * - Circle2DRealization2D: Computed circle geometry with center and radius
+ * - Circle2DRealization2D: Computed circle geometry with center and radius vector
  * 
  * Reference: specs/001-dihedral-learning-mvp/data-model.md#circle2d
  */
@@ -13,7 +12,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
 import {
-  Circle2DByCenterAndRadius,
   Circle2DByCenterAndPoint,
   Circle2DByThreePoints,
   Circle2DRealization2D
@@ -48,72 +46,6 @@ describe('Circle2D', () => {
     point3Id = 'p3';
   });
 
-  describe('Circle2DByCenterAndRadius', () => {
-    it('should create circle with center and radius', () => {
-      const circle = new Circle2DByCenterAndRadius('c1', centerPointId, 50, 'proj_plane_H');
-      
-      expect(circle.id).toBe('c1');
-      expect(circle.type).toBe('by-center-and-radius');
-      expect(circle.centerPointId).toBe(centerPointId);
-      expect(circle.radius).toBe(50);
-      expect(circle.planeId).toBe('proj_plane_H');
-    });
-
-    it('should clone circle correctly', () => {
-      const original = new Circle2DByCenterAndRadius('c1', centerPointId, 50, 'proj_plane_H');
-      const cloned = original.clone();
-      
-      expect(cloned.id).toBe('c1');
-      expect(cloned.centerPointId).toBe(centerPointId);
-      expect(cloned.radius).toBe(50);
-      expect(cloned.planeId).toBe('proj_plane_H');
-      expect(cloned).not.toBe(original);
-    });
-
-    it('should realize circle with valid center and radius', () => {
-      const circle = new Circle2DByCenterAndRadius('c1', centerPointId, 50, 'proj_plane_H');
-      
-      world.addCircle2D(circle);
-      const realization = world.getCircle2DRealization('c1');
-      
-      expect(realization).toBeDefined();
-      expect(realization!.center.x).toBe(0);
-      expect(realization!.center.y).toBe(0);
-      expect(realization!.radius).toBe(50);
-    });
-
-    it('should return null when center point is missing', () => {
-      const circle = new Circle2DByCenterAndRadius('c1', 'missing', 50, 'proj_plane_H');
-      
-      world.addCircle2D(circle);
-      const realization = world.getCircle2DRealization('c1');
-      
-      expect(realization).toBeUndefined();
-    });
-
-    it('should return null for zero radius', () => {
-      const circle = new Circle2DByCenterAndRadius('c1', centerPointId, 0, 'proj_plane_H');
-      
-      world.addCircle2D(circle);
-      const realization = world.getCircle2DRealization('c1');
-      
-      // Should return infeasible realization for degenerate circle
-      expect(realization).toBeDefined();
-      expect(realization!.feasible).toBe(false);
-    });
-
-    it('should return null for negative radius', () => {
-      const circle = new Circle2DByCenterAndRadius('c1', centerPointId, -10, 'proj_plane_H');
-      
-      world.addCircle2D(circle);
-      const realization = world.getCircle2DRealization('c1');
-      
-      // Should return infeasible realization for invalid circle
-      expect(realization).toBeDefined();
-      expect(realization!.feasible).toBe(false);
-    });
-  });
-
   describe('Circle2DByCenterAndPoint', () => {
     it('should create circle with center and circumference point', () => {
       const circle = new Circle2DByCenterAndPoint('c1', centerPointId, point1Id, 'proj_plane_H');
@@ -134,7 +66,11 @@ describe('Circle2D', () => {
       expect(realization!.center.x).toBe(0);
       expect(realization!.center.y).toBe(0);
       // Radius = distance from (0,0) to (50,0) = 50
-      expect(realization!.radius).toBe(50);
+      expect(realization!.getRadius()).toBe(50);
+      // Radius vector should point from center to circumference point
+      expect(realization!.radiusVector.x).toBe(50);
+      expect(realization!.radiusVector.y).toBe(0);
+      expect(realization!.radiusVector.z).toBe(0);  // Vectors have z=0
     });
 
     it('should return null when center point is missing', () => {

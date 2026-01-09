@@ -9,6 +9,15 @@
  * Architecture:
  * Domain (rules) → Realization (<u,v> geometry) → Plane transform → Paper (paper coords) → Viewport transform → SVG
  * 
+ * Phase 22.5.4 - Direct ProjectionPlane Access:
+ * Hit testing directly accesses the active ProjectionPlane to iterate elements:
+ *   const plane = world.projectionPlanes.get(activePlaneId);
+ *   for (const point of plane.getAllPoints()) {
+ *     const realization = plane.realizePoint2D(point, world);
+ *     // Hit test logic...
+ *   }
+ * This matches the rendering pattern in PaperService and eliminates World facade calls.
+ * 
  * IMPORTANT: All coordinates are stored as Vector3 (homogeneous) throughout the pipeline.
  * Only SVGRenderer extracts .x and .y components when generating final SVG attributes.
  * 
@@ -349,132 +358,118 @@ export class Paper {
     let closestHit: HitResult | null = null;
     let minDistance = planeRadius;
     
+    // Get active plane for direct element access
+    const activePlane = activePlaneId ? world.projectionPlanes.get(activePlaneId) : null;
+    
     // Test points (only from active plane)
-    const points = activePlaneId ? world.getPoints2DByPlane(activePlaneId) : [];
-    for (const point of points) {
-      // Filter by selection mask if provided
-      if (selectionMask && !selectionMask.includes('point')) {
-        continue;
-      }
-      
-      const realization = world.getPoint2DRealization(point.id);
-      if (!realization) continue;
-      
-      const distance = planePos.distanceTo(realization.position);
-      
-      if (distance < minDistance) {
-        closestHit = {
-          elementId: point.id,
-          elementType: 'point',
-          primitiveId: point.id,
-          distance: distance * this.viewportTransform.zoom, // Convert to canvas pixels for consistency
-          snapPoint: realization.position.clone()  // Snap point in plane coordinates
-        };
-        minDistance = distance;
+    if (activePlane) {
+      for (const point of activePlane.getAllPoints()) {
+        // Filter by selection mask if provided
+        if (selectionMask && !selectionMask.includes('point')) {
+          continue;
+        }
+        
+        const realization = activePlane.realizePoint2D(point, world);
+        if (!realization) continue;
+        
+        const distance = planePos.distanceTo(realization.position);
+        
+        if (distance < minDistance) {
+          closestHit = {
+            elementId: point.id,
+            elementType: 'point',
+            primitiveId: point.id,
+            distance: distance * this.viewportTransform.zoom, // Convert to canvas pixels for consistency
+            snapPoint: realization.position.clone()  // Snap point in plane coordinates
+          };
+          minDistance = distance;
+        }
       }
     }
     
     // Test lines (includes HalfHingeLine2D on active plane)
-    const lines = activePlaneId ? world.getLines2DByPlane(activePlaneId) : [];
-    for (const line of lines) {
-      // Filter by selection mask if provided
-      if (selectionMask) {
-        const elementType = this.getElementType(line, world);
-        if (!selectionMask.includes(elementType)) {
-          continue;
+    if (activePlane) {
+      for (const line of activePlane.getAllLines()) {
+        // Filter by selection mask if provided
+        if (selectionMask) {
+          const elementType = this.getElementType(line, world);
+          if (!selectionMask.includes(elementType)) {
+            continue;
+          }
         }
-      }
-      
-      const realization = world.getLine2DRealization(line.id);
-      if (!realization) continue;
-      
-      const distance = this.distanceToLineInPlaneSpace(planePos, realization);
-      
-      if (distance < minDistance) {
-        closestHit = {
-          elementId: line.id,
-          elementType: 'line',
-          primitiveId: line.id,
-          distance: distance * this.viewportTransform.zoom,
-          snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
-        };
-        minDistance = distance;
+        
+        const realization = activePlane.realizeLine2D(line, world);
+        if (!realization) continue;
+        
+        const distance = this.distanceToLineInPlaneSpace(planePos, realization);
+        
+        if (distance < minDistance) {
+          closestHit = {
+            elementId: line.id,
+            elementType: 'line',
+            primitiveId: line.id,
+            distance: distance * this.viewportTransform.zoom,
+            snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
+          };
+          minDistance = distance;
+        }
       }
     }
     
     // Test circles (only from active plane)
-    const circles = activePlaneId ? world.getCircles2DByPlane(activePlaneId) : [];
-    for (const circle of circles) {
-      // Filter by selection mask if provided
-      if (selectionMask && !selectionMask.includes('circle')) {
-        continue;
-      }
-      
-      const realization = world.getCircle2DRealization(circle.id);
-      if (!realization) continue;
-      
-      const distance = this.distanceToCircleInPlaneSpace(planePos, realization);
-      
-      if (distance < minDistance) {
-        closestHit = {
-          elementId: circle.id,
-          elementType: 'circle',
-          primitiveId: circle.id,
-          distance: distance * this.viewportTransform.zoom,
-          snapPoint: this.snapToCircleInPlaneSpace(planePos, realization)
-        };
-        minDistance = distance;
+    if (activePlane) {
+      for (const circle of activePlane.getAllCircles()) {
+        // Filter by selection mask if provided
+        if (selectionMask && !selectionMask.includes('circle')) {
+          continue;
+        }
+        
+        const realization = activePlane.realizeCircle2D(circle, world);
+        if (!realization) continue;
+        
+        const distance = this.distanceToCircleInPlaneSpace(planePos, realization);
+        
+        if (distance < minDistance) {
+          closestHit = {
+            elementId: circle.id,
+            elementType: 'circle',
+            primitiveId: circle.id,
+            distance: distance * this.viewportTransform.zoom,
+            snapPoint: this.snapToCircleInPlaneSpace(planePos, realization)
+          };
+          minDistance = distance;
+        }
       }
     }
     
-    // Test segments (only from active plane)
-    const segments = activePlaneId ? world.getSegments2DByPlane(activePlaneId) : [];
-    for (const segment of segments) {
-      // Filter by selection mask if provided
-      if (selectionMask && !selectionMask.includes('segment')) {
-        continue;
-      }
-      
-      const realization = world.getSegment2DRealization(segment.id);
-      if (!realization) continue;
-      
-      const distance = this.distanceToSegmentInPlaneSpace(planePos, realization);
-      
-      if (distance < minDistance) {
-        closestHit = {
-          elementId: segment.id,
-          elementType: 'segment',
-          primitiveId: segment.id,
-          distance: distance * this.viewportTransform.zoom,
-          snapPoint: this.snapToSegmentInPlaneSpace(planePos, realization)
-        };
-        minDistance = distance;
-      }
-    }
+    // Note: Segments are handled above in lines iteration (they're Line2D with type='segment')
     
     // Test guides (always pickable - belong to both planes)
-    for (const guide of world.getAllGuides2D()) {
-      // Filter by selection mask if provided
-      if (selectionMask && !selectionMask.includes('guide')) {
-        continue;
-      }
-      
-      // Guides don't filter by plane - they're universal construction aids
-      
-      const realization = world.getGuide2DRealization(guide.id);
-      if (!realization) continue;
-      
-      const distance = this.distanceToLineInPlaneSpace(planePos, realization);
-      
-      if (distance < minDistance) {
-        closestHit = {
-          elementId: guide.id,
-          elementType: 'guide',
-          primitiveId: guide.id,
-          distance: distance * this.viewportTransform.zoom,
-          snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
-        };
-        minDistance = distance;
+    for (const plane of world.projectionPlanes.values()) {
+      for (const line of plane.getAllLines()) {
+        if (line.type !== 'guide') continue;
+        
+        // Filter by selection mask if provided
+        if (selectionMask && !selectionMask.includes('guide')) {
+          continue;
+        }
+        
+        // Guides don't filter by plane - they're universal construction aids
+        const realization = plane.realizeLine2D(line, world);
+        if (!realization) continue;
+        
+        const distance = this.distanceToLineInPlaneSpace(planePos, realization);
+        
+        if (distance < minDistance) {
+          closestHit = {
+            elementId: line.id,
+            elementType: 'guide',
+            primitiveId: line.id,
+            distance: distance * this.viewportTransform.zoom,
+            snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
+          };
+          minDistance = distance;
+        }
       }
     }
     
@@ -771,12 +766,13 @@ export class Paper {
    * @returns Distance in plane units
    */
   private distanceToLineInPlaneSpace(planePos: Vector3, lineRealization: Line2DRealization2D): number {
-    // Line in parametric form: P(t) = point + t * direction
+    // Line in parametric form: P(t) = point1 + t * direction
     // Distance from point to line is: ||pointToLine - projection|| where
     // projection = (pointToLine · direction) * direction
-    const pointToLine = planePos.clone().sub(lineRealization.point);
-    const projection = pointToLine.dot(lineRealization.direction);
-    const closestPoint = lineRealization.point.clone().addScaledVector(lineRealization.direction, projection);
+    const direction = lineRealization.getDirection();
+    const pointToLine = planePos.clone().sub(lineRealization.point1);
+    const projection = pointToLine.dot(direction);
+    const closestPoint = lineRealization.point1.clone().addScaledVector(direction, projection);
     return planePos.distanceTo(closestPoint);
   }
 
@@ -788,9 +784,10 @@ export class Paper {
    * @returns Closest point on line in plane coordinates
    */
   private snapToLineInPlaneSpace(planePos: Vector3, lineRealization: Line2DRealization2D): Vector3 {
-    const pointToLine = planePos.clone().sub(lineRealization.point);
-    const projection = pointToLine.dot(lineRealization.direction);
-    return lineRealization.point.clone().addScaledVector(lineRealization.direction, projection);
+    const direction = lineRealization.getDirection();
+    const pointToLine = planePos.clone().sub(lineRealization.point1);
+    const projection = pointToLine.dot(direction);
+    return lineRealization.point1.clone().addScaledVector(direction, projection);
   }
 
   /**
@@ -802,7 +799,7 @@ export class Paper {
    */
   private distanceToCircleInPlaneSpace(planePos: Vector3, circleRealization: Circle2DRealization2D): number {
     const centerDistance = planePos.distanceTo(circleRealization.center);
-    return Math.abs(centerDistance - circleRealization.radius);
+    return Math.abs(centerDistance - circleRealization.getRadius());
   }
 
   /**
@@ -813,8 +810,18 @@ export class Paper {
    * @returns Closest point on circle in plane coordinates
    */
   private snapToCircleInPlaneSpace(planePos: Vector3, circleRealization: Circle2DRealization2D): Vector3 {
-    const direction = planePos.clone().sub(circleRealization.center).normalize();
-    return circleRealization.center.clone().addScaledVector(direction, circleRealization.radius);
+    const direction = planePos.clone().sub(circleRealization.center);
+    const distance = direction.lengthSq();  // Use squared - cheaper
+    
+    if (distance < 1e-20) {
+      // Query point at center - snap to angle 0 (defined by radiusVector)
+      return circleRealization.center.clone().add(circleRealization.radiusVector);
+    }
+    
+    // Normalize and scale to radius
+    const radius = circleRealization.getRadius();
+    direction.normalize().multiplyScalar(radius);
+    return circleRealization.center.clone().add(direction);
   }
 
   /**

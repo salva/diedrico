@@ -35,7 +35,7 @@ describe('Segment2D', () => {
       const segment = new Segment2DByPoints('seg1', point1Id, point2Id, 'proj_plane_H');
       
       expect(segment.id).toBe('seg1');
-      expect(segment.type).toBe('by-points');
+      expect(segment.type).toBe('segment');  // Phase 22.5: unified line type
       expect(segment.point1Id).toBe(point1Id);
       expect(segment.point2Id).toBe(point2Id);
       expect(segment.planeId).toBe('proj_plane_H');
@@ -57,7 +57,7 @@ describe('Segment2D', () => {
       
       // Use World's method which handles the realization properly
       world.addSegment2D(segment);
-      const realization = world.getSegment2DRealization('seg1');
+      const realization = world.getLine2DRealization('seg1');
       
       expect(realization).toBeDefined();
       expect(realization!.point1.x).toBe(0);
@@ -70,7 +70,7 @@ describe('Segment2D', () => {
       const segment = new Segment2DByPoints('seg1', 'missing', point2Id, 'proj_plane_H');
       
       world.addSegment2D(segment);
-      const realization = world.getSegment2DRealization('seg1');
+      const realization = world.getLine2DRealization('seg1');
       
       expect(realization).toBeUndefined();
     });
@@ -79,7 +79,7 @@ describe('Segment2D', () => {
       const segment = new Segment2DByPoints('seg1', point1Id, 'missing', 'proj_plane_H');
       
       world.addSegment2D(segment);
-      const realization = world.getSegment2DRealization('seg1');
+      const realization = world.getLine2DRealization('seg1');
       
       expect(realization).toBeUndefined();
     });
@@ -88,7 +88,7 @@ describe('Segment2D', () => {
       const segment = new Segment2DByPoints('seg1', 'missing1', 'missing2', 'proj_plane_H');
       
       world.addSegment2D(segment);
-      const realization = world.getSegment2DRealization('seg1');
+      const realization = world.getLine2DRealization('seg1');
       
       expect(realization).toBeUndefined();
     });
@@ -102,7 +102,7 @@ describe('Segment2D', () => {
       
       const segment = new Segment2DByPoints('seg1', 'p3', 'p4', 'proj_plane_H');
       world.addSegment2D(segment);
-      const realization = world.getSegment2DRealization('seg1');
+      const realization = world.getLine2DRealization('seg1');
       
       // Degenerate segments return infeasible realization
       expect(realization).toBeDefined();

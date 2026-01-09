@@ -179,6 +179,79 @@ export class DependencyService {
   }
 
   /**
+   * Get elements to delete in proper order for cascade deletion
+   * Returns elements sorted in reverse topological order (dependents before dependencies)
+   * 
+   * CRITICAL for cascade deletion: Elements MUST be deleted in this order to maintain
+   * referential integrity during the deletion process.
+   * 
+   * Algorithm:
+   * 1. Compute dependency depth for each element (max distance from leaves)
+   * 2. Sort by depth descending (higher depth = more dependents = delete first)
+   * 
+   * Example: Point P, Line L (depends on P)
+   * - L has depth 0 (no dependents)
+   * - P has depth 1 (L depends on it)
+   * - Result: [L, P] - delete line before point
+   * 
+   * @param elementIds - Element IDs to delete (user selection)
+   * @returns Array of element IDs in deletion order (dependents first, roots last)
+   */
+  getElementsInDeletionOrder(elementIds: string[]): string[] {
+    // Collect all elements to delete (selected + cascaded dependents)
+    const allElements = new Set<string>();
+    for (const elementId of elementIds) {
+      allElements.add(elementId);
+      const dependents = this.getAllDependents(elementId);
+      dependents.forEach(dep => allElements.add(dep));
+    }
+
+    // Compute dependency depth for each element
+    const depths = new Map<string, number>();
+    
+    const computeDepth = (elementId: string, visited: Set<string>): number => {
+      if (depths.has(elementId)) {
+        return depths.get(elementId)!;
+      }
+      
+      if (visited.has(elementId)) {
+        // Circular dependency - shouldn't happen but handle gracefully
+        return 0;
+      }
+      
+      visited.add(elementId);
+      
+      // Depth = 1 + max(depth of all dependents)
+      const directDependents = this.getDependents(elementId);
+      let maxDepth = 0;
+      
+      for (const dependentId of directDependents) {
+        if (allElements.has(dependentId)) {
+          const depDepth = computeDepth(dependentId, visited);
+          maxDepth = Math.max(maxDepth, depDepth + 1);
+        }
+      }
+      
+      depths.set(elementId, maxDepth);
+      visited.delete(elementId);
+      
+      return maxDepth;
+    };
+    
+    // Compute depths for all elements
+    for (const elementId of allElements) {
+      computeDepth(elementId, new Set());
+    }
+    
+    // Sort by depth descending (higher depth = has more dependents = delete first)
+    return Array.from(allElements).sort((a, b) => {
+      const depthA = depths.get(a) || 0;
+      const depthB = depths.get(b) || 0;
+      return depthB - depthA; // Descending order
+    });
+  }
+
+  /**
    * Get dependency edges for a specific action
    * 
    * @param actionId - Action ID to query

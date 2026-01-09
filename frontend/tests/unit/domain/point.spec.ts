@@ -316,8 +316,11 @@ describe('Point2D', () => {
         expect(realization1.position.x).toBe(50);
 
         // Update primary coordinates by creating a new point at same ID
-        world.points.set(primaryPointId, new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), 'proj_plane_H'));
-        world.pointRealizations2D.delete(primaryPointId); // Clear cache
+        const primaryPoint = new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), 'proj_plane_H');
+        world.addPoint2D(primaryPoint);
+        // Phase 22.5.3: Clear cache from plane, not World
+        const plane = world.projectionPlanes.get('proj_plane_H');
+        plane?.clearPointRealization2D(primaryPointId);
 
         // Sibling should reflect updated coordinates
         const realization2 = sibling.realize2D(world);

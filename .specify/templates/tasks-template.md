@@ -8,7 +8,7 @@ description: "Task list template for feature implementation"
 **Input**: Design documents from `/specs/[###-feature-name]/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Per Diedrico Constitution (Principle V: Test-Driven Development), tests are MANDATORY unless explicitly waived for the feature. Tests MUST be written BEFORE implementation.
+**Tests**: The examples below include test tasks. Per Diedrico Constitution (Principle VII: Pragmatic Testing), tests are expected where they add clear value (complex domain logic, commands/operations, and critical user journeys). Tests may be written before or after implementation depending on what is most effective.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 

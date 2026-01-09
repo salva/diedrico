@@ -552,7 +552,8 @@ describe('World Factory Methods', () => {
         const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(10, 10, 1));
         const segment = world.addSegment2DBetweenPoints('proj_plane_H', p1.id, p2.id);
 
-        const realization = world.getSegment2DRealization(segment.id);
+        // Phase 22.5: Segments are Line2D, use getLine2DRealization
+        const realization = world.getLine2DRealization(segment.id);
 
         expect(realization).toBeDefined();
       });

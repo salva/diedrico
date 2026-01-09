@@ -1,28 +1,31 @@
 /**
  * Segment2D - Finite line segment in 2D projection plane
  * 
- * Segments are defined by two endpoint references. Unlike infinite lines,
- * segments render ONLY between their endpoints.
+ * Phase 22.5: Segments now extend Line2D base class
+ * - Segments are bounded lines with endpoints
+ * - Use Line2DRealization2D with point1/point2 fields set
+ * - Stored in ProjectionPlane.lines Map alongside infinite lines
  * 
  * Design principles:
  * - Principle V: Segment stores DEFINITION (point IDs), realization stores computed coordinates
  * - Dependencies: Segment depends on both endpoint points
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#segment2d
+ * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
  */
 
 import { Vector3 } from 'three';
+import { Line2D, Line2DRealization2D } from './Line';
 
-export type Segment2DType = 'by-points';
+export type Segment2DType = 'segment';  // Phase 22.5: Use 'segment' to match Line2DType
 
 /**
- * Segment2DRealization2D - Stores computed endpoints for a Segment2D
- * Contains ONLY numeric data. Structural information (id, planeId, pointIds) stays in domain objects.
+ * @deprecated Phase 22.5: Use Line2DRealization2D instead
+ * Kept temporarily for backward compatibility during migration
  */
 export class Segment2DRealization2D {
-  point1: Vector3;  // First endpoint in plane coordinates (u, v, 1)
-  point2: Vector3;  // Second endpoint in plane coordinates (u, v, 1)
-  feasible: boolean;  // Whether the geometric computation succeeded
+  point1: Vector3;
+  point2: Vector3;
+  feasible: boolean;
 
   constructor(point1: Vector3, point2: Vector3, feasible: boolean = true) {
     this.point1 = point1;
@@ -30,67 +33,25 @@ export class Segment2DRealization2D {
     this.feasible = feasible;
   }
 
-  /**
-   * Get first endpoint
-   */
   getPoint1(): Vector3 {
     return this.point1;
   }
 
-  /**
-   * Get second endpoint
-   */
   getPoint2(): Vector3 {
     return this.point2;
   }
 
-  /**
-   * Calculate segment length in plane coordinates
-   */
   getLength(): number {
     return this.point1.distanceTo(this.point2);
   }
 }
 
 /**
- * Base Segment2D class - represents the rule/definition of a segment
+ * Segment2DByPoints - Bounded line segment defined by two endpoint references
+ * Phase 22.5: Now extends Line2D base class
  */
-export abstract class Segment2D {
-  id: string;  // Unique identifier (required)
-  abstract readonly type: Segment2DType;
-  label?: string;
-  planeId: string;  // Which projection plane this segment belongs to
-  visible: boolean = true;  // Whether segment is visible in the canvas
-
-  constructor(
-    id: string,
-    planeId: string,
-    label?: string
-  ) {
-    this.id = id;
-    this.planeId = planeId;
-    this.label = label;
-  }
-
-  /**
-   * Clone this segment
-   */
-  abstract clone(): Segment2D;
-
-  /**
-   * Calculate the 2D realization (endpoints) for this segment
-   * Returns endpoints in the projection plane's intrinsic coordinates
-   * @param world World instance to access element realizations
-   */
-  abstract realize2D(world: import('./World').World): Segment2DRealization2D | null;
-}
-
-/**
- * Segment2DByPoints - Segment defined by two endpoint references
- * The rule is: "segment from point1 to point2"
- */
-export class Segment2DByPoints extends Segment2D {
-  readonly type: 'by-points' = 'by-points';
+export class Segment2DByPoints extends Line2D {
+  readonly type: 'segment' = 'segment';
   readonly point1Id: string;  // ID of first endpoint
   readonly point2Id: string;  // ID of second endpoint
 
@@ -117,9 +78,13 @@ export class Segment2DByPoints extends Segment2D {
   }
 
   /**
-   * Calculate 2D realization - get endpoints from point realizations
+   * Calculate 2D realization - returns Line2DRealization2D for segment
+   * 
+   * Segments use two finite points:
+   *   point1: start endpoint (z=1)
+   *   point2: end endpoint (z=1)
    */
-  realize2D(world: import('./World').World): Segment2DRealization2D | null {
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get both endpoint realizations from world
     const p1Realization = world.getPoint2DRealization(this.point1Id);
     const p2Realization = world.getPoint2DRealization(this.point2Id);
@@ -131,7 +96,10 @@ export class Segment2DByPoints extends Segment2D {
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible) {
       console.warn('[Segment2DByPoints] Parent point is infeasible, marking segment as infeasible');
-      return new Segment2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 1), false);
+      // Infeasible segment: arbitrary points
+      const p1 = new Vector3(0, 0, 1);
+      const p2 = new Vector3(1, 0, 1);
+      return new Line2DRealization2D(p1, p2, false);
     }
 
     const p1 = p1Realization.position;
@@ -140,9 +108,13 @@ export class Segment2DByPoints extends Segment2D {
     // Check for degenerate segment (endpoints coincident)
     if (p1.distanceToSquared(p2) < 1e-10) {
       console.warn(`Segment ${this.id}: endpoints are coincident`);
-      return new Segment2DRealization2D(p1.clone(), p2.clone(), false);
+      return new Line2DRealization2D(p1.clone(), p2.clone(), false);
     }
 
-    return new Segment2DRealization2D(p1.clone(), p2.clone(), true);
+    // Return segment: both point1 and point2 are finite (z=1)
+    return new Line2DRealization2D(p1.clone(), p2.clone(), true);
   }
 }
+
+// Export legacy type alias for backward compatibility during migration
+export type Segment2D = Segment2DByPoints;

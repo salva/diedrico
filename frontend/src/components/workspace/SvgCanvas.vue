@@ -366,11 +366,15 @@ const primitives = computed(() => {
   const selectedIds = selectionStore.selectedIdsArray;
   const selectedIdsSet = selectedIds.length > 0 ? new Set(selectedIds) : undefined;
   
+  const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
+  const cascadeHighlightIdsSet = cascadeHighlightIds.length > 0 ? new Set(cascadeHighlightIds) : undefined;
+  
   const context: PrimitiveContext = {
     world,
     planeTransforms,
     hoveredIds,              // Hover state (lighter highlight)
     selectedIds: selectedIdsSet,  // Selection state (bold highlight)
+    cascadeHighlightIds: cascadeHighlightIdsSet,  // Cascade delete preview (orange warning)
     activePlaneId: activePlane.value,  // FR-002: Active plane visual emphasis
   };
   
@@ -525,7 +529,7 @@ const renderedCircles = computed(() => {
 
 const renderedGuides = computed(() => {
   return primitives.value
-    .filter(p => p.type === 'guide')
+    .filter(p => p.type === 'line' && p.id.startsWith('guide-'))
     .map(p => {
       const result = svgRenderer.renderPrimitive(p, viewport.value);
       return {

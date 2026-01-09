@@ -193,10 +193,9 @@ export class IntersectionPoint2D extends Point2D {
    * @returns Point2DRealization2D with intersection point, or infeasible if computation fails
    */
   realize2D(world: World): Point2DRealization2D {
-    // Try to get elements as lines (check both lines and guides collections)
-    // Guides extend Line2DRealization2D, so they can be used as lines
-    const line1 = world.getLine2DRealization(this.element1Id) || world.getGuide2DRealization(this.element1Id);
-    const line2 = world.getLine2DRealization(this.element2Id) || world.getGuide2DRealization(this.element2Id);
+    // Try to get elements as lines (guides are Line2D, use unified method)
+    const line1 = world.getLine2DRealization(this.element1Id);
+    const line2 = world.getLine2DRealization(this.element2Id);
     
     // Try to get elements as circles
     const circle1 = world.getCircle2DRealization(this.element1Id);

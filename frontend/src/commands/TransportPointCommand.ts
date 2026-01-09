@@ -67,8 +67,8 @@ export class TransportPointCommand extends Command {
       throw new Error(`Guide ${this.guideId} not found`);
     }
 
-    // Get guide realization
-    const guideRealization = this.world.getGuide2DRealization(this.guideId);
+    // Get guide realization (guides are Line2D)
+    const guideRealization = this.world.getLine2DRealization(this.guideId);
     if (!guideRealization) {
       throw new Error(`Cannot get realization for guide ${this.guideId}`);
     }

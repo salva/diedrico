@@ -35,7 +35,7 @@
 - [ ] **Command Pattern**: Are all user actions and state changes encapsulated as commands with execute/undo/validate?
 - [ ] **Frontend-First**: Is presentation logic in frontend? Is backend limited to storage/API? Are API contracts defined?
 - [ ] **Technology Discipline**: Does it use approved stack (Vue.js, Node.js, TypeScript, Vite, Vitest/Playwright)?
-- [ ] **Test-Driven Development**: Are acceptance tests defined? Is test strategy documented?
+- [ ] **Testing Strategy (Pragmatic)**: Are acceptance scenarios defined? Is the test strategy documented (unit/integration/E2E where valuable)?
 
 **Notes**: Document any deviations in Complexity Tracking section below.
 

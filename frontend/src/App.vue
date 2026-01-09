@@ -69,6 +69,7 @@
         :active-tool="activeTool"
         :coordinates3-d="coordinates3D"
         :save-status="saveStatus"
+        :cascade-count="selectionStore.cascadeHighlightIdsArray.length"
       />
     </footer>
   </div>
@@ -93,7 +94,7 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#startup-flow-and-google-drive-authentication
  */
 
-import { provide, ref, onMounted, onUnmounted } from 'vue';
+import { provide, ref, onMounted, onUnmounted, watch } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
@@ -102,6 +103,9 @@ import ElementsPanel from './components/panels/ElementsPanel.vue';
 import StartupDialog from './components/dialogs/StartupDialog.vue';
 import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
 import { CommandStack } from './commands/CommandStack';
+import { Command } from './commands/Command';
+import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from './commands/operations/RemoveElementOps';
+import { RemoveActionFromProcessTreeOp } from './commands/operations/ProcessTreeOperations';
 import { useToolStore } from './stores/toolStore';
 import { useSelectionStore } from './stores/selectionStore';
 import { useSettingsStore } from './stores/settingsStore';
@@ -179,6 +183,33 @@ const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
 // Auto-save debounce timer
 let autoSaveTimer: NodeJS.Timeout | null = null;
 const AUTO_SAVE_DELAY_MS = 2000; // 2 seconds
+
+/**
+ * Update cascade highlight when selection changes (T289)
+ * Shows which elements will be deleted due to dependencies
+ */
+watch(() => selectionStore.selectedIdsArray, (selectedIds) => {
+  if (selectedIds.length === 0) {
+    selectionStore.clearCascadeHighlight();
+    return;
+  }
+  
+  // Compute cascade deletion preview
+  const dependencyService = world.getDependencyService();
+  const allElementsToDelete = dependencyService.getElementsInDeletionOrder(selectedIds);
+  
+  // Cascade elements are those not directly selected
+  const cascadedElements = allElementsToDelete.filter(id => !selectedIds.includes(id));
+  
+  // Update cascade highlight state
+  selectionStore.setCascadeHighlight(cascadedElements);
+  
+  console.log('[App] Cascade preview:', {
+    selected: selectedIds,
+    cascaded: cascadedElements,
+    total: allElementsToDelete.length
+  });
+}, { immediate: true });
 
 /**
  * Initialize Google Drive API and show startup dialog
@@ -524,14 +555,18 @@ function handleFitToView() {
 }
 
 /**
- * Handle delete selected elements (T271)
- * Delete/Backspace key: Remove all selected elements
+ * Handle delete selected elements (T271, T285-T289)
+ * Delete/Backspace key: Remove all selected elements with cascade deletion
  * 
- * Note: This is a simplified implementation that deletes elements directly.
- * TODO: Implement proper DeleteElementsCommand with:
- * - Cascade deletion for dependent elements  
- * - Proper undo/redo support
- * - Atomic command execution
+ * Builds a Command from RemoveElement and RemoveAction operations:
+ * - Computes cascade (all dependent elements via DependencyService)
+ * - Sorts elements in deletion order (dependents before dependencies)
+ * - Adds RemoveElementOp for each element (by type)
+ * - Adds RemoveActionFromProcessTreeOp for each action
+ * - Supports proper undo/redo through operation composition
+ * 
+ * CRITICAL: Elements must be deleted in reverse topological order to maintain
+ * referential integrity during deletion (dependents first, roots last).
  */
 function handleDeleteSelected() {
   const selectedIds = selectionStore.selectedIdsArray;
@@ -543,52 +578,99 @@ function handleDeleteSelected() {
   
   console.log('[App] Deleting selected elements:', selectedIds);
   
-  // Delete each selected element
-  // Note: This is a direct delete without cascade or proper undo
-  // TODO: Replace with DeleteElementsCommand that handles dependencies
-  for (const elementId of selectedIds) {
-    try {
-      // Try to find element type and delete accordingly
+  // Step 1: Compute cascade and get elements in proper deletion order
+  // CRITICAL: getElementsInDeletionOrder returns elements sorted by dependency depth
+  // (dependents first, roots last) to maintain referential integrity
+  const dependencyService = world.getDependencyService();
+  const allElementsToDelete = dependencyService.getElementsInDeletionOrder(selectedIds);
+  
+  const cascadedElements = allElementsToDelete.filter(id => !selectedIds.includes(id));
+  
+  console.log('[App] Cascade deletion:', {
+    direct: selectedIds,
+    cascaded: cascadedElements,
+    total: allElementsToDelete,
+    order: 'dependents-first (proper deletion order)'
+  });
+  
+  // Step 2: Build Command with operations
+  const deleteCommand = new Command('Delete elements', world);
+  
+  try {
+    // Find all actions that produce these elements
+    const processTree = world.getProcessTree();
+    const actionsToDelete = new Map<string, string[]>();
+    
+    for (const elementId of allElementsToDelete) {
+      const actions = processTree.getActionsProducingElement(elementId);
+      if (actions.length === 0) {
+        console.warn(`[App] Element ${elementId} has no producing action - skipping`);
+        continue;
+      }
+      
+      for (const action of actions) {
+        if (!actionsToDelete.has(action.id)) {
+          actionsToDelete.set(action.id, []);
+        }
+        actionsToDelete.get(action.id)!.push(elementId);
+      }
+    }
+    
+    // Step 3: Add operations to command in proper order
+    // Elements are already sorted in deletion order by getElementsInDeletionOrder
+    for (const elementId of allElementsToDelete) {
+      // Determine element type and add appropriate RemoveOp
       const point = world.getPoint2DById(elementId);
       if (point) {
-        world.removePoint2D(point.planeId, elementId);
+        deleteCommand.addAndExecute(new RemovePoint2DOp(point.planeId, elementId));
         continue;
       }
       
       const line = world.getLine2DById(elementId);
       if (line) {
-        world.removeLine2D(line.planeId, elementId);
+        deleteCommand.addAndExecute(new RemoveLine2DOp(line.planeId, elementId));
         continue;
       }
       
       const segment = world.getSegment2DById(elementId);
       if (segment) {
-        world.removeSegment2D(segment.planeId, elementId);
+        deleteCommand.addAndExecute(new RemoveSegment2DOp(segment.planeId, elementId));
         continue;
       }
       
       const circle = world.getCircle2DById(elementId);
       if (circle) {
-        world.removeCircle2D(circle.planeId, elementId);
+        deleteCommand.addAndExecute(new RemoveCircle2DOp(circle.planeId, elementId));
         continue;
       }
       
       const guide = world.getGuide2DById(elementId);
       if (guide) {
-        world.removeGuide2D(guide.planeId, elementId);
+        deleteCommand.addAndExecute(new RemoveGuide2DOp(guide.planeId, elementId));
         continue;
       }
-      
-      console.warn(`[App] Unknown element type for ID: ${elementId}`);
-    } catch (error) {
-      console.error(`[App] Failed to delete element ${elementId}:`, error);
     }
+    
+    // Remove actions from ProcessTree (creates tombstones for undo)
+    for (const [actionId, _] of actionsToDelete) {
+      deleteCommand.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+    }
+    
+    // Step 4: Commit and push to command stack
+    deleteCommand.commit();
+    commandStack.push(deleteCommand);
+    
+    // Rebuild dependency maps after deletion
+    dependencyService.rebuildDependencyMaps();
+    
+    // Clear selection
+    selectionStore.clearSelection();
+    
+    console.log('[App] Delete command executed successfully');
+    
+  } catch (error) {
+    console.error('[App] Failed to delete elements:', error);
   }
-  
-  // Clear selection after deletion
-  selectionStore.clearSelection();
-  
-  console.log('[App] Deleted elements:', selectedIds);
 }
 
 /**

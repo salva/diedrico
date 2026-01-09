@@ -34,8 +34,8 @@ import {
   intersectCircleCircle 
 } from '@/domain/calculations/Intersections';
 import type { World } from '@/domain/world/World';
-
-type ElementType = 'line' | 'circle' | 'half-hinge-line' | 'guide';
+import { Line2D } from '@/domain/world/Line';
+import { Circle2D } from '@/domain/world/Circle';
 
 /**
  * IntersectionTool state machine:
@@ -46,7 +46,6 @@ export class IntersectionTool extends BaseTool {
   readonly name = 'intersection';
   private state: 'waiting-first-element' | 'waiting-second-element' = 'waiting-first-element';
   private firstElementId?: string;
-  private firstElementType?: ElementType;
 
   /**
    * Handle click event for intersection point creation
@@ -88,7 +87,6 @@ export class IntersectionTool extends BaseTool {
 
       // Record first element
       this.firstElementId = hit.elementId;
-      this.firstElementType = hit.elementType;
       this.state = 'waiting-second-element';
       
       const elementTypeName = hit.elementType === 'circle' ? 'circle' : 'line';
@@ -110,7 +108,6 @@ export class IntersectionTool extends BaseTool {
       }
 
       const secondElementId = hit.elementId;
-      const secondElementType = hit.elementType;
 
       // Validate: cannot intersect element with itself
       if (secondElementId === this.firstElementId) {
@@ -121,9 +118,7 @@ export class IntersectionTool extends BaseTool {
       // Determine intersection type and compute intersections
       const intersectionIndex = this.computeIntersectionIndex(
         this.firstElementId!,
-        this.firstElementType!,
         secondElementId,
-        secondElementType,
         planeCoords,
         world
       );
@@ -187,19 +182,22 @@ export class IntersectionTool extends BaseTool {
    */
   private computeIntersectionIndex(
     element1Id: string,
-    element1Type: ElementType,
     element2Id: string,
-    element2Type: ElementType,
     mousePos: Vector3,
     world: World
   ): number | null {
-    // Line-Line intersection (includes guides, which are line-like)
-    if ((element1Type === 'line' || element1Type === 'half-hinge-line' || element1Type === 'guide') && 
-        (element2Type === 'line' || element2Type === 'half-hinge-line' || element2Type === 'guide')) {
-      
-      // Get line realization (guides use getGuide2DRealization, which returns Line2DRealization2D)
-      const line1 = element1Type === 'guide' ? world.getGuide2DRealization(element1Id) : world.getLine2DRealization(element1Id);
-      const line2 = element2Type === 'guide' ? world.getGuide2DRealization(element2Id) : world.getLine2DRealization(element2Id);
+    // Get actual domain objects
+    const element1 = world.getLine2DFromPlanes(element1Id) || world.getCircle2DFromPlanes(element1Id);
+    const element2 = world.getLine2DFromPlanes(element2Id) || world.getCircle2DFromPlanes(element2Id);
+    
+    if (!element1 || !element2) {
+      return null;
+    }
+
+    // Line-Line intersection (using instanceof instead of type strings)
+    if (element1 instanceof Line2D && element2 instanceof Line2D) {
+      const line1 = world.getLine2DRealization(element1Id);
+      const line2 = world.getLine2DRealization(element2Id);
       
       if (!line1 || !line2) {
         return null;
@@ -214,17 +212,17 @@ export class IntersectionTool extends BaseTool {
       return 0;
     }
 
-    // Line-Circle intersection (line or guide with circle)
-    if ((element1Type === 'line' || element1Type === 'half-hinge-line' || element1Type === 'guide') && element2Type === 'circle') {
-      return this.computeLineCircleIntersectionIndex(element1Id, element1Type, element2Id, mousePos, world);
+    // Line-Circle intersection
+    if (element1 instanceof Line2D && element2 instanceof Circle2D) {
+      return this.computeLineCircleIntersectionIndex(element1Id, element2Id, mousePos, world);
     }
     
-    if (element1Type === 'circle' && (element2Type === 'line' || element2Type === 'half-hinge-line' || element2Type === 'guide')) {
-      return this.computeLineCircleIntersectionIndex(element2Id, element2Type, element1Id, mousePos, world);
+    if (element1 instanceof Circle2D && element2 instanceof Line2D) {
+      return this.computeLineCircleIntersectionIndex(element2Id, element1Id, mousePos, world);
     }
 
     // Circle-Circle intersection
-    if (element1Type === 'circle' && element2Type === 'circle') {
+    if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
       return this.computeCircleCircleIntersectionIndex(element1Id, element2Id, mousePos, world);
     }
 
@@ -236,12 +234,11 @@ export class IntersectionTool extends BaseTool {
    */
   private computeLineCircleIntersectionIndex(
     lineId: string,
-    lineType: ElementType,
     circleId: string,
     mousePos: Vector3,
     world: World
   ): number | null {
-    const lineRealization = lineType === 'guide' ? world.getGuide2DRealization(lineId) : world.getLine2DRealization(lineId);
+    const lineRealization = world.getLine2DRealization(lineId);
     const circleRealization = world.getCircle2DRealization(circleId);
     
     if (!lineRealization || !circleRealization) {
@@ -319,6 +316,5 @@ export class IntersectionTool extends BaseTool {
   private reset(): void {
     this.state = 'waiting-first-element';
     this.firstElementId = undefined;
-    this.firstElementType = undefined;
   }
 }
