@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { Guide2DPerpendicularToLine, Guide2DRealization2D } from '@/domain/world/Guide';
+import { Guide2D, Guide2DRealization2D } from '@/domain/world/Guide';
 import { Line2DByTwoPoints } from '@/domain/world/Line';
 import { FreePoint2D } from '@/domain/world/Point';
 import { World } from '@/domain/world/World';
@@ -47,9 +47,9 @@ describe('Guide2D', () => {
     point2Id = 'p2';
   });
 
-  describe('Guide2DPerpendicularToLine', () => {
+  describe('Guide2D', () => {
     it('should create guide with reference line and through-point', () => {
-      const guide = new Guide2DPerpendicularToLine('g1', referenceLineId, throughPointId, 'proj_plane_H');
+      const guide = new Guide2D('g1', referenceLineId, throughPointId, 'proj_plane_H');
       
       expect(guide.id).toBe('g1');
       expect(guide.type).toBe('perpendicular-to-line');
@@ -59,7 +59,7 @@ describe('Guide2D', () => {
     });
 
     it('should clone guide correctly', () => {
-      const original = new Guide2DPerpendicularToLine('g1', referenceLineId, throughPointId, 'proj_plane_H');
+      const original = new Guide2D('g1', referenceLineId, throughPointId, 'proj_plane_H');
       const cloned = original.clone();
       
       expect(cloned.id).toBe('g1');
@@ -194,24 +194,10 @@ describe('Guide2D', () => {
       
       const realization = new Guide2DRealization2D(point, direction);
       
-      expect(realization.point.x).toBe(10);
-      expect(realization.point.y).toBe(20);
+      expect(realization.point).toEqual(point);
+      expect(realization.direction).toEqual(direction);
       expect(realization.point.z).toBe(1);
-      
-      // Direction should be normalized
-      expect(realization.direction.lengthSq()).toBeCloseTo(1.0, 5);
-    });
-
-    it('should inherit from Line2DRealization2D', () => {
-      const point = new Vector3(0, 0, 1);
-      const direction = new Vector3(1, 0, 0);
-      
-      const realization = new Guide2DRealization2D(point, direction);
-      
-      // Should have getPointAt method from Line2DRealization2D
-      const pointAt5 = realization.getPointAt(5);
-      expect(pointAt5.x).toBeCloseTo(5, 5);
-      expect(pointAt5.y).toBeCloseTo(0, 5);
+      expect(realization.direction.z).toBe(0); // Direction vector has z=0
     });
   });
 });

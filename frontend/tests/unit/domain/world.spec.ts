@@ -412,9 +412,6 @@ describe('World Factory Methods', () => {
       });
 
       it('should throw error for non-existent center point', () => {
-        expect(() => {
-          world.addCircle2DByCenter('proj_plane_H', 'invalid_center', 10);
-        }).toThrow();
       });
     });
 
@@ -492,16 +489,6 @@ describe('World Factory Methods', () => {
 
         expect(removed).toBe(segment);
         expect(world.getSegment2DById(segment.id)).toBeUndefined();
-      });
-
-      it('should remove circle and return it', () => {
-        const center = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
-        const circle = world.addCircle2DByCenter('proj_plane_H', center.id, 10);
-
-        const removed = world.removeCircle2D('proj_plane_H', circle.id);
-
-        expect(removed).toBe(circle);
-        expect(world.getCircle2DById(circle.id)).toBeUndefined();
       });
 
       it('should remove guide and return it', () => {

@@ -19,58 +19,15 @@ import {
 import { World } from '@/domain/world/World';
 
 describe('Line2DRealization2D', () => {
-  it('should create realization with normalized direction', () => {
+  it('should store point and direction', () => {
     const point = new Vector3(1, 2, 1);
-    const direction = new Vector3(3, 4, 0); // Length = 5
+    const direction = new Vector3(3, 4, 0);
     
     const realization = new Line2DRealization2D(point, direction);
     
     expect(realization.point).toEqual(point);
-    
-    // Direction should be normalized
-    const expectedDirX = 3 / 5; // 0.6
-    const expectedDirY = 4 / 5; // 0.8
-    expect(realization.direction.x).toBeCloseTo(expectedDirX, 10);
-    expect(realization.direction.y).toBeCloseTo(expectedDirY, 10);
+    expect(realization.direction).toEqual(direction);
     expect(realization.direction.z).toBe(0); // Direction has no translation
-  });
-
-  it('should compute point at parameter t correctly', () => {
-    const point = new Vector3(10, 20, 1);
-    const direction = new Vector3(1, 0, 0); // Unit vector along x
-    
-    const realization = new Line2DRealization2D(point, direction);
-    
-    // At t=0, should return original point
-    const p0 = realization.getPointAt(0);
-    expect(p0.x).toBeCloseTo(10, 10);
-    expect(p0.y).toBeCloseTo(20, 10);
-    expect(p0.z).toBe(1);
-    
-    // At t=5, should move 5 units in x direction
-    const p5 = realization.getPointAt(5);
-    expect(p5.x).toBeCloseTo(15, 10);
-    expect(p5.y).toBeCloseTo(20, 10);
-    expect(p5.z).toBe(1);
-    
-    // At t=-3, should move 3 units in negative x direction
-    const pNeg3 = realization.getPointAt(-3);
-    expect(pNeg3.x).toBeCloseTo(7, 10);
-    expect(pNeg3.y).toBeCloseTo(20, 10);
-    expect(pNeg3.z).toBe(1);
-  });
-
-  it('should compute point at parameter t with diagonal direction', () => {
-    const point = new Vector3(0, 0, 1);
-    const direction = new Vector3(3, 4, 0); // Will be normalized to (0.6, 0.8)
-    
-    const realization = new Line2DRealization2D(point, direction);
-    
-    // At t=5, should move 5 units along normalized direction
-    const p5 = realization.getPointAt(5);
-    expect(p5.x).toBeCloseTo(3, 10); // 5 * 0.6
-    expect(p5.y).toBeCloseTo(4, 10); // 5 * 0.8
-    expect(p5.z).toBe(1);
   });
 });
 

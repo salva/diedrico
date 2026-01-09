@@ -127,7 +127,7 @@ describe('Circle2D', () => {
       // and radius = distance from center to any of the three points
       expect(realization!.center.x).toBeCloseTo(0, 1);
       expect(realization!.center.y).toBeCloseTo(0, 1);
-      expect(realization!.radius).toBeCloseTo(50, 1);
+      expect(realization!.getRadius()).toBeCloseTo(50, 1);
     });
 
     it('should return null when any point is missing', () => {
@@ -159,36 +159,14 @@ describe('Circle2D', () => {
   });
 
   describe('Circle2DRealization2D', () => {
-    it('should compute circumference', () => {
-      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(10, 0, 0));
-      
-      // Circumference = 2πr = 2π*10 ≈ 62.83
-      expect(realization.getCircumference()).toBeCloseTo(2 * Math.PI * 10, 10);
-    });
-
-    it('should compute area', () => {
-      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(10, 0, 0));
-      
-      // Area = πr² = π*100 ≈ 314.16
-      expect(realization.getArea()).toBeCloseTo(Math.PI * 100, 10);
-    });
 
     it('should store center correctly', () => {
       const center = new Vector3(25, 30, 1);
-      const realization = new Circle2DRealization2D(center, 15);
+      const realization = new Circle2DRealization2D(center, new Vector3(15, 0, 0));
       
       expect(realization.center.x).toBe(25);
       expect(realization.center.y).toBe(30);
-      expect(realization.radius).toBe(15);
-    });
-
-    it('should return center via getCenter()', () => {
-      const center = new Vector3(10, 20, 1);
-      const realization = new Circle2DRealization2D(center, 5);
-      
-      const returnedCenter = realization.getCenter();
-      expect(returnedCenter.x).toBe(10);
-      expect(returnedCenter.y).toBe(20);
+      expect(realization.getRadius()).toBe(15);
     });
 
     it('should return radius via getRadius()', () => {

@@ -152,7 +152,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
       expect(realization).toBeDefined();
       expect(realization!.center.x).toBe(0);
       expect(realization!.center.y).toBe(0);
-      expect(realization!.radius).toBe(5);
+      expect(realization!.getRadius()).toBe(5);
       
       // Verify cached in ProjectionPlane
       const cached = planeH.getCircleRealization2D('c1');

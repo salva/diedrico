@@ -20,8 +20,8 @@ import { World } from '../../../src/domain/world/World';
 import { FreePoint2D } from '../../../src/domain/world/Point';
 import { Line2DByTwoPoints } from '../../../src/domain/world/Line';
 import { Segment2DByPoints } from '../../../src/domain/world/Segment';
-import { Circle2DByCenterAndRadius } from '../../../src/domain/world/Circle';
-import { Guide2DPerpendicularToLine } from '../../../src/domain/world/Guide';
+import { Circle2DByCenterAndPoint } from '../../../src/domain/world/Circle';
+import { Guide2D } from '../../../src/domain/world/Guide';
 import { Vector3 } from 'three';
 
 describe('ElementsPanel', () => {
@@ -151,9 +151,14 @@ describe('ElementsPanel', () => {
       const center = new FreePoint2D(centerId, new Vector3(5, 5, 1), 'proj_plane_H');
       world.addPoint2D(center);
       
-      // Create circle
+      // Create edge point for circle
+      const edgeId = world.generatePoint2DId();
+      const edge = new FreePoint2D(edgeId, new Vector3(8, 5, 1), 'proj_plane_H'); // radius = 3
+      world.addPoint2D(edge);
+      
+      // Create circle by center and point
       const circleId = world.generateCircle2DId();
-      const circle = new Circle2DByCenterAndRadius(circleId, centerId, 3, 'proj_plane_H', 'C1');
+      const circle = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, 'proj_plane_H', 'C1');
       world.addCircle2D(circle);
       
       const wrapper = mountPanel();
@@ -348,8 +353,12 @@ describe('ElementsPanel', () => {
       const center = new FreePoint2D(centerId, new Vector3(5, 5, 1), 'proj_plane_H');
       world.addPoint2D(center);
       
+      const edgeId = world.generatePoint2DId();
+      const edge = new FreePoint2D(edgeId, new Vector3(8, 5, 1), 'proj_plane_H'); // radius = 3
+      world.addPoint2D(edge);
+      
       const circleId = world.generateCircle2DId();
-      const circle = new Circle2DByCenterAndRadius(circleId, centerId, 3, 'proj_plane_H');
+      const circle = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, 'proj_plane_H');
       world.addCircle2D(circle);
       
       const wrapper = mountPanel();
