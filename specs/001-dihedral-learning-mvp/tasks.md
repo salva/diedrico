@@ -663,12 +663,14 @@ commandStack.push(cmd);
 
 **Cleanup (Delete Obsolete Subclasses)**:
 
-- [X] R010 Delete frontend/src/commands/CreateFreePointCommand.ts
-- [X] R011 Delete frontend/src/commands/CreateLineCommand.ts
-- [X] R012 Delete frontend/src/commands/CreateSegmentCommand.ts
-- [X] R013 Delete frontend/src/commands/CreateCircleCommand.ts
-- [X] R014 Delete frontend/src/commands/CreateIntersectionPointCommand.ts
-- [X] R015 Delete frontend/src/commands/CreateGuideCommand.ts
+- [ ] R010 Delete frontend/src/commands/CreateFreePointCommand.ts (Still used in tests)
+- [ ] R011 Delete frontend/src/commands/CreateLineCommand.ts (Still used in tests)
+- [ ] R012 Delete frontend/src/commands/CreateSegmentCommand.ts (Still used in tests)
+- [ ] R013 Delete frontend/src/commands/CreateCircleCommand.ts (Still used in tests)
+- [ ] R014 Delete frontend/src/commands/CreateIntersectionPointCommand.ts (Still used in tests)
+- [ ] R015 Delete frontend/src/commands/CreateGuideCommand.ts (Still used in tests)
+
+**NOTE**: Command subclasses still exist and are used by unit tests. Tools have been refactored to use generic Command pattern. Tests need to be updated before these classes can be deleted.
 
 **Operation Verification**:
 
@@ -2149,10 +2151,13 @@ Currently, some UI operations directly manipulate application state without goin
 **Phase 30 Status**: 8/8 tasks complete (100%) ✅ - All tasks implemented and tested
 
 **Note**: T289 (visual feedback UI for cascade) deferred
-**TODO**: Refactor 10 existing Command subclasses to use Command + Operations pattern:
-  - CreateFreePointCommand, CreatePointOnElementCommand, CreateIntersectionPointCommand
-  - CreateLineCommand, CreateSegmentCommand, CreateCircleCommand, CreateGuideCommand
-  - TransportPointCommand, TransportDistanceCommand, UpdateElementStyleCommand
+
+**Command Pattern Status**:
+- ✅ Tools refactored to use generic Command + Operations pattern
+- ✅ Command subclasses (Create*Command) still exist but only used in tests
+- ⏳ TODO: Update unit tests to use generic Command pattern, then delete Command subclasses
+  - Affects: createFreePoint.spec.ts, createLine.spec.ts, createSegment.spec.ts, createCircle.spec.ts, createIntersectionPoint.spec.ts, createGuide.spec.ts
+  - See "REFACTORING: Command Pattern Simplification" section for details
 
 **Notes**:
 - This phase fixes the TODO comment in App.vue handleDeleteSelected()
