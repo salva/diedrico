@@ -160,14 +160,14 @@ describe('Circle2D', () => {
 
   describe('Circle2DRealization2D', () => {
     it('should compute circumference', () => {
-      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), 10);
+      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(10, 0, 0));
       
       // Circumference = 2πr = 2π*10 ≈ 62.83
       expect(realization.getCircumference()).toBeCloseTo(2 * Math.PI * 10, 10);
     });
 
     it('should compute area', () => {
-      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), 10);
+      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(10, 0, 0));
       
       // Area = πr² = π*100 ≈ 314.16
       expect(realization.getArea()).toBeCloseTo(Math.PI * 100, 10);
@@ -192,7 +192,7 @@ describe('Circle2D', () => {
     });
 
     it('should return radius via getRadius()', () => {
-      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), 42);
+      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(42, 0, 0));
       
       expect(realization.getRadius()).toBe(42);
     });

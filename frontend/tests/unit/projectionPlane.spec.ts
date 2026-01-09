@@ -380,7 +380,9 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
       const retrieved = planeH.getCircleRealization2D('c1');
       expect(retrieved).toBeDefined();
       expect(retrieved?.center.x).toBe(100);
-      expect(retrieved?.radius).toBe(50);
+      expect(retrieved?.getRadius()).toBe(50);  // Use getRadius() method
+      expect(retrieved?.radiusVector.x).toBe(50);  // Check radiusVector components
+      expect(retrieved?.radiusVector.y).toBe(0);
     });
   });
 

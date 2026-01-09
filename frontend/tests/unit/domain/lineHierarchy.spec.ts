@@ -15,7 +15,7 @@ import { Vector3 } from 'three';
 import { World } from '../../../src/domain/world/World';
 import { Line2D, Line2DByTwoPoints, Line2DRealization2D } from '../../../src/domain/world/Line';
 import { Segment2DByPoints } from '../../../src/domain/world/Segment';
-import { Guide2DPerpendicularToLine } from '../../../src/domain/world/Guide';
+import { Guide2D } from '../../../src/domain/world/Guide';
 import { HalfHingeLine2D } from '../../../src/domain/world/HingeLine';
 
 describe('Line2D Hierarchy (Phase 22.5)', () => {
@@ -48,7 +48,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     it('all line types should extend Line2D', () => {
       const line = new Line2DByTwoPoints('line1', p1Id, p2Id, planeH.id);
       const segment = new Segment2DByPoints('seg1', p1Id, p2Id, planeH.id);
-      const guide = new Guide2DPerpendicularToLine('guide1', 'line1', p1Id, planeH.id);
+      const guide = new Guide2D('guide1', 'line1', p1Id, planeH.id);
 
       expect(line).toBeInstanceOf(Line2D);
       expect(segment).toBeInstanceOf(Line2D);
@@ -143,24 +143,25 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('getDirection() should work for both lines and segments', () => {
-      // Infinite line: point2 IS the direction
+      // Infinite line: point2 IS the direction (not normalized per data-model.md)
       const lineRealization = new Line2DRealization2D(
         new Vector3(0, 0, 1),
         new Vector3(1, 0, 0)  // Horizontal direction
       );
       const lineDir = lineRealization.getDirection();
       expect(lineDir.z).toBe(0);  // Direction has z=0
-      expect(lineDir.lengthSq()).toBeCloseTo(1, 5);  // Normalized
+      expect(lineDir.x).toBe(1);  // Raw direction (NOT normalized)
+      expect(lineDir.y).toBe(0);
       
-      // Segment: direction computed from endpoints
+      // Segment: direction computed from endpoints (NOT normalized per data-model.md)
       const segmentRealization = new Line2DRealization2D(
         new Vector3(0, 0, 1),
         new Vector3(10, 0, 1)
       );
       const segDir = segmentRealization.getDirection();
       expect(segDir.z).toBe(0);  // Direction has z=0
-      expect(segDir.x).toBeCloseTo(1, 5);  // Horizontal
-      expect(segDir.y).toBeCloseTo(0, 5);
+      expect(segDir.x).toBe(10);  // Raw direction (NOT normalized)
+      expect(segDir.y).toBe(0);
     });
   });
 
@@ -241,7 +242,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const line = new Line2DByTwoPoints('line1', p1Id, p2Id, planeH.id);
       world.addLine2D(line);
       
-      const guide = new Guide2DPerpendicularToLine('guide1', 'line1', p1Id, planeH.id);
+      const guide = new Guide2D('guide1', 'line1', p1Id, planeH.id);
       
       expect(guide).toBeInstanceOf(Line2D);
       expect(guide.type).toBe('perpendicular-to-line');
@@ -251,7 +252,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const line = new Line2DByTwoPoints('line1', p1Id, p2Id, planeH.id);
       world.addLine2D(line);
       
-      const guide = new Guide2DPerpendicularToLine('guide1', 'line1', p1Id, planeH.id);
+      const guide = new Guide2D('guide1', 'line1', p1Id, planeH.id);
       const realization = guide.realize2D(world);
       
       expect(realization).toBeInstanceOf(Line2DRealization2D);

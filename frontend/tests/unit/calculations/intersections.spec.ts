@@ -297,7 +297,7 @@ describe('Intersections', () => {
   describe('intersectLineCircle', () => {
     it('should find secant intersection - horizontal line through circle center', () => {
       // Circle at origin with radius 5
-      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), 5);
+      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(5, 0, 0));
       
       // Horizontal line through center: y = 0
       const line = new Line2DRealization2D(
@@ -321,7 +321,7 @@ describe('Intersections', () => {
 
     it('should find secant intersection - vertical line through circle center', () => {
       // Circle at (3, 2) with radius 4
-      const circle = new Circle2DRealization2D(new Vector3(3, 2, 1), 4);
+      const circle = new Circle2DRealization2D(new Vector3(3, 2, 1), new Vector3(4, 0, 0));
       
       // Vertical line through center: x = 3
       const line = new Line2DRealization2D(
@@ -345,7 +345,7 @@ describe('Intersections', () => {
 
     it('should find tangent intersection', () => {
       // Circle at origin with radius 3
-      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), 3);
+      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(3, 0, 0));
       
       // Horizontal line tangent at top: y = 3
       const line = new Line2DRealization2D(
@@ -364,7 +364,7 @@ describe('Intersections', () => {
 
     it('should detect no intersection - line too far', () => {
       // Circle at origin with radius 2
-      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), 2);
+      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(2, 0, 0));
       
       // Horizontal line above circle: y = 5
       const line = new Line2DRealization2D(
@@ -380,7 +380,7 @@ describe('Intersections', () => {
 
     it('should find diagonal secant intersection', () => {
       // Circle at origin with radius sqrt(2)
-      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), Math.sqrt(2));
+      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(Math.sqrt(2), 0, 0));
       
       // Diagonal line: y = x (passes through origin)
       const line = new Line2DRealization2D(
@@ -404,7 +404,7 @@ describe('Intersections', () => {
 
     it('should handle circle offset from origin', () => {
       // Circle at (10, -5) with radius 7
-      const circle = new Circle2DRealization2D(new Vector3(10, -5, 1), 7);
+      const circle = new Circle2DRealization2D(new Vector3(10, -5, 1), new Vector3(7, 0, 0));
       
       // Vertical line through center: x = 10
       const line = new Line2DRealization2D(
@@ -425,7 +425,7 @@ describe('Intersections', () => {
     });
 
     it('should produce homogeneous points with z=1', () => {
-      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), 5);
+      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(5, 0, 0));
       const line = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0));
       
       const result = intersectLineCircle(line, circle);
@@ -439,10 +439,10 @@ describe('Intersections', () => {
   describe('intersectCircleCircle', () => {
     it('should find secant intersection - circles of equal radius', () => {
       // Circle 1 at (-2, 0) with radius 3
-      const circle1 = new Circle2DRealization2D(new Vector3(-2, 0, 1), 3);
+      const circle1 = new Circle2DRealization2D(new Vector3(-2, 0, 1), new Vector3(3, 0, 0));
       
       // Circle 2 at (2, 0) with radius 3
-      const circle2 = new Circle2DRealization2D(new Vector3(2, 0, 1), 3);
+      const circle2 = new Circle2DRealization2D(new Vector3(2, 0, 1), new Vector3(3, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -467,10 +467,10 @@ describe('Intersections', () => {
 
     it('should find external tangent intersection', () => {
       // Circle 1 at origin with radius 3
-      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), 3);
+      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(3, 0, 0));
       
       // Circle 2 at (6, 0) with radius 3 - exactly touching
-      const circle2 = new Circle2DRealization2D(new Vector3(6, 0, 1), 3);
+      const circle2 = new Circle2DRealization2D(new Vector3(6, 0, 1), new Vector3(3, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -482,10 +482,10 @@ describe('Intersections', () => {
 
     it('should find internal tangent intersection', () => {
       // Large circle at origin with radius 5
-      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), 5);
+      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(5, 0, 0));
       
       // Small circle at (3, 0) with radius 2 - internally tangent
-      const circle2 = new Circle2DRealization2D(new Vector3(3, 0, 1), 2);
+      const circle2 = new Circle2DRealization2D(new Vector3(3, 0, 1), new Vector3(2, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -497,10 +497,10 @@ describe('Intersections', () => {
 
     it('should detect no intersection - circles too far apart', () => {
       // Circle 1 at origin
-      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), 2);
+      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(2, 0, 0));
       
       // Circle 2 far away
-      const circle2 = new Circle2DRealization2D(new Vector3(10, 0, 1), 3);
+      const circle2 = new Circle2DRealization2D(new Vector3(10, 0, 1), new Vector3(3, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -510,10 +510,10 @@ describe('Intersections', () => {
 
     it('should detect no intersection - one circle inside the other', () => {
       // Large circle at origin
-      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), 10);
+      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(10, 0, 0));
       
       // Small circle inside
-      const circle2 = new Circle2DRealization2D(new Vector3(2, 0, 1), 3);
+      const circle2 = new Circle2DRealization2D(new Vector3(2, 0, 1), new Vector3(3, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -523,8 +523,8 @@ describe('Intersections', () => {
 
     it('should detect coincident circles', () => {
       // Same circle defined at same location
-      const circle1 = new Circle2DRealization2D(new Vector3(5, 3, 1), 4);
-      const circle2 = new Circle2DRealization2D(new Vector3(5, 3, 1), 4);
+      const circle1 = new Circle2DRealization2D(new Vector3(5, 3, 1), new Vector3(4, 0, 0));
+      const circle2 = new Circle2DRealization2D(new Vector3(5, 3, 1), new Vector3(4, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -534,10 +534,10 @@ describe('Intersections', () => {
 
     it('should find secant intersection - different radii', () => {
       // Circle 1 at origin with radius 5
-      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), 5);
+      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(5, 0, 0));
       
       // Circle 2 at (4, 0) with radius 3
-      const circle2 = new Circle2DRealization2D(new Vector3(4, 0, 1), 3);
+      const circle2 = new Circle2DRealization2D(new Vector3(4, 0, 1), new Vector3(3, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -555,10 +555,10 @@ describe('Intersections', () => {
 
     it('should handle circles in different quadrants', () => {
       // Circle 1 in quadrant II
-      const circle1 = new Circle2DRealization2D(new Vector3(-3, 4, 1), 2);
+      const circle1 = new Circle2DRealization2D(new Vector3(-3, 4, 1), new Vector3(2, 0, 0));
       
       // Circle 2 in quadrant IV
-      const circle2 = new Circle2DRealization2D(new Vector3(2, -1, 1), 6);
+      const circle2 = new Circle2DRealization2D(new Vector3(2, -1, 1), new Vector3(6, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -570,8 +570,8 @@ describe('Intersections', () => {
     });
 
     it('should produce homogeneous points with z=1', () => {
-      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), 3);
-      const circle2 = new Circle2DRealization2D(new Vector3(4, 0, 1), 3);
+      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(3, 0, 0));
+      const circle2 = new Circle2DRealization2D(new Vector3(4, 0, 1), new Vector3(3, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
@@ -582,10 +582,10 @@ describe('Intersections', () => {
 
     it('should handle vertical separation', () => {
       // Circle 1 at top
-      const circle1 = new Circle2DRealization2D(new Vector3(0, 5, 1), 3);
+      const circle1 = new Circle2DRealization2D(new Vector3(0, 5, 1), new Vector3(3, 0, 0));
       
       // Circle 2 at bottom  
-      const circle2 = new Circle2DRealization2D(new Vector3(0, -5, 1), 3);
+      const circle2 = new Circle2DRealization2D(new Vector3(0, -5, 1), new Vector3(3, 0, 0));
       
       const result = intersectCircleCircle(circle1, circle2);
       
