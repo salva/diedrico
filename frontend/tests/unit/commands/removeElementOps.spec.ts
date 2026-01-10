@@ -11,8 +11,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { RemovePoint2DOp, RemoveLine2DOp } from '@/commands/operations/RemoveElementOps';
-import { RemoveActionFromProcessTreeOp } from '@/commands/operations/ProcessTreeOperations';
+import { RemovePoint2DOp, RemoveLine2DOp } from '@/commands/operations/world/RemoveElementOps';
+import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
 import { Command } from '@/commands/Command';
 import { World } from '@/domain/world/World';
 import { CommandStack } from '@/commands/CommandStack';

@@ -149,7 +149,7 @@ import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
 import { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
-import { UpdateElementStyleOp } from '@/commands/operations/UpdateElementStyleOp';
+import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { PointTool } from '@/tools/PointTool';
 import { LineTool } from '@/tools/LineTool';
 import { SegmentTool } from '@/tools/SegmentTool';

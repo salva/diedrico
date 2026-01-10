@@ -16,8 +16,8 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
-import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/AddCircleOp';
-import { AddFreePoint2DOp } from '@/commands/operations/AddFreePointOp';
+import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
+import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
 import type { SelectionMask } from '@/types/SelectionMask';
 

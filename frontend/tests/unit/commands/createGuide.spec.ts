@@ -4,9 +4,9 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
-import { AddGuide2DPerpendicularToLineOp } from '../../../src/commands/operations/AddGuideOp';
-import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/AddLineOp';
-import { AddFreePoint2DOp } from '../../../src/commands/operations/AddFreePointOp';
+import { AddGuide2DPerpendicularToLineOp } from '../../../src/commands/operations/world/AddGuideOp';
+import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
+import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';
 

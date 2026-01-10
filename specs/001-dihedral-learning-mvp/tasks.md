@@ -3205,3 +3205,369 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
 
 ---
 
+## Phase 40: Complete Command Sourcing Implementation (Ensure All Operations Are Persisted)
+
+**Goal**: Ensure ALL operation types can be serialized/deserialized so that projects can be saved and loaded without data loss.
+
+**Problem**: ProjectService.reconstructOperation() only handles 8 operation types, but 19 operation classes exist. This means operations like deletion, style changes, and ProcessTree operations are NOT saved to files, causing data loss on project reload.
+
+**Current Coverage** (schema version 3.0.0):
+- ✅ AddFreePoint2D, AddLine2D, AddSegment2D, AddCircle2D (4/8)
+- ✅ AddLineLineIntersectionPoint2D, AddLineCircleIntersectionPoint2D, AddCircleCircleIntersectionPoint2D (7/8)
+- ✅ AddGuide2D (8/8)
+
+**Missing Operations** (11 types NOT serializable):
+- ❌ RemovePoint2D, RemoveLine2D, RemoveSegment2D, RemoveCircle2D, RemoveGuide2D (5 remove ops)
+- ❌ AddSiblingGuide2D (1 guide op)
+- ❌ UpdateElementStyle (1 style op)
+- ❌ RemoveActionFromProcessTree, RemoveActionGroup, RemoveSubprocess (3 ProcessTree ops)
+- ❌ AddIntersectionPoint2D (1 legacy intersection op, if still used)
+
+**Impact**: Users who delete elements, change styles, or remove process tree actions will find those changes LOST when they reload the project. This is a critical data integrity issue.
+
+**Architecture Reference**: See data-model.md §Command Sourcing Architecture for requirements (deterministic, serializable, self-contained operations).
+
+**Tasks**:
+
+[T431] [P] Add RemovePoint2DOp to ProjectService switch in `frontend/src/services/ProjectService.ts`
+- Add case 'RemovePoint2D' to reconstructOperation() switch statement
+- Import RemovePoint2DOp from '@/commands/operations/RemoveElementOps'
+- Instantiate with parameters: `new RemovePoint2DOp(parameters.planeId, parameters.pointId)`
+- Verify parameters object contains: planeId, pointId, beforeState (for undo)
+- **Critical**: RemoveOps need beforeState to reconstruct deleted element on undo
+- **Test**: Create point → delete → save → reload → undo (should restore point)
+
+[T432] [P] Add RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp cases
+- Add 4 cases to reconstructOperation() switch for all remove operations
+- Each takes (planeId, elementId, beforeState) parameters
+- Import from '@/commands/operations/RemoveElementOps'
+- **Test**: Create each element type → delete → save → reload → verify deleted
+- **Test**: Reload → undo deletion → verify element restored with correct state
+
+[T433] Add AddSiblingGuide2DOp to ProjectService switch
+- Add case 'AddSiblingGuide2D' to reconstructOperation()
+- Import AddSiblingGuide2DOp from '@/commands/operations/AddGuideOp'
+- Instantiate with parameters from sibling guide creation
+- **Test**: Create guide (creates sibling automatically) → save → reload → verify both guides exist
+
+[T434] Add UpdateElementStyleOp to ProjectService switch
+- Add case 'UpdateElementStyle' to reconstructOperation()
+- Import UpdateElementStyleOp from '@/commands/operations/UpdateElementStyleOp'
+- Instantiate with parameters: elementPath, beforeState, afterState
+- **Test**: Create element → change color → save → reload → verify new color persisted
+
+[T435] Add ProcessTree operation cases to ProjectService switch
+- Add cases: 'RemoveActionFromProcessTree', 'RemoveActionGroup', 'RemoveSubprocess'
+- Import from '@/commands/operations/ProcessTreeOperations'
+- Each reconstructs with appropriate parameters (action/group/subprocess paths, beforeState)
+- **Test**: Create elements → remove from ProcessTree panel → save → reload → verify removed
+
+[T436] Verify legacy AddIntersectionPoint2DOp is not used
+- Search codebase for AddIntersectionPoint2DOp usage
+- If found, either: add to switch OR migrate to specialized intersection ops
+- Document whether operation is deprecated and safe to ignore
+- **Decision Point**: Keep or remove from operation registry?
+
+[T437] [P] Add architectural test for serialization coverage in `frontend/tests/unit/architecture/serializationCoverage.spec.ts`
+- Test: Scan all IOperation implementations (grep for "implements IOperation")
+- Test: Verify each operation type has case in ProjectService.reconstructOperation()
+- Test: Fail build if new operation added without serialization support
+- **Purpose**: Prevent future data loss from missing serialization cases
+- **Pattern**: Similar to noCommandSubclasses.spec.ts architectural test
+
+[T438] Test round-trip serialization for all operation types
+- For each of 19 operation types:
+  - Create operation with test parameters
+  - Serialize via ProjectService.serializeCommands()
+  - Deserialize via ProjectService.deserializeCommands()
+  - Verify reconstructed operation matches original
+- **Test file**: `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts`
+- **Coverage**: Ensure parameters survive serialization (no data loss)
+
+[T439] Test determinism requirement: replay commands multiple times
+- Create project with 10-20 operations (points, lines, circles, deletions)
+- Serialize to JSON
+- Load 5 times and verify World state is identical each time
+- **Test**: Element IDs, positions, dependencies all match
+- **Purpose**: Verify operations are deterministic (no randomness, no Date.now())
+- **Test file**: `frontend/tests/integration/projectService.determinism.spec.ts`
+
+[T440] Test parameter self-containment: no external dependencies
+- For each operation type, verify parameters object contains ALL needed data
+- Check that reconstructed operation doesn't require World/CommandStack state
+- **Example failure**: Operation that assumes World.getNextId() returns specific value
+- **Test approach**: Create fresh World, replay single operation, verify success
+- **Test file**: `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts`
+
+[T441] Document operation serialization requirements in operation base classes
+- Add JSDoc to IOperation interface explaining:
+  - Deterministic requirement (same params → same result)
+  - Serializable requirement (no closures, functions, circular refs)
+  - Self-contained requirement (all data in parameters)
+  - ID management strategy (generate in op vs pass as param)
+- **File**: `frontend/src/commands/operations/IOperation.ts`
+- **Audience**: Future developers adding new operations
+
+[T442] Add schema version migration framework (optional, for future)
+- Create ProjectService.migrateSchema(data, fromVersion, toVersion) method
+- Currently: Reject projects with mismatched schema version
+- Future: Allow upgrading old project files to new format
+- **Example**: v2.0.0 → v3.0.0 converts AddIntersectionPoint2D to specialized types
+- **Status**: Document as future enhancement, not required for Phase 40
+
+[T443] Test cascade deletion persistence
+- Create point with dependent line
+- Delete point (cascades to delete line)
+- Save project
+- Reload project
+- **Verify**: Both point and line are deleted
+- **Verify**: Undo brings back both elements
+- **Test file**: `frontend/tests/integration/projectService.cascadeDeletion.spec.ts`
+
+[T444] [P] Manual E2E test: Complex project save/load workflow
+- Create project with 20+ elements (points, lines, circles, guides, intersections)
+- Perform deletions, style changes, ProcessTree operations
+- Save to Google Drive
+- Reload from Google Drive
+- **Verify**: All elements present with correct properties
+- **Verify**: Undo history works correctly
+- **Verify**: ProcessTree structure preserved
+- **Document**: Known limitations (ViewState not persisted, etc.)
+
+[T445] Bump schema version to 3.1.0 after adding all operations
+- Change ProjectService.SCHEMA_VERSION = '3.1.0'
+- Update data-model.md version history:
+  - `3.1.0`: Complete operation coverage (all 19 types serializable)
+  - `3.0.0`: Specialized intersection point types
+- **Test**: Save with 3.1.0, verify old loader rejects (version mismatch)
+- **Prepare**: Future migration from 3.0.0 → 3.1.0 (no breaking changes)
+
+**Testing Strategy**:
+- Unit tests: Round-trip serialization for each operation (T438)
+- Unit tests: Parameter self-containment (T440)
+- Integration tests: Determinism across multiple loads (T439)
+- Integration tests: Cascade deletion persistence (T443)
+- Architectural test: Serialization coverage (T437)
+- E2E test: Complex real-world workflow (T444)
+
+**Risk Mitigation**:
+- **Backward compatibility**: New operations added don't break existing files
+- **Data loss prevention**: Architectural test catches missing serialization
+- **Determinism**: Test suite verifies no randomness/time-dependence
+- **Migration path**: Document how to upgrade old projects (T442)
+
+**Success Criteria**:
+- ✅ All 19 operation types have cases in ProjectService.reconstructOperation()
+- ✅ Architectural test enforces serialization coverage for future operations
+- ✅ Round-trip tests pass for all operation types
+- ✅ Determinism test passes (5 loads → identical World state)
+- ✅ Complex E2E workflow preserves all data through save/load
+- ✅ No data loss when deleting, styling, or modifying ProcessTree
+
+**Constitution Compliance**:
+- Command sourcing pattern preserved (operations are atomic, reversible)
+- No direct World manipulation (all changes through operations)
+- Serialization format matches architectural requirements (deterministic, serializable)
+- Schema versioning enables future evolution without breaking changes
+---
+
+## Phase 41: Component-Based Operation Organization
+
+**Goal**: Organize operations into folders by component ownership (World, ProcessTree, Paper, Toolbar, ViewState) for improved cohesion, navigation, and architectural clarity.
+
+**Problem**: Currently all 19+ operation classes are in a flat directory structure (`frontend/src/commands/operations/`), mixing concerns:
+- World operations (geometry): AddFreePointOp, RemoveElementOps, AddCircle2DOp, etc.
+- ProcessTree operations: RemoveActionFromProcessTreeOp, etc.
+- ViewState operations: SetActivePlaneOp, etc.
+- Mixed in single folder → hard to navigate, unclear ownership
+
+**Proposed Structure**: Organize by which component each operation modifies:
+```
+operations/
+├── world/              ← All World-modifying operations
+├── processTree/        ← All ProcessTree-modifying operations
+├── paper/              ← All Paper-modifying operations (NEW)
+├── toolbar/            ← All Toolbar-modifying operations (NEW)
+├── viewState/          ← All ViewState-modifying operations
+└── IOperation.ts       ← Shared interface
+```
+
+**Benefits**:
+- **Cohesion**: All World ops co-located, easy to find
+- **Ownership**: Clear which component each op modifies
+- **Separation**: Domain (world/) vs rendering (paper/) vs UI (toolbar/)
+- **Scalability**: New component → new folder
+- **Cross-component commands**: Commands can compose ops from multiple folders
+
+**Architecture Reference**: See data-model.md §Component-Based Operation Organization
+
+**Tasks**:
+
+[T446] Create operation folder structure in `frontend/src/commands/operations/`
+- Create folders: `world/`, `processTree/`, `paper/`, `toolbar/`, `viewState/`
+- Keep `IOperation.ts` at root level (shared interface)
+- Add README.md in each folder explaining component responsibility
+- **World README**: "Operations modifying geometric domain (points, lines, circles, dependencies)"
+- **ProcessTree README**: "Operations modifying construction history (actions, subprocesses, groups)"
+- **Paper README**: "Operations modifying rendering state (PaperJS primitives, caches, visibility)"
+- **Toolbar README**: "Operations modifying UI control state (active tool, tool options, feedback)"
+- **ViewState README**: "Operations modifying presentation state (zoom, pan, camera, active plane)"
+
+[T447] [P] Move World operations to `operations/world/` folder
+- Move files (16 operations):
+  - AddFreePointOp.ts → world/AddFreePointOp.ts
+  - AddLineOp.ts → world/AddLineOp.ts
+  - AddSegmentOp.ts → world/AddSegmentOp.ts
+  - AddCircleOp.ts → world/AddCircleOp.ts
+  - AddGuideOp.ts → world/AddGuideOp.ts (2 classes)
+  - AddLineLineIntersectionPoint2DOp.ts → world/
+  - AddLineCircleIntersectionPoint2DOp.ts → world/
+  - AddCircleCircleIntersectionPoint2DOp.ts → world/
+  - AddIntersectionPointOp.ts → world/ (legacy, if used)
+  - RemoveElementOps.ts → world/ (5 classes)
+  - UpdateElementStyleOp.ts → world/
+- Update imports in moved files to use new relative paths
+- **Test**: Files compile without errors
+
+[T448] Move ProcessTree operations to `operations/processTree/` folder
+- Move ProcessTreeOperations.ts → processTree/ProcessTreeOperations.ts (3 classes)
+- Update imports in moved file
+- **Test**: ProcessTree deletion/modification tests pass
+
+[T449] Move ViewState operations to `operations/viewState/` folder
+- Move ViewStateOperations.ts → viewState/ViewStateOperations.ts
+- Update imports in moved file
+- **Test**: Active plane switching tests pass
+
+[T450] Create barrel export files for each operation folder
+- Create `operations/world/index.ts`:
+  ```typescript
+  export * from './AddFreePointOp';
+  export * from './AddLineOp';
+  // ... all World operations
+  ```
+- Create similar index files for: processTree/, viewState/
+- **Purpose**: Simplify imports: `import { AddPoint2DOp } from '@/commands/operations/world'`
+- **Test**: Import from barrel export in one file, verify it works
+
+[T451] [P] Update ProjectService.reconstructOperation() import paths
+- File: `frontend/src/services/ProjectService.ts`
+- Update all operation imports:
+  - `import { AddFreePoint2DOp } from '@/commands/operations/world'`
+  - `import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree'`
+- **Critical**: Ensure serialization still works after path changes
+- **Test**: Load existing project file (schema 3.0.0) → verify reconstruction works
+
+[T452] [P] Update tool implementations to use new import paths
+- Search for: `import.*from.*commands/operations/(?!world|processTree|viewState)`
+- Update tools: PointTool, LineTool, CircleTool, IntersectionTool, GuideTool, etc.
+- Use barrel imports where multiple ops are imported
+- **Files**: frontend/src/tools/*.ts
+- **Test**: Each tool creates elements correctly (run E2E tests)
+
+[T453] Update command factories to use new import paths
+- Search for command construction code importing ops
+- Update to use component-specific imports
+- **Files**: frontend/src/commands/*.ts
+- **Test**: Command creation + execution works in integration tests
+
+[T454] Update all remaining import references
+- Search workspace for: `@/commands/operations/` (without component folder)
+- Update stores, composables, utilities to use new paths
+- **Test**: Full workspace compiles without errors
+
+[T455] Add architectural test for operation coverage with new structure
+- Modify `tests/unit/architecture/serializationCoverage.spec.ts` (from T437)
+- Update to scan subdirectories: `operations/world/**/*.ts`, `operations/processTree/**/*.ts`
+- Verify each operation has case in ProjectService.reconstructOperation()
+- **Test**: Architectural test passes with new folder structure
+
+[T456] Add architectural test for operation organization
+- Create `tests/unit/architecture/operationOrganization.spec.ts`
+- Test 1: Verify all World ops are in `operations/world/` folder
+- Test 2: Verify all ProcessTree ops are in `operations/processTree/` folder
+- Test 3: Verify no operations in root `operations/` folder (except IOperation.ts)
+- **Purpose**: Prevent future ops from being added to wrong folder
+- **Fail fast**: Build fails if new op added outside component folders
+
+[T457] [P] Integration test: Cross-component command workflow
+- Test: Create command with ops from multiple components
+  ```typescript
+  cmd.addAndExecute(new AddPoint2DOp(...));        // world/
+  cmd.addAndExecute(new SetActivePlaneOp(...));    // viewState/
+  cmd.addAndExecute(new RemoveActionOp(...));      // processTree/
+  ```
+- Verify: All ops execute, undo works, redo works
+- **Purpose**: Validate cross-component composition pattern
+- **Test file**: `tests/integration/crossComponentCommands.spec.ts`
+
+[T458] [P] Manual E2E test: Full workflow with reorganized operations
+- Create project with all operation types:
+  - Geometry: points, lines, circles, guides, intersections (world/)
+  - History: remove actions from ProcessTree (processTree/)
+  - View: change active plane (viewState/)
+- Save and reload project
+- Undo/redo several operations
+- **Verify**: All operations work, no import errors, serialization works
+- **Verify**: Architectural boundaries respected
+
+[T459] Code cleanup: Remove deprecated WorldOperations.ts
+- Delete `frontend/src/commands/operations/WorldOperations.ts` (already empty/deprecated)
+- Remove any remaining imports referencing this file
+- **Test**: Full test suite passes after removal
+
+[T460] Code cleanup: Check and migrate DependencyOperations.ts
+- Check if DependencyOperations.ts file exists and is used
+- If exists and unused: delete
+- If used: migrate to `operations/world/DependencyOperations.ts`
+- **Test**: Dependency tests pass (cascade deletion, etc.)
+
+[T461] Documentation: Update operation development guide
+- Add to data-model.md §Component-Based Operation Organization:
+  - "When creating new operation, choose correct component folder"
+  - "World ops modify geometry, Paper ops modify rendering, etc."
+- Update README.md in each component folder with examples
+- **Audience**: Future developers adding new operations
+
+**Optional Future Tasks** (not blocking Phase 41):
+
+[T462] Create Paper operations folder and initial ops (NEW OPERATIONS)
+- Create `operations/paper/` folder (already created in T446)
+- Create `InvalidateCacheOp.ts`: Invalidate Paper.js rendering cache
+- Create `SetVisibilityOp.ts`: Show/hide element in Paper rendering
+- **Purpose**: Separate rendering concerns from domain logic
+- **Note**: Can be added incrementally after core migration
+
+[T463] Create Toolbar operations folder and initial ops (NEW OPERATIONS)
+- Create `operations/toolbar/` folder (already created in T446)
+- Create `SetActiveToolOp.ts`: Change active tool
+- Create `SetToolFeedbackOp.ts`: Update tool feedback text
+- **Purpose**: Make tool state changes undoable
+- **Note**: Can be added incrementally
+
+**Testing Strategy**:
+- Unit tests: Verify operations still work after move (T447-T449)
+- Architectural tests: Enforce folder structure (T455-T456)
+- Integration tests: Cross-component commands (T457)
+- E2E tests: Full workflow with all operation types (T458)
+- Import tests: No broken imports after reorganization
+
+**Risk Mitigation**:
+- **Import breakage**: Update all imports systematically (T451-T454), run tests after each
+- **Serialization breakage**: Test loading old projects after path changes (T451)
+- **Gradual migration**: Core organization (T447-T449) first, then update consumers
+
+**Success Criteria**:
+- ✅ All operations organized into component folders (world/, processTree/, viewState/)
+- ✅ No operations in root `operations/` folder (except IOperation.ts)
+- ✅ All imports updated, no broken references
+- ✅ ProjectService.reconstructOperation() works with new paths
+- ✅ Architectural tests enforce organization
+- ✅ Full test suite passes (unit + integration + E2E)
+- ✅ Old project files (schema 3.0.0) still load correctly
+
+**Constitution Compliance**:
+- Operations remain atomic, reversible (architecture unchanged)
+- Command sourcing pattern preserved (only organization changes)
+- Serialization format unchanged (no schema version bump needed)
+- Clear separation between domain (world/), history (processTree/), and presentation (viewState/)

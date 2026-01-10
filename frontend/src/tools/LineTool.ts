@@ -13,7 +13,7 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
-import { AddLine2DByTwoPointsOp } from '@/commands/operations/AddLineOp';
+import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
 import type { SelectionMask } from '@/types/SelectionMask';
 

@@ -491,30 +491,58 @@ interface World {
 
 ### Persistence Entity: Project
 
-**Purpose**: Root aggregate containing all user work for one dihedral drawing exercise
+**Purpose**: Root aggregate for persisting user work via command sourcing pattern
 
-**Fields**:
+**Serialized Fields** (saved to Google Drive):
 ```typescript
-interface Project {
+interface ProjectData {
   id: ProjectId;                    // UUID
   name: string;                     // User-provided name
-  schemaVersion: string;            // "1.0.0" (semantic versioning)
-  created: Date;                    // ISO 8601 timestamp
-  modified: Date;                   // ISO 8601 timestamp, auto-updated
-  world: World;                     // All domain/construction data (the "what")
-  processTree: ProcessTree;         // The process that builds/manipulates the world (the "how")
-  viewState: ViewState;             // UI state (zoom, camera, visibility)
-  commandStack: CommandStack;       // Command history for undo/redo
+  schemaVersion: string;            // "3.0.0" (semantic versioning)
+  created: string;                  // ISO 8601 timestamp
+  modified: string;                 // ISO 8601 timestamp, auto-updated
+  commands: SerializedCommand[];    // Complete command history
+}
+
+interface SerializedCommand {
+  id: string;                       // Command UUID
+  timestamp: string;                // ISO 8601 timestamp
+  description: string;              // Human-readable description
+  operations: SerializedOperation[]; // Atomic operations
+}
+
+interface SerializedOperation {
+  type: string;                     // Operation class name (e.g., "AddFreePoint2D")
+  parameters: Record<string, any>;  // Operation-specific parameters
 }
 ```
 
-**Conceptual Model**:
-- **World**: The geometric construction - planes, elements, dependencies
-- **ProcessTree**: The construction process - actions organized in subprocesses/groups
-- **ViewState**: UI presentation state
-- **CommandStack**: History of all user operations for undo/redo
+**Runtime State** (reconstructed from commands, NOT persisted):
+- **World**: Geometric construction - planes, elements, dependencies
+- **ProcessTree**: Construction process - actions organized in subprocesses/groups  
+- **ViewState**: UI state - zoom, camera, visibility (future: may persist separately)
+- **CommandStack**: Command history for undo/redo - loaded from `commands` array
 
-All mutations to World, ProcessTree, and ViewState happen through Commands, which are composed of reversible Operations.
+**Command Sourcing Architecture**:
+
+The project file contains ONLY the command history, not the final state. All application state is reconstructed by:
+1. Creating fresh World instance with default planes (P_H, P_V, HL_HV)
+2. Replaying all operations from `commands` array in order
+3. Each operation modifies World through `op.apply(world)`
+4. Result: World state matches when project was saved
+
+**Benefits**:
+- **Audit trail**: Complete history of how construction evolved
+- **Reproducibility**: Same commands → exact same result
+- **Smaller files**: Commands more compact than full World serialization
+- **Parametric**: Changes to early steps propagate automatically
+- **Undo/redo**: Commands are inherently reversible
+
+**Requirements for Operations**:
+- **Deterministic**: Same parameters → same result every time
+- **Serializable**: No closures, function references, or circular dependencies
+- **Self-contained**: All data needed in `parameters` object
+- **Idempotent for IDs**: Generate same IDs when replayed (or store IDs in parameters)
 
 **Critical Architectural Principle - Command-Based State Management**: 
 
@@ -4435,6 +4463,352 @@ class Command {
     this.status = CommandStatus.Committed;
   }
 }
+```
+
+---
+
+## Command Sourcing Architecture (Project Persistence)
+
+**Pattern**: Projects are persisted as **command streams**, not final state snapshots
+
+**Purpose**: Enable reproducible, auditable, parametric geometry construction through command history replay
+
+### Core Concept
+
+Instead of serializing the final World state (all points, lines, circles, etc.), we serialize only the **sequence of commands** that created that state. On load, we replay all commands to reconstruct the World.
+
+```typescript
+// ❌ Traditional state persistence (NOT USED)
+{
+  "world": {
+    "points": [ { "id": "p1", "x": 100, "y": 200 }, ... ],
+    "lines": [ { "id": "l1", "point1": "p1", "point2": "p2" }, ... ],
+    // ... thousands of lines for complex drawings
+  }
+}
+
+// ✅ Command sourcing (ACTUAL IMPLEMENTATION)
+{
+  "commands": [
+    { "operations": [ { "type": "AddFreePoint2D", "parameters": { "planeId": "P_H", "position": [100, 200] } } ] },
+    { "operations": [ { "type": "AddFreePoint2D", "parameters": { "planeId": "P_H", "position": [300, 400] } } ] },
+    { "operations": [ { "type": "AddLine2D", "parameters": { "planeId": "P_H", "point1Id": "...", "point2Id": "..." } } ] },
+    // ... typically 10-100 commands even for complex drawings
+  ]
+}
+```
+
+### Loading Process
+
+```typescript
+// ProjectService.deserializeCommands(projectData, world, commandStack)
+
+1. Create fresh World with default planes (P_H, P_V, HL_HV)
+2. For each serialized command:
+   a. Reconstruct operations from serialized data
+   b. Execute each operation: op.apply(world)
+   c. Add reconstructed command to commandStack
+3. Result: World state matches saved state exactly
+```
+
+### Benefits
+
+1. **Audit Trail**: Complete history of every construction step
+2. **Reproducibility**: Same commands → exact same result (deterministic)
+3. **Smaller Files**: Commands are more compact than full state
+   - 1000-point drawing: ~50KB commands vs ~500KB full state
+4. **Parametric**: Edit early command → later dependent elements update automatically
+5. **Undo/Redo Built-in**: Commands are inherently reversible
+6. **Schema Migration**: Can upgrade old command formats on load
+7. **Debugging**: Replay specific command sequences to reproduce issues
+
+### Requirements for Operations
+
+For command sourcing to work, all operations MUST be:
+
+1. **Deterministic**: Same parameters → same result every time
+   ```typescript
+   // ✅ Deterministic
+   new AddFreePoint2DOp(planeId, new Vector3(100, 200, 0))
+   
+   // ❌ Non-deterministic (uses current time)
+   new AddPointOp(planeId, new Vector3(Date.now(), 200, 0))
+   ```
+
+2. **Serializable**: No closures, function references, or circular dependencies
+   ```typescript
+   // ✅ Serializable
+   parameters: { planeId: "P_H", position: [100, 200] }
+   
+   // ❌ Not serializable (function reference)
+   parameters: { planeId: "P_H", positionGenerator: () => getRandomPoint() }
+   ```
+
+3. **Self-contained**: All data needed for execution in `parameters` object
+   ```typescript
+   // ✅ Self-contained
+   parameters: { planeId: "P_H", point1Id: "p1", point2Id: "p2" }
+   
+   // ❌ Missing data (requires external state)
+   parameters: { planeId: "P_H" }  // Where are point IDs?
+   ```
+
+4. **ID Management**: Generated IDs must be reproducible OR stored in parameters
+   ```typescript
+   // Option 1: Generate ID in operation, store in parameters after execution
+   // Option 2: Generate ID before operation, pass as parameter
+   // Current implementation: Option 1 (IDs generated by World.getNextId())
+   ```
+
+### Operation Type Registry
+
+ProjectService maintains a switch statement mapping operation type strings to operation classes:
+
+```typescript
+switch (type) {
+  case 'AddFreePoint2D': return new AddFreePoint2DOp(params.planeId, params.position);
+  case 'AddLine2D': return new AddLine2DOp(params.planeId, params.point1Id, params.point2Id);
+  case 'AddGuide2D': return new AddGuide2DOp(params.planeId, params.lineId, params.pointId);
+  // ... must cover ALL operation types that can be created in UI
+}
+```
+
+**CRITICAL**: Every operation type that can be created through UI tools MUST have a case in this switch statement. Missing cases = unsaveable operations = data loss!
+
+**Current Coverage** (as of schema version 3.0.0):
+- ✅ AddFreePoint2D, AddLine2D, AddSegment2D, AddCircle2D
+- ✅ AddLineLineIntersectionPoint2D, AddLineCircleIntersectionPoint2D, AddCircleCircleIntersectionPoint2D
+- ✅ AddGuide2D
+- ⚠️ MISSING: RemovePoint2D, RemoveLine2D, RemoveSegment2D, RemoveCircle2D, RemoveGuide2D
+- ⚠️ MISSING: AddSiblingGuide2D
+- ⚠️ MISSING: UpdateElementStyle
+- ⚠️ MISSING: ProcessTree operations (RemoveAction, RemoveActionGroup, RemoveSubprocess)
+
+### Schema Versioning
+
+Project files include `schemaVersion` field for handling format changes:
+
+```typescript
+{
+  "schemaVersion": "3.0.0",  // Semantic versioning
+  "commands": [ ... ]
+}
+```
+
+**Version History**:
+- `3.0.0`: Specialized intersection point types (AddLineLineIntersectionPoint2DOp, etc.)
+- `2.0.0`: ProjectionPlane ownership refactoring
+- `1.0.0`: Initial command sourcing implementation
+
+**Migration Strategy**: Currently strict - only exact version match accepted. Future: add migration functions to upgrade old formats.
+
+### Not Persisted
+
+These elements are **NOT** stored in project files (intentional):
+
+1. **Transient UI State**: Hover highlights, cursor position, temporary feedback
+2. **Performance Caches**: Realization caches, computed geometry (rebuilt on demand)
+3. **ViewState** (future): Zoom, pan, camera position (may add optional persistence)
+4. **Command Undo History**: Only committed commands saved, not undo/redo position
+5. **Authentication State**: User tokens, profile data (session-only)
+
+### Implementation Reference
+
+- **Serialization**: `ProjectService.serializeCommands(commandStack, projectName)`
+- **Deserialization**: `ProjectService.deserializeCommands(projectData, world, commandStack)`
+- **Operation Registry**: `ProjectService.reconstructOperation(serializedOp)`
+- **Schema Validation**: `ProjectService.validateProjectData(data)`
+
+---
+
+## Component-Based Operation Organization
+
+**Pattern**: Operations are organized into containers by **which component they modify**, ensuring clear ownership and cohesion.
+
+### Architecture Overview
+
+**High-Level Components** (each with mutable state):
+1. **World** - Domain model (geometric entities, dependencies, construction state)
+2. **ProcessTree** - Construction history (actions, subprocesses, groups)
+3. **Paper** - Rendering layer (PaperJS primitives, caches, visual state)
+4. **Toolbar** - UI controls (active tool, tool options, feedback)
+5. **ViewState** - Presentation state (zoom, pan, camera, active plane)
+
+**Operation Containers** (parallel classes grouping ops by component):
+```
+frontend/src/commands/operations/
+├── world/              ← World operations container
+│   ├── AddPoint2DOp.ts
+│   ├── RemoveLine2DOp.ts
+│   ├── AddCircle2DOp.ts
+│   ├── UpdateElementStyleOp.ts
+│   └── ...all ops modifying World
+├── processTree/        ← ProcessTree operations container
+│   ├── RemoveActionOp.ts
+│   ├── AddSubprocessOp.ts
+│   ├── RemoveActionGroupOp.ts
+│   └── ...all ops modifying ProcessTree
+├── paper/              ← Paper operations container
+│   ├── InvalidateCacheOp.ts
+│   ├── SetVisibilityOp.ts
+│   ├── HighlightElementOp.ts
+│   └── ...all ops modifying Paper rendering
+├── toolbar/            ← Toolbar operations container
+│   ├── SetActiveToolOp.ts
+│   ├── UpdateToolStateOp.ts
+│   ├── SetToolFeedbackOp.ts
+│   └── ...all ops modifying Toolbar
+├── viewState/          ← ViewState operations container
+│   ├── SetZoomOp.ts
+│   ├── SetPanOp.ts
+│   ├── SetActivePlaneOp.ts
+│   └── ...all ops modifying ViewState
+└── IOperation.ts       ← Shared interface
+```
+
+### Benefits
+
+1. **Cohesion**: All operations for a component are co-located
+   - Easy to find: "Where are World operations?" → `operations/world/`
+   - Easy to navigate: All geometry ops in one folder
+
+2. **Clear Ownership**: Each operation knows which component it modifies
+   - `AddPoint2DOp` → modifies `World`
+   - `SetActivePlaneOp` → modifies `ViewState`
+   - No ambiguity about responsibility
+
+3. **Separation of Concerns**: Domain ops separate from UI ops
+   - `world/` contains pure domain logic (geometry, dependencies)
+   - `paper/` contains rendering logic (PaperJS, caches)
+   - `toolbar/` contains UI control logic
+   - Clean architectural boundaries
+
+4. **Cross-Component Commands**: Commands can compose ops from multiple containers
+   ```typescript
+   const cmd = new Command("Create and highlight point", commandStack);
+   
+   // Op 1: Modify World (domain)
+   cmd.addAndExecute(new AddPoint2DOp(planeId, position));  // from world/
+   
+   // Op 2: Modify Paper (rendering)
+   cmd.addAndExecute(new HighlightElementOp(pointId));      // from paper/
+   
+   // Op 3: Modify Toolbar (UI feedback)
+   cmd.addAndExecute(new UpdateToolFeedbackOp("Point created")); // from toolbar/
+   
+   cmd.commit();
+   ```
+
+5. **Scalability**: New component → new operation folder
+   - Future: Add `Canvas3D` component → create `operations/canvas3D/` folder
+   - Pattern extends naturally to new subsystems
+
+### Implementation Guidelines
+
+**Each operation container module provides:**
+
+1. **Operation classes** implementing `IOperation` interface
+2. **Type registration** for serialization/deserialization
+3. **Component reference** (passed to operations or injected)
+4. **Validation logic** (parameters, pre-conditions)
+
+**Example: World Operations Container**
+```typescript
+// operations/world/AddPoint2DOp.ts
+export class AddPoint2DOp implements IOperation {
+  readonly type = 'AddPoint2D';
+  readonly parameters: {
+    planeId: PlaneId;
+    position: Vector3;
+  };
+  
+  // Operation modifies World component
+  apply(world: World): OperationResult {
+    const result = world.addPoint2D(this.parameters.planeId, this.parameters.position);
+    return { success: true, outputs: { pointId: result.pointId } };
+  }
+  
+  undo(world: World): OperationResult {
+    return world.removePoint2D(this.parameters.planeId, this.outputs.pointId);
+  }
+}
+```
+
+**Example: Paper Operations Container**
+```typescript
+// operations/paper/HighlightElementOp.ts
+export class HighlightElementOp implements IOperation {
+  readonly type = 'HighlightElement';
+  readonly parameters: {
+    elementId: ElementId;
+    highlightStyle: HighlightStyle;
+  };
+  
+  // Operation modifies Paper component
+  apply(paper: PaperService): OperationResult {
+    paper.highlightElement(this.parameters.elementId, this.parameters.highlightStyle);
+    return { success: true, outputs: {} };
+  }
+  
+  undo(paper: PaperService): OperationResult {
+    paper.clearHighlight(this.parameters.elementId);
+    return { success: true, outputs: {} };
+  }
+}
+```
+
+### Migration Strategy
+
+**Current State** (operations scattered):
+- `AddFreePointOp.ts`, `RemoveElementOps.ts`, `ProcessTreeOperations.ts` in flat structure
+- Mixed concerns (World + ProcessTree + ViewState in single directory)
+
+**Target State** (operations organized by component):
+- `operations/world/` - 16 files (all geometry operations)
+- `operations/processTree/` - 3 files (ProcessTree operations)
+- `operations/paper/` - TBD files (rendering operations)
+- `operations/toolbar/` - TBD files (UI operations)
+- `operations/viewState/` - TBD files (presentation operations)
+
+**Migration Steps** (see Phase 41 tasks):
+1. Create component folders: `world/`, `processTree/`, `paper/`, `toolbar/`, `viewState/`
+2. Move existing operations to appropriate folders
+3. Update imports throughout codebase
+4. Create new operations following organized structure
+5. Update ProjectService.reconstructOperation() with new paths
+
+### Current vs Proposed Organization
+
+**Current** (flat):
+```
+operations/
+├── AddFreePointOp.ts              // World op
+├── AddLineOp.ts                   // World op
+├── RemoveElementOps.ts            // World ops (5 classes)
+├── ProcessTreeOperations.ts       // ProcessTree ops (3 classes)
+├── UpdateElementStyleOp.ts        // World op
+├── ViewStateOperations.ts         // ViewState ops
+└── ...14 more files
+```
+
+**Proposed** (organized):
+```
+operations/
+├── world/
+│   ├── AddFreePointOp.ts
+│   ├── AddLineOp.ts
+│   ├── RemoveElementOps.ts
+│   ├── UpdateElementStyleOp.ts
+│   └── ...12 more files
+├── processTree/
+│   └── ProcessTreeOperations.ts (3 classes)
+├── paper/
+│   └── (new operations)
+├── toolbar/
+│   └── (new operations)
+├── viewState/
+│   └── ViewStateOperations.ts
+└── IOperation.ts
 ```
 
 ---

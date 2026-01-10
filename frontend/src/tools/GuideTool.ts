@@ -19,7 +19,7 @@ import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import type { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '@/commands/operations/AddGuideOp';
+import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '@/commands/operations/world/AddGuideOp';
 import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
 import type { Point2D } from '@/domain/world/Point';
 import { isSiblingIntersectionPoint2D } from '@/domain/world/Point';

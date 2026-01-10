@@ -11,7 +11,7 @@ import type { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
-import { AddFreePoint2DOp } from '@/commands/operations/AddFreePointOp';
+import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
 import type { SelectionMask } from '@/types/SelectionMask';
 

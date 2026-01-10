@@ -144,42 +144,42 @@ export class ProjectService {
     // Import and instantiate the correct operation class based on type
     switch (type) {
       case 'AddFreePoint2D': {
-        const { AddFreePoint2DOp } = require('@/commands/operations/AddFreePointOp');
+        const { AddFreePoint2DOp } = require('@/commands/operations/world/AddFreePointOp');
         return new AddFreePoint2DOp(parameters.planeId, parameters.position);
       }
       
       case 'AddLine2D': {
-        const { AddLine2DOp } = require('@/commands/operations/AddLineOp');
+        const { AddLine2DOp } = require('@/commands/operations/world/AddLineOp');
         return new AddLine2DOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
       }
       
       case 'AddSegment2D': {
-        const { AddSegment2DOp } = require('@/commands/operations/AddSegmentOp');
+        const { AddSegment2DOp } = require('@/commands/operations/world/AddSegmentOp');
         return new AddSegment2DOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
       }
       
       case 'AddCircle2D': {
-        const { AddCircle2DOp } = require('@/commands/operations/AddCircleOp');
+        const { AddCircle2DOp } = require('@/commands/operations/world/AddCircleOp');
         return new AddCircle2DOp(parameters.planeId, parameters.centerPointId, parameters.radiusPointId);
       }
       
       case 'AddLineLineIntersectionPoint2D': {
-        const { AddLineLineIntersectionPoint2DOp } = require('@/commands/operations/AddLineLineIntersectionPoint2DOp');
+        const { AddLineLineIntersectionPoint2DOp } = require('@/commands/operations/world/AddLineLineIntersectionPoint2DOp');
         return new AddLineLineIntersectionPoint2DOp(parameters.planeId, parameters.line1Id, parameters.line2Id);
       }
       
       case 'AddLineCircleIntersectionPoint2D': {
-        const { AddLineCircleIntersectionPoint2DOp } = require('@/commands/operations/AddLineCircleIntersectionPoint2DOp');
+        const { AddLineCircleIntersectionPoint2DOp } = require('@/commands/operations/world/AddLineCircleIntersectionPoint2DOp');
         return new AddLineCircleIntersectionPoint2DOp(parameters.planeId, parameters.lineId, parameters.circleId, parameters.index);
       }
       
       case 'AddCircleCircleIntersectionPoint2D': {
-        const { AddCircleCircleIntersectionPoint2DOp } = require('@/commands/operations/AddCircleCircleIntersectionPoint2DOp');
+        const { AddCircleCircleIntersectionPoint2DOp } = require('@/commands/operations/world/AddCircleCircleIntersectionPoint2DOp');
         return new AddCircleCircleIntersectionPoint2DOp(parameters.planeId, parameters.circle1Id, parameters.circle2Id, parameters.index);
       }
       
       case 'AddGuide2D': {
-        const { AddGuide2DOp } = require('@/commands/operations/AddGuideOp');
+        const { AddGuide2DOp } = require('@/commands/operations/world/AddGuideOp');
         return new AddGuide2DOp(parameters.planeId, parameters.lineId, parameters.pointId);
       }
       

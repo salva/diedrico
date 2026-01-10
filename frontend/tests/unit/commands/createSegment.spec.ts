@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
-import { AddSegment2DByPointsOp } from '../../../src/commands/operations/AddSegmentOp';
+import { AddSegment2DByPointsOp } from '../../../src/commands/operations/world/AddSegmentOp';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';

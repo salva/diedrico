@@ -16,7 +16,7 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
-import { AddSegment2DByPointsOp } from '@/commands/operations/AddSegmentOp';
+import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
 import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
 import type { SelectionMask } from '@/types/SelectionMask';
 

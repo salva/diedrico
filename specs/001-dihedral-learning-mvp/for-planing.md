@@ -28,7 +28,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Sibling object creation must be explicitly done at the command level using specific ops. That logic should not be embedded in the world layer.
 * [ ] Sibling objects must be deleted in pairs, so deletion must always be redirected to the primary object. (the second is going to be then deleted automatically because it is a dependency). This should also be managed at the command construction level!
 * [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
-* [ ] Consider introducing a `Project` class to encapsulate world, commandStack, visaulization configuration and metadata for cleaner lifecycle management. Best done when domain model stabilizes.
 * [ ] Do not use type aliases in the code.
 * [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
 * [ ] Introduce a set of factory methods with the logic for creating the Command + Ops for supporting the tools.
@@ -43,11 +42,77 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
 * [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
-* [ ] Ensure that Ops are simple objects which only do basic tasks. For instance, on cascade deletion must not be handled in the op, but on the command construction (the method building the command is the responsible for following dependency relations, retrieving all the objects, sorting them and implementing the cascade deletion by introducing a specific op in the command for every object).
+* [ ] Ensure that Ops are simple objects which only do basic tasks. For instance, on cascade deletion must not be handled in the op, but on the command construction (the method building the command is the responsible for following dependency relations, retrieving all the objects, sorting them and implementing the cascade deletion by introducing a specific op in the command for every object). Another example, we must have an intersection op for every two types of intersecting objects, and is the tool the one which must pick the right op.
 * [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
 
 
 ## ALREADY PLANNED
+
+* [X] Reorganize operation files into component-based folders (world/, processTree/, paper/, toolbar/, viewState/) for better cohesion and maintainability.
+  - **STATUS**: ✅ PLANNED - Phase 41 created
+  - **Problem**: All 19 operation classes scattered in flat directory structure (`frontend/src/commands/operations/`), mixing concerns
+  - **Current State**: AddFreePointOp, AddLineOp, RemoveElementOps, ProcessTreeOperations all in same folder
+  - **Proposed Structure**: 5 component folders organizing operations by which component they modify
+  - **Components**: World (geometry), ProcessTree (history), Paper (rendering), Toolbar (UI controls), ViewState (presentation)
+  - **Benefits**: 
+    - **Cohesion**: All World operations co-located and easy to find
+    - **Clear ownership**: Obvious which component each operation affects
+    - **Separation of concerns**: Domain (world/) vs rendering (paper/) vs UI (toolbar/)
+    - **Cross-component composition**: Commands can still compose ops from multiple folders
+    - **Scalability**: New component → new folder, pattern established
+  - **Architecture**: Updated data-model.md with §Component-Based Operation Organization
+  - **Implementation**: Phase 41 with 16 core tasks (T446-T461) + 2 optional (T462-T463)
+  - **Task categories**:
+    - Create folder structure (T446): 5 component folders + READMEs
+    - Migrate operations (T447-T449): Move 19 operations to correct folders (world/, processTree/, viewState/)
+    - Barrel exports (T450): index.ts for cleaner imports
+    - Update imports (T451-T454): ProjectService, tools, commands, all consumers
+    - Architectural tests (T455-T456): Enforce organization, prevent future violations
+    - Integration testing (T457-T458): Cross-component commands, full E2E workflow
+    - Code cleanup (T459-T460): Remove deprecated files (WorldOperations.ts, DependencyOperations.ts)
+    - Documentation (T461): Update operation development guide
+  - **Optional**: Create Paper/Toolbar operations (T462-T463) - can be added incrementally after core migration
+  - **Success Criteria**: All operations organized, no imports broken, old projects still load, architectural tests enforce structure
+  - **Risk Mitigation**: Systematic import updates, test after each batch, verify serialization still works
+  - **Schema Impact**: None - purely organizational refactoring, no serialization format change
+  - **Timing**: After Phase 40 completion (command sourcing fully functional), before new operation types added
+
+* [X] Ensure ALL operation types can be serialized to prevent data loss on project save/load. Currently only 8 of 19 operation types are serializable, meaning deletions and style changes are lost!
+  - **STATUS**: ✅ PLANNED - Phase 40 created
+  - **Problem**: ProjectService.reconstructOperation() only handles 8 operation types (creation), but 19 operation classes exist
+  - **Critical Data Loss**: Operations NOT saved: RemovePoint2D, RemoveLine2D, RemoveSegment2D, RemoveCircle2D, RemoveGuide2D (deletions), AddSiblingGuide2D, UpdateElementStyle, RemoveActionFromProcessTree/Group/Subprocess
+  - **Impact**: Users delete elements or change styles → save project → reload → changes are LOST (only creates persisted)
+  - **Architecture**: Command sourcing pattern (projects saved as command history, not final state)
+  - **Benefits**: Audit trail, reproducibility, smaller files, parametric updates
+  - **Requirements**: Operations must be deterministic, serializable (no closures), self-contained
+  - **Implementation**: Phase 40 with 15 tasks (T431-T445)
+  - **Task categories**: 
+    - Add missing serialization cases (T431-T436): 11 operation types to ProjectService switch
+    - Architectural test for coverage (T437): Prevent future gaps
+    - Round-trip serialization tests (T438): Verify no data loss
+    - Determinism tests (T439): Same commands → same result
+    - Self-containment tests (T440): No external dependencies
+    - Documentation (T441): Requirements for future operations
+    - Schema migration framework (T442): Future enhancement
+    - Integration tests (T443-T444): Cascade deletion, E2E workflow
+    - Schema version bump (T445): 3.0.0 → 3.1.0
+  - **Data Model**: Updated §Persistence Entity: Project to reflect command sourcing (only commands array persisted)
+  - **Data Model**: Added §Command Sourcing Architecture explaining pattern, benefits, requirements
+  - **Success Criteria**: All 19 operations serializable, architectural test enforces coverage, no data loss
+  - **Current Coverage**: 8/19 operations (42% complete) - AddFreePoint2D, AddLine2D, AddSegment2D, AddCircle2D, intersection types, AddGuide2D
+  - **Schema Version**: Bump to 3.1.0 after completion (currently 3.0.0)
+  - **Timing**: URGENT - users currently experiencing data loss on any project with deletions or style changes
+
+* [X] Consider introducing a `Project` class to encapsulate world, commandStack, visualization configuration and metadata for cleaner lifecycle management. Best done when domain model stabilizes.
+  - **STATUS**: ❌ CANCELLED - Not needed (misunderstanding about existing architecture)
+  - **Original Misunderstanding**: Thought Project entity was only a spec, wanted runtime class
+  - **Reality**: Project entity is PERSISTENCE FORMAT (command sourcing), not runtime object
+  - **Current Architecture**: App.vue manages World/CommandStack/metadata as separate reactive refs - this is correct
+  - **What Exists**: ProjectService for serialization/deserialization via command replay
+  - **What Changed**: User clarified "serialization must only contain command stack" - already implemented!
+  - **Lesson**: Always verify existing implementation before planning major refactoring
+  - **Actual Issue**: Command sourcing incomplete (only 8/19 ops serializable) → Phase 40 addresses this
+  - **Note**: If runtime Project class needed in future, revisit after Phase 40 complete
 
 * [X] Display Google Drive login status in the UI, including user profile information if Google provides it.
   - **STATUS**: ✅ PLANNED - Phase 38 created

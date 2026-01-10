@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
-import { AddCircle2DByCenterAndPointOp } from '../../../src/commands/operations/AddCircleOp';
+import { AddCircle2DByCenterAndPointOp } from '../../../src/commands/operations/world/AddCircleOp';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';
