@@ -26,18 +26,69 @@ import type { Circle2DRealization2D } from '../world/Circle';
 /**
  * Sort intersection points by angle relative to circle's radius vector
  * 
- * Per data-model.md: When multiple points intersect a circle, they must be indexed
- * by their angular position relative to the circle's radius vector (angle zero).
+ * Per data-model.md §Intersection Point Indexing on Circles:
+ * When multiple points intersect a circle, they must be indexed by their angular 
+ * position relative to the circle's radius vector (angle zero reference).
  * 
- * Algorithm:
- * 1. For each point P: compute angle θ = atan2(P.y - C.y, P.x - C.x)
- * 2. Compute reference angle θ₀ = atan2(R.y, R.x) from radius vector
- * 3. Compute relative angle Δθ = θ - θ₀, normalized to [0, 2π)
- * 4. Sort by Δθ ascending (index 0 = smallest Δθ = closest to radius vector)
+ * This ensures stable, predictable indexing that is preserved under parametric
+ * updates to the circle's defining elements.
  * 
- * @param points Intersection points to sort
- * @param circle Circle realization containing center and radiusVector
- * @returns Points sorted by angle relative to radius vector
+ * ┌─────────────────────────────────────────────────────────────────────┐
+ * │ ALGORITHM: Angle-based sorting for circle intersection points       │
+ * │                                                                      │
+ * │  Given:                                                              │
+ * │    • Circle with center C and radius vector R                       │
+ * │    • Intersection points P₀, P₁, ... Pₙ on the circle              │
+ * │                                                                      │
+ * │  Steps:                                                              │
+ * │    1. Compute reference angle: θ₀ = atan2(R.y, R.x)                │
+ * │    2. For each point Pᵢ:                                            │
+ * │         θᵢ = atan2(Pᵢ.y - C.y, Pᵢ.x - C.x)                         │
+ * │         Δθᵢ = θᵢ - θ₀                                               │
+ * │         Normalize Δθᵢ to range [0, 2π)                             │
+ * │    3. Sort points by Δθᵢ ascending                                  │
+ * │    4. Assign indices: index 0 = smallest Δθ, index 1 = next, etc.  │
+ * │                                                                      │
+ * │  Visual Example:                                                     │
+ * │                                                                      │
+ * │                    P₁ (Δθ ≈ 1.1 rad)                               │
+ * │                     ●                                                │
+ * │                   ╱   ╲                                              │
+ * │                 ╱       ╲                                            │
+ * │               ╱           ╲                                          │
+ * │             ╱               ╲                                        │
+ * │           ●─────────C────────●─────> R (θ₀ = 0°)                   │
+ * │             ╲               ╱                                        │
+ * │               ╲           ╱                                          │
+ * │                 ╲       ╱                                            │
+ * │                   ╲   ╱                                              │
+ * │                     ●                                                │
+ * │                    P₀ (Δθ ≈ 5.2 rad)                               │
+ * │                                                                      │
+ * │    Circle center C = (0, 0)                                          │
+ * │    Radius vector R = (1, 0) → θ₀ = 0                               │
+ * │    Point P₀ = (0.7, -0.7) → θ = -0.79 rad → Δθ = 5.49 rad         │
+ * │    Point P₁ = (0.7, 0.7)  → θ = 0.79 rad  → Δθ = 0.79 rad         │
+ * │                                                                      │
+ * │    After sorting: [P₁ (Δθ=0.79), P₀ (Δθ=5.49)]                    │
+ * │    Indices:       [index 0,        index 1]                         │
+ * │                                                                      │
+ * │  Result: Points ordered counterclockwise from radius vector         │
+ * └─────────────────────────────────────────────────────────────────────┘
+ * 
+ * **Why this matters:**
+ * - Ensures intersection point indices remain stable when circle parameters change
+ * - Provides predictable, user-understandable ordering (counterclockwise from radius)
+ * - Critical for dependent constructions that reference specific intersection indices
+ * - Prevents index swapping that would break geometric relationships
+ * 
+ * **References:**
+ * - specs/001-dihedral-learning-mvp/data-model.md §Intersection Point Indexing
+ * - Phase 33 test suite: frontend/tests/unit/calculations/intersections.spec.ts
+ * 
+ * @param points Intersection points to sort (must all lie on the circle)
+ * @param circle Circle realization containing center C and radius vector R
+ * @returns Points sorted by relative angle Δθ ascending (counterclockwise from R)
  */
 function sortPointsByAngleFromRadiusVector(
   points: Vector3[],

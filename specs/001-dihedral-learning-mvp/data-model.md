@@ -1844,6 +1844,16 @@ Line intersection produces two points:
 
 **Note**: For `Circle2DByCenterAndRadius` (which lacks a radius vector), a default reference direction (e.g., +X axis) may be used, but this type does NOT guarantee consistent indexing under parametric updates.
 
+**Testing Requirement**: The intersection ordering implementation in `Intersections.ts` must be verified with comprehensive tests that:
+1. Verify circle-circle intersections are indexed by angle relative to the **first circle's** radius vector
+2. Test various circle positions (overlapping, horizontal, vertical, diagonal)
+3. Test various radius vector orientations (0°, 45°, 90°, 180°, etc.)
+4. Verify index 0 is always the intersection point with smaller relative angle
+5. Test line-circle intersections similarly (if applicable)
+6. Document expected vs actual angles for debugging
+
+See Phase 33 tasks for implementation.
+
 // Realization types for 3D elements
 type Element3DRealization =
   | Point3DRealization

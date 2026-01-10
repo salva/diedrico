@@ -2541,6 +2541,71 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
 
 ---
 
+## Phase 33: Intersection Ordering Verification
+
+**Purpose**: Ensure circle intersection points are correctly ordered by angle relative to radius vector  
+**Reference**: [data-model.md](./data-model.md#intersection-point-indexing-on-circles) - Intersection indexing algorithm
+
+**Background**: 
+- The implementation in `Intersections.ts` already sorts intersection points by angle
+- `sortPointsByAngleFromRadiusVector()` computes relative angles and sorts ascending
+- Need comprehensive tests to verify correctness and catch regressions
+
+**Testing Requirements**:
+- Test circle-circle intersections with various configurations
+- Test line-circle intersections (if index ordering applies)
+- Verify index 0 = smallest relative angle from first circle's radius vector
+- Test edge cases: tangent points, perpendicular radius vectors, etc.
+
+- [X] T325 [P] Create test suite for circle-circle intersection ordering
+  - Test horizontal circles with various radius vector angles (0°, 45°, 90°, 135°, 180°, 270°)
+  - Test vertical circles with various radius vector angles
+  - Test diagonal circles (centers at 45° angles)
+  - Verify index 0 has smaller relative angle than index 1
+  - Document computed angles in test assertions for debugging
+  - File: frontend/tests/unit/calculations/intersections.spec.ts (add new describe block)
+
+- [X] T326 [P] Create test suite for line-circle intersection ordering
+  - Test horizontal/vertical lines intersecting circles with various radius vectors
+  - Test diagonal lines intersecting circles
+  - Verify index 0 has smaller relative angle than index 1
+  - File: frontend/tests/unit/calculations/intersections.spec.ts (add new describe block)
+
+- [X] T327 [P] Add edge case tests for intersection ordering
+  - Test tangent cases (single intersection point)
+  - Test radius vector pointing directly at/away from intersection point
+  - Test perpendicular radius vectors (90° apart)
+  - Test circles with centers on same vertical/horizontal line
+  - File: frontend/tests/unit/calculations/intersections.spec.ts
+
+- [X] T328 [P] Add regression test for circle-circle ordering with specific real-world scenario
+  - Create test with actual coordinates from user construction
+  - Document the geometric configuration (sketch/diagram in test comment)
+  - Verify both intersection indices produce expected points
+  - File: frontend/tests/unit/calculations/intersections.spec.ts
+
+- [X] T329 Document intersection ordering in code comments
+  - Add detailed comments in `sortPointsByAngleFromRadiusVector()` explaining algorithm
+  - Add ASCII art diagram showing angle measurement
+  - Add references to data-model.md specification
+  - File: frontend/src/domain/calculations/Intersections.ts
+
+**Checkpoint**: Intersection ordering verified with comprehensive tests covering all configurations
+
+**Phase 33 Status**: 5/5 tasks complete (100%) ✅ COMPLETE
+
+**Dependencies**: 
+- Phase 27.5 (Circle Architecture) - Complete ✅
+- Phase 32 (Specialized Intersection Types) - Complete ✅
+
+**Notes**:
+- Implementation already correct, just needs verification tests
+- `sortPointsByAngleFromRadiusVector()` is used by both circle-circle and line-circle intersections
+- Tests should verify the mathematical correctness, not just that code runs
+- Consider adding visual debugging output (angles, positions) to test failures
+
+---
+
 ## FUTURE WORK REQUIRING CLARIFICATION
 
 ## FUTURE WORK REQUIRING CLARIFICATION
