@@ -5016,15 +5016,32 @@ handleClick(context: ToolContext): ToolResult {
 - **Complexity**: Conditional sibling creation, error handling, link management
 - **Factory**: `GuideSequenceFactory.createGuideWithSibling()`
 
-**Pattern 2: Intersection Point Creation** (future - Phase 42)
+**Pattern 2: Intersection Point Creation**
 - **Current location**: `IntersectionTool.ts` lines 137-210
 - **Operations**:
-  1. AddLineLineIntersectionPoint2DOp / AddLineCircleIntersectionPoint2DOp / AddCircleCircleIntersectionPoint2DOp
-  2. Detect HalfHingeLine intersection
-  3. AddSiblingIntersectionPoint2DOp (if HHL detected)
-  4. Create process tree actions for both points
-- **Complexity**: Type detection, HHL detection, sibling creation conditional
-- **Factory**: `IntersectionSequenceFactory.createIntersectionWithSibling()`
+  1. Detect intersection type (line-line, line-circle, circle-circle)
+  2. Dispatch to appropriate AddIntersectionPoint2DOp (type-specific)
+  3. Detect HalfHingeLine intersection
+  4. AddSiblingIntersectionPoint2DOp (if HHL detected)
+- **Complexity**: Type detection, operation dispatch, HHL detection, conditional sibling
+- **Factory**: `IntersectionSequenceFactory.createIntersection()`
+- **Example**:
+  ```typescript
+  // Factory handles type detection and sibling logic
+  IntersectionSequenceFactory.createIntersection(
+    cmd,
+    planeId,
+    element1Id,  // Could be line or circle
+    element2Id,  // Could be line or circle
+    index,       // For multi-point intersections
+    world
+  );
+  // Factory:
+  // 1. Queries world to get element types
+  // 2. Dispatches to correct operation (AddLineLineIntersectionPoint2DOp, etc.)
+  // 3. Checks if either element is HalfHingeLine
+  // 4. If HHL, adds AddSiblingIntersectionPoint2DOp
+  ```
 
 **Pattern 3: Cascade Deletion**
 - **Current location**: `App.vue` lines 660-760
@@ -5036,15 +5053,12 @@ handleClick(context: ToolContext): ToolResult {
 - **Complexity**: Topological sort, type-specific operation selection, process tree cleanup
 - **Factory**: `DeletionSequenceFactory.createCascadeDeletion()`
 
-**Pattern 4: Element Creation with Auxiliary Points**
+**Non-Pattern: Auxiliary Element Creation**
 - **Current location**: Various tools (CircleTool, SegmentTool, LineTool)
-- **Operations**:
-  1. Create auxiliary free points (if needed)
-  2. Create primary element (circle, segment, line)
-  3. Create process tree action group for auxiliaries
-  4. Create process tree action for primary element
-- **Complexity**: Auxiliary group creation, process tree organization
-- **Factory**: `AuxiliaryElementFactory.createWithAuxiliaryPoints()`
+- **Why not a factory**: Each tool creates auxiliary elements differently (circle needs center+radius point, segment needs 2 endpoints)
+- **Principle**: Factories should be domain-specific, not generic patterns
+- **Tool responsibility**: Tools handle their own auxiliary creation + process tree organization
+- **Not extracted**: Logic stays in tools - no shared pattern complex enough to warrant factory
 
 ### Factory Method Signature Pattern
 
@@ -5114,6 +5128,31 @@ commandStack.push(cmd);
 3. **Atomic rollback**: If any operation fails, command automatically rolls back all
 4. **Simple API**: Factory doesn't return anything, just modifies command
 5. **Natural composition**: Multiple factories can contribute to same command
+
+### Factory Design Principles
+
+**Domain-Specific, Not Abstract**:
+- ✅ Good: `GuideSequenceFactory`, `IntersectionSequenceFactory`, `DeletionSequenceFactory`
+  - Each handles specific domain logic
+  - Factory knows what operations to create
+  - Caller doesn't need to know operation details
+
+- ❌ Bad: `AuxiliaryElementFactory`, `GenericSequenceFactory`
+  - Abstract patterns that require caller to specify operations
+  - Breaks encapsulation - caller must know too much
+  - Creates coupling between caller and factory internals
+
+**When to Create a Factory**:
+1. Pattern appears in 2+ places (actual duplication)
+2. Sequence has conditional logic (e.g., sibling creation)
+3. Pattern is domain-specific (guides, intersections, deletion)
+4. Factory can fully encapsulate the sequence logic
+
+**When NOT to Create a Factory**:
+1. Pattern appears only once (no duplication)
+2. Logic is simple (1-2 operations, no conditionals)
+3. Pattern is too generic (each use case needs different ops)
+4. Caller would need to specify operations anyway
 
 ### Benefits
 
@@ -5202,11 +5241,11 @@ As new common sequences emerge from tool implementations:
 4. Refactor tools to use factory
 5. Document pattern in factory README.md
 
-**Example candidates**:
-- Transport point across planes using guides
-- Create 3D point from two 2D projections
-- Create auxiliary plane from two traces
-- Style propagation through subprocess hierarchy
+**Example candidates** (only if pattern repeats in 2+ places):
+- Transport point across planes using guides (if transport logic becomes complex)
+- Create 3D point from two 2D projections (if used by multiple tools)
+- Create auxiliary plane from two traces (when auxiliary planes are implemented)
+- Element style updates with cascade to dependents (if pattern emerges)
 
 ---
 

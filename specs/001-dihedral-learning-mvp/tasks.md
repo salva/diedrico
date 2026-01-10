@@ -3838,6 +3838,8 @@ class IntersectionTool {
 
 **Implementation Location**: `frontend/src/commands/factories/` (new directory)
 
+**Factory Design Principle**: Factories should be domain-specific (GuideSequenceFactory, IntersectionSequenceFactory, DeletionSequenceFactory), not abstract patterns (❌ AuxiliaryElementFactory). Each factory encapsulates specific domain logic - type detection, conditional sibling creation, operation dispatch.
+
 ### Tasks
 
 - [ ] T477 Create factories directory structure and README
@@ -3940,24 +3942,54 @@ class IntersectionTool {
   - Verify examples match actual implementation
   - Add references from tool documentation to relevant factories
 
-- [ ] T486 [P] Optional: Create AuxiliaryElementFactory for point creation pattern
-  - Analyze tools that create auxiliary free points (CircleTool, SegmentTool, LineTool)
-  - If pattern is repeated, extract to `AuxiliaryElementFactory.ts`
-  - Implement `createWithAuxiliaryPoints(cmd: Command, ...params)` method
-  - Add unit tests
-  - Refactor tools to use factory
-  - Mark as optional - can be deferred if pattern is not sufficiently repeated
+- [ ] T486 [P] Implement IntersectionSequenceFactory for intersection creation
+  - Create `frontend/src/commands/factories/IntersectionSequenceFactory.ts`
+  - Implement static method: `createIntersection(cmd: Command, planeId: string, element1Id: string, element2Id: string, index: number, world: World): void`
+  - Logic:
+    1. Query world to get element1 and element2 types
+    2. Dispatch to correct operation class:
+       - Both lines → AddLineLineIntersectionPoint2DOp
+       - Line + circle → AddLineCircleIntersectionPoint2DOp
+       - Both circles → AddCircleCircleIntersectionPoint2DOp
+    3. Check if either element is HalfHingeLine2D
+    4. If HHL detected, add AddSiblingIntersectionPoint2DOp
+  - Factory encapsulates type detection and sibling logic
+  - Document factory with JSDoc and usage examples
+
+- [ ] T487 [P] Add unit tests for IntersectionSequenceFactory
+  - Create `frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts`
+  - Test 1: Line-line intersection → verify AddLineLineIntersectionPoint2DOp added
+  - Test 2: Line-circle intersection → verify AddLineCircleIntersectionPoint2DOp added
+  - Test 3: Circle-circle intersection → verify AddCircleCircleIntersectionPoint2DOp added
+  - Test 4: Line-line intersection with HHL → verify sibling operation added
+  - Test 5: Line-circle intersection with HHL → verify sibling operation added
+  - Test 6: Invalid element IDs → verify error handling
+  - Use mock World with test elements and HalfHingeLine data
+
+- [ ] T488 [P] Refactor IntersectionTool to use IntersectionSequenceFactory
+  - Update `frontend/src/tools/IntersectionTool.ts` handleClick() method
+  - Replace inline type detection and operation creation (lines 137-210) with factory call
+  - Pattern:
+    ```typescript
+    const cmd = new Command('Create intersection point', world);
+    IntersectionSequenceFactory.createIntersection(cmd, planeId, element1Id, element2Id, index, world);
+    // Tool handles: process tree actions, commit, push to stack, feedback
+    ```
+  - Remove now-unused type detection logic
+  - Verify all existing intersection tests still pass
+  - No behavior change - pure refactoring
 
 **Checkpoint**: ✅ Common operation sequences extracted to testable factories, tools simplified
 
 **Success Criteria**:
 - ✅ GuideSequenceFactory tested and used by GuideTool
 - ✅ DeletionSequenceFactory tested and used by App.vue
+- ✅ IntersectionSequenceFactory tested and used by IntersectionTool
 - ✅ All unit tests passing (verify operation sequences correct)
 - ✅ All integration tests passing (verify sequences execute correctly)
 - ✅ All existing tool tests still pass (no behavior change)
-- ✅ Tool code simplified - logic moved to factories
-- ✅ Factories documented in README.md with usage examples
+- ✅ Tool code simplified - type detection and sibling logic moved to factories
+- ✅ Factories documented in README.md with usage examples and design principles
 
 **Benefits**:
 - Testability: Factories are pure functions, easy to unit test

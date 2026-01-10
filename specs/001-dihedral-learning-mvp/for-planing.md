@@ -43,6 +43,7 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
 * [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
 * [ ] Activate or fix undo & redo buttoms.
+* [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
 
 
 ## ALREADY PLANNED
@@ -58,14 +59,18 @@ Note that completing these tasks may require asking the user for additional info
   - **Solution**: Extract patterns to factory methods in `frontend/src/commands/factories/`
   - **Pattern**: Factories receive open Command object, add operations directly, handle conditionals
   - **Architecture**: Operations atomic → factories compose → tools call factories
-  - **Implementation**: Phase 43 with 10 tasks (T477-T486)
+  - **Design Principle**: Factories are domain-specific (GuideSequenceFactory, IntersectionSequenceFactory), not abstract (❌ AuxiliaryElementFactory)
+    - Each factory encapsulates specific domain logic
+    - Factory knows what operations to create
+    - Caller doesn't need to know operation details
+  - **Implementation**: Phase 43 with 12 tasks (T477-T488)
   - **Task Categories**:
-    - Directory setup (T477): Create factories/, README.md documenting pattern
+    - Directory setup (T477): Create factories/, README.md documenting pattern and design principles
     - GuideSequenceFactory (T478-T480): Extract guide+sibling creation from GuideTool
     - DeletionSequenceFactory (T481-T483): Extract cascade deletion from App.vue
     - Testing (T479, T482, T484): Unit tests for factories, integration tests for commands
     - Documentation (T485): Already complete in data-model.md
-    - Optional (T486): AuxiliaryElementFactory if pattern sufficiently repeated
+    - IntersectionSequenceFactory (T486-T488): Extract type detection and sibling logic from IntersectionTool
   - **Benefits**:
     - Testability: Pure functions, easy to unit test sequences
     - Reusability: Same logic used by multiple tools
