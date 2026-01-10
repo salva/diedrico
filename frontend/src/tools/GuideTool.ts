@@ -26,20 +26,22 @@ import { isSiblingIntersectionPoint2D } from '@/domain/world/Point';
 
 /**
  * GuideTool state machine:
- * - State 0: Waiting for reference line selection
- * - State 1: Reference line selected, waiting for through-point
+ * - State 'waiting-first': Waiting for first element (either half-hinge-line or point)
+ * - State 'waiting-line': Point selected, waiting for half-hinge-line
+ * - State 'waiting-point': Half-hinge-line selected, waiting for point
  */
 export class GuideTool extends BaseTool {
   readonly name = 'guide';
-  private state: 'waiting-line' | 'waiting-point' = 'waiting-line';
+  private state: 'waiting-first' | 'waiting-line' | 'waiting-point' = 'waiting-first';
   private referenceLineId?: string;
+  private throughPointId?: string;
 
   /**
    * Handle click event for guide creation
    * 
-   * Two-click workflow:
-   * 1. First click: Select reference line
-   * 2. Second click: Select through-point and create guide
+   * Two-click workflow (order-independent):
+   * 1. First click: Select either half-hinge-line or point
+   * 2. Second click: Select the other element and create guide
    */
   handleClick(context: ToolContext): ToolResult {
     const { planeId, planeCoords, canvasCoords, commandStack, world, paper, paperToPlaneTransform } = context;
@@ -54,45 +56,69 @@ export class GuideTool extends BaseTool {
       return this.failure(`Plane not found: ${planeId}`);
     }
 
-    // State machine
-    if (this.state === 'waiting-line') {
-      // First click: Select reference line
-      
-      // Use Paper.hitTest() for spatial queries
-      const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const selectionMask = this.getSelectionMask();
-      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
-      
-      console.log('[GuideTool] Paper.hitTest() result for reference line:', hit);
-      
-      // Check if we found a half-hinge-line
-      if (!hit) {
-        return this.failure('No hinge line found at click position. Please click on a hinge line.');
-      }
+    // Use Paper.hitTest() for spatial queries
+    const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
+    const selectionMask = this.getSelectionMask();
+    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius
 
-      // Record reference line
-      this.referenceLineId = hit.elementId;
-      this.state = 'waiting-point';
+    if (!hit) {
+      if (this.state === 'waiting-first') {
+        return this.failure('No hinge line or point found. Please click on a hinge line or existing point.');
+      } else if (this.state === 'waiting-line') {
+        this.reset();
+        return this.failure('No hinge line found. Please click on a hinge line.');
+      } else {
+        this.reset();
+        return this.failure('No point found. Please click on an existing point.');
+      }
+    }
+
+    // State machine
+    if (this.state === 'waiting-first') {
+      // First click: Accept either half-hinge-line or point
       
-      return this.success(`Selected reference line: ${hit.elementId}. Click to select through-point for guide.`);
+      if (hit.elementType === 'half-hinge-line') {
+        // Selected half-hinge-line first
+        this.referenceLineId = hit.elementId;
+        this.state = 'waiting-point';
+        return this.success(`Selected hinge line: ${hit.elementId}. Click to select through-point for guide.`);
+      } else if (hit.elementType === 'point') {
+        // Selected point first
+        this.throughPointId = hit.elementId;
+        this.state = 'waiting-line';
+        return this.success(`Selected point: ${hit.elementId}. Click to select hinge line for guide.`);
+      } else {
+        return this.failure('Invalid element type. Please click on a hinge line or point.');
+      }
       
-    } else {
-      // Second click: Select through-point and create guide
-      
-      // Use Paper.hitTest() to find existing point
-      const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-      const selectionMask = this.getSelectionMask();
-      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask); // 50px snap radius for better point detection
+    } else if (this.state === 'waiting-point') {
+      // Waiting for point after selecting half-hinge-line
       
       console.log('[GuideTool] Paper.hitTest() result for through-point:', hit);
       
-      // Selection mask ensures only points are returned (state-based mask)
-      if (!hit) {
+      if (hit.elementType !== 'point') {
         this.reset();
-        return this.failure('No point found at click position. Please click near an existing point.');
+        return this.failure('Expected a point. Please click on an existing point.');
       }
       
-      const throughPointId = hit.elementId;
+      this.throughPointId = hit.elementId;
+      
+    } else {
+      // Waiting for half-hinge-line after selecting point
+      
+      console.log('[GuideTool] Paper.hitTest() result for reference line:', hit);
+      
+      if (hit.elementType !== 'half-hinge-line') {
+        this.reset();
+        return this.failure('Expected a hinge line. Please click on a hinge line.');
+      }
+      
+      this.referenceLineId = hit.elementId;
+    }
+
+    // If we reach here, we have both elements - create the guide
+    if (this.referenceLineId && this.throughPointId) {
+      const throughPointId = this.throughPointId;
       
       try {
         // Build Command directly
@@ -168,6 +194,10 @@ export class GuideTool extends BaseTool {
         return this.failure(`Failed to create guide: ${message}`);
       }
     }
+    
+    // Should never reach here
+    this.reset();
+    return this.failure('Unexpected state in guide creation');
   }
 
   /**
@@ -180,11 +210,14 @@ export class GuideTool extends BaseTool {
   /**
    * Get selection mask for guide creation
    * Dynamic mask based on tool state:
-   * - waiting-line: Allow half-hinge-line selection only (guides must be perpendicular to hinge lines)
+   * - waiting-first: Allow both half-hinge-line and point selection
+   * - waiting-line: Allow half-hinge-line selection only
    * - waiting-point: Allow point selection only
    */
   getSelectionMask(): SelectionMask {
-    if (this.state === 'waiting-line') {
+    if (this.state === 'waiting-first') {
+      return ['half-hinge-line', 'point'];
+    } else if (this.state === 'waiting-line') {
       return ['half-hinge-line'];
     } else {
       return ['point'];
@@ -197,7 +230,8 @@ export class GuideTool extends BaseTool {
   getState(): Record<string, any> {
     return {
       state: this.state,
-      referenceLineId: this.referenceLineId
+      referenceLineId: this.referenceLineId,
+      throughPointId: this.throughPointId
     };
   }
 
@@ -205,7 +239,8 @@ export class GuideTool extends BaseTool {
    * Reset tool state for new guide
    */
   private reset(): void {
-    this.state = 'waiting-line';
+    this.state = 'waiting-first';
     this.referenceLineId = undefined;
+    this.throughPointId = undefined;
   }
 }
