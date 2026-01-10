@@ -51,7 +51,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.position).toEqual({ x: 5, y: 10, z: 1 });
   });
 
-  it('AddLine2DOp survives round-trip', () => {
+  it('AddLine2DByTwoPoints survives round-trip', () => {
     const op = new AddLine2DByTwoPointsOp('proj_plane_H', 'point1', 'point2');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -62,7 +62,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.point2Id).toBe('point2');
   });
 
-  it('AddSegment2DOp survives round-trip', () => {
+  it('AddSegment2DByPoints survives round-trip', () => {
     const op = new AddSegment2DByPointsOp('proj_plane_H', 'point1', 'point2');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -73,7 +73,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.point2Id).toBe('point2');
   });
 
-  it('AddCircle2DOp survives round-trip', () => {
+  it('AddCircle2DByCenterAndPoint survives round-trip', () => {
     const op = new AddCircle2DByCenterAndPointOp('proj_plane_H', 'center', 'radiusPoint');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -84,7 +84,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.circumferencePointId).toBe('radiusPoint');
   });
 
-  it('AddGuide2DOp survives round-trip', () => {
+  it('AddGuide2DPerpendicularToLine survives round-trip', () => {
     const op = new AddGuide2DPerpendicularToLineOp('proj_plane_H', 'lineId', 'pointId');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -95,7 +95,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.throughPointId).toBe('pointId');
   });
 
-  it('AddSiblingGuide2DOp survives round-trip', () => {
+  it('AddSiblingGuide2D survives round-trip', () => {
     const op = new AddSiblingGuide2DOp('proj_plane_V', 'primaryGuide', 'refLine');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -106,7 +106,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.referenceLineId).toBe('refLine');
   });
 
-  it('AddLineLineIntersectionPoint2DOp survives round-trip', () => {
+  it('AddLineLineIntersectionPoint2D survives round-trip', () => {
     const op = new AddLineLineIntersectionPoint2DOp('proj_plane_H', 'line1', 'line2');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -117,7 +117,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.line2Id).toBe('line2');
   });
 
-  it('AddLineCircleIntersectionPoint2DOp survives round-trip', () => {
+  it('AddLineCircleIntersectionPoint2D survives round-trip', () => {
     const op = new AddLineCircleIntersectionPoint2DOp('proj_plane_H', 'line', 'circle', 0);
     
     const result = roundTripOperation(op, world, commandStack);
@@ -129,7 +129,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.index).toBe(0);
   });
 
-  it('AddCircleCircleIntersectionPoint2DOp survives round-trip', () => {
+  it('AddCircleCircleIntersectionPoint2D survives round-trip', () => {
     const op = new AddCircleCircleIntersectionPoint2DOp('proj_plane_H', 'circle1', 'circle2', 1);
     
     const result = roundTripOperation(op, world, commandStack);
@@ -141,7 +141,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.index).toBe(1);
   });
 
-  it('RemovePoint2DOp survives round-trip', () => {
+  it('RemovePoint2D survives round-trip', () => {
     const op = new RemovePoint2DOp('proj_plane_H', 'point1');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -151,7 +151,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.pointId).toBe('point1');
   });
 
-  it('RemoveLine2DOp survives round-trip', () => {
+  it('RemoveLine2D survives round-trip', () => {
     const op = new RemoveLine2DOp('proj_plane_H', 'line1');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -161,7 +161,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.lineId).toBe('line1');
   });
 
-  it('RemoveSegment2DOp survives round-trip', () => {
+  it('RemoveSegment2D survives round-trip', () => {
     const op = new RemoveSegment2DOp('proj_plane_H', 'segment1');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -171,7 +171,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.segmentId).toBe('segment1');
   });
 
-  it('RemoveCircle2DOp survives round-trip', () => {
+  it('RemoveCircle2D survives round-trip', () => {
     const op = new RemoveCircle2DOp('proj_plane_H', 'circle1');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -181,7 +181,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.circleId).toBe('circle1');
   });
 
-  it('RemoveGuide2DOp survives round-trip', () => {
+  it('RemoveGuide2D survives round-trip', () => {
     const op = new RemoveGuide2DOp('proj_plane_H', 'guide1');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -191,7 +191,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.guideId).toBe('guide1');
   });
 
-  it('UpdateElementStyleOp survives round-trip', () => {
+  it('UpdateElementStyle survives round-trip', () => {
     const op = new UpdateElementStyleOp('point1', 'proj_plane_H', { color: '#FF0000', strokeWidth: 2 });
     
     const result = roundTripOperation(op, world, commandStack);
@@ -202,7 +202,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.newStyle).toEqual({ color: '#FF0000', strokeWidth: 2 });
   });
 
-  it('RemoveActionFromProcessTreeOp survives round-trip', () => {
+  it('RemoveActionFromProcessTree survives round-trip', () => {
     const op = new RemoveActionFromProcessTreeOp('action_123');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -211,7 +211,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.actionId).toBe('action_123');
   });
 
-  it('RemoveActionGroupOp survives round-trip', () => {
+  it('RemoveActionGroupFromProcessTree survives round-trip', () => {
     const op = new RemoveActionGroupFromProcessTreeOp('group_456');
     
     const result = roundTripOperation(op, world, commandStack);
@@ -220,7 +220,7 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.parameters.groupId).toBe('group_456');
   });
 
-  it('RemoveSubprocessOp survives round-trip', () => {
+  it('RemoveSubprocessFromProcessTree survives round-trip', () => {
     const op = new RemoveSubprocessFromProcessTreeOp('subprocess_789');
     
     const result = roundTripOperation(op, world, commandStack);
