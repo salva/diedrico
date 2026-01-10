@@ -16,7 +16,6 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Display Google Drive login status in the UI, including user profile information if Google provides it.
 * [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
 * [ ] Add support for moving semi-free points and distances along guide lines.
@@ -49,6 +48,24 @@ Note that completing these tasks may require asking the user for additional info
 
 
 ## ALREADY PLANNED
+
+* [X] Display Google Drive login status in the UI, including user profile information if Google provides it.
+  - **STATUS**: ✅ PLANNED - Phase 38 created
+  - UI Specification: Added §Google Drive Login Status Widget to ui-spec.md
+  - Position: Far right of toolbar (after all tool groups)
+  - States: "Sign in" button (unauthenticated) → Avatar + name + dropdown (authenticated)
+  - Profile data: name, email, picture from Google Identity Services userinfo endpoint
+  - Dropdown menu: Shows email, "Sign Out" button, future account settings
+  - Responsive: Full name on wide screens, first name on medium, avatar only on narrow
+  - Data Model: Added §Authentication State to data-model.md
+  - State storage: AuthState interface in authStore (Pinia) or viewStore
+  - Profile fields: GoogleUserProfile { name, email, picture, sub }
+  - Lifecycle: Session-only token in session storage, not persisted in projects
+  - Scopes: Add `profile email` to existing `drive.file` scope
+  - Implementation: Phase 38 with 11 tasks (T400-T410)
+  - Tasks cover: Scope addition, profile fetching, state management, component creation, toolbar integration, sign-out, session persistence, testing
+  - Benefits: Users know active account, quick sign-out access, multi-account awareness
+  - Security: Session-only tokens, no long-term credentials in browser storage
 
 * [X] Ensure that SiblingIntersectionPoint2D works for any HL, not only for HL_HV. See how sibling line realization is calculated (it should be almost identical).
   - **STATUS**: ✅ COMPLETE - Phase 37 implemented

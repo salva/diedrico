@@ -463,6 +463,85 @@ The toolbars are organized into distinct groups, each focused on a specific cate
 - Separators (│) between groups for visual organization
 - Tool groups may collapse to single icon + dropdown on very narrow screens
 
+### Google Drive Login Status Widget
+
+Located at the **far right of the top toolbar**, the login status widget provides persistent visibility of the user's authentication state and profile information.
+
+**Visual States**:
+
+1. **Not Authenticated**:
+   ```
+   [Sign in with Google]
+   ```
+   - Text button with Google branding colors
+   - Clicking opens Google Sign-In flow
+   
+2. **Authenticated - Compact**:
+   ```
+   [👤 User Name ▼]
+   ```
+   - User avatar (circular, 32×32px) if available from Google profile
+   - Fallback to generic user icon if no avatar
+   - User's display name (truncated if too long: "John D...")
+   - Small dropdown arrow indicating menu availability
+   
+3. **Authenticated - Menu Open**:
+   ```
+   [👤 User Name ▼]
+      ├─ user@example.com
+      ├─ [Sign Out]
+      └─ [Account Settings] (future)
+   ```
+
+**User Profile Data** (fetched from Google Identity Services):
+- `name`: Display name (e.g., "John Doe")
+- `email`: Email address for identification
+- `picture`: Avatar image URL (if available)
+- Profile data fetched once after successful authentication
+- Cached in application state for session duration
+- Refreshed on page reload or re-authentication
+
+**Interaction Behavior**:
+- Click widget → Opens dropdown menu
+- Menu shows:
+  - User email (non-interactive, for confirmation)
+  - "Sign Out" button → Revokes token and returns to sign-in state
+  - Future: "Account Settings" → Opens account preferences dialog
+- Click outside menu → Closes menu
+- ESC key → Closes menu
+
+**Visual Design**:
+- Contrasts with toolbar background for visibility
+- Maintains consistent branding with Google colors where appropriate
+- Avatar circular with subtle border
+- Hover state: Slight background highlight
+- Active (menu open): Darker background
+
+**Responsive Behavior**:
+- On wide screens: Show avatar + full name + dropdown
+- On medium screens: Show avatar + first name + dropdown
+- On narrow screens: Show avatar only + dropdown (name in menu header)
+- Minimum size: 40px width (avatar + padding)
+
+**State Persistence**:
+- Authentication state persists across page reloads via session token
+- Profile data cached in browser session storage
+- On startup: Check for existing valid token
+  - If valid: Restore session and display authenticated state
+  - If invalid/expired: Show "Sign in with Google" button
+
+**Technical Integration**:
+- Profile data fetched via Google Identity Services tokeninfo endpoint
+- Stored in application state (likely viewStore or dedicated authStore)
+- Widget component reactively updates based on auth state changes
+- Sign out: Calls GoogleDriveService.signOut() and clears cached profile
+
+**Benefits**:
+- Users always know their authentication status
+- Quick access to sign out without navigating away
+- Visual confirmation of active account (important for multi-account users)
+- Reinforces cloud storage connection (files saved to this account)
+
 ### Toolbar Interaction Model
 
 The toolbar system follows a structured interaction pattern designed to make geometric reasoning explicit and unambiguous. This model is detailed in the sections below and expanded further in spec.md.

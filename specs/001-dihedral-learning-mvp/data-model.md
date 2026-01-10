@@ -573,6 +573,93 @@ commandStack.execute(new UpdateSettingCommand('grid.visible', false, settings));
 - **Active** → **Saved**: Persisted to Google Drive (auto-save 2 seconds after last change)
 - **Active** → **Closed**: User closes project, all changes already saved to Google Drive
 
+### Authentication State (Google Drive)
+
+**Purpose**: Track user authentication status and profile information for Google Drive integration
+
+**Fields**:
+```typescript
+interface AuthState {
+  isAuthenticated: boolean;         // True if user has valid access token
+  user: GoogleUserProfile | null;   // User profile from Google, null if not authenticated
+  accessToken: string | null;       // OAuth2 access token for API calls
+  tokenExpiry: Date | null;         // When token expires (for refresh logic)
+}
+
+interface GoogleUserProfile {
+  name: string;                     // Display name (e.g., "John Doe")
+  email: string;                    // Email address (e.g., "john@example.com")
+  picture?: string;                 // Avatar URL (if available)
+  sub: string;                      // Google user ID (unique identifier)
+}
+```
+
+**Storage Location**:
+- **Runtime**: Reactive state in `authStore` (Pinia store) or `viewStore` auth section
+- **Persistence**: Access token in browser session storage (cleared on browser close)
+- **Security**: Never persist refresh tokens or long-term credentials in browser storage
+
+**State Management**:
+- Authentication state is NOT part of CommandStack (not undoable)
+- Not persisted in project files (user-specific, not document-specific)
+- Managed directly by GoogleDriveService and reactive stores
+- Changes trigger UI updates via reactive bindings
+
+**Lifecycle**:
+1. **Startup**: Check session storage for existing valid token
+   - If found and valid: Restore authenticated state, fetch user profile
+   - If missing/expired: Show "Sign in with Google" button
+2. **Sign In**: OAuth2 flow → Receive access token → Fetch profile → Update state
+3. **API Calls**: Use access token for all Google Drive operations
+4. **Token Refresh**: Auto-refresh before expiry (Google Identity Services handles this)
+5. **Sign Out**: Clear token, clear profile, update UI to unauthenticated state
+6. **Session End**: Token cleared on browser close (session storage)
+
+**User Profile Fetching**:
+```typescript
+// After successful authentication, fetch profile
+async function fetchUserProfile(accessToken: string): Promise<GoogleUserProfile> {
+  const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  const data = await response.json();
+  return {
+    name: data.name,
+    email: data.email,
+    picture: data.picture,
+    sub: data.sub
+  };
+}
+```
+
+**Scope Requirements**:
+- **Existing**: `https://www.googleapis.com/auth/drive.file` (app-created files)
+- **Additional**: `https://www.googleapis.com/auth/userinfo.profile` (name, picture)
+- **Additional**: `https://www.googleapis.com/auth/userinfo.email` (email)
+- Or use combined scope: `openid profile email` with OAuth2
+
+**UI Integration**:
+- Login status widget (toolbar) reactively displays auth state
+- Widget shows:
+  - Not authenticated: "Sign in with Google" button
+  - Authenticated: Avatar + name + dropdown menu
+- Menu provides:
+  - User email display (for account confirmation)
+  - "Sign Out" action
+  - Future: Account settings
+
+**Error Handling**:
+- Network failure during sign-in: Show error message, allow retry
+- Token expired during operation: Auto-refresh if possible, else prompt re-auth
+- Sign-out failure: Force local state clear, log error
+- Profile fetch failure: Use email as fallback name, no avatar
+
+**Benefits**:
+- Users know which Google account is active (important for multi-account users)
+- Persistent authentication across page reloads (within session)
+- Automatic file association with correct Google Drive account
+- Security: Session-only token storage, no long-term credentials
+
 ---
 
 ## Process Layer (Construction History)
