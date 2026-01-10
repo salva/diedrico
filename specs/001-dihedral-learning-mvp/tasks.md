@@ -3302,13 +3302,6 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
 - **File**: `frontend/src/commands/operations/IOperation.ts`
 - **Audience**: Future developers adding new operations
 
-[T442] Add schema version migration framework (optional, for future)
-- Create ProjectService.migrateSchema(data, fromVersion, toVersion) method
-- Currently: Reject projects with mismatched schema version
-- Future: Allow upgrading old project files to new format
-- **Example**: v2.0.0 → v3.0.0 converts AddIntersectionPoint2D to specialized types
-- **Status**: Document as future enhancement, not required for Phase 40
-
 [T443] Test cascade deletion persistence
 - Create point with dependent line
 - Delete point (cascades to delete line)
