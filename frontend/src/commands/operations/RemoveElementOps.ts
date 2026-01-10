@@ -40,8 +40,15 @@ export class RemovePoint2DOp implements IOperation {
     try {
       // Store element before removal for undo - get from plane
       const plane = world.projectionPlanes.get(this.planeId);
-      this.removedPoint = plane?.getPoint(this.pointId);
+      if (!plane) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Plane ${this.planeId} not found`
+        };
+      }
       
+      this.removedPoint = plane.getPoint(this.pointId);
       if (!this.removedPoint) {
         return {
           success: false,
@@ -50,8 +57,15 @@ export class RemovePoint2DOp implements IOperation {
         };
       }
 
-      // Remove the point
-      world.removePoint2D(this.planeId, this.pointId);
+      // Remove the point from the plane
+      const removed = plane.removePoint(this.pointId);
+      if (!removed) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Failed to remove point ${this.pointId}`
+        };
+      }
       
       this.outputs = { removedPointId: this.pointId };
       return {
@@ -72,9 +86,12 @@ export class RemovePoint2DOp implements IOperation {
       throw new Error('Cannot undo: no point data stored');
     }
 
-    // Restore the point using the stored object
-    // World's internal maps will re-add it with the same ID
-    world.restorePoint2D(this.planeId, this.removedPoint);
+    // Restore the point by adding it back to the plane
+    const plane = world.projectionPlanes.get(this.planeId);
+    if (!plane) {
+      throw new Error(`Plane ${this.planeId} not found`);
+    }
+    plane.addPoint(this.removedPoint);
   }
 }
 
@@ -101,8 +118,15 @@ export class RemoveLine2DOp implements IOperation {
     try {
       // Get from plane for undo storage
       const plane = world.projectionPlanes.get(this.planeId);
-      this.removedLine = plane?.getLine(this.lineId);
+      if (!plane) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Plane ${this.planeId} not found`
+        };
+      }
       
+      this.removedLine = plane.getLine(this.lineId);
       if (!this.removedLine) {
         return {
           success: false,
@@ -111,7 +135,15 @@ export class RemoveLine2DOp implements IOperation {
         };
       }
 
-      world.removeLine2D(this.planeId, this.lineId);
+      // Remove the line from the plane
+      const removed = plane.removeLine(this.lineId);
+      if (!removed) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Failed to remove line ${this.lineId}`
+        };
+      }
       
       this.outputs = { removedLineId: this.lineId };
       return {
@@ -132,7 +164,12 @@ export class RemoveLine2DOp implements IOperation {
       throw new Error('Cannot undo: no line data stored');
     }
 
-    world.restoreLine2D(this.planeId, this.removedLine);
+    // Restore the line by adding it back to the plane
+    const plane = world.projectionPlanes.get(this.planeId);
+    if (!plane) {
+      throw new Error(`Plane ${this.planeId} not found`);
+    }
+    plane.addLine(this.removedLine);
   }
 }
 
@@ -157,9 +194,16 @@ export class RemoveSegment2DOp implements IOperation {
     try {
       // Get from plane for undo storage
       const plane = world.projectionPlanes.get(this.planeId);
-      const line = plane?.getLine(this.segmentId);
-      this.removedSegment = line && line.type === 'segment' ? line as Segment2D : undefined;
+      if (!plane) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Plane ${this.planeId} not found`
+        };
+      }
       
+      const line = plane.getLine(this.segmentId);
+      this.removedSegment = line && line.type === 'segment' ? line as Segment2D : undefined;
       if (!this.removedSegment) {
         return {
           success: false,
@@ -168,7 +212,15 @@ export class RemoveSegment2DOp implements IOperation {
         };
       }
 
-      world.removeSegment2D(this.planeId, this.segmentId);
+      // Remove the segment from the plane (segments are stored as lines)
+      const removed = plane.removeLine(this.segmentId);
+      if (!removed) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Failed to remove segment ${this.segmentId}`
+        };
+      }
       
       this.outputs = { removedSegmentId: this.segmentId };
       return {
@@ -189,7 +241,12 @@ export class RemoveSegment2DOp implements IOperation {
       throw new Error('Cannot undo: no segment data stored');
     }
 
-    world.restoreSegment2D(this.planeId, this.removedSegment);
+    // Restore the segment by adding it back to the plane as a line
+    const plane = world.projectionPlanes.get(this.planeId);
+    if (!plane) {
+      throw new Error(`Plane ${this.planeId} not found`);
+    }
+    plane.addLine(this.removedSegment);
   }
 }
 
@@ -214,8 +271,15 @@ export class RemoveCircle2DOp implements IOperation {
     try {
       // Get from plane for undo storage
       const plane = world.projectionPlanes.get(this.planeId);
-      this.removedCircle = plane?.getCircle(this.circleId);
+      if (!plane) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Plane ${this.planeId} not found`
+        };
+      }
       
+      this.removedCircle = plane.getCircle(this.circleId);
       if (!this.removedCircle) {
         return {
           success: false,
@@ -224,7 +288,15 @@ export class RemoveCircle2DOp implements IOperation {
         };
       }
 
-      world.removeCircle2D(this.planeId, this.circleId);
+      // Remove the circle from the plane
+      const removed = plane.removeCircle(this.circleId);
+      if (!removed) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Failed to remove circle ${this.circleId}`
+        };
+      }
       
       this.outputs = { removedCircleId: this.circleId };
       return {
@@ -245,7 +317,12 @@ export class RemoveCircle2DOp implements IOperation {
       throw new Error('Cannot undo: no circle data stored');
     }
 
-    world.restoreCircle2D(this.planeId, this.removedCircle);
+    // Restore the circle by adding it back to the plane
+    const plane = world.projectionPlanes.get(this.planeId);
+    if (!plane) {
+      throw new Error(`Plane ${this.planeId} not found`);
+    }
+    plane.addCircle(this.removedCircle);
   }
 }
 
@@ -268,7 +345,9 @@ export class RemoveGuide2DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      this.removedGuide = world.getGuide2DById(this.guideId);
+      // Get from plane for undo storage
+      const plane = world.projectionPlanes.get(this.planeId);
+      this.removedGuide = plane?.getGuide(this.guideId);
       
       if (!this.removedGuide) {
         return {
@@ -278,7 +357,22 @@ export class RemoveGuide2DOp implements IOperation {
         };
       }
 
-      world.removeGuide2D(this.planeId, this.guideId);
+      // Remove the guide from the plane
+      if (!plane) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Plane ${this.planeId} not found`
+        };
+      }
+      const removed = plane.removeGuide(this.guideId);
+      if (!removed) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Failed to remove guide ${this.guideId}`
+        };
+      }
       
       this.outputs = { removedGuideId: this.guideId };
       return {
@@ -299,6 +393,14 @@ export class RemoveGuide2DOp implements IOperation {
       throw new Error('Cannot undo: no guide data stored');
     }
 
-    world.restoreGuide2D(this.planeId, this.removedGuide);
+    // Restore the guide by adding it back to the plane
+    const plane = world.projectionPlanes.get(this.planeId);
+    if (!plane) {
+      throw new Error(`Plane ${this.planeId} not found`);
+    }
+    // Add the guide back (assuming there's an addGuide method)
+    if (!plane.guides.has(this.removedGuide.id)) {
+      plane.guides.set(this.removedGuide.id, this.removedGuide);
+    }
   }
 }

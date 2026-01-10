@@ -20,14 +20,14 @@ import { World } from '@/domain/world/World';
 
 describe('Line2DRealization2D', () => {
   it('should store point and direction', () => {
-    const point = new Vector3(1, 2, 1);
-    const direction = new Vector3(3, 4, 0);
+    const point1 = new Vector3(1, 2, 1);
+    const point2 = new Vector3(3, 4, 0);  // Direction vector (z=0)
     
-    const realization = new Line2DRealization2D(point, direction);
+    const realization = new Line2DRealization2D(point1, point2);
     
-    expect(realization.point).toEqual(point);
-    expect(realization.direction).toEqual(direction);
-    expect(realization.direction.z).toBe(0); // Direction has no translation
+    expect(realization.point1).toEqual(point1);
+    expect(realization.point2).toEqual(point2);
+    expect(realization.point2.z).toBe(0); // Direction has no translation (point2.z === 0)
   });
 });
 
@@ -85,8 +85,9 @@ describe('Line2DByTwoPoints', () => {
 
   it('should realize line from two points', () => {
     const world = new World();
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'point1');
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(10, 0, 1), 'point2');
+    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'point1');
+    const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world, 'point2');
     
     const line = new Line2DByTwoPoints(
       'line1',
@@ -98,20 +99,21 @@ describe('Line2DByTwoPoints', () => {
     const realization = line.realize2D(world);
     
     expect(realization).not.toBeNull();
-    expect(realization!.point.x).toBeCloseTo(0, 10);
-    expect(realization!.point.y).toBeCloseTo(0, 10);
-    expect(realization!.point.z).toBe(1);
+    expect(realization!.point1.x).toBeCloseTo(0, 10);
+    expect(realization!.point1.y).toBeCloseTo(0, 10);
+    expect(realization!.point1.z).toBe(1);
     
-    // Direction should be normalized (1, 0, 0)
-    expect(realization!.direction.x).toBeCloseTo(1, 10);
-    expect(realization!.direction.y).toBeCloseTo(0, 10);
-    expect(realization!.direction.z).toBe(0);
+    // point2 is raw direction (p2 - p1) = (10, 0, 0) with z=0 for infinite line
+    expect(realization!.point2.x).toBeCloseTo(10, 10);
+    expect(realization!.point2.y).toBeCloseTo(0, 10);
+    expect(realization!.point2.z).toBe(0);
   });
 
   it('should realize line with diagonal direction', () => {
     const world = new World();
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'point1');
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(3, 4, 1), 'point2');
+    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'point1');
+    const p2 = plane.addFreePoint2D(new Vector3(3, 4, 1), world, 'point2');
     
     const line = new Line2DByTwoPoints(
       'line1',
@@ -124,15 +126,16 @@ describe('Line2DByTwoPoints', () => {
     
     expect(realization).not.toBeNull();
     
-    // Direction should be normalized (0.6, 0.8, 0)
-    expect(realization!.direction.x).toBeCloseTo(0.6, 10);
-    expect(realization!.direction.y).toBeCloseTo(0.8, 10);
-    expect(realization!.direction.z).toBe(0);
+    // point2 is raw direction (p2 - p1) = (3, 4, 0) with z=0 for infinite line
+    expect(realization!.point2.x).toBeCloseTo(3, 10);
+    expect(realization!.point2.y).toBeCloseTo(4, 10);
+    expect(realization!.point2.z).toBe(0);
   });
 
   it('should return null if first point is missing', () => {
     const world = new World();
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(10, 0, 1), 'point2');
+    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world, 'point2');
     // point1 doesn't exist in world
     
     const line = new Line2DByTwoPoints(
@@ -149,7 +152,8 @@ describe('Line2DByTwoPoints', () => {
 
   it('should return null if second point is missing', () => {
     const world = new World();
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'point1');
+    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'point1');
     // point2 doesn't exist in world
     
     const line = new Line2DByTwoPoints(
@@ -166,8 +170,9 @@ describe('Line2DByTwoPoints', () => {
 
   it('should return null if both points are too close (degenerate line)', () => {
     const world = new World();
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'point1');
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(0.0000001, 0.0000001, 1), 'point2');
+    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'point1');
+    const p2 = plane.addFreePoint2D(new Vector3(0.0000001, 0.0000001, 1), world, 'point2');
     
     const line = new Line2DByTwoPoints(
       'line1',
@@ -185,8 +190,9 @@ describe('Line2DByTwoPoints', () => {
 
   it('should realize line with negative coordinates', () => {
     const world = new World();
-    const p1 = world.addFreePoint2D('proj_plane_V', new Vector3(-10, -5, 1), 'point1');
-    const p2 = world.addFreePoint2D('proj_plane_V', new Vector3(5, 10, 1), 'point2');
+    const plane = world.getProjectionPlaneById('proj_plane_V')!;
+    const p1 = plane.addFreePoint2D(new Vector3(-10, -5, 1), world, 'point1');
+    const p2 = plane.addFreePoint2D(new Vector3(5, 10, 1), world, 'point2');
     
     const line = new Line2DByTwoPoints(
       'line1',
@@ -198,19 +204,19 @@ describe('Line2DByTwoPoints', () => {
     const realization = line.realize2D(world);
     
     expect(realization).not.toBeNull();
-    expect(realization!.point.x).toBeCloseTo(-10, 10);
-    expect(realization!.point.y).toBeCloseTo(-5, 10);
+    expect(realization!.point1.x).toBeCloseTo(-10, 10);
+    expect(realization!.point1.y).toBeCloseTo(-5, 10);
     
-    // Direction: (15, 15) normalized to (sqrt(2)/2, sqrt(2)/2)
-    const expectedDir = Math.sqrt(2) / 2;
-    expect(realization!.direction.x).toBeCloseTo(expectedDir, 10);
-    expect(realization!.direction.y).toBeCloseTo(expectedDir, 10);
+    // point2 is raw direction (p2 - p1) = (15, 15, 0) with z=0 for infinite line
+    expect(realization!.point2.x).toBeCloseTo(15, 10);
+    expect(realization!.point2.y).toBeCloseTo(15, 10);
   });
 
   it('should work with vertical line', () => {
     const world = new World();
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 0, 1), 'point1');
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 10, 1), 'point2');
+    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const p1 = plane.addFreePoint2D(new Vector3(5, 0, 1), world, 'point1');
+    const p2 = plane.addFreePoint2D(new Vector3(5, 10, 1), world, 'point2');
     
     const line = new Line2DByTwoPoints(
       'line1',
@@ -223,16 +229,17 @@ describe('Line2DByTwoPoints', () => {
     
     expect(realization).not.toBeNull();
     
-    // Direction should be (0, 1, 0) - vertical
-    expect(realization!.direction.x).toBeCloseTo(0, 10);
-    expect(realization!.direction.y).toBeCloseTo(1, 10);
-    expect(realization!.direction.z).toBe(0);
+    // point2 is raw direction (p2 - p1) = (0, 10, 0) with z=0 for infinite line
+    expect(realization!.point2.x).toBeCloseTo(0, 10);
+    expect(realization!.point2.y).toBeCloseTo(10, 10);
+    expect(realization!.point2.z).toBe(0);
   });
 
   it('should work with horizontal line', () => {
     const world = new World();
-    const p1 = world.addFreePoint2D('proj_plane_V', new Vector3(0, 7, 1), 'point1');
-    const p2 = world.addFreePoint2D('proj_plane_V', new Vector3(20, 7, 1), 'point2');
+    const plane = world.getProjectionPlaneById('proj_plane_V')!;
+    const p1 = plane.addFreePoint2D(new Vector3(0, 7, 1), world, 'point1');
+    const p2 = plane.addFreePoint2D(new Vector3(20, 7, 1), world, 'point2');
     
     const line = new Line2DByTwoPoints(
       'line1',
@@ -245,9 +252,9 @@ describe('Line2DByTwoPoints', () => {
     
     expect(realization).not.toBeNull();
     
-    // Direction should be (1, 0, 0) - horizontal
-    expect(realization!.direction.x).toBeCloseTo(1, 10);
-    expect(realization!.direction.y).toBeCloseTo(0, 10);
-    expect(realization!.direction.z).toBe(0);
+    // point2 is raw direction (p2 - p1) = (20, 0, 0) with z=0 for infinite line
+    expect(realization!.point2.x).toBeCloseTo(20, 10);
+    expect(realization!.point2.y).toBeCloseTo(0, 10);
+    expect(realization!.point2.z).toBe(0);
   });
 });

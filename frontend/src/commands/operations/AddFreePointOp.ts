@@ -1,7 +1,7 @@
 /**
- * AddFreePoint2DOp - Operation to add a FreePoint2D using World factory method
+ * AddFreePoint2DOp - Operation to add a FreePoint2D using ProjectionPlane factory method
  * 
- * Wraps World.addFreePoint2D() in the Operation interface.
+ * Wraps ProjectionPlane.addFreePoint2D() in the Operation interface.
  */
 
 import type { Vector3 } from 'three';
@@ -22,8 +22,14 @@ export class AddFreePoint2DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Pass stored ID if available (for redo), otherwise let World generate new one
-      const point = world.addFreePoint2D(this.planeId, this.position, this.outputs.pointId);
+      // Get the projection plane
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const point = plane.addFreePoint2D(this.position, world, this.outputs.pointId);
       this.outputs = { pointId: point.id };
       return {
         success: true,
@@ -40,7 +46,10 @@ export class AddFreePoint2DOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.pointId) {
-      world.removePoint2D(this.planeId, this.outputs.pointId);
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removePoint(this.outputs.pointId);
+      }
     }
   }
 }

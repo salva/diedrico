@@ -1,7 +1,7 @@
 /**
- * AddCircle2DByCenterAndRadiusOp - Operation to add a Circle2DByCenterAndRadius using World factory method
+ * AddCircle2DByCenterAndRadiusOp - Operation to add a Circle2DByCenterAndRadius using ProjectionPlane factory method
  * 
- * Wraps World.addCircle2DByCenter() in the Operation interface.
+ * Wraps ProjectionPlane.addCircle2DByCenter() in the Operation interface.
  */
 
 import type { IOperation, OperationResult } from './IOperation';
@@ -22,11 +22,16 @@ export class AddCircle2DByCenterAndRadiusOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Pass stored ID if available (for redo), otherwise let World generate new one
-      const circle = world.addCircle2DByCenter(
-        this.planeId,
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const circle = plane.addCircle2DByCenter(
         this.centerId,
         this.radius,
+        world,
         this.outputs.circleId
       );
       this.outputs = { circleId: circle.id };
@@ -45,7 +50,10 @@ export class AddCircle2DByCenterAndRadiusOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.circleId) {
-      world.removeCircle2D(this.planeId, this.outputs.circleId);
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeCircle(this.outputs.circleId);
+      }
     }
   }
 }

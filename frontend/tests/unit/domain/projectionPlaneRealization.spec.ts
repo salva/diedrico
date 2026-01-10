@@ -23,11 +23,11 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
   beforeEach(() => {
     world = new World();
-    planeH = world.projectionPlanes.get('proj_plane_H');
+    planeH = world.getProjectionPlaneById('proj_plane_H')!;
     
     // Create test points
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(10, 10, 1), 'p2');
+    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+    const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world, 'p2');
     
     p1Id = p1.id;
     p2Id = p2.id;
@@ -35,7 +35,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
   describe('Point realization computation', () => {
     it('ProjectionPlane.realizePoint2D() should compute and cache point realization', () => {
-      const point = world.getPoint2DById(p1Id)!;
+      const point = planeH.getPoint(p1Id)!;
       
       // Verify cache is empty initially
       expect(planeH.getPointRealization2D(p1Id)).toBeUndefined();
@@ -68,7 +68,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
     });
 
     it('subsequent calls should return cached realization', () => {
-      const point = world.getPoint2DById(p1Id)!;
+      const point = planeH.getPoint(p1Id)!;
       
       // First call - computes
       const first = planeH.realizePoint2D(point, world);
@@ -138,7 +138,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
   describe('Circle realization computation', () => {
     it('ProjectionPlane.realizeCircle2D() should compute and cache circle realization', () => {
       // Create circumference point
-      const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 0, 1));
+      const p2 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
       const circle = new Circle2DByCenterAndPoint('c1', p1Id, p2.id, 'proj_plane_H');
       world.addCircle2D(circle);
       
@@ -162,7 +162,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
     it('World.getCircle2DRealization() should delegate to ProjectionPlane', () => {
       // Create circumference point
-      const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(5, 0, 1));
+      const p2 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
       const circle = new Circle2DByCenterAndPoint('c1', p1Id, p2.id, 'proj_plane_H');
       world.addCircle2D(circle);
       
@@ -180,11 +180,11 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
   describe('Cache isolation between planes', () => {
     it('realizations should be cached per plane', () => {
-      const planeV = world.projectionPlanes.get('proj_plane_V')!;
+      const planeV = world.getProjectionPlaneById('proj_plane_V')!;
       
       // Add points to both planes
-      const p1H = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1), 'pH');
-      const p1V = world.addFreePoint2D('proj_plane_V', new Vector3(5, 5, 1), 'pV');
+      const p1H = planeH.addFreePoint2D(new Vector3(5, 5, 1), world, 'pH');
+      const p1V = planeV.addFreePoint2D(new Vector3(5, 5, 1), world, 'pV');
       
       // Realize via World (which delegates to planes)
       world.getPoint2DRealization(p1H.id);
@@ -204,7 +204,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
       // This verifies dual caching during migration
       // World cache will be removed in Phase 22.5.5
       
-      const point = world.getPoint2DById(p1Id)!;
+      const point = planeH.getPoint(p1Id)!;
       
       // Call via World
       const realization = world.getPoint2DRealization(p1Id);

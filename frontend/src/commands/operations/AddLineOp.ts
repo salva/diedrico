@@ -1,7 +1,7 @@
 /**
- * AddLine2DByTwoPointsOp - Operation to add a Line2DByTwoPoints using World factory method
+ * AddLine2DByTwoPointsOp - Operation to add a Line2DByTwoPoints using ProjectionPlane factory method
  * 
- * Wraps World.addLine2DBetweenTwoPoints() in the Operation interface.
+ * Wraps ProjectionPlane.addLine2DBetweenTwoPoints() in the Operation interface.
  */
 
 import type { IOperation, OperationResult } from './IOperation';
@@ -22,11 +22,16 @@ export class AddLine2DByTwoPointsOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Pass stored ID if available (for redo), otherwise let World generate new one
-      const line = world.addLine2DBetweenTwoPoints(
-        this.planeId,
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const line = plane.addLine2DBetweenTwoPoints(
         this.point1Id,
         this.point2Id,
+        world,
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
@@ -45,7 +50,10 @@ export class AddLine2DByTwoPointsOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.lineId) {
-      world.removeLine2D(this.planeId, this.outputs.lineId);
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
     }
   }
 }

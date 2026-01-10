@@ -21,10 +21,11 @@ describe('Segment2D', () => {
 
   beforeEach(() => {
     world = new World();
+    const plane = world.getProjectionPlaneById('proj_plane_H')!;
     
     // Create two test points using factory method
-    const point1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-    const point2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 50, 1), 'p2');
+    const point1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+    const point2 = plane.addFreePoint2D(new Vector3(100, 50, 1), world, 'p2');
     
     point1Id = point1.id;
     point2Id = point2.id;

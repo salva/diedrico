@@ -1,7 +1,7 @@
 /**
- * AddSegment2DByPointsOp - Operation to add a Segment2DByPoints using World factory method
+ * AddSegment2DByPointsOp - Operation to add a Segment2DByPoints using ProjectionPlane factory method
  * 
- * Wraps World.addSegment2DBetweenPoints() in the Operation interface.
+ * Wraps ProjectionPlane.addSegment2DBetweenPoints() in the Operation interface.
  */
 
 import type { IOperation, OperationResult } from './IOperation';
@@ -22,11 +22,16 @@ export class AddSegment2DByPointsOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Pass stored ID if available (for redo), otherwise let World generate new one
-      const segment = world.addSegment2DBetweenPoints(
-        this.planeId,
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const segment = plane.addSegment2DBetweenPoints(
         this.point1Id,
         this.point2Id,
+        world,
         this.outputs.segmentId
       );
       this.outputs = { segmentId: segment.id };
@@ -45,7 +50,10 @@ export class AddSegment2DByPointsOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.segmentId) {
-      world.removeSegment2D(this.planeId, this.outputs.segmentId);
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeSegment(this.outputs.segmentId);
+      }
     }
   }
 }

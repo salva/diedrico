@@ -47,25 +47,27 @@ describe('RemoveElement Operations (T286, T290)', () => {
 
   describe('RemovePoint2DOp', () => {
     it('should remove a point from World', () => {
-      const point = world.addFreePoint2D('proj_plane_H', new Vector3(100, 200, 1), 'point1');
-      expect(world.getPoint2DById('point1')).toBeDefined();
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const point = plane.addFreePoint2D(new Vector3(100, 200, 1), world, 'point1');
+      expect(plane.getPoint('point1')).toBeDefined();
       
       const removeOp = new RemovePoint2DOp('proj_plane_H', 'point1');
       const result = removeOp.apply(world);
       
       expect(result.success).toBe(true);
-      expect(world.getPoint2DById('point1')).toBeUndefined();
+      expect(plane.getPoint('point1')).toBeUndefined();
     });
 
     it('should support undo to restore point', () => {
-      const point = world.addFreePoint2D('proj_plane_H', new Vector3(100, 200, 1), 'point1');
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const point = plane.addFreePoint2D(new Vector3(100, 200, 1), world, 'point1');
       
       const removeOp = new RemovePoint2DOp('proj_plane_H', 'point1');
       removeOp.apply(world);
-      expect(world.getPoint2DById('point1')).toBeUndefined();
+      expect(plane.getPoint('point1')).toBeUndefined();
       
       removeOp.undo(world);
-      expect(world.getPoint2DById('point1')).toBeDefined();
+      expect(plane.getPoint('point1')).toBeDefined();
     });
 
     it('should return error when point not found', () => {
@@ -79,39 +81,42 @@ describe('RemoveElement Operations (T286, T290)', () => {
 
   describe('RemoveLine2DOp', () => {
     it('should remove a line from World', () => {
-      const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-      const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 100, 1), 'p2');
-      const line = world.addLine2DBetweenTwoPoints('proj_plane_H', 'p1', 'p2', 'line1');
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world, 'p2');
+      const line = plane.addLine2DBetweenTwoPoints('p1', 'p2', world, 'line1');
       
-      expect(world.getLine2DById('line1')).toBeDefined();
+      expect(plane.getLine('line1')).toBeDefined();
       
       const removeOp = new RemoveLine2DOp('proj_plane_H', 'line1');
       const result = removeOp.apply(world);
       
       expect(result.success).toBe(true);
-      expect(world.getLine2DById('line1')).toBeUndefined();
+      expect(plane.getLine('line1')).toBeUndefined();
     });
 
     it('should support undo to restore line', () => {
-      const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-      const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 100, 1), 'p2');
-      const line = world.addLine2DBetweenTwoPoints('proj_plane_H', 'p1', 'p2', 'line1');
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world, 'p2');
+      const line = plane.addLine2DBetweenTwoPoints('p1', 'p2', world, 'line1');
       
       const removeOp = new RemoveLine2DOp('proj_plane_H', 'line1');
       removeOp.apply(world);
-      expect(world.getLine2DById('line1')).toBeUndefined();
+      expect(plane.getLine('line1')).toBeUndefined();
       
       removeOp.undo(world);
-      expect(world.getLine2DById('line1')).toBeDefined();
+      expect(plane.getLine('line1')).toBeDefined();
     });
   });
 
   describe('Command composition for cascade deletion', () => {
     it('should delete point and dependent line using Command', () => {
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
       // Create point → line dependency
-      const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-      const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 100, 1), 'p2');
-      const line = world.addLine2DBetweenTwoPoints('proj_plane_H', 'p1', 'p2', 'line1');
+      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world, 'p2');
+      const line = plane.addLine2DBetweenTwoPoints('p1', 'p2', world, 'line1');
       
       // Add actions to process tree
       addTestAction('action1', [], ['p1']);
@@ -135,15 +140,16 @@ describe('RemoveElement Operations (T286, T290)', () => {
       commandStack.push(deleteCmd);
       
       // Verify both deleted
-      expect(world.getPoint2DById('p1')).toBeUndefined();
-      expect(world.getLine2DById('line1')).toBeUndefined();
-      expect(world.getPoint2DById('p2')).toBeDefined(); // p2 should remain
+      expect(plane.getPoint('p1')).toBeUndefined();
+      expect(plane.getLine('line1')).toBeUndefined();
+      expect(plane.getPoint('p2')).toBeDefined(); // p2 should remain
     });
 
     it('should support undo for cascade deletion', () => {
-      const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-      const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 100, 1), 'p2');
-      const line = world.addLine2DBetweenTwoPoints('proj_plane_H', 'p1', 'p2', 'line1');
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world, 'p2');
+      const line = plane.addLine2DBetweenTwoPoints('p1', 'p2', world, 'line1');
       
       addTestAction('action1', [], ['p1']);
       addTestAction('action2', [], ['p2']);
@@ -158,19 +164,20 @@ describe('RemoveElement Operations (T286, T290)', () => {
       commandStack.push(deleteCmd);
       
       // Verify deleted
-      expect(world.getPoint2DById('p1')).toBeUndefined();
-      expect(world.getLine2DById('line1')).toBeUndefined();
+      expect(plane.getPoint('p1')).toBeUndefined();
+      expect(plane.getLine('line1')).toBeUndefined();
       
       // Undo - both should be restored
       commandStack.undo();
-      expect(world.getPoint2DById('p1')).toBeDefined();
-      expect(world.getLine2DById('line1')).toBeDefined();
+      expect(plane.getPoint('p1')).toBeDefined();
+      expect(plane.getLine('line1')).toBeDefined();
     });
 
     it('should support redo after undo', () => {
-      const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-      const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 100, 1), 'p2');
-      const line = world.addLine2DBetweenTwoPoints('proj_plane_H', 'p1', 'p2', 'line1');
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world, 'p2');
+      const line = plane.addLine2DBetweenTwoPoints('p1', 'p2', world, 'line1');
       
       addTestAction('action1', [], ['p1']);
       addTestAction('action2', [], ['p2']);
@@ -186,19 +193,20 @@ describe('RemoveElement Operations (T286, T290)', () => {
       
       // Undo then redo
       commandStack.undo();
-      expect(world.getPoint2DById('p1')).toBeDefined();
-      expect(world.getLine2DById('line1')).toBeDefined();
+      expect(plane.getPoint('p1')).toBeDefined();
+      expect(plane.getLine('line1')).toBeDefined();
       
       commandStack.redo();
-      expect(world.getPoint2DById('p1')).toBeUndefined();
-      expect(world.getLine2DById('line1')).toBeUndefined();
+      expect(plane.getPoint('p1')).toBeUndefined();
+      expect(plane.getLine('line1')).toBeUndefined();
     });
   });
 
   describe('Multiple elements deletion', () => {
     it('should delete multiple independent points', () => {
-      world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-      world.addFreePoint2D('proj_plane_H', new Vector3(100, 100, 1), 'p2');
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+      plane.addFreePoint2D(new Vector3(100, 100, 1), world, 'p2');
       
       addTestAction('action1', [], ['p1']);
       addTestAction('action2', [], ['p2']);
@@ -211,8 +219,8 @@ describe('RemoveElement Operations (T286, T290)', () => {
       deleteCmd.commit();
       commandStack.push(deleteCmd);
       
-      expect(world.getPoint2DById('p1')).toBeUndefined();
-      expect(world.getPoint2DById('p2')).toBeUndefined();
+      expect(plane.getPoint('p1')).toBeUndefined();
+      expect(plane.getPoint('p2')).toBeUndefined();
     });
   });
 });

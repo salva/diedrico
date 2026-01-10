@@ -27,11 +27,11 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
   beforeEach(() => {
     world = new World();
     // Get first projection plane (proj_plane_H)
-    planeH = { id: 'proj_plane_H' };  // Use hardcoded projection plane ID
+    planeH = world.getProjectionPlaneById('proj_plane_H')!;
     
-    // Create test points using World factory method
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1), 'p1');
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(10, 10, 1), 'p2');
+    // Create test points using plane factory method
+    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+    const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world, 'p2');
     
     p1Id = p1.id;
     p2Id = p2.id;

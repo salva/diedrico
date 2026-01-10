@@ -109,8 +109,9 @@ describe('Selection Mask System', () => {
     });
 
     it('filters out points when mask excludes point type', () => {
-      // Create a point at (100, 100) using World factory
-      const point = world.addFreePoint2D(planeId, new Vector3(100, 100, 1));
+      // Create a point at (100, 100) using plane factory
+      const plane = world.getProjectionPlaneById(planeId)!;
+      const point = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
 
       // Hit test with point excluded from mask
       const queryPos = new Vector3(100, 100, 1);
@@ -123,8 +124,9 @@ describe('Selection Mask System', () => {
     });
 
     it('allows points when mask includes point type', () => {
-      // Create a point at (100, 100) using World factory
-      const point = world.addFreePoint2D(planeId, new Vector3(100, 100, 1));
+      // Create a point at (100, 100) using plane factory
+      const plane = world.getProjectionPlaneById(planeId)!;
+      const point = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
 
       // Hit test with point included in mask
       const queryPos = new Vector3(100, 100, 1);
@@ -139,10 +141,11 @@ describe('Selection Mask System', () => {
     });
 
     it('filters out lines when mask excludes line type', () => {
-      // Create two points and a line using World factory
-      const p1 = world.addFreePoint2D(planeId, new Vector3(0, 0, 1));
-      const p2 = world.addFreePoint2D(planeId, new Vector3(200, 200, 1));
-      const line = world.addLine2DBetweenTwoPoints(planeId, p1.id, p2.id);
+      // Create two points and a line using plane factory
+      const plane = world.getProjectionPlaneById(planeId)!;
+      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = plane.addFreePoint2D(new Vector3(200, 200, 1), world);
+      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
 
       // Hit test on the line with line excluded from mask
       const queryPos = new Vector3(100, 100, 1); // On the line
@@ -158,10 +161,11 @@ describe('Selection Mask System', () => {
     });
 
     it('allows lines when mask includes line type', () => {
-      // Create two points and a line using World factory
-      const p1 = world.addFreePoint2D(planeId, new Vector3(0, 0, 1));
-      const p2 = world.addFreePoint2D(planeId, new Vector3(200, 200, 1));
-      const line = world.addLine2DBetweenTwoPoints(planeId, p1.id, p2.id);
+      // Create two points and a line using plane factory
+      const plane = world.getProjectionPlaneById(planeId)!;
+      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = plane.addFreePoint2D(new Vector3(200, 200, 1), world);
+      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
 
       // Hit test on the line with line included in mask
       const queryPos = new Vector3(100, 100, 1); // On the line
@@ -175,8 +179,9 @@ describe('Selection Mask System', () => {
     });
 
     it('respects empty mask (nothing selectable)', () => {
-      // Create a point using World factory
-      const point = world.addFreePoint2D(planeId, new Vector3(100, 100, 1));
+      // Create a point using plane factory
+      const plane = world.getProjectionPlaneById(planeId)!;
+      const point = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
 
       // Hit test with empty mask
       const queryPos = new Vector3(100, 100, 1);
@@ -189,8 +194,9 @@ describe('Selection Mask System', () => {
     });
 
     it('allows multiple types in mask', () => {
-      // Create a point using World factory
-      const point = world.addFreePoint2D(planeId, new Vector3(100, 100, 1));
+      // Create a point using plane factory
+      const plane = world.getProjectionPlaneById(planeId)!;
+      const point = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
 
       // Hit test with mask including both points and lines
       const queryPos = new Vector3(100, 100, 1);
@@ -208,9 +214,10 @@ describe('Selection Mask System', () => {
       // For unit testing purposes, we just verify the mask logic works
       // Full HHL testing is better done in integration/e2e tests
       
-      const p1 = world.addFreePoint2D(planeId, new Vector3(0, 0, 1));
-      const p2 = world.addFreePoint2D(planeId, new Vector3(200, 200, 1));
-      const line = world.addLine2DBetweenTwoPoints(planeId, p1.id, p2.id);
+      const plane = world.getProjectionPlaneById(planeId)!;
+      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = plane.addFreePoint2D(new Vector3(200, 200, 1), world);
+      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
 
       const queryPos = new Vector3(100, 100, 1);
 

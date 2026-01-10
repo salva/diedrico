@@ -57,12 +57,18 @@ export class AddIntersectionPoint2DOp implements IOperation {
     // Remove sibling first (if exists)
     if (this.outputs.siblingPointId) {
       const siblingPlaneId = this.planeId === 'proj_plane_H' ? 'proj_plane_V' : 'proj_plane_H';
-      world.removePoint2D(siblingPlaneId, this.outputs.siblingPointId);
+      const siblingPlane = world.getProjectionPlaneById(siblingPlaneId);
+      if (siblingPlane) {
+        siblingPlane.removePoint(this.outputs.siblingPointId);
+      }
     }
     
     // Remove primary
     if (this.outputs.pointId) {
-      world.removePoint2D(this.planeId, this.outputs.pointId);
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removePoint(this.outputs.pointId);
+      }
     }
   }
 }

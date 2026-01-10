@@ -50,7 +50,10 @@ describe('PointTool', () => {
       expect(result.message).toContain('Created point');
       
       // Verify point was created in World
-      const allPoints = world.getAllPoints2D();
+      const allPoints: any[] = [];
+      for (const plane of world.projectionPlanes.values()) {
+        allPoints.push(...plane.getAllPoints());
+      }
       const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       expect(userPoints.length).toBe(1);
       expect(userPoints[0].planeId).toBe('proj_plane_H');
@@ -80,7 +83,10 @@ describe('PointTool', () => {
 
       tool.handleClick(context);
 
-      const allPoints = world.getAllPoints2D();
+      const allPoints: any[] = [];
+      for (const plane of world.projectionPlanes.values()) {
+        allPoints.push(...plane.getAllPoints());
+      }
       const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       const createdPoint = userPoints[0];
       
@@ -101,7 +107,10 @@ describe('PointTool', () => {
 
       tool.handleClick(context);
 
-      const allPoints = world.getAllPoints2D();
+      const allPoints: any[] = [];
+      for (const plane of world.projectionPlanes.values()) {
+        allPoints.push(...plane.getAllPoints());
+      }
       const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       expect(userPoints[0].planeId).toBe('proj_plane_V');
     });
@@ -203,7 +212,10 @@ describe('PointTool', () => {
       tool.handleClick(context);
 
       // No point should be created
-      const allPoints = world.getAllPoints2D();
+      const allPoints: any[] = [];
+      for (const plane of world.projectionPlanes.values()) {
+        allPoints.push(...plane.getAllPoints());
+      }
       const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       expect(userPoints.length).toBe(0);
     });
@@ -281,7 +293,10 @@ describe('PointTool', () => {
       });
 
       // Verify all points exist
-      const allPoints = world.getAllPoints2D();
+      const allPoints: any[] = [];
+      for (const plane of world.projectionPlanes.values()) {
+        allPoints.push(...plane.getAllPoints());
+      }
       const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       expect(userPoints.length).toBe(3);
     });
@@ -364,14 +379,22 @@ describe('PointTool', () => {
       tool.handleClick(context);
 
       // Point should exist
-      let userPoints = world.getAllPoints2D().filter(p => p.id?.startsWith('point2d_'));
+      let allPoints: any[] = [];
+      for (const plane of world.projectionPlanes.values()) {
+        allPoints.push(...plane.getAllPoints());
+      }
+      let userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       expect(userPoints.length).toBe(1);
 
       // Undo
       commandStack.undo();
 
       // Point should be removed
-      userPoints = world.getAllPoints2D().filter(p => p.id?.startsWith('point2d_'));
+      allPoints = [];
+      for (const plane of world.projectionPlanes.values()) {
+        allPoints.push(...plane.getAllPoints());
+      }
+      userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       expect(userPoints.length).toBe(0);
     });
 
@@ -390,7 +413,11 @@ describe('PointTool', () => {
       commandStack.redo();
 
       // Point should be restored
-      const userPoints = world.getAllPoints2D().filter(p => p.id?.startsWith('point2d_'));
+      const allPoints: any[] = [];
+      for (const plane of world.projectionPlanes.values()) {
+        allPoints.push(...plane.getAllPoints());
+      }
+      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       expect(userPoints.length).toBe(1);
     });
   });

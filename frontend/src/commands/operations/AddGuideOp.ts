@@ -1,7 +1,7 @@
 /**
- * AddGuide2DPerpendicularToLineOp - Operation to add a Guide2DPerpendicularToLine using World factory method
+ * AddGuide2DPerpendicularToLineOp - Operation to add a Guide2DPerpendicularToLine using ProjectionPlane factory method
  * 
- * Wraps World.addGuide2D() in the Operation interface.
+ * Wraps ProjectionPlane.addGuide2D() in the Operation interface.
  */
 
 import type { IOperation, OperationResult } from './IOperation';
@@ -22,11 +22,16 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Pass stored ID if available (for redo), otherwise let World generate new one
-      const guide = world.addGuide2D(
-        this.planeId,
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const guide = plane.addGuide2D(
         this.referenceLineId,
         this.throughPointId,
+        world,
         this.outputs.guideId
       );
       this.outputs = { guideId: guide.id };
@@ -45,7 +50,10 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.guideId) {
-      world.removeGuide2D(this.planeId, this.outputs.guideId);
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeGuide(this.outputs.guideId);
+      }
     }
   }
 }

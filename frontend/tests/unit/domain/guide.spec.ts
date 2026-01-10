@@ -27,19 +27,20 @@ describe('Guide2D', () => {
 
   beforeEach(() => {
     world = new World();
+    const plane = world.getProjectionPlaneById('proj_plane_H')!;
     
     // Create reference line (horizontal line along X-axis)
     const p1 = new FreePoint2D('p1', new Vector3(0, 0, 1), 'proj_plane_H');
     const p2 = new FreePoint2D('p2', new Vector3(100, 0, 1), 'proj_plane_H');
-    world.addPoint2D(p1);
-    world.addPoint2D(p2);
+    plane.addPoint(p1);
+    plane.addPoint(p2);
     
     const referenceLine = new Line2DByTwoPoints('line1', 'p1', 'p2', 'proj_plane_H');
-    world.addLine2D(referenceLine);
+    plane.addLine(referenceLine);
     
     // Create through-point above the line
     const throughPoint = new FreePoint2D('p3', new Vector3(50, 30, 1), 'proj_plane_H');
-    world.addPoint2D(throughPoint);
+    plane.addPoint(throughPoint);
     
     referenceLineId = 'line1';
     throughPointId = 'p3';
@@ -72,132 +73,134 @@ describe('Guide2D', () => {
     it('should realize guide perpendicular to horizontal reference line', () => {
       // Reference line is horizontal (direction: 1, 0, 0)
       // Perpendicular guide should be vertical (direction: 0, 1, 0)
-      const guide = world.addGuide2D('proj_plane_H', referenceLineId, throughPointId, 'g1');
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const guide = plane.addGuide2D(referenceLineId, throughPointId, world, 'g1');
       
       const realization = world.getLine2DRealization('g1');
       
       expect(realization).toBeDefined();
       
       // Guide should pass through the through-point (50, 30, 1)
-      expect(realization!.point.x).toBeCloseTo(50, 5);
-      expect(realization!.point.y).toBeCloseTo(30, 5);
+      expect(realization!.point1.x).toBeCloseTo(50, 5);
+      expect(realization!.point1.y).toBeCloseTo(30, 5);
       
-      // Direction should be perpendicular to horizontal line
-      // Reference line direction: (1, 0, 0)
-      // Perpendicular: (0, 1, 0) - vertical
-      expect(realization!.direction.x).toBeCloseTo(0, 5);
-      expect(realization!.direction.y).toBeCloseTo(1, 5);
-      expect(realization!.direction.z).toBeCloseTo(0, 5);
+      // point2 is perpendicular direction to horizontal line
+      // Reference line direction: (100, 0, 0) unnormalized
+      // Perpendicular: (0, 100, 0) - vertical, z=0, unnormalized
+      expect(realization!.point2.x).toBeCloseTo(0, 5);
+      expect(realization!.point2.y).toBeCloseTo(100, 5);
+      expect(realization!.point2.z).toBeCloseTo(0, 5);
     });
 
     it('should realize guide perpendicular to vertical reference line', () => {
       // Create vertical reference line
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
       const p3 = new FreePoint2D('p4', new Vector3(0, 0, 1), 'proj_plane_H');
       const p4 = new FreePoint2D('p5', new Vector3(0, 100, 1), 'proj_plane_H');
-      world.addPoint2D(p3);
-      world.addPoint2D(p4);
+      plane.addPoint(p3);
+      plane.addPoint(p4);
       
       const verticalLine = new Line2DByTwoPoints('line2', 'p4', 'p5', 'proj_plane_H');
-      world.addLine2D(verticalLine);
+      plane.addLine(verticalLine);
       
       // Create through-point to the right of the vertical line
       const throughPoint2 = new FreePoint2D('p6', new Vector3(30, 50, 1), 'proj_plane_H');
-      world.addPoint2D(throughPoint2);
+      plane.addPoint(throughPoint2);
       
       // Create guide perpendicular to vertical line
-      const guide = world.addGuide2D('proj_plane_H', 'line2', 'p6', 'g2');
+      const guide = plane.addGuide2D('line2', 'p6', world, 'g2');
       
       const realization = world.getLine2DRealization('g2');
       
       expect(realization).toBeDefined();
       
       // Guide should pass through the through-point (30, 50, 1)
-      expect(realization!.point.x).toBeCloseTo(30, 5);
-      expect(realization!.point.y).toBeCloseTo(50, 5);
+      expect(realization!.point1.x).toBeCloseTo(30, 5);
+      expect(realization!.point1.y).toBeCloseTo(50, 5);
       
-      // Direction should be perpendicular to vertical line
-      // Reference line direction: (0, 1, 0) - vertical
-      // Perpendicular: (1, 0, 0) - horizontal (due to 90-degree rotation)
-      // Note: (-dy, dx) = (-(1), 0) = (-1, 0), normalized
-      expect(realization!.direction.x).toBeCloseTo(-1, 5);
-      expect(realization!.direction.y).toBeCloseTo(0, 5);
-      expect(realization!.direction.z).toBeCloseTo(0, 5);
+      // point2 is perpendicular direction to vertical line
+      // Reference line direction: (0, 100, 0) - vertical, unnormalized
+      // Perpendicular: (-100, 0, 0) - horizontal (due to 90-degree rotation)
+      // Note: (-dy, dx) = (-(100), 0) = (-100, 0), unnormalized
+      expect(realization!.point2.x).toBeCloseTo(-100, 5);
+      expect(realization!.point2.y).toBeCloseTo(0, 5);
+      expect(realization!.point2.z).toBeCloseTo(0, 5);
     });
 
     it('should realize guide perpendicular to diagonal reference line', () => {
       // Create diagonal reference line (45 degrees)
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
       const p3 = new FreePoint2D('p4', new Vector3(0, 0, 1), 'proj_plane_H');
       const p4 = new FreePoint2D('p5', new Vector3(100, 100, 1), 'proj_plane_H');
-      world.addPoint2D(p3);
-      world.addPoint2D(p4);
+      plane.addPoint(p3);
+      plane.addPoint(p4);
       
       const diagonalLine = new Line2DByTwoPoints('line2', 'p4', 'p5', 'proj_plane_H');
-      world.addLine2D(diagonalLine);
+      plane.addLine(diagonalLine);
       
       // Create through-point
       const throughPoint2 = new FreePoint2D('p6', new Vector3(50, 50, 1), 'proj_plane_H');
-      world.addPoint2D(throughPoint2);
+      plane.addPoint(throughPoint2);
       
       // Create guide perpendicular to diagonal line
-      const guide = world.addGuide2D('proj_plane_H', 'line2', 'p6', 'g2');
+      const guide = plane.addGuide2D('line2', 'p6', world, 'g2');
       
       const realization = world.getLine2DRealization('g2');
       
       expect(realization).toBeDefined();
       
-      // Reference line direction: (1, 1, 0) normalized to (1/√2, 1/√2, 0)
-      // Perpendicular: (-dy, dx) = (-1/√2, 1/√2) - perpendicular to 45° line
-      const expectedDir = 1 / Math.sqrt(2);
-      expect(realization!.direction.x).toBeCloseTo(-expectedDir, 5);
-      expect(realization!.direction.y).toBeCloseTo(expectedDir, 5);
-      expect(realization!.direction.z).toBeCloseTo(0, 5);
+      // Reference line direction: (100, 100, 0) unnormalized
+      // Perpendicular: (-100, 100, 0) - perpendicular to 45° line, unnormalized
+      expect(realization!.point2.x).toBeCloseTo(-100, 5);
+      expect(realization!.point2.y).toBeCloseTo(100, 5);
+      expect(realization!.point2.z).toBeCloseTo(0, 5);
     });
 
     it('should throw error when reference line is missing', () => {
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
       expect(() => {
-        world.addGuide2D('proj_plane_H', 'missing-line', throughPointId, 'g1');
+        plane.addGuide2D('missing-line', throughPointId, world, 'g1');
       }).toThrow('Invalid referenceLineId');
     });
 
     it('should throw error when through-point is missing', () => {
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
       expect(() => {
-        world.addGuide2D('proj_plane_H', referenceLineId, 'missing-point', 'g1');
+        plane.addGuide2D(referenceLineId, 'missing-point', world, 'g1');
       }).toThrow('Invalid throughPointId');
     });
 
     it('should use homogeneous coordinates for perpendicular calculation', () => {
       // This test verifies the perpendicular calculation uses the correct formula:
       // For direction vector (dx, dy, 0), perpendicular is (-dy, dx, 0)
-      
-      const guide = world.addGuide2D('proj_plane_H', referenceLineId, throughPointId, 'g1');
+      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const guide = plane.addGuide2D(referenceLineId, throughPointId, world, 'g1');
       
       const realization = world.getLine2DRealization('g1');
       
       expect(realization).toBeDefined();
       
       // Verify z-component is 0 (direction vector, not a point)
-      expect(realization!.direction.z).toBeCloseTo(0, 10);
+      expect(realization!.point2.z).toBeCloseTo(0, 10);
       
-      // Verify direction is normalized (length = 1)
-      const length = Math.sqrt(
-        realization!.direction.x ** 2 + 
-        realization!.direction.y ** 2
-      );
-      expect(length).toBeCloseTo(1.0, 5);
+      // Verify perpendicular relationship: for horizontal line (100, 0, 0)
+      // perpendicular should be (0, 100, 0)
+      expect(realization!.point2.x).toBeCloseTo(0, 5);
+      expect(realization!.point2.y).toBeCloseTo(100, 5);
     });
   });
 
   describe('Guide2DRealization2D', () => {
     it('should store point and direction correctly', () => {
-      const point = new Vector3(10, 20, 1);
-      const direction = new Vector3(0, 1, 0);
+      const point1 = new Vector3(10, 20, 1);
+      const point2 = new Vector3(0, 1, 0);  // Direction with z=0
       
-      const realization = new Guide2DRealization2D(point, direction);
+      const realization = new Guide2DRealization2D(point1, point2);
       
-      expect(realization.point).toEqual(point);
-      expect(realization.direction).toEqual(direction);
-      expect(realization.point.z).toBe(1);
-      expect(realization.direction.z).toBe(0); // Direction vector has z=0
+      expect(realization.point1).toEqual(point1);
+      expect(realization.point2).toEqual(point2);
+      expect(realization.point1.z).toBe(1);
+      expect(realization.point2.z).toBe(0); // Direction vector has z=0
     });
   });
 });
