@@ -3814,3 +3814,170 @@ class IntersectionTool {
 - Clear separation: tool composes, ops execute, domain provides primitives
 
 ---
+
+## Phase 43: Operation Sequence Factory Methods
+
+**Purpose**: Extract common multi-operation patterns from tool implementations into testable, reusable factory methods
+
+**Reference**: [data-model.md §Operation Sequence Factory Methods](./data-model.md#operation-sequence-factory-methods)
+
+**Background**: Tools currently contain complex logic for building multi-operation commands (guide+sibling creation, cascade deletion, auxiliary elements). This logic should be extracted into factory methods that:
+- Accept an open Command object as input
+- Determine operation sequence based on domain state
+- Add operations directly to the command
+- Handle conditionals (e.g., sibling creation when HHL detected)
+- Are pure functions that can be unit tested independently
+
+**Key Architectural Principle**: Operations are atomic (one task), factories compose operations, tools call factories. This follows the established "simple operations" principle throughout the codebase.
+
+**Identified Patterns from Existing Code**:
+1. **Guide Creation with Sibling** - GuideTool.ts lines 125-179
+2. **Intersection Point Creation** - IntersectionTool.ts lines 137-210 (future - Phase 42)
+3. **Cascade Deletion** - App.vue lines 660-760
+4. **Element Creation with Auxiliary Points** - Various tools
+
+**Implementation Location**: `frontend/src/commands/factories/` (new directory)
+
+### Tasks
+
+- [ ] T477 Create factories directory structure and README
+  - Create `frontend/src/commands/factories/` directory
+  - Create `frontend/src/commands/factories/README.md` documenting:
+    - Purpose: Extract common operation sequences from tools
+    - Pattern: Factories receive open Command, add operations, return void
+    - When to create factory: When same operation sequence appears in 2+ places
+    - How to test: Unit tests verify operation sequence, integration tests verify execution
+  - Create `frontend/src/commands/factories/index.ts` barrel export file
+
+- [ ] T478 [P] Implement GuideSequenceFactory for guide creation with sibling
+  - Create `frontend/src/commands/factories/GuideSequenceFactory.ts`
+  - Implement static method: `createGuideWithSibling(cmd: Command, planeId: string, referenceLineId: string, throughPointId: string, world: World): void`
+  - Logic extracted from GuideTool.ts lines 125-179:
+    1. Add AddGuide2DPerpendicularToLineOp to command
+    2. Get guideId from operation result outputs
+    3. Check if reference line is HalfHingeLine
+    4. If HalfHingeLine, get sibling plane info via World.getSiblingPlaneAndHalfHingeLineForGuide()
+    5. If sibling info available, add AddSiblingGuide2DOp to command
+  - Factory should NOT handle process tree actions (tool responsibility)
+  - Factory should NOT commit command (tool responsibility)
+  - Document factory in JSDoc with example usage
+
+- [ ] T479 [P] Add unit tests for GuideSequenceFactory
+  - Create `frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts`
+  - Test 1: Non-HHL reference line → verify 1 operation added (AddGuide2DPerpendicularToLineOp)
+  - Test 2: HHL reference line → verify 2 operations added (AddGuide2DPerpendicularToLineOp + AddSiblingGuide2DOp)
+  - Test 3: HHL reference line but sibling info unavailable → verify 1 operation only
+  - Test 4: Invalid reference line ID → verify error handling
+  - Use mock World with test data for HalfHingeLine and sibling planes
+  - Verify operation types, parameters, and sequence order
+
+- [ ] T480 [P] Refactor GuideTool to use GuideSequenceFactory
+  - Update `frontend/src/tools/GuideTool.ts` handleClick() method
+  - Replace inline operation sequence logic (lines 125-179) with factory call
+  - Pattern:
+    ```typescript
+    const cmd = new Command('Create guide', world);
+    GuideSequenceFactory.createGuideWithSibling(cmd, planeId, referenceLineId, throughPointId, world);
+    // Tool still handles: process tree action, commit, commandStack.push(), feedback
+    ```
+  - Remove now-unused imports and logic
+  - Verify all existing guide tests still pass
+  - No behavior change - pure refactoring
+
+- [ ] T481 [P] Implement DeletionSequenceFactory for cascade deletion
+  - Create `frontend/src/commands/factories/DeletionSequenceFactory.ts`
+  - Implement static method: `createCascadeDeletion(cmd: Command, selectedIds: string[], world: World): void`
+  - Logic extracted from App.vue lines 660-760:
+    1. Get deletion order via world.getDependencyService().getElementsInDeletionOrder(selectedIds)
+    2. For each element in order:
+       - Determine element type (point, line, segment, circle, guide)
+       - Add appropriate RemoveOp to command (RemovePoint2DOp, RemoveLine2DOp, etc.)
+    3. Get all actions producing deleted elements
+    4. Add RemoveActionFromProcessTreeOp for each action
+    5. Add RebuildDependencyMapsOp (if exists, else factory should NOT rebuild - tool handles it)
+  - Document factory with example usage
+
+- [ ] T482 [P] Add unit tests for DeletionSequenceFactory
+  - Create `frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts`
+  - Test 1: Delete single free point → verify RemovePoint2DOp added
+  - Test 2: Delete line → verify cascade includes dependent elements
+  - Test 3: Delete multiple selected elements → verify proper deletion order (dependents first)
+  - Test 4: Verify process tree cleanup operations added
+  - Test 5: Verify operation sequence respects topological order
+  - Use mock World with test dependency graph
+
+- [ ] T483 [P] Refactor App.vue to use DeletionSequenceFactory
+  - Update `frontend/src/App.vue` handleDeleteSelected() method (lines 660-760)
+  - Replace inline operation sequence logic with factory call
+  - Pattern:
+    ```typescript
+    const deleteCommand = new Command('Delete elements', world);
+    DeletionSequenceFactory.createCascadeDeletion(deleteCommand, selectedIds, world);
+    deleteCommand.commit();
+    commandStack.push(deleteCommand);
+    dependencyService.rebuildDependencyMaps();
+    selectionStore.clearSelection();
+    ```
+  - Remove now-unused inline logic
+  - Verify all existing deletion tests still pass
+  - No behavior change - pure refactoring
+
+- [ ] T484 [P] Add integration tests for factory-built commands
+  - Create `frontend/tests/integration/commandFactories.spec.ts`
+  - Test GuideSequenceFactory end-to-end:
+    - Create guide with HHL reference → verify both guides exist in World
+    - Verify bidirectional sibling links
+    - Undo command → verify both guides removed
+    - Redo command → verify both guides restored
+  - Test DeletionSequenceFactory end-to-end:
+    - Delete element with dependents → verify cascade
+    - Verify dependency graph updated correctly
+    - Undo deletion → verify all elements restored with dependencies
+  - All tests use real World, CommandStack, not mocks
+
+- [ ] T485 [P] Document factory pattern guidelines in data-model.md
+  - Already complete - see [data-model.md §Operation Sequence Factory Methods](./data-model.md#operation-sequence-factory-methods)
+  - Verify examples match actual implementation
+  - Add references from tool documentation to relevant factories
+
+- [ ] T486 [P] Optional: Create AuxiliaryElementFactory for point creation pattern
+  - Analyze tools that create auxiliary free points (CircleTool, SegmentTool, LineTool)
+  - If pattern is repeated, extract to `AuxiliaryElementFactory.ts`
+  - Implement `createWithAuxiliaryPoints(cmd: Command, ...params)` method
+  - Add unit tests
+  - Refactor tools to use factory
+  - Mark as optional - can be deferred if pattern is not sufficiently repeated
+
+**Checkpoint**: ✅ Common operation sequences extracted to testable factories, tools simplified
+
+**Success Criteria**:
+- ✅ GuideSequenceFactory tested and used by GuideTool
+- ✅ DeletionSequenceFactory tested and used by App.vue
+- ✅ All unit tests passing (verify operation sequences correct)
+- ✅ All integration tests passing (verify sequences execute correctly)
+- ✅ All existing tool tests still pass (no behavior change)
+- ✅ Tool code simplified - logic moved to factories
+- ✅ Factories documented in README.md with usage examples
+
+**Benefits**:
+- Testability: Factories are pure functions, easy to unit test
+- Reusability: Same sequence used by multiple tools
+- Maintainability: Pattern logic centralized, not duplicated
+- Clarity: Tools focus on user interaction, factories handle sequencing
+- Extracted from real code: Patterns come from actual implementations
+
+**Future Patterns**:
+When new common sequences emerge from tools:
+1. Identify repeated operation sequences (appears in 2+ places)
+2. Extract to factory method
+3. Add unit tests for factory
+4. Refactor tools to use factory
+5. Document pattern in factory README.md
+
+**Constitution Compliance**:
+- Operations are atomic (Principle II)
+- Factories compose operations (architecture principle)
+- Command sourcing compatible (factories add serializable operations)
+- Clear separation: tool → factory → operations → domain
+
+---

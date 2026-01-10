@@ -16,6 +16,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
 * [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
 * [ ] Add support for moving semi-free points and distances along guide lines.
@@ -23,12 +24,11 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
-* [ ] remove the restore functionality. Element restoration should be performed through recreation.
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
+* [ ] When initializing a new project, instead of doing it using ad-hoc actions, use a initialization command with a set of predefined ops. Also, create a subprocess called Worl initialization and place all the init objects there.
 * [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
 * [ ] Do not use type aliases in the code.
 * [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
-* [ ] Introduce a set of factory methods with the logic for creating the Command + Ops for supporting the tools.
 * [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
 * [ ] Add support for converting intersections into points automatically while building other elements.
 * [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
@@ -41,9 +41,51 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
 * [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
+* [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
+* [ ] Activate or fix undo & redo buttoms.
 
 
 ## ALREADY PLANNED
+
+* [X] Introduce a set of factory methods with the logic for creating common sequences of Ops (for instance, creating a new intersection point and its sibling and including them in the process tree, on cascade delete, etc.). Those sequences could be easily tested. The sequences to implement should not be decided in a creative way, but extracted from current tool implementations. Those sequence builders should get as input an open Command object.
+  - **STATUS**: ✅ PLANNED - Phase 43 created
+  - **Problem**: Tools contain complex logic for building multi-operation commands, duplicating patterns across codebase
+  - **Current Examples of Repeated Patterns**:
+    - Guide creation with sibling (GuideTool.ts lines 125-179): Primary guide + conditional sibling + bidirectional links
+    - Cascade deletion (App.vue lines 660-760): Topological sort + type-specific RemoveOps + process tree cleanup
+    - Auxiliary element creation (CircleTool, SegmentTool): Create aux points + group in ProcessTree
+    - Intersection point creation (IntersectionTool.ts): Primary intersection + conditional sibling for HHL
+  - **Solution**: Extract patterns to factory methods in `frontend/src/commands/factories/`
+  - **Pattern**: Factories receive open Command object, add operations directly, handle conditionals
+  - **Architecture**: Operations atomic → factories compose → tools call factories
+  - **Implementation**: Phase 43 with 10 tasks (T477-T486)
+  - **Task Categories**:
+    - Directory setup (T477): Create factories/, README.md documenting pattern
+    - GuideSequenceFactory (T478-T480): Extract guide+sibling creation from GuideTool
+    - DeletionSequenceFactory (T481-T483): Extract cascade deletion from App.vue
+    - Testing (T479, T482, T484): Unit tests for factories, integration tests for commands
+    - Documentation (T485): Already complete in data-model.md
+    - Optional (T486): AuxiliaryElementFactory if pattern sufficiently repeated
+  - **Benefits**:
+    - Testability: Pure functions, easy to unit test sequences
+    - Reusability: Same logic used by multiple tools
+    - Maintainability: Pattern centralized, not duplicated
+    - Clarity: Tools focus on interaction, factories handle sequencing
+    - Extracted from real code: Patterns from actual tool implementations
+  - **Success Criteria**: GuideSequenceFactory and DeletionSequenceFactory tested and used, tools simplified, all tests passing
+  - **Future**: When new patterns emerge (appears in 2+ places), extract to factory
+  - **Open Command Pattern**: Factories accept `cmd: Command` parameter, add operations via `cmd.addAndExecute()`, return void
+  - **Example Usage**:
+    ```typescript
+    // Tool creates command and calls factory
+    const cmd = new Command('Create guide', world);
+    GuideSequenceFactory.createGuideWithSibling(cmd, planeId, referenceLineId, throughPointId, world);
+    // Tool handles: process tree actions, commit, push to stack, feedback
+    cmd.commit();
+    commandStack.push(cmd);
+    ```
+  - **Data Model**: Updated [data-model.md §Operation Sequence Factory Methods](./data-model.md#operation-sequence-factory-methods) with complete specification
+  - **Timing**: After Phase 42 (sibling intersections) but before new tool development
 
 * [X] Ensure that Ops are simple objects which only do basic tasks. For instance, on cascade deletion must not be handled in the op, but on the command construction (the method building the command is the responsible for following dependency relations, retrieving all the objects, sorting them and implementing the cascade deletion by introducing a specific op in the command for every object). Another example, we must have an intersection op for every two types of intersecting objects, and is the tool the one which must pick the right op.
   - **STATUS**: ✅ ALREADY CORRECT - Architecture verified
