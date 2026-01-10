@@ -819,6 +819,74 @@ export abstract class ProjectionPlane {
   }
 
   /**
+   * Add a sibling guide to this plane
+   * 
+   * Sibling guides are automatically created when a primary Guide2D is created.
+   * They maintain the same geometric relationship (perpendicular to HalfHingeLine2D)
+   * but in the paired projection plane.
+   * 
+   * @param primaryGuideId ID of the primary guide that spawned this sibling
+   * @param referenceLineId ID of the HalfHingeLine2D in this (sibling) plane
+   * @param throughPointId ID of the point in this plane (often a sibling intersection point)
+   * @param world World instance for validation
+   * @param id Optional ID for the sibling guide (generated if not provided)
+   * @returns The created SiblingGuide2D
+   * @throws Error if validation fails
+   */
+  addSiblingGuide2D(
+    primaryGuideId: string,
+    referenceLineId: string,
+    throughPointId: string,
+    world: import('./World').World,
+    id?: string
+  ): import('./Guide').SiblingGuide2D {
+    if (!this.id) {
+      throw new Error('Cannot add sibling guide to plane without ID');
+    }
+
+    // Validate through point exists on this plane
+    const throughPoint = this.getPoint(throughPointId);
+    if (!throughPoint) {
+      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+    }
+
+    // Validate reference line exists in world
+    const referenceLine = world.getLine2DRealization(referenceLineId);
+    if (!referenceLine) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+
+    // Validate primary guide exists
+    const primaryGuide = world.getLine2D(primaryGuideId);
+    if (!primaryGuide) {
+      throw new Error(`Invalid primaryGuideId: ${primaryGuideId}. Primary guide does not exist.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateGuide2DId(world);
+    }
+
+    // Import SiblingGuide2D
+    const { SiblingGuide2D } = require('./Guide');
+    
+    // Get label from primary guide
+    const label = primaryGuide.label;
+    
+    const siblingGuide = new SiblingGuide2D(
+      id,
+      referenceLineId,
+      throughPointId,
+      this.id,
+      primaryGuideId,
+      label
+    );
+    
+    this.addLine(siblingGuide);  // Sibling guides are stored as lines
+    return siblingGuide;
+  }
+
+  /**
    * Clone this plane
    */
   abstract clone(): ProjectionPlane;

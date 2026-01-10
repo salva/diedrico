@@ -780,6 +780,69 @@ export class World {
     return siblingPlaneId || undefined;
   }
 
+  /**
+   * Get sibling plane and corresponding HalfHingeLine2D for a guide
+   * 
+   * Given a HalfHingeLine2D ID and the current plane, returns the sibling plane ID
+   * and the corresponding HalfHingeLine2D in that plane.
+   * 
+   * Algorithm:
+   * 1. Get HalfHingeLine2D from ID
+   * 2. Get parent HingeLine via hingeLineId
+   * 3. Get other plane via HingeLine.getOtherPlane()
+   * 4. Find HalfHingeLine2D in sibling plane with same hingeLineId
+   * 
+   * @param halfHingeLineId ID of the HalfHingeLine2D in current plane
+   * @param currentPlaneId ID of the current plane
+   * @returns Object with siblingPlaneId and siblingHalfHingeLineId, or undefined if not found
+   */
+  getSiblingPlaneAndHalfHingeLineForGuide(
+    halfHingeLineId: string,
+    currentPlaneId: string
+  ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
+    // Get HalfHingeLine2D
+    const halfHingeLine = this.getLine2DById(halfHingeLineId);
+    if (!halfHingeLine || halfHingeLine.type !== 'half-hinge') {
+      return undefined;
+    }
+
+    const halfHL = halfHingeLine as HalfHingeLine2D;
+
+    // Get parent HingeLine
+    const hingeLine = this.getHingeLineById(halfHL.hingeLineId);
+    if (!hingeLine) {
+      console.warn(`[World.getSiblingPlaneAndHalfHingeLineForGuide] HingeLine ${halfHL.hingeLineId} not found`);
+      return undefined;
+    }
+
+    // Get sibling plane
+    const siblingPlaneId = hingeLine.getOtherPlane(currentPlaneId);
+    if (!siblingPlaneId) {
+      return undefined;
+    }
+
+    // Find corresponding HalfHingeLine2D in sibling plane
+    const siblingPlane = this.getProjectionPlaneById(siblingPlaneId);
+    if (!siblingPlane) {
+      return undefined;
+    }
+
+    // Find HalfHingeLine2D with same hingeLineId in sibling plane
+    const siblingHalfHingeLine = siblingPlane.getAllLines().find(
+      (line) => line.type === 'half-hinge' && (line as HalfHingeLine2D).hingeLineId === halfHL.hingeLineId
+    );
+
+    if (!siblingHalfHingeLine) {
+      console.warn(`[World.getSiblingPlaneAndHalfHingeLineForGuide] No matching HalfHingeLine2D found in sibling plane ${siblingPlaneId}`);
+      return undefined;
+    }
+
+    return {
+      siblingPlaneId,
+      siblingHalfHingeLineId: siblingHalfHingeLine.id
+    };
+  }
+
   // ========================================
   // Convenience Getter Methods for UI
   // These methods aggregate data from all ProjectionPlanes
