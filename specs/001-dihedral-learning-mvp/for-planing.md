@@ -77,7 +77,8 @@ Note that completing these tasks may require asking the user for additional info
     - Maintainability: Pattern centralized, not duplicated
     - Clarity: Tools focus on interaction, factories handle sequencing
     - Extracted from real code: Patterns from actual tool implementations
-  - **Success Criteria**: GuideSequenceFactory and DeletionSequenceFactory tested and used, tools simplified, all tests passing
+  - **Success Criteria**: GuideSequenceFactory, DeletionSequenceFactory, and IntersectionSequenceFactory tested and used, tools simplified, all tests passing
+  - **Broader Pattern**: Most construction tools follow similar pattern (create world elements → process tree actions → conditionals). After Phase 43, evaluate creating factories for other tools (CircleSequenceFactory, SegmentSequenceFactory, etc.) if complexity warrants it. Decision criteria: create factory if multiple operations/conditionals, skip if trivial.
   - **Future**: When new patterns emerge (appears in 2+ places), extract to factory
   - **Open Command Pattern**: Factories accept `cmd: Command` parameter, add operations via `cmd.addAndExecute()`, return void
   - **Example Usage**:

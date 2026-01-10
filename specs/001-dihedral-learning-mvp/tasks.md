@@ -4013,6 +4013,14 @@ When new common sequences emerge from tools:
 4. Refactor tools to use factory
 5. Document pattern in factory README.md
 
+**Tool Sequence Factories** (broader pattern - evaluate after Phase 43):
+Most construction tools follow: create world elements → create process tree actions → handle conditionals
+- Consider creating factories for each tool type (CircleSequenceFactory, SegmentSequenceFactory, etc.)
+- Benefits: Uniform tool structure, testable sequences, consistent process tree handling
+- Decision criteria: Create factory if multiple operations/conditionals, skip if trivial (1-2 ops, no conditionals)
+- See data-model.md §Tool Sequence Factories for detailed guidance
+- Evaluate during or after Phase 43 implementation based on observed patterns
+
 **Constitution Compliance**:
 - Operations are atomic (Principle II)
 - Factories compose operations (architecture principle)

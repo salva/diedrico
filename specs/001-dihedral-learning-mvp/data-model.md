@@ -5232,6 +5232,34 @@ it('guide factory creates both guides when using HHL', () => {
 });
 ```
 
+### Tool Sequence Factories (Broader Pattern)
+
+**Observation**: Most construction tools follow the same pattern:
+1. Create world elements (geometry)
+2. Create auxiliary elements if needed (free points)
+3. Create process tree actions (history tracking)
+4. Handle tool-specific conditionals
+
+**Current State**: Tools contain this sequence logic inline, mixing concerns
+
+**Proposed Solution**: Create factory for each tool type
+- **CircleSequenceFactory**: Create auxiliary points + circle + process tree actions
+- **SegmentSequenceFactory**: Create auxiliary points + segment + process tree actions  
+- **LineSequenceFactory**: Create auxiliary points + line + process tree actions
+- **FreePointSequenceFactory**: Create point + process tree action (simpler)
+
+**Benefits**:
+- Tools become uniformly thin (only handle mouse input, call factory, show feedback)
+- Process tree handling consistent across all tools
+- Sequence logic centralized and testable
+- Clear separation: Tool (UI) → Factory (sequencing) → Operations (atomic)
+
+**Consideration**: Unlike GuideSequence/IntersectionSequence/DeletionSequence which handle complex conditionals and type detection, these tool factories might be simpler. Evaluate complexity during implementation - if a tool's sequence is trivial (1-2 operations, no conditionals), factory might not add value.
+
+**Decision Criteria**:
+- ✅ Create factory if: Multiple operations, conditionals, or process tree complexity
+- ❌ Skip factory if: Single operation with no conditionals (tool can handle directly)
+
 ### Future Patterns
 
 As new common sequences emerge from tool implementations:
