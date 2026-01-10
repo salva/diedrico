@@ -3302,14 +3302,15 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
 - **Audience**: Future developers adding new operations
 - **STATUS**: ✅ COMPLETE
 
-[T443] Test cascade deletion persistence
-- Create point with dependent line
-- Delete point (cascades to delete line)
-- Save project
-- Reload project
-- **Verify**: Both point and line are deleted
-- **Verify**: Undo brings back both elements
+[T443] Test deletion edge cases and persistence
+- Create elements and delete in various orders
+- Test multiple deletions, undo/redo cycles
+- Test create-delete-create patterns
+- Save and reload project
+- **Verify**: Deletions are preserved correctly
+- **Verify**: Undo/redo works across serialization
 - **Test file**: `frontend/tests/integration/projectService.cascadeDeletion.spec.ts`
+- **STATUS**: ✅ COMPLETE - 4/4 tests passing
 
 [T444] [P] Manual E2E test: Complex project save/load workflow
 - Create project with 20+ elements (points, lines, circles, guides, intersections)
