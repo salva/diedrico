@@ -3567,6 +3567,8 @@ operations/
 
 **Goal**: Re-implement sibling intersection point creation using separate operations at command level, following the same pattern as SiblingGuide2D (Phase 36).
 
+**Note**: After Phase 43 (Operation Sequence Factory Methods), the intersection creation logic should be encapsulated in `IntersectionSequenceFactory.createIntersection()`. This factory will handle type detection, operation dispatch, and conditional sibling creation. The tool implementation in T466-T467 should be refactored to use the factory pattern.
+
 **Problem**: Sibling intersection points are currently NOT being created:
 - The domain method `addIntersectionPoint2DWithSibling()` was removed
 - Tests are marked `.skip()` with comment "method was removed, tests commented out until sibling functionality is re-implemented"
