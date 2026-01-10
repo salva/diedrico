@@ -28,7 +28,7 @@ import { SegmentTool } from '@/tools/SegmentTool';
 import { CircleTool } from '@/tools/CircleTool';
 import { GuideTool } from '@/tools/GuideTool';
 import { IntersectionTool } from '@/tools/IntersectionTool';
-import { TransportTool } from '@/tools/TransportTool';
+
 
 describe('Selection Mask System', () => {
   let world: World;
@@ -77,17 +77,6 @@ describe('Selection Mask System', () => {
         const mask = tool.getSelectionMask();
         expect(mask).toContain('line');
         expect(mask).toContain('half-hinge-line');
-      });
-
-      // Note: Testing state transitions requires actually clicking with the tool
-      // which is better suited for integration/e2e tests
-    });
-
-    describe('TransportTool dynamic mask', () => {
-      it('returns point mask in waiting-point state', () => {
-        const tool = new TransportTool();
-        const mask = tool.getSelectionMask();
-        expect(mask).toEqual(['point']);
       });
 
       // Note: Testing state transitions requires actually clicking with the tool

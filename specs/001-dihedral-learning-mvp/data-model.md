@@ -1110,15 +1110,45 @@ projPlaneC.addLine(bhl_BC_on_C);  // Regular Line2D
 - User explicitly creates the intersection on one plane (primary)
 - System automatically creates the projection on the sibling plane
 
-**Implementation - Two Point Types**:
+**Implementation - Point Type Hierarchy**:
 
-1. **IntersectionPoint2D** (Primary):
-   - Explicitly defined by user action: "Intersect circle with HHL"
-   - Contains `siblingPointId?: string` field
-   - Only populated when element1 or element2 is a HalfHingeLine2D
-   - Enables navigation to the sibling point
+The system uses specialized point classes for different intersection types to provide type safety and clear semantics:
 
-2. **SiblingIntersectionPoint2D** (Derived):
+1. **Point2D** (Abstract Base):
+   - Base class for all 2D point types
+   - Common fields: id, planeId, label, type
+   - Abstract method: realize2D(world): Point2DRealization2D
+
+2. **FreePoint2D** (Concrete):
+   - Direct position-based point
+   - Fields: position (Vector3)
+   - User-movable
+
+3. **IntersectionPoint2D** (Abstract Base for Intersections):
+   - Base class for all intersection point types
+   - Common behavior: siblingPointId field for HalfHingeLine intersections
+   - Specialized subclasses provide type-specific realization
+
+4. **Point2DLineLineIntersection** (Concrete):
+   - Intersection of two lines
+   - Fields: line1Id, line2Id
+   - No index needed - line-line has exactly 0 or 1 intersection
+   - realize2D(): calls intersectLineLine(), returns single point or infeasible
+
+5. **Point2DLineCircleIntersection** (Concrete):
+   - Intersection of a line and a circle
+   - Fields: lineId, circleId, index (0 or 1)
+   - Handles both line-circle and circle-line (order doesn't matter)
+   - realize2D(): calls intersectLineCircle(), returns points[index]
+   - Index based on angle from circle's radius vector (see "Intersection Point Indexing on Circles")
+
+6. **Point2DCircleCircleIntersection** (Concrete):
+   - Intersection of two circles
+   - Fields: circle1Id, circle2Id, index (0 or 1)
+   - realize2D(): calls intersectCircleCircle(), returns points[index]
+   - Index based on angle from first circle's radius vector
+
+7. **SiblingIntersectionPoint2D** (Concrete):
    - Automatically created when primary intersects HHL
    - Represents the projection of the primary's 3D position onto the sibling plane
    - Contains `primaryIntersectionId: string` field
@@ -1129,9 +1159,9 @@ projPlaneC.addLine(bhl_BC_on_C);  // Regular Line2D
 User creates: Circle ∩ HHL_on_P_H (at index 0)
   ↓
 System creates:
-  1. IntersectionPoint2D "I1" on P_H
-     - element1Id: "circle_5"
-     - element2Id: "half_HL_HV_on_PH"
+  1. Point2DLineCircleIntersection "I1" on P_H (assuming HHL is represented as a line)
+     - lineId: "half_HL_HV_on_PH"
+     - circleId: "circle_5"
      - index: 0
      - siblingPointId: "I1_sibling"
   
@@ -1142,6 +1172,12 @@ System creates:
   
 Result: Both points visible, representing same 3D position
 ```
+
+**Type-Specific Behavior**:
+- **Line-Line**: Creates Point2DLineLineIntersection (no index - always single point)
+- **Line-Circle**: Creates Point2DLineCircleIntersection with index 0 or 1
+- **Circle-Circle**: Creates Point2DCircleCircleIntersection with index 0 or 1
+- All intersection types can have siblingPointId if involving HalfHingeLine2D
 
 **Realization Logic - SiblingIntersectionPoint2D**:
 ```typescript
@@ -2001,37 +2037,95 @@ class FreePoint2D extends Point2D {
 }
 ```
 
-**IntersectionPoint2D - Recursive Computation**:
+**IntersectionPoint2D - Abstract Base for All Intersection Types**:
 ```typescript
-class IntersectionPoint2D extends Point2D {
-  element1Id: string;
-  element2Id: string;
-  index: number;       // The rule: "intersection of elem1 & elem2 at index"
+abstract class IntersectionPoint2D extends Point2D {
+  siblingPointId?: string;  // Set when intersecting with HalfHingeLine2D
+  
+  // Subclasses implement type-specific realization
+  abstract realize(context: RealizationContext): Point2DRealization;
+}
+```
+
+**Point2DLineLineIntersection - Recursive Computation**:
+```typescript
+class Point2DLineLineIntersection extends IntersectionPoint2D {
+  line1Id: string;
+  line2Id: string;
+  // No index - line-line has exactly 0 or 1 intersection
   
   realize(context: RealizationContext): Point2DRealization {
     // 1. GET REALIZATIONS OF DEFINING ELEMENTS
-    //    This may recursively trigger THEIR realization if not cached
-    const line1Realization = context.getLine2DRealization(this.element1Id);
-    const line2Realization = context.getLine2DRealization(this.element2Id);
+    const line1Realization = context.getLine2DRealization(this.line1Id);
+    const line2Realization = context.getLine2DRealization(this.line2Id);
     
     if (!line1Realization || !line2Realization) {
       throw new Error('Cannot realize intersection: defining elements not found');
     }
     
     // 2. COMPUTE INTERSECTION GEOMETRY
-    const intersections = computeLineLineIntersection(
-      line1Realization,
-      line2Realization
-    );
+    const intersections = intersectLineLine(line1Realization, line2Realization);
     
-    if (intersections.length <= this.index) {
-      throw new Error(`Intersection index ${this.index} out of bounds`);
+    if (intersections.length === 0) {
+      return new Point2DRealization(/* infeasible */);
     }
     
     // 3. RETURN REALIZATION WITH COMPUTED POSITION (only numeric data)
-    return new Point2DRealization(
-      intersections[this.index]  // Computed intersection point (Vector3)
-    );
+    return new Point2DRealization(intersections[0]);  // Always index 0
+  }
+}
+```
+
+**Point2DLineCircleIntersection - With Index Selection**:
+```typescript
+class Point2DLineCircleIntersection extends IntersectionPoint2D {
+  lineId: string;
+  circleId: string;
+  index: number;  // 0 or 1 - which intersection point (sorted by angle from radius vector)
+  
+  realize(context: RealizationContext): Point2DRealization {
+    const lineRealization = context.getLine2DRealization(this.lineId);
+    const circleRealization = context.getCircle2DRealization(this.circleId);
+    
+    if (!lineRealization || !circleRealization) {
+      throw new Error('Cannot realize intersection: defining elements not found');
+    }
+    
+    // Compute intersection points (sorted by angle from circle's radius vector)
+    const intersections = intersectLineCircle(lineRealization, circleRealization);
+    
+    if (intersections.length <= this.index) {
+      return new Point2DRealization(/* infeasible */);
+    }
+    
+    return new Point2DRealization(intersections[this.index]);
+  }
+}
+```
+
+**Point2DCircleCircleIntersection - With Index Selection**:
+```typescript
+class Point2DCircleCircleIntersection extends IntersectionPoint2D {
+  circle1Id: string;
+  circle2Id: string;
+  index: number;  // 0 or 1 - which intersection point (sorted by angle from first circle's radius vector)
+  
+  realize(context: RealizationContext): Point2DRealization {
+    const circle1Realization = context.getCircle2DRealization(this.circle1Id);
+    const circle2Realization = context.getCircle2DRealization(this.circle2Id);
+    
+    if (!circle1Realization || !circle2Realization) {
+      throw new Error('Cannot realize intersection: defining elements not found');
+    }
+    
+    // Compute intersection points (sorted by angle from first circle's radius vector)
+    const intersections = intersectCircleCircle(circle1Realization, circle2Realization);
+    
+    if (intersections.length <= this.index) {
+      return new Point2DRealization(/* infeasible */);
+    }
+    
+    return new Point2DRealization(intersections[this.index]);
   }
 }
 ```

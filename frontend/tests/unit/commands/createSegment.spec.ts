@@ -1,263 +1,107 @@
 /**
- * Tests for Segment creation using Command pattern
- * TODO: Refactor tests to use generic Command + Operations pattern
+ * Tests for creating segments using Command + AddSegment2DByPointsOp
+ * Refactored from CreateSegmentCommand to generic Command pattern (Phase 8, R017c)
  */
-import { describe, it } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { Command } from '../../../src/commands/Command';
+import { AddSegment2DByPointsOp } from '../../../src/commands/operations/AddSegmentOp';
+import { AddFreePoint2DOp } from '../../../src/commands/operations/AddFreePointOp';
+import { World } from '../../../src/domain/world/World';
+import { Vector3 } from 'three';
 
-describe.skip('Create Segment', () => {
-  it.skip('tests need refactoring to use generic Command pattern', () => {
-    // These tests need to be refactored from CreateSegmentCommand to use
-    // generic Command + AddSegment2DByPointsOp pattern
-  });
-});
+describe('Create Segment Command', () => {
+  let world: World;
+  const planeId = 'proj_plane_H';
 
-  describe('validation', () => {
-    it('should validate valid parameters', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P002',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const validation = command.validate();
-      expect(validation.valid).toBe(true);
-    });
-
-    it('should reject non-existent point1', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'NONEXISTENT',
-          point2Id: 'P002',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const validation = command.validate();
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toContain('does not exist');
-    });
-
-    it('should reject non-existent point2', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'NONEXISTENT',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const validation = command.validate();
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toContain('does not exist');
-    });
-
-    it('should reject points on different planes', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001', // on P_H
-          point2Id: 'P003', // on P_V
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const validation = command.validate();
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toContain('same plane');
-    });
-
-    it('should reject same point for both endpoints', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P001', // Same as point1
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const validation = command.validate();
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toContain('same point');
-    });
+  beforeEach(() => {
+    world = new World();
   });
 
   describe('execution', () => {
-    it('should create a Segment2DByPoints element', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P002',
-          planeId: 'P_H',
-          actionId: 'action-1',
-          name: 'AB'
-        },
-        worldStore
-      );
-
-      const result = command.execute();
-
-      expect(result.success).toBe(true);
-      expect(worldStore.elements2D.size).toBe(5); // 4 mock points + 1 segment
+    it('should create a segment between two points', () => {
+      const cmd = new Command("Create segment with points", world);
+      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
-      const segment = worldStore.elements2D.get(command.getSegmentId());
-      expect(segment).toBeDefined();
-      expect(segment.kind).toBe('Segment2DByPoints');
-      expect(segment.point1Id).toBe('P001');
-      expect(segment.point2Id).toBe('P002');
-      expect(segment.name).toBe('AB');
-      expect(segment.planeId).toBe('P_H');
-    });
-
-    it('should generate segment ID automatically', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P002',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const result = command.execute();
-
-      expect(result.success).toBe(true);
-      const segmentId = result.outputs.segmentId;
+      const point1Id = p1Result.outputs.pointId!;
+      const point2Id = p2Result.outputs.pointId!;
+      
+      const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1Id, point2Id));
+      
+      expect(segmentResult.success).toBe(true);
+      
+      const segmentId = segmentResult.outputs.segmentId!;
       expect(segmentId).toBeDefined();
-      expect(segmentId).toMatch(/^S\d{3}$/); // Pattern: S001, S002, etc.
-    });
-
-    it('should return segmentId, elementPath, and infeasibility status', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P002',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const result = command.execute();
-
-      expect(result.success).toBe(true);
-      expect(result.outputs.segmentId).toBeDefined();
-      expect(result.outputs.elementPath).toBe(`/world/elements2D/${result.outputs.segmentId}`);
-      expect(result.outputs.infeasible).toBeDefined();
-      expect(result.outputs.infeasible).toBe(false); // P001 and P002 are not coincident
-    });
-  });
-
-  describe('infeasibility - coincident points', () => {
-    it('should detect coincident points and mark segment as infeasible', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',  // (100, 100)
-          point2Id: 'P004',  // (100, 100) - same location
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const result = command.execute();
-
-      expect(result.success).toBe(true);
-      expect(result.outputs.infeasible).toBe(true);
+      expect(segmentId).toMatch(/^segment2d_/);
       
-      const segment = worldStore.elements2D.get(command.getSegmentId());
-      expect(segment.infeasible).toBe(true);
+      const plane = world.projectionPlanes.get(planeId)!;
+      const segment = plane.getLine(segmentId);
+      
+      expect(segment).toBeDefined();
+      expect(segment?.id).toBe(segmentId);
+      expect(segment?.type).toBe('segment');
     });
 
-    it('should use red dashed style for infeasible segments', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P004',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
+    it('should return segmentId in outputs', () => {
+      const cmd = new Command("Create segment", world);
+      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+      
+      const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(
+        planeId,
+        p1Result.outputs.pointId!,
+        p2Result.outputs.pointId!
+      ));
 
-      command.execute();
-      const segment = worldStore.elements2D.get(command.getSegmentId());
-
-      expect(segment.visualStyle.color).toBe('#f44336'); // Red
-      expect(segment.visualStyle.lineStyle).toBe('dashed');
-      expect(segment.visualStyle.opacity).toBe(0.6);
-    });
-
-    it('should use green solid style for feasible segments', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P002',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      command.execute();
-      const segment = worldStore.elements2D.get(command.getSegmentId());
-
-      expect(segment.visualStyle.color).toBe('#4caf50'); // Green
-      expect(segment.visualStyle.lineStyle).toBe('solid');
-      expect(segment.visualStyle.opacity).toBe(1.0);
+      expect(segmentResult.success).toBe(true);
+      expect(segmentResult.outputs.segmentId).toBeDefined();
+      expect(typeof segmentResult.outputs.segmentId).toBe('string');
     });
   });
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P002',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
+      const cmd = new Command("Create segment", world);
+      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+      const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(
+        planeId,
+        p1Result.outputs.pointId!,
+        p2Result.outputs.pointId!
+      ));
+      cmd.commit();
+      
+      const segmentId = segmentResult.outputs.segmentId!;
+      const plane = world.projectionPlanes.get(planeId)!;
+      
+      expect(plane.getLine(segmentId)).toBeDefined();
+      
+      cmd.undo();
+      expect(plane.getLine(segmentId)).toBeUndefined();
 
-      command.execute();
-      expect(worldStore.elements2D.size).toBe(5);
-
-      command.undo();
-      expect(worldStore.elements2D.size).toBe(4); // Back to just points
+      cmd.redo();
+      expect(plane.getLine(segmentId)).toBeDefined();
     });
 
-    it('should support redo by re-executing operations', () => {
-      const command = new CreateSegmentCommand(
-        {
-          point1Id: 'P001',
-          point2Id: 'P002',
-          planeId: 'P_H',
-          actionId: 'action-1'
-        },
-        worldStore
-      );
-
-      const result = command.execute();
-      const segmentId = result.outputs.segmentId;
+    it('should maintain stable IDs across undo/redo', () => {
+      const cmd = new Command("Create segment", world);
+      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+      const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(
+        planeId,
+        p1Result.outputs.pointId!,
+        p2Result.outputs.pointId!
+      ));
+      cmd.commit();
       
-      command.undo();
-      expect(worldStore.elements2D.size).toBe(4);
-
-      command.redo();
-      expect(worldStore.elements2D.size).toBe(5);
-      expect(worldStore.elements2D.has(segmentId)).toBe(true);
+      const originalSegmentId = segmentResult.outputs.segmentId!;
+      
+      cmd.undo();
+      cmd.redo();
+      
+      const plane = world.projectionPlanes.get(planeId)!;
+      const segment = plane.getLine(originalSegmentId);
+      expect(segment?.id).toBe(originalSegmentId);
     });
   });
 });

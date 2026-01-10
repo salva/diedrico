@@ -52,7 +52,8 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
     if (this.outputs.guideId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeGuide(this.outputs.guideId);
+        // Guides are stored in the lines Map
+        plane.removeLine(this.outputs.guideId);
       }
     }
   }

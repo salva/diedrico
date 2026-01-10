@@ -1,23 +1,24 @@
 /**
- * AddCircle2DByCenterAndRadiusOp - Operation to add a Circle2DByCenterAndRadius using ProjectionPlane factory method
+ * AddCircle2DByCenterAndPointOp - Operation to add a Circle2DByCenterAndPoint using ProjectionPlane factory method
  * 
- * Wraps ProjectionPlane.addCircle2DByCenter() in the Operation interface.
+ * This is the standard circle construction that defines both radius magnitude and angular reference.
+ * Wraps ProjectionPlane.addCircle2DByCenterAndPoint() in the Operation interface.
  */
 
 import type { IOperation, OperationResult } from './IOperation';
 import type { World } from '@/domain/world/World';
 
-export class AddCircle2DByCenterAndRadiusOp implements IOperation {
-  readonly type = 'AddCircle2DByCenterAndRadius';
+export class AddCircle2DByCenterAndPointOp implements IOperation {
+  readonly type = 'AddCircle2DByCenterAndPoint';
   readonly parameters: Record<string, any>;
   outputs: Record<string, any> = {};
 
   constructor(
     private planeId: string,
-    private centerId: string,
-    private radius: number
+    private centerPointId: string,
+    private circumferencePointId: string
   ) {
-    this.parameters = { planeId, centerId, radius };
+    this.parameters = { planeId, centerPointId, circumferencePointId };
   }
 
   apply(world: World): OperationResult {
@@ -28,9 +29,9 @@ export class AddCircle2DByCenterAndRadiusOp implements IOperation {
       }
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const circle = plane.addCircle2DByCenter(
-        this.centerId,
-        this.radius,
+      const circle = plane.addCircle2DByCenterAndPoint(
+        this.centerPointId,
+        this.circumferencePointId,
         world,
         this.outputs.circleId
       );

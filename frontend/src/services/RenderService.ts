@@ -70,8 +70,10 @@ export function renderPoint(
 
   // Generic point rendering: all points are rendered as circles
   // Visual distinction via styling (free vs derived), not shape
-  const radius = point.type === 'free' ? 5 : 4;
-  const fill = point.type === 'free' ? '#4A90E2' : '#E94E77';
+  // Derived points include: intersection types and sibling-intersection
+  const isFreePoint = point.type === 'free';
+  const radius = isFreePoint ? 5 : 4;
+  const fill = isFreePoint ? '#4A90E2' : '#E94E77';
   const stroke = '#333333';
   const strokeWidth = 1.5;
 

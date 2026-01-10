@@ -17,9 +17,15 @@
 
 import { Vector3, Vector4 } from 'three';
 import type { World } from './World';
-import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '../calculations/Intersections';
+import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
 
-export type Point2DType = 'free' | 'intersection' | 'sibling-intersection';
+export type Point2DType = 
+  | 'free' 
+  | 'intersection'  // Kept temporarily for backward compatibility
+  | 'line-line-intersection'
+  | 'line-circle-intersection'
+  | 'circle-circle-intersection'
+  | 'sibling-intersection';
 
 /**
  * Point2DRealization2D - Stores computed 2D position for a Point2D
@@ -140,130 +146,257 @@ export class FreePoint2D extends Point2D {
 }
 
 /**
- * Intersection Point2D - defined as intersection of two objects
- * The rule is: "intersection of element1 and element2 at index"
+ * Intersection Point2D - Abstract base class for all intersection point types
+ * 
+ * The rule is: "intersection of two geometric elements"
  * Coordinates are computed and cached in Point2DRealization2D.
+ * 
+ * Concrete subclasses:
+ * - Point2DLineLineIntersection: intersection of two lines
+ * - Point2DLineCircleIntersection: intersection of a line and a circle
+ * - Point2DCircleCircleIntersection: intersection of two circles
  * 
  * When intersecting with HalfHingeLine2D, a sibling point is automatically
  * created on the paired plane to maintain geometric consistency.
  */
-export class IntersectionPoint2D extends Point2D {
-  readonly type: 'intersection' = 'intersection';
-  element1Id: string;  // ID of first intersecting element
-  element2Id: string;  // ID of second intersecting element
-  index: number;       // Index to identify which intersection (0, 1, 2...) when multiple exist
+export abstract class IntersectionPoint2D extends Point2D {
   siblingPointId?: string;  // Optional: ID of sibling point on paired plane (populated when intersecting with HalfHingeLine2D)
 
   constructor(
     id: string,
-    element1Id: string,
-    element2Id: string,
-    index: number,
     planeId: string,
     label?: string
   ) {
     super(id, planeId, label);
-    this.element1Id = element1Id;
-    this.element2Id = element2Id;
-    this.index = index;
-  }
-
-  clone(): IntersectionPoint2D {
-    const cloned = new IntersectionPoint2D(
-      this.id,
-      this.element1Id,
-      this.element2Id,
-      this.index,
-      this.planeId,
-      this.label
-    );
-    return cloned;
   }
 
   /**
    * Calculate 2D realization - compute intersection of two geometric objects
    * Intersection is calculated in the plane's intrinsic coordinate system
    * 
-   * Supports:
-   * - Line-Line intersection (index must be 0, as there's only one intersection point)
-   * - Line-Circle intersection (index 0 or 1 for two possible intersection points)
-   * - Circle-Circle intersection (index 0 or 1 for two possible intersection points)
-   * 
    * @param world World instance to query parent realizations
    * @returns Point2DRealization2D with intersection point, or infeasible if computation fails
    */
+  abstract realize2D(world: World): Point2DRealization2D;
+}
+
+/**
+ * Line-Line Intersection Point2D - intersection of two lines
+ * 
+ * The rule is: "intersection of line1 and line2"
+ * Line-line intersection produces at most one point (or none if parallel/coincident).
+ */
+export class Point2DLineLineIntersection extends IntersectionPoint2D {
+  readonly type: 'line-line-intersection' = 'line-line-intersection';
+  line1Id: string;  // ID of first line
+  line2Id: string;  // ID of second line
+
+  constructor(
+    id: string,
+    line1Id: string,
+    line2Id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.line1Id = line1Id;
+    this.line2Id = line2Id;
+  }
+
+  clone(): Point2DLineLineIntersection {
+    const cloned = new Point2DLineLineIntersection(
+      this.id,
+      this.line1Id,
+      this.line2Id,
+      this.planeId,
+      this.label
+    );
+    if (this.siblingPointId) {
+      cloned.siblingPointId = this.siblingPointId;
+    }
+    return cloned;
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of two lines
+   * 
+   * @param world World instance to query parent realizations
+   * @returns Point2DRealization2D with intersection point, or infeasible if lines are parallel/coincident
+   */
   realize2D(world: World): Point2DRealization2D {
-    // Try to get elements as lines (guides are Line2D, use unified method)
-    const line1 = world.getLine2DRealization(this.element1Id);
-    const line2 = world.getLine2DRealization(this.element2Id);
-    
-    // Try to get elements as circles
-    const circle1 = world.getCircle2DRealization(this.element1Id);
-    const circle2 = world.getCircle2DRealization(this.element2Id);
+    const line1 = world.getLine2DRealization(this.line1Id);
+    const line2 = world.getLine2DRealization(this.line2Id);
     
     // Check if parent elements are infeasible - propagate infeasibility
-    if ((line1 && !line1.feasible) || (line2 && !line2.feasible) || 
-        (circle1 && !circle1.feasible) || (circle2 && !circle2.feasible)) {
-      console.warn('[IntersectionPoint2D] Parent element is infeasible, marking this as infeasible');
+    if ((line1 && !line1.feasible) || (line2 && !line2.feasible)) {
+      console.warn('[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
-    // Determine intersection type and compute
-    if (line1 && line2) {
-      // Line-Line intersection
-      const result = intersectLineLine(line1, line2);
-      
-      if (result.type !== 'point' || !result.point) {
-        console.warn('[IntersectionPoint2D] Lines do not intersect (parallel or coincident):', result.type, result.message);
-        return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-      }
-      
-      return new Point2DRealization2D(result.point, true);
-      
-    } else if (line1 && circle2) {
-      // Line-Circle intersection
-      const result = intersectLineCircle(line1, circle2);
-      
-      if (result.points.length === 0) {
-        console.warn('[IntersectionPoint2D] Line and circle do not intersect');
-        return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-      }
-      
-      // Return the point at the specified index
-      const point = result.points[Math.min(this.index, result.points.length - 1)];
-      return new Point2DRealization2D(point, true);
-      
-    } else if (circle1 && line2) {
-      // Circle-Line intersection (same as Line-Circle)
-      const result = intersectLineCircle(line2, circle1);
-      
-      if (result.points.length === 0) {
-        console.warn('[IntersectionPoint2D] Circle and line do not intersect');
-        return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-      }
-      
-      const point = result.points[Math.min(this.index, result.points.length - 1)];
-      return new Point2DRealization2D(point, true);
-      
-    } else if (circle1 && circle2) {
-      // Circle-Circle intersection
-      const result = intersectCircleCircle(circle1, circle2);
-      
-      if (result.points.length === 0) {
-        console.warn('[IntersectionPoint2D] Circles do not intersect:', result.type);
-        return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-      }
-      
-      const point = result.points[Math.min(this.index, result.points.length - 1)];
-      return new Point2DRealization2D(point, true);
-      
-    } else {
-      console.warn(
-        '[IntersectionPoint2D] Cannot compute intersection: unsupported element combination or missing realizations',
-        { element1Id: this.element1Id, element2Id: this.element2Id, line1, line2, circle1, circle2 }
-      );
+    if (!line1 || !line2) {
+      console.warn('[Point2DLineLineIntersection] Cannot get line realizations');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
+    
+    const result = intersectLineLine(line1, line2);
+    
+    if (result.type !== 'point' || !result.point) {
+      console.warn('[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident):', result.type, result.message);
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    return new Point2DRealization2D(result.point, true);
+  }
+}
+
+/**
+ * Line-Circle Intersection Point2D - intersection of a line and a circle
+ * 
+ * The rule is: "intersection of line and circle at index"
+ * Line-circle intersection produces 0, 1 (tangent), or 2 points.
+ * Points are indexed by angle from the circle's radius vector.
+ */
+export class Point2DLineCircleIntersection extends IntersectionPoint2D {
+  readonly type: 'line-circle-intersection' = 'line-circle-intersection';
+  lineId: string;    // ID of the line
+  circleId: string;  // ID of the circle
+  index: number;     // Index to identify which intersection (0 or 1)
+
+  constructor(
+    id: string,
+    lineId: string,
+    circleId: string,
+    index: number,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.lineId = lineId;
+    this.circleId = circleId;
+    this.index = index;
+  }
+
+  clone(): Point2DLineCircleIntersection {
+    const cloned = new Point2DLineCircleIntersection(
+      this.id,
+      this.lineId,
+      this.circleId,
+      this.index,
+      this.planeId,
+      this.label
+    );
+    if (this.siblingPointId) {
+      cloned.siblingPointId = this.siblingPointId;
+    }
+    return cloned;
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of line and circle
+   * 
+   * @param world World instance to query parent realizations
+   * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection
+   */
+  realize2D(world: World): Point2DRealization2D {
+    const line = world.getLine2DRealization(this.lineId);
+    const circle = world.getCircle2DRealization(this.circleId);
+    
+    // Check if parent elements are infeasible - propagate infeasibility
+    if ((line && !line.feasible) || (circle && !circle.feasible)) {
+      console.warn('[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    if (!line || !circle) {
+      console.warn('[Point2DLineCircleIntersection] Cannot get line or circle realization');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    const result = intersectLineCircle(line, circle);
+    
+    if (result.points.length === 0) {
+      console.warn('[Point2DLineCircleIntersection] Line and circle do not intersect');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    // Return the point at the specified index
+    const point = result.points[Math.min(this.index, result.points.length - 1)];
+    return new Point2DRealization2D(point, true);
+  }
+}
+
+/**
+ * Circle-Circle Intersection Point2D - intersection of two circles
+ * 
+ * The rule is: "intersection of circle1 and circle2 at index"
+ * Circle-circle intersection produces 0, 1 (tangent), or 2 points.
+ * Points are indexed by angle from the first circle's radius vector.
+ */
+export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
+  readonly type: 'circle-circle-intersection' = 'circle-circle-intersection';
+  circle1Id: string;  // ID of first circle
+  circle2Id: string;  // ID of second circle
+  index: number;      // Index to identify which intersection (0 or 1)
+
+  constructor(
+    id: string,
+    circle1Id: string,
+    circle2Id: string,
+    index: number,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.circle1Id = circle1Id;
+    this.circle2Id = circle2Id;
+    this.index = index;
+  }
+
+  clone(): Point2DCircleCircleIntersection {
+    const cloned = new Point2DCircleCircleIntersection(
+      this.id,
+      this.circle1Id,
+      this.circle2Id,
+      this.index,
+      this.planeId,
+      this.label
+    );
+    if (this.siblingPointId) {
+      cloned.siblingPointId = this.siblingPointId;
+    }
+    return cloned;
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of two circles
+   * 
+   * @param world World instance to query parent realizations
+   * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection
+   */
+  realize2D(world: World): Point2DRealization2D {
+    const circle1 = world.getCircle2DRealization(this.circle1Id);
+    const circle2 = world.getCircle2DRealization(this.circle2Id);
+    
+    // Check if parent elements are infeasible - propagate infeasibility
+    if ((circle1 && !circle1.feasible) || (circle2 && !circle2.feasible)) {
+      console.warn('[Point2DCircleCircleIntersection] Parent element is infeasible, marking this as infeasible');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    if (!circle1 || !circle2) {
+      console.warn('[Point2DCircleCircleIntersection] Cannot get circle realizations');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    const result = intersectCircleCircle(circle1, circle2);
+    
+    if (result.points.length === 0) {
+      console.warn('[Point2DCircleCircleIntersection] Circles do not intersect:', result.type);
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    const point = result.points[Math.min(this.index, result.points.length - 1)];
+    return new Point2DRealization2D(point, true);
   }
 }
 
@@ -339,4 +472,29 @@ export class SiblingIntersectionPoint2D extends Point2D {
     // They represent the same 3D hinge line with consistent 2D parameterization
     return new Point2DRealization2D(primaryRealization.position.clone());
   }
+}
+
+// Type guards for Point2D types
+export function isFreePoint2D(point: Point2D): point is FreePoint2D {
+  return point.type === 'free';
+}
+
+export function isLineLineIntersection(point: Point2D): point is Point2DLineLineIntersection {
+  return point.type === 'line-line-intersection';
+}
+
+export function isLineCircleIntersection(point: Point2D): point is Point2DLineCircleIntersection {
+  return point.type === 'line-circle-intersection';
+}
+
+export function isCircleCircleIntersection(point: Point2D): point is Point2DCircleCircleIntersection {
+  return point.type === 'circle-circle-intersection';
+}
+
+export function isIntersectionPoint2D(point: Point2D): point is IntersectionPoint2D {
+  return point instanceof IntersectionPoint2D;
+}
+
+export function isSiblingIntersectionPoint2D(point: Point2D): point is SiblingIntersectionPoint2D {
+  return point.type === 'sibling-intersection';
 }

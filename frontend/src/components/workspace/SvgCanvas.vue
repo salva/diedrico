@@ -148,14 +148,14 @@ import { PaperService, type PrimitiveContext } from '@/services/PaperService';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
 import { CommandStack } from '@/commands/CommandStack';
-import { UpdateElementStyleCommand } from '@/commands/UpdateElementStyleCommand';
+import { Command } from '@/commands/Command';
+import { UpdateElementStyleOp } from '@/commands/operations/UpdateElementStyleOp';
 import { PointTool } from '@/tools/PointTool';
 import { LineTool } from '@/tools/LineTool';
 import { SegmentTool } from '@/tools/SegmentTool';
 import { CircleTool } from '@/tools/CircleTool';
 import { GuideTool } from '@/tools/GuideTool';
 import { IntersectionTool } from '@/tools/IntersectionTool';
-import { TransportTool } from '@/tools/TransportTool';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
@@ -302,7 +302,6 @@ const tools: Record<string, ITool> = {
   'circle': new CircleTool(),
   'guide': new GuideTool(),
   'intersection': new IntersectionTool(),
-  'transport': new TransportTool(),
   // Future tools: etc.
 };
 
@@ -740,24 +739,33 @@ function handleDoubleClick(event: MouseEvent) {
 function handleSaveProperties(changes: any) {
   console.log('[SvgCanvas] Saving property changes:', changes);
   
-  // Create and execute style update command
-  const styleCommand = new UpdateElementStyleCommand(
-    changes.elementId,
-    {
-      color: changes.color,
-      lineWidth: changes.lineWidth,
-      lineStyle: changes.lineStyle,
-      visible: changes.visible
-    },
-    world
-  );
+  // Create command using base Command + Operation pattern per data-model.md
+  const cmd = new Command(`Update style: ${changes.elementId}`, world);
   
-  styleCommand.execute();
-  commandStack.push(styleCommand);
-  
-  // Trigger reactivity
-  worldVersion.value++;
-  console.log('[SvgCanvas] Style updated and command added to stack');
+  try {
+    // Create and execute style update operation
+    const styleOp = new UpdateElementStyleOp(
+      changes.elementId,
+      activePlane.value, // TODO: Get actual planeId from element
+      {
+        color: changes.color,
+        lineWidth: changes.lineWidth,
+        lineStyle: changes.lineStyle,
+        visible: changes.visible
+      }
+    );
+    
+    cmd.addAndExecute(styleOp);
+    cmd.commit();
+    commandStack.push(cmd);
+    
+    // Trigger reactivity
+    worldVersion.value++;
+    console.log('[SvgCanvas] Style updated and command added to stack');
+  } catch (error) {
+    console.error('[SvgCanvas] Style update failed:', error);
+    cmd.rollback();
+  }
 }
 
 /**

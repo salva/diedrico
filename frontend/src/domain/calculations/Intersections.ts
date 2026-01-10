@@ -24,6 +24,59 @@ import type { Line2DRealization2D } from '../world/Line';
 import type { Circle2DRealization2D } from '../world/Circle';
 
 /**
+ * Sort intersection points by angle relative to circle's radius vector
+ * 
+ * Per data-model.md: When multiple points intersect a circle, they must be indexed
+ * by their angular position relative to the circle's radius vector (angle zero).
+ * 
+ * Algorithm:
+ * 1. For each point P: compute angle θ = atan2(P.y - C.y, P.x - C.x)
+ * 2. Compute reference angle θ₀ = atan2(R.y, R.x) from radius vector
+ * 3. Compute relative angle Δθ = θ - θ₀, normalized to [0, 2π)
+ * 4. Sort by Δθ ascending (index 0 = smallest Δθ = closest to radius vector)
+ * 
+ * @param points Intersection points to sort
+ * @param circle Circle realization containing center and radiusVector
+ * @returns Points sorted by angle relative to radius vector
+ */
+function sortPointsByAngleFromRadiusVector(
+  points: Vector3[],
+  circle: Circle2DRealization2D
+): Vector3[] {
+  if (points.length <= 1) {
+    return points; // No sorting needed
+  }
+
+  const center = circle.center;
+  const radiusVector = circle.radiusVector;
+  
+  // Compute reference angle from radius vector
+  const theta0 = Math.atan2(radiusVector.y, radiusVector.x);
+  
+  // Compute relative angle for each point
+  const pointsWithAngles = points.map(point => {
+    const theta = Math.atan2(point.y - center.y, point.x - center.x);
+    let deltaTheta = theta - theta0;
+    
+    // Normalize to [0, 2π) range
+    while (deltaTheta < 0) {
+      deltaTheta += 2 * Math.PI;
+    }
+    while (deltaTheta >= 2 * Math.PI) {
+      deltaTheta -= 2 * Math.PI;
+    }
+    
+    return { point, deltaTheta };
+  });
+  
+  // Sort by deltaTheta ascending
+  pointsWithAngles.sort((a, b) => a.deltaTheta - b.deltaTheta);
+  
+  // Return sorted points
+  return pointsWithAngles.map(item => item.point);
+}
+
+/**
  * Result of a line-line intersection calculation
  */
 export interface LineLineIntersectionResult {
@@ -241,7 +294,8 @@ export function intersectLineCircle(
 ): LineCircleIntersectionResult {
   const P0 = line.point1;
   const d = line.getDirection();
-  const { center: C, radius: r } = circle;
+  const C = circle.center;
+  const r = circle.getRadius();
   
   // Line: P(t) = P0 + t*d = (P0.x + t*d.x, P0.y + t*d.y)
   // Circle: (x - C.x)² + (y - C.y)² = r²
@@ -300,13 +354,17 @@ export function intersectLineCircle(
     const x2 = P0.x + t2 * d.x;
     const y2 = P0.y + t2 * d.y;
     
+    // Sort points by angle relative to circle's radius vector
+    const unsortedPoints = [
+      new Vector3(x1, y1, 1),
+      new Vector3(x2, y2, 1)
+    ];
+    const sortedPoints = sortPointsByAngleFromRadiusVector(unsortedPoints, circle);
+    
     return {
-      points: [
-        new Vector3(x1, y1, 1),
-        new Vector3(x2, y2, 1)
-      ],
+      points: sortedPoints,
       type: 'secant',
-      message: `Line intersects circle at (${x1.toFixed(2)}, ${y1.toFixed(2)}) and (${x2.toFixed(2)}, ${y2.toFixed(2)})`
+      message: `Line intersects circle at 2 points (sorted by angle from radius vector)`
     };
   }
 }
@@ -452,12 +510,16 @@ export function intersectCircleCircle(
   const x2 = p2x - h * perp_x;
   const y2 = p2y - h * perp_y;
   
+  // Sort points by angle relative to first circle's radius vector
+  const unsortedPoints = [
+    new Vector3(x1, y1, 1),
+    new Vector3(x2, y2, 1)
+  ];
+  const sortedPoints = sortPointsByAngleFromRadiusVector(unsortedPoints, circle1);
+  
   return {
-    points: [
-      new Vector3(x1, y1, 1),
-      new Vector3(x2, y2, 1)
-    ],
+    points: sortedPoints,
     type: 'secant',
-    message: `Circles intersect at (${x1.toFixed(2)}, ${y1.toFixed(2)}) and (${x2.toFixed(2)}, ${y2.toFixed(2)})`
+    message: `Circles intersect at 2 points (sorted by angle from circle1's radius vector)`
   };
 }

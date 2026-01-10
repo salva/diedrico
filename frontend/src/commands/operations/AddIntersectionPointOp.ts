@@ -1,8 +1,10 @@
 /**
- * AddIntersectionPoint2DOp - Operation to add an IntersectionPoint2D using World factory method
+ * AddIntersectionPoint2DOp - Operation to add an IntersectionPoint2D using ProjectionPlane factory method
  * 
- * Wraps World.addIntersectionPoint2DWithSibling() to automatically create sibling points
- * when intersecting with HalfHingeLine2D.
+ * Wraps ProjectionPlane.addIntersectionPoint2D() in the Operation interface.
+ * 
+ * Note: Sibling point creation for HalfHingeLine2D intersections is handled automatically
+ * by the domain logic, not by this operation.
  */
 
 import type { IOperation, OperationResult } from './IOperation';
@@ -24,21 +26,21 @@ export class AddIntersectionPoint2DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Use sibling-aware factory method
-      // Pass stored IDs if available (for redo), otherwise let World generate new ones
-      const result = world.addIntersectionPoint2DWithSibling(
-        this.planeId,
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const point = plane.addIntersectionPoint2D(
         this.line1Id,
         this.line2Id,
         this.index,
-        this.outputs.pointId,
-        this.outputs.siblingPointId
+        world,
+        this.outputs.pointId
       );
       
-      this.outputs = { 
-        pointId: result.primary.id,
-        siblingPointId: result.sibling?.id
-      };
+      this.outputs = { pointId: point.id };
       
       return {
         success: true,
@@ -54,21 +56,15 @@ export class AddIntersectionPoint2DOp implements IOperation {
   }
 
   undo(world: World): void {
-    // Remove sibling first (if exists)
-    if (this.outputs.siblingPointId) {
-      const siblingPlaneId = this.planeId === 'proj_plane_H' ? 'proj_plane_V' : 'proj_plane_H';
-      const siblingPlane = world.getProjectionPlaneById(siblingPlaneId);
-      if (siblingPlane) {
-        siblingPlane.removePoint(this.outputs.siblingPointId);
-      }
-    }
-    
-    // Remove primary
+    // Remove primary point
     if (this.outputs.pointId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
         plane.removePoint(this.outputs.pointId);
       }
     }
+    
+    // Note: If sibling points exist, they should be removed by domain logic
+    // via dependency tracking, not explicitly here
   }
 }

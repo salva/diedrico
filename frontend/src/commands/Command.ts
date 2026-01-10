@@ -6,11 +6,67 @@
  * 
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
  * 
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ARCHITECTURAL PRINCIPLE: Command MUST NOT be subclassed
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * Per data-model.md §Command Pattern:
+ * "Architecture: Single Command class (not subclasses) - the real logic is in Operation classes"
+ * "No Subclasses Needed: Tools create operations directly and pass to generic Command"
+ * 
+ * WHY THIS MATTERS:
+ * 
+ * 1. **Generic Container Pattern**: Command is a generic container for Operations.
+ *    It provides undo/redo infrastructure but contains NO domain logic.
+ * 
+ * 2. **All Logic in Operations**: Domain logic (create point, add line, update style)
+ *    belongs in Operation classes (AddFreePoint2DOp, AddLine2DOp, UpdateElementStyleOp).
+ *    Operations implement the IOperation interface with apply() and undo() methods.
+ * 
+ * 3. **Operation Chaining**: Commands enable incremental execution where later operations
+ *    can use outputs from earlier operations. Example:
+ *    ```typescript
+ *    const cmd = new Command("Create segment", world);
+ *    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
+ *    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
+ *    cmd.addAndExecute(new AddSegment2DOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+ *    cmd.commit();
+ *    ```
+ * 
+ * 4. **Architectural Consistency**: Having Command subclasses encourages violating
+ *    the Operation pattern and leads to inconsistent architecture.
+ * 
+ * 5. **Testability**: The generic Command + Operations pattern is easier to test
+ *    because each Operation can be tested independently.
+ * 
+ * CORRECT USAGE:
+ * - Tools create Operations: `new AddFreePoint2DOp(planeId, position)`
+ * - Tools create generic Command: `new Command("Create point", world)`
+ * - Tools add operations: `cmd.addAndExecute(operation)`
+ * - Tools commit: `cmd.commit()` and `commandStack.push(cmd)`
+ * 
+ * INCORRECT USAGE (DO NOT DO THIS):
+ * - ❌ class CreatePointCommand extends Command { ... }
+ * - ❌ class UpdateStyleCommand extends Command { ... }
+ * - ❌ Overriding execute(), undo(), or redo() methods
+ * 
+ * See UpdateElementStyleOp as example of correct pattern - it's an Operation,
+ * not a Command subclass.
+ * 
+ * This architectural rule is enforced by:
+ * - This documentation comment
+ * - @sealed JSDoc annotation
+ * - Automated test in tests/unit/architecture/noCommandSubclasses.spec.ts
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
  * Key Principles:
  * - Operations execute immediately when added (incremental execution)
  * - Later operations can use outputs from earlier operations
  * - If any operation fails, entire command is rolled back
  * - Commands maintain status: Building → Committed → Undone
+ * 
+ * @sealed - This class must NOT be extended. All domain logic belongs in Operation classes.
  */
 
 import type { IOperation, OperationResult } from './operations/IOperation';
@@ -22,6 +78,11 @@ export enum CommandStatus {
   Undone = 'undone'           // Command has been undone
 }
 
+/**
+ * Command - Generic container for operations
+ * 
+ * @sealed DO NOT SUBCLASS - All logic belongs in Operation classes
+ */
 export class Command {
   readonly id: string;
   readonly timestamp: Date;

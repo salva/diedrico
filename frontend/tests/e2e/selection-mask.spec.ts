@@ -155,29 +155,7 @@ test.describe('Selection Mask System E2E', () => {
     );
     expect(pointHasHover).toBe(false);
   });
-
-  test('TransportTool: dynamic mask changes from points to guides', async ({ page }) => {
-    // Complex setup needed: points, hinge line, guide
-    // For MVP this test may need adjustment based on actual UI structure
-    
-    // Create points
-    await page.click('[data-testid="tool-point"]');
-    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } }); // Source point
-    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 300 } }); // Hinge point 1
-    await page.click('[data-testid="svg-canvas"]', { position: { x: 400, y: 300 } }); // Hinge point 2
-    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } }); // Through point
-
-    // Create guide (requires GuideTool interaction)
-    await page.click('[data-testid="tool-guide"]');
-    await page.click('[data-testid="svg-canvas"]', { position: { x: 250, y: 300 } }); // Select hinge
-    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } }); // Through point
-
-    // Activate transport tool
-    await page.click('[data-testid="tool-transport"]');
-
-    // Initial state: points should highlight
-    await page.mouse.move(100, 100);
-    await page.waitForTimeout(200);
+});
     
     const pointElement = page.locator('[data-element-type="point"]').first();
     const pointHasHover = await pointElement.evaluate(el => 

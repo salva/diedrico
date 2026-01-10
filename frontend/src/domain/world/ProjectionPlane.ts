@@ -25,7 +25,13 @@
 import { Matrix3, Vector3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import type { Point2D, Point2DRealization2D } from './Point';
-import { FreePoint2D, IntersectionPoint2D } from './Point';
+import { 
+  FreePoint2D,
+  IntersectionPoint2D,
+  Point2DLineLineIntersection,
+  Point2DLineCircleIntersection,
+  Point2DCircleCircleIntersection
+} from './Point';
 import type { Line2D, Line2DRealization2D } from './Line';
 import { Line2DByTwoPoints } from './Line';
 import type { Circle2D, Circle2DRealization2D } from './Circle';
@@ -490,34 +496,32 @@ export abstract class ProjectionPlane {
   }
 
   /**
-   * Factory method: Create and add an IntersectionPoint2D to this plane
-   * @param element1Id ID of first element (line or circle)
-   * @param element2Id ID of second element
-   * @param index Intersection index (0 for first/only point, 1 for second)
+   * Factory method: Create and add a Point2DLineLineIntersection to this plane
+   * @param line1Id ID of first line
+   * @param line2Id ID of second line
    * @param world World context for validation and ID generation
    * @param id Optional ID for redo operations
-   * @returns The created IntersectionPoint2D
+   * @returns The created Point2DLineLineIntersection
    */
-  addIntersectionPoint2D(
-    element1Id: string,
-    element2Id: string,
-    index: number,
+  addLineLineIntersection(
+    line1Id: string,
+    line2Id: string,
     world: import('./World').World,
     id?: string
-  ): IntersectionPoint2D {
+  ): Point2DLineLineIntersection {
     if (!this.id) {
       throw new Error('Cannot add point to plane without ID');
     }
 
-    // Validate elements exist
-    const element1 = world.getLine2DRealization(element1Id) || world.getCircle2DRealization(element1Id);
-    const element2 = world.getLine2DRealization(element2Id) || world.getCircle2DRealization(element2Id);
+    // Validate lines exist
+    const line1 = world.getLine2DRealization(line1Id);
+    const line2 = world.getLine2DRealization(line2Id);
     
-    if (!element1) {
-      throw new Error(`Invalid element1Id: ${element1Id}. Element does not exist.`);
+    if (!line1) {
+      throw new Error(`Invalid line1Id: ${line1Id}. Line does not exist.`);
     }
-    if (!element2) {
-      throw new Error(`Invalid element2Id: ${element2Id}. Element does not exist.`);
+    if (!line2) {
+      throw new Error(`Invalid line2Id: ${line2Id}. Line does not exist.`);
     }
 
     // Generate unique ID if not provided
@@ -525,7 +529,101 @@ export abstract class ProjectionPlane {
       id = this.generatePoint2DId(world);
     }
 
-    const point = new IntersectionPoint2D(id, element1Id, element2Id, index, this.id);
+    const point = new Point2DLineLineIntersection(id, line1Id, line2Id, this.id);
+    
+    this.addPoint(point);
+    return point;
+  }
+
+  /**
+   * Factory method: Create and add a Point2DLineCircleIntersection to this plane
+   * @param lineId ID of the line
+   * @param circleId ID of the circle
+   * @param index Intersection index (0 or 1)
+   * @param world World context for validation and ID generation
+   * @param id Optional ID for redo operations
+   * @returns The created Point2DLineCircleIntersection
+   */
+  addLineCircleIntersection(
+    lineId: string,
+    circleId: string,
+    index: number,
+    world: import('./World').World,
+    id?: string
+  ): Point2DLineCircleIntersection {
+    if (!this.id) {
+      throw new Error('Cannot add point to plane without ID');
+    }
+
+    // Validate elements exist
+    const line = world.getLine2DRealization(lineId);
+    const circle = world.getCircle2DRealization(circleId);
+    
+    if (!line) {
+      throw new Error(`Invalid lineId: ${lineId}. Line does not exist.`);
+    }
+    if (!circle) {
+      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist.`);
+    }
+
+    // Validate index
+    if (index !== 0 && index !== 1) {
+      throw new Error(`Invalid index: ${index}. Must be 0 or 1.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generatePoint2DId(world);
+    }
+
+    const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, this.id);
+    
+    this.addPoint(point);
+    return point;
+  }
+
+  /**
+   * Factory method: Create and add a Point2DCircleCircleIntersection to this plane
+   * @param circle1Id ID of first circle
+   * @param circle2Id ID of second circle
+   * @param index Intersection index (0 or 1)
+   * @param world World context for validation and ID generation
+   * @param id Optional ID for redo operations
+   * @returns The created Point2DCircleCircleIntersection
+   */
+  addCircleCircleIntersection(
+    circle1Id: string,
+    circle2Id: string,
+    index: number,
+    world: import('./World').World,
+    id?: string
+  ): Point2DCircleCircleIntersection {
+    if (!this.id) {
+      throw new Error('Cannot add point to plane without ID');
+    }
+
+    // Validate circles exist
+    const circle1 = world.getCircle2DRealization(circle1Id);
+    const circle2 = world.getCircle2DRealization(circle2Id);
+    
+    if (!circle1) {
+      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist.`);
+    }
+    if (!circle2) {
+      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist.`);
+    }
+
+    // Validate index
+    if (index !== 0 && index !== 1) {
+      throw new Error(`Invalid index: ${index}. Must be 0 or 1.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generatePoint2DId(world);
+    }
+
+    const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, this.id);
     
     this.addPoint(point);
     return point;
@@ -677,27 +775,6 @@ export abstract class ProjectionPlane {
     
     this.addCircle(circle);
     return circle;
-  }
-
-  /**
-   * Factory method: Create circle by center and radius (convenience wrapper)
-   * Creates a temporary point at the given radius and uses Circle2DByCenterAndPoint
-   * NOTE: This is a temporary solution. In the future, we should have Circle2DByCenterAndRadius class.
-   * @param centerPointId ID of center point
-   * @param radius Radius value
-   * @param world World context for validation and ID generation
-   * @param id Optional ID for redo operations
-   * @returns The created circle
-   */
-  addCircle2DByCenter(
-    centerPointId: string,
-    radius: number,
-    world: import('./World').World,
-    id?: string
-  ): Circle2DByCenterAndPoint {
-    // For now, this method is a placeholder that should not be used
-    // The AddCircleOp should be refactored to use addCircle2DByCenterAndPoint
-    throw new Error('addCircle2DByCenter not implemented. Use addCircle2DByCenterAndPoint instead.');
   }
 
   /**

@@ -26,8 +26,12 @@ import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import type { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddIntersectionPoint2DOp } from '@/commands/operations/AddIntersectionPointOp';
-import { createIntersectionPointAction } from '@/domain/processTree/actions/CreateIntersectionPointAction';
+import { AddLineLineIntersectionPoint2DOp } from '@/commands/operations/AddLineLineIntersectionPoint2DOp';
+import { AddLineCircleIntersectionPoint2DOp } from '@/commands/operations/AddLineCircleIntersectionPoint2DOp';
+import { AddCircleCircleIntersectionPoint2DOp } from '@/commands/operations/AddCircleCircleIntersectionPoint2DOp';
+import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
+import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
+import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
 import { 
   areLinesParallel, 
   intersectLineCircle, 
@@ -116,14 +120,14 @@ export class IntersectionTool extends BaseTool {
       }
 
       // Determine intersection type and compute intersections
-      const intersectionIndex = this.computeIntersectionIndex(
+      const intersectionData = this.computeIntersectionData(
         this.firstElementId!,
         secondElementId,
         planeCoords,
         world
       );
 
-      if (intersectionIndex === null) {
+      if (!intersectionData) {
         this.reset();
         return this.failure('Elements do not intersect or are parallel.');
       }
@@ -132,25 +136,67 @@ export class IntersectionTool extends BaseTool {
         // Build Command directly
         const cmd = new Command("Create intersection point", world);
         
+        // Create the appropriate operation based on intersection type
+        let operation;
+        if (intersectionData.type === 'line-line') {
+          operation = new AddLineLineIntersectionPoint2DOp(
+            planeId,
+            intersectionData.element1Id,
+            intersectionData.element2Id
+          );
+        } else if (intersectionData.type === 'line-circle') {
+          operation = new AddLineCircleIntersectionPoint2DOp(
+            planeId,
+            intersectionData.lineId!,
+            intersectionData.circleId!,
+            intersectionData.index!
+          );
+        } else if (intersectionData.type === 'circle-circle') {
+          operation = new AddCircleCircleIntersectionPoint2DOp(
+            planeId,
+            intersectionData.element1Id,
+            intersectionData.element2Id,
+            intersectionData.index!
+          );
+        } else {
+          throw new Error(`Unknown intersection type: ${intersectionData.type}`);
+        }
+        
         // Use return value from addAndExecute
-        const result = cmd.addAndExecute(new AddIntersectionPoint2DOp(
-          planeId,
-          this.firstElementId!,
-          secondElementId,
-          intersectionIndex
-        ));
+        const result = cmd.addAndExecute(operation);
         
         // Extract outputs
         const pointId = result.outputs.pointId;
         
-        // Record ProcessTree action using pointId from outputs
-        const action = createIntersectionPointAction(
-          pointId,
-          planeId,
-          this.firstElementId!,
-          secondElementId,
-          intersectionIndex
-        );
+        // Record ProcessTree action using specialized action factories
+        let action;
+        if (intersectionData.type === 'line-line') {
+          action = createLineLineIntersectionPointAction(
+            pointId,
+            planeId,
+            intersectionData.element1Id,
+            intersectionData.element2Id
+          );
+        } else if (intersectionData.type === 'line-circle') {
+          action = createLineCircleIntersectionPointAction(
+            pointId,
+            planeId,
+            intersectionData.lineId!,
+            intersectionData.circleId!,
+            intersectionData.index!
+          );
+        } else if (intersectionData.type === 'circle-circle') {
+          action = createCircleCircleIntersectionPointAction(
+            pointId,
+            planeId,
+            intersectionData.element1Id,
+            intersectionData.element2Id,
+            intersectionData.index!
+          );
+        } else {
+          throw new Error(`Unknown intersection type: ${intersectionData.type}`);
+        }
+        
         world.getProcessTree().addAction(action);
         
         // Commit
@@ -173,19 +219,26 @@ export class IntersectionTool extends BaseTool {
   }
 
   /**
-   * Compute intersection index for the intersection point nearest to mouse position
+   * Compute intersection data for the intersection point nearest to mouse position
    * 
    * When multiple intersections exist (line-circle or circle-circle), this method
    * determines which intersection is closest to the user's click position.
    * 
-   * @returns Intersection index (0 for first/only point, 1 for second point) or null if no intersection
+   * @returns Intersection data with type and appropriate IDs, or null if no intersection
    */
-  private computeIntersectionIndex(
+  private computeIntersectionData(
     element1Id: string,
     element2Id: string,
     mousePos: Vector3,
     world: World
-  ): number | null {
+  ): { 
+    type: 'line-line' | 'line-circle' | 'circle-circle'; 
+    element1Id: string; 
+    element2Id: string;
+    lineId?: string;
+    circleId?: string;
+    index?: number;
+  } | null {
     // Get actual domain objects
     const element1 = world.getLine2DFromPlanes(element1Id) || world.getCircle2DFromPlanes(element1Id);
     const element2 = world.getLine2DFromPlanes(element2Id) || world.getCircle2DFromPlanes(element2Id);
@@ -208,22 +261,54 @@ export class IntersectionTool extends BaseTool {
         return null;
       }
       
-      // Line-line always has 0 or 1 intersection, so index is always 0
-      return 0;
+      // Line-line always has 0 or 1 intersection, no index needed
+      return {
+        type: 'line-line',
+        element1Id,
+        element2Id
+      };
     }
 
     // Line-Circle intersection
     if (element1 instanceof Line2D && element2 instanceof Circle2D) {
-      return this.computeLineCircleIntersectionIndex(element1Id, element2Id, mousePos, world);
+      const index = this.computeLineCircleIntersectionIndex(element1Id, element2Id, mousePos, world);
+      if (index === null) return null;
+      
+      return {
+        type: 'line-circle',
+        element1Id,
+        element2Id,
+        lineId: element1Id,
+        circleId: element2Id,
+        index
+      };
     }
     
     if (element1 instanceof Circle2D && element2 instanceof Line2D) {
-      return this.computeLineCircleIntersectionIndex(element2Id, element1Id, mousePos, world);
+      const index = this.computeLineCircleIntersectionIndex(element2Id, element1Id, mousePos, world);
+      if (index === null) return null;
+      
+      return {
+        type: 'line-circle',
+        element1Id,
+        element2Id,
+        lineId: element2Id,
+        circleId: element1Id,
+        index
+      };
     }
 
     // Circle-Circle intersection
     if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
-      return this.computeCircleCircleIntersectionIndex(element1Id, element2Id, mousePos, world);
+      const index = this.computeCircleCircleIntersectionIndex(element1Id, element2Id, mousePos, world);
+      if (index === null) return null;
+      
+      return {
+        type: 'circle-circle',
+        element1Id,
+        element2Id,
+        index
+      };
     }
 
     return null;

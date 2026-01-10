@@ -243,8 +243,7 @@ function getGuidePoint2Y(element: any): number {
 
 // Get circle center and radius
 function getCircleCenterX(element: any): number {
-  if (element.kind === 'Circle2DByCenterAndRadius' || 
-      element.kind === 'Circle2DByCenterAndPoint') {
+  if (element.kind === 'Circle2DByCenterAndPoint') {
     const center = getElement(element.centerPointId) as Point2D;
     return center ? getPointX(center) : 0;
   }
@@ -256,8 +255,7 @@ function getCircleCenterX(element: any): number {
 }
 
 function getCircleCenterY(element: any): number {
-  if (element.kind === 'Circle2DByCenterAndRadius' || 
-      element.kind === 'Circle2DByCenterAndPoint') {
+  if (element.kind === 'Circle2DByCenterAndPoint') {
     const center = getElement(element.centerPointId) as Point2D;
     return center ? getPointY(center) : 0;
   }
@@ -269,9 +267,6 @@ function getCircleCenterY(element: any): number {
 }
 
 function getCircleRadius(element: any): number {
-  if (element.kind === 'Circle2DByCenterAndRadius') {
-    return element.radius;
-  }
   if (element.kind === 'Circle2DByCenterAndPoint') {
     const center = getElement(element.centerPointId) as Point2D;
     const circumference = getElement(element.circumferencePointId) as Point2D;

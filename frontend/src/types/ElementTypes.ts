@@ -124,16 +124,8 @@ export type Line2D =
  */
 
 /**
- * Circle by center point and radius value
- */
-export interface Circle2DByCenterAndRadius extends Element2DBase {
-  kind: 'Circle2DByCenterAndRadius';
-  centerPointId: string;
-  radius: number;
-}
-
-/**
  * Circle by center point and point on circumference
+ * This is the ONLY allowed circle construction per data-model.md
  */
 export interface Circle2DByCenterAndPoint extends Element2DBase {
   kind: 'Circle2DByCenterAndPoint';
@@ -152,7 +144,6 @@ export interface Circle2DByThreePoints extends Element2DBase {
 }
 
 export type Circle2D = 
-  | Circle2DByCenterAndRadius 
   | Circle2DByCenterAndPoint 
   | Circle2DByThreePoints;
 
@@ -314,8 +305,7 @@ export function isLine2D(element: Element2D): element is Line2D {
 }
 
 export function isCircle2D(element: Element2D): element is Circle2D {
-  return element.kind === 'Circle2DByCenterAndRadius' 
-    || element.kind === 'Circle2DByCenterAndPoint' 
+  return element.kind === 'Circle2DByCenterAndPoint' 
     || element.kind === 'Circle2DByThreePoints';
 }
 

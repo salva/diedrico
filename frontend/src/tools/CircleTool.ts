@@ -1,13 +1,13 @@
 /**
- * CircleTool - Tool for creating circles by center point and radius
+ * CircleTool - Tool for creating circles by center point and circumference point
  * 
  * Implements two-click workflow:
- * 1. First click: Select center point (snaps to existing point)
- * 2. Second click: Set radius (distance from center to click position)
- * 3. Create circle with the specified center and radius
+ * 1. First click: Select/create center point
+ * 2. Second click: Create/select circumference point (defines radius vector)
+ * 3. Create circle with these two points
  * 
- * The tool calculates radius as the distance from center to the second click point,
- * allowing intuitive circle sizing by clicking at the desired circumference.
+ * The circumference point defines both the radius magnitude and angle zero reference,
+ * ensuring stable intersection indexing per Diedrico principles.
  * 
  * Reference: specs/001-dihedral-learning-mvp/spec.md §US2 - Create circles
  */
@@ -16,27 +16,27 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
-import { AddCircle2DByCenterAndRadiusOp } from '@/commands/operations/AddCircleOp';
+import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/AddCircleOp';
+import { AddFreePoint2DOp } from '@/commands/operations/AddPointOp';
 import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
 import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * CircleTool state machine:
  * - State 0: Waiting for center point
- * - State 1: Center selected, waiting for radius point
+ * - State 1: Center selected, waiting for circumference point
  */
 export class CircleTool extends BaseTool {
   readonly name = 'circle';
-  private state: 'waiting-center' | 'waiting-radius' = 'waiting-center';
+  private state: 'waiting-center' | 'waiting-circumference' = 'waiting-center';
   private centerPointId?: string;
-  private centerPosition?: Vector3;  // Store center position for radius calculation
 
   /**
    * Handle click event for circle creation
    * 
    * Two-click workflow:
    * 1. First click: Record center point
-   * 2. Second click: Calculate radius and create circle
+   * 2. Second click: Create/select circumference point and create circle
    */
   handleClick(context: ToolContext): ToolResult {
     const { planeId, planeCoords, canvasCoords, commandStack, world, paper, paperToPlaneTransform } = context;
@@ -69,44 +69,48 @@ export class CircleTool extends BaseTool {
 
       // Record center point
       this.centerPointId = hit.elementId;
+      this.state = 'waiting-circumference';
       
-      // Get center position for radius calculation
-      const centerRealization = world.getPoint2DRealization(hit.elementId);
-      if (!centerRealization) {
-        this.reset();
-        return this.failure('Failed to get center point position');
-      }
-      
-      this.centerPosition = centerRealization.position.clone();
-      this.state = 'waiting-radius';
-      
-      return this.success(`Selected center point: ${hit.elementId}. Click to set radius.`);
+      return this.success(`Selected center point: ${hit.elementId}. Click to set circumference point.`);
       
     } else {
-      // Second click: Set radius and create circle
-      
-      // Calculate radius as distance from center to click position
-      const clickPos = new Vector3(planeCoords.x, planeCoords.y, planeCoords.z);
-      const radius = this.centerPosition!.distanceTo(clickPos);
-      
-      // Validate minimum radius
-      if (radius < 1e-3) {
-        this.reset();
-        return this.failure('Radius too small. Please click farther from center.');
-      }
+      // Second click: Create circumference point and circle
       
       try {
-        // Build Command directly
+        // Build Command with two operations: create circumference point, then circle
         const cmd = new Command("Create circle", world);
         
-        // Use return value from addAndExecute
-        const result = cmd.addAndExecute(new AddCircle2DByCenterAndRadiusOp(planeId, this.centerPointId!, radius));
+        // Operation 1: Create circumference point at click position
+        const circumferencePos = new Vector3(planeCoords.x, planeCoords.y, planeCoords.z);
+        const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
+        const circumferencePointId = pointResult.outputs.pointId;
+        
+        // Validate minimum radius before creating circle
+        const centerRealization = world.getPoint2DRealization(this.centerPointId!);
+        const circumferenceRealization = world.getPoint2DRealization(circumferencePointId);
+        
+        if (centerRealization && circumferenceRealization) {
+          const radius = centerRealization.position.distanceTo(circumferenceRealization.position);
+          if (radius < 1e-3) {
+            cmd.rollback();
+            this.reset();
+            return this.failure('Radius too small. Please click farther from center.');
+          }
+        }
+        
+        // Operation 2: Create circle using center and circumference points
+        const result = cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(
+          planeId,
+          this.centerPointId!,
+          circumferencePointId
+        ));
         
         // Extract outputs
         const circleId = result.outputs.circleId;
         
         // Record ProcessTree action using circleId from outputs
-        const action = createCircleAction(circleId, planeId, this.centerPointId!, radius);
+        // Note: createCircleAction currently expects radius, but will be updated to use two points
+        const action = createCircleAction(circleId, planeId, this.centerPointId!, 0);  // radius=0 as placeholder
         world.getProcessTree().addAction(action);
         
         // Commit
@@ -120,7 +124,7 @@ export class CircleTool extends BaseTool {
         // Reset state for next circle
         this.reset();
         
-        return this.success(`Created circle ${circleId} with center ${centerPointId} and radius ${radius.toFixed(2)}`);
+        return this.success(`Created circle ${circleId} with center ${centerPointId} and circumference ${circumferencePointId}`);
         
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -150,8 +154,7 @@ export class CircleTool extends BaseTool {
   getState(): Record<string, any> {
     return {
       state: this.state,
-      centerPointId: this.centerPointId,
-      centerPosition: this.centerPosition
+      centerPointId: this.centerPointId
     };
   }
 
@@ -161,6 +164,5 @@ export class CircleTool extends BaseTool {
   private reset(): void {
     this.state = 'waiting-center';
     this.centerPointId = undefined;
-    this.centerPosition = undefined;
   }
 }

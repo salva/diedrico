@@ -32,11 +32,12 @@
 import { Matrix3 } from 'three';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { FreePoint2D } from '@/domain/world/Point';
+import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Guide2D } from '@/domain/world/Guide';
 import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
 import type { Line2D, Line2DRealization2D } from '../domain/world/Line';
-import type { Segment2D } from '../domain/world/Segment';
 import type { Circle2D, Circle2DRealization2D } from '../domain/world/Circle';
-import type { Guide2D, Guide2DRealization2D } from '../domain/world/Guide';
+import type { Guide2DRealization2D } from '../domain/world/Guide';
 import type { HingeLine } from '../domain/world/HingeLine';
 import type { HalfHingeLine2D } from '../domain/world/HingeLine';
 import type { World } from '../domain/world/World';
@@ -114,7 +115,7 @@ export class PaperService {
           if (line instanceof HalfHingeLine2D) {
             const primitive = this.halfHingeLineToPrimitive(line, realization, transform, line.planeId!, context);
             primitives.push(primitive);
-          } else if (line instanceof Segment2D) {
+          } else if (line instanceof Segment2DByPoints) {
             // Segments are Line2D subclass with finite endpoints
             const primitive = this.segmentToPrimitive(line, realization, transform, context);
             primitives.push(primitive);

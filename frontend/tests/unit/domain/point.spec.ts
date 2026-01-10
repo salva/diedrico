@@ -9,7 +9,13 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3, Vector4 } from 'three';
-import { FreePoint2D, IntersectionPoint2D, SiblingIntersectionPoint2D } from '@/domain/world/Point';
+import { 
+  FreePoint2D, 
+  Point2DLineLineIntersection,
+  Point2DLineCircleIntersection,
+  Point2DCircleCircleIntersection,
+  SiblingIntersectionPoint2D 
+} from '@/domain/world/Point';
 import { World } from '@/domain/world/World';
 import { Plane3D } from '@/domain/world/Plane';
 
@@ -24,13 +30,12 @@ describe('Point2D', () => {
       expect(point.type).toBe('free');
     });
 
-    it('should create an intersection point', () => {
-      const point = new IntersectionPoint2D('test-point-2', 'line_1', 'circle_2', 0, "plane_H");
+    it('should create a line-line intersection point', () => {
+      const point = new Point2DLineLineIntersection('test-point-2', 'line_1', 'line_2', "plane_H");
 
-      expect(point.element1Id).toBe('line_1');
-      expect(point.element2Id).toBe('circle_2');
-      expect(point.index).toBe(0);
-      expect(point.type).toBe('intersection');
+      expect(point.line1Id).toBe('line_1');
+      expect(point.line2Id).toBe('line_2');
+      expect(point.type).toBe('line-line-intersection');
     });
 
     it('should default to free type', () => {
