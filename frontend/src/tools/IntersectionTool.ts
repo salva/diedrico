@@ -389,10 +389,10 @@ export class IntersectionTool extends BaseTool {
 
   /**
    * Get selection mask for intersection point creation
-   * Both states need to select lines, guides, or circles (first element, then second element)
+   * All line types (lines, segments, guides, half-hinge-lines) and circles can participate in intersections.
    */
   getSelectionMask(): SelectionMask {
-    return ['line', 'half-hinge-line', 'guide', 'circle'];
+    return ['line', 'segment', 'half-hinge-line', 'guide', 'circle'];
   }
 
   /**

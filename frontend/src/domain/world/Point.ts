@@ -228,7 +228,7 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
    * Calculate 2D realization - compute intersection of two lines
    * 
    * @param world World instance to query parent realizations
-   * @returns Point2DRealization2D with intersection point, or infeasible if lines are parallel/coincident
+   * @returns Point2DRealization2D with intersection point, or infeasible if lines are parallel/coincident or intersection falls outside segment bounds
    */
   realize2D(world: World): Point2DRealization2D {
     const line1 = world.getLine2DRealization(this.line1Id);
@@ -252,7 +252,65 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
+    // Get the domain objects to check if they're segments
+    const line1Domain = world.getLine2DById(this.line1Id);
+    const line2Domain = world.getLine2DById(this.line2Id);
+    
+    // Check if intersection falls within segment bounds
+    // A segment has point1.z=1 and point2.z=1 (finite endpoints)
+    // An infinite line has point2.z=0 (direction vector)
+    
+    // Check line1 if it's a segment
+    if (line1Domain && line1Domain.type === 'segment' && line1.point2.z === 1) {
+      // Segment: check if intersection is between point1 and point2
+      if (!this.isPointOnSegment(result.point, line1)) {
+        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)');
+        return new Point2DRealization2D(result.point, false);
+      }
+    }
+    
+    // Check line2 if it's a segment
+    if (line2Domain && line2Domain.type === 'segment' && line2.point2.z === 1) {
+      // Segment: check if intersection is between point1 and point2
+      if (!this.isPointOnSegment(result.point, line2)) {
+        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)');
+        return new Point2DRealization2D(result.point, false);
+      }
+    }
+    
     return new Point2DRealization2D(result.point, true);
+  }
+  
+  /**
+   * Check if a point lies on a segment (between its endpoints)
+   * 
+   * @param point The point to check
+   * @param segment The segment realization (with point1 and point2 as endpoints, z=1)
+   * @returns true if point is on segment, false otherwise
+   */
+  private isPointOnSegment(point: Vector3, segment: import('./Line').Line2DRealization2D): boolean {
+    // For a segment, point2.z should be 1 (not a direction vector)
+    if (segment.point2.z !== 1) {
+      return true; // Not a segment, it's an infinite line
+    }
+    
+    // Get the direction from point1 to point2
+    const segmentVector = segment.point2.clone().sub(segment.point1);
+    const pointVector = point.clone().sub(segment.point1);
+    
+    // Project pointVector onto segmentVector
+    const segmentLengthSq = segmentVector.lengthSq();
+    if (segmentLengthSq === 0) {
+      // Degenerate segment (point1 == point2)
+      return point.distanceTo(segment.point1) < 0.0001;
+    }
+    
+    const t = pointVector.dot(segmentVector) / segmentLengthSq;
+    
+    // t should be between 0 and 1 for the point to be on the segment
+    // Use small epsilon for numerical tolerance
+    const epsilon = 0.0001;
+    return t >= -epsilon && t <= 1 + epsilon;
   }
 }
 
@@ -302,7 +360,7 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
    * Calculate 2D realization - compute intersection of line and circle
    * 
    * @param world World instance to query parent realizations
-   * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection
+   * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection or intersection falls outside segment bounds
    */
   realize2D(world: World): Point2DRealization2D {
     const line = world.getLine2DRealization(this.lineId);
@@ -328,7 +386,50 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
     
     // Return the point at the specified index
     const point = result.points[Math.min(this.index, result.points.length - 1)];
+    
+    // Check if the line is actually a segment and if intersection is within bounds
+    const lineDomain = world.getLine2DById(this.lineId);
+    if (lineDomain && lineDomain.type === 'segment' && line.point2.z === 1) {
+      // Segment: check if intersection is between point1 and point2
+      if (!this.isPointOnSegment(point, line)) {
+        console.warn('[Point2DLineCircleIntersection] Intersection falls outside segment bounds');
+        return new Point2DRealization2D(point, false);
+      }
+    }
+    
     return new Point2DRealization2D(point, true);
+  }
+  
+  /**
+   * Check if a point lies on a segment (between its endpoints)
+   * 
+   * @param point The point to check
+   * @param segment The segment realization (with point1 and point2 as endpoints, z=1)
+   * @returns true if point is on segment, false otherwise
+   */
+  private isPointOnSegment(point: Vector3, segment: import('./Line').Line2DRealization2D): boolean {
+    // For a segment, point2.z should be 1 (not a direction vector)
+    if (segment.point2.z !== 1) {
+      return true; // Not a segment, it's an infinite line
+    }
+    
+    // Get the direction from point1 to point2
+    const segmentVector = segment.point2.clone().sub(segment.point1);
+    const pointVector = point.clone().sub(segment.point1);
+    
+    // Project pointVector onto segmentVector
+    const segmentLengthSq = segmentVector.lengthSq();
+    if (segmentLengthSq === 0) {
+      // Degenerate segment (point1 == point2)
+      return point.distanceTo(segment.point1) < 0.0001;
+    }
+    
+    const t = pointVector.dot(segmentVector) / segmentLengthSq;
+    
+    // t should be between 0 and 1 for the point to be on the segment
+    // Use small epsilon for numerical tolerance
+    const epsilon = 0.0001;
+    return t >= -epsilon && t <= 1 + epsilon;
   }
 }
 

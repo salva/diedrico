@@ -391,22 +391,26 @@ export class Paper {
     if (activePlane) {
       for (const line of activePlane.getAllLines()) {
         // Filter by selection mask if provided
+        const elementType = this.getElementType(line, world);
         if (selectionMask) {
-          const elementType = this.getElementType(line, world);
           if (!selectionMask.includes(elementType)) {
             continue;
           }
         }
         
         const realization = activePlane.realizeLine2D(line, world);
-        if (!realization) continue;
+        if (!realization) {
+          console.log(`[Paper.hitTest] Line ${line.id} has no realization`);
+          continue;
+        }
         
         const distance = this.distanceToLineInPlaneSpace(planePos, realization);
+        console.log(`[Paper.hitTest] Line ${line.id} (${elementType}) distance: ${distance}, minDistance: ${minDistance}`);
         
         if (distance < minDistance) {
           closestHit = {
             elementId: line.id,
-            elementType: 'line',
+            elementType: elementType,  // Use actual element type, not hardcoded 'line'
             primitiveId: line.id,
             distance: distance * this.viewportTransform.zoom,
             snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
@@ -497,12 +501,21 @@ export class Paper {
    * @returns SelectableElementType for this entity
    */
   private getElementType(entity: any, world: World): SelectableElementType {
-    // Check if it's a line type (includes HalfHingeLine2D)
+    // Check entity.type discriminator (most reliable)
     if (entity.type) {
+      // HalfHingeLine2D
       if (entity.type === 'half-hinge') {
         return 'half-hinge-line';
       }
-      // Other line types return 'line'
+      // Guide2D and SiblingGuide2D
+      if (entity.type === 'perpendicular-to-line' || entity.type === 'sibling-guide') {
+        return 'guide';
+      }
+      // Segment2DByPoints
+      if (entity.type === 'segment') {
+        return 'segment';
+      }
+      // Regular lines (Line2DByTwoPoints, etc.)
       if (entity.type === 'by-two-points' || entity.type === 'parallel' || entity.type === 'perpendicular') {
         return 'line';
       }
@@ -768,8 +781,9 @@ export class Paper {
   private distanceToLineInPlaneSpace(planePos: Vector3, lineRealization: Line2DRealization2D): number {
     // Line in parametric form: P(t) = point1 + t * direction
     // Distance from point to line is: ||pointToLine - projection|| where
-    // projection = (pointToLine · direction) * direction
-    const direction = lineRealization.getDirection();
+    // projection = (pointToLine · direction_unit) * direction_unit
+    // IMPORTANT: getDirection() returns NON-NORMALIZED vector, must normalize!
+    const direction = lineRealization.getDirection().normalize();
     const pointToLine = planePos.clone().sub(lineRealization.point1);
     const projection = pointToLine.dot(direction);
     const closestPoint = lineRealization.point1.clone().addScaledVector(direction, projection);
@@ -784,7 +798,8 @@ export class Paper {
    * @returns Closest point on line in plane coordinates
    */
   private snapToLineInPlaneSpace(planePos: Vector3, lineRealization: Line2DRealization2D): Vector3 {
-    const direction = lineRealization.getDirection();
+    // IMPORTANT: getDirection() returns NON-NORMALIZED vector, must normalize!
+    const direction = lineRealization.getDirection().normalize();
     const pointToLine = planePos.clone().sub(lineRealization.point1);
     const projection = pointToLine.dot(direction);
     return lineRealization.point1.clone().addScaledVector(direction, projection);

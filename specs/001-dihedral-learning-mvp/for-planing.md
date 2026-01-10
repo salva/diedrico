@@ -27,9 +27,9 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] remove the restore functionality. Element restoration should be performed through recreation.
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
 * [ ] Sibling object creation must be explicitly done at the command level using specific ops. That logic should not be embedded in the world layer.
-* [ ] Sibling objects must be deleted in pairs, so deletion must always be redirected to the primary object. (the second is going to be then deleted automatically because it is a dependency)
+* [ ] Sibling objects must be deleted in pairs, so deletion must always be redirected to the primary object. (the second is going to be then deleted automatically because it is a dependency). This should also be managed at the command construction level!
 * [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
-* [ ] Consider introducing a `Project` class to encapsulate world, commandStack, and metadata for cleaner lifecycle management. Best done when domain model stabilizes.
+* [ ] Consider introducing a `Project` class to encapsulate world, commandStack, visaulization configuration and metadata for cleaner lifecycle management. Best done when domain model stabilizes.
 * [ ] Do not use type aliases in the code.
 * [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
 * [ ] Introduce a set of factory methods with the logic for creating the Command + Ops for supporting the tools.
@@ -43,8 +43,9 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tool for creating line perpendicular to another one passing by given point.
 * [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
 * [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
-* [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted.
+* [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
 * [ ] Ensure that Ops are simple objects which only do basic tasks. For instance, on cascade deletion must not be handled in the op, but on the command construction (the method building the command is the responsible for following dependency relations, retrieving all the objects, sorting them and implementing the cascade deletion by introducing a specific op in the command for every object).
+* [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
 
 
 ## ALREADY PLANNED

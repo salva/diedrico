@@ -232,10 +232,8 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
           break;
         case 'line':
         case 'half-hinge-line':
+        case 'segment':  // Segments are Line2D objects, use getLine
           element = plane.getLine(elementId);
-          break;
-        case 'segment':
-          element = plane.getSegment(elementId);
           break;
         case 'guide':
           element = plane.getGuide(elementId);
@@ -257,10 +255,8 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
           break;
         case 'line':
         case 'half-hinge-line':
+        case 'segment':  // Segments are Line2D objects, use getLine
           element = plane.getLine(elementId);
-          break;
-        case 'segment':
-          element = plane.getSegment(elementId);
           break;
         case 'guide':
           element = plane.getGuide(elementId);
