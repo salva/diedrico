@@ -84,13 +84,13 @@ export class ProjectService {
   /**
    * Deserialize and replay commands to reconstruct World
    * Replays all commands from the saved project to rebuild the current state
+   * Note: Assumes world is a fresh instance - caller should create new World before calling this
    */
   static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
     // Validate project data
     this.validateProjectData(data);
     
-    // Clear existing world and command stack
-    world.clear();
+    // Clear command stack only (world should be fresh)
     commandStack.clear();
     
     // Replay each command

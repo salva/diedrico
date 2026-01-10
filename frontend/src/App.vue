@@ -134,7 +134,7 @@ const hasGoogleCredentials = GOOGLE_CONFIG.clientId;
 console.log('[DEBUG] hasGoogleCredentials:', hasGoogleCredentials);
 
 // Create World instance and provide to all child components
-const world = new World();
+let world = new World();
 provide('world', world);
 
 // Create command stack and provide to all child components
@@ -327,6 +327,10 @@ async function handleOpenProject(fileId: string) {
   try {
     // Load file from Google Drive
     const projectData = await driveService.loadFile(fileId);
+    
+    // Create a new World instance instead of clearing the old one
+    world = new World();
+    provide('world', world);  // Update the provided world
     
     // Validate and deserialize commands
     ProjectService.validateProjectData(projectData);
