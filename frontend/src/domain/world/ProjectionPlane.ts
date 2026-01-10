@@ -165,6 +165,19 @@ export abstract class ProjectionPlane {
     this.circleRealizations = new Map();
   }
 
+  /**
+   * Clear all elements and realizations from this plane
+   * Used when loading projects or resetting the world
+   */
+  clear(): void {
+    this.points.clear();
+    this.lines.clear();
+    this.circles.clear();
+    this.pointRealizations.clear();
+    this.lineRealizations.clear();
+    this.circleRealizations.clear();
+  }
+
   // ==================== Point Methods ====================
 
   /**
