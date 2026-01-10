@@ -28,6 +28,13 @@ export interface GoogleDriveConfig {
   appId: string;
 }
 
+export interface GoogleUserProfile {
+  name: string;       // Display name (e.g., "John Doe")
+  email: string;      // Email address
+  picture?: string;   // Avatar URL (if available)
+  sub: string;        // Google user ID (unique identifier)
+}
+
 /**
  * Service for Google Drive operations
  */
@@ -36,7 +43,8 @@ export class GoogleDriveService {
     'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
   ];
   
-  private static readonly SCOPES = 'https://www.googleapis.com/auth/drive.file';
+  // T400: Add profile and email scopes for user profile information
+  private static readonly SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
   
   private static readonly FOLDER_NAME = 'diedrico';
   private static readonly FILE_EXTENSION = '.diedrico';
@@ -223,6 +231,42 @@ export class GoogleDriveService {
       this.folderId = null;
     } catch (error) {
       throw new Error(`Failed to sign out: ${error}`);
+    }
+  }
+
+  /**
+   * T401: Fetch user profile information from Google
+   * Uses the OAuth2 userinfo endpoint to get profile data
+   */
+  async fetchUserProfile(): Promise<GoogleUserProfile> {
+    if (!this.isSignedIn()) {
+      throw new Error('User not signed in');
+    }
+
+    try {
+      const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      return {
+        name: data.name || data.email, // Fallback to email if name not available
+        email: data.email,
+        picture: data.picture,
+        sub: data.id,
+      };
+    } catch (error: any) {
+      if (error.message?.includes('401')) {
+        throw new Error('Authentication expired. Please sign in again.');
+      }
+      throw new Error(`Failed to fetch user profile: ${error.message || error}`);
     }
   }
 

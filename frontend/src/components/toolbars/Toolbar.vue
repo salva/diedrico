@@ -173,6 +173,12 @@
       </svg>
       <span>Intersection</span>
     </button>
+
+    <!-- T406: Login Status Widget at far right -->
+    <LoginStatusWidget
+      @sign-in="handleSignIn"
+      @sign-out="handleSignOut"
+    />
   </div>
 </template>
 
@@ -181,6 +187,7 @@ import { inject, computed } from 'vue';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { CommandStack } from '@/commands/CommandStack';
+import LoginStatusWidget from '@/components/LoginStatusWidget.vue';
 
 /**
  * Toolbar.vue - Tool selection toolbar
@@ -196,6 +203,8 @@ interface Emits {
   (e: 'new-project'): void;
   (e: 'open-project'): void;
   (e: 'fit-to-view'): void;
+  (e: 'sign-in'): void;
+  (e: 'sign-out'): void;
 }
 
 const emit = defineEmits<Emits>();
@@ -269,6 +278,20 @@ function handleToggleGrid() {
  */
 function handleFitToView() {
   emit('fit-to-view');
+}
+
+/**
+ * T406: Handle sign in request
+ */
+function handleSignIn() {
+  emit('sign-in');
+}
+
+/**
+ * T407: Handle sign out request
+ */
+function handleSignOut() {
+  emit('sign-out');
 }
 </script>
 

@@ -388,4 +388,92 @@ describe('GoogleDriveService', () => {
       await expect(service.deleteFile('file-123')).rejects.toThrow('User not signed in');
     });
   });
+
+  describe('fetchUserProfile', () => {
+    beforeEach(async () => {
+      await service.initialize();
+      mockAuthInstance.isSignedIn.get.mockReturnValue(true);
+      // Set access token (private field, simulate signed in state)
+      service['accessToken'] = 'test-access-token';
+    });
+
+    it('should fetch user profile from Google userinfo API', async () => {
+      const mockProfileData = {
+        id: 'google-user-123',
+        name: 'John Doe',
+        email: 'john@example.com',
+        picture: 'https://example.com/avatar.jpg',
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockProfileData,
+      } as Response);
+
+      const profile = await service.fetchUserProfile();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://www.googleapis.com/oauth2/v2/userinfo',
+        {
+          headers: {
+            Authorization: 'Bearer test-access-token',
+          },
+        }
+      );
+
+      expect(profile).toEqual({
+        name: 'John Doe',
+        email: 'john@example.com',
+        picture: 'https://example.com/avatar.jpg',
+        sub: 'google-user-123',
+      });
+    });
+
+    it('should use email as fallback when name not available', async () => {
+      const mockProfileData = {
+        id: 'google-user-123',
+        email: 'john@example.com',
+        picture: 'https://example.com/avatar.jpg',
+        // name missing
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockProfileData,
+      } as Response);
+
+      const profile = await service.fetchUserProfile();
+
+      expect(profile.name).toBe('john@example.com');
+    });
+
+    it('should throw error when not signed in', async () => {
+      mockAuthInstance.isSignedIn.get.mockReturnValue(false);
+      service['accessToken'] = null;
+
+      await expect(service.fetchUserProfile()).rejects.toThrow('User not signed in');
+    });
+
+    it('should throw error on HTTP error response', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      } as Response);
+
+      await expect(service.fetchUserProfile()).rejects.toThrow('HTTP 401: Unauthorized');
+    });
+
+    it('should handle authentication expiry', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('401: Unauthorized'));
+
+      await expect(service.fetchUserProfile()).rejects.toThrow('Authentication expired');
+    });
+
+    it('should handle network errors', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+
+      await expect(service.fetchUserProfile()).rejects.toThrow('Failed to fetch user profile: Network error');
+    });
+  });
 });

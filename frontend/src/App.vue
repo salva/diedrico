@@ -22,6 +22,8 @@
         @new-project="handleNewProject"
         @open-project="handleOpenProjectDialog"
         @fit-to-view="handleFitToView"
+        @sign-in="handleToolbarSignIn"
+        @sign-out="handleToolbarSignOut"
       />
     </header>
 
@@ -109,6 +111,7 @@ import { RemoveActionFromProcessTreeOp } from './commands/operations/ProcessTree
 import { useToolStore } from './stores/toolStore';
 import { useSelectionStore } from './stores/selectionStore';
 import { useSettingsStore } from './stores/settingsStore';
+import { useAuthStore } from './stores/authStore';
 import { World } from './domain/world/World';
 import { GoogleDriveService } from './services/GoogleDriveService';
 import { ProjectService } from './services/ProjectService';
@@ -160,6 +163,9 @@ const selectionStore = useSelectionStore();
 // Initialize settings store to load preferences from localStorage
 // Settings are automatically loaded on store initialization and saved on changes
 useSettingsStore();
+
+// T403: Authentication state
+const authStore = useAuthStore();
 
 // Active plane state
 const activePlaneId = ref('proj_plane_H');
@@ -228,6 +234,18 @@ async function initializeApp() {
     await driveService!.initialize();
     isSignedIn.value = driveService!.isSignedIn();
     
+    // T408: Restore authentication session from session storage
+    if (isSignedIn.value && authStore.restoreSession()) {
+      console.log('[Auth] Session restored from storage');
+      // Optionally refresh profile data
+      try {
+        const profile = await driveService!.fetchUserProfile();
+        authStore.setUser(profile);
+      } catch (error) {
+        console.warn('[Auth] Could not refresh profile:', error);
+      }
+    }
+    
     // Try to restore last opened file
     const lastFileId = localStorage.getItem('diedrico_last_file_id');
     const lastFileName = localStorage.getItem('diedrico_last_file_name');
@@ -258,6 +276,7 @@ async function initializeApp() {
 
 /**
  * Handle sign-in button click
+ * T403: Fetch user profile after authentication
  */
 async function handleSignIn() {
   if (!driveService) {
@@ -268,6 +287,16 @@ async function handleSignIn() {
   try {
     await driveService.signIn();
     isSignedIn.value = driveService.isSignedIn();
+    
+    // T403: Fetch user profile and update auth store
+    try {
+      const profile = await driveService.fetchUserProfile();
+      authStore.setAuthenticated(profile, driveService['accessToken'] || '', undefined);
+      console.log('[Auth] User profile loaded:', profile.name);
+    } catch (profileError) {
+      console.warn('[Auth] Failed to fetch profile, continuing without it:', profileError);
+      // Continue even if profile fetch fails - user can still use Drive functionality
+    }
     
     // Load file list after sign-in
     const files = await driveService.listFiles();
@@ -555,6 +584,65 @@ function handleOpenProjectDialog() {
 function handleFitToView() {
   if (svgCanvasRef.value) {
     svgCanvasRef.value.fitToView();
+  }
+}
+
+/**
+ * T406: Handle sign-in from toolbar widget
+ */
+async function handleToolbarSignIn() {
+  if (!driveService) {
+    console.error('[Auth] Google Drive service not available');
+    return;
+  }
+  
+  try {
+    await driveService.signIn();
+    isSignedIn.value = driveService.isSignedIn();
+    
+    // Fetch user profile and update auth store
+    try {
+      const profile = await driveService.fetchUserProfile();
+      authStore.setAuthenticated(profile, driveService['accessToken'] || '', undefined);
+      console.log('[Auth] User signed in:', profile.name);
+    } catch (profileError) {
+      console.warn('[Auth] Failed to fetch profile:', profileError);
+    }
+  } catch (error) {
+    console.error('[Auth] Sign-in failed:', error);
+  }
+}
+
+/**
+ * T407: Handle sign-out from toolbar widget
+ * Revokes Google token and clears auth state
+ */
+async function handleToolbarSignOut() {
+  if (!driveService) {
+    console.error('[Auth] Google Drive service not available');
+    return;
+  }
+  
+  try {
+    await driveService.signOut();
+    authStore.clearAuth();
+    isSignedIn.value = false;
+    
+    // Clear current project
+    currentProjectName.value = null;
+    currentFileId.value = null;
+    
+    // Reset to empty world
+    world = new World();
+    provide('world', world);
+    commandStack.clear();
+    
+    // Show startup dialog
+    showStartupDialog.value = true;
+    
+    console.log('[Auth] User signed out');
+  } catch (error) {
+    console.error('[Auth] Sign-out failed:', error);
   }
 }
 
