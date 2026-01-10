@@ -215,34 +215,65 @@ const snapTarget = ref<{ pointId: string | null; position: { x: number; y: numbe
 
 /**
  * Get display label for an element
+ * @param elementId - ID of the element
+ * @param elementType - Type of the element (point, line, segment, etc.)
+ * @param planeId - ID of the plane containing the element (optional, will search all planes if not provided)
  */
-function getElementLabel(elementId: string, elementType: string): string {
+function getElementLabel(elementId: string, elementType: string, planeId?: string): string {
   let element: any;
   
-  // Elements are now stored in ProjectionPlanes, so search through all planes
-  for (const plane of world.projectionPlanes.values()) {
-    switch (elementType) {
-      case 'point':
-        element = plane.getPoint(elementId);
-        break;
-      case 'line':
-      case 'half-hinge-line':
-        element = plane.getLine(elementId);
-        break;
-      case 'segment':
-        element = plane.getSegment(elementId);
-        break;
-      case 'guide':
-        element = plane.getGuide(elementId);
-        break;
-      case 'circle':
-        element = plane.getCircle(elementId);
-        break;
-      case 'arc':
-        element = plane.getArc(elementId);
-        break;
+  // If planeId is provided, only search that plane
+  if (planeId) {
+    const plane = world.getProjectionPlaneById(planeId);
+    if (plane) {
+      switch (elementType) {
+        case 'point':
+          element = plane.getPoint(elementId);
+          break;
+        case 'line':
+        case 'half-hinge-line':
+          element = plane.getLine(elementId);
+          break;
+        case 'segment':
+          element = plane.getSegment(elementId);
+          break;
+        case 'guide':
+          element = plane.getGuide(elementId);
+          break;
+        case 'circle':
+          element = plane.getCircle(elementId);
+          break;
+        case 'arc':
+          element = plane.getArc(elementId);
+          break;
+      }
     }
-    if (element) break; // Found it
+  } else {
+    // Search all planes if no planeId provided
+    for (const plane of world.projectionPlanes.values()) {
+      switch (elementType) {
+        case 'point':
+          element = plane.getPoint(elementId);
+          break;
+        case 'line':
+        case 'half-hinge-line':
+          element = plane.getLine(elementId);
+          break;
+        case 'segment':
+          element = plane.getSegment(elementId);
+          break;
+        case 'guide':
+          element = plane.getGuide(elementId);
+          break;
+        case 'circle':
+          element = plane.getCircle(elementId);
+          break;
+        case 'arc':
+          element = plane.getArc(elementId);
+          break;
+      }
+      if (element) break; // Found it
+    }
   }
   
   return element?.label || elementId;
@@ -792,7 +823,7 @@ function handleMouseMove(event: MouseEvent) {
     
     // Update global hover state for UI feedback
     if (newHovered && hit) {
-      const label = getElementLabel(newHovered, hit.elementType);
+      const label = getElementLabel(newHovered, hit.elementType, activePlane.value);
       hoverHighlight.setHoveredElement(
         newHovered,
         hit.elementType,
