@@ -26,7 +26,7 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Improve how elements are shown in the left world listing widget.
 * [ ] remove the restore functionality. Element restoration should be performed through recreation.
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
-* [ ] 2d objects with siblings must store the id of the sibling projection plane in order to find it.
+* [ ] Sibling object creation must be explicitly done at the command level using specific ops. That logic should not be embedded in the world layer.
 * [ ] Sibling objects must be deleted in pairs, so deletion must always be redirected to the primary object. (the second is going to be then deleted automatically because it is a dependency)
 * [ ] It seems SiblingGuide2D type is missing. It must be used to represent the Sibling of a guide on the complementary projection plane.
 * [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
@@ -36,9 +36,28 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Introduce a set of factory methods with the logic for creating the Command + Ops for supporting the tools.
 * [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
 * [ ] Add support for converting intersections into points automatically while building other elements.
-* [ ] Add tests for intersections with segments
+* [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
+* [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
+* [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
+* [ ] Remove any methods tagged as deprecated
 
 ## ALREADY PLANNED
+
+* [X] 2d objects with siblings must store the id of the sibling projection plane in order to find it.
+  - **STATUS**: ✅ COMPLETE - Phase 35 implemented
+  - User insight: siblingPlaneId doesn't need to be stored - it's derivable!
+  - Solution: Added helper methods to derive sibling plane from HingeLine path
+  - Completed 6 tasks (T336-T341):
+    - T336: ✅ Added World.getSiblingPlaneForIntersection() helper method
+    - T337: ✅ Added World.getHingeLineFromHalfHingeLine() helper method
+    - T338: ✅ Documented sibling plane derivation in data-model.md
+    - T339: ✅ No hardcoded patterns found (minimal use in UI only)
+    - T340: ✅ Added 10 comprehensive tests - all passing
+    - T341: ✅ Documented ComplementaryGuide2D future pattern
+  - Algorithm: HalfHingeLine2D → hingeLineId → HingeLine → getOtherPlane(currentPlaneId)
+  - Benefits: No data redundancy, cleaner architecture, scales naturally
+  - All intersection classes verified to have siblingPointId field
+  - Pattern ready for future ComplementaryGuide2D implementation
 
 * [X] There are many realizations 2d classes for elements deriving from line2d when all of then must be using just Line2DRealization2D. No need to derive from that class.
   - **STATUS**: ✅ COMPLETE - Phase 34 implemented

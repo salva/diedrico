@@ -697,6 +697,89 @@ export class World {
     );
   }
 
+  /**
+   * Get parent HingeLine from a HalfHingeLine2D
+   * 
+   * @param halfHingeLineId ID of the HalfHingeLine2D
+   * @returns Parent HingeLine or undefined if not found
+   */
+  getHingeLineFromHalfHingeLine(halfHingeLineId: string): HingeLine | undefined {
+    // Get the HalfHingeLine2D by searching all planes
+    const halfHingeLine = this.getLine2DById(halfHingeLineId);
+    if (!halfHingeLine || halfHingeLine.type !== 'half-hinge') {
+      return undefined;
+    }
+    
+    // Cast to HalfHingeLine2D to access hingeLineId
+    const halfHL = halfHingeLine as HalfHingeLine2D;
+    return this.getHingeLineById(halfHL.hingeLineId);
+  }
+
+  /**
+   * Get sibling projection plane for an intersection point
+   * 
+   * If the intersection involves a HalfHingeLine2D, returns the other plane
+   * connected by the parent HingeLine. Otherwise returns undefined.
+   * 
+   * Algorithm:
+   * 1. Check if intersection point involves a HalfHingeLine2D
+   * 2. If yes: HalfHingeLine2D → hingeLineId → HingeLine → getOtherPlane(currentPlaneId)
+   * 3. If no: return undefined (not a HHL intersection, no sibling)
+   * 
+   * @param intersectionPoint The intersection point to check
+   * @returns Sibling plane ID if HHL intersection, undefined otherwise
+   */
+  getSiblingPlaneForIntersection(intersectionPoint: Point2D): string | undefined {
+    // Determine element IDs based on intersection type
+    let element1Id: string | undefined;
+    let element2Id: string | undefined;
+
+    if (intersectionPoint.type === 'line-line-intersection') {
+      const llIntersection = intersectionPoint as any;
+      element1Id = llIntersection.line1Id;
+      element2Id = llIntersection.line2Id;
+    } else if (intersectionPoint.type === 'line-circle-intersection') {
+      const lcIntersection = intersectionPoint as any;
+      element1Id = lcIntersection.lineId;
+      element2Id = lcIntersection.circleId;
+    } else if (intersectionPoint.type === 'circle-circle-intersection') {
+      const ccIntersection = intersectionPoint as any;
+      element1Id = ccIntersection.circle1Id;
+      element2Id = ccIntersection.circle2Id;
+    } else {
+      // Not a standard intersection type
+      return undefined;
+    }
+
+    // Check if either element is a HalfHingeLine2D
+    const element1 = element1Id ? this.getLine2DById(element1Id) : undefined;
+    const element2 = element2Id ? this.getLine2DById(element2Id) : undefined;
+
+    let halfHingeLine: HalfHingeLine2D | undefined;
+
+    if (element1 && element1.type === 'half-hinge') {
+      halfHingeLine = element1 as HalfHingeLine2D;
+    } else if (element2 && element2.type === 'half-hinge') {
+      halfHingeLine = element2 as HalfHingeLine2D;
+    }
+
+    if (!halfHingeLine) {
+      // Not a HalfHingeLine intersection
+      return undefined;
+    }
+
+    // Get parent HingeLine and determine sibling plane
+    const hingeLine = this.getHingeLineById(halfHingeLine.hingeLineId);
+    if (!hingeLine) {
+      console.warn(`[World.getSiblingPlaneForIntersection] HingeLine ${halfHingeLine.hingeLineId} not found`);
+      return undefined;
+    }
+
+    // Get the other plane (sibling plane)
+    const siblingPlaneId = hingeLine.getOtherPlane(intersectionPoint.planeId);
+    return siblingPlaneId || undefined;
+  }
+
   // ========================================
   // Convenience Getter Methods for UI
   // These methods aggregate data from all ProjectionPlanes

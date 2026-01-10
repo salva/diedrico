@@ -2055,6 +2055,66 @@ All 300 tasks are defined with clear deliverables and dependencies. Implementati
 
 **Phase 34 Status**: 6/6 tasks complete (100%) ✅ COMPLETE
 
+---
+
+## Phase 35: Add Helper Methods to Find Sibling Plane
+
+**Goal**: Enable reliable lookup of sibling projection planes without storing redundant data.
+
+**User Insight**: siblingPlaneId doesn't need to be stored - it can be derived via:
+- HalfHingeLine2D.hingeLineId → HingeLine → HingeLine.getOtherPlane(currentPlaneId)
+
+**Current State**:
+- `SiblingIntersectionPoint2D` has `primaryIntersectionId` and `planeId`
+- All intersection classes inherit `siblingPointId` from `IntersectionPoint2D` ✅
+- To find sibling's plane: need to identify which element is the HalfHingeLine, then use its HingeLine
+- Guide siblings (ComplementaryGuide2D) specified but not yet implemented
+
+**Solution**:
+- Add helper methods to derive sibling plane from HingeLine path
+- Document how to find sibling plane for different element types
+- Remove any hardcoded plane ID logic
+- Prepare architecture for future ComplementaryGuide2D implementation
+
+**Tasks**:
+
+- [X] T336 Add World.getSiblingPlaneForIntersection() helper method
+  - Given an intersection point, determine if it involves a HalfHingeLine2D
+  - If yes: get HalfHingeLine2D → hingeLineId → HingeLine → getOtherPlane()
+  - Return sibling plane ID or null if not a HHL intersection
+  - Add comprehensive JSDoc explaining algorithm
+
+- [X] T337 Add World.getHingeLineFromHalfHingeLine() helper method
+  - Given HalfHingeLine2D ID, return the parent HingeLine
+  - Lookup via hingeLineId field
+  - Add error handling for missing HingeLine
+
+- [X] T338 Document sibling plane derivation in data-model.md
+  - Explain why siblingPlaneId is NOT stored (derivable from HingeLine)
+  - Show algorithm: HalfHingeLine2D → HingeLine → getOtherPlane()
+  - Add example code for finding sibling plane
+  - Note: Applies to both intersection points and future guide siblings
+
+- [X] T339 (Optional) Replace hardcoded plane lookups with helper methods
+  - Search for hardcoded `'proj_plane_H' ? 'proj_plane_V'` patterns
+  - Replace with getSiblingPlaneForIntersection() calls
+  - Only do this where straightforward and beneficial
+
+- [X] T340 Add tests for sibling plane derivation
+  - Test getSiblingPlaneForIntersection() with HHL intersections
+  - Test with non-HHL intersections (should return null)
+  - Test getHingeLineFromHalfHingeLine() lookup
+  - Verify correct plane determination for both P_H and P_V
+
+- [X] T341 Add note about future ComplementaryGuide2D implementation
+  - Document in data-model.md that guides will use same pattern
+  - ComplementaryGuide2D will also derive sibling plane via HingeLine
+  - Note current status: Guide2D exists, ComplementaryGuide2D not implemented yet
+
+**Checkpoint**: Sibling projection plane can be reliably derived from HingeLine relationships without storing redundant data
+
+**Phase 35 Status**: 6/6 tasks complete (100%) ✅ COMPLETE
+
 **Dependencies**: None - pure refactoring of existing implementation
 
 **Notes**:

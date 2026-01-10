@@ -562,4 +562,141 @@ describe('ProjectionPlane Factory Methods', () => {
       });
     });
   });
+
+  // Phase 35: Sibling Plane Derivation Tests
+  describe('Sibling Plane Derivation (Phase 35)', () => {
+    describe('getHingeLineFromHalfHingeLine', () => {
+      it('should return parent HingeLine for HalfHingeLine2D on P_H', () => {
+        const halfHLId = 'half_HL_HV_on_PH';
+        
+        const hingeLine = world.getHingeLineFromHalfHingeLine(halfHLId);
+
+        expect(hingeLine).toBeDefined();
+        expect(hingeLine?.id).toBe('HL_HV');
+        expect(hingeLine?.plane1Id).toBe('proj_plane_H');
+        expect(hingeLine?.plane2Id).toBe('proj_plane_V');
+      });
+
+      it('should return parent HingeLine for HalfHingeLine2D on P_V', () => {
+        const halfHLId = 'half_HL_HV_on_PV';
+        
+        const hingeLine = world.getHingeLineFromHalfHingeLine(halfHLId);
+
+        expect(hingeLine).toBeDefined();
+        expect(hingeLine?.id).toBe('HL_HV');
+      });
+
+      it('should return undefined for non-existent HalfHingeLine2D', () => {
+        const hingeLine = world.getHingeLineFromHalfHingeLine('nonexistent');
+
+        expect(hingeLine).toBeUndefined();
+      });
+
+      it('should return undefined for non-HalfHingeLine element', () => {
+        // Create a regular line
+        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+
+        const hingeLine = world.getHingeLineFromHalfHingeLine(line.id);
+
+        expect(hingeLine).toBeUndefined();
+      });
+    });
+
+    describe('getSiblingPlaneForIntersection', () => {
+      it('should return sibling plane for line-HHL intersection on P_H', () => {
+        const hhlId = 'half_HL_HV_on_PH';
+
+        // Create a regular line
+        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+
+        // Create intersection point
+        const intersection = planeH.addLineLineIntersection(hhlId, line.id, world);
+
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+
+        expect(siblingPlaneId).toBe('proj_plane_V');
+      });
+
+      it('should return sibling plane for line-HHL intersection on P_V', () => {
+        const hhlId = 'half_HL_HV_on_PV';
+
+        // Create a regular line
+        const p1 = planeV.addFreePoint2D(new Vector3(5, -5, 1), world);
+        const p2 = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const line = planeV.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+
+        // Create intersection point
+        const intersection = planeV.addLineLineIntersection(line.id, hhlId, world);
+
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+
+        expect(siblingPlaneId).toBe('proj_plane_H');
+      });
+
+      it('should return undefined for regular line-line intersection (no HHL)', () => {
+        // Create two regular lines
+        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+
+        const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+
+        // Create intersection point
+        const intersection = planeH.addLineLineIntersection(line1.id, line2.id, world);
+
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+
+        expect(siblingPlaneId).toBeUndefined();
+      });
+
+      it('should return sibling plane for circle-HHL intersection', () => {
+        const hhlId = 'half_HL_HV_on_PH';
+
+        // Create a circle that intersects the HHL
+        const center = planeH.addFreePoint2D(new Vector3(5, 3, 1), world);
+        const radiusPoint = planeH.addFreePoint2D(new Vector3(5, 8, 1), world);
+        const circle = planeH.addCircle2DByCenterAndPoint(center.id, radiusPoint.id, world);
+
+        // Create intersection point (circle-line)
+        const intersection = planeH.addLineCircleIntersection(hhlId, circle.id, 0, world);
+
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+
+        expect(siblingPlaneId).toBe('proj_plane_V');
+      });
+
+      it('should return undefined for circle-circle intersection (no HHL)', () => {
+        // Create two circles
+        const c1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+        const r1 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
+        const circle1 = planeH.addCircle2DByCenterAndPoint(c1.id, r1.id, world);
+
+        const c2 = planeH.addFreePoint2D(new Vector3(8, 0, 1), world);
+        const r2 = planeH.addFreePoint2D(new Vector3(13, 0, 1), world);
+        const circle2 = planeH.addCircle2DByCenterAndPoint(c2.id, r2.id, world);
+
+        // Create intersection point
+        const intersection = planeH.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
+
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+
+        expect(siblingPlaneId).toBeUndefined();
+      });
+
+      it('should return undefined for non-intersection point', () => {
+        // Create a free point
+        const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(point);
+
+        expect(siblingPlaneId).toBeUndefined();
+      });
+    });
+  });
 });

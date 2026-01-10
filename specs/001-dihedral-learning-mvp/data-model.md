@@ -1193,6 +1193,35 @@ class SiblingIntersectionPoint2D extends Point2D {
 
 **Coordinate Consistency**: For this direct coordinate cloning to work correctly, both `HalfHingeLine2D` objects representing the same 3D hinge line **MUST use identical (point, direction) in their local (u,v) coordinates**. See the **"CRITICAL: HalfHingeLine2D Coordinate Consistency Requirement"** section in the Hinge Lines Architecture above for detailed requirements and validation strategy.
 
+**Sibling Plane Derivation (Phase 35)**:
+
+Sibling objects do NOT store the sibling plane ID explicitly. Instead, the sibling projection plane is derived when needed using the HingeLine relationship:
+
+```typescript
+// Algorithm: HalfHingeLine2D → HingeLine → getOtherPlane()
+// 
+// Example usage:
+const siblingPlaneId = world.getSiblingPlaneForIntersection(intersectionPoint);
+// Returns: 'proj_plane_V' (if intersection on P_H with HHL)
+//          'proj_plane_H' (if intersection on P_V with HHL)
+//          undefined      (if not a HHL intersection)
+
+// Implementation:
+// 1. Identify which element in the intersection is a HalfHingeLine2D
+// 2. Get HalfHingeLine2D.hingeLineId → retrieve HingeLine
+// 3. Call HingeLine.getOtherPlane(currentPlaneId) to get sibling plane
+```
+
+**Helper Methods**:
+- `World.getHingeLineFromHalfHingeLine(halfHLId)`: Get parent HingeLine
+- `World.getSiblingPlaneForIntersection(point)`: Get sibling plane for intersection
+
+**Why Not Store siblingPlaneId?**:
+- Avoids data redundancy (derivable from existing relationships)
+- Scales naturally to multiple projection plane pairs
+- Single source of truth (HingeLine defines plane relationships)
+- Same pattern applies to future ComplementaryGuide2D sibling guides
+
 **Reference**: See tasks.md "Future Work Requiring Clarification" section for implementation guidance.
 
 **Process Tree Recording**:
@@ -1245,6 +1274,8 @@ interface ComplementaryGuide2D {
   visualStyle: VisualStyle;         // Same as primary guide
 }
 ```
+
+**Note**: ComplementaryGuide2D is not yet implemented (as of Phase 35). When implemented, it will use the same sibling plane derivation pattern as intersection points: derive sibling plane via `HalfHingeLine2D → HingeLine → getOtherPlane()` instead of storing it explicitly.
 
 **Construction Process**:
 1. User selects a HalfHingeLine2D in the **active plane** (e.g., plane H)
