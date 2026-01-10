@@ -1220,7 +1220,7 @@ const siblingPlaneId = world.getSiblingPlaneForIntersection(intersectionPoint);
 - Avoids data redundancy (derivable from existing relationships)
 - Scales naturally to multiple projection plane pairs
 - Single source of truth (HingeLine defines plane relationships)
-- Same pattern applies to future ComplementaryGuide2D sibling guides
+- Same pattern applies to future SiblingGuide2D sibling guides
 
 **Reference**: See tasks.md "Future Work Requiring Clarification" section for implementation guidance.
 
@@ -1259,12 +1259,12 @@ interface Guide2D {
   halfHingeLineId: string;          // Reference to HalfHingeLine2D in this plane
   sourcePoint: Point2DId;           // Point on this plane that defines the guide
   line2D: Line2D;                   // Line in this plane's (u,v) coordinates, perpendicular to half-hinge
-  complementaryGuideId?: GuideId;   // Reference to complementary guide in other plane
+  siblingGuideId?: GuideId;   // Reference to sibling guide in other plane
   visualStyle: VisualStyle;         // Inherited or overridden
 }
 
-// Complementary Guide - automatically created in the paired plane
-interface ComplementaryGuide2D {
+// Sibling Guide - automatically created in the paired plane
+interface SiblingGuide2D {
   id: GuideId;                      // UUID
   name: string;                     // Same name as primary guide
   planeId: PlaneId;                 // The OTHER plane (paired with primary)
@@ -1275,13 +1275,13 @@ interface ComplementaryGuide2D {
 }
 ```
 
-**Note**: ComplementaryGuide2D is not yet implemented (as of Phase 35). When implemented, it will use the same sibling plane derivation pattern as intersection points: derive sibling plane via `HalfHingeLine2D → HingeLine → getOtherPlane()` instead of storing it explicitly.
+**Note**: SiblingGuide2D is not yet implemented (as of Phase 35). When implemented, it will use the same sibling plane derivation pattern as intersection points: derive sibling plane via `HalfHingeLine2D → HingeLine → getOtherPlane()` instead of storing it explicitly.
 
 **Construction Process**:
 1. User selects a HalfHingeLine2D in the **active plane** (e.g., plane H)
 2. User picks a point P in that plane
 3. System creates Guide2D: line through P, perpendicular to the selected HalfHingeLine2D
-4. System **automatically** creates ComplementaryGuide2D in the other plane (e.g., plane V)
+4. System **automatically** creates SiblingGuide2D in the other plane (e.g., plane V)
 5. The complementary guide is perpendicular to the corresponding HalfHingeLine2D in that plane
 6. Both guides appear simultaneously and remain geometrically linked
 
@@ -1296,9 +1296,9 @@ interface ComplementaryGuide2D {
 **Relationships**:
 - 1 Guide2D → 1 HalfHingeLine2D (reference in its own plane)
 - 1 Guide2D → 1 Point2D (source point in its own plane)
-- 1 Guide2D → 1 ComplementaryGuide2D (paired guide in other plane)
-- 1 ComplementaryGuide2D → 1 Guide2D (back reference to primary)
-- N Elements → 1 Guide2D | ComplementaryGuide2D (elements created via guide transport)
+- 1 Guide2D → 1 SiblingGuide2D (paired guide in other plane)
+- 1 SiblingGuide2D → 1 Guide2D (back reference to primary)
+- N Elements → 1 Guide2D | SiblingGuide2D (elements created via guide transport)
 
 **Validation Rules**:
 - `line2D` must be perpendicular to the referenced `halfHingeLineId`'s line
@@ -1353,7 +1353,7 @@ class Segment2D extends Line2D {
 class Guide2D extends Line2D {
   halfHingeLineId: string;
   sourcePointId: string;
-  complementaryGuideId?: string;
+  siblingGuideId?: string;
   
   realize2D(context) {
     // Returns line realization with point + direction

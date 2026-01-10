@@ -443,7 +443,7 @@ User clicks → SvgCanvas (coordinate conversion)
 - [X] T053e Update World.initializeStandardPlanes() to create HalfHingeLine2D objects for HL_HV
 - [X] T053f Update PaperService to generate primitives from HalfHingeLine2D (not HingeLine)
 - [X] T053g Update Paper.hitTest() to iterate world.getHalfHingeLines2D(activePlaneId)
-- [X] T053h Update Guide2D/ComplementaryGuide2D to reference HalfHingeLine2D (halfHingeLineId field)
+- [X] T053h Update Guide2D/SiblingGuide2D to reference HalfHingeLine2D (halfHingeLineId field)
 - [X] T053i Update GuideTool to select HalfHingeLine2D on first click (not HingeLine)
 - [X] T053j [P] Unit test for HalfHingeLine2D in frontend/tests/unit/domain/hingeLine.spec.ts
 - [X] T053k [P] Update E2E tests that reference hinge lines (guide-creation.spec.ts)
@@ -2068,13 +2068,13 @@ All 300 tasks are defined with clear deliverables and dependencies. Implementati
 - `SiblingIntersectionPoint2D` has `primaryIntersectionId` and `planeId`
 - All intersection classes inherit `siblingPointId` from `IntersectionPoint2D` ✅
 - To find sibling's plane: need to identify which element is the HalfHingeLine, then use its HingeLine
-- Guide siblings (ComplementaryGuide2D) specified but not yet implemented
+- Guide siblings (SiblingGuide2D) specified but not yet implemented
 
 **Solution**:
 - Add helper methods to derive sibling plane from HingeLine path
 - Document how to find sibling plane for different element types
 - Remove any hardcoded plane ID logic
-- Prepare architecture for future ComplementaryGuide2D implementation
+- Prepare architecture for future SiblingGuide2D implementation
 
 **Tasks**:
 
@@ -2106,10 +2106,10 @@ All 300 tasks are defined with clear deliverables and dependencies. Implementati
   - Test getHingeLineFromHalfHingeLine() lookup
   - Verify correct plane determination for both P_H and P_V
 
-- [X] T341 Add note about future ComplementaryGuide2D implementation
+- [X] T341 Add note about future SiblingGuide2D implementation
   - Document in data-model.md that guides will use same pattern
-  - ComplementaryGuide2D will also derive sibling plane via HingeLine
-  - Note current status: Guide2D exists, ComplementaryGuide2D not implemented yet
+  - SiblingGuide2D will also derive sibling plane via HingeLine
+  - Note current status: Guide2D exists, SiblingGuide2D not implemented yet
 
 **Checkpoint**: Sibling projection plane can be reliably derived from HingeLine relationships without storing redundant data
 

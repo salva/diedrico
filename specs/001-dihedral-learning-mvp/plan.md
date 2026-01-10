@@ -188,7 +188,7 @@ Hinge lines require a dual representation: the 3D intersection line and its 2D p
 
 **Guide Relationship**:
 - **Guide2D** (primary): Created by selecting HalfHingeLine2D + point in active plane
-- **ComplementaryGuide2D**: Automatically created in the paired plane, perpendicular to that plane's HalfHingeLine2D
+- **SiblingGuide2D**: Automatically created in the paired plane, perpendicular to that plane's HalfHingeLine2D
 - Both guides reference their respective HalfHingeLine2D, maintaining proper geometric relationships
 
 See [data-model.md § HingeLine](/specs/001-dihedral-learning-mvp/data-model.md#domain-entity-hingeline) and [data-model.md § Guide](/specs/001-dihedral-learning-mvp/data-model.md#domain-entity-guide) for detailed specifications.

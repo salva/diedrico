@@ -53,11 +53,11 @@ Note that completing these tasks may require asking the user for additional info
     - T338: ✅ Documented sibling plane derivation in data-model.md
     - T339: ✅ No hardcoded patterns found (minimal use in UI only)
     - T340: ✅ Added 10 comprehensive tests - all passing
-    - T341: ✅ Documented ComplementaryGuide2D future pattern
+    - T341: ✅ Documented SiblingGuide2D future pattern
   - Algorithm: HalfHingeLine2D → hingeLineId → HingeLine → getOtherPlane(currentPlaneId)
   - Benefits: No data redundancy, cleaner architecture, scales naturally
   - All intersection classes verified to have siblingPointId field
-  - Pattern ready for future ComplementaryGuide2D implementation
+  - Pattern ready for future SiblingGuide2D implementation
 
 * [X] There are many realizations 2d classes for elements deriving from line2d when all of then must be using just Line2DRealization2D. No need to derive from that class.
   - **STATUS**: ✅ COMPLETE - Phase 34 implemented
