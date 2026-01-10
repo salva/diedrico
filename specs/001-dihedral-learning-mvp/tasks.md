@@ -2125,6 +2125,176 @@ All 300 tasks are defined with clear deliverables and dependencies. Implementati
 
 ---
 
+## Phase 36: Implement SiblingGuide2D
+
+**Goal**: Create SiblingGuide2D class and automatic sibling guide creation when Guide2D is created.
+
+**Reference**: [data-model.md](./data-model.md#guide2d-and-siblingguide2d) - Guide2D and SiblingGuide2D specification, [for-planing.md](./for-planing.md) - "It seems SiblingGuide2D type is missing"
+
+**Current State**:
+- Guide2D class exists and works (12/12 tests passing)
+- Guide2D extends Line2DPerpendicularToLine
+- GuideTool provides 2-click workflow (select HalfHingeLine, pick point)
+- AddGuide2DPerpendicularToLineOp creates single guide on one plane
+- Guides render as dashed lines extending to viewport edges
+- **NO sibling implementation yet**
+
+**Architecture Pattern** (from Phase 32 & Phase 35):
+- Follow SiblingIntersectionPoint2D pattern established in Phase 32
+- Use sibling plane derivation from Phase 35: HalfHingeLine2D → HingeLine → getOtherPlane()
+- Bidirectional links: Guide2D.siblingGuideId, SiblingGuide2D.primaryGuideId
+- Sibling creation at command level using specific ops (architecture requirement)
+- Deletion cascade: deleting primary triggers sibling deletion via dependency system
+
+**SiblingGuide2D Specification** (data-model.md):
+```typescript
+interface SiblingGuide2D {
+  id: GuideId;                      // UUID
+  name: string;                     // Same name as primary guide
+  planeId: PlaneId;                 // The OTHER plane (derived via HingeLine)
+  halfHingeLineId: string;          // Reference to HalfHingeLine2D in sibling plane
+  primaryGuideId: GuideId;          // Reference to the guide that spawned this one
+  line2D: Line2D;                   // Line perpendicular to half-hinge in sibling plane
+  visualStyle: VisualStyle;         // Same as primary guide
+}
+```
+
+**Construction Process**:
+1. User selects HalfHingeLine2D in active plane (e.g., P_H)
+2. User picks point P in that plane
+3. System creates Guide2D: line through P, perpendicular to HalfHingeLine2D
+4. System **automatically** creates SiblingGuide2D in sibling plane (e.g., P_V)
+5. Sibling guide is perpendicular to corresponding HalfHingeLine2D in sibling plane
+6. Both guides appear simultaneously, geometrically linked
+
+**Tasks**:
+
+**Domain Layer** (T342-T345):
+
+- [ ] T342 [D] Create SiblingGuide2D class in frontend/src/domain/world/Guide.ts
+  - Extends Line2DPerpendicularToLine (same as Guide2D)
+  - Fields: id, name, planeId, halfHingeLineId, primaryGuideId, visualStyle
+  - Constructor: Takes primaryGuideId and derives sibling plane via World.getSiblingPlaneForIntersection()
+  - Type: 'sibling-guide'
+  - realize2D(): Computes line perpendicular to sibling plane's HalfHingeLine2D
+  - Add JSDoc explaining automatic creation and geometric relationship
+
+- [ ] T343 [D] Add siblingGuideId field to Guide2D class
+  - Add optional field: siblingGuideId?: GuideId
+  - Update constructor to accept siblingGuideId
+  - Bidirectional link: Guide2D.siblingGuideId ↔ SiblingGuide2D.primaryGuideId
+  - File: frontend/src/domain/world/Guide.ts
+
+- [ ] T344 [D] Update Guide2D union type and type guards
+  - Update GuideType = 'guide' | 'sibling-guide'
+  - Add SiblingGuide2D to Guide union type
+  - Add type guard: isSiblingGuide2D(guide: Guide): guide is SiblingGuide2D
+  - File: frontend/src/domain/world/Guide.ts
+
+- [ ] T345 [D] Add factory method to ProjectionPlane for sibling guides
+  - addSiblingGuide2D(primaryGuideId, halfHingeLineId): SiblingGuide2D
+  - Validates halfHingeLineId belongs to same parent HingeLine as primary guide
+  - Generates ID, creates SiblingGuide2D, adds to plane.guides map
+  - Returns created sibling guide
+  - File: frontend/src/domain/world/ProjectionPlane.ts
+
+**Operations & Commands** (T346-T347):
+
+- [ ] T346 [D] Create AddSiblingGuide2DOp operation
+  - Fields: planeId, primaryGuideId, siblingHalfHingeLineId
+  - execute(): Creates SiblingGuide2D using plane.addSiblingGuide2D()
+  - undo(): Removes sibling guide from plane
+  - Validates sibling plane is correct (derived via Phase 35 helpers)
+  - File: frontend/src/commands/operations/AddGuideOp.ts (new operation in same file)
+
+- [ ] T347 [D] Update AddGuide2DPerpendicularToLineOp to include sibling creation
+  - After creating primary Guide2D, derive sibling plane via World.getSiblingPlaneForIntersection()
+  - Get corresponding HalfHingeLine2D in sibling plane (via parent HingeLine)
+  - Create AddSiblingGuide2DOp for sibling guide
+  - Set bidirectional siblingGuideId links
+  - Return both ops as array (primary guide op + sibling guide op)
+  - File: frontend/src/commands/operations/AddGuideOp.ts
+
+**Deletion & Dependencies** (T348):
+
+- [ ] T348 [D] Implement sibling guide deletion cascade
+  - Ensure Guide2D depends on its SiblingGuide2D
+  - When primary guide deleted → sibling deleted via dependency system
+  - When sibling guide deletion attempted → redirect to primary guide deletion
+  - Add validation: cannot delete sibling without deleting primary
+  - File: frontend/src/domain/world/World.ts, frontend/src/commands/operations/DeleteElementOp.ts
+
+**Tool Integration** (T349):
+
+- [ ] T349 [D] Update GuideTool to handle automatic sibling creation
+  - No UI changes needed (workflow stays: select HHL, pick point)
+  - Update command creation to use new AddGuide2DPerpendicularToLineOp (returns 2 ops)
+  - Ensure both guides rendered immediately
+  - Add visual feedback showing both guides highlighted during creation
+  - File: frontend/src/tools/GuideTool.ts
+
+**Rendering & UI** (T350):
+
+- [ ] T350 [D] Update rendering for SiblingGuide2D
+  - ElementRenderer.vue: Handle 'sibling-guide' type
+  - Render SiblingGuide2D with same visual style as primary (dashed lines)
+  - Distinguish in elements panel: show "Guide" vs "Sibling Guide"
+  - Add hover effect: hovering over guide highlights its sibling
+  - File: frontend/src/components/renderers/ElementRenderer.vue, frontend/src/components/panels/ElementsPanel.vue
+
+**Testing** (T351-T353):
+
+- [ ] T351 [D] Unit tests for SiblingGuide2D class
+  - Test SiblingGuide2D creation with valid primaryGuideId
+  - Test realize2D() computes perpendicular line in sibling plane
+  - Test bidirectional linking: Guide2D.siblingGuideId ↔ SiblingGuide2D.primaryGuideId
+  - Test sibling plane derivation via Phase 35 helpers
+  - Verify name and visualStyle match primary guide
+  - File: frontend/tests/unit/domain/guide.spec.ts
+
+- [ ] T352 [D] Unit tests for sibling guide operations
+  - Test AddSiblingGuide2DOp execute/undo
+  - Test AddGuide2DPerpendicularToLineOp creates both guides
+  - Test deletion cascade: primary deletion removes sibling
+  - Test sibling deletion attempt redirects to primary
+  - Test undo/redo preserves sibling relationships
+  - File: frontend/tests/unit/commands/createGuide.spec.ts
+
+- [ ] T353 [D] Integration tests for GuideTool with sibling creation
+  - Test creating guide via tool creates both primary and sibling
+  - Test both guides render on correct planes
+  - Test both guides perpendicular to their respective HalfHingeLines
+  - Test selecting and deleting guide removes both
+  - Test undo/redo with sibling guides
+  - File: frontend/tests/integration/tools/guideTool.spec.ts
+
+**Documentation** (T354):
+
+- [ ] T354 [D] Update data-model.md with implementation details
+  - Remove "not yet implemented" note from SiblingGuide2D section
+  - Document sibling creation process at command level
+  - Add example code showing Guide2D + SiblingGuide2D creation
+  - Document deletion cascade behavior
+  - Add diagram showing bidirectional relationship
+  - File: specs/001-dihedral-learning-mvp/data-model.md
+
+**Checkpoint**: Guide2D automatically creates SiblingGuide2D in paired plane, both guides geometrically linked
+
+**Phase 36 Status**: 0/13 tasks (0%)
+
+**Dependencies**: 
+- Phase 35 (Sibling Plane Helpers) - Complete ✅
+- Guide2D implementation - Complete ✅
+
+**Notes**:
+- Follows same pattern as SiblingIntersectionPoint2D (Phase 32)
+- Uses sibling plane derivation from Phase 35 (no stored siblingPlaneId)
+- Command-level sibling creation (architecture requirement satisfied)
+- Deletion cascade via dependency system
+- Bidirectional links enable navigation between primary/sibling
+
+---
+
 ## FUTURE WORK REQUIRING CLARIFICATION
 
 ### Additional Hinge Lines & Coordinate Consistency

@@ -28,7 +28,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
 * [ ] Sibling object creation must be explicitly done at the command level using specific ops. That logic should not be embedded in the world layer.
 * [ ] Sibling objects must be deleted in pairs, so deletion must always be redirected to the primary object. (the second is going to be then deleted automatically because it is a dependency)
-* [ ] It seems SiblingGuide2D type is missing. It must be used to represent the Sibling of a guide on the complementary projection plane.
 * [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
 * [ ] Consider introducing a `Project` class to encapsulate world, commandStack, and metadata for cleaner lifecycle management. Best done when domain model stabilizes.
 * [ ] Do not use type aliases in the code.
@@ -40,8 +39,24 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
 * [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
 * [ ] Remove any methods and classes tagged as deprecated. Modify client code and tests to use the right interfaces (or remove it when it doesn't make sense any more).
+* [ ] Add tool for creating line parallel to another one passing by given point.
+* [ ] Add tool for creating line perpendicular to another one passing by given point.
+* [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
+* [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
+* [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted.
 
 ## ALREADY PLANNED
+
+* [X] It seems SiblingGuide2D type is missing. It must be used to represent the Sibling of a guide on the complementary projection plane.
+  - **STATUS**: ✅ PLANNED - Phase 36 
+  - Specification exists in data-model.md with full interface definition
+  - Plan: Follow SiblingIntersectionPoint2D pattern (Phase 32)
+  - Implementation: 13 tasks (T342-T354) covering domain, ops, commands, tool, rendering, tests
+  - Architecture: Command-level sibling creation using AddSiblingGuide2DOp
+  - Sibling plane derivation: Use Phase 35 helpers (HalfHingeLine2D → HingeLine → getOtherPlane())
+  - Deletion: Cascade via dependency system (primary deletion removes sibling)
+  - Construction: Automatic sibling creation when Guide2D created
+  - Tasks documented in tasks.md Phase 36
 
 * [X] 2d objects with siblings must store the id of the sibling projection plane in order to find it.
   - **STATUS**: ✅ COMPLETE - Phase 35 implemented
