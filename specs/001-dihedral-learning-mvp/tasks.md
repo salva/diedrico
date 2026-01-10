@@ -3282,6 +3282,7 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
 - **Test**: Element IDs, positions, dependencies all match
 - **Purpose**: Verify operations are deterministic (no randomness, no Date.now())
 - **Test file**: `frontend/tests/integration/projectService.determinism.spec.ts`
+- **STATUS**: ✅ COMPLETE - 2/2 tests passing
 
 [T440] Test parameter self-containment: no external dependencies
 - For each operation type, verify parameters object contains ALL needed data
@@ -3289,6 +3290,7 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
 - **Example failure**: Operation that assumes World.getNextId() returns specific value
 - **Test approach**: Create fresh World, replay single operation, verify success
 - **Test file**: `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts`
+- **STATUS**: ✅ COMPLETE - 8/8 tests passing
 
 [T441] Document operation serialization requirements in operation base classes
 - Add JSDoc to IOperation interface explaining:
@@ -3298,6 +3300,7 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
   - ID management strategy (generate in op vs pass as param)
 - **File**: `frontend/src/commands/operations/IOperation.ts`
 - **Audience**: Future developers adding new operations
+- **STATUS**: ✅ COMPLETE
 
 [T443] Test cascade deletion persistence
 - Create point with dependent line
