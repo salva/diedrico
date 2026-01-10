@@ -1997,6 +1997,74 @@ All 300 tasks are defined with clear deliverables and dependencies. Implementati
 
 ---
 
+## Phase 34: Remove Unnecessary Line Realization Subclasses
+
+**Purpose**: Eliminate Guide2DRealization2D subclass, use Line2DRealization2D directly  
+**Reference**: [data-model.md](./data-model.md#line2d-constructions) - Unified realization type architecture
+
+**Background**:
+- Architecture specifies \"Unified realization type: all lines use Line2DRealization2D\"
+- Current implementation has `Guide2DRealization2D extends Line2DRealization2D`
+- Subclass adds no functionality - just calls super constructor
+- Violates single realization type principle
+- Creates unnecessary type complexity
+
+**Architectural Principle**:
+- Realization classes contain ONLY geometric data (point1, point2, feasible)
+- Behavioral differences belong in domain classes (Guide2D vs Line2D)
+- Type distinction for rendering happens via domain object type, not realization type
+
+- [X] T330 Remove Guide2DRealization2D class definition from Guide.ts
+  - Change return type of Guide2D.realize2D() from Guide2DRealization2D to Line2DRealization2D
+  - Replace all `new Guide2DRealization2D(...)` with `new Line2DRealization2D(...)`
+  - Keep comment explaining guides are lines with special rendering
+  - File: frontend/src/domain/world/Guide.ts
+
+- [X] T331 Update PaperService to use Line2DRealization2D for guides
+  - Change guideToPrimitive() parameter type from Guide2DRealization2D to Line2DRealization2D
+  - Remove Guide2DRealization2D import
+  - Verify guide rendering still works (dashed line, viewport edges)
+  - File: frontend/src/services/PaperService.ts
+
+- [X] T332 Search codebase for any other Guide2DRealization2D references
+  - Use grep to find all remaining references
+  - Update type annotations to use Line2DRealization2D
+  - Ensure no instanceof checks for Guide2DRealization2D exist
+
+- [X] T333 Run existing tests to verify no regressions
+  - Run all unit tests (domain, calculations, services)
+  - Run integration tests
+  - Verify guide creation, rendering, and interaction still works
+  - Check that perpendicular calculation unchanged
+
+- [ ] T334 Update data-model.md with architectural clarification
+  - Document that realization subclasses should not be created
+  - Add rationale: geometric data vs behavioral distinction
+  - Add examples of correct vs incorrect patterns
+  - Reference: Already done in planning phase
+
+- [ ] T335 Mark all realization 2D classes as final to prevent inheritance
+  - Add @sealed JSDoc comment to Line2DRealization2D class
+  - Add @sealed JSDoc comment to Point2DRealization2D class
+  - Add @sealed JSDoc comment to Circle2DRealization2D class
+  - Document in each class comment: "Realization classes must not be subclassed"
+  - Add rationale: realization classes contain only geometric data, no behavior
+  - Files: frontend/src/domain/world/Line.ts, Point.ts, Circle.ts
+
+**Checkpoint**: All line-based elements use Line2DRealization2D directly, no unnecessary subclasses
+
+**Phase 34 Status**: 6/6 tasks complete (100%) ✅ COMPLETE
+
+**Dependencies**: None - pure refactoring of existing implementation
+
+**Notes**:
+- This is a pure architectural cleanup with no functional changes
+- Guides still render as dashed lines (determined by Guide2D domain type)
+- Segments still bounded (determined by point2.z === 1 in Line2DRealization2D)
+- Type safety maintained through domain class hierarchy, not realization hierarchy
+
+---
+
 ## FUTURE WORK REQUIRING CLARIFICATION
 
 ### Additional Hinge Lines & Coordinate Consistency

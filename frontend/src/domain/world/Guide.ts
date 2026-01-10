@@ -22,20 +22,6 @@ import { Vector3 } from 'three';
 import { Line2DPerpendicularToLine, Line2DRealization2D } from './Line';
 
 /**
- * Guide2DRealization2D - Stores computed guide line in parametric form
- * 
- * Same structure as Line2DRealization2D - guides are lines with special rendering.
- * Parametric form: P(t) = point + t * direction
- * 
- * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
- */
-export class Guide2DRealization2D extends Line2DRealization2D {
-  constructor(point1: Vector3, point2: Vector3, feasible: boolean = true) {
-    super(point1, point2, feasible);
-  }
-}
-
-/**
  * Guide2D - Guide line perpendicular to reference line (hinge line or BHL)
  * 
  * Guides are by definition perpendicular to a reference line and pass through a point.
@@ -83,8 +69,13 @@ export class Guide2D extends Line2DPerpendicularToLine {
    * - If line has direction (dx, dy, 0), perpendicular is (-dy, dx, 0)
    * - This is a counter-clockwise 90-degree rotation
    * - Works correctly with homogeneous coords (z=0 for direction vectors)
+   * 
+   * NOTE: Guides use Line2DRealization2D directly per architectural principle.
+   * Guides are lines with special rendering (dashed, dual-plane), but geometrically
+   * they are simply lines. Type distinction happens at domain level (Guide2D), not
+   * realization level. See data-model.md §Line2D Constructions.
    */
-  realize2D(world: import('./World').World): Guide2DRealization2D | null {
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get reference line realization from world
     const referenceLine = world.getLine2DRealization(this.referenceLineId);
     if (!referenceLine) {
@@ -94,7 +85,7 @@ export class Guide2D extends Line2DPerpendicularToLine {
     // Check if reference line is infeasible - propagate infeasibility
     if (!referenceLine.feasible) {
       console.warn('[Guide2DPerpendicularToLine] Reference line is infeasible, marking guide as infeasible');
-      return new Guide2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
     // Get through-point realization from world
@@ -106,7 +97,7 @@ export class Guide2D extends Line2DPerpendicularToLine {
     // Check if through-point is infeasible - propagate infeasibility
     if (!throughPointRealization.feasible) {
       console.warn('[Guide2DPerpendicularToLine] Through-point is infeasible, marking guide as infeasible');
-      return new Guide2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
     // Compute perpendicular direction using 90-degree rotation
@@ -121,10 +112,10 @@ export class Guide2D extends Line2DPerpendicularToLine {
     // Check for degenerate case (shouldn't happen if reference line is valid)
     if (perpendicularDirection.lengthSq() < 1e-10) {
       console.warn(`Guide ${this.id}: reference line has zero direction`);
-      return new Guide2DRealization2D(throughPointRealization.position.clone(), new Vector3(1, 0, 0), false);
+      return new Line2DRealization2D(throughPointRealization.position.clone(), new Vector3(1, 0, 0), false);
     }
 
     // Create guide realization: line through throughPoint with perpendicular direction
-    return new Guide2DRealization2D(throughPointRealization.position.clone(), perpendicularDirection, true);
+    return new Line2DRealization2D(throughPointRealization.position.clone(), perpendicularDirection, true);
   }
 }

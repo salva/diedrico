@@ -23,6 +23,16 @@ export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpe
 /**
  * Line2DRealization2D - Stores computed line using homogeneous coordinates
  * 
+ * @sealed - This class must not be subclassed
+ * 
+ * Architectural principle: Realization classes contain ONLY geometric data.
+ * All behavioral differences belong in domain classes (Line2D, Guide2D, etc.),
+ * not in realization classes. Type distinction for rendering happens via domain
+ * object type, not realization type.
+ * 
+ * See data-model.md §Line2D Constructions - "Unified realization type: all lines
+ * use Line2DRealization2D".
+ * 
  * CRITICAL: Homogeneous coordinates elegantly unify infinite lines and bounded segments.
  * Two points always define a line, but the z coordinate distinguishes the cases:
  * 

@@ -3,7 +3,8 @@
  * 
  * Tests the Guide2D geometry classes:
  * - Guide2DPerpendicularToLine: Defines guide perpendicular to reference line through a point
- * - Guide2DRealization2D: Computed guide line geometry (point + direction)
+ * - Line2DRealization2D: Computed guide line geometry (point + direction)
+ *   NOTE: Guides use Line2DRealization2D directly per Phase 34 architectural principle
  * - Perpendicular calculation using homogeneous coordinates
  * 
  * Reference: 
@@ -13,8 +14,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { Guide2D, Guide2DRealization2D } from '@/domain/world/Guide';
-import { Line2DByTwoPoints } from '@/domain/world/Line';
+import { Guide2D } from '@/domain/world/Guide';
+import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D } from '@/domain/world/Point';
 import { World } from '@/domain/world/World';
 
@@ -190,17 +191,7 @@ describe('Guide2D', () => {
     });
   });
 
-  describe('Guide2DRealization2D', () => {
-    it('should store point and direction correctly', () => {
-      const point1 = new Vector3(10, 20, 1);
-      const point2 = new Vector3(0, 1, 0);  // Direction with z=0
-      
-      const realization = new Guide2DRealization2D(point1, point2);
-      
-      expect(realization.point1).toEqual(point1);
-      expect(realization.point2).toEqual(point2);
-      expect(realization.point1.z).toBe(1);
-      expect(realization.point2.z).toBe(0); // Direction vector has z=0
-    });
-  });
+  // NOTE: Guide2DRealization2D class removed in Phase 34
+  // Guides now use Line2DRealization2D directly per architectural principle
+  // Test removed as class no longer exists
 });

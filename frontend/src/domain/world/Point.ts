@@ -29,6 +29,13 @@ export type Point2DType =
 
 /**
  * Point2DRealization2D - Stores computed 2D position for a Point2D
+ * 
+ * @sealed - This class must not be subclassed
+ * 
+ * Architectural principle: Realization classes contain ONLY geometric data.
+ * All behavioral differences belong in domain classes (FreePoint2D, Point2DLineLineIntersection,
+ * etc.), not in realization classes. Type distinction happens at domain level, not realization level.
+ * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
 export class Point2DRealization2D {

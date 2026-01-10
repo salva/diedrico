@@ -29,7 +29,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] 2d objects with siblings must store the id of the sibling projection plane in order to find it.
 * [ ] Sibling objects must be deleted in pairs, so deletion must always be redirected to the primary object. (the second is going to be then deleted automatically because it is a dependency)
 * [ ] It seems SiblingGuide2D type is missing. It must be used to represent the Sibling of a guide on the complementary projection plane.
-* [ ] There are many realizations 2d classes for elements deriving from line2d when all of then must be using just Line2DRealization2D. No need to derive from that class.
 * [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
 * [ ] Consider introducing a `Project` class to encapsulate world, commandStack, and metadata for cleaner lifecycle management. Best done when domain model stabilizes.
 * [ ] Do not use type aliases in the code.
@@ -37,8 +36,24 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Introduce a set of factory methods with the logic for creating the Command + Ops for supporting the tools.
 * [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
 * [ ] Add support for converting intersections into points automatically while building other elements.
+* [ ] Add tests for intersections with segments
 
 ## ALREADY PLANNED
+
+* [X] There are many realizations 2d classes for elements deriving from line2d when all of then must be using just Line2DRealization2D. No need to derive from that class.
+  - **STATUS**: ✅ COMPLETE - Phase 34 implemented
+  - Issue: Guide2DRealization2D extends Line2DRealization2D unnecessarily
+  - Architecture specifies: "Unified realization type: all lines use Line2DRealization2D"
+  - Completed 6 tasks (T330-T335):
+    - T330: ✅ Removed Guide2DRealization2D class, updated Guide.ts to use Line2DRealization2D
+    - T331: ✅ Updated PaperService.guideToPrimitive() parameter type
+    - T332: ✅ Searched and verified no remaining Guide2DRealization2D references
+    - T333: ✅ Ran tests - all guide tests pass (12/12), line hierarchy tests pass (26/26)
+    - T334: ✅ Documented architectural principle in data-model.md
+    - T335: ✅ Marked Line2DRealization2D, Point2DRealization2D, Circle2DRealization2D as @sealed
+  - Rationale: Realization classes contain only geometric data; behavior belongs in domain classes
+  - Guide special rendering (dashed) determined by Guide2D domain type, not realization type
+  - All tests passing, no regressions introduced
 
 * [X] generate*Id methods for 2D elements must be moved inside projection plane class.
   - **STATUS**: ✅ ALREADY COMPLETE

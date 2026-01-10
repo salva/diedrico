@@ -20,6 +20,13 @@ export type Circle2DType = 'by-center-and-point' | 'by-three-points';
 /**
  * Circle2DRealization2D - Stores computed geometry for a Circle2D
  * 
+ * @sealed - This class must not be subclassed
+ * 
+ * Architectural principle: Realization classes contain ONLY geometric data.
+ * All behavioral differences belong in domain classes (Circle2DByCenterAndPoint,
+ * Circle2DByThreePoints, etc.), not in realization classes. Type distinction happens
+ * at domain level, not realization level.
+ * 
  * CRITICAL: Stores radius as a VECTOR (not scalar) pointing from center to edge point.
  * This defines angle 0 for the circle and preserves the construction.
  * 

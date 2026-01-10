@@ -1378,6 +1378,29 @@ The beauty of homogeneous coordinates is that **two points always define a line*
 - Polymorphic rendering: check `point1/point2` presence to distinguish segments from infinite lines
 - Type-safe hierarchy: TypeScript `instanceof` checks for specific behaviors
 
+**IMPORTANT: No Realization Subclasses** (Phase 34):
+
+All line-based elements (Line2D, Guide2D, Segment2D) MUST use `Line2DRealization2D` directly.
+**Do NOT create subclasses** like `Guide2DRealization2D` or `Segment2DRealization2D`.
+
+Rationale:
+- Realization classes contain ONLY geometric data (point1, point2, feasible)
+- No behavioral differences between line types at realization level
+- Type distinction happens in domain classes (Guide2D vs Line2D), not realizations
+- Special rendering (dashed guides, bounded segments) determined by domain type, not realization type
+- Simpler type system: one realization class for all line-based geometry
+
+Incorrect (creates unnecessary type hierarchy):
+```typescript
+class Guide2DRealization2D extends Line2DRealization2D { ... }  // ❌ NO
+const realization: Guide2DRealization2D = new Guide2DRealization2D(...);
+```
+
+Correct (uses base realization class):
+```typescript
+const realization: Line2DRealization2D = new Line2DRealization2D(...);  // ✅ YES
+```
+
 **Storage**:
 - All Line2D subtypes stored in `ProjectionPlane.lines` Map
 - Realizations cached in `ProjectionPlane.lineRealizations` Map

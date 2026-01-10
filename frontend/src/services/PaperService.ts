@@ -37,7 +37,7 @@ import { Guide2D } from '@/domain/world/Guide';
 import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
 import type { Line2D, Line2DRealization2D } from '../domain/world/Line';
 import type { Circle2D, Circle2DRealization2D } from '../domain/world/Circle';
-import type { Guide2DRealization2D } from '../domain/world/Guide';
+import type { Guide2D } from '../domain/world/Guide';
 import type { HingeLine } from '../domain/world/HingeLine';
 import type { HalfHingeLine2D } from '../domain/world/HingeLine';
 import type { World } from '../domain/world/World';
@@ -520,10 +520,14 @@ export class PaperService {
    * Convert a Guide2D + realization to a LinePrimitive
    * Guides are rendered as dashed lines extending to viewport edges
    * Applies plane-to-paper transformation
+   * 
+   * NOTE: Uses Line2DRealization2D per architectural principle - guides are
+   * geometrically just lines with special rendering. Type distinction happens
+   * at domain level (Guide2D vs Line2D), not realization level.
    */
   private guideToPrimitive(
     guide: Guide2D,
-    realization: Guide2DRealization2D,
+    realization: Line2DRealization2D,
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
   ): LinePrimitive {
