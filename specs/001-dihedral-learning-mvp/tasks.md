@@ -3935,6 +3935,11 @@ class IntersectionTool {
     - Delete element with dependents → verify cascade
     - Verify dependency graph updated correctly
     - Undo deletion → verify all elements restored with dependencies
+  - Test IntersectionSequenceFactory end-to-end:
+    - Create intersection with HHL element → verify both intersections exist
+    - Verify sibling links and correct intersection types
+    - Undo command → verify both intersections removed
+    - Redo command → verify both intersections restored
   - All tests use real World, CommandStack, not mocks
 
 - [ ] T485 [P] Document factory pattern guidelines in data-model.md
