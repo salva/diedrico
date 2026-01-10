@@ -14,7 +14,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { Guide2D } from '@/domain/world/Guide';
+import { Guide2D, SiblingGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
 import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D } from '@/domain/world/Point';
 import { World } from '@/domain/world/World';
@@ -194,4 +194,90 @@ describe('Guide2D', () => {
   // NOTE: Guide2DRealization2D class removed in Phase 34
   // Guides now use Line2DRealization2D directly per architectural principle
   // Test removed as class no longer exists
+
+  describe('SiblingGuide2D (Phase 36)', () => {
+    it('should create sibling guide with primary guide reference', () => {
+      // Create a sibling guide
+      const siblingGuide = new SiblingGuide2D(
+        'sg1',
+        referenceLineId,
+        throughPointId,
+        'proj_plane_V',  // Sibling plane
+        'g1',  // Primary guide ID
+        'Test Guide'
+      );
+      
+      expect(siblingGuide.id).toBe('sg1');
+      expect(siblingGuide.type).toBe('sibling-guide');
+      expect(siblingGuide.referenceLineId).toBe(referenceLineId);
+      expect(siblingGuide.throughPointId).toBe(throughPointId);
+      expect(siblingGuide.planeId).toBe('proj_plane_V');
+      expect(siblingGuide.primaryGuideId).toBe('g1');
+      expect(siblingGuide.label).toBe('Test Guide');
+    });
+
+    it('should clone sibling guide correctly', () => {
+      const original = new SiblingGuide2D('sg1', referenceLineId, throughPointId, 'proj_plane_V', 'g1', 'Test');
+      const cloned = original.clone();
+      
+      expect(cloned.id).toBe('sg1');
+      expect(cloned.referenceLineId).toBe(referenceLineId);
+      expect(cloned.throughPointId).toBe(throughPointId);
+      expect(cloned.planeId).toBe('proj_plane_V');
+      expect(cloned.primaryGuideId).toBe('g1');
+      expect(cloned.label).toBe('Test');
+      expect(cloned).not.toBe(original);
+    });
+
+    it('should realize sibling guide perpendicular to reference line (same as Guide2D)', () => {
+      // Create reference line in plane V (horizontal)
+      const planeV = world.getProjectionPlaneById('proj_plane_V')!;
+      const p1V = new FreePoint2D('p1v', new Vector3(0, 0, 1), 'proj_plane_V');
+      const p2V = new FreePoint2D('p2v', new Vector3(100, 0, 1), 'proj_plane_V');
+      planeV.addPoint(p1V);
+      planeV.addPoint(p2V);
+      
+      const refLineV = new Line2DByTwoPoints('lineV', 'p1v', 'p2v', 'proj_plane_V');
+      planeV.addLine(refLineV);
+      
+      // Create through-point
+      const throughPointV = new FreePoint2D('p3v', new Vector3(50, 30, 1), 'proj_plane_V');
+      planeV.addPoint(throughPointV);
+      
+      // Create sibling guide
+      const siblingGuide = new SiblingGuide2D('sg1', 'lineV', 'p3v', 'proj_plane_V', 'g1');
+      planeV.addLine(siblingGuide);
+      
+      const realization = world.getLine2DRealization('sg1');
+      
+      expect(realization).toBeDefined();
+      
+      // Guide should pass through the through-point (50, 30, 1)
+      expect(realization!.point1.x).toBeCloseTo(50, 5);
+      expect(realization!.point1.y).toBeCloseTo(30, 5);
+      
+      // Perpendicular direction should be vertical (0, 100, 0)
+      expect(realization!.point2.x).toBeCloseTo(0, 5);
+      expect(realization!.point2.y).toBeCloseTo(100, 5);
+      expect(realization!.point2.z).toBeCloseTo(0, 5);
+    });
+
+    it('should have bidirectional links between Guide2D and SiblingGuide2D', () => {
+      // Create primary guide with siblingGuideId
+      const primaryGuide = new Guide2D('g1', referenceLineId, throughPointId, 'proj_plane_H', 'Primary', 'sg1');
+      expect(primaryGuide.siblingGuideId).toBe('sg1');
+      
+      // Create sibling guide with primaryGuideId
+      const siblingGuide = new SiblingGuide2D('sg1', referenceLineId, throughPointId, 'proj_plane_V', 'g1');
+      expect(siblingGuide.primaryGuideId).toBe('g1');
+    });
+
+    it('should use isSiblingGuide2D type guard correctly', () => {
+      const primaryGuide = new Guide2D('g1', referenceLineId, throughPointId, 'proj_plane_H');
+      const siblingGuide = new SiblingGuide2D('sg1', referenceLineId, throughPointId, 'proj_plane_V', 'g1');
+      
+      expect(isSiblingGuide2D(siblingGuide)).toBe(true);
+      expect(isSiblingGuide2D(primaryGuide)).toBe(false);
+    });
+  });
 });
