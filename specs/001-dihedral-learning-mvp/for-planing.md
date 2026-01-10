@@ -24,7 +24,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
-* [ ] generate*Id methods for 2D elements must be moved inside projection plane class.
 * [ ] remove the restore functionality. Element restoration should be performed through recreation.
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
 * [ ] 2d objects with siblings must store the id of the sibling projection plane in order to find it.
@@ -40,6 +39,14 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add support for converting intersections into points automatically while building other elements.
 
 ## ALREADY PLANNED
+
+* [X] generate*Id methods for 2D elements must be moved inside projection plane class.
+  - **STATUS**: ✅ ALREADY COMPLETE
+  - All ID generation methods (`generatePoint2DId`, `generateLine2DId`, `generateSegment2DId`, `generateCircle2DId`, `generateGuide2DId`) are inside ProjectionPlane class (lines 439-467 of ProjectionPlane.ts)
+  - Methods use World's counter via `world.getNextId()` for unique ID generation
+  - All factory methods in ProjectionPlane use these internal generate methods
+  - Legacy `IdGenerator.ts` file exists but is not imported anywhere (unused)
+  - Implementation verified complete in Phase 22.5 (World Factory Methods Refactoring)
 
 * [X] Add a test ensuring that circle intersection are ordered relative to the angle formed between the **vector** radius and the intersection point. When intersecting two circunferences, the intersection points are numbered acording to the first circunference.
   - **STATUS**: ✅ COMPLETE - Phase 33 implemented
