@@ -37,7 +37,7 @@ import { Line2DByTwoPoints } from './Line';
 import type { Circle2D, Circle2DRealization2D } from './Circle';
 import { Circle2DByCenterAndPoint } from './Circle';
 import { Segment2DByPoints } from './Segment';
-import { Guide2D } from './Guide';
+import { Guide2D, SiblingGuide2D } from './Guide';
 
 export type ProjectionPlaneType = 'base' | 'auxiliary';
 
@@ -849,7 +849,7 @@ export abstract class ProjectionPlane {
     }
 
     // Validate primary guide exists
-    const primaryGuide = world.getLine2D(primaryGuideId);
+    const primaryGuide = world.getLine2DById(primaryGuideId);
     if (!primaryGuide) {
       throw new Error(`Invalid primaryGuideId: ${primaryGuideId}. Primary guide does not exist.`);
     }
@@ -859,9 +859,6 @@ export abstract class ProjectionPlane {
       id = this.generateGuide2DId(world);
     }
 
-    // Import SiblingGuide2D
-    const { SiblingGuide2D } = require('./Guide');
-    
     // Get label from primary guide
     const label = primaryGuide.label;
     
