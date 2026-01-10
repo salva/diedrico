@@ -44,6 +44,9 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
 * [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted.
+* [ ] Ensure that Ops are simple objects which only do basic tasks. For instance, on cascade deletion must not be handled in the op, but on the command construction (the method building the command is the responsible for following dependency relations, retrieving all the objects, sorting them and implementing the cascade deletion by introducing a specific op in the command for every object).
+* [ ] SiblingGuide2D must have its own class, which may derive from some kind of line-perpendicular-to-line, but that is not required. The interesting thing here, is that in the realization, the position of the intersection with the Half HL is the twin of the original Guide2D object (similar to how intersection points are handled). So, they don't probably need to derive from perpendicular line, as the parent objects used to define the line are different (there is no line and point but parent guide and half HL)!
+* [ ] Ensure that SiblingIntersectionPoint2D works for any HL, not only for HL_HV. See how sibling line realization is calculated (it should be almost identical).
 
 ## ALREADY PLANNED
 

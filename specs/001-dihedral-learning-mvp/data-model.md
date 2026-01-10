@@ -1264,41 +1264,63 @@ interface Guide2D {
 }
 
 // Sibling Guide - automatically created in the paired plane
+// Uses coordinate correspondence pattern (no throughPointId needed)
 interface SiblingGuide2D {
   id: GuideId;                      // UUID
   name: string;                     // Same name as primary guide
   planeId: PlaneId;                 // The OTHER plane (paired with primary)
   halfHingeLineId: string;          // Reference to HalfHingeLine2D in this plane
   primaryGuideId: GuideId;          // Reference to the guide that spawned this one
+  // NO throughPointId - position derived via coordinate correspondence!
   line2D: Line2D;                   // Line in this plane's (u,v) coordinates, perpendicular to half-hinge
   visualStyle: VisualStyle;         // Same as primary guide
 }
 ```
 
-**Implementation Status** (as of Phase 36): ✅ **COMPLETE**
+**Implementation Status** (as of Phase 36 - Refactored): ✅ **COMPLETE**
 
-SiblingGuide2D is fully implemented following the architecture established in Phase 32 (SiblingIntersectionPoint2D) and Phase 35 (sibling plane derivation).
+SiblingGuide2D is fully implemented using the **coordinate correspondence pattern** following the architecture established in Phase 32 (SiblingIntersectionPoint2D) and Phase 35 (sibling plane derivation).
+
+**Key Architectural Principle**:
+- **Parent objects**: "primary guide + half HL" (NOT "line + point" like regular Guide2D)
+- **Position derivation**: Uses coordinate correspondence - NO throughPointId stored!
+- **Coordinate twin**: Position where primary guide intersects its HalfHingeLine → same coordinates on sibling HalfHingeLine
 
 **Implementation Details**:
 - **Domain**: `SiblingGuide2D` class extends `Line2D` (not `Line2DPerpendicularToLine`) to have own type discriminator `'sibling-guide'`
+- **Fields**: Only `referenceLineId`, `primaryGuideId`, `planeId` - NO `throughPointId`!
+- **Realization Algorithm** (`realize2D()`):
+  1. Get primary guide's realization
+  2. Find where primary guide intersects its HalfHingeLine → intersection point with coordinates (u,v)
+  3. Use SAME (u,v) coordinates on sibling HalfHingeLine (coordinate correspondence)
+  4. Compute perpendicular direction to sibling HalfHingeLine
+  5. Return line through twin position with perpendicular direction
 - **Sibling Plane Derivation**: Uses `World.getSiblingPlaneAndHalfHingeLineForGuide()` helper (Phase 35 pattern)
-- **Command-Level Creation**: `AddSiblingGuide2DOp` creates sibling guides (architecture requirement satisfied)
-- **Tool Integration**: `GuideTool` automatically creates sibling when conditions met (HalfHingeLine2D + point with sibling)
+- **Command-Level Creation**: `AddSiblingGuide2DOp` creates sibling guides (NO throughPointId parameter)
+- **Tool Integration**: `GuideTool` automatically creates sibling when primary guide created with HalfHingeLine reference
 - **Deletion Cascade**: `RemoveGuide2DOp` implements paired deletion - deleting primary removes sibling, attempting to delete sibling redirects to primary
 - **Bidirectional Links**: `Guide2D.siblingGuideId` ↔ `SiblingGuide2D.primaryGuideId`
 - **Rendering**: Both Guide2D and SiblingGuide2D render identically as dashed purple lines in `PaperService`
-- **Tests**: 17/17 passing (8 Guide2D + 4 command + 5 SiblingGuide2D)
+- **Tests**: 17/17 passing (8 Guide2D + 4 command + 5 SiblingGuide2D including coordinate correspondence test)
 
 **Construction Process**:
 1. User selects a HalfHingeLine2D in the **active plane** (e.g., plane H)
 2. User picks a point P in that plane
 3. System creates Guide2D: line through P, perpendicular to the selected HalfHingeLine2D
-4. System **automatically** creates SiblingGuide2D in the other plane (e.g., plane V) if:
+4. System **automatically** creates SiblingGuide2D in the other plane (e.g., plane V):
    - Reference line is a HalfHingeLine2D
-   - Through-point has a sibling (siblingPointId or primaryIntersectionId)
-   - Sibling plane and corresponding HalfHingeLine2D can be derived
-5. The sibling guide is perpendicular to the corresponding HalfHingeLine2D in that plane
+   - Sibling plane and corresponding HalfHingeLine2D derived via `getSiblingPlaneAndHalfHingeLineForGuide()`
+5. Sibling guide position determined by coordinate correspondence:
+   - Primary guide intersects its HalfHingeLine at some point with coordinates (u,v,1)
+   - Sibling guide uses SAME (u,v,1) on sibling HalfHingeLine (twin position)
+   - Sibling guide is perpendicular to sibling HalfHingeLine from that position
 6. Both guides appear simultaneously and remain geometrically linked
+
+**Coordinate Correspondence Pattern**:
+- Both HalfHingeLine2D objects (P_H and P_V) use identical parameterization: same (point, direction) in local coordinates
+- Point at parameter coordinates (u,v,1) on HalfHingeLine in P_H → same (u,v,1) on HalfHingeLine in P_V
+- This enables direct coordinate transfer WITHOUT storing throughPointId
+- Optimizes memory and ensures geometric consistency
 
 **Key Insights**:
 - Guides are always defined relative to a **HalfHingeLine2D** (not the 3D HingeLine itself)

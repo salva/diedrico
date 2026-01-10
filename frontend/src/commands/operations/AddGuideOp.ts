@@ -76,10 +76,9 @@ export class AddSiblingGuide2DOp implements IOperation {
   constructor(
     private planeId: string,
     private primaryGuideId: string,
-    private referenceLineId: string,
-    private throughPointId: string
+    private referenceLineId: string
   ) {
-    this.parameters = { planeId, primaryGuideId, referenceLineId, throughPointId };
+    this.parameters = { planeId, primaryGuideId, referenceLineId };
   }
 
   apply(world: World): OperationResult {
@@ -93,7 +92,6 @@ export class AddSiblingGuide2DOp implements IOperation {
       const siblingGuide = plane.addSiblingGuide2D(
         this.primaryGuideId,
         this.referenceLineId,
-        this.throughPointId,
         world,
         this.outputs.siblingGuideId
       );

@@ -20,6 +20,7 @@
 
 import { Vector3 } from 'three';
 import { Line2DPerpendicularToLine, Line2DRealization2D, Line2D } from './Line';
+import { intersectLineLine } from '@/domain/calculations/Intersections';
 
 /**
  * Guide2D - Guide line perpendicular to reference line (hinge line or BHL)
@@ -152,21 +153,18 @@ export class Guide2D extends Line2DPerpendicularToLine {
 export class SiblingGuide2D extends Line2D {
   readonly type: 'sibling-guide' = 'sibling-guide';
   readonly referenceLineId: string;  // HalfHingeLine2D in sibling plane
-  readonly throughPointId: string;   // Point the guide passes through (often sibling intersection)
   primaryGuideId: string;  // ID of the primary guide this sibling derives from
   visible: boolean = true;  // Whether guide is visible in the canvas
 
   constructor(
     id: string,
     referenceLineId: string,
-    throughPointId: string,
     planeId: string,
     primaryGuideId: string,
     label?: string
   ) {
     super(id, planeId, label);
     this.referenceLineId = referenceLineId;
-    this.throughPointId = throughPointId;
     this.primaryGuideId = primaryGuideId;
   }
 
@@ -174,7 +172,6 @@ export class SiblingGuide2D extends Line2D {
     return new SiblingGuide2D(
       this.id,
       this.referenceLineId,
-      this.throughPointId,
       this.planeId,
       this.primaryGuideId,
       this.label
@@ -182,67 +179,102 @@ export class SiblingGuide2D extends Line2D {
   }
 
   /**
-   * Calculate 2D realization - compute guide perpendicular to sibling plane's half-hinge line
+   * Calculate 2D realization using coordinate correspondence pattern
    * 
-   * OPTIMIZATION: For guides based on HalfHingeLine2D, the sibling guide has identical
-   * geometric parameters to the primary guide. This is because both HalfHingeLine2D
-   * objects (on P_H and P_V) represent the same 3D hinge line with consistent 2D
-   * representations at v=0, parallel to X-axis.
+   * COORDINATE CORRESPONDENCE: The position where the sibling guide intersects its
+   * HalfHingeLine is the twin of where the primary guide intersects its HalfHingeLine.
+   * Both HalfHingeLine2D objects use identical parameterization (same point and direction
+   * in local coordinates), enabling direct coordinate transfer.
    * 
-   * Algorithm (same as Guide2D):
-   * 1. Get reference line's realization (point + direction)
-   * 2. Compute perpendicular direction using 90-degree rotation
-   * 3. Get the through-point position
-   * 4. Return guide as line through the point with perpendicular direction
+   * Algorithm:
+   * 1. Get primary guide's realization
+   * 2. Find where primary guide intersects its HalfHingeLine → get (u,v) coordinates
+   * 3. Use those SAME (u,v) coordinates on the sibling HalfHingeLine (coordinate twin)
+   * 4. Compute perpendicular direction to sibling HalfHingeLine
+   * 5. Return line through twin position with perpendicular direction
    * 
-   * The through-point for a sibling guide is typically a sibling intersection point,
-   * which also uses the coordinate correspondence property.
+   * This follows the same pattern as SiblingIntersectionPoint2D: parent objects are
+   * "primary guide + half HL" rather than "line + point", and we use coordinate
+   * correspondence instead of explicit through-point.
    * 
-   * @param world World instance to access line and point realizations
-   * @returns Line2DRealization2D with perpendicular line to reference
+   * @param world World instance to access primary guide and HalfHingeLine realizations
+   * @returns Line2DRealization2D with perpendicular line to sibling HalfHingeLine
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
-    // Get reference line realization from world
-    const referenceLine = world.getLine2DRealization(this.referenceLineId);
-    if (!referenceLine) {
-      return null;  // Cannot compute guide without reference line
+    // Get primary guide's realization
+    const primaryGuide = world.getLine2DById(this.primaryGuideId);
+    if (!primaryGuide) {
+      console.warn(`[SiblingGuide2D] Cannot find primary guide ${this.primaryGuideId}`);
+      return null;
     }
 
-    // Check if reference line is infeasible - propagate infeasibility
-    if (!referenceLine.feasible) {
-      console.warn('[SiblingGuide2D] Reference line is infeasible, marking guide as infeasible');
+    const primaryGuideRealization = world.getLine2DRealization(this.primaryGuideId);
+    if (!primaryGuideRealization) {
+      return null;  // Cannot compute without primary guide realization
+    }
+
+    // Check if primary guide is infeasible - propagate infeasibility
+    if (!primaryGuideRealization.feasible) {
+      console.warn('[SiblingGuide2D] Primary guide is infeasible, marking sibling guide as infeasible');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // Get through-point realization from world
-    const throughPointRealization = world.getPoint2DRealization(this.throughPointId);
-    if (!throughPointRealization) {
-      return null;  // Cannot compute guide without through-point
+    // Get primary guide's HalfHingeLine to find the intersection point
+    // Primary guide is Guide2D which extends Line2DPerpendicularToLine
+    const primaryReferenceLineId = (primaryGuide as any).referenceLineId;
+    if (!primaryReferenceLineId) {
+      console.warn(`[SiblingGuide2D] Cannot find referenceLineId on primary guide ${this.primaryGuideId}`);
+      return null;
     }
 
-    // Check if through-point is infeasible - propagate infeasibility
-    if (!throughPointRealization.feasible) {
-      console.warn('[SiblingGuide2D] Through-point is infeasible, marking guide as infeasible');
+    const primaryHalfHingeLineRealization = world.getLine2DRealization(primaryReferenceLineId);
+    if (!primaryHalfHingeLineRealization) {
+      console.warn(`[SiblingGuide2D] Cannot get realization for primary HalfHingeLine ${primaryReferenceLineId}`);
+      return null;
+    }
+
+    // Find intersection of primary guide with its HalfHingeLine
+    // This gives us the (u,v) coordinates we'll use on the sibling HalfHingeLine
+    const intersectionResult = intersectLineLine(primaryGuideRealization, primaryHalfHingeLineRealization);
+    
+    if (intersectionResult.type !== 'point' || !intersectionResult.point) {
+      console.warn(`[SiblingGuide2D] Primary guide does not intersect its HalfHingeLine (type: ${intersectionResult.type})`);
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // Compute perpendicular direction using 90-degree rotation
+    // The intersection point's coordinates are what we'll use on the sibling HalfHingeLine
+    // This is the coordinate correspondence: same (u,v) on both parameterized HalfHingeLines
+    const twinPosition = intersectionResult.point.clone();
+
+    // Get sibling HalfHingeLine realization
+    const siblingHalfHingeLineRealization = world.getLine2DRealization(this.referenceLineId);
+    if (!siblingHalfHingeLineRealization) {
+      return null;  // Cannot compute without sibling HalfHingeLine
+    }
+
+    // Check if sibling HalfHingeLine is infeasible - propagate infeasibility
+    if (!siblingHalfHingeLineRealization.feasible) {
+      console.warn('[SiblingGuide2D] Sibling HalfHingeLine is infeasible, marking sibling guide as infeasible');
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+
+    // Compute perpendicular direction to sibling HalfHingeLine
     // If line direction is (dx, dy, 0), perpendicular is (-dy, dx, 0)
-    const lineDirection = referenceLine.getDirection();
+    const hingeDirection = siblingHalfHingeLineRealization.getDirection();
     const perpendicularDirection = new Vector3(
-      -lineDirection.y,  // -dy
-      lineDirection.x,   // dx
-      0                  // Direction vector, no translation
+      -hingeDirection.y,  // -dy
+      hingeDirection.x,   // dx
+      0                   // Direction vector, no translation
     );
 
-    // Check for degenerate case (shouldn't happen if reference line is valid)
+    // Check for degenerate case (shouldn't happen if HalfHingeLine is valid)
     if (perpendicularDirection.lengthSq() < 1e-10) {
-      console.warn(`SiblingGuide2D ${this.id}: reference line has zero direction`);
-      return new Line2DRealization2D(throughPointRealization.position.clone(), new Vector3(1, 0, 0), false);
+      console.warn(`SiblingGuide2D ${this.id}: sibling HalfHingeLine has zero direction`);
+      return new Line2DRealization2D(twinPosition, new Vector3(1, 0, 0), false);
     }
 
-    // Create guide realization: line through throughPoint with perpendicular direction
-    return new Line2DRealization2D(throughPointRealization.position.clone(), perpendicularDirection, true);
+    // Create sibling guide realization: line through twin position with perpendicular direction
+    return new Line2DRealization2D(twinPosition, perpendicularDirection, true);
   }
 }
 

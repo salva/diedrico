@@ -827,7 +827,6 @@ export abstract class ProjectionPlane {
    * 
    * @param primaryGuideId ID of the primary guide that spawned this sibling
    * @param referenceLineId ID of the HalfHingeLine2D in this (sibling) plane
-   * @param throughPointId ID of the point in this plane (often a sibling intersection point)
    * @param world World instance for validation
    * @param id Optional ID for the sibling guide (generated if not provided)
    * @returns The created SiblingGuide2D
@@ -836,18 +835,11 @@ export abstract class ProjectionPlane {
   addSiblingGuide2D(
     primaryGuideId: string,
     referenceLineId: string,
-    throughPointId: string,
     world: import('./World').World,
     id?: string
   ): import('./Guide').SiblingGuide2D {
     if (!this.id) {
       throw new Error('Cannot add sibling guide to plane without ID');
-    }
-
-    // Validate through point exists on this plane
-    const throughPoint = this.getPoint(throughPointId);
-    if (!throughPoint) {
-      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
     }
 
     // Validate reference line exists in world
@@ -876,7 +868,6 @@ export abstract class ProjectionPlane {
     const siblingGuide = new SiblingGuide2D(
       id,
       referenceLineId,
-      throughPointId,
       this.id,
       primaryGuideId,
       label

@@ -114,35 +114,18 @@ export class GuideTool extends BaseTool {
           const siblingInfo = world.getSiblingPlaneAndHalfHingeLineForGuide(this.referenceLineId!, planeId);
           
           if (siblingInfo) {
-            // Get through-point to check for sibling
-            const throughPoint = world.getPoint2DById(throughPointId);
+            // Create sibling guide using coordinate correspondence
+            // No need for throughPointId - sibling guide derives position from primary guide
+            const siblingResult = cmd.addAndExecute(
+              new AddSiblingGuide2DOp(
+                siblingInfo.siblingPlaneId,
+                guideId, // primaryGuideId
+                siblingInfo.siblingHalfHingeLineId
+              )
+            );
+            siblingGuideId = siblingResult.outputs.siblingGuideId;
             
-            if (throughPoint) {
-              // Determine sibling through-point ID
-              let siblingThroughPointId: string | undefined;
-              
-              // Check if it's a sibling intersection point (has primaryIntersectionId)
-              if (isSiblingIntersectionPoint2D(throughPoint)) {
-                // Use the primary intersection point as the sibling through-point
-                siblingThroughPointId = throughPoint.primaryIntersectionId;
-              } else if ('siblingPointId' in throughPoint && (throughPoint as any).siblingPointId) {
-                // Regular intersection point with siblingPointId field
-                siblingThroughPointId = (throughPoint as any).siblingPointId;
-              }
-              
-              if (siblingThroughPointId) {
-                // Create sibling guide
-                const siblingResult = cmd.addAndExecute(
-                  new AddSiblingGuide2DOp(
-                    siblingInfo.siblingPlaneId,
-                    guideId, // primaryGuideId
-                    siblingInfo.siblingHalfHingeLineId,
-                    siblingThroughPointId
-                  )
-                );
-                siblingGuideId = siblingResult.outputs.siblingGuideId;
-                
-                // Update bidirectional links
+            // Update bidirectional links
                 // Get guides and set siblingGuideId
                 const primaryGuide = world.getLine2DById(guideId);
                 const siblingGuide = world.getLine2DById(siblingGuideId);
