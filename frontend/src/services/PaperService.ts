@@ -33,7 +33,7 @@ import { Matrix3 } from 'three';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { FreePoint2D } from '@/domain/world/Point';
 import { Segment2DByPoints } from '@/domain/world/Segment';
-import { Guide2D } from '@/domain/world/Guide';
+import { Guide2D, SiblingGuide2D, isGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
 import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
 import type { Line2D, Line2DRealization2D } from '../domain/world/Line';
 import type { Circle2D, Circle2DRealization2D } from '../domain/world/Circle';
@@ -119,9 +119,9 @@ export class PaperService {
             // Segments are Line2D subclass with finite endpoints
             const primitive = this.segmentToPrimitive(line, realization, transform, context);
             primitives.push(primitive);
-          } else if (line instanceof Guide2D) {
-            // Guides are perpendicular lines with special rendering
-            const primitive = this.guideToPrimitive(line, realization, transform, context);
+          } else if (line instanceof Guide2D || line instanceof SiblingGuide2D) {
+            // Guides (both primary and sibling) are perpendicular lines with special rendering
+            const primitive = this.guideToPrimitive(line as Guide2D | SiblingGuide2D, realization, transform, context);
             primitives.push(primitive);
           } else {
             // RENDER: Normal infinite lines
@@ -517,16 +517,19 @@ export class PaperService {
   }
 
   /**
-   * Convert a Guide2D + realization to a LinePrimitive
+   * Convert a Guide2D or SiblingGuide2D + realization to a LinePrimitive
    * Guides are rendered as dashed lines extending to viewport edges
    * Applies plane-to-paper transformation
+   * 
+   * Both Guide2D and SiblingGuide2D render identically - as dashed purple lines.
+   * The distinction is semantic (primary vs sibling), not visual.
    * 
    * NOTE: Uses Line2DRealization2D per architectural principle - guides are
    * geometrically just lines with special rendering. Type distinction happens
    * at domain level (Guide2D vs Line2D), not realization level.
    */
   private guideToPrimitive(
-    guide: Guide2D,
+    guide: Guide2D | SiblingGuide2D,
     realization: Line2DRealization2D,
     planeToPaperMatrix: Matrix3,
     context: PrimitiveContext
@@ -559,13 +562,13 @@ export class PaperService {
   }
 
   /**
-   * Resolve visual style for a guide
+   * Resolve visual style for a guide (primary or sibling)
    * Guides render as dashed lines with distinct color
    * FR-002: Guides always 100% opacity (belong to all planes)
    * Per ui-spec.md: Hover = lighter purple, Selection = #0066CC
    */
   private resolveGuideStyle(
-    _guide: Guide2D,  // Reserved for future style inheritance
+    _guide: Guide2D | SiblingGuide2D,  // Reserved for future style inheritance
     isSelected: boolean,
     isHovered: boolean,
     _activePlaneId?: string,  // Ignored - guides always 100% opacity
