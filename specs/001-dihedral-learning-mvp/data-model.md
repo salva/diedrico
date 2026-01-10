@@ -1002,21 +1002,33 @@ projPlaneV.addLine(halfHingeHV_onPV);  // ✅ Stored in ProjectionPlane
 
 ---
 
-### CRITICAL: HalfHingeLine2D Coordinate Consistency Requirement
+### CRITICAL: HalfHingeLine2D Parametric Consistency Requirement
 
-**Purpose**: Enable direct coordinate transfer for intersection points between sibling HalfHingeLine2D objects
+**Purpose**: Enable parametric scalar correspondence for intersection points and guides between sibling HalfHingeLine2D objects
 
-**Geometric Requirement**: Both HalfHingeLine2D objects representing the same 3D HingeLine **MUST use identical (point, direction) in their local (u,v) coordinates**.
+**Geometric Requirement**: Both HalfHingeLine2D objects representing the same 3D HingeLine **MUST use identical (point Q, direction D) in their local (u,v) coordinates**.
 
 **Why This Matters**:
 
-When an element (circle, line, etc.) intersects with a HalfHingeLine2D on one plane, the system automatically creates a sibling point on the other plane. For this to work correctly with direct coordinate cloning, both HalfHingeLine2D representations must parameterize the same 3D line identically.
+When an element (circle, line, guide, etc.) intersects with a HalfHingeLine2D on one plane at position R, the system can compute the corresponding position R' on the sibling plane using parametric scalar correspondence.
+
+**Parametric Representation**:
+- HalfHingeLine2D is parameterized as: **R = Q + d·D**
+  - Q = reference point (e.g., (0, 0, 1))
+  - D = direction vector (e.g., (1, 0, 0))
+  - d = scalar parameter
+
+**Key Insight - Scalar Correspondence**:
+- When primary element intersects at R = Q + d·D in plane P_H
+- Sibling element intersects at R' = Q' + d·D' in plane P_V
+- Since Q = Q' and D = D' (identical parameterization), the **SAME scalar d** transfers between planes
+- This is more fundamental than coordinate cloning - we transfer the parametric scalar!
 
 **Rationale**:
 - A HingeLine in 3D is a single line shared by both projection planes
 - Both planes use the same coordinate system origin and axes for the hinge line
-- Points on the hinge line have the same (u, v) coordinates in both planes
-- For sibling points to transfer coordinates directly, both HalfHingeLine2D representations must use the same parameterization
+- The parametric scalar d is intrinsic to the 3D geometry, independent of which plane observes it
+- Both HalfHingeLine2D representations must use identical Q and D for scalar d to transfer correctly
 
 **Implementation Example** (HL_HV):
 
@@ -1026,27 +1038,32 @@ const halfHingeHV_onPH = new HalfHingeLine2D(
   'half_HL_HV_on_PH',
   'HL_HV',
   'proj_plane_H',
-  new Vector3(0, 0, 1),      // ✅ Same point: origin (0, 0, 1)
-  new Vector3(1, 0, 0)       // ✅ Same direction: horizontal (1, 0, 0)
+  new Vector3(0, 0, 1),      // ✅ Same Q: origin (0, 0, 1)
+  new Vector3(1, 0, 0)       // ✅ Same D: horizontal (1, 0, 0)
 );
 
 const halfHingeHV_onPV = new HalfHingeLine2D(
   'half_HL_HV_on_PV',
   'HL_HV',
   'proj_plane_V',
-  new Vector3(0, 0, 1),      // ✅ Same point: origin (0, 0, 1)
-  new Vector3(1, 0, 0)       // ✅ Same direction: horizontal (1, 0, 0)
+  new Vector3(0, 0, 1),      // ✅ Same Q: origin (0, 0, 1)
+  new Vector3(1, 0, 0)       // ✅ Same D: horizontal (1, 0, 0)
 );
 ```
 
-**Result**: Point at parameter (u, 0, 1) on HalfHingeLine2D in P_H has the same coordinates (u, 0, 1) in P_V, enabling direct coordinate transfer for sibling intersection points.
+**Result**: 
+- Point at R = Q + d·D on HalfHingeLine2D in P_H transfers to R' = Q' + d·D' in P_V using **same d**
+- Since Q = Q' and D = D', this simplifies to R' = Q + d·D (numerically identical)
+- But the key is the **parametric scalar d**, not the coordinate values themselves
 
 **Validation**:
 - Unit test verifies all HalfHingeLine2D pairs have matching point/direction
 - Constructor enforces identical parameterization for sibling pairs
 - World initialization documents this requirement in comments
 
-**Consequence**: `SiblingIntersectionPoint2D.realize2D()` can use direct coordinate cloning:
+**Applications**:
+1. **SiblingIntersectionPoint2D**: Uses direct coordinate cloning (special case when Q=Q', D=D')
+2. **SiblingGuide2D**: Extracts scalar d from primary intersection, applies same d on sibling HHL
 
 ```typescript
 class SiblingIntersectionPoint2D extends Point2D {
@@ -1264,14 +1281,14 @@ interface Guide2D {
 }
 
 // Sibling Guide - automatically created in the paired plane
-// Uses coordinate correspondence pattern (no throughPointId needed)
+// Uses parametric scalar correspondence pattern (no throughPointId needed)
 interface SiblingGuide2D {
   id: GuideId;                      // UUID
   name: string;                     // Same name as primary guide
   planeId: PlaneId;                 // The OTHER plane (paired with primary)
   halfHingeLineId: string;          // Reference to HalfHingeLine2D in this plane
   primaryGuideId: GuideId;          // Reference to the guide that spawned this one
-  // NO throughPointId - position derived via coordinate correspondence!
+  // NO throughPointId - position derived via parametric scalar correspondence!
   line2D: Line2D;                   // Line in this plane's (u,v) coordinates, perpendicular to half-hinge
   visualStyle: VisualStyle;         // Same as primary guide
 }
@@ -1279,29 +1296,31 @@ interface SiblingGuide2D {
 
 **Implementation Status** (as of Phase 36 - Refactored): ✅ **COMPLETE**
 
-SiblingGuide2D is fully implemented using the **coordinate correspondence pattern** following the architecture established in Phase 32 (SiblingIntersectionPoint2D) and Phase 35 (sibling plane derivation).
+SiblingGuide2D is fully implemented using the **parametric scalar correspondence pattern** following the architecture established in Phase 32 (SiblingIntersectionPoint2D) and Phase 35 (sibling plane derivation).
 
 **Key Architectural Principle**:
 - **Parent objects**: "primary guide + half HL" (NOT "line + point" like regular Guide2D)
-- **Position derivation**: Uses coordinate correspondence - NO throughPointId stored!
-- **Coordinate twin**: Position where primary guide intersects its HalfHingeLine → same coordinates on sibling HalfHingeLine
+- **Position derivation**: Uses parametric scalar correspondence - NO throughPointId stored!
+- **Parametric scalar transfer**: Primary guide intersects HHL at R = Q + d·D → sibling uses SAME scalar d: R' = Q' + d·D'
 
 **Implementation Details**:
 - **Domain**: `SiblingGuide2D` class extends `Line2D` (not `Line2DPerpendicularToLine`) to have own type discriminator `'sibling-guide'`
 - **Fields**: Only `referenceLineId`, `primaryGuideId`, `planeId` - NO `throughPointId`!
 - **Realization Algorithm** (`realize2D()`):
   1. Get primary guide's realization
-  2. Find where primary guide intersects its HalfHingeLine → intersection point with coordinates (u,v)
-  3. Use SAME (u,v) coordinates on sibling HalfHingeLine (coordinate correspondence)
-  4. Compute perpendicular direction to sibling HalfHingeLine
-  5. Return line through twin position with perpendicular direction
+  2. Find where primary guide intersects its HalfHingeLine → point R
+  3. Express R parametrically on primary HalfHingeLine: R = Q + d·D (extract scalar d)
+  4. Apply SAME scalar d on sibling HalfHingeLine: R' = Q' + d·D' (parametric correspondence)
+  5. Compute perpendicular direction to sibling HalfHingeLine
+  6. Return line through R' with perpendicular direction
+- **Why This Works**: Both HalfHingeLine2D objects use identical Q and D, so scalar d transfers between planes
 - **Sibling Plane Derivation**: Uses `World.getSiblingPlaneAndHalfHingeLineForGuide()` helper (Phase 35 pattern)
 - **Command-Level Creation**: `AddSiblingGuide2DOp` creates sibling guides (NO throughPointId parameter)
 - **Tool Integration**: `GuideTool` automatically creates sibling when primary guide created with HalfHingeLine reference
 - **Deletion Cascade**: `RemoveGuide2DOp` implements paired deletion - deleting primary removes sibling, attempting to delete sibling redirects to primary
 - **Bidirectional Links**: `Guide2D.siblingGuideId` ↔ `SiblingGuide2D.primaryGuideId`
 - **Rendering**: Both Guide2D and SiblingGuide2D render identically as dashed purple lines in `PaperService`
-- **Tests**: 17/17 passing (8 Guide2D + 4 command + 5 SiblingGuide2D including coordinate correspondence test)
+- **Tests**: 17/17 passing (8 Guide2D + 4 command + 5 SiblingGuide2D including parametric correspondence test)
 
 **Construction Process**:
 1. User selects a HalfHingeLine2D in the **active plane** (e.g., plane H)
@@ -1310,17 +1329,21 @@ SiblingGuide2D is fully implemented using the **coordinate correspondence patter
 4. System **automatically** creates SiblingGuide2D in the other plane (e.g., plane V):
    - Reference line is a HalfHingeLine2D
    - Sibling plane and corresponding HalfHingeLine2D derived via `getSiblingPlaneAndHalfHingeLineForGuide()`
-5. Sibling guide position determined by coordinate correspondence:
-   - Primary guide intersects its HalfHingeLine at some point with coordinates (u,v,1)
-   - Sibling guide uses SAME (u,v,1) on sibling HalfHingeLine (twin position)
-   - Sibling guide is perpendicular to sibling HalfHingeLine from that position
+5. Sibling guide position determined by parametric scalar correspondence:
+   - Primary guide intersects its HalfHingeLine at point R
+   - Express R parametrically: R = Q + d·D (extract scalar d)
+   - Apply same d on sibling HalfHingeLine: R' = Q' + d·D'
+   - Since Q = Q' and D = D' (identical parameterization), R' is geometrically correct
+   - Sibling guide is perpendicular to sibling HalfHingeLine from position R'
 6. Both guides appear simultaneously and remain geometrically linked
 
-**Coordinate Correspondence Pattern**:
-- Both HalfHingeLine2D objects (P_H and P_V) use identical parameterization: same (point, direction) in local coordinates
-- Point at parameter coordinates (u,v,1) on HalfHingeLine in P_H → same (u,v,1) on HalfHingeLine in P_V
-- This enables direct coordinate transfer WITHOUT storing throughPointId
-- Optimizes memory and ensures geometric consistency
+**Parametric Scalar Correspondence Pattern**:
+- Both HalfHingeLine2D objects (P_H and P_V) use identical parameterization: same Q (point) and D (direction)
+- Primary intersection at R = Q + d·D → extract scalar d
+- Sibling position: R' = Q' + d·D' = Q + d·D (since Q' = Q and D' = D)
+- The key insight: **scalar d transfers between planes**, not absolute coordinates
+- This enables precise geometric correspondence WITHOUT storing throughPointId
+- More fundamental than coordinate cloning - we transfer the parametric parameter itself!
 
 **Key Insights**:
 - Guides are always defined relative to a **HalfHingeLine2D** (not the 3D HingeLine itself)

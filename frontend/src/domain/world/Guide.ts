@@ -179,22 +179,23 @@ export class SiblingGuide2D extends Line2D {
   }
 
   /**
-   * Calculate 2D realization using coordinate correspondence pattern
+   * Calculate 2D realization using parametric scalar correspondence pattern
    * 
-   * COORDINATE CORRESPONDENCE: The position where the sibling guide intersects its
-   * HalfHingeLine is the twin of where the primary guide intersects its HalfHingeLine.
-   * Both HalfHingeLine2D objects use identical parameterization (same point and direction
-   * in local coordinates), enabling direct coordinate transfer.
+   * PARAMETRIC SCALAR CORRESPONDENCE: Both HalfHingeLine2D objects use identical
+   * parameterization (same reference point Q and direction D). When the primary guide
+   * intersects its HalfHingeLine at position R = Q + d·D, the sibling guide intersects
+   * its HalfHingeLine at R' = Q' + d·D' using the SAME scalar d.
    * 
    * Algorithm:
    * 1. Get primary guide's realization
-   * 2. Find where primary guide intersects its HalfHingeLine → get (u,v) coordinates
-   * 3. Use those SAME (u,v) coordinates on the sibling HalfHingeLine (coordinate twin)
-   * 4. Compute perpendicular direction to sibling HalfHingeLine
-   * 5. Return line through twin position with perpendicular direction
+   * 2. Find where primary guide intersects its HalfHingeLine → point R
+   * 3. Express R parametrically: R = Q + d·D (extract scalar d)
+   * 4. Use SAME scalar d on sibling HalfHingeLine: R' = Q' + d·D'
+   * 5. Compute perpendicular direction to sibling HalfHingeLine
+   * 6. Return line through R' with perpendicular direction
    * 
    * This follows the same pattern as SiblingIntersectionPoint2D: parent objects are
-   * "primary guide + half HL" rather than "line + point", and we use coordinate
+   * "primary guide + half HL" rather than "line + point", and we use parametric
    * correspondence instead of explicit through-point.
    * 
    * @param world World instance to access primary guide and HalfHingeLine realizations
@@ -234,7 +235,6 @@ export class SiblingGuide2D extends Line2D {
     }
 
     // Find intersection of primary guide with its HalfHingeLine
-    // This gives us the (u,v) coordinates we'll use on the sibling HalfHingeLine
     const intersectionResult = intersectLineLine(primaryGuideRealization, primaryHalfHingeLineRealization);
     
     if (intersectionResult.type !== 'point' || !intersectionResult.point) {
@@ -242,11 +242,49 @@ export class SiblingGuide2D extends Line2D {
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // The intersection point's coordinates are what we'll use on the sibling HalfHingeLine
-    // This is the coordinate correspondence: same (u,v) on both parameterized HalfHingeLines
-    const twinPosition = intersectionResult.point.clone();
+    // Get primary HalfHingeLine's parametric representation: R = Q + d·D
+    const primaryHHL = world.getLine2DById(primaryReferenceLineId) as any;
+    if (!primaryHHL || !primaryHHL.point || !primaryHHL.direction) {
+      console.warn(`[SiblingGuide2D] Cannot get HalfHingeLine parametric data for ${primaryReferenceLineId}`);
+      return null;
+    }
 
-    // Get sibling HalfHingeLine realization
+    const Q = primaryHHL.point;      // Reference point
+    const D = primaryHHL.direction;  // Direction vector
+    const R = intersectionResult.point;  // Intersection point
+
+    // Extract scalar d such that R = Q + d·D
+    // We can use either x or y component (whichever has larger direction component to avoid division by small numbers)
+    let d: number;
+    if (Math.abs(D.x) > Math.abs(D.y)) {
+      // Use x component: R.x = Q.x + d·D.x  =>  d = (R.x - Q.x) / D.x
+      d = (R.x - Q.x) / D.x;
+    } else if (Math.abs(D.y) > 1e-10) {
+      // Use y component: R.y = Q.y + d·D.y  =>  d = (R.y - Q.y) / D.y
+      d = (R.y - Q.y) / D.y;
+    } else {
+      console.warn(`[SiblingGuide2D] Primary HalfHingeLine has degenerate direction`);
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+
+    // Get sibling HalfHingeLine's parametric representation: R' = Q' + d·D'
+    const siblingHHL = world.getLine2DById(this.referenceLineId) as any;
+    if (!siblingHHL || !siblingHHL.point || !siblingHHL.direction) {
+      console.warn(`[SiblingGuide2D] Cannot get sibling HalfHingeLine parametric data for ${this.referenceLineId}`);
+      return null;
+    }
+
+    const Q_prime = siblingHHL.point;      // Sibling reference point (should equal Q due to identical parameterization)
+    const D_prime = siblingHHL.direction;  // Sibling direction vector (should equal D due to identical parameterization)
+
+    // Compute twin position using SAME scalar d: R' = Q' + d·D'
+    const twinPosition = new Vector3(
+      Q_prime.x + d * D_prime.x,
+      Q_prime.y + d * D_prime.y,
+      1  // Homogeneous coordinate for a point
+    );
+
+    // Get sibling HalfHingeLine realization for perpendicular computation
     const siblingHalfHingeLineRealization = world.getLine2DRealization(this.referenceLineId);
     if (!siblingHalfHingeLineRealization) {
       return null;  // Cannot compute without sibling HalfHingeLine
