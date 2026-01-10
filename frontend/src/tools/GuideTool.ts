@@ -65,8 +65,8 @@ export class GuideTool extends BaseTool {
       
       console.log('[GuideTool] Paper.hitTest() result for reference line:', hit);
       
-      // Selection mask ensures only lines are returned
-      if (!hit || hit.elementType !== 'line') {
+      // Check if we found a valid line (any line type from selection mask)
+      if (!hit) {
         return this.failure('No line found at click position. Please click near a hinge line or existing line.');
       }
 
