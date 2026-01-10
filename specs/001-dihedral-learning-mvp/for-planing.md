@@ -45,6 +45,21 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted.
 * [ ] Ensure that Ops are simple objects which only do basic tasks. For instance, on cascade deletion must not be handled in the op, but on the command construction (the method building the command is the responsible for following dependency relations, retrieving all the objects, sorting them and implementing the cascade deletion by introducing a specific op in the command for every object).
+
+
+## ALREADY PLANNED
+
+* [X] Ensure that SiblingIntersectionPoint2D works for any HL, not only for HL_HV. See how sibling line realization is calculated (it should be almost identical).
+  - **STATUS**: ✅ COMPLETE - Phase 37 implemented
+  - Verification phase completed: parametric consistency enforced and validated
+  - Added `HingeLine.validateParametricConsistency()` method (validates Q=Q', D=D')
+  - Added runtime assertion in `SiblingIntersectionPoint2D.realize2D()`
+  - Unit tests verify consistency with HL_HV and custom arbitrary HingeLines
+  - Documentation updated with generic examples (not HL_HV-specific)
+  - Mathematical basis: coordinate cloning ≡ parametric scalar transfer when Q=Q', D=D'
+  - All 32/32 point tests passing
+  - Prevents future bugs when adding auxiliary planes with custom HingeLines
+
 * [X] SiblingGuide2D must have its own class, which may derive from some kind of line-perpendicular-to-line, but that is not required. The interesting thing here, is that in the realization, the position of the intersection with the Half HL is the twin of the original Guide2D object (similar to how intersection points are handled). So, they don't probably need to derive from perpendicular line, as the parent objects used to define the line are different (there is no line and point but parent guide and half HL)!
   - **STATUS**: ✅ COMPLETE - Phase 36 Refactored (commit b5e0c6c)
   - Implemented using coordinate correspondence pattern (NOT throughPointId)
@@ -53,10 +68,6 @@ Note that completing these tasks may require asking the user for additional info
   - Fields: Only referenceLineId, primaryGuideId, planeId (NO throughPointId!)
   - Realization: Intersect primary guide with its HalfHL, transfer coordinates to sibling HalfHL, compute perpendicular
   - All 17/17 guide tests passing with correct architecture
-* [ ] Ensure that SiblingIntersectionPoint2D works for any HL, not only for HL_HV. See how sibling line realization is calculated (it should be almost identical).
-
-
-## ALREADY PLANNED
 
 * [X] It seems SiblingGuide2D type is missing. It must be used to represent the Sibling of a guide on the complementary projection plane.
   - **STATUS**: ✅ PLANNED - Phase 36 

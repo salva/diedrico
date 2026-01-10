@@ -172,6 +172,10 @@ export class World {
       new Vector3(1, 0, 0)       // Horizontal direction (parallel to X-axis)
     );
     projPlaneV.addLine(halfHingeHV_onPV);
+
+    // Validate parametric consistency: both HalfHingeLine2D must use identical (Q, D)
+    // This is CRITICAL for SiblingIntersectionPoint2D coordinate cloning to work correctly
+    HingeLine.validateParametricConsistency(halfHingeHV_onPH, halfHingeHV_onPV);
   }
 
   /**

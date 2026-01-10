@@ -446,16 +446,26 @@ export class SiblingIntersectionPoint2D extends Point2D {
   }
 
   /**
-   * Calculate 2D realization - project primary's 3D position onto sibling plane
+   * Calculate 2D realization - uses coordinate cloning from primary point
    * 
-   * OPTIMIZATION: For intersections with HalfHingeLine2D, the sibling point coordinates
-   * are identical to the primary's coordinates. This is because both HalfHingeLine2D
-   * objects (on P_H and P_V) represent the same 3D hinge line with consistent 2D
-   * representations: both at v=0, parallel to X-axis. A point at (u, 0, 1) on the
-   * HalfHingeLine2D in P_H maps to the same (u, 0, 1) in P_V.
+   * CRITICAL REQUIREMENT: Coordinate cloning is mathematically equivalent to parametric
+   * scalar transfer (R = Q + d·D pattern) ONLY when both HalfHingeLine2D objects
+   * representing the same 3D HingeLine use IDENTICAL parametric representation:
+   *   - Same reference point Q in local (u,v) coordinates
+   *   - Same direction vector D in local (u,v) coordinates
+   * 
+   * When this parametric consistency holds:
+   *   Primary intersection: R = Q + d·D (on primary plane)
+   *   Sibling position: R' = Q' + d·D' = Q + d·D = R (coordinates identical!)
+   *   Therefore: coordinate cloning ≡ parametric scalar transfer
+   * 
+   * This property MUST be enforced for ALL HingeLines during construction.
+   * Breaking this constraint causes sibling points to compute incorrect positions silently.
    * 
    * @param world World instance to access primary point realization
    * @returns Point2DRealization2D with same coordinates as primary
+   * @see HingeLine constructor must ensure parametric consistency for paired HalfHingeLine2D
+   * @see specs/001-dihedral-learning-mvp/data-model.md §Parametric Consistency Requirement
    */
   realize2D(world: World): Point2DRealization2D {
     // Get primary intersection point's 2D realization
@@ -471,12 +481,52 @@ export class SiblingIntersectionPoint2D extends Point2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
 
-    // For HalfHingeLine2D intersections: both planes use the same coordinate representation
-    // Point at (u, 0, 1) on hinge line in P_H → same (u, 0, 1) on hinge line in P_V
-    // This works because HalfHingeLine2D on both planes have:
-    //   - Same point: (0, 0, 1)
-    //   - Same direction: (1, 0, 0)
-    // They represent the same 3D hinge line with consistent 2D parameterization
+    // VALIDATION: Verify parametric consistency assumption (inexpensive check)
+    // Find HalfHingeLine2D involved in primary intersection to validate consistency
+    const primaryPoint = world.getPoint2DById(this.primaryIntersectionId);
+    if (primaryPoint && 'elementAId' in primaryPoint && 'elementBId' in primaryPoint) {
+      const elemA = world.getLine2DById(primaryPoint.elementAId);
+      const elemB = world.getLine2DById(primaryPoint.elementBId);
+      
+      // Check if either element is a HalfHingeLine2D
+      const primaryHHL = (elemA?.type === 'half-hinge' ? elemA : elemB?.type === 'half-hinge' ? elemB : null) as any;
+      if (primaryHHL) {
+        // Find corresponding HalfHingeLine2D on sibling plane
+        const hingeLineId = primaryHHL.hingeLineId;
+        const siblingPlane = world.getSiblingPlaneForIntersection(primaryPoint);
+        if (siblingPlane) {
+          const siblingHHL = Array.from(world.getProjectionPlane(siblingPlane.id)?.lines.values() || [])
+            .find(line => line.type === 'half-hinge' && (line as any).hingeLineId === hingeLineId) as any;
+          
+          if (siblingHHL) {
+            // Validate parametric consistency: Q=Q', D=D'
+            const EPSILON = 1e-10;
+            const pointDist = primaryHHL.point.distanceTo(siblingHHL.point);
+            const dirDist = primaryHHL.direction.distanceTo(siblingHHL.direction);
+            
+            if (pointDist > EPSILON || dirDist > EPSILON) {
+              throw new Error(
+                `[SiblingIntersectionPoint2D] Parametric consistency violated for ${hingeLineId}!\n` +
+                `  Point distance: ${pointDist}, Direction distance: ${dirDist}\n` +
+                `  Coordinate cloning requires both HalfHingeLine2D use identical (Q, D).\n` +
+                `  This should have been caught during HingeLine construction.`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    // Coordinate cloning optimization: mathematically equivalent to parametric scalar transfer
+    // when HalfHingeLine2D parametric consistency holds (Q=Q', D=D')
+    // 
+    // Mathematical basis:
+    //   Primary: R = Q + d·D  (intersection at scalar parameter d)
+    //   Sibling: R' = Q' + d·D'  (same scalar d, consistent Q' and D')
+    //   Result: R' = Q + d·D = R  (coordinates identical)
+    // 
+    // ASSUMPTION: Both HalfHingeLine2D objects use identical (Q, D) parameterization
+    // This is enforced during HingeLine construction and validated above
     return new Point2DRealization2D(primaryRealization.position.clone());
   }
 }

@@ -123,4 +123,64 @@ export class HingeLine {
     if (planeId === this.plane2Id) return this.plane1Id;
     return null;
   }
+
+  /**
+   * Validate that both HalfHingeLine2D objects use identical parametric representation
+   * 
+   * CRITICAL REQUIREMENT: For SiblingIntersectionPoint2D coordinate cloning to work,
+   * both HalfHingeLine2D objects representing this HingeLine MUST use:
+   *   - Same reference point Q (in local (u,v) coordinates)
+   *   - Same direction vector D (in local (u,v) coordinates)
+   * 
+   * When Q=Q' and D=D', a point at R = Q + d·D on the primary plane
+   * maps to R' = Q' + d·D' = Q + d·D = R on the sibling plane (identical coordinates).
+   * 
+   * Breaking this constraint causes sibling points to compute incorrect positions silently.
+   * 
+   * @param halfHinge1 First HalfHingeLine2D object
+   * @param halfHinge2 Second HalfHingeLine2D object
+   * @throws Error if parametric consistency is violated
+   */
+  static validateParametricConsistency(
+    halfHinge1: HalfHingeLine2D,
+    halfHinge2: HalfHingeLine2D
+  ): void {
+    const EPSILON = 1e-10;
+
+    // Check hingeLineId matches
+    if (halfHinge1.hingeLineId !== halfHinge2.hingeLineId) {
+      throw new Error(
+        `HingeLine.validateParametricConsistency: HalfHingeLine2D objects have different hingeLineIds ` +
+        `(${halfHinge1.hingeLineId} vs ${halfHinge2.hingeLineId})`
+      );
+    }
+
+    // Check reference points are identical: Q = Q'
+    const pointDiff = halfHinge1.point.clone().sub(halfHinge2.point);
+    const pointDistance = pointDiff.length();
+    
+    if (pointDistance > EPSILON) {
+      throw new Error(
+        `HingeLine.validateParametricConsistency: Reference points differ for ${halfHinge1.hingeLineId}\n` +
+        `  Plane ${halfHinge1.planeId}: point = (${halfHinge1.point.x}, ${halfHinge1.point.y}, ${halfHinge1.point.z})\n` +
+        `  Plane ${halfHinge2.planeId}: point = (${halfHinge2.point.x}, ${halfHinge2.point.y}, ${halfHinge2.point.z})\n` +
+        `  Distance: ${pointDistance}\n` +
+        `CRITICAL: Both HalfHingeLine2D must use identical reference point Q for coordinate cloning to work.`
+      );
+    }
+
+    // Check direction vectors are identical: D = D'
+    const directionDiff = halfHinge1.direction.clone().sub(halfHinge2.direction);
+    const directionDistance = directionDiff.length();
+    
+    if (directionDistance > EPSILON) {
+      throw new Error(
+        `HingeLine.validateParametricConsistency: Direction vectors differ for ${halfHinge1.hingeLineId}\n` +
+        `  Plane ${halfHinge1.planeId}: direction = (${halfHinge1.direction.x}, ${halfHinge1.direction.y}, ${halfHinge1.direction.z})\n` +
+        `  Plane ${halfHinge2.planeId}: direction = (${halfHinge2.direction.x}, ${halfHinge2.direction.y}, ${halfHinge2.direction.z})\n` +
+        `  Distance: ${directionDistance}\n` +
+        `CRITICAL: Both HalfHingeLine2D must use identical direction vector D for coordinate cloning to work.`
+      );
+    }
+  }
 }

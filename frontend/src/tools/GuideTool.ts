@@ -126,17 +126,15 @@ export class GuideTool extends BaseTool {
             siblingGuideId = siblingResult.outputs.siblingGuideId;
             
             // Update bidirectional links
-                // Get guides and set siblingGuideId
-                const primaryGuide = world.getLine2DById(guideId);
-                const siblingGuide = world.getLine2DById(siblingGuideId);
-                
-                if (primaryGuide && 'siblingGuideId' in primaryGuide) {
-                  (primaryGuide as any).siblingGuideId = siblingGuideId;
-                }
-                
-                console.log(`[GuideTool] Created sibling guide ${siblingGuideId} in plane ${siblingInfo.siblingPlaneId}`);
-              }
+            // Get guides and set siblingGuideId
+            const primaryGuide = world.getLine2DById(guideId);
+            const siblingGuide = world.getLine2DById(siblingGuideId);
+            
+            if (primaryGuide && 'siblingGuideId' in primaryGuide) {
+              (primaryGuide as any).siblingGuideId = siblingGuideId;
             }
+            
+            console.log(`[GuideTool] Created sibling guide ${siblingGuideId} in plane ${siblingInfo.siblingPlaneId}`);
           }
         } catch (siblingError) {
           // Sibling creation failed - log but don't fail the entire operation

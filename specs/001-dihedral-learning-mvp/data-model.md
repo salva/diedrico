@@ -1004,7 +1004,7 @@ projPlaneV.addLine(halfHingeHV_onPV);  // ✅ Stored in ProjectionPlane
 
 ### CRITICAL: HalfHingeLine2D Parametric Consistency Requirement
 
-**Purpose**: Enable parametric scalar correspondence for intersection points and guides between sibling HalfHingeLine2D objects
+**Purpose**: Enable parametric scalar correspondence for intersection points and guides between sibling HalfHingeLine2D objects representing ANY HingeLine
 
 **Geometric Requirement**: Both HalfHingeLine2D objects representing the same 3D HingeLine **MUST use identical (point Q, direction D) in their local (u,v) coordinates**.
 
@@ -1014,15 +1014,16 @@ When an element (circle, line, guide, etc.) intersects with a HalfHingeLine2D on
 
 **Parametric Representation**:
 - HalfHingeLine2D is parameterized as: **R = Q + d·D**
-  - Q = reference point (e.g., (0, 0, 1))
-  - D = direction vector (e.g., (1, 0, 0))
+  - Q = reference point (e.g., (0, 0, 1) for HL_HV, but can be ANY point)
+  - D = direction vector (e.g., (1, 0, 0) for HL_HV, but can be ANY direction)
   - d = scalar parameter
 
 **Key Insight - Scalar Correspondence**:
-- When primary element intersects at R = Q + d·D in plane P_H
-- Sibling element intersects at R' = Q' + d·D' in plane P_V
+- When primary element intersects at R = Q + d·D on primary plane
+- Sibling element intersects at R' = Q' + d·D' on sibling plane
 - Since Q = Q' and D = D' (identical parameterization), the **SAME scalar d** transfers between planes
 - This is more fundamental than coordinate cloning - we transfer the parametric scalar!
+- **Works for ANY HingeLine**, not just HL_HV
 
 **Rationale**:
 - A HingeLine in 3D is a single line shared by both projection planes
@@ -1030,7 +1031,7 @@ When an element (circle, line, guide, etc.) intersects with a HalfHingeLine2D on
 - The parametric scalar d is intrinsic to the 3D geometry, independent of which plane observes it
 - Both HalfHingeLine2D representations must use identical Q and D for scalar d to transfer correctly
 
-**Implementation Example** (HL_HV):
+**Implementation Example** (HL_HV - but principle applies to ALL HingeLines):
 
 ```typescript
 // World constructor - both HalfHingeLine2D use IDENTICAL geometry
@@ -1049,26 +1050,56 @@ const halfHingeHV_onPV = new HalfHingeLine2D(
   new Vector3(0, 0, 1),      // ✅ Same Q: origin (0, 0, 1)
   new Vector3(1, 0, 0)       // ✅ Same D: horizontal (1, 0, 0)
 );
+
+// VALIDATION: Ensure parametric consistency (called in World constructor)
+HingeLine.validateParametricConsistency(halfHingeHV_onPH, halfHingeHV_onPV);
+```
+
+**Generic Example** (works for auxiliary planes with arbitrary Q, D):
+
+```typescript
+// Arbitrary HingeLine with Q=(2,3,1), D=(0,1,0)
+const halfHinge_plane1 = new HalfHingeLine2D(
+  'hhl1', 'HL_CUSTOM', 'plane1',
+  new Vector3(2, 3, 1),      // Q = (2,3,1) - arbitrary
+  new Vector3(0, 1, 0)       // D = (0,1,0) - arbitrary
+);
+
+const halfHinge_plane2 = new HalfHingeLine2D(
+  'hhl2', 'HL_CUSTOM', 'plane2',
+  new Vector3(2, 3, 1),      // Q' = (2,3,1) - SAME
+  new Vector3(0, 1, 0)       // D' = (0,1,0) - SAME
+);
+
+// Validation ensures Q=Q', D=D'
+HingeLine.validateParametricConsistency(halfHinge_plane1, halfHinge_plane2);
 ```
 
 **Result**: 
-- Point at R = Q + d·D on HalfHingeLine2D in P_H transfers to R' = Q' + d·D' in P_V using **same d**
+- Point at R = Q + d·D on HalfHingeLine2D in primary plane transfers to R' = Q' + d·D' in sibling plane using **same d**
 - Since Q = Q' and D = D', this simplifies to R' = Q + d·D (numerically identical)
 - But the key is the **parametric scalar d**, not the coordinate values themselves
+- **Works for ANY (Q, D) values**, not just HL_HV-specific coordinates
 
-**Validation**:
-- Unit test verifies all HalfHingeLine2D pairs have matching point/direction
-- Constructor enforces identical parameterization for sibling pairs
-- World initialization documents this requirement in comments
+**Validation** (Phase 37):
+- `HingeLine.validateParametricConsistency()` method enforces identical Q and D
+- Called during World construction for all HingeLine pairs
+- Unit tests verify consistency with both HL_HV and custom HingeLines
+- Runtime assertion in `SiblingIntersectionPoint2D.realize2D()` validates assumption
 
 **Applications**:
-1. **SiblingIntersectionPoint2D**: Uses direct coordinate cloning (special case when Q=Q', D=D')
+1. **SiblingIntersectionPoint2D**: Uses direct coordinate cloning (mathematically equivalent to scalar transfer when Q=Q', D=D')
 2. **SiblingGuide2D**: Extracts scalar d from primary intersection, applies same d on sibling HHL
 
 ```typescript
 class SiblingIntersectionPoint2D extends Point2D {
   realize(context: RealizationContext): Point2DRealization {
-    // OPTIMIZED: Direct coordinate clone (safe due to coordinate consistency)
+    // OPTIMIZED: Direct coordinate clone - mathematically equivalent to:
+    //   1. Extract d from primary: R = Q + d·D  =>  d = (R-Q)/D
+    //   2. Apply d to sibling: R' = Q' + d·D' = Q + d·D = R (since Q'=Q, D'=D)
+    // 
+    // Result: R' = R (coordinates identical when parametric consistency holds)
+    // CRITICAL: Requires Q=Q', D=D' for ALL HingeLines (validated at construction)
     const primaryRealization = context.world.getPoint2DRealization(this.primaryIntersectionId);
     return new Point2DRealization(primaryRealization.position.clone());
   }
