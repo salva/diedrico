@@ -328,6 +328,13 @@ export class RemoveCircle2DOp implements IOperation {
 
 /**
  * RemoveGuide2DOp - Remove a guide from a projection plane
+ * 
+ * Handles sibling guide deletion cascade:
+ * - If deleting SiblingGuide2D → redirects to delete primary guide instead
+ * - If deleting Guide2D with sibling → also deletes the sibling guide
+ * 
+ * Architecture: Sibling objects must be deleted in pairs, with deletion always
+ * redirected to the primary object (as per architecture requirements).
  */
 export class RemoveGuide2DOp implements IOperation {
   readonly type = 'RemoveGuide2D';
@@ -335,6 +342,8 @@ export class RemoveGuide2DOp implements IOperation {
   outputs: Record<string, any> = {};
   
   private removedGuide?: Guide2D;
+  private removedSibling?: import('@/domain/world/Guide').SiblingGuide2D;
+  private siblingPlaneId?: string;
 
   constructor(
     private planeId: string,
@@ -347,17 +356,6 @@ export class RemoveGuide2DOp implements IOperation {
     try {
       // Get from plane for undo storage
       const plane = world.projectionPlanes.get(this.planeId);
-      this.removedGuide = plane?.getGuide(this.guideId);
-      
-      if (!this.removedGuide) {
-        return {
-          success: false,
-          outputs: {},
-          error: `Guide ${this.guideId} not found`
-        };
-      }
-
-      // Remove the guide from the plane
       if (!plane) {
         return {
           success: false,
@@ -365,8 +363,64 @@ export class RemoveGuide2DOp implements IOperation {
           error: `Plane ${this.planeId} not found`
         };
       }
+
+      const guide = plane.getGuide(this.guideId);
+      if (!guide) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Guide ${this.guideId} not found`
+        };
+      }
+
+      // Check if this is a SiblingGuide2D → redirect to delete primary
+      const { isSiblingGuide2D } = require('@/domain/world/Guide');
+      if (isSiblingGuide2D(guide)) {
+        const siblingGuide = guide as import('@/domain/world/Guide').SiblingGuide2D;
+        console.warn(`[RemoveGuide2DOp] Cannot delete sibling guide ${this.guideId} directly. Redirect to delete primary guide ${siblingGuide.primaryGuideId} instead.`);
+        return {
+          success: false,
+          outputs: {},
+          error: `Cannot delete sibling guide directly. Delete primary guide ${siblingGuide.primaryGuideId} instead.`
+        };
+      }
+
+      // This is a primary Guide2D - proceed with deletion
+      this.removedGuide = guide as Guide2D;
+
+      // Check if it has a sibling → delete sibling first
+      if ('siblingGuideId' in this.removedGuide && (this.removedGuide as any).siblingGuideId) {
+        const siblingGuideId = (this.removedGuide as any).siblingGuideId;
+        
+        // Find sibling's plane and delete sibling
+        const siblingGuide = world.getLine2DById(siblingGuideId);
+        if (siblingGuide) {
+          const siblingPlane = world.getProjectionPlaneById(siblingGuide.planeId);
+          if (siblingPlane) {
+            this.siblingPlaneId = siblingGuide.planeId;
+            this.removedSibling = siblingGuide as import('@/domain/world/Guide').SiblingGuide2D;
+            
+            // Remove sibling guide
+            const siblingRemoved = siblingPlane.removeGuide(siblingGuideId);
+            if (!siblingRemoved) {
+              console.warn(`[RemoveGuide2DOp] Failed to remove sibling guide ${siblingGuideId}`);
+            } else {
+              console.log(`[RemoveGuide2DOp] Removed sibling guide ${siblingGuideId} from plane ${this.siblingPlaneId}`);
+            }
+          }
+        }
+      }
+
+      // Remove the primary guide from the plane
       const removed = plane.removeGuide(this.guideId);
       if (!removed) {
+        // If primary removal failed but sibling was removed, restore sibling
+        if (this.removedSibling && this.siblingPlaneId) {
+          const siblingPlane = world.getProjectionPlaneById(this.siblingPlaneId);
+          if (siblingPlane) {
+            siblingPlane.guides.set(this.removedSibling.id, this.removedSibling);
+          }
+        }
         return {
           success: false,
           outputs: {},
@@ -374,7 +428,10 @@ export class RemoveGuide2DOp implements IOperation {
         };
       }
       
-      this.outputs = { removedGuideId: this.guideId };
+      this.outputs = { 
+        removedGuideId: this.guideId,
+        removedSiblingId: this.removedSibling?.id
+      };
       return {
         success: true,
         outputs: this.outputs
@@ -393,14 +450,21 @@ export class RemoveGuide2DOp implements IOperation {
       throw new Error('Cannot undo: no guide data stored');
     }
 
-    // Restore the guide by adding it back to the plane
+    // Restore the primary guide
     const plane = world.projectionPlanes.get(this.planeId);
     if (!plane) {
       throw new Error(`Plane ${this.planeId} not found`);
     }
-    // Add the guide back (assuming there's an addGuide method)
     if (!plane.guides.has(this.removedGuide.id)) {
       plane.guides.set(this.removedGuide.id, this.removedGuide);
+    }
+
+    // Restore the sibling guide if it was deleted
+    if (this.removedSibling && this.siblingPlaneId) {
+      const siblingPlane = world.projectionPlanes.get(this.siblingPlaneId);
+      if (siblingPlane && !siblingPlane.guides.has(this.removedSibling.id)) {
+        siblingPlane.guides.set(this.removedSibling.id, this.removedSibling);
+      }
     }
   }
 }
