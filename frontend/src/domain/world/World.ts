@@ -696,5 +696,52 @@ export class World {
       line.type === 'half-hinge'
     );
   }
+
+  // ========================================
+  // Convenience Getter Methods for UI
+  // These methods aggregate data from all ProjectionPlanes
+  // ========================================
+
+  /**
+   * Get all points from all projection planes
+   * @returns Array of all Point2D objects
+   */
+  getAllPoints2D(): Point2D[] {
+    const allPoints: Point2D[] = [];
+    for (const plane of this.projectionPlanes.values()) {
+      allPoints.push(...plane.getAllPoints());
+    }
+    return allPoints;
+  }
+
+  /**
+   * Get all lines from all projection planes
+   * @returns Array of all Line2D objects
+   */
+  getAllLines2D(): Line2D[] {
+    const allLines: Line2D[] = [];
+    for (const plane of this.projectionPlanes.values()) {
+      allLines.push(...plane.getAllLines());
+    }
+    return allLines;
+  }
+
+  /**
+   * Get a point by ID (searches all planes)
+   * @param pointId ID of the point
+   * @returns Point if found, undefined otherwise
+   */
+  getPoint2DById(pointId: string): Point2D | undefined {
+    return this.getPoint2DFromPlanes(pointId);
+  }
+
+  /**
+   * Get a line by ID (searches all planes)
+   * @param lineId ID of the line
+   * @returns Line if found, undefined otherwise
+   */
+  getLine2DById(lineId: string): Line2D | undefined {
+    return this.getLine2DFromPlanes(lineId);
+  }
 }
 

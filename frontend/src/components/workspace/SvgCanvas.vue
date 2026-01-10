@@ -218,29 +218,33 @@ const snapTarget = ref<{ pointId: string | null; position: { x: number; y: numbe
  */
 function getElementLabel(elementId: string, elementType: string): string {
   let element: any;
-  switch (elementType) {
-    case 'point':
-      element = world.points.get(elementId);
-      break;
-    case 'line':
-      element = world.lines.get(elementId);
-      break;
-    case 'half-hinge-line':
-      element = world.lines.get(elementId);
-      break;
-    case 'segment':
-      element = world.segments.get(elementId);
-      break;
-    case 'guide':
-      element = world.guides.get(elementId);
-      break;
-    case 'circle':
-      element = world.circles.get(elementId);
-      break;
-    case 'arc':
-      element = world.arcs.get(elementId);
-      break;
+  
+  // Elements are now stored in ProjectionPlanes, so search through all planes
+  for (const plane of world.projectionPlanes.values()) {
+    switch (elementType) {
+      case 'point':
+        element = plane.getPoint(elementId);
+        break;
+      case 'line':
+      case 'half-hinge-line':
+        element = plane.getLine(elementId);
+        break;
+      case 'segment':
+        element = plane.getSegment(elementId);
+        break;
+      case 'guide':
+        element = plane.getGuide(elementId);
+        break;
+      case 'circle':
+        element = plane.getCircle(elementId);
+        break;
+      case 'arc':
+        element = plane.getArc(elementId);
+        break;
+    }
+    if (element) break; // Found it
   }
+  
   return element?.label || elementId;
 }
 
