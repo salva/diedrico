@@ -3090,25 +3090,25 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
 
 **Goal**: Display user authentication status and profile information in the toolbar, providing clear visibility of which Google account is active and quick access to sign out.
 
-**Status**: ⏳ PLANNED (not started)
+**Status**: ✅ COMPLETE
 
 **Tasks**:
 
-- [ ] T400 [M] Add userinfo scopes to GoogleDriveService
+- [X] T400 [M] Add userinfo scopes to GoogleDriveService
   - Update OAuth2 scope to include profile and email
   - Current scope: `https://www.googleapis.com/auth/drive.file`
   - Add scopes: `profile email` (or `userinfo.profile` + `userinfo.email`)
   - Update `GoogleDriveService.SCOPES` constant
   - File: frontend/src/services/GoogleDriveService.ts
 
-- [ ] T401 [M] Add user profile fetching to GoogleDriveService
+- [X] T401 [M] Add user profile fetching to GoogleDriveService
   - Create method `fetchUserProfile(accessToken): Promise<GoogleUserProfile>`
   - Call Google userinfo endpoint: `https://www.googleapis.com/oauth2/v3/userinfo`
   - Return profile object with { name, email, picture, sub }
   - Add error handling for network failures
   - File: frontend/src/services/GoogleDriveService.ts
 
-- [ ] T402 [M] Create auth state store
+- [X] T402 [M] Create auth state store
   - Create AuthState interface: { isAuthenticated, user, accessToken, tokenExpiry }
   - Create GoogleUserProfile interface: { name, email, picture, sub }
   - Implement in Pinia store or extend viewStore
@@ -3116,14 +3116,14 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
   - Add actions: setAuthenticated(), setUser(), clearAuth()
   - File: frontend/src/stores/authStore.ts (or add to viewStore.ts)
 
-- [ ] T403 [M] Integrate profile fetch into sign-in flow
+- [X] T403 [M] Integrate profile fetch into sign-in flow
   - After successful authentication, call fetchUserProfile()
   - Store profile data in auth state store
   - Store access token in session storage
   - Handle profile fetch failures gracefully (use email as fallback name)
   - File: frontend/src/services/GoogleDriveService.ts (signIn method)
 
-- [ ] T404 [L] Create LoginStatusWidget component
+- [X] T404 [L] Create LoginStatusWidget component
   - Display "Sign in with Google" button when not authenticated
   - Display avatar + name + dropdown when authenticated
   - Show user icon fallback if no avatar URL
@@ -3134,7 +3134,7 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
   - Handle ESC key to close menu
   - File: frontend/src/components/toolbar/LoginStatusWidget.vue
 
-- [ ] T405 [L] Style LoginStatusWidget with responsive behavior
+- [X] T405 [L] Style LoginStatusWidget with responsive behavior
   - Avatar: circular, 32×32px, border
   - Name truncation: "John D..." on narrow screens
   - Hover states for button and menu items
@@ -3142,13 +3142,13 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
   - Responsive: show avatar only on very narrow screens
   - File: frontend/src/components/toolbar/LoginStatusWidget.vue (style section)
 
-- [ ] T406 [S] Add LoginStatusWidget to Toolbar
+- [X] T406 [S] Add LoginStatusWidget to Toolbar
   - Position at far right of toolbar (after all tool groups)
   - Add separator before widget
   - Ensure proper spacing and alignment
   - File: frontend/src/components/Toolbar.vue
 
-- [ ] T407 [M] Implement sign-out functionality
+- [X] T407 [M] Implement sign-out functionality
   - Add signOut() method to GoogleDriveService
   - Revoke Google token
   - Clear auth state store
@@ -3156,21 +3156,21 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
   - Update UI to show "Sign in" button
   - File: frontend/src/services/GoogleDriveService.ts
 
-- [ ] T408 [M] Add session persistence and restoration
+- [X] T408 [M] Add session persistence and restoration
   - On app startup, check session storage for token
   - If token exists, validate and restore auth state
   - If token invalid/expired, clear and show sign-in button
   - Fetch and cache user profile on restoration
   - File: frontend/src/services/GoogleDriveService.ts (initialize method)
 
-- [ ] T409 [M] Add unit tests for auth state management
+- [X] T409 [M] Add unit tests for auth state management
   - Test auth store state transitions
   - Test profile data storage and retrieval
   - Test sign-out clears all auth data
   - Test session restoration scenarios
   - File: frontend/tests/unit/stores/authStore.spec.ts
 
-- [ ] T410 [M] Add component tests for LoginStatusWidget
+- [X] T410 [M] Add component tests for LoginStatusWidget
   - Test "Sign in" button displays when not authenticated
   - Test avatar and name display when authenticated
   - Test dropdown menu opens and closes
@@ -3180,7 +3180,15 @@ const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId);
 
 **Checkpoint**: User authentication status and profile visible in toolbar with sign-out capability
 
-**Phase 38 Status**: 0/11 tasks complete (0%)
+**Phase 38 Status**: 11/11 tasks complete (100%)
+
+**Implementation Details**:
+- OAuth scopes updated to include userinfo.profile and userinfo.email
+- User profile fetched from Google OAuth2 userinfo endpoint
+- Session-only storage (cleared on browser close for security)
+- Responsive UI: full name → first name → avatar only
+- 18 unit tests for authStore (all passing)
+- Sign-out revokes token and resets application state
 
 **Dependencies**: 
 - GoogleDriveService OAuth2 implementation (already exists)
