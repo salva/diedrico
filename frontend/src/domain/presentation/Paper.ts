@@ -400,12 +400,10 @@ export class Paper {
         
         const realization = activePlane.realizeLine2D(line, world);
         if (!realization) {
-          console.log(`[Paper.hitTest] Line ${line.id} has no realization`);
           continue;
         }
         
         const distance = this.distanceToLineInPlaneSpace(planePos, realization);
-        console.log(`[Paper.hitTest] Line ${line.id} (${elementType}) distance: ${distance}, minDistance: ${minDistance}`);
         
         if (distance < minDistance) {
           closestHit = {
