@@ -1264,14 +1264,74 @@ projPlaneC.addLine(bhl_BC_on_C);  // Regular Line2D
 
 ### HalfHingeLine2D Intersection Sibling Behavior
 
-**Purpose**: When an element intersects with a HalfHingeLine2D, automatically create the corresponding point on the sibling plane to maintain geometric consistency.
+**Purpose**: When an element intersects with a HalfHingeLine2D, create the corresponding point on the sibling plane to maintain geometric consistency.
 
 **Geometric Rationale**:
 - HalfHingeLine2D represents a 3D hinge line visible on both planes
 - Intersection with HHL occurs at a specific 3D point
 - That 3D point exists in 3D space and therefore has projections on BOTH planes
 - User explicitly creates the intersection on one plane (primary)
-- System automatically creates the projection on the sibling plane
+- System creates the projection on the sibling plane using separate operation
+
+**CRITICAL ARCHITECTURAL REQUIREMENT - Command-Level Sibling Creation**:
+
+Following the "simple operations" principle established throughout this architecture:
+- **Operations are atomic**: Each operation performs ONE simple task
+- **Composition at command level**: Complex behaviors are composed by commands, NOT embedded in domain factories
+- **Explicit sibling creation**: Sibling intersections are created via separate `AddSiblingIntersectionPoint2DOp` operation
+- **Tool responsibility**: IntersectionTool detects HHL intersections and adds both operations to the command
+
+**Operation Pattern** (matches SiblingGuide2D architecture):
+```typescript
+// PRIMARY intersection operation (user's explicit action)
+class AddLineLineIntersectionPoint2DOp implements IOperation {
+  apply(world: World): OperationResult {
+    // Creates ONLY the primary intersection point
+    const point = plane.addLineLineIntersection(line1Id, line2Id, world);
+    return { success: true, outputs: { pointId: point.id } };
+  }
+}
+
+// SIBLING intersection operation (automatic geometric consequence)
+class AddSiblingIntersectionPoint2DOp implements IOperation {
+  constructor(
+    private planeId: string,          // Sibling plane ID
+    private primaryIntersectionId: string  // Reference to primary point
+  ) {}
+  
+  apply(world: World): OperationResult {
+    // Creates ONLY the sibling intersection point
+    const plane = world.getProjectionPlaneById(planeId);
+    const point = plane.addSiblingIntersectionPoint(primaryIntersectionId);
+    return { success: true, outputs: { pointId: point.id } };
+  }
+}
+
+// TOOL composes both operations into command
+class IntersectionTool {
+  createIntersection(...) {
+    // Create primary intersection
+    cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(planeId, line1Id, line2Id));
+    const primaryId = cmd.getOutput('pointId');
+    
+    // Detect HHL and create sibling if needed
+    if (isHalfHingeLineIntersection(line1Id, line2Id, world)) {
+      const siblingPlaneId = getSiblingPlaneId(world, planeId, line1Id, line2Id);
+      cmd.addAndExecute(new AddSiblingIntersectionPoint2DOp(siblingPlaneId, primaryId));
+    }
+    
+    cmd.commit();
+  }
+}
+```
+
+**Why This Pattern**:
+1. **Consistency**: Matches `AddGuide2DPerpendicularToLineOp` + `AddSiblingGuide2DOp` pattern
+2. **Command Sourcing**: Both operations serializable independently
+3. **Separation of Concerns**: Domain factories stay simple, tools handle composition
+4. **Testability**: Can test primary/sibling creation independently
+5. **Explicit Dependencies**: Command structure shows sibling depends on primary
+6. **No Hidden Logic**: All creation is visible in command history
 
 **Implementation - Point Type Hierarchy**:
 

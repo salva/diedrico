@@ -18,6 +18,20 @@ import { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
 
+// Import all operation classes for deserialization
+import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
+import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '@/commands/operations/world/AddGuideOp';
+import { AddLineLineIntersectionPoint2DOp } from '@/commands/operations/world/AddLineLineIntersectionPoint2DOp';
+import { AddLineCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddLineCircleIntersectionPoint2DOp';
+import { AddCircleCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddCircleCircleIntersectionPoint2DOp';
+import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from '@/commands/operations/world/RemoveElementOps';
+import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
+
 /**
  * Project data structure based on command stream
  */
@@ -49,7 +63,7 @@ interface SerializedOperation {
 }
 
 export class ProjectService {
-  private static readonly SCHEMA_VERSION = '3.0.0';  // Bumped to 3.0.0 for specialized intersection types
+  private static readonly SCHEMA_VERSION = '3.1.0';  // Complete operation coverage (all types serializable)
 
   /**
    * Serialize CommandStack to JSON
@@ -141,47 +155,65 @@ export class ProjectService {
   private static reconstructOperation(serializedOp: SerializedOperation): IOperation {
     const { type, parameters } = serializedOp;
     
-    // Import and instantiate the correct operation class based on type
+    // Instantiate the correct operation class based on type
     switch (type) {
-      case 'AddFreePoint2D': {
-        const { AddFreePoint2DOp } = require('@/commands/operations/world/AddFreePointOp');
+      case 'AddFreePoint2D':
         return new AddFreePoint2DOp(parameters.planeId, parameters.position);
-      }
       
-      case 'AddLine2D': {
-        const { AddLine2DOp } = require('@/commands/operations/world/AddLineOp');
-        return new AddLine2DOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
-      }
+      case 'AddLine2DByTwoPoints':
+        return new AddLine2DByTwoPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
       
-      case 'AddSegment2D': {
-        const { AddSegment2DOp } = require('@/commands/operations/world/AddSegmentOp');
-        return new AddSegment2DOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
-      }
+      case 'AddSegment2DByPoints':
+        return new AddSegment2DByPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
       
-      case 'AddCircle2D': {
-        const { AddCircle2DOp } = require('@/commands/operations/world/AddCircleOp');
-        return new AddCircle2DOp(parameters.planeId, parameters.centerPointId, parameters.radiusPointId);
-      }
+      case 'AddCircle2DByCenterAndPoint':
+        return new AddCircle2DByCenterAndPointOp(parameters.planeId, parameters.centerPointId, parameters.circumferencePointId);
       
-      case 'AddLineLineIntersectionPoint2D': {
-        const { AddLineLineIntersectionPoint2DOp } = require('@/commands/operations/world/AddLineLineIntersectionPoint2DOp');
+      case 'AddLineLineIntersectionPoint2D':
         return new AddLineLineIntersectionPoint2DOp(parameters.planeId, parameters.line1Id, parameters.line2Id);
-      }
       
-      case 'AddLineCircleIntersectionPoint2D': {
-        const { AddLineCircleIntersectionPoint2DOp } = require('@/commands/operations/world/AddLineCircleIntersectionPoint2DOp');
+      case 'AddLineCircleIntersectionPoint2D':
         return new AddLineCircleIntersectionPoint2DOp(parameters.planeId, parameters.lineId, parameters.circleId, parameters.index);
-      }
       
-      case 'AddCircleCircleIntersectionPoint2D': {
-        const { AddCircleCircleIntersectionPoint2DOp } = require('@/commands/operations/world/AddCircleCircleIntersectionPoint2DOp');
+      case 'AddCircleCircleIntersectionPoint2D':
         return new AddCircleCircleIntersectionPoint2DOp(parameters.planeId, parameters.circle1Id, parameters.circle2Id, parameters.index);
-      }
       
-      case 'AddGuide2D': {
-        const { AddGuide2DOp } = require('@/commands/operations/world/AddGuideOp');
-        return new AddGuide2DOp(parameters.planeId, parameters.lineId, parameters.pointId);
-      }
+      case 'AddGuide2DPerpendicularToLine':
+        return new AddGuide2DPerpendicularToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+      
+      case 'AddSiblingGuide2D':
+        return new AddSiblingGuide2DOp(parameters.planeId, parameters.primaryGuideId, parameters.referenceLineId);
+      
+      case 'RemovePoint2D':
+        return new RemovePoint2DOp(parameters.planeId, parameters.pointId);
+      
+      case 'RemoveLine2D':
+        return new RemoveLine2DOp(parameters.planeId, parameters.lineId);
+      
+      case 'RemoveSegment2D':
+        return new RemoveSegment2DOp(parameters.planeId, parameters.segmentId);
+      
+      case 'RemoveCircle2D':
+        return new RemoveCircle2DOp(parameters.planeId, parameters.circleId);
+      
+      case 'RemoveGuide2D':
+        return new RemoveGuide2DOp(parameters.planeId, parameters.guideId);
+      
+      case 'UpdateElementStyle':
+        return new UpdateElementStyleOp(parameters.elementId, parameters.planeId, parameters.newStyle);
+      
+      case 'RemoveActionFromProcessTree':
+        return new RemoveActionFromProcessTreeOp(parameters.actionId);
+      
+      case 'RemoveActionGroupFromProcessTree':
+        return new RemoveActionGroupFromProcessTreeOp(parameters.groupId);
+      
+      case 'RemoveSubprocessFromProcessTree':
+        return new RemoveSubprocessFromProcessTreeOp(parameters.subprocessId);
+      
+      case 'AddIntersectionPoint2D':
+        // Legacy operation - check if still used
+        return new AddIntersectionPoint2DOp(parameters.planeId, parameters.element1Id, parameters.element2Id, parameters.index);
       
       default:
         throw new Error(`Unknown operation type: ${type}`);

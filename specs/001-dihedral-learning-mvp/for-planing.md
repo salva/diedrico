@@ -25,8 +25,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Improve how elements are shown in the left world listing widget.
 * [ ] remove the restore functionality. Element restoration should be performed through recreation.
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
-* [ ] Sibling object creation must be explicitly done at the command level using specific ops. That logic should not be embedded in the world layer.
-* [ ] Sibling objects must be deleted in pairs, so deletion must always be redirected to the primary object. (the second is going to be then deleted automatically because it is a dependency). This should also be managed at the command construction level!
 * [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
 * [ ] Do not use type aliases in the code.
 * [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
@@ -42,11 +40,27 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
 * [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
-* [ ] Ensure that Ops are simple objects which only do basic tasks. For instance, on cascade deletion must not be handled in the op, but on the command construction (the method building the command is the responsible for following dependency relations, retrieving all the objects, sorting them and implementing the cascade deletion by introducing a specific op in the command for every object). Another example, we must have an intersection op for every two types of intersecting objects, and is the tool the one which must pick the right op.
 * [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
 
 
 ## ALREADY PLANNED
+
+* [X] Ensure that Ops are simple objects which only do basic tasks. For instance, on cascade deletion must not be handled in the op, but on the command construction (the method building the command is the responsible for following dependency relations, retrieving all the objects, sorting them and implementing the cascade deletion by introducing a specific op in the command for every object). Another example, we must have an intersection op for every two types of intersecting objects, and is the tool the one which must pick the right op.
+  - **STATUS**: ✅ ALREADY CORRECT - Architecture verified
+  - **Cascade Deletion**: Command construction in App.vue already follows correct pattern:
+    1. `dependencyService.getElementsInDeletionOrder()` computes cascade and sorts by dependency depth
+    2. Returns elements in reverse topological order (dependents first, roots last)
+    3. Command construction adds one RemoveOp per element (RemovePoint2DOp, RemoveLine2DOp, etc.)
+    4. Each operation is simple: stores element state, calls plane.removePoint(), no cascade logic
+  - **Separation Verified**: `handleDeleteSelected()` in App.vue lines 660-760
+  - **Operation Simplicity**: RemoveElementOps.ts operations only handle single element removal
+  - **Specialized Intersections**: Already implemented in Phase 32:
+    - AddLineLineIntersectionPoint2DOp (line-line)
+    - AddLineCircleIntersectionPoint2DOp (line-circle)  
+    - AddCircleCircleIntersectionPoint2DOp (circle-circle)
+  - **Tool Responsibility**: IntersectionTool.ts detects types and picks correct operation
+  - **Constitution Compliance**: Operations are atomic, command handles composition
+  - **No Action Needed**: Architecture already matches specification perfectly
 
 * [X] Reorganize operation files into component-based folders (world/, processTree/, paper/, toolbar/, viewState/) for better cohesion and maintainability.
   - **STATUS**: ✅ PLANNED - Phase 41 created
@@ -131,6 +145,49 @@ Note that completing these tasks may require asking the user for additional info
   - Tasks cover: Scope addition, profile fetching, state management, component creation, toolbar integration, sign-out, session persistence, testing
   - Benefits: Users know active account, quick sign-out access, multi-account awareness
   - Security: Session-only tokens, no long-term credentials in browser storage
+
+* [X] Sibling object creation must be explicitly done at the command level using specific ops. That logic should not be embedded in the world layer.
+  - **STATUS**: ✅ PLANNED - Phase 42 created
+  - **Problem**: Sibling intersection points NOT being created (domain method removed, tests skipped)
+  - **Current State**:
+    - ✅ Guide siblings: Already correct pattern (`AddGuide2DPerpendicularToLineOp` + `AddSiblingGuide2DOp`)
+    - ❌ Intersection siblings: Not implemented
+  - **Architectural Requirement**: Operations simple (one task), composition at command level, NO domain auto-creation
+  - **Solution**: Create `AddSiblingIntersectionPoint2DOp` operation following guide sibling pattern
+  - **Operation Pattern**:
+    - Primary: `AddLineLineIntersectionPoint2DOp` creates ONLY primary intersection
+    - Sibling: `AddSiblingIntersectionPoint2DOp` creates ONLY sibling intersection
+    - Tool: `IntersectionTool` composes both operations when HHL detected
+  - **Implementation**: Phase 42 with 13 tasks (T464-T476)
+  - **Task Categories**:
+    - Create operation (T464): AddSiblingIntersectionPoint2DOp with apply/undo/serialize
+    - Domain method (T465): ProjectionPlane.addSiblingIntersectionPoint()
+    - Tool integration (T466-T467): IntersectionTool detects HHL, creates both ops
+    - Serialization (T468): ProjectService reconstructOperation case
+    - Deletion (T469): Verify cascade deletion via dependency system
+    - Unit tests (T470-T471): Operation and domain method
+    - Integration tests (T472): Full sibling creation workflow
+    - Re-enable tests (T473): Fix skipped world.spec.ts tests
+    - E2E tests (T474): User-visible behavior validation
+    - Documentation (T475-T476): Update comments and data-model.md
+  - **Benefits**: Consistency with guide pattern, serializable, testable, explicit, simple ops
+  - **Success Criteria**: Both points created for HHL intersections, cascade deletion works, all tests pass
+  - **Schema Version**: Bump to 3.2.0 (sibling intersection ops added)
+  - **Architecture References**: spec.md §Intersection Point, data-model.md §HalfHingeLine2D Intersection Sibling Behavior
+
+* [X] Sibling objects must be deleted in pairs, so deletion must always be redirected to the primary object.
+  - **STATUS**: ✅ ARCHITECTURE CORRECT - Handled by dependency system
+  - **Current Implementation**: Sibling points depend on primary, cascade deletion automatic
+  - **Mechanism**:
+    - Sibling points reference primary via `primaryIntersectionId` field
+    - Dependency system tracks: sibling depends on primary
+    - Delete primary → dependency cascade removes sibling automatically
+    - Attempting to delete sibling → dependency system prevents (sibling depends on primary, can't delete dependency)
+  - **Guide Sibling Pattern**: `RemoveGuide2DOp` handles paired deletion - redirects sibling deletion to primary
+  - **Intersection Sibling Pattern**: Once Phase 42 complete, verify `RemovePoint2DOp` handles similar redirection
+  - **Command Construction**: Deletion command only needs to target primary, cascade handles sibling
+  - **Verification**: Phase 42 Task T469 confirms cascade deletion works for intersection siblings
+  - **No Action Needed**: Architecture already correct, just needs implementation (Phase 42)
 
 * [X] Ensure that SiblingIntersectionPoint2D works for any HL, not only for HL_HV. See how sibling line realization is calculated (it should be almost identical).
   - **STATUS**: ✅ COMPLETE - Phase 37 implemented

@@ -2207,14 +2207,6 @@ interface SiblingGuide2D {
   - Validates sibling plane is correct (derived via Phase 35 helpers)
   - File: frontend/src/commands/operations/AddGuideOp.ts (new operation in same file)
 
-- [ ] T347 [D] Update AddGuide2DPerpendicularToLineOp to include sibling creation
-  - After creating primary Guide2D, derive sibling plane via World.getSiblingPlaneForIntersection()
-  - Get corresponding HalfHingeLine2D in sibling plane (via parent HingeLine)
-  - Create AddSiblingGuide2DOp for sibling guide
-  - Set bidirectional siblingGuideId links
-  - Return both ops as array (primary guide op + sibling guide op)
-  - File: frontend/src/commands/operations/AddGuideOp.ts
-
 **Deletion & Dependencies** (T348):
 
 - [ ] T348 [D] Implement sibling guide deletion cascade
@@ -3571,3 +3563,257 @@ operations/
 - Command sourcing pattern preserved (only organization changes)
 - Serialization format unchanged (no schema version bump needed)
 - Clear separation between domain (world/), history (processTree/), and presentation (viewState/)
+
+---
+
+## Phase 42: Implement Explicit Sibling Intersection Creation
+
+**Goal**: Re-implement sibling intersection point creation using separate operations at command level, following the same pattern as SiblingGuide2D (Phase 36).
+
+**Problem**: Sibling intersection points are currently NOT being created:
+- The domain method `addIntersectionPoint2DWithSibling()` was removed
+- Tests are marked `.skip()` with comment "method was removed, tests commented out until sibling functionality is re-implemented"
+- Operation comments incorrectly state "sibling handled automatically by domain logic" but this logic doesn't exist
+- User expectation: Intersecting with HalfHingeLine2D should create both primary + sibling points
+
+**Current State**:
+- ✅ **Guide siblings**: Already correct - `AddGuide2DPerpendicularToLineOp` + `AddSiblingGuide2DOp` (separate operations)
+- ❌ **Intersection siblings**: Not implemented - need similar pattern
+
+**Architectural Requirement** (per for-planing.md):
+- "Sibling object creation must be explicitly done at the command level using specific ops"
+- "That logic should not be embedded in the world layer"
+- Operations must be simple, doing ONE task only
+- Tool/command responsible for composition, NOT domain factories
+
+**Proposed Pattern** (matches SiblingGuide2D architecture):
+```typescript
+// PRIMARY intersection operation (user's explicit action)
+class AddLineLineIntersectionPoint2DOp {
+  apply(world) {
+    // Creates ONLY primary intersection (no sibling logic)
+    const point = plane.addLineLineIntersection(line1Id, line2Id, world);
+    return { outputs: { pointId: point.id } };
+  }
+}
+
+// NEW: SIBLING intersection operation (automatic consequence)
+class AddSiblingIntersectionPoint2DOp {
+  constructor(planeId, primaryIntersectionId) {}
+  
+  apply(world) {
+    // Creates ONLY sibling intersection
+    const plane = world.getProjectionPlaneById(planeId);
+    const point = plane.addSiblingIntersectionPoint(primaryIntersectionId);
+    return { outputs: { pointId: point.id } };
+  }
+}
+
+// TOOL composes both operations
+class IntersectionTool {
+  createIntersection() {
+    // Create primary
+    cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(...));
+    const primaryId = cmd.getOutput('pointId');
+    
+    // Detect HHL and create sibling
+    if (isHalfHingeLineIntersection(...)) {
+      const siblingPlaneId = getSiblingPlaneId(...);
+      cmd.addAndExecute(new AddSiblingIntersectionPoint2DOp(siblingPlaneId, primaryId));
+    }
+    
+    cmd.commit();
+  }
+}
+```
+
+**Benefits**:
+- **Consistency**: Matches guide sibling pattern
+- **Serialization**: Both operations saved to project file
+- **Testability**: Can test primary/sibling creation independently
+- **Explicit**: All creation visible in command history
+- **Simple Ops**: Each operation does one thing
+
+**Architecture References**:
+- spec.md §Intersection Point - documents user-facing behavior
+- data-model.md §HalfHingeLine2D Intersection Sibling Behavior - operation architecture
+- for-planing.md - architectural requirements
+
+**Tasks**:
+
+[T464] Create AddSiblingIntersectionPoint2DOp operation
+- Create `frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts`
+- Constructor parameters: `planeId: string`, `primaryIntersectionId: string`
+- Implement apply(): calls `plane.addSiblingIntersectionPoint(primaryId)`
+- Implement undo(): calls `plane.removePoint(siblingId)` and unlinks from primary
+- Store outputs: `{ pointId: sibling.id }`
+- Add serialization support (type, parameters)
+- **Pattern**: Follow `AddSiblingGuide2DOp.ts` as reference
+- **Test**: Unit test creates sibling, undo removes it
+
+[T465] Add ProjectionPlane.addSiblingIntersectionPoint() domain method
+- Create method in `frontend/src/domain/world/ProjectionPlane.ts`
+- Parameters: `primaryIntersectionId: string`, optional `id?: string`
+- Logic:
+  1. Get primary intersection point from world
+  2. Validate primary exists and is an intersection type
+  3. Create `SiblingIntersectionPoint2D` instance
+  4. Add to plane's points collection
+  5. Link bidirectionally: `primary.siblingPointId = sibling.id`, `sibling.primaryIntersectionId = primary.id`
+  6. Return sibling point
+- **Validation**: Throw error if primary not found or not an intersection
+- **Test**: Unit test in world.spec.ts
+
+[T466] Update IntersectionTool to detect HHL intersections
+- Modify `frontend/src/tools/IntersectionTool.ts`
+- After creating primary intersection, detect if either element is HalfHingeLine2D:
+  ```typescript
+  const line1 = world.getLine2DById(line1Id);
+  const line2 = world.getLine2DById(line2Id);
+  const isHHL = line1?.type === 'half-hinge' || line2?.type === 'half-hinge';
+  ```
+- If HHL detected, get sibling plane:
+  ```typescript
+  const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
+  ```
+- **Test**: Unit test for HHL detection logic
+
+[T467] Update IntersectionTool to create sibling operation
+- After primary intersection operation:
+  ```typescript
+  cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(planeId, line1Id, line2Id));
+  const primaryId = cmd.getOutput('pointId');
+  
+  // NEW: Add sibling if HHL
+  if (isHalfHingeLineIntersection(line1Id, line2Id, world)) {
+    const siblingPlaneId = getSiblingPlaneId(world, primaryId);
+    cmd.addAndExecute(new AddSiblingIntersectionPoint2DOp(siblingPlaneId, primaryId));
+  }
+  ```
+- Apply to all intersection types (line-line, line-circle, circle-circle)
+- **Pattern**: Follow GuideTool.ts sibling creation pattern
+- **Test**: Integration test verifies both points created
+
+[T468] Add sibling intersection to ProjectService serialization
+- Update `frontend/src/services/ProjectService.ts`
+- Add case in `reconstructOperation()`:
+  ```typescript
+  case 'AddSiblingIntersectionPoint2D':
+    return new AddSiblingIntersectionPoint2DOp(
+      op.parameters.planeId,
+      op.parameters.primaryIntersectionId
+    );
+  ```
+- **Test**: Round-trip test - create sibling, save, reload, verify both points exist
+
+[T469] Update RemoveElementOps to handle sibling deletion
+- Verify `RemovePoint2DOp` already handles sibling unlinking (via dependency system)
+- If needed, add explicit sibling cleanup:
+  ```typescript
+  if (point.type === 'intersection' && point.siblingPointId) {
+    // Unlinking should happen via dependency cascade
+    // Verify cascade works, add explicit unlink if needed
+  }
+  ```
+- **Test**: Delete primary → sibling removed automatically
+
+[T470] [P] Unit tests for AddSiblingIntersectionPoint2DOp
+- Test file: `frontend/tests/unit/commands/operations/AddSiblingIntersectionPoint2DOp.spec.ts`
+- Test cases:
+  - Creates sibling point with correct primaryIntersectionId
+  - Links bidirectionally (primary.siblingPointId ↔ sibling.primaryIntersectionId)
+  - Undo removes sibling and unlinks from primary
+  - Throws error if primary not found
+  - Serialization includes planeId and primaryIntersectionId
+- **Coverage**: Operation logic fully tested
+
+[T471] [P] Unit tests for ProjectionPlane.addSiblingIntersectionPoint()
+- Test file: `frontend/tests/unit/domain/world.spec.ts`
+- Test cases:
+  - Creates SiblingIntersectionPoint2D with correct type
+  - Links to primary intersection point
+  - Validates primary exists before creation
+  - Throws error if primary is not intersection type
+- **Coverage**: Domain method logic
+
+[T472] [P] Integration tests for sibling intersection creation
+- Test file: `frontend/tests/integration/siblingIntersection.spec.ts`
+- Test scenarios:
+  - Create line-line intersection with HHL → both points created
+  - Create line-circle intersection with HHL → both points created (for each index)
+  - Create circle-circle intersection with HHL → both points created (for each index)
+  - Verify sibling points have matching realizations (coordinate correspondence)
+  - Delete primary → sibling cascade deleted
+  - Save/reload project → both points persist
+- **Coverage**: End-to-end sibling creation workflow
+
+[T473] [P] Re-enable and fix skipped sibling tests
+- File: `frontend/tests/unit/domain/world.spec.ts`
+- Remove `.skip()` from `describe('addIntersectionPoint2DWithSibling', ...)`
+- Update tests to use new operation-based pattern instead of removed domain method
+- Test cases to fix:
+  - "should create only primary point when neither element is HHL"
+  - "should create sibling when element1 is HalfHingeLine2D"
+  - "should create sibling when element2 is HalfHingeLine2D"
+  - All intersection type combinations (line-line, line-circle, circle-circle)
+- **Coverage**: Restore test coverage for sibling behavior
+
+[T474] [P] E2E test for sibling intersection visual feedback
+- Test file: `frontend/tests/e2e/siblingIntersection.spec.ts`
+- Test scenarios:
+  - User creates intersection with HHL using IntersectionTool
+  - Verify TWO points rendered (one on each plane)
+  - Verify both points visible simultaneously
+  - Hover over primary → verify feedback
+  - Delete primary → verify both points disappear
+- **Purpose**: Validate user-visible behavior matches spec.md
+
+[T475] Update operation comments to reflect new architecture
+- Update comments in existing intersection operations:
+  - Remove "sibling handled automatically by domain logic" (incorrect)
+  - Add "Creates ONLY primary intersection point"
+  - Add "For sibling creation, see AddSiblingIntersectionPoint2DOp"
+- Files to update:
+  - AddLineLineIntersectionPoint2DOp.ts
+  - AddLineCircleIntersectionPoint2DOp.ts
+  - AddCircleCircleIntersectionPoint2DOp.ts
+- **Purpose**: Code documentation accuracy
+
+[T476] Documentation: Update data-model.md examples
+- Section: §HalfHingeLine2D Intersection Sibling Behavior
+- Update "Creation Flow Example" with actual operation code
+- Show tool composition pattern (primary + sibling ops)
+- Reference AddSiblingGuide2DOp as parallel example
+- **Audience**: Future developers working on sibling features
+
+**Testing Strategy**:
+- Unit tests: Operation logic, domain method (T470-T471)
+- Integration tests: Full sibling creation workflow (T472)
+- Re-enable skipped tests: Restore coverage (T473)
+- E2E tests: User-visible behavior (T474)
+
+**Risk Mitigation**:
+- **Breaking change**: This re-introduces previously removed functionality
+- **Backward compatibility**: Old projects (without siblings) still load
+- **Forward compatibility**: New projects with siblings require schema 3.2.0
+- **Gradual rollout**: Create operation first (T464-T465), then integrate into tool (T466-T467)
+
+**Success Criteria**:
+- ✅ AddSiblingIntersectionPoint2DOp operation created and tested
+- ✅ IntersectionTool creates both primary + sibling points for HHL intersections
+- ✅ Both points visible, linked bidirectionally, update together
+- ✅ Delete primary → sibling cascade deleted
+- ✅ Save/reload → both points persist
+- ✅ All skipped tests re-enabled and passing
+- ✅ E2E test validates user-visible behavior
+- ✅ Pattern matches SiblingGuide2D architecture
+
+**Schema Version**: Bump to `3.2.0` after completion (sibling intersection ops added)
+
+**Constitution Compliance**:
+- Operations atomic and reversible (Principle II)
+- Simple operations composed at command level (architecture principle)
+- Command sourcing pattern (both ops serialized)
+- Clear separation: tool composes, ops execute, domain provides primitives
+
+---

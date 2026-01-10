@@ -764,6 +764,12 @@ Contains tools for creating 2D primitives on the active plane. Tools may expose 
     2. Select the first element.
     3. Select the second element.
   - **Result**: A new point entity is created at the intersection. If multiple intersections exist, the system may prompt for selection or create all intersection points.
+  - **Sibling Intersections with Hinge Lines**: When one of the intersecting elements is a hinge line (HL or BHL projection), the system automatically creates **both** intersection points:
+    - The **primary intersection** on the active plane (explicitly created by the user).
+    - The **sibling intersection** on the paired plane (automatically created to show the complete 3D relationship).
+    - Both points represent the same 3D position projected onto their respective planes.
+    - Both points are visible and update together, maintaining geometric consistency.
+    - Deletion: Deleting the primary intersection automatically removes the sibling (dependency relationship).
   - **Infeasibility**: If the elements do not intersect, the construction is invalid and blocked at creation time.
 
 **Segment** tool family:
