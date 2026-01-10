@@ -1275,23 +1275,38 @@ interface SiblingGuide2D {
 }
 ```
 
-**Note**: SiblingGuide2D is not yet implemented (as of Phase 35). When implemented, it will use the same sibling plane derivation pattern as intersection points: derive sibling plane via `HalfHingeLine2D → HingeLine → getOtherPlane()` instead of storing it explicitly.
+**Implementation Status** (as of Phase 36): ✅ **COMPLETE**
+
+SiblingGuide2D is fully implemented following the architecture established in Phase 32 (SiblingIntersectionPoint2D) and Phase 35 (sibling plane derivation).
+
+**Implementation Details**:
+- **Domain**: `SiblingGuide2D` class extends `Line2D` (not `Line2DPerpendicularToLine`) to have own type discriminator `'sibling-guide'`
+- **Sibling Plane Derivation**: Uses `World.getSiblingPlaneAndHalfHingeLineForGuide()` helper (Phase 35 pattern)
+- **Command-Level Creation**: `AddSiblingGuide2DOp` creates sibling guides (architecture requirement satisfied)
+- **Tool Integration**: `GuideTool` automatically creates sibling when conditions met (HalfHingeLine2D + point with sibling)
+- **Deletion Cascade**: `RemoveGuide2DOp` implements paired deletion - deleting primary removes sibling, attempting to delete sibling redirects to primary
+- **Bidirectional Links**: `Guide2D.siblingGuideId` ↔ `SiblingGuide2D.primaryGuideId`
+- **Rendering**: Both Guide2D and SiblingGuide2D render identically as dashed purple lines in `PaperService`
+- **Tests**: 17/17 passing (8 Guide2D + 4 command + 5 SiblingGuide2D)
 
 **Construction Process**:
 1. User selects a HalfHingeLine2D in the **active plane** (e.g., plane H)
 2. User picks a point P in that plane
 3. System creates Guide2D: line through P, perpendicular to the selected HalfHingeLine2D
-4. System **automatically** creates SiblingGuide2D in the other plane (e.g., plane V)
-5. The complementary guide is perpendicular to the corresponding HalfHingeLine2D in that plane
+4. System **automatically** creates SiblingGuide2D in the other plane (e.g., plane V) if:
+   - Reference line is a HalfHingeLine2D
+   - Through-point has a sibling (siblingPointId or primaryIntersectionId)
+   - Sibling plane and corresponding HalfHingeLine2D can be derived
+5. The sibling guide is perpendicular to the corresponding HalfHingeLine2D in that plane
 6. Both guides appear simultaneously and remain geometrically linked
 
 **Key Insights**:
 - Guides are always defined relative to a **HalfHingeLine2D** (not the 3D HingeLine itself)
 - This is geometrically correct: perpendicularity is a 2D concept within each plane
-- The primary/complementary distinction captures the construction semantics:
-  - Primary = user's intentional creation
-  - Complementary = automatic geometric consequence
-- Guides always come in pairs across the two planes
+- The primary/sibling distinction captures the construction semantics:
+  - Primary = user's intentional creation (Guide2D)
+  - Sibling = automatic geometric consequence (SiblingGuide2D)
+- Guides always come in pairs across the two planes when created from HalfHingeLine intersections
 
 **Relationships**:
 - 1 Guide2D → 1 HalfHingeLine2D (reference in its own plane)
@@ -1303,11 +1318,11 @@ interface SiblingGuide2D {
 **Validation Rules**:
 - `line2D` must be perpendicular to the referenced `halfHingeLineId`'s line
 - `sourcePoint` must belong to the same plane as the guide
-- Primary and complementary guides must reference HalfHingeLine2Ds from the same parent HingeLine
+- Primary and sibling guides must reference HalfHingeLine2Ds from the same parent HingeLine
 - Both guides in a pair must have matching `name` and `visualStyle`
 
 **BHL Behavior**:
-- When guide is created from a BHL's HalfHingeLine2D projection on plane1, complementary guide appears on plane2
+- When guide is created from a BHL's HalfHingeLine2D projection on plane1, sibling guide appears on plane2
 - This establishes immediate correspondence between the BHL projections on both planes
 - The guide pair creation is atomic (both appear simultaneously)
 

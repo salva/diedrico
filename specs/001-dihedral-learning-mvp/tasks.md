@@ -2280,7 +2280,7 @@ interface SiblingGuide2D {
 
 **Checkpoint**: Guide2D automatically creates SiblingGuide2D in paired plane, both guides geometrically linked
 
-**Phase 36 Status**: 0/13 tasks (0%)
+**Phase 36 Status**: 13/13 tasks (100%) ✅ COMPLETE
 
 **Dependencies**: 
 - Phase 35 (Sibling Plane Helpers) - Complete ✅
@@ -2290,8 +2290,9 @@ interface SiblingGuide2D {
 - Follows same pattern as SiblingIntersectionPoint2D (Phase 32)
 - Uses sibling plane derivation from Phase 35 (no stored siblingPlaneId)
 - Command-level sibling creation (architecture requirement satisfied)
-- Deletion cascade via dependency system
+- Deletion cascade via RemoveGuide2DOp (primary deletion removes sibling)
 - Bidirectional links enable navigation between primary/sibling
+- All tests passing: 17/17 guide tests
 
 ---
 
