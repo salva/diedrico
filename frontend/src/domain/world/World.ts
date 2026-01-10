@@ -175,10 +175,11 @@ export class World {
   }
 
   /**
-   * Generate a unique ID for a new point
+   * Get next unique ID counter value (for element ID generation)
+   * ProjectionPlane uses this to generate element IDs
    */
-  generatePoint2DId(): string {
-    return `point2d_${this.nextId++}`;
+  getNextId(): number {
+    return this.nextId++;
   }
 
   /**
@@ -474,12 +475,7 @@ export class World {
     this.dependencyService.rebuildDependencyMaps();
   }
 
-  /**
-   * Generate a unique line ID
-   */
-  generateLine2DId(): string {
-    return `line2d_${this.nextId++}`;
-  }
+
 
   /**
    * Add a segment to the world (generic version - prefer addSegment2DBetweenPoints factory method)
@@ -502,12 +498,7 @@ export class World {
     return segment;
   }
 
-  /**
-   * Generate a unique segment ID
-   */
-  generateSegment2DId(): string {
-    return `segment2d_${this.nextId++}`;
-  }
+
 
   // ========================================
   // CIRCLE METHODS
@@ -545,12 +536,7 @@ export class World {
     return undefined;
   }
 
-  /**
-   * Generate a unique circle ID
-   */
-  generateCircle2DId(): string {
-    return `circle2d_${this.nextId++}`;
-  }
+
 
   /**
    * Get the 2D realization of a circle (with caching)
@@ -596,12 +582,7 @@ export class World {
     return guide;
   }
 
-  /**
-   * Generate a unique guide ID
-   */
-  generateGuide2DId(): string {
-    return `guide2d_${this.nextId++}`;
-  }
+
 
   // ========================================
   // Plane Methods
@@ -700,7 +681,7 @@ export class World {
     const plane = this.projectionPlanes.get(planeId)!;
     const point = plane.addFreePoint2D(
       position,
-      () => this.generatePoint2DId(),
+      this,
       id
     );
     
@@ -767,7 +748,6 @@ export class World {
       element1Id,
       element2Id,
       index,
-      () => this.generatePoint2DId(),
       this,
       id
     );
@@ -827,7 +807,8 @@ export class World {
 
     // Generate sibling ID if not provided
     if (!siblingId) {
-      siblingId = this.generatePoint2DId();
+      const plane = this.projectionPlanes.get(siblingPlaneId)!;
+      siblingId = plane.generatePoint2DId(this);
     }
 
     // Create sibling point
@@ -876,7 +857,6 @@ export class World {
     const line = plane.addLine2DBetweenTwoPoints(
       point1Id,
       point2Id,
-      () => this.generateLine2DId(),
       this,
       id
     );
@@ -914,7 +894,6 @@ export class World {
     const segment = plane.addSegment2DBetweenPoints(
       point1Id,
       point2Id,
-      () => this.generateSegment2DId(),
       this,
       id
     );
@@ -953,7 +932,6 @@ export class World {
     const guide = plane.addGuide2D(
       referenceLineId,
       throughPointId,
-      () => this.generateGuide2DId(),
       this,
       id
     );
@@ -990,7 +968,6 @@ export class World {
     const circle = plane.addCircle2DByCenterAndPoint(
       centerPointId,
       circumferencePointId,
-      () => this.generateCircle2DId(),
       this,
       id
     );

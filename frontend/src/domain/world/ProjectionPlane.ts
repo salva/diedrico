@@ -415,15 +415,50 @@ export abstract class ProjectionPlane {
   // These methods create and add 2D elements to this plane
 
   /**
+   * Generate unique Point2D ID using World's counter
+   */
+  generatePoint2DId(world: import('./World').World): string {
+    return `point2d_${world.getNextId()}`;
+  }
+
+  /**
+   * Generate unique Line2D ID using World's counter
+   */
+  generateLine2DId(world: import('./World').World): string {
+    return `line2d_${world.getNextId()}`;
+  }
+
+  /**
+   * Generate unique Segment2D ID using World's counter
+   */
+  generateSegment2DId(world: import('./World').World): string {
+    return `segment2d_${world.getNextId()}`;
+  }
+
+  /**
+   * Generate unique Circle2D ID using World's counter
+   */
+  generateCircle2DId(world: import('./World').World): string {
+    return `circle2d_${world.getNextId()}`;
+  }
+
+  /**
+   * Generate unique Guide2D ID using World's counter
+   */
+  generateGuide2DId(world: import('./World').World): string {
+    return `guide2d_${world.getNextId()}`;
+  }
+
+  /**
    * Factory method: Create and add a FreePoint2D to this plane
    * @param position Point position in plane coordinates
-   * @param generateId Callback to generate unique ID
+   * @param world World instance for ID generation
    * @param id Optional ID for redo operations
    * @returns The created FreePoint2D
    */
   addFreePoint2D(
     position: Vector3,
-    generateId: () => string,
+    world: import('./World').World,
     id?: string
   ): FreePoint2D {
     if (!this.id) {
@@ -432,7 +467,7 @@ export abstract class ProjectionPlane {
 
     // Generate unique ID if not provided
     if (!id) {
-      id = generateId();
+      id = this.generatePoint2DId(world);
     }
 
     const point = new FreePoint2D(id, position, this.id);
@@ -446,8 +481,7 @@ export abstract class ProjectionPlane {
    * @param element1Id ID of first element (line or circle)
    * @param element2Id ID of second element
    * @param index Intersection index (0 for first/only point, 1 for second)
-   * @param generateId Callback to generate unique ID
-   * @param world World context for validation
+   * @param world World context for validation and ID generation
    * @param id Optional ID for redo operations
    * @returns The created IntersectionPoint2D
    */
@@ -455,7 +489,6 @@ export abstract class ProjectionPlane {
     element1Id: string,
     element2Id: string,
     index: number,
-    generateId: () => string,
     world: import('./World').World,
     id?: string
   ): IntersectionPoint2D {
@@ -476,7 +509,7 @@ export abstract class ProjectionPlane {
 
     // Generate unique ID if not provided
     if (!id) {
-      id = generateId();
+      id = this.generatePoint2DId(world);
     }
 
     const point = new IntersectionPoint2D(id, element1Id, element2Id, index, this.id);
@@ -489,15 +522,13 @@ export abstract class ProjectionPlane {
    * Factory method: Create and add a Line2DByTwoPoints to this plane
    * @param point1Id ID of first point
    * @param point2Id ID of second point
-   * @param generateId Callback to generate unique ID
-   * @param world World context for validation
+   * @param world World context for validation and ID generation
    * @param id Optional ID for redo operations
    * @returns The created Line2DByTwoPoints
    */
   addLine2DBetweenTwoPoints(
     point1Id: string,
     point2Id: string,
-    generateId: () => string,
     world: import('./World').World,
     id?: string
   ): Line2DByTwoPoints {
@@ -536,7 +567,7 @@ export abstract class ProjectionPlane {
 
     // Generate unique ID if not provided
     if (!id) {
-      id = generateId();
+      id = this.generateLine2DId(world);
     }
 
     const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id);
@@ -549,15 +580,13 @@ export abstract class ProjectionPlane {
    * Factory method: Create and add a Segment2DByPoints to this plane
    * @param point1Id ID of first endpoint
    * @param point2Id ID of second endpoint
-   * @param generateId Callback to generate unique ID
-   * @param world World context for validation
+   * @param world World context for validation and ID generation
    * @param id Optional ID for redo operations
    * @returns The created Segment2DByPoints
    */
   addSegment2DBetweenPoints(
     point1Id: string,
     point2Id: string,
-    generateId: () => string,
     world: import('./World').World,
     id?: string
   ): Segment2DByPoints {
@@ -583,7 +612,7 @@ export abstract class ProjectionPlane {
 
     // Generate unique ID if not provided
     if (!id) {
-      id = generateId();
+      id = this.generateSegment2DId(world);
     }
 
     const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id);
@@ -596,15 +625,13 @@ export abstract class ProjectionPlane {
    * Factory method: Create and add a Circle2DByCenterAndPoint to this plane
    * @param centerPointId ID of center point
    * @param circumferencePointId ID of point on circumference
-   * @param generateId Callback to generate unique ID
-   * @param world World context for validation
+   * @param world World context for validation and ID generation
    * @param id Optional ID for redo operations
    * @returns The created Circle2DByCenterAndPoint
    */
   addCircle2DByCenterAndPoint(
     centerPointId: string,
     circumferencePointId: string,
-    generateId: () => string,
     world: import('./World').World,
     id?: string
   ): Circle2DByCenterAndPoint {
@@ -630,7 +657,7 @@ export abstract class ProjectionPlane {
 
     // Generate unique ID if not provided
     if (!id) {
-      id = generateId();
+      id = this.generateCircle2DId(world);
     }
 
     const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, this.id);
@@ -645,15 +672,13 @@ export abstract class ProjectionPlane {
    * NOTE: This is a temporary solution. In the future, we should have Circle2DByCenterAndRadius class.
    * @param centerPointId ID of center point
    * @param radius Radius value
-   * @param generateIdCallback Callback to generate unique IDs
-   * @param world World context for validation
+   * @param world World context for validation and ID generation
    * @param id Optional ID for redo operations
    * @returns The created circle
    */
   addCircle2DByCenter(
     centerPointId: string,
     radius: number,
-    generateIdCallback: () => string,
     world: import('./World').World,
     id?: string
   ): Circle2DByCenterAndPoint {
@@ -666,15 +691,13 @@ export abstract class ProjectionPlane {
    * Factory method: Create and add a Guide2D to this plane
    * @param referenceLineId ID of line to be perpendicular to
    * @param throughPointId ID of point the guide passes through
-   * @param generateId Callback to generate unique ID
-   * @param world World context for validation
+   * @param world World context for validation and ID generation
    * @param id Optional ID for redo operations
    * @returns The created Guide2D
    */
   addGuide2D(
     referenceLineId: string,
     throughPointId: string,
-    generateId: () => string,
     world: import('./World').World,
     id?: string
   ): Guide2D {
@@ -696,7 +719,7 @@ export abstract class ProjectionPlane {
 
     // Generate unique ID if not provided
     if (!id) {
-      id = generateId();
+      id = this.generateGuide2DId(world);
     }
 
     const guide = new Guide2D(id, referenceLineId, throughPointId, this.id);
