@@ -17,7 +17,7 @@ import { applyMatrix4x3 } from '@/utils/threeUtils';
 import { Point2D, FreePoint2D, IntersectionPoint2D, SiblingIntersectionPoint2D, Point2DRealization2D, Point3DRealization3D } from './Point';
 import { Line2D, Line2DByTwoPoints, Line2DRealization2D } from './Line';
 import { Segment2D, Segment2DByPoints, Segment2DRealization2D } from './Segment';
-import { Circle2D, Circle2DRealization2D } from './Circle';
+import { Circle2D, Circle2DByCenterAndPoint, Circle2DRealization2D } from './Circle';
 import { Guide2D, Guide2DRealization2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D } from './Plane';
@@ -697,17 +697,14 @@ export class World {
       throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
     }
 
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generatePoint2DId();
-    }
-
-    // Create the point
-    const point = new FreePoint2D(id, position, planeId);
+    const plane = this.projectionPlanes.get(planeId)!;
+    const point = plane.addFreePoint2D(
+      position,
+      () => this.generatePoint2DId(),
+      id
+    );
     
-    // Add to world storage using addPoint2D (which calls notifyChange)
-    this.addPoint2D(point);
-    
+    this.notifyChange();
     return point;
   }
 
@@ -744,7 +741,7 @@ export class World {
       throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
     }
 
-    // Try to get elements (could be lines, guides, or circles) - Phase 22.5.3: search planes
+    // Validate elements exist and are on same plane (search all planes)
     const element1 = this.getLine2DFromPlanes(element1Id) || this.getCircle2DFromPlanes(element1Id);
     const element2 = this.getLine2DFromPlanes(element2Id) || this.getCircle2DFromPlanes(element2Id);
     
@@ -765,17 +762,17 @@ export class World {
       throw new Error(`Elements are on plane ${element1.planeId}, but intersection point is being created on plane ${planeId}.`);
     }
 
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generatePoint2DId();
-    }
-
-    // Create the intersection point
-    const point = new IntersectionPoint2D(id, element1Id, element2Id, index, planeId);
+    const plane = this.projectionPlanes.get(planeId)!;
+    const point = plane.addIntersectionPoint2D(
+      element1Id,
+      element2Id,
+      index,
+      () => this.generatePoint2DId(),
+      this,
+      id
+    );
     
-    // Add to world storage using addPoint2D (which calls notifyChange)
-    this.addPoint2D(point);
-    
+    this.notifyChange();
     return point;
   }
 
@@ -875,56 +872,16 @@ export class World {
       throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
     }
 
-    // Validate points exist (Phase 22.5.3: search planes)
-    const point1 = this.getPoint2DFromPlanes(point1Id);
-    const point2 = this.getPoint2DFromPlanes(point2Id);
+    const plane = this.projectionPlanes.get(planeId)!;
+    const line = plane.addLine2DBetweenTwoPoints(
+      point1Id,
+      point2Id,
+      () => this.generateLine2DId(),
+      this,
+      id
+    );
     
-    if (!point1) {
-      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist.`);
-    }
-    if (!point2) {
-      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist.`);
-    }
-
-    // Validate points are on the same plane
-    if (point1.planeId !== point2.planeId) {
-      throw new Error(`Points must be on the same plane. Point1 is on ${point1.planeId}, Point2 is on ${point2.planeId}.`);
-    }
-
-    // Validate points are on the specified plane
-    if (point1.planeId !== planeId) {
-      throw new Error(`Points are on plane ${point1.planeId}, but line is being created on plane ${planeId}.`);
-    }
-
-    // Validate points are distinct (not the same point)
-    if (point1Id === point2Id) {
-      throw new Error(`Cannot create line from a point to itself. point1Id and point2Id must be different.`);
-    }
-
-    // Validate points have distinct positions
-    const point1Realization = this.getPoint2DRealization(point1Id);
-    const point2Realization = this.getPoint2DRealization(point2Id);
-    
-    if (!point1Realization || !point2Realization) {
-      throw new Error(`Cannot compute point realizations. Points may depend on missing elements.`);
-    }
-
-    const distance = point1Realization.position.distanceTo(point2Realization.position);
-    if (distance < 1e-10) {
-      throw new Error(`Points ${point1Id} and ${point2Id} are too close (distance: ${distance}). Cannot create line.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateLine2DId();
-    }
-
-    // Create the line
-    const line = new Line2DByTwoPoints(id, point1Id, point2Id, planeId);
-    
-    // Add to world storage using addLine2D (which calls notifyChange)
-    this.addLine2D(line);
-    
+    this.notifyChange();
     return line;
   }
 
@@ -953,43 +910,16 @@ export class World {
       throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
     }
 
-    // Validate points exist (Phase 22.5.3: search planes)
-    const point1 = this.getPoint2DFromPlanes(point1Id);
-    const point2 = this.getPoint2DFromPlanes(point2Id);
+    const plane = this.projectionPlanes.get(planeId)!;
+    const segment = plane.addSegment2DBetweenPoints(
+      point1Id,
+      point2Id,
+      () => this.generateSegment2DId(),
+      this,
+      id
+    );
     
-    if (!point1) {
-      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist.`);
-    }
-    if (!point2) {
-      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist.`);
-    }
-
-    // Validate points are on the same plane
-    if (point1.planeId !== point2.planeId) {
-      throw new Error(`Points must be on the same plane. Point1 is on ${point1.planeId}, Point2 is on ${point2.planeId}.`);
-    }
-
-    // Validate points are on the specified plane
-    if (point1.planeId !== planeId) {
-      throw new Error(`Points are on plane ${point1.planeId}, but segment is being created on plane ${planeId}.`);
-    }
-
-    // Validate points are distinct
-    if (point1Id === point2Id) {
-      throw new Error(`Cannot create segment from a point to itself. point1Id and point2Id must be different.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateSegment2DId();
-    }
-
-    // Create the segment
-    const segment = new Segment2DByPoints(id, point1Id, point2Id, planeId);
-    
-    // Add to world storage using addSegment2D (which calls notifyChange)
-    this.addSegment2D(segment);
-    
+    this.notifyChange();
     return segment;
   }
 
@@ -1019,35 +949,73 @@ export class World {
       throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
     }
 
-    // Validate reference line exists (Phase 22.5.3: search planes)
-    const referenceLine = this.getLine2DFromPlanes(referenceLineId);
-    if (!referenceLine) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-
-    // Validate through point exists (Phase 22.5.3: search planes)
-    const throughPoint = this.getPoint2DFromPlanes(throughPointId);
-    if (!throughPoint) {
-      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist.`);
-    }
-
-    // Validate point is on the specified plane
-    if (throughPoint.planeId !== planeId) {
-      throw new Error(`Through point is on plane ${throughPoint.planeId}, but guide is being created on plane ${planeId}.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateGuide2DId();
-    }
-
-    // Create the guide
-    const guide = new Guide2D(id, referenceLineId, throughPointId, planeId);
+    const plane = this.projectionPlanes.get(planeId)!;
+    const guide = plane.addGuide2D(
+      referenceLineId,
+      throughPointId,
+      () => this.generateGuide2DId(),
+      this,
+      id
+    );
     
-    // Add to world storage using addGuide2DGeneric (which calls notifyChange)
-    this.addGuide2DGeneric(guide);
-    
+    this.notifyChange();
     return guide;
+  }
+
+  // ========================================
+  // Factory Methods for Circle2D
+  // ========================================
+
+  /**
+   * Factory method to create and add a Circle2DByCenterAndPoint to the world
+   * 
+   * @param planeId ID of the projection plane this circle belongs to
+   * @param centerPointId ID of center point
+   * @param circumferencePointId ID of point on circumference
+   * @param id Optional ID for redo operations
+   * @returns The created Circle2DByCenterAndPoint
+   */
+  addCircle2DByCenterAndPoint(
+    planeId: string,
+    centerPointId: string,
+    circumferencePointId: string,
+    id?: string
+  ): Circle2DByCenterAndPoint {
+    // Validate plane exists
+    if (!this.projectionPlanes.has(planeId)) {
+      throw new Error(`Invalid planeId: ${planeId}. Plane does not exist.`);
+    }
+
+    const plane = this.projectionPlanes.get(planeId)!;
+    const circle = plane.addCircle2DByCenterAndPoint(
+      centerPointId,
+      circumferencePointId,
+      () => this.generateCircle2DId(),
+      this,
+      id
+    );
+    
+    this.notifyChange();
+    return circle;
+  }
+
+  /**
+   * Factory method to create circle by center and radius (placeholder)
+   * NOTE: This is a temporary stub. AddCircleOp should be refactored to use addCircle2DByCenterAndPoint.
+   * 
+   * @param _planeId ID of the projection plane
+   * @param _centerPointId ID of center point
+   * @param _radius Radius value
+   * @param _id Optional ID for redo operations
+   * @throws Error - not implemented
+   */
+  addCircle2DByCenter(
+    _planeId: string,
+    _centerPointId: string,
+    _radius: number,
+    _id?: string
+  ): Circle2DByCenterAndPoint {
+    throw new Error('addCircle2DByCenter not implemented. Refactor AddCircleOp to use addCircle2DByCenterAndPoint instead.');
   }
 
   // ========================================

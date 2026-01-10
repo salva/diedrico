@@ -22,11 +22,16 @@
  * @see specs/001-dihedral-learning-mvp/refactoring-projection-plane-ownership.md
  */
 
-import { Matrix3 } from 'three';
+import { Matrix3, Vector3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import type { Point2D, Point2DRealization2D } from './Point';
+import { FreePoint2D, IntersectionPoint2D } from './Point';
 import type { Line2D, Line2DRealization2D } from './Line';
+import { Line2DByTwoPoints } from './Line';
 import type { Circle2D, Circle2DRealization2D } from './Circle';
+import { Circle2DByCenterAndPoint } from './Circle';
+import { Segment2DByPoints } from './Segment';
+import { Guide2D } from './Guide';
 
 export type ProjectionPlaneType = 'base' | 'auxiliary';
 
@@ -403,6 +408,301 @@ export abstract class ProjectionPlane {
     // Cache the result
     this.circleRealizations.set(circle.id, realization);
     return realization;
+  }
+
+  // ==================== Factory Methods ====================
+  // Phase 22.5: Factory methods moved from World to ProjectionPlane
+  // These methods create and add 2D elements to this plane
+
+  /**
+   * Factory method: Create and add a FreePoint2D to this plane
+   * @param position Point position in plane coordinates
+   * @param generateId Callback to generate unique ID
+   * @param id Optional ID for redo operations
+   * @returns The created FreePoint2D
+   */
+  addFreePoint2D(
+    position: Vector3,
+    generateId: () => string,
+    id?: string
+  ): FreePoint2D {
+    if (!this.id) {
+      throw new Error('Cannot add point to plane without ID');
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = generateId();
+    }
+
+    const point = new FreePoint2D(id, position, this.id);
+    
+    this.addPoint(point);
+    return point;
+  }
+
+  /**
+   * Factory method: Create and add an IntersectionPoint2D to this plane
+   * @param element1Id ID of first element (line or circle)
+   * @param element2Id ID of second element
+   * @param index Intersection index (0 for first/only point, 1 for second)
+   * @param generateId Callback to generate unique ID
+   * @param world World context for validation
+   * @param id Optional ID for redo operations
+   * @returns The created IntersectionPoint2D
+   */
+  addIntersectionPoint2D(
+    element1Id: string,
+    element2Id: string,
+    index: number,
+    generateId: () => string,
+    world: import('./World').World,
+    id?: string
+  ): IntersectionPoint2D {
+    if (!this.id) {
+      throw new Error('Cannot add point to plane without ID');
+    }
+
+    // Validate elements exist
+    const element1 = world.getLine2DRealization(element1Id) || world.getCircle2DRealization(element1Id);
+    const element2 = world.getLine2DRealization(element2Id) || world.getCircle2DRealization(element2Id);
+    
+    if (!element1) {
+      throw new Error(`Invalid element1Id: ${element1Id}. Element does not exist.`);
+    }
+    if (!element2) {
+      throw new Error(`Invalid element2Id: ${element2Id}. Element does not exist.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = generateId();
+    }
+
+    const point = new IntersectionPoint2D(id, element1Id, element2Id, index, this.id);
+    
+    this.addPoint(point);
+    return point;
+  }
+
+  /**
+   * Factory method: Create and add a Line2DByTwoPoints to this plane
+   * @param point1Id ID of first point
+   * @param point2Id ID of second point
+   * @param generateId Callback to generate unique ID
+   * @param world World context for validation
+   * @param id Optional ID for redo operations
+   * @returns The created Line2DByTwoPoints
+   */
+  addLine2DBetweenTwoPoints(
+    point1Id: string,
+    point2Id: string,
+    generateId: () => string,
+    world: import('./World').World,
+    id?: string
+  ): Line2DByTwoPoints {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate points exist
+    const point1 = this.getPoint(point1Id);
+    const point2 = this.getPoint(point2Id);
+    
+    if (!point1) {
+      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist on this plane.`);
+    }
+    if (!point2) {
+      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist on this plane.`);
+    }
+
+    // Validate points are distinct
+    if (point1Id === point2Id) {
+      throw new Error(`Cannot create line from a point to itself. point1Id and point2Id must be different.`);
+    }
+
+    // Validate points have distinct positions
+    const point1Realization = world.getPoint2DRealization(point1Id);
+    const point2Realization = world.getPoint2DRealization(point2Id);
+    
+    if (!point1Realization || !point2Realization) {
+      throw new Error(`Cannot compute point realizations. Points may depend on missing elements.`);
+    }
+
+    const distance = point1Realization.position.distanceTo(point2Realization.position);
+    if (distance < 1e-10) {
+      throw new Error(`Points ${point1Id} and ${point2Id} are too close (distance: ${distance}). Cannot create line.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = generateId();
+    }
+
+    const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id);
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Factory method: Create and add a Segment2DByPoints to this plane
+   * @param point1Id ID of first endpoint
+   * @param point2Id ID of second endpoint
+   * @param generateId Callback to generate unique ID
+   * @param world World context for validation
+   * @param id Optional ID for redo operations
+   * @returns The created Segment2DByPoints
+   */
+  addSegment2DBetweenPoints(
+    point1Id: string,
+    point2Id: string,
+    generateId: () => string,
+    world: import('./World').World,
+    id?: string
+  ): Segment2DByPoints {
+    if (!this.id) {
+      throw new Error('Cannot add segment to plane without ID');
+    }
+
+    // Validate points exist
+    const point1 = this.getPoint(point1Id);
+    const point2 = this.getPoint(point2Id);
+    
+    if (!point1) {
+      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist on this plane.`);
+    }
+    if (!point2) {
+      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist on this plane.`);
+    }
+
+    // Validate points are distinct
+    if (point1Id === point2Id) {
+      throw new Error(`Cannot create segment from a point to itself. point1Id and point2Id must be different.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = generateId();
+    }
+
+    const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id);
+    
+    this.addLine(segment);  // Segments are stored as lines
+    return segment;
+  }
+
+  /**
+   * Factory method: Create and add a Circle2DByCenterAndPoint to this plane
+   * @param centerPointId ID of center point
+   * @param circumferencePointId ID of point on circumference
+   * @param generateId Callback to generate unique ID
+   * @param world World context for validation
+   * @param id Optional ID for redo operations
+   * @returns The created Circle2DByCenterAndPoint
+   */
+  addCircle2DByCenterAndPoint(
+    centerPointId: string,
+    circumferencePointId: string,
+    generateId: () => string,
+    world: import('./World').World,
+    id?: string
+  ): Circle2DByCenterAndPoint {
+    if (!this.id) {
+      throw new Error('Cannot add circle to plane without ID');
+    }
+
+    // Validate points exist
+    const centerPoint = this.getPoint(centerPointId);
+    const circumferencePoint = this.getPoint(circumferencePointId);
+    
+    if (!centerPoint) {
+      throw new Error(`Invalid centerPointId: ${centerPointId}. Point does not exist on this plane.`);
+    }
+    if (!circumferencePoint) {
+      throw new Error(`Invalid circumferencePointId: ${circumferencePointId}. Point does not exist on this plane.`);
+    }
+
+    // Validate points are distinct
+    if (centerPointId === circumferencePointId) {
+      throw new Error(`Cannot create circle with center and circumference point being the same point.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = generateId();
+    }
+
+    const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, this.id);
+    
+    this.addCircle(circle);
+    return circle;
+  }
+
+  /**
+   * Factory method: Create circle by center and radius (convenience wrapper)
+   * Creates a temporary point at the given radius and uses Circle2DByCenterAndPoint
+   * NOTE: This is a temporary solution. In the future, we should have Circle2DByCenterAndRadius class.
+   * @param centerPointId ID of center point
+   * @param radius Radius value
+   * @param generateIdCallback Callback to generate unique IDs
+   * @param world World context for validation
+   * @param id Optional ID for redo operations
+   * @returns The created circle
+   */
+  addCircle2DByCenter(
+    centerPointId: string,
+    radius: number,
+    generateIdCallback: () => string,
+    world: import('./World').World,
+    id?: string
+  ): Circle2DByCenterAndPoint {
+    // For now, this method is a placeholder that should not be used
+    // The AddCircleOp should be refactored to use addCircle2DByCenterAndPoint
+    throw new Error('addCircle2DByCenter not implemented. Use addCircle2DByCenterAndPoint instead.');
+  }
+
+  /**
+   * Factory method: Create and add a Guide2D to this plane
+   * @param referenceLineId ID of line to be perpendicular to
+   * @param throughPointId ID of point the guide passes through
+   * @param generateId Callback to generate unique ID
+   * @param world World context for validation
+   * @param id Optional ID for redo operations
+   * @returns The created Guide2D
+   */
+  addGuide2D(
+    referenceLineId: string,
+    throughPointId: string,
+    generateId: () => string,
+    world: import('./World').World,
+    id?: string
+  ): Guide2D {
+    if (!this.id) {
+      throw new Error('Cannot add guide to plane without ID');
+    }
+
+    // Validate through point exists on this plane
+    const throughPoint = this.getPoint(throughPointId);
+    if (!throughPoint) {
+      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+    }
+
+    // Validate reference line exists (could be on any plane for perpendicular construction)
+    const referenceLine = world.getLine2DRealization(referenceLineId);
+    if (!referenceLine) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = generateId();
+    }
+
+    const guide = new Guide2D(id, referenceLineId, throughPointId, this.id);
+    
+    this.addLine(guide);  // Guides are stored as lines
+    return guide;
   }
 
   /**
