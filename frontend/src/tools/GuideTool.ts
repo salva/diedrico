@@ -65,9 +65,9 @@ export class GuideTool extends BaseTool {
       
       console.log('[GuideTool] Paper.hitTest() result for reference line:', hit);
       
-      // Check if we found a valid line (any line type from selection mask)
+      // Check if we found a half-hinge-line
       if (!hit) {
-        return this.failure('No line found at click position. Please click near a hinge line or existing line.');
+        return this.failure('No hinge line found at click position. Please click on a hinge line.');
       }
 
       // Record reference line
@@ -180,12 +180,12 @@ export class GuideTool extends BaseTool {
   /**
    * Get selection mask for guide creation
    * Dynamic mask based on tool state:
-   * - waiting-line: Allow line selection only
+   * - waiting-line: Allow half-hinge-line selection only (guides must be perpendicular to hinge lines)
    * - waiting-point: Allow point selection only
    */
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-line') {
-      return ['line', 'half-hinge-line'];
+      return ['half-hinge-line'];
     } else {
       return ['point'];
     }
