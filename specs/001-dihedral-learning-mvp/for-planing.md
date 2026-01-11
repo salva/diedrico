@@ -10,13 +10,95 @@ In general, any idea needs to...
 4. Be broken down into smaller implementable tasks in tasks.md.
 5. Include corresponding testing tasks.
 6. Be marked here as done and move it to the already planned section.
+7. Implement the new tasks. All of them. Fix regressions.
+8. Commit with git.
 
 Note that completing these tasks may require asking the user for additional information and clarification. When in doubt, just ask!!!
 
 
 ## FOR PLANING
 
-* [ ] There are still many facade methods in the World class which must be removed (for instance, getAllPoints2D or similar). There are also special case methods as get_HV() which unless they are justified should be removed. In general, performa a cleanup of this clase.
+* [X] There are still many facade methods in the World class which must be removed (for instance, getAllPoints2D or similar). There are also special case methods as get_HV() which unless they are justified should be removed. In general, performa a cleanup of this clase.
+  - **STATUS**: ✅ PLANNED - Phase 48 created
+  - **Problem**: World class has accumulated facade methods that violate architectural principles by providing shortcuts to data that should be accessed through ProjectionPlane
+  - **Current Issues**:
+    - **Realization facade methods**: `getPoint2DRealization()`, `getLine2DRealization()`, `getCircle2DRealization()` - these bypass ProjectionPlane, which owns element realizations
+    - **Aggregation methods**: `getAllPoints2D()`, `getAllLines2D()` - aggregate data from all planes (only 2-3 uses, can be replaced with direct plane iteration)
+    - **Legacy search methods**: `getPoint2DById()`, `getLine2DById()` - superseded by Phase 45's hierarchical IDs and `getElement2D()`
+    - **Hardcoded plane getters**: `getPH()`, `getPV()` - use hardcoded 'plane_H', 'plane_V' IDs (superseded by Phase 46's semantic getters)
+  - **Architectural Violations**:
+    1. **Bypasses ownership**: Elements and realizations belong to ProjectionPlane, not World
+    2. **Tight coupling**: Client code depends on World instead of ProjectionPlane
+    3. **Inconsistent access**: Some code uses facade, some uses proper ProjectionPlane access
+    4. **Maintenance burden**: World has to mirror ProjectionPlane's interface
+  - **Solution**: Remove facade methods, update all callers to use proper ProjectionPlane access
+  - **Methods to Remove** (9 methods):
+    1. `getPoint2DRealization(pointId)` - 20+ usages → Replace with `plane.getPoint(id)?.realize2D(world)`
+    2. `getLine2DRealization(lineId)` - 18+ usages → Replace with `plane.getLine(id)?.realize2D(world)`
+    3. `getCircle2DRealization(circleId)` - 11 usages → Replace with `plane.getCircle(id)?.realize2D(world)`
+    4. `getAllPoints2D()` - 5 usages (App.vue cascade delete, ElementsPanel, SvgCanvas debug) → Replace with plane iteration
+    5. `getAllLines2D()` - 3 usages (App.vue cascade delete, ElementsPanel debug) → Replace with plane iteration
+    6. `getPoint2DById(pointId)` - Replace with `getPoint2D()` (Phase 45 hierarchical ID method)
+    7. `getLine2DById(lineId)` - Replace with `getLine2D()` (Phase 45 hierarchical ID method)
+    8. `getPH()` - No usages found → Remove directly (superseded by `getHorizontalPlane()`)
+    9. `getPV()` - No usages found → Remove directly (superseded by `getVerticalPlane()`)
+  - **Methods to Keep** (justified):
+    - `getElement2D(id)` - Phase 45 hierarchical ID lookup (essential)
+    - `getPoint2D(id)`, `getLine2D(id)`, `getCircle2D(id)` - Phase 45 type-safe lookups (essential)
+    - `getProjectionPlaneById(id)` - Essential for plane access
+    - `getHorizontalPlane()`, `getVerticalPlane()` - Phase 46 semantic accessors (essential)
+    - `getHorizontalOrigin()`, `getVerticalOrigin()` - Phase 46 semantic accessors (essential)
+    - `getMainHingeLine()` - Phase 46 semantic accessor (essential)
+    - Sibling helper methods - Domain logic for HHL sibling calculation (essential)
+  - **Migration Pattern**:
+    ```typescript
+    // BEFORE (facade)
+    const realization = world.getPoint2DRealization(pointId);
+    
+    // AFTER (proper ownership)
+    const containerId = getContainerIdFromElementId(pointId);
+    const plane = world.getProjectionPlaneById(containerId);
+    const point = plane?.getPoint(pointId);
+    const realization = point?.realize2D(world);
+    
+    // OR (using Phase 45 helper)
+    const point = world.getPoint2D(pointId);
+    if (point) {
+      const plane = world.getProjectionPlaneById(point.planeId);
+      const realization = plane?.getPoint(pointId)?.realize2D(world);
+    }
+    ```
+  - **Benefits**:
+    - **Proper encapsulation**: Elements accessed through their container (ProjectionPlane)
+    - **Clear ownership**: ProjectionPlane owns elements and their realizations
+    - **Reduced coupling**: Client code depends on ProjectionPlane interface
+    - **Smaller World class**: Removes 9 methods, ~200 lines of code
+    - **Architectural consistency**: All element access follows same pattern
+  - **Implementation**: Phase 48 with 17 tasks (T559-T575)
+  - **Task Categories**:
+    - Analysis (T559): Audit all usages, categorize by replacement strategy
+    - Realization methods (T560-T562): Replace getPoint2DRealization, getLine2DRealization, getCircle2DRealization
+    - Aggregation methods (T563-T564): Replace getAllPoints2D, getAllLines2D
+    - Legacy search methods (T565-T566): Replace getPoint2DById, getLine2DById with Phase 45 methods
+    - Hardcoded plane getters (T567-T568): Remove getPH, getPV (no usages)
+    - Remove methods (T569): Delete all 9 methods from World.ts
+    - Documentation (T570): Update comments explaining proper access patterns
+    - Testing (T571-T574): Unit tests for proper element access, integration tests for workflows, regression tests
+    - Performance check (T575): Verify no performance degradation from proper access
+  - **Risk Mitigation**:
+    - Systematic replacement: One method at a time, test after each batch
+    - Verify no usages missed: grep search after removal
+    - Integration tests: Ensure tools still work (IntersectionTool, CircleTool heavily affected)
+    - Performance tests: Measure realization computation time before/after
+  - **Success Criteria**:
+    - All 9 facade methods removed
+    - No direct World realization getters remain
+    - All element access goes through ProjectionPlane
+    - All tests pass (unit, integration, E2E)
+    - No performance regression
+  - **Breaking Changes**: None (internal refactoring only)
+  - **Timing**: After Phase 47 (World initialization complete) before new feature development
+  - **Future**: Consider adding helper utility functions if pattern becomes too verbose (but keep World clean)
 * [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
 * [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).

@@ -4448,6 +4448,182 @@ Most construction tools follow: create world elements → create process tree ac
 - ✅ Command marked non-undoable, not in CommandStack
 - ✅ ProcessTree shows "World Initialization" subprocess
 - ✅ All tests pass (including reactivated Phase 45 tests)
+
+---
+
+## Phase 48: Remove World Facade Methods
+
+**Purpose**: Clean up World class by removing facade methods that violate architectural principles
+
+**Reference**: [for-planing.md](./for-planing.md#for-planing) - Phase 48 specification
+
+**Problem**: World has accumulated facade methods that bypass ProjectionPlane ownership, creating tight coupling and architectural violations. Element realizations belong to ProjectionPlane, not World.
+
+**Architecture**: All 2D element access should go through ProjectionPlane. World provides lookup by hierarchical ID (Phase 45) but not realization facades.
+
+### Phase 48 Tasks
+
+**Phase 1: Analysis** (T559)
+
+- [ ] T559 Audit all usages of facade methods to be removed
+  - Grep for each method: getPoint2DRealization, getLine2DRealization, getCircle2DRealization, getAllPoints2D, getAllLines2D, getPoint2DById, getLine2DById, getPH, getPV
+  - Document all usages by file and context
+  - Categorize by replacement strategy (direct plane access vs iteration)
+  - Create replacement checklist
+  - Verify getPH() and getPV() have no usages (should be zero)
+
+**Phase 2: Replace Realization Facade Methods** (T560-T562)
+
+- [ ] T560 Replace all `world.getPoint2DRealization(pointId)` calls (20+ usages)
+  - Pattern: Replace with proper ProjectionPlane access
+  - Tools (CircleTool.ts): Get point from plane, call realize2D(world)
+  - Domain classes (Point.ts, Line.ts, Circle.ts, Guide.ts, Segment.ts): Use plane.getPoint(id)?.realize2D(world)
+  - ProjectionPlane methods: Already have world reference, use directly
+  - PropertiesDialog.vue: Get plane from world, then point, then realization
+  - Test each file after changes
+
+- [ ] T561 Replace all `world.getLine2DRealization(lineId)` calls (18+ usages)
+  - Pattern: Similar to T560 for lines
+  - IntersectionTool.ts: Get line from plane, call realize2D(world)
+  - Domain classes (Point.ts, Guide.ts, ProjectionPlane.ts): Use plane.getLine(id)?.realize2D(world)
+  - Handle HalfHingeLine2D cases (realize2D doesn't compute, returns stored geometry)
+  - Test each file after changes
+
+- [ ] T562 Replace all `world.getCircle2DRealization(circleId)` calls (11 usages)
+  - Pattern: Similar to T560 for circles
+  - IntersectionTool.ts: Get circle from plane, call realize2D(world)
+  - PropertiesDialog.vue: Get plane first, then circle, then realization
+  - Domain classes (Point.ts, ProjectionPlane.ts): Use plane.getCircle(id)?.realize2D(world)
+  - Test each file after changes
+
+**Phase 3: Replace Aggregation Methods** (T563-T564)
+
+- [ ] T563 Replace all `world.getAllPoints2D()` calls (5 usages)
+  - App.vue (cascade delete lines 699): Replace with iteration over projectionPlanes.values() → plane.getAllPoints()
+  - ElementsPanel.vue (line 190): Same pattern, iterate planes
+  - SvgCanvas.vue (debug logs): Same pattern or remove debug logs
+  - Pattern: `Array.from(world.projectionPlanes.values()).flatMap(plane => plane.getAllPoints())`
+  - Test cascade delete thoroughly (critical functionality)
+
+- [ ] T564 Replace all `world.getAllLines2D()` calls (3 usages)
+  - App.vue (cascade delete lines 706): Same iteration pattern as T563
+  - ElementsPanel.vue (debug log): Same pattern or remove
+  - Pattern: `Array.from(world.projectionPlanes.values()).flatMap(plane => plane.getAllLines())`
+  - Test cascade delete thoroughly
+
+**Phase 4: Replace Legacy Search Methods** (T565-T566)
+
+- [ ] T565 Replace `getPoint2DById()` with Phase 45's `getPoint2D()`
+  - Find all usages of getPoint2DById()
+  - Replace with getPoint2D() (hierarchical ID method from Phase 45)
+  - getPoint2D() already parses hierarchical ID and finds correct plane
+  - Test that hierarchical lookup works correctly
+
+- [ ] T566 Replace `getLine2DById()` with Phase 45's `getLine2D()`
+  - Find all usages of getLine2DById()
+  - Replace with getLine2D() (hierarchical ID method from Phase 45)
+  - getLine2D() already parses hierarchical ID and finds correct plane
+  - Test that hierarchical lookup works correctly
+
+**Phase 5: Remove Hardcoded Plane Getters** (T567-T568)
+
+- [ ] T567 Verify `getPH()` has no usages
+  - Grep search confirms no usages found
+  - Method superseded by Phase 46's getHorizontalPlane()
+  - Ready for removal in T569
+
+- [ ] T568 Verify `getPV()` has no usages
+  - Grep search confirms no usages found
+  - Method superseded by Phase 46's getVerticalPlane()
+  - Ready for removal in T569
+
+**Phase 6: Remove Facade Methods from World** (T569)
+
+- [ ] T569 Delete all 9 facade methods from World.ts
+  - Remove getPoint2DRealization() (lines 377-397)
+  - Remove getLine2DRealization() (lines 548-574)
+  - Remove getCircle2DRealization() (lines 657-683)
+  - Remove getAllPoints2D() (lines 1047-1054)
+  - Remove getAllLines2D() (lines 1059-1066)
+  - Remove getPoint2DById() (lines 1071-1074)
+  - Remove getLine2DById() (lines 1079-1082)
+  - Remove getPH() (lines 818-820)
+  - Remove getPV() (lines 825-827)
+  - Verify no compilation errors
+  - Run all tests to catch any missed usages
+
+**Phase 7: Documentation** (T570)
+
+- [ ] T570 Update World.ts documentation
+  - Add comment explaining proper element access pattern
+  - Document Phase 45 hierarchical ID methods (getElement2D, getPoint2D, getLine2D, getCircle2D)
+  - Document Phase 46 semantic accessors (getHorizontalPlane, getVerticalPlane, etc.)
+  - Explain why facade methods were removed (ownership, encapsulation)
+  - Reference ProjectionPlane for direct element access
+
+**Phase 8: Testing** (T571-T574)
+
+- [ ] T571 Unit tests for proper element access pattern
+  - Test getting element from World via hierarchical ID
+  - Test getting plane from World
+  - Test getting element from plane
+  - Test calling realize2D(world) on element
+  - Verify realization computed correctly
+  - Test error handling (element not found, plane not found)
+
+- [ ] T572 Integration tests for affected workflows
+  - Test cascade deletion (uses getAllPoints2D, getAllLines2D replacement)
+  - Test IntersectionTool (uses getLine2DRealization, getCircle2DRealization replacements)
+  - Test CircleTool (uses getPoint2DRealization replacement)
+  - Test element properties dialog (uses realization getters)
+  - Verify all workflows work correctly with new access pattern
+
+- [ ] T573 Run full test suite
+  - Unit tests (all domains, commands, operations)
+  - Integration tests (tool workflows, element creation)
+  - E2E tests (if applicable)
+  - Verify no regressions introduced
+  - Fix any test failures
+
+- [ ] T574 Regression testing
+  - Manual test: Create elements on both planes
+  - Manual test: Delete elements (cascade delete)
+  - Manual test: Create intersections (line/line, line/circle, circle/circle)
+  - Manual test: Create circles (center + circumference point)
+  - Manual test: View element properties dialog
+  - Verify UI behaves correctly with new access pattern
+
+**Phase 9: Performance Verification** (T575)
+
+- [ ] T575 Performance check
+  - Measure realization computation time before/after refactoring
+  - Test with 100+ elements on multiple planes
+  - Verify no significant performance degradation
+  - Document any performance differences
+  - If performance issue found, consider adding plane-level caching (but keep World clean)
+
+**Checkpoint**: ✅ World class cleaned up, facade methods removed, proper encapsulation restored
+
+**Success Criteria**:
+- ✅ All 9 facade methods removed from World
+- ✅ All callers updated to use proper ProjectionPlane access
+- ✅ Aggregation methods replaced with plane iteration
+- ✅ Legacy search methods replaced with Phase 45 hierarchical ID methods
+- ✅ Hardcoded plane getters (getPH, getPV) removed
+- ✅ All tests pass (unit, integration, E2E)
+- ✅ No performance regression
+- ✅ Documentation updated with proper access patterns
+
+**Breaking Changes**: None (internal refactoring only)
+
+**Benefits**:
+- Proper encapsulation (ProjectionPlane owns elements and realizations)
+- Reduced coupling (client code depends on ProjectionPlane interface)
+- Smaller World class (~200 lines removed)
+- Architectural consistency (all element access follows same pattern)
+- Clear ownership boundaries
+
+
 - ✅ World.initializeFixedElements() removed
 - ✅ Serialization uses hierarchical IDs
 - ✅ All tests pass with hierarchical IDs
