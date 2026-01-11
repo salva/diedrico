@@ -128,8 +128,11 @@ export class Circle2DByCenterAndPoint extends Circle2D {
    */
   realize2D(world: import('./World').World): Circle2DRealization2D | null {
     // Get both point realizations from world
-    const centerRealization = world.getPoint2DRealization(this.centerPointId);
-    const circumferenceRealization = world.getPoint2DRealization(this.circumferencePointId);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const centerPoint = plane?.getPoint(this.centerPointId);
+    const circumferencePoint = plane?.getPoint(this.circumferencePointId);
+    const centerRealization = centerPoint?.realize2D(world);
+    const circumferenceRealization = circumferencePoint?.realize2D(world);
 
     if (!centerRealization || !circumferenceRealization) {
       return null;  // Cannot compute circle without both points
@@ -211,9 +214,13 @@ export class Circle2DByThreePoints extends Circle2D {
    */
   realize2D(world: import('./World').World): Circle2DRealization2D | null {
     // Get all three point realizations from world
-    const p1Realization = world.getPoint2DRealization(this.point1Id);
-    const p2Realization = world.getPoint2DRealization(this.point2Id);
-    const p3Realization = world.getPoint2DRealization(this.point3Id);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const point1 = plane?.getPoint(this.point1Id);
+    const point2 = plane?.getPoint(this.point2Id);
+    const point3 = plane?.getPoint(this.point3Id);
+    const p1Realization = point1?.realize2D(world);
+    const p2Realization = point2?.realize2D(world);
+    const p3Realization = point3?.realize2D(world);
 
     if (!p1Realization || !p2Realization || !p3Realization) {
       return null;  // Cannot compute circle without all three points

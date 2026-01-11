@@ -187,10 +187,11 @@ let lastVersion = world.getVersion();
 
 onMounted(() => {
   console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
-  const allPoints = world.getAllPoints2D();
-  console.log('[ElementsPanel] Initial points:', allPoints.length);
-  console.log('[ElementsPanel] Point planeIds:', allPoints.map(p => ({ id: p.id, planeId: p.planeId })));
-  console.log('[ElementsPanel] Initial lines:', world.getAllLines2D().length);
+  const allPlanes = world.getAllProjectionPlanes();
+  const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
+  const totalLines = allPlanes.reduce((sum, plane) => sum + plane.getAllLines().length, 0);
+  console.log('[ElementsPanel] Initial points:', totalPoints);
+  console.log('[ElementsPanel] Initial lines:', totalLines);
   
   intervalId = window.setInterval(() => {
     const currentVersion = world.getVersion();
@@ -215,7 +216,7 @@ const horizontalElements = computed(() => {
   
   console.log('[ElementsPanel] Computing P_H elements, version:', version, 'forceUpdate:', update);
   
-  const plane = world.projectionPlanes.get('proj_plane_H');
+  const plane = world.getHorizontalPlane();
   if (!plane) {
     return {
       points: [],
@@ -256,7 +257,7 @@ const verticalElements = computed(() => {
   worldVersion.value; // Create dependency
   forceUpdate.value; // Create dependency
   
-  const plane = world.projectionPlanes.get('proj_plane_V');
+  const plane = world.getVerticalPlane();
   if (!plane) {
     return {
       points: [],

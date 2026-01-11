@@ -212,19 +212,19 @@ const elementType = computed(() => {
   if (!props.elementId || !props.world) return 'Unknown';
   
   // Determine element type by checking which collection contains it
-  const point = props.world.getPoint2DById(props.elementId);
+  const point = props.world.getPoint2D(props.elementId);
   if (point) return '2D Point';
   
-  const line = props.world.getLine2DById(props.elementId);
+  const line = props.world.getLine2D(props.elementId);
   if (line) return '2D Line';
   
-  const segment = props.world.getSegment2DById(props.elementId);
+  const segment = props.world.getSegment2D(props.elementId);
   if (segment) return '2D Segment';
   
-  const circle = props.world.getCircle2DById(props.elementId);
+  const circle = props.world.getCircle2D(props.elementId);
   if (circle) return '2D Circle';
   
-  const guide = props.world.getGuide2DById(props.elementId);
+  const guide = props.world.getGuide2D(props.elementId);
   if (guide) return '2D Guide';
   
   return 'Unknown';
@@ -234,19 +234,19 @@ const planeId = computed(() => {
   if (!props.elementId || !props.world) return null;
   
   // Get plane ID from element
-  const point = props.world.getPoint2DById(props.elementId);
+  const point = props.world.getPoint2D(props.elementId);
   if (point) return point.planeId;
   
-  const line = props.world.getLine2DById(props.elementId);
+  const line = props.world.getLine2D(props.elementId);
   if (line) return line.planeId;
   
-  const segment = props.world.getSegment2DById(props.elementId);
+  const segment = props.world.getSegment2D(props.elementId);
   if (segment) return segment.planeId;
   
-  const circle = props.world.getCircle2DById(props.elementId);
+  const circle = props.world.getCircle2D(props.elementId);
   if (circle) return circle.planeId;
   
-  const guide = props.world.getGuide2DById(props.elementId);
+  const guide = props.world.getGuide2D(props.elementId);
   if (guide) return guide.planeId;
   
   return null;
@@ -256,18 +256,20 @@ const coordinates = computed(() => {
   if (!props.elementId || !props.world) return null;
   
   // Get coordinates from realization
-  const point = props.world.getPoint2DById(props.elementId);
+  const point = props.world.getPoint2D(props.elementId);
   if (point) {
-    const realization = props.world.getPoint2DRealization(props.elementId);
+    const plane = props.world.getProjectionPlaneById(point.planeId);
+    const realization = plane?.getPoint(props.elementId)?.realize2D(props.world);
     if (realization) {
       const pos = realization.getPosition();
       return `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`;
     }
   }
   
-  const circle = props.world.getCircle2DById(props.elementId);
+  const circle = props.world.getCircle2D(props.elementId);
   if (circle) {
-    const realization = props.world.getCircle2DRealization(props.elementId);
+    const plane = props.world.getProjectionPlaneById(circle.planeId);
+    const realization = plane?.getCircle(props.elementId)?.realize2D(props.world);
     if (realization) {
       const center = realization.center;
       return `Center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}), Radius: ${realization.radius.toFixed(2)}`;
@@ -282,7 +284,7 @@ const dependencies = computed(() => {
   if (!props.elementId || !props.world) return [];
   
   // Get dependencies from element
-  const point = props.world.getPoint2DById(props.elementId);
+  const point = props.world.getPoint2D(props.elementId);
   if (point) {
     // Check if it's an intersection point
     if (point.type === 'intersection') {
@@ -291,7 +293,7 @@ const dependencies = computed(() => {
     }
   }
   
-  const line = props.world.getLine2DById(props.elementId);
+  const line = props.world.getLine2D(props.elementId);
   if (line) {
     const lineByPoints = line as any;
     if (lineByPoints.point1Id && lineByPoints.point2Id) {

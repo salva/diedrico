@@ -393,7 +393,7 @@ export class RemoveGuide2DOp implements IOperation {
         const siblingGuideId = (this.removedGuide as any).siblingGuideId;
         
         // Find sibling's plane and delete sibling
-        const siblingGuide = world.getLine2DById(siblingGuideId);
+        const siblingGuide = world.getLine2D(siblingGuideId);
         if (siblingGuide) {
           const siblingPlane = world.getProjectionPlaneById(siblingGuide.planeId);
           if (siblingPlane) {

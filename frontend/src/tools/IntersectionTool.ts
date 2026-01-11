@@ -211,9 +211,9 @@ export class IntersectionTool extends BaseTool {
     circleId?: string;
     index?: number;
   } | null {
-    // Get actual domain objects
-    const element1 = world.getLine2DFromPlanes(element1Id) || world.getCircle2DFromPlanes(element1Id);
-    const element2 = world.getLine2DFromPlanes(element2Id) || world.getCircle2DFromPlanes(element2Id);
+    // Get actual domain objects using Phase 45 hierarchical ID methods
+    const element1 = world.getLine2D(element1Id) || world.getCircle2D(element1Id);
+    const element2 = world.getLine2D(element2Id) || world.getCircle2D(element2Id);
     
     if (!element1 || !element2) {
       return null;
@@ -221,8 +221,9 @@ export class IntersectionTool extends BaseTool {
 
     // Line-Line intersection (using instanceof instead of type strings)
     if (element1 instanceof Line2D && element2 instanceof Line2D) {
-      const line1 = world.getLine2DRealization(element1Id);
-      const line2 = world.getLine2DRealization(element2Id);
+      const plane = world.getProjectionPlaneById(element1.planeId);
+      const line1 = plane?.getLine(element1Id)?.realize2D(world);
+      const line2 = plane?.getLine(element2Id)?.realize2D(world);
       
       if (!line1 || !line2) {
         return null;
@@ -295,8 +296,10 @@ export class IntersectionTool extends BaseTool {
     mousePos: Vector3,
     world: World
   ): number | null {
-    const lineRealization = world.getLine2DRealization(lineId);
-    const circleRealization = world.getCircle2DRealization(circleId);
+    const lineElement = world.getLine2D(lineId);
+    const circleElement = world.getCircle2D(circleId);
+    const lineRealization = lineElement?.realize2D(world);
+    const circleRealization = circleElement?.realize2D(world);
     
     if (!lineRealization || !circleRealization) {
       return null;
@@ -328,8 +331,10 @@ export class IntersectionTool extends BaseTool {
     mousePos: Vector3,
     world: World
   ): number | null {
-    const circle1Realization = world.getCircle2DRealization(circle1Id);
-    const circle2Realization = world.getCircle2DRealization(circle2Id);
+    const circle1Element = world.getCircle2D(circle1Id);
+    const circle2Element = world.getCircle2D(circle2Id);
+    const circle1Realization = circle1Element?.realize2D(world);
+    const circle2Realization = circle2Element?.realize2D(world);
     
     if (!circle1Realization || !circle2Realization) {
       return null;

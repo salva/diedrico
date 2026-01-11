@@ -32,7 +32,8 @@ import {
   AddOriginPoint2DOp,
   AddHingeLineOp,
   AddHalfHingeLine2DOp,
-  CreateInitializationSubprocessOp
+  CreateInitializationSubprocessOp,
+  SetActivePlaneOp
 } from './operations/world/InitializationOps';
 
 /**
@@ -80,6 +81,12 @@ export class InitializeWorldCommand extends Command {
     const projPlaneVId = 'proj_plane_2';
     const hingeLineId = 'hinge_line_1';
     
+    // Phase 46: Store semantic references in World for these IDs
+    // These enable getHorizontalPlane(), getVerticalPlane() etc.
+    (this.world as any).horizontalPlaneId = projPlaneHId;
+    (this.world as any).verticalPlaneId = projPlaneVId;
+    (this.world as any).mainHingeLineId = hingeLineId;
+    
     // Steps 2-3: Create 3D planes
     this.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
     this.addAndExecute(new AddPlane3DOp(planeVId, 'vertical'));
@@ -90,8 +97,21 @@ export class InitializeWorldCommand extends Command {
 
     // Steps 6-7: Create origin points (locked at 0,0)
     const originPos = new Vector3(0, 0, 1);
-    this.addAndExecute(new AddOriginPoint2DOp(projPlaneHId, originPos));
-    this.addAndExecute(new AddOriginPoint2DOp(projPlaneVId, originPos));
+    const originHOp = new AddOriginPoint2DOp(projPlaneHId, originPos);
+    this.addAndExecute(originHOp);
+    const originVOp = new AddOriginPoint2DOp(projPlaneVId, originPos);
+    this.addAndExecute(originVOp);
+    
+    // Store origin IDs from operation outputs
+    if (originHOp.outputs.pointId) {
+      (this.world as any).horizontalOriginId = originHOp.outputs.pointId;
+    }
+    if (originVOp.outputs.pointId) {
+      (this.world as any).verticalOriginId = originVOp.outputs.pointId;
+    }
+    
+    // Origin point O at (0,0,0) in 3D space
+    (this.world as any).originPoint = new Vector3(0, 0, 0);
 
     // Step 8: Create hinge line
     this.addAndExecute(new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId));
@@ -101,5 +121,8 @@ export class InitializeWorldCommand extends Command {
     const hingeDirection = new Vector3(1, 0, 0);  // Horizontal direction
     this.addAndExecute(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
     this.addAndExecute(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
+    
+    // Step 11: Set horizontal plane as initially active
+    this.addAndExecute(new SetActivePlaneOp(projPlaneHId));
   }
 }

@@ -96,7 +96,7 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#startup-flow-and-google-drive-authentication
  */
 
-import { provide, ref, onMounted, onUnmounted, watch } from 'vue';
+import { provide, ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
@@ -166,9 +166,30 @@ useSettingsStore();
 // T403: Authentication state
 const authStore = useAuthStore();
 
-// Active plane state
-const activePlaneId = ref('proj_plane_H');
-const activePlaneName = ref('P_H (Horizontal)');
+// Active plane state - will be set after world initialization
+// Active plane state - read from World (set by InitializeWorldCommand)
+const activePlaneId = computed(() => world.getActivePlaneId());
+const activePlaneName = computed(() => {
+  const planeId = world.getActivePlaneId();
+  if (!planeId) return '';
+  
+  // Determine plane name based on semantic role
+  try {
+    const horizontalPlane = world.getHorizontalPlane();
+    if (planeId === horizontalPlane.id) {
+      return 'P_H (Horizontal)';
+    }
+  } catch {}
+  
+  try {
+    const verticalPlane = world.getVerticalPlane();
+    if (planeId === verticalPlane.id) {
+      return 'P_V (Vertical)';
+    }
+  } catch {}
+  
+  return planeId;
+});
 
 // 3D coordinates state
 const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
@@ -695,16 +716,16 @@ function handleDeleteSelected() {
 function handleSelectAll() {
   const selectedIds: string[] = [];
   
-  // Select all points in the active plane
-  for (const point of world.getAllPoints2D()) {
-    if (point.planeId === activePlaneId.value) {
+  // Get active plane and iterate through its elements
+  const activePlane = world.getProjectionPlaneById(activePlaneId.value);
+  if (activePlane) {
+    // Select all points in the active plane
+    for (const point of activePlane.getAllPoints()) {
       selectedIds.push(point.id);
     }
-  }
-  
-  // Select all lines in the active plane
-  for (const line of world.getAllLines2D()) {
-    if (line.planeId === activePlaneId.value) {
+    
+    // Select all lines in the active plane
+    for (const line of activePlane.getAllLines()) {
       selectedIds.push(line.id);
     }
   }

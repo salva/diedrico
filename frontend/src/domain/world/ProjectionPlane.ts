@@ -520,8 +520,10 @@ export abstract class ProjectionPlane {
     }
 
     // Validate lines exist
-    const line1 = world.getLine2DRealization(line1Id);
-    const line2 = world.getLine2DRealization(line2Id);
+    const l1 = this.getLine(line1Id) || world.getLine2D(line1Id);
+    const l2 = this.getLine(line2Id) || world.getLine2D(line2Id);
+    const line1 = l1?.realize2D(world);
+    const line2 = l2?.realize2D(world);
     
     if (!line1) {
       throw new Error(`Invalid line1Id: ${line1Id}. Line does not exist.`);
@@ -562,8 +564,10 @@ export abstract class ProjectionPlane {
     }
 
     // Validate elements exist
-    const line = world.getLine2DRealization(lineId);
-    const circle = world.getCircle2DRealization(circleId);
+    const lineElement = this.getLine(lineId);
+    const circleElement = this.getCircle(circleId);
+    const line = lineElement?.realize2D(world);
+    const circle = circleElement?.realize2D(world);
     
     if (!line) {
       throw new Error(`Invalid lineId: ${lineId}. Line does not exist.`);
@@ -609,8 +613,10 @@ export abstract class ProjectionPlane {
     }
 
     // Validate circles exist
-    const circle1 = world.getCircle2DRealization(circle1Id);
-    const circle2 = world.getCircle2DRealization(circle2Id);
+    const circle1Element = this.getCircle(circle1Id);
+    const circle2Element = this.getCircle(circle2Id);
+    const circle1 = circle1Element?.realize2D(world);
+    const circle2 = circle2Element?.realize2D(world);
     
     if (!circle1) {
       throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist.`);
@@ -670,8 +676,8 @@ export abstract class ProjectionPlane {
     }
 
     // Validate points have distinct positions
-    const point1Realization = world.getPoint2DRealization(point1Id);
-    const point2Realization = world.getPoint2DRealization(point2Id);
+    const point1Realization = point1?.realize2D(world);
+    const point2Realization = point2?.realize2D(world);
     
     if (!point1Realization || !point2Realization) {
       throw new Error(`Cannot compute point realizations. Points may depend on missing elements.`);
@@ -808,7 +814,8 @@ export abstract class ProjectionPlane {
     }
 
     // Validate reference line exists (could be on any plane for perpendicular construction)
-    const referenceLine = world.getLine2DRealization(referenceLineId);
+    const refLineElement = world.getLine2D(referenceLineId);
+    const referenceLine = refLineElement?.realize2D(world);
     if (!referenceLine) {
       throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
     }
@@ -849,13 +856,14 @@ export abstract class ProjectionPlane {
     }
 
     // Validate reference line exists in world
-    const referenceLine = world.getLine2DRealization(referenceLineId);
+    const refLineElement = world.getLine2D(referenceLineId);
+    const referenceLine = refLineElement?.realize2D(world);
     if (!referenceLine) {
       throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
     }
 
     // Validate primary guide exists
-    const primaryGuide = world.getLine2DById(primaryGuideId);
+    const primaryGuide = world.getLine2D(primaryGuideId);
     if (!primaryGuide) {
       throw new Error(`Invalid primaryGuideId: ${primaryGuideId}. Primary guide does not exist.`);
     }

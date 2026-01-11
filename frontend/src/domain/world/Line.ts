@@ -174,8 +174,11 @@ export class Line2DByTwoPoints extends Line2D {
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get both points from world
-    const p1Realization = world.getPoint2DRealization(this.point1Id);
-    const p2Realization = world.getPoint2DRealization(this.point2Id);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const point1 = plane?.getPoint(this.point1Id);
+    const point2 = plane?.getPoint(this.point2Id);
+    const p1Realization = point1?.realize2D(world);
+    const p2Realization = point2?.realize2D(world);
     
     if (!p1Realization || !p2Realization) {
       return null;  // Cannot compute line without both points
@@ -313,7 +316,9 @@ export class Line2DPerpendicularToLine extends Line2D {
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get reference line realization from world
-    const referenceLine = world.getLine2DRealization(this.referenceLineId);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const refLine = plane?.getLine(this.referenceLineId);
+    const referenceLine = refLine?.realize2D(world);
     if (!referenceLine) {
       return null;  // Cannot compute line without reference line
     }
@@ -324,7 +329,8 @@ export class Line2DPerpendicularToLine extends Line2D {
     }
 
     // Get through-point realization from world
-    const throughPointRealization = world.getPoint2DRealization(this.throughPointId);
+    const throughPoint = plane?.getPoint(this.throughPointId);
+    const throughPointRealization = throughPoint?.realize2D(world);
     if (!throughPointRealization) {
       return null;  // Cannot compute line without through-point
     }

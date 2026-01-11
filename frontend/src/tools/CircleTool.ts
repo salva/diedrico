@@ -86,8 +86,11 @@ export class CircleTool extends BaseTool {
         const circumferencePointId = pointResult.outputs.pointId;
         
         // Validate minimum radius before creating circle
-        const centerRealization = world.getPoint2DRealization(this.centerPointId!);
-        const circumferenceRealization = world.getPoint2DRealization(circumferencePointId);
+        const plane = world.getProjectionPlaneById(planeId);
+        const centerPoint = plane?.getPoint(this.centerPointId!);
+        const circumferencePoint = plane?.getPoint(circumferencePointId);
+        const centerRealization = centerPoint?.realize2D(world);
+        const circumferenceRealization = circumferencePoint?.realize2D(world);
         
         if (centerRealization && circumferenceRealization) {
           const radius = centerRealization.position.distanceTo(circumferenceRealization.position);

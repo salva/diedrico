@@ -86,8 +86,11 @@ export class Segment2DByPoints extends Line2D {
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get both endpoint realizations from world
-    const p1Realization = world.getPoint2DRealization(this.point1Id);
-    const p2Realization = world.getPoint2DRealization(this.point2Id);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const p1 = plane?.getPoint(this.point1Id);
+    const p2 = plane?.getPoint(this.point2Id);
+    const p1Realization = p1?.realize2D(world);
+    const p2Realization = p2?.realize2D(world);
 
     if (!p1Realization || !p2Realization) {
       return null;  // Cannot compute segment without both endpoints
@@ -96,21 +99,21 @@ export class Segment2DByPoints extends Line2D {
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible) {
       // Infeasible segment: arbitrary points
-      const p1 = new Vector3(0, 0, 1);
-      const p2 = new Vector3(1, 0, 1);
-      return new Line2DRealization2D(p1, p2, false);
+      const pos1 = new Vector3(0, 0, 1);
+      const pos2 = new Vector3(1, 0, 1);
+      return new Line2DRealization2D(pos1, pos2, false);
     }
 
-    const p1 = p1Realization.position;
-    const p2 = p2Realization.position;
+    const pos1 = p1Realization.position;
+    const pos2 = p2Realization.position;
 
     // Check for degenerate segment (endpoints coincident)
-    if (p1.distanceToSquared(p2) < 1e-10) {
-      return new Line2DRealization2D(p1.clone(), p2.clone(), false);
+    if (pos1.distanceToSquared(pos2) < 1e-10) {
+      return new Line2DRealization2D(pos1.clone(), pos2.clone(), false);
     }
 
     // Return segment: both point1 and point2 are finite (z=1)
-    return new Line2DRealization2D(p1.clone(), p2.clone(), true);
+    return new Line2DRealization2D(pos1.clone(), pos2.clone(), true);
   }
 }
 

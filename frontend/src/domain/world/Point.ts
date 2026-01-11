@@ -227,8 +227,11 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
    * @returns Point2DRealization2D with intersection point, or infeasible if lines are parallel/coincident or intersection falls outside segment bounds
    */
   realize2D(world: World): Point2DRealization2D {
-    const line1 = world.getLine2DRealization(this.line1Id);
-    const line2 = world.getLine2DRealization(this.line2Id);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const l1 = plane?.getLine(this.line1Id);
+    const l2 = plane?.getLine(this.line2Id);
+    const line1 = l1?.realize2D(world);
+    const line2 = l2?.realize2D(world);
     
     // Check if parent elements are infeasible - propagate infeasibility
     if ((line1 && !line1.feasible) || (line2 && !line2.feasible)) {
@@ -249,8 +252,8 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
     }
     
     // Get the domain objects to check if they're segments
-    const line1Domain = world.getLine2DById(this.line1Id);
-    const line2Domain = world.getLine2DById(this.line2Id);
+    const line1Domain = world.getLine2D(this.line1Id);
+    const line2Domain = world.getLine2D(this.line2Id);
     
     // Check if intersection falls within segment bounds
     // A segment has point1.z=1 and point2.z=1 (finite endpoints)
@@ -359,8 +362,11 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
    * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection or intersection falls outside segment bounds
    */
   realize2D(world: World): Point2DRealization2D {
-    const line = world.getLine2DRealization(this.lineId);
-    const circle = world.getCircle2DRealization(this.circleId);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const l = plane?.getLine(this.lineId);
+    const c = plane?.getCircle(this.circleId);
+    const line = l?.realize2D(world);
+    const circle = c?.realize2D(world);
     
     // Check if parent elements are infeasible - propagate infeasibility
     if ((line && !line.feasible) || (circle && !circle.feasible)) {
@@ -384,7 +390,7 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
     const point = result.points[Math.min(this.index, result.points.length - 1)];
     
     // Check if the line is actually a segment and if intersection is within bounds
-    const lineDomain = world.getLine2DById(this.lineId);
+    const lineDomain = world.getLine2D(this.lineId);
     if (lineDomain && lineDomain.type === 'segment' && line.point2.z === 1) {
       // Segment: check if intersection is between point1 and point2
       if (!this.isPointOnSegment(point, line)) {
@@ -478,8 +484,11 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
    * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection
    */
   realize2D(world: World): Point2DRealization2D {
-    const circle1 = world.getCircle2DRealization(this.circle1Id);
-    const circle2 = world.getCircle2DRealization(this.circle2Id);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const c1 = plane?.getCircle(this.circle1Id);
+    const c2 = plane?.getCircle(this.circle2Id);
+    const circle1 = c1?.realize2D(world);
+    const circle2 = c2?.realize2D(world);
     
     // Check if parent elements are infeasible - propagate infeasibility
     if ((circle1 && !circle1.feasible) || (circle2 && !circle2.feasible)) {
@@ -566,7 +575,9 @@ export class SiblingIntersectionPoint2D extends Point2D {
    */
   realize2D(world: World): Point2DRealization2D {
     // Get primary intersection point's 2D realization
-    const primaryRealization = world.getPoint2DRealization(this.primaryIntersectionId);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const primaryPoint = plane?.getPoint(this.primaryIntersectionId);
+    const primaryRealization = primaryPoint?.realize2D(world);
     if (!primaryRealization) {
       console.warn(`[SiblingIntersectionPoint2D] Cannot get realization for primary ${this.primaryIntersectionId}`);
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
@@ -580,19 +591,21 @@ export class SiblingIntersectionPoint2D extends Point2D {
 
     // VALIDATION: Verify parametric consistency assumption (inexpensive check)
     // Find HalfHingeLine2D involved in primary intersection to validate consistency
-    const primaryPoint = world.getPoint2DById(this.primaryIntersectionId);
-    if (primaryPoint && 'elementAId' in primaryPoint && 'elementBId' in primaryPoint) {
-      const elemA = world.getLine2DById(primaryPoint.elementAId);
-      const elemB = world.getLine2DById(primaryPoint.elementBId);
+    const primaryPointDomain = world.getPoint2D(this.primaryIntersectionId);
+    if (primaryPointDomain && 'elementAId' in primaryPointDomain && 'elementBId' in primaryPointDomain) {
+      const primaryIntersection = primaryPointDomain as any; // Type assertion for intersection-specific properties
+      const elemA = world.getLine2D(primaryIntersection.elementAId);
+      const elemB = world.getLine2D(primaryIntersection.elementBId);
       
       // Check if either element is a HalfHingeLine2D
       const primaryHHL = (elemA?.type === 'half-hinge' ? elemA : elemB?.type === 'half-hinge' ? elemB : null) as any;
       if (primaryHHL) {
         // Find corresponding HalfHingeLine2D on sibling plane
         const hingeLineId = primaryHHL.hingeLineId;
-        const siblingPlane = world.getSiblingPlaneForIntersection(primaryPoint);
-        if (siblingPlane) {
-          const siblingHHL = Array.from(world.getProjectionPlane(siblingPlane.id)?.lines.values() || [])
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPointDomain);
+        if (siblingPlaneId) {
+          const siblingPlane = world.getProjectionPlaneById(siblingPlaneId);
+          const siblingHHL = siblingPlane?.getAllLines()
             .find(line => line.type === 'half-hinge' && (line as any).hingeLineId === hingeLineId) as any;
           
           if (siblingHHL) {

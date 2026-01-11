@@ -1,22 +1,5 @@
 <template>
   <div class="svg-canvas-container">
-    <!-- Plane selector -->
-    <div class="plane-selector">
-      <label>Active Plane:</label>
-      <button 
-        :class="{ active: activePlane === 'proj_plane_H' }"
-        @click="activePlane = 'proj_plane_H'"
-      >
-        P_H (Horizontal)
-      </button>
-      <button 
-        :class="{ active: activePlane === 'proj_plane_V' }"
-        @click="activePlane = 'proj_plane_V'"
-      >
-        P_V (Vertical)
-      </button>
-    </div>
-    
     <svg
       ref="svgElement"
       class="svg-canvas"
@@ -173,8 +156,8 @@ const emit = defineEmits<{
 
 const svgElement = ref<SVGSVGElement | null>(null);
 
-// Active plane selection
-const activePlane = ref<'proj_plane_H' | 'proj_plane_V'>('proj_plane_H');
+// Active plane - read from World (managed by App.vue)
+const activePlane = computed(() => world.getActivePlaneId());
 
 // Dynamic canvas dimensions - updated based on container size
 const canvasWidth = ref(1600);
@@ -304,12 +287,6 @@ const worldVersion = ref(0);
 let lastCoordinateUpdate = 0;
 const COORDINATE_UPDATE_THROTTLE_MS = 50; // 20fps for coordinate updates
 
-// Watch active plane changes and emit to parent
-watch(activePlane, (newPlane) => {
-  const planeName = newPlane === 'proj_plane_H' ? 'P_H (Horizontal)' : 'P_V (Vertical)';
-  emit('update-active-plane', { id: newPlane, name: planeName });
-});
-
 // Update canvas dimensions based on container size
 function updateCanvasDimensions() {
   if (!svgElement.value) return;
@@ -320,10 +297,11 @@ function updateCanvasDimensions() {
   canvasHeight.value = rect.height;
 }
 
-// Initialize fixed elements on mount
+// Initialize canvas on mount
 onMounted(() => {
-  world.initializeFixedElements();
-  worldVersion.value++; // Trigger initial render
+  // World is already initialized by InitializeWorldCommand in constructor
+  // Just trigger initial render
+  worldVersion.value++;
   
   // Set initial canvas dimensions
   updateCanvasDimensions();
@@ -333,8 +311,9 @@ onMounted(() => {
   window.addEventListener('resize', resizeHandler);
   
   console.log('World initialized');
-  console.log('Points in world:', world.getAllPoints2D().length);
-  console.log('Points:', world.getAllPoints2D().map(p => ({ id: p.id, type: p.type, planeId: p.planeId })));
+  const allPlanes = world.getAllProjectionPlanes();
+  const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
+  console.log('Points in world:', totalPoints);
   
   // Cleanup on unmount
   return () => {
@@ -346,14 +325,12 @@ onMounted(() => {
 function getPlaneTransformsForInput(): Map<string, Matrix3> {
   const transforms = new Map<string, Matrix3>();
   
-  const realizationH = world.getProjectionPlane2DRealization('proj_plane_H');
-  const realizationV = world.getProjectionPlane2DRealization('proj_plane_V');
-  
-  if (realizationH) {
-    transforms.set('proj_plane_H', realizationH.paperToPlane2D);  // paperToPlane2D for input
-  }
-  if (realizationV) {
-    transforms.set('proj_plane_V', realizationV.paperToPlane2D);  // paperToPlane2D for input
+  // Get all projection planes dynamically
+  for (const plane of world.getAllProjectionPlanes()) {
+    const realization = world.getProjectionPlane2DRealization(plane.id);
+    if (realization) {
+      transforms.set(plane.id, realization.paperToPlane2D);
+    }
   }
   
   return transforms;
@@ -363,14 +340,12 @@ function getPlaneTransformsForInput(): Map<string, Matrix3> {
 function getPlaneTransformsForRendering(): Map<string, Matrix3> {
   const transforms = new Map<string, Matrix3>();
   
-  const realizationH = world.getProjectionPlane2DRealization('proj_plane_H');
-  const realizationV = world.getProjectionPlane2DRealization('proj_plane_V');
-  
-  if (realizationH) {
-    transforms.set('proj_plane_H', realizationH.planeToPaper2D);  // planeToPaper2D for rendering
-  }
-  if (realizationV) {
-    transforms.set('proj_plane_V', realizationV.planeToPaper2D);  // planeToPaper2D for rendering
+  // Get all projection planes dynamically
+  for (const plane of world.getAllProjectionPlanes()) {
+    const realization = world.getProjectionPlane2DRealization(plane.id);
+    if (realization) {
+      transforms.set(plane.id, realization.planeToPaper2D);
+    }
   }
   
   return transforms;

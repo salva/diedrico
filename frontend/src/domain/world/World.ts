@@ -12,12 +12,12 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
  */
 
-import { Vector3, Vector4 } from 'three';
+import { Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
-import { Point2D, FreePoint2D, Point2DRealization2D, Point3DRealization3D } from './Point';
-import { Line2D, Line2DRealization2D } from './Line';
+import { Point2D, FreePoint2D, Point3DRealization3D } from './Point';
+import { Line2D } from './Line';
 import { Segment2D } from './Segment';
-import { Circle2D, Circle2DRealization2D } from './Circle';
+import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D } from './Plane';
@@ -26,14 +26,6 @@ import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
 import { Element2D } from './Element2D';
 import { getContainerIdFromElementId } from './ElementId';
-import {
-  AddPlane3DOp,
-  AddProjectionPlaneOp,
-  AddOriginPoint2DOp,
-  AddHingeLineOp,
-  AddHalfHingeLine2DOp,
-  CreateInitializationSubprocessOp
-} from '@/commands/operations/world/InitializationOps';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -62,6 +54,7 @@ export class World {
   private horizontalOriginId!: string;   // ID of origin point on horizontal plane
   private verticalOriginId!: string;     // ID of origin point on vertical plane
   private mainHingeLineId!: string;      // ID of main hinge line connecting the two planes
+  private activePlaneId!: string;        // ID of currently active projection plane (set by InitializeWorldCommand)
   
   // Phase 46: ID generation counters for automatic ID assignment
   private projPlaneCounter: number = 0;
@@ -83,8 +76,13 @@ export class World {
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService(this.processTree);
     
-    // Phase 47: Initialize fixed elements using Command/Operation pattern
-    this.initializeFixedElements();
+    // Phase 47: Initialize fixed elements using InitializeWorldCommand
+    // Use dynamic import to avoid circular dependency
+    import('@/commands/InitializeWorldCommand').then(({ InitializeWorldCommand }) => {
+      const initCmd = new InitializeWorldCommand(this);
+      initCmd.commit();
+      this.notifyChange();
+    });
   }
 
   /**
@@ -121,83 +119,18 @@ export class World {
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService(this.processTree);
     
-    // Reinitialize fixed elements
-    this.initializeFixedElements();
-    
-    // Notify UI of change
-    this.notifyChange();
+    // Phase 47: Reinitialize fixed elements using InitializeWorldCommand
+    // Use dynamic import to avoid circular dependency
+    import('@/commands/InitializeWorldCommand').then(({ InitializeWorldCommand }) => {
+      const initCmd = new InitializeWorldCommand(this);
+      initCmd.commit();
+      
+      // Notify UI of change
+      this.notifyChange();
+    });
   }
 
-  /**
-   * Initialize fixed elements: P_V, P_H, origin O, and hinge line HL_HV
-   * These are always present and cannot be deleted.
-   * 
-   * Phase 47: Uses Command/Operation pattern instead of imperative code.
-   * Each initialization step is an atomic operation.
-   */
-  initializeFixedElements(): void {
-    // Phase 47: Use operations to initialize fixed elements
-    
-    // Step 1: Create initialization subprocess
-    const createSubprocessOp = new CreateInitializationSubprocessOp('World Initialization');
-    createSubprocessOp.apply(this);
-    
-    // Generate IDs for fundamental structure (Phase 46)
-    const planeHId = 'plane_H';
-    const planeVId = 'plane_V';
-    const projPlaneHId = 'proj_plane_1';
-    const projPlaneVId = 'proj_plane_2';
-    const hingeLineId = 'hinge_line_1';
-    
-    // Store semantic references
-    this.horizontalPlaneId = projPlaneHId;
-    this.verticalPlaneId = projPlaneVId;
-    this.mainHingeLineId = hingeLineId;
-    
-    // Step 2-3: Create 3D planes
-    new AddPlane3DOp(planeHId, 'horizontal').apply(this);
-    new AddPlane3DOp(planeVId, 'vertical').apply(this);
-    
-    // Step 4-5: Create projection planes
-    new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal').apply(this);
-    new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical').apply(this);
-    
-    // Step 6-7: Create origin points (locked at 0,0)
-    const originPos = new Vector3(0, 0, 1);
-    const originHResult = new AddOriginPoint2DOp(projPlaneHId, originPos).apply(this);
-    const originVResult = new AddOriginPoint2DOp(projPlaneVId, originPos).apply(this);
-    
-    // Store origin IDs from operation outputs
-    if (originHResult.success) {
-      this.horizontalOriginId = originHResult.outputs.pointId;
-    }
-    if (originVResult.success) {
-      this.verticalOriginId = originVResult.outputs.pointId;
-    }
-    
-    // Origin point O at (0,0,0) in 3D space
-    this.originPoint = new Vector4(0, 0, 0, 1);
-    
-    // Step 8: Create hinge line
-    new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId).apply(this);
-    
-    // Step 9-10: Create half hinge lines (2D representations at v=0)
-    const hingePoint = new Vector3(0, 0, 1);
-    const hingeDirection = new Vector3(1, 0, 0);
-    new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection).apply(this);
-    new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection).apply(this);
-    
-    // Validate parametric consistency
-    const projPlaneH = this.projectionPlanes.get(projPlaneHId);
-    const projPlaneV = this.projectionPlanes.get(projPlaneVId);
-    if (projPlaneH && projPlaneV) {
-      const halfHingeH = projPlaneH.getAllLines().find(l => l.type === 'half-hinge');
-      const halfHingeV = projPlaneV.getAllLines().find(l => l.type === 'half-hinge');
-      if (halfHingeH && halfHingeV) {
-        HingeLine.validateParametricConsistency(halfHingeH, halfHingeV);
-      }
-    }
-  }
+
 
   /**
    * Get next unique ID counter value (for element ID generation)
@@ -229,6 +162,26 @@ export class World {
    */
   generateHingeLineId(): string {
     return `HL_${++this.hingeLineCounter}`;
+  }
+
+  /**
+   * Get active projection plane ID
+   * @returns ID of currently active projection plane
+   */
+  getActivePlaneId(): string {
+    return this.activePlaneId;
+  }
+
+  /**
+   * Set active projection plane (used by operations)
+   * @param planeId ID of plane to make active
+   */
+  setActivePlaneId(planeId: string): void {
+    if (!this.projectionPlanes.has(planeId)) {
+      throw new Error(`[World] Cannot set active plane: plane ${planeId} does not exist`);
+    }
+    this.activePlaneId = planeId;
+    this.notifyChange();
   }
 
   /**
@@ -321,32 +274,6 @@ export class World {
   }
 
   /**
-   * Get a line by searching all planes
-   * @param lineId ID of line to get
-   * @returns Line if found, undefined otherwise
-   */
-  private getLine2DFromPlanes(lineId: string): Line2D | undefined {
-    for (const plane of this.projectionPlanes.values()) {
-      const line = plane.getLine(lineId);
-      if (line) return line;
-    }
-    return undefined;
-  }
-
-  /**
-   * Get a circle by searching all planes
-   * @param circleId ID of circle to get
-   * @returns Circle if found, undefined otherwise
-   */
-  private getCircle2DFromPlanes(circleId: string): Circle2D | undefined {
-    for (const plane of this.projectionPlanes.values()) {
-      const circle = plane.getCircle(circleId);
-      if (circle) return circle;
-    }
-    return undefined;
-  }
-
-  /**
    * Add a point to the world
    * Point must already have an ID assigned
    * @param point Point to add
@@ -374,24 +301,6 @@ export class World {
    * Get the 2D realization for a point (cached or computed on-demand)
    * Implements RealizationContext interface for recursive realization lookup
    */
-  getPoint2DRealization(pointId: string): Point2DRealization2D | undefined {
-    // Phase 22.5.3: Use plane-only storage
-    // Get point from planes
-    const point = this.getPoint2DFromPlanes(pointId);
-    if (!point) {
-      return undefined;
-    }
-
-    // Delegate to ProjectionPlane for computation and caching
-    const plane = this.projectionPlanes.get(point.planeId);
-    if (plane) {
-      return plane.realizePoint2D(point, this);
-    }
-
-    // Fallback: compute directly if plane not found (shouldn't happen)
-    return point.realize2D(this);
-  }
-
   /**
    * Get the 3D realization for a point (cached or computed on-demand)
    * Computes 3D position by transforming the 2D realization using the projection plane's 3D transform
@@ -410,7 +319,7 @@ export class World {
     }
 
     // Get the point's 2D realization (intrinsic plane coordinates)
-    const realization2D = this.getPoint2DRealization(pointId);
+    const realization2D = point.realize2D(this);
     if (!realization2D) {
       return undefined;
     }
@@ -545,24 +454,6 @@ export class World {
    * @param lineId ID of line to get realization for
    * @returns Line2DRealization2D if line exists and can be computed, undefined otherwise
    */
-  getLine2DRealization(lineId: string): Line2DRealization2D | undefined {
-    // Phase 22.5.3: Use plane-only storage
-    // Get line from planes
-    const line = this.getLine2DFromPlanes(lineId);
-    if (!line) {
-      return undefined;
-    }
-
-    // Delegate to ProjectionPlane for computation and caching
-    const plane = this.projectionPlanes.get(line.planeId);
-    if (plane) {
-      return plane.realizeLine2D(line, this);
-    }
-
-    // Fallback: compute directly if plane not found (shouldn't happen)
-    return line.realize2D(this);
-  }
-
   /**
    * Invalidate line realization cache for a specific line
    * Call this when the line's dependencies change
@@ -654,24 +545,6 @@ export class World {
    * Returns circle geometry (center and radius) in plane coordinates
    * Phase 22.5: Delegates to ProjectionPlane for computation
    */
-  getCircle2DRealization(circleId: string): Circle2DRealization2D | undefined {
-    // Phase 22.5.3: Use plane-only storage
-    // Get circle from planes
-    const circle = this.getCircle2DFromPlanes(circleId);
-    if (!circle) {
-      return undefined;
-    }
-
-    // Delegate to ProjectionPlane for computation and caching
-    const plane = this.projectionPlanes.get(circle.planeId);
-    if (plane) {
-      return plane.realizeCircle2D(circle, this);
-    }
-
-    // Fallback: compute directly if plane not found (shouldn't happen)
-    return circle.realize2D(this);
-  }
-
   // ========================================
   // Guide Methods
   // ========================================
@@ -722,6 +595,14 @@ export class World {
    */
   getProjectionPlaneById(id: string): ProjectionPlane | undefined {
     return this.projectionPlanes.get(id);
+  }
+
+  /**
+   * Get all projection planes
+   * @returns Array of all ProjectionPlane objects
+   */
+  getAllProjectionPlanes(): ProjectionPlane[] {
+    return Array.from(this.projectionPlanes.values());
   }
 
   /**
@@ -813,20 +694,6 @@ export class World {
   }
 
   /**
-   * Get P_H plane
-   */
-  getPH(): Plane3D | undefined {
-    return this.planes.get('plane_H');
-  }
-
-  /**
-   * Get P_V plane
-   */
-  getPV(): Plane3D | undefined {
-    return this.planes.get('plane_V');
-  }
-
-  /**
    * Get the process tree (construction history)
    */
   getProcessTree(): ProcessTree {
@@ -897,7 +764,7 @@ export class World {
    */
   getHingeLineFromHalfHingeLine(halfHingeLineId: string): HingeLine | undefined {
     // Get the HalfHingeLine2D by searching all planes
-    const halfHingeLine = this.getLine2DById(halfHingeLineId);
+    const halfHingeLine = this.getLine2D(halfHingeLineId);
     if (!halfHingeLine || halfHingeLine.type !== 'half-hinge') {
       return undefined;
     }
@@ -944,8 +811,8 @@ export class World {
     }
 
     // Check if either element is a HalfHingeLine2D
-    const element1 = element1Id ? this.getLine2DById(element1Id) : undefined;
-    const element2 = element2Id ? this.getLine2DById(element2Id) : undefined;
+    const element1 = element1Id ? this.getLine2D(element1Id) : undefined;
+    const element2 = element2Id ? this.getLine2D(element2Id) : undefined;
 
     let halfHingeLine: HalfHingeLine2D | undefined;
 
@@ -993,7 +860,7 @@ export class World {
     currentPlaneId: string
   ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
     // Get HalfHingeLine2D
-    const halfHingeLine = this.getLine2DById(halfHingeLineId);
+    const halfHingeLine = this.getLine2D(halfHingeLineId);
     if (!halfHingeLine || halfHingeLine.type !== 'half-hinge') {
       return undefined;
     }
@@ -1044,42 +911,15 @@ export class World {
    * Get all points from all projection planes
    * @returns Array of all Point2D objects
    */
-  getAllPoints2D(): Point2D[] {
-    const allPoints: Point2D[] = [];
-    for (const plane of this.projectionPlanes.values()) {
-      allPoints.push(...plane.getAllPoints());
-    }
-    return allPoints;
-  }
-
   /**
-   * Get all lines from all projection planes
-   * @returns Array of all Line2D objects
+   * Get all lines across all planes
+   * Deprecated: Use plane.getAllLines() for plane-specific access
+   * Or world.getAllProjectionPlanes() to iterate planes
    */
-  getAllLines2D(): Line2D[] {
-    const allLines: Line2D[] = [];
-    for (const plane of this.projectionPlanes.values()) {
-      allLines.push(...plane.getAllLines());
-    }
-    return allLines;
-  }
-
   /**
    * Get a point by ID (searches all planes)
    * @param pointId ID of the point
    * @returns Point if found, undefined otherwise
    */
-  getPoint2DById(pointId: string): Point2D | undefined {
-    return this.getPoint2DFromPlanes(pointId);
-  }
-
-  /**
-   * Get a line by ID (searches all planes)
-   * @param lineId ID of the line
-   * @returns Line if found, undefined otherwise
-   */
-  getLine2DById(lineId: string): Line2D | undefined {
-    return this.getLine2DFromPlanes(lineId);
-  }
 }
 

@@ -82,7 +82,9 @@ export class Guide2D extends Line2DPerpendicularToLine {
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get reference line realization from world
-    const referenceLine = world.getLine2DRealization(this.referenceLineId);
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const refLine = plane?.getLine(this.referenceLineId);
+    const referenceLine = refLine?.realize2D(world);
     if (!referenceLine) {
       return null;  // Cannot compute guide without reference line
     }
@@ -94,7 +96,8 @@ export class Guide2D extends Line2DPerpendicularToLine {
     }
 
     // Get through-point realization from world
-    const throughPointRealization = world.getPoint2DRealization(this.throughPointId);
+    const throughPoint = plane?.getPoint(this.throughPointId);
+    const throughPointRealization = throughPoint?.realize2D(world);
     if (!throughPointRealization) {
       return null;  // Cannot compute guide without through-point
     }
@@ -203,13 +206,14 @@ export class SiblingGuide2D extends Line2D {
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get primary guide's realization
-    const primaryGuide = world.getLine2DById(this.primaryGuideId);
+    const primaryGuide = world.getLine2D(this.primaryGuideId);
     if (!primaryGuide) {
       console.warn(`[SiblingGuide2D] Cannot find primary guide ${this.primaryGuideId}`);
       return null;
     }
 
-    const primaryGuideRealization = world.getLine2DRealization(this.primaryGuideId);
+    const primaryGuidePlane = world.getProjectionPlaneById(primaryGuide.planeId);
+    const primaryGuideRealization = primaryGuidePlane?.getLine(this.primaryGuideId)?.realize2D(world);
     if (!primaryGuideRealization) {
       return null;  // Cannot compute without primary guide realization
     }
@@ -228,7 +232,8 @@ export class SiblingGuide2D extends Line2D {
       return null;
     }
 
-    const primaryHalfHingeLineRealization = world.getLine2DRealization(primaryReferenceLineId);
+    const primaryRefLine = primaryGuidePlane?.getLine(primaryReferenceLineId);
+    const primaryHalfHingeLineRealization = primaryRefLine?.realize2D(world);
     if (!primaryHalfHingeLineRealization) {
       console.warn(`[SiblingGuide2D] Cannot get realization for primary HalfHingeLine ${primaryReferenceLineId}`);
       return null;
@@ -243,7 +248,7 @@ export class SiblingGuide2D extends Line2D {
     }
 
     // Get primary HalfHingeLine's parametric representation: R = Q + d·D
-    const primaryHHL = world.getLine2DById(primaryReferenceLineId) as any;
+    const primaryHHL = world.getLine2D(primaryReferenceLineId) as any;
     if (!primaryHHL || !primaryHHL.point || !primaryHHL.direction) {
       console.warn(`[SiblingGuide2D] Cannot get HalfHingeLine parametric data for ${primaryReferenceLineId}`);
       return null;
@@ -268,7 +273,7 @@ export class SiblingGuide2D extends Line2D {
     }
 
     // Get sibling HalfHingeLine's parametric representation: R' = Q' + d·D'
-    const siblingHHL = world.getLine2DById(this.referenceLineId) as any;
+    const siblingHHL = world.getLine2D(this.referenceLineId) as any;
     if (!siblingHHL || !siblingHHL.point || !siblingHHL.direction) {
       console.warn(`[SiblingGuide2D] Cannot get sibling HalfHingeLine parametric data for ${this.referenceLineId}`);
       return null;
@@ -285,7 +290,9 @@ export class SiblingGuide2D extends Line2D {
     );
 
     // Get sibling HalfHingeLine realization for perpendicular computation
-    const siblingHalfHingeLineRealization = world.getLine2DRealization(this.referenceLineId);
+    const siblingPlane = world.getProjectionPlaneById(this.planeId);
+    const siblingRefLine = siblingPlane?.getLine(this.referenceLineId);
+    const siblingHalfHingeLineRealization = siblingRefLine?.realize2D(world);
     if (!siblingHalfHingeLineRealization) {
       return null;  // Cannot compute without sibling HalfHingeLine
     }

@@ -76,7 +76,7 @@ export class GuideSequenceFactory {
         siblingGuideId = siblingResult.outputs.siblingGuideId;
         
         // Update bidirectional links
-        const primaryGuide = world.getLine2DById(guideId);
+        const primaryGuide = world.getLine2D(guideId);
         
         if (primaryGuide && 'siblingGuideId' in primaryGuide) {
           (primaryGuide as any).siblingGuideId = siblingGuideId;
