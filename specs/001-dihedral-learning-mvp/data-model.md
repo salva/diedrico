@@ -258,6 +258,207 @@ const point = world.getPlane(planeId)?.getPoint(localId);
 
 ---
 
+## Semantic Entity References (Phase 46)
+
+### Problem Statement
+
+**Previous State (Phase 45)**: World initialization used hardcoded IDs for fundamental entities:
+- Projection planes: `'proj_plane_H'`, `'proj_plane_V'`
+- 3D planes: `'plane_H'`, `'plane_V'`
+- Origin points: `'proj_plane_H/O_H'`, `'proj_plane_V/O_V'`
+- Hinge line: `'HL_HV'`
+- Half hinge lines: `'proj_plane_H/half_HL_HV_on_PH'`, `'proj_plane_V/half_HL_HV_on_PV'`
+
+**Problems**:
+1. Violates principle that all IDs should be system-generated
+2. Cannot create multiple projection plane pairs (IDs would collide)
+3. Tests depend on specific hardcoded IDs (brittle, hard to maintain)
+4. Not future-proof for dynamic plane creation
+
+**Solution**: Generate all IDs automatically, track entities by **semantic role** (horizontal plane, vertical plane) not by hardcoded ID.
+
+### Architecture
+
+**World Semantic Properties** (private fields):
+```typescript
+class World {
+  // Semantic references to initial entities (track by role, not hardcoded ID)
+  private horizontalPlaneId: string;    // ID of horizontal projection plane
+  private verticalPlaneId: string;      // ID of vertical projection plane  
+  private horizontalOriginId: string;   // ID of origin point on horizontal plane
+  private verticalOriginId: string;     // ID of origin point on vertical plane
+  private mainHingeLineId: string;      // ID of main hinge line connecting the two planes
+  private activePlaneId: string;        // ID of currently active projection plane
+  
+  // ID generation counters for automatic ID assignment
+  private projPlaneCounter: number = 0;
+  private planeCounter: number = 0;
+  private hingeLineCounter: number = 0;
+}
+```
+
+**ID Generation Methods**:
+```typescript
+class World {
+  generateProjPlaneId(): string {
+    return `proj_plane_${++this.projPlaneCounter}`;
+  }
+  
+  generatePlaneId(): string {
+    return `plane_${++this.planeCounter}`;
+  }
+  
+  generateHingeLineId(): string {
+    return `hinge_line_${++this.hingeLineCounter}`;
+  }
+}
+```
+
+**Semantic Accessor Methods** (public API):
+```typescript
+class World {
+  getHorizontalPlane(): ProjectionPlane {
+    const plane = this.projectionPlanes.get(this.horizontalPlaneId);
+    if (!plane) throw new Error('[World] Horizontal plane not initialized');
+    return plane;
+  }
+  
+  getVerticalPlane(): ProjectionPlane {
+    const plane = this.projectionPlanes.get(this.verticalPlaneId);
+    if (!plane) throw new Error('[World] Vertical plane not initialized');
+    return plane;
+  }
+  
+  getHorizontalOrigin(): FreePoint2D {
+    const plane = this.getHorizontalPlane();
+    const point = plane.getPoint(this.horizontalOriginId);
+    if (!point || !(point instanceof FreePoint2D)) {
+      throw new Error('[World] Horizontal origin not found');
+    }
+    return point;
+  }
+  
+  getVerticalOrigin(): FreePoint2D {
+    const plane = this.getVerticalPlane();
+    const point = plane.getPoint(this.verticalOriginId);
+    if (!point || !(point instanceof FreePoint2D)) {
+      throw new Error('[World] Vertical origin not found');
+    }
+    return point;
+  }
+  
+  getMainHingeLine(): HingeLine {
+    const hingeLine = this.hingeLines.get(this.mainHingeLineId);
+    if (!hingeLine) throw new Error('[World] Main hinge line not found');
+    return hingeLine;
+  }
+}
+```
+
+### Benefits
+
+1. **All IDs System-Generated**: No hardcoded IDs anywhere, maintaining consistency with architecture principles
+
+2. **Multiple Plane Pairs Supported**: Generated IDs (proj_plane_1, proj_plane_2, proj_plane_3, ...) allow creating multiple projection plane pairs without collisions
+
+3. **Test Independence**: Tests reference planes by semantic role (`getHorizontalPlane()`) not by hardcoded string, making tests resilient to ID format changes
+
+4. **Consistent with Hierarchical IDs**: Extends Phase 45 hierarchical ID architecture to cover ALL entities including fundamental ones
+
+5. **Semantic Clarity**: Code reads naturally: `world.getHorizontalPlane()` vs `world.getPlane('proj_plane_H')`
+
+6. **Future-Proof**: Enables dynamic plane creation (user can create auxiliary projection planes at runtime)
+
+### ID Format Examples
+
+**Before Phase 46** (hardcoded):
+- Projection planes: `'proj_plane_H'`, `'proj_plane_V'`
+- Origin points: `'proj_plane_H/O_H'`, `'proj_plane_V/O_V'`
+- Hinge line: `'HL_HV'`
+- Half hinge lines: `'proj_plane_H/half_HL_HV_on_PH'`, `'proj_plane_V/half_HL_HV_on_PV'`
+
+**After Phase 46** (generated):
+- Projection planes: `'proj_plane_1'`, `'proj_plane_2'`
+- Origin points: `'proj_plane_1/point2d_1'`, `'proj_plane_2/point2d_1'`
+- Hinge line: `'hinge_line_1'`
+- Half hinge lines: `'proj_plane_1/half_hl_1'`, `'proj_plane_2/half_hl_1'`
+
+### Test Helper Pattern
+
+Instead of tests using hardcoded IDs, they use semantic helper functions:
+
+```typescript
+// frontend/tests/helpers/worldHelpers.ts
+export function getHorizontalPlane(world: World): ProjectionPlane {
+  return world.getHorizontalPlane();
+}
+
+export function getHorizontalPlaneId(world: World): string {
+  return world.getHorizontalPlane().id!;
+}
+
+export function getVerticalPlaneId(world: World): string {
+  return world.getVerticalPlane().id!;
+}
+
+export function getHorizontalOriginId(world: World): string {
+  return world.getHorizontalOrigin().id!;
+}
+```
+
+**Test Usage**:
+```typescript
+// BEFORE (hardcoded IDs - brittle)
+const plane = world.getProjectionPlaneById('proj_plane_H');
+const point = plane.getPoint('proj_plane_H/O_H');
+
+// AFTER (semantic accessors - resilient)
+const plane = getHorizontalPlane(world);
+const pointId = getHorizontalOriginId(world);
+const point = plane.getPoint(pointId);
+```
+
+### Implementation Notes
+
+**InitializeWorldCommand** (Phase 47):
+- Uses generated IDs for all entities
+- Stores semantic references in World after creation
+- Sets horizontalPlaneId, verticalPlaneId, mainHingeLineId, etc.
+- All subsequent code uses semantic accessors
+
+**UI Integration**:
+- App.vue uses semantic accessors for plane name display:
+  ```typescript
+  const activePlaneName = computed(() => {
+    try {
+      const horizontalPlane = world.getHorizontalPlane();
+      if (activePlaneId === horizontalPlane.id) return 'P_H (Horizontal)';
+      
+      const verticalPlane = world.getVerticalPlane();
+      if (activePlaneId === verticalPlane.id) return 'P_V (Vertical)';
+    } catch {}
+    return activePlaneId;
+  });
+  ```
+
+**Test Strategy**:
+- Phase 46: Helper functions created, infrastructure ready
+- Phase 47: All tests updated to use helpers (replacing hardcoded IDs)
+- E2E tests: Use semantic references for plane identification
+
+### Coordination with Other Phases
+
+- **Phase 45 (Hierarchical IDs)**: Provides the ID format that Phase 46 generates
+- **Phase 47 (Command-Based Initialization)**: Fully implements command pattern for World initialization using Phase 46 semantic tracking
+
+### Schema Version
+
+- **Before Phase 46**: Schema 4.0.0 (hierarchical IDs)
+- **After Phase 46**: Schema 4.1.0 (semantic references, all IDs generated)
+- **Breaking Change**: Old projects with hardcoded IDs will not load
+
+---
+
 ## Architecture Overview
 
 **⚠️ Refactoring in Progress**: This document reflects the **new architecture** where ProjectionPlane owns 2D elements. See [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md) for migration plan.

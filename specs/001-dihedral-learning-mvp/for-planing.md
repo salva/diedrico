@@ -27,6 +27,32 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
+
+* [ ] Do not use type aliases in the code.
+* [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
+* [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
+* [ ] Add support for converting intersections into points automatically while building other elements.
+* [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
+* [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
+* [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
+* [ ] Remove any methods and classes tagged as deprecated. Modify client code and tests to use the right interfaces (or remove it when it doesn't make sense any more).
+* [ ] Add tool for creating line parallel to another one passing by given point.
+* [ ] Add tool for creating line perpendicular to another one passing by given point.
+* [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
+* [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
+* [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
+* [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
+* [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
+* [ ] Activate or fix undo & redo buttoms.
+* [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
+* [ ] Ensure Google Drive logout works correctly.
+* [ ] Why are reverse dependencies estored in the process tree? that seems wrong!
+* [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
+* [ ] Check that on circle creation, the radius point really snaps to preexistent points before creating a new one.
+* [ ] Ensure we have a per-plane cache for 2D realizations.
+
+## ALREADY PLANNED
+
 * [X] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old.
   - **STATUS**: ✅ COMPLETE (Jan 11, 2026) - Already implemented with improvements needed
   - **Current Implementation**: App.vue `handleOpenProject()` creates new World instance instead of clearing old one
@@ -51,30 +77,6 @@ Note that completing these tasks may require asking the user for additional info
     2. Update handleNewProject to create new World instance instead of calling world.clear()
     3. Consider if ProcessTree/DependencyService need special handling (currently recreated by World)
   - **Verification**: Partially complete - World is recreated, but CommandStack is not
-
-* [ ] Do not use type aliases in the code.
-* [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
-* [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
-* [ ] Add support for converting intersections into points automatically while building other elements.
-* [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
-* [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
-* [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
-* [ ] Remove any methods and classes tagged as deprecated. Modify client code and tests to use the right interfaces (or remove it when it doesn't make sense any more).
-* [ ] Add tool for creating line parallel to another one passing by given point.
-* [ ] Add tool for creating line perpendicular to another one passing by given point.
-* [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
-* [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
-* [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
-* [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
-* [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
-* [ ] Activate or fix undo & redo buttoms.
-* [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
-* [ ] Ensure Google Drive logout works correctly.
-* [ ] Why are reverse dependencies estored in the process tree? that seems wrong!
-* [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
-* [ ] Check that on circle creation, the radius point really snaps to preexistent points before creating a new one.
-
-## ALREADY PLANNED
 
 * [X] There are still many facade methods in the World class which must be removed (for instance, getAllPoints2D or similar). There are also special case methods as get_HV() which unless they are justified should be removed. In general, performa a cleanup of this clase.
   - **STATUS**: ✅ COMPLETE - Phase 48 implemented (Jan 11, 2026)
