@@ -303,8 +303,8 @@ describe('Factory Integration Tests', () => {
 
       const pointRealization = plane.realizePoint2D(intersectionPoint!, world);
       expect(pointRealization).toBeDefined();
-      expect(pointRealization!.x).toBeCloseTo(5, 0.001);
-      expect(pointRealization!.y).toBeCloseTo(5, 0.001);
+      expect(pointRealization!.position.x).toBeCloseTo(5, 0.001);
+      expect(pointRealization!.position.y).toBeCloseTo(5, 0.001);
 
       // Test: Undo
       commandStack.undo();
@@ -369,15 +369,15 @@ describe('Factory Integration Tests', () => {
       // Verify: Point is on both line (y=5) and circle
       const pointRealization = plane.realizePoint2D(intersectionPoint!, world);
       expect(pointRealization).toBeDefined();
-      expect(pointRealization!.y).toBeCloseTo(5, 0.001); // On line y=5
+      expect(pointRealization!.position.y).toBeCloseTo(5, 0.001); // On line y=5
       
       // Check distance from center equals radius
       const center = plane.getPoint(centerId)!;
       const circlePoint = plane.getPoint(circlePointId)!;
       const centerRealization = plane.realizePoint2D(center, world);
       const circlePointRealization = plane.realizePoint2D(circlePoint, world);
-      const radius = centerRealization!.distanceTo(circlePointRealization!);
-      const distToIntersection = centerRealization!.distanceTo(pointRealization!);
+      const radius = centerRealization!.position.distanceTo(circlePointRealization!.position);
+      const distToIntersection = centerRealization!.position.distanceTo(pointRealization!.position);
       expect(distToIntersection).toBeCloseTo(radius, 0.001);
     });
   });
