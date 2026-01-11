@@ -23,12 +23,21 @@ export class CommandStack {
    * Push a pre-built and committed command to the undo stack
    * Clears the redo stack (can't redo after new action)
    * 
+   * Phase 47: Non-undoable commands (canUndo() === false) are not added to the stack.
+   * This allows InitializeWorldCommand and other non-undoable commands to execute
+   * without appearing in undo history.
+   * 
    * Note: Commands should be built, executed, and committed by tools before pushing
    */
   push(command: Command): void {
     // Verify command is committed (not building)
     if (command.status !== 'committed') {
       throw new Error('Can only push committed commands to stack');
+    }
+    
+    // Phase 47: Skip non-undoable commands
+    if (!command.canUndo()) {
+      return;
     }
     
     // Add to undo stack

@@ -26,7 +26,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
-* [ ] When initializing a new project, instead of doing it using ad-hoc actions, use a initialization command with a set of predefined ops. Also, create a subprocess called Worl initialization and place all the init objects there.
 * [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
 * [ ] Do not use type aliases in the code.
 * [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
@@ -46,9 +45,248 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Activate or fix undo & redo buttoms.
 * [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
 * [ ] It seems we still have methods in world for retrieving realizations (for instance, world.getLine2DRealization()). Remove all of them and change the client code to go directly to the projection plane.
-
+* [ ] Ensure Google Drive logout works correctly.
+* [ ] Why are reverse dependencies estored in the process tree? that seems wrong!
+* [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
+* [ ] Check that on circle creation, the radius point really snaps to preexistent points before creating a new one.
 
 ## ALREADY PLANNED
+
+* [X] Use Command/Operation pattern for World initialization with non-undoable initialization subprocess.
+  - **STATUS**: ✅ PLANNED - Phase 47 created
+  - **Problem**: World initialization uses ad-hoc imperative code in `World.initializeFixedElements()` method, not the Command/Operation pattern used everywhere else
+  - **Current State**:
+    - `World.initializeFixedElements()` called in constructor and `clear()`
+    - Creates 2 3D planes, 2 projection planes, 2 origin points, 1 hinge line, 2 half hinge lines
+    - Direct mutations: `this.planes.set()`, `projPlaneH.addPoint()`, etc.
+    - No undo support (correct - initialization should never be undoable)
+    - No ProcessTree representation (initialization elements not visible in history)
+    - Not using operations (inconsistent with rest of architecture)
+  - **Issues**:
+    - **Architectural inconsistency**: Only place in codebase not using Command/Operation pattern
+    - **Testing difficulty**: Can't test initialization independently from World constructor
+    - **No history representation**: User can't see initialization in ProcessTree (though they can't interact with it either)
+    - **Harder to modify**: Adding/removing initial elements requires editing World.ts instead of composing operations
+    - **Serialization gap**: When saving project, initialization not represented in command history (though it's implicit in schema)
+  - **Solution**: Create `InitializeWorldCommand` using operation sequence, mark as non-undoable, store in "World Initialization" subprocess
+  - **Architecture Changes**:
+    1. **New operations** (6 types for atomic initialization steps):
+       - `AddPlane3DOp` - Create 3D plane (plane_H, plane_V)
+       - `AddProjectionPlaneOp` - Create projection plane (proj_plane_H, proj_plane_V)
+       - `AddOriginPoint2DOp` - Create locked origin point (O_H, O_V)
+       - `AddHingeLineOp` - Create hinge line (HL_HV)
+       - `AddHalfHingeLine2DOp` - Create half hinge line on plane
+       - `CreateInitializationSubprocessOp` - Create "World Initialization" subprocess in ProcessTree
+    2. **InitializeWorldCommand class**:
+       - Special command that CANNOT be undone (not added to CommandStack)
+       - Executes initialization operation sequence
+       - Creates "World Initialization" subprocess
+       - Adds ProcessTree actions for all initialization elements
+    3. **Non-undoable mechanism**:
+       - Add `canUndo` flag to Command class (default true)
+       - CommandStack checks `cmd.canUndo()` before adding to undo stack
+       - InitializeWorldCommand sets `canUndo = false`
+    4. **World refactoring**:
+       - Remove imperative code from `World.initializeFixedElements()`
+       - Constructor creates and executes InitializeWorldCommand
+       - `World.clear()` does same (execute InitializeWorldCommand after clearing)
+  - **Benefits**:
+    - **Architectural consistency**: All World modifications use Command/Operation pattern
+    - **Testability**: Can unit test InitializeWorldCommand independently
+    - **ProcessTree visibility**: Users see initialization subprocess in history tree (though collapsed by default)
+    - **Composability**: Easy to add/remove initial elements by adding/removing operations
+    - **Serialization clarity**: When saving new project, initialization command explicitly in history
+    - **Separation of concerns**: World class doesn't know HOW to initialize, just delegates to command
+  - **Command Pattern**:
+    ```typescript
+    // InitializeWorldCommand.ts
+    export class InitializeWorldCommand extends Command {
+      private readonly canUndoFlag = false;  // NON-UNDOABLE
+      
+      constructor(world: World) {
+        super('Initialize World', world);
+        this.buildInitializationSequence();
+      }
+      
+      canUndo(): boolean {
+        return this.canUndoFlag;  // Always false
+      }
+      
+      private buildInitializationSequence(): void {
+        // 1. Create subprocess for organization
+        const subprocessOp = new CreateInitializationSubprocessOp();
+        this.addAndExecute(subprocessOp);
+        
+        // 2. Create 3D planes
+        this.addAndExecute(new AddPlane3DOp('plane_H', 'horizontal'));
+        this.addAndExecute(new AddPlane3DOp('plane_V', 'vertical'));
+        
+        // 3. Create projection planes
+        this.addAndExecute(new AddProjectionPlaneOp('proj_plane_H', 'plane_H'));
+        this.addAndExecute(new AddProjectionPlaneOp('proj_plane_V', 'plane_V'));
+        
+        // 4. Create origin points (locked, non-deletable)
+        this.addAndExecute(new AddOriginPoint2DOp('proj_plane_H', new Vector3(0,0,1)));
+        this.addAndExecute(new AddOriginPoint2DOp('proj_plane_V', new Vector3(0,0,1)));
+        
+        // 5. Create hinge line
+        this.addAndExecute(new AddHingeLineOp('HL_HV', 'proj_plane_H', 'proj_plane_V'));
+        
+        // 6. Create half hinge lines
+        this.addAndExecute(new AddHalfHingeLine2DOp('proj_plane_H', 'HL_HV', new Vector3(0,0,1), new Vector3(1,0,0)));
+        this.addAndExecute(new AddHalfHingeLine2DOp('proj_plane_V', 'HL_HV', new Vector3(0,0,1), new Vector3(1,0,0)));
+      }
+    }
+    
+    // World.ts
+    constructor() {
+      // ... initialize maps ...
+      const initCmd = new InitializeWorldCommand(this);
+      initCmd.commit();
+      // Note: NOT pushed to CommandStack (canUndo = false)
+    }
+    ```
+  - **ProcessTree Structure**:
+    ```
+    Root
+    └── World Initialization (subprocess, collapsed by default)
+        ├── Create P_H plane (action)
+        ├── Create P_V plane (action)
+        ├── Create projection plane H (action)
+        ├── Create projection plane V (action)
+        ├── Create origin O_H (action)
+        ├── Create origin O_V (action)
+        ├── Create hinge line HL_HV (action)
+        ├── Create half hinge H (action)
+        └── Create half hinge V (action)
+    ```
+  - **Non-Undoable Mechanism**:
+    - Command gets `canUndo(): boolean` method (default implementation returns true)
+    - CommandStack.push() checks: `if (!cmd.canUndo()) { return; }` (don't add to stack)
+    - InitializeWorldCommand overrides to return false
+    - UI undo button remains disabled when only initialization command exists
+  - **Migration Impact**: Low - initialization already happens in specific places (World constructor, World.clear())
+  - **Implementation**: Phase 47 with 16 tasks (T543-T558)
+  - **Task Categories**:
+    - Command infrastructure (T543-T544): Add canUndo mechanism to Command and CommandStack
+    - Create initialization operations (T545-T550): 6 operation classes for initialization steps
+    - InitializeWorldCommand (T551): Main command orchestrating sequence
+    - World refactoring (T552-T553): Replace initializeFixedElements with InitializeWorldCommand
+    - ProcessTree integration (T554): Ensure subprocess created and actions added
+    - Unit tests (T555-T556): Test operations, command, and non-undoable behavior
+    - Integration tests (T557): Test full initialization workflow
+    - Documentation (T558): Update data-model.md with initialization architecture
+  - **Success Criteria**: 
+    - World initialization uses Command/Operation pattern
+    - InitializeWorldCommand cannot be undone
+    - "World Initialization" subprocess visible in ProcessTree
+    - All initialization operations serializable (though implicit in new projects)
+    - All tests pass
+  - **Schema Impact**: None - initialization still produces same World state, just different mechanism
+  - **Timing**: After Phase 46 (remove hardcoded IDs) so initialization operations use generated IDs
+  - **Coordination with Phase 46**: Phase 46 (T539-T540) had placeholder tasks for this - Phase 47 provides full implementation
+  - **Future**: Pattern can extend to other non-undoable commands (e.g., "Load Project Command")
+
+* [X] Remove hardcoded projection plane IDs and use automatic ID generation for all entities.
+  - **STATUS**: ✅ PLANNED - Phase 46 created
+  - **Problem**: World initialization uses hardcoded IDs ('proj_plane_H', 'proj_plane_V', 'O_H', 'O_V', 'half_HL_HV_on_PH', etc.) violating the principle that all IDs should be system-generated
+  - **Current Hardcoded IDs**:
+    - Projection planes: 'proj_plane_H', 'proj_plane_V'
+    - 3D planes: 'plane_H', 'plane_V'
+    - Origin points: 'proj_plane_H/O_H', 'proj_plane_V/O_V'
+    - Hinge line: 'HL_HV'
+    - Half hinge lines: 'proj_plane_H/half_HL_HV_on_PH', 'proj_plane_V/half_HL_HV_on_PV'
+  - **Issues**:
+    - Cannot create multiple projection plane pairs (IDs would collide)
+    - Tests depend on specific hardcoded IDs (brittle)
+    - Violates DRY principle (IDs duplicated in tests)
+    - Not future-proof for dynamic plane creation
+    - World initialization not using Command/Operation pattern
+  - **Solution**: Generate all IDs automatically, track entities by semantic role (horizontal plane, vertical plane) not by hardcoded ID
+  - **Architecture Changes**:
+    1. **World properties**: Add `horizontalPlaneId`, `verticalPlaneId`, `horizontalOriginId`, `verticalOriginId`, `mainHingeLineId` to track semantic entities
+    2. **ID generation**: Use counters (projPlaneCounter, planeCounter, hingeLineCounter) to generate unique IDs
+    3. **Lookup methods**: Add `getHorizontalPlane()`, `getVerticalPlane()`, `getHorizontalOrigin()`, `getVerticalOrigin()`, `getMainHingeLine()` to World
+    4. **World initialization**: Refactor to use Command/Operation pattern (addresses separate planning item)
+  - **Benefits**:
+    - All IDs truly system-generated, no special cases
+    - Multiple projection plane pairs supported
+    - Tests reference planes by semantic role, not hardcoded ID
+    - Consistent with hierarchical ID architecture (Phase 45)
+    - Enables dynamic plane creation in future
+  - **ID Format Examples** (after change):
+    - Projection planes: 'proj_plane_1', 'proj_plane_2'
+    - Origin points: 'proj_plane_1/point2d_1', 'proj_plane_2/point2d_1'
+    - Half hinge lines: 'proj_plane_1/half_hl_1', 'proj_plane_2/half_hl_1'
+  - **Migration Impact**: BREAKING - All tests referencing hardcoded IDs need updating (but we just fixed all tests in Phase 45, so we know the patterns)
+  - **Implementation**: Phase 46 with 18 tasks (T525-T542)
+  - **Task Categories**:
+    - World refactoring (T525-T528): Add semantic properties, ID counters, generate methods, lookup methods
+    - Update World initialization (T529-T530): Use generated IDs, store semantic references
+    - Update World getters (T531): Add getHorizontalPlane(), getVerticalPlane(), etc.
+    - Test infrastructure (T532-T534): Create test helpers for semantic access, update all domain tests
+    - Operation updates (T535-T536): Ensure operations use semantic references where appropriate
+    - UI/Service updates (T537-T538): Update services to use semantic references
+    - Command-based initialization (T539-T540): Move World init to Command/Operation pattern (addresses planning item)
+    - Documentation (T541): Update data-model.md with semantic reference architecture
+    - Integration tests (T542): Verify multiple plane pairs work, no hardcoded ID assumptions
+  - **Test Strategy**: Create helper functions returning semantic IDs, update all tests to use helpers instead of hardcoded strings
+  - **Example Test Helper**:
+    ```typescript
+    function getHorizontalPlaneId(world: World): string {
+      return world.horizontalPlaneId;
+    }
+    // Tests use: getHorizontalPlaneId(world) instead of 'proj_plane_H'
+    ```
+  - **Success Criteria**: No hardcoded IDs in World initialization, tests pass using semantic references, can create multiple projection plane pairs, World init uses Command pattern
+  - **Schema Version**: 4.0.0 → 4.1.0 (BREAKING - ID format changes)
+  - **Data Model**: Will add §Semantic Entity References explaining architecture and benefits
+  - **Timing**: After Phase 45 (hierarchical IDs complete) but before UI services need multiple plane support
+  - **Related**: Addresses "World initialization should use Command/Operation pattern" planning item
+
+* [X] Ids for 2D elements must become paths, so that we can extract from then the container object. For instance, `proj_45/point_234`.
+  - **STATUS**: ✅ PLANNED - Phase 45 created
+  - **Problem**: Current flat IDs (e.g., `point2d_123`) require separate planeId field to find container. Cannot extract ownership from ID alone.
+  - **Solution**: Hierarchical IDs encoding ownership: `proj_plane_H/point2d_123`
+  - **Benefits**:
+    - **Self-documenting**: ID reveals container (projection plane)
+    - **Simplified lookups**: Parse container from ID directly
+    - **Consistency**: Matches ProcessTree path pattern already used
+    - **Validation**: Verify element belongs to claimed container
+    - **Future-proof**: Scales to nested containers (auxiliary planes, groups)
+  - **Design Decisions**:
+    - Keep planeId field for validation (redundancy)
+    - Local ID remains flat: `{containerId}/{elementType}_{counter}`
+    - No backward compatibility (IDs currently opaque, clean break)
+    - Schema 4.0.0 (BREAKING CHANGE - old projects won't load)
+  - **ID Format**: `{containerId}/{localId}` where:
+    - containerId: Projection plane ID (e.g., `"proj_plane_H"`)
+    - localId: Element-specific ID (e.g., `"point2d_123"`)
+  - **Examples**:
+    - `"proj_plane_H/point2d_1"` - Point on horizontal plane
+    - `"proj_plane_V/line2d_5"` - Line on vertical plane
+    - `"proj_plane_H/segment2d_12"` - Segment on horizontal plane
+  - **Implementation Strategy**: Simple cutover (no migration)
+    1. Infrastructure (T505-T512): ID utilities, generation, World lookup methods
+    2. Operations (T513-T517): Audit, verify, serialization
+    3. UI/Services (T518-T522): PaperService, SelectionService, ElementsPanel
+    4. Regression testing (T523-T524): Domain and E2E tests
+  - **Implementation**: Phase 45 with 20 tasks (T505-T524)
+  - **Task Categories**:
+    - Infrastructure (8 tasks): ID parsing, generation, World.getElement2D(), validation
+    - Operations (5 tasks): Audit, verify operations use hierarchical IDs, serialization
+    - UI/Services (5 tasks): PaperService, SelectionService, ElementsPanel, DependencyService, E2E
+    - Regression testing (2 tasks): Domain tests, E2E tests
+  - **Affected Components**:
+    - Domain: All Element2D subclasses (Point2D, Line2D, Circle2D hierarchies)
+    - Operations: All 19 operation types (IDs in constructionParams)
+    - Services: ProjectService (serialization), PaperService (rendering), DependencyService
+    - UI: SelectionService, ElementsPanel, all tools
+    - ProcessTree: Action references (constructionParams store element IDs)
+  - **Schema Version**: 3.1.0 → 4.0.0 (BREAKING CHANGE - old projects won't load)
+  - **Data Model**: Added §Hierarchical Element IDs (Phase 45) specification
+  - **Success Criteria**: ID utilities work, new elements use paths, migration tool converts old projects, all tests pass, no regressions
+  - **Timing**: After Phase 44 (Element2D base class provides uniform interface for ID handling)
 
 * [X] Introduce a set of factory methods with the logic for creating common sequences of Ops (for instance, creating a new intersection point and its sibling and including them in the process tree, on cascade delete, etc.). Those sequences could be easily tested. The sequences to implement should not be decided in a creative way, but extracted from current tool implementations. Those sequence builders should get as input an open Command object.
   - **STATUS**: ✅ PLANNED - Phase 43 created
@@ -166,6 +404,61 @@ Note that completing these tasks may require asking the user for additional info
   - **Current Coverage**: 8/19 operations (42% complete) - AddFreePoint2D, AddLine2D, AddSegment2D, AddCircle2D, intersection types, AddGuide2D
   - **Schema Version**: Bump to 3.1.0 after completion (currently 3.0.0)
   - **Timing**: URGENT - users currently experiencing data loss on any project with deletions or style changes
+
+* [X] Introduce common `Element2D` base class for all 2D geometric elements (Point2D, Line2D, Circle2D).
+  - **STATUS**: ✅ PLANNED - Phase 44 created
+  - **Problem**: Point2D, Line2D, Circle2D are three separate abstract hierarchies with no shared ancestor, despite having identical properties (id, planeId, label, visible, type). This creates code duplication and prevents uniform handling in utilities, factories, and tests.
+  - **Solution**: Create abstract `Element2D` base class containing common properties (id, planeId, label, visible, type) and abstract methods (clone(), realize2D(world)). Point2D, Line2D, Circle2D extend Element2D.
+  - **Benefits**:
+    1. Uniform type guards for all 2D elements (`isElement2D()` works for points, lines, circles)
+    2. Generic functions operating on Element2D regardless of specific type
+    3. Simplified factory interfaces (test infrastructure can work with Element2D)
+    4. DRY principle - common properties defined once, not duplicated three times
+    5. Enables test infrastructure factories (LineSequenceFactory, CircleSequenceFactory, etc.)
+  - **Migration Impact**: Low-risk pure addition, not a breaking change. Only adds `extends Element2D` to three base classes. No changes to concrete classes (FreePoint2D, Line2DByTwoPoints, etc.). Type discriminators unchanged.
+  - **Implementation**: Phase 44 with 16 tasks (T489-T504) including both Element2D and Element2DRealization2D
+  - **Task Categories**:
+    - Create Element2D base class (T489): Abstract class with common properties/methods
+    - Update domain hierarchies (T490-T492): Point2D, Line2D, Circle2D extend Element2D, remove duplicate properties
+    - Type exports (T493): Export Element2D and Element2DRealization union type
+    - Unit tests (T494): Verify base class via concrete subclasses, test type guards
+    - Generic utilities (T495): Create isElement2D(), getElementsOnPlane(), hideElement(), showElement()
+    - Integration test (T496): Verify generic functions work with mixed element types
+    - Regression verification (T497): Ensure all existing tests still pass
+    - Create Element2DRealization2D base class (T498): Abstract base with feasible property
+    - Update realization hierarchies (T499-T501): Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D extend base
+    - Realization unit tests (T502): Test isFeasible() method on all three types
+    - Realization type exports (T503): Export Element2DRealization2D
+    - Realization regression tests (T504): Verify all realization tests pass
+  - **Success Criteria**: 
+    - Element2D: Base class created, all three hierarchies extend it, generic type guard works, no duplicate properties
+    - Element2DRealization2D: Base class created, all three realization types extend it, uniform feasibility checking, all tests pass
+  - **Data Model**: Added §Element2D Base Class and §Element2DRealization2D Base Class with complete specifications
+  - **Future-Proof**: When Arc2D or other 2D element types added, they extend both Element2D and Element2DRealization2D
+  - **Timing**: After Phase 43 (factories need generic Element2D for test infrastructure)
+
+* [X] Introduce common `Element2DRealization2D` base class for all 2D element realization types.
+  - **STATUS**: ✅ PLANNED - Phase 44 (same phase as Element2D)
+  - **Problem**: Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D all have identical `feasible: boolean` property duplicated in each class. No common base prevents generic realization filtering and uniform feasibility checking.
+  - **Solution**: Create abstract `Element2DRealization2D` base class with readonly feasible property and `isFeasible()` method. All three realization classes extend this base.
+  - **Benefits**:
+    1. Uniform feasibility checking across all realization types
+    2. Generic realization filtering (filter by feasibility regardless of type)
+    3. DRY principle - feasible property defined once, not duplicated three times
+    4. Type safety - isFeasible() method guaranteed to exist on all realizations
+    5. Consistent architecture - mirrors Element2D pattern in realization layer
+  - **Migration Impact**: Low-risk pure addition, not a breaking change. Only adds `extends Element2DRealization2D` to three realization classes and calls `super(feasible)` in constructors. All three already have feasible property, just moves it to base class.
+  - **Implementation**: Phase 44 with 7 tasks (T498-T504) alongside Element2D tasks
+  - **Task Categories**:
+    - Create base class (T498): Abstract Element2DRealization2D with feasible property and isFeasible() method
+    - Update hierarchies (T499-T501): Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D extend base, remove duplicate feasible fields
+    - Unit tests (T502): Test isFeasible() method works on all three types
+    - Type exports (T503): Export Element2DRealization2D from domain/world/index.ts
+    - Regression tests (T504): Verify all existing realization tests still pass
+  - **Success Criteria**: Element2DRealization2D base class created, all three realization types extend it, no duplicate feasible properties, isFeasible() works uniformly, all tests pass
+  - **Data Model**: Added §Element2DRealization2D Base Class with complete specification, code examples, migration guide
+  - **Architectural Symmetry**: Domain layer has Element2D base, realization layer has Element2DRealization2D base - clean parallel structure
+  - **Timing**: Same as Element2D (Phase 44) - both base classes implemented together
 
 * [X] Consider introducing a `Project` class to encapsulate world, commandStack, visualization configuration and metadata for cleaner lifecycle management. Best done when domain model stabilizes.
   - **STATUS**: ❌ CANCELLED - Not needed (misunderstanding about existing architecture)

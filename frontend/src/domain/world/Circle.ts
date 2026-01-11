@@ -14,6 +14,8 @@
  */
 
 import { Vector3 } from 'three';
+import { Element2DRealization2D } from './Element2DRealization2D';
+import { Element2D } from './Element2D';
 
 export type Circle2DType = 'by-center-and-point' | 'by-three-points';
 
@@ -40,15 +42,14 @@ export type Circle2DType = 'by-center-and-point' | 'by-three-points';
  * 
  * Contains ONLY numeric data. Structural information (id, planeId, pointIds) stays in domain objects.
  */
-export class Circle2DRealization2D {
+export class Circle2DRealization2D extends Element2DRealization2D {
   center: Vector3;        // Center in plane coordinates (u, v, 1) - finite point
   radiusVector: Vector3;  // Vector from center to edge point (u, v, 0) - defines radius and angle 0
-  feasible: boolean;      // Whether the geometric computation succeeded
 
   constructor(center: Vector3, radiusVector: Vector3, feasible: boolean = true) {
+    super(feasible);
     this.center = center;
     this.radiusVector = radiusVector;
-    this.feasible = feasible;
   }
 
   /**
@@ -68,18 +69,13 @@ export class Circle2DRealization2D {
 
 /**
  * Base Circle2D class - represents the rule/definition of a circle
+ * Extends Element2D to provide common properties and interface for all 2D elements
  */
-export abstract class Circle2D {
-  readonly id: string;
-  readonly planeId: string;
-  readonly label?: string;
+export abstract class Circle2D extends Element2D {
   abstract readonly type: Circle2DType;
-  visible: boolean = true;  // Whether circle is visible in the canvas
 
   constructor(id: string, planeId: string, label?: string) {
-    this.id = id;
-    this.planeId = planeId;
-    this.label = label;
+    super(id, planeId, label);
   }
 
   abstract clone(): Circle2D;

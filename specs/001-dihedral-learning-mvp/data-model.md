@@ -5,6 +5,259 @@
 
 ---
 
+## Hierarchical Element IDs (Phase 45)
+
+### Problem Statement
+
+**Current State**: 2D element IDs are flat strings like `point2d_123`, `line2d_456`. To find an element's container (ProjectionPlane), you must:
+1. Have separate `planeId` field on every element
+2. Query World → getPlane(planeId) → getPoint(id)
+3. No way to extract container from ID alone
+
+**Proposed Solution**: Make IDs hierarchical paths that encode ownership: `proj_plane_H/point2d_123`
+
+### Benefits
+
+1. **Self-Documenting**: ID reveals element's container immediately
+   - Debug logs become clearer: see which plane owns each element
+   - No need to cross-reference separate planeId field
+
+2. **Simplified Lookups**: Parse container from ID
+   ```typescript
+   const [planeId, localId] = parseElementId(id);  // "proj_plane_H/point2d_123" → ["proj_plane_H", "point2d_123"]
+   const point = world.getPlane(planeId)?.getPoint(localId);
+   ```
+
+3. **Consistency with ProcessTree**: ProcessTree already uses paths (e.g., `subprocess_1/action_5`)
+
+4. **Future-Proof**: Scales naturally to nested containers (auxiliary planes, groups, layers)
+
+5. **Validation**: Can verify element exists in claimed container
+   ```typescript
+   // Detect inconsistencies
+   if (!id.startsWith(element.planeId + '/')) {
+     throw new Error('Element ID does not match planeId');
+   }
+   ```
+
+### Design Decisions
+
+**Decision: Keep `planeId` field for validation**
+- **Why**: Redundant validation (verify ID starts with planeId)
+- **Future**: Could make planeId a computed property (derived from ID)
+- **Rationale**: Catch ID/container mismatches during development
+
+**Decision: Local ID remains flat (no further nesting)**
+- Format: `{containerId}/{elementType}_{counter}`
+- Example: `proj_plane_H/point2d_123`
+- **Why**: 2D elements always belong to exactly one plane (no sub-containers)
+
+**Decision: ProcessTree paths remain unchanged**
+- ProcessTree already uses hierarchical paths correctly
+- This change only affects 2D geometric elements (Point2D, Line2D, Circle2D, etc.)
+
+**Decision: No backward compatibility**
+- IDs are currently opaque strings (no parsing logic exists)
+- Simply change generation, all new projects use hierarchical format
+- Old projects won't load (breaking change acceptable at this stage)
+- Schema version 4.0.0 (major version bump)
+
+### ID Format Specification
+
+```typescript
+/**
+ * Hierarchical Element ID Format
+ * 
+ * Structure: {containerId}/{localId}
+ * - containerId: Projection plane ID (e.g., "proj_plane_H")
+ * - localId: Element-specific ID within plane (e.g., "point2d_123")
+ * 
+ * Examples:
+ * - "proj_plane_H/point2d_1"     // Point on horizontal plane
+ * - "proj_plane_V/line2d_5"      // Line on vertical plane
+ * - "proj_plane_H/segment2d_12"  // Segment on horizontal plane
+ * - "proj_plane_V/circle2d_3"    // Circle on vertical plane
+ * - "proj_plane_H/guide2d_7"     // Guide on horizontal plane
+ * 
+ * UI Display Convention:
+ * - Elements have optional 'label' property for user-friendly names
+ * - UI displays: element.label if set, otherwise full hierarchical ID
+ * - Labels are for users (e.g., "Point A", "Baseline")
+ * - IDs are for internal reference (e.g., "proj_plane_H/point2d_1")
+ * - When showing IDs, use full unaltered path (self-documenting)
+ */
+type Element2DId = `${string}/${string}`;
+
+/**
+ * Parse hierarchical element ID into components
+ * @param id Full element ID (e.g., "proj_plane_H/point2d_123")
+ * @returns [containerId, localId] tuple
+ * @throws Error if ID format is invalid
+ */
+function parseElementId(id: string): [string, string] {
+  const parts = id.split('/');
+  if (parts.length !== 2) {
+    throw new Error(`Invalid element ID format: "${id}". Expected "containerId/localId"`);
+  }
+  return [parts[0], parts[1]];
+}
+
+/**
+ * Extract container ID from element ID
+ * @param id Full element ID
+ * @returns Container ID (projection plane ID)
+ */
+function getContainerIdFromElementId(id: string): string {
+  return parseElementId(id)[0];
+}
+
+/**
+ * Extract local ID from element ID
+ * @param id Full element ID
+ * @returns Local ID within container
+ */
+function getLocalIdFromElementId(id: string): string {
+  return parseElementId(id)[1];
+}
+
+/**
+ * Build hierarchical element ID
+ * @param containerId Container (projection plane) ID
+ * @param localId Element-specific ID
+ * @returns Full hierarchical ID
+ */
+function buildElementId(containerId: string, localId: string): string {
+  return `${containerId}/${localId}`;
+}
+
+/**
+ * Validate element ID format and container consistency
+ * @param id Element ID
+ * @param expectedPlaneId Expected container plane ID
+ * @throws Error if format invalid or container mismatch
+ */
+function validateElementId(id: string, expectedPlaneId: string): void {
+  const [containerId] = parseElementId(id);
+  if (containerId !== expectedPlaneId) {
+    throw new Error(`Element ID "${id}" container "${containerId}" does not match expected plane "${expectedPlaneId}"`);
+  }
+}
+```
+
+### ID Generation (Updated)
+
+**Current**:
+```typescript
+// ProjectionPlane.ts
+generatePoint2DId(world: World): string {
+  return `point2d_${world.getNextId()}`;
+}
+```
+
+**After Migration**:
+```typescript
+// ProjectionPlane.ts
+generatePoint2DId(world: World): string {
+  return `${this.id}/point2d_${world.getNextId()}`;
+}
+```
+
+### Element Lookup (Updated)
+
+**Current Pattern**:
+```typescript
+// Caller must know planeId separately
+const point = world.getPlane(planeId)?.getPoint(pointId);
+```
+
+**New Pattern**:
+```typescript
+// Container encoded in ID
+const point = world.getElement2D(pointId);  // Parses ID internally
+
+// Or explicit parsing
+const [planeId, localId] = parseElementId(pointId);
+const point = world.getPlane(planeId)?.getPoint(localId);
+```
+
+### Implementation Strategy
+
+**Simple Cutover** (No Migration Needed):
+1. Add ID parsing utilities
+2. Update ID generation in ProjectionPlane
+3. Add World.getElement2D() generic lookup
+4. Update operations to use new lookups
+5. All new projects automatically use hierarchical IDs
+6. Old projects won't load (breaking change)
+
+**Rationale**: IDs currently opaque (no parsing logic exists). Clean break is simpler than supporting both formats.
+
+### Schema Version
+
+- **Current**: 3.1.0 (after Phase 40)
+- **After Phase 45**: 4.0.0 (hierarchical IDs - BREAKING CHANGE)
+- Old projects with flat IDs will not load
+
+### Testing Requirements
+
+1. **ID Parsing Tests**
+   - Valid formats: "proj_plane_H/point2d_123"
+   - Invalid formats: "point2d_123", "proj_plane_H/", "//point2d_123"
+   - Edge cases: empty strings, special characters
+
+2. **ID Generation Tests**
+   - Verify format: {planeId}/{localId}
+   - Uniqueness: Multiple calls produce different local IDs
+   - Container consistency: Generated ID starts with plane's ID
+
+3. **Lookup Tests**
+   - World.getElement2D() finds elements by hierarchical ID
+   - Handles missing plane gracefully
+   - Handles missing element gracefully
+
+4. **Validation Tests**
+   - Detect ID/planeId mismatches
+   - Report clear error messages
+
+5. **Integration Tests**
+   - Create elements with hierarchical IDs
+   - Save and load project
+   - Verify all references preserved
+   - Test cross-references (intersection parent IDs, guide references)
+
+### Affected Components
+
+**Domain Classes** (19 operations):
+- All Element2D subclasses (Point2D, Line2D, Circle2D hierarchies)
+- Intersection classes (store parent element IDs)
+- Guide classes (store referenceLineId, primaryGuideId)
+- Sibling classes (store siblingPointId, primaryIntersectionId)
+
+**Operations** (all 19 types):
+- AddFreePoint2DOp, AddLine2DOp, AddSegment2DOp, AddCircle2DOp
+- AddGuide2DOp, AddSiblingGuide2DOp
+- AddLineLineIntersectionPoint2DOp, AddLineCircleIntersectionPoint2DOp, AddCircleCircleIntersectionPoint2DOp
+- AddSiblingIntersectionPoint2DOp
+- RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp
+- UpdateElementStyleOp
+- ProcessTree operations
+
+**Services**:
+- ProjectService (serialization/deserialization)
+- PaperService (rendering - uses element IDs)
+- DependencyService (tracks element references)
+
+**UI Components**:
+- SelectionService (selected element IDs)
+- ElementsPanel (displays element IDs/labels)
+- Tools (all create elements with IDs)
+
+**Process Tree**:
+- ProcessTreeAction references (constructionParams store element IDs)
+- No format change needed (already hierarchical)
+
+---
+
 ## Architecture Overview
 
 **⚠️ Refactoring in Progress**: This document reflects the **new architecture** where ProjectionPlane owns 2D elements. See [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md) for migration plan.
@@ -1333,16 +1586,388 @@ class IntersectionTool {
 5. **Explicit Dependencies**: Command structure shows sibling depends on primary
 6. **No Hidden Logic**: All creation is visible in command history
 
+---
+
+## Element2D Base Class
+
+**Purpose**: Common base class for all 2D geometric elements (Point2D, Line2D, Circle2D) to provide uniform interface and shared properties.
+
+**Current Problem**: Point2D, Line2D, and Circle2D are three separate abstract hierarchies with no common ancestor, despite sharing identical properties (id, planeId, label, visible, type). This creates code duplication and prevents uniform handling in utilities, factories, and tests.
+
+**Solution**: Introduce abstract `Element2D` base class containing common properties and abstract methods. All 2D element types extend from it.
+
+### Element2D Base Class
+
+```typescript
+/**
+ * Base class for all 2D geometric elements (points, lines, circles)
+ * Provides common properties and interface for element identification and plane membership
+ */
+export abstract class Element2D {
+  readonly id: string;              // Unique identifier (required)
+  readonly planeId: string;         // Which projection plane this element belongs to
+  label?: string;                   // Optional user-assigned label
+  visible: boolean = true;          // Whether element is visible in canvas
+  abstract readonly type: string;   // Element type discriminator (e.g., 'free', 'by-two-points')
+  
+  constructor(
+    id: string,
+    planeId: string,
+    label?: string
+  ) {
+    this.id = id;
+    this.planeId = planeId;
+    this.label = label;
+  }
+  
+  /**
+   * Clone this element
+   * Must be implemented by concrete subclasses
+   */
+  abstract clone(): Element2D;
+  
+  /**
+   * Calculate 2D realization (geometric position/shape) for this element
+   * Returns realization in the projection plane's intrinsic coordinates
+   * 
+   * @param world World instance to query parent element realizations
+   */
+  abstract realize2D(world: World): Element2DRealization | null;
+}
+
+/**
+ * Union type for all possible 2D element realizations
+ */
+type Element2DRealization = Point2DRealization2D | Line2DRealization2D | Circle2DRealization2D;
+```
+
+### Updated Point2D Hierarchy
+
+```typescript
+/**
+ * Base Point2D class - represents the rule/definition of a point
+ */
+export abstract class Point2D extends Element2D {
+  abstract readonly type: Point2DType;  // Narrows Element2D.type to Point2DType
+  
+  constructor(
+    id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+  }
+  
+  abstract clone(): Point2D;
+  abstract realize2D(world: World): Point2DRealization2D;
+}
+```
+
+### Updated Line2D Hierarchy
+
+```typescript
+/**
+ * Base Line2D class - represents the rule/definition of a line
+ */
+export abstract class Line2D extends Element2D {
+  abstract readonly type: Line2DType;  // Narrows Element2D.type to Line2DType
+  
+  constructor(
+    id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+  }
+  
+  abstract clone(): Line2D;
+  abstract realize2D(world: World): Line2DRealization2D;
+}
+```
+
+### Updated Circle2D Hierarchy
+
+```typescript
+/**
+ * Base Circle2D class - represents the rule/definition of a circle
+ */
+export abstract class Circle2D extends Element2D {
+  abstract readonly type: Circle2DType;  // Narrows Element2D.type to Circle2DType
+  
+  constructor(
+    id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+  }
+  
+  abstract clone(): Circle2D;
+  abstract realize2D(world: World): Circle2DRealization2D;
+}
+```
+
+### Benefits
+
+1. **Uniform Type Guards**: Single type guard for all 2D elements
+   ```typescript
+   function isElement2D(obj: any): obj is Element2D {
+     return obj instanceof Element2D;
+   }
+   ```
+
+2. **Generic Element Processing**: Functions can operate on Element2D regardless of specific type
+   ```typescript
+   function getElementsOnPlane(planeId: string, elements: Element2D[]): Element2D[] {
+     return elements.filter(el => el.planeId === planeId);
+   }
+   ```
+
+3. **Simplified Factory Interfaces**: Test factories can work with Element2D
+   ```typescript
+   interface ElementSequenceFactory {
+     createElement(cmd: Command, ...params): Element2D;
+   }
+   ```
+
+4. **Consistent Property Access**: All elements guaranteed to have id, planeId, label, visible
+   ```typescript
+   function hideElement(element: Element2D): void {
+     element.visible = false;
+   }
+   ```
+
+5. **DRY Principle**: Common properties defined once in base class, not duplicated three times
+
+### Migration Impact
+
+**Low-Risk Change**: This is a pure addition to the type hierarchy, not a breaking change. Existing code continues to work:
+- Point2D, Line2D, Circle2D maintain their current interfaces
+- No changes to concrete classes (FreePoint2D, Line2DByTwoPoints, etc.)
+- Only adds `extends Element2D` to three base classes
+- Type discriminators (Point2DType, Line2DType, Circle2DType) unchanged
+
+**Files to Modify**:
+1. Create `frontend/src/domain/world/Element2D.ts` with base class
+2. Update `frontend/src/domain/world/Point.ts` - add `extends Element2D`
+3. Update `frontend/src/domain/world/Line.ts` - add `extends Element2D`
+4. Update `frontend/src/domain/world/Circle.ts` - add `extends Element2D`
+5. Update type exports in `frontend/src/domain/world/index.ts`
+
+**Testing Requirements**:
+- Unit tests for Element2D base class (instantiation via concrete subclass)
+- Type guard tests (isElement2D works for all three types)
+- Verify existing Point2D/Line2D/Circle2D tests still pass
+- Integration test: generic function operating on Element2D[]
+
+---
+
+## Element2DRealization2D Base Class
+
+**Purpose**: Common base class for all 2D element realizations (Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D) to provide uniform interface for feasibility checking.
+
+**Current Problem**: Point2DRealization2D, Line2DRealization2D, and Circle2DRealization2D all have identical `feasible: boolean` property but no shared base class. This prevents uniform feasibility checking and generic realization handling.
+
+**Solution**: Introduce abstract `Element2DRealization2D` base class containing the common `feasible` property. All 2D realization types extend from it.
+
+### Element2DRealization2D Base Class
+
+```typescript
+/**
+ * Base class for all 2D element realizations (point, line, circle positions/shapes)
+ * Provides common feasibility status for geometric computations
+ * 
+ * Architectural principle: Realization classes contain ONLY geometric data.
+ * No structural information (id, planeId) - that stays in domain objects.
+ */
+export abstract class Element2DRealization2D {
+  readonly feasible: boolean;  // Whether the geometric computation succeeded
+  
+  constructor(feasible: boolean = true) {
+    this.feasible = feasible;
+  }
+  
+  /**
+   * Check if this realization is feasible (geometric computation succeeded)
+   * 
+   * Infeasible realizations occur when:
+   * - Parent elements are infeasible (e.g., intersection of parallel lines)
+   * - Geometric constraints cannot be satisfied (e.g., circle with coincident points)
+   * - Elements degenerate to invalid configurations
+   */
+  isFeasible(): boolean {
+    return this.feasible;
+  }
+}
+```
+
+### Updated Point2DRealization2D
+
+```typescript
+/**
+ * Point2DRealization2D - Stores computed 2D position for a point
+ * Result of realize2D() geometric calculation
+ * 
+ * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
+ */
+export class Point2DRealization2D extends Element2DRealization2D {
+  position: Vector3;  // Position in plane coordinates (u, v, 1) - ONLY NUMERIC DATA
+
+  constructor(position: Vector3, feasible: boolean = true) {
+    super(feasible);
+    this.position = position;
+  }
+
+  /**
+   * Get position as Vector3
+   */
+  getPosition(): Vector3 {
+    return this.position;
+  }
+}
+```
+
+### Updated Line2DRealization2D
+
+```typescript
+/**
+ * Line2DRealization2D - Stores computed line equation/endpoints
+ * Unified representation for both infinite lines and bounded segments via homogeneous coordinates
+ * 
+ * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
+ */
+export class Line2DRealization2D extends Element2DRealization2D {
+  point1: Vector3;     // First defining point (always finite: z=1)
+  point2: Vector3;     // Second defining point (z=0 for direction, z=1 for endpoint)
+  
+  constructor(
+    point1: Vector3, 
+    point2: Vector3, 
+    feasible: boolean = true
+  ) {
+    super(feasible);
+    this.point1 = point1;
+    this.point2 = point2;
+  }
+  
+  /**
+   * Get direction vector (works for both lines and segments)
+   */
+  getDirection(): Vector3 {
+    if (this.point2.z === 0) {
+      return this.point2.clone();  // Infinite line: point2 is direction
+    } else {
+      const dir = this.point2.clone().sub(this.point1);
+      dir.z = 0;
+      return dir;  // Segment: compute direction
+    }
+  }
+}
+```
+
+### Updated Circle2DRealization2D
+
+```typescript
+/**
+ * Circle2DRealization2D - Stores computed circle center and radius vector
+ * 
+ * Contains ONLY numeric data. Structural information (id, planeId, pointIds) stays in domain objects.
+ */
+export class Circle2DRealization2D extends Element2DRealization2D {
+  center: Vector3;        // Center in plane coordinates (u, v, 1) - finite point
+  radiusVector: Vector3;  // Vector from center to edge point (u, v, 0) - defines radius and angle 0
+
+  constructor(center: Vector3, radiusVector: Vector3, feasible: boolean = true) {
+    super(feasible);
+    this.center = center;
+    this.radiusVector = radiusVector;
+  }
+
+  /**
+   * Get radius as scalar (computed from vector length - not cached)
+   */
+  getRadius(): number {
+    return this.radiusVector.length();
+  }
+
+  /**
+   * Get squared radius (cheaper than getRadius() - no sqrt)
+   */
+  getRadiusSquared(): number {
+    return this.radiusVector.lengthSq();
+  }
+}
+```
+
+### Benefits
+
+1. **Uniform Feasibility Checking**: Single interface for all realization types
+   ```typescript
+   function isRealizationFeasible(realization: Element2DRealization2D): boolean {
+     return realization.isFeasible();
+   }
+   ```
+
+2. **Generic Realization Processing**: Functions can operate on Element2DRealization2D
+   ```typescript
+   function filterFeasible(realizations: Element2DRealization2D[]): Element2DRealization2D[] {
+     return realizations.filter(r => r.feasible);
+   }
+   ```
+
+3. **Type Safety**: All realizations guaranteed to have feasibility status
+   ```typescript
+   function renderIfFeasible(realization: Element2DRealization2D): void {
+     if (!realization.isFeasible()) return;
+     // Safe to render - geometric data is valid
+   }
+   ```
+
+4. **DRY Principle**: Feasible property defined once in base class
+
+5. **Consistent Architecture**: Mirrors Element2D pattern for domain objects
+
+### Migration Impact
+
+**Low-Risk Change**: Pure addition to type hierarchy, not a breaking change:
+- Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D maintain current interfaces
+- Only adds `extends Element2DRealization2D` to three classes
+- `feasible` property already exists in all three - just moves to base class
+- No changes to callers (still access `.feasible` directly)
+
+**Files to Modify**:
+1. Create `frontend/src/domain/world/Element2D.ts` with Element2DRealization2D base class
+2. Update `frontend/src/domain/world/Point.ts` - Point2DRealization2D extends Element2DRealization2D
+3. Update `frontend/src/domain/world/Line.ts` - Line2DRealization2D extends Element2DRealization2D
+4. Update `frontend/src/domain/world/Circle.ts` - Circle2DRealization2D extends Element2DRealization2D
+5. Update type exports in `frontend/src/domain/world/index.ts`
+
+**Testing Requirements**:
+- Unit tests for Element2DRealization2D base class
+- Type guard tests (instanceof Element2DRealization2D works for all three types)
+- Verify existing realization tests still pass
+- Integration test: generic feasibility filtering function
+
+---
+
+## Point Type Hierarchy
+
 **Implementation - Point Type Hierarchy**:
 
 The system uses specialized point classes for different intersection types to provide type safety and clear semantics:
 
-1. **Point2D** (Abstract Base):
+1. **Element2D** (Abstract Base for All 2D Elements):
+   - Base class for Point2D, Line2D, Circle2D
+   - Common fields: id, planeId, label, visible, type
+   - Abstract method: realize2D(world): Element2DRealization
+
+2. **Point2D** (Abstract Base for Points):
+   - Extends Element2D
    - Base class for all 2D point types
-   - Common fields: id, planeId, label, type
+   - Narrows type to Point2DType
    - Abstract method: realize2D(world): Point2DRealization2D
 
-2. **FreePoint2D** (Concrete):
+3. **FreePoint2D** (Concrete):
    - Direct position-based point
    - Fields: position (Vector3)
    - User-movable
@@ -4873,6 +5498,263 @@ operations/
 
 ---
 
+### Phase 47: Command-Based World Initialization
+
+**Status**: ✅ Implemented (2026-01-06)
+
+**Problem Statement**: World initialization was using imperative code in `World.initializeFixedElements()` that directly created geometric elements (planes, points, hinge lines) without using the Command/Operation pattern. This created several issues:
+
+1. **Architectural Inconsistency**: Initialization bypassed the Command pattern while all other World modifications used operations
+2. **No Undo Tracking**: InitializeWorldCommand wasn't being tracked properly (should be non-undoable)
+3. **ProcessTree Gaps**: Initialization actions weren't properly recorded in ProcessTree's subprocess structure
+4. **Testing Difficulty**: Imperative code is harder to test than atomic operations
+
+**Solution**: Refactored World initialization to use the Command/Operation pattern with these components:
+
+#### 1. Six Initialization Operations
+
+All operations implement `IOperation` interface and follow the atomic operation pattern:
+
+```typescript
+// 1. CreateInitializationSubprocessOp
+// Creates "World Initialization" subprocess in ProcessTree
+parameters: { name: string }
+outputs: { subprocessId: string }
+
+// 2. AddPlane3DOp
+// Creates horizontal or vertical 3D plane
+parameters: { planeId: string, orientation: 'horizontal' | 'vertical' }
+outputs: { planeId: string }
+
+// 3. AddProjectionPlaneOp
+// Creates projection plane linked to 3D plane
+parameters: { projPlaneId: string, plane3DId: string, orientation: 'horizontal' | 'vertical' }
+outputs: { projPlaneId: string }
+
+// 4. AddOriginPoint2DOp
+// Creates locked origin point at (0,0) on projection plane
+parameters: { planeId: string, position: Vector3 }
+outputs: { pointId: string }
+
+// 5. AddHingeLineOp
+// Creates hinge line connecting two projection planes
+parameters: { hingeLineId: string, plane1Id: string, plane2Id: string }
+outputs: { hingeLineId: string }
+
+// 6. AddHalfHingeLine2DOp
+// Creates 2D half hinge line representation on a projection plane
+parameters: { planeId: string, hingeLineId: string, point: Vector3, direction: Vector3 }
+outputs: { halfHingeLineId: string }
+```
+
+#### 2. InitializeWorldCommand
+
+Non-undoable command that orchestrates initialization:
+
+```typescript
+class InitializeWorldCommand extends Command {
+  constructor(world: World) {
+    super('Initialize World', world);
+    this.buildInitializationSequence();
+    // Override canUndo to make command non-undoable
+    this.canUndo = () => false;
+  }
+
+  private buildInitializationSequence(): void {
+    // 1. Create subprocess
+    this.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+
+    // 2-3. Create 3D planes
+    this.addAndExecute(new AddPlane3DOp('plane_H', 'horizontal'));
+    this.addAndExecute(new AddPlane3DOp('plane_V', 'vertical'));
+
+    // 4-5. Create projection planes
+    this.addAndExecute(new AddProjectionPlaneOp('proj_plane_1', 'plane_H', 'horizontal'));
+    this.addAndExecute(new AddProjectionPlaneOp('proj_plane_2', 'plane_V', 'vertical'));
+
+    // 6-7. Create origin points (locked at 0,0)
+    const originPos = new Vector3(0, 0, 1);
+    this.addAndExecute(new AddOriginPoint2DOp('proj_plane_1', originPos));
+    this.addAndExecute(new AddOriginPoint2DOp('proj_plane_2', originPos));
+
+    // 8. Create hinge line
+    this.addAndExecute(new AddHingeLineOp('hinge_line_1', 'proj_plane_1', 'proj_plane_2'));
+
+    // 9-10. Create half hinge lines (2D representations)
+    const hingePoint = new Vector3(0, 0, 1);
+    const hingeDirection = new Vector3(1, 0, 0);
+    this.addAndExecute(new AddHalfHingeLine2DOp('proj_plane_1', 'hinge_line_1', hingePoint, hingeDirection));
+    this.addAndExecute(new AddHalfHingeLine2DOp('proj_plane_2', 'hinge_line_1', hingePoint, hingeDirection));
+  }
+}
+```
+
+#### 3. Non-Undoable Command Mechanism
+
+Extended Command class with `canUndo()` method:
+
+```typescript
+class Command {
+  // Phase 47: Determines whether command can be undone
+  // Non-undoable commands (like InitializeWorldCommand) return false
+  // CommandStack checks this before adding to undo stack
+  canUndo(): boolean {
+    return true;  // Default: commands are undoable
+  }
+}
+```
+
+Updated CommandStack to respect `canUndo()`:
+
+```typescript
+class CommandStack {
+  push(command: Command): void {
+    // Phase 47: Only add to undo stack if command is undoable
+    if (!command.canUndo()) {
+      // Non-undoable command (e.g., InitializeWorldCommand)
+      // Track for history but don't allow undo
+      return;
+    }
+    
+    // Add to undo stack
+    this.commands.push(command);
+    this.currentIndex++;
+  }
+}
+```
+
+#### 4. World Refactoring
+
+Replaced imperative initialization code with operation-based approach:
+
+**Before** (90+ lines of imperative code):
+```typescript
+initializeFixedElements(): void {
+  // Direct World mutations
+  const planeH = new Plane3D('plane_H', 'horizontal', ...);
+  this.planes.set('plane_H', planeH);
+  
+  const projPlaneH = new ProjectionPlane('proj_plane_1', ...);
+  this.projectionPlanes.set('proj_plane_1', projPlaneH);
+  
+  // ... 80+ more lines of direct mutations
+}
+```
+
+**After** (operations-based):
+```typescript
+initializeFixedElements(): void {
+  // Create subprocess
+  new CreateInitializationSubprocessOp('World Initialization').apply(this);
+  
+  // Create planes
+  new AddPlane3DOp('plane_H', 'horizontal').apply(this);
+  new AddPlane3DOp('plane_V', 'vertical').apply(this);
+  
+  // Create projection planes
+  new AddProjectionPlaneOp('proj_plane_1', 'plane_H', 'horizontal').apply(this);
+  new AddProjectionPlaneOp('proj_plane_2', 'plane_V', 'vertical').apply(this);
+  
+  // Create origins, hinge line, half hinges
+  // ... (all using operations)
+}
+```
+
+#### 5. ProcessTree Integration
+
+Initialization now creates proper subprocess structure:
+
+```
+ProcessTree
+└── subprocess: "World Initialization"
+    ├── action: "Add 3D plane (horizontal)"
+    ├── action: "Add 3D plane (vertical)"
+    ├── action: "Add projection plane (proj_plane_1)"
+    ├── action: "Add projection plane (proj_plane_2)"
+    ├── action: "Add origin point (proj_plane_1/point2d_X)"
+    ├── action: "Add origin point (proj_plane_2/point2d_Y)"
+    ├── action: "Add hinge line (hinge_line_1)"
+    ├── action: "Add half hinge line (proj_plane_1)"
+    └── action: "Add half hinge line (proj_plane_2)"
+```
+
+#### Benefits
+
+1. **Architectural Consistency**: All World modifications now use Command/Operation pattern
+2. **Testability**: Each initialization operation can be unit tested independently
+3. **ProcessTree Completeness**: All initialization steps properly recorded
+4. **Non-Undoable Commands**: Infrastructure for commands that shouldn't be undone
+5. **Atomic Operations**: Each initialization step is reversible (though command as whole is non-undoable)
+6. **Clear Semantics**: Operation names document what's happening during initialization
+
+#### Usage
+
+World initialization happens automatically:
+
+```typescript
+// Constructor initializes World
+const world = new World();
+// ✅ All fundamental elements created via InitializeWorldCommand
+// ✅ ProcessTree has "World Initialization" subprocess
+// ✅ Command not added to undo stack (non-undoable)
+
+// Clear and re-initialize
+world.clear();
+// ✅ Calls initializeFixedElements() again
+// ✅ Uses same operation-based approach
+```
+
+#### Testing
+
+Comprehensive test suite validates implementation:
+
+**Unit Tests** (20 tests):
+- `tests/unit/commands/initializationOps.spec.ts`: Tests all 6 operations individually
+  - apply() creates correct elements
+  - undo() removes elements
+  - serialize() produces correct format
+  - parameters and outputs properties defined
+
+**Unit Tests** (11 tests):
+- `tests/unit/commands/initializeWorldCommand.spec.ts`: Tests command orchestration
+  - Command creation and naming
+  - Non-undoable behavior (canUndo() returns false)
+  - CommandStack doesn't add non-undoable commands
+  - All 10 operations execute in correct order
+  - World initialized with correct elements
+
+**Integration Tests** (13 tests):
+- `tests/integration/worldInitialization.spec.ts`: Tests complete workflow
+  - Constructor initialization creates all elements
+  - World.clear() re-initialization works
+  - Element relationships (projection planes → 3D planes, hinge line → planes)
+  - Generated IDs follow correct patterns
+  - ProcessTree subprocess created with actions
+
+#### Files Modified
+
+- `src/commands/Command.ts`: Added `canUndo()` method
+- `src/commands/CommandStack.ts`: Updated `push()` to check `canUndo()`
+- `src/commands/operations/world/InitializationOps.ts`: Created 6 operations
+- `src/commands/InitializeWorldCommand.ts`: Created orchestration command
+- `src/domain/world/World.ts`: Refactored `initializeFixedElements()` to use operations
+- `tests/unit/commands/initializationOps.spec.ts`: Unit tests for operations
+- `tests/unit/commands/initializeWorldCommand.spec.ts`: Unit tests for command
+- `tests/integration/worldInitialization.spec.ts`: Integration tests
+
+#### Migration Notes
+
+**Breaking Changes**: None - initialization behavior is identical, only implementation changed
+
+**Performance**: Negligible impact - operations add minimal overhead compared to direct mutations
+
+**Future Work**:
+- Consider making fixed element IDs truly unique across World instances (currently use fixed IDs like `plane_H`, `proj_plane_1`)
+- Add operation for setting semantic references (`horizontalPlaneId`, `verticalPlaneId`, etc.)
+- Consider extracting fixed IDs as constants (`PLANE_H_ID = 'plane_H'`)
+
+---
+
 ## Operation Sequence Factory Methods
 
 **Purpose**: Encapsulate common multi-operation patterns extracted from tool implementations into testable, reusable factory methods that build command sequences
@@ -5231,6 +6113,129 @@ it('guide factory creates both guides when using HHL', () => {
   expect(guides[0].siblingGuideId).toBe(guides[1].id);
 });
 ```
+
+### CRITICAL: Testing with Sequence Factories
+
+**Problem**: Direct operation execution in tests bypasses ProcessTree recording, breaking dependency tracking
+
+Tests that directly execute operations without recording in ProcessTree will cause cascade deletion and dependency tracking to fail:
+
+```typescript
+// ❌ INCORRECT: Direct operation execution - no ProcessTree recording
+it('should cascade delete line when deleting defining point', () => {
+  const setupCmd = new Command('Setup', world);
+  
+  const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+  const point1Id = p1Result.outputs.pointId!;
+  
+  const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+  const point2Id = p2Result.outputs.pointId!;
+  
+  const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+  const lineId = lineResult.outputs.lineId!;
+  
+  setupCmd.commit();
+  
+  // BUG: DependencyService has no record of these elements!
+  // Error: "Element point2d_1 has no producing action - skipping"
+  const deleteCmd = new Command('Delete', world);
+  DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], world);
+  // Cascade deletion fails - no dependencies tracked
+});
+```
+
+**Solution**: Use sequence factories which handle BOTH geometric creation AND ProcessTree recording
+
+```typescript
+// ✅ CORRECT: Use factories that record in ProcessTree
+it('should cascade delete line when deleting defining point', () => {
+  // Setup: Use appropriate factory or manually record actions
+  const setupCmd = new Command('Setup', world);
+  
+  // Option 1: Use factory if available (preferred)
+  const result = LineSequenceFactory.createLine(setupCmd, planeId, pos1, pos2, world);
+  const { point1Id, point2Id, lineId } = result;
+  
+  // Factory handles:
+  // 1. Creating operations and executing them
+  // 2. Recording actions in ProcessTree with proper inputs/outputs
+  // 3. Rebuilding dependency maps
+  
+  setupCmd.commit();
+  
+  // Now DependencyService has full dependency graph
+  const deleteCmd = new Command('Delete', world);
+  DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], world);
+  deleteCmd.commit();
+  
+  // Cascade deletion works - line is deleted with point
+  expect(plane.getPoint(point1Id)).toBeUndefined();
+  expect(plane.getLine(lineId)).toBeUndefined(); // ✅ Cascaded successfully
+});
+```
+
+**Why Factories Are Required for Tests**:
+
+1. **ProcessTree Recording**: Factories record actions with proper inputs/outputs
+2. **Dependency Tracking**: DependencyService builds dependency graph from ProcessTree
+3. **Cascade Deletion**: DeletionSequenceFactory queries DependencyService for dependent elements
+4. **Parametric Updates**: Future recomputation requires dependency information
+
+**Test Infrastructure Pattern**:
+
+```typescript
+// Each factory handles the complete sequence including ProcessTree
+class LineSequenceFactory {
+  static createLine(
+    cmd: Command,
+    planeId: string,
+    point1Pos: Vector3,
+    point2Pos: Vector3,
+    world: World
+  ): { point1Id: string; point2Id: string; lineId: string } {
+    // 1. Create geometric elements
+    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, point1Pos));
+    const point1Id = p1Result.outputs.pointId!;
+    
+    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, point2Pos));
+    const point2Id = p2Result.outputs.pointId!;
+    
+    const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+    const lineId = lineResult.outputs.lineId!;
+    
+    // 2. Record in ProcessTree (CRITICAL for dependency tracking)
+    const action = createLineAction(lineId, planeId, point1Id, point2Id);
+    world.getProcessTree().addAction(action);
+    
+    // 3. Rebuild dependency maps
+    world.getDependencyService().rebuildDependencyMaps();
+    
+    return { point1Id, point2Id, lineId };
+  }
+}
+```
+
+**Testing Guidelines**:
+
+1. **Use factories for multi-element setup** - Any test creating dependent elements should use factories
+2. **Manual recording only for simple cases** - Single element creation can manually record if no factory exists
+3. **Always rebuild dependency maps** - Call `world.getDependencyService().rebuildDependencyMaps()` after ProcessTree changes
+4. **Integration tests require factories** - All integration tests testing cascade deletion, parametric updates, or dependencies MUST use factories
+
+**Factory Availability**:
+- ✅ `GuideSequenceFactory` - Guide creation with sibling handling
+- ✅ `IntersectionSequenceFactory` - Intersection point creation with sibling handling  
+- ✅ `DeletionSequenceFactory` - Cascade deletion with dependency resolution
+- 🚧 `LineSequenceFactory` - Pending (needed for tests)
+- 🚧 `CircleSequenceFactory` - Pending (needed for tests)
+- 🚧 `SegmentSequenceFactory` - Pending (needed for tests)
+
+**Migration Path for Existing Tests**:
+
+1. Identify tests failing with "has no producing action" errors
+2. Replace direct operation calls with factory calls
+3. If no factory exists, create minimal factory for test infrastructure
+4. Verify dependency tracking works by running cascade deletion tests
 
 ### Tool Sequence Factories (Broader Pattern)
 

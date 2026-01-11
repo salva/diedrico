@@ -21,9 +21,19 @@ import { Circle2D, Circle2DRealization2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D } from './Plane';
-import { ProjectionPlane, BaseProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
+import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
+import { Element2D } from './Element2D';
+import { getContainerIdFromElementId } from './ElementId';
+import {
+  AddPlane3DOp,
+  AddProjectionPlaneOp,
+  AddOriginPoint2DOp,
+  AddHingeLineOp,
+  AddHalfHingeLine2DOp,
+  CreateInitializationSubprocessOp
+} from '@/commands/operations/world/InitializationOps';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -45,6 +55,19 @@ export class World {
   private nextId: number;
   private _version: number = 0;  // For tracking changes and triggering UI updates
 
+  // Phase 46: Semantic references to initial entities (track by role, not hardcoded ID)
+  // These are set during initialization and provide semantic access to the initial planes
+  private horizontalPlaneId!: string;    // ID of horizontal projection plane (formerly 'proj_plane_H')
+  private verticalPlaneId!: string;      // ID of vertical projection plane (formerly 'proj_plane_V')
+  private horizontalOriginId!: string;   // ID of origin point on horizontal plane
+  private verticalOriginId!: string;     // ID of origin point on vertical plane
+  private mainHingeLineId!: string;      // ID of main hinge line connecting the two planes
+  
+  // Phase 46: ID generation counters for automatic ID assignment
+  private projPlaneCounter: number = 0;
+  private planeCounter: number = 0;
+  private hingeLineCounter: number = 0;
+
   // Fixed elements (always present)
   originPoint?: Vector4;  // O at (0,0,0) in 3D space
 
@@ -60,7 +83,7 @@ export class World {
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService(this.processTree);
     
-    // Initialize fixed elements
+    // Phase 47: Initialize fixed elements using Command/Operation pattern
     this.initializeFixedElements();
   }
 
@@ -108,74 +131,72 @@ export class World {
   /**
    * Initialize fixed elements: P_V, P_H, origin O, and hinge line HL_HV
    * These are always present and cannot be deleted.
+   * 
+   * Phase 47: Uses Command/Operation pattern instead of imperative code.
+   * Each initialization step is an atomic operation.
    */
   initializeFixedElements(): void {
-    // Create P_H and P_V 3D planes
-    const planeH = Plane3D.createPH();
-    planeH.id = 'plane_H';
-    this.planes.set('plane_H', planeH);
-
-    const planeV = Plane3D.createPV();
-    planeV.id = 'plane_V';
-    this.planes.set('plane_V', planeV);
-
-    // Create base projection planes for P_H and P_V
-    const projPlaneH = BaseProjectionPlane.createPH();
-    projPlaneH.id = 'proj_plane_H';
-    projPlaneH.plane3DId = 'plane_H';
-    this.projectionPlanes.set('proj_plane_H', projPlaneH);
-
-    const projPlaneV = BaseProjectionPlane.createPV();
-    projPlaneV.id = 'proj_plane_V';
-    projPlaneV.plane3DId = 'plane_V';
-    this.projectionPlanes.set('proj_plane_V', projPlaneV);
-
-    // Origin projections O_H and O_V
-    // These are the 2D projections of the 3D origin point O at (0,0,0)
-    // O is at the intersection of HL_HV with the origin
-    // O_H on P_H: v=0 (where HL is), u=0 (at origin along X-axis)
-    // O_V on P_V: v=0 (where HL is), u=0 (at origin along X-axis)
-    const pointOH = new FreePoint2D('O_H', new Vector3(0, 0, 1), 'proj_plane_H');
-    pointOH.locked = true;
-    // Phase 22.5.3: Store in plane instead of World
-    projPlaneH.addPoint(pointOH);
-
-    const pointOV = new FreePoint2D('O_V', new Vector3(0, 0, 1), 'proj_plane_V');
-    pointOV.locked = true;
-    // Phase 22.5.3: Store in plane instead of World
-    projPlaneV.addPoint(pointOV);
-
-    // Origin point O at (0,0,0) in 3D space is defined by O_H and O_V
+    // Phase 47: Use operations to initialize fixed elements
+    
+    // Step 1: Create initialization subprocess
+    const createSubprocessOp = new CreateInitializationSubprocessOp('World Initialization');
+    createSubprocessOp.apply(this);
+    
+    // Generate IDs for fundamental structure (Phase 46)
+    const planeHId = 'plane_H';
+    const planeVId = 'plane_V';
+    const projPlaneHId = 'proj_plane_1';
+    const projPlaneVId = 'proj_plane_2';
+    const hingeLineId = 'hinge_line_1';
+    
+    // Store semantic references
+    this.horizontalPlaneId = projPlaneHId;
+    this.verticalPlaneId = projPlaneVId;
+    this.mainHingeLineId = hingeLineId;
+    
+    // Step 2-3: Create 3D planes
+    new AddPlane3DOp(planeHId, 'horizontal').apply(this);
+    new AddPlane3DOp(planeVId, 'vertical').apply(this);
+    
+    // Step 4-5: Create projection planes
+    new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal').apply(this);
+    new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical').apply(this);
+    
+    // Step 6-7: Create origin points (locked at 0,0)
+    const originPos = new Vector3(0, 0, 1);
+    const originHResult = new AddOriginPoint2DOp(projPlaneHId, originPos).apply(this);
+    const originVResult = new AddOriginPoint2DOp(projPlaneVId, originPos).apply(this);
+    
+    // Store origin IDs from operation outputs
+    if (originHResult.success) {
+      this.horizontalOriginId = originHResult.outputs.pointId;
+    }
+    if (originVResult.success) {
+      this.verticalOriginId = originVResult.outputs.pointId;
+    }
+    
+    // Origin point O at (0,0,0) in 3D space
     this.originPoint = new Vector4(0, 0, 0, 1);
-
-    // Create hinge line HL_HV connecting P_H and P_V
-    const hingeLineHV = new HingeLine('HL_HV', 'HL_HV', 'proj_plane_H', 'proj_plane_V');
-    this.hingeLines.set('HL_HV', hingeLineHV);
-
-    // Create HalfHingeLine2D objects for HL_HV (one per plane)
-    // HL_HV appears at v=0 on both P_H and P_V (horizontal line)
-    // These are Line2D entities stored in ProjectionPlane
-    const halfHingeHV_onPH = new HalfHingeLine2D(
-      'half_HL_HV_on_PH',
-      'HL_HV',
-      'proj_plane_H',
-      new Vector3(0, 0, 1),      // Point at origin
-      new Vector3(1, 0, 0)       // Horizontal direction (parallel to X-axis)
-    );
-    projPlaneH.addLine(halfHingeHV_onPH);
-
-    const halfHingeHV_onPV = new HalfHingeLine2D(
-      'half_HL_HV_on_PV',
-      'HL_HV',
-      'proj_plane_V',
-      new Vector3(0, 0, 1),      // Point at origin
-      new Vector3(1, 0, 0)       // Horizontal direction (parallel to X-axis)
-    );
-    projPlaneV.addLine(halfHingeHV_onPV);
-
-    // Validate parametric consistency: both HalfHingeLine2D must use identical (Q, D)
-    // This is CRITICAL for SiblingIntersectionPoint2D coordinate cloning to work correctly
-    HingeLine.validateParametricConsistency(halfHingeHV_onPH, halfHingeHV_onPV);
+    
+    // Step 8: Create hinge line
+    new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId).apply(this);
+    
+    // Step 9-10: Create half hinge lines (2D representations at v=0)
+    const hingePoint = new Vector3(0, 0, 1);
+    const hingeDirection = new Vector3(1, 0, 0);
+    new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection).apply(this);
+    new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection).apply(this);
+    
+    // Validate parametric consistency
+    const projPlaneH = this.projectionPlanes.get(projPlaneHId);
+    const projPlaneV = this.projectionPlanes.get(projPlaneVId);
+    if (projPlaneH && projPlaneV) {
+      const halfHingeH = projPlaneH.getAllLines().find(l => l.type === 'half-hinge');
+      const halfHingeV = projPlaneV.getAllLines().find(l => l.type === 'half-hinge');
+      if (halfHingeH && halfHingeV) {
+        HingeLine.validateParametricConsistency(halfHingeH, halfHingeV);
+      }
+    }
   }
 
   /**
@@ -184,6 +205,92 @@ export class World {
    */
   getNextId(): number {
     return this.nextId++;
+  }
+
+  /**
+   * Phase 46: Generate unique projection plane ID
+   * @returns Unique projection plane ID (e.g., 'proj_plane_1', 'proj_plane_2')
+   */
+  generateProjPlaneId(): string {
+    return `proj_plane_${++this.projPlaneCounter}`;
+  }
+
+  /**
+   * Phase 46: Generate unique 3D plane ID
+   * @returns Unique plane ID (e.g., 'plane_1', 'plane_2')
+   */
+  generatePlaneId(): string {
+    return `plane_${++this.planeCounter}`;
+  }
+
+  /**
+   * Phase 46: Generate unique hinge line ID
+   * @returns Unique hinge line ID (e.g., 'HL_1', 'HL_2')
+   */
+  generateHingeLineId(): string {
+    return `HL_${++this.hingeLineCounter}`;
+  }
+
+  /**
+   * Phase 46: Get horizontal projection plane (semantic access)
+   * @returns Horizontal projection plane
+   */
+  getHorizontalPlane(): ProjectionPlane {
+    const plane = this.projectionPlanes.get(this.horizontalPlaneId);
+    if (!plane) {
+      throw new Error('[World] Horizontal plane not initialized');
+    }
+    return plane;
+  }
+
+  /**
+   * Phase 46: Get vertical projection plane (semantic access)
+   * @returns Vertical projection plane
+   */
+  getVerticalPlane(): ProjectionPlane {
+    const plane = this.projectionPlanes.get(this.verticalPlaneId);
+    if (!plane) {
+      throw new Error('[World] Vertical plane not initialized');
+    }
+    return plane;
+  }
+
+  /**
+   * Phase 46: Get horizontal origin point (semantic access)
+   * @returns Origin point on horizontal plane
+   */
+  getHorizontalOrigin(): FreePoint2D {
+    const plane = this.getHorizontalPlane();
+    const point = plane.getPoint(this.horizontalOriginId);
+    if (!point || !(point instanceof FreePoint2D)) {
+      throw new Error('[World] Horizontal origin not found');
+    }
+    return point;
+  }
+
+  /**
+   * Phase 46: Get vertical origin point (semantic access)
+   * @returns Origin point on vertical plane
+   */
+  getVerticalOrigin(): FreePoint2D {
+    const plane = this.getVerticalPlane();
+    const point = plane.getPoint(this.verticalOriginId);
+    if (!point || !(point instanceof FreePoint2D)) {
+      throw new Error('[World] Vertical origin not found');
+    }
+    return point;
+  }
+
+  /**
+   * Phase 46: Get main hinge line (semantic access)
+   * @returns Main hinge line connecting horizontal and vertical planes
+   */
+  getMainHingeLine(): HingeLine {
+    const hingeLine = this.hingeLines.get(this.mainHingeLineId);
+    if (!hingeLine) {
+      throw new Error('[World] Main hinge line not found');
+    }
+    return hingeLine;
   }
 
   /**
@@ -615,6 +722,87 @@ export class World {
    */
   getProjectionPlaneById(id: string): ProjectionPlane | undefined {
     return this.projectionPlanes.get(id);
+  }
+
+  /**
+   * Get any 2D element by hierarchical ID (Phase 45)
+   * Parses ID to find container plane and retrieve element
+   * 
+   * @param id Hierarchical ID in format "{planeId}/{localId}"
+   * @returns Element2D (Point2D, Line2D, or Circle2D) or undefined if not found
+   * 
+   * @example
+   * world.getElement2D("proj_plane_H/point2d_1") // FreePoint2D
+   * world.getElement2D("proj_plane_V/line2d_5")   // Line2DByTwoPoints
+   */
+  getElement2D(id: string): Element2D | undefined {
+    try {
+      const containerId = getContainerIdFromElementId(id);
+      const plane = this.getProjectionPlaneById(containerId);
+      
+      if (!plane) {
+        return undefined;
+      }
+      
+      // Try each element type
+      return plane.getPoint(id) ||
+             plane.getLine(id) ||
+             plane.getCircle(id);
+    } catch (error) {
+      // Invalid ID format
+      return undefined;
+    }
+  }
+
+  /**
+   * Get Point2D by hierarchical ID (Phase 45)
+   * Type-safe variant of getElement2D() for points
+   * 
+   * @param id Hierarchical ID in format "{planeId}/{localId}"
+   * @returns Point2D or undefined if not found or not a point
+   */
+  getPoint2D(id: string): Point2D | undefined {
+    try {
+      const containerId = getContainerIdFromElementId(id);
+      const plane = this.getProjectionPlaneById(containerId);
+      return plane?.getPoint(id);
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  /**
+   * Get Line2D by hierarchical ID (Phase 45)
+   * Type-safe variant of getElement2D() for lines
+   * 
+   * @param id Hierarchical ID in format "{planeId}/{localId}"
+   * @returns Line2D or undefined if not found or not a line
+   */
+  getLine2D(id: string): Line2D | undefined {
+    try {
+      const containerId = getContainerIdFromElementId(id);
+      const plane = this.getProjectionPlaneById(containerId);
+      return plane?.getLine(id);
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  /**
+   * Get Circle2D by hierarchical ID (Phase 45)
+   * Type-safe variant of getElement2D() for circles
+   * 
+   * @param id Hierarchical ID in format "{planeId}/{localId}"
+   * @returns Circle2D or undefined if not found or not a circle
+   */
+  getCircle2D(id: string): Circle2D | undefined {
+    try {
+      const containerId = getContainerIdFromElementId(id);
+      const plane = this.getProjectionPlaneById(containerId);
+      return plane?.getCircle(id);
+    } catch (error) {
+      return undefined;
+    }
   }
 
   /**

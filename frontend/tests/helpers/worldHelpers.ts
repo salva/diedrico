@@ -1,0 +1,90 @@
+/**
+ * Test helpers for World semantic access (Phase 46)
+ * 
+ * These helpers abstract away specific ID values, allowing tests
+ * to work with semantic references (horizontal plane, vertical plane, etc.)
+ * instead of hardcoded IDs.
+ * 
+ * Usage:
+ * ```typescript
+ * const world = new World();
+ * const planeH = getHorizontalPlane(world);
+ * const planeV = getVerticalPlane(world);
+ * const originH = getHorizontalOrigin(world);
+ * ```
+ */
+
+import type { World } from '../../src/domain/world/World';
+import type { ProjectionPlane } from '../../src/domain/world/ProjectionPlane';
+import type { FreePoint2D } from '../../src/domain/world/Point';
+import type { HingeLine } from '../../src/domain/world/HingeLine';
+
+/**
+ * Get horizontal projection plane from world
+ */
+export function getHorizontalPlane(world: World): ProjectionPlane {
+  return world.getHorizontalPlane();
+}
+
+/**
+ * Get vertical projection plane from world
+ */
+export function getVerticalPlane(world: World): ProjectionPlane {
+  return world.getVerticalPlane();
+}
+
+/**
+ * Get horizontal projection plane ID
+ */
+export function getHorizontalPlaneId(world: World): string {
+  return world.getHorizontalPlane().id!;
+}
+
+/**
+ * Get vertical projection plane ID
+ */
+export function getVerticalPlaneId(world: World): string {
+  return world.getVerticalPlane().id!;
+}
+
+/**
+ * Get horizontal origin point from world
+ */
+export function getHorizontalOrigin(world: World): FreePoint2D {
+  return world.getHorizontalOrigin();
+}
+
+/**
+ * Get vertical origin point from world
+ */
+export function getVerticalOrigin(world: World): FreePoint2D {
+  return world.getVerticalOrigin();
+}
+
+/**
+ * Get horizontal origin point ID
+ */
+export function getHorizontalOriginId(world: World): string {
+  return world.getHorizontalOrigin().id!;
+}
+
+/**
+ * Get vertical origin point ID
+ */
+export function getVerticalOriginId(world: World): string {
+  return world.getVerticalOrigin().id!;
+}
+
+/**
+ * Get main hinge line from world
+ */
+export function getMainHingeLine(world: World): HingeLine {
+  return world.getMainHingeLine();
+}
+
+/**
+ * Get main hinge line ID
+ */
+export function getMainHingeLineId(world: World): string {
+  return world.getMainHingeLine().id!;
+}

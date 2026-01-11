@@ -18,6 +18,8 @@
 import { Vector3, Vector4 } from 'three';
 import type { World } from './World';
 import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
+import { Element2DRealization2D } from './Element2DRealization2D';
+import { Element2D } from './Element2D';
 
 export type Point2DType = 
   | 'free' 
@@ -38,13 +40,12 @@ export type Point2DType =
  * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
-export class Point2DRealization2D {
+export class Point2DRealization2D extends Element2DRealization2D {
   position: Vector3;  // Position in plane coordinates (u, v, 1) - ONLY NUMERIC DATA
-  feasible: boolean;  // Whether the geometric computation succeeded
 
   constructor(position: Vector3, feasible: boolean = true) {
+    super(feasible);
     this.position = position;
-    this.feasible = feasible;
   }
 
   /**
@@ -79,22 +80,17 @@ export class Point3DRealization3D {
 
 /**
  * Base Point2D class - represents the rule/definition of a point
+ * Extends Element2D to provide common properties and interface for all 2D elements
  */
-export abstract class Point2D {
-  id: string;  // Unique identifier (required)
+export abstract class Point2D extends Element2D {
   abstract readonly type: Point2DType;
-  label?: string;
-  planeId: string;  // Which projection plane this point belongs to
-  visible: boolean = true;  // Whether point is visible in the canvas
 
   constructor(
     id: string,
     planeId: string,
     label?: string
   ) {
-    this.id = id;
-    this.label = label;
-    this.planeId = planeId;
+    super(id, planeId, label);
   }
 
   /**

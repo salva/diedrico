@@ -24,6 +24,7 @@
 
 import { Matrix3, Vector3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
+import { buildElementId } from './ElementId';
 import type { Point2D, Point2DRealization2D } from './Point';
 import { 
   FreePoint2D,
@@ -437,35 +438,40 @@ export abstract class ProjectionPlane {
    * Generate unique Point2D ID using World's counter
    */
   generatePoint2DId(world: import('./World').World): string {
-    return `point2d_${world.getNextId()}`;
+    const localId = `point2d_${world.getNextId()}`;
+    return buildElementId(this.id, localId);
   }
 
   /**
    * Generate unique Line2D ID using World's counter
    */
   generateLine2DId(world: import('./World').World): string {
-    return `line2d_${world.getNextId()}`;
+    const localId = `line2d_${world.getNextId()}`;
+    return buildElementId(this.id, localId);
   }
 
   /**
    * Generate unique Segment2D ID using World's counter
    */
   generateSegment2DId(world: import('./World').World): string {
-    return `segment2d_${world.getNextId()}`;
+    const localId = `segment2d_${world.getNextId()}`;
+    return buildElementId(this.id, localId);
   }
 
   /**
    * Generate unique Circle2D ID using World's counter
    */
   generateCircle2DId(world: import('./World').World): string {
-    return `circle2d_${world.getNextId()}`;
+    const localId = `circle2d_${world.getNextId()}`;
+    return buildElementId(this.id, localId);
   }
 
   /**
    * Generate unique Guide2D ID using World's counter
    */
   generateGuide2DId(world: import('./World').World): string {
-    return `guide2d_${world.getNextId()}`;
+    const localId = `guide2d_${world.getNextId()}`;
+    return buildElementId(this.id, localId);
   }
 
   /**

@@ -325,26 +325,10 @@ function formatElement(element: any): any {
 }
 
 function formatLabel(element: any): string {
-  // Use element label if available, otherwise format the ID
-  let label = element.label || element.id;
-  
-  // If using ID, remove common prefixes
-  if (!element.label) {
-    label = label.replace(/^point2d_/, '')
-      .replace(/^line2d_/, '')
-      .replace(/^segment2d_/, '')
-      .replace(/^circle2d_/, '')
-      .replace(/^guide2d_/, '');
-  }
-  
-  // Add subscript for plane (P_H → subscript H, P_V → subscript V)
-  if (element.planeId === 'proj_plane_H') {
-    label = label + '�subscriptH�';
-  } else if (element.planeId === 'proj_plane_V') {
-    label = label + '�subscriptV�';
-  }
-  
-  return label;
+  // Use element label if available, otherwise use unaltered hierarchical ID
+  // Hierarchical IDs (e.g., "proj_plane_H/point2d_1") are self-documenting
+  // and show which plane the element belongs to
+  return element.label || element.id;
 }
 
 function getElementType(element: any): string {

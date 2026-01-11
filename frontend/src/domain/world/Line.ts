@@ -17,6 +17,8 @@
  */
 
 import { Vector3 } from 'three';
+import { Element2DRealization2D } from './Element2DRealization2D';
+import { Element2D } from './Element2D';
 
 export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'half-hinge' | 'segment' | 'guide' | 'sibling-guide';
 
@@ -52,19 +54,18 @@ export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpe
  * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
-export class Line2DRealization2D {
+export class Line2DRealization2D extends Element2DRealization2D {
   point1: Vector3;     // First defining point (always finite: z=1)
   point2: Vector3;     // Second defining point (z=0 for direction, z=1 for endpoint)
-  feasible: boolean;   // Whether the geometric computation succeeded
   
   constructor(
     point1: Vector3, 
     point2: Vector3, 
     feasible: boolean = true
   ) {
+    super(feasible);
     this.point1 = point1;
     this.point2 = point2;
-    this.feasible = feasible;
   }
   
   /**
@@ -108,22 +109,17 @@ export class Line2DRealization2D {
 
 /**
  * Base Line2D class - represents the rule/definition of a line
+ * Extends Element2D to provide common properties and interface for all 2D elements
  */
-export abstract class Line2D {
-  id: string;  // Unique identifier (required)
+export abstract class Line2D extends Element2D {
   abstract readonly type: Line2DType;
-  label?: string;
-  planeId: string;  // Which projection plane this line belongs to
-  visible: boolean = true;  // Whether line is visible in the canvas
   
   constructor(
     id: string,
     planeId: string,
     label?: string
   ) {
-    this.id = id;
-    this.label = label;
-    this.planeId = planeId;
+    super(id, planeId, label);
   }
   
   /**

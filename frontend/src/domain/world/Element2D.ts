@@ -1,0 +1,97 @@
+import { World } from './World';
+import { Point2DRealization2D } from './Point';
+import { Line2DRealization2D } from './Line';
+import { Circle2DRealization2D } from './Circle';
+import { validateElementId } from './ElementId';
+
+/**
+ * Union type for all possible 2D element realizations
+ */
+export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | Circle2DRealization2D;
+
+/**
+ * Base class for all 2D geometric elements (points, lines, circles)
+ * 
+ * **Architectural Principle: DRY and Uniform Interface**
+ * 
+ * Before Element2D, Point2D, Line2D, and Circle2D were three separate hierarchies
+ * with no common ancestor, despite sharing identical properties (id, planeId, label, visible).
+ * This caused:
+ * - Code duplication (same properties defined three times)
+ * - No uniform handling (couldn't write generic functions for all elements)
+ * - Inconsistent interfaces (each hierarchy evolved independently)
+ * 
+ * Element2D provides:
+ * - Common properties: id, planeId, label, visible, type
+ * - Abstract methods: clone(), realize2D()
+ * - Uniform type guard: isElement2D() works for all types
+ * - Generic processing: Functions can work with Element2D regardless of specific type
+ * 
+ * **Usage**:
+ * ```typescript
+ * // Type guard works for all elements
+ * function isElement2D(obj: any): obj is Element2D {
+ *   return obj instanceof Element2D;
+ * }
+ * 
+ * // Generic functions
+ * function hideElement(element: Element2D): void {
+ *   element.visible = false;
+ * }
+ * 
+ * // Filter by plane
+ * function getElementsOnPlane(planeId: string, elements: Element2D[]): Element2D[] {
+ *   return elements.filter(el => el.planeId === planeId);
+ * }
+ * ```
+ * 
+ * @sealed - Cannot be directly subclassed, only Point2D/Line2D/Circle2D extend it
+ */
+export abstract class Element2D {
+  /** Unique identifier for this element */
+  readonly id: string;
+  
+  /** Which projection plane this element belongs to */
+  readonly planeId: string;
+  
+  /** Optional user-assigned label */
+  label?: string;
+  
+  /** Whether element is visible in canvas (default: true) */
+  visible: boolean = true;
+  
+  /** 
+   * Element type discriminator (e.g., 'free', 'by-two-points', 'intersection-line-line')
+   * Narrows to Point2DType | Line2DType | Circle2DType in subclasses
+   */
+  abstract readonly type: string;
+  
+  constructor(
+    id: string,
+    planeId: string,
+    label?: string
+  ) {
+    // Phase 45: Validate hierarchical ID format
+    // Ensure element ID starts with its container plane ID
+    validateElementId(id, planeId);
+    
+    this.id = id;
+    this.planeId = planeId;
+    this.label = label;
+  }
+  
+  /**
+   * Clone this element
+   * Must be implemented by concrete subclasses
+   */
+  abstract clone(): Element2D;
+  
+  /**
+   * Calculate 2D realization (geometric position/shape) for this element
+   * Returns realization in the projection plane's intrinsic coordinates
+   * 
+   * @param world World instance to query parent element realizations
+   * @returns Element realization or null if computation fails
+   */
+  abstract realize2D(world: World): Element2DRealization | null;
+}
