@@ -3844,17 +3844,17 @@ class IntersectionTool {
 
 ### Tasks
 
-- [ ] T477 Create factories directory structure and README
-  - Create `frontend/src/commands/factories/` directory
-  - Create `frontend/src/commands/factories/README.md` documenting:
+- [X] T477 Create factories directory structure and README
+  - ✅ Created `frontend/src/commands/factories/` directory
+  - ✅ Created `frontend/src/commands/factories/README.md` documenting:
     - Purpose: Extract common operation sequences from tools
     - Pattern: Factories receive open Command, add operations, return void
     - When to create factory: When same operation sequence appears in 2+ places
     - How to test: Unit tests verify operation sequence, integration tests verify execution
   - Create `frontend/src/commands/factories/index.ts` barrel export file
 
-- [ ] T478 [P] Implement GuideSequenceFactory for guide creation with sibling
-  - Create `frontend/src/commands/factories/GuideSequenceFactory.ts`
+- [X] T478 [P] Implement GuideSequenceFactory for guide creation with sibling
+  - ✅ Created `frontend/src/commands/factories/GuideSequenceFactory.ts`
   - Implement static method: `createGuideWithSibling(cmd: Command, planeId: string, referenceLineId: string, throughPointId: string, world: World): void`
   - Logic extracted from GuideTool.ts lines 125-179:
     1. Add AddGuide2DPerpendicularToLineOp to command
@@ -3866,8 +3866,8 @@ class IntersectionTool {
   - Factory should NOT commit command (tool responsibility)
   - Document factory in JSDoc with example usage
 
-- [ ] T479 [P] Add unit tests for GuideSequenceFactory
-  - Create `frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts`
+- [X] T479 [P] Add unit tests for GuideSequenceFactory
+  - ✅ Tests exist for guide creation with and without siblings
   - Test 1: Non-HHL reference line → verify 1 operation added (AddGuide2DPerpendicularToLineOp)
   - Test 2: HHL reference line → verify 2 operations added (AddGuide2DPerpendicularToLineOp + AddSiblingGuide2DOp)
   - Test 3: HHL reference line but sibling info unavailable → verify 1 operation only
@@ -3875,8 +3875,8 @@ class IntersectionTool {
   - Use mock World with test data for HalfHingeLine and sibling planes
   - Verify operation types, parameters, and sequence order
 
-- [ ] T480 [P] Refactor GuideTool to use GuideSequenceFactory
-  - Update `frontend/src/tools/GuideTool.ts` handleClick() method
+- [X] T480 [P] Refactor GuideTool to use GuideSequenceFactory
+  - ✅ Updated `frontend/src/tools/GuideTool.ts` to use factory (line 128)
   - Replace inline operation sequence logic (lines 125-179) with factory call
   - Pattern:
     ```typescript
@@ -3888,8 +3888,8 @@ class IntersectionTool {
   - Verify all existing guide tests still pass
   - No behavior change - pure refactoring
 
-- [ ] T481 [P] Implement DeletionSequenceFactory for cascade deletion
-  - Create `frontend/src/commands/factories/DeletionSequenceFactory.ts`
+- [X] T481 [P] Implement DeletionSequenceFactory for cascade deletion
+  - ✅ Created `frontend/src/commands/factories/DeletionSequenceFactory.ts`
   - Implement static method: `createCascadeDeletion(cmd: Command, selectedIds: string[], world: World): void`
   - Logic extracted from App.vue lines 660-760:
     1. Get deletion order via world.getDependencyService().getElementsInDeletionOrder(selectedIds)
@@ -3901,8 +3901,8 @@ class IntersectionTool {
     5. Add RebuildDependencyMapsOp (if exists, else factory should NOT rebuild - tool handles it)
   - Document factory with example usage
 
-- [ ] T482 [P] Add unit tests for DeletionSequenceFactory
-  - Create `frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts`
+- [X] T482 [P] Add unit tests for DeletionSequenceFactory
+  - ✅ Tests cover cascade deletion with dependency order
   - Test 1: Delete single free point → verify RemovePoint2DOp added
   - Test 2: Delete line → verify cascade includes dependent elements
   - Test 3: Delete multiple selected elements → verify proper deletion order (dependents first)
@@ -3910,8 +3910,8 @@ class IntersectionTool {
   - Test 5: Verify operation sequence respects topological order
   - Use mock World with test dependency graph
 
-- [ ] T483 [P] Refactor App.vue to use DeletionSequenceFactory
-  - Update `frontend/src/App.vue` handleDeleteSelected() method (lines 660-760)
+- [X] T483 [P] Refactor App.vue to use DeletionSequenceFactory
+  - ✅ Updated `frontend/src/App.vue` handleDeleteSelected() to use factory (line 693)
   - Replace inline operation sequence logic with factory call
   - Pattern:
     ```typescript
@@ -3926,8 +3926,8 @@ class IntersectionTool {
   - Verify all existing deletion tests still pass
   - No behavior change - pure refactoring
 
-- [ ] T484 [P] Add integration tests for factory-built commands
-  - Create `frontend/tests/integration/commandFactories.spec.ts`
+- [X] T484 [P] Add integration tests for factory-built commands
+  - ✅ Integration tests verify end-to-end factory behavior
   - Test GuideSequenceFactory end-to-end:
     - Create guide with HHL reference → verify both guides exist in World
     - Verify bidirectional sibling links
@@ -3944,13 +3944,13 @@ class IntersectionTool {
     - Redo command → verify both intersections restored
   - All tests use real World, CommandStack, not mocks
 
-- [ ] T485 [P] Document factory pattern guidelines in data-model.md
-  - Already complete - see [data-model.md §Operation Sequence Factory Methods](./data-model.md#operation-sequence-factory-methods)
+- [X] T485 [P] Document factory pattern guidelines in data-model.md
+  - ✅ Already complete - see [data-model.md §Operation Sequence Factory Methods](./data-model.md#operation-sequence-factory-methods)
   - Verify examples match actual implementation
   - Add references from tool documentation to relevant factories
 
-- [ ] T486 [P] Implement IntersectionSequenceFactory for intersection creation
-  - Create `frontend/src/commands/factories/IntersectionSequenceFactory.ts`
+- [X] T486 [P] Implement IntersectionSequenceFactory for intersection creation
+  - ✅ Created `frontend/src/commands/factories/IntersectionSequenceFactory.ts`
   - Implement static method: `createIntersection(cmd: Command, planeId: string, element1Id: string, element2Id: string, index: number, world: World): void`
   - Logic:
     1. Query world to get element1 and element2 types
@@ -3963,8 +3963,8 @@ class IntersectionTool {
   - Factory encapsulates type detection and sibling logic
   - Document factory with JSDoc and usage examples
 
-- [ ] T487 [P] Add unit tests for IntersectionSequenceFactory
-  - Create `frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts`
+- [X] T487 [P] Add unit tests for IntersectionSequenceFactory
+  - ✅ Tests cover all intersection types and sibling creation
   - Test 1: Line-line intersection → verify AddLineLineIntersectionPoint2DOp added
   - Test 2: Line-circle intersection → verify AddLineCircleIntersectionPoint2DOp added
   - Test 3: Circle-circle intersection → verify AddCircleCircleIntersectionPoint2DOp added
@@ -3973,8 +3973,8 @@ class IntersectionTool {
   - Test 6: Invalid element IDs → verify error handling
   - Use mock World with test elements and HalfHingeLine data
 
-- [ ] T488 [P] Refactor IntersectionTool to use IntersectionSequenceFactory
-  - Update `frontend/src/tools/IntersectionTool.ts` handleClick() method
+- [X] T488 [P] Refactor IntersectionTool to use IntersectionSequenceFactory
+  - ✅ Updated `frontend/src/tools/IntersectionTool.ts` to use factory (line 138)
   - Replace inline type detection and operation creation (lines 137-210) with factory call
   - Pattern:
     ```typescript
@@ -4664,65 +4664,54 @@ Most construction tools follow: create world elements → create process tree ac
 
 **Tasks**:
 
-- [ ] T489 [P] Create Element2D abstract base class in `frontend/src/domain/world/Element2D.ts`
-  - Properties: id, planeId, label, visible, abstract type
-  - Abstract methods: clone(): Element2D, realize2D(world): Element2DRealization
-  - Constructor accepting (id, planeId, label?)
-  - Export Element2DRealization union type (Point2DRealization2D | Line2DRealization2D | Circle2DRealization2D)
+- [X] T489 [P] Create Element2D abstract base class in `frontend/src/domain/world/Element2D.ts`
+  - ✅ Created with properties: id, planeId, label, visible, abstract type
+  - ✅ Abstract methods: clone(), realize2D()
+  - ✅ Element2DRealization union type exported
 
-- [ ] T490 Update Point2D to extend Element2D in `frontend/src/domain/world/Point.ts`
-  - Add `extends Element2D` to Point2D abstract class
-  - Update constructor to call super(id, planeId, label)
-  - Remove duplicate properties (id, planeId, label, visible) now inherited from Element2D
-  - Narrow type to Point2DType
-  - Update abstract method signatures to return specific types (Point2D, Point2DRealization2D)
+- [X] T490 Update Point2D to extend Element2D in `frontend/src/domain/world/Point.ts`
+  - ✅ Added `extends Element2D` to Point2D abstract class (line 85)
+  - ✅ Constructor calls super(id, planeId, label)
+  - ✅ Duplicate properties removed (now inherited from Element2D)
+  - ✅ Type narrowed to Point2DType
 
-- [ ] T491 Update Line2D to extend Element2D in `frontend/src/domain/world/Line.ts`
-  - Add `extends Element2D` to Line2D abstract class
-  - Update constructor to call super(id, planeId, label)
-  - Remove duplicate properties now inherited from Element2D
-  - Narrow type to Line2DType
-  - Update abstract method signatures to return specific types (Line2D, Line2DRealization2D)
+- [X] T491 Update Line2D to extend Element2D in `frontend/src/domain/world/Line.ts`
+  - ✅ Added `extends Element2D` to Line2D abstract class (line 114)
+  - ✅ Constructor calls super(id, planeId, label)
+  - ✅ Duplicate properties removed (now inherited from Element2D)
+  - ✅ Type narrowed to Line2DType
 
-- [ ] T492 Update Circle2D to extend Element2D in `frontend/src/domain/world/Circle.ts`
-  - Add `extends Element2D` to Circle2D abstract class
-  - Update constructor to call super(id, planeId, label)
-  - Remove duplicate properties now inherited from Element2D
-  - Narrow type to Circle2DType
-  - Update abstract method signatures to return specific types (Circle2D, Circle2DRealization2D)
+- [X] T492 Update Circle2D to extend Element2D in `frontend/src/domain/world/Circle.ts`
+  - ✅ Added `extends Element2D` to Circle2D abstract class (line 74)
+  - ✅ Constructor calls super(id, planeId, label)
+  - ✅ Duplicate properties removed (now inherited from Element2D)
+  - ✅ Type narrowed to Circle2DType
 
-- [ ] T493 [P] Update type exports in `frontend/src/domain/world/index.ts`
-  - Export Element2D base class
-  - Export Element2DRealization union type
-  - Verify all existing exports still work
+- [X] T493 [P] Update type exports in `frontend/src/domain/world/index.ts`
+  - ✅ Element2D base class exported
+  - ✅ Element2DRealization union type exported
+  - ✅ All existing exports verified working
 
-- [ ] T494 [P] Unit tests for Element2D base class in `frontend/tests/unit/domain/element2d.spec.ts`
-  - Test instantiation via concrete subclasses (FreePoint2D, Line2DByTwoPoints, Circle2DByCenterAndPoint)
-  - Test type guard: isElement2D(point) returns true
-  - Test type guard: isElement2D(line) returns true
-  - Test type guard: isElement2D(circle) returns true
-  - Test common property access (id, planeId, label, visible)
-  - Test abstract methods are implemented by subclasses
+- [X] T494 [P] Unit tests for Element2D base class in `frontend/tests/unit/domain/element2d.spec.ts`
+  - ✅ Tests exist for Element2D instantiation via concrete subclasses
+  - ✅ Type guards tested for all element types
+  - ✅ Common property access tested
+  - ✅ Abstract methods verified implemented by subclasses
 
-- [ ] T495 [P] Generic element utility functions in `frontend/src/utils/elementUtils.ts`
-  - Create type guard: `function isElement2D(obj: any): obj is Element2D`
-  - Filter by plane: `function getElementsOnPlane(planeId: string, elements: Element2D[]): Element2D[]`
-  - Hide element: `function hideElement(element: Element2D): void`
-  - Show element: `function showElement(element: Element2D): void`
-  - Unit tests for these utilities
+- [X] T495 [P] Generic element utility functions in `frontend/src/utils/elementUtils.ts`
+  - ✅ Type guard isElement2D() implemented
+  - ✅ Element filtering and manipulation utilities created
+  - ✅ Unit tests for utilities passing
 
-- [ ] T496 Integration test: verify generic functions work with mixed element types in `frontend/tests/integration/element2d.spec.ts`
-  - Create array of mixed elements: [FreePoint2D, Line2DByTwoPoints, Circle2DByCenterAndPoint]
-  - Test getElementsOnPlane returns all elements on specified plane
-  - Test hideElement hides each element type
-  - Test isElement2D type guard works for all three types
+- [X] T496 Integration test: verify generic functions work with mixed element types in `frontend/tests/integration/element2d.spec.ts`
+  - ✅ Integration tests pass with mixed element types
+  - ✅ Generic functions tested end-to-end
+  - ✅ Type guards verified for all element types
 
-- [ ] T497 Verify all existing tests still pass after Element2D introduction
-  - Run full test suite
-  - Verify Point2D tests in `frontend/tests/unit/domain/point.spec.ts`
-  - Verify Line2D tests in `frontend/tests/unit/domain/line.spec.ts`
-  - Verify Circle2D tests in `frontend/tests/unit/domain/circle.spec.ts`
-  - Fix any broken tests (should be none - this is a pure addition)
+- [X] T497 Verify all existing tests still pass after Element2D introduction
+  - ✅ Full test suite passes
+  - ✅ Point2D, Line2D, Circle2D tests all passing
+  - ✅ No regressions from Element2D addition
 
 ### Element2DRealization2D Base Class (Same Phase)
 
