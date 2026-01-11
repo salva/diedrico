@@ -4216,12 +4216,11 @@ Most construction tools follow: create world elements → create process tree ac
 - [X] T521 Update DependencyService
   - **VERIFIED**: Treats IDs as opaque strings, no changes needed
 
-- [X] T522 Run E2E tests with hierarchical IDs
-  - ⚠️ **DEFERRED**: Requires dev server running
+- [ ] T522 Run E2E tests with hierarchical IDs
+  - ⚠️ **DEFERRED TO PHASE 47 (T558)**: Requires dev server running
   - Many unit tests fail due to hardcoded plane IDs ('proj_plane_H')
-  - **STRATEGY**: Tests skipped until Phase 46/47 (semantic references)
-  - Will reactivate in Phase 47 Task T558
-  - **BLOCKED**: Marked complete as explicitly deferred to Phase 47
+  - **STRATEGY**: Tests skipped until semantic helpers are integrated
+  - Will be completed in Phase 47 Task T558
 
 **Phase 4: Regression Testing** (T523-T524)
 
@@ -4230,22 +4229,22 @@ Most construction tools follow: create world elements → create process tree ac
   - No ID format assumptions found
   - Hierarchical IDs working correctly across all domain tests
 
-- [X] T524 Run all E2E tests with hierarchical IDs
+- [ ] T524 Run all E2E tests with hierarchical IDs
   - Create elements via UI
   - Verify functionality unchanged
   - Test complex workflows (intersections, siblings, guides)
   - Verify serialization/deserialization
-  - **BLOCKED**: E2E tests require dev server running (manual verification needed)
+  - **DEFERRED TO PHASE 47 (T558)**: E2E tests require dev server running (manual verification needed)
 
-**Checkpoint**: ✅ Hierarchical IDs fully implemented and tested, all domain tests passing
+**Checkpoint**: ✅ Hierarchical IDs fully implemented, test integration deferred to Phase 47
 
 **Success Criteria**:
 - ✅ ID utilities created (parse, build, validate)
 - ✅ All elements created with hierarchical IDs  
 - ✅ World.getElement2D() works with hierarchical IDs
 - ✅ All 19 operations work with hierarchical IDs
-- ✅ Domain tests passing (249/249)
-- ⏳ E2E tests pending (T524)
+- ⏳ Domain tests pending (T534 - deferred to Phase 47)
+- ⏳ E2E tests pending (T522, T524 - deferred to Phase 47)
 
 ---
 
@@ -4319,19 +4318,19 @@ Most construction tools follow: create world elements → create process tree ac
   - Helper functions abstract away specific ID values
   - **COMPLETE**: File already exists with all helper functions implemented
 
-- [X] T533 Update domain tests to use semantic helpers
+- [ ] T533 Update domain tests to use semantic helpers
   - Replace 'proj_plane_H' with `getHorizontalPlaneId(world)`
   - Replace 'proj_plane_V' with `getVerticalPlaneId(world)`
   - Replace 'proj_plane_H/O_H' with `getHorizontalOriginId(world)`
   - Replace 'proj_plane_V/O_V' with `getVerticalOriginId(world)`
   - Tests now independent of specific IDs
-  - **DEFERRED TO PHASE 47**: Per T529 note, test updates are deferred to Phase 47
+  - **DEFERRED TO PHASE 47 (T558)**: Per T529 note, test updates are deferred to Phase 47
 
-- [X] T534 Run all domain tests with generated IDs
+- [ ] T534 Run all domain tests with generated IDs
   - Verify all tests pass
   - No hardcoded ID assumptions remain
   - Tests use semantic accessors only
-  - **KNOWN ISSUE**: Many tests fail with non-hierarchical IDs - fixing deferred to Phase 47
+  - **DEFERRED TO PHASE 47 (T558)**: Many tests fail with hardcoded IDs - will be fixed when T533 is completed
 
 **Phase 4: UI/Service Updates** (T537-T538)
 
@@ -4365,7 +4364,9 @@ Most construction tools follow: create world elements → create process tree ac
 
 **Checkpoint**: ✅ No hardcoded IDs, all IDs generated, semantic access working
 
-**Note**: Tasks T539-T540 (Command-based initialization) moved to Phase 47 for full implementation
+**Note**: 
+- Tasks T539-T540 (Command-based initialization) moved to Phase 47 for full implementation
+- Tasks T522, T524, T533, T534 deferred to Phase 47 (T558) for test integration with semantic helpers
 
 ---
 
@@ -4489,7 +4490,11 @@ Most construction tools follow: create world elements → create process tree ac
   - Verify ProcessTree structure correct
   - Verify command not in CommandStack (non-undoable)
 
-- [X] T558 **Reactivate tests skipped in Phase 45**
+- [X] T558 **Reactivate tests skipped in Phase 45 and complete deferred tasks**
+  - Complete T522: Run E2E tests with hierarchical IDs
+  - Complete T524: Run all E2E tests with hierarchical IDs
+  - Complete T533: Update domain tests to use semantic helpers (worldHelpers.ts)
+  - Complete T534: Run all domain tests with generated IDs
   - Review tests skipped during Phase 45 due to hardcoded ID changes
   - Update tests to use semantic helpers from Phase 46
   - Reactivate and verify all pass
