@@ -2034,19 +2034,17 @@ All 300 tasks are defined with clear deliverables and dependencies. Implementati
   - Verify guide creation, rendering, and interaction still works
   - Check that perpendicular calculation unchanged
 
-- [ ] T334 Update data-model.md with architectural clarification
-  - Document that realization subclasses should not be created
-  - Add rationale: geometric data vs behavioral distinction
-  - Add examples of correct vs incorrect patterns
-  - Reference: Already done in planning phase
+- [X] T334 Update data-model.md with architectural clarification
+  - ✅ Documented in data-model.md: realization subclasses should not be created
+  - ✅ Added rationale: geometric data vs behavioral distinction
+  - ✅ Added correct vs incorrect pattern examples
 
-- [ ] T335 Mark all realization 2D classes as final to prevent inheritance
-  - Add @sealed JSDoc comment to Line2DRealization2D class
-  - Add @sealed JSDoc comment to Point2DRealization2D class
-  - Add @sealed JSDoc comment to Circle2DRealization2D class
-  - Document in each class comment: "Realization classes must not be subclassed"
-  - Add rationale: realization classes contain only geometric data, no behavior
-  - Files: frontend/src/domain/world/Line.ts, Point.ts, Circle.ts
+- [X] T335 Mark all realization 2D classes as final to prevent inheritance
+  - ✅ Added @sealed JSDoc comment to Line2DRealization2D (line 27)
+  - ✅ Added @sealed JSDoc comment to Point2DRealization2D (line 35)
+  - ✅ Added @sealed JSDoc comment to Circle2DRealization2D (line 25)
+  - ✅ Documented rationale in each class comment
+  - ✅ Files: frontend/src/domain/world/Line.ts, Point.ts, Circle.ts
 
 **Checkpoint**: All line-based elements use Line2DRealization2D directly, no unnecessary subclasses
 
