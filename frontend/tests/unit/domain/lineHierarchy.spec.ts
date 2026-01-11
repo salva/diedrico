@@ -245,7 +245,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const guide = new Guide2D('guide1', 'line1', p1Id, planeH.id);
       
       expect(guide).toBeInstanceOf(Line2D);
-      expect(guide.type).toBe('perpendicular-to-line');
+      expect(guide.type).toBe('guide');
     });
 
     it('realize2D() should return Line2DRealization2D', () => {

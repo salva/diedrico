@@ -106,8 +106,7 @@ import StartupDialog from './components/dialogs/StartupDialog.vue';
 import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
 import { CommandStack } from './commands/CommandStack';
 import { Command } from './commands/Command';
-import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from './commands/operations/world/RemoveElementOps';
-import { RemoveActionFromProcessTreeOp } from './commands/operations/processTree/ProcessTreeOperations';
+import { DeletionSequenceFactory } from './commands/factories/DeletionSequenceFactory';
 import { useToolStore } from './stores/toolStore';
 import { useSelectionStore } from './stores/selectionStore';
 import { useSettingsStore } from './stores/settingsStore';
@@ -650,15 +649,11 @@ async function handleToolbarSignOut() {
  * Handle delete selected elements (T271, T285-T289)
  * Delete/Backspace key: Remove all selected elements with cascade deletion
  * 
- * Builds a Command from RemoveElement and RemoveAction operations:
- * - Computes cascade (all dependent elements via DependencyService)
- * - Sorts elements in deletion order (dependents before dependencies)
- * - Adds RemoveElementOp for each element (by type)
- * - Adds RemoveActionFromProcessTreeOp for each action
+ * Uses DeletionSequenceFactory to build a Command with:
+ * - Cascade computation (all dependent elements via DependencyService)
+ * - Type-specific RemoveOps for each element (in proper deletion order)
+ * - RemoveActionFromProcessTreeOp for each action
  * - Supports proper undo/redo through operation composition
- * 
- * CRITICAL: Elements must be deleted in reverse topological order to maintain
- * referential integrity during deletion (dependents first, roots last).
  */
 function handleDeleteSelected() {
   const selectedIds = selectionStore.selectedIdsArray;
@@ -670,89 +665,18 @@ function handleDeleteSelected() {
   
   console.log('[App] Deleting selected elements:', selectedIds);
   
-  // Step 1: Compute cascade and get elements in proper deletion order
-  // CRITICAL: getElementsInDeletionOrder returns elements sorted by dependency depth
-  // (dependents first, roots last) to maintain referential integrity
-  const dependencyService = world.getDependencyService();
-  const allElementsToDelete = dependencyService.getElementsInDeletionOrder(selectedIds);
-  
-  const cascadedElements = allElementsToDelete.filter(id => !selectedIds.includes(id));
-  
-  console.log('[App] Cascade deletion:', {
-    direct: selectedIds,
-    cascaded: cascadedElements,
-    total: allElementsToDelete,
-    order: 'dependents-first (proper deletion order)'
-  });
-  
-  // Step 2: Build Command with operations
+  // Build Command with operations via factory
   const deleteCommand = new Command('Delete elements', world);
   
   try {
-    // Find all actions that produce these elements
-    const processTree = world.getProcessTree();
-    const actionsToDelete = new Map<string, string[]>();
+    DeletionSequenceFactory.createCascadeDeletion(deleteCommand, selectedIds, world);
     
-    for (const elementId of allElementsToDelete) {
-      const actions = processTree.getActionsProducingElement(elementId);
-      if (actions.length === 0) {
-        console.warn(`[App] Element ${elementId} has no producing action - skipping`);
-        continue;
-      }
-      
-      for (const action of actions) {
-        if (!actionsToDelete.has(action.id)) {
-          actionsToDelete.set(action.id, []);
-        }
-        actionsToDelete.get(action.id)!.push(elementId);
-      }
-    }
-    
-    // Step 3: Add operations to command in proper order
-    // Elements are already sorted in deletion order by getElementsInDeletionOrder
-    for (const elementId of allElementsToDelete) {
-      // Determine element type and add appropriate RemoveOp
-      const point = world.getPoint2DById(elementId);
-      if (point) {
-        deleteCommand.addAndExecute(new RemovePoint2DOp(point.planeId, elementId));
-        continue;
-      }
-      
-      const line = world.getLine2DById(elementId);
-      if (line) {
-        deleteCommand.addAndExecute(new RemoveLine2DOp(line.planeId, elementId));
-        continue;
-      }
-      
-      const segment = world.getSegment2DById(elementId);
-      if (segment) {
-        deleteCommand.addAndExecute(new RemoveSegment2DOp(segment.planeId, elementId));
-        continue;
-      }
-      
-      const circle = world.getCircle2DById(elementId);
-      if (circle) {
-        deleteCommand.addAndExecute(new RemoveCircle2DOp(circle.planeId, elementId));
-        continue;
-      }
-      
-      const guide = world.getGuide2DById(elementId);
-      if (guide) {
-        deleteCommand.addAndExecute(new RemoveGuide2DOp(guide.planeId, elementId));
-        continue;
-      }
-    }
-    
-    // Remove actions from ProcessTree (creates tombstones for undo)
-    for (const [actionId, _] of actionsToDelete) {
-      deleteCommand.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
-    }
-    
-    // Step 4: Commit and push to command stack
+    // Commit and push to command stack
     deleteCommand.commit();
     commandStack.push(deleteCommand);
     
     // Rebuild dependency maps after deletion
+    const dependencyService = world.getDependencyService();
     dependencyService.rebuildDependencyMaps();
     
     // Clear selection

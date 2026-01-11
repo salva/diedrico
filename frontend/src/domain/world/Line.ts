@@ -18,7 +18,7 @@
 
 import { Vector3 } from 'three';
 
-export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'half-hinge' | 'segment' | 'sibling-guide';
+export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'half-hinge' | 'segment' | 'guide' | 'sibling-guide';
 
 /**
  * Line2DRealization2D - Stores computed line using homogeneous coordinates

@@ -26,9 +26,7 @@ import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import type { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddLineLineIntersectionPoint2DOp } from '@/commands/operations/world/AddLineLineIntersectionPoint2DOp';
-import { AddLineCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddLineCircleIntersectionPoint2DOp';
-import { AddCircleCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddCircleCircleIntersectionPoint2DOp';
+import { IntersectionSequenceFactory, type IntersectionData } from '@/commands/factories/IntersectionSequenceFactory';
 import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
 import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
 import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
@@ -136,37 +134,11 @@ export class IntersectionTool extends BaseTool {
         // Build Command directly
         const cmd = new Command("Create intersection point", world);
         
-        // Create the appropriate operation based on intersection type
-        let operation;
-        if (intersectionData.type === 'line-line') {
-          operation = new AddLineLineIntersectionPoint2DOp(
-            planeId,
-            intersectionData.element1Id,
-            intersectionData.element2Id
-          );
-        } else if (intersectionData.type === 'line-circle') {
-          operation = new AddLineCircleIntersectionPoint2DOp(
-            planeId,
-            intersectionData.lineId!,
-            intersectionData.circleId!,
-            intersectionData.index!
-          );
-        } else if (intersectionData.type === 'circle-circle') {
-          operation = new AddCircleCircleIntersectionPoint2DOp(
-            planeId,
-            intersectionData.element1Id,
-            intersectionData.element2Id,
-            intersectionData.index!
-          );
-        } else {
-          throw new Error(`Unknown intersection type: ${intersectionData.type}`);
-        }
-        
-        // Use return value from addAndExecute
-        const result = cmd.addAndExecute(operation);
-        
-        // Extract outputs
-        const pointId = result.outputs.pointId;
+        // Use factory to create intersection
+        const result = IntersectionSequenceFactory.createIntersection(
+          cmd, planeId, intersectionData, world
+        );
+        const pointId = result.pointId;
         
         // Record ProcessTree action using specialized action factories
         let action;

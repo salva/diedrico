@@ -1,0 +1,139 @@
+/**
+ * DeletionSequenceFactory - Factory for cascade deletion sequences
+ * 
+ * Encapsulates the complex cascade deletion logic:
+ * 1. Compute dependency cascade (dependents before dependencies)
+ * 2. Sort elements in proper deletion order (reverse topological)
+ * 3. Add type-specific RemoveElementOp for each element
+ * 4. Remove corresponding ProcessTree actions
+ * 
+ * Design: This factory follows the Open Command pattern:
+ * - Receives open Command object
+ * - Adds operations via cmd.addAndExecute()
+ * - Returns void (caller handles commit/push/feedback)
+ * - Encapsulates complex cascade logic
+ * 
+ * CRITICAL: Elements must be deleted in reverse topological order to maintain
+ * referential integrity (dependents first, roots last).
+ * 
+ * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
+ */
+
+import { Command } from '@/commands/Command';
+import type { World } from '@/domain/world/World';
+import { 
+  RemovePoint2DOp, 
+  RemoveLine2DOp, 
+  RemoveSegment2DOp, 
+  RemoveCircle2DOp, 
+  RemoveGuide2DOp 
+} from '@/commands/operations/world/RemoveElementOps';
+import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+
+/**
+ * DeletionSequenceFactory - Factory for cascade deletion sequences
+ * 
+ * Encapsulates multi-element deletion logic extracted from App.vue lines 660-760.
+ * Handles cascade computation, topological sorting, and operation sequencing.
+ */
+export class DeletionSequenceFactory {
+  /**
+   * Create cascade deletion sequence for selected elements
+   * 
+   * Algorithm:
+   * 1. Compute cascade using dependency service (get all dependent elements)
+   * 2. Sort elements in deletion order (dependents first, roots last)
+   * 3. Add type-specific RemoveElementOp for each element
+   * 4. Add RemoveActionFromProcessTreeOp for each producing action
+   * 
+   * @param cmd - Open command to add operations to
+   * @param selectedIds - IDs of elements user wants to delete
+   * @param world - World instance for element lookup and dependency analysis
+   */
+  static createCascadeDeletion(
+    cmd: Command,
+    selectedIds: string[],
+    world: World
+  ): void {
+    // Step 1: Compute cascade and get elements in proper deletion order
+    const dependencyService = world.getDependencyService();
+    const allElementsToDelete = dependencyService.getElementsInDeletionOrder(selectedIds);
+    
+    const cascadedElements = allElementsToDelete.filter(id => !selectedIds.includes(id));
+    
+    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+      direct: selectedIds,
+      cascaded: cascadedElements,
+      total: allElementsToDelete,
+      order: 'dependents-first (proper deletion order)'
+    });
+    
+    // Step 2: Find all actions that produce these elements
+    const processTree = world.getProcessTree();
+    const actionsToDelete = new Map<string, string[]>();
+    
+    for (const elementId of allElementsToDelete) {
+      const actions = processTree.getActionsProducingElement(elementId);
+      if (actions.length === 0) {
+        console.warn(`[DeletionSequenceFactory] Element ${elementId} has no producing action - skipping`);
+        continue;
+      }
+      
+      for (const action of actions) {
+        if (!actionsToDelete.has(action.id)) {
+          actionsToDelete.set(action.id, []);
+        }
+        actionsToDelete.get(action.id)!.push(elementId);
+      }
+    }
+    
+    // Step 3: Add operations to command in proper order
+    // Search through projection planes to find each element and determine its type
+    for (const elementId of allElementsToDelete) {
+      let found = false;
+      
+      // Search in all projection planes
+      for (const [planeId, plane] of world.projectionPlanes.entries()) {
+        // Check if it's a point
+        const point = plane.getPoint(elementId);
+        if (point) {
+          cmd.addAndExecute(new RemovePoint2DOp(planeId, elementId));
+          found = true;
+          break;
+        }
+        
+        // Check if it's a line (includes segments and guides)
+        const line = plane.getLine(elementId);
+        if (line) {
+          // Determine specific line subtype for appropriate removal operation
+          if (line.type === 'segment') {
+            cmd.addAndExecute(new RemoveSegment2DOp(planeId, elementId));
+          } else if (line.type === 'guide' || line.type === 'sibling-guide') {
+            cmd.addAndExecute(new RemoveGuide2DOp(planeId, elementId));
+          } else {
+            cmd.addAndExecute(new RemoveLine2DOp(planeId, elementId));
+          }
+          found = true;
+          break;
+        }
+        
+        // Check if it's a circle
+        const circle = plane.getCircle(elementId);
+        if (circle) {
+          cmd.addAndExecute(new RemoveCircle2DOp(planeId, elementId));
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found) {
+        console.warn(`[DeletionSequenceFactory] Element ${elementId} not found in any plane`);
+      }
+    }
+    
+    // Step 4: Remove actions from ProcessTree (creates tombstones for undo)
+    for (const [actionId, _] of actionsToDelete) {
+      cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+    }
+  }
+}

@@ -34,7 +34,7 @@ import { intersectLineLine } from '@/domain/calculations/Intersections';
  * Extends Line2DPerpendicularToLine to inherit perpendicular line computation.
  */
 export class Guide2D extends Line2DPerpendicularToLine {
-  readonly type: 'perpendicular-to-line' = 'perpendicular-to-line';
+  readonly type: 'guide' = 'guide';
   visible: boolean = true;  // Whether guide is visible in the canvas
   siblingGuideId?: string;  // ID of the sibling guide in the paired plane
 
@@ -318,7 +318,7 @@ export class SiblingGuide2D extends Line2D {
 
 // Type guards for Guide types
 export function isGuide2D(line: Line2D): line is Guide2D {
-  return line.type === 'perpendicular-to-line' && 'visible' in line && !('primaryGuideId' in line);
+  return line.type === 'guide';
 }
 
 export function isSiblingGuide2D(line: Line2D): line is SiblingGuide2D {

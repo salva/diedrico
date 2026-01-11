@@ -506,7 +506,7 @@ export class Paper {
         return 'half-hinge-line';
       }
       // Guide2D and SiblingGuide2D
-      if (entity.type === 'perpendicular-to-line' || entity.type === 'sibling-guide') {
+      if (entity.type === 'guide' || entity.type === 'sibling-guide') {
         return 'guide';
       }
       // Segment2DByPoints

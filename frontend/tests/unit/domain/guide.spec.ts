@@ -54,7 +54,7 @@ describe('Guide2D', () => {
       const guide = new Guide2D('g1', referenceLineId, throughPointId, 'proj_plane_H');
       
       expect(guide.id).toBe('g1');
-      expect(guide.type).toBe('perpendicular-to-line');
+      expect(guide.type).toBe('guide');
       expect(guide.referenceLineId).toBe(referenceLineId);
       expect(guide.throughPointId).toBe(throughPointId);
       expect(guide.planeId).toBe('proj_plane_H');

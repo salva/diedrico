@@ -19,7 +19,7 @@ import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import type { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '@/commands/operations/world/AddGuideOp';
+import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
 import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
 import type { Point2D } from '@/domain/world/Point';
 import { isSiblingIntersectionPoint2D } from '@/domain/world/Point';
@@ -124,48 +124,17 @@ export class GuideTool extends BaseTool {
         // Build Command directly
         const cmd = new Command("Create guide", world);
         
-        // Create primary guide
-        const result = cmd.addAndExecute(new AddGuide2DPerpendicularToLineOp(planeId, this.referenceLineId!, throughPointId));
-        const guideId = result.outputs.guideId;
+        // Use factory to create guide with conditional sibling
+        const result = GuideSequenceFactory.createGuideWithSibling(
+          cmd, 
+          planeId, 
+          this.referenceLineId!, 
+          throughPointId, 
+          world
+        );
         
-        // Try to create sibling guide if conditions are met
-        // Conditions:
-        // 1. Reference line is a HalfHingeLine2D
-        // 2. Through-point has a sibling (is a sibling intersection or has siblingPointId)
-        // 3. Sibling plane and corresponding HalfHingeLine2D can be found
-        let siblingGuideId: string | undefined;
-        
-        try {
-          // Get sibling plane and HalfHingeLine2D
-          const siblingInfo = world.getSiblingPlaneAndHalfHingeLineForGuide(this.referenceLineId!, planeId);
-          
-          if (siblingInfo) {
-            // Create sibling guide using coordinate correspondence
-            // No need for throughPointId - sibling guide derives position from primary guide
-            const siblingResult = cmd.addAndExecute(
-              new AddSiblingGuide2DOp(
-                siblingInfo.siblingPlaneId,
-                guideId, // primaryGuideId
-                siblingInfo.siblingHalfHingeLineId
-              )
-            );
-            siblingGuideId = siblingResult.outputs.siblingGuideId;
-            
-            // Update bidirectional links
-            // Get guides and set siblingGuideId
-            const primaryGuide = world.getLine2DById(guideId);
-            const siblingGuide = world.getLine2DById(siblingGuideId);
-            
-            if (primaryGuide && 'siblingGuideId' in primaryGuide) {
-              (primaryGuide as any).siblingGuideId = siblingGuideId;
-            }
-            
-            console.log(`[GuideTool] Created sibling guide ${siblingGuideId} in plane ${siblingInfo.siblingPlaneId}`);
-          }
-        } catch (siblingError) {
-          // Sibling creation failed - log but don't fail the entire operation
-          console.warn('[GuideTool] Failed to create sibling guide:', siblingError);
-        }
+        const guideId = result.guideId;
+        const siblingGuideId = result.siblingGuideId;
         
         // Record ProcessTree action using guideId from outputs
         const action = createGuideAction(guideId, this.referenceLineId!, throughPointId, planeId);

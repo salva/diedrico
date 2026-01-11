@@ -356,8 +356,8 @@ function getElementType(element: any): string {
         element.type === 'perpendicular' || element.type === 'half-hinge') {
       return 'line';
     }
-    // Guide types: 'perpendicular-to-line'
-    if (element.type === 'perpendicular-to-line') {
+    // Guide types: 'guide'
+    if (element.type === 'guide') {
       return 'guide';
     }
     // Segment types: 'by-points'

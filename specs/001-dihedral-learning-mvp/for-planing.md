@@ -16,6 +16,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] There are still many facade methods in the World class which must be removed (for instance, getAllPoints2D or similar). There are also special case methods as get_HV() which unless they are justified should be removed. In general, performa a cleanup of this clase.
 * [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
 * [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
@@ -44,6 +45,7 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
 * [ ] Activate or fix undo & redo buttoms.
 * [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
+* [ ] It seems we still have methods in world for retrieving realizations (for instance, world.getLine2DRealization()). Remove all of them and change the client code to go directly to the projection plane.
 
 
 ## ALREADY PLANNED

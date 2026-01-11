@@ -52,7 +52,7 @@ describe('Create Guide Command', () => {
       
       expect(guide).toBeDefined();
       expect(guide?.id).toBe(guideId);
-      expect(guide?.type).toBe('perpendicular-to-line');
+      expect(guide?.type).toBe('guide');
     });
 
     it('should return guideId in outputs', () => {
