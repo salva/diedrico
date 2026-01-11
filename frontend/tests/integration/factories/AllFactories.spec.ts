@@ -41,7 +41,7 @@ describe('Factory Integration Tests', () => {
       const hhlId = 'half_HL_HV_on_PH';
       
       // Create through point for guide
-      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 0)));
+      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
       const throughPointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
       
       setupCmd.commit();
@@ -93,16 +93,16 @@ describe('Factory Integration Tests', () => {
       // Setup: Create regular line
       const setupCmd = new Command('Setup line', world);
       
-      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 0)));
+      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
       
-      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 0)));
+      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
       const point2Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[1].id;
       
       setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
       const lineId = world.getProjectionPlaneById(planeId)!.getAllLines()[0].id;
       
-      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 0)));
+      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
       const throughPointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[2].id;
       
       setupCmd.commit();
@@ -130,10 +130,10 @@ describe('Factory Integration Tests', () => {
       // Setup: Create point and line
       const setupCmd = new Command('Setup', world);
       
-      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 0)));
+      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = p1Result.outputs.pointId!;
       
-      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 0)));
+      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
       const point2Id = p2Result.outputs.pointId!;
       
       const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
@@ -180,10 +180,10 @@ describe('Factory Integration Tests', () => {
       // Setup: Create circle
       const setupCmd = new Command('Setup', world);
       
-      const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const centerId = centerResult.outputs.pointId!;
       
-      const circumResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 0)));
+      const circumResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
       const circumferenceId = circumResult.outputs.pointId!;
       
       const circleResult = setupCmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, centerId, circumferenceId));
@@ -216,13 +216,13 @@ describe('Factory Integration Tests', () => {
       // Setup: Create multiple independent points
       const setupCmd = new Command('Setup', world);
       
-      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 0)));
+      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = p1Result.outputs.pointId!;
       
-      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 0)));
+      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
       const point2Id = p2Result.outputs.pointId!;
       
-      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(20, 0, 0)));
+      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(20, 0, 1)));
       const point3Id = p3Result.outputs.pointId!;
       
       setupCmd.commit();
@@ -259,20 +259,20 @@ describe('Factory Integration Tests', () => {
       const setupCmd = new Command('Setup', world);
       
       // Line 1: horizontal from (0, 5) to (10, 5)
-      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 0)));
+      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 1)));
       const p1Id = p1Result.outputs.pointId!;
       
-      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const p2Id = p2Result.outputs.pointId!;
       
       const line1Result = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Id, p2Id));
       const line1Id = line1Result.outputs.lineId!;
       
       // Line 2: vertical from (5, 0) to (5, 10)
-      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const p3Id = p3Result.outputs.pointId!;
       
-      const p4Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 10, 0)));
+      const p4Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 10, 1)));
       const p4Id = p4Result.outputs.pointId!;
       
       const line2Result = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p3Id, p4Id));
@@ -321,20 +321,20 @@ describe('Factory Integration Tests', () => {
       const setupCmd = new Command('Setup', world);
       
       // Circle: center (5, 5), radius 5 (through point (10, 5))
-      const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 0)));
+      const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
       const centerId = centerResult.outputs.pointId!;
       
-      const circlePointResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      const circlePointResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const circlePointId = circlePointResult.outputs.pointId!;
       
       const circleResult = setupCmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, centerId, circlePointId));
       const circleId = circleResult.outputs.circleId!;
       
       // Line: horizontal through (0, 5) to (10, 5) - intersects circle at 2 points
-      const lineP1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 0)));
+      const lineP1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 1)));
       const lineP1Id = lineP1Result.outputs.pointId!;
       
-      const lineP2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(15, 5, 0)));
+      const lineP2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(15, 5, 1)));
       const lineP2Id = lineP2Result.outputs.pointId!;
       
       const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, lineP1Id, lineP2Id));
@@ -388,19 +388,19 @@ describe('Factory Integration Tests', () => {
       const setupCmd = new Command('Setup', world);
       
       // Create two lines
-      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 0)));
+      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 1)));
       const p1Id = p1Result.outputs.pointId!;
       
-      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const p2Id = p2Result.outputs.pointId!;
       
       const line1Result = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Id, p2Id));
       const line1Id = line1Result.outputs.lineId!;
       
-      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const p3Id = p3Result.outputs.pointId!;
       
-      const p4Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 10, 0)));
+      const p4Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 10, 1)));
       const p4Id = p4Result.outputs.pointId!;
       
       const line2Result = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p3Id, p4Id));

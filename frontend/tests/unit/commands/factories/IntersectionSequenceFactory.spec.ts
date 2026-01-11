@@ -33,24 +33,24 @@ describe('IntersectionSequenceFactory', () => {
       const cmd = new Command('Setup', world);
       
       // Line 1: (0, 0) to (10, 0) - horizontal
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 0)));
-      const point1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
+      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+      const point1Id = p1Result.outputs.pointId!;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 0)));
-      const point2Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[1].id;
+      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+      const point2Id = p2Result.outputs.pointId!;
       
-      cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
-      const line1Id = world.getProjectionPlaneById(planeId)!.getAllLines()[0].id;
+      const line1Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+      const line1Id = line1Result.outputs.lineId!;
       
       // Line 2: (5, -5) to (5, 5) - vertical
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, -5, 0)));
-      const point3Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[2].id;
+      const p3Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, -5, 1)));
+      const point3Id = p3Result.outputs.pointId!;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 0)));
-      const point4Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[3].id;
+      const p4Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
+      const point4Id = p4Result.outputs.pointId!;
       
-      cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point3Id, point4Id));
-      const line2Id = world.getProjectionPlaneById(planeId)!.getAllLines()[1].id;
+      const line2Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point3Id, point4Id));
+      const line2Id = line2Result.outputs.lineId!;
       
       cmd.commit();
 
@@ -79,10 +79,10 @@ describe('IntersectionSequenceFactory', () => {
       expect(intersectionPoint!.id).toBe(result.pointId);
 
       // Verify: Intersection is at (5, 0, 0)
-      const pointRealization = world.getPoint2DRealization(result.pointId);
+      const pointRealization = plane.realizePoint2D(intersectionPoint!, world);
       expect(pointRealization).toBeDefined();
-      expect(pointRealization!.x).toBeCloseTo(5);
-      expect(pointRealization!.y).toBeCloseTo(0);
+      expect(pointRealization!.position.position.x).toBeCloseTo(5);
+      expect(pointRealization!.position.position.y).toBeCloseTo(0);
     });
 
     it('should create line-circle intersection with index 0', () => {
@@ -90,20 +90,20 @@ describe('IntersectionSequenceFactory', () => {
       const cmd = new Command('Setup', world);
       
       // Circle: center (5, 0), radius ~7.07 through point (10, 5)
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const centerId = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const circlePointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[1].id;
       
       cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, centerId, circlePointId));
       const circleId = world.getProjectionPlaneById(planeId)!.getAllCircles()[0].id;
       
       // Line: horizontal through (0, 5) to (10, 5)
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 1)));
       const linePoint1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[2].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const linePoint2Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[3].id;
       
       cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, linePoint1Id, linePoint2Id));
@@ -138,7 +138,7 @@ describe('IntersectionSequenceFactory', () => {
       // Verify: Intersection is on the line y=5 and on the circle
       const pointRealization = world.getPoint2DRealization(result.pointId);
       expect(pointRealization).toBeDefined();
-      expect(pointRealization!.y).toBeCloseTo(5);
+      expect(pointRealization!.position.y).toBeCloseTo(5);
       
       // Check it's on the circle (distance from center equals radius)
       const centerRealization = world.getPoint2DRealization(centerId);
@@ -153,20 +153,20 @@ describe('IntersectionSequenceFactory', () => {
       const cmd = new Command('Setup', world);
       
       // Circle: center (5, 0), radius ~7.07 through point (10, 5)
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const centerId = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const circlePointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[1].id;
       
       cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, centerId, circlePointId));
       const circleId = world.getProjectionPlaneById(planeId)!.getAllCircles()[0].id;
       
       // Line: horizontal through (0, 5) to (10, 5)
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 1)));
       const linePoint1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[2].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const linePoint2Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[3].id;
       
       cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, linePoint1Id, linePoint2Id));
@@ -196,26 +196,26 @@ describe('IntersectionSequenceFactory', () => {
       // Verify: Point exists and is on both line and circle
       const pointRealization = world.getPoint2DRealization(result.pointId);
       expect(pointRealization).toBeDefined();
-      expect(pointRealization!.y).toBeCloseTo(5);
+      expect(pointRealization!.position.y).toBeCloseTo(5);
     });
 
     it('should handle reversed element order for line-circle intersection', () => {
       // Setup: Create circle and line (reversed order)
       const cmd = new Command('Setup', world);
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const centerId = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const circlePointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[1].id;
       
       cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, centerId, circlePointId));
       const circleId = world.getProjectionPlaneById(planeId)!.getAllCircles()[0].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 1)));
       const linePoint1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[2].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 5, 1)));
       const linePoint2Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[3].id;
       
       cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, linePoint1Id, linePoint2Id));
@@ -252,20 +252,20 @@ describe('IntersectionSequenceFactory', () => {
       const cmd = new Command('Setup', world);
       
       // Circle 1: center (0, 0), radius 5
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const center1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const circle1PointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[1].id;
       
       cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, center1Id, circle1PointId));
       const circle1Id = world.getProjectionPlaneById(planeId)!.getAllCircles()[0].id;
       
       // Circle 2: center (5, 0), radius 5
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const center2Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[2].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
       const circle2PointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[3].id;
       
       cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, center2Id, circle2PointId));
@@ -298,7 +298,7 @@ describe('IntersectionSequenceFactory', () => {
       // Verify: Intersection is at x=2.5 (midpoint), and on both circles
       const pointRealization = world.getPoint2DRealization(result.pointId);
       expect(pointRealization).toBeDefined();
-      expect(pointRealization!.x).toBeCloseTo(2.5);
+      expect(pointRealization!.position.x).toBeCloseTo(2.5);
     });
 
     it('should create circle-circle intersection with index 1', () => {
@@ -306,20 +306,20 @@ describe('IntersectionSequenceFactory', () => {
       const cmd = new Command('Setup', world);
       
       // Circle 1: center (0, 0), radius 5
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const center1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const circle1PointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[1].id;
       
       cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, center1Id, circle1PointId));
       const circle1Id = world.getProjectionPlaneById(planeId)!.getAllCircles()[0].id;
       
       // Circle 2: center (5, 0), radius 5
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const center2Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[2].id;
       
-      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 0)));
+      cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
       const circle2PointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[3].id;
       
       cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, center2Id, circle2PointId));
