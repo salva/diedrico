@@ -18,6 +18,64 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
+* [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
+* [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
+* [ ] Add support for moving semi-free points and distances along guide lines.
+* [ ] Verify if 3D visualization support is already planned. If not, plan and implement it.
+* [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
+* [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
+* [ ] Improve how elements are shown in the left world listing widget.
+* [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
+* [X] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old.
+  - **STATUS**: ✅ COMPLETE (Jan 11, 2026) - Already implemented with improvements needed
+  - **Current Implementation**: App.vue `handleOpenProject()` creates new World instance instead of clearing old one
+  - **Implementation Details**:
+    ```typescript
+    // App.vue handleOpenProject (lines 382-383)
+    world = new World();
+    provide('world', world);  // Update the provided world
+    ```
+  - **Issues Identified**:
+    - ❌ **CommandStack NOT recreated**: Only cleared, not replaced with new instance
+    - ❌ **ProcessTree NOT recreated**: Lives inside World, but World.clear() recreates it
+    - ❌ **DependencyService NOT recreated**: Lives inside World, but World.clear() recreates it
+    - ⚠️ **handleNewProject uses world.clear()**: Should create new World instance like handleOpenProject
+  - **Benefits**:
+    - **Memory cleanup**: Old World instance and all references are garbage collected
+    - **Clean state**: No risk of leftover state from previous project
+    - **Simpler**: No need to carefully reset all World properties
+    - **Safer**: Avoid potential bugs from incomplete clearing
+  - **Action Items**:
+    1. Create new CommandStack instance when creating/loading projects (not just clear)
+    2. Update handleNewProject to create new World instance instead of calling world.clear()
+    3. Consider if ProcessTree/DependencyService need special handling (currently recreated by World)
+  - **Verification**: Partially complete - World is recreated, but CommandStack is not
+
+* [ ] Do not use type aliases in the code.
+* [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
+* [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
+* [ ] Add support for converting intersections into points automatically while building other elements.
+* [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
+* [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
+* [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
+* [ ] Remove any methods and classes tagged as deprecated. Modify client code and tests to use the right interfaces (or remove it when it doesn't make sense any more).
+* [ ] Add tool for creating line parallel to another one passing by given point.
+* [ ] Add tool for creating line perpendicular to another one passing by given point.
+* [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
+* [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
+* [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
+* [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
+* [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
+* [ ] Activate or fix undo & redo buttoms.
+* [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
+* [ ] Ensure Google Drive logout works correctly.
+* [ ] Why are reverse dependencies estored in the process tree? that seems wrong!
+* [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
+* [ ] Check that on circle creation, the radius point really snaps to preexistent points before creating a new one.
+
+## ALREADY PLANNED
+
 * [X] There are still many facade methods in the World class which must be removed (for instance, getAllPoints2D or similar). There are also special case methods as get_HV() which unless they are justified should be removed. In general, performa a cleanup of this clase.
   - **STATUS**: ✅ COMPLETE - Phase 48 implemented (Jan 11, 2026)
   - **Result**: Successfully removed all 9 facade methods (~150 lines) from World.ts
@@ -111,39 +169,123 @@ Note that completing these tasks may require asking the user for additional info
     - **Files modified**: CircleTool, Segment, Circle, Line, Point, Guide, ProjectionPlane, IntersectionTool, PropertiesDialog, App.vue, ElementsPanel.vue, SvgCanvas.vue, World, GuideSequenceFactory, RemoveElementOps, IntersectionTool
     - **Pattern established**: `plane.getPoint(id)?.realize2D(world)` for realization access
     - **Tests**: Compilation successful, pre-existing test failures unrelated to Phase 48
-* [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
-* [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
-* [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
-* [ ] Add support for moving semi-free points and distances along guide lines.
-* [ ] Verify if 3D visualization support is already planned. If not, plan and implement it.
-* [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
-* [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
-* [ ] Improve how elements are shown in the left world listing widget.
-* [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
-* [ ] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old. Maybe already done?
-* [ ] Do not use type aliases in the code.
-* [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
-* [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
-* [ ] Add support for converting intersections into points automatically while building other elements.
-* [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
-* [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
-* [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
-* [ ] Remove any methods and classes tagged as deprecated. Modify client code and tests to use the right interfaces (or remove it when it doesn't make sense any more).
-* [ ] Add tool for creating line parallel to another one passing by given point.
-* [ ] Add tool for creating line perpendicular to another one passing by given point.
-* [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
-* [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
-* [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
-* [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
-* [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
-* [ ] Activate or fix undo & redo buttoms.
-* [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
-* [ ] Ensure Google Drive logout works correctly.
-* [ ] Why are reverse dependencies estored in the process tree? that seems wrong!
-* [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
-* [ ] Check that on circle creation, the radius point really snaps to preexistent points before creating a new one.
 
-## ALREADY PLANNED
+
+* [ ] Encapsulate World initialization in an operation sequence factory (InitializationSequenceFactory).
+  - **Problem**: InitializeWorldCommand is called directly from World.clear() and World constructor, not through a factory pattern
+  - **Current State**:
+    - InitializeWorldCommand exists and builds initialization sequence
+    - World.clear() dynamically imports and creates InitializeWorldCommand
+    - World constructor does the same via dynamic import
+    - No factory pattern - initialization logic is directly in InitializeWorldCommand class
+  - **Issues**:
+    - Initialization sequence logic embedded in InitializeWorldCommand class
+    - Cannot easily reuse initialization sequence in different contexts
+    - Inconsistent with other sequence factories (GuideSequenceFactory, DeletionSequenceFactory, IntersectionSequenceFactory)
+    - World.clear() and constructor have duplicate initialization logic
+  - **Solution**: Create InitializationSequenceFactory following Phase 43 pattern
+  - **Architecture Changes**:
+    1. **InitializationSequenceFactory** (new file):
+       - Static method `buildInitializationSequence(cmd: Command, world: World)`
+       - Encapsulates logic for creating 11 initialization operations
+       - Returns object with created IDs (horizontalPlaneId, verticalPlaneId, etc.)
+    2. **InitializeWorldCommand** (refactor):
+       - Use InitializationSequenceFactory.buildInitializationSequence()
+       - Store returned IDs in World's semantic properties
+       - Still marked as non-undoable
+    3. **World constructor/clear** (no change):
+       - Continue using InitializeWorldCommand (which now uses factory internally)
+  - **Benefits**:
+    - **Reusability**: Initialization sequence can be used in tests, migration tools, etc.
+    - **Testability**: Can unit test factory independently of Command
+    - **Consistency**: Follows same pattern as other sequence factories
+    - **Maintainability**: Single place to modify initialization logic
+    - **Clarity**: Separation between command orchestration and operation sequence
+  - **Pattern** (following GuideSequenceFactory):
+    ```typescript
+    // InitializationSequenceFactory.ts
+    export class InitializationSequenceFactory {
+      static buildInitializationSequence(cmd: Command, world: World): {
+        horizontalPlaneId: string;
+        verticalPlaneId: string;
+        mainHingeLineId: string;
+        horizontalOriginId: string;
+        verticalOriginId: string;
+      } {
+        // Create subprocess
+        cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+        
+        // Generate IDs
+        const planeHId = 'plane_H';
+        const planeVId = 'plane_V';
+        const projPlaneHId = 'proj_plane_1';
+        const projPlaneVId = 'proj_plane_2';
+        const hingeLineId = 'hinge_line_1';
+        
+        // Create planes
+        cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
+        cmd.addAndExecute(new AddPlane3DOp(planeVId, 'vertical'));
+        cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal'));
+        cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical'));
+        
+        // Create origins
+        const originPos = new Vector3(0, 0, 1);
+        const originHOp = new AddOriginPoint2DOp(projPlaneHId, originPos);
+        cmd.addAndExecute(originHOp);
+        const originVOp = new AddOriginPoint2DOp(projPlaneVId, originPos);
+        cmd.addAndExecute(originVOp);
+        
+        // Create hinge line and half hinge lines
+        cmd.addAndExecute(new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId));
+        const hingePoint = new Vector3(0, 0, 1);
+        const hingeDirection = new Vector3(1, 0, 0);
+        cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
+        cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
+        
+        // Set active plane
+        cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
+        
+        // Return IDs for World to store
+        return {
+          horizontalPlaneId: projPlaneHId,
+          verticalPlaneId: projPlaneVId,
+          mainHingeLineId: hingeLineId,
+          horizontalOriginId: originHOp.outputs.pointId,
+          verticalOriginId: originVOp.outputs.pointId
+        };
+      }
+    }
+    
+    // InitializeWorldCommand.ts (refactored)
+    export class InitializeWorldCommand extends Command {
+      constructor(world: World) {
+        super('Initialize World', world);
+        
+        // Use factory to build sequence
+        const ids = InitializationSequenceFactory.buildInitializationSequence(this, world);
+        
+        // Store semantic IDs in World
+        (world as any).horizontalPlaneId = ids.horizontalPlaneId;
+        (world as any).verticalPlaneId = ids.verticalPlaneId;
+        (world as any).mainHingeLineId = ids.mainHingeLineId;
+        (world as any).horizontalOriginId = ids.horizontalOriginId;
+        (world as any).verticalOriginId = ids.verticalOriginId;
+        (world as any).originPoint = new Vector3(0, 0, 0);
+        
+        // Non-undoable
+        this.canUndo = () => false;
+      }
+    }
+    ```
+  - **Implementation**: New Phase 49 (mini-phase)
+  - **Task Categories**:
+    - Create factory (T576): InitializationSequenceFactory with buildInitializationSequence()
+    - Refactor command (T577): Update InitializeWorldCommand to use factory
+    - Update tests (T578): Test factory independently, update command tests
+    - Update documentation (T579): Add factory to README.md in factories folder
+  - **Migration Impact**: Low - InitializeWorldCommand interface unchanged, internal refactoring only
+  - **Timing**: After Phase 47/48 complete (now)
+  - **Related**: Follows Phase 43 pattern for sequence factories
 
 * [X] It seems we still have methods in world for retrieving realizations (for instance, world.getLine2DRealization()). Remove all of them and change the client code to go directly to the projection plane.
   - **STATUS**: ✅ PLANNED - Handled by Phase 48 (same issue)

@@ -9,7 +9,75 @@
  * - Principle I: Domain layer - pure business logic, no UI dependencies
  * - Principle V: All points stored in plane intrinsic coordinates (homogeneous)
  * 
+ * ## Architecture: Element Access Patterns (Phase 48)
+ * 
+ * **Ownership Hierarchy**: World → ProjectionPlane → Element2D
+ * - 2D elements (points, lines, circles, etc.) are stored in and owned by ProjectionPlane
+ * - World provides high-level access methods but does NOT store 2D elements directly
+ * - This ensures proper encapsulation and clear ownership boundaries
+ * 
+ * **How to Access Elements**:
+ * 
+ * 1. **Via Hierarchical ID** (Phase 45 - preferred for known IDs):
+ *    ```typescript
+ *    const point = world.getPoint2D(pointId);        // Returns Point2D | undefined
+ *    const line = world.getLine2D(lineId);           // Returns Line2D | undefined
+ *    const circle = world.getCircle2D(circleId);     // Returns Circle2D | undefined
+ *    const element = world.getElement2D(elementId);  // Returns Element2D | undefined
+ *    ```
+ *    These methods use hierarchical IDs (e.g., "proj_plane_1:point_5") to find the 
+ *    correct plane and retrieve the element. Type-safe and fast.
+ * 
+ * 2. **Via ProjectionPlane** (when you already have the plane):
+ *    ```typescript
+ *    const plane = world.getProjectionPlaneById(planeId);
+ *    const point = plane.getPoint(pointId);
+ *    const line = plane.getLine(lineId);
+ *    ```
+ * 
+ * 3. **Getting Realizations** (computed geometric data):
+ *    ```typescript
+ *    const plane = world.getProjectionPlaneById(planeId);
+ *    const point = plane.getPoint(pointId);
+ *    const realization = point?.realize2D(world);  // Get computed coordinates
+ *    ```
+ *    Realizations contain the actual computed positions/geometry. The domain object
+ *    stores the construction definition (e.g., "intersection of line A and circle B"),
+ *    while the realization stores the computed result (e.g., actual [x, y] coordinates).
+ * 
+ * 4. **Iterating All Elements** (for operations like select-all, export):
+ *    ```typescript
+ *    for (const plane of world.getAllProjectionPlanes()) {
+ *      for (const point of plane.getAllPoints()) {
+ *        // Process each point
+ *      }
+ *    }
+ *    ```
+ * 
+ * 5. **Semantic Access** (Phase 46 - for fixed initial planes):
+ *    ```typescript
+ *    const horizontalPlane = world.getHorizontalPlane();
+ *    const verticalPlane = world.getVerticalPlane();
+ *    const origin = world.getHorizontalOrigin();
+ *    const hingeLine = world.getMainHingeLine();
+ *    ```
+ * 
+ * **Why Facade Methods Were Removed** (Phase 48):
+ * 
+ * Previous versions had convenience methods like `world.getPoint2DRealization(id)` that
+ * bypassed ProjectionPlane ownership. These were removed because:
+ * - **Violated encapsulation**: World shouldn't know about ProjectionPlane's internal storage
+ * - **Tight coupling**: Client code became dependent on World instead of ProjectionPlane
+ * - **Inconsistent patterns**: Some code used facade, some used proper ownership
+ * - **Maintenance burden**: World had to mirror ProjectionPlane's interface
+ * 
+ * The current architecture enforces proper ownership: ProjectionPlane owns its elements,
+ * World provides semantic access and ID-based lookup.
+ * 
  * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
+ * @see Phase 45: Hierarchical Element IDs
+ * @see Phase 46: Semantic Accessors
+ * @see Phase 48: Remove World Facade Methods
  */
 
 import { Vector4 } from 'three';
