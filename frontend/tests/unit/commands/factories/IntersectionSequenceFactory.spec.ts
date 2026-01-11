@@ -81,8 +81,8 @@ describe('IntersectionSequenceFactory', () => {
       // Verify: Intersection is at (5, 0, 0)
       const pointRealization = plane.realizePoint2D(intersectionPoint!, world);
       expect(pointRealization).toBeDefined();
-      expect(pointRealization!.position.position.x).toBeCloseTo(5);
-      expect(pointRealization!.position.position.y).toBeCloseTo(0);
+      expect(pointRealization!.position.x).toBeCloseTo(5);
+      expect(pointRealization!.position.y).toBeCloseTo(0);
     });
 
     it('should create line-circle intersection with index 0', () => {
