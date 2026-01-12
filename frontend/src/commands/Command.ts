@@ -138,7 +138,7 @@ export class Command {
   /**
    * Determines whether this command can be undone
    * 
-   * Phase 47: Non-undoable commands (like InitializeWorldCommand) return false.
+   * Phase 47: Non-undoable commands (like world initialization) are not added to stack.
    * CommandStack checks this before adding commands to the undo stack.
    * 
    * @returns true if command can be undone (default), false for non-undoable commands

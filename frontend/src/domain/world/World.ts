@@ -124,7 +124,7 @@ export class World {
   private horizontalOriginId!: string;   // ID of origin point on horizontal plane
   private verticalOriginId!: string;     // ID of origin point on vertical plane
   private mainHingeLineId!: string;      // ID of main hinge line connecting the two planes
-  private activePlaneId!: string;        // ID of currently active projection plane (set by InitializeWorldCommand)
+  private activePlaneId!: string;        // ID of currently active projection plane (set by initialization factory)
   
   // Phase 46: ID generation counters for automatic ID assignment
   private projPlaneCounter: number = 0;

@@ -167,7 +167,7 @@ useSettingsStore();
 const authStore = useAuthStore();
 
 // Active plane state - will be set after world initialization
-// Active plane state - read from World (set by InitializeWorldCommand)
+// Active plane state - read from World (set by initialization factory)
 const activePlaneId = computed(() => world.getActivePlaneId());
 const activePlaneName = computed(() => {
   const planeId = world.getActivePlaneId();

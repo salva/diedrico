@@ -299,7 +299,7 @@ function updateCanvasDimensions() {
 
 // Initialize canvas on mount
 onMounted(() => {
-  // World is already initialized by InitializeWorldCommand in constructor
+  // World is already initialized by initialization factory in constructor
   // Just trigger initial render
   worldVersion.value++;
   

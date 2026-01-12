@@ -2,7 +2,7 @@
  * Initialization Operations for World setup
  * 
  * Phase 47: Operations for setting up World's fixed elements (planes, origins, hinge lines)
- * These operations are used by InitializeWorldCommand to create the basic geometry structure
+ * These operations are used by InitializationSequenceFactory to create the basic geometry structure
  * that every World instance needs.
  * 
  * Operations:
@@ -12,7 +12,7 @@
  * - AddHingeLineOp: Create a hinge line connecting two planes
  * - AddHalfHingeLine2DOp: Create a half hinge line on a projection plane
  * 
- * These are simple atomic operations - the orchestration happens in InitializeWorldCommand.
+ * These are simple atomic operations - the orchestration happens in InitializationSequenceFactory.
  * 
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
  */

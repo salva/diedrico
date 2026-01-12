@@ -24,7 +24,7 @@ export class CommandStack {
    * Clears the redo stack (can't redo after new action)
    * 
    * Phase 47: Non-undoable commands (canUndo() === false) are not added to the stack.
-   * This allows InitializeWorldCommand and other non-undoable commands to execute
+   * This allows world initialization and other non-undoable commands to execute
    * without appearing in undo history.
    * 
    * Note: Commands should be built, executed, and committed by tools before pushing
