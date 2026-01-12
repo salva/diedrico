@@ -4079,7 +4079,7 @@ Most construction tools follow: create world elements → create process tree ac
 ---
 ---
 
-## Phase 45: Hierarchical Element IDs
+## Phase 45: Hierarchical Element IDs ✅ COMPLETE
 
 **Purpose**: Make 2D element IDs hierarchical paths encoding ownership (e.g., `proj_plane_H/point2d_123`)
 
@@ -4241,19 +4241,19 @@ Most construction tools follow: create world elements → create process tree ac
   - **MAJOR INFRASTRUCTURE FIX**: World initialization no longer async
   - Test framework now functional with generated IDs
 
-**Checkpoint**: ✅ Hierarchical IDs fully implemented, test integration deferred to Phase 47
+**Checkpoint**: ✅ Hierarchical IDs fully implemented, test integration completed in Phase 47
 
 **Success Criteria**:
 - ✅ ID utilities created (parse, build, validate)
 - ✅ All elements created with hierarchical IDs  
 - ✅ World.getElement2D() works with hierarchical IDs
 - ✅ All 19 operations work with hierarchical IDs
-- ⏳ Domain tests pending (T534 - deferred to Phase 47)
-- ⏳ E2E tests pending (T522, T524 - deferred to Phase 47)
+- ✅ Domain tests complete (T534 - completed in Phase 47)
+- ✅ E2E tests complete (T522, T524 - completed in Phase 47)
 
 ---
 
-## Phase 46: Remove Hardcoded IDs
+## Phase 46: Remove Hardcoded IDs ✅ COMPLETE
 
 **Purpose**: Replace hardcoded plane IDs ('proj_plane_H', 'proj_plane_V') with generated IDs, track by semantic role
 
@@ -4389,8 +4389,8 @@ Most construction tools follow: create world elements → create process tree ac
 **Checkpoint**: ✅ No hardcoded IDs, all IDs generated, semantic access working
 
 **Note**: 
-- Tasks T539-T540 (Command-based initialization) moved to Phase 47 for full implementation
-- Tasks T522, T524, T533, T534 deferred to Phase 47 (T558) for test integration with semantic helpers
+- Tasks T539-T540 (Command-based initialization) completed in Phase 47
+- Tasks T522, T524, T533, T534 completed in Phase 47 (T558) via semantic helpers
 
 ---
 
