@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { World } from '@/domain/world/World';
 import { Command } from '@/commands/Command';
-import { createWorldInitializationOperations } from '@/commands/factories/InitializationSequenceFactory';
+import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
 import { CommandStack } from '@/commands/CommandStack';
 
 describe('InitializeWorldCommand', () => {
@@ -139,8 +139,7 @@ describe('InitializeWorldCommand', () => {
   describe('Operation Orchestration', () => {
     it('should execute operations in correct order', () => {
       const cmd = new Command('Initialize World', world);
-      const ops = createWorldInitializationOperations(world);
-      ops.forEach((op: any) => cmd.addAndExecute(op));
+      buildWorldInitialization(world, cmd);
       
       const operations = (cmd as any).operations;
 

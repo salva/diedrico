@@ -5459,9 +5459,9 @@ World initialization requires a specific sequence of operations (create planes, 
 
 ```typescript
 /**
- * Factory: Generate operation sequence for world initialization
+ * Factory: Build operation sequence for world initialization
  * 
- * Creates all fundamental geometric structures:
+ * Creates all fundamental geometric structures by adding operations to provided Command:
  * - Two 3D planes (P_H horizontal, P_V vertical)
  * - Two projection planes 
  * - Origin points on each projection plane
@@ -5470,13 +5470,11 @@ World initialization requires a specific sequence of operations (create planes, 
  * - ProcessTree subprocess for organization
  * 
  * @param world World instance for ID generation
- * @returns Array of operations to be added to a Command
+ * @param cmd Open Command to which operations will be added
  */
-function createWorldInitializationOperations(world: World): IOperation[] {
-  const operations: IOperation[] = [];
-  
+function buildWorldInitialization(world: World, cmd: Command): void {
   // Step 1: Create initialization subprocess
-  operations.push(new CreateInitializationSubprocessOp('World Initialization'));
+  cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
   
   // Generate IDs for geometric structure
   const planeHId = 'plane_H';
@@ -5485,31 +5483,29 @@ function createWorldInitializationOperations(world: World): IOperation[] {
   const projPlaneVId = 'proj_plane_2';
   
   // Step 2-3: Create 3D planes
-  operations.push(new AddPlane3DOp(planeHId, 'horizontal'));
-  operations.push(new AddPlane3DOp(planeVId, 'vertical'));
+  cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
+  cmd.addAndExecute(new AddPlane3DOp(planeVId, 'vertical'));
   
   // Step 4-5: Create projection planes
-  operations.push(new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal'));
-  operations.push(new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical'));
+  cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal'));
+  cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical'));
   
   // Step 6-7: Create origin points
-  operations.push(new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1)));
-  operations.push(new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1)));
+  cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1)));
+  cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1)));
   
   // Step 8: Create hinge line
   const hingeLineId = world.generateHingeLineId();
-  operations.push(new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId));
+  cmd.addAndExecute(new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId));
   
   // Step 9-10: Create half hinge lines
   const hingePoint = new Vector3(0, 0, 1);
   const hingeDirection = new Vector3(1, 0, 0);
-  operations.push(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
-  operations.push(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
+  cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
+  cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
   
   // Step 11: Set active plane
-  operations.push(new SetActivePlaneOp(projPlaneHId));
-  
-  return operations;
+  cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
 }
 
 /**
@@ -5519,12 +5515,9 @@ class World {
   constructor() {
     // ... basic initialization ...
     
-    // Create command using factory
+    // Create command and use factory to build initialization sequence
     const cmd = new Command('Initialize World', this);
-    
-    // Add all initialization operations from factory
-    const initOps = createWorldInitializationOperations(this);
-    initOps.forEach(op => cmd.addAndExecute(op));
+    buildWorldInitialization(this, cmd);
     
     // Commit (but don't add to undo stack - initialization is non-undoable)
     cmd.commit();
@@ -5538,11 +5531,12 @@ class World {
 **Benefits of Factory Pattern**:
 1. **Architecture Compliance**: Respects @sealed Command class - no subclassing ever
 2. **Mandatory Pattern**: Only way to handle complex sequences without violating architecture
-3. **Testability**: Factory can be unit tested independently
-4. **Reusability**: Same factory can be used in different contexts (new World, project templates)
-5. **Serialization**: Each operation is independently serializable (Command subclass cannot be serialized)
-6. **Composability**: Can combine multiple factories or modify operation sequences
-7. **Transparency**: Operation sequence is explicit and inspectable
+3. **Direct Execution**: Factory adds operations directly to Command - no intermediate arrays
+4. **Simplicity**: Clear, straightforward orchestration of operation sequences
+5. **Testability**: Factory can be unit tested independently
+6. **Reusability**: Same factory can be used in different contexts (new World, project templates)
+7. **Serialization**: Each operation is independently serializable (Command subclass cannot be serialized)
+8. **Transparency**: Operation sequence is explicit and inspectable
 
 **When to Use Factories**:
 - Complex multi-step workflows that need to be reused (MANDATORY)
@@ -5574,13 +5568,15 @@ class InitializeWorldCommand extends Command {
 
 // ✅ MANDATORY: Factory + Generic Command
 // This is the ONLY acceptable pattern for complex sequences
-function createWorldInitializationOperations(world: World): IOperation[] {
-  // operations built outside, returned as array
-  return [...operations];
+function buildWorldInitialization(world: World, cmd: Command): void {
+  // Factory adds operations directly to command
+  cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+  cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
+  // ... more operations
 }
 
 const cmd = new Command('Initialize World', world);
-createWorldInitializationOperations(world).forEach(op => cmd.addAndExecute(op));
+buildWorldInitialization(world, cmd);
 cmd.commit();
 ```
 
@@ -5598,7 +5594,7 @@ Some operations (like world initialization) should not be undoable. Handle this 
 ```typescript
 // World initialization is non-undoable
 const cmd = new Command('Initialize World', world);
-createWorldInitializationOperations(world).forEach(op => cmd.addAndExecute(op));
+buildWorldInitialization(world, cmd);
 cmd.commit();
 // Note: Not pushed to commandStack - initialization cannot be undone
 ```

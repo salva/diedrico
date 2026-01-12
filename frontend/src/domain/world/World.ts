@@ -95,7 +95,7 @@ import { DependencyService } from '@/services/DependencyService';
 import { Element2D } from './Element2D';
 import { getContainerIdFromElementId } from './ElementId';
 import { Command } from '@/commands/Command';
-import { createWorldInitializationOperations } from '@/commands/factories/InitializationSequenceFactory';
+import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -147,11 +147,10 @@ export class World {
     this.dependencyService = new DependencyService(this.processTree);
     
     // Phase 47: Initialize fixed elements using factory + Command
-    // Factory pattern: Operations are generated externally, added to generic Command
+    // Factory pattern: Operations are added directly to Command by factory
     // This avoids Command subclasses while maintaining initialization logic
     const initCmd = new Command('Initialize World', this);
-    const initOps = createWorldInitializationOperations(this);
-    initOps.forEach(op => initCmd.addAndExecute(op));
+    buildWorldInitialization(this, initCmd);
     initCmd.commit();
     // Note: Not pushed to CommandStack - initialization is non-undoable
     
@@ -194,8 +193,7 @@ export class World {
     
     // Phase 47: Reinitialize fixed elements using factory + Command
     const initCmd = new Command('Initialize World', this);
-    const initOps = createWorldInitializationOperations(this);
-    initOps.forEach(op => initCmd.addAndExecute(op));
+    buildWorldInitialization(this, initCmd);
     initCmd.commit();
     // Note: Not pushed to CommandStack - initialization is non-undoable
     
