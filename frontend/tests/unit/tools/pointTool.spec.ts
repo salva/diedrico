@@ -25,7 +25,6 @@ describe('PointTool', () => {
   beforeEach(() => {
     tool = new PointTool();
     world = new World();
-    world.initializeFixedElements();
     commandStack = new CommandStack();
   });
 

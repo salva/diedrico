@@ -24,7 +24,6 @@ describe('RemoveElement Operations (T286, T290)', () => {
 
   beforeEach(() => {
     world = new World();
-    world.initializeFixedElements();
     commandStack = new CommandStack();
   });
 

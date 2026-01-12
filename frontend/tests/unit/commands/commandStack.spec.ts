@@ -34,7 +34,6 @@ describe('CommandStack (R018)', () => {
   beforeEach(() => {
     commandStack = new CommandStack();
     world = new World();
-    world.initializeFixedElements();
   });
 
   describe('Initialization', () => {

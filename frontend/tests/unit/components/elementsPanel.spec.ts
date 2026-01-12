@@ -29,7 +29,6 @@ describe('ElementsPanel', () => {
 
   beforeEach(() => {
     world = new World();
-    world.initializeFixedElements();
   });
 
   afterEach(() => {

@@ -132,7 +132,6 @@ describe('Coordinate Transformation Pipeline', () => {
     
     beforeEach(() => {
       world = new World();
-      world.initializeFixedElements();
     });
     
     it('should convert paper coordinates to plane coordinates for P_H', () => {
@@ -181,7 +180,6 @@ describe('Coordinate Transformation Pipeline', () => {
     
     beforeEach(() => {
       world = new World();
-      world.initializeFixedElements();
     });
     
     it('should convert P_H plane coordinates to 3D coordinates', () => {
@@ -231,7 +229,6 @@ describe('Coordinate Transformation Pipeline', () => {
     
     beforeEach(() => {
       world = new World();
-      world.initializeFixedElements();
       
       svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svgElement.setAttribute('viewBox', '0 0 1600 1000');

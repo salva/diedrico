@@ -23,7 +23,6 @@ describe('ActionsPanel', () => {
 
   beforeEach(() => {
     world = new World();
-    world.initializeFixedElements();
   });
 
   /**
