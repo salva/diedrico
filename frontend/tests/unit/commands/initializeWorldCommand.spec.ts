@@ -163,9 +163,9 @@ describe('InitializeWorldCommand', () => {
       const cmd = new InitializeWorldCommand(world);
       const operations = (cmd as any).operations;
 
-      // Should have all 10 operations:
-      // 1 subprocess + 2 planes + 2 proj planes + 2 origins + 1 hinge + 2 half hinges = 10
-      expect(operations.length).toBe(10);
+      // Should have all 11 operations:
+      // 1 subprocess + 2 planes + 2 proj planes + 2 origins + 1 hinge + 2 half hinges + 1 set active = 11
+      expect(operations.length).toBe(11);
 
       // Verify operation types in sequence
       const opTypes = operations.map((op: any) => op.type);
@@ -180,6 +180,7 @@ describe('InitializeWorldCommand', () => {
       expect(opTypes[7]).toBe('AddHingeLine');
       expect(opTypes[8]).toBe('AddHalfHingeLine2D'); // Horizontal
       expect(opTypes[9]).toBe('AddHalfHingeLine2D'); // Vertical
+      expect(opTypes[10]).toBe('SetActivePlane'); // Set horizontal as active
     });
   });
 });
