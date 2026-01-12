@@ -396,4 +396,159 @@ describe('IntersectionSequenceFactory', () => {
       }).toThrow('Unknown intersection type: unknown-type');
     });
   });
+
+  describe('HalfHingeLine sibling intersection creation (Phase 42)', () => {
+    it('should create sibling intersection when line is HalfHingeLine2D', () => {
+      // Setup: Create a line that intersects with HHL
+      const cmd = new Command('Setup', world);
+      
+      // Get HalfHingeLine on horizontal plane (half_HL_HV_on_PH)
+      const hhlId = 'half_HL_HV_on_PH';
+      
+      // Create a line that intersects the HHL
+      // HHL is horizontal at y=0, so create a vertical line at x=5
+      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, -5, 1)));
+      const point1Id = p1Result.outputs.pointId!;
+      
+      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
+      const point2Id = p2Result.outputs.pointId!;
+      
+      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+      const lineId = lineResult.outputs.lineId!;
+      
+      cmd.commit();
+
+      // Test: Create intersection with HHL
+      const intersectionCmd = new Command('Create HHL intersection', world);
+      const intersectionData: IntersectionData = {
+        type: 'line-line',
+        element1Id: hhlId,
+        element2Id: lineId
+      };
+
+      const result = IntersectionSequenceFactory.createIntersection(
+        intersectionCmd, planeId, intersectionData, world
+      );
+
+      // Verify: Primary intersection created
+      expect(result.pointId).toBeDefined();
+      expect(typeof result.pointId).toBe('string');
+
+      // Verify: Sibling intersection created
+      expect(result.siblingPointId).toBeDefined();
+      expect(typeof result.siblingPointId).toBe('string');
+      expect(result.pointId).not.toBe(result.siblingPointId);
+
+      intersectionCmd.commit();
+
+      // Verify: Both points exist in world
+      const horizontalPlane = world.getProjectionPlaneById('proj_plane_H')!;
+      const verticalPlane = world.getProjectionPlaneById('proj_plane_V')!;
+      
+      const primaryPoint = horizontalPlane.getPoint(result.pointId);
+      const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);
+      
+      expect(primaryPoint).toBeDefined();
+      expect(siblingPoint).toBeDefined();
+      expect(siblingPoint!.type).toBe('sibling-intersection');
+
+      // Verify: Bidirectional links
+      expect((primaryPoint as any).siblingPointId).toBe(result.siblingPointId);
+      expect((siblingPoint as any).primaryIntersectionId).toBe(result.pointId);
+
+      // Verify: Both points realize to same coordinate (parametric consistency)
+      const primaryRealization = horizontalPlane.realizePoint2D(primaryPoint!, world);
+      const siblingRealization = verticalPlane.realizePoint2D(siblingPoint!, world);
+      
+      expect(primaryRealization).toBeDefined();
+      expect(siblingRealization).toBeDefined();
+      expect(primaryRealization!.position.x).toBeCloseTo(siblingRealization!.position.x);
+      expect(primaryRealization!.position.y).toBeCloseTo(siblingRealization!.position.y);
+    });
+
+    it('should create only primary intersection for non-HHL line', () => {
+      // Setup: Create two regular lines that intersect
+      const cmd = new Command('Setup', world);
+      
+      // Line 1: horizontal
+      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+      const line1Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Result.outputs.pointId!, p2Result.outputs.pointId!));
+      
+      // Line 2: vertical
+      const p3Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, -5, 1)));
+      const p4Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
+      const line2Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p3Result.outputs.pointId!, p4Result.outputs.pointId!));
+      
+      cmd.commit();
+
+      // Test: Create intersection (no HHL involved)
+      const intersectionCmd = new Command('Create regular intersection', world);
+      const intersectionData: IntersectionData = {
+        type: 'line-line',
+        element1Id: line1Result.outputs.lineId!,
+        element2Id: line2Result.outputs.lineId!
+      };
+
+      const result = IntersectionSequenceFactory.createIntersection(
+        intersectionCmd, planeId, intersectionData, world
+      );
+
+      // Verify: Only primary intersection created (no sibling)
+      expect(result.pointId).toBeDefined();
+      expect(result.siblingPointId).toBeUndefined();
+    });
+
+    it('should create sibling for line-circle intersection with HHL', () => {
+      // Setup: Create circle and HHL that intersect
+      const cmd = new Command('Setup', world);
+      
+      // Get HalfHingeLine on horizontal plane
+      const hhlId = 'half_HL_HV_on_PH';
+      
+      // Create a circle centered at (0, 5) with radius passing through (0, 0)
+      // This will intersect the HHL (y=0 line) at two points
+      const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 1)));
+      const circlePointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+      const circleResult = cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(
+        planeId,
+        centerResult.outputs.pointId!,
+        circlePointResult.outputs.pointId!
+      ));
+      
+      cmd.commit();
+
+      // Test: Create line-circle intersection with index 0
+      const intersectionCmd = new Command('Create HHL-circle intersection', world);
+      const intersectionData: IntersectionData = {
+        type: 'line-circle',
+        lineId: hhlId,
+        circleId: circleResult.outputs.circleId!,
+        element1Id: hhlId,
+        element2Id: circleResult.outputs.circleId!,
+        index: 0
+      };
+
+      const result = IntersectionSequenceFactory.createIntersection(
+        intersectionCmd, planeId, intersectionData, world
+      );
+
+      // Verify: Both primary and sibling created
+      expect(result.pointId).toBeDefined();
+      expect(result.siblingPointId).toBeDefined();
+
+      intersectionCmd.commit();
+
+      // Verify: Both points exist
+      const horizontalPlane = world.getProjectionPlaneById('proj_plane_H')!;
+      const verticalPlane = world.getProjectionPlaneById('proj_plane_V')!;
+      
+      const primaryPoint = horizontalPlane.getPoint(result.pointId);
+      const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);
+      
+      expect(primaryPoint).toBeDefined();
+      expect(siblingPoint).toBeDefined();
+      expect(siblingPoint!.type).toBe('sibling-intersection');
+    });
+  });
 });
