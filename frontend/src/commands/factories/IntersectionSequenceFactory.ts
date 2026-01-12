@@ -6,6 +6,9 @@
  * - Line-Circle intersections (with index for multiple intersections)
  * - Circle-Circle intersections (with index for multiple intersections)
  * 
+ * Phase 42: Now handles HalfHingeLine2D intersections by creating sibling points
+ * on the complementary plane (follows same pattern as SiblingGuide2D from Phase 36).
+ * 
  * Pattern: Open Command - Receives an open Command, adds operations to it.
  * 
  * Benefits:
@@ -21,17 +24,20 @@
  *   cmd, planeId, intersectionData, world
  * );
  * // result.pointId: ID of created intersection point
+ * // result.siblingPointId: ID of sibling point (if HHL intersection)
  * 
  * // Tool handles: process tree action, commit, push to stack, feedback
  * ```
  * 
  * @see frontend/src/commands/factories/README.md
+ * @see data-model.md §HalfHingeLine2D Intersection Sibling Behavior
  */
 
 import { Command } from '../Command';
 import { AddLineLineIntersectionPoint2DOp } from '../operations/world/AddLineLineIntersectionPoint2DOp';
 import { AddLineCircleIntersectionPoint2DOp } from '../operations/world/AddLineCircleIntersectionPoint2DOp';
 import { AddCircleCircleIntersectionPoint2DOp } from '../operations/world/AddCircleCircleIntersectionPoint2DOp';
+import { AddSiblingIntersectionPoint2DOp } from '../operations/world/AddSiblingIntersectionPoint2DOp';
 import type { World } from '@/domain/world/World';
 
 /**
@@ -51,13 +57,16 @@ export interface IntersectionData {
  */
 export class IntersectionSequenceFactory {
   /**
-   * Create an intersection point with the appropriate operation type
+   * Create an intersection point with the appropriate operation type.
+   * 
+   * If either element is a HalfHingeLine2D, automatically creates a sibling
+   * intersection point on the complementary plane (following Phase 36 sibling pattern).
    * 
    * @param cmd - Open Command to add operations to
    * @param planeId - ID of the projection plane
    * @param intersectionData - Specification of intersection type and elements
-   * @param world - World instance (currently unused, included for consistency with other factories)
-   * @returns Object with pointId of created intersection point
+   * @param world - World instance for HHL detection and sibling plane resolution
+   * @returns Object with pointId and optional siblingPointId
    * @throws Error if intersection type is unknown or operation fails
    */
   static createIntersection(
@@ -65,10 +74,7 @@ export class IntersectionSequenceFactory {
     planeId: string,
     intersectionData: IntersectionData,
     world: World
-  ): { pointId: string } {
-    // Silence unused variable warning - world included for future extensibility
-    void world;
-
+  ): { pointId: string; siblingPointId?: string } {
     // Create the appropriate operation based on intersection type
     let operation;
     if (intersectionData.type === 'line-line') {
@@ -105,10 +111,43 @@ export class IntersectionSequenceFactory {
       throw new Error(`Unknown intersection type: ${(intersectionData as IntersectionData).type}`);
     }
 
-    // Execute operation and extract outputs
+    // Execute primary operation and extract outputs
     const result = cmd.addAndExecute(operation);
     const pointId = result.outputs.pointId;
+    
+    let siblingPointId: string | undefined;
+    
+    try {
+      // Check if either element is HalfHingeLine2D and get sibling plane
+      const plane = world.getProjectionPlaneById(planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${planeId}`);
+      }
+      
+      const primaryPoint = plane.getPoint(pointId);
+      if (!primaryPoint) {
+        throw new Error(`Primary intersection point not found: ${pointId}`);
+      }
+      
+      const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
+      
+      if (siblingPlaneId) {
+        // Create sibling intersection using coordinate correspondence
+        const siblingResult = cmd.addAndExecute(
+          new AddSiblingIntersectionPoint2DOp(siblingPlaneId, pointId)
+        );
+        siblingPointId = siblingResult.outputs.pointId;
+        
+        console.log(
+          `[IntersectionSequenceFactory] Created sibling intersection ${siblingPointId} ` +
+          `in plane ${siblingPlaneId} for primary ${pointId}`
+        );
+      }
+    } catch (siblingError) {
+      // Sibling creation failed - log but don't fail the entire operation
+      console.warn('[IntersectionSequenceFactory] Failed to create sibling intersection:', siblingError);
+    }
 
-    return { pointId };
+    return { pointId, siblingPointId };
   }
 }

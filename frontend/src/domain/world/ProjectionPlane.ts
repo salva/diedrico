@@ -31,7 +31,8 @@ import {
   IntersectionPoint2D,
   Point2DLineLineIntersection,
   Point2DLineCircleIntersection,
-  Point2DCircleCircleIntersection
+  Point2DCircleCircleIntersection,
+  SiblingIntersectionPoint2D
 } from './Point';
 import type { Line2D, Line2DRealization2D } from './Line';
 import { Line2DByTwoPoints } from './Line';
@@ -907,6 +908,70 @@ export abstract class ProjectionPlane {
     
     this.addLine(siblingGuide);  // Sibling guides are stored as lines
     return siblingGuide;
+  }
+
+  /**
+   * Factory method: Create and add a sibling intersection point to this plane
+   * 
+   * When an element intersects with a HalfHingeLine2D, the intersection represents
+   * a 3D point that projects onto both planes. This method creates the sibling
+   * intersection point on the paired projection plane.
+   * 
+   * Architecture note: Follows the same pattern as addSiblingGuide2D (Phase 36).
+   * The sibling point uses SiblingIntersectionPoint2D which realizes by cloning
+   * the primary point's coordinates (valid when HHL parametric consistency holds).
+   * 
+   * @param primaryIntersectionId ID of the primary intersection point
+   * @param world World context for validation and ID generation
+   * @param id Optional ID for redo support
+   * @returns The created SiblingIntersectionPoint2D
+   * @throws Error if plane has no ID or primary intersection doesn't exist
+   */
+  addSiblingIntersectionPoint(
+    primaryIntersectionId: string,
+    world: import('./World').World,
+    id?: string
+  ): import('./Point').SiblingIntersectionPoint2D {
+    if (!this.id) {
+      throw new Error('Cannot add sibling intersection point to plane without ID');
+    }
+
+    // Validate primary intersection exists
+    const primaryPlane = world.getPlaneForElement(primaryIntersectionId);
+    if (!primaryPlane) {
+      throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
+    }
+
+    const primaryPoint = primaryPlane.getPoint(primaryIntersectionId);
+    if (!primaryPoint) {
+      throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
+    }
+
+    // Validate primary is an intersection type
+    if (!primaryPoint.type.includes('intersection')) {
+      throw new Error(`Primary point must be an intersection type, got: ${primaryPoint.type}`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generatePoint2DId(world);
+    }
+
+    // Get label from primary point
+    const label = primaryPoint.label;
+    
+    const siblingPoint = new SiblingIntersectionPoint2D(
+      id,
+      this.id,
+      primaryIntersectionId,
+      label
+    );
+    
+    // Link bidirectionally
+    (primaryPoint as any).siblingPointId = siblingPoint.id;
+    
+    this.addPoint(siblingPoint);
+    return siblingPoint;
   }
 
   /**

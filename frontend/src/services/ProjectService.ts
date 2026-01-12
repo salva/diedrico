@@ -17,6 +17,7 @@
 import { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
+import { Vector4 } from 'three';
 
 // Import all operation classes for deserialization
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -27,13 +28,14 @@ import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '@/commands
 import { AddLineLineIntersectionPoint2DOp } from '@/commands/operations/world/AddLineLineIntersectionPoint2DOp';
 import { AddLineCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddLineCircleIntersectionPoint2DOp';
 import { AddCircleCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddCircleCircleIntersectionPoint2DOp';
+import { AddSiblingIntersectionPoint2DOp } from '@/commands/operations/world/AddSiblingIntersectionPoint2DOp';
 import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from '@/commands/operations/world/RemoveElementOps';
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
 import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
 import {
   CreateInitializationSubprocessOp,
-  AddPlane3DOp,
+  AddPlane3DFixedOp,
   AddProjectionPlaneOp,
   AddOriginPoint2DOp,
   AddHingeLineOp,
@@ -193,6 +195,9 @@ export class ProjectService {
       case 'AddSiblingGuide2D':
         return new AddSiblingGuide2DOp(parameters.planeId, parameters.primaryGuideId, parameters.referenceLineId);
       
+      case 'AddSiblingIntersectionPoint2D':
+        return new AddSiblingIntersectionPoint2DOp(parameters.planeId, parameters.primaryIntersectionId);
+      
       case 'RemovePoint2D':
         return new RemovePoint2DOp(parameters.planeId, parameters.pointId);
       
@@ -228,8 +233,32 @@ export class ProjectService {
       case 'CreateInitializationSubprocess':
         return new CreateInitializationSubprocessOp(parameters.name);
       
-      case 'AddPlane3D':
-        return new AddPlane3DOp(parameters.planeId, parameters.orientation);
+      case 'AddPlane3D': // Legacy - for backward compatibility with old orientation-based format
+        // Old format: { orientation: 'horizontal' | 'vertical' }
+        // Convert to point + normal (homogeneous coordinates)
+        const isHorizontal = parameters.orientation === 'horizontal';
+        const legacyPoint = new Vector4(0, 0, 0, 1);  // Point at origin
+        const legacyNormal = isHorizontal 
+          ? new Vector4(0, 0, 1, 0)  // +Z for horizontal
+          : new Vector4(0, 1, 0, 0); // +Y for vertical
+        const legacyLabel = isHorizontal ? 'P_H' : 'P_V';
+        return new AddPlane3DFixedOp(legacyPoint, legacyNormal, parameters.planeId, legacyLabel);
+      
+      case 'AddPlane3DFixed':
+        // New format: { point: {x,y,z,w}, normal: {x,y,z,w}, planeId, label }
+        const point = new Vector4(
+          parameters.point.x, 
+          parameters.point.y, 
+          parameters.point.z,
+          parameters.point.w
+        );
+        const normal = new Vector4(
+          parameters.normal.x, 
+          parameters.normal.y, 
+          parameters.normal.z,
+          parameters.normal.w
+        );
+        return new AddPlane3DFixedOp(point, normal, parameters.planeId, parameters.label);
       
       case 'AddProjectionPlane':
         return new AddProjectionPlaneOp(parameters.projPlaneId, parameters.planeId, parameters.orientation);
