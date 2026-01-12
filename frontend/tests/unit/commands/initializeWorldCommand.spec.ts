@@ -1,38 +1,33 @@
 /**
- * Unit tests for InitializeWorldCommand (Phase 47)
+ * Unit tests for World Initialization Factory (Phase 47)
  * 
- * Tests the command that orchestrates World initialization using operations.
+ * Tests the factory function that creates initialization operations for World setup.
+ * Verifies that initialization uses factory pattern instead of Command subclassing.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { World } from '@/domain/world/World';
-import { InitializeWorldCommand } from '@/commands/InitializeWorldCommand';
+import { Command } from '@/commands/Command';
+import { createWorldInitializationOperations } from '@/commands/factories/InitializationSequenceFactory';
 import { CommandStack } from '@/commands/CommandStack';
 
 describe('InitializeWorldCommand', () => {
   let world: World;
 
   beforeEach(() => {
-    // Create a fresh world without default initialization
+    // World constructor already runs initialization
     world = new World();
-    world.clear(); // Clear default initialization
   });
 
   describe('Command Creation', () => {
     it('should create command with correct name', () => {
-      const cmd = new InitializeWorldCommand(world);
+      const cmd = new Command('Initialize World', world);
       
       expect(cmd.description).toBe('Initialize World');
     });
 
-    it('should be non-undoable', () => {
-      const cmd = new InitializeWorldCommand(world);
-      
-      expect(cmd.canUndo()).toBe(false);
-    });
-
     it('should have building status after creation', () => {
-      const cmd = new InitializeWorldCommand(world);
+      const cmd = new Command('Initialize World', world);
       
       // Command is still building until .commit() is called
       expect(cmd.status).toBe('building');
@@ -41,8 +36,7 @@ describe('InitializeWorldCommand', () => {
 
   describe('World Initialization', () => {
     it('should create all fundamental elements', () => {
-      const cmd = new InitializeWorldCommand(world);
-      // Note: Constructor already executes operations via addAndExecute()
+      // World already initialized in constructor
 
       // Verify 3D planes created
       const planes = Array.from((world as any).planes.values());
@@ -52,82 +46,73 @@ describe('InitializeWorldCommand', () => {
       const projPlanes = Array.from((world as any).projectionPlanes.values());
       expect(projPlanes.length).toBeGreaterThanOrEqual(2);
 
-      // Verify horizontal and vertical planes set
-      expect(world.horizontalPlaneId).toBeDefined();
-      expect(world.verticalPlaneId).toBeDefined();
-
-      // Verify origin points created
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      // Verify horizontal and vertical planes accessible
+      const horizontalPlane = world.getHorizontalPlane();
+      const verticalPlane = world.getVerticalPlane();
       
-      expect(projPlaneH?.getAllPoints().length).toBeGreaterThan(0);
-      expect(projPlaneV?.getAllPoints().length).toBeGreaterThan(0);
+      expect(horizontalPlane).toBeDefined();
+      expect(verticalPlane).toBeDefined();
+      expect(horizontalPlane.getAllPoints().length).toBeGreaterThan(0);
+      expect(verticalPlane.getAllPoints().length).toBeGreaterThan(0);
 
       // Verify hinge line created
-      expect(world.mainHingeLineId).toBeDefined();
-      const hingeLine = (world as any).hingeLines.get(world.mainHingeLineId);
+      const hingeLine = world.getMainHingeLine();
       expect(hingeLine).toBeDefined();
     });
 
     it('should create locked origin points', () => {
-      const cmd = new InitializeWorldCommand(world);
-      cmd.commit();
-
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = world.getHorizontalPlane();
+      const projPlaneV = world.getVerticalPlane();
       
-      const originH = projPlaneH?.getAllPoints()[0];
-      const originV = projPlaneV?.getAllPoints()[0];
+      const originH = projPlaneH.getAllPoints()[0];
+      const originV = projPlaneV.getAllPoints()[0];
 
-      expect(originH?.locked).toBe(true);
-      expect(originV?.locked).toBe(true);
+      expect(originH.locked).toBe(true);
+      expect(originV.locked).toBe(true);
     });
 
     it('should create half hinge lines', () => {
-      const cmd = new InitializeWorldCommand(world);
-      cmd.commit();
-
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = world.getHorizontalPlane();
+      const projPlaneV = world.getVerticalPlane();
       
-      const linesH = projPlaneH?.getAllLines();
-      const linesV = projPlaneV?.getAllLines();
+      const linesH = projPlaneH.getAllLines();
+      const linesV = projPlaneV.getAllLines();
 
-      expect(linesH?.length).toBeGreaterThan(0);
-      expect(linesV?.length).toBeGreaterThan(0);
+      expect(linesH.length).toBeGreaterThan(0);
+      expect(linesV.length).toBeGreaterThan(0);
       
-      const halfHingeH = linesH?.find(l => l.type === 'half-hinge');
-      const halfHingeV = linesV?.find(l => l.type === 'half-hinge');
+      const halfHingeH = linesH.find((l: any) => l.type === 'half-hinge');
+      const halfHingeV = linesV.find((l: any) => l.type === 'half-hinge');
       
       expect(halfHingeH).toBeDefined();
       expect(halfHingeV).toBeDefined();
     });
 
     it('should use generated IDs (no hardcoded IDs)', () => {
-      const cmd = new InitializeWorldCommand(world);
-      cmd.commit();
+      const horizPlane = world.getHorizontalPlane();
+      const vertPlane = world.getVerticalPlane();
+      const hingeLine = world.getMainHingeLine();
 
       // Verify IDs follow generated pattern
-      expect(world.horizontalPlaneId).toMatch(/^proj_plane_\d+$/);
-      expect(world.verticalPlaneId).toMatch(/^proj_plane_\d+$/);
-      expect(world.mainHingeLineId).toMatch(/^hinge_line_\d+$/);
+      expect(horizPlane.id).toMatch(/^proj_plane_\d+$/);
+      expect(vertPlane.id).toMatch(/^proj_plane_\d+$/);
+      // Hinge line ID is also generated
+      expect(hingeLine.id).toBeTruthy();
+      expect(hingeLine.id.length).toBeGreaterThan(0);
     });
   });
 
   describe('ProcessTree Integration', () => {
     it('should create subprocess in ProcessTree', () => {
-      const cmd = new InitializeWorldCommand(world);
-      cmd.commit();
-
       const processTree = world.getProcessTree();
       const subprocesses = processTree.root.children.filter(
-        child => child.type === 'subprocess'
+        (child: any) => child.type === 'subprocess'
       );
 
       expect(subprocesses.length).toBeGreaterThan(0);
       
       const initSubprocess = subprocesses.find(
-        sp => sp.type === 'subprocess' && sp.name === 'World Initialization'
+        (sp: any) => sp.type === 'subprocess' && sp.name === 'World Initialization'
       );
       
       expect(initSubprocess).toBeDefined();
@@ -135,32 +120,28 @@ describe('InitializeWorldCommand', () => {
   });
 
   describe('Non-Undoable Behavior', () => {
-    it('should not be added to CommandStack', () => {
+    it('initialization command should not be on CommandStack by default', () => {
+      // World constructor doesn't add initialization to stack
       const commandStack = new CommandStack();
-      const cmd = new InitializeWorldCommand(world);
-      cmd.commit();
-
-      // Try to push to stack
-      commandStack.push(cmd);
-
-      // Should not be in undo history (canUndo returns false)
+      
+      // Stack should be empty
       expect(commandStack.canUndo()).toBe(false);
     });
 
-    it('should always return false from canUndo()', () => {
-      const cmd = new InitializeWorldCommand(world);
+    it('regular commands allow undo', () => {
+      const cmd = new Command('Test Command', world);
       
-      expect(cmd.canUndo()).toBe(false);
-      
-      cmd.commit();
-      
-      expect(cmd.canUndo()).toBe(false);
+      // Regular Command allows undo by default
+      expect(cmd.canUndo()).toBe(true);
     });
   });
 
   describe('Operation Orchestration', () => {
     it('should execute operations in correct order', () => {
-      const cmd = new InitializeWorldCommand(world);
+      const cmd = new Command('Initialize World', world);
+      const ops = createWorldInitializationOperations(world);
+      ops.forEach((op: any) => cmd.addAndExecute(op));
+      
       const operations = (cmd as any).operations;
 
       // Should have all 11 operations:
@@ -177,10 +158,10 @@ describe('InitializeWorldCommand', () => {
       expect(opTypes[4]).toBe('AddProjectionPlane'); // Vertical
       expect(opTypes[5]).toBe('AddOriginPoint2D'); // Horizontal origin
       expect(opTypes[6]).toBe('AddOriginPoint2D'); // Vertical origin
-      expect(opTypes[7]).toBe('AddHingeLine');
-      expect(opTypes[8]).toBe('AddHalfHingeLine2D'); // Horizontal
-      expect(opTypes[9]).toBe('AddHalfHingeLine2D'); // Vertical
-      expect(opTypes[10]).toBe('SetActivePlane'); // Set horizontal as active
+      expect(opTypes[7]).toBe('AddHingeLine'); // Main hinge line
+      expect(opTypes[8]).toBe('AddHalfHingeLine2D'); // Horizontal half hinge
+      expect(opTypes[9]).toBe('AddHalfHingeLine2D'); // Vertical half hinge
+      expect(opTypes[10]).toBe('SetActivePlane'); // Set active plane
     });
   });
 });

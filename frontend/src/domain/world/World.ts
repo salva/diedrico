@@ -94,7 +94,8 @@ import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
 import { Element2D } from './Element2D';
 import { getContainerIdFromElementId } from './ElementId';
-import { InitializeWorldCommand } from '@/commands/InitializeWorldCommand';
+import { Command } from '@/commands/Command';
+import { createWorldInitializationOperations } from '@/commands/factories/InitializationSequenceFactory';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -145,9 +146,15 @@ export class World {
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService(this.processTree);
     
-    // Phase 47: Initialize fixed elements using InitializeWorldCommand
-    const initCmd = new InitializeWorldCommand(this);
+    // Phase 47: Initialize fixed elements using factory + Command
+    // Factory pattern: Operations are generated externally, added to generic Command
+    // This avoids Command subclasses while maintaining initialization logic
+    const initCmd = new Command('Initialize World', this);
+    const initOps = createWorldInitializationOperations(this);
+    initOps.forEach(op => initCmd.addAndExecute(op));
     initCmd.commit();
+    // Note: Not pushed to CommandStack - initialization is non-undoable
+    
     this.notifyChange();
   }
 
@@ -185,9 +192,12 @@ export class World {
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService(this.processTree);
     
-    // Phase 47: Reinitialize fixed elements using InitializeWorldCommand
-    const initCmd = new InitializeWorldCommand(this);
+    // Phase 47: Reinitialize fixed elements using factory + Command
+    const initCmd = new Command('Initialize World', this);
+    const initOps = createWorldInitializationOperations(this);
+    initOps.forEach(op => initCmd.addAndExecute(op));
     initCmd.commit();
+    // Note: Not pushed to CommandStack - initialization is non-undoable
     
     // Notify UI of change
     this.notifyChange();

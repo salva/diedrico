@@ -7,15 +7,18 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { World } from '../../src/domain/world/World';
-import { InitializeWorldCommand } from '../../src/commands/InitializeWorldCommand';
+import { Command } from '../../src/commands/Command';
+import { createWorldInitializationOperations } from '../../src/commands/factories/InitializationSequenceFactory';
 
 describe('Semantic Entity References (Phase 46)', () => {
   let world: World;
 
   beforeEach(() => {
     world = new World();
-    // InitializeWorldCommand executes all operations in constructor
-    new InitializeWorldCommand(world);
+    // Use factory to create initialization operations
+    const cmd = new Command('Initialize World', world);
+    createWorldInitializationOperations(world).forEach((op: any) => cmd.addAndExecute(op));
+    cmd.commit();
   });
 
   describe('Semantic Accessors', () => {

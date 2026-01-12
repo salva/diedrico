@@ -111,6 +111,13 @@ export class AddProjectionPlaneOp implements IOperation {
       // Add to world
       (world as any).projectionPlanes.set(this.projPlaneId, projPlane);
       
+      // Set semantic reference on World (Phase 46)
+      if (this.orientation === 'horizontal') {
+        (world as any).horizontalPlaneId = this.projPlaneId;
+      } else {
+        (world as any).verticalPlaneId = this.projPlaneId;
+      }
+      
       return {
         success: true,
         outputs: { projPlaneId: this.projPlaneId }
@@ -126,6 +133,13 @@ export class AddProjectionPlaneOp implements IOperation {
 
   undo(world: World): void {
     (world as any).projectionPlanes.delete(this.projPlaneId);
+    
+    // Clear semantic reference
+    if (this.orientation === 'horizontal') {
+      (world as any).horizontalPlaneId = undefined;
+    } else {
+      (world as any).verticalPlaneId = undefined;
+    }
   }
 
   serialize() {
@@ -180,6 +194,17 @@ export class AddOriginPoint2DOp implements IOperation {
       // Add to projection plane
       projPlane.addPoint(originPoint);
       
+      // Set semantic reference on World (Phase 46)
+      // Check if this is the horizontal or vertical plane to set the correct origin ID
+      const horizontalPlane = world.getHorizontalPlane();
+      const verticalPlane = world.getVerticalPlane();
+      
+      if (horizontalPlane && projPlane.id === horizontalPlane.id) {
+        (world as any).horizontalOriginId = pointId;
+      } else if (verticalPlane && projPlane.id === verticalPlane.id) {
+        (world as any).verticalOriginId = pointId;
+      }
+      
       return {
         success: true,
         outputs: { pointId, projPlaneId: this.projPlaneId }
@@ -199,7 +224,18 @@ export class AddOriginPoint2DOp implements IOperation {
       // Get origin point (should be the first point added to plane)
       const points = projPlane.getAllPoints();
       if (points.length > 0) {
-        projPlane.removePoint(points[0].id);
+        const pointId = points[0].id;
+        projPlane.removePoint(pointId);
+        
+        // Clear semantic reference
+        const horizontalPlane = world.getHorizontalPlane();
+        const verticalPlane = world.getVerticalPlane();
+        
+        if (horizontalPlane && projPlane.id === horizontalPlane.id) {
+          (world as any).horizontalOriginId = undefined;
+        } else if (verticalPlane && projPlane.id === verticalPlane.id) {
+          (world as any).verticalOriginId = undefined;
+        }
       }
     }
   }

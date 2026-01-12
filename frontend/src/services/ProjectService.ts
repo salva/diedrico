@@ -31,6 +31,15 @@ import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, R
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
 import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
+import {
+  CreateInitializationSubprocessOp,
+  AddPlane3DOp,
+  AddProjectionPlaneOp,
+  AddOriginPoint2DOp,
+  AddHingeLineOp,
+  AddHalfHingeLine2DOp,
+  SetActivePlaneOp
+} from '@/commands/operations/world/InitializationOps';
 
 /**
  * Project data structure based on command stream
@@ -214,6 +223,28 @@ export class ProjectService {
       case 'AddIntersectionPoint2D':
         // Legacy operation - check if still used
         return new AddIntersectionPoint2DOp(parameters.planeId, parameters.element1Id, parameters.element2Id, parameters.index);
+      
+      // Initialization operations (Phase 47)
+      case 'CreateInitializationSubprocess':
+        return new CreateInitializationSubprocessOp(parameters.name);
+      
+      case 'AddPlane3D':
+        return new AddPlane3DOp(parameters.planeId, parameters.orientation);
+      
+      case 'AddProjectionPlane':
+        return new AddProjectionPlaneOp(parameters.projPlaneId, parameters.planeId, parameters.orientation);
+      
+      case 'AddOriginPoint2D':
+        return new AddOriginPoint2DOp(parameters.projPlaneId, parameters.localPosition);
+      
+      case 'AddHingeLine':
+        return new AddHingeLineOp(parameters.hingeLineId, parameters.projPlaneAId, parameters.projPlaneBId);
+      
+      case 'AddHalfHingeLine2D':
+        return new AddHalfHingeLine2DOp(parameters.projPlaneId, parameters.hingeLineId, parameters.hingePoint, parameters.hingeDirection);
+      
+      case 'SetActivePlane':
+        return new SetActivePlaneOp(parameters.projPlaneId);
       
       default:
         throw new Error(`Unknown operation type: ${type}`);

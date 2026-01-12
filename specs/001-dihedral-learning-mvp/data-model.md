@@ -5437,6 +5437,165 @@ class Command {
 
 ---
 
+### Operation Sequence Factories
+
+**Purpose**: Factories that generate sequences of operations for complex workflows while maintaining the single Command class architecture
+
+**Pattern**: Factory functions/classes that return arrays of IOperation instances, which are then added to a regular Command instance. This avoids the need for Command subclasses while enabling reusable operation sequences.
+
+**Key Principles**:
+1. **No Command Subclasses**: Factories return operation arrays, not Command subclasses
+2. **Reusable Logic**: Complex operation sequences can be generated and reused
+3. **Generic Command**: Always use the base Command class
+4. **Testable**: Factories can be tested independently of Command
+5. **Composable**: Factory outputs can be combined or modified before adding to Command
+
+**Example - World Initialization Factory**:
+
+World initialization requires a specific sequence of operations (create planes, projection planes, origins, hinge lines, etc.). Instead of creating an `InitializeWorldCommand` subclass (which violates architecture), we use a factory:
+
+```typescript
+/**
+ * Factory: Generate operation sequence for world initialization
+ * 
+ * Creates all fundamental geometric structures:
+ * - Two 3D planes (P_H horizontal, P_V vertical)
+ * - Two projection planes 
+ * - Origin points on each projection plane
+ * - Hinge line connecting the two planes
+ * - Half hinge lines (2D representations) on each projection plane
+ * - ProcessTree subprocess for organization
+ * 
+ * @param world World instance for ID generation
+ * @returns Array of operations to be added to a Command
+ */
+function createWorldInitializationOperations(world: World): IOperation[] {
+  const operations: IOperation[] = [];
+  
+  // Step 1: Create initialization subprocess
+  operations.push(new CreateInitializationSubprocessOp('World Initialization'));
+  
+  // Generate IDs for geometric structure
+  const planeHId = 'plane_H';
+  const planeVId = 'plane_V';
+  const projPlaneHId = 'proj_plane_1';
+  const projPlaneVId = 'proj_plane_2';
+  
+  // Step 2-3: Create 3D planes
+  operations.push(new AddPlane3DOp(planeHId, 'horizontal'));
+  operations.push(new AddPlane3DOp(planeVId, 'vertical'));
+  
+  // Step 4-5: Create projection planes
+  operations.push(new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal'));
+  operations.push(new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical'));
+  
+  // Step 6-7: Create origin points
+  operations.push(new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1)));
+  operations.push(new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1)));
+  
+  // Step 8: Create hinge line
+  const hingeLineId = world.generateHingeLineId();
+  operations.push(new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId));
+  
+  // Step 9-10: Create half hinge lines
+  const hingePoint = new Vector3(0, 0, 1);
+  const hingeDirection = new Vector3(1, 0, 0);
+  operations.push(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
+  operations.push(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
+  
+  // Step 11: Set active plane
+  operations.push(new SetActivePlaneOp(projPlaneHId));
+  
+  return operations;
+}
+
+/**
+ * Usage in World constructor
+ */
+class World {
+  constructor() {
+    // ... basic initialization ...
+    
+    // Create command using factory
+    const cmd = new Command('Initialize World', this);
+    
+    // Add all initialization operations from factory
+    const initOps = createWorldInitializationOperations(this);
+    initOps.forEach(op => cmd.addAndExecute(op));
+    
+    // Commit (but don't add to undo stack - initialization is non-undoable)
+    cmd.commit();
+    
+    // Note: Command is not pushed to CommandStack because world initialization
+    // is a one-time non-undoable operation
+  }
+}
+```
+
+**Benefits of Factory Pattern**:
+1. **Architecture Compliance**: No Command subclasses, preserves sealed Command class
+2. **Testability**: Factory can be unit tested independently
+3. **Reusability**: Same factory can be used in different contexts (new World, project templates)
+4. **Serialization**: Each operation is independently serializable (unlike Command subclass)
+5. **Composability**: Can combine multiple factories or modify operation sequences
+6. **Transparency**: Operation sequence is explicit and inspectable
+
+**When to Use Factories**:
+- Complex multi-step workflows that need to be reused
+- Initialization sequences (World, templates, presets)
+- Batch operations (delete cascade, duplicate with dependencies)
+- Generated operation sequences (parametric patterns, repetition)
+
+**When NOT to Use Factories**:
+- Simple single-operation commands (just create operation directly)
+- One-off sequences (inline the operations)
+- Dynamic sequences that can't be predetermined (use conditional logic in tool code)
+
+**Comparison with Command Subclass (Anti-Pattern)**:
+
+```typescript
+// ❌ WRONG: Command subclass (violates architecture)
+class InitializeWorldCommand extends Command {
+  constructor(world: World) {
+    super('Initialize World', world);
+    this.buildInitializationSequence();
+  }
+  
+  private buildInitializationSequence() {
+    // operations built inside Command subclass
+  }
+}
+
+// ✅ CORRECT: Factory + Generic Command
+function createWorldInitializationOperations(world: World): IOperation[] {
+  // operations built outside, returned as array
+  return [...operations];
+}
+
+const cmd = new Command('Initialize World', world);
+createWorldInitializationOperations(world).forEach(op => cmd.addAndExecute(op));
+cmd.commit();
+```
+
+**Non-Undoable Commands**:
+
+Some operations (like world initialization) should not be undoable. Handle this by:
+1. Create Command normally using factory
+2. Commit the Command
+3. Don't push it to CommandStack
+
+```typescript
+// World initialization is non-undoable
+const cmd = new Command('Initialize World', world);
+createWorldInitializationOperations(world).forEach(op => cmd.addAndExecute(op));
+cmd.commit();
+// Note: Not pushed to commandStack - initialization cannot be undone
+```
+
+The Command is still created normally (no subclass needed), but by not adding it to the CommandStack, it effectively becomes non-undoable.
+
+---
+
 ## Command Sourcing Architecture (Project Persistence)
 
 **Pattern**: Projects are persisted as **command streams**, not final state snapshots
