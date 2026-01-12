@@ -96,7 +96,6 @@ describe('Generic Command Class (R017)', () => {
 
   beforeEach(() => {
     world = new World();
-    world.initializeFixedElements();
     command = new Command('Test Command', world);
   });
 
