@@ -19,6 +19,7 @@ import {
 import { World } from '@/domain/world/World';
 import { Plane3D } from '@/domain/world/Plane';
 import { HingeLine, HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Point2D', () => {
   describe('constructor', () => {
@@ -178,15 +179,17 @@ describe('Point2D', () => {
   describe('SiblingIntersectionPoint2D', () => {
     let world: World;
     let primaryPointId: string;
+    let planeVId: string;
 
     beforeEach(() => {
       world = new World();
-      const plane = world.getProjectionPlaneById('proj_plane_H')!;
+      const planeH = getHorizontalPlane(world);
+      planeVId = getVerticalPlaneId(world);
       
       // Create a primary intersection point using a free point for simplicity
       // (In real usage it would be from line intersection, but for testing we just need
       // a point with known coordinates that the sibling can reference)
-      const freePoint = plane.addFreePoint2D(new Vector3(50, 0, 1), world);
+      const freePoint = planeH.addFreePoint2D(new Vector3(50, 0, 1), world);
       primaryPointId = freePoint.id;
     });
 
@@ -195,14 +198,14 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           primaryPointId,
-          'proj_plane_V',
+          planeVId,
           'Sibling Point'
         );
 
         expect(sibling.id).toBe('sibling-point');
         expect(sibling.type).toBe('sibling-intersection');
         expect(sibling.primaryIntersectionId).toBe(primaryPointId);
-        expect(sibling.planeId).toBe('proj_plane_V');
+        expect(sibling.planeId).toBe(planeVId);
         expect(sibling.label).toBe('Sibling Point');
       });
 
@@ -210,7 +213,7 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           primaryPointId,
-          'proj_plane_V'
+          planeVId
         );
 
         expect(sibling.label).toBeUndefined();
@@ -222,7 +225,7 @@ describe('Point2D', () => {
         const original = new SiblingIntersectionPoint2D(
           'sibling-1',
           primaryPointId,
-          'proj_plane_V',
+          planeVId,
           'Original Sibling'
         );
 
@@ -232,7 +235,7 @@ describe('Point2D', () => {
         expect(clone.id).toBe('sibling-1');
         expect(clone.type).toBe('sibling-intersection');
         expect(clone.primaryIntersectionId).toBe(primaryPointId);
-        expect(clone.planeId).toBe('proj_plane_V');
+        expect(clone.planeId).toBe(planeVId);
         expect(clone.label).toBe('Original Sibling');
       });
 
@@ -240,7 +243,7 @@ describe('Point2D', () => {
         const original = new SiblingIntersectionPoint2D(
           'sibling-1',
           primaryPointId,
-          'proj_plane_V'
+          planeVId
         );
         const clone = original.clone();
 
@@ -256,7 +259,7 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           primaryPointId,
-          'proj_plane_V'
+          planeVId
         );
 
         const realization = sibling.realize2D(world);
@@ -270,7 +273,7 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           primaryPointId,
-          'proj_plane_V'
+          planeVId
         );
 
         const realization1 = sibling.realize2D(world);
@@ -285,7 +288,7 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           'nonexistent-primary',
-          'proj_plane_V'
+          planeVId
         );
 
         const realization = sibling.realize2D(world);
@@ -300,7 +303,7 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           'nonexistent-primary',
-          'proj_plane_V'
+          planeVId
         );
 
         const realization = sibling.realize2D(world);
@@ -315,7 +318,7 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           primaryPointId,
-          'proj_plane_V'
+          planeVId
         );
 
         // Initial realization
@@ -323,11 +326,12 @@ describe('Point2D', () => {
         expect(realization1.position.x).toBe(50);
 
         // Update primary coordinates by creating a new point at same ID
-        const primaryPoint = new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), 'proj_plane_H');
+        const planeHId = getHorizontalPlaneId(world);
+        const primaryPoint = new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), planeHId);
         world.addPoint2D(primaryPoint);
         // Phase 22.5.3: Clear cache from plane, not World
-        const plane = world.projectionPlanes.get('proj_plane_H');
-        plane?.clearPointRealization2D(primaryPointId);
+        const planeH = getHorizontalPlane(world);
+        planeH?.clearPointRealization2D(primaryPointId);
 
         // Sibling should reflect updated coordinates
         const realization2 = sibling.realize2D(world);
@@ -339,7 +343,7 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           primaryPointId,
-          'proj_plane_V'
+          planeVId
         );
 
         const realization = sibling.realize2D(world);
@@ -362,7 +366,7 @@ describe('Point2D', () => {
         const sibling = new SiblingIntersectionPoint2D(
           'sibling-point',
           primary.id,
-          'proj_plane_V'
+          planeVId
         );
 
         const realizationSibling = sibling.realize2D(world);
@@ -379,7 +383,7 @@ describe('Point2D', () => {
       it('T358: HL_HV HalfHingeLine2D pairs maintain identical Q and D', () => {
         // Get both HalfHingeLine2D objects for HL_HV
         const planeH = world.getProjectionPlaneById('proj_plane_H')!;
-        const planeV = world.getProjectionPlaneById('proj_plane_V')!;
+        const planeV = world.getProjectionPlaneById(planeVId)!;
         
         const halfHingeH = Array.from(planeH.lines.values())
           .find(line => line.type === 'half-hinge') as any;
@@ -421,7 +425,7 @@ describe('Point2D', () => {
           const sibling = new SiblingIntersectionPoint2D(
             `sibling-${pos.d}`,
             primary.id,
-            'proj_plane_V'
+            planeVId
           );
           
           // Realize both
