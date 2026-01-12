@@ -89,7 +89,7 @@ import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D } from './Plane';
-import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlane';
+import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D, BaseProjectionPlane } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
 import { Element2D } from './Element2D';
@@ -233,6 +233,100 @@ export class World {
    */
   generateHingeLineId(): string {
     return `HL_${++this.hingeLineCounter}`;
+  }
+
+  /**
+   * Element factory: Create 3D plane
+   * 
+   * Creates a 3D plane (horizontal or vertical) and adds it to World.
+   * If planeId is not provided, generates a new ID.
+   * 
+   * @param orientation - 'horizontal' or 'vertical'
+   * @param planeId - Optional ID (for redo support)
+   * @returns Created Plane3D instance
+   */
+  addPlane3D(orientation: 'horizontal' | 'vertical', planeId?: string): Plane3D {
+    const id = planeId || this.generatePlaneId();
+    
+    const plane = orientation === 'horizontal' 
+      ? Plane3D.createPH() 
+      : Plane3D.createPV();
+    
+    plane.id = id;
+    this.planes.set(id, plane);
+    
+    return plane;
+  }
+
+  /**
+   * Element factory: Create projection plane
+   * 
+   * Creates a projection plane associated with a 3D plane and adds it to World.
+   * If projPlaneId is not provided, generates a new ID.
+   * Sets semantic references (horizontalPlaneId/verticalPlaneId) on World.
+   * 
+   * @param plane3DId - ID of associated 3D plane
+   * @param orientation - 'horizontal' or 'vertical'
+   * @param projPlaneId - Optional ID (for redo support)
+   * @returns Created ProjectionPlane instance
+   */
+  addProjectionPlane(
+    plane3DId: string, 
+    orientation: 'horizontal' | 'vertical', 
+    projPlaneId?: string
+  ): ProjectionPlane {
+    const id = projPlaneId || this.generateProjPlaneId();
+    
+    const projPlane = orientation === 'horizontal'
+      ? BaseProjectionPlane.createPH()
+      : BaseProjectionPlane.createPV();
+    
+    projPlane.id = id;
+    projPlane.plane3DId = plane3DId;
+    
+    this.projectionPlanes.set(id, projPlane);
+    
+    // Set semantic reference on World
+    if (orientation === 'horizontal') {
+      this.horizontalPlaneId = id;
+    } else {
+      this.verticalPlaneId = id;
+    }
+    
+    return projPlane;
+  }
+
+  /**
+   * Element factory: Create hinge line (3D object only)
+   * 
+   * Creates a 3D HingeLine object connecting two projection planes.
+   * Does NOT create the 2D half hinge lines - those are separate operations.
+   * If hingeLineId is not provided, generates a new ID.
+   * Sets mainHingeLineId semantic reference on World.
+   * 
+   * @param horizontalPlaneId - ID of horizontal projection plane
+   * @param verticalPlaneId - ID of vertical projection plane
+   * @param hingeLineId - Optional ID (for redo support)
+   * @returns Created HingeLine instance
+   */
+  addHingeLine(
+    horizontalPlaneId: string,
+    verticalPlaneId: string,
+    hingeLineId?: string
+  ): HingeLine {
+    const id = hingeLineId || this.generateHingeLineId();
+    
+    const hingeLine = new HingeLine(
+      id,
+      id, // label same as ID
+      horizontalPlaneId,
+      verticalPlaneId
+    );
+    
+    this.hingeLines.set(id, hingeLine);
+    this.mainHingeLineId = id;
+    
+    return hingeLine;
   }
 
   /**

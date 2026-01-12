@@ -39,6 +39,7 @@ import type { Circle2D, Circle2DRealization2D } from './Circle';
 import { Circle2DByCenterAndPoint } from './Circle';
 import { Segment2DByPoints } from './Segment';
 import { Guide2D, SiblingGuide2D } from './Guide';
+import { HalfHingeLine2D } from './HingeLine';
 
 export type ProjectionPlaneType = 'base' | 'auxiliary';
 
@@ -906,6 +907,80 @@ export abstract class ProjectionPlane {
     
     this.addLine(siblingGuide);  // Sibling guides are stored as lines
     return siblingGuide;
+  }
+
+  /**
+   * Element factory: Add origin point to projection plane
+   * 
+   * Creates a locked origin point at the specified position.
+   * Origin points cannot be moved or deleted by user actions.
+   * 
+   * @param position Position in intrinsic plane coordinates (typically (0,0,1))
+   * @param world World instance for ID generation
+   * @param id Optional ID for redo support
+   * @returns The created origin FreePoint2D (with locked=true)
+   */
+  addOriginPoint2D(
+    position: Vector3,
+    world: import('./World').World,
+    id?: string
+  ): FreePoint2D {
+    if (!this.id) {
+      throw new Error('Cannot add origin point to plane without ID');
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generatePoint2DId(world);
+    }
+
+    const originPoint = new FreePoint2D(id, position, this.id);
+    originPoint.locked = true;  // Lock origin point
+    
+    this.addPoint(originPoint);
+    return originPoint;
+  }
+
+  /**
+   * Element factory: Add half hinge line to projection plane
+   * 
+   * Creates a half hinge line (2D representation of 3D hinge line).
+   * This is a special line type that represents where the plane intersects
+   * the main hinge line axis.
+   * 
+   * @param hingeLineId ID of the 3D HingeLine this represents
+   * @param point Point on the half hinge line (typically origin)
+   * @param direction Direction vector of the half hinge line (typically (1,0,0))
+   * @param world World instance for ID generation
+   * @param id Optional ID for redo support
+   * @returns The created HalfHingeLine2D
+   */
+  addHalfHingeLine2D(
+    hingeLineId: string,
+    point: Vector3,
+    direction: Vector3,
+    world: import('./World').World,
+    id?: string
+  ): HalfHingeLine2D {
+    if (!this.id) {
+      throw new Error('Cannot add half hinge line to plane without ID');
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const halfHingeLine = new HalfHingeLine2D(
+      id,
+      hingeLineId,
+      this.id,
+      point,
+      direction
+    );
+    
+    this.addLine(halfHingeLine);
+    return halfHingeLine;
   }
 
   /**

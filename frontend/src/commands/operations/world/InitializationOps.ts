@@ -20,10 +20,6 @@
 import { Vector3 } from 'three';
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
-import { Plane3D } from '@/domain/world/Plane';
-import { BaseProjectionPlane } from '@/domain/world/ProjectionPlane';
-import { FreePoint2D } from '@/domain/world/Point';
-import { HingeLine, HalfHingeLine2D } from '@/domain/world/HingeLine';
 
 /**
  * AddPlane3DOp - Create a 3D plane
@@ -44,21 +40,11 @@ export class AddPlane3DOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Generate ID if not provided (first execution) or use stored/provided ID (redo)
-      const id = this.planeId || this.outputs.planeId || world.generatePlaneId();
-      
-      // Create 3D plane
-      const plane = this.orientation === 'horizontal' 
-        ? Plane3D.createPH() 
-        : Plane3D.createPV();
-      
-      plane.id = id;
-      
-      // Add to world
-      (world as any).planes.set(id, plane);
+      // Call element factory method - it handles ID generation
+      const plane = world.addPlane3D(this.orientation, this.planeId || this.outputs.planeId);
       
       // Store ID in outputs for redo support
-      this.outputs = { planeId: id };
+      this.outputs = { planeId: plane.id };
       return {
         success: true,
         outputs: this.outputs
@@ -107,29 +93,15 @@ export class AddProjectionPlaneOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Generate ID if not provided (first execution) or use stored/provided ID (redo)
-      const id = this.projPlaneId || this.outputs.projPlaneId || world.generateProjPlaneId();
-      
-      // Create projection plane
-      const projPlane = this.orientation === 'horizontal'
-        ? BaseProjectionPlane.createPH()
-        : BaseProjectionPlane.createPV();
-      
-      projPlane.id = id;
-      projPlane.plane3DId = this.plane3DId;
-      
-      // Add to world
-      (world as any).projectionPlanes.set(id, projPlane);
-      
-      // Set semantic reference on World (Phase 46)
-      if (this.orientation === 'horizontal') {
-        (world as any).horizontalPlaneId = id;
-      } else {
-        (world as any).verticalPlaneId = id;
-      }
+      // Call element factory method - it handles ID generation and semantic references
+      const projPlane = world.addProjectionPlane(
+        this.plane3DId, 
+        this.orientation, 
+        this.projPlaneId || this.outputs.projPlaneId
+      );
       
       // Store ID in outputs for redo support
-      this.outputs = { projPlaneId: id };
+      this.outputs = { projPlaneId: projPlane.id };
       return {
         success: true,
         outputs: this.outputs
@@ -198,30 +170,29 @@ export class AddOriginPoint2DOp implements IOperation {
         };
       }
       
-      // Generate ID for origin point
-      const pointId = projPlane.generatePoint2DId(world);
+      // Call element factory method - it handles ID generation and locking
+      const originPoint = projPlane.addOriginPoint2D(
+        this.position, 
+        world, 
+        this.outputs.pointId
+      );
       
-      // Create locked origin point
-      const originPoint = new FreePoint2D(pointId, this.position, this.projPlaneId);
-      originPoint.locked = true;
-      
-      // Add to projection plane
-      projPlane.addPoint(originPoint);
+      // Store ID in outputs for redo support
+      this.outputs = { pointId: originPoint.id, projPlaneId: this.projPlaneId };
       
       // Set semantic reference on World (Phase 46)
-      // Check if this is the horizontal or vertical plane to set the correct origin ID
       const horizontalPlane = world.getHorizontalPlane();
       const verticalPlane = world.getVerticalPlane();
       
       if (horizontalPlane && projPlane.id === horizontalPlane.id) {
-        (world as any).horizontalOriginId = pointId;
+        (world as any).horizontalOriginId = originPoint.id;
       } else if (verticalPlane && projPlane.id === verticalPlane.id) {
-        (world as any).verticalOriginId = pointId;
+        (world as any).verticalOriginId = originPoint.id;
       }
       
       return {
         success: true,
-        outputs: { pointId, projPlaneId: this.projPlaneId }
+        outputs: this.outputs
       };
     } catch (error) {
       return {
@@ -287,25 +258,15 @@ export class AddHingeLineOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Generate ID if not provided (first execution) or use stored/provided ID (redo)
-      const id = this.hingeLineId || this.outputs.hingeLineId || world.generateHingeLineId();
-      
-      // Create hinge line
-      const hingeLine = new HingeLine(
-        id,
-        id, // label same as ID
+      // Call element factory method - it handles ID generation and semantic references
+      const hingeLine = world.addHingeLine(
         this.horizontalPlaneId,
-        this.verticalPlaneId
+        this.verticalPlaneId,
+        this.hingeLineId || this.outputs.hingeLineId
       );
       
-      // Add to world
-      (world as any).hingeLines.set(id, hingeLine);
-      
-      // Store as main hinge line reference
-      (world as any).mainHingeLineId = id;
-      
       // Store ID in outputs for redo support
-      this.outputs = { hingeLineId: id };
+      this.outputs = { hingeLineId: hingeLine.id };
       return {
         success: true,
         outputs: this.outputs
@@ -372,24 +333,20 @@ export class AddHalfHingeLine2DOp implements IOperation {
         };
       }
       
-      // Generate ID for half hinge line
-      const lineId = projPlane.generateLine2DId(world);
-      
-      // Create half hinge line
-      const halfHingeLine = new HalfHingeLine2D(
-        lineId,
+      // Call element factory method - it handles ID generation
+      const halfHingeLine = projPlane.addHalfHingeLine2D(
         this.hingeLineId,
-        this.projPlaneId,
         this.point,
-        this.direction
+        this.direction,
+        world,
+        this.outputs.lineId
       );
       
-      // Add to projection plane
-      projPlane.addLine(halfHingeLine);
-      
+      // Store ID in outputs for redo support
+      this.outputs = { lineId: halfHingeLine.id, projPlaneId: this.projPlaneId };
       return {
         success: true,
-        outputs: { lineId, projPlaneId: this.projPlaneId }
+        outputs: this.outputs
       };
     } catch (error) {
       return {

@@ -5,11 +5,10 @@ import {
   AddPlane3DOp,
   AddProjectionPlaneOp,
   AddOriginPoint2DOp,
-  AddHingeLineOp,
-  AddHalfHingeLine2DOp,
   SetActivePlaneOp
 } from '../operations/world/InitializationOps';
 import { Vector3 } from 'three';
+import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
 
 /**
  * Factory: Build operation sequence for world initialization
@@ -62,19 +61,11 @@ export function buildWorldInitialization(_world: World, cmd: Command): void {
   cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1)));
   cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1)));
   
-  // Step 8: Create hinge line
-  // The hinge line is the 3D line where the two planes intersect (the x-axis)
-  // Operation generates ID internally via world.generateHingeLineId()
-  const hingeLineOp = new AddHingeLineOp(projPlaneHId, projPlaneVId);
-  cmd.addAndExecute(hingeLineOp);
-  const hingeLineId = hingeLineOp.outputs.hingeLineId as string;
-  
-  // Step 9-10: Create half hinge lines
-  // Each projection plane gets a half hinge line (its local 2D representation of the hinge)
+  // Step 8-10: Create complete hinge line with both half hinge lines
+  // Uses sequence factory to orchestrate 3 operations atomically
   const hingePoint = new Vector3(0, 0, 1); // Start at origin
   const hingeDirection = new Vector3(1, 0, 0); // Along x-axis
-  cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
-  cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
+  buildHingeLineWithHalves(projPlaneHId, projPlaneVId, cmd, hingePoint, hingeDirection);
   
   // Step 11: Set active plane
   // Default to horizontal plane as the active drawing surface

@@ -5545,13 +5545,13 @@ Sequence factories **MUST NOT** generate element IDs themselves. ID generation i
 **Why This Matters**:
 - **Redo Support**: Operations must use the same IDs when redone (undo then redo)
 - **Outputs Storage**: Operations store generated IDs in `outputs` for redo
-- **Factory Methods**: Element factory methods (e.g., `world.addPlane3D()`) accept optional ID parameter
-- **First Execution**: Factory method generates new ID if not provided
-- **Redo Execution**: Operation passes `outputs.elementId` to factory method, which reuses that ID
+- **Element Factories**: Factory methods (e.g., `world.addPlane3D()`) accept optional ID parameter
+- **First Execution**: Element factory generates new ID if not provided
+- **Redo Execution**: Operation passes `outputs.elementId` to factory, which reuses that ID
 
 **Correct Pattern**:
 ```typescript
-// ✅ CORRECT: Operation lets element factory generate ID
+// ✅ CORRECT: Operation calls element factory method
 export class AddPlane3DOp implements IOperation {
   outputs: Record<string, any> = {};
   
@@ -5563,35 +5563,99 @@ export class AddPlane3DOp implements IOperation {
   }
 
   apply(world: World): OperationResult {
-    // Pass stored ID (if available from redo), otherwise factory generates new one
+    // Call element factory - passes stored ID if available (redo), otherwise undefined
     const plane = world.addPlane3D(this.orientation, this.planeId || this.outputs.planeId);
     
-    // Store generated ID for redo
+    // Store ID returned by factory for future redo
     this.outputs = { planeId: plane.id };
     return { success: true, outputs: this.outputs };
   }
 }
 
-// ✅ Sequence factory does NOT generate IDs
-function buildWorldInitialization(world: World, cmd: Command): void {
+// Element factory in World class
+class World {
+  addPlane3D(orientation: 'horizontal' | 'vertical', planeId?: string): Plane3D {
+    // Generate ID if not provided (first execution)
+    const id = planeId || this.generatePlaneId();
+    
+    const plane = orientation === 'horizontal' ? Plane3D.createPH() : Plane3D.createPV();
+    plane.id = id;
+    this.planes.set(id, plane);
+    
+    return plane;
+  }
+}
+
+// ✅ Sequence factory does NOT generate IDs - operations do via element factories
+function buildWorldInitialization(_world: World, cmd: Command): void {
   cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
   
-  // Operations generate their own IDs via element factory methods
-  cmd.addAndExecute(new AddPlane3DOp('horizontal'));  // No ID passed
-  cmd.addAndExecute(new AddPlane3DOp('vertical'));    // Factory method generates ID
+  // Operations call element factories which generate IDs
+  cmd.addAndExecute(new AddPlane3DOp('horizontal'));  // No ID passed - factory generates
+  cmd.addAndExecute(new AddPlane3DOp('vertical'));
   // ... more operations
 }
 ```
 
 **Incorrect Pattern** (FORBIDDEN):
 ```typescript
+// ❌ FORBIDDEN: Operation generates ID itself
+export class AddPlane3DOp {
+  apply(world: World): OperationResult {
+    const id = this.planeId || this.outputs.planeId || world.generatePlaneId(); // ❌ WRONG
+    // Directly manipulates world internals
+    const plane = Plane3D.createPH();
+    plane.id = id;
+    world.planes.set(id, plane); // ❌ WRONG - bypasses element factory
+  }
+}
+
 // ❌ FORBIDDEN: Sequence factory generates IDs
 function buildWorldInitialization(world: World, cmd: Command): void {
   const planeHId = world.generatePlaneId();  // ❌ WRONG - factory shouldn't generate IDs
-  const planeVId = world.generatePlaneId();  // ❌ WRONG
+  cmd.addAndExecute(new AddPlane3DOp('horizontal', planeHId)); // ❌ WRONG
+}
+```
+
+**Element Factory Organization**:
+
+1. **World** provides factories for **3D objects**:
+   - `world.addPlane3D(orientation, planeId?)` - 3D plane
+   - `world.addProjectionPlane(plane3DId, orientation, projPlaneId?)` - Projection plane
+   - `world.addHingeLine(horizPlaneId, vertPlaneId, hingeLineId?)` - 3D hinge line
+
+2. **ProjectionPlane** provides factories for **2D objects**:
+   - `projPlane.addFreePoint2D(position, world, pointId?)`
+   - `projPlane.addOriginPoint2D(position, world, pointId?)` - Locked origin point
+   - `projPlane.addHalfHingeLine2D(hingeLineId, point, direction, world, lineId?)` - 2D half hinge line
+   - `projPlane.addLine2DByTwoPoints(...)` - etc.
+
+**Operations Must Be Minimal**:
+
+Operations should do ONE thing only. Complex multi-element creation requires multiple operations:
+
+```typescript
+// ❌ WRONG: Single operation creating 3 elements
+class AddHingeLineWithHalvesOp {
+  apply(world: World) {
+    world.addHingeLine(...);  // Creates 3D hinge line
+    horizPlane.addHalfHingeLine2D(...);  // Creates 2D half on horizontal
+    vertPlane.addHalfHingeLine2D(...);  // Creates 2D half on vertical
+  }
+}
+
+// ✅ CORRECT: 3 minimal operations orchestrated by sequence factory
+function buildHingeLineWithHalves(horizPlaneId, vertPlaneId, cmd) {
+  // Operation 1: 3D hinge line
+  const hingeOp = new AddHingeLineOp(horizPlaneId, vertPlaneId);
+  cmd.addAndExecute(hingeOp);
+  const hingeLineId = hingeOp.outputs.hingeLineId;
   
-  cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
-  cmd.addAndExecute(new AddPlane3DOp(planeVId, 'vertical'));
+  // Operation 2: Half hinge on horizontal plane
+  cmd.addAndExecute(new AddHalfHingeLine2DOp(horizPlaneId, hingeLineId, point, dir));
+  
+  // Operation 3: Half hinge on vertical plane
+  cmd.addAndExecute(new AddHalfHingeLine2DOp(vertPlaneId, hingeLineId, point, dir));
 }
 ```
 
@@ -5600,6 +5664,7 @@ function buildWorldInitialization(world: World, cmd: Command): void {
 2. Sequence factories are stateless - they don't track what IDs were assigned
 3. Element factory methods already handle ID generation logic
 4. Operations already store outputs for redo - ID fits naturally there
+5. Minimal operations enable fine-grained undo/redo and reusability
 
 **When to Use Factories**:
 - Complex multi-step workflows that need to be reused (MANDATORY)
