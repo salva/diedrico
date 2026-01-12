@@ -71,7 +71,7 @@ describe('Create Free Point Command', () => {
       
       expect(() => {
         cmd.addAndExecute(new AddFreePoint2DOp('INVALID_PLANE', planePos));
-      }).toThrow(/Plane does not exist/);
+      }).toThrow(/Plane not found/);
     });
   });
 
