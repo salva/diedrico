@@ -17,6 +17,7 @@ import { Line2D, Line2DByTwoPoints, Line2DRealization2D } from '../../../src/dom
 import { Segment2DByPoints } from '../../../src/domain/world/Segment';
 import { Guide2D } from '../../../src/domain/world/Guide';
 import { HalfHingeLine2D } from '../../../src/domain/world/HingeLine';
+import { getHorizontalPlane } from '../../helpers/worldHelpers';
 
 describe('Line2D Hierarchy (Phase 22.5)', () => {
   let world: World;
@@ -26,8 +27,8 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
   beforeEach(() => {
     world = new World();
-    // Get first projection plane (proj_plane_H)
-    planeH = world.getProjectionPlaneById('proj_plane_H')!;
+    // Get horizontal projection plane
+    planeH = getHorizontalPlane(world);
     
     // Create test points using plane factory method
     const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');

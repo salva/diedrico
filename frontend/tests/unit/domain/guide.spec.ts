@@ -18,6 +18,7 @@ import { Guide2D, SiblingGuide2D, isSiblingGuide2D } from '@/domain/world/Guide'
 import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D } from '@/domain/world/Point';
 import { World } from '@/domain/world/World';
+import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Guide2D', () => {
   let world: World;
@@ -28,25 +29,26 @@ describe('Guide2D', () => {
 
   beforeEach(() => {
     world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const plane = getHorizontalPlane(world);
+    const planeId = getHorizontalPlaneId(world);
     
     // Create reference line (horizontal line along X-axis)
-    const p1 = new FreePoint2D('p1', new Vector3(0, 0, 1), 'proj_plane_H');
-    const p2 = new FreePoint2D('p2', new Vector3(100, 0, 1), 'proj_plane_H');
+    const p1 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
+    const p2 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(100, 0, 1), planeId);
     plane.addPoint(p1);
     plane.addPoint(p2);
     
-    const referenceLine = new Line2DByTwoPoints('line1', 'p1', 'p2', 'proj_plane_H');
+    const referenceLine = new Line2DByTwoPoints(plane.generateLine2DId(world), p1.id, p2.id, planeId);
     plane.addLine(referenceLine);
     
     // Create through-point above the line
-    const throughPoint = new FreePoint2D('p3', new Vector3(50, 30, 1), 'proj_plane_H');
+    const throughPoint = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(50, 30, 1), planeId);
     plane.addPoint(throughPoint);
     
-    referenceLineId = 'line1';
-    throughPointId = 'p3';
-    point1Id = 'p1';
-    point2Id = 'p2';
+    referenceLineId = referenceLine.id;
+    throughPointId = throughPoint.id;
+    point1Id = p1.id;
+    point2Id = p2.id;
   });
 
   describe('Guide2D', () => {
