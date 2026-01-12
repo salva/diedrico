@@ -4,7 +4,7 @@
  * Wraps ProjectionPlane.addSegment2DBetweenPoints() in the Operation interface.
  */
 
-import type { IOperation, OperationResult } from './IOperation';
+import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddSegment2DByPointsOp implements IOperation {

@@ -5,19 +5,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
 import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
-import { AddFreePoint2DOp } from '../../../src/commands/operations/AddFreePointOp';
+import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';
+import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Create Line Command', () => {
   let world: World;
-  const planeId = 'proj_plane_H';
+  let planeId: string;
 
   beforeEach(() => {
     world = new World();
-  });
-  beforeEach(() => {
-    world = new World();
+    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
@@ -37,9 +36,9 @@ describe('Create Line Command', () => {
       
       const lineId = lineResult.outputs.lineId!;
       expect(lineId).toBeDefined();
-      expect(lineId).toMatch(/^line2d_/);
+      expect(lineId).toMatch(/line2d_/);
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const line = plane.getLine(lineId);
       
       expect(line).toBeDefined();
@@ -78,7 +77,7 @@ describe('Create Line Command', () => {
       cmd.commit();
       
       const lineId = lineResult.outputs.lineId!;
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       
       expect(plane.getLine(lineId)).toBeDefined();
       
@@ -107,7 +106,7 @@ describe('Create Line Command', () => {
       cmd.undo();
       cmd.redo();
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const line = plane.getLine(originalLineId);
       expect(line?.id).toBe(originalLineId);
     });

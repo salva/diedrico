@@ -5,7 +5,7 @@
  */
 
 import type { Vector3 } from 'three';
-import type { IOperation, OperationResult } from './IOperation';
+import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddFreePoint2DOp implements IOperation {

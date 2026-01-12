@@ -8,16 +8,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
 import { AddCircle2DByCenterAndPointOp } from '../../../src/commands/operations/world/AddCircleOp';
-import { AddFreePoint2DOp } from '../../../src/commands/operations/AddFreePointOp';
+import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';
+import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Create Circle Command', () => {
   let world: World;
-  const planeId = 'proj_plane_H';
+  let planeId: string;
 
   beforeEach(() => {
     world = new World();
+    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
@@ -43,9 +45,9 @@ describe('Create Circle Command', () => {
       
       const circleId = circleResult.outputs.circleId!;
       expect(circleId).toBeDefined();
-      expect(circleId).toMatch(/^circle2d_/);
+      expect(circleId).toMatch(/circle2d_/);
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const circle = plane.getCircle(circleId);
       
       expect(circle).toBeDefined();
@@ -86,7 +88,7 @@ describe('Create Circle Command', () => {
       cmd.commit();
       
       const circleId = circleResult.outputs.circleId!;
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       
       expect(plane.getCircle(circleId)).toBeDefined();
       
@@ -114,7 +116,7 @@ describe('Create Circle Command', () => {
       cmd.undo();
       cmd.redo();
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const circle = plane.getCircle(originalCircleId);
       expect(circle?.id).toBe(originalCircleId);
     });

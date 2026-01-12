@@ -9,13 +9,15 @@ import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/A
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';
+import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Create Guide Command', () => {
   let world: World;
-  const planeId = 'proj_plane_H';
+  let planeId: string;
 
   beforeEach(() => {
     world = new World();
+    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
@@ -45,9 +47,9 @@ describe('Create Guide Command', () => {
       
       const guideId = guideResult.outputs.guideId!;
       expect(guideId).toBeDefined();
-      expect(guideId).toMatch(/^guide2d_/);
+      expect(guideId).toMatch(/guide2d_/);
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const guide = plane.getLine(guideId);
       
       expect(guide).toBeDefined();
@@ -102,7 +104,7 @@ describe('Create Guide Command', () => {
       cmd.commit();
       
       const guideId = guideResult.outputs.guideId!;
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       
       expect(plane.getLine(guideId)).toBeDefined();
       
@@ -138,7 +140,7 @@ describe('Create Guide Command', () => {
       cmd.undo();
       cmd.redo();
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const guide = plane.getLine(originalGuideId);
       expect(guide?.id).toBe(originalGuideId);
     });

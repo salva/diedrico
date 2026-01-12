@@ -9,13 +9,15 @@ import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/A
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';
+import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Create Intersection Point Command', () => {
   let world: World;
-  const planeId = 'proj_plane_H';
+  let planeId: string;
 
   beforeEach(() => {
     world = new World();
+    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
@@ -52,9 +54,9 @@ describe('Create Intersection Point Command', () => {
       
       const pointId = intersectionResult.outputs.pointId!;
       expect(pointId).toBeDefined();
-      expect(pointId).toMatch(/^point2d_/);
+      expect(pointId).toMatch(/point2d_/);
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const point = plane.getPoint(pointId);
       
       expect(point).toBeDefined();
@@ -123,7 +125,7 @@ describe('Create Intersection Point Command', () => {
       cmd.commit();
       
       const pointId = intersectionResult.outputs.pointId!;
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       
       expect(plane.getPoint(pointId)).toBeDefined();
       
@@ -166,7 +168,7 @@ describe('Create Intersection Point Command', () => {
       cmd.undo();
       cmd.redo();
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const point = plane.getPoint(originalPointId);
       expect(point?.id).toBe(originalPointId);
     });

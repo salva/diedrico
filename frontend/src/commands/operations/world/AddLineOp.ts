@@ -4,7 +4,7 @@
  * Wraps ProjectionPlane.addLine2DBetweenTwoPoints() in the Operation interface.
  */
 
-import type { IOperation, OperationResult } from './IOperation';
+import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddLine2DByTwoPointsOp implements IOperation {

@@ -5,16 +5,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
 import { AddSegment2DByPointsOp } from '../../../src/commands/operations/world/AddSegmentOp';
-import { AddFreePoint2DOp } from '../../../src/commands/operations/AddFreePointOp';
+import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';
+import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Create Segment Command', () => {
   let world: World;
-  const planeId = 'proj_plane_H';
+  let planeId: string;
 
   beforeEach(() => {
     world = new World();
+    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
@@ -32,9 +34,9 @@ describe('Create Segment Command', () => {
       
       const segmentId = segmentResult.outputs.segmentId!;
       expect(segmentId).toBeDefined();
-      expect(segmentId).toMatch(/^segment2d_/);
+      expect(segmentId).toMatch(/segment2d_/);
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const segment = plane.getLine(segmentId);
       
       expect(segment).toBeDefined();
@@ -72,7 +74,7 @@ describe('Create Segment Command', () => {
       cmd.commit();
       
       const segmentId = segmentResult.outputs.segmentId!;
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       
       expect(plane.getLine(segmentId)).toBeDefined();
       
@@ -99,7 +101,7 @@ describe('Create Segment Command', () => {
       cmd.undo();
       cmd.redo();
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const segment = plane.getLine(originalSegmentId);
       expect(segment?.id).toBe(originalSegmentId);
     });

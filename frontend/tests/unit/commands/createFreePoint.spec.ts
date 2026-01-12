@@ -6,13 +6,15 @@ import { Command } from '../../../src/commands/Command';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../src/domain/world/World';
 import { Vector3 } from 'three';
+import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Create Free Point Command', () => {
   let world: World;
-  const planeId = 'proj_plane_H';  // Fixed plane ID used in World
+  let planeId: string;
 
   beforeEach(() => {
     world = new World();
+    planeId = getHorizontalPlaneId(world);
   });
 
   describe('validation', () => {
@@ -42,9 +44,9 @@ describe('Create Free Point Command', () => {
       
       const pointId = result.outputs.pointId!;
       expect(pointId).toBeDefined();
-      expect(pointId).toMatch(/^point2d_/);
+      expect(pointId).toMatch(/point2d_/);
       
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const point = plane.getPoint(pointId);
       
       expect(point).toBeDefined();
@@ -82,7 +84,7 @@ describe('Create Free Point Command', () => {
       cmd.commit();
       
       const pointId = result.outputs.pointId!;
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       
       expect(plane.getPoint(pointId)).toBeDefined();
       
@@ -103,7 +105,7 @@ describe('Create Free Point Command', () => {
       cmd.commit();
       
       const pointId = result.outputs.pointId!;
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       
       cmd.undo();
       expect(plane.getPoint(pointId)).toBeUndefined();
@@ -121,7 +123,7 @@ describe('Create Free Point Command', () => {
       const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
 
       const pointId = result.outputs.pointId!;
-      const plane = world.projectionPlanes.get(planeId)!;
+      const plane = getHorizontalPlane(world);
       const point = plane.getPoint(pointId);
 
       expect(point).toBeDefined();

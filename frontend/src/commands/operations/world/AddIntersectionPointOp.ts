@@ -7,7 +7,7 @@
  * by the domain logic, not by this operation.
  */
 
-import type { IOperation, OperationResult } from './IOperation';
+import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddIntersectionPoint2DOp implements IOperation {

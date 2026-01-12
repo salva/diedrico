@@ -4,7 +4,7 @@
  * Wraps ProjectionPlane.addGuide2D() in the Operation interface.
  */
 
-import type { IOperation, OperationResult } from './IOperation';
+import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddGuide2DPerpendicularToLineOp implements IOperation {

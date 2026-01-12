@@ -11,7 +11,7 @@
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
  */
 
-import type { IOperation, OperationResult } from './IOperation';
+import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 /**
