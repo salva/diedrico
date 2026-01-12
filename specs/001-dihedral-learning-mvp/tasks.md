@@ -5373,3 +5373,91 @@ Most construction tools follow: create world elements → create process tree ac
 **Status**: ⏳ NOT STARTED
 
 ---
+## Phase 53: Label-Based Point Lookup on ProjectionPlane
+
+**Purpose**: Enable semantic access to points within projection planes using labels instead of IDs, completing the transition from ID-based to label-based element access
+
+**Reference**: [data-model.md](./data-model.md#semantic-references) - Semantic access patterns, Phase 46 semantic accessors
+
+**Context**: Currently World provides `getHorizontalOrigin()` and `getVerticalOrigin()` methods that use stored IDs to retrieve origin points. This violates the principle established in the previous commit (4b66685) where we moved to label-based plane access via `getProjectionPlaneByLabel()`. Points within planes should be accessed by their labels (e.g., 'O_H', 'O_V'), not by storing their IDs in World.
+
+**Problem**: 
+- World.getHorizontalOrigin() and getVerticalOrigin() use stored `horizontalOriginId` and `verticalOriginId`
+- This creates unnecessary coupling between World and specific element IDs
+- Inconsistent with new label-based plane access pattern
+- Violates DRY: semantic knowledge stored in both labels AND separate ID fields
+
+**Solution**: Add `ProjectionPlane.getPoint2DByLabel(label: string)` method and remove World's origin accessor methods. Callers should use:
+```typescript
+const originPoint = world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_H');
+```
+
+**Benefits**:
+- Consistency: All semantic access uses labels (planes and points)
+- Reduced coupling: World doesn't store individual element IDs
+- Simpler API: Generic pattern applies to any labeled element
+- Resilience: Tests and code robust to ID generation changes
+- Extensibility: Easy to add getLine2DByLabel(), getCircle2DByLabel() later
+
+**Migration**: Update all callers of getHorizontalOrigin()/getVerticalOrigin() to use the new pattern
+
+### Phase 53 Tasks
+
+**ProjectionPlane Label-Based Point Access** (T944-T945)
+
+- [ ] T944 Add getPoint2DByLabel() method to ProjectionPlane
+  - Add method to ProjectionPlane class (after getPoint() around line 210)
+  - Iterate through points collection matching on label property
+  - Throw descriptive error if no point found with given label
+  - Add JSDoc with example usage
+  - File: `frontend/src/domain/world/ProjectionPlane.ts`
+
+- [ ] T945 Remove getHorizontalOrigin() and getVerticalOrigin() from World
+  - Delete getHorizontalOrigin() method (around line 356)
+  - Delete getVerticalOrigin() method (around line 368)
+  - Keep horizontalOriginId and verticalOriginId fields for now (still used in InitializationOps)
+  - Update JSDoc comments if they reference these methods
+  - File: `frontend/src/domain/world/World.ts`
+
+**Update Production Code Callers** (T946-T947)
+
+- [ ] T946 Update test helper functions in worldHelpers.ts
+  - Update getHorizontalOrigin() helper to use new pattern
+  - Update getVerticalOrigin() helper to use new pattern
+  - Pattern: `world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_H')`
+  - File: `frontend/tests/helpers/worldHelpers.ts`
+
+- [ ] T947 Find and update any direct callers
+  - Search codebase for world.getHorizontalOrigin() calls
+  - Search codebase for world.getVerticalOrigin() calls
+  - Update to use projection plane label-based pattern
+  - Files: TBD (search results will determine)
+
+**Testing** (T948-T949)
+
+- [ ] T948 Add unit tests for getPoint2DByLabel()
+  - Test successful label match returns correct point
+  - Test error thrown when label not found
+  - Test with multiple points to verify uniqueness
+  - Add to existing ProjectionPlane test file
+  - File: `frontend/tests/unit/domain/projectionPlane.spec.ts` or create if needed
+
+- [ ] T949 Verify all existing tests still pass
+  - Run full test suite: `npm test`
+  - Fix any tests that relied on removed methods
+  - Ensure no regression in test pass rate
+  - Files: Various test files
+
+**Documentation** (T950)
+
+- [ ] T950 Update documentation
+  - Add note about label-based point access pattern to data-model.md
+  - Update any examples showing origin point access
+  - Add migration note explaining why getHorizontalOrigin() was removed
+  - Files: `specs/001-dihedral-learning-mvp/data-model.md`
+
+**Checkpoint**: All element access (planes and points) uses consistent label-based pattern, no ID storage needed in World for semantic references
+
+**Status**: ⏳ NOT STARTED
+
+---

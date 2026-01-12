@@ -69,8 +69,9 @@ export function buildWorldInitialization(_world: World, cmd: Command): void {
   
   // Step 6-7: Create origin points
   // Every projection plane needs an origin (0,0) point for coordinate system
-  cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1)));
-  cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1)));
+  // Phase 53: Add labels for semantic access
+  cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1), 'O_H'));
+  cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1), 'O_V'));
   
   // Step 8-10: Create complete hinge line with both half hinge lines
   // Uses sequence factory to orchestrate 3 operations atomically

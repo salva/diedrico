@@ -167,11 +167,13 @@ export class AddOriginPoint2DOp implements IOperation {
   
   constructor(
     private readonly projPlaneId: string,
-    private readonly position: Vector3 = new Vector3(0, 0, 1)
+    private readonly position: Vector3 = new Vector3(0, 0, 1),
+    private readonly label?: string
   ) {
     this.parameters = {
       projPlaneId,
-      position: { x: position.x, y: position.y, z: position.z }
+      position: { x: position.x, y: position.y, z: position.z },
+      label
     };
   }
 
@@ -190,21 +192,14 @@ export class AddOriginPoint2DOp implements IOperation {
       const originPoint = projPlane.addOriginPoint2D(
         this.position, 
         world, 
-        this.outputs.pointId
+        this.outputs.pointId,
+        this.label
       );
       
       // Store ID in outputs for redo support
       this.outputs = { pointId: originPoint.id, projPlaneId: this.projPlaneId };
       
-      // Set semantic reference on World (Phase 46)
-      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
-      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
-      
-      if (horizontalPlane && projPlane.id === horizontalPlane.id) {
-        (world as any).horizontalOriginId = originPoint.id;
-      } else if (verticalPlane && projPlane.id === verticalPlane.id) {
-        (world as any).verticalOriginId = originPoint.id;
-      }
+      // Phase 53: No longer storing origin IDs in World - use label-based access instead
       
       return {
         success: true,
@@ -228,15 +223,7 @@ export class AddOriginPoint2DOp implements IOperation {
         const pointId = points[0].id;
         projPlane.removePoint(pointId);
         
-        // Clear semantic reference
-        const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
-        const verticalPlane = world.getProjectionPlaneByLabel('P_V');
-        
-        if (horizontalPlane && projPlane.id === horizontalPlane.id) {
-          (world as any).horizontalOriginId = undefined;
-        } else if (verticalPlane && projPlane.id === verticalPlane.id) {
-          (world as any).verticalOriginId = undefined;
-        }
+        // Phase 53: No longer storing origin IDs in World - use label-based access instead
       }
     }
   }

@@ -56,6 +56,36 @@ Note that completing these tasks may require asking the user for additional info
  
 ## ALREADY PLANNED
 
+* [X] **Label-Based Point Lookup on ProjectionPlane**
+  - **STATUS**: ✅ PLANNED (Jan 12, 2026) - Phase 53
+  - **Problem**: World provides getHorizontalOrigin() and getVerticalOrigin() using stored IDs, violating label-based access pattern
+  - **Context**: Recent refactoring (commit 4b66685) moved to label-based plane access via getProjectionPlaneByLabel()
+  - **Inconsistency**: Planes accessed by label ('P_H', 'P_V'), but points still accessed via stored IDs
+  - **Current Issues**:
+    - World stores horizontalOriginId and verticalOriginId fields
+    - getHorizontalOrigin() and getVerticalOrigin() use these stored IDs
+    - Creates coupling between World and specific element IDs
+    - Violates DRY: semantic knowledge in labels AND separate ID fields
+  - **Solution**: Add ProjectionPlane.getPoint2DByLabel(label) method, remove World's origin accessors
+  - **New Pattern**:
+    ```typescript
+    // Old (ID-based):
+    const origin = world.getHorizontalOrigin();
+    
+    // New (label-based):
+    const origin = world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_H');
+    ```
+  - **Benefits**:
+    - **Consistency**: All semantic access uses labels (planes and points)
+    - **Reduced coupling**: World doesn't store individual element IDs
+    - **Simpler API**: Generic pattern applies to any labeled element
+    - **Resilience**: Code robust to ID generation changes
+    - **Extensibility**: Easy to add getLine2DByLabel(), getCircle2DByLabel() later
+  - **Implementation**: Phase 53 with 7 tasks (T944-T950)
+  - **Architecture**: Follows semantic reference pattern from Phase 46
+  - **Migration**: Update all callers and test helpers
+  - **Timing**: Can be done now (builds on commit 4b66685)
+
 * [X] **Remove deprecated CommandStack.execute() method**
   - **STATUS**: ✅ COMPLETE (Jan 12, 2026) - Phase 50 implemented
   - **Problem**: CommandStack.execute() is marked @deprecated and kept for backward compatibility, but no external code uses it

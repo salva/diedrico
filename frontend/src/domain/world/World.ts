@@ -56,9 +56,9 @@
  * 
  * 5. **Semantic Access** (Phase 46 - for fixed initial planes):
  *    ```typescript
- *    const horizontalPlane = world.getHorizontalPlane();
- *    const verticalPlane = world.getVerticalPlane();
- *    const origin = world.getHorizontalOrigin();
+ *    const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+ *    const verticalPlane = world.getProjectionPlaneByLabel('P_V');
+ *    const originH = horizontalPlane.getPoint2DByLabel('O_H');  // Phase 53
  *    const hingeLine = world.getMainHingeLine();
  *    ```
  * 
@@ -82,7 +82,7 @@
 
 import { Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
-import { Point2D, FreePoint2D, Point3DRealization3D } from './Point';
+import { Point2D, Point3DRealization3D } from './Point';
 import { Line2D } from './Line';
 import { Segment2D } from './Segment';
 import { Circle2D } from './Circle';
@@ -348,32 +348,6 @@ export class World {
     this.notifyChange();
   }
 
-
-  /**
-   * Phase 46: Get horizontal origin point (semantic access)
-   * @returns Origin point on horizontal plane
-   */
-  getHorizontalOrigin(): FreePoint2D {
-    const plane = this.getProjectionPlaneByLabel('P_H');
-    const point = plane.getPoint(this.horizontalOriginId);
-    if (!point || !(point instanceof FreePoint2D)) {
-      throw new Error('[World] Horizontal origin not found');
-    }
-    return point;
-  }
-
-  /**
-   * Phase 46: Get vertical origin point (semantic access)
-   * @returns Origin point on vertical plane
-   */
-  getVerticalOrigin(): FreePoint2D {
-    const plane = this.getProjectionPlaneByLabel('P_V');
-    const point = plane.getPoint(this.verticalOriginId);
-    if (!point || !(point instanceof FreePoint2D)) {
-      throw new Error('[World] Vertical origin not found');
-    }
-    return point;
-  }
 
   /**
    * Phase 46: Get main hinge line (semantic access)

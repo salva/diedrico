@@ -207,6 +207,26 @@ export abstract class ProjectionPlane {
   }
 
   /**
+   * Get a point by label (semantic access)
+   * Phase 53: Enable label-based point lookup for semantic references
+   * 
+   * @param label - Point label (e.g., 'O_H', 'O_V', 'A', 'B')
+   * @returns Point with matching label
+   * @throws Error if no point found with given label
+   * 
+   * @example
+   * const originH = plane.getPoint2DByLabel('O_H');
+   */
+  getPoint2DByLabel(label: string): Point2D {
+    for (const point of this.points.values()) {
+      if (point.label === label) {
+        return point;
+      }
+    }
+    throw new Error(`Point not found on plane ${this.name} with label: ${label}`);
+  }
+
+  /**
    * Get all points on this plane
    */
   getAllPoints(): Point2D[] {
@@ -983,12 +1003,14 @@ export abstract class ProjectionPlane {
    * @param position Position in intrinsic plane coordinates (typically (0,0,1))
    * @param world World instance for ID generation
    * @param id Optional ID for redo support
+   * @param label Optional label for semantic access (e.g., 'O_H', 'O_V')
    * @returns The created origin FreePoint2D (with locked=true)
    */
   addOriginPoint2D(
     position: Vector3,
     world: import('./World').World,
-    id?: string
+    id?: string,
+    label?: string
   ): FreePoint2D {
     if (!this.id) {
       throw new Error('Cannot add origin point to plane without ID');
@@ -999,7 +1021,7 @@ export abstract class ProjectionPlane {
       id = this.generatePoint2DId(world);
     }
 
-    const originPoint = new FreePoint2D(id, position, this.id);
+    const originPoint = new FreePoint2D(id, position, this.id, label);
     originPoint.locked = true;  // Lock origin point
     
     this.addPoint(originPoint);

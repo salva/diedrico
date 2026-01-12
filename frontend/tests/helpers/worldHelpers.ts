@@ -49,30 +49,34 @@ export function getVerticalPlaneId(world: World): string {
 
 /**
  * Get horizontal origin point from world
+ * Phase 53: Use label-based access
  */
 export function getHorizontalOrigin(world: World): FreePoint2D {
-  return world.getHorizontalOrigin();
+  return world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_H') as FreePoint2D;
 }
 
 /**
  * Get vertical origin point from world
+ * Phase 53: Use label-based access
  */
 export function getVerticalOrigin(world: World): FreePoint2D {
-  return world.getVerticalOrigin();
+  return world.getProjectionPlaneByLabel('P_V').getPoint2DByLabel('O_V') as FreePoint2D;
 }
 
 /**
  * Get horizontal origin point ID
+ * Phase 53: Use label-based access
  */
 export function getHorizontalOriginId(world: World): string {
-  return world.getHorizontalOrigin().id!;
+  return world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_H').id!;
 }
 
 /**
  * Get vertical origin point ID
+ * Phase 53: Use label-based access
  */
 export function getVerticalOriginId(world: World): string {
-  return world.getVerticalOrigin().id!;
+  return world.getProjectionPlaneByLabel('P_V').getPoint2DByLabel('O_V').id!;
 }
 
 /**
