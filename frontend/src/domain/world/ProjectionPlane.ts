@@ -476,9 +476,19 @@ export abstract class ProjectionPlane {
 
   /**
    * Factory method: Create and add a FreePoint2D to this plane
-   * @param position Point position in plane coordinates
+   * 
+   * @param position Position vector in intrinsic plane coordinates
    * @param world World instance for ID generation
-   * @param id Optional ID for redo operations
+   * @param id Optional ID - ONLY pass this for redo operations that need to recreate
+   *           an element with its previous ID. All other callers (tests, tools, normal
+   *           operations) should omit this parameter to get an auto-generated hierarchical ID.
+   *           
+   *           Tests must pass null/undefined and capture the returned element's ID:
+   *           ```typescript
+   *           const p1 = plane.addFreePoint2D(pos, world);  // Auto-generates ID
+   *           const p2 = plane.addFreePoint2D(pos2, world);
+   *           const line = plane.addLineByTwoPoints(p1.id, p2.id, world);
+   *           ```
    * @returns The created FreePoint2D
    */
   addFreePoint2D(
@@ -503,10 +513,12 @@ export abstract class ProjectionPlane {
 
   /**
    * Factory method: Create and add a Point2DLineLineIntersection to this plane
+   * 
    * @param line1Id ID of first line
    * @param line2Id ID of second line
    * @param world World context for validation and ID generation
-   * @param id Optional ID for redo operations
+   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
    * @returns The created Point2DLineLineIntersection
    */
   addLineLineIntersection(
@@ -643,10 +655,12 @@ export abstract class ProjectionPlane {
 
   /**
    * Factory method: Create and add a Line2DByTwoPoints to this plane
+   * 
    * @param point1Id ID of first point
    * @param point2Id ID of second point
    * @param world World context for validation and ID generation
-   * @param id Optional ID for redo operations
+   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
    * @returns The created Line2DByTwoPoints
    */
   addLine2DBetweenTwoPoints(
@@ -701,10 +715,12 @@ export abstract class ProjectionPlane {
 
   /**
    * Factory method: Create and add a Segment2DByPoints to this plane
+   * 
    * @param point1Id ID of first endpoint
    * @param point2Id ID of second endpoint
    * @param world World context for validation and ID generation
-   * @param id Optional ID for redo operations
+   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
    * @returns The created Segment2DByPoints
    */
   addSegment2DBetweenPoints(
@@ -746,10 +762,12 @@ export abstract class ProjectionPlane {
 
   /**
    * Factory method: Create and add a Circle2DByCenterAndPoint to this plane
+   * 
    * @param centerPointId ID of center point
    * @param circumferencePointId ID of point on circumference
    * @param world World context for validation and ID generation
-   * @param id Optional ID for redo operations
+   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
    * @returns The created Circle2DByCenterAndPoint
    */
   addCircle2DByCenterAndPoint(
@@ -791,10 +809,12 @@ export abstract class ProjectionPlane {
 
   /**
    * Factory method: Create and add a Guide2D to this plane
+   * 
    * @param referenceLineId ID of line to be perpendicular to
    * @param throughPointId ID of point the guide passes through
    * @param world World context for validation and ID generation
-   * @param id Optional ID for redo operations
+   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
    * @returns The created Guide2D
    */
   addGuide2D(

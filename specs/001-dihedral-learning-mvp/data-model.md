@@ -162,6 +162,68 @@ generatePoint2DId(world: World): string {
 }
 ```
 
+### Optional ID Parameters in Factory Methods
+
+**Purpose**: Factory methods (e.g., `addFreePoint2D`, `addLineLineIntersection`) accept an optional `id` parameter. This parameter serves a **single specific purpose**: enabling redo operations to recreate elements with the exact same ID they had before being undone.
+
+**When to Pass an ID**:
+- ✅ **Redo Operations Only**: When reconstructing an element that was previously created and undone
+  ```typescript
+  // In Operation.redo() method
+  const point = plane.addFreePoint2D(position, world, this.previousId);
+  ```
+
+**When to Let ID Auto-Generate** (pass `null`, `undefined`, or omit parameter):
+- ✅ **All Other Cases**: Initial creation, tool usage, user interactions, tests
+  ```typescript
+  // Normal usage - let factory generate hierarchical ID
+  const point = plane.addFreePoint2D(position, world);
+  
+  // Test usage - capture auto-generated ID for later reference
+  const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+  const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+  const line = plane.addLineByTwoPoints(p1.id, p2.id, world);
+  ```
+
+**Test Pattern**:
+Tests should **never** pass hardcoded IDs. Instead, capture auto-generated IDs:
+
+```typescript
+// ❌ WRONG - Passing hardcoded IDs (will fail validation)
+const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world, 'p2');
+
+// ✅ CORRECT - Let factory generate IDs, capture for reference
+const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+const line = plane.addLineByTwoPoints(p1.id, p2.id, world);
+
+expect(p1.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
+expect(line.id).toMatch(/^proj_plane_\d+\/line2d_\d+$/);
+```
+
+**Rationale**:
+1. **Uniqueness**: System-generated IDs are guaranteed unique via counters
+2. **Validation**: Hierarchical ID format is validated in Element2D constructor
+3. **Consistency**: All production code uses auto-generated IDs
+4. **Testability**: Tests verify ID format patterns, not specific values
+5. **Redo Safety**: Only redo operations need to preserve exact IDs
+
+**Implementation Note**:
+All factory methods follow this pattern:
+```typescript
+addFreePoint2D(position: Vector3, world: World, id?: string): FreePoint2D {
+  // Auto-generate if not provided (normal case)
+  if (!id) {
+    id = this.generatePoint2DId(world);
+  }
+  // Use provided ID only for redo operations
+  const point = new FreePoint2D(id, position, this.id);
+  this.addPoint(point);
+  return point;
+}
+```
+
 ### Element Lookup (Updated)
 
 **Current Pattern**:
@@ -417,6 +479,28 @@ const plane = getHorizontalPlane(world);
 const pointId = getHorizontalOriginId(world);
 const point = plane.getPoint(pointId);
 ```
+
+**Test Pattern for Element Creation**:
+Tests should never pass hardcoded IDs to factory methods. Instead, let factories auto-generate IDs and capture them for later reference:
+
+```typescript
+// ❌ WRONG - Hardcoded non-hierarchical IDs fail validation
+const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
+
+// ✅ CORRECT - Omit ID parameter, capture auto-generated ID
+const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+
+// Reference captured IDs in subsequent operations
+const line = plane.addLineByTwoPoints(p1.id, p2.id, world);
+const intersection = plane.addLineLineIntersection(line.id, otherLine.id, world);
+
+// Verify ID format patterns, not specific values
+expect(p1.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
+expect(line.id).toMatch(/^proj_plane_\d+\/line2d_\d+$/);
+```
+
+**Rationale**: Optional `id` parameters in factory methods are **exclusively for redo operations** that need to recreate elements with their previous IDs. Tests and normal operations should always let the system generate IDs automatically.
 
 ### Implementation Notes
 
