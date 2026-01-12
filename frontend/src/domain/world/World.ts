@@ -348,36 +348,13 @@ export class World {
     this.notifyChange();
   }
 
-  /**
-   * Phase 46: Get horizontal projection plane (semantic access)
-   * @returns Horizontal projection plane
-   */
-  getHorizontalPlane(): ProjectionPlane {
-    const plane = this.projectionPlanes.get(this.horizontalPlaneId);
-    if (!plane) {
-      throw new Error('[World] Horizontal plane not initialized');
-    }
-    return plane;
-  }
-
-  /**
-   * Phase 46: Get vertical projection plane (semantic access)
-   * @returns Vertical projection plane
-   */
-  getVerticalPlane(): ProjectionPlane {
-    const plane = this.projectionPlanes.get(this.verticalPlaneId);
-    if (!plane) {
-      throw new Error('[World] Vertical plane not initialized');
-    }
-    return plane;
-  }
 
   /**
    * Phase 46: Get horizontal origin point (semantic access)
    * @returns Origin point on horizontal plane
    */
   getHorizontalOrigin(): FreePoint2D {
-    const plane = this.getHorizontalPlane();
+    const plane = this.getProjectionPlaneByLabel('P_H');
     const point = plane.getPoint(this.horizontalOriginId);
     if (!point || !(point instanceof FreePoint2D)) {
       throw new Error('[World] Horizontal origin not found');
@@ -390,7 +367,7 @@ export class World {
    * @returns Origin point on vertical plane
    */
   getVerticalOrigin(): FreePoint2D {
-    const plane = this.getVerticalPlane();
+    const plane = this.getProjectionPlaneByLabel('P_V');
     const point = plane.getPoint(this.verticalOriginId);
     if (!point || !(point instanceof FreePoint2D)) {
       throw new Error('[World] Vertical origin not found');
@@ -763,6 +740,22 @@ export class World {
    */
   getProjectionPlaneById(id: string): ProjectionPlane | undefined {
     return this.projectionPlanes.get(id);
+  }
+
+  /**
+   * Get projection plane by label (semantic access)
+   * 
+   * @param label - Plane label (e.g., 'P_H', 'P_V')
+   * @returns Projection plane with matching label
+   * @throws Error if no plane found with given label
+   */
+  getProjectionPlaneByLabel(label: string): ProjectionPlane {
+    for (const plane of this.projectionPlanes.values()) {
+      if (plane.name === label) {
+        return plane;
+      }
+    }
+    throw new Error(`Projection plane not found with label: ${label}`);
   }
 
   /**

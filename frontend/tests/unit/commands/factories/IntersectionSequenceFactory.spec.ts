@@ -25,7 +25,7 @@ describe('IntersectionSequenceFactory', () => {
   beforeEach(() => {
     world = new World();
     // Get horizontal plane ID (no longer hardcoded as 'proj_plane_H')
-    planeId = world.getHorizontalPlane()!.id;
+    planeId = world.getProjectionPlaneByLabel('P_H')!.id;
   });
 
   describe('createIntersection', () => {
@@ -408,7 +408,7 @@ describe('IntersectionSequenceFactory', () => {
       const cmd = new Command('Setup', world);
       
       // Get HalfHingeLine on horizontal plane
-      const horizontalPlane = world.getHorizontalPlane()!;
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
       const mainHingeLine = world.getMainHingeLine();
       const hhl = horizontalPlane.getAllLines().find(
         l => (l as any).hingeLineId === mainHingeLine.id
@@ -456,7 +456,7 @@ describe('IntersectionSequenceFactory', () => {
 
       // Verify: Both points exist in world
       // (Reuse horizontalPlane from HHL lookup)
-      const verticalPlane = world.getVerticalPlane()!;
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V')!;
       
       const primaryPoint = horizontalPlane.getPoint(result.pointId);
       const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);
@@ -517,7 +517,7 @@ describe('IntersectionSequenceFactory', () => {
       const cmd = new Command('Setup', world);
       
       // Get HalfHingeLine on horizontal plane
-      const horizontalPlane = world.getHorizontalPlane()!;
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
       const mainHingeLine = world.getMainHingeLine();
       const hhl = horizontalPlane.getAllLines().find(
         l => (l as any).hingeLineId === mainHingeLine.id
@@ -562,7 +562,7 @@ describe('IntersectionSequenceFactory', () => {
 
       // Verify: Both points exist
       // (Reuse horizontalPlane from HHL lookup)
-      const verticalPlane = world.getVerticalPlane()!;
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V')!;
       
       const primaryPoint = horizontalPlane.getPoint(result.pointId);
       const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);

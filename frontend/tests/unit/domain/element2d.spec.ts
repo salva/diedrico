@@ -264,7 +264,7 @@ describe('Element2D base class', () => {
     it('should filter elements by plane', () => {
       const planeH = getHorizontalPlane(world);
       const planeHId = getHorizontalPlaneId(world);
-      const planeV = world.getVerticalPlane();
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       const planeVId = planeV.id!;
       
       const p1Id = planeH.generatePoint2DId(world);

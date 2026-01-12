@@ -85,7 +85,7 @@ describe('Line2DByTwoPoints', () => {
 
   it('should realize line from two points', () => {
     const world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'point1');
     const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world, 'point2');
     
@@ -111,7 +111,7 @@ describe('Line2DByTwoPoints', () => {
 
   it('should realize line with diagonal direction', () => {
     const world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'point1');
     const p2 = plane.addFreePoint2D(new Vector3(3, 4, 1), world, 'point2');
     
@@ -134,7 +134,7 @@ describe('Line2DByTwoPoints', () => {
 
   it('should return null if first point is missing', () => {
     const world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world, 'point2');
     // point1 doesn't exist in world
     
@@ -152,7 +152,7 @@ describe('Line2DByTwoPoints', () => {
 
   it('should return null if second point is missing', () => {
     const world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'point1');
     // point2 doesn't exist in world
     
@@ -170,7 +170,7 @@ describe('Line2DByTwoPoints', () => {
 
   it('should return null if both points are too close (degenerate line)', () => {
     const world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'point1');
     const p2 = plane.addFreePoint2D(new Vector3(0.0000001, 0.0000001, 1), world, 'point2');
     
@@ -190,7 +190,7 @@ describe('Line2DByTwoPoints', () => {
 
   it('should realize line with negative coordinates', () => {
     const world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_V')!;
+    const plane = world.getProjectionPlaneByLabel('P_V')!;
     const p1 = plane.addFreePoint2D(new Vector3(-10, -5, 1), world, 'point1');
     const p2 = plane.addFreePoint2D(new Vector3(5, 10, 1), world, 'point2');
     
@@ -214,7 +214,7 @@ describe('Line2DByTwoPoints', () => {
 
   it('should work with vertical line', () => {
     const world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     const p1 = plane.addFreePoint2D(new Vector3(5, 0, 1), world, 'point1');
     const p2 = plane.addFreePoint2D(new Vector3(5, 10, 1), world, 'point2');
     
@@ -237,7 +237,7 @@ describe('Line2DByTwoPoints', () => {
 
   it('should work with horizontal line', () => {
     const world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_V')!;
+    const plane = world.getProjectionPlaneByLabel('P_V')!;
     const p1 = plane.addFreePoint2D(new Vector3(0, 7, 1), world, 'point1');
     const p2 = plane.addFreePoint2D(new Vector3(20, 7, 1), world, 'point2');
     

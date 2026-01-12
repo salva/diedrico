@@ -47,8 +47,8 @@ describe('InitializeWorldCommand', () => {
       expect(projPlanes.length).toBeGreaterThanOrEqual(2);
 
       // Verify horizontal and vertical planes accessible
-      const horizontalPlane = world.getHorizontalPlane();
-      const verticalPlane = world.getVerticalPlane();
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
       expect(horizontalPlane).toBeDefined();
       expect(verticalPlane).toBeDefined();
@@ -61,8 +61,8 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('should create locked origin points', () => {
-      const projPlaneH = world.getHorizontalPlane();
-      const projPlaneV = world.getVerticalPlane();
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
       const originH = projPlaneH.getAllPoints()[0];
       const originV = projPlaneV.getAllPoints()[0];
@@ -72,8 +72,8 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('should create half hinge lines', () => {
-      const projPlaneH = world.getHorizontalPlane();
-      const projPlaneV = world.getVerticalPlane();
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
       const linesH = projPlaneH.getAllLines();
       const linesV = projPlaneV.getAllLines();
@@ -89,8 +89,8 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('should use generated IDs (no hardcoded IDs)', () => {
-      const horizPlane = world.getHorizontalPlane();
-      const vertPlane = world.getVerticalPlane();
+      const horizPlane = world.getProjectionPlaneByLabel('P_H');
+      const vertPlane = world.getProjectionPlaneByLabel('P_V');
       const hingeLine = world.getMainHingeLine();
 
       // Verify IDs follow generated pattern

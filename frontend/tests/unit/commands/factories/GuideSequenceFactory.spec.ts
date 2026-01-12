@@ -13,11 +13,14 @@ import { Vector3 } from 'three';
 
 describe('GuideSequenceFactory', () => {
   let world: World;
-  const horizontalPlaneId = 'proj_plane_H';
-  const verticalPlaneId = 'proj_plane_V';
+  let horizontalPlaneId: string;
+  let verticalPlaneId: string;
 
   beforeEach(() => {
     world = new World();
+    // Get plane IDs dynamically from initialized world
+    horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+    verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
   });
 
   describe('createGuideWithSibling', () => {

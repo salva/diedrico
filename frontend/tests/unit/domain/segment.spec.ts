@@ -21,7 +21,7 @@ describe('Segment2D', () => {
 
   beforeEach(() => {
     world = new World();
-    const plane = world.getProjectionPlaneById('proj_plane_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     // Create two test points using factory method
     const point1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');

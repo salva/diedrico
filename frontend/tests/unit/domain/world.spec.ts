@@ -22,8 +22,8 @@ describe('ProjectionPlane Factory Methods', () => {
 
   beforeEach(() => {
     world = new World();
-    planeH = world.getProjectionPlaneById('proj_plane_H')!;
-    planeV = world.getProjectionPlaneById('proj_plane_V')!;
+    planeH = world.getProjectionPlaneByLabel('P_H')!;
+    planeV = world.getProjectionPlaneByLabel('P_V')!;
   });
 
   describe('constructor', () => {

@@ -23,28 +23,28 @@ import type { HingeLine } from '../../src/domain/world/HingeLine';
  * Get horizontal projection plane from world
  */
 export function getHorizontalPlane(world: World): ProjectionPlane {
-  return world.getHorizontalPlane();
+  return world.getProjectionPlaneByLabel('P_H');
 }
 
 /**
  * Get vertical projection plane from world
  */
 export function getVerticalPlane(world: World): ProjectionPlane {
-  return world.getVerticalPlane();
+  return world.getProjectionPlaneByLabel('P_V');
 }
 
 /**
  * Get horizontal projection plane ID
  */
 export function getHorizontalPlaneId(world: World): string {
-  return world.getHorizontalPlane().id!;
+  return world.getProjectionPlaneByLabel('P_H').id!;
 }
 
 /**
  * Get vertical projection plane ID
  */
 export function getVerticalPlaneId(world: World): string {
-  return world.getVerticalPlane().id!;
+  return world.getProjectionPlaneByLabel('P_V').id!;
 }
 
 /**

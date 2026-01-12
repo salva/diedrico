@@ -23,7 +23,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
   beforeEach(() => {
     world = new World();
-    planeH = world.getProjectionPlaneById('proj_plane_H')!;
+    planeH = world.getProjectionPlaneByLabel('P_H')!;
     
     // Create test points
     const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
@@ -180,7 +180,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
   describe('Cache isolation between planes', () => {
     it('realizations should be cached per plane', () => {
-      const planeV = world.getProjectionPlaneById('proj_plane_V')!;
+      const planeV = world.getProjectionPlaneByLabel('P_V')!;
       
       // Add points to both planes
       const p1H = planeH.addFreePoint2D(new Vector3(5, 5, 1), world, 'pH');

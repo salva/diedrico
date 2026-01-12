@@ -203,7 +203,7 @@ describe('Guide2D', () => {
   describe('SiblingGuide2D (Phase 36 - Refactored)', () => {
     it('should create sibling guide with primary guide reference (no throughPointId)', () => {
       // Create a sibling guide using coordinate correspondence pattern
-      const plane = world.getVerticalPlane();
+      const plane = world.getProjectionPlaneByLabel('P_V');
       const planeId = plane.id!;
       const guideId = plane.generateLine2DId(world);
       const primaryGuideId = getHorizontalPlane(world).generateLine2DId(world);
@@ -226,7 +226,7 @@ describe('Guide2D', () => {
     });
 
     it('should clone sibling guide correctly', () => {
-      const plane = world.getVerticalPlane();
+      const plane = world.getProjectionPlaneByLabel('P_V');
       const planeId = plane.id!;
       const guideId = plane.generateLine2DId(world);
       const primaryGuideId = getHorizontalPlane(world).generateLine2DId(world);
@@ -294,7 +294,7 @@ describe('Guide2D', () => {
     it('should have bidirectional links between Guide2D and SiblingGuide2D', () => {
       const planeH = getHorizontalPlane(world);
       const planeHId = getHorizontalPlaneId(world);
-      const planeV = world.getVerticalPlane();
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       const planeVId = planeV.id!;
       const guideId = planeH.generateLine2DId(world);
       const siblingId = planeV.generateLine2DId(world);
@@ -311,7 +311,7 @@ describe('Guide2D', () => {
     it('should use isSiblingGuide2D type guard correctly', () => {
       const planeH = getHorizontalPlane(world);
       const planeHId = getHorizontalPlaneId(world);
-      const planeV = world.getVerticalPlane();
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       const planeVId = planeV.id!;
       const guideId = planeH.generateLine2DId(world);
       const siblingId = planeV.generateLine2DId(world);

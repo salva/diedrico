@@ -23,7 +23,7 @@ describe('Semantic Entity References (Phase 46)', () => {
 
   describe('Semantic Accessors', () => {
     it('should provide access to horizontal plane via semantic method', () => {
-      const horizontalPlane = world.getHorizontalPlane();
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
       
       expect(horizontalPlane).toBeDefined();
       expect(horizontalPlane.id).toBeTruthy();
@@ -31,7 +31,7 @@ describe('Semantic Entity References (Phase 46)', () => {
     });
 
     it('should provide access to vertical plane via semantic method', () => {
-      const verticalPlane = world.getVerticalPlane();
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
       expect(verticalPlane).toBeDefined();
       expect(verticalPlane.id).toBeTruthy();
@@ -54,7 +54,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       expect(horizontalOrigin).toBeDefined();
       expect(horizontalOrigin.id).toBeTruthy();
       // Origin ID should be hierarchical: {planeId}/point2d_{n}
-      const horizontalPlane = world.getHorizontalPlane();
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
       expect(horizontalOrigin.id).toContain(horizontalPlane.id!);
     });
 
@@ -66,15 +66,15 @@ describe('Semantic Entity References (Phase 46)', () => {
       expect(verticalOrigin).toBeDefined();
       expect(verticalOrigin.id).toBeTruthy();
       // Origin ID should be hierarchical: {planeId}/point2d_{n}
-      const verticalPlane = world.getVerticalPlane();
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       expect(verticalOrigin.id).toContain(verticalPlane.id!);
     });
   });
 
   describe('No Hardcoded ID Assumptions', () => {
     it('should use generated IDs, not hardcoded ones', () => {
-      const horizontalPlane = world.getHorizontalPlane();
-      const verticalPlane = world.getVerticalPlane();
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
       // IDs should NOT be the old hardcoded values
       expect(horizontalPlane.id).not.toBe('proj_plane_H');
@@ -114,8 +114,8 @@ describe('Semantic Entity References (Phase 46)', () => {
 
   describe('ID Generation Consistency', () => {
     it('should generate sequential projection plane IDs', () => {
-      const horizontalPlane = world.getHorizontalPlane();
-      const verticalPlane = world.getVerticalPlane();
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
       // Both IDs should follow proj_plane_{n} format
       const hMatch = horizontalPlane.id!.match(/^proj_plane_(\d+)$/);
@@ -133,13 +133,13 @@ describe('Semantic Entity References (Phase 46)', () => {
 
     it.skip('should use plane ID as container in origin point IDs - SKIPPED: origin tracking not fully implemented', () => {
       // Skipped because origin tracking through semantic IDs not complete (Phase 47)
-      const horizontalPlane = world.getHorizontalPlane();
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
       const horizontalOrigin = world.getHorizontalOrigin();
       
       // Origin ID should start with plane ID
       expect(horizontalOrigin.id).toContain(horizontalPlane.id!);
       
-      const verticalPlane = world.getVerticalPlane();
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       const verticalOrigin = world.getVerticalOrigin();
       
       // Origin ID should start with plane ID
@@ -153,8 +153,8 @@ describe('Semantic Entity References (Phase 46)', () => {
       // Currently we only have one pair, but the pattern scales
       
       // First pair (initial)
-      const horizontalPlane1 = world.getHorizontalPlane();
-      const verticalPlane1 = world.getVerticalPlane();
+      const horizontalPlane1 = world.getProjectionPlaneByLabel('P_H');
+      const verticalPlane1 = world.getProjectionPlaneByLabel('P_V');
       
       expect(horizontalPlane1.id).toMatch(/^proj_plane_\d+$/);
       expect(verticalPlane1.id).toMatch(/^proj_plane_\d+$/);

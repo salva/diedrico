@@ -360,7 +360,7 @@ describe('Point2D', () => {
         //   - Same direction: (1, 0, 0)
         
         // Create primary point with specific coordinates
-        const planeH = world.getProjectionPlaneById('proj_plane_H')!;
+        const planeH = world.getProjectionPlaneByLabel('P_H')!;
         const primary = planeH.addFreePoint2D(new Vector3(100, 0, 1), world);
         
         const sibling = new SiblingIntersectionPoint2D(
@@ -382,7 +382,7 @@ describe('Point2D', () => {
     describe('Parametric consistency validation', () => {
       it('T358: HL_HV HalfHingeLine2D pairs maintain identical Q and D', () => {
         // Get both HalfHingeLine2D objects for HL_HV
-        const planeH = world.getProjectionPlaneById('proj_plane_H')!;
+        const planeH = world.getProjectionPlaneByLabel('P_H')!;
         const planeV = world.getProjectionPlaneById(planeVId)!;
         
         const halfHingeH = Array.from(planeH.lines.values())
@@ -408,7 +408,7 @@ describe('Point2D', () => {
 
       it('T359: sibling coordinates match primary at different HHL positions', () => {
         // Test at multiple positions along the hinge line
-        const planeH = world.getProjectionPlaneById('proj_plane_H')!;
+        const planeH = world.getProjectionPlaneByLabel('P_H')!;
         
         const testPositions = [
           { d: 0, x: 0, y: 0 },    // At origin (d=0)

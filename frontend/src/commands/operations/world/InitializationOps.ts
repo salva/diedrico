@@ -197,8 +197,8 @@ export class AddOriginPoint2DOp implements IOperation {
       this.outputs = { pointId: originPoint.id, projPlaneId: this.projPlaneId };
       
       // Set semantic reference on World (Phase 46)
-      const horizontalPlane = world.getHorizontalPlane();
-      const verticalPlane = world.getVerticalPlane();
+      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
       if (horizontalPlane && projPlane.id === horizontalPlane.id) {
         (world as any).horizontalOriginId = originPoint.id;
@@ -229,8 +229,8 @@ export class AddOriginPoint2DOp implements IOperation {
         projPlane.removePoint(pointId);
         
         // Clear semantic reference
-        const horizontalPlane = world.getHorizontalPlane();
-        const verticalPlane = world.getVerticalPlane();
+        const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+        const verticalPlane = world.getProjectionPlaneByLabel('P_V');
         
         if (horizontalPlane && projPlane.id === horizontalPlane.id) {
           (world as any).horizontalOriginId = undefined;

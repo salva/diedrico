@@ -90,7 +90,7 @@ describe('Selection Mask System', () => {
 
     beforeEach(() => {
       // Use existing projection plane from World constructor
-      planeId = 'proj_plane_H';
+      planeId = world.getProjectionPlaneByLabel('P_H').id!;
       
       // Identity transform for testing (no transformation needed)
       paperToPlaneTransform = new Matrix3();
