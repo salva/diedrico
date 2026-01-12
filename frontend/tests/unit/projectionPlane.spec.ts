@@ -10,6 +10,8 @@ import { BaseProjectionPlane } from '@/domain/world/ProjectionPlane';
 import { FreePoint2D, Point2DRealization2D } from '@/domain/world/Point';
 import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { Circle2DByCenterAndPoint, Circle2DRealization2D } from '@/domain/world/Circle';
+import { World } from '@/domain/world/World';
+import { getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../helpers/worldHelpers';
 
 describe('ProjectionPlane Transformations', () => {
   describe('P_H (Horizontal Plane)', () => {
@@ -174,210 +176,195 @@ describe('ProjectionPlane Transformations', () => {
 });
 
 describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
+  let world: World;
   let planeH: BaseProjectionPlane;
   let planeV: BaseProjectionPlane;
 
   beforeEach(() => {
-    planeH = BaseProjectionPlane.createPH();
-    planeH.id = 'proj_plane_H';
-    
-    planeV = BaseProjectionPlane.createPV();
-    planeV.id = 'proj_plane_V';
+    world = new World();
+    planeH = getHorizontalPlane(world);
+    planeV = getVerticalPlane(world);
   });
 
   describe('Point Storage', () => {
     it('should add and retrieve a point', () => {
-      const point = new FreePoint2D('p1', new Vector3(10, 20, 1), 'proj_plane_H');
+      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
       
-      planeH.addPoint(point);
-      const retrieved = planeH.getPoint('p1');
+      const retrieved = planeH.getPoint(point.id);
       
       expect(retrieved).toBeDefined();
-      expect(retrieved?.id).toBe('p1');
-      expect(retrieved?.planeId).toBe('proj_plane_H');
+      expect(retrieved?.id).toBe(point.id);
+      expect(retrieved?.planeId).toBe(planeH.id);
     });
 
     it('should retrieve all points', () => {
-      const p1 = new FreePoint2D('p1', new Vector3(10, 20, 1), 'proj_plane_H');
-      const p2 = new FreePoint2D('p2', new Vector3(30, 40, 1), 'proj_plane_H');
-      
-      planeH.addPoint(p1);
-      planeH.addPoint(p2);
+      const initialCount = planeH.getAllPoints().length;
+      const p1 = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(30, 40, 1), world);
       
       const allPoints = planeH.getAllPoints();
-      expect(allPoints).toHaveLength(2);
-      expect(allPoints.map(p => p.id)).toContain('p1');
-      expect(allPoints.map(p => p.id)).toContain('p2');
+      expect(allPoints).toHaveLength(initialCount + 2);
+      expect(allPoints.map(p => p.id)).toContain(p1.id);
+      expect(allPoints.map(p => p.id)).toContain(p2.id);
     });
 
     it('should remove a point', () => {
-      const point = new FreePoint2D('p1', new Vector3(10, 20, 1), 'proj_plane_H');
+      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
       
-      planeH.addPoint(point);
-      expect(planeH.getPoint('p1')).toBeDefined();
+      expect(planeH.getPoint(point.id)).toBeDefined();
       
-      const removed = planeH.removePoint('p1');
+      const removed = planeH.removePoint(point.id);
       expect(removed).toBe(true);
-      expect(planeH.getPoint('p1')).toBeUndefined();
-    });
-
-    it('should throw error when adding point without ID', () => {
-      const point = new FreePoint2D('', new Vector3(10, 20, 1), 'proj_plane_H');
-      
-      expect(() => planeH.addPoint(point)).toThrow('Cannot add point without ID');
+      expect(planeH.getPoint(point.id)).toBeUndefined();
     });
 
     it('should cache and retrieve point realizations', () => {
-      const point = new FreePoint2D('p1', new Vector3(10, 20, 1), 'proj_plane_H');
-      planeH.addPoint(point);
+      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
       
       const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
-      planeH.setPointRealization2D('p1', realization);
+      planeH.setPointRealization2D(point.id, realization);
       
-      const retrieved = planeH.getPointRealization2D('p1');
+      const retrieved = planeH.getPointRealization2D(point.id);
       expect(retrieved).toBeDefined();
       expect(retrieved?.position.x).toBe(10);
       expect(retrieved?.position.y).toBe(20);
     });
 
     it('should clear point realization', () => {
-      const point = new FreePoint2D('p1', new Vector3(10, 20, 1), 'proj_plane_H');
-      planeH.addPoint(point);
+      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
       
       const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
-      planeH.setPointRealization2D('p1', realization);
-      expect(planeH.getPointRealization2D('p1')).toBeDefined();
+      planeH.setPointRealization2D(point.id, realization);
+      expect(planeH.getPointRealization2D(point.id)).toBeDefined();
       
-      planeH.clearPointRealization2D('p1');
-      expect(planeH.getPointRealization2D('p1')).toBeUndefined();
+      planeH.clearPointRealization2D(point.id);
+      expect(planeH.getPointRealization2D(point.id)).toBeUndefined();
     });
 
     it('should auto-clear realization when removing point', () => {
-      const point = new FreePoint2D('p1', new Vector3(10, 20, 1), 'proj_plane_H');
-      planeH.addPoint(point);
+      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
       
       const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
-      planeH.setPointRealization2D('p1', realization);
+      planeH.setPointRealization2D(point.id, realization);
       
-      planeH.removePoint('p1');
-      expect(planeH.getPointRealization2D('p1')).toBeUndefined();
+      planeH.removePoint(point.id);
+      expect(planeH.getPointRealization2D(point.id)).toBeUndefined();
     });
   });
 
   describe('Line Storage', () => {
     it('should add and retrieve a line', () => {
-      const line = new Line2DByTwoPoints('l1', 'p1', 'p2', 'proj_plane_H');
+      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
       
-      planeH.addLine(line);
-      const retrieved = planeH.getLine('l1');
+      const retrieved = planeH.getLine(line.id);
       
       expect(retrieved).toBeDefined();
-      expect(retrieved?.id).toBe('l1');
-      expect(retrieved?.planeId).toBe('proj_plane_H');
+      expect(retrieved?.id).toBe(line.id);
+      expect(retrieved?.planeId).toBe(planeH.id);
     });
 
     it('should retrieve all lines', () => {
-      const l1 = new Line2DByTwoPoints('l1', 'p1', 'p2', 'proj_plane_H');
-      const l2 = new Line2DByTwoPoints('l2', 'p3', 'p4', 'proj_plane_H');
+      const initialLineCount = planeH.getAllLines().length;
+      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      const p3 = planeH.addFreePoint2D(new Vector3(20, 0, 1), world);
+      const p4 = planeH.addFreePoint2D(new Vector3(30, 10, 1), world);
       
-      planeH.addLine(l1);
-      planeH.addLine(l2);
+      const l1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const l2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
       
       const allLines = planeH.getAllLines();
-      expect(allLines).toHaveLength(2);
-      expect(allLines.map(l => l.id)).toContain('l1');
-      expect(allLines.map(l => l.id)).toContain('l2');
+      expect(allLines).toHaveLength(initialLineCount + 2);
+      expect(allLines.map(l => l.id)).toContain(l1.id);
+      expect(allLines.map(l => l.id)).toContain(l2.id);
     });
 
     it('should remove a line', () => {
-      const line = new Line2DByTwoPoints('l1', 'p1', 'p2', 'proj_plane_H');
+      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
       
-      planeH.addLine(line);
-      expect(planeH.getLine('l1')).toBeDefined();
+      expect(planeH.getLine(line.id)).toBeDefined();
       
-      const removed = planeH.removeLine('l1');
+      const removed = planeH.removeLine(line.id);
       expect(removed).toBe(true);
-      expect(planeH.getLine('l1')).toBeUndefined();
-    });
-
-    it('should throw error when adding line without ID', () => {
-      const line = new Line2DByTwoPoints('', 'p1', 'p2', 'proj_plane_H');
-      
-      expect(() => planeH.addLine(line)).toThrow('Cannot add line without ID');
+      expect(planeH.getLine(line.id)).toBeUndefined();
     });
 
     it('should cache and retrieve line realizations', () => {
-      const line = new Line2DByTwoPoints('l1', 'p1', 'p2', 'proj_plane_H');
-      planeH.addLine(line);
+      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
       
       const realization = new Line2DRealization2D(
         new Vector3(0, 0, 1), 
         new Vector3(1, 0, 0),
         true
       );
-      planeH.setLineRealization2D('l1', realization);
+      planeH.setLineRealization2D(line.id, realization);
       
-      const retrieved = planeH.getLineRealization2D('l1');
+      const retrieved = planeH.getLineRealization2D(line.id);
       expect(retrieved).toBeDefined();
-      expect(retrieved?.point.x).toBe(0);
-      expect(retrieved?.direction.x).toBeCloseTo(1);
+      expect(retrieved?.point1.x).toBe(0);
+      expect(retrieved?.point2.x).toBe(1);
     });
   });
 
   describe('Circle Storage', () => {
     it('should add and retrieve a circle', () => {
-      const circle = new Circle2DByCenterAndPoint('c1', 'p1', 'p_edge', 'proj_plane_H');
+      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
+      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
+      const circle = planeH.addCircle2DByCenterAndPoint(center.id, edge.id, world);
       
-      planeH.addCircle(circle);
-      const retrieved = planeH.getCircle('c1');
+      const retrieved = planeH.getCircle(circle.id);
       
       expect(retrieved).toBeDefined();
-      expect(retrieved?.id).toBe('c1');
-      expect(retrieved?.planeId).toBe('proj_plane_H');
+      expect(retrieved?.id).toBe(circle.id);
+      expect(retrieved?.planeId).toBe(planeH.id);
     });
 
     it('should retrieve all circles', () => {
-      const c1 = new Circle2DByCenterAndPoint('c1', 'p1', 'p_edge1', 'proj_plane_H');
-      const c2 = new Circle2DByCenterAndPoint('c2', 'p2', 'p_edge2', 'proj_plane_H');
+      const c1Center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
+      const c1Edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
+      const c2Center = planeH.addFreePoint2D(new Vector3(200, 200, 1), world);
+      const c2Edge = planeH.addFreePoint2D(new Vector3(250, 200, 1), world);
       
-      planeH.addCircle(c1);
-      planeH.addCircle(c2);
+      const c1 = planeH.addCircle2DByCenterAndPoint(c1Center.id, c1Edge.id, world);
+      const c2 = planeH.addCircle2DByCenterAndPoint(c2Center.id, c2Edge.id, world);
       
       const allCircles = planeH.getAllCircles();
       expect(allCircles).toHaveLength(2);
-      expect(allCircles.map(c => c.id)).toContain('c1');
-      expect(allCircles.map(c => c.id)).toContain('c2');
+      expect(allCircles.map(c => c.id)).toContain(c1.id);
+      expect(allCircles.map(c => c.id)).toContain(c2.id);
     });
 
     it('should remove a circle', () => {
-      const circle = new Circle2DByCenterAndPoint('c1', 'p1', 'p_edge', 'proj_plane_H');
+      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
+      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
+      const circle = planeH.addCircle2DByCenterAndPoint(center.id, edge.id, world);
       
-      planeH.addCircle(circle);
-      expect(planeH.getCircle('c1')).toBeDefined();
+      expect(planeH.getCircle(circle.id)).toBeDefined();
       
-      const removed = planeH.removeCircle('c1');
+      const removed = planeH.removeCircle(circle.id);
       expect(removed).toBe(true);
-      expect(planeH.getCircle('c1')).toBeUndefined();
-    });
-
-    it('should throw error when adding circle without ID', () => {
-      const circle = new Circle2DByCenterAndPoint('', 'p1', 'p_edge', 'proj_plane_H');
-      
-      expect(() => planeH.addCircle(circle)).toThrow('Cannot add circle without ID');
+      expect(planeH.getCircle(circle.id)).toBeUndefined();
     });
 
     it('should cache and retrieve circle realizations', () => {
-      const circle = new Circle2DByCenterAndPoint('c1', 'p1', 'p_edge', 'proj_plane_H');
-      planeH.addCircle(circle);
+      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
+      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
+      const circle = planeH.addCircle2DByCenterAndPoint(center.id, edge.id, world);
       
       const realization = new Circle2DRealization2D(
         new Vector3(100, 100, 1),
         new Vector3(50, 0, 0),  // Radius vector pointing right
         true
       );
-      planeH.setCircleRealization2D('c1', realization);
+      planeH.setCircleRealization2D(circle.id, realization);
       
-      const retrieved = planeH.getCircleRealization2D('c1');
+      const retrieved = planeH.getCircleRealization2D(circle.id);
       expect(retrieved).toBeDefined();
       expect(retrieved?.center.x).toBe(100);
       expect(retrieved?.getRadius()).toBe(50);  // Use getRadius() method
@@ -388,60 +375,64 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
 
   describe('Multi-Plane Isolation', () => {
     it('should keep elements isolated between planes', () => {
-      const pointH = new FreePoint2D('p1', new Vector3(10, 20, 1), 'proj_plane_H');
-      const pointV = new FreePoint2D('p2', new Vector3(30, 40, 1), 'proj_plane_V');
+      const initialHCount = planeH.getAllPoints().length;
+      const initialVCount = planeV.getAllPoints().length;
       
-      planeH.addPoint(pointH);
-      planeV.addPoint(pointV);
+      const pointH = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+      const pointV = planeV.addFreePoint2D(new Vector3(30, 40, 1), world);
       
-      // P_H should only have p1
-      expect(planeH.getAllPoints()).toHaveLength(1);
-      expect(planeH.getPoint('p1')).toBeDefined();
-      expect(planeH.getPoint('p2')).toBeUndefined();
+      // P_H should have initialHCount + pointH
+      expect(planeH.getAllPoints()).toHaveLength(initialHCount + 1);
+      expect(planeH.getPoint(pointH.id)).toBeDefined();
+      expect(planeH.getPoint(pointV.id)).toBeUndefined();
       
-      // P_V should only have p2
-      expect(planeV.getAllPoints()).toHaveLength(1);
-      expect(planeV.getPoint('p2')).toBeDefined();
-      expect(planeV.getPoint('p1')).toBeUndefined();
+      // P_V should have initialVCount + pointV
+      expect(planeV.getAllPoints()).toHaveLength(initialVCount + 1);
+      expect(planeV.getPoint(pointV.id)).toBeDefined();
+      expect(planeV.getPoint(pointH.id)).toBeUndefined();
     });
 
     it('should keep line realizations isolated between planes', () => {
-      const lineH = new Line2DByTwoPoints('l1', 'p1', 'p2', 'proj_plane_H');
-      const lineV = new Line2DByTwoPoints('l2', 'p3', 'p4', 'proj_plane_V');
+      const p1H = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2H = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+      const p1V = planeV.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2V = planeV.addFreePoint2D(new Vector3(10, 0, 1), world);
       
-      planeH.addLine(lineH);
-      planeV.addLine(lineV);
+      const lineH = planeH.addLine2DBetweenTwoPoints(p1H.id, p2H.id, world);
+      const lineV = planeV.addLine2DBetweenTwoPoints(p1V.id, p2V.id, world);
       
       const realH = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true);
       const realV = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(0, 1, 0), true);
       
-      planeH.setLineRealization2D('l1', realH);
-      planeV.setLineRealization2D('l2', realV);
+      planeH.setLineRealization2D(lineH.id, realH);
+      planeV.setLineRealization2D(lineV.id, realV);
       
-      expect(planeH.getLineRealization2D('l1')).toBeDefined();
-      expect(planeH.getLineRealization2D('l2')).toBeUndefined();
-      expect(planeV.getLineRealization2D('l2')).toBeDefined();
-      expect(planeV.getLineRealization2D('l1')).toBeUndefined();
+      expect(planeH.getLineRealization2D(lineH.id)).toBeDefined();
+      expect(planeH.getLineRealization2D(lineV.id)).toBeUndefined();
+      expect(planeV.getLineRealization2D(lineV.id)).toBeDefined();
+      expect(planeV.getLineRealization2D(lineH.id)).toBeUndefined();
     });
   });
 
   describe('Element Type Mixing', () => {
     it('should handle points, lines, and circles in same plane', () => {
-      const point = new FreePoint2D('p1', 'proj_plane_H', new Vector3(10, 20, 1));
-      const line = new Line2DByTwoPoints('l1', 'p1', 'p2', 'proj_plane_H');
-      const circle = new Circle2DByCenterAndPoint('c1', 'p1', 'p_edge', 'proj_plane_H');
+      const initialPointCount = planeH.getAllPoints().length;  // Hinge points may exist
+      const initialLineCount = planeH.getAllLines().length;  // Hinge lines may exist
       
-      planeH.addPoint(point);
-      planeH.addLine(line);
-      planeH.addCircle(circle);
+      const p1 = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(20, 30, 1), world);
+      const pEdge = planeH.addFreePoint2D(new Vector3(60, 20, 1), world);
       
-      expect(planeH.getAllPoints()).toHaveLength(1);
-      expect(planeH.getAllLines()).toHaveLength(1);
+      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const circle = planeH.addCircle2DByCenterAndPoint(p1.id, pEdge.id, world);
+      
+      expect(planeH.getAllPoints()).toHaveLength(initialPointCount + 3);
+      expect(planeH.getAllLines()).toHaveLength(initialLineCount + 1);
       expect(planeH.getAllCircles()).toHaveLength(1);
       
-      expect(planeH.getPoint('p1')).toBeDefined();
-      expect(planeH.getLine('l1')).toBeDefined();
-      expect(planeH.getCircle('c1')).toBeDefined();
+      expect(planeH.getPoint(p1.id)).toBeDefined();
+      expect(planeH.getLine(line.id)).toBeDefined();
+      expect(planeH.getCircle(circle.id)).toBeDefined();
     });
   });
 });
