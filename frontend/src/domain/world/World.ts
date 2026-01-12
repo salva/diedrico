@@ -94,6 +94,7 @@ import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
 import { Element2D } from './Element2D';
 import { getContainerIdFromElementId } from './ElementId';
+import { InitializeWorldCommand } from '@/commands/InitializeWorldCommand';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -145,12 +146,9 @@ export class World {
     this.dependencyService = new DependencyService(this.processTree);
     
     // Phase 47: Initialize fixed elements using InitializeWorldCommand
-    // Use dynamic import to avoid circular dependency
-    import('@/commands/InitializeWorldCommand').then(({ InitializeWorldCommand }) => {
-      const initCmd = new InitializeWorldCommand(this);
-      initCmd.commit();
-      this.notifyChange();
-    });
+    const initCmd = new InitializeWorldCommand(this);
+    initCmd.commit();
+    this.notifyChange();
   }
 
   /**
@@ -188,14 +186,11 @@ export class World {
     this.dependencyService = new DependencyService(this.processTree);
     
     // Phase 47: Reinitialize fixed elements using InitializeWorldCommand
-    // Use dynamic import to avoid circular dependency
-    import('@/commands/InitializeWorldCommand').then(({ InitializeWorldCommand }) => {
-      const initCmd = new InitializeWorldCommand(this);
-      initCmd.commit();
-      
-      // Notify UI of change
-      this.notifyChange();
-    });
+    const initCmd = new InitializeWorldCommand(this);
+    initCmd.commit();
+    
+    // Notify UI of change
+    this.notifyChange();
   }
 
 

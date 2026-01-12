@@ -50,6 +50,7 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
 * [ ] Check that on circle creation, the radius point really snaps to preexistent points before creating a new one.
 * [ ] Ensure we have a per-plane cache for 2D realizations.
+* [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?
 
 ## ALREADY PLANNED
 

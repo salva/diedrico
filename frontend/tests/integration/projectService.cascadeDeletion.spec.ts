@@ -21,15 +21,17 @@ import { ProjectService } from '@/services/ProjectService';
 import { Vector3 } from 'three';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { RemovePoint2DOp } from '@/commands/operations/world/RemoveElementOps';
+import { getHorizontalPlaneId } from '../helpers/worldHelpers';
 
 describe('ProjectService Deletion Edge Case Tests', () => {
   let world: World;
   let commandStack: CommandStack;
-  const planeId = 'proj_plane_H';
+  let planeId: string;
 
   beforeEach(() => {
     world = new World();
     commandStack = new CommandStack();
+    planeId = getHorizontalPlaneId(world);
   });
 
   /**

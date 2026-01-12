@@ -16,6 +16,7 @@ import { CommandStack } from '@/commands/CommandStack';
 import { ProjectService } from '@/services/ProjectService';
 import { Command } from '@/commands/Command';
 import { Vector3 } from 'three';
+import { getHorizontalPlaneId } from '../helpers/worldHelpers';
 
 // Import operations
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -24,13 +25,16 @@ import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCi
 import { AddGuide2DPerpendicularToLineOp } from '@/commands/operations/world/AddGuideOp';
 import { AddLineLineIntersectionPoint2DOp } from '@/commands/operations/world/AddLineLineIntersectionPoint2DOp';
 import { RemovePoint2DOp } from '@/commands/operations/world/RemoveElementOps';
+import type { Point2D, FreePoint2D } from '@/domain/world/Point';
+import type { Line2D } from '@/domain/world/Line';
+import type { Circle2D } from '@/domain/world/Circle';
 
 describe('ProjectService Determinism Tests', () => {
   it('should produce identical World state when deserializing same project 5 times', () => {
     // Step 1: Create a complex project with various operations
     const world = new World();
     const commandStack = new CommandStack();
-    const planeId = 'proj_plane_H';
+    const planeId = getHorizontalPlaneId(world);
     
     // Create multiple elements
     const cmd1 = new Command('Create points', world);
@@ -134,11 +138,12 @@ describe('ProjectService Determinism Tests', () => {
     // Create a simple project
     const world = new World();
     const commandStack = new CommandStack();
+    const planeId = getHorizontalPlaneId(world);
     
     const cmd = new Command('Create elements', world);
-    cmd.addAndExecute(new AddFreePoint2DOp('proj_plane_H', new Vector3(50, 50, 1)));
-    cmd.addAndExecute(new AddFreePoint2DOp('proj_plane_H', new Vector3(100, 50, 1)));
-    cmd.addAndExecute(new AddFreePoint2DOp('proj_plane_H', new Vector3(75, 100, 1)));
+    cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
+    cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
+    cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(75, 100, 1)));
     cmd.commit();
     commandStack.push(cmd);
     
@@ -153,7 +158,8 @@ describe('ProjectService Determinism Tests', () => {
       
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
       
-      const plane = freshWorld.getProjectionPlaneById('proj_plane_H');
+      const freshPlaneId = getHorizontalPlaneId(freshWorld);
+      const plane = freshWorld.getProjectionPlaneById(freshPlaneId);
       if (!plane) throw new Error('Plane not found');
       const points = plane.getAllPoints();
       const ids = points.map((p: Point2D) => p.id).sort();
@@ -170,7 +176,8 @@ describe('ProjectService Determinism Tests', () => {
  * Helper: Capture complete World state for comparison
  */
 function captureWorldState(world: World): any {
-  const plane = world.getProjectionPlaneById('proj_plane_H');
+  const planeId = getHorizontalPlaneId(world);
+  const plane = world.getProjectionPlaneById(planeId);
   if (!plane) throw new Error('Plane not found');
   
   const points = plane.getAllPoints();

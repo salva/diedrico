@@ -8,10 +8,6 @@
  * 
  * These tests verify that factories work correctly in real application context,
  * with full dependency service, process tree, and command stack integration.
- * 
- * SKIPPED (Phase 45): Tests use hardcoded plane IDs ('proj_plane_H')
- * which will change to generated IDs in Phase 46/47.
- * Will be reactivated and updated in Phase 47 Task T558.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -25,15 +21,17 @@ import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
 import { Vector3 } from 'three';
+import { getHorizontalPlaneId, getVerticalPlaneId, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
 
-describe.skip('Factory Integration Tests', () => {
+describe('Factory Integration Tests', () => {
   let world: World;
   let commandStack: CommandStack;
-  const planeId = 'proj_plane_H';
+  let planeId: string;
 
   beforeEach(() => {
     world = new World();
     commandStack = new CommandStack();
+    planeId = getHorizontalPlaneId(world);
   });
 
   describe('GuideSequenceFactory Integration', () => {
@@ -42,17 +40,17 @@ describe.skip('Factory Integration Tests', () => {
       const setupCmd = new Command('Setup', world);
       
       // Use the default HHL that exists in every World
-      const hhlId = 'half_HL_HV_on_PH';
+      const hhlId = world.getHalfHingeLines2D(planeId)[0].id;
       
       // Create through point for guide
       setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
-      const throughPointId = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
+      const plane = getHorizontalPlane(world);
+      const throughPointId = plane.getAllPoints()[0].id;
       
       setupCmd.commit();
       commandStack.push(setupCmd);
 
       // Initial state
-      const plane = world.getProjectionPlaneById(planeId)!;
       const initialLineCount = plane.getAllLines().length;
       const initialPointCount = plane.getAllPoints().length;
 
@@ -69,7 +67,7 @@ describe.skip('Factory Integration Tests', () => {
       expect(result.guideId).toBeDefined();
       expect(result.siblingGuideId).toBeDefined();
       // Note: sibling is in different plane (V), so we check it separately
-      const siblingPlane = world.getProjectionPlaneById('proj_plane_V')!;
+      const siblingPlane = getVerticalPlane(world);
       expect(plane.getAllLines().length).toBe(initialLineCount + 1); // original lines + guide on this plane
       expect(siblingPlane.getLine(result.siblingGuideId!)).toBeDefined(); // sibling on paired plane
 

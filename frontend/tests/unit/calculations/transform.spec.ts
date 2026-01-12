@@ -9,7 +9,7 @@
  * - Homogeneous coordinate operations per Constitution Principle V
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   planeToCanvas,
   canvasToPlane,
@@ -20,12 +20,23 @@ import {
   multiplyMatrices,
   applyMatrix
 } from '@/domain/calculations/CoordinateTransform';
+import { World } from '@/domain/world/World';
+import { getHorizontalPlaneId, getVerticalPlaneId } from '../../helpers/worldHelpers';
 
 describe('CoordinateTransform', () => {
+  let planeH: string;
+  let planeV: string;
+
+  beforeEach(() => {
+    const world = new World();
+    planeH = getHorizontalPlaneId(world);
+    planeV = getVerticalPlaneId(world);
+  });
+
   describe('planeToCanvas', () => {
     it('should transform P_H coordinates to canvas', () => {
       // P_H: origin at (400, 400), u→x, v→y
-      const [x, y] = planeToCanvas(100, 50, 'proj_plane_H', 400, 400);
+      const [x, y] = planeToCanvas(100, 50, planeH, 400, 400);
       
       expect(x).toBe(500);  // 400 + 100
       expect(y).toBe(450);  // 400 + 50
@@ -33,21 +44,21 @@ describe('CoordinateTransform', () => {
 
     it('should transform P_V coordinates to canvas with Z-flip', () => {
       // P_V: origin at (400, 400), u→x, v→-y (Z-up convention)
-      const [x, y] = planeToCanvas(100, 50, 'proj_plane_V', 400, 400);
+      const [x, y] = planeToCanvas(100, 50, planeV, 400, 400);
       
       expect(x).toBe(500);  // 400 + 100
       expect(y).toBe(350);  // 400 - 50 (Z-up flips)
     });
 
     it('should handle negative coordinates', () => {
-      const [x, y] = planeToCanvas(-50, -30, 'proj_plane_H', 400, 400);
+      const [x, y] = planeToCanvas(-50, -30, planeH, 400, 400);
       
       expect(x).toBe(350);  // 400 - 50
       expect(y).toBe(370);  // 400 - 30
     });
 
     it('should handle custom canvas origin', () => {
-      const [x, y] = planeToCanvas(10, 20, 'proj_plane_H', 200, 300);
+      const [x, y] = planeToCanvas(10, 20, planeH, 200, 300);
       
       expect(x).toBe(210);  // 200 + 10
       expect(y).toBe(320);  // 300 + 20
@@ -56,14 +67,14 @@ describe('CoordinateTransform', () => {
 
   describe('canvasToPlane', () => {
     it('should transform canvas coordinates to P_H', () => {
-      const [u, v] = canvasToPlane(500, 450, 'proj_plane_H', 400, 400);
+      const [u, v] = canvasToPlane(500, 450, planeH, 400, 400);
       
       expect(u).toBe(100);  // 500 - 400
       expect(v).toBe(50);   // 450 - 400
     });
 
     it('should transform canvas coordinates to P_V with Z-flip', () => {
-      const [u, v] = canvasToPlane(500, 350, 'proj_plane_V', 400, 400);
+      const [u, v] = canvasToPlane(500, 350, planeV, 400, 400);
       
       expect(u).toBe(100);  // 500 - 400
       expect(v).toBe(50);   // -(350 - 400) = 50 (Z-up flips)
@@ -73,8 +84,8 @@ describe('CoordinateTransform', () => {
       const originalU = 123;
       const originalV = -45;
       
-      const [x, y] = planeToCanvas(originalU, originalV, 'proj_plane_H');
-      const [u, v] = canvasToPlane(x, y, 'proj_plane_H');
+      const [x, y] = planeToCanvas(originalU, originalV, planeH);
+      const [u, v] = canvasToPlane(x, y, planeH);
       
       expect(u).toBeCloseTo(originalU);
       expect(v).toBeCloseTo(originalV);
@@ -84,8 +95,8 @@ describe('CoordinateTransform', () => {
       const originalU = 67;
       const originalV = 89;
       
-      const [x, y] = planeToCanvas(originalU, originalV, 'proj_plane_V');
-      const [u, v] = canvasToPlane(x, y, 'proj_plane_V');
+      const [x, y] = planeToCanvas(originalU, originalV, planeV);
+      const [u, v] = canvasToPlane(x, y, planeV);
       
       expect(u).toBeCloseTo(originalU);
       expect(v).toBeCloseTo(originalV);
@@ -282,7 +293,7 @@ describe('CoordinateTransform', () => {
       const v = 30;
       
       // 2. Transform to canvas
-      const [canvasX, canvasY] = planeToCanvas(u, v, 'proj_plane_H', 400, 400);
+      const [canvasX, canvasY] = planeToCanvas(u, v, planeH, 400, 400);
       
       // 3. Apply viewport transform (pan and zoom)
       const viewportMatrix = createViewportMatrix(20, 10, 1.5);
@@ -300,10 +311,10 @@ describe('CoordinateTransform', () => {
       const originalY = 234;
       
       // Canvas → Plane3D
-      const [u, v] = canvasToPlane(originalX, originalY, 'proj_plane_H', 400, 400);
+      const [u, v] = canvasToPlane(originalX, originalY, planeH, 400, 400);
       
       // Plane3D → Canvas
-      const [x, y] = planeToCanvas(u, v, 'proj_plane_H', 400, 400);
+      const [x, y] = planeToCanvas(u, v, planeH, 400, 400);
       
       expect(x).toBe(originalX);
       expect(y).toBe(originalY);
