@@ -1,8 +1,8 @@
 /**
- * Unit tests for World initialization operations (Phase 47)
+ * Unit tests for World initialization operations (Phase 47, updated Phase 28)
  * 
  * Tests all 6 initialization operation classes:
- * - AddPlane3DOp
+ * - AddPlane3DFixedOp (formerly AddPlane3DOp)
  * - AddProjectionPlaneOp
  * - AddOriginPoint2DOp
  * - AddHingeLineOp
@@ -11,10 +11,10 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Vector3 } from 'three';
+import { Vector3, Vector4 } from 'three';
 import { World } from '@/domain/world/World';
 import {
-  AddPlane3DOp,
+  AddPlane3DFixedOp,
   AddProjectionPlaneOp,
   AddOriginPoint2DOp,
   AddHingeLineOp,
@@ -66,9 +66,11 @@ describe('Initialization Operations', () => {
     });
   });
 
-  describe('AddPlane3DOp', () => {
+  describe('AddPlane3DFixedOp', () => {
     it('should create horizontal 3D plane', () => {
-      const op = new AddPlane3DOp('horizontal', 'plane_test_H');
+      const point = new Vector4(0, 0, 0, 1);   // Homogeneous: point
+      const normal = new Vector4(0, 0, 1, 0);  // Homogeneous: vector
+      const op = new AddPlane3DFixedOp(point, normal, 'plane_test_H', 'P_H');
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
@@ -77,20 +79,26 @@ describe('Initialization Operations', () => {
       const plane = (world as any).planes.get('plane_test_H');
       expect(plane).toBeDefined();
       expect(plane.type).toBe('projection');
+      expect(plane.label).toBe('P_H');
     });
 
     it('should create vertical 3D plane', () => {
-      const op = new AddPlane3DOp('vertical', 'plane_test_V');
+      const point = new Vector4(0, 0, 0, 1);   // Homogeneous: point
+      const normal = new Vector4(0, 1, 0, 0);  // Homogeneous: vector
+      const op = new AddPlane3DFixedOp(point, normal, 'plane_test_V', 'P_V');
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
       
       const plane = (world as any).planes.get('plane_test_V');
       expect(plane).toBeDefined();
+      expect(plane.label).toBe('P_V');
     });
 
     it('should undo plane creation', () => {
-      const op = new AddPlane3DOp('horizontal', 'plane_undo_test');
+      const point = new Vector4(0, 0, 0, 1);
+      const normal = new Vector4(0, 0, 1, 0);
+      const op = new AddPlane3DFixedOp(point, normal, 'plane_undo_test');
       op.apply(world);
       
       expect((world as any).planes.has('plane_undo_test')).toBe(true);
@@ -101,31 +109,36 @@ describe('Initialization Operations', () => {
     });
 
     it('should have valid parameters and outputs', () => {
-      const op = new AddPlane3DOp('horizontal', 'plane_test');
+      const point = new Vector4(0, 0, 0, 1);
+      const normal = new Vector4(0, 0, 1, 0);
+      const op = new AddPlane3DFixedOp(point, normal, 'plane_test');
       
-      expect(op.parameters).toEqual({
-        orientation: 'horizontal',
-        planeId: 'plane_test'
-      });
+      expect(op.parameters.point).toEqual({ x: 0, y: 0, z: 0, w: 1 });
+      expect(op.parameters.normal).toEqual({ x: 0, y: 0, z: 1, w: 0 });
+      expect(op.parameters.planeId).toBe('plane_test');
     });
 
     it('should serialize correctly', () => {
-      const op = new AddPlane3DOp('vertical', 'plane_ser');
+      const point = new Vector4(0, 0, 0, 1);
+      const normal = new Vector4(0, 1, 0, 0);
+      const op = new AddPlane3DFixedOp(point, normal, 'plane_ser', 'P_V');
       op.apply(world); // Need to apply to populate outputs
       const serialized = op.serialize();
       
-      expect(serialized).toEqual({
-        type: 'AddPlane3D',
-        orientation: 'vertical',
-        planeId: 'plane_ser'
-      });
+      expect(serialized.type).toBe('AddPlane3DFixed');
+      expect(serialized.point).toEqual({ x: 0, y: 0, z: 0, w: 1 });
+      expect(serialized.normal).toEqual({ x: 0, y: 1, z: 0, w: 0 });
+      expect(serialized.planeId).toBe('plane_ser');
+      expect(serialized.label).toBe('P_V');
     });
   });
 
   describe('AddProjectionPlaneOp', () => {
     beforeEach(() => {
       // Create 3D plane first
-      new AddPlane3DOp('horizontal', 'plane_3d_test').apply(world);
+      const point = new Vector4(0, 0, 0, 1);
+      const normal = new Vector4(0, 0, 1, 0);
+      new AddPlane3DFixedOp(point, normal, 'plane_3d_test', 'P_H').apply(world);
     });
 
     it('should create projection plane', () => {
@@ -164,7 +177,9 @@ describe('Initialization Operations', () => {
 
   describe('AddOriginPoint2DOp', () => {
     beforeEach(() => {
-      new AddPlane3DOp('horizontal', 'plane_3d').apply(world);
+      const point = new Vector4(0, 0, 0, 1);
+      const normal = new Vector4(0, 0, 1, 0);
+      new AddPlane3DFixedOp(point, normal, 'plane_3d', 'P_H').apply(world);
       new AddProjectionPlaneOp('plane_3d', 'horizontal', 'proj_plane').apply(world);
     });
 
@@ -206,8 +221,14 @@ describe('Initialization Operations', () => {
 
   describe('AddHingeLineOp', () => {
     beforeEach(() => {
-      new AddPlane3DOp('horizontal', 'plane_H').apply(world);
-      new AddPlane3DOp('vertical', 'plane_V').apply(world);
+      const pointH = new Vector4(0, 0, 0, 1);
+      const normalH = new Vector4(0, 0, 1, 0);
+      new AddPlane3DFixedOp(pointH, normalH, 'plane_H', 'P_H').apply(world);
+      
+      const pointV = new Vector4(0, 0, 0, 1);
+      const normalV = new Vector4(0, 1, 0, 0);
+      new AddPlane3DFixedOp(pointV, normalV, 'plane_V', 'P_V').apply(world);
+      
       new AddProjectionPlaneOp('plane_H', 'horizontal', 'proj_H').apply(world);
       new AddProjectionPlaneOp('plane_V', 'vertical', 'proj_V').apply(world);
     });
@@ -252,7 +273,9 @@ describe('Initialization Operations', () => {
 
   describe('AddHalfHingeLine2DOp', () => {
     beforeEach(() => {
-      new AddPlane3DOp('horizontal', 'plane_3d').apply(world);
+      const point = new Vector4(0, 0, 0, 1);
+      const normal = new Vector4(0, 0, 1, 0);
+      new AddPlane3DFixedOp(point, normal, 'plane_3d', 'P_H').apply(world);
       new AddProjectionPlaneOp('plane_3d', 'horizontal', 'proj_plane').apply(world);
     });
 

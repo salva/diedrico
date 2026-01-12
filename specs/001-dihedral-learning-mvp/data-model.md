@@ -1873,25 +1873,246 @@ class IntersectionTool {
 
 ---
 
+## Element Base Class Hierarchy
+
+**Phase 52**: Unified base class architecture for all geometric elements (both 2D and 3D).
+
+### Motivation
+
+Currently, we have:
+- **Element2D** (Phase 44): Common base for Point2D, Line2D, Circle2D with properties: id, planeId, label, visible, type
+- **Element2DRealization2D** (Phase 44): Common base for 2D realizations with property: feasible
+- **3D Elements** (Plane3D, HingeLine): No common base class, independently define id and label properties
+
+**Problems**:
+1. **Code Duplication**: id and label properties duplicated across Element2D and each 3D element class
+2. **No Uniform Handling**: Cannot write generic functions that work with both 2D and 3D elements
+3. **Inconsistent Interfaces**: 3D elements evolved independently, may have inconsistent property names (e.g., HingeLine uses `name` instead of `label`)
+4. **Type System Gaps**: No way to express "any geometric element" regardless of dimension
+5. **Realization Hierarchy Incomplete**: Element2DRealization2D has no sibling for 3D realizations (if needed in future)
+
+**Solution**: Extract common properties into base classes:
+- **Element**: Base for all geometric elements with id, label
+- **Element3D**: Extends Element for 3D elements (Plane3D, HingeLine, future Point3D/Line3D/Circle3D)
+- **Element2D**: Refactor to extend Element, add 2D-specific properties (planeId, visible, type)
+- **Realization**: Base for all realization classes with feasible property
+- **Element2DRealization2D**: Refactor to extend Realization
+
+### Element Base Class
+
+Abstract base class for ALL geometric elements in the system (both 2D and 3D).
+
+```typescript
+/**
+ * Base class for all geometric elements (2D and 3D)
+ * 
+ * Provides common identification and labeling for all geometric objects.
+ * This is the root of the element hierarchy:
+ *   Element
+ *   ├── Element3D (Plane3D, HingeLine, future Point3D/Line3D/Circle3D)
+ *   └── Element2D (Point2D, Line2D, Circle2D)
+ * 
+ * Design Principle: DRY (Don't Repeat Yourself)
+ * - id and label are common to ALL geometric elements
+ * - Extracted to base class to avoid duplication
+ * - Enables uniform handling across dimensions
+ */
+export abstract class Element {
+  /** Unique identifier for this element */
+  readonly id: string;
+  
+  /** Optional user-assigned label for UI display */
+  label?: string;
+  
+  /**
+   * Construct a geometric element
+   * 
+   * @param id Element ID (format varies by dimension)
+   * @param label Optional user-friendly label
+   */
+  constructor(id: string, label?: string) {
+    this.id = id;
+    this.label = label;
+  }
+  
+  /**
+   * Clone this element
+   * Must be implemented by concrete subclasses
+   */
+  abstract clone(): Element;
+}
+```
+
+**Properties**:
+- `id`: Unique identifier
+  - For 2D elements: hierarchical format `{planeId}/{localId}` (enforced by validateElementId in Element2D constructor)
+  - For 3D elements: simple ID (e.g., `'plane_1'`, `'hinge_h_v'`)
+- `label`: Optional user-friendly name for UI display
+  - Examples: "A", "P₁", "HL_HV", "α"
+
+**Benefits**:
+- **DRY Principle**: id and label defined once, not repeated in Element2D and every 3D element class
+- **Uniform Interface**: Can write functions accepting `Element` to work with any geometric object
+- **Type Safety**: `isElement(obj)` type guard works for all elements
+- **Consistent Property Names**: Enforce `label` instead of `name` across all elements
+- **Future-Proof**: Easy to add new common properties (createdBy, visualStyle, metadata) in one place
+
+### Element3D Class
+
+Abstract base class for 3D geometric elements (planes, hinge lines, future 3D primitives).
+
+```typescript
+/**
+ * Base class for 3D geometric elements
+ * 
+ * Extends Element with no additional properties.
+ * Serves as type marker and organizational structure for 3D elements.
+ * 
+ * Current 3D element types:
+ * - Plane3D (and subclasses: Plane3DFixed, Plane3DByTraces, Plane3DByPointAndNormal)
+ * - HingeLine
+ * 
+ * Future 3D element types (when needed):
+ * - Point3D (3D point in space)
+ * - Line3D (3D line in space)
+ * - Circle3D (3D circle in space)
+ */
+export abstract class Element3D extends Element {
+  /**
+   * Get dependencies - IDs of elements this 3D element depends on
+   * 
+   * Examples:
+   * - Plane3DFixed: [] (no dependencies)
+   * - Plane3DByTraces: [traceH, traceV] (depends on 2D trace lines)
+   * - HingeLine: [plane1, plane2] (depends on two planes)
+   */
+  abstract getDependencies(): string[];
+  
+  /**
+   * Clone this 3D element
+   */
+  abstract clone(): Element3D;
+}
+```
+
+**Properties**:
+- Inherits `id` and `label` from Element
+- No additional properties at this level
+
+**Design Note**: Element3D "probably adds nothing" (per planning notes) because 3D elements don't need:
+- `planeId` (they're not confined to a single projection plane)
+- `visible` (3D elements don't have direct UI visibility toggles; their 2D projections do)
+- `type` discriminator (handled by concrete subclass instanceof checks)
+
+However, Element3D provides:
+- **Type Organization**: Clear distinction between 2D and 3D elements in type system
+- **Dependency Interface**: All 3D elements must implement getDependencies()
+- **Future Extensibility**: Common place to add 3D-specific functionality later
+
+### Realization Base Class
+
+Abstract base class for ALL element realizations (geometric computations).
+
+```typescript
+/**
+ * Base class for all element realizations (2D and potential future 3D)
+ * 
+ * Realization classes contain ONLY geometric data resulting from computation:
+ * - Position/shape/orientation data (coordinates, vectors, etc.)
+ * - Feasibility status (whether computation succeeded)
+ * 
+ * Behavioral differences belong in domain classes (Element2D, Element3D).
+ * 
+ * Hierarchy:
+ *   Realization
+ *   └── Element2DRealization2D (Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D)
+ *   └── Element3DRealization3D (future: if 3D elements need dynamic realization)
+ * 
+ * Design Principle: DRY + Architectural Symmetry
+ * - Mirrors Element base class pattern in realization layer
+ * - All realizations share feasibility property
+ * - Enables uniform feasibility checking
+ */
+export abstract class Realization {
+  /**
+   * Whether the geometric computation succeeded
+   * 
+   * Feasibility indicates whether the realization could be computed from the domain
+   * element's definition. For example:
+   * - Intersection of parallel lines → feasible = false
+   * - Intersection of perpendicular lines → feasible = true
+   * - Circle with negative radius → feasible = false
+   * - Plane from parallel traces → feasible = false
+   */
+  readonly feasible: boolean;
+  
+  /**
+   * Constructor for all element realizations
+   * 
+   * @param feasible - Whether the geometric computation succeeded (default: true)
+   */
+  constructor(feasible: boolean = true) {
+    this.feasible = feasible;
+  }
+  
+  /**
+   * Check if this realization is feasible (geometric computation succeeded)
+   * 
+   * This method provides a uniform way to check feasibility across all realization types.
+   * Infeasible realizations typically should not be rendered or used in further calculations.
+   * 
+   * @returns true if the realization is feasible, false otherwise
+   */
+  isFeasible(): boolean {
+    return this.feasible;
+  }
+}
+```
+
+**Properties**:
+- `feasible`: Boolean flag indicating whether geometric computation succeeded
+
+**Benefits**:
+- **DRY Principle**: feasible property defined once, not duplicated in Element2DRealization2D and potential future realization classes
+- **Uniform Interface**: isFeasible() method guaranteed to exist on all realizations
+- **Type Safety**: Can write functions accepting `Realization` base type
+- **Architectural Symmetry**: Realization hierarchy mirrors Element hierarchy
+- **Generic Processing**: Infeasibility handling code can work with Realization base type
+
+**Design Note**: Currently only 2D elements need realizations (Element2DRealization2D). 3D elements in MVP have fixed geometry (Plane3DFixed) or are defined by references (Plane3DByTraces, HingeLine). If future phases introduce dynamically computed 3D geometry, Element3DRealization3D can extend Realization.
+
+---
+
 ## Element2D Base Class
 
 **Purpose**: Common base class for all 2D geometric elements (Point2D, Line2D, Circle2D) to provide uniform interface and shared properties.
 
-**Current Problem**: Point2D, Line2D, and Circle2D are three separate abstract hierarchies with no common ancestor, despite sharing identical properties (id, planeId, label, visible, type). This creates code duplication and prevents uniform handling in utilities, factories, and tests.
+**Phase 44**: Originally introduced as standalone base class with id, planeId, label, visible, type properties.
 
-**Solution**: Introduce abstract `Element2D` base class containing common properties and abstract methods. All 2D element types extend from it.
+**Phase 52 Refactoring**: Element2D now extends Element base class to share id and label properties with 3D elements. Element2D adds 2D-specific properties: planeId, visible, type.
 
-### Element2D Base Class
+**Previous Problem**: Point2D, Line2D, and Circle2D were three separate abstract hierarchies with no common ancestor, causing code duplication and preventing uniform handling.
+
+**Current Solution**: Element2D extends Element and provides 2D-specific functionality. Combined with Element3D, this creates a unified hierarchy for all geometric elements.
+
+### Element2D Class (Refactored in Phase 52)
 
 ```typescript
 /**
  * Base class for all 2D geometric elements (points, lines, circles)
- * Provides common properties and interface for element identification and plane membership
+ * 
+ * Extends Element to inherit id and label properties.
+ * Adds 2D-specific properties for plane membership, visibility, and type discrimination.
+ * 
+ * Properties:
+ * - id (from Element): Hierarchical format '{planeId}/{localId}'
+ * - label (from Element): Optional user-friendly label
+ * - planeId: Which projection plane this element belongs to
+ * - visible: Whether element is visible in canvas UI
+ * - type: Element type discriminator (e.g., 'free', 'by-two-points')
  */
-export abstract class Element2D {
-  readonly id: string;              // Unique identifier (required)
+export abstract class Element2D extends Element {
   readonly planeId: string;         // Which projection plane this element belongs to
-  label?: string;                   // Optional user-assigned label
   visible: boolean = true;          // Whether element is visible in canvas
   abstract readonly type: string;   // Element type discriminator (e.g., 'free', 'by-two-points')
   
@@ -1900,9 +2121,14 @@ export abstract class Element2D {
     planeId: string,
     label?: string
   ) {
-    this.id = id;
+    super(id, label);  // Pass id and label to Element constructor
+    
+    // Phase 45: Validate hierarchical ID format
+    // Ensure element ID starts with its container plane ID
+    // Throws error if ID doesn't match format '{planeId}/{localId}'
+    validateElementId(id, planeId);
+    
     this.planeId = planeId;
-    this.label = label;
   }
   
   /**
@@ -2055,33 +2281,32 @@ export abstract class Circle2D extends Element2D {
 
 **Solution**: Introduce abstract `Element2DRealization2D` base class containing the common `feasible` property. All 2D realization types extend from it.
 
-### Element2DRealization2D Base Class
+### Element2DRealization2D Base Class (Refactored in Phase 52)
+
+**Phase 44**: Originally introduced as standalone base class with feasible property.
+
+**Phase 52 Refactoring**: Element2DRealization2D now extends Realization base class to share feasible property with potential future 3D realizations.
 
 ```typescript
 /**
  * Base class for all 2D element realizations (point, line, circle positions/shapes)
- * Provides common feasibility status for geometric computations
+ * 
+ * Extends Realization to inherit feasible property.
+ * Provides common feasibility status for all 2D geometric computations.
  * 
  * Architectural principle: Realization classes contain ONLY geometric data.
  * No structural information (id, planeId) - that stays in domain objects.
+ * 
+ * Architectural symmetry: Mirrors Element → Element2D hierarchy pattern.
  */
-export abstract class Element2DRealization2D {
-  readonly feasible: boolean;  // Whether the geometric computation succeeded
-  
-  constructor(feasible: boolean = true) {
-    this.feasible = feasible;
-  }
-  
+export abstract class Element2DRealization2D extends Realization {
   /**
-   * Check if this realization is feasible (geometric computation succeeded)
+   * Constructor for all 2D element realizations
    * 
-   * Infeasible realizations occur when:
-   * - Parent elements are infeasible (e.g., intersection of parallel lines)
-   * - Geometric constraints cannot be satisfied (e.g., circle with coincident points)
-   * - Elements degenerate to invalid configurations
+   * @param feasible - Whether the geometric computation succeeded (default: true)
    */
-  isFeasible(): boolean {
-    return this.feasible;
+  constructor(feasible: boolean = true) {
+    super(feasible);  // Pass feasible to Realization constructor
   }
 }
 ```

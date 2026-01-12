@@ -1,8 +1,13 @@
 /**
- * Plane3D - 3D plane representation
+ * Plane3D - 3D plane representation (abstract base)
  * 
- * Represents a 3D plane defined by a point and normal vector.
- * Used for projection planes (P_V, P_H) and auxiliary planes.
+ * Abstract base class for 3D planes. Concrete implementations provide
+ * specific construction rules:
+ * - Plane3DFixed: Hard-coded planes (P_H: z=0, P_V: y=0) for initialization
+ * - Plane3DByTraces: Computed from traces (future)
+ * 
+ * **Phase 52**: Refactored to extend Element3D, removing id and label properties
+ * which are now inherited from Element base class.
  * 
  * Per data-model.md §Plane3DByPointAndNormal:
  * - Point on plane (P₀)
@@ -13,6 +18,7 @@
  */
 
 import { Vector3, Vector4 } from 'three';
+import { Element3D } from './Element3D';
 
 export interface Plane3DCoordinateSystem {
   origin: Vector4;     // Origin point on the plane (x, y, z, 1)
@@ -22,10 +28,8 @@ export interface Plane3DCoordinateSystem {
 
 export type Plane3DType = 'projection' | 'auxiliary';
 
-export class Plane3D {
-  id?: string;
+export abstract class Plane3D extends Element3D {
   type: Plane3DType;
-  label?: string;
   
   // Plane3D definition: point + normal
   point: Vector4;      // Point on the plane (x, y, z, 1)
@@ -42,16 +46,33 @@ export class Plane3D {
     maxV: number;
   };
 
-  constructor(
+  /**
+   * Get the plane equation parameters
+   * For planes defined by point + normal: n·(P - P₀) = 0
+   * Concrete implementations may use different representations
+   */
+  abstract getEquation(): { point: Vector4; normal: Vector4 };
+
+  /**
+   * Get dependencies - IDs of elements this plane depends on
+   * Fixed planes have no dependencies, trace-based planes depend on traces
+   * Inherited from Element3D
+   */
+  abstract getDependencies(): string[];
+
+  protected constructor(
+    id: string,
     point: Vector4,
     normal: Vector4,
     type: Plane3DType = 'auxiliary',
     label?: string
   ) {
+    // Phase 52: Call Element3D constructor with id and label
+    super(id, label);
+    
     this.point = point.clone();
     this.normal = this.normalize(normal);
     this.type = type;
-    this.label = label;
   }
 
   /**
@@ -103,74 +124,9 @@ export class Plane3D {
 
   /**
    * Clone this plane
+   * Subclasses must implement their own cloning logic
    */
-  clone(): Plane3D {
-    const cloned = new Plane3D(this.point, this.normal, this.type, this.label);
-    if (this.id) {
-      cloned.id = this.id;
-    }
-    if (this.coordinateSystem) {
-      cloned.coordinateSystem = {
-        origin: this.coordinateSystem.origin.clone(),
-        uAxis: this.coordinateSystem.uAxis.clone(),
-        vAxis: this.coordinateSystem.vAxis.clone()
-      };
-    }
-    if (this.boundaries) {
-      cloned.boundaries = { ...this.boundaries };
-    }
-    return cloned;
-  }
-
-  /**
-   * Create P_H (horizontal projection plane)
-   * Z = 0 plane with origin at (0,0,0)
-   */
-  static createPH(): Plane3D {
-    const plane = new Plane3D(
-      new Vector4(0, 0, 0, 1),           // Origin
-      new Vector4(0, 0, 1, 0),           // Normal: +Z
-      'projection',
-      'P_H'
-    );
-    
-    // Set coordinate system per spec.md
-    plane.setCoordinateSystem({
-      origin: new Vector4(0, 0, 0, 1),
-      uAxis: new Vector4(1, 0, 0, 0),    // i = (1,0,0) → X in 3D
-      vAxis: new Vector4(0, 1, 0, 0)     // j = (0,1,0) → Y in 3D
-    });
-    
-    // Default boundaries
-    plane.setBoundaries(-400, 400, -400, 400);
-    
-    return plane;
-  }
-
-  /**
-   * Create P_V (vertical projection plane)
-   * Y = 0 plane with origin at (0,0,0)
-   */
-  static createPV(): Plane3D {
-    const plane = new Plane3D(
-      new Vector4(0, 0, 0, 1),           // Origin
-      new Vector4(0, 1, 0, 0),           // Normal: +Y
-      'projection',
-      'P_V'
-    );
-    
-    // Set coordinate system per spec.md
-    plane.setCoordinateSystem({
-      origin: new Vector4(0, 0, 0, 1),
-      uAxis: new Vector4(1, 0, 0, 0),    // i = (1,0,0) → X in 3D
-      vAxis: new Vector4(0, 0, 1, 0)     // k = (0,0,1) → Z in 3D
-    });
-    
-    // Default boundaries
-    plane.setBoundaries(-400, 400, -400, 400);
-    
-    return plane;
-  }
+  abstract clone(): Plane3D;
 
   /**
    * Getters for boundaries (convenience accessors)
@@ -189,5 +145,61 @@ export class Plane3D {
 
   get maxV(): number {
     return this.boundaries?.maxV ?? 400;
+  }
+}
+
+/**
+ * Plane3DFixed - Fixed 3D plane defined by point and normal
+ * 
+ * Represents a plane with fixed geometric definition (no dependencies).
+ * The plane is fully defined by a point on the plane and a normal vector.
+ * 
+ * **Phase 52**: Updated constructor to pass id as required parameter to parent,
+ * and implements getDependencies() from Element3D.
+ * 
+ * @remarks This class is typically used during world initialization but can
+ * represent any plane defined by point and normal without dependencies.
+ */
+export class Plane3DFixed extends Plane3D {
+  constructor(
+    id: string,
+    point: Vector4,
+    normal: Vector4,
+    label?: string
+  ) {
+    // Phase 52: Pass id to Plane3D constructor (which calls Element3D/Element)
+    super(id, point, normal, 'projection', label);
+  }
+
+  getEquation(): { point: Vector4; normal: Vector4 } {
+    return {
+      point: this.point.clone(),
+      normal: this.normal.clone()
+    };
+  }
+
+  getDependencies(): string[] {
+    // Phase 52: Fixed planes have no dependencies
+    return [];
+  }
+
+  clone(): Plane3D {
+    const cloned = new Plane3DFixed(
+      this.id,
+      this.point.clone(),
+      this.normal.clone(),
+      this.label
+    );
+    if (this.coordinateSystem) {
+      cloned.coordinateSystem = {
+        origin: this.coordinateSystem.origin.clone(),
+        uAxis: this.coordinateSystem.uAxis.clone(),
+        vAxis: this.coordinateSystem.vAxis.clone()
+      };
+    }
+    if (this.boundaries) {
+      cloned.boundaries = { ...this.boundaries };
+    }
+    return cloned;
   }
 }

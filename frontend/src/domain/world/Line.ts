@@ -274,7 +274,7 @@ export class Line2DParallel extends Line2D {
  * This is the base class for Guide2D (guides are lines with special rendering/behavior).
  */
 export class Line2DPerpendicularToLine extends Line2D {
-  readonly type: 'perpendicular-to-line' = 'perpendicular-to-line';
+  readonly type: Line2DType;  // Phase 52: Allow subclasses to override with their own type
   readonly referenceLineId: string;  // Line to be perpendicular to
   readonly throughPointId: string;   // Point the new line passes through
   
@@ -283,9 +283,11 @@ export class Line2DPerpendicularToLine extends Line2D {
     referenceLineId: string,
     throughPointId: string,
     planeId: string,
-    label?: string
+    label?: string,
+    type: Line2DType = 'perpendicular-to-line'  // Default type, subclasses can override
   ) {
     super(id, planeId, label);
+    this.type = type;
     this.referenceLineId = referenceLineId;
     this.throughPointId = throughPointId;
   }
@@ -296,7 +298,8 @@ export class Line2DPerpendicularToLine extends Line2D {
       this.referenceLineId,
       this.throughPointId,
       this.planeId,
-      this.label
+      this.label,
+      this.type
     );
   }
   

@@ -595,6 +595,119 @@ Tools are grouped into **functional families**, each represented by a primary bu
 - Last-used sub-tool becomes default for efficiency
 
 #### Sequential Interaction Flow
+#### Element Variations and Tool Architecture
+
+**Principle**: Different construction methods require different tools, even for the same element type.
+
+**Tool Creation Per Variation**:
+
+Each element variation (see spec.md "Element Construction Methods") has its own dedicated tool:
+
+- **Free Point Tool**: Creates FreePoint2D by clicking to position
+- **Line-Line Intersection Tool**: Creates Point2DLineLineIntersection from two lines
+- **Line-Circle Intersection Tool**: Creates Point2DLineCircleIntersection from line + circle
+- **Circle-Circle Intersection Tool**: Creates Point2DCircleCircleIntersection from two circles
+- **Free Line Tool**: Creates Line2D from two selected points
+- **Parallel Line Tool** (planned): Creates ParallelLine2D from point + reference line
+- **Perpendicular Line Tool** (planned): Creates PerpendicularLine2D from point + reference line
+- **Plane by Traces Tool** (planned): Creates Plane3DByTraces from two trace lines
+
+**Why Separate Tools Matter for UI**:
+
+1. **Different input sequences**:
+   - Free Point: Click position → done
+   - Line-Line Intersection: Select line 1 → select line 2 → done
+   - Line-Circle Intersection: Select line → select circle → choose index (0 or 1) → done
+
+2. **Different selection masks**:
+   - Free Point Tool: No mask (clicks canvas directly)
+   - Intersection Tools: mask=['line', 'circle'] (depending on step)
+   - Parallel Line Tool: mask=['line'] (step 1), mask=['point'] (step 2)
+
+3. **Different preview behavior**:
+   - Free Point: Shows point at cursor position
+   - Line-Line Intersection: Shows intersection point(s) when cursor hovers over second line
+   - Line-Circle Intersection: Shows 0, 1, or 2 intersection points, highlights selected index
+
+4. **Different validation requirements**:
+   - Free Point: Position must be within canvas bounds
+   - Intersections: Selected elements must actually intersect (validation at execution)
+   - Parallel Line: Reference line and through-point cannot be coincident
+
+5. **Different feedback requirements**:
+   - Intersections: "No intersection" message if elements don't intersect
+   - Index selection: Visual indicators showing which solution is selected (0 or 1)
+   - Infeasibility: If later edits make intersection infeasible, element becomes infeasible
+
+**Tool Family Organization by Variation**:
+
+Tool families group variations of the same element type:
+
+```
+[Point ▼]
+  └─ Free Point              (creates FreePoint2D)
+
+[Line ▼]
+  └─ Free Line              (creates Line2D)
+```
+
+**Note**: Additional variations (intersection points, parallel/perpendicular lines, auxiliary planes) will be added when 3D manipulation support is implemented.
+
+NOTE: The Plane tool family does NOT include "Fixed Plane" - Plane3DFixed (P_H, P_V) 
+are initialization-only elements that users CANNOT create via UI. Only Plane3DByTraces 
+is user-creatable.
+```
+
+**CRITICAL - Initialization-Only Elements Have No Tools**:
+
+Some element variations exist only for world initialization and CANNOT be created by users:
+
+- **Plane3DFixed**: Only for P_H and P_V during world setup
+  - No tool in toolbar
+  - No way for users to create additional fixed planes
+  - Purpose: Represent the fundamental horizontal and vertical projection planes
+  
+- **Origin Points**: O_H and O_V created during initialization
+  - No special tool (just FreePoint2D with locked=true)
+  - Users can create other free points, but origins are pre-existing
+
+All other variations are user-creatable and have corresponding tools.
+
+**Visual Differentiation in Canvas**:
+
+Elements created by different construction methods have visual differences:
+
+- **Free elements** (user-positioned):
+  - Full opacity/saturation
+  - Standard colors (black for lines, blue for points)
+  - Always shown when visible
+  
+- **Derived elements** (computed from dependencies):
+  - Slightly de-emphasized (80% opacity or lighter color)
+  - Labeled automatically with construction info (e.g., "P₁ ∩ L₂")
+  - Can become infeasible (shown with dashed outline + red tint)
+
+- **Fixed elements** (initialization only - P_H, P_V, O_H, O_V):
+  - Always locked (cannot be moved)
+  - Displayed with special visual treatment (heavier weight, distinctive color)
+  - No creation tool (created during world initialization)
+
+**Interaction Behavior Differences**:
+
+- **Free elements**: 
+  - Can be moved by dragging
+  - Can be deleted
+  - Cannot become infeasible
+  
+- **Derived elements**:
+  - Cannot be moved directly (move parent elements instead)
+  - Can be deleted (breaks dependency chain)
+  - Can become infeasible (when parent positions make computation invalid)
+  
+- **Fixed elements**:
+  - Cannot be moved (locked permanently)
+  - Cannot be deleted (structural elements)
+  - Never infeasible (hard-coded values)
 
 Each tool defines an **explicit sequential flow** of steps:
 

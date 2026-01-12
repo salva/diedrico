@@ -46,7 +46,8 @@ export class Guide2D extends Line2DPerpendicularToLine {
     label?: string,
     siblingGuideId?: string
   ) {
-    super(id, referenceLineId, throughPointId, planeId, label);
+    // Phase 52: Pass 'guide' as type to parent constructor
+    super(id, referenceLineId, throughPointId, planeId, label, 'guide');
     this.siblingGuideId = siblingGuideId;
   }
 

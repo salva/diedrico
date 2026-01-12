@@ -2,12 +2,12 @@ import type { World } from '../../domain/world/World';
 import type { Command } from '../Command';
 import {
   CreateInitializationSubprocessOp,
-  AddPlane3DOp,
+  AddPlane3DFixedOp,
   AddProjectionPlaneOp,
   AddOriginPoint2DOp,
   SetActivePlaneOp
 } from '../operations/world/InitializationOps';
-import { Vector3 } from 'three';
+import { Vector3, Vector4 } from 'three';
 import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
 
 /**
@@ -37,12 +37,23 @@ export function buildWorldInitialization(_world: World, cmd: Command): void {
   cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
   
   // Step 2-3: Create 3D planes
-  // Operations generate IDs internally via world.generatePlaneId()
-  const planeHOp = new AddPlane3DOp('horizontal');
+  // P_H: horizontal plane (z=0), normal=(0,0,1)
+  const planeHOp = new AddPlane3DFixedOp(
+    new Vector4(0, 0, 0, 1),  // Point: origin (homogeneous)
+    new Vector4(0, 0, 1, 0),  // Normal: +Z (homogeneous)
+    undefined,                // Let operation generate ID
+    'P_H'                     // Label
+  );
   cmd.addAndExecute(planeHOp);
   const planeHId = planeHOp.outputs.planeId as string;
   
-  const planeVOp = new AddPlane3DOp('vertical');
+  // P_V: vertical plane (y=0), normal=(0,1,0)
+  const planeVOp = new AddPlane3DFixedOp(
+    new Vector4(0, 0, 0, 1),  // Point: origin (homogeneous)
+    new Vector4(0, 1, 0, 0),  // Normal: +Y (homogeneous)
+    undefined,                // Let operation generate ID
+    'P_V'                     // Label
+  );
   cmd.addAndExecute(planeVOp);
   const planeVId = planeVOp.outputs.planeId as string;
   

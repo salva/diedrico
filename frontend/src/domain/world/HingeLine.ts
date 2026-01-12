@@ -8,11 +8,15 @@
  * The hinge line exists in 3D space and automatically realizes on both planes it connects.
  * Each plane gets a HingeLineRealization2D (the 2D view of the hinge line on that plane).
  * 
+ * **Phase 52**: Refactored to extend Element3D, removing id and label properties
+ * which are now inherited from Element base class. Replaces `name` with `label`.
+ * 
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
  */
 
 import { Vector3, Vector4 } from 'three';
 import { Line2D, Line2DRealization2D } from './Line';
+import { Element3D } from './Element3D';
 
 /**
  * HalfHingeLine2D - 2D representation of a hinge line on a specific projection plane
@@ -79,10 +83,11 @@ export class HalfHingeLine2D extends Line2D {
  * Each HingeLine has exactly 2 HalfHingeLine2D objects (one per plane) that represent
  * how the hinge line appears in each plane's (u,v) coordinate system. These HalfHingeLine2D
  * objects are owned by their respective ProjectionPlane objects.
+ * 
+ * **Phase 52**: Refactored to extend Element3D. Inherits id and label from Element.
+ * Implements getDependencies() to return [plane1Id, plane2Id].
  */
-export class HingeLine {
-  readonly id: string;
-  readonly name: string;
+export class HingeLine extends Element3D {
   readonly plane1Id: string;  // First projection plane
   readonly plane2Id: string;  // Second projection plane
   readonly line3D?: {         // 3D representation (for future 3D rendering)
@@ -92,20 +97,46 @@ export class HingeLine {
 
   constructor(
     id: string,
-    name: string,
+    label: string,
     plane1Id: string,
     plane2Id: string,
     line3D?: { point: Vector4; direction: Vector4 }
   ) {
+    // Phase 52: Call Element3D constructor with id and label
+    super(id, label);
+    
     if (plane1Id === plane2Id) {
       throw new Error('HingeLine: plane1 and plane2 must be distinct');
     }
 
-    this.id = id;
-    this.name = name;
     this.plane1Id = plane1Id;
     this.plane2Id = plane2Id;
     this.line3D = line3D;
+  }
+
+  /**
+   * Get dependencies - IDs of planes this hinge line depends on
+   * Implementation of Element3D.getDependencies()
+   */
+  getDependencies(): string[] {
+    return [this.plane1Id, this.plane2Id];
+  }
+
+  /**
+   * Clone this hinge line
+   * Implementation of Element3D.clone()
+   */
+  clone(): HingeLine {
+    return new HingeLine(
+      this.id,
+      this.label || '',
+      this.plane1Id,
+      this.plane2Id,
+      this.line3D ? {
+        point: this.line3D.point.clone(),
+        direction: this.line3D.direction.clone()
+      } : undefined
+    );
   }
 
   /**

@@ -6,7 +6,7 @@
  * that every World instance needs.
  * 
  * Operations:
- * - AddPlane3DOp: Create a 3D plane (P_H or P_V)
+ * - AddPlane3DFixedOp: Create a fixed 3D plane (P_H or P_V)
  * - AddProjectionPlaneOp: Create a projection plane
  * - AddOriginPoint2DOp: Create a locked origin point
  * - AddHingeLineOp: Create a hinge line connecting two planes
@@ -17,31 +17,45 @@
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
  */
 
-import { Vector3 } from 'three';
+import { Vector3, Vector4 } from 'three';
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 /**
- * AddPlane3DOp - Create a 3D plane
+ * AddPlane3DFixedOp - Create a fixed 3D plane
  * 
- * Creates either horizontal (P_H) or vertical (P_V) 3D plane.
+ * Creates a fixed 3D plane defined by point and normal vector.
+ * 
+ * @remarks This operation is typically used during world initialization.
  */
-export class AddPlane3DOp implements IOperation {
-  readonly type = 'AddPlane3D';
+export class AddPlane3DFixedOp implements IOperation {
+  readonly type = 'AddPlane3DFixed';
   readonly parameters: Record<string, any>;
   outputs: Record<string, any> = {};
   
   constructor(
-    private readonly orientation: 'horizontal' | 'vertical',
-    private readonly planeId?: string
+    private readonly point: Vector4,
+    private readonly normal: Vector4,
+    private readonly planeId?: string,
+    private readonly label?: string
   ) {
-    this.parameters = { orientation, planeId };
+    this.parameters = { 
+      point: { x: point.x, y: point.y, z: point.z, w: point.w },
+      normal: { x: normal.x, y: normal.y, z: normal.z, w: normal.w },
+      planeId,
+      label
+    };
   }
 
   apply(world: World): OperationResult {
     try {
       // Call element factory method - it handles ID generation
-      const plane = world.addPlane3D(this.orientation, this.planeId || this.outputs.planeId);
+      const plane = world.addPlane3DFixed(
+        this.point.clone(),
+        this.normal.clone(),
+        this.planeId || this.outputs.planeId,
+        this.label
+      );
       
       // Store ID in outputs for redo support
       this.outputs = { planeId: plane.id };
@@ -52,7 +66,7 @@ export class AddPlane3DOp implements IOperation {
     } catch (error) {
       return {
         success: false,
-        error: `Failed to create 3D plane: ${(error as Error).message}`,
+        error: `Failed to create fixed 3D plane: ${(error as Error).message}`,
         outputs: {}
       };
     }
@@ -67,8 +81,10 @@ export class AddPlane3DOp implements IOperation {
   serialize() {
     return {
       type: this.type,
-      orientation: this.orientation,
-      planeId: this.outputs.planeId
+      point: this.parameters.point,
+      normal: this.parameters.normal,
+      planeId: this.outputs.planeId,
+      label: this.label
     };
   }
 }

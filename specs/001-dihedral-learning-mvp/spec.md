@@ -92,6 +92,53 @@ Guides enable transporting points and distances between planes in an explicit, t
 - The UI must not create “implicit points” (e.g., a click somewhere along a segment is *not* treated as a point-on-segment).
 - If a later operation needs a point-on-curve/line/segment, the user must first create an explicit 2D point entity (e.g., point-on-element or intersection).
 
+#### Element Construction Methods
+
+Elements of the same type can be constructed in fundamentally different ways. Each construction method becomes a distinct **element variation** with its own creation tool and behavior:
+
+**Points**:
+- **Free Point**: User clicks to position anywhere on the active plane
+  - Tool: Free Point Tool
+  - Example: Drawing a triangle's vertices
+  - Special case: Origin points (O_H, O_V) are Free Points with locked=true
+
+**Note**: Intersection point variations (Line-Line, Line-Circle, Circle-Circle) will be added in future phases.
+
+**Lines**:
+- **Free Line**: User picks two existing points to define the line
+  - Tool: Line Tool + point selection
+  - Example: Connecting two traced points
+
+**Note**: Line variations (Parallel, Perpendicular) will be added in future phases.
+
+**Circles**:
+- **Circle by Center and Point**: Defined by center point and a point on the circumference
+  - Tool: Circle Tool + point selection
+  - Example: Creating an arc construction
+
+**Planes** (3D, created from 2D traces):
+- **Fixed Plane**: P_H and P_V with hard-coded orientations (**INITIALIZATION ONLY**)
+  - **CRITICAL**: NO user tool - users CANNOT create fixed planes via UI
+  - Created only during world initialization (bootstrapping)
+  - P_H at z=0 (horizontal), P_V at y=0 (vertical)
+  - This variation exists solely to represent the fundamental H and V projection planes
+
+**CRITICAL - Initialization-Only Elements**:
+- **Fixed Planes (Plane3DFixed)**: Created automatically during world setup, NO UI tools
+  - P_H and P_V only - these are the horizontal and vertical projection planes
+- **Origin points O_H, O_V**: Created as locked FreePoint2D during initialization
+- **Main hinge line HL_HV**: Created during world initialization
+
+**Note**: User-creatable plane variations (such as auxiliary planes) and 3D object manipulation are deferred to future phases when full 3D support is implemented.
+
+**Why Construction Methods Matter**:
+1. **Different parameters**: Free points need position; intersections need parent elements
+2. **Different dependencies**: Intersections update when parents move; free points don't
+3. **Different validity**: Intersections can become infeasible; free points can't
+4. **Different UI behavior**: Some need index selection; others don't
+5. **Different visualization**: Derived elements (intersections) appear de-emphasized
+
+The construction method is part of the element's identity and persists through undo/redo and save/load.
 ### 3D Elements (Derived, Not Edited)
 
 3D elements are derived artifacts created explicitly from compatible 2D inputs:

@@ -88,7 +88,7 @@ import { Segment2D } from './Segment';
 import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
-import { Plane3D } from './Plane';
+import { Plane3D, Plane3DFixed } from './Plane';
 import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D, BaseProjectionPlane } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
@@ -236,23 +236,22 @@ export class World {
   }
 
   /**
-   * Element factory: Create 3D plane
+   * Element factory: Create fixed 3D plane
    * 
-   * Creates a 3D plane (horizontal or vertical) and adds it to World.
+   * Creates a fixed 3D plane defined by point and normal vector.
    * If planeId is not provided, generates a new ID.
    * 
-   * @param orientation - 'horizontal' or 'vertical'
+   * @param point - Point on the plane (homogeneous coordinates)
+   * @param normal - Normal vector to the plane (homogeneous coordinates)
    * @param planeId - Optional ID (for redo support)
-   * @returns Created Plane3D instance
+   * @param label - Optional label for the plane
+   * @returns Created Plane3DFixed instance
    */
-  addPlane3D(orientation: 'horizontal' | 'vertical', planeId?: string): Plane3D {
+  addPlane3DFixed(point: Vector4, normal: Vector4, planeId?: string, label?: string): Plane3DFixed {
     const id = planeId || this.generatePlaneId();
     
-    const plane = orientation === 'horizontal' 
-      ? Plane3D.createPH() 
-      : Plane3D.createPV();
-    
-    plane.id = id;
+    // Phase 52: Plane3DFixed constructor signature changed to (id, point, normal, label)
+    const plane = new Plane3DFixed(id, point, normal, label);
     this.planes.set(id, plane);
     
     return plane;
@@ -739,10 +738,14 @@ export class World {
 
   /**
    * Add a plane to the world
+   * 
+   * @deprecated Phase 52: This method is problematic because Plane3D.id is now readonly (inherited from Element).
+   * Planes should be created using addPlane3DFixed() or other factory methods that properly set id during construction.
+   * This method will fail if plane doesn't already have an id set.
    */
   addPlane(plane: Plane3D): Plane3D {
     if (!plane.id) {
-      plane.id = `plane_${this.nextId++}`;
+      throw new Error('addPlane: plane.id is readonly and must be set during construction. Use addPlane3DFixed() instead.');
     }
     this.planes.set(plane.id, plane);
     return plane;

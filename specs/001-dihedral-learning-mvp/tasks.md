@@ -5204,3 +5204,172 @@ Most construction tools follow: create world elements → create process tree ac
 
 **Status**: ✅ COMPLETE (2026-01-12) - All 6 tasks complete, no compilation errors
 
+---
+
+## Phase 52: Element Base Class Hierarchy
+
+**Purpose**: Introduce unified base class hierarchy for all geometric elements (2D and 3D) to eliminate duplication and enable uniform handling
+
+**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 52 specification, [data-model.md](./data-model.md#element-base-class-hierarchy) - Complete architecture and rationale
+
+**Context**: Currently Element2D (Phase 44) and 3D elements (Plane3D, HingeLine) independently define id and label properties. Element2DRealization2D (Phase 44) has no sibling for 3D realizations. This causes code duplication and prevents uniform handling of elements across dimensions.
+
+**Solution**: Extract common properties into base classes:
+- **Element**: Base for all geometric elements with id, label
+- **Element3D**: Extends Element for 3D elements (adds getDependencies())
+- **Element2D**: Refactor to extend Element (inherits id, label; adds planeId, visible, type)
+- **Realization**: Base for all realization classes with feasible property
+- **Element2DRealization2D**: Refactor to extend Realization
+
+**Benefits**:
+- DRY principle: id, label, feasible properties defined once
+- Uniform interface: Generic functions can work with Element or Realization base types
+- Type safety: Type guards (isElement, isElement3D, isElement2D) work uniformly
+- Consistent property names: Enforce `label` (not `name`) across all elements
+- Architectural symmetry: Element and Realization hierarchies mirror each other
+- Future-proof: Easy to add Element3DRealization3D or common properties in base classes
+
+### Phase 52 Tasks
+
+**Element Base Class Implementation** (T926-T929)
+
+- [ ] T926 Create Element base class
+  - Create frontend/src/domain/world/Element.ts
+  - Define abstract Element class with id, label properties
+  - Add abstract clone() method
+  - Add JSDoc documentation with hierarchy diagram
+  - File: `frontend/src/domain/world/Element.ts`
+
+- [ ] T927 Create Element3D base class
+  - Create frontend/src/domain/world/Element3D.ts
+  - Define abstract Element3D extending Element
+  - Add abstract getDependencies() method
+  - Add abstract clone() override returning Element3D
+  - File: `frontend/src/domain/world/Element3D.ts`
+
+- [ ] T928 Refactor Element2D to extend Element
+  - Update Element2D class definition to extend Element
+  - Remove id and label properties (now inherited)
+  - Update constructor to call super(id, label)
+  - Keep planeId, visible, type properties (2D-specific)
+  - Update imports to import Element
+  - File: `frontend/src/domain/world/Element2D.ts`
+
+- [ ] T929 Create type guards for Element hierarchy
+  - Add isElement() type guard in Element.ts
+  - Add isElement3D() type guard in Element3D.ts
+  - Update isElement2D() type guard (if exists) or create it
+  - Ensure type guards use instanceof checks
+  - Files: `Element.ts`, `Element3D.ts`, `Element2D.ts`
+
+**Realization Base Class Implementation** (T930-T931)
+
+- [ ] T930 Create Realization base class
+  - Create frontend/src/domain/world/Realization.ts
+  - Define abstract Realization class with feasible property
+  - Add isFeasible() method
+  - Add JSDoc documentation with hierarchy diagram
+  - File: `frontend/src/domain/world/Realization.ts`
+
+- [ ] T931 Refactor Element2DRealization2D to extend Realization
+  - Update Element2DRealization2D class definition to extend Realization
+  - Remove feasible property (now inherited)
+  - Remove isFeasible() method (now inherited)
+  - Update constructor to call super(feasible)
+  - Update imports to import Realization
+  - File: `frontend/src/domain/world/Element2DRealization2D.ts`
+
+**3D Element Refactoring** (T932-T934)
+
+- [ ] T932 Refactor Plane3D to extend Element3D
+  - Update Plane3D abstract class to extend Element3D
+  - Remove id and label properties (now inherited from Element)
+  - Update constructor to call super(id, label)
+  - Keep plane-specific properties (point, normal, type, coordinateSystem, boundaries)
+  - Implement getDependencies() as abstract (overridden by subclasses)
+  - File: `frontend/src/domain/world/Plane.ts`
+
+- [ ] T933 Update Plane3D subclasses (Plane3DFixed)
+  - Update Plane3DFixed constructor to pass id, label to super()
+  - Implement getDependencies(): return [] (no dependencies)
+  - Verify no compilation errors
+  - File: `frontend/src/domain/world/Plane.ts`
+
+- [ ] T934 Refactor HingeLine to extend Element3D
+  - Update HingeLine class to extend Element3D
+  - Remove id and label properties (now inherited from Element)
+  - Update constructor to call super(id, label)
+  - Implement getDependencies(): return [plane1Id, plane2Id]
+  - Keep hinge-specific properties (plane1, plane2, line, etc.)
+  - File: `frontend/src/domain/world/HingeLine.ts`
+
+**World and Utilities Update** (T935-T937)
+
+- [ ] T935 Update World methods to use Element types
+  - Review World.ts for methods that could accept Element instead of specific types
+  - Update method signatures where appropriate (e.g., getElementById(id: string): Element | undefined)
+  - Add generic element collection methods if useful
+  - Verify no breaking changes to existing code
+  - File: `frontend/src/domain/world/World.ts`
+
+- [ ] T936 Update serialization/deserialization
+  - Verify Element hierarchy serializes correctly (JSON.stringify)
+  - Verify Element hierarchy deserializes correctly (from JSON)
+  - Check that id, label, planeId, feasible properties persist correctly
+  - Test with sample world (save and reload)
+  - Files: serialization utilities, World.ts
+
+- [ ] T937 Update imports across codebase
+  - Search for files importing Element2D, Element2DRealization2D
+  - Add Element, Realization imports where needed
+  - Update type annotations if using Element base type
+  - Verify no compilation errors
+  - Files: Multiple (use grep search)
+
+**Testing** (T938-T942)
+
+- [ ] T938 [P] Unit tests for Element base class
+  - Test Element.clone() is abstract (cannot instantiate)
+  - Test Element constructor sets id and label
+  - Test type guards (isElement returns true for Element2D and Element3D)
+  - File: `frontend/tests/unit/domain/world/Element.test.ts`
+
+- [ ] T939 [P] Unit tests for Element3D base class
+  - Test Element3D extends Element
+  - Test Element3D.getDependencies() is abstract
+  - Test type guards (isElement3D returns true for Plane3D, HingeLine)
+  - File: `frontend/tests/unit/domain/world/Element3D.test.ts`
+
+- [ ] T940 [P] Unit tests for Realization base class
+  - Test Realization constructor sets feasible
+  - Test isFeasible() method returns correct value
+  - Test Realization is abstract (cannot instantiate directly)
+  - File: `frontend/tests/unit/domain/world/Realization.test.ts`
+
+- [ ] T941 [P] Regression tests for Element2D hierarchy
+  - Verify Point2D, Line2D, Circle2D still work correctly
+  - Test Element2D.clone() on concrete subclasses
+  - Test Element2D.realize2D() on concrete subclasses
+  - Verify id, label, planeId properties accessible
+  - Files: Existing Element2D, Point2D, Line2D, Circle2D tests
+
+- [ ] T942 [P] Regression tests for 3D elements
+  - Test Plane3DFixed creation and properties
+  - Test HingeLine creation and dependencies
+  - Verify World.planes and World.hingeLines still work
+  - Test serialization/deserialization of 3D elements
+  - Files: Existing Plane3D, HingeLine tests
+
+**Documentation** (T943)
+
+- [ ] T943 [P] Update documentation
+  - ✅ data-model.md: Already added Element Base Class Hierarchy section (Phase 52)
+  - Verify all class JSDoc comments reference Phase 52
+  - Add migration notes for future developers
+  - Update architecture diagrams if any exist
+
+**Checkpoint**: All Element and Realization base classes implemented, all tests passing
+
+**Status**: ⏳ NOT STARTED
+
+---

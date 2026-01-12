@@ -51,7 +51,9 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Check that on circle creation, the radius point really snaps to preexistent points before creating a new one.
 * [ ] Ensure we have a per-plane cache for 2D realizations.
 * [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?
-
+* [ ] In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. In general don't try to handle unexpected internal states but just report an error instead.
+* [ ] The plane selection toolbar is gone!
+ 
 ## ALREADY PLANNED
 
 * [X] **Remove deprecated CommandStack.execute() method**
@@ -114,6 +116,63 @@ Note that completing these tasks may require asking the user for additional info
   - **Schema Impact**: None - realization types not serialized
   - **Timing**: Can be done anytime (pure cleanup completing existing phase)
   - **Related**: Completes Phase 22.5 (Segment unification with Line2D hierarchy)
+
+* [X] **Element Base Class Hierarchy**
+  - **STATUS**: ✅ PLANNED (Jan 13, 2026) - Phase 52 added to tasks.md with complete specification
+  - **Problem**: Element2D (Phase 44) and 3D elements (Plane3D, HingeLine) independently define id and label properties. Element2DRealization2D has no sibling for potential 3D realizations. This causes code duplication and prevents uniform handling of elements across dimensions.
+  - **Current State**:
+    - Element2D (Phase 44): Base for Point2D, Line2D, Circle2D with id, planeId, label, visible, type
+    - Element2DRealization2D (Phase 44): Base for 2D realizations with feasible property
+    - 3D elements: Plane3D and HingeLine independently define id and label (HingeLine uses `name` inconsistently)
+    - No common base class for 2D and 3D elements
+    - No Realization base class (only Element2DRealization2D)
+  - **Solution**: Extract common properties into base class hierarchy:
+    - **Element**: Base for all geometric elements with id, label properties
+    - **Element3D**: Extends Element for 3D elements (adds getDependencies() abstract method)
+    - **Element2D**: Refactor to extend Element (inherits id, label; adds planeId, visible, type)
+    - **Realization**: Base for all realization classes with feasible property
+    - **Element2DRealization2D**: Refactor to extend Realization
+  - **Benefits**:
+    - **DRY Principle**: id, label, feasible properties defined once, not duplicated
+    - **Uniform Interface**: Generic functions can work with Element or Realization base types
+    - **Type Safety**: Type guards (isElement, isElement3D, isElement2D) work uniformly
+    - **Consistent Property Names**: Enforce `label` (not `name`) across all elements
+    - **Architectural Symmetry**: Element and Realization hierarchies mirror each other
+    - **Future-Proof**: Easy to add Element3DRealization3D or common properties in base classes
+  - **Architecture**:
+    ```
+    Element (id, label)
+    ├── Element3D (getDependencies())
+    │   ├── Plane3D (point, normal, ...)
+    │   └── HingeLine (plane1, plane2, ...)
+    └── Element2D (planeId, visible, type)
+        ├── Point2D
+        ├── Line2D
+        └── Circle2D
+    
+    Realization (feasible)
+    └── Element2DRealization2D
+        ├── Point2DRealization2D
+        ├── Line2DRealization2D
+        └── Circle2DRealization2D
+    ```
+  - **Migration Impact**: Low - purely additive refactoring
+    - Element2D already has id and label (moves to Element base)
+    - All existing code continues to work
+    - No serialization changes (properties stay the same)
+  - **Implementation**: Phase 52 with 18 tasks (T926-T943)
+  - **Task Categories**:
+    - Element base class implementation (T926-T929): Create Element, Element3D, refactor Element2D, add type guards
+    - Realization base class implementation (T930-T931): Create Realization, refactor Element2DRealization2D
+    - 3D element refactoring (T932-T934): Update Plane3D, Plane3DFixed, HingeLine to extend Element3D
+    - World and utilities update (T935-T937): Update World methods, serialization, imports
+    - Testing (T938-T942): Unit tests for new base classes, regression tests
+    - Documentation (T943): data-model.md already updated with complete specification
+  - **Documentation Added**:
+    - data-model.md §Element Base Class Hierarchy: Complete architecture with rationale, class definitions, benefits
+    - data-model.md §Element2D Base Class: Updated to show it extends Element (Phase 52 refactoring)
+    - data-model.md §Element2DRealization2D Base Class: Updated to show it extends Realization (Phase 52 refactoring)
+  - **Timing**: Can be done anytime (low-risk refactoring, no breaking changes)
 
 * [X] **Element Variation Classes**: Split element classes by construction method. Plane3DFixed (P_H, P_V with hard-coded values) for initialization only. Focus on minimal infrastructure needed for world bootstrapping - no user-creatable variations or 3D manipulation until future 3D support is implemented.
   - **STATUS**: ✅ PLANNED (Jan 12, 2026) - Phase 28 added to tasks.md with initialization-only focus

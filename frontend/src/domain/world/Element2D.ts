@@ -3,6 +3,7 @@ import { Point2DRealization2D } from './Point';
 import { Line2DRealization2D } from './Line';
 import { Circle2DRealization2D } from './Circle';
 import { validateElementId } from './ElementId';
+import { Element } from './Element';
 
 /**
  * Union type for all possible 2D element realizations
@@ -12,29 +13,39 @@ export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | 
 /**
  * Base class for all 2D geometric elements (points, lines, circles)
  * 
+ * **Phase 44**: Originally introduced as standalone base class with id, planeId, label, visible, type properties.
+ * 
+ * **Phase 52 Refactoring**: Element2D now extends Element base class to share id and label properties
+ * with 3D elements. Element2D adds 2D-specific properties: planeId, visible, type.
+ * 
  * **Architectural Principle: DRY and Uniform Interface**
  * 
- * Before Element2D, Point2D, Line2D, and Circle2D were three separate hierarchies
+ * Before Element2D (Phase 44), Point2D, Line2D, and Circle2D were three separate hierarchies
  * with no common ancestor, despite sharing identical properties (id, planeId, label, visible).
  * This caused:
  * - Code duplication (same properties defined three times)
  * - No uniform handling (couldn't write generic functions for all elements)
  * - Inconsistent interfaces (each hierarchy evolved independently)
  * 
- * Element2D provides:
+ * Element2D (Phase 44) provided:
  * - Common properties: id, planeId, label, visible, type
  * - Abstract methods: clone(), realize2D()
  * - Uniform type guard: isElement2D() works for all types
  * - Generic processing: Functions can work with Element2D regardless of specific type
  * 
+ * Element2D (Phase 52) now extends Element:
+ * - Inherits id and label from Element base class
+ * - Adds 2D-specific properties: planeId, visible, type
+ * - Enables uniform handling with 3D elements via Element base type
+ * 
  * **Usage**:
  * ```typescript
- * // Type guard works for all elements
+ * // Type guard works for all 2D elements
  * function isElement2D(obj: any): obj is Element2D {
  *   return obj instanceof Element2D;
  * }
  * 
- * // Generic functions
+ * // Generic functions for 2D elements
  * function hideElement(element: Element2D): void {
  *   element.visible = false;
  * }
@@ -43,19 +54,18 @@ export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | 
  * function getElementsOnPlane(planeId: string, elements: Element2D[]): Element2D[] {
  *   return elements.filter(el => el.planeId === planeId);
  * }
+ * 
+ * // Generic functions for all elements (2D and 3D)
+ * function getElementLabel(element: Element): string {
+ *   return element.label || element.id;
+ * }
  * ```
  * 
  * @sealed - Cannot be directly subclassed, only Point2D/Line2D/Circle2D extend it
  */
-export abstract class Element2D {
-  /** Unique identifier for this element */
-  readonly id: string;
-  
+export abstract class Element2D extends Element {
   /** Which projection plane this element belongs to */
   readonly planeId: string;
-  
-  /** Optional user-assigned label */
-  label?: string;
   
   /** Whether element is visible in canvas (default: true) */
   visible: boolean = true;
@@ -80,14 +90,15 @@ export abstract class Element2D {
     planeId: string,
     label?: string
   ) {
+    // Phase 52: Call Element base constructor with id and label
+    super(id, label);
+    
     // Phase 45: Validate hierarchical ID format
     // Ensure element ID starts with its container plane ID
     // Throws error if ID doesn't match format '{planeId}/{localId}'
     validateElementId(id, planeId);
     
-    this.id = id;
     this.planeId = planeId;
-    this.label = label;
   }
   
   /**
