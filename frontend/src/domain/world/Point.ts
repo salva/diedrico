@@ -575,10 +575,8 @@ export class SiblingIntersectionPoint2D extends Point2D {
    */
   realize2D(world: World): Point2DRealization2D {
     // Get primary intersection point's 2D realization
-    // Extract the plane ID from the hierarchical primary intersection ID
-    const primaryPlaneId = this.primaryIntersectionId.split('/')[0];
-    const plane = world.getProjectionPlaneById(primaryPlaneId);
-    const primaryPoint = plane?.getPoint(this.primaryIntersectionId);
+    // Use world.getPoint2D() which handles hierarchical IDs properly
+    const primaryPoint = world.getPoint2D(this.primaryIntersectionId);
     const primaryRealization = primaryPoint?.realize2D(world);
     if (!primaryRealization) {
       console.warn(`[SiblingIntersectionPoint2D] Cannot get realization for primary ${this.primaryIntersectionId}`);
