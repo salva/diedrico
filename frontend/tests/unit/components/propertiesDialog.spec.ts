@@ -91,9 +91,9 @@ describe('PropertiesDialog', () => {
   describe('Element type detection', () => {
     it('should display "2D Point" for point elements', () => {
       // Add a point to world
-      const planeId = 'proj_plane_H';
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       const position = new Vector3(0, 0, 1);
-      const point = world.addFreePoint2D(planeId, position);
+      const point = planeH.addFreePoint2D(position, world);
       const pointId = point.id;
       
       const wrapper = mount(PropertiesDialog, {
@@ -108,9 +108,9 @@ describe('PropertiesDialog', () => {
     });
 
     it('should display plane ID for 2D elements', () => {
-      const planeId = 'proj_plane_H';
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       const position = new Vector3(0, 0, 1);
-      const point = world.addFreePoint2D(planeId, position);
+      const point = planeH.addFreePoint2D(position, world);
       const pointId = point.id;
       
       const wrapper = mount(PropertiesDialog, {
@@ -172,12 +172,12 @@ describe('PropertiesDialog', () => {
 
     it('should validate line width range', async () => {
       // Add a line element
-      const planeId = 'proj_plane_H';
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       const pos1 = new Vector3(0, 0, 1);
       const pos2 = new Vector3(10, 10, 1);
-      const point1 = world.addFreePoint2D(planeId, pos1);
-      const point2 = world.addFreePoint2D(planeId, pos2);
-      const line = world.addLine2DBetweenTwoPoints(planeId, point1.id, point2.id);
+      const point1 = planeH.addFreePoint2D(pos1, world);
+      const point2 = planeH.addFreePoint2D(pos2, world);
+      const line = planeH.addLine2DByTwoPoints(point1.id, point2.id, world);
       const lineId = line.id;
       
       const wrapper = mount(PropertiesDialog, {
@@ -203,12 +203,12 @@ describe('PropertiesDialog', () => {
     });
 
     it('should validate line style options', async () => {
-      const planeId = 'proj_plane_H';
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       const pos1 = new Vector3(0, 0, 1);
       const pos2 = new Vector3(10, 10, 1);
-      const point1 = world.addFreePoint2D(planeId, pos1);
-      const point2 = world.addFreePoint2D(planeId, pos2);
-      const line = world.addLine2DBetweenTwoPoints(planeId, point1.id, point2.id);
+      const point1 = planeH.addFreePoint2D(pos1, world);
+      const point2 = planeH.addFreePoint2D(pos2, world);
+      const line = planeH.addLine2DByTwoPoints(point1.id, point2.id, world);
       const lineId = line.id;
       
       const wrapper = mount(PropertiesDialog, {
@@ -258,9 +258,9 @@ describe('PropertiesDialog', () => {
     });
 
     it('should emit save event with valid changes', async () => {
-      const planeId = 'proj_plane_H';
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       const position = new Vector3(0, 0, 1);
-      const point = world.addFreePoint2D(planeId, position);
+      const point = planeH.addFreePoint2D(position, world);
       const pointId = point.id;
       
       const wrapper = mount(PropertiesDialog, {
@@ -291,9 +291,9 @@ describe('PropertiesDialog', () => {
     });
 
     it('should only include overridden properties in save event', async () => {
-      const planeId = 'proj_plane_H';
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       const position = new Vector3(0, 0, 1);
-      const point = world.addFreePoint2D(planeId, position);
+      const point = planeH.addFreePoint2D(position, world);
       const pointId = point.id;
       
       const wrapper = mount(PropertiesDialog, {

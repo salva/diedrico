@@ -71,10 +71,9 @@ describe('ElementsPanel', () => {
     });
 
     it('should not display empty state when user elements exist', () => {
-      // Add a point
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(5, 3, 1), 'proj_plane_H', 'a');
-      world.addPoint2D(point);
+      // Add a point using plane factory method
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      planeH.addFreePoint2D(new Vector3(5, 3, 1), world, undefined, 'a');
       
       const wrapper = mountPanel();
       
@@ -84,14 +83,12 @@ describe('ElementsPanel', () => {
 
   describe('Element Retrieval from World', () => {
     it('should retrieve all points from World', () => {
-      // Add points to both planes
-      const point1Id = world.generatePoint2DId();
-      const point1 = new FreePoint2D(point1Id, new Vector3(1, 2, 1), 'proj_plane_H', 'a');
-      world.addPoint2D(point1);
+      // Add points to both planes using plane factory methods
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       
-      const point2Id = world.generatePoint2DId();
-      const point2 = new FreePoint2D(point2Id, new Vector3(3, 4, 1), 'proj_plane_V', 'b');
-      world.addPoint2D(point2);
+      planeH.addFreePoint2D(new Vector3(1, 2, 1), world, undefined, 'a');
+      planeV.addFreePoint2D(new Vector3(3, 4, 1), world, undefined, 'b');
       
       const wrapper = mountPanel();
       
@@ -102,19 +99,11 @@ describe('ElementsPanel', () => {
     });
 
     it('should retrieve all lines from World', () => {
-      // Create points first
-      const p1Id = world.generatePoint2DId();
-      const p1 = new FreePoint2D(p1Id, new Vector3(0, 0, 1), 'proj_plane_H');
-      world.addPoint2D(p1);
-      
-      const p2Id = world.generatePoint2DId();
-      const p2 = new FreePoint2D(p2Id, new Vector3(5, 5, 1), 'proj_plane_H');
-      world.addPoint2D(p2);
-      
-      // Create line
-      const lineId = world.generateLine2DId();
-      const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, 'proj_plane_H', 'L1');
-      world.addLine2D(line);
+      // Create points and line using plane factory methods
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+      planeH.addLine2DByTwoPoints(p1.id, p2.id, world, undefined, 'L1');
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -124,19 +113,11 @@ describe('ElementsPanel', () => {
     });
 
     it('should retrieve all segments from World', () => {
-      // Create points first
-      const p1Id = world.generatePoint2DId();
-      const p1 = new FreePoint2D(p1Id, new Vector3(0, 0, 1), 'proj_plane_V');
-      world.addPoint2D(p1);
-      
-      const p2Id = world.generatePoint2DId();
-      const p2 = new FreePoint2D(p2Id, new Vector3(5, 5, 1), 'proj_plane_V');
-      world.addPoint2D(p2);
-      
-      // Create segment
-      const segmentId = world.generateSegment2DId();
-      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, 'proj_plane_V', 'S1');
-      world.addSegment2D(segment);
+      // Create points and segment using plane factory methods
+      const planeV = world.getProjectionPlaneByLabel('P_V');
+      const p1 = planeV.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
+      planeV.addSegment2DByPoints(p1.id, p2.id, world, undefined, 'S1');
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -145,20 +126,11 @@ describe('ElementsPanel', () => {
     });
 
     it('should retrieve all circles from World', () => {
-      // Create center point
-      const centerId = world.generatePoint2DId();
-      const center = new FreePoint2D(centerId, new Vector3(5, 5, 1), 'proj_plane_H');
-      world.addPoint2D(center);
-      
-      // Create edge point for circle
-      const edgeId = world.generatePoint2DId();
-      const edge = new FreePoint2D(edgeId, new Vector3(8, 5, 1), 'proj_plane_H'); // radius = 3
-      world.addPoint2D(edge);
-      
-      // Create circle by center and point
-      const circleId = world.generateCircle2DId();
-      const circle = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, 'proj_plane_H', 'C1');
-      world.addCircle2D(circle);
+      // Create points and circle using plane factory methods
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const center = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const edge = planeH.addFreePoint2D(new Vector3(8, 5, 1), world); // radius = 3
+      planeH.addCircle2DByCenterAndPoint(center.id, edge.id, world, undefined, 'C1');
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -167,25 +139,15 @@ describe('ElementsPanel', () => {
     });
 
     it('should retrieve all guides from World', () => {
-      // Create line and point for guide
-      const p1Id = world.generatePoint2DId();
-      const p1 = new FreePoint2D(p1Id, new Vector3(0, 0, 1), 'proj_plane_V');
-      world.addPoint2D(p1);
+      // Create line, point, and guide using plane factory methods
+      const planeV = world.getProjectionPlaneByLabel('P_V');
+      const p1 = planeV.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeV.addFreePoint2D(new Vector3(5, 0, 1), world);
+      const line = planeV.addLine2DByTwoPoints(p1.id, p2.id, world);
+      const throughPoint = planeV.addFreePoint2D(new Vector3(3, 3, 1), world);
       
-      const p2Id = world.generatePoint2DId();
-      const p2 = new FreePoint2D(p2Id, new Vector3(5, 0, 1), 'proj_plane_V');
-      world.addPoint2D(p2);
-      
-      const lineId = world.generateLine2DId();
-      const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, 'proj_plane_V');
-      world.addLine2D(line);
-      
-      const throughPointId = world.generatePoint2DId();
-      const throughPoint = new FreePoint2D(throughPointId, new Vector3(3, 3, 1), 'proj_plane_V');
-      world.addPoint2D(throughPoint);
-      
-      // Create guide using World factory
-      const guideId = world.addGuide2D('proj_plane_V', lineId, throughPointId);
+      // Create guide using plane factory method
+      planeV.addGuide2D(line.id, throughPoint.id, world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -197,13 +159,11 @@ describe('ElementsPanel', () => {
   describe('PlaneId Filtering', () => {
     it('should correctly filter elements by proj_plane_H', () => {
       // Add points to both planes
-      const pointHId = world.generatePoint2DId();
-      const pointH = new FreePoint2D(pointHId, new Vector3(1, 2, 1), 'proj_plane_H', 'a');
-      world.addPoint2D(pointH);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      planeH.addFreePoint2D(new Vector3(1, 2, 1), world, undefined, 'a');
       
-      const pointVId = world.generatePoint2DId();
-      const pointV = new FreePoint2D(pointVId, new Vector3(3, 4, 1), 'proj_plane_V', 'b');
-      world.addPoint2D(pointV);
+      const planeV = world.getProjectionPlaneByLabel('P_V');
+      planeV.addFreePoint2D(new Vector3(3, 4, 1), world, undefined, 'b');
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -216,30 +176,16 @@ describe('ElementsPanel', () => {
     });
 
     it('should correctly filter elements by proj_plane_V', () => {
-      // Add lines to both planes
-      const p1HId = world.generatePoint2DId();
-      const p1H = new FreePoint2D(p1HId, new Vector3(0, 0, 1), 'proj_plane_H');
-      world.addPoint2D(p1H);
+      // Add lines to both planes using factory methods
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const p1H = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2H = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+      planeH.addLine2DByTwoPoints(p1H.id, p2H.id, world, undefined, 'LH');
       
-      const p2HId = world.generatePoint2DId();
-      const p2H = new FreePoint2D(p2HId, new Vector3(5, 5, 1), 'proj_plane_H');
-      world.addPoint2D(p2H);
-      
-      const lineHId = world.generateLine2DId();
-      const lineH = new Line2DByTwoPoints(lineHId, p1HId, p2HId, 'proj_plane_H', 'LH');
-      world.addLine2D(lineH);
-      
-      const p1VId = world.generatePoint2DId();
-      const p1V = new FreePoint2D(p1VId, new Vector3(0, 0, 1), 'proj_plane_V');
-      world.addPoint2D(p1V);
-      
-      const p2VId = world.generatePoint2DId();
-      const p2V = new FreePoint2D(p2VId, new Vector3(5, 5, 1), 'proj_plane_V');
-      world.addPoint2D(p2V);
-      
-      const lineVId = world.generateLine2DId();
-      const lineV = new Line2DByTwoPoints(lineVId, p1VId, p2VId, 'proj_plane_V', 'LV');
-      world.addLine2D(lineV);
+      const planeV = world.getProjectionPlaneByLabel('P_V');
+      const p1V = planeV.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2V = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
+      planeV.addLine2DByTwoPoints(p1V.id, p2V.id, world, undefined, 'LV');
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -251,9 +197,8 @@ describe('ElementsPanel', () => {
 
   describe('formatLabel Subscript Notation', () => {
     it('should add subscript H for proj_plane_H elements', () => {
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_H', 'a');
-      world.addPoint2D(point);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      planeH.addFreePoint2D(new Vector3(1, 2, 1), world, undefined, 'a');
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -266,9 +211,8 @@ describe('ElementsPanel', () => {
     });
 
     it('should add subscript V for proj_plane_V elements', () => {
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_V', 'b');
-      world.addPoint2D(point);
+      const planeV = world.getProjectionPlaneByLabel('P_V');
+      planeV.addFreePoint2D(new Vector3(1, 2, 1), world, undefined, 'b');
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -279,9 +223,8 @@ describe('ElementsPanel', () => {
     });
 
     it('should remove type prefix from element IDs in labels', () => {
-      const pointId = world.generatePoint2DId(); // Will be like 'point2d_1'
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_H');
-      world.addPoint2D(point);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -294,9 +237,8 @@ describe('ElementsPanel', () => {
 
   describe('formatElement Type Detection', () => {
     it('should correctly detect point type', () => {
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_H');
-      world.addPoint2D(point);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -306,39 +248,25 @@ describe('ElementsPanel', () => {
     });
 
     it('should correctly detect line type', () => {
-      const p1Id = world.generatePoint2DId();
-      const p1 = new FreePoint2D(p1Id, new Vector3(0, 0, 1), 'proj_plane_H');
-      world.addPoint2D(p1);
-      
-      const p2Id = world.generatePoint2DId();
-      const p2 = new FreePoint2D(p2Id, new Vector3(5, 5, 1), 'proj_plane_H');
-      world.addPoint2D(p2);
-      
-      const lineId = world.generateLine2DId();
-      const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, 'proj_plane_H');
-      world.addLine2D(line);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const line = planeH.addLine2DByTwoPoints(p1.id, p2.id, world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
       
       // Find our specific line (not hinge lines)
-      const formattedLine = vm.horizontalElements.lines.find((l: any) => l.id === lineId);
+      const formattedLine = vm.horizontalElements.lines.find((l: any) => l.id === line.id);
       expect(formattedLine).toBeDefined();
       expect(formattedLine.type).toBe('line');
     });
 
     it('should correctly detect segment type', () => {
-      const p1Id = world.generatePoint2DId();
-      const p1 = new FreePoint2D(p1Id, new Vector3(0, 0, 1), 'proj_plane_H');
-      world.addPoint2D(p1);
-      
-      const p2Id = world.generatePoint2DId();
-      const p2 = new FreePoint2D(p2Id, new Vector3(5, 5, 1), 'proj_plane_H');
-      world.addPoint2D(p2);
-      
-      const segmentId = world.generateSegment2DId();
-      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, 'proj_plane_H');
-      world.addSegment2D(segment);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+      planeH.addSegment2DByPoints(p1.id, p2.id, world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -348,17 +276,10 @@ describe('ElementsPanel', () => {
     });
 
     it('should correctly detect circle type', () => {
-      const centerId = world.generatePoint2DId();
-      const center = new FreePoint2D(centerId, new Vector3(5, 5, 1), 'proj_plane_H');
-      world.addPoint2D(center);
-      
-      const edgeId = world.generatePoint2DId();
-      const edge = new FreePoint2D(edgeId, new Vector3(8, 5, 1), 'proj_plane_H'); // radius = 3
-      world.addPoint2D(edge);
-      
-      const circleId = world.generateCircle2DId();
-      const circle = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, 'proj_plane_H');
-      world.addCircle2D(circle);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const center = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const edge = planeH.addFreePoint2D(new Vector3(8, 5, 1), world); // radius = 3
+      planeH.addCircle2DByCenterAndPoint(center.id, edge.id, world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -368,24 +289,14 @@ describe('ElementsPanel', () => {
     });
 
     it('should correctly detect guide type', () => {
-      const p1Id = world.generatePoint2DId();
-      const p1 = new FreePoint2D(p1Id, new Vector3(0, 0, 1), 'proj_plane_H');
-      world.addPoint2D(p1);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
+      const line = planeH.addLine2DByTwoPoints(p1.id, p2.id, world);
+      const throughPoint = planeH.addFreePoint2D(new Vector3(3, 3, 1), world);
       
-      const p2Id = world.generatePoint2DId();
-      const p2 = new FreePoint2D(p2Id, new Vector3(5, 0, 1), 'proj_plane_H');
-      world.addPoint2D(p2);
-      
-      const lineId = world.generateLine2DId();
-      const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, 'proj_plane_H');
-      world.addLine2D(line);
-      
-      const throughPointId = world.generatePoint2DId();
-      const throughPoint = new FreePoint2D(throughPointId, new Vector3(3, 3, 1), 'proj_plane_H');
-      world.addPoint2D(throughPoint);
-      
-      // Create guide using World factory
-      const guideId = world.addGuide2D('proj_plane_H', lineId, throughPointId);
+      // Create guide using plane factory method
+      planeH.addGuide2D(line.id, throughPoint.id, world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -403,9 +314,8 @@ describe('ElementsPanel', () => {
       const initialVersion = world.getVersion();
       
       // Add a point to trigger version change
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_H');
-      world.addPoint2D(point);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
       
       // Wait for polling interval (100ms as per component implementation)
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -427,9 +337,8 @@ describe('ElementsPanel', () => {
       expect(initialCount).toBeGreaterThan(0);
       
       // Add a point
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_H');
-      world.addPoint2D(point);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
       
       // Wait for polling to detect change
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -442,9 +351,8 @@ describe('ElementsPanel', () => {
 
   describe('Visibility Toggle', () => {
     it('should correctly report visible property for elements', () => {
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_H');
-      world.addPoint2D(point);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -454,26 +362,24 @@ describe('ElementsPanel', () => {
     });
 
     it('should reflect visibility changes in formatted elements', () => {
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_H');
-      world.addPoint2D(point);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const point = planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
       
       // Toggle visibility
-      world.togglePoint2DVisibility(pointId);
+      world.togglePoint2DVisibility(point.id);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
       
       // Find our specific point (not the default O_H)
-      const formattedPoint = vm.horizontalElements.points.find((p: any) => p.id === pointId);
+      const formattedPoint = vm.horizontalElements.points.find((p: any) => p.id === point.id);
       expect(formattedPoint).toBeDefined();
       expect(formattedPoint.visible).toBe(false);
     });
 
     it('should call World method when visibility is toggled', async () => {
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_H');
-      world.addPoint2D(point);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const point = planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
       
       const wrapper = mountPanel();
       
@@ -482,7 +388,7 @@ describe('ElementsPanel', () => {
       
       // Trigger visibility toggle
       const vm = wrapper.vm as any;
-      vm.handleVisibilityToggle(pointId);
+      vm.handleVisibilityToggle(point.id);
       
       expect(toggleSpy).toHaveBeenCalledWith(pointId);
     });
@@ -491,17 +397,10 @@ describe('ElementsPanel', () => {
   describe('Element Count', () => {
     it('should correctly count elements by type', () => {
       // Add various elements
-      const p1Id = world.generatePoint2DId();
-      const p1 = new FreePoint2D(p1Id, new Vector3(1, 1, 1), 'proj_plane_H');
-      world.addPoint2D(p1);
-      
-      const p2Id = world.generatePoint2DId();
-      const p2 = new FreePoint2D(p2Id, new Vector3(2, 2, 1), 'proj_plane_H');
-      world.addPoint2D(p2);
-      
-      const lineId = world.generateLine2DId();
-      const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, 'proj_plane_H');
-      world.addLine2D(line);
+      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const p1 = planeH.addFreePoint2D(new Vector3(1, 1, 1), world);
+      const p2 = planeH.addFreePoint2D(new Vector3(2, 2, 1), world);
+      planeH.addLine2DByTwoPoints(p1.id, p2.id, world);
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -522,9 +421,8 @@ describe('ElementsPanel', () => {
       expect(vm1.verticalElements.hasElements).toBe(true);
       
       // Add an element
-      const pointId = world.generatePoint2DId();
-      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), 'proj_plane_V');
-      world.addPoint2D(point);
+      const planeV = world.getProjectionPlaneByLabel('P_V');
+      planeV.addFreePoint2D(new Vector3(1, 2, 1), world);
       
       const wrapper2 = mountPanel();
       const vm2 = wrapper2.vm as any;

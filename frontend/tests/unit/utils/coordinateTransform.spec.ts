@@ -129,15 +129,19 @@ describe('Coordinate Transformation Pipeline', () => {
   
   describe('paperToPlane', () => {
     let world: World;
+    let horizontalPlaneId: string;
+    let verticalPlaneId: string;
     
     beforeEach(() => {
       world = new World();
+      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
     });
     
     it('should convert paper coordinates to plane coordinates for P_H', () => {
       const paperPoint = new Vector3(800, 500, 1);
       
-      const result = paperToPlane(paperPoint, 'proj_plane_H', world);
+      const result = paperToPlane(paperPoint, horizontalPlaneId, world);
       
       expect(result).not.toBeNull();
       if (result) {
@@ -153,7 +157,7 @@ describe('Coordinate Transformation Pipeline', () => {
     it('should convert paper coordinates to plane coordinates for P_V', () => {
       const paperPoint = new Vector3(800, 500, 1);
       
-      const result = paperToPlane(paperPoint, 'proj_plane_V', world);
+      const result = paperToPlane(paperPoint, verticalPlaneId, world);
       
       expect(result).not.toBeNull();
       if (result) {
@@ -177,15 +181,19 @@ describe('Coordinate Transformation Pipeline', () => {
   
   describe('planeTo3D', () => {
     let world: World;
+    let horizontalPlaneId: string;
+    let verticalPlaneId: string;
     
     beforeEach(() => {
       world = new World();
+      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
     });
     
     it('should convert P_H plane coordinates to 3D coordinates', () => {
       const planePoint = new Vector3(100, 50, 1);  // (u, v, 1)
       
-      const result = planeTo3D(planePoint, 'proj_plane_H', world);
+      const result = planeTo3D(planePoint, horizontalPlaneId, world);
       
       expect(result).not.toBeNull();
       if (result) {
@@ -201,7 +209,7 @@ describe('Coordinate Transformation Pipeline', () => {
     it('should convert P_V plane coordinates to 3D coordinates', () => {
       const planePoint = new Vector3(100, 50, 1);  // (u, v, 1)
       
-      const result = planeTo3D(planePoint, 'proj_plane_V', world);
+      const result = planeTo3D(planePoint, verticalPlaneId, world);
       
       expect(result).not.toBeNull();
       if (result) {
@@ -226,9 +234,13 @@ describe('Coordinate Transformation Pipeline', () => {
   describe('screenTo3D (complete pipeline)', () => {
     let world: World;
     let svgElement: SVGSVGElement;
+    let horizontalPlaneId: string;
+    let verticalPlaneId: string;
     
     beforeEach(() => {
       world = new World();
+      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
       
       svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svgElement.setAttribute('viewBox', '0 0 1600 1000');
@@ -254,7 +266,7 @@ describe('Coordinate Transformation Pipeline', () => {
         800, 500,
         svgElement,
         identityViewport,
-        'proj_plane_H',
+        horizontalPlaneId,
         world
       );
       
@@ -275,7 +287,7 @@ describe('Coordinate Transformation Pipeline', () => {
         800, 500,
         svgElement,
         identityViewport,
-        'proj_plane_V',
+        verticalPlaneId,
         world
       );
       

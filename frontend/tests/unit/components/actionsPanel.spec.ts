@@ -68,7 +68,8 @@ describe('ActionsPanel', () => {
     const wrapper = mountPanel();
     
     // Create a free point and manually add action
-    const point = world.addFreePoint2D('proj_plane_H', new Vector3(10, 20, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
     const action = createAction('CreateFreePoint', [point.id]);
     world.getProcessTree().addAction(action);
     
@@ -85,13 +86,14 @@ describe('ActionsPanel', () => {
     const wrapper = mountPanel();
     
     // Create multiple elements with actions
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [p1.id]));
     
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 100, 1));
+    const p2 = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [p2.id]));
     
-    const line = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+    const line = planeH.addLine2DByTwoPoints(p1.id, p2.id, world);
     world.getProcessTree().addAction(createAction('CreateLine', [line.id], [p1.id, p2.id]));
     
     await wrapper.vm.$nextTick();
@@ -128,7 +130,8 @@ describe('ActionsPanel', () => {
     
     // Add subprocess with an action
     const subprocess = world.getProcessTree().addSubprocess('Collapsible Section');
-    const point = world.addFreePoint2D('proj_plane_H', new Vector3(5, 5, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const point = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [point.id]));
     
     await wrapper.vm.$nextTick();
@@ -153,7 +156,8 @@ describe('ActionsPanel', () => {
     const wrapper = mountPanel();
     
     // Create action
-    const point = world.addFreePoint2D('proj_plane_H', new Vector3(10, 10, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const point = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [point.id]));
     
     await wrapper.vm.$nextTick();
@@ -173,9 +177,10 @@ describe('ActionsPanel', () => {
     const wrapper = mountPanel();
     
     // Create line with inputs/outputs
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1));
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 0, 1));
-    const line = world.addLine2DBetweenTwoPoints('proj_plane_H', p1.id, p2.id);
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+    const p2 = planeH.addFreePoint2D(new Vector3(100, 0, 1), world);
+    const line = planeH.addLine2DByTwoPoints(p1.id, p2.id, world);
     world.getProcessTree().addAction(createAction('CreateLine', [line.id], [p1.id, p2.id]));
     
     await wrapper.vm.$nextTick();
@@ -202,7 +207,8 @@ describe('ActionsPanel', () => {
   it('should emit highlightElements on action hover', async () => {
     const wrapper = mountPanel();
     
-    const point = world.addFreePoint2D('proj_plane_H', new Vector3(10, 10, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const point = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [point.id]));
     
     await wrapper.vm.$nextTick();
@@ -220,7 +226,8 @@ describe('ActionsPanel', () => {
   it('should emit clearHighlight on action mouse leave', async () => {
     const wrapper = mountPanel();
     
-    const point = world.addFreePoint2D('proj_plane_H', new Vector3(10, 10, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const point = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [point.id]));
     
     await wrapper.vm.$nextTick();
@@ -239,7 +246,8 @@ describe('ActionsPanel', () => {
     const wrapper = mountPanel();
     
     // Create some constructions
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [p1.id]));
     
     await wrapper.vm.$nextTick();
@@ -259,7 +267,8 @@ describe('ActionsPanel', () => {
     let initialCount = wrapper.findAll('.action-node').length;
     
     // Add action
-    const point = world.addFreePoint2D('proj_plane_H', new Vector3(10, 10, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const point = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [point.id]));
     
     await wrapper.vm.$nextTick();
@@ -291,10 +300,11 @@ describe('ActionsPanel', () => {
 
   it('should retrieve all actions from ProcessTree', async () => {
     // Create elements with actions
-    const p1 = world.addFreePoint2D('proj_plane_H', new Vector3(0, 0, 1));
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [p1.id]));
     
-    const p2 = world.addFreePoint2D('proj_plane_H', new Vector3(100, 0, 1));
+    const p2 = planeH.addFreePoint2D(new Vector3(100, 0, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [p2.id]));
     
     // Verify ProcessTree has the actions

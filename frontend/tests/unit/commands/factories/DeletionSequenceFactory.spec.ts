@@ -27,11 +27,13 @@ import { createCircleAction } from '../../../../src/domain/processTree/actions/C
 describe('DeletionSequenceFactory', () => {
   let world: World;
   let commandStack: CommandStack;
-  const planeId = 'proj_plane_H';
+  let planeId: string; // Will be set dynamically in beforeEach
 
   beforeEach(() => {
     world = new World();
     commandStack = new CommandStack();
+    // Get actual plane ID from initialized world
+    planeId = world.getProjectionPlaneByLabel('P_H').id!;
   });
 
   describe('createCascadeDeletion', () => {

@@ -57,11 +57,11 @@ describe('GuideSequenceFactory', () => {
       
       // Should return guideId but no siblingGuideId
       expect(result.guideId).toBeDefined();
-      expect(result.guideId).toMatch(/^guide2d_/);
+      expect(result.guideId).toContain('/guide2d_'); // Hierarchical ID format
       expect(result.siblingGuideId).toBeUndefined();
       
       // Verify guide exists in world
-      const guide = world.getLine2DById(result.guideId);
+      const guide = world.getLine2D(result.guideId);
       expect(guide).toBeDefined();
       expect(guide!.type).toBe('guide');
     });
@@ -69,8 +69,10 @@ describe('GuideSequenceFactory', () => {
     it('should create two operations for HHL reference line', () => {
       const cmd = new Command('Test', world);
       
-      // Get HalfHingeLine (half_HL_HV_on_PH exists by default)
-      const hhlId = 'half_HL_HV_on_PH';
+      // Get HalfHingeLine (get actual ID from world)
+      const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
+      expect(halfHingeLines.length).toBeGreaterThan(0);
+      const hhlId = halfHingeLines[0].id;
       
       // Create through point on horizontal plane
       const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
@@ -95,13 +97,13 @@ describe('GuideSequenceFactory', () => {
       // Should return both guideId and siblingGuideId
       expect(result.guideId).toBeDefined();
       expect(result.siblingGuideId).toBeDefined();
-      expect(result.guideId).toMatch(/^guide2d_/);
-      expect(result.siblingGuideId).toMatch(/^guide2d_/);
+      expect(result.guideId).toContain('/guide2d_'); // Hierarchical ID format
+      expect(result.siblingGuideId).toContain('/guide2d_'); // Hierarchical ID format
       expect(result.guideId).not.toBe(result.siblingGuideId);
       
       // Verify both guides exist in world
-      const primaryGuide = world.getLine2DById(result.guideId);
-      const siblingGuide = world.getLine2DById(result.siblingGuideId!);
+      const primaryGuide = world.getLine2D(result.guideId);
+      const siblingGuide = world.getLine2D(result.siblingGuideId!);
       
       expect(primaryGuide).toBeDefined();
       expect(siblingGuide).toBeDefined();
@@ -142,7 +144,7 @@ describe('GuideSequenceFactory', () => {
       expect(result.guideId).toBeDefined();
       expect(result.siblingGuideId).toBeUndefined();
       
-      const guide = world.getLine2DById(result.guideId);
+      const guide = world.getLine2D(result.guideId);
       expect(guide).toBeDefined();
     });
 
@@ -192,7 +194,9 @@ describe('GuideSequenceFactory', () => {
       const cmd = new Command('Create guide with sibling', world);
       
       // Get HalfHingeLine
-      const hhlId = 'half_HL_HV_on_PH';
+      const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
+      expect(halfHingeLines.length).toBeGreaterThan(0);
+      const hhlId = halfHingeLines[0].id;
       
       // Create through point
       const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
@@ -210,8 +214,8 @@ describe('GuideSequenceFactory', () => {
       cmd.commit();
       
       // Verify guides still exist after commit
-      const primaryGuide = world.getLine2DById(result.guideId);
-      const siblingGuide = world.getLine2DById(result.siblingGuideId!);
+      const primaryGuide = world.getLine2D(result.guideId);
+      const siblingGuide = world.getLine2D(result.siblingGuideId!);
       
       expect(primaryGuide).toBeDefined();
       expect(siblingGuide).toBeDefined();
@@ -222,7 +226,9 @@ describe('GuideSequenceFactory', () => {
     it('should handle multiple sequential guide creations', () => {
       const cmd = new Command('Create multiple guides', world);
       
-      const hhlId = 'half_HL_HV_on_PH';
+      const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
+      expect(halfHingeLines.length).toBeGreaterThan(0);
+      const hhlId = halfHingeLines[0].id;
       
       // Create two guides at different positions
       const through1 = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
@@ -247,10 +253,10 @@ describe('GuideSequenceFactory', () => {
       expect(result1.guideId).not.toBe(result2.guideId);
       expect(result1.siblingGuideId).not.toBe(result2.siblingGuideId);
       
-      const guide1 = world.getLine2DById(result1.guideId);
-      const guide2 = world.getLine2DById(result2.guideId);
-      const sibling1 = world.getLine2DById(result1.siblingGuideId!);
-      const sibling2 = world.getLine2DById(result2.siblingGuideId!);
+      const guide1 = world.getLine2D(result1.guideId);
+      const guide2 = world.getLine2D(result2.guideId);
+      const sibling1 = world.getLine2D(result1.siblingGuideId!);
+      const sibling2 = world.getLine2D(result2.siblingGuideId!);
       
       expect(guide1).toBeDefined();
       expect(guide2).toBeDefined();
