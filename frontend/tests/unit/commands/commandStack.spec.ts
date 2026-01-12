@@ -117,44 +117,6 @@ describe('CommandStack (R018)', () => {
     });
   });
 
-  describe('execute() - Backward compatibility', () => {
-    it('should handle legacy pattern (command with execute method)', () => {
-      class LegacyCommand extends Command {
-        execute() {
-          this.addAndExecute(createMockOperation('legacy'));
-        }
-      }
-      
-      const command = new LegacyCommand('Legacy Command', world);
-      
-      commandStack.execute(command);
-      
-      expect(command.status).toBe(CommandStatus.Committed);
-      expect(commandStack.canUndo()).toBe(true);
-    });
-
-    it('should commit pre-built command if not committed', () => {
-      const command = new Command('Pre-built Command', world);
-      command.addAndExecute(createMockOperation('test'));
-      // Not committed yet
-      
-      commandStack.execute(command);
-      
-      expect(command.status).toBe(CommandStatus.Committed);
-      expect(commandStack.getUndoCount()).toBe(1);
-    });
-
-    it('should accept already committed command', () => {
-      const command = new Command('Already Committed', world);
-      command.addAndExecute(createMockOperation('test'));
-      command.commit();
-      
-      commandStack.execute(command);
-      
-      expect(commandStack.getUndoCount()).toBe(1);
-    });
-  });
-
   describe('undo()', () => {
     it('should undo the most recent command', () => {
       const command = new Command('Test Command', world);

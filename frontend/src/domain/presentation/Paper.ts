@@ -45,7 +45,6 @@
 import { Vector3, Matrix3 } from 'three';
 import type { World } from '../world/World';
 import type { Line2DRealization2D } from '../world/Line';
-import type { Segment2DRealization2D } from '../world/Segment';
 import type { Circle2DRealization2D } from '../world/Circle';
 import type { SelectionMask, SelectableElementType } from '@/types/SelectionMask';
 
@@ -844,7 +843,7 @@ export class Paper {
    * @param segmentRealization - Segment geometry in plane coordinates
    * @returns Distance to nearest point on segment in plane units
    */
-  private distanceToSegmentInPlaneSpace(planePos: Vector3, segmentRealization: Segment2DRealization2D): number {
+  private distanceToSegmentInPlaneSpace(planePos: Vector3, segmentRealization: Line2DRealization2D): number {
     // Segment is finite - need to clamp to endpoints
     const p1 = segmentRealization.point1;
     const p2 = segmentRealization.point2;
@@ -870,7 +869,7 @@ export class Paper {
    * @param segmentRealization - Segment geometry in plane coordinates
    * @returns Closest point on segment in plane coordinates
    */
-  private snapToSegmentInPlaneSpace(planePos: Vector3, segmentRealization: Segment2DRealization2D): Vector3 {
+  private snapToSegmentInPlaneSpace(planePos: Vector3, segmentRealization: Line2DRealization2D): Vector3 {
     const p1 = segmentRealization.point1;
     const p2 = segmentRealization.point2;
     const segmentVec = p2.clone().sub(p1);

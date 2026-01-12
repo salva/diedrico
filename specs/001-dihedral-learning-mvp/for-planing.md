@@ -18,6 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] The process tree is not being updated with the elements in World initialization.
 * [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
 * [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
@@ -35,7 +36,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
 * [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
 * [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
-* [ ] Remove any methods and classes tagged as deprecated. Modify client code and tests to use the right interfaces (or remove it when it doesn't make sense any more).
 * [ ] Add tool for creating line parallel to another one passing by given point.
 * [ ] Add tool for creating line perpendicular to another one passing by given point.
 * [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
@@ -53,6 +53,111 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?
 
 ## ALREADY PLANNED
+
+* [X] **Remove deprecated CommandStack.execute() method**
+  - **STATUS**: ✅ COMPLETE (Jan 12, 2026) - Phase 50 implemented
+  - **Problem**: CommandStack.execute() is marked @deprecated and kept for backward compatibility, but no external code uses it
+  - **Current State**:
+    - Method exists in CommandStack.ts (lines 51-70)
+    - Marked with `@deprecated Use push() instead. Kept for backward compatibility.`
+    - Only called internally within CommandStack itself as fallback
+    - No external code uses it (grep search confirmed)
+    - Comment in ITool.ts mentions it but doesn't call it
+  - **Technical Debt**: This is purely technical cleanup - no user-facing changes
+  - **Solution**: Remove the execute() method entirely
+  - **Architecture**: All commands should use `push()` pattern (already enforced)
+  - **Benefits**:
+    - **Reduced API surface**: Fewer methods to maintain
+    - **Clear contract**: Single way to add commands (push)
+    - **No confusion**: Eliminates deprecated method that might mislead developers
+  - **Implementation**: Phase 50 with 4 tasks (T916-T919)
+  - **Task Categories**:
+    - Remove method (T916): Delete execute() from CommandStack.ts
+    - Update comment (T917): Fix ITool.ts comment to mention push() not execute()
+    - Unit tests (T918): Verify CommandStack.push() still works correctly
+    - Documentation (T919): Update data-model.md to reflect removal
+  - **Migration Impact**: None - method was already deprecated, no callers exist
+  - **Schema Impact**: None - purely internal refactoring
+  - **Timing**: Can be done anytime (pure cleanup, no dependencies)
+
+* [X] **Complete Segment2DRealization2D migration (Phase 22.5 cleanup)**
+  - **STATUS**: ✅ COMPLETE (Jan 12, 2026) - Phase 51 implemented
+  - **Problem**: Segment2DRealization2D class is marked @deprecated but still used in Paper.ts
+  - **Background**: Phase 22.5 unified segment and line realizations to use Line2DRealization2D, but migration incomplete
+  - **Current State**:
+    - Segment2DRealization2D exists in Segment.ts (lines 22-35) marked @deprecated
+    - Used in Paper.ts for segment operations:
+      - Import statement (line 48)
+      - `distanceToSegmentInPlaneSpace()` method parameter (line 847)
+      - `snapToSegmentInPlaneSpace()` method parameter (line 873)
+    - Line2DRealization2D already has point1/point2 fields for segments
+  - **Technical Debt**: Incomplete migration leaving deprecated class in use
+  - **Solution**: Replace Segment2DRealization2D with Line2DRealization2D in Paper.ts, then delete deprecated class
+  - **Architecture Principle**: Segments use same realization type as lines (Line2DRealization2D)
+    - Realization classes contain only geometric data (point1, point2)
+    - Domain classes (Segment2D) determine behavior and rendering
+    - No need for separate realization class
+  - **Benefits**:
+    - **Complete migration**: Finishes Phase 22.5 work
+    - **Reduced code**: Removes deprecated class (~15 lines)
+    - **Consistency**: All line-based elements use same realization type
+    - **Clarity**: No confusion about which realization type to use
+  - **Implementation**: Phase 51 with 6 tasks (T920-T925)
+  - **Task Categories**:
+    - Update Paper.ts imports (T920): Remove Segment2DRealization2D, already has Line2DRealization2D
+    - Update method signatures (T921): Change parameter types in distanceToSegmentInPlaneSpace and snapToSegmentInPlaneSpace
+    - Verify method bodies (T922): Ensure logic still works (point1/point2 fields identical)
+    - Remove deprecated class (T923): Delete Segment2DRealization2D from Segment.ts
+    - Unit tests (T924): Test segment hit testing and snapping in Paper
+    - Documentation (T925): Update data-model.md to confirm completion of Phase 22.5 migration
+  - **Migration Impact**: Low - internal Paper.ts changes only, no external callers
+  - **Schema Impact**: None - realization types not serialized
+  - **Timing**: Can be done anytime (pure cleanup completing existing phase)
+  - **Related**: Completes Phase 22.5 (Segment unification with Line2D hierarchy)
+
+* [X] **Element Variation Classes**: Split element classes by construction method. Plane3DFixed (P_H, P_V with hard-coded values) for initialization only. Focus on minimal infrastructure needed for world bootstrapping - no user-creatable variations or 3D manipulation until future 3D support is implemented.
+  - **STATUS**: ✅ PLANNED (Jan 12, 2026) - Phase 28 added to tasks.md with initialization-only focus
+  - **Problem**: Current architecture has monolithic Plane3D class that doesn't distinguish between fixed initialization planes (P_H, P_V with hard-coded values) and potentially future user-created planes. This creates architectural ambiguity.
+  - **Principle**: Different construction methods require different element classes for clean architecture and proper type safety.
+  - **Scope - Initialization Only**:
+    - **IN SCOPE**: Plane3DFixed for P_H and P_V (hard-coded z=0/y=0) - ONLY for world initialization
+    - **OUT OF SCOPE**: All user-creatable variations deferred until 3D support is implemented
+      - Plane3DByTraces (auxiliary planes from traces)
+      - Point intersection variations (Line-Line, Line-Circle, Circle-Circle)
+      - Line variations (Parallel, Perpendicular)
+      - 3D object manipulation tools
+  - **Minimal Infrastructure**:
+    - Plane3DFixed class (abstract base + concrete class)
+    - World.addPlane3DFixed() factory method
+    - AddPlane3DFixedOp for InitializationSequenceFactory
+    - Serialization with type discriminator
+    - NO UI tools (initialization only)
+  - **Key Decision**: Origin points O_H and O_V are NOT a special variation - they're just FreePoint2D with locked=true flag
+  - **Existing Elements Unchanged**:
+    - FreePoint2D (remains as-is, used for origins with locked=true)
+    - HingeLine (no variations needed - regular HingeLine sufficient)
+    - HalfHingeLine2D (no variations needed)
+    - ProjectionPlane (no variations needed)
+  - **Documentation Added**:
+    - spec.md §Element Construction Methods: Focus on initialization-only elements
+    - ui-spec.md: Removed user-creatable tool sections, noted future 3D support
+    - data-model.md §Element Variation Classes: Initialization infrastructure only
+  - **Implementation Plan**: Phase 28 in tasks.md with 11 tasks (T901-T911):
+    - Create Plane3D abstract base class
+    - Create Plane3DFixed concrete class (initialization only)
+    - Add World.addPlane3DFixed() factory
+    - Create AddPlane3DFixedOp
+    - Update InitializationSequenceFactory
+    - Add Plane3DFixed serialization
+    - Unit and integration tests
+    - Documentation updates
+  - **Benefits**:
+    - **Clean Architecture**: Fixed planes have distinct type with hard-coded values
+    - **Type Safety**: Plane3DFixed enforces initialization-only usage
+    - **Serialization Ready**: Can save/load P_H and P_V correctly
+    - **Future-Proof**: Architecture supports adding Plane3DByTraces later when 3D support is added
+    - **Minimal Scope**: Only implements what's needed for current MVP initialization (11 tasks vs original 59)
+  - **Next Steps**: Implement Phase 28.1 (Plane3DFixed only) - no 3D manipulation or user tools
 
 * [X] When we load a project, instead of cleaning the old World, just create a new one and forget everything about the old.
   - **STATUS**: ✅ COMPLETE (Jan 11, 2026) - Already implemented with improvements needed
@@ -174,121 +279,62 @@ Note that completing these tasks may require asking the user for additional info
     - **Tests**: Compilation successful, pre-existing test failures unrelated to Phase 48
 
 
-* [ ] Encapsulate World initialization in an operation sequence factory (InitializationSequenceFactory).
-  - **Problem**: InitializeWorldCommand is called directly from World.clear() and World constructor, not through a factory pattern
+* [X] Encapsulate World initialization in an operation sequence factory (InitializationSequenceFactory).
+  - **STATUS**: ✅ COMPLETE - Already implemented in Phase 47 (Jan 11, 2026)
+  - **Implementation**: `buildWorldInitialization()` factory function in InitializationSequenceFactory.ts
+  - **Architecture**: Factory pattern (function, not class) following Phase 43 pattern
   - **Current State**:
-    - InitializeWorldCommand exists and builds initialization sequence
-    - World.clear() dynamically imports and creates InitializeWorldCommand
-    - World constructor does the same via dynamic import
-    - No factory pattern - initialization logic is directly in InitializeWorldCommand class
-  - **Issues**:
-    - Initialization sequence logic embedded in InitializeWorldCommand class
-    - Cannot easily reuse initialization sequence in different contexts
-    - Inconsistent with other sequence factories (GuideSequenceFactory, DeletionSequenceFactory, IntersectionSequenceFactory)
-    - World.clear() and constructor have duplicate initialization logic
-  - **Solution**: Create InitializationSequenceFactory following Phase 43 pattern
-  - **Architecture Changes**:
-    1. **InitializationSequenceFactory** (new file):
-       - Static method `buildInitializationSequence(cmd: Command, world: World)`
-       - Encapsulates logic for creating 11 initialization operations
-       - Returns object with created IDs (horizontalPlaneId, verticalPlaneId, etc.)
-    2. **InitializeWorldCommand** (refactor):
-       - Use InitializationSequenceFactory.buildInitializationSequence()
-       - Store returned IDs in World's semantic properties
-       - Still marked as non-undoable
-    3. **World constructor/clear** (no change):
-       - Continue using InitializeWorldCommand (which now uses factory internally)
-  - **Benefits**:
-    - **Reusability**: Initialization sequence can be used in tests, migration tools, etc.
-    - **Testability**: Can unit test factory independently of Command
-    - **Consistency**: Follows same pattern as other sequence factories
-    - **Maintainability**: Single place to modify initialization logic
-    - **Clarity**: Separation between command orchestration and operation sequence
-  - **Pattern** (following GuideSequenceFactory):
+    - Factory function `buildWorldInitialization(world: World, cmd: Command): void`
+    - Takes open Command and adds operations directly (no return value needed)
+    - Used by World constructor via dynamic import to avoid circular dependency
+    - Encapsulates all 11 initialization operations
+  - **Benefits Achieved**:
+    - ✅ Reusability: Factory can be called from World constructor, tests, migration tools
+    - ✅ Testability: Factory is pure function, easily unit tested
+    - ✅ Consistency: Follows same pattern as GuideSequenceFactory, HingeLineSequenceFactory
+    - ✅ Maintainability: Single place to modify initialization logic
+    - ✅ Clarity: Separation between command orchestration and operation sequence
+  - **Implementation Details**:
     ```typescript
-    // InitializationSequenceFactory.ts
-    export class InitializationSequenceFactory {
-      static buildInitializationSequence(cmd: Command, world: World): {
-        horizontalPlaneId: string;
-        verticalPlaneId: string;
-        mainHingeLineId: string;
-        horizontalOriginId: string;
-        verticalOriginId: string;
-      } {
-        // Create subprocess
-        cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
-        
-        // Generate IDs
-        const planeHId = 'plane_H';
-        const planeVId = 'plane_V';
-        const projPlaneHId = 'proj_plane_1';
-        const projPlaneVId = 'proj_plane_2';
-        const hingeLineId = 'hinge_line_1';
-        
-        // Create planes
-        cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
-        cmd.addAndExecute(new AddPlane3DOp(planeVId, 'vertical'));
-        cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal'));
-        cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical'));
-        
-        // Create origins
-        const originPos = new Vector3(0, 0, 1);
-        const originHOp = new AddOriginPoint2DOp(projPlaneHId, originPos);
-        cmd.addAndExecute(originHOp);
-        const originVOp = new AddOriginPoint2DOp(projPlaneVId, originPos);
-        cmd.addAndExecute(originVOp);
-        
-        // Create hinge line and half hinge lines
-        cmd.addAndExecute(new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId));
-        const hingePoint = new Vector3(0, 0, 1);
-        const hingeDirection = new Vector3(1, 0, 0);
-        cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
-        cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
-        
-        // Set active plane
-        cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
-        
-        // Return IDs for World to store
-        return {
-          horizontalPlaneId: projPlaneHId,
-          verticalPlaneId: projPlaneVId,
-          mainHingeLineId: hingeLineId,
-          horizontalOriginId: originHOp.outputs.pointId,
-          verticalOriginId: originVOp.outputs.pointId
-        };
-      }
+    // InitializationSequenceFactory.ts (ALREADY EXISTS)
+    export function buildWorldInitialization(_world: World, cmd: Command): void {
+      // Step 1: Create initialization subprocess
+      cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+      
+      // Steps 2-3: Create 3D planes (P_H, P_V)
+      const planeHOp = new AddPlane3DFixedOp(
+        new Vector4(0, 0, 0, 1),  // Point at origin
+        new Vector4(0, 0, 1, 0),  // Normal +Z
+        undefined, 'P_H'
+      );
+      cmd.addAndExecute(planeHOp);
+      const planeHId = planeHOp.outputs.planeId as string;
+      
+      // ... (similar for P_V, projection planes, origins)
+      
+      // Step 8-10: Create complete hinge line with half hinge lines
+      buildHingeLineWithHalves(projPlaneHId, projPlaneVId, cmd, hingePoint, hingeDirection);
+      
+      // Step 11: Set active plane
+      cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
     }
     
-    // InitializeWorldCommand.ts (refactored)
-    export class InitializeWorldCommand extends Command {
-      constructor(world: World) {
-        super('Initialize World', world);
-        
-        // Use factory to build sequence
-        const ids = InitializationSequenceFactory.buildInitializationSequence(this, world);
-        
-        // Store semantic IDs in World
-        (world as any).horizontalPlaneId = ids.horizontalPlaneId;
-        (world as any).verticalPlaneId = ids.verticalPlaneId;
-        (world as any).mainHingeLineId = ids.mainHingeLineId;
-        (world as any).horizontalOriginId = ids.horizontalOriginId;
-        (world as any).verticalOriginId = ids.verticalOriginId;
-        (world as any).originPoint = new Vector3(0, 0, 0);
-        
-        // Non-undoable
-        this.canUndo = () => false;
-      }
+    // World constructor (ALREADY USES FACTORY)
+    constructor() {
+      // ... initialize collections ...
+      const cmd = new Command('Initialize World', this);
+      buildWorldInitialization(this, cmd);
+      cmd.commit();
+      // Store semantic IDs from operations
+      this.updateSemanticReferences();
     }
     ```
-  - **Implementation**: New Phase 49 (mini-phase)
-  - **Task Categories**:
-    - Create factory (T576): InitializationSequenceFactory with buildInitializationSequence()
-    - Refactor command (T577): Update InitializeWorldCommand to use factory
-    - Update tests (T578): Test factory independently, update command tests
-    - Update documentation (T579): Add factory to README.md in factories folder
-  - **Migration Impact**: Low - InitializeWorldCommand interface unchanged, internal refactoring only
-  - **Timing**: After Phase 47/48 complete (now)
-  - **Related**: Follows Phase 43 pattern for sequence factories
+  - **Pattern**: Factory function (not class) that adds operations to open Command
+  - **No Return Value**: Operations generate IDs in `outputs`, World reads them afterward
+  - **Composition**: Uses HingeLineSequenceFactory for hinge line creation (factory composition)
+  - **Migration Impact**: None - already in production use
+  - **Related Factories**: GuideSequenceFactory, DeletionSequenceFactory, IntersectionSequenceFactory, HingeLineSequenceFactory
+  - **Note**: Original Phase 49 planning was redundant - work completed as part of Phase 47
 
 * [X] It seems we still have methods in world for retrieving realizations (for instance, world.getLine2DRealization()). Remove all of them and change the client code to go directly to the projection plane.
   - **STATUS**: ✅ PLANNED - Handled by Phase 48 (same issue)

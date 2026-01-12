@@ -48,26 +48,6 @@ export class CommandStack {
   }
 
   /**
-   * @deprecated Use push() instead. Kept for backward compatibility.
-   * Execute a command and add it to the undo stack
-   */
-  execute(command: Command): void {
-    // For backward compatibility with existing command subclasses
-    // that have execute() method
-    if ('execute' in command && typeof (command as any).execute === 'function') {
-      (command as any).execute();
-    }
-    
-    // Commit if not already committed
-    if (command.status === 'building') {
-      command.commit();
-    }
-    
-    // Push to stack
-    this.push(command);
-  }
-
-  /**
    * Undo the most recent command
    * Moves command from undo stack to redo stack
    */

@@ -3724,7 +3724,7 @@ interface Segment3D {
   visualStyle: VisualStyle;
 }
 
-// Plane from two trace lines (user-constructed planes)
+// Plane from two trace lines (user-constructed planes - future)
 interface Plane3DByTraces {
   kind: 'Plane3DByTraces';
   id: ElementId;
@@ -3739,7 +3739,19 @@ interface Plane3DByTraces {
   visualStyle: VisualStyle;
 }
 
-// Plane defined by point and normal vector (projection planes)
+// Fixed plane with hard-coded equation (P_H, P_V only - Phase 28)
+interface Plane3DFixed {
+  kind: 'Plane3DFixed';
+  id: ElementId;
+  name: string;                     // "P_H" or "P_V"
+  orientation: 'horizontal' | 'vertical';  // Determines equation
+  
+  // Metadata and relationships
+  createdBy: ActionId;              // Always "system:init"
+  visualStyle: VisualStyle;
+}
+
+// Plane defined by point and normal vector (legacy - replaced by Plane3DFixed for P_H/P_V)
 interface Plane3DByPointAndNormal {
   kind: 'Plane3DByPointAndNormal';
   id: ElementId;
@@ -3752,7 +3764,7 @@ interface Plane3DByPointAndNormal {
   visualStyle: VisualStyle;
 }
 
-type Plane3D = Plane3DByTraces | Plane3DByPointAndNormal;
+type Plane3D = Plane3DFixed | Plane3DByTraces | Plane3DByPointAndNormal;
 ```
 
 **Special System Elements**:
@@ -3764,15 +3776,19 @@ The following elements are always present from workspace initialization (`create
    - Projections: O_H on P_H, O_V on P_V
    - Cannot be deleted or moved
 
-2. **Horizontal Plane P_H** (`Plane3DByPointAndNormal`):
-   - Origin: O with coordinates [0, 0, 0, 1]
-   - Normal: [0, 0, 1, 0] — Z-axis direction vector
+2. **Horizontal Plane P_H** (`Plane3DFixed`):
+   - Orientation: 'horizontal'
+   - Equation: z = 0 (hard-coded)
+   - Coordinate system: U=(1,0,0), V=(0,1,0)
    - The plane for "top views"
+   - No dependencies
 
-3. **Vertical Plane P_V** (`Plane3DByPointAndNormal`):
-   - Origin: O with coordinates [0, 0, 0, 1]
-   - Normal: [0, 1, 0, 0] — Y-axis direction vector
+3. **Vertical Plane P_V** (`Plane3DFixed`):
+   - Orientation: 'vertical'
+   - Equation: y = 0 (hard-coded)
+   - Coordinate system: U=(1,0,0), V=(0,0,1)
    - The plane for "front views"
+   - No dependencies
 
 4. **Hinge Line HL_HV** (`Line3DFromPlaneIntersection`):
    - Intersection of P_H and P_V
@@ -3789,6 +3805,7 @@ The following elements are always present from workspace initialization (`create
 - **Line3DFromProjections**: `projectionH` and `projectionV` must exist, must be compatible projections of same 3D line
 - **Line3DFromPlaneIntersection**: `plane1` and `plane2` must exist and intersect (not parallel)
 - **Segment3D**: `point1` and `point2` must exist, must not be coincident
+- **Plane3DFixed**: Orientation must be 'horizontal' or 'vertical', used only for initialization
 - **Plane3DByTraces**: `traceH` and `traceV` must exist, must not be parallel (define unique plane)
 - **Plane3DByPointAndNormal**: `origin` must exist, `normal` must be non-zero vector
 
@@ -5665,6 +5682,386 @@ function buildHingeLineWithHalves(horizPlaneId, vertPlaneId, cmd) {
 3. Element factory methods already handle ID generation logic
 4. Operations already store outputs for redo - ID fits naturally there
 5. Minimal operations enable fine-grained undo/redo and reusability
+
+### Element Variation Classes by Construction Method
+
+**Principle**: Different construction methods require different element classes.
+
+**Why**: Elements with fundamentally different construction patterns need separate classes to maintain clean architecture and proper type safety. The distinction is based on **how the element is constructed**, not minor behavioral differences.
+
+**Examples**:
+
+**3D Planes** (INITIALIZATION ONLY - No user tools):
+- `Plane3DFixed` - P_H and P_V with hard-coded orientations and equations
+  - Parameters: orientation ('horizontal' | 'vertical')
+  - Fixed values: P_H at z=0, P_V at y=0
+  - Used for: World initialization only
+  - NO user tool - cannot be created via UI
+
+**2D Points** (Current implementation):
+- `FreePoint2D` - User-positioned points (includes origin points)
+  - Parameters: position, locked flag
+  - Values: x, y coordinates, locked state
+  - Used for: All freely positioned points including O_H and O_V
+  - **Note**: Origin points are NOT a special variation - just FreePoint2D with locked=true
+
+**Future Variations** (Deferred until 3D support):
+- Point intersection variations (Line-Line, Line-Circle, Circle-Circle)
+- Line variations (Parallel, Perpendicular)
+- Plane3DByTraces (user-created auxiliary planes)
+
+**Infrastructure Requirements per Variation**:
+
+Each element variation needs:
+1. **Element class** - Separate class with construction-specific fields (ALWAYS required)
+2. **Factory method** - In World (3D) or ProjectionPlane (2D) (ALWAYS required)
+   - Example: `world.addPlane3DFixed(orientation, id?)`
+3. **Operation class** - For undo/redo support (ALWAYS required)
+   - Example: `AddPlane3DFixedOp` (used by InitializationSequenceFactory)
+4. **Serialization** - In ProjectService save/load (ALWAYS required)
+5. **Tool** - ONLY if user-creatable via UI (NOT for initialization-only elements)
+   - Example: NO tool for `Plane3DFixed` ❌ - only for bootstrapping P_H and P_V
+   - Example: NO tool for origin points ❌ - created during initialization
+
+**CRITICAL - UI Tool Decision for Current MVP**:
+- **NO UI Tools** = Created only during initialization
+  - Plane3DFixed (P_H, P_V only), origin points, main hinge line
+- **Future** = User-creatable variations deferred until 3D support
+  - Plane3DByTraces, intersection points, parallel/perpendicular lines
+
+**When to Create Variations** (Different Classes):
+- Different construction algorithms (fixed vs computed from traces)
+- Different parameter sets (orientation vs traceH/traceV)
+- Different computational requirements (none vs intersection calculation)
+- **Different lifecycle (CRITICAL for UI tool decision)**:
+  - **Initialization-only**: Created once during world setup, NO UI tool
+    - Example: Plane3DFixed for P_H and P_V
+  - **User-creatable**: Users can create via UI tools anytime
+    - Example: Plane3DByTraces, all intersection points
+
+**When NOT to Create Variations** (Use Single Class):
+- Simple property differences (use flags: locked, visible, selected)
+- Behavioral changes (use state patterns or strategies)
+- Styling or rendering differences (use separate rendering logic)
+- Origin points are special (NO - they're just FreePoint2D with locked=true)
+
+**Current Status**:
+- ✅ FreePoint2D (all 2D points including origins)
+- ✅ HingeLine (3D hinge line)
+- ✅ HalfHingeLine2D (2D hinge line representation)
+- 📋 TODO: Plane3DFixed split from current Plane3D (Phase 28)
+- ⏸️ DEFERRED: Plane3DByTraces (until 3D support)
+- ⏸️ DEFERRED: All intersection point variations (until 3D support)
+- ⏸️ DEFERRED: Line and circle variations (until 3D support)
+
+#### Detailed Element Variation Design
+
+**Class Hierarchy Pattern**:
+
+Each element type should follow this hierarchy:
+
+```typescript
+// Base abstract class (defines common interface)
+abstract class Plane3D {
+  id: string;
+  abstract equation: PlaneEquation;
+  abstract orientation: 'horizontal' | 'vertical' | 'oblique';
+  // Common methods shared by all variations
+}
+
+// Fixed variation (initialization only)
+class Plane3DFixed extends Plane3D {
+  private readonly _orientation: 'horizontal' | 'vertical';
+  
+  constructor(orientation: 'horizontal' | 'vertical', id?: string) {
+    super();
+    this._orientation = orientation;
+    this.id = id || generateId();
+  }
+  
+  get orientation() { return this._orientation; }
+  
+  get equation(): PlaneEquation {
+    // Hard-coded values
+    return this._orientation === 'horizontal' 
+      ? { a: 0, b: 0, c: 1, d: 0 } // z=0
+      : { a: 0, b: 1, c: 0, d: 0 }; // y=0
+  }
+}
+
+// User-created variation (computed from dependencies)
+class Plane3DByTraces extends Plane3D {
+  constructor(
+    private traceOnHId: string,
+    private traceOnVId: string,
+    id?: string
+  ) {
+    super();
+    this.id = id || generateId();
+  }
+  
+  get orientation() {
+    // Computed from traces
+    return computeOrientation(this.traceOnHId, this.traceOnVId);
+  }
+  
+  get equation(): PlaneEquation {
+    // Computed from trace lines
+    return computePlaneEquation(this.traceOnHId, this.traceOnVId);
+  }
+  
+  // Dependency tracking
+  getDependencies(): string[] {
+    return [this.traceOnHId, this.traceOnVId];
+  }
+}
+```
+
+**Factory Methods Pattern**:
+
+World and ProjectionPlane objects provide factory methods for each variation:
+
+```typescript
+class World {
+  // Fixed plane factory (initialization only)
+  addPlane3DFixed(orientation: 'horizontal' | 'vertical', id?: string): Plane3DFixed {
+    const planeId = id || this.generatePlaneId();
+    const plane = new Plane3DFixed(orientation, planeId);
+    this.planes.set(planeId, plane);
+    return plane;
+  }
+  
+  // User-created plane factory
+  addPlane3DByTraces(traceHId: string, traceVId: string, id?: string): Plane3DByTraces {
+    const planeId = id || this.generatePlaneId();
+    const plane = new Plane3DByTraces(traceHId, traceVId, planeId);
+    this.planes.set(planeId, plane);
+    return plane;
+  }
+}
+
+class ProjectionPlane {
+  // Free point factory
+  addFreePoint2D(position: Vector2, locked: boolean, id?: string): FreePoint2D {
+    const pointId = id || this.generatePointId();
+    const point = new FreePoint2D(position, locked, pointId);
+    this.points.set(pointId, point);
+    return point;
+  }
+  
+  // Line-line intersection factory
+  addPoint2DLineLineIntersection(line1Id: string, line2Id: string, id?: string): Point2DLineLineIntersection {
+    const pointId = id || this.generatePointId();
+    const point = new Point2DLineLineIntersection(line1Id, line2Id, pointId);
+    this.points.set(pointId, point);
+    return point;
+  }
+}
+```
+
+**Operation Classes Pattern**:
+
+Each variation needs its own operation class:
+
+```typescript
+// Fixed plane operation (initialization only)
+class AddPlane3DFixedOp extends Operation {
+  private orientation: 'horizontal' | 'vertical';
+  private planeId?: string;
+  private outputs: { planeId: string } = { planeId: '' };
+  
+  constructor(orientation: 'horizontal' | 'vertical', planeId?: string) {
+    super();
+    this.orientation = orientation;
+    this.planeId = planeId;
+  }
+  
+  apply(world: World): OperationResult {
+    const plane = world.addPlane3DFixed(this.orientation, this.planeId || this.outputs.planeId);
+    this.outputs = { planeId: plane.id };
+    return { success: true, outputs: this.outputs };
+  }
+  
+  undo(world: World): void {
+    world.removePlane(this.outputs.planeId);
+  }
+  
+  serialize(): any {
+    return {
+      type: 'AddPlane3DFixed',
+      orientation: this.orientation,
+      planeId: this.outputs.planeId,
+    };
+  }
+}
+
+// User-created plane operation
+class AddPlane3DByTracesOp extends Operation {
+  private traceHId: string;
+  private traceVId: string;
+  private planeId?: string;
+  private outputs: { planeId: string } = { planeId: '' };
+  
+  constructor(traceHId: string, traceVId: string, planeId?: string) {
+    super();
+    this.traceHId = traceHId;
+    this.traceVId = traceVId;
+    this.planeId = planeId;
+  }
+  
+  apply(world: World): OperationResult {
+    const plane = world.addPlane3DByTraces(this.traceHId, this.traceVId, this.planeId || this.outputs.planeId);
+    if (!plane) {
+      return { success: false, error: 'Traces do not define a valid plane' };
+    }
+    this.outputs = { planeId: plane.id };
+    return { success: true, outputs: this.outputs };
+  }
+  
+  undo(world: World): void {
+    world.removePlane(this.outputs.planeId);
+  }
+  
+  serialize(): any {
+    return {
+      type: 'AddPlane3DByTraces',
+      traceHId: this.traceHId,
+      traceVId: this.traceVId,
+      planeId: this.outputs.planeId,
+    };
+  }
+}
+```
+
+**Serialization Format**:
+
+Each element variation has its own serialization format in ProjectService:
+
+```typescript
+// Serialized world format
+{
+  "version": "1.0.0",
+  "planes": [
+    {
+      "type": "Plane3DFixed",
+      "id": "plane_1",
+      "orientation": "horizontal"
+    },
+    {
+      "type": "Plane3DFixed",
+      "id": "plane_2",
+      "orientation": "vertical"
+    },
+    {
+      "type": "Plane3DByTraces",
+      "id": "plane_3",
+      "traceOnHId": "line_5",
+      "traceOnVId": "line_6"
+    }
+  ],
+  "projectionPlanes": {
+    "plane_1": {
+      "points": [
+        {
+          "type": "FreePoint2D",
+          "id": "point_1",
+          "position": { "x": 0, "y": -200 },
+          "locked": true
+        },
+        {
+          "type": "Point2DLineLineIntersection",
+          "id": "point_2",
+          "line1Id": "line_1",
+          "line2Id": "line_2"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Tool Implementation Pattern**:
+
+Each user-creatable variation needs a tool:
+
+```typescript
+// Tool for creating planes by traces
+class Plane3DByTracesTool extends BaseTool {
+  private step: 'select-trace-h' | 'select-trace-v' | 'complete' = 'select-trace-h';
+  private traceHId?: string;
+  
+  getSelectionMask(): string[] {
+    if (this.step === 'select-trace-h') {
+      return ['line']; // Only lines on P_H
+    } else if (this.step === 'select-trace-v') {
+      return ['line']; // Only lines on P_V
+    }
+    return [];
+  }
+  
+  onClick(hit: HitResult): void {
+    if (this.step === 'select-trace-h') {
+      this.traceHId = hit.elementId;
+      this.step = 'select-trace-v';
+    } else if (this.step === 'select-trace-v') {
+      const cmd = new Command('Create Plane by Traces', this.world);
+      cmd.addAndExecute(new AddPlane3DByTracesOp(this.traceHId!, hit.elementId));
+      cmd.commit();
+      this.reset();
+    }
+  }
+  
+  getPrompt(): string {
+    if (this.step === 'select-trace-h') {
+      return 'Select trace on horizontal plane (P_H)';
+    } else {
+      return 'Select trace on vertical plane (P_V)';
+    }
+  }
+}
+```
+
+**Migration Strategy**:
+
+When adding new element variations:
+
+1. **Phase 1: Create new classes**
+   - Add Plane3DFixed and Plane3DByTraces
+   - Keep existing Plane3D as deprecated
+   - Mark all usages with @deprecated comments
+
+2. **Phase 2: Add factories and operations**
+   - Implement addPlane3DFixed() and addPlane3DByTraces()
+   - Create AddPlane3DFixedOp and AddPlane3DByTracesOp
+   - Update InitializationOps to use new operations
+
+3. **Phase 3: Update serialization**
+   - Add type discriminators to ProjectService
+   - Implement deserialization for new types
+   - Add migration code for old format
+
+4. **Phase 4: Create tools** (if needed)
+   - Implement Plane3DByTracesTool
+   - Add to toolbar with dropdown
+   - Update tool tests
+
+5. **Phase 5: Remove deprecated code**
+   - Delete old Plane3D class
+   - Remove @deprecated markers
+   - Clean up migration code (after grace period)
+
+**Element Variation Checklist**:
+
+For each new element variation, ensure:
+- [ ] Element class created with proper constructor
+- [ ] Factory method added to World or ProjectionPlane
+- [ ] Operation class with apply/undo/serialize
+- [ ] Serialization format defined in ProjectService
+- [ ] Deserialization implemented
+- [ ] Tool created (if user-creatable)
+- [ ] Tests: element class, factory, operation, tool
+- [ ] Documentation: spec.md, ui-spec.md, data-model.md
+
 
 **When to Use Factories**:
 - Complex multi-step workflows that need to be reused (MANDATORY)
@@ -7875,3 +8272,25 @@ Key design principles:
 6. **Layered separation**: Domain defines "what", Presentation defines "how to render"
 
 **Next**: Generate API contracts for backend persistence endpoints.
+
+
+---
+
+### Phase 50: Remove Deprecated CommandStack.execute() Method
+
+**Status**: 📋 Planned (2026-01-12)
+
+**Problem Statement**: The `CommandStack.execute()` method is marked `@deprecated` and kept for backward compatibility, but analysis shows no external code uses it.
+
+**Solution**: Remove execute() method entirely and update documentation to use push() pattern only.
+
+---
+
+### Phase 51: Complete Segment2DRealization2D Migration  
+
+**Status**: 📋 Planned (2026-01-12)
+
+**Problem Statement**: Phase 22.5 unified segment and line realizations to use `Line2DRealization2D`, but the deprecated `Segment2DRealization2D` class is still used in Paper.ts.
+
+**Solution**: Replace Segment2DRealization2D with Line2DRealization2D in Paper.ts, then delete deprecated class.
+

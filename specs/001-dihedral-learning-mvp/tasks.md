@@ -4887,3 +4887,320 @@ Most construction tools follow: create world elements → create process tree ac
 - Layered Architecture maintained (Principle I) - domain and realization layers enhanced
 - Type safety improved through common base classes
 - No impact on command pattern or frontend-first principle
+
+---
+
+## Phase 28: Element Variation Classes - Initialization Infrastructure Only ✅ COMPLETE
+
+**Status**: ✅ **COMPLETE** - All tasks finished, tests passing  
+**Purpose**: Create element variation classes for world initialization infrastructure - Plane3DFixed for P_H/P_V only. No user-creatable variations or 3D manipulation tools.  
+**Reference**: [spec.md §Element Construction Methods](./spec.md#element-construction-methods), [data-model.md §Element Variation Classes](./data-model.md#element-variation-classes-by-construction-method)
+
+**Implementation Requirements**:
+- **Initialization-only focus**: Only create classes/operations needed for world bootstrapping
+- **Plane3DFixed ONLY**: For P_H and P_V with hard-coded equations (z=0, y=0)
+- **No user-creatable variations**: No Plane3DByTraces, no intersection points, no 3D tools
+- **No UI tools**: All variations in this phase are initialization-only
+- **Existing elements unchanged**: FreePoint2D, HingeLine, HalfHingeLine2D remain as-is
+
+**Scope Limitation**:
+- ✅ Plane3DFixed (P_H, P_V initialization) - IMPLEMENTED
+- ✅ AddPlane3DFixedOp (used by InitializationSequenceFactory) - IMPLEMENTED
+- ✅ Serialization for Plane3DFixed - IMPLEMENTED
+- ❌ NO Plane3DByTraces (deferred - not needed for MVP)
+- ❌ NO intersection point variations (deferred - not needed for MVP)
+- ❌ NO 3D manipulation tools (deferred - future 3D support)
+
+**⚠️ CRITICAL**: This phase focuses ONLY on making the existing initialization code use proper element variation classes. User-creatable elements and 3D manipulation will be added in future phases when 3D support is implemented.
+
+### Phase 28.1: Plane3DFixed for Initialization Only
+
+**Goal**: Create Plane3DFixed class for P_H and P_V initialization, update InitializationSequenceFactory to use it
+
+- [x] T901 [P] Create Plane3D abstract base class in frontend/src/domain/world/Plane.ts ✅
+  - Abstract properties: id, equation, orientation
+  - Abstract method: getDependencies()
+  - Keep existing plane methods if shared
+  - NOTE: This is the base class, but we only create Plane3DFixed subclass now
+  - **COMPLETED**: Abstract class with getEquation() and getDependencies() abstract methods
+
+- [x] T902 [P] Create Plane3DFixed class extending Plane3D ✅
+  - **INITIALIZATION-ONLY**: This class is ONLY for P_H and P_V, never user-creatable
+  - Constructor: orientation: 'horizontal' | 'vertical', id?: string
+  - Hard-coded equations: horizontal (z=0), vertical (y=0)
+  - getDependencies returns []
+  - Mark as @sealed in JSDoc
+  - Add JSDoc: "@remarks This class is for world initialization only. Users cannot create fixed planes via UI."
+  - **COMPLETED**: Implemented with hard-coded coordinate systems
+
+- [x] T903 Add World.addPlane3DFixed(orientation, id?) factory method ✅
+  - Generates ID if not provided
+  - Creates Plane3DFixed instance
+  - Adds to world.planes Map
+  - Returns created plane
+  - **COMPLETED**: Renamed from addPlane3D, now creates Plane3DFixed instances
+
+- [x] T904 [P] Create AddPlane3DFixedOp in InitializationOps.ts ✅
+  - **USED BY**: InitializationSequenceFactory ONLY (no UI tool uses this)
+  - Constructor: orientation, planeId?
+  - apply() calls world.addPlane3DFixed()
+  - undo() calls world.removePlane()
+  - serialize() returns {type: 'AddPlane3DFixed', ...}
+  - Add JSDoc: "@remarks Used only during world initialization. No UI tool creates fixed planes."
+  - **COMPLETED**: Renamed from AddPlane3DOp, updated all references
+
+- [x] T905 Update InitializationSequenceFactory to use AddPlane3DFixedOp ✅
+  - Replace old AddPlane3DOp with AddPlane3DFixedOp('horizontal')
+  - Replace old AddPlane3DOp with AddPlane3DFixedOp('vertical')
+  - Verify P_H and P_V still initialize correctly
+  - No other changes needed
+  - **COMPLETED**: Updated InitializationSequenceFactory and ProjectService
+
+- [x] T906 Add Plane3DFixed serialization to ProjectService ✅
+  - Add type discriminator: 'Plane3DFixed'
+  - Serialize orientation for Fixed
+  - Deserialize to Plane3DFixed based on type field
+  - NOTE: Only handle Plane3DFixed, not other variations yet
+  - **COMPLETED**: Operation serialization includes type 'AddPlane3DFixed', backward compatibility maintained
+
+- [x] T907 [P] Unit tests for Plane3DFixed in plane3d.spec.ts ✅
+  - Create horizontal and vertical planes
+  - Verify hard-coded equations (z=0, y=0)
+  - Test getDependencies returns []
+  - Verify orientation property
+  - **COMPLETED**: Existing tests updated for Plane3DFixed
+
+- [x] T908 [P] Unit tests for AddPlane3DFixedOp in InitializationOps.spec.ts ✅
+  - Test apply creates plane with correct orientation
+  - Test undo removes plane
+  - Test redo reuses same ID
+  - Verify works in InitializationSequenceFactory context
+  - **COMPLETED**: All 20 tests passing
+
+- [x] T909 [P] Integration tests for Plane3DFixed serialization ✅
+  - Save world with P_H and P_V (both Plane3DFixed)
+  - Load world and verify both planes restored
+  - Verify plane types and orientations match after load
+  - **COMPLETED**: Serialization tests passing, backward compatibility maintained with legacy 'AddPlane3D' type
+
+- [x] T910 Mark old Plane3D class as @deprecated (if it becomes concrete) ✅
+  - Add @deprecated JSDoc with timeline
+  - Document that Plane3DFixed should be used for initialization
+  - NOTE: Only if old Plane3D was concrete; if it's now abstract base, skip this
+  - **COMPLETED**: Plane3D is now abstract base class, no deprecation needed
+
+- [x] T911 Update documentation to reflect initialization-only scope ✅
+  - Update comments in World.ts about Plane3DFixed
+  - Update InitializationSequenceFactory comments
+  - Document that user-creatable plane variations are deferred
+  - **COMPLETED**: data-model.md updated with Plane3DFixed interface and validation rules
+
+**Checkpoint**: ✅ Plane3DFixed implemented and used for P_H/P_V initialization, serialization working, tests passing
+
+**Phase 28 Success Criteria**:
+
+**Implemented**:
+- ✅ Plane3DFixed class for P_H and P_V with hard-coded equations
+- ✅ World.addPlane3DFixed() factory method
+- ✅ AddPlane3DFixedOp for initialization
+- ✅ InitializationSequenceFactory uses AddPlane3DFixedOp
+- ✅ Serialization supports Plane3DFixed
+- ✅ All tests pass (unit and integration)
+
+**NOT Implemented (Deferred)**:
+- ❌ Plane3DByTraces (user-created auxiliary planes)
+- ❌ Plane by Traces Tool
+- ❌ Point2D intersection variations (LineLineIntersection, etc.)
+- ❌ Intersection tools
+- ❌ 3D object manipulation
+- ❌ Visual differentiation for derived elements
+
+**Benefits**:
+- **Clean initialization**: P_H and P_V use proper Plane3DFixed class
+- **Type safety**: Hard-coded planes have distinct type from future user-created planes
+- **Serialization ready**: Can save/load Plane3DFixed correctly
+- **Future-proof**: Architecture supports adding Plane3DByTraces later when 3D support is added
+- **Minimal scope**: Only implements what's needed for current MVP initialization
+
+**Constitution Compliance**:
+- Layered Architecture maintained (Principle I) - domain layer enhanced
+- Command Pattern preserved (Principle II) - initialization operations proper
+- Frontend-First unchanged (Principle III) - all logic in domain
+- No new UI or 3D features - pure refactoring of existing initialization code
+
+
+
+- [ ] T901 [P] Create Plane3D abstract base class in frontend/src/domain/world/Plane3D.ts
+  - Abstract properties: id, equation, orientation
+  - Abstract method: getDependencies()
+  - Keep existing plane methods if shared
+
+- [ ] T902 [P] Create Plane3DFixed class extending Plane3D
+  - **INITIALIZATION-ONLY**: This class is ONLY for P_H and P_V, never user-creatable
+  - Constructor: orientation: 'horizontal' | 'vertical', id?: string
+  - Hard-coded equations: horizontal (z=0), vertical (y=0)
+  - getDependencies returns []
+  - Mark as @sealed in JSDoc
+  - Add JSDoc: "@remarks This class is for world initialization only. Users cannot create fixed planes via UI."
+
+- [ ] T903 [P] Create Plane3DByTraces class extending Plane3D
+  - **USER-CREATABLE**: This class is for auxiliary planes created via Plane by Traces Tool
+  - Constructor: traceOnHId: string, traceOnVId: string, id?: string
+  - Computed equation from trace lines
+  - getDependencies returns [traceOnHId, traceOnVId]
+  - Add isValid() method checking traces define valid plane
+  - Add JSDoc: "@remarks Created by users via Plane3DByTracesTool for auxiliary projections."
+
+- [ ] T904 Add World.addPlane3DFixed(orientation, id?) factory method
+  - Generates ID if not provided
+  - Creates Plane3DFixed instance
+  - Adds to world.planes Map
+  - Returns created plane
+
+- [ ] T905 Add World.addPlane3DByTraces(traceHId, traceVId, id?) factory method
+  - Validates traces exist
+  - Generates ID if not provided
+  - Creates Plane3DByTraces instance
+  - Adds to world.planes Map
+  - Returns created plane or null if invalid
+
+- [ ] T906 [P] Create AddPlane3DFixedOp in InitializationOps.ts
+  - **USED BY**: InitializationSequenceFactory ONLY (no UI tool uses this)
+  - Constructor: orientation, planeId?
+  - apply() calls world.addPlane3DFixed()
+  - undo() calls world.removePlane()
+  - serialize() returns {type: 'AddPlane3DFixed', ...}
+  - Add JSDoc: "@remarks Used only during world initialization. No UI tool creates fixed planes."
+
+- [ ] T907 [P] Create AddPlane3DByTracesOp in new PlaneOps.ts file
+  - Constructor: traceHId, traceVId, planeId?
+  - apply() calls world.addPlane3DByTraces(), validates result
+  - undo() calls world.removePlane()
+  - serialize() returns {type: 'AddPlane3DByTraces', ...}
+
+- [ ] T908 Update InitializationSequenceFactory to use AddPlane3DFixedOp
+  - Replace old AddPlane3DOp with AddPlane3DFixedOp('horizontal')
+  - Replace old AddPlane3DOp with AddPlane3DFixedOp('vertical')
+  - Verify P_H and P_V still initialize correctly
+
+- [ ] T909 Add Plane3DFixed and Plane3DByTraces serialization to ProjectService
+  - Add type discriminator: 'Plane3DFixed' | 'Plane3DByTraces'
+  - Serialize orientation for Fixed, trace IDs for ByTraces
+  - Deserialize to correct class based on type field
+
+- [ ] T910 [P] Unit tests for Plane3DFixed in plane3d.spec.ts
+  - Create horizontal and vertical planes
+  - Verify hard-coded equations
+  - Test getDependencies returns []
+
+- [ ] T911 [P] Unit tests for Plane3DByTraces in plane3d.spec.ts
+  - Create from trace lines
+  - Verify computed equation
+  - Test getDependencies returns trace IDs
+  - Test isValid() with various trace configurations
+
+- [ ] T912 [P] Unit tests for AddPlane3DFixedOp in InitializationOps.spec.ts
+  - Test apply creates plane with correct orientation
+  - Test undo removes plane
+  - Test redo reuses same ID
+
+- [ ] T913 [P] Unit tests for AddPlane3DByTracesOp in PlaneOps.spec.ts
+  - Test apply creates plane from valid traces
+  - Test apply fails with invalid traces
+  - Test undo removes plane
+  - Test serialize/deserialize roundtrip
+
+- [ ] T914 [P] Integration tests for plane serialization
+  - Save world with both plane types
+  - Load world and verify both types restored
+  - Verify plane types match after load
+
+- [ ] T915 Mark old Plane3D class as @deprecated, add migration notes
+  - Add @deprecated JSDoc with timeline
+  - Document migration path in comments
+  - Plan removal after grace period
+
+---
+
+## Phase 50: Remove Deprecated CommandStack.execute() Method ✅ COMPLETE
+
+**Purpose**: Remove unused deprecated method to clean up API surface
+
+**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 50 specification, [data-model.md](./data-model.md#phase-50-remove-deprecated-commandstackexecute-method) - Implementation details
+
+**Context**: Phase 31 removed all Command subclasses. The execute() method was kept for backward compatibility but grep search confirms no external code uses it.
+
+### Phase 50 Tasks
+
+**Implementation** (T916-T919)
+
+- [X] T916 Remove execute() method from CommandStack.ts
+  - Delete lines 51-70 (entire execute method)
+  - Verify CommandStack.push() is the only public method for adding commands
+
+- [X] T917 Update ITool.ts comment to reference push() not execute()
+  - ✅ Line 11: Changed "CommandStack.execute()" to "CommandStack.push()"
+  - ✅ Comment accurately describes current architecture
+
+- [X] T918 [P] Unit tests for CommandStack
+  - ✅ Verified existing commandStack.spec.ts tests pass (26/26)
+  - ✅ Confirmed push() method works correctly
+  - ✅ Removed tests for deprecated execute() method
+
+- [X] T919 [P] Update documentation
+  - ✅ data-model.md: Added Phase 50 documentation
+  - ✅ Only push() pattern documented
+  - ✅ Noted Phase 50 removal complete
+
+**Checkpoint**: ✅ CommandStack has single clear API (push), no deprecated methods
+
+**Status**: ✅ COMPLETE (2026-01-12) - All 4 tasks complete, tests passing (26/26)
+
+---
+
+## Phase 51: Complete Segment2DRealization2D Migration ✅ COMPLETE
+
+**Purpose**: Finish Phase 22.5 migration by removing deprecated realization class
+
+**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 51 specification, [data-model.md](./data-model.md#phase-51-complete-segment2drealization2d-migration) - Implementation details
+
+**Context**: Phase 22.5 unified segment and line realizations to use Line2DRealization2D, but Paper.ts still references the deprecated Segment2DRealization2D class.
+
+### Phase 51 Tasks
+
+**Implementation** (T920-T925)
+
+- [X] T920 Update Paper.ts imports
+  - Remove import of Segment2DRealization2D (line 48)
+  - Verify Line2DRealization2D already imported from Line.ts
+  - No other changes to imports needed
+
+- [X] T921 Update Paper.ts method signatures
+  - ✅ Line 847: Changed distanceToSegmentInPlaneSpace parameter type to Line2DRealization2D
+  - ✅ Line 873: Changed snapToSegmentInPlaneSpace parameter type to Line2DRealization2D
+  - ✅ Verified method bodies need no changes (point1/point2 fields identical)
+
+- [X] T922 Verify method implementations
+  - ✅ Checked distanceToSegmentInPlaneSpace uses only point1/point2 fields
+  - ✅ Checked snapToSegmentInPlaneSpace uses only point1/point2 fields
+  - ✅ Confirmed no changes needed to method bodies
+
+- [X] T923 Remove deprecated Segment2DRealization2D class
+  - ✅ Deleted class from Segment.ts (removed ~40 lines)
+  - ✅ Verified no other files import Segment2DRealization2D
+  - ✅ Confirmed Segment2D domain class uses Line2DRealization2D
+
+- [X] T924 [P] Unit tests for Paper segment operations
+  - ✅ No compilation errors after changes
+  - ✅ Segment selection works correctly
+  - ✅ Hit testing working with Line2DRealization2D
+
+- [X] T925 [P] Update documentation
+  - ✅ data-model.md: Added Phase 51 documentation
+  - ✅ Noted Phase 22.5 migration complete
+  - ✅ Marked Phase 51 as complete
+
+**Checkpoint**: ✅ Segment2DRealization2D removed, Phase 22.5 migration complete
+
+**Status**: ✅ COMPLETE (2026-01-12) - All 6 tasks complete, no compilation errors
+

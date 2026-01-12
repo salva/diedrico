@@ -19,34 +19,6 @@ import { Line2D, Line2DRealization2D } from './Line';
 export type Segment2DType = 'segment';  // Phase 22.5: Use 'segment' to match Line2DType
 
 /**
- * @deprecated Phase 22.5: Use Line2DRealization2D instead
- * Kept temporarily for backward compatibility during migration
- */
-export class Segment2DRealization2D {
-  point1: Vector3;
-  point2: Vector3;
-  feasible: boolean;
-
-  constructor(point1: Vector3, point2: Vector3, feasible: boolean = true) {
-    this.point1 = point1;
-    this.point2 = point2;
-    this.feasible = feasible;
-  }
-
-  getPoint1(): Vector3 {
-    return this.point1;
-  }
-
-  getPoint2(): Vector3 {
-    return this.point2;
-  }
-
-  getLength(): number {
-    return this.point1.distanceTo(this.point2);
-  }
-}
-
-/**
  * Segment2DByPoints - Bounded line segment defined by two endpoint references
  * Phase 22.5: Now extends Line2D base class
  */

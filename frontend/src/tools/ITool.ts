@@ -8,7 +8,7 @@
  * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Tool Interactions
  * 
  * Architecture:
- * User input → Tool.handleClick() → Command creation → CommandStack.execute()
+ * User input → Tool.handleClick() → Command creation → CommandStack.push()
  * 
  * Tools do NOT mutate World directly - they always go through commands.
  */
