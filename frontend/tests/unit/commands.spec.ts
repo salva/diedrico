@@ -1,25 +1,28 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../src/commands/Command';
-import type { Operation } from '../../src/commands/Command';
-import type { OperationResult } from '../../src/types/CommandTypes';
+import type { IOperation } from '../../src/commands/operations/IOperation';
+import type { OperationResult } from '../../src/commands/operations/IOperation';
+import type { World } from '../../src/domain/world/World';
+import { World as WorldClass } from '../../src/domain/world/World';
 
 // Mock operation for testing
-class MockOperation implements Operation {
-  id: string;
+class MockOperation implements IOperation {
   type: string;
-  args: Record<string, any>;
+  parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
   executed = false;
-  rolledBack = false;
+  undone = false;
   shouldFail = false;
+  operationId: string;
 
-  constructor(id: string, shouldFail = false) {
-    this.id = id;
+  constructor(operationId: string, shouldFail = false) {
+    this.operationId = operationId;
     this.type = 'MockOp';
-    this.args = {};
+    this.parameters = { operationId };
     this.shouldFail = shouldFail;
   }
 
-  execute(): OperationResult {
+  apply(_world: World): OperationResult {
     if (this.shouldFail) {
       return {
         success: false,
@@ -28,23 +31,26 @@ class MockOperation implements Operation {
       };
     }
     this.executed = true;
+    this.outputs = { operationId: this.operationId };
     return {
       success: true,
-      outputs: { operationId: this.id }
+      outputs: this.outputs
     };
   }
 
-  rollback(): void {
-    this.rolledBack = true;
+  undo(_world: World): void {
+    this.undone = true;
     this.executed = false;
   }
 }
 
 describe('Command', () => {
   let command: Command;
+  let world: World;
 
   beforeEach(() => {
-    command = new Command('cmd-1', 'Test command');
+    world = new WorldClass();
+    command = new Command('Test command', world);
   });
 
   describe('incremental execution', () => {
@@ -55,7 +61,6 @@ describe('Command', () => {
       
       expect(result.success).toBe(true);
       expect(op.executed).toBe(true);
-      expect(command.operations).toHaveLength(1);
     });
 
     it('should return operation outputs for dependency resolution', () => {
@@ -75,7 +80,6 @@ describe('Command', () => {
       command.addAndExecute(op2);
       command.addAndExecute(op3);
       
-      expect(command.operations).toHaveLength(3);
       expect(op1.executed).toBe(true);
       expect(op2.executed).toBe(true);
       expect(op3.executed).toBe(true);
@@ -91,9 +95,8 @@ describe('Command', () => {
       
       expect(() => command.addAndExecute(op3)).toThrow();
       
-      expect(op1.rolledBack).toBe(true);
-      expect(op2.rolledBack).toBe(true);
-      expect(command.operations).toHaveLength(0);
+      expect(op1.undone).toBe(true);
+      expect(op2.undone).toBe(true);
     });
 
     it('should not allow adding operations to committed command', () => {
@@ -133,8 +136,8 @@ describe('Command', () => {
       command.undo();
       
       expect(command.status).toBe('undone');
-      expect(op1.rolledBack).toBe(true);
-      expect(op2.rolledBack).toBe(true);
+      expect(op1.undone).toBe(true);
+      expect(op2.undone).toBe(true);
     });
 
     it('should redo undone command', () => {
@@ -146,9 +149,8 @@ describe('Command', () => {
       command.commit();
       command.undo();
       
-      // Reset execution flags for redo test
-      op1.executed = false;
-      op2.executed = false;
+      // Reset flags for redo test
+      op1.undone = false;
       
       command.redo();
       
@@ -181,10 +183,10 @@ describe('Command', () => {
       for (let i = 0; i < 3; i++) {
         const op = new MockOperation(`op-${i}`);
         // Track rollback order
-        const originalRollback = op.rollback.bind(op);
-        op.rollback = () => {
-          rollbackOrder.push(op.id);
-          originalRollback();
+        const originalUndo = op.undo.bind(op);
+        op.undo = (world: World) => {
+          rollbackOrder.push(op.operationId);
+          originalUndo(world);
         };
         operations.push(op);
         command.addAndExecute(op);
@@ -193,22 +195,7 @@ describe('Command', () => {
       command.rollback();
       
       expect(rollbackOrder).toEqual(['op-2', 'op-1', 'op-0']);
-      expect(command.operations).toHaveLength(0);
-    });
-  });
-
-  describe('getSummary', () => {
-    it('should return command summary', () => {
-      const op1 = new MockOperation('op-1');
-      const op2 = new MockOperation('op-2');
-      
-      command.addAndExecute(op1);
-      command.addAndExecute(op2);
-      
-      const summary = command.getSummary();
-      
-      expect(summary).toContain('Test command');
-      expect(summary).toContain('2 operations');
+      expect(command.status).toBe('building');
     });
   });
 });

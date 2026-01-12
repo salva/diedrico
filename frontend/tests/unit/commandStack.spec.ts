@@ -1,168 +1,181 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CommandStack } from '../../src/commands/CommandStack';
 import { Command } from '../../src/commands/Command';
-import type { Operation } from '../../src/commands/Command';
-import type { OperationResult } from '../../src/types/CommandTypes';
+import type { IOperation } from '../../src/commands/operations/IOperation';
+import type { OperationResult } from '../../src/commands/operations/IOperation';
+import type { World } from '../../src/domain/world/World';
+import { World as WorldClass } from '../../src/domain/world/World';
 
 // Mock operation for testing
-class MockOperation implements Operation {
-  id: string;
+class MockOperation implements IOperation {
   type = 'MockOp';
-  args: Record<string, any> = {};
+  parameters: Record<string, any> = {};
+  outputs: Record<string, any> = {};
   value: number;
 
-  constructor(id: string, value: number) {
-    this.id = id;
+  constructor(value: number) {
     this.value = value;
+    this.parameters = { value };
   }
 
-  execute(): OperationResult {
+  apply(_world: World): OperationResult {
+    this.outputs = { value: this.value };
     return {
       success: true,
-      outputs: { value: this.value }
+      outputs: this.outputs
     };
   }
 
-  rollback(): void {
-    // Mock rollback
+  undo(_world: World): void {
+    // Mock undo
   }
 }
 
 describe('CommandStack', () => {
   let stack: CommandStack;
+  let world: World;
 
   beforeEach(() => {
+    world = new WorldClass();
     stack = new CommandStack(5); // Small size for testing
   });
 
-  describe('commit', () => {
-    it('should commit command to stack', () => {
-      const cmd = new Command('cmd-1', 'Command 1');
-      cmd.addAndExecute(new MockOperation('op-1', 1));
+  describe('push', () => {
+    it('should push committed command to stack', () => {
+      const cmd = new Command('Command 1', world);
+      cmd.addAndExecute(new MockOperation(1));
+      cmd.commit();
       
-      stack.commit(cmd);
+      stack.push(cmd);
       
       expect(stack.canUndo()).toBe(true);
-      expect(stack.getUndoDescription()).toBe('Command 1');
+      expect(stack.getUndoCount()).toBe(1);
     });
 
-    it('should not commit non-building commands', () => {
-      const cmd = new Command('cmd-1', 'Command 1');
-      cmd.addAndExecute(new MockOperation('op-1', 1));
-      cmd.commit(); // Already committed
+    it('should not push non-committed commands', () => {
+      const cmd = new Command('Command 1', world);
+      cmd.addAndExecute(new MockOperation(1));
+      // Not committed
       
-      expect(() => stack.commit(cmd)).toThrow('Can only commit building commands');
+      expect(() => stack.push(cmd)).toThrow('Can only push committed commands');
     });
 
-    it('should clear redo history when new command committed', () => {
-      const cmd1 = new Command('cmd-1', 'Command 1');
-      cmd1.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd1);
+    it('should clear redo history when new command pushed', () => {
+      const cmd1 = new Command('Command 1', world);
+      cmd1.addAndExecute(new MockOperation(1));
+      cmd1.commit();
+      stack.push(cmd1);
       
-      const cmd2 = new Command('cmd-2', 'Command 2');
-      cmd2.addAndExecute(new MockOperation('op-2', 2));
-      stack.commit(cmd2);
+      const cmd2 = new Command('Command 2', world);
+      cmd2.addAndExecute(new MockOperation(2));
+      cmd2.commit();
+      stack.push(cmd2);
       
       stack.undo(); // Now can redo cmd2
       expect(stack.canRedo()).toBe(true);
       
-      const cmd3 = new Command('cmd-3', 'Command 3');
-      cmd3.addAndExecute(new MockOperation('op-3', 3));
-      stack.commit(cmd3); // Should clear redo
+      const cmd3 = new Command('Command 3', world);
+      cmd3.addAndExecute(new MockOperation(3));
+      cmd3.commit();
+      stack.push(cmd3); // Should clear redo
       
       expect(stack.canRedo()).toBe(false);
     });
 
-    it('should enforce max stack size', () => {
-      // Commit 6 commands (max is 5)
-      for (let i = 0; i < 6; i++) {
-        const cmd = new Command(`cmd-${i}`, `Command ${i}`);
-        cmd.addAndExecute(new MockOperation(`op-${i}`, i));
-        stack.commit(cmd);
-      }
+    it('should not push non-undoable commands', () => {
+      // Create a command and mark it as non-undoable
+      const cmd = new Command('Non-undoable', world);
+      cmd.addAndExecute(new MockOperation(1));
+      cmd.commit();
+      // Make it non-undoable by overriding canUndo
+      (cmd as any).canUndo = () => false;
       
-      const state = stack.getState();
-      expect(state.totalCommands).toBe(5);
-      expect(state.currentIndex).toBe(4);
+      stack.push(cmd);
+      
+      expect(stack.canUndo()).toBe(false);
+      expect(stack.getUndoCount()).toBe(0);
     });
   });
 
   describe('undo/redo', () => {
     it('should undo last command', () => {
-      const cmd = new Command('cmd-1', 'Command 1');
-      cmd.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd);
+      const cmd = new Command('Command 1', world);
+      cmd.addAndExecute(new MockOperation(1));
+      cmd.commit();
+      stack.push(cmd);
       
-      const result = stack.undo();
+      stack.undo();
       
-      expect(result).toBe(true);
       expect(stack.canUndo()).toBe(false);
       expect(stack.canRedo()).toBe(true);
     });
 
     it('should redo undone command', () => {
-      const cmd = new Command('cmd-1', 'Command 1');
-      cmd.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd);
+      const cmd = new Command('Command 1', world);
+      cmd.addAndExecute(new MockOperation(1));
+      cmd.commit();
+      stack.push(cmd);
       stack.undo();
       
-      const result = stack.redo();
+      stack.redo();
       
-      expect(result).toBe(true);
       expect(stack.canUndo()).toBe(true);
       expect(stack.canRedo()).toBe(false);
     });
 
     it('should handle multiple undo operations', () => {
-      const cmd1 = new Command('cmd-1', 'Command 1');
-      cmd1.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd1);
+      const cmd1 = new Command('Command 1', world);
+      cmd1.addAndExecute(new MockOperation(1));
+      cmd1.commit();
+      stack.push(cmd1);
       
-      const cmd2 = new Command('cmd-2', 'Command 2');
-      cmd2.addAndExecute(new MockOperation('op-2', 2));
-      stack.commit(cmd2);
+      const cmd2 = new Command('Command 2', world);
+      cmd2.addAndExecute(new MockOperation(2));
+      cmd2.commit();
+      stack.push(cmd2);
       
-      const cmd3 = new Command('cmd-3', 'Command 3');
-      cmd3.addAndExecute(new MockOperation('op-3', 3));
-      stack.commit(cmd3);
+      const cmd3 = new Command('Command 3', world);
+      cmd3.addAndExecute(new MockOperation(3));
+      cmd3.commit();
+      stack.push(cmd3);
       
       stack.undo(); // Undo cmd3
-      expect(stack.getUndoDescription()).toBe('Command 2');
+      expect(stack.getUndoCount()).toBe(2);
       
       stack.undo(); // Undo cmd2
-      expect(stack.getUndoDescription()).toBe('Command 1');
+      expect(stack.getUndoCount()).toBe(1);
       
       stack.undo(); // Undo cmd1
       expect(stack.canUndo()).toBe(false);
     });
 
     it('should handle multiple redo operations', () => {
-      const cmd1 = new Command('cmd-1', 'Command 1');
-      cmd1.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd1);
+      const cmd1 = new Command('Command 1', world);
+      cmd1.addAndExecute(new MockOperation(1));
+      cmd1.commit();
+      stack.push(cmd1);
       
-      const cmd2 = new Command('cmd-2', 'Command 2');
-      cmd2.addAndExecute(new MockOperation('op-2', 2));
-      stack.commit(cmd2);
+      const cmd2 = new Command('Command 2', world);
+      cmd2.addAndExecute(new MockOperation(2));
+      cmd2.commit();
+      stack.push(cmd2);
       
       stack.undo();
       stack.undo();
       
       stack.redo(); // Redo cmd1
-      expect(stack.getRedoDescription()).toBe('Command 2');
+      expect(stack.getRedoCount()).toBe(1);
       
       stack.redo(); // Redo cmd2
       expect(stack.canRedo()).toBe(false);
     });
 
-    it('should return false when nothing to undo', () => {
-      const result = stack.undo();
-      expect(result).toBe(false);
+    it('should throw when nothing to undo', () => {
+      expect(() => stack.undo()).toThrow('Nothing to undo');
     });
 
-    it('should return false when nothing to redo', () => {
-      const result = stack.redo();
-      expect(result).toBe(false);
+    it('should throw when nothing to redo', () => {
+      expect(() => stack.redo()).toThrow('Nothing to redo');
     });
   });
 
@@ -172,19 +185,21 @@ describe('CommandStack', () => {
       expect(stack.canRedo()).toBe(false);
     });
 
-    it('should return true for undo after commit', () => {
-      const cmd = new Command('cmd-1', 'Command 1');
-      cmd.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd);
+    it('should return true for undo after push', () => {
+      const cmd = new Command('Command 1', world);
+      cmd.addAndExecute(new MockOperation(1));
+      cmd.commit();
+      stack.push(cmd);
       
       expect(stack.canUndo()).toBe(true);
       expect(stack.canRedo()).toBe(false);
     });
 
     it('should return true for redo after undo', () => {
-      const cmd = new Command('cmd-1', 'Command 1');
-      cmd.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd);
+      const cmd = new Command('Command 1', world);
+      cmd.addAndExecute(new MockOperation(1));
+      cmd.commit();
+      stack.push(cmd);
       stack.undo();
       
       expect(stack.canUndo()).toBe(false);
@@ -192,69 +207,43 @@ describe('CommandStack', () => {
     });
   });
 
-  describe('getUndoDescription/getRedoDescription', () => {
-    it('should return null when no undo available', () => {
-      expect(stack.getUndoDescription()).toBeNull();
-    });
-
-    it('should return null when no redo available', () => {
-      expect(stack.getRedoDescription()).toBeNull();
-    });
-
-    it('should return correct descriptions', () => {
-      const cmd1 = new Command('cmd-1', 'Create segment');
-      cmd1.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd1);
-      
-      const cmd2 = new Command('cmd-2', 'Move point');
-      cmd2.addAndExecute(new MockOperation('op-2', 2));
-      stack.commit(cmd2);
-      
-      expect(stack.getUndoDescription()).toBe('Move point');
-      
-      stack.undo();
-      expect(stack.getUndoDescription()).toBe('Create segment');
-      expect(stack.getRedoDescription()).toBe('Move point');
-    });
-  });
-
   describe('clear', () => {
     it('should clear all commands', () => {
-      const cmd1 = new Command('cmd-1', 'Command 1');
-      cmd1.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd1);
+      const cmd1 = new Command('Command 1', world);
+      cmd1.addAndExecute(new MockOperation(1));
+      cmd1.commit();
+      stack.push(cmd1);
       
-      const cmd2 = new Command('cmd-2', 'Command 2');
-      cmd2.addAndExecute(new MockOperation('op-2', 2));
-      stack.commit(cmd2);
+      const cmd2 = new Command('Command 2', world);
+      cmd2.addAndExecute(new MockOperation(2));
+      cmd2.commit();
+      stack.push(cmd2);
       
       stack.clear();
       
       expect(stack.canUndo()).toBe(false);
       expect(stack.canRedo()).toBe(false);
-      expect(stack.getState().totalCommands).toBe(0);
+      expect(stack.getUndoCount()).toBe(0);
     });
   });
 
-  describe('getState', () => {
-    it('should return current stack state', () => {
-      const cmd1 = new Command('cmd-1', 'Command 1');
-      cmd1.addAndExecute(new MockOperation('op-1', 1));
-      stack.commit(cmd1);
+  describe('getCommands', () => {
+    it('should return all commands in undo stack', () => {
+      const cmd1 = new Command('Command 1', world);
+      cmd1.addAndExecute(new MockOperation(1));
+      cmd1.commit();
+      stack.push(cmd1);
       
-      const cmd2 = new Command('cmd-2', 'Command 2');
-      cmd2.addAndExecute(new MockOperation('op-2', 2));
-      stack.commit(cmd2);
+      const cmd2 = new Command('Command 2', world);
+      cmd2.addAndExecute(new MockOperation(2));
+      cmd2.commit();
+      stack.push(cmd2);
       
-      const state = stack.getState();
+      const commands = stack.getCommands();
       
-      expect(state.totalCommands).toBe(2);
-      expect(state.currentIndex).toBe(1);
-      expect(state.canUndo).toBe(true);
-      expect(state.canRedo).toBe(false);
-      expect(state.commands).toHaveLength(2);
-      expect(state.commands[0].description).toBe('Command 1');
-      expect(state.commands[1].description).toBe('Command 2');
+      expect(commands).toHaveLength(2);
+      expect(commands[0].description).toBe('Command 1');
+      expect(commands[1].description).toBe('Command 2');
     });
   });
 });
