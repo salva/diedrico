@@ -962,8 +962,8 @@ export abstract class ProjectionPlane {
     
     const siblingPoint = new SiblingIntersectionPoint2D(
       id,
-      this.id,
       primaryIntersectionId,
+      this.id,
       label
     );
     

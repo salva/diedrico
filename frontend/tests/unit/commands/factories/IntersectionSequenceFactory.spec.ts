@@ -24,7 +24,8 @@ describe('IntersectionSequenceFactory', () => {
 
   beforeEach(() => {
     world = new World();
-    planeId = 'proj_plane_H'; // Horizontal projection plane
+    // Get horizontal plane ID (no longer hardcoded as 'proj_plane_H')
+    planeId = world.getHorizontalPlane()!.id;
   });
 
   describe('createIntersection', () => {
@@ -136,13 +137,15 @@ describe('IntersectionSequenceFactory', () => {
       expect(intersectionPoint).toBeDefined();
 
       // Verify: Intersection is on the line y=5 and on the circle
-      const pointRealization = world.getPoint2DRealization(result.pointId);
+      const pointRealization = plane.realizePoint2D(intersectionPoint!, world);
       expect(pointRealization).toBeDefined();
       expect(pointRealization!.position.y).toBeCloseTo(5);
       
       // Check it's on the circle (distance from center equals radius)
-      const centerRealization = world.getPoint2DRealization(centerId);
-      const circlePointRealization = world.getPoint2DRealization(circlePointId);
+      const centerPoint = plane.getPoint(centerId)!;
+      const circlePoint = plane.getPoint(circlePointId)!;
+      const centerRealization = plane.realizePoint2D(centerPoint, world);
+      const circlePointRealization = plane.realizePoint2D(circlePoint, world);
       const radius = centerRealization!.position.distanceTo(circlePointRealization!.position);
       const distToIntersection = centerRealization!.position.distanceTo(pointRealization!.position);
       expect(distToIntersection).toBeCloseTo(radius);
@@ -194,7 +197,9 @@ describe('IntersectionSequenceFactory', () => {
       intersectionCmd.commit();
 
       // Verify: Point exists and is on both line and circle
-      const pointRealization = world.getPoint2DRealization(result.pointId);
+      const plane = world.getProjectionPlaneById(planeId)!;
+      const intersectionPoint = plane.getPoint(result.pointId)!;
+      const pointRealization = plane.realizePoint2D(intersectionPoint, world);
       expect(pointRealization).toBeDefined();
       expect(pointRealization!.position.y).toBeCloseTo(5);
     });
@@ -296,7 +301,7 @@ describe('IntersectionSequenceFactory', () => {
       expect(intersectionPoint).toBeDefined();
 
       // Verify: Intersection is at x=2.5 (midpoint), and on both circles
-      const pointRealization = world.getPoint2DRealization(result.pointId);
+      const pointRealization = plane.realizePoint2D(intersectionPoint!, world);
       expect(pointRealization).toBeDefined();
       expect(pointRealization!.position.x).toBeCloseTo(2.5);
     });
@@ -402,8 +407,16 @@ describe('IntersectionSequenceFactory', () => {
       // Setup: Create a line that intersects with HHL
       const cmd = new Command('Setup', world);
       
-      // Get HalfHingeLine on horizontal plane (half_HL_HV_on_PH)
-      const hhlId = 'half_HL_HV_on_PH';
+      // Get HalfHingeLine on horizontal plane
+      const horizontalPlane = world.getHorizontalPlane()!;
+      const mainHingeLine = world.getMainHingeLine();
+      const hhl = horizontalPlane.getAllLines().find(
+        l => (l as any).hingeLineId === mainHingeLine.id
+      );
+      if (!hhl) {
+        throw new Error('HalfHingeLine not found on horizontal plane');
+      }
+      const hhlId = hhl.id;
       
       // Create a line that intersects the HHL
       // HHL is horizontal at y=0, so create a vertical line at x=5
@@ -442,8 +455,8 @@ describe('IntersectionSequenceFactory', () => {
       intersectionCmd.commit();
 
       // Verify: Both points exist in world
-      const horizontalPlane = world.getProjectionPlaneById('proj_plane_H')!;
-      const verticalPlane = world.getProjectionPlaneById('proj_plane_V')!;
+      // (Reuse horizontalPlane from HHL lookup)
+      const verticalPlane = world.getVerticalPlane()!;
       
       const primaryPoint = horizontalPlane.getPoint(result.pointId);
       const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);
@@ -504,7 +517,15 @@ describe('IntersectionSequenceFactory', () => {
       const cmd = new Command('Setup', world);
       
       // Get HalfHingeLine on horizontal plane
-      const hhlId = 'half_HL_HV_on_PH';
+      const horizontalPlane = world.getHorizontalPlane()!;
+      const mainHingeLine = world.getMainHingeLine();
+      const hhl = horizontalPlane.getAllLines().find(
+        l => (l as any).hingeLineId === mainHingeLine.id
+      );
+      if (!hhl) {
+        throw new Error('HalfHingeLine not found on horizontal plane');
+      }
+      const hhlId = hhl.id;
       
       // Create a circle centered at (0, 5) with radius passing through (0, 0)
       // This will intersect the HHL (y=0 line) at two points
@@ -540,8 +561,8 @@ describe('IntersectionSequenceFactory', () => {
       intersectionCmd.commit();
 
       // Verify: Both points exist
-      const horizontalPlane = world.getProjectionPlaneById('proj_plane_H')!;
-      const verticalPlane = world.getProjectionPlaneById('proj_plane_V')!;
+      // (Reuse horizontalPlane from HHL lookup)
+      const verticalPlane = world.getVerticalPlane()!;
       
       const primaryPoint = horizontalPlane.getPoint(result.pointId);
       const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);
