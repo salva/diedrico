@@ -26,29 +26,36 @@ import { Vector3 } from 'three';
  * This factory receives an open Command and adds operations directly to it.
  * It does NOT create a Command subclass, maintaining architecture compliance.
  * 
- * @param world World instance for ID generation
+ * CRITICAL: This factory does NOT generate element IDs. Operations generate their own IDs
+ * via World/ProjectionPlane factory methods, supporting redo by storing IDs in outputs.
+ * 
+ * @param _world World instance (not used - operations get World from Command)
  * @param cmd Open Command to which operations will be added
  */
-export function buildWorldInitialization(world: World, cmd: Command): void {
+export function buildWorldInitialization(_world: World, cmd: Command): void {
   // Step 1: Create initialization subprocess
   // This organizes all initialization elements under a dedicated subprocess in the ProcessTree
   cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
   
-  // Generate IDs for geometric structure using World's ID generators
-  const planeHId = world.generatePlaneId(); // Horizontal 3D plane
-  const planeVId = world.generatePlaneId(); // Vertical 3D plane
-  const projPlaneHId = world.generateProjPlaneId(); // Horizontal projection plane
-  const projPlaneVId = world.generateProjPlaneId(); // Vertical projection plane
-  
   // Step 2-3: Create 3D planes
-  // These represent the infinite 3D planes in abstract geometric space
-  cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
-  cmd.addAndExecute(new AddPlane3DOp(planeVId, 'vertical'));
+  // Operations generate IDs internally via world.generatePlaneId()
+  const planeHOp = new AddPlane3DOp('horizontal');
+  cmd.addAndExecute(planeHOp);
+  const planeHId = planeHOp.outputs.planeId as string;
+  
+  const planeVOp = new AddPlane3DOp('vertical');
+  cmd.addAndExecute(planeVOp);
+  const planeVId = planeVOp.outputs.planeId as string;
   
   // Step 4-5: Create projection planes
-  // These are the drawable 2D canvases that correspond to the 3D planes
-  cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal'));
-  cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical'));
+  // Operations generate IDs internally via world.generateProjPlaneId()
+  const projPlaneHOp = new AddProjectionPlaneOp(planeHId, 'horizontal');
+  cmd.addAndExecute(projPlaneHOp);
+  const projPlaneHId = projPlaneHOp.outputs.projPlaneId as string;
+  
+  const projPlaneVOp = new AddProjectionPlaneOp(planeVId, 'vertical');
+  cmd.addAndExecute(projPlaneVOp);
+  const projPlaneVId = projPlaneVOp.outputs.projPlaneId as string;
   
   // Step 6-7: Create origin points
   // Every projection plane needs an origin (0,0) point for coordinate system
@@ -57,8 +64,10 @@ export function buildWorldInitialization(world: World, cmd: Command): void {
   
   // Step 8: Create hinge line
   // The hinge line is the 3D line where the two planes intersect (the x-axis)
-  const hingeLineId = world.generateHingeLineId();
-  cmd.addAndExecute(new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId));
+  // Operation generates ID internally via world.generateHingeLineId()
+  const hingeLineOp = new AddHingeLineOp(projPlaneHId, projPlaneVId);
+  cmd.addAndExecute(hingeLineOp);
+  const hingeLineId = hingeLineOp.outputs.hingeLineId as string;
   
   // Step 9-10: Create half hinge lines
   // Each projection plane gets a half hinge line (its local 2D representation of the hinge)

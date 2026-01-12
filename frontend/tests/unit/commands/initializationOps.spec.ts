@@ -68,7 +68,7 @@ describe('Initialization Operations', () => {
 
   describe('AddPlane3DOp', () => {
     it('should create horizontal 3D plane', () => {
-      const op = new AddPlane3DOp('plane_test_H', 'horizontal');
+      const op = new AddPlane3DOp('horizontal', 'plane_test_H');
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
@@ -80,7 +80,7 @@ describe('Initialization Operations', () => {
     });
 
     it('should create vertical 3D plane', () => {
-      const op = new AddPlane3DOp('plane_test_V', 'vertical');
+      const op = new AddPlane3DOp('vertical', 'plane_test_V');
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
@@ -90,7 +90,7 @@ describe('Initialization Operations', () => {
     });
 
     it('should undo plane creation', () => {
-      const op = new AddPlane3DOp('plane_undo_test', 'horizontal');
+      const op = new AddPlane3DOp('horizontal', 'plane_undo_test');
       op.apply(world);
       
       expect((world as any).planes.has('plane_undo_test')).toBe(true);
@@ -101,22 +101,23 @@ describe('Initialization Operations', () => {
     });
 
     it('should have valid parameters and outputs', () => {
-      const op = new AddPlane3DOp('plane_test', 'horizontal');
+      const op = new AddPlane3DOp('horizontal', 'plane_test');
       
       expect(op.parameters).toEqual({
-        planeId: 'plane_test',
-        orientation: 'horizontal'
+        orientation: 'horizontal',
+        planeId: 'plane_test'
       });
     });
 
     it('should serialize correctly', () => {
-      const op = new AddPlane3DOp('plane_ser', 'vertical');
+      const op = new AddPlane3DOp('vertical', 'plane_ser');
+      op.apply(world); // Need to apply to populate outputs
       const serialized = op.serialize();
       
       expect(serialized).toEqual({
         type: 'AddPlane3D',
-        planeId: 'plane_ser',
-        orientation: 'vertical'
+        orientation: 'vertical',
+        planeId: 'plane_ser'
       });
     });
   });
@@ -124,11 +125,11 @@ describe('Initialization Operations', () => {
   describe('AddProjectionPlaneOp', () => {
     beforeEach(() => {
       // Create 3D plane first
-      new AddPlane3DOp('plane_3d_test', 'horizontal').apply(world);
+      new AddPlane3DOp('horizontal', 'plane_3d_test').apply(world);
     });
 
     it('should create projection plane', () => {
-      const op = new AddProjectionPlaneOp('proj_plane_test', 'plane_3d_test', 'horizontal');
+      const op = new AddProjectionPlaneOp('plane_3d_test', 'horizontal', 'proj_plane_test');
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
@@ -140,7 +141,7 @@ describe('Initialization Operations', () => {
     });
 
     it('should undo projection plane creation', () => {
-      const op = new AddProjectionPlaneOp('proj_undo', 'plane_3d_test', 'horizontal');
+      const op = new AddProjectionPlaneOp('plane_3d_test', 'horizontal', 'proj_undo');
       op.apply(world);
       
       expect(world.getProjectionPlaneById('proj_undo')).toBeDefined();
@@ -151,20 +152,20 @@ describe('Initialization Operations', () => {
     });
 
     it('should have valid parameters', () => {
-      const op = new AddProjectionPlaneOp('proj_test', 'plane_3d', 'vertical');
+      const op = new AddProjectionPlaneOp('plane_3d', 'vertical', 'proj_test');
       
       expect(op.parameters).toEqual({
-        projPlaneId: 'proj_test',
         plane3DId: 'plane_3d',
-        orientation: 'vertical'
+        orientation: 'vertical',
+        projPlaneId: 'proj_test'
       });
     });
   });
 
   describe('AddOriginPoint2DOp', () => {
     beforeEach(() => {
-      new AddPlane3DOp('plane_3d', 'horizontal').apply(world);
-      new AddProjectionPlaneOp('proj_plane', 'plane_3d', 'horizontal').apply(world);
+      new AddPlane3DOp('horizontal', 'plane_3d').apply(world);
+      new AddProjectionPlaneOp('plane_3d', 'horizontal', 'proj_plane').apply(world);
     });
 
     it('should create locked origin point', () => {
@@ -205,14 +206,14 @@ describe('Initialization Operations', () => {
 
   describe('AddHingeLineOp', () => {
     beforeEach(() => {
-      new AddPlane3DOp('plane_H', 'horizontal').apply(world);
-      new AddPlane3DOp('plane_V', 'vertical').apply(world);
-      new AddProjectionPlaneOp('proj_H', 'plane_H', 'horizontal').apply(world);
-      new AddProjectionPlaneOp('proj_V', 'plane_V', 'vertical').apply(world);
+      new AddPlane3DOp('horizontal', 'plane_H').apply(world);
+      new AddPlane3DOp('vertical', 'plane_V').apply(world);
+      new AddProjectionPlaneOp('plane_H', 'horizontal', 'proj_H').apply(world);
+      new AddProjectionPlaneOp('plane_V', 'vertical', 'proj_V').apply(world);
     });
 
     it('should create hinge line', () => {
-      const op = new AddHingeLineOp('hl_test', 'proj_H', 'proj_V');
+      const op = new AddHingeLineOp('proj_H', 'proj_V', 'hl_test');
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
@@ -224,7 +225,7 @@ describe('Initialization Operations', () => {
     });
 
     it('should undo hinge line creation', () => {
-      const op = new AddHingeLineOp('hl_undo', 'proj_H', 'proj_V');
+      const op = new AddHingeLineOp('proj_H', 'proj_V', 'hl_undo');
       op.apply(world);
       
       expect((world as any).hingeLines.has('hl_undo')).toBe(true);
@@ -236,22 +237,23 @@ describe('Initialization Operations', () => {
     });
 
     it('should serialize correctly', () => {
-      const op = new AddHingeLineOp('hl_ser', 'proj_1', 'proj_2');
+      const op = new AddHingeLineOp('proj_1', 'proj_2', 'hl_ser');
+      op.apply(world); // Need to apply to populate outputs
       const serialized = op.serialize();
       
       expect(serialized).toEqual({
         type: 'AddHingeLine',
-        hingeLineId: 'hl_ser',
         horizontalPlaneId: 'proj_1',
-        verticalPlaneId: 'proj_2'
+        verticalPlaneId: 'proj_2',
+        hingeLineId: 'hl_ser'
       });
     });
   });
 
   describe('AddHalfHingeLine2DOp', () => {
     beforeEach(() => {
-      new AddPlane3DOp('plane_3d', 'horizontal').apply(world);
-      new AddProjectionPlaneOp('proj_plane', 'plane_3d', 'horizontal').apply(world);
+      new AddPlane3DOp('horizontal', 'plane_3d').apply(world);
+      new AddProjectionPlaneOp('plane_3d', 'horizontal', 'proj_plane').apply(world);
     });
 
     it('should create half hinge line', () => {

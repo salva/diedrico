@@ -5538,6 +5538,69 @@ class World {
 7. **Serialization**: Each operation is independently serializable (Command subclass cannot be serialized)
 8. **Transparency**: Operation sequence is explicit and inspectable
 
+**CRITICAL: ID Generation Pattern**:
+
+Sequence factories **MUST NOT** generate element IDs themselves. ID generation is the responsibility of element factory methods in `World` and `ProjectionPlane` classes.
+
+**Why This Matters**:
+- **Redo Support**: Operations must use the same IDs when redone (undo then redo)
+- **Outputs Storage**: Operations store generated IDs in `outputs` for redo
+- **Factory Methods**: Element factory methods (e.g., `world.addPlane3D()`) accept optional ID parameter
+- **First Execution**: Factory method generates new ID if not provided
+- **Redo Execution**: Operation passes `outputs.elementId` to factory method, which reuses that ID
+
+**Correct Pattern**:
+```typescript
+// ✅ CORRECT: Operation lets element factory generate ID
+export class AddPlane3DOp implements IOperation {
+  outputs: Record<string, any> = {};
+  
+  constructor(
+    private readonly orientation: 'horizontal' | 'vertical',
+    private readonly planeId?: string  // Optional - for redo support
+  ) {
+    this.parameters = { orientation, planeId };
+  }
+
+  apply(world: World): OperationResult {
+    // Pass stored ID (if available from redo), otherwise factory generates new one
+    const plane = world.addPlane3D(this.orientation, this.planeId || this.outputs.planeId);
+    
+    // Store generated ID for redo
+    this.outputs = { planeId: plane.id };
+    return { success: true, outputs: this.outputs };
+  }
+}
+
+// ✅ Sequence factory does NOT generate IDs
+function buildWorldInitialization(world: World, cmd: Command): void {
+  cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+  
+  // Operations generate their own IDs via element factory methods
+  cmd.addAndExecute(new AddPlane3DOp('horizontal'));  // No ID passed
+  cmd.addAndExecute(new AddPlane3DOp('vertical'));    // Factory method generates ID
+  // ... more operations
+}
+```
+
+**Incorrect Pattern** (FORBIDDEN):
+```typescript
+// ❌ FORBIDDEN: Sequence factory generates IDs
+function buildWorldInitialization(world: World, cmd: Command): void {
+  const planeHId = world.generatePlaneId();  // ❌ WRONG - factory shouldn't generate IDs
+  const planeVId = world.generatePlaneId();  // ❌ WRONG
+  
+  cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
+  cmd.addAndExecute(new AddPlane3DOp(planeVId, 'vertical'));
+}
+```
+
+**Rationale**:
+1. Operations are the unit of redo - they must manage their own IDs
+2. Sequence factories are stateless - they don't track what IDs were assigned
+3. Element factory methods already handle ID generation logic
+4. Operations already store outputs for redo - ID fits naturally there
+
 **When to Use Factories**:
 - Complex multi-step workflows that need to be reused (MANDATORY)
 - Initialization sequences (World, templates, presets) (MANDATORY)
@@ -5570,8 +5633,10 @@ class InitializeWorldCommand extends Command {
 // This is the ONLY acceptable pattern for complex sequences
 function buildWorldInitialization(world: World, cmd: Command): void {
   // Factory adds operations directly to command
+  // Operations generate their own IDs via element factory methods
   cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
-  cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
+  cmd.addAndExecute(new AddPlane3DOp('horizontal'));  // No ID - factory method generates
+  cmd.addAndExecute(new AddPlane3DOp('vertical'));
   // ... more operations
 }
 

@@ -36,27 +36,32 @@ export class AddPlane3DOp implements IOperation {
   outputs: Record<string, any> = {};
   
   constructor(
-    private readonly planeId: string,
-    private readonly orientation: 'horizontal' | 'vertical'
+    private readonly orientation: 'horizontal' | 'vertical',
+    private readonly planeId?: string
   ) {
-    this.parameters = { planeId, orientation };
+    this.parameters = { orientation, planeId };
   }
 
   apply(world: World): OperationResult {
     try {
+      // Generate ID if not provided (first execution) or use stored/provided ID (redo)
+      const id = this.planeId || this.outputs.planeId || world.generatePlaneId();
+      
       // Create 3D plane
       const plane = this.orientation === 'horizontal' 
         ? Plane3D.createPH() 
         : Plane3D.createPV();
       
-      plane.id = this.planeId;
+      plane.id = id;
       
       // Add to world
-      (world as any).planes.set(this.planeId, plane);
+      (world as any).planes.set(id, plane);
       
+      // Store ID in outputs for redo support
+      this.outputs = { planeId: id };
       return {
         success: true,
-        outputs: { planeId: this.planeId }
+        outputs: this.outputs
       };
     } catch (error) {
       return {
@@ -68,14 +73,16 @@ export class AddPlane3DOp implements IOperation {
   }
 
   undo(world: World): void {
-    (world as any).planes.delete(this.planeId);
+    if (this.outputs.planeId) {
+      (world as any).planes.delete(this.outputs.planeId);
+    }
   }
 
   serialize() {
     return {
       type: this.type,
-      planeId: this.planeId,
-      orientation: this.orientation
+      orientation: this.orientation,
+      planeId: this.outputs.planeId
     };
   }
 }
@@ -91,36 +98,41 @@ export class AddProjectionPlaneOp implements IOperation {
   outputs: Record<string, any> = {};
   
   constructor(
-    private readonly projPlaneId: string,
     private readonly plane3DId: string,
-    private readonly orientation: 'horizontal' | 'vertical'
+    private readonly orientation: 'horizontal' | 'vertical',
+    private readonly projPlaneId?: string
   ) {
-    this.parameters = { projPlaneId, plane3DId, orientation };
+    this.parameters = { plane3DId, orientation, projPlaneId };
   }
 
   apply(world: World): OperationResult {
     try {
+      // Generate ID if not provided (first execution) or use stored/provided ID (redo)
+      const id = this.projPlaneId || this.outputs.projPlaneId || world.generateProjPlaneId();
+      
       // Create projection plane
       const projPlane = this.orientation === 'horizontal'
         ? BaseProjectionPlane.createPH()
         : BaseProjectionPlane.createPV();
       
-      projPlane.id = this.projPlaneId;
+      projPlane.id = id;
       projPlane.plane3DId = this.plane3DId;
       
       // Add to world
-      (world as any).projectionPlanes.set(this.projPlaneId, projPlane);
+      (world as any).projectionPlanes.set(id, projPlane);
       
       // Set semantic reference on World (Phase 46)
       if (this.orientation === 'horizontal') {
-        (world as any).horizontalPlaneId = this.projPlaneId;
+        (world as any).horizontalPlaneId = id;
       } else {
-        (world as any).verticalPlaneId = this.projPlaneId;
+        (world as any).verticalPlaneId = id;
       }
       
+      // Store ID in outputs for redo support
+      this.outputs = { projPlaneId: id };
       return {
         success: true,
-        outputs: { projPlaneId: this.projPlaneId }
+        outputs: this.outputs
       };
     } catch (error) {
       return {
@@ -132,22 +144,24 @@ export class AddProjectionPlaneOp implements IOperation {
   }
 
   undo(world: World): void {
-    (world as any).projectionPlanes.delete(this.projPlaneId);
-    
-    // Clear semantic reference
-    if (this.orientation === 'horizontal') {
-      (world as any).horizontalPlaneId = undefined;
-    } else {
-      (world as any).verticalPlaneId = undefined;
+    if (this.outputs.projPlaneId) {
+      (world as any).projectionPlanes.delete(this.outputs.projPlaneId);
+      
+      // Clear semantic reference
+      if (this.orientation === 'horizontal') {
+        (world as any).horizontalPlaneId = undefined;
+      } else {
+        (world as any).verticalPlaneId = undefined;
+      }
     }
   }
 
   serialize() {
     return {
       type: this.type,
-      projPlaneId: this.projPlaneId,
       plane3DId: this.plane3DId,
-      orientation: this.orientation
+      orientation: this.orientation,
+      projPlaneId: this.outputs.projPlaneId
     };
   }
 }
@@ -264,32 +278,37 @@ export class AddHingeLineOp implements IOperation {
   outputs: Record<string, any> = {};
   
   constructor(
-    private readonly hingeLineId: string,
     private readonly horizontalPlaneId: string,
-    private readonly verticalPlaneId: string
+    private readonly verticalPlaneId: string,
+    private readonly hingeLineId?: string
   ) {
-    this.parameters = { hingeLineId, horizontalPlaneId, verticalPlaneId };
+    this.parameters = { horizontalPlaneId, verticalPlaneId, hingeLineId };
   }
 
   apply(world: World): OperationResult {
     try {
+      // Generate ID if not provided (first execution) or use stored/provided ID (redo)
+      const id = this.hingeLineId || this.outputs.hingeLineId || world.generateHingeLineId();
+      
       // Create hinge line
       const hingeLine = new HingeLine(
-        this.hingeLineId,
-        this.hingeLineId, // label same as ID
+        id,
+        id, // label same as ID
         this.horizontalPlaneId,
         this.verticalPlaneId
       );
       
       // Add to world
-      (world as any).hingeLines.set(this.hingeLineId, hingeLine);
+      (world as any).hingeLines.set(id, hingeLine);
       
       // Store as main hinge line reference
-      (world as any).mainHingeLineId = this.hingeLineId;
+      (world as any).mainHingeLineId = id;
       
+      // Store ID in outputs for redo support
+      this.outputs = { hingeLineId: id };
       return {
         success: true,
-        outputs: { hingeLineId: this.hingeLineId }
+        outputs: this.outputs
       };
     } catch (error) {
       return {
@@ -301,16 +320,18 @@ export class AddHingeLineOp implements IOperation {
   }
 
   undo(world: World): void {
-    (world as any).hingeLines.delete(this.hingeLineId);
-    (world as any).mainHingeLineId = undefined;
+    if (this.outputs.hingeLineId) {
+      (world as any).hingeLines.delete(this.outputs.hingeLineId);
+      (world as any).mainHingeLineId = undefined;
+    }
   }
 
   serialize() {
     return {
       type: this.type,
-      hingeLineId: this.hingeLineId,
       horizontalPlaneId: this.horizontalPlaneId,
-      verticalPlaneId: this.verticalPlaneId
+      verticalPlaneId: this.verticalPlaneId,
+      hingeLineId: this.outputs.hingeLineId
     };
   }
 }
@@ -441,7 +462,7 @@ export class SetActivePlaneOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(_world: World): void {
     // Active plane state is UI concern, no need to undo
     // (initialization is non-undoable anyway)
   }
