@@ -5439,20 +5439,23 @@ class Command {
 
 ### Operation Sequence Factories
 
-**Purpose**: Factories that generate sequences of operations for complex workflows while maintaining the single Command class architecture
+**Purpose**: Factories that generate sequences of operations for complex workflows while maintaining the @sealed Command class architecture
 
-**Pattern**: Factory functions/classes that return arrays of IOperation instances, which are then added to a regular Command instance. This avoids the need for Command subclasses while enabling reusable operation sequences.
+**Critical Architecture Rule**: Command MUST NEVER be subclassed. The Command class is @sealed and any attempt to extend it violates the architecture. Factories are the ONLY way to handle complex multi-operation sequences.
+
+**Pattern**: Factory functions/classes that return arrays of IOperation instances, which are then added to a regular Command instance. This is not optional - it's the mandatory pattern for all complex operation sequences.
 
 **Key Principles**:
-1. **No Command Subclasses**: Factories return operation arrays, not Command subclasses
-2. **Reusable Logic**: Complex operation sequences can be generated and reused
-3. **Generic Command**: Always use the base Command class
-4. **Testable**: Factories can be tested independently of Command
-5. **Composable**: Factory outputs can be combined or modified before adding to Command
+1. **Command is @sealed**: NEVER create Command subclasses - this is an architectural violation
+2. **Factories are Mandatory**: All complex operation sequences MUST use factories
+3. **Generic Command Only**: Always use the base Command class without extension
+4. **Reusable Logic**: Complex operation sequences can be generated and reused via factories
+5. **Testable**: Factories can be tested independently of Command
+6. **Composable**: Factory outputs can be combined or modified before adding to Command
 
 **Example - World Initialization Factory**:
 
-World initialization requires a specific sequence of operations (create planes, projection planes, origins, hinge lines, etc.). Instead of creating an `InitializeWorldCommand` subclass (which violates architecture), we use a factory:
+World initialization requires a specific sequence of operations (create planes, projection planes, origins, hinge lines, etc.). Creating an `InitializeWorldCommand` subclass would be an architectural violation. Instead, we MUST use a factory:
 
 ```typescript
 /**
@@ -5533,28 +5536,31 @@ class World {
 ```
 
 **Benefits of Factory Pattern**:
-1. **Architecture Compliance**: No Command subclasses, preserves sealed Command class
-2. **Testability**: Factory can be unit tested independently
-3. **Reusability**: Same factory can be used in different contexts (new World, project templates)
-4. **Serialization**: Each operation is independently serializable (unlike Command subclass)
-5. **Composability**: Can combine multiple factories or modify operation sequences
-6. **Transparency**: Operation sequence is explicit and inspectable
+1. **Architecture Compliance**: Respects @sealed Command class - no subclassing ever
+2. **Mandatory Pattern**: Only way to handle complex sequences without violating architecture
+3. **Testability**: Factory can be unit tested independently
+4. **Reusability**: Same factory can be used in different contexts (new World, project templates)
+5. **Serialization**: Each operation is independently serializable (Command subclass cannot be serialized)
+6. **Composability**: Can combine multiple factories or modify operation sequences
+7. **Transparency**: Operation sequence is explicit and inspectable
 
 **When to Use Factories**:
-- Complex multi-step workflows that need to be reused
-- Initialization sequences (World, templates, presets)
-- Batch operations (delete cascade, duplicate with dependencies)
-- Generated operation sequences (parametric patterns, repetition)
+- Complex multi-step workflows that need to be reused (MANDATORY)
+- Initialization sequences (World, templates, presets) (MANDATORY)
+- Batch operations (delete cascade, duplicate with dependencies) (MANDATORY)
+- Generated operation sequences (parametric patterns, repetition) (MANDATORY)
+- Any time you're tempted to subclass Command (FORBIDDEN - use factory instead)
 
 **When NOT to Use Factories**:
 - Simple single-operation commands (just create operation directly)
 - One-off sequences (inline the operations)
 - Dynamic sequences that can't be predetermined (use conditional logic in tool code)
 
-**Comparison with Command Subclass (Anti-Pattern)**:
+**Comparison with Command Subclass (FORBIDDEN Anti-Pattern)**:
 
 ```typescript
-// ❌ WRONG: Command subclass (violates architecture)
+// ❌ FORBIDDEN: Command subclass (VIOLATES @sealed architecture)
+// This pattern is NEVER acceptable and will fail architecture tests
 class InitializeWorldCommand extends Command {
   constructor(world: World) {
     super('Initialize World', world);
@@ -5566,7 +5572,8 @@ class InitializeWorldCommand extends Command {
   }
 }
 
-// ✅ CORRECT: Factory + Generic Command
+// ✅ MANDATORY: Factory + Generic Command
+// This is the ONLY acceptable pattern for complex sequences
 function createWorldInitializationOperations(world: World): IOperation[] {
   // operations built outside, returned as array
   return [...operations];
@@ -5577,10 +5584,14 @@ createWorldInitializationOperations(world).forEach(op => cmd.addAndExecute(op));
 cmd.commit();
 ```
 
+**Architecture Enforcement**:
+
+The `noCommandSubclasses.spec.ts` architecture test will fail if any Command subclasses are detected in the codebase. This is intentional - Command subclassing is a serious architectural violation that breaks the Command Pattern and prevents proper serialization.
+
 **Non-Undoable Commands**:
 
 Some operations (like world initialization) should not be undoable. Handle this by:
-1. Create Command normally using factory
+1. Create Command normally using factory (never subclass)
 2. Commit the Command
 3. Don't push it to CommandStack
 
@@ -5592,7 +5603,9 @@ cmd.commit();
 // Note: Not pushed to commandStack - initialization cannot be undone
 ```
 
-The Command is still created normally (no subclass needed), but by not adding it to the CommandStack, it effectively becomes non-undoable.
+The Command is still created normally (NEVER subclassed), but by not adding it to the CommandStack, it effectively becomes non-undoable.
+
+**Summary**: Command is @sealed. Subclassing Command is forbidden. Use factories for all complex operation sequences.
 
 ---
 
