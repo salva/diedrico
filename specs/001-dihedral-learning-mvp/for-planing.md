@@ -18,7 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Implement the selection tool (toolbar button, interaction modes: double-click → properties dialog, drag free point → move, drag empty → pan).
+* [ ] Fix circle dependencies, moving the radious point doesn't update the circle.
 * [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
 * [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
@@ -95,19 +95,25 @@ Note that completing these tasks may require asking the user for additional info
     - Visual feedback (highlighting) reflects distance-adjusted selection
     - All construction tools benefit from adjustment (no per-tool changes)
 
-* [X] **Implement the Selection Tool**
-  - **STATUS**: PLANNED (Jan 13, 2026)
+* [X] **Selection Tool: Toolbar Button & Interaction Modes**
+  - **STATUS**: ✅ COMPLETE (Jan 13, 2026) - All interaction modes implemented
   - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-039 (Selection Tool requirement)
   - **UI**: [ui-spec.md](./ui-spec.md#toolbar-organization) toolbar group 1 + [interaction modes](./ui-spec.md#mode-1-selection-tool-active-selectioneditnavigation-mode)
   - **Data model**: [data-model.md](./data-model.md#viewstate-structure) active tool state
-  - **Tasks**: Phase 54.5 in [tasks.md](./tasks.md#phase-545-selection-tool-toolbar-button--interaction-modes)
+  - **Tasks**: Phase 54 (point dragging) and Phase 54.5 (toolbar) in [tasks.md](./tasks.md)
+  - **Implementation**: ✅ COMPLETE
+    - toolStore.ts: 'select' tool type, default active tool
+    - SvgCanvas.vue: Double-click opens properties dialog (T188)
+    - SvgCanvas.vue: Drag free points to move (T954-T956)
+    - SvgCanvas.vue: Escape cancels drag (T956)
+    - SvgCanvas.vue: Drag empty space pans viewport (T965)
   - **Acceptance**:
-    - Toolbar button (pointer icon) toggles Selection Tool on/off
-    - Default active tool on startup; `Esc` activates Selection Tool
-    - Double-click any object → opens properties dialog
-    - Drag free point → moves point (Phase 54 behavior)
-    - Drag empty space → pans viewport
-    - Construction tools deactivate Selection Tool when clicked
+    - ✅ 'select' is default active tool on startup
+    - ✅ Double-click any object → opens properties dialog
+    - ✅ Drag free point → moves point continuously
+    - ✅ Drag empty space → pans viewport
+    - ✅ Escape cancels in-progress drag
+    - ✅ Mouse-up commits single undoable move action
 
 * [X] **Picking and moving free 2D points in a plane (drag)**
   - **STATUS**: PLANNED (Jan 13, 2026)
