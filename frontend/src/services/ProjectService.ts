@@ -31,6 +31,7 @@ import { AddCircleCircleIntersectionPoint2DOp } from '@/commands/operations/worl
 import { AddSiblingIntersectionPoint2DOp } from '@/commands/operations/world/AddSiblingIntersectionPoint2DOp';
 import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from '@/commands/operations/world/RemoveElementOps';
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
 import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
 import {
@@ -215,6 +216,9 @@ export class ProjectService {
       
       case 'UpdateElementStyle':
         return new UpdateElementStyleOp(parameters.elementId, parameters.planeId, parameters.newStyle);
+
+      case 'UpdateFreePoint2DPosition':
+        return new UpdateFreePoint2DPositionOp(parameters.planeId, parameters.pointId, parameters.newPosition);
       
       case 'RemoveActionFromProcessTree':
         return new RemoveActionFromProcessTreeOp(parameters.actionId);

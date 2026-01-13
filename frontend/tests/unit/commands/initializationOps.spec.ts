@@ -275,21 +275,29 @@ describe('Initialization Operations', () => {
     beforeEach(() => {
       const point = new Vector4(0, 0, 0, 1);
       const normal = new Vector4(0, 0, 1, 0);
-      new AddPlane3DFixedOp(point, normal, 'plane_3d', 'P_H').apply(world);
-      new AddProjectionPlaneOp('plane_3d', 'horizontal', 'proj_plane').apply(world);
+
+      // Create two distinct planes so hinge line construction is valid
+      new AddPlane3DFixedOp(point, normal, 'plane_3d_h', 'P_H').apply(world);
+      new AddProjectionPlaneOp('plane_3d_h', 'horizontal', 'proj_plane_h').apply(world);
+
+      new AddPlane3DFixedOp(point, normal, 'plane_3d_v', 'P_V').apply(world);
+      new AddProjectionPlaneOp('plane_3d_v', 'vertical', 'proj_plane_v').apply(world);
+
+      // Parent hinge line must exist before creating half-hinge lines
+      new AddHingeLineOp('proj_plane_h', 'proj_plane_v', 'hl_test').apply(world);
     });
 
     it('should create half hinge line', () => {
       const point = new Vector3(0, 0, 1);
       const direction = new Vector3(1, 0, 0);
-      const op = new AddHalfHingeLine2DOp('proj_plane', 'hl_test', point, direction);
+      const op = new AddHalfHingeLine2DOp('proj_plane_h', 'hl_test', point, direction);
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
       expect(result.outputs.lineId).toBeDefined();
-      expect(result.outputs.projPlaneId).toBe('proj_plane');
+      expect(result.outputs.projPlaneId).toBe('proj_plane_h');
       
-      const projPlane = world.getProjectionPlaneById('proj_plane');
+      const projPlane = world.getProjectionPlaneById('proj_plane_h');
       const lines = projPlane!.getAllLines();
       
       expect(lines.length).toBe(1);

@@ -40,7 +40,7 @@ import type { Circle2D, Circle2DRealization2D } from './Circle';
 import { Circle2DByCenterAndPoint } from './Circle';
 import { Segment2DByPoints } from './Segment';
 import { Guide2D, SiblingGuide2D } from './Guide';
-import { HalfHingeLine2D } from './HingeLine';
+import { HingeLine, HalfHingeLine2D } from './HingeLine';
 
 export type ProjectionPlaneType = 'base' | 'auxiliary';
 
@@ -1058,6 +1058,11 @@ export abstract class ProjectionPlane {
       id = this.generateLine2DId(world);
     }
 
+    const hingeLine = world.getHingeLineById(hingeLineId);
+    if (!hingeLine) {
+      throw new Error(`Cannot add HalfHingeLine2D: HingeLine ${hingeLineId} not found`);
+    }
+
     const halfHingeLine = new HalfHingeLine2D(
       id,
       hingeLineId,
@@ -1065,6 +1070,23 @@ export abstract class ProjectionPlane {
       point,
       direction
     );
+
+    // Phase 37: Enforce parametric consistency (Q=Q', D=D') across paired HalfHingeLine2D.
+    // If the sibling half-hinge line already exists on the other plane, validate before adding.
+    const otherPlaneId = hingeLine.getOtherPlane(this.id);
+    if (otherPlaneId) {
+      const otherPlane = world.getProjectionPlaneById(otherPlaneId);
+      const sibling = otherPlane
+        ?.getAllLines()
+        .find(
+          (line): line is HalfHingeLine2D =>
+            line.type === 'half-hinge' && (line as HalfHingeLine2D).hingeLineId === hingeLineId
+        );
+
+      if (sibling) {
+        HingeLine.validateParametricConsistency(halfHingeLine, sibling);
+      }
+    }
     
     this.addLine(halfHingeLine);
     return halfHingeLine;

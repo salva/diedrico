@@ -18,7 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] The process tree is not being updated with the elements in World initialization.
+* [ ] Implement the selection tool (toolbar button, interaction modes: double-click → properties dialog, drag free point → move, drag empty → pan).
 * [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
 * [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
@@ -28,7 +28,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
 * [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
-
 * [ ] Do not use type aliases in the code.
 * [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
 * [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
@@ -52,9 +51,59 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Ensure we have a per-plane cache for 2D realizations.
 * [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?
 * [ ] In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. In general don't try to handle unexpected internal states but just report an error instead.
-* [ ] The plane selection toolbar is gone!
+* [ ] Adding new elements just expands all subprocesses in the process tree
+* [ ] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
+* [ ] View zooming must work using the mouse position as the center when using the mouse wheel, or the center of the screen when using + or - icons (not implemented yet).
  
 ## ALREADY PLANNED
+
+* [X] **Distance-Adjusted Hit-Testing**
+  - **STATUS**: IN PROGRESS (Jan 13, 2026) - Algorithm implemented (T969-T970 complete), testing remaining
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-040 (Distance-adjusted hit-testing)
+  - **UI**: [ui-spec.md](./ui-spec.md#distance-adjusted-hit-testing) Distance adjustment: points get visual radius (~5px) subtracted from distance
+  - **Data model**: [data-model.md](./data-model.md#distance-adjusted-hit-testing-phase-55) Paper.hitTest() algorithm with distance adjustment
+  - **Tasks**: Phase 55 in [tasks.md](./tasks.md#phase-55-distance-adjusted-hit-testing)
+  - **Implementation**: Points treated as small circles; adjusted_distance = actual_distance - 5px (in plane space)
+  - **Acceptance**:
+    - When cursor within snap radius of point + line → point is highlighted/selected (distance adjustment gives preference)
+    - When cursor within snap radius of multiple points → closest point selected (after adjustment)
+    - Selection mask filtering still works (applied before distance check)
+    - Visual feedback (highlighting) reflects distance-adjusted selection
+    - All construction tools benefit from adjustment (no per-tool changes)
+
+* [X] **Implement the Selection Tool**
+  - **STATUS**: PLANNED (Jan 13, 2026)
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-039 (Selection Tool requirement)
+  - **UI**: [ui-spec.md](./ui-spec.md#toolbar-organization) toolbar group 1 + [interaction modes](./ui-spec.md#mode-1-selection-tool-active-selectioneditnavigation-mode)
+  - **Data model**: [data-model.md](./data-model.md#viewstate-structure) active tool state
+  - **Tasks**: Phase 54.5 in [tasks.md](./tasks.md#phase-545-selection-tool-toolbar-button--interaction-modes)
+  - **Acceptance**:
+    - Toolbar button (pointer icon) toggles Selection Tool on/off
+    - Default active tool on startup; `Esc` activates Selection Tool
+    - Double-click any object → opens properties dialog
+    - Drag free point → moves point (Phase 54 behavior)
+    - Drag empty space → pans viewport
+    - Construction tools deactivate Selection Tool when clicked
+
+* [X] **Picking and moving free 2D points in a plane (drag)**
+  - **STATUS**: PLANNED (Jan 13, 2026)
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-039
+  - **UI**: [ui-spec.md](./ui-spec.md#mode-1-no-tool-active-selectionnavigation-mode) “Click on Directly-Defined Point” drag semantics + Esc cancel
+  - **Data model**: [data-model.md](./data-model.md#persistence-entity-commandstack) Move command + validation rules (free only, not locked)
+  - **Tasks**: Phase 54 in [tasks.md](./tasks.md#phase-54-picking-and-moving-free-2d-points-drag)
+  - **Acceptance**:
+    - Dragging a directly-defined (free) point updates its coordinates and recomputes dependents continuously
+    - Derived points are not movable; locked points are not movable
+    - `Esc` cancels an in-progress drag; mouse-up commits a single undoable action
+    - `Shift + drag` always pans the viewport
+
+* [X] **ProcessTree shows world initialization actions**
+  - **STATUS**: ✅ COMPLETE (Jan 13, 2026)
+  - **Notes**: World initialization ops now add initialization actions into the “World Initialization” subprocess so the Actions/ProcessTree panels reflect the full init sequence.
+
+* [X] **Plane selection toolbar restored**
+  - **STATUS**: ✅ COMPLETE (Jan 13, 2026)
+  - **Notes**: Plane selector restored in the top toolbar and wired to World active plane.
 
 * [X] **Label-Based Point Lookup on ProjectionPlane**
   - **STATUS**: ✅ COMPLETE (Jan 12, 2026) - Phase 53 implemented (commit 7d432ef)
@@ -450,8 +499,8 @@ Note that completing these tasks may require asking the user for additional info
     - ✅ World.clear() also uses `InitializeWorldCommand` for reinitialization
     - ✅ InitializeWorldCommand sets semantic IDs (horizontalPlaneId, verticalPlaneId, etc.)
     - ✅ Removed duplicate initialization from SvgCanvas.vue
-    - ✅ Active plane now set via `SetActivePlaneOp` in initialization command
-    - ✅ World tracks active plane as domain state, not UI state
+    - ✅ Active plane now set via `SetActivePlaneOp` in initialization command (defaults ViewState)
+    - ✅ Active plane is treated as ViewState (presentation state), not a constructive action
     - ✅ App.vue reads active plane via `world.getActivePlaneId()` computed property
     - ✅ **CLEANUP**: Removed all hardcoded 'proj_plane_H'/'proj_plane_V' references from UI
     - ✅ **CLEANUP**: SvgCanvas uses World's active plane (removed local state)
@@ -467,7 +516,7 @@ Note that completing these tasks may require asking the user for additional info
     - SvgCanvas.vue: Removed local activePlane ref, plane selector UI, and hardcoded IDs
     - ElementsPanel.vue: Uses world.getHorizontalPlane()/getVerticalPlane() instead of hardcoded IDs
   - **Architectural Benefits**:
-    - Active plane is domain state (World), not UI state
+    - Active plane is ViewState/presentation state (stored in World for convenience)
     - Initialization completely handled by command system (no watchers needed)
     - Single source of truth for active plane
     - Zero hardcoded plane IDs in UI components

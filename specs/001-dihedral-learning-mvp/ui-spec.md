@@ -228,6 +228,14 @@ The left side of the interface contains a vertical stack of two panels. These pa
 
 **Purpose**: Shows the hierarchical construction history—the sequence of actions that built the current world state.
 
+**Scope**: This panel contains **constructive actions only**. Pure presentation/UI state changes are excluded (they do not create geometry and must not appear in the ProcessTree), for example:
+- Active plane selection
+- 2D viewport navigation (pan/zoom/fit)
+- Hover highlighting and cursor feedback
+- Current selection set (selected elements)
+- Active tool + in-progress tool arguments
+- Panel collapse/expand state
+
 **Tree Structure** (example):
 ```
 ▼ 👁 Root Process
@@ -440,22 +448,31 @@ The toolbars are organized into distinct groups, each focused on a specific cate
 
 **Groups** (left to right):
 
-1. **File Operations**: 
+1. **Selection Tool**: 
+   - [↖] Selection/Pointer Tool: Activates selection mode for picking, moving, and editing objects
+   - Icon: Pointer/arrow cursor
+   - Default active tool when no construction tool is selected
+   - Double-click object → Opens properties dialog
+   - Drag free point → Moves point (live parametric update)
+   - Drag empty space → Pans viewport
+   - Shift+drag always pans (navigation override)
+
+2. **File Operations**: 
    - [+] New Project (Ctrl+N): Creates a new project instantly with auto-generated name "untitled N"
    - [📁] Open Project (Ctrl+O): Shows dialog to open existing projects from Google Drive
    - Note: Projects auto-save to Google Drive, no explicit save button needed
    
-2. **History Controls**: Undo (Ctrl+Z), Redo (Ctrl+Y) for command history
+3. **History Controls**: Undo (Ctrl+Z), Redo (Ctrl+Y) for command history
 
-3. **Active Plane Selector**: Dropdown showing current active plane and list of all available planes
+4. **Active Plane Selector**: Dropdown showing current active plane and list of all available planes
 
-4. **2D Drawing Tools**: Point, Segment, Line, Circle, Arc tools (each with sub-tool dropdowns)
+5. **2D Drawing Tools**: Point, Segment, Line, Circle, Arc tools (each with sub-tool dropdowns)
 
-5. **Dihedral Tools**: Guide, Transport tools (specific to multi-plane operations)
+6. **Dihedral Tools**: Guide, Transport tools (specific to multi-plane operations)
 
-6. **3D Creation Tools**: 3D Point, 3D Line, 3D Segment, 3D Plane (derive 3D from 2D projections)
+7. **3D Creation Tools**: 3D Point, 3D Line, 3D Segment, 3D Plane (derive 3D from 2D projections)
 
-7. **Navigation Tools**: Pan, Zoom, Fit View (explicit navigation controls)
+8. **Navigation Tools**: Pan, Zoom, Fit View (explicit navigation controls)
 
 **Layout Behavior**:
 - Single horizontal row on wide screens
@@ -820,6 +837,23 @@ The system provides **constant feedback** during tool operation:
      - Normal crosshair cursor
      - Clicking creates free point at cursor location
 
+6. **Distance-Adjusted Hit-Testing**:
+   When multiple elements fall within the snap radius, the system uses distance-adjusted selection:
+   - **Points**: adjusted_distance = actual_distance - POINT_VISUAL_RADIUS (5 pixels)
+   - **Other elements** (lines, circles, etc.): adjusted_distance = actual_distance
+   - System selects the element with the smallest adjusted_distance
+   
+   **Rationale**: Distance adjustment reflects geometric intuition. Points are rendered as small circles (~5px radius), creating a "capture zone". Subtracting this radius from the distance naturally gives points preference when they're nearby, while still allowing other elements to win if they're significantly closer.
+   
+   **Examples**:
+   - Cursor 3px from point, 8px from line → Point wins (3-5=-2 < 8)
+   - Cursor 10px from point, 3px from line → Line wins (10-5=5 > 3)
+   - Cursor 7px from point, 6px from line → Point wins (7-5=2 < 6)
+   
+   **Implementation**: Distance adjustment applies AFTER the active tool's selection mask filters available elements. For example, if a tool's mask excludes points, lines will be selected even if points are present (mask overrides distance).
+   
+   **Visual Feedback**: Only the element with smallest adjusted distance within snap radius receives highlighting and snap indicator. Other elements remain visible but unhighlighted.
+
 **Pedagogical Value**: Feedback guides the user without making decisions for them. Users learn what inputs are valid and why.
 
 #### Explicit Result Creation
@@ -992,6 +1026,8 @@ The main viewport is the primary work surface where all geometric constructions 
 
 **Important**: Active plane affects ONLY visual emphasis and creation target. It does NOT control visibility (all planes always visible in MVP).
 
+**Classification**: Active plane is **ViewState** (presentation state). Switching the active plane is **not** a constructive action, is **not** recorded in the ProcessTree, and is **not** part of undo/redo.
+
 ### Background Grid (Optional)
 
 **Purpose**: Provides measurable visual reference for geometric construction.
@@ -1039,11 +1075,11 @@ The main viewport is the primary work surface where all geometric constructions 
 
 ### Viewport Interaction Modes
 
-The viewport has distinct interaction behaviors depending on whether a construction tool is active. Mouse cursor changes provide constant visual feedback about the current interaction mode.
+The viewport has distinct interaction behaviors depending on which tool is active. Mouse cursor changes provide constant visual feedback about the current interaction mode.
 
-#### Mode 1: No Tool Active (Selection/Navigation Mode)
+#### Mode 1: Selection Tool Active (Selection/Edit/Navigation Mode)
 
-When no construction tool is active, the viewport operates in **selection and navigation mode**:
+When the **Selection Tool** is active (pointer/arrow icon in toolbar), the viewport operates in **selection, editing, and navigation mode**:
 
 **Click on Empty Area**:
 - **Behavior**: Pan/drag the viewport
@@ -1056,8 +1092,13 @@ When no construction tool is active, the viewport operates in **selection and na
 - **Cursor**: Four-way arrow or crosshair when hovering over movable point
 - **Action**: Click and drag to reposition the point
 - **Effect**: Point's coordinates updated, dependent elements recalculated automatically
-- **Restriction**: Only **directly-defined points** can be moved (free points, not intersection points or other derived points)
+- **Restriction**: Only **directly-defined points** can be moved (free points, not intersection points or other derived points). Points with `locked=true` MUST NOT be movable.
 - **Visual Feedback**: Point highlights on hover to indicate it's movable
+- **Drag Threshold**: The system SHOULD treat a gesture as a “move” only after the pointer travels a small distance threshold (e.g., 3–5 px) to avoid accidental moves from clicks.
+- **Continuous Feedback**: While dragging, the point’s position and all dependent geometry MUST update continuously so the user sees the full parametric impact of the move in real time.
+- **Commit/Undo**: Releasing the mouse button commits the move as a single undoable action. `Ctrl+Z` reverts the point to its pre-drag position and recomputes dependents.
+- **Cancel**: Pressing `Esc` during an in-progress drag MUST cancel the move and restore the original coordinates (no new action recorded).
+- **Post-Drag Click Suppression**: After a drag-commit, the immediate mouse-up MUST NOT additionally trigger a “click” selection toggle.
 
 **Click on Other Elements**:
 - **Behavior**: Select the element

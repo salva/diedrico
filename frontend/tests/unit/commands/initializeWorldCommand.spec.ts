@@ -117,6 +117,35 @@ describe('InitializeWorldCommand', () => {
       
       expect(initSubprocess).toBeDefined();
     });
+
+    it('should record initialization actions under subprocess', () => {
+      const processTree = world.getProcessTree();
+      const initSubprocess = processTree.root.children.find(
+        (child: any) => child.type === 'subprocess' && child.name === 'World Initialization'
+      ) as any;
+
+      expect(initSubprocess).toBeDefined();
+
+      const actionGroups = (initSubprocess.children || []).filter(
+        (child: any) => child?.type === 'actionGroup'
+      );
+
+      // Phase 47 expectation: 9 actions (2 planes, 2 proj planes, 2 origins, 1 HL, 2 half HLs)
+      expect(actionGroups.length).toBe(9);
+
+      const actionTypes = actionGroups.map((g: any) => g.children?.[0]?.actionType);
+      expect(actionTypes).toEqual([
+        'InitializePlane3D',
+        'InitializePlane3D',
+        'InitializeProjectionPlane',
+        'InitializeProjectionPlane',
+        'InitializeOriginPoint2D',
+        'InitializeOriginPoint2D',
+        'InitializeHingeLine',
+        'InitializeHalfHingeLine2D',
+        'InitializeHalfHingeLine2D'
+      ]);
+    });
   });
 
   describe('Non-Undoable Behavior', () => {

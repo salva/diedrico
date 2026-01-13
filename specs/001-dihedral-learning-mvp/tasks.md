@@ -5479,3 +5479,259 @@ const originPoint = world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_
 **Status**: ✅ COMPLETE (Jan 12, 2026) - Commit 7d432ef
 
 ---
+
+## Phase 54: Picking and Moving Free 2D Points (Drag)
+
+**Purpose**: Allow users to select and reposition directly-defined (free) 2D points by dragging them on the canvas, with continuous parametric updates, cancellation, and undo/redo.
+
+**References**:
+- [spec.md](./spec.md#requirements-mandatory) - FR-039 (move directly-defined points)
+- [ui-spec.md](./ui-spec.md#mode-1-no-tool-active-selectionnavigation-mode) - Selection/Navigation mode drag behavior
+- [data-model.md](./data-model.md#persistence-entity-commandstack) - Move command example + validation rules
+
+### Phase 54 Tasks
+
+**Domain Operation** (T951-T953)
+
+- [ ] T951 Add an explicit operation to update a FreePoint2D position
+  - Operation validates: plane exists, point exists, point is FreePoint2D, point.locked != true
+  - Operation applies by updating the point definition (coordinates) and triggers recomputation of dependents
+  - Operation supports undo (restores previous position)
+  - File: `frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts`
+
+- [ ] T952 Wire operation persistence / reconstruction
+  - Ensure move operation can be deserialized and reconstructed from stored project data
+  - File: `frontend/src/services/ProjectService.ts`
+
+- [ ] T953 Ensure world/view invalidation occurs on point move
+  - Confirm UI refresh is triggered (world version change or equivalent) and dependent realizations recompute
+  - File(s): `frontend/src/domain/world/World.ts`, relevant realization/cache plumbing
+
+**Canvas Interaction** (T954-T957)
+
+- [ ] T954 Implement picking for directly-defined points in selection mode
+  - Hover highlight indicates movability
+  - Derived points are selectable but not draggable
+  - File: `frontend/src/components/workspace/SvgCanvas.vue`
+
+- [ ] T955 Implement drag-to-move with continuous feedback
+  - Drag threshold (3–5 px) before treating as a move
+  - During drag: continuously update point + dependents (live preview)
+  - Release mouse: commit as a single undoable action
+  - File: `frontend/src/components/workspace/SvgCanvas.vue`
+
+- [ ] T956 Implement cancellation and navigation overrides
+  - `Esc` cancels in-progress drag and restores start position (no new action recorded)
+  - `Shift + drag` always pans the viewport even when starting over a point
+  - File: `frontend/src/components/workspace/SvgCanvas.vue`
+
+- [ ] T957 Prevent post-drag click side-effects
+  - After a drag commit, suppress the immediate click selection toggle
+  - File: `frontend/src/components/workspace/SvgCanvas.vue`
+
+**Testing** (T958-T960)
+
+- [ ] T958 [P] Unit tests for move operation
+  - Moves a free point and verifies new coordinates
+  - Undo restores original coordinates
+  - Locked point cannot be moved
+  - File: `frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts`
+
+- [ ] T959 [P] E2E test: drag moves point, dependents update, undo/redo works
+  - Create a segment from two free points
+  - Drag one endpoint; verify segment updates visually (or by model inspection if supported)
+  - Press `Esc` during drag; verify position unchanged
+  - Press `Ctrl+Z`/`Ctrl+Y` after commit; verify move undo/redo
+  - File: `frontend/tests/e2e/move-free-point.spec.ts`
+
+- [ ] T960 [P] Regression: Shift+drag pans even over points
+  - Ensure navigation override works reliably
+  - File: `frontend/tests/e2e/navigation-pan.spec.ts` (or fold into T959)
+
+**Checkpoint**: Users can drag free points with live feedback; derived/locked points are not movable; `Esc` cancels; undo/redo works; tests cover core behaviors.
+
+**Status**: PLANNED
+
+---
+
+## Phase 54.5: Selection Tool (Toolbar Button + Interaction Modes)
+
+**Purpose**: Implement an explicit Selection Tool in the toolbar that activates selection/editing/navigation mode, enabling object property editing, point dragging, and viewport panning.
+
+**References**:
+- [spec.md](./spec.md#requirements-mandatory) - FR-039 (Selection Tool requirement)
+- [ui-spec.md](./ui-spec.md#toolbar-organization) - Selection Tool in toolbar (group 1)
+- [ui-spec.md](./ui-spec.md#mode-1-selection-tool-active-selectioneditnavigation-mode) - Selection Tool interaction behaviors
+- [data-model.md](./data-model.md#viewstate-structure) - Active tool state management
+
+**Context**: Phase 54 defined the *operation* and *semantics* for moving points. Phase 54.5 adds the *UI affordance* (toolbar button) and *tool state management* so users can explicitly activate selection mode.
+
+### Phase 54.5 Tasks
+
+**Toolbar UI** (T961-T962)
+
+- [ ] T961 Add Selection Tool button to toolbar
+  - Add pointer/arrow icon button as first tool in toolbar
+  - Button style: Toggle (active state visually distinct)
+  - Default active tool when application starts
+  - Tooltip: "Selection Tool - Pick, move, and edit objects (Esc)"
+  - Keyboard shortcut: `Esc` activates Selection Tool (cancels any active construction tool)
+  - File: `frontend/src/components/toolbar/Toolbar.vue` (or equivalent)
+
+- [ ] T962 Integrate Selection Tool with tool state management
+  - Store active tool in ViewState (or equivalent reactive store)
+  - When Selection Tool clicked: set activeTool = 'selection'
+  - When construction tool clicked: set activeTool = toolName, deactivate Selection Tool
+  - When `Esc` pressed: set activeTool = 'selection'
+  - Files: `frontend/src/stores/toolStore.ts`, `frontend/src/stores/viewStore.ts`, or equivalent
+
+**Interaction Handlers** (T963-T965)
+
+- [ ] T963 Implement double-click → properties dialog
+  - When Selection Tool active + double-click on any element: open properties dialog for that element
+  - Properties dialog shows: style (color, line width, visibility), label, geometry info (read-only)
+  - File: `frontend/src/components/workspace/SvgCanvas.vue`
+
+- [ ] T964 Wire Selection Tool to point drag behavior (Phase 54 integration)
+  - When Selection Tool active: enable drag-to-move for free points (Phase 54 behavior)
+  - When construction tool active: disable drag-to-move (clicks are tool inputs)
+  - File: `frontend/src/components/workspace/SvgCanvas.vue`
+
+- [ ] T965 Wire Selection Tool to viewport pan behavior
+  - When Selection Tool active + drag on empty space: pan viewport
+  - Shift+drag always pans (regardless of tool)
+  - File: `frontend/src/components/workspace/SvgCanvas.vue`
+
+**Testing** (T966-T968)
+
+- [ ] T966 [P] Unit tests for tool state management
+  - Selection Tool is default active tool on startup
+  - Clicking Selection Tool sets activeTool = 'selection'
+  - Clicking construction tool deactivates Selection Tool
+  - `Esc` key activates Selection Tool
+  - File: `frontend/tests/unit/stores/toolStore.spec.ts`
+
+- [ ] T967 [P] E2E test: Selection Tool interaction modes
+  - Activate Selection Tool (should be active by default)
+  - Double-click a segment → properties dialog opens
+  - Drag a free point → point moves (verify via Phase 54 test coverage)
+  - Drag empty space → viewport pans
+  - Press `Esc` during construction tool → returns to Selection Tool
+  - File: `frontend/tests/e2e/selection-tool.spec.ts`
+
+- [ ] T968 [P] E2E test: Tool switching and state consistency
+  - Start with Selection Tool active
+  - Activate Point Tool → Selection Tool deactivates
+  - Press `Esc` → Selection Tool reactivates, Point Tool cancels
+  - Verify cursor changes appropriately
+  - File: `frontend/tests/e2e/tool-switching.spec.ts`
+
+**Checkpoint**: Selection Tool button exists in toolbar, activates on click/Esc, enables double-click properties + point drag + viewport pan; construction tools properly deactivate Selection Tool.
+
+**Status**: COMPLETED
+
+---
+
+## Phase 55: Hit-Testing Priority Hierarchy
+
+**Purpose**: Implement intelligent element selection when multiple elements fall within snap radius. When a point lies on a line, select the point (not the line). This prevents ambiguous selections that frustrate construction workflows.
+
+**References**:
+- [spec.md](./spec.md#requirements-mandatory) - FR-040 (Distance-adjusted hit-testing requirement)
+- [ui-spec.md](./ui-spec.md#distance-adjusted-hit-testing) - Distance adjustment: points get visual radius subtracted
+- [data-model.md](./data-model.md#distance-adjusted-hit-testing-phase-55) - Paper.hitTest() algorithm with distance adjustment
+
+**Context**: Currently, Paper.hitTest() returns the closest element within snap radius without considering element type. When a point lies on a line (both within radius), the result is arbitrary. Phase 55 adds distance adjustment to make selection predictable and workflow-friendly: points are treated as small circles (~5px radius), with this radius subtracted from their measured distance.
+
+### Phase 55 Tasks
+
+**Algorithm Implementation** (T969-T971)
+
+- [X] T969 Add POINT_VISUAL_RADIUS constant to Paper.ts  
+  - Define constant: POINT_VISUAL_RADIUS_PIXELS = 5 (matches rendering)
+  - Convert to plane space: pointRadiusInPlaneSpace = POINT_VISUAL_RADIUS_PIXELS / zoom
+  - Used for distance adjustment calculation
+  - File: `frontend/src/domain/presentation/Paper.ts` ✅
+
+- [X] T970 Modify Paper.hitTest() point distance calculation
+  - Subtract pointRadiusInPlaneSpace from measured distance to points
+  - adjustedDistance = actualDistance - pointRadiusInPlaneSpace
+  - Compare adjustedDistance (not actualDistance) with minDistance
+  - File: `frontend/src/domain/presentation/Paper.ts` ✅
+
+- [ ] T971 Verify other element types unchanged
+  - Lines, circles, guides: no distance adjustment (use actualDistance)
+  - Ensure minDistance comparison consistent across all element types
+  - Adjusted distances can be negative (cursor inside point radius) - this is correct
+  - File: `frontend/src/domain/presentation/Paper.ts`
+
+**Selection Mask Integration** (T972)
+
+- [ ] T972 Verify selection mask filtering happens BEFORE distance comparison
+  - Distance adjustment applies AFTER active tool's selection mask filters elements
+  - Example: If tool mask excludes points, lines will be selected regardless of distance
+  - Review Paper.hitTest() signature: selectionMask parameter already exists
+  - Confirm mask filtering happens before distance checks ✅ (already correct)
+  - File: `frontend/src/domain/presentation/Paper.ts`
+
+**Testing** (T973-T977)
+
+- [ ] T973 [P] Unit test: Point preferred when nearby
+  - Create point at (0,0) and line through (0,0)
+  - Hit-test at (3,0) with both within radius
+  - Assert: Point is returned (3-5=-2 < distance to line)
+  - File: `frontend/tests/unit/domain/Paper.spec.ts`
+
+- [ ] T974 [P] Unit test: Line wins when significantly closer
+  - Create point at (10,0) and line through (0,0)
+  - Hit-test at (2,0) with both within radius
+  - Assert: Line is returned (10-5=5 > distance to line ~2)
+  - File: `frontend/tests/unit/domain/Paper.spec.ts`
+
+- [ ] T975 [P] Unit test: Point barely closer still wins
+  - Create point at (7,0) and line through (0,6)
+  - Hit-test at (4,3) such that point ~7px, line ~6px away
+  - Assert: Point is returned (7-5=2 < 6)
+  - File: `frontend/tests/unit/domain/Paper.spec.ts`
+
+- [ ] T976 [P] Unit test: Closest point wins among multiple points
+  - Create two points: one at (0,0), one at (10,0)
+  - Hit-test at (2,0) with both within radius
+  - Assert: Point at (0,0) is returned (2-5=-3 < 10-5=5)
+  - File: `frontend/tests/unit/domain/Paper.spec.ts`
+
+- [ ] T977 [P] Unit test: Selection mask overrides distance
+  - Create point at (0,0) and line through (0,0)
+  - Hit-test with mask=['line'] (excludes points)
+  - Assert: Line is returned (point filtered out by mask before distance check)
+  - File: `frontend/tests/unit/domain/Paper.spec.ts`
+
+**E2E Validation** (T978-T979)
+
+- [ ] T978 [P] E2E test: Point selection with overlapping elements
+  - Place point on line in canvas
+  - Move cursor over point (both point and line within snap radius)
+  - Verify: Point is highlighted (not line) due to distance adjustment
+  - Click: Verify point is selected (via selection feedback or properties dialog)
+  - File: `frontend/tests/e2e/hit-testing-distance-adjustment.spec.ts`
+
+- [ ] T979 [P] E2E test: Construction workflow with overlapping elements
+  - Use Line Tool (requires two point inputs)
+  - Create point A at (0,0)
+  - Create horizontal line through A
+  - Create point B on that line at (10,0)
+  - Start Line Tool, click at B's position
+  - Verify: Tool selects point B (not the underlying horizontal line)
+  - Complete line A→B, verify success
+  - File: `frontend/tests/e2e/construction-with-distance-adjustment.spec.ts`
+
+**Acceptance Criteria**:
+1. When cursor within snap radius of both point and line → point is highlighted/selected (due to distance adjustment)
+2. When cursor within snap radius of multiple points → closest point selected (after adjustment)
+3. Selection mask filtering still works correctly (masks are applied before distance check)
+4. Visual feedback (highlighting) reflects distance-adjusted selection
+5. All construction tools benefit from adjustment (no per-tool changes needed)
+
+**Checkpoint**: Distance-adjusted hit-testing implemented; point-on-line scenarios consistently select point; all unit and E2E tests passing.
+
+**Status**: IN PROGRESS (T969-T970 complete, T971-T979 remaining)

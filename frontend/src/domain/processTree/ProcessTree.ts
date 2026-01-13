@@ -71,7 +71,7 @@ export class ProcessTree {
    * Add an action to the process tree
    * Creates an ActionGroup if needed
    */
-  addAction(action: Action, groupName?: string): ActionGroup {
+  addAction(action: Action, groupName?: string, parentSubprocessId?: string): ActionGroup {
     // Wrap action in ActionNode
     const actionNode: ActionNode = {
       ...action,
@@ -89,11 +89,37 @@ export class ProcessTree {
       created: new Date()
     };
 
-    // Add to root subprocess
-    this.root.children.push(actionGroup);
+    // Add to requested subprocess (or root by default)
+    // Note: groupName is ignored - ActionGroups have no names per spec
+    if (parentSubprocessId) {
+      const parent = this.findSubprocessById(parentSubprocessId);
+      (parent || this.root).children.push(actionGroup);
+    } else {
+      this.root.children.push(actionGroup);
+    }
     this.notifyChange();
 
     return actionGroup;
+  }
+
+  findSubprocessByName(name: string): Subprocess | undefined {
+    let found: Subprocess | undefined;
+    this.traverseSubprocesses(this.root, (subprocess) => {
+      if (subprocess.name === name) {
+        found = subprocess;
+      }
+    });
+    return found;
+  }
+
+  private findSubprocessById(subprocessId: string): Subprocess | undefined {
+    let found: Subprocess | undefined;
+    this.traverseSubprocesses(this.root, (subprocess) => {
+      if (subprocess.id === subprocessId) {
+        found = subprocess;
+      }
+    });
+    return found;
   }
 
   /**

@@ -172,6 +172,16 @@ export class World {
   }
 
   /**
+   * Public hook for Operations/Commands to signal a change.
+   *
+   * World version is used by some UI panels to trigger updates.
+   * Keep this as a tiny, explicit API instead of exposing notifyChange().
+   */
+  markDirty(): void {
+    this.notifyChange();
+  }
+
+  /**
    * Clear all elements (for loading projects)
    * Resets world to initial state with only fixed elements
    */
@@ -846,8 +856,8 @@ export class World {
    * Add an action to the process tree and update dependency tracking
    * Use this instead of getProcessTree().addAction() directly
    */
-  addAction(action: any, groupName?: string): any {
-    const result = this.processTree.addAction(action, groupName);
+  addAction(action: any, groupName?: string, parentSubprocessId?: string): any {
+    const result = this.processTree.addAction(action, groupName, parentSubprocessId);
     // Rebuild dependency maps to include the new action
     this.dependencyService.rebuildDependencyMaps();
     return result;

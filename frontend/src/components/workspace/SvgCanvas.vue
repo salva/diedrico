@@ -6,6 +6,7 @@
       xmlns="http://www.w3.org/2000/svg"
       :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
       preserveAspectRatio="xMidYMid meet"
+      @mousedown="handleMouseDown"
       @click="handleCanvasClick"
       @dblclick="handleDoubleClick"
       @mousemove="handleMouseMove"
@@ -123,7 +124,7 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
  */
 
-import { ref, computed, watch, onMounted, inject, provide } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
 import { Matrix3, Vector3 } from 'three';
 import { World } from '@/domain/world/World';
 import { Paper } from '@/domain/presentation/Paper';
@@ -133,12 +134,14 @@ import { InputService } from '@/services/InputService';
 import { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import { PointTool } from '@/tools/PointTool';
 import { LineTool } from '@/tools/LineTool';
 import { SegmentTool } from '@/tools/SegmentTool';
 import { CircleTool } from '@/tools/CircleTool';
 import { GuideTool } from '@/tools/GuideTool';
 import { IntersectionTool } from '@/tools/IntersectionTool';
+import type { FreePoint2D } from '@/domain/world/Point';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
@@ -156,8 +159,17 @@ const emit = defineEmits<{
 
 const svgElement = ref<SVGSVGElement | null>(null);
 
-// Active plane - read from World (managed by App.vue)
-const activePlane = computed(() => world.getActivePlaneId());
+// Track World version changes (World is not reactive by itself)
+const worldVersion = ref(0);
+let versionPollId: number | null = null;
+let lastWorldVersion = 0;
+
+// Active plane - derived from World (managed by App.vue)
+const activePlane = computed(() => {
+  // Depend on worldVersion so plane switching triggers recomputation
+  const _ = worldVersion.value;
+  return world.getActivePlaneId();
+});
 
 // Dynamic canvas dimensions - updated based on container size
 const canvasWidth = ref(1600);
@@ -195,6 +207,90 @@ const snapTarget = ref<{ pointId: string | null; position: { x: number; y: numbe
   pointId: null,
   position: null
 });
+
+// Drag-to-move (Select mode)
+const pointDrag = ref<{
+  active: boolean;
+  planeId: string | null;
+  pointId: string | null;
+  cmd: Command | null;
+  startClientX: number;
+  startClientY: number;
+  moved: boolean;
+}>({
+  active: false,
+  planeId: null,
+  pointId: null,
+  cmd: null,
+  startClientX: 0,
+  startClientY: 0,
+  moved: false
+});
+
+// Viewport pan in select mode (T965: drag empty space pans)
+const viewportPan = ref<{
+  active: boolean;
+  startX: number;
+  startY: number;
+}>({
+  active: false,
+  startX: 0,
+  startY: 0
+});
+
+let ignoreNextClick = false;
+
+function isMovableFreePoint(point: any): point is FreePoint2D {
+  return point?.type === 'free' && !point?.locked;
+}
+
+function endPointDrag(commit: boolean): void {
+  if (!pointDrag.value.active) return;
+
+  const cmd = pointDrag.value.cmd;
+
+  try {
+    if (cmd) {
+      if (commit && (cmd as any).operations?.length > 0) {
+        cmd.commit();
+        commandStack.push(cmd);
+      } else {
+        cmd.rollback();
+      }
+    }
+  } finally {
+    pointDrag.value = {
+      active: false,
+      planeId: null,
+      pointId: null,
+      cmd: null,
+      startClientX: 0,
+      startClientY: 0,
+      moved: false
+    };
+    renderTick.value++;
+  }
+}
+
+function handleGlobalKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    // T956: Cancel viewport pan on Esc
+    if (viewportPan.value.active) {
+      viewportPan.value = {
+        active: false,
+        startX: 0,
+        startY: 0
+      };
+      return;
+    }
+    
+    // T956: Cancel point drag on Esc
+    if (pointDrag.value.active) {
+      ignoreNextClick = true;
+      endPointDrag(false);
+    }
+  }
+}
 
 /**
  * Get display label for an element
@@ -280,8 +376,8 @@ const tools: Record<string, ITool> = {
   // Future tools: etc.
 };
 
-// Reactivity trigger - increment this to force re-render after World changes
-const worldVersion = ref(0);
+// Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
+const renderTick = ref(0);
 
 // Throttle for coordinate updates (limits update frequency)
 let lastCoordinateUpdate = 0;
@@ -298,27 +394,48 @@ function updateCanvasDimensions() {
 }
 
 // Initialize canvas on mount
+const resizeHandler = () => updateCanvasDimensions();
+
 onMounted(() => {
   // World is already initialized by initialization factory in constructor
   // Just trigger initial render
-  worldVersion.value++;
-  
+  renderTick.value++;
+
   // Set initial canvas dimensions
   updateCanvasDimensions();
-  
+
   // Update dimensions on window resize
-  const resizeHandler = () => updateCanvasDimensions();
   window.addEventListener('resize', resizeHandler);
-  
+
+  // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+  lastWorldVersion = world.getVersion();
+  worldVersion.value = lastWorldVersion;
+  versionPollId = window.setInterval(() => {
+    const current = world.getVersion();
+    if (current !== lastWorldVersion) {
+      lastWorldVersion = current;
+      worldVersion.value = current;
+      renderTick.value++;
+    }
+  }, 100);
+
   console.log('World initialized');
   const allPlanes = world.getAllProjectionPlanes();
   const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
   console.log('Points in world:', totalPoints);
-  
-  // Cleanup on unmount
-  return () => {
-    window.removeEventListener('resize', resizeHandler);
-  };
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', resizeHandler);
+  window.removeEventListener('keydown', handleGlobalKeyDown);
+  if (versionPollId !== null) {
+    clearInterval(versionPollId);
+  }
+});
+
+// Global key handling (Esc cancels point-drag)
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeyDown);
 });
 
 // Get plane transforms for INPUT (canvas click → plane coordinates)
@@ -353,8 +470,8 @@ function getPlaneTransformsForRendering(): Map<string, Matrix3> {
 
 // Generate primitives from World using PaperService
 const primitives = computed(() => {
-  // Access worldVersion to make this computed reactive to World changes
-  worldVersion.value;
+  // Access renderTick to make this computed reactive to non-reactive sources (World + Paper)
+  renderTick.value;
   
   // PaperService uses plane-to-paper transforms for rendering
   const planeTransforms = getPlaneTransformsForRendering();
@@ -557,6 +674,11 @@ const renderedArcs = computed(() => {
  * Phase 6.5: Unified tool delegation for all tools (point, line, circle, etc.)
  */
 function handleCanvasClick(event: MouseEvent) {
+  if (ignoreNextClick) {
+    ignoreNextClick = false;
+    return;
+  }
+
   // Get SVG element for coordinate conversion
   if (!svgElement.value) return;
   
@@ -657,11 +779,74 @@ function handleCanvasClick(event: MouseEvent) {
   if (result.success) {
     console.log('[SvgCanvas] Tool operation succeeded:', result.message);
     // Trigger reactivity - World was mutated via command
-    worldVersion.value++;
-    console.log('[SvgCanvas] Reactivity triggered, worldVersion:', worldVersion.value);
+    renderTick.value++;
+    console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
   } else {
     console.error('[SvgCanvas] Tool operation failed:', result.message);
   }
+}
+
+/**
+ * Handle mouse down for select-mode drag-to-move of free points.
+ * T954: Check if clicking on movable point, start drag if so
+ * T965: Otherwise, prepare for viewport pan
+ */
+function handleMouseDown(event: MouseEvent) {
+  if (!svgElement.value) return;
+
+  const activeToolName = toolStore.currentTool.value;
+  if (activeToolName !== 'select') return;
+
+  // Only left button drag, no modifiers (Shift is handled by useViewport)
+  if (event.button !== 0) return;
+  if (event.shiftKey || event.altKey || event.metaKey || event.ctrlKey) return;
+
+  const svg = svgElement.value;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return;
+  const canvasPoint = pt.matrixTransform(ctm.inverse());
+
+  const planeTransforms = getPlaneTransformsForInput();
+  const paperToPlane = planeTransforms.get(activePlane.value);
+  if (!paperToPlane) return;
+
+  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+  
+  // Check if we hit a movable point
+  if (hit && hit.elementType === 'point') {
+    const plane = world.getProjectionPlaneById(activePlane.value);
+    const point = plane?.getPoint(hit.elementId);
+    
+    if (point && isMovableFreePoint(point)) {
+      // Start point drag (T954)
+      selectionStore.selectSingle(hit.elementId);
+
+      pointDrag.value = {
+        active: true,
+        planeId: activePlane.value,
+        pointId: hit.elementId,
+        cmd: new Command(`Move point ${point.label ?? hit.elementId}`, world),
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        moved: false
+      };
+      return;
+    }
+  }
+  
+  // No movable point hit - start viewport pan (T965: Drag empty space pans)
+  // Note: useViewport composable handles Shift+drag pan automatically
+  // Here we handle non-Shift drag when selection tool is active
+  viewportPan.value = {
+    active: true,
+    startX: event.clientX,
+    startY: event.clientY
+  };
 }
 
 /**
@@ -727,7 +912,7 @@ function handleSaveProperties(changes: any) {
     commandStack.push(cmd);
     
     // Trigger reactivity
-    worldVersion.value++;
+    renderTick.value++;
     console.log('[SvgCanvas] Style updated and command added to stack');
   } catch (error) {
     console.error('[SvgCanvas] Style update failed:', error);
@@ -739,9 +924,62 @@ function handleSaveProperties(changes: any) {
  * Handle mouse movement for hover feedback and 3D coordinate display
  * Uses Paper.hitTest() to detect elements near cursor
  * Computes 3D coordinates from cursor position with debouncing
+ * T955: Continuous feedback for point dragging
+ * T965: Viewport pan when dragging empty space
  */
 function handleMouseMove(event: MouseEvent) {
   if (!svgElement.value) return;
+
+  // T965: Handle viewport pan in select mode (drag empty space)
+  if (viewportPan.value.active) {
+    const dx = event.clientX - viewportPan.value.startX;
+    const dy = event.clientY - viewportPan.value.startY;
+    
+    viewStore.adjustPan(dx, dy);
+    
+    viewportPan.value.startX = event.clientX;
+    viewportPan.value.startY = event.clientY;
+    return;
+  }
+
+  // T955: Live preview for point dragging (Select mode)
+  if (pointDrag.value.active && pointDrag.value.planeId && pointDrag.value.pointId && pointDrag.value.cmd) {
+    // Small drag threshold to avoid turning clicks into moves
+    const dx = event.clientX - pointDrag.value.startClientX;
+    const dy = event.clientY - pointDrag.value.startClientY;
+    if (!pointDrag.value.moved && (dx * dx + dy * dy) < 9) {
+      return;
+    }
+    pointDrag.value.moved = true;
+
+    const svg = svgElement.value;
+    const pt = svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    const canvasPoint = pt.matrixTransform(ctm.inverse());
+
+    const planeTransforms = getPlaneTransformsForInput();
+    const paperToPlane = planeTransforms.get(pointDrag.value.planeId);
+    if (!paperToPlane) return;
+
+    const planePos = inputService.canvasToPlaneCoordinates(
+      canvasPoint.x,
+      canvasPoint.y,
+      paperToPlane,
+      viewport.value
+    );
+    if (!planePos) return;
+
+    // Preview update: rollback previous op and apply the new one.
+    pointDrag.value.cmd.rollback();
+    pointDrag.value.cmd.addAndExecute(
+      new UpdateFreePoint2DPositionOp(pointDrag.value.planeId, pointDrag.value.pointId, planePos)
+    );
+    renderTick.value++;
+    return;
+  }
   
   // Update tooltip position (offset from cursor)
   tooltipPosition.value = {
@@ -810,7 +1048,7 @@ function handleMouseMove(event: MouseEvent) {
     }
     
     // Trigger re-render only when hover state actually changes
-    worldVersion.value++;
+    renderTick.value++;
   }
   
   // Compute 3D coordinates with throttling (limits update frequency)
@@ -850,6 +1088,37 @@ function handleMouseMove(event: MouseEvent) {
     emit('update-3d-coordinates', null);
   }
 }
+
+// Commit point move on global mouseup (even if mouseup happens outside SVG)
+// T957: Handle viewport pan end
+function handleGlobalMouseUp() {
+  // End viewport pan
+  if (viewportPan.value.active) {
+    viewportPan.value = {
+      active: false,
+      startX: 0,
+      startY: 0
+    };
+    return;
+  }
+  
+  // End point drag
+  if (!pointDrag.value.active) return;
+  if (pointDrag.value.moved) {
+    ignoreNextClick = true;
+    endPointDrag(true);
+  } else {
+    endPointDrag(false);
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('mouseup', handleGlobalMouseUp);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('mouseup', handleGlobalMouseUp);
+});
 
 /**
  * Fit to View - Zoom and pan to show all elements (T274)

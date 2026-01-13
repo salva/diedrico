@@ -57,6 +57,11 @@
     </div>
     
     <div class="toolbar-separator"></div>
+
+    <!-- Active Plane selector -->
+    <PlaneSelector />
+    
+    <div class="toolbar-separator"></div>
     
     <!-- Navigation controls -->
     <div class="navigation-controls">
@@ -94,6 +99,20 @@
     <div class="toolbar-separator"></div>
     
     <!-- Tool buttons -->
+    <!-- Phase 54.5: Selection Tool -->
+    <button
+      class="tool-button"
+      :class="{ active: toolStore.isToolActive('select') }"
+      @click="selectTool('select')"
+      title="Selection Tool - Pick, move, and edit objects (Esc)"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <!-- Pointer/arrow cursor icon -->
+        <path d="M 3 2 L 3 16 L 7 12 L 10 18 L 12 17 L 9 11 L 14 11 Z" fill="currentColor" />
+      </svg>
+      <span>Select</span>
+    </button>
+    
     <button
       class="tool-button"
       :class="{ active: toolStore.isToolActive('point') }"
@@ -183,11 +202,12 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed } from 'vue';
+import { inject, computed, onMounted, onUnmounted } from 'vue';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { CommandStack } from '@/commands/CommandStack';
 import LoginStatusWidget from '@/components/LoginStatusWidget.vue';
+import PlaneSelector from '@/components/toolbars/PlaneSelector.vue';
 
 /**
  * Toolbar.vue - Tool selection toolbar
@@ -228,11 +248,30 @@ const gridVisible = computed(() => viewStore.gridVisible.value);
 /**
  * Select a tool
  */
-function selectTool(tool: 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection') {
+function selectTool(tool: 'select' | 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection') {
   console.log('Selecting tool:', tool);
   toolStore.setTool(tool);
   console.log('Tool set. Current tool:', toolStore.currentTool);
 }
+
+/**
+ * Handle global keyboard shortcuts
+ * Phase 54.5: Esc activates Selection Tool
+ */
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    selectTool('select');
+    event.preventDefault();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 
 /**
  * Handle undo action

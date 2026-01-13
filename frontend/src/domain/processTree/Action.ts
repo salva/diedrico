@@ -16,7 +16,12 @@ export type ActionType =
   | 'CreateCircle'
   | 'CreateGuide'
   | 'TransportPoint'
-  | 'TransportDistance';
+  | 'TransportDistance'
+  | 'InitializePlane3D'
+  | 'InitializeProjectionPlane'
+  | 'InitializeOriginPoint2D'
+  | 'InitializeHingeLine'
+  | 'InitializeHalfHingeLine2D';
 
 export interface Action {
   id: string;                    // UUID

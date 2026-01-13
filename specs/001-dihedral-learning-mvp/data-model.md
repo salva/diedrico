@@ -4307,7 +4307,6 @@ class Paper {
       canvasPos.y / this.viewportTransform.zoom - this.viewportTransform.panY
     );
   }
-  
   private distanceToPrimitive(paperPos: Vector2, primitive: Primitive): number {
     switch (primitive.type) {
       case 'point':
@@ -4352,6 +4351,108 @@ class Paper {
   }
 }
 ```
+
+#### Distance-Adjusted Hit-Testing (Phase 55)
+
+**Problem**: When multiple elements fall within the snap radius, which one should be selected? If a point lies on a line, should the point or line be selected?
+
+**Solution**: Implement **distance-adjusted hit-testing** where points are treated as small circles/spheres with a radius matching their visual representation. Subtracting this radius from point distances naturally gives them preference when nearby.
+
+**Distance Adjustment**:
+```typescript
+// Visual radius of points in canvas pixels (matches rendering in RenderService.ts)
+// Free points rendered at 5px radius, derived points at 4px
+const POINT_VISUAL_RADIUS = 5;
+
+// In hitTest() for each element:
+if (elementType === 'point') {
+  adjustedDistance = actualDistance - POINT_VISUAL_RADIUS;
+} else {
+  adjustedDistance = actualDistance;
+}
+
+// Select element with minimum adjustedDistance
+```
+
+**Rationale**:
+- **Geometric intuition**: Points are rendered as circles (~5px radius), creating a "capture zone"
+- **Natural preference**: Subtracting radius gives points preference without arbitrary priority numbers
+- **Distance-based**: Still uses single metric (adjusted distance), not type-based branching  
+- **Tunable**: Adjusting POINT_VISUAL_RADIUS changes "preference strength"
+
+**Example Scenarios**:
+- Cursor 3px from point, 8px from line → Point wins (3-5=-2 < 8)
+- Cursor 10px from point, 3px from line → Line wins (10-5=5 > 3)
+- Cursor 7px from point, 6px from line → Point wins (7-5=2 < 6)
+- Two points: Cursor 4px from A, 7px from B → A wins (4-5=-1 < 7-5=2)
+
+**Algorithm**:
+
+```typescript
+// Visual radius constant (in canvas pixels)
+const POINT_VISUAL_RADIUS = 5;
+
+hitTest(canvasPos: Vector2, snapRadius: number, selectionMask?: string[]): HitResult | null {
+  const paperPos = this.canvasToPaper(canvasPos);
+  const paperRadius = snapRadius / this.viewportTransform.zoom;
+  
+  // Collect ALL hits within radius with adjusted distances
+  const hits: Array<HitResult & { adjustedDistance: number }> = [];
+  
+  for (const primitive of this.primitives) {
+    // Filter by selection mask first (if provided)
+    if (selectionMask && !selectionMask.includes(primitive.type)) {
+      continue;
+    }
+    
+    const distance = this.distanceToPrimitive(paperPos, primitive);
+    
+    if (distance <= paperRadius) {
+      // Calculate adjusted distance (points get visual radius subtracted)
+      const adjustedDistance = primitive.type === 'point' 
+        ? distance - POINT_VISUAL_RADIUS / this.viewportTransform.zoom
+        : distance;
+      
+      hits.push({
+        elementId: primitive.sourceEntityId,
+        elementType: primitive.type,
+        primitiveId: primitive.id,
+        distance: distance * this.viewportTransform.zoom,
+        snapPoint: this.getSnapPoint(primitive),
+        adjustedDistance: adjustedDistance
+      });
+    }
+  }
+  
+  if (hits.length === 0) {
+    return null;
+  }
+  
+  // Sort by adjusted distance (lower = better)
+  hits.sort((a, b) => a.adjustedDistance - b.adjustedDistance);
+  
+  // Return hit with smallest adjusted distance
+  const { adjustedDistance, ...hitResult } = hits[0];
+  return hitResult;
+}
+```
+
+**Implementation Notes**:
+
+1. **Selection Mask Filtering First**: Distance adjustment applies AFTER the active tool's selection mask has filtered available elements. If a tool's mask excludes points, lines will be selected regardless of distance.
+
+2. **Negative Adjusted Distances**: When cursor is inside a point's visual radius, adjusted distance can be negative (e.g., 2px from point → 2-5=-3). This is correct and gives strong preference to points.
+
+3. **Visual Feedback**: Only the element with smallest adjusted distance within snap radius should receive highlighting and snap indicator.
+
+4. **Backward Compatibility**: The distance adjustment is an enhancement to the existing hit-testing algorithm. Tools that don't need special handling continue to work unchanged.
+
+5. **Testing Strategy**: Unit tests should verify:
+   - Point selected when point and line nearby (point closer after adjustment)
+   - Line selected when line significantly closer than point
+   - Point barely closer still wins (e.g., 7px point vs 6px line → point wins)
+   - Closest element wins among same-type elements  
+   - Selection mask filtering still works correctly (overrides distance)
 
 **Tool Usage Pattern**:
 
@@ -5746,7 +5847,7 @@ function buildWorldInitialization(world: World, cmd: Command): void {
   cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
   cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
   
-  // Step 11: Set active plane
+  // Step 11: Set active plane (ViewState default; NOT a constructive action)
   cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
 }
 
@@ -6498,7 +6599,7 @@ These elements are **NOT** stored in project files (intentional):
 
 1. **Transient UI State**: Hover highlights, cursor position, temporary feedback
 2. **Performance Caches**: Realization caches, computed geometry (rebuilt on demand)
-3. **ViewState** (future): Zoom, pan, camera position (may add optional persistence)
+3. **ViewState** (presentation state): Zoom, pan, camera position, active plane, panel layout, etc. (may add optional persistence)
 4. **Command Undo History**: Only committed commands saved, not undo/redo position
 5. **Authentication State**: User tokens, profile data (session-only)
 
@@ -8060,6 +8161,14 @@ moveCmd.addAndExecute(new UpdateElementOp({
   afterState: { position: [150, 250, 1] }
 }));
 commandStack.commit(moveCmd);
+
+// Validation rules for move operations (MVP):
+// - Only directly-defined points are movable (e.g., FreePoint2D).
+// - Derived points (intersection points, transported points, etc.) MUST NOT be moved.
+// - Points with locked=true MUST NOT be moved.
+// - Moving a base point triggers recomputation of all dependents (parametric update).
+// - UI drag previews may repeatedly rollback/reapply the same in-progress command to provide live feedback,
+//   but the committed history MUST contain a single command representing the final move.
 
 // User presses Ctrl+Z (undo)
 commandStack.undo(); // Point moves back to [100, 200, 1], segment updated

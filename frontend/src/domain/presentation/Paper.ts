@@ -360,6 +360,11 @@ export class Paper {
     // Get active plane for direct element access
     const activePlane = activePlaneId ? world.projectionPlanes.get(activePlaneId) : null;
     
+    // Visual radius for points (used for distance adjustment)
+    // Points rendered as circles with ~5px radius; this creates a "capture zone"
+    const POINT_VISUAL_RADIUS_PIXELS = 5;
+    const pointRadiusInPlaneSpace = POINT_VISUAL_RADIUS_PIXELS / this.viewportTransform.zoom;
+    
     // Test points (only from active plane)
     if (activePlane) {
       for (const point of activePlane.getAllPoints()) {
@@ -373,15 +378,19 @@ export class Paper {
         
         const distance = planePos.distanceTo(realization.position);
         
-        if (distance < minDistance) {
+        // Adjust distance by subtracting point visual radius
+        // This naturally gives points preference when they're nearby
+        const adjustedDistance = distance - pointRadiusInPlaneSpace;
+        
+        if (adjustedDistance < minDistance) {
           closestHit = {
             elementId: point.id,
             elementType: 'point',
             primitiveId: point.id,
-            distance: distance * this.viewportTransform.zoom, // Convert to canvas pixels for consistency
+            distance: distance * this.viewportTransform.zoom, // Store actual distance for consistency
             snapPoint: realization.position.clone()  // Snap point in plane coordinates
           };
-          minDistance = distance;
+          minDistance = adjustedDistance;
         }
       }
     }

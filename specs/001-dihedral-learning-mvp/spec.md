@@ -779,6 +779,8 @@ The toolbars follow a structured interaction model designed to make geometric re
 - Updates visual emphasis (active plane full intensity, others de-emphasized)
 - Hinge lines always visible regardless of active plane
 
+**Classification**: Active plane selection is **ViewState** (presentation state). Switching the active plane is **not** a constructive action, is **not** recorded in the ProcessTree, and is **not** part of undo/redo.
+
 #### Navigation Toolbar
 
 Provides explicit navigation controls (complementary to the always-available shortcuts):
@@ -1488,6 +1490,8 @@ These use cases cover primitive user actions and micro-interactions. They are in
 - **FR-036**: The system MUST provide a mode to enable/disable dependency-hover highlighting on actions and elements.
 - **FR-037**: When a tool is active and awaiting input, the system MUST provide continuous visual feedback by highlighting elements that are valid inputs as the cursor moves over them; for intersections, both intersecting elements MUST be highlighted near the intersection point with a visual marker at the intersection location; for empty space, the cursor or canvas MUST indicate that clicking will create a free point.
 - **FR-038**: The system MUST implement point snapping: when the cursor moves within a configurable snap radius of an existing point or intersection marker, the cursor MUST visually snap to that exact location and the target point MUST be highlighted, allowing the user to select the point without requiring exact cursor positioning; the snap radius SHOULD be appropriate for the current zoom level.
+- **FR-039**: The system MUST provide a Selection Tool (pointer/arrow icon) in the toolbar that, when active, enables: (a) double-clicking any object to open its properties dialog, (b) dragging a directly-defined unlocked 2D point to reposition it with continuous parametric updates, and (c) dragging empty space to pan the viewport. The point move MUST be undoable/redoable, MUST NOT allow moving derived points, and MUST NOT allow moving points marked as locked.
+- **FR-040**: The system MUST implement distance-adjusted hit-testing when multiple elements fall within the snap radius: after filtering by the active tool's selection mask, the system MUST treat points as small circles by subtracting their visual radius (~5 pixels) from the measured distance, then select the element with the smallest adjusted distance. This ensures that when a point lies on a line, the point is naturally preferred when nearby, while still allowing other elements to be selected if they are significantly closer.
 
 ### Assumptions
 
