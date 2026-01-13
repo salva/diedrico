@@ -248,10 +248,43 @@ export class Line2DParallel extends Line2D {
     );
   }
   
-  realize2D(_world: import('./World').World): Line2DRealization2D | null {
-    // TODO: Implement parallel line realization
-    // Need access to reference line's realization
-    return null;
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Get reference line realization from world
+    const plane = world.getProjectionPlaneById(this.planeId);
+    const refLine = plane?.getLine(this.referenceLineId);
+    const referenceLine = refLine?.realize2D(world);
+    if (!referenceLine) {
+      return null;  // Cannot compute line without reference line
+    }
+
+    // Check if reference line is infeasible - propagate infeasibility
+    if (!referenceLine.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+
+    // Get through-point realization from world
+    const throughPoint = plane?.getPoint(this.throughPointId);
+    const throughPointRealization = throughPoint?.realize2D(world);
+    if (!throughPointRealization) {
+      return null;  // Cannot compute line without through-point
+    }
+
+    // Check if through-point is infeasible - propagate infeasibility
+    if (!throughPointRealization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+
+    // CRITICAL: Parallel direction = reference direction (NO rotation)
+    // This is the key difference from perpendicular lines
+    const parallelDirection = referenceLine.getDirection();
+
+    // Create parallel line realization
+    // Line passes through the specified point with parallel direction
+    return new Line2DRealization2D(
+      throughPointRealization.position,  // Through-point (z=1)
+      parallelDirection,                 // Parallel direction (z=0)
+      true                                // Feasible
+    );
   }
 }
 

@@ -34,7 +34,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
 * [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
 * [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
-* [ ] Add tool for creating line parallel to another one passing by given point.
 * [ ] Add tool for creating line perpendicular to another one passing by given point.
 * [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
 * [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
@@ -79,6 +78,38 @@ Note that completing these tasks may require asking the user for additional info
     - ✅ Moving circumference point updates circle (NEW fix - now works)
     - ✅ Circle radius recalculates when either point moves
   - **Notes**: Parametric behavior now fully functional; no regressions
+
+* [X] **Parallel Line Tool: Line Parallel to Reference Through Point**
+  - **STATUS**: 📋 PLANNED (Jan 13, 2026)
+  - **Problem**: Users cannot create lines parallel to existing lines, a fundamental geometric construction in dihedral drawing
+  - **Context**: Line2DParallel class exists but realize2D() returns null with TODO comment
+  - **Solution**: Complete implementation pipeline: domain realization, ProcessTree action/operation, two-step tool following GuideTool pattern
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-043 (Parallel Line Tool requirement)
+  - **UI**: [spec.md](./spec.md#line-tool-family) Line tool family - "Parallel line through point" workflow (two-step: select reference line → select/create point)
+  - **Data model**: [data-model.md](./data-model.md#line2dparallel-parallel-line-construction-implementation) Complete implementation specification with algorithm, dependencies, parametric behavior
+  - **Tasks**: Phase 58 in [tasks.md](./tasks.md#phase-58-parallel-line-tool---line-parallel-to-reference-through-point) (T994-T1007: 14 tasks)
+    - T994-T996: Domain implementation (realize2D, factory method, unit test)
+    - T997-T999: ProcessTree integration (action, operation, unit test)
+    - T1000-T1002: Tool implementation (ParallelLineTool, toolbar button, registration)
+    - T1003-T1006: Testing (unit, integration, E2E, parametric updates)
+    - T1007: Documentation (data-model.md section - COMPLETE)
+  - **Algorithm**: `parallelDirection = referenceDirection.clone()` (no rotation, unlike perpendicular which rotates 90°)
+  - **Reference Pattern**: Line2DPerpendicularToLine (~90 lines of implementation), GuideTool (two-step state machine)
+  - **Dependencies**: Tracks referenceLineId and throughPointId for parametric updates
+  - **Acceptance**:
+    - ✅ Line2DParallel.realize2D() computes parallel line realization correctly
+    - ✅ AddLine2DParallelToLineOp creates line and records action in ProcessTree
+    - ✅ ParallelLineTool follows two-step workflow: select reference line → select/create point
+    - ✅ Toolbar has "Parallel Line" button in Line tool family dropdown
+    - ✅ Line remains parallel when reference line rotates (parametric update)
+    - ✅ Line passes through point when point moves (parametric update)
+    - ✅ Infeasibility propagates from reference line or through-point
+    - ✅ Tool supports auto-creation of intersection points and free points
+    - ✅ All unit tests passing (realization, operation, tool state machine)
+    - ✅ Integration tests verify parametric behavior
+    - ✅ E2E test verifies complete user workflow
+  - **Implementation**: Ready for Phase 58 execution
+  - **Notes**: All planning documentation complete; implementation follows established patterns from Line2DPerpendicularToLine and GuideTool
 
 * [X] **Circle Tool: Circumference Point Snapping**
   - **STATUS**: ✅ COMPLETE (Jan 13, 2026) - All tasks (T980-T986) finished

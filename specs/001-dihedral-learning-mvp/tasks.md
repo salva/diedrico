@@ -5940,4 +5940,179 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 ---
 
+## Phase 58: Parallel Line Tool - Line Parallel to Reference Through Point
+
+**Purpose**: Implement parallel line construction tool for creating lines parallel to a reference line passing through a specified point  
+**Reference**: [spec.md](./spec.md#requirements-mandatory) FR-043 (Parallel Line Tool requirement), [spec.md](./spec.md#line-tool-family) - Line tool family parallel variant
+
+**Problem**: Users cannot currently create lines parallel to existing lines, a fundamental geometric construction in dihedral drawing. The Line2DParallel class exists but has no realize2D() implementation, no action, and no tool.
+
+**Solution**: Complete the parallel line construction pipeline: implement Line2DParallel realization using homogeneous coordinate vector operations, create action and operation, implement ParallelLineTool following established two-step pattern.
+
+### Phase 58 Tasks
+
+**Domain Implementation** (T994-T996)
+
+- [ ] T994 [P] Implement Line2DParallel.realize2D() method
+  - Algorithm: parallel direction = reference line direction (no rotation)
+  - Get reference line realization (point + direction vector with z=0)
+  - Get through-point realization
+  - Return Line2DRealization2D(throughPoint, referenceDirection.clone())
+  - Handle infeasibility: if reference line infeasible, return infeasible realization
+  - Handle infeasibility: if through-point infeasible, return infeasible realization
+  - File: `frontend/src/domain/world/Line.ts` (Line2DParallel class, ~lines 230-260)
+  - Follow pattern from Line2DPerpendicularToLine.realize2D() (~lines 290-350)
+
+- [ ] T995 [P] Add ProjectionPlane.addLine2DParallelToLine() factory method
+  - Parameters: (referenceLineId, throughPointId, world, id?)
+  - Generate hierarchical ID if not provided (for redo)
+  - Create Line2DParallel instance with generated ID
+  - Add to lines Map
+  - Return created line
+  - File: `frontend/src/domain/world/ProjectionPlane.ts` (~line 700, after addLine2DBetweenTwoPoints)
+  - Pattern: Follow addLine2DBetweenTwoPoints structure
+
+- [ ] T996 [P] Unit test for Line2DParallel realization
+  - Create world with plane, reference line (horizontal at y=5), through-point at (3,10)
+  - Call Line2DParallel.realize2D()
+  - Assert parallel realization has same direction as reference (direction.y === 0)
+  - Assert parallel passes through specified point (point1.x === 3, point1.y === 10)
+  - Test infeasibility propagation: reference line infeasible → parallel infeasible
+  - Test infeasibility propagation: through-point infeasible → parallel infeasible
+  - File: `frontend/tests/unit/domain/line.spec.ts` (new "Line2DParallel" describe block)
+
+**ProcessTree Integration** (T997-T999)
+
+- [ ] T997 [P] Create CreateLineParallelToLineAction factory function
+  - Parameters: (lineId, planeId, referenceLineId, throughPointId)
+  - Return Action with type='action', actionType='CreateLineParallelToLine'
+  - inputs array: [referenceLineId, throughPointId]
+  - outputs array: [lineId]
+  - parameters: { planeId, referenceLineId, throughPointId }
+  - description: `Parallel line on ${planeId} through ${throughPointId} parallel to ${referenceLineId}`
+  - File: `frontend/src/domain/processTree/actions/CreateLineParallelToLineAction.ts` (NEW FILE)
+  - Pattern: Follow CreateLineAction.ts structure exactly
+
+- [ ] T998 [P] Create AddLine2DParallelToLineOp operation
+  - Constructor: (planeId, referenceLineId, throughPointId)
+  - Store parameters for undo
+  - apply(): 
+    - Get plane from world
+    - Call plane.addLine2DParallelToLine(referenceLineId, throughPointId, world)
+    - Store lineId in outputs
+    - Create and add action to ProcessTree via world.addAction()
+    - Return { ok: true, elementIds: [lineId] }
+  - undo():
+    - Get plane, call plane.removeLine(lineId)
+    - Remove action from ProcessTree
+  - File: `frontend/src/commands/operations/world/AddLineOp.ts` (add to existing file, after AddLine2DByTwoPointsOp)
+
+- [ ] T999 [P] Unit test for AddLine2DParallelToLineOp
+  - Create world, plane, reference line, through-point
+  - Create and apply op
+  - Assert line created with correct referenceLineId, throughPointId
+  - Assert action added to ProcessTree
+  - Call undo, assert line removed
+  - File: `frontend/tests/unit/commands/operations/AddLineOp.spec.ts` (new "AddLine2DParallelToLineOp" describe block)
+
+**Tool Implementation** (T1000-T1002)
+
+- [ ] T1000 Create ParallelLineTool class
+  - Extends BaseTool
+  - State machine: 
+    - State 0: Awaiting reference line selection
+    - State 1: Reference line selected, awaiting point
+  - getSelectionMask(state):
+    - State 0: ['line', 'guide', 'segment'] (any line-like element can be reference)
+    - State 1: ['point'] (only points for through-point)
+  - Step 1: onClick() with line → store referenceLineId, advance to state 1
+  - Step 2: onClick() with point/intersection/empty → store throughPointId, create line
+  - Auto-create point if needed (intersection or free point as auxiliary action)
+  - Create command with AddLine2DParallelToLineOp
+  - File: `frontend/src/tools/ParallelLineTool.ts` (NEW FILE)
+  - Pattern: Follow GuideTool.ts structure (also two-step: reference line + point)
+
+- [ ] T1001 [P] Add "Parallel Line" button to toolbar
+  - Add button in Line tool family dropdown (after "Line by two points")
+  - Icon: Two parallel lines with arrow indicator
+  - Click activates ParallelLineTool
+  - File: `frontend/src/components/toolbars/Toolbar.vue` (~line 150, after Line button)
+
+- [ ] T1002 [P] Register ParallelLineTool in toolStore
+  - Add 'parallel-line' to tool types
+  - Map 'parallel-line' → ParallelLineTool class
+  - File: `frontend/src/stores/toolStore.ts` (~line 30, after 'line')
+
+**Testing** (T1003-T1006)
+
+- [ ] T1003 [P] Unit test for ParallelLineTool state machine
+  - Test state 0: click line → advances to state 1, stores referenceLineId
+  - Test state 1: click point → creates parallel line
+  - Test state 1: click intersection → auto-creates intersection point, creates parallel line
+  - Test state 1: click empty space → auto-creates free point, creates parallel line
+  - Test validation: cannot select same line and point (degenerate case)
+  - Test reset: ESC or tool switch resets state to 0
+  - File: `frontend/tests/unit/tools/ParallelLineTool.spec.ts` (NEW FILE)
+  - Pattern: Follow GuideTool.spec.ts test structure
+
+- [ ] T1004 [P] Integration test: Create parallel line through existing point
+  - Create world with plane, reference line, existing point
+  - Activate ParallelLineTool
+  - Simulate clicks: reference line, existing point
+  - Assert Line2DParallel created with correct IDs
+  - Assert line realization parallel to reference (directions equal)
+  - Assert line passes through specified point
+  - Assert action recorded in ProcessTree
+  - File: `frontend/tests/integration/parallelLine.spec.ts` (NEW FILE)
+
+- [ ] T1005 [P] Integration test: Parallel line parametric update
+  - Create parallel line (reference + through-point)
+  - Move reference line's defining point
+  - Assert parallel line updates (stays parallel to new reference orientation)
+  - Move through-point
+  - Assert parallel line updates (stays parallel, passes through new point position)
+  - File: `frontend/tests/integration/parallelLine.spec.ts` (add to same file)
+
+- [ ] T1006 [P] E2E test: Parallel line tool workflow
+  - Open app, activate Point tool, create two points for reference line
+  - Activate Line tool, create reference line
+  - Activate Parallel Line tool
+  - Click reference line (verify highlight)
+  - Click empty space for through-point (verify free point creation)
+  - Verify parallel line rendered
+  - Verify action appears in ProcessTree panel
+  - Move reference line point, verify parallel updates
+  - File: `frontend/tests/e2e/parallel-line-creation.spec.ts` (NEW FILE)
+  - Pattern: Follow line-creation.spec.ts structure
+
+**Documentation** (T1007)
+
+- [ ] T1007 Update data-model.md with Line2DParallel complete specification
+  - Add "Line2DParallel: Parallel Line Construction" section after Line2DPerpendicularToLine
+  - Document algorithm: parallel direction = reference direction (no transformation)
+  - Document realization: Line2DRealization2D(throughPoint, referenceDirection)
+  - Document dependencies: tracks referenceLineId and throughPointId
+  - Document infeasibility propagation from reference or through-point
+  - Add code examples matching implementation
+  - File: `specs/001-dihedral-learning-mvp/data-model.md` (~line 3400, new section)
+
+**Acceptance Criteria**:
+1. ✅ Line2DParallel.realize2D() computes parallel line realization correctly
+2. ✅ AddLine2DParallelToLineOp creates line and records action in ProcessTree
+3. ✅ ParallelLineTool follows two-step workflow: select reference line → select/create point
+4. ✅ Toolbar has "Parallel Line" button in Line tool family
+5. ✅ Line remains parallel to reference when reference line rotates (parametric update)
+6. ✅ Line passes through specified point when point moves (parametric update)
+7. ✅ Infeasibility propagates correctly from reference line or through-point
+8. ✅ Tool supports auto-creation of intersection points and free points
+9. ✅ All unit tests passing (Line2DParallel realize, operation, tool state machine)
+10. ✅ Integration tests verify parametric behavior
+11. ✅ E2E test verifies complete user workflow
+
+**Phase 58 Status**: 📋 PLANNED (Jan 13, 2026)
+
+**Checkpoint**: Users can create parallel lines through specified points; parallel lines update parametrically when reference line or through-point moves; fundamental geometric construction available for dihedral drawing exercises.
+
+---
+
 **Status**: IN PROGRESS (T980-T982 complete, T983-T986 remaining - tests needed)

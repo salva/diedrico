@@ -706,4 +706,58 @@ describe('DependencyService', () => {
       expect(invalidatedElements).toContain('pointIntersection');
     });
   });
+
+  describe('T990: Circle Dependency Tracking', () => {
+    it('should track both center and circumference point dependencies for circles', () => {
+      // Create two points
+      processTree.addAction({
+        id: 'action1',
+        type: 'action',
+        actionType: 'CreateFreePoint',
+        timestamp: new Date(),
+        inputs: [],
+        outputs: ['centerPoint'],
+        parameters: {},
+        description: 'Center Point'
+      });
+
+      processTree.addAction({
+        id: 'action2',
+        type: 'action',
+        actionType: 'CreateFreePoint',
+        timestamp: new Date(),
+        inputs: [],
+        outputs: ['circumferencePoint'],
+        parameters: {},
+        description: 'Circumference Point'
+      });
+
+      // Create circle with BOTH points as dependencies (Phase 57 fix)
+      processTree.addAction({
+        id: 'action3',
+        type: 'action',
+        actionType: 'CreateCircle',
+        timestamp: new Date(),
+        inputs: ['centerPoint', 'circumferencePoint'],  // Both points tracked
+        outputs: ['circle1'],
+        parameters: {},
+        description: 'Circle from two points'
+      });
+
+      dependencyService.rebuildDependencyMaps();
+
+      // Circle should depend on BOTH points
+      const dependencies = dependencyService.getDependencies('circle1');
+      expect(dependencies).toHaveLength(2);
+      expect(dependencies).toContain('centerPoint');
+      expect(dependencies).toContain('circumferencePoint');
+
+      // Both points should have circle as dependent
+      const centerDependents = dependencyService.getDependents('centerPoint');
+      expect(centerDependents).toContain('circle1');
+
+      const circumferenceDependents = dependencyService.getDependents('circumferencePoint');
+      expect(circumferenceDependents).toContain('circle1');
+    });
+  });
 });

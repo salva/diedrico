@@ -35,7 +35,7 @@ import {
   SiblingIntersectionPoint2D
 } from './Point';
 import type { Line2D, Line2DRealization2D } from './Line';
-import { Line2DByTwoPoints } from './Line';
+import { Line2DByTwoPoints, Line2DParallel } from './Line';
 import type { Circle2D, Circle2DRealization2D } from './Circle';
 import { Circle2DByCenterAndPoint } from './Circle';
 import { Segment2DByPoints } from './Segment';
@@ -730,6 +730,50 @@ export abstract class ProjectionPlane {
     }
 
     const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id);
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Factory method: Create and add a Line2DParallel to this plane
+   * 
+   * @param referenceLineId ID of line to be parallel to
+   * @param throughPointId ID of point the new line passes through
+   * @param world World context for validation and ID generation
+   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
+   * @returns The created Line2DParallel
+   */
+  addLine2DParallelToLine(
+    referenceLineId: string,
+    throughPointId: string,
+    world: import('./World').World,
+    id?: string
+  ): Line2DParallel {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate through-point exists on this plane
+    const throughPoint = this.getPoint(throughPointId);
+    if (!throughPoint) {
+      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+    }
+
+    // Validate reference line exists (could be on any plane)
+    const refLineElement = world.getLine2D(referenceLineId);
+    const referenceLine = refLineElement?.realize2D(world);
+    if (!referenceLine) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const line = new Line2DParallel(id, referenceLineId, throughPointId, this.id);
     
     this.addLine(line);
     return line;

@@ -3006,6 +3006,363 @@ type Line2D =
   | Line2DParallelThroughPoint 
   | Line2DPerpendicularThroughPoint;
 
+---
+
+#### Line2DParallel: Parallel Line Construction Implementation
+
+**Purpose**: Create an infinite line parallel to a reference line passing through a specified point.
+
+**Algorithm**: Unlike perpendicular lines which require 90-degree rotation, parallel lines simply clone the reference direction:
+
+```typescript
+class Line2DParallel extends Line2D {
+  readonly type: 'parallel' = 'parallel';
+  readonly referenceLineId: string;
+  readonly throughPointId: string;
+  
+  realize2D(world: World): Line2DRealization2D | null {
+    // Step 1: Get containing plane
+    const plane = world.getProjectionPlane(this.planeId);
+    if (!plane) return null;
+    
+    // Step 2: Get reference line realization
+    const referenceLine = plane.getLine(this.referenceLineId)?.realize2D(world);
+    if (!referenceLine) return null;
+    
+    // Step 3: Get through-point realization
+    const throughPoint = plane.getPoint(this.throughPointId)?.realize2D(world);
+    if (!throughPoint) return null;
+    
+    // Step 4: Handle infeasibility propagation
+    // If reference line or through-point are infeasible, propagate infeasibility
+    if (!referenceLine.feasible || !throughPoint.feasible) {
+      // Return fallback line with infeasible flag
+      const fallbackPoint = new Vector3(0, 0, 1);
+      const fallbackDirection = new Vector3(1, 0, 0);
+      return new Line2DRealization2D(fallbackPoint, fallbackDirection, false);
+    }
+    
+    // Step 5: Extract reference direction
+    // referenceLine.point2 is the direction vector (z=0) for infinite lines
+    const referenceDirection = referenceLine.point2.clone();
+    
+    // CRITICAL: Parallel direction = reference direction (NO rotation)
+    // This is the key difference from perpendicular lines
+    const parallelDirection = referenceDirection;
+    
+    // Step 6: Create parallel line realization
+    // Line passes through the specified point with parallel direction
+    return new Line2DRealization2D(
+      throughPoint.position,    // Through-point (z=1)
+      parallelDirection,        // Parallel direction (z=0)
+      true                      // Feasible
+    );
+  }
+}
+```
+
+**Homogeneous Coordinates**:
+- **Input**: Reference line realization with `point1` (z=1, point on line) and `point2` (z=0, direction vector)
+- **Output**: Parallel line realization with `throughPoint.position` (z=1) and `parallelDirection` (z=0)
+- **Key property**: `parallelDirection === referenceDirection` (no transformation)
+
+**Comparison with Line2DPerpendicularToLine**:
+
+```typescript
+// Perpendicular: 90-degree rotation
+const referenceDirection = referenceLine.getDirection();
+const perpendicularDirection = new Vector3(
+  -referenceDirection.y,  // ← 90° CCW rotation
+  referenceDirection.x,
+  0
+);
+
+// Parallel: No rotation (direct clone)
+const referenceDirection = referenceLine.point2.clone();
+const parallelDirection = referenceDirection;  // ← Same direction
+```
+
+**Dependencies and Parametric Updates**:
+
+Line2DParallel tracks two dependencies:
+1. **referenceLineId**: When reference line rotates or moves, parallel line updates to maintain same direction
+2. **throughPointId**: When through-point moves, parallel line updates to pass through new position
+
+Example parametric behavior:
+```typescript
+// Initial state: Horizontal reference line (direction = [1, 0, 0])
+const referenceLine = new Line2DByTwoPoints('ref', 'p1', 'p2', 'plane_H');
+const parallelLine = new Line2DParallel('parallel', 'ref', 'p3', 'plane_H');
+
+// Realize parallel line
+const realization1 = parallelLine.realize2D(world);
+// → point1 = p3.position (e.g., [5, 10, 1])
+// → point2 = [1, 0, 0] (horizontal direction)
+
+// User moves p2, rotating reference line to 45°
+world.movePoint('p2', new Vector3(100, 100, 1));
+
+// DependencyService detects 'ref' changed, invalidates 'parallel'
+// Next render, parallel line realizes again
+const realization2 = parallelLine.realize2D(world);
+// → point1 = [5, 10, 1] (same through-point)
+// → point2 = [0.707, 0.707, 0] (45° direction, parallel to ref)
+
+// User moves through-point p3
+world.movePoint('p3', new Vector3(20, 30, 1));
+
+// DependencyService detects 'p3' changed, invalidates 'parallel'
+const realization3 = parallelLine.realize2D(world);
+// → point1 = [20, 30, 1] (new through-point position)
+// → point2 = [0.707, 0.707, 0] (same 45° direction)
+```
+
+**Infeasibility Propagation**:
+
+Line2DParallel becomes infeasible if:
+1. Reference line is infeasible (e.g., reference's defining points coincide)
+2. Through-point is infeasible (e.g., intersection doesn't exist)
+
+Infeasibility handling:
+```typescript
+if (!referenceLine.feasible || !throughPoint.feasible) {
+  // Return fallback line with infeasible=false flag
+  return new Line2DRealization2D(
+    new Vector3(0, 0, 1),   // Arbitrary fallback point
+    new Vector3(1, 0, 0),   // Arbitrary fallback direction
+    false                   // infeasible flag
+  );
+}
+```
+
+**Factory Method**:
+
+```typescript
+// ProjectionPlane.ts
+addLine2DParallelToLine(
+  referenceLineId: string,
+  throughPointId: string,
+  world: World,
+  id?: string
+): Line2DParallel {
+  // Generate hierarchical ID if not provided (for redo)
+  const lineId = id ?? this.generateHierarchicalId('line');
+  
+  // Create Line2DParallel instance
+  const parallelLine = new Line2DParallel(
+    lineId,
+    referenceLineId,
+    throughPointId,
+    this.id,  // planeId
+    lineId    // label
+  );
+  
+  // Add to lines Map
+  this.lines.set(lineId, parallelLine);
+  
+  return parallelLine;
+}
+```
+
+**ProcessTree Action**:
+
+```typescript
+// CreateParallelLineAction.ts
+export function createParallelLineAction(
+  lineId: string,
+  planeId: string,
+  referenceLineId: string,
+  throughPointId: string
+): Action {
+  return {
+    id: generateActionId(),
+    type: 'action',
+    actionType: 'CreateParallelLine',
+    timestamp: new Date(),
+    inputs: [referenceLineId, throughPointId],   // Dependencies
+    outputs: [lineId],                            // Created element
+    parameters: { planeId, referenceLineId, throughPointId },
+    description: `Parallel line on ${planeId}`
+  };
+}
+
+function generateActionId(): string {
+  return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+```
+
+**Operation**:
+
+```typescript
+// AddLineOp.ts
+export class AddLine2DParallelToLineOp implements Operation {
+  private lineId?: string;
+  
+  constructor(
+    private planeId: string,
+    private referenceLineId: string,
+    private throughPointId: string
+  ) {}
+  
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Create line (pass stored ID if available for redo)
+      const line = plane.addLine2DParallelToLine(
+        this.referenceLineId,
+        this.throughPointId,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+  
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}
+```
+
+**Tool Implementation** (Two-Step Pattern):
+
+```typescript
+// ParallelLineTool.ts
+export class ParallelLineTool extends BaseTool {
+  private state: 'waiting-line' | 'waiting-point' = 'waiting-line';
+  private referenceLineId?: string;
+  
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-line') {
+      // Step 1: Select reference line
+      return ['line'];  // Also works with guides/segments as they extend Line2D
+    } else {
+      // Step 2: Select or create through-point
+      return ['point'];
+    }
+  }
+  
+  handleClick(context: ToolContext): ToolResult {
+    const { hit, world, planeId, commandStack } = context;
+    
+    if (this.state === 'waiting-line') {
+      // Step 1: Store reference line
+      this.referenceLineId = hit.elementId;
+      this.state = 'waiting-point';
+      return this.success(`Selected reference line: ${hit.elementId}`);
+      
+    } else {
+      // Step 2: Create parallel line
+      const throughPointId = hit.elementId;
+      
+      try {
+        // Build Command
+        const cmd = new Command("Create parallel line", world);
+        
+        // Execute operation and get outputs
+        const result = cmd.addAndExecute(
+          new AddLine2DParallelToLineOp(planeId, this.referenceLineId!, throughPointId)
+        );
+        
+        const lineId = result.outputs.lineId;
+        
+        // Record ProcessTree action (Tool adds action, not Operation)
+        const action = createParallelLineAction(
+          lineId,
+          planeId,
+          this.referenceLineId!,
+          throughPointId
+        );
+        world.getProcessTree().addAction(action);
+        
+        // Commit and push
+        cmd.commit();
+        commandStack.push(cmd);
+        
+        const refId = this.referenceLineId;
+        this.reset();
+        
+        return this.success(`Created parallel line ${lineId} parallel to ${refId} through ${throughPointId}`);
+        
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.reset();
+        return this.failure(`Failed to create parallel line: ${message}`);
+      }
+    }
+  }
+  
+  cancel(): void {
+    this.reset();
+  }
+  
+  private reset(): void {
+    this.state = 'waiting-line';
+    this.referenceLineId = undefined;
+  }
+}
+```
+
+**Testing Requirements**:
+
+1. **Unit test**: Line2DParallel.realize2D()
+   - Reference line horizontal → parallel horizontal
+   - Reference line at 45° → parallel at 45°
+   - Infeasibility propagation from reference line
+   - Infeasibility propagation from through-point
+
+2. **Integration test**: Parametric updates
+   - Rotate reference line → parallel updates direction
+   - Move through-point → parallel passes through new position
+   - Verify action recorded in ProcessTree
+
+3. **E2E test**: Complete workflow
+   - Create reference line with Point tool + Line tool
+   - Activate Parallel Line tool
+   - Click reference line (verify highlight)
+   - Click empty space (verify free point auto-creation)
+   - Verify parallel line rendered
+   - Move reference point → verify parallel updates
+
+**Implementation Files**:
+- Domain: `frontend/src/domain/world/Line.ts` (Line2DParallel class, ~lines 230-260)
+- Factory: `frontend/src/domain/world/ProjectionPlane.ts` (addLine2DParallelToLine method)
+- Action: `frontend/src/domain/processTree/actions/CreateParallelLineAction.ts` (NEW FILE)
+- Operation: `frontend/src/commands/operations/world/AddLineOp.ts` (AddLine2DParallelToLineOp class)
+- Tool: `frontend/src/tools/ParallelLineTool.ts` (NEW FILE)
+- Tests: Multiple files in `frontend/tests/{unit,integration,e2e}/`
+
+**Key Architecture Points**:
+- **Tool adds action**: ParallelLineTool calls `createParallelLineAction()` and adds it via `world.getProcessTree().addAction()` AFTER operation executes
+- **Operation does NOT add action**: AddLine2DParallelToLineOp only creates the line domain object
+- **Action naming**: Use lowercase function name `createParallelLineAction` (not `CreateParallelLineAction`)
+- **Operation result**: Returns `{ success: true, outputs: {...} }` (not `{ ok: true, ... }`)
+
+**Phase**: Phase 58 (T994-T1007)  
+**Status**: 📋 PLANNED (Jan 13, 2026)
+
+---
+
 // === CIRCLE 2D CONSTRUCTIONS ===
 
 // **DESIGN DECISION**: Circle2D DOES NOT support scalar radius parameter

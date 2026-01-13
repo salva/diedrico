@@ -139,6 +139,20 @@
 
     <button
       class="tool-button"
+      :class="{ active: toolStore.isToolActive('parallel-line') }"
+      @click="selectTool('parallel-line')"
+      title="Parallel Line Tool - Create line parallel to reference through point"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <!-- Two parallel lines -->
+        <line x1="2" y1="6" x2="18" y2="6" stroke="currentColor" stroke-width="2" />
+        <line x1="2" y1="14" x2="18" y2="14" stroke="currentColor" stroke-width="2" />
+      </svg>
+      <span>Parallel</span>
+    </button>
+
+    <button
+      class="tool-button"
       :class="{ active: toolStore.isToolActive('segment') }"
       @click="selectTool('segment')"
       title="Segment Tool (S)"
