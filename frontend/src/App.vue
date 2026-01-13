@@ -175,14 +175,14 @@ const activePlaneName = computed(() => {
   
   // Determine plane name based on semantic role
   try {
-    const horizontalPlane = world.getHorizontalPlane();
+    const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
     if (planeId === horizontalPlane.id) {
       return 'P_H (Horizontal)';
     }
   } catch {}
   
   try {
-    const verticalPlane = world.getVerticalPlane();
+    const verticalPlane = world.getProjectionPlaneByLabel('P_V');
     if (planeId === verticalPlane.id) {
       return 'P_V (Vertical)';
     }

@@ -216,7 +216,7 @@ const horizontalElements = computed(() => {
   
   console.log('[ElementsPanel] Computing P_H elements, version:', version, 'forceUpdate:', update);
   
-  const plane = world.getHorizontalPlane();
+  const plane = world.getProjectionPlaneByLabel('P_H');
   if (!plane) {
     return {
       points: [],
@@ -257,7 +257,7 @@ const verticalElements = computed(() => {
   worldVersion.value; // Create dependency
   forceUpdate.value; // Create dependency
   
-  const plane = world.getVerticalPlane();
+  const plane = world.getProjectionPlaneByLabel('P_V');
   if (!plane) {
     return {
       points: [],

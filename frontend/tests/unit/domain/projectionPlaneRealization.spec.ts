@@ -25,9 +25,9 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
     world = new World();
     planeH = world.getProjectionPlaneByLabel('P_H')!;
     
-    // Create test points
-    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world, 'p1');
-    const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world, 'p2');
+    // Create test points (let IDs auto-generate)
+    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+    const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
     
     p1Id = p1.id;
     p2Id = p2.id;
@@ -54,17 +54,20 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
       expect(cached).toBe(realization);  // Same instance
     });
 
-    it('World.getPoint2DRealization() should delegate to ProjectionPlane', () => {
-      // Call via World (public API)
-      const realization = world.getPoint2DRealization(p1Id);
+    it('Point.realize2D() should compute realization (without automatic caching)', () => {
+      // Get the point element
+      const point = planeH.getPoint(p1Id);
+      expect(point).toBeDefined();
+      
+      // Call realize2D on the element - this computes fresh, no caching
+      const realization = point!.realize2D(world);
       
       // Verify realization computed
       expect(realization).toBeDefined();
+      expect(realization!.position.x).toBe(0);
+      expect(realization!.position.y).toBe(0);
       
-      // Verify cached in ProjectionPlane
-      const planeCached = planeH.getPointRealization2D(p1Id);
-      expect(planeCached).toBeDefined();
-      expect(planeCached).toBe(realization);
+      // Note: realize2D() doesn't automatically cache. Use plane.realizePoint2D() for caching.
     });
 
     it('subsequent calls should return cached realization', () => {
@@ -82,11 +85,11 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
   describe('Line realization computation', () => {
     it('ProjectionPlane.realizeLine2D() should compute and cache line realization', () => {
-      const line = new Line2DByTwoPoints('line1', p1Id, p2Id, 'proj_plane_H');
+      const line = new Line2DByTwoPoints(planeH.id + '/line1', p1Id, p2Id, planeH.id);
       world.addLine2D(line);
       
       // Verify cache is empty initially
-      expect(planeH.getLineRealization2D('line1')).toBeUndefined();
+      expect(planeH.getLineRealization2D(line.id)).toBeUndefined();
       
       // Compute realization via ProjectionPlane
       const realization = planeH.realizeLine2D(line, world);
@@ -96,28 +99,18 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
       expect(realization!.feasible).toBe(true);
       
       // Verify cached in ProjectionPlane
-      const cached = planeH.getLineRealization2D('line1');
+      const cached = planeH.getLineRealization2D(line.id);
       expect(cached).toBeDefined();
       expect(cached).toBe(realization);
     });
 
-    it('World.getLine2DRealization() should delegate to ProjectionPlane', () => {
-      const line = new Line2DByTwoPoints('line1', p1Id, p2Id, 'proj_plane_H');
-      world.addLine2D(line);
-      
-      // Call via World
-      const realization = world.getLine2DRealization('line1');
-      
-      // Verify realization computed
-      expect(realization).toBeDefined();
-      
-      // Verify cached in ProjectionPlane
-      const planeCached = planeH.getLineRealization2D('line1');
-      expect(planeCached).toBeDefined();
+    it.skip('World.getLine2DRealization() - REMOVED IN PHASE 48', () => {
+      // This test is skipped because world.getLine2DRealization() was removed in Phase 48
+      // to enforce ProjectionPlane ownership. Use plane.realizeLine2D() instead.
     });
 
     it('should work for segments (Line2D subtypes)', () => {
-      const segment = new Segment2DByPoints('seg1', p1Id, p2Id, 'proj_plane_H');
+      const segment = new Segment2DByPoints(planeH.id + '/seg1', p1Id, p2Id, planeH.id);
       world.addSegment2D(segment);
       
       // Compute via ProjectionPlane
@@ -130,7 +123,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
       expect(realization!.point2).toBeDefined();
       
       // Verify cached
-      const cached = planeH.getLineRealization2D('seg1');
+      const cached = planeH.getLineRealization2D(segment.id);
       expect(cached).toBe(realization);
     });
   });
@@ -139,11 +132,11 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
     it('ProjectionPlane.realizeCircle2D() should compute and cache circle realization', () => {
       // Create circumference point
       const p2 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circle = new Circle2DByCenterAndPoint('c1', p1Id, p2.id, 'proj_plane_H');
+      const circle = new Circle2DByCenterAndPoint(planeH.id + '/c1', p1Id, p2.id, planeH.id);
       world.addCircle2D(circle);
       
       // Verify cache is empty initially
-      expect(planeH.getCircleRealization2D('c1')).toBeUndefined();
+      expect(planeH.getCircleRealization2D(circle.id)).toBeUndefined();
       
       // Compute realization via ProjectionPlane
       const realization = planeH.realizeCircle2D(circle, world);
@@ -155,26 +148,14 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
       expect(realization!.getRadius()).toBe(5);
       
       // Verify cached in ProjectionPlane
-      const cached = planeH.getCircleRealization2D('c1');
+      const cached = planeH.getCircleRealization2D(circle.id);
       expect(cached).toBeDefined();
       expect(cached).toBe(realization);
     });
 
-    it('World.getCircle2DRealization() should delegate to ProjectionPlane', () => {
-      // Create circumference point
-      const p2 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circle = new Circle2DByCenterAndPoint('c1', p1Id, p2.id, 'proj_plane_H');
-      world.addCircle2D(circle);
-      
-      // Call via World
-      const realization = world.getCircle2DRealization('c1');
-      
-      // Verify realization computed
-      expect(realization).toBeDefined();
-      
-      // Verify cached in ProjectionPlane
-      const planeCached = planeH.getCircleRealization2D('c1');
-      expect(planeCached).toBeDefined();
+    it.skip('World.getCircle2DRealization() - REMOVED IN PHASE 48', () => {
+      // This test is skipped because world.getCircle2DRealization() was removed in Phase 48
+      // to enforce ProjectionPlane ownership. Use plane.realizeCircle2D() instead.
     });
   });
 
@@ -182,13 +163,13 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
     it('realizations should be cached per plane', () => {
       const planeV = world.getProjectionPlaneByLabel('P_V')!;
       
-      // Add points to both planes
-      const p1H = planeH.addFreePoint2D(new Vector3(5, 5, 1), world, 'pH');
-      const p1V = planeV.addFreePoint2D(new Vector3(5, 5, 1), world, 'pV');
+      // Add points to both planes (no hardcoded IDs)
+      const p1H = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const p1V = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
       
-      // Realize via World (which delegates to planes)
-      world.getPoint2DRealization(p1H.id);
-      world.getPoint2DRealization(p1V.id);
+      // Realize via plane methods
+      planeH.realizePoint2D(p1H, world);
+      planeV.realizePoint2D(p1V, world);
       
       // Verify cached in correct planes
       expect(planeH.getPointRealization2D(p1H.id)).toBeDefined();
@@ -199,22 +180,10 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
     });
   });
 
-  describe('Dual storage during migration', () => {
-    it('World should also cache realizations during Phase 22.5', () => {
-      // This verifies dual caching during migration
-      // World cache will be removed in Phase 22.5.5
-      
-      const point = planeH.getPoint(p1Id)!;
-      
-      // Call via World
-      const realization = world.getPoint2DRealization(p1Id);
-      
-      // Verify cached in both World and ProjectionPlane during migration
-      expect(realization).toBeDefined();
-      expect(planeH.getPointRealization2D(p1Id)).toBeDefined();
-      
-      // Both should have the same realization
-      expect(planeH.getPointRealization2D(p1Id)).toBe(realization);
+  describe.skip('Dual storage during migration - OBSOLETE AFTER PHASE 48', () => {
+    it('World cache removed in Phase 48', () => {
+      // This test suite is skipped because Phase 48 removed World facade methods.
+      // ProjectionPlane is now the sole owner of realization caching.
     });
   });
 });

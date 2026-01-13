@@ -21,17 +21,11 @@ import {
   applyMatrix
 } from '@/domain/calculations/CoordinateTransform';
 import { World } from '@/domain/world/World';
-import { getHorizontalPlaneId, getVerticalPlaneId } from '../../helpers/worldHelpers';
 
 describe('CoordinateTransform', () => {
-  let planeH: string;
-  let planeV: string;
-
-  beforeEach(() => {
-    const world = new World();
-    planeH = getHorizontalPlaneId(world);
-    planeV = getVerticalPlaneId(world);
-  });
+  // Use plane labels directly since planeToCanvas expects labels, not IDs
+  const planeH = 'P_H';
+  const planeV = 'P_V';
 
   describe('planeToCanvas', () => {
     it('should transform P_H coordinates to canvas', () => {

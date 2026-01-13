@@ -116,3 +116,13 @@ export abstract class Element2D extends Element {
    */
   abstract realize2D(world: World): Element2DRealization | null;
 }
+
+/**
+ * Type guard to check if an object is an Element2D
+ * 
+ * @param obj Object to check
+ * @returns true if obj is an Element2D (Point2D, Line2D, or Circle2D), false otherwise
+ */
+export function isElement2D(obj: any): obj is Element2D {
+  return obj instanceof Element2D;
+}

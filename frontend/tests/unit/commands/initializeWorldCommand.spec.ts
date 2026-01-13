@@ -151,8 +151,8 @@ describe('InitializeWorldCommand', () => {
       const opTypes = operations.map((op: any) => op.type);
       
       expect(opTypes[0]).toBe('CreateInitializationSubprocess');
-      expect(opTypes[1]).toBe('AddPlane3D'); // Horizontal
-      expect(opTypes[2]).toBe('AddPlane3D'); // Vertical
+      expect(opTypes[1]).toBe('AddPlane3DFixed'); // Horizontal
+      expect(opTypes[2]).toBe('AddPlane3DFixed'); // Vertical
       expect(opTypes[3]).toBe('AddProjectionPlane'); // Horizontal
       expect(opTypes[4]).toBe('AddProjectionPlane'); // Vertical
       expect(opTypes[5]).toBe('AddOriginPoint2D'); // Horizontal origin

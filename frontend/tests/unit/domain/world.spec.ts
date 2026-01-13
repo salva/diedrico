@@ -42,9 +42,9 @@ describe('ProjectionPlane Factory Methods', () => {
         const position = new Vector3(10, 20, 1);
         const point = planeH.addFreePoint2D(position, world);
 
-        expect(point.id).toMatch(/^point2d_\d+$/);
+        expect(point.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
         expect(point.position).toEqual(position);
-        expect(point.planeId).toBe('proj_plane_H');
+        expect(point.planeId).toBe(planeH.id);
         
         // Verify in world by searching through planes
         let foundPoint;
@@ -55,16 +55,16 @@ describe('ProjectionPlane Factory Methods', () => {
         expect(foundPoint).toBe(point);
       });
 
-      it('should create point with provided ID', () => {
+      it('should create point with auto-generated ID', () => {
         const position = new Vector3(10, 20, 1);
-        const point = planeH.addFreePoint2D(position, world, 'custom_point_id');
+        const point = planeH.addFreePoint2D(position, world);
 
-        expect(point.id).toBe('custom_point_id');
+        expect(point.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);  // Verify hierarchical format
         
         // Verify in world
         let foundPoint;
         for (const plane of world.projectionPlanes.values()) {
-          foundPoint = plane.getPoint('custom_point_id');
+          foundPoint = plane.getPoint(point.id);
           if (foundPoint) break;
         }
         expect(foundPoint).toBe(point);
@@ -78,7 +78,7 @@ describe('ProjectionPlane Factory Methods', () => {
       });
     });
 
-    describe('addIntersectionPoint2D', () => {
+    describe('addLineLineIntersection', () => {
       it('should create intersection point between two lines', () => {
         const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
         const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
@@ -88,15 +88,14 @@ describe('ProjectionPlane Factory Methods', () => {
         const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
         const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
 
-        const intersection = planeH.addIntersectionPoint2D(
+        const intersection = planeH.addLineLineIntersection(
           line1.id,
           line2.id,
-          0,
           world
         );
 
-        expect(intersection.id).toMatch(/^point2d_\d+$/);
-        expect(intersection.planeId).toBe('proj_plane_H');
+        expect(intersection.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
+        expect(intersection.planeId).toBe(planeH.id);
         expect(planeH.getPoint(intersection.id)).toBe(intersection);
       });
 
@@ -109,20 +108,20 @@ describe('ProjectionPlane Factory Methods', () => {
         const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
         const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
 
-        const intersection = planeH.addIntersectionPoint2D(
+        const customId = planeH.id + '/custom_intersection';
+        const intersection = planeH.addLineLineIntersection(
           line1.id,
           line2.id,
-          0,
           world,
-          'custom_intersection'
+          customId
         );
 
-        expect(intersection.id).toBe('custom_intersection');
+        expect(intersection.id).toBe(customId);
       });
 
       it('should throw error for non-existent lines', () => {
         expect(() => {
-          planeH.addIntersectionPoint2D('invalid_line1', 'invalid_line2', 0, world);
+          planeH.addLineLineIntersection('invalid_line1', 'invalid_line2', world);
         }).toThrow();
       });
 
@@ -137,8 +136,8 @@ describe('ProjectionPlane Factory Methods', () => {
         const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world); // Parallel to line1
 
         // After Phase 23, parallel lines create infeasible intersection point instead of throwing
-        const point = planeH.addIntersectionPoint2D(line1.id, line2.id, 0, world);
-        const realization = world.getPoint2DRealization(point.id);
+        const point = planeH.addLineLineIntersection(line1.id, line2.id, world);
+        const realization = point.realize2D(world);
         expect(realization).toBeDefined();
         expect(realization!.feasible).toBe(false);
       });
@@ -345,8 +344,8 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
 
-        expect(line.id).toMatch(/^line2d_\d+$/);
-        expect(line.planeId).toBe('proj_plane_H');
+        expect(line.id).toMatch(/^proj_plane_\d+\/line2d_\d+$/);
+        expect(line.planeId).toBe(planeH.id);
         expect(planeH.getLine(line.id)).toBe(line);
       });
 
@@ -354,9 +353,10 @@ describe('ProjectionPlane Factory Methods', () => {
         const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
         const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
 
-        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world, 'custom_line');
+        const customId = planeH.id + '/custom_line';
+        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world, customId);
 
-        expect(line.id).toBe('custom_line');
+        expect(line.id).toBe(customId);
       });
 
       it('should throw error for identical points', () => {
@@ -381,8 +381,8 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
 
-        expect(segment.id).toMatch(/^segment2d_\d+$/);
-        expect(segment.planeId).toBe('proj_plane_H');
+        expect(segment.id).toMatch(/^proj_plane_\d+\/segment2d_\d+$/);
+        expect(segment.planeId).toBe(planeH.id);
         expect(planeH.getLine(segment.id)).toBe(segment);
       });
 
@@ -390,9 +390,10 @@ describe('ProjectionPlane Factory Methods', () => {
         const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
         const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
 
-        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world, 'custom_segment');
+        const customId = planeH.id + '/custom_segment';
+        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world, customId);
 
-        expect(segment.id).toBe('custom_segment');
+        expect(segment.id).toBe(customId);
       });
 
       it('should throw error for identical points', () => {
@@ -411,7 +412,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const circle = planeH.addCircle2DByCenterAndPoint(center.id, circumPoint.id, world);
 
-        expect(circle.id).toMatch(/^circle2d_\d+$/);
+        expect(circle.id).toMatch(/^proj_plane_\d+\/circle2d_\d+$/);
         expect(planeH.getCircle(circle.id)).toBe(circle);
       });
 
@@ -419,9 +420,10 @@ describe('ProjectionPlane Factory Methods', () => {
         const center = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
         const circumPoint = planeH.addFreePoint2D(new Vector3(15, 5, 1), world);
 
-        const circle = planeH.addCircle2DByCenterAndPoint(center.id, circumPoint.id, world, 'custom_circle');
+        const customId = planeH.id + '/custom_circle';
+        const circle = planeH.addCircle2DByCenterAndPoint(center.id, circumPoint.id, world, customId);
 
-        expect(circle.id).toBe('custom_circle');
+        expect(circle.id).toBe(customId);
       });
 
       it('should throw error for non-existent center point', () => {
@@ -442,7 +444,7 @@ describe('ProjectionPlane Factory Methods', () => {
         const referenceLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
         const guide = planeH.addGuide2D(referenceLine.id, throughPoint.id, world);
 
-        expect(guide.id).toMatch(/^guide2d_\d+$/);
+        expect(guide.id).toMatch(/^proj_plane_\d+\/guide2d_\d+$/);
         expect(planeH.getLine(guide.id)).toBe(guide);
       });
 
@@ -452,9 +454,10 @@ describe('ProjectionPlane Factory Methods', () => {
         const throughPoint = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
         
         const referenceLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-        const guide = planeH.addGuide2D(referenceLine.id, throughPoint.id, world, 'custom_guide');
+        const customId = planeH.id + '/custom_guide';
+        const guide = planeH.addGuide2D(referenceLine.id, throughPoint.id, world, customId);
 
-        expect(guide.id).toBe('custom_guide');
+        expect(guide.id).toBe(customId);
       });
 
       it('should throw error for non-existent reference line', () => {
@@ -533,7 +536,7 @@ describe('ProjectionPlane Factory Methods', () => {
       it('should update realizations when point added', () => {
         const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
 
-        const realization = world.getPoint2DRealization(point.id);
+        const realization = point.realize2D(world);
 
         expect(realization).toBeDefined();
         expect(realization?.position.x).toBe(10);
@@ -545,7 +548,7 @@ describe('ProjectionPlane Factory Methods', () => {
         const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
         const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
 
-        const realization = world.getLine2DRealization(line.id);
+        const realization = line.realize2D(world);
 
         expect(realization).toBeDefined();
       });
@@ -555,8 +558,8 @@ describe('ProjectionPlane Factory Methods', () => {
         const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
         const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
 
-        // Phase 22.5: Segments are Line2D, use getLine2DRealization
-        const realization = world.getLine2DRealization(segment.id);
+        // Phase 22.5: Segments are Line2D, use realize2D
+        const realization = segment.realize2D(world);
 
         expect(realization).toBeDefined();
       });
@@ -567,23 +570,27 @@ describe('ProjectionPlane Factory Methods', () => {
   describe('Sibling Plane Derivation (Phase 35)', () => {
     describe('getHingeLineFromHalfHingeLine', () => {
       it('should return parent HingeLine for HalfHingeLine2D on P_H', () => {
-        const halfHLId = 'half_HL_HV_on_PH';
+        // Find the HalfHingeLine2D on P_H (created during initialization)
+        const halfHLs = planeH.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        expect(halfHLs.length).toBeGreaterThan(0);
+        const halfHL = halfHLs[0] as HalfHingeLine2D;
         
-        const hingeLine = world.getHingeLineFromHalfHingeLine(halfHLId);
+        const hingeLine = world.getHingeLineFromHalfHingeLine(halfHL.id);
 
         expect(hingeLine).toBeDefined();
-        expect(hingeLine?.id).toBe('HL_HV');
-        expect(hingeLine?.plane1Id).toBe('proj_plane_H');
-        expect(hingeLine?.plane2Id).toBe('proj_plane_V');
+        expect(hingeLine?.plane1Id).toBe(planeH.id);
+        expect(hingeLine?.plane2Id).toBe(planeV.id);
       });
 
       it('should return parent HingeLine for HalfHingeLine2D on P_V', () => {
-        const halfHLId = 'half_HL_HV_on_PV';
+        // Find the HalfHingeLine2D on P_V (created during initialization)
+        const halfHLs = planeV.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        expect(halfHLs.length).toBeGreaterThan(0);
+        const halfHL = halfHLs[0] as HalfHingeLine2D;
         
-        const hingeLine = world.getHingeLineFromHalfHingeLine(halfHLId);
+        const hingeLine = world.getHingeLineFromHalfHingeLine(halfHL.id);
 
         expect(hingeLine).toBeDefined();
-        expect(hingeLine?.id).toBe('HL_HV');
       });
 
       it('should return undefined for non-existent HalfHingeLine2D', () => {
@@ -606,7 +613,10 @@ describe('ProjectionPlane Factory Methods', () => {
 
     describe('getSiblingPlaneForIntersection', () => {
       it('should return sibling plane for line-HHL intersection on P_H', () => {
-        const hhlId = 'half_HL_HV_on_PH';
+        // Find the HalfHingeLine2D on P_H
+        const halfHLs = planeH.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        expect(halfHLs.length).toBeGreaterThan(0);
+        const hhlId = halfHLs[0].id;
 
         // Create a regular line
         const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
@@ -618,11 +628,14 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
 
-        expect(siblingPlaneId).toBe('proj_plane_V');
+        expect(siblingPlaneId).toBe(planeV.id);
       });
 
       it('should return sibling plane for line-HHL intersection on P_V', () => {
-        const hhlId = 'half_HL_HV_on_PV';
+        // Find the HalfHingeLine2D on P_V
+        const halfHLs = planeV.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        expect(halfHLs.length).toBeGreaterThan(0);
+        const hhlId = halfHLs[0].id;
 
         // Create a regular line
         const p1 = planeV.addFreePoint2D(new Vector3(5, -5, 1), world);
@@ -634,7 +647,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
 
-        expect(siblingPlaneId).toBe('proj_plane_H');
+        expect(siblingPlaneId).toBe(planeH.id);
       });
 
       it('should return undefined for regular line-line intersection (no HHL)', () => {
@@ -656,7 +669,10 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should return sibling plane for circle-HHL intersection', () => {
-        const hhlId = 'half_HL_HV_on_PH';
+        // Find the HalfHingeLine2D on P_H
+        const halfHLs = planeH.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        expect(halfHLs.length).toBeGreaterThan(0);
+        const hhlId = halfHLs[0].id;
 
         // Create a circle that intersects the HHL
         const center = planeH.addFreePoint2D(new Vector3(5, 3, 1), world);
@@ -668,7 +684,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
 
-        expect(siblingPlaneId).toBe('proj_plane_V');
+        expect(siblingPlaneId).toBe(planeV.id);
       });
 
       it('should return undefined for circle-circle intersection (no HHL)', () => {

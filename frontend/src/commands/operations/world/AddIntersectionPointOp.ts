@@ -1,7 +1,7 @@
 /**
  * AddIntersectionPoint2DOp - Operation to add an IntersectionPoint2D using ProjectionPlane factory method
  * 
- * Wraps ProjectionPlane.addIntersectionPoint2D() in the Operation interface.
+ * Wraps ProjectionPlane.addLineLineIntersection() in the Operation interface.
  * 
  * Note: Sibling point creation for HalfHingeLine2D intersections is handled automatically
  * by the domain logic, not by this operation.
@@ -19,7 +19,7 @@ export class AddIntersectionPoint2DOp implements IOperation {
     private planeId: string,
     private line1Id: string,
     private line2Id: string,
-    private index: number
+    private index: number  // Note: index parameter currently unused - line-line intersection has at most 1 point
   ) {
     this.parameters = { planeId, line1Id, line2Id, index };
   }
@@ -32,10 +32,10 @@ export class AddIntersectionPoint2DOp implements IOperation {
       }
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const point = plane.addIntersectionPoint2D(
+      // Note: index is stored but not used - line-line intersection has at most 1 point
+      const point = plane.addLineLineIntersection(
         this.line1Id,
         this.line2Id,
-        this.index,
         world,
         this.outputs.pointId
       );

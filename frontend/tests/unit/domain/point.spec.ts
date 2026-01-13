@@ -24,7 +24,7 @@ import { getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVertical
 describe('Point2D', () => {
   describe('constructor', () => {
     it('should create a free point with coordinates', () => {
-      const point = new FreePoint2D('test-point-1', new Vector3(10, 20, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-1', new Vector3(10, 20, 1), "plane_H");
 
       expect(point.position.x).toBe(10);
       expect(point.position.y).toBe(20);
@@ -33,33 +33,33 @@ describe('Point2D', () => {
     });
 
     it('should create a line-line intersection point', () => {
-      const point = new Point2DLineLineIntersection('test-point-2', 'line_1', 'line_2', "plane_H");
+      const point = new Point2DLineLineIntersection('plane_H/test-point-2', 'plane_H/line_1', 'plane_H/line_2', "plane_H");
 
-      expect(point.line1Id).toBe('line_1');
-      expect(point.line2Id).toBe('line_2');
+      expect(point.line1Id).toBe('plane_H/line_1');
+      expect(point.line2Id).toBe('plane_H/line_2');
       expect(point.type).toBe('line-line-intersection');
     });
 
     it('should default to free type', () => {
-      const point = new FreePoint2D('test-point-3', new Vector3(10, 20, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-3', new Vector3(10, 20, 1), "plane_H");
 
       expect(point.type).toBe('free');
     });
 
     it('should accept optional label', () => {
-      const point = new FreePoint2D('test-point-4', new Vector3(10, 20, 1), "plane_H", 'Point A');
+      const point = new FreePoint2D('plane_H/test-point-4', new Vector3(10, 20, 1), "plane_H", 'Point A');
 
       expect(point.label).toBe('Point A');
     });
 
     it('should accept optional planeId', () => {
-      const point = new FreePoint2D('test-point-5', new Vector3(10, 20, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-5', new Vector3(10, 20, 1), "plane_H");
 
       expect(point.planeId).toBe('plane_H');
     });
 
     it('should not have an ID initially', () => {
-      const point = new FreePoint2D('test-point-6', new Vector3(10, 20, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-6', new Vector3(10, 20, 1), "plane_H");
 
       expect(point.id).toBeDefined();
     });
@@ -67,7 +67,7 @@ describe('Point2D', () => {
 
   describe('position coordinates', () => {
     it('should store position as Vector3', () => {
-      const point = new FreePoint2D('test-point-7', new Vector3(10, 20, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-7', new Vector3(10, 20, 1), "plane_H");
 
       expect(point.position.x).toBe(10);
       expect(point.position.y).toBe(20);
@@ -75,7 +75,7 @@ describe('Point2D', () => {
     });
 
     it('should work with negative coordinates', () => {
-      const point = new FreePoint2D('test-point-8', new Vector3(-5, -15, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-8', new Vector3(-5, -15, 1), "plane_H");
 
       expect(point.position.x).toBe(-5);
       expect(point.position.y).toBe(-15);
@@ -83,7 +83,7 @@ describe('Point2D', () => {
     });
 
     it('should work with zero coordinates', () => {
-      const point = new FreePoint2D('test-point-9', new Vector3(0, 0, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-9', new Vector3(0, 0, 1), "plane_H");
 
       expect(point.position.x).toBe(0);
       expect(point.position.y).toBe(0);
@@ -91,7 +91,7 @@ describe('Point2D', () => {
     });
 
     it('should work with decimal coordinates', () => {
-      const point = new FreePoint2D('test-point-10', new Vector3(10.5, 20.75, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-10', new Vector3(10.5, 20.75, 1), "plane_H");
 
       expect(point.position.x).toBe(10.5);
       expect(point.position.y).toBe(20.75);
@@ -101,7 +101,7 @@ describe('Point2D', () => {
 
   describe('position updates', () => {
     it('should allow updating position', () => {
-      const point = new FreePoint2D('test-point-11', new Vector3(10, 20, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-11', new Vector3(10, 20, 1), "plane_H");
 
       point.position = new Vector3(30, 40, 1);
 
@@ -111,11 +111,11 @@ describe('Point2D', () => {
     });
 
     it('should preserve other properties when position changes', () => {
-      const point = new FreePoint2D('point_1', new Vector3(10, 20, 1), "plane_H", 'Point A');
+      const point = new FreePoint2D('plane_H/point_1', new Vector3(10, 20, 1), "plane_H", 'Point A');
 
       point.position = new Vector3(30, 40, 1);
 
-      expect(point.id).toBe('point_1');
+      expect(point.id).toBe('plane_H/point_1');
       expect(point.type).toBe('free');
       expect(point.label).toBe('Point A');
       expect(point.planeId).toBe('plane_H');
@@ -124,7 +124,7 @@ describe('Point2D', () => {
 
   describe('clone', () => {
     it('should create a deep copy of the point', () => {
-      const original = new FreePoint2D('point_1', new Vector3(10, 20, 1), "plane_H", 'Point A');
+      const original = new FreePoint2D('plane_H/point_1', new Vector3(10, 20, 1), "plane_H", 'Point A');
 
       const clone = original.clone();
 
@@ -136,11 +136,11 @@ describe('Point2D', () => {
       expect(clone.type).toBe('free');
       expect(clone.label).toBe('Point A');
       expect(clone.planeId).toBe('plane_H');
-      expect(clone.id).toBe('point_1');
+      expect(clone.id).toBe('plane_H/point_1');
     });
 
     it('should clone point without ID', () => {
-      const original = new FreePoint2D('test-point-12', new Vector3(10, 20, 1), "plane_H");
+      const original = new FreePoint2D('plane_H/test-point-12', new Vector3(10, 20, 1), "plane_H");
 
       const clone = original.clone();
 
@@ -150,7 +150,7 @@ describe('Point2D', () => {
     });
 
     it('should allow modifying clone without affecting original', () => {
-      const original = new FreePoint2D('test-point-13', new Vector3(10, 20, 1), "plane_H");
+      const original = new FreePoint2D('plane_H/test-point-13', new Vector3(10, 20, 1), "plane_H");
       const clone = original.clone();
 
       clone.position = new Vector3(30, 40, 1);
@@ -166,7 +166,7 @@ describe('Point2D', () => {
     it('should store position as Vector3 homogeneous coordinates (u, v, 1)', () => {
       // As per Constitution Principle V,
       // points MUST be stored in homogeneous coordinates (u, v, 1)
-      const point = new FreePoint2D('test-point-14', new Vector3(100, 200, 1), "plane_H");
+      const point = new FreePoint2D('plane_H/test-point-14', new Vector3(100, 200, 1), "plane_H");
 
       expect(point.position).toBeInstanceOf(Vector3);
       expect(point.position.x).toBe(100);
@@ -196,13 +196,13 @@ describe('Point2D', () => {
     describe('constructor', () => {
       it('should create a sibling intersection point', () => {
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           primaryPointId,
           planeVId,
           'Sibling Point'
         );
 
-        expect(sibling.id).toBe('sibling-point');
+        expect(sibling.id).toBe(planeVId + '/sibling-point');
         expect(sibling.type).toBe('sibling-intersection');
         expect(sibling.primaryIntersectionId).toBe(primaryPointId);
         expect(sibling.planeId).toBe(planeVId);
@@ -211,7 +211,7 @@ describe('Point2D', () => {
 
       it('should work without label', () => {
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           primaryPointId,
           planeVId
         );
@@ -223,7 +223,7 @@ describe('Point2D', () => {
     describe('clone', () => {
       it('should create a deep copy of the sibling point', () => {
         const original = new SiblingIntersectionPoint2D(
-          'sibling-1',
+          planeVId + '/sibling-1',
           primaryPointId,
           planeVId,
           'Original Sibling'
@@ -232,7 +232,7 @@ describe('Point2D', () => {
         const clone = original.clone();
 
         expect(clone).not.toBe(original);
-        expect(clone.id).toBe('sibling-1');
+        expect(clone.id).toBe(planeVId + '/sibling-1');
         expect(clone.type).toBe('sibling-intersection');
         expect(clone.primaryIntersectionId).toBe(primaryPointId);
         expect(clone.planeId).toBe(planeVId);
@@ -241,7 +241,7 @@ describe('Point2D', () => {
 
       it('should allow modifying clone without affecting original', () => {
         const original = new SiblingIntersectionPoint2D(
-          'sibling-1',
+          planeVId + '/sibling-1',
           primaryPointId,
           planeVId
         );
@@ -257,7 +257,7 @@ describe('Point2D', () => {
     describe('realize2D', () => {
       it('should return primary point coordinates when world provided', () => {
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           primaryPointId,
           planeVId
         );
@@ -271,7 +271,7 @@ describe('Point2D', () => {
 
       it('should clone coordinates not reference primary', () => {
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           primaryPointId,
           planeVId
         );
@@ -286,7 +286,7 @@ describe('Point2D', () => {
 
       it('should return infeasible coordinates when primary not found', () => {
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           'nonexistent-primary',
           planeVId
         );
@@ -301,7 +301,7 @@ describe('Point2D', () => {
 
       it('should return fallback coordinates when primary not found', () => {
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           'nonexistent-primary',
           planeVId
         );
@@ -316,7 +316,7 @@ describe('Point2D', () => {
 
       it('should handle updated primary coordinates', () => {
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           primaryPointId,
           planeVId
         );
@@ -341,7 +341,7 @@ describe('Point2D', () => {
 
       it('should preserve homogeneous coordinate z=1', () => {
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           primaryPointId,
           planeVId
         );
@@ -364,13 +364,13 @@ describe('Point2D', () => {
         const primary = planeH.addFreePoint2D(new Vector3(100, 0, 1), world);
         
         const sibling = new SiblingIntersectionPoint2D(
-          'sibling-point',
+          planeVId + '/sibling-point',
           primary.id,
           planeVId
         );
 
         const realizationSibling = sibling.realize2D(world);
-        const realizationPrimary = world.getPoint2DRealization(primary.id);
+        const realizationPrimary = primary.realize2D(world);
 
         expect(realizationSibling.position.x).toBe(realizationPrimary!.position.x);
         expect(realizationSibling.position.y).toBe(realizationPrimary!.position.y);
@@ -392,8 +392,8 @@ describe('Point2D', () => {
         
         expect(halfHingeH).toBeDefined();
         expect(halfHingeV).toBeDefined();
-        expect(halfHingeH.hingeLineId).toBe('HL_HV');
-        expect(halfHingeV.hingeLineId).toBe('HL_HV');
+        // Both half-hinges should reference the same hinge line
+        expect(halfHingeH.hingeLineId).toBe(halfHingeV.hingeLineId);
         
         // Verify parametric consistency: Q = Q'
         expect(halfHingeH.point.x).toBe(halfHingeV.point.x);
@@ -423,13 +423,13 @@ describe('Point2D', () => {
           
           // Create sibling point
           const sibling = new SiblingIntersectionPoint2D(
-            `sibling-${pos.d}`,
+            `${planeVId}/sibling-${pos.d}`,
             primary.id,
             planeVId
           );
           
           // Realize both
-          const primaryRealization = world.getPoint2DRealization(primary.id);
+          const primaryRealization = primary.realize2D(world);
           const siblingRealization = sibling.realize2D(world);
           
           // Verify coordinates match (due to parametric consistency)
@@ -444,13 +444,13 @@ describe('Point2D', () => {
         
         // Create two HalfHingeLine2D with DIFFERENT reference points
         const hhl1 = new HalfHingeLine2D(
-          'hhl1', 'TEST_HL', 'plane1',
+          'plane1/hhl1', 'TEST_HL', 'plane1',
           new Vector3(0, 0, 1),  // Q1 = (0,0,1)
           new Vector3(1, 0, 0)   // D = (1,0,0)
         );
         
         const hhl2 = new HalfHingeLine2D(
-          'hhl2', 'TEST_HL', 'plane2',
+          'plane2/hhl2', 'TEST_HL', 'plane2',
           new Vector3(1, 0, 1),  // Q2 = (1,0,1) - DIFFERENT!
           new Vector3(1, 0, 0)   // D = (1,0,0)
         );
@@ -466,13 +466,13 @@ describe('Point2D', () => {
         
         // Create two HalfHingeLine2D with DIFFERENT directions
         const hhl1 = new HalfHingeLine2D(
-          'hhl1', 'TEST_HL', 'plane1',
+          'plane1/hhl1', 'TEST_HL', 'plane1',
           new Vector3(0, 0, 1),  // Q = (0,0,1)
           new Vector3(1, 0, 0)   // D1 = (1,0,0)
         );
         
         const hhl2 = new HalfHingeLine2D(
-          'hhl2', 'TEST_HL', 'plane2',
+          'plane2/hhl2', 'TEST_HL', 'plane2',
           new Vector3(0, 0, 1),  // Q = (0,0,1)
           new Vector3(0, 1, 0)   // D2 = (0,1,0) - DIFFERENT!
         );
@@ -488,13 +488,13 @@ describe('Point2D', () => {
         
         // Create two HalfHingeLine2D with IDENTICAL (Q, D)
         const hhl1 = new HalfHingeLine2D(
-          'hhl1', 'TEST_HL', 'plane1',
+          'plane1/hhl1', 'TEST_HL', 'plane1',
           new Vector3(2, 3, 1),  // Q = (2,3,1) - arbitrary
           new Vector3(0, 1, 0)   // D = (0,1,0) - arbitrary
         );
         
         const hhl2 = new HalfHingeLine2D(
-          'hhl2', 'TEST_HL', 'plane2',
+          'plane2/hhl2', 'TEST_HL', 'plane2',
           new Vector3(2, 3, 1),  // Q = (2,3,1) - same
           new Vector3(0, 1, 0)   // D = (0,1,0) - same
         );

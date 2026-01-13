@@ -3,21 +3,24 @@
  * Unit tests for Plane3D class
  * 
  * Tests cover:
- * - Plane3D construction with point and normal
- * - P_H and P_V factory methods
+ * - Plane3DFixed construction
  * - Boundary setting and getters
  * - Coordinate system setup
  * - Point containment checks
+ * 
+ * Note: Plane3D is now abstract. Use Plane3DFixed for testing.
+ * Static methods createPH/createPV removed - planes created via initialization ops.
  */
 
 import { describe, it, expect } from 'vitest';
 import { Vector4 } from 'three';
-import { Plane3D } from "@/domain/world/Plane";
+import { Plane3DFixed } from "@/domain/world/Plane";
 
-describe('Plane3D', () => {
+describe('Plane3DFixed', () => {
   describe('constructor', () => {
     it('should create a plane with point and normal', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_1',
         new Vector4(0, 0, 0, 1),
         new Vector4(0, 0, 1, 0)
       );
@@ -29,11 +32,12 @@ describe('Plane3D', () => {
       expect(plane.normal.x).toBe(0);
       expect(plane.normal.y).toBe(0);
       expect(plane.normal.z).toBe(1);
-      expect(plane.type).toBe('auxiliary');
+      expect(plane.type).toBe('projection');
     });
 
     it('should normalize the normal vector', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_2',
         new Vector4(0, 0, 0, 1),
         new Vector4(3, 0, 4, 0)  // Length 5, w=0 for direction
       );
@@ -47,7 +51,8 @@ describe('Plane3D', () => {
 
     it('should throw error for zero normal vector', () => {
       expect(() => {
-        new Plane3D(
+        new Plane3DFixed(
+          'test_plane_3',
           new Vector4(0, 0, 0, 1),
           new Vector4(0, 0, 0, 1)  // Zero vector
         );
@@ -55,10 +60,10 @@ describe('Plane3D', () => {
     });
 
     it('should accept optional label', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_4',
         new Vector4(0, 0, 0, 1),
         new Vector4(0, 0, 1, 1),
-        'projection',
         'Test Plane3D'
       );
 
@@ -67,7 +72,9 @@ describe('Plane3D', () => {
     });
   });
 
-  describe('createPH', () => {
+  // Skip old createPH/createPV tests - these static methods were removed
+  // Planes are now created via initialization operations
+  describe.skip('createPH', () => {
     it('should create P_H horizontal projection plane', () => {
       const planeH = Plane3D.createPH();
 
@@ -96,7 +103,7 @@ describe('Plane3D', () => {
     });
   });
 
-  describe('createPV', () => {
+  describe.skip('createPV', () => {
     it('should create P_V vertical projection plane', () => {
       const planeV = Plane3D.createPV();
 
@@ -127,9 +134,10 @@ describe('Plane3D', () => {
 
   describe('setBoundaries', () => {
     it('should set and get boundaries', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_5',
         new Vector4(0, 0, 0, 1),
-        new Vector4(0, 0, 1, 1)
+        new Vector4(0, 0, 1, 0)
       );
 
       plane.setBoundaries(-100, 200, -150, 250);
@@ -141,9 +149,10 @@ describe('Plane3D', () => {
     });
 
     it('should return default boundaries if not set', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_6',
         new Vector4(0, 0, 0, 1),
-        new Vector4(0, 0, 1, 1)
+        new Vector4(0, 0, 1, 0)
       );
 
       // Default boundaries are -400 to 400
@@ -156,9 +165,10 @@ describe('Plane3D', () => {
 
   describe('setCoordinateSystem', () => {
     it('should set coordinate system', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_7',
         new Vector4(0, 0, 0, 1),
-        new Vector4(0, 0, 1, 1)
+        new Vector4(0, 0, 1, 0)
       );
 
       plane.setCoordinateSystem({
@@ -175,7 +185,8 @@ describe('Plane3D', () => {
 
   describe('containsPoint', () => {
     it('should return true for point on plane', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_8',
         new Vector4(0, 0, 0, 1),
         new Vector4(0, 0, 1, 0)  // Z = 0 plane, normal direction
       );
@@ -185,7 +196,8 @@ describe('Plane3D', () => {
     });
 
     it('should return false for point not on plane', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_9',
         new Vector4(0, 0, 0, 1),
         new Vector4(0, 0, 1, 0)  // Z = 0 plane, normal direction
       );
@@ -195,7 +207,8 @@ describe('Plane3D', () => {
     });
 
     it('should use tolerance for near-plane points', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'test_plane_10',
         new Vector4(0, 0, 0, 1),
         new Vector4(0, 0, 1, 0)  // Z = 0 plane, normal direction
       );
@@ -210,17 +223,16 @@ describe('Plane3D', () => {
 
   describe('clone', () => {
     it('should create deep copy of plane', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'plane_1',
         new Vector4(1, 2, 3, 1),
-        new Vector4(0, 1, 0, 1),
-        'projection',
+        new Vector4(0, 1, 0, 0),
         'Test'
       );
-      plane.id = 'plane_1';
       plane.setBoundaries(-100, 100, -50, 50);
       plane.setCoordinateSystem({
         origin: new Vector4(0, 0, 0, 1),
-        uAxis: new Vector4(1, 0, 0, 1),
+        uAxis: new Vector4(1, 0, 0, 0),
         vAxis: new Vector4(0, 0, 1, 0)
       });
 
@@ -235,9 +247,10 @@ describe('Plane3D', () => {
     });
 
     it('should create independent copy', () => {
-      const plane = new Plane3D(
+      const plane = new Plane3DFixed(
+        'plane_2',
         new Vector4(0, 0, 0, 1),
-        new Vector4(0, 0, 1, 1)
+        new Vector4(0, 0, 1, 0)
       );
       plane.setBoundaries(-100, 100, -100, 100);
 

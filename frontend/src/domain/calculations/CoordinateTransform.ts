@@ -55,17 +55,18 @@ export function planeToCanvas(
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): [number, number] {
-  // Normalize plane ID (handle both plane_H and proj_plane_H)
-  const normalizedId = planeId.replace('proj_', '');
+  // Handle plane labels (P_H, P_V) or IDs (proj_plane_H, proj_plane_V, plane_H, plane_V)
+  // Strip 'proj_' prefix if present and check for horizontal or vertical indicator
+  const normalizedId = planeId.replace('proj_', '').replace('P_', 'plane_');
   
-  if (normalizedId === 'plane_H') {
+  if (normalizedId === 'plane_H' || normalizedId.includes('_H')) {
     // P_H: horizontal plane, straightforward mapping
     // u → x, v → y (no flip, Y is already aligned)
     return [
       canvasOriginX + u,
       canvasOriginY + v
     ];
-  } else if (normalizedId === 'plane_V') {
+  } else if (normalizedId === 'plane_V' || normalizedId.includes('_V')) {
     // P_V: vertical plane, u → x, v → z (which maps to -y_canvas because Z is up)
     return [
       canvasOriginX + u,
@@ -99,15 +100,16 @@ export function canvasToPlane(
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): [number, number] {
-  // Normalize plane ID (handle both plane_H and proj_plane_H)
-  const normalizedId = planeId.replace('proj_', '');
+  // Handle plane labels (P_H, P_V) or IDs (proj_plane_H, proj_plane_V, plane_H, plane_V)
+  // Strip 'proj_' prefix if present and check for horizontal or vertical indicator
+  const normalizedId = planeId.replace('proj_', '').replace('P_', 'plane_');
   
-  if (normalizedId === 'plane_H') {
+  if (normalizedId === 'plane_H' || normalizedId.includes('_H')) {
     return [
       x - canvasOriginX,
       y - canvasOriginY
     ];
-  } else if (normalizedId === 'plane_V') {
+  } else if (normalizedId === 'plane_V' || normalizedId.includes('_V')) {
     return [
       x - canvasOriginX,
       -(y - canvasOriginY)  // Flip back
