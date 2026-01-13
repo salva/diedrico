@@ -5761,24 +5761,24 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 **Implementation** (T980-T982)
 
-- [ ] T980 Add Paper.hitTest() call in second click handler
+- [X] T980 Add Paper.hitTest() call in second click handler
   - Add hitTest() call before point creation logic
   - Use same parameters as first click: canvasPos, snapRadius=50, selectionMask=['point']
   - Store result in `hit` variable for conditional point creation
-  - File: `frontend/src/tools/CircleTool.ts` (lines ~76-85)
+  - File: `frontend/src/tools/CircleTool.ts` (lines ~76-85) ✅
 
-- [ ] T981 Implement conditional point creation
+- [X] T981 Implement conditional point creation
   - If `hit` exists → use hit.elementId as circumferencePointId (snap to existing point)
   - If `hit` is null → create new free point with AddFreePoint2DOp (current behavior)
   - Add console.log for debugging: "Snapped to existing point" vs "Created new circumference point"
   - Preserve all validation logic (minimum radius check still applies)
-  - File: `frontend/src/tools/CircleTool.ts` (lines ~82-90)
+  - File: `frontend/src/tools/CircleTool.ts` (lines ~82-90) ✅
 
-- [ ] T982 Update success/error messages
+- [X] T982 Update success/error messages
   - Success message should indicate whether point was snapped or created
   - Format: "Created circle {circleId} with center {centerId} and circumference {circumferenceId} (snapped)" or "(created)"
   - Keep error messages unchanged (minimum radius, validation failures)
-  - File: `frontend/src/tools/CircleTool.ts` (line ~128)
+  - File: `frontend/src/tools/CircleTool.ts` (line ~128) ✅
 
 **Testing - Unit Tests** (T983-T985)
 
@@ -5838,4 +5838,4 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 **Checkpoint**: CircleTool has consistent snapping behavior for both clicks; no duplicate points created; all tests passing.
 
-**Status**: NOT STARTED
+**Status**: IN PROGRESS (T980-T982 complete, T983-T986 remaining - tests needed)

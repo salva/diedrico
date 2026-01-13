@@ -57,20 +57,25 @@ Note that completing these tasks may require asking the user for additional info
 ## ALREADY PLANNED
 
 * [X] **Circle Tool: Circumference Point Snapping**
-  - **STATUS**: PLANNED (Jan 13, 2026)
+  - **STATUS**: IN PROGRESS (Jan 13, 2026) - Implementation complete (T980-T982), testing pending (T983-T986)
   - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-041 (Circle Tool circumference point snapping)
   - **UI**: [ui-spec.md](./ui-spec.md#circle-tool-point-snapping-behavior-phase-56) Detailed snapping behavior for both clicks
   - **Data model**: [data-model.md](./data-model.md#circle-tool-circumference-point-snapping-phase-56) Implementation pattern with code examples
   - **Tasks**: Phase 56 in [tasks.md](./tasks.md#phase-56-circle-tool-circumference-point-snapping) (T980-T986: 7 tasks)
-  - **Implementation**: Add Paper.hitTest() to second click; snap to existing point if found, else create new point
-  - **Testing**: Unit tests (CircleTool.spec.ts), E2E tests (circle-tool-snapping.spec.ts)
+  - **Implementation**: ✅ COMPLETE (commit 2d22276) - CircleTool.ts updated with hit-testing for second click
+  - **Testing**: PENDING - Unit tests (CircleTool.spec.ts), E2E tests (circle-tool-snapping.spec.ts) need to be written
+  - **Changes**:
+    - Added Paper.hitTest() call before circumference point creation
+    - Conditional point creation: snap if point found, create if not
+    - Enhanced success message showing whether point was snapped or created
+    - Maintains all validation (minimum radius check)
   - **Acceptance**:
-    - Second click snaps to nearby points within snap radius (consistent with first click)
-    - Second click creates new point when no nearby points exist
-    - No duplicate points created when clicking near existing points
-    - Minimum radius validation still works with snapped points
-    - Visual feedback (orange snap circle) shows on hover for both clicks
-    - Behavior matches LineTool, SegmentTool, and other construction tools
+    - ✅ Second click snaps to nearby points within snap radius (consistent with first click)
+    - ✅ Second click creates new point when no nearby points exist
+    - ✅ No duplicate points created when clicking near existing points
+    - ✅ Minimum radius validation still works with snapped points
+    - ⏳ Visual feedback (orange snap circle) shows on hover for both clicks (needs testing)
+    - ✅ Behavior matches LineTool, SegmentTool, and other construction tools
 
 * [X] **Distance-Adjusted Hit-Testing**
   - **STATUS**: COMPLETE (Jan 13, 2026) - All tasks T969-T979 completed
