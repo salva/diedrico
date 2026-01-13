@@ -169,6 +169,40 @@
 
     <button
       class="tool-button"
+      :class="{ active: toolStore.isToolActive('tangent-line-to-circle-through-point') }"
+      @click="selectTool('tangent-line-to-circle-through-point')"
+      title="Tangent Line Through Point - Create line tangent to circle through external point"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <!-- Circle -->
+        <circle cx="10" cy="10" r="5" fill="none" stroke="currentColor" stroke-width="1.5" />
+        <!-- External point -->
+        <circle cx="16" cy="8" r="1.5" fill="currentColor" />
+        <!-- Tangent line -->
+        <line x1="10" y1="5" x2="16" y2="8" stroke="currentColor" stroke-width="2" />
+      </svg>
+      <span>Tangent (Point)</span>
+    </button>
+
+    <button
+      class="tool-button"
+      :class="{ active: toolStore.isToolActive('tangent-line-to-circle-parallel') }"
+      @click="selectTool('tangent-line-to-circle-parallel')"
+      title="Tangent Line Parallel - Create line tangent to circle parallel to reference line"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <!-- Circle -->
+        <circle cx="10" cy="10" r="5" fill="none" stroke="currentColor" stroke-width="1.5" />
+        <!-- Reference line (dashed) -->
+        <line x1="2" y1="3" x2="18" y2="3" stroke="currentColor" stroke-width="1" stroke-dasharray="2,2" opacity="0.6" />
+        <!-- Tangent line (parallel to reference) -->
+        <line x1="2" y1="15" x2="18" y2="15" stroke="currentColor" stroke-width="2" />
+      </svg>
+      <span>Tangent (Parallel)</span>
+    </button>
+
+    <button
+      class="tool-button"
       :class="{ active: toolStore.isToolActive('segment') }"
       @click="selectTool('segment')"
       title="Segment Tool (S)"

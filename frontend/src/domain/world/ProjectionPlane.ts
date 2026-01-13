@@ -35,7 +35,13 @@ import {
   SiblingIntersectionPoint2D
 } from './Point';
 import type { Line2D, Line2DRealization2D } from './Line';
-import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine } from './Line';
+import { 
+  Line2DByTwoPoints, 
+  Line2DParallel, 
+  Line2DPerpendicularToLine,
+  Line2DTangentToCircleThroughPoint,
+  Line2DTangentToCircleParallelToLine
+} from './Line';
 import type { Circle2D, Circle2DRealization2D } from './Circle';
 import { Circle2DByCenterAndPoint } from './Circle';
 import { Segment2DByPoints } from './Segment';
@@ -818,6 +824,121 @@ export abstract class ProjectionPlane {
     }
 
     const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, this.id);
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Factory method: Create and add Line2DTangentToCircleThroughPoint to this plane
+   * 
+   * Phase 60: Tangent line to circle passing through external point
+   * 
+   * @param circleId ID of circle to be tangent to
+   * @param throughPointId ID of external point line passes through
+   * @param tangentIndex Index (0 or 1) to disambiguate which tangent line (angle-based)
+   * @param world World context for validation and ID generation
+   * @param id Optional ID - ONLY for redo operations
+   * @returns The created Line2DTangentToCircleThroughPoint
+   */
+  addLine2DTangentToCircleThroughPoint(
+    circleId: string,
+    throughPointId: string,
+    tangentIndex: 0 | 1,
+    world: import('./World').World,
+    id?: string
+  ): Line2DTangentToCircleThroughPoint {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate circle exists on this plane
+    const circle = this.getCircle(circleId);
+    if (!circle) {
+      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist on this plane.`);
+    }
+
+    // Validate through-point exists on this plane
+    const throughPoint = this.getPoint(throughPointId);
+    if (!throughPoint) {
+      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+    }
+
+    // Validate tangent index
+    if (tangentIndex !== 0 && tangentIndex !== 1) {
+      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const line = new Line2DTangentToCircleThroughPoint(
+      id,
+      circleId,
+      throughPointId,
+      tangentIndex,
+      this.id
+    );
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Factory method: Create and add Line2DTangentToCircleParallelToLine to this plane
+   * 
+   * Phase 61: Tangent line to circle parallel to reference line
+   * 
+   * @param circleId ID of circle to be tangent to
+   * @param referenceLineId ID of line to be parallel to (can be on any plane)
+   * @param tangentIndex Index (0 or 1) to disambiguate which tangent line (angle-based)
+   * @param world World context for validation and ID generation
+   * @param id Optional ID - ONLY for redo operations
+   * @returns The created Line2DTangentToCircleParallelToLine
+   */
+  addLine2DTangentToCircleParallelToLine(
+    circleId: string,
+    referenceLineId: string,
+    tangentIndex: 0 | 1,
+    world: import('./World').World,
+    id?: string
+  ): Line2DTangentToCircleParallelToLine {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate circle exists on this plane
+    const circle = this.getCircle(circleId);
+    if (!circle) {
+      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist on this plane.`);
+    }
+
+    // Validate reference line exists (could be on any plane)
+    const refLineElement = world.getLine2D(referenceLineId);
+    const referenceLine = refLineElement?.realize2D(world);
+    if (!referenceLine) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+
+    // Validate tangent index
+    if (tangentIndex !== 0 && tangentIndex !== 1) {
+      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const line = new Line2DTangentToCircleParallelToLine(
+      id,
+      circleId,
+      referenceLineId,
+      tangentIndex,
+      this.id
+    );
     
     this.addLine(line);
     return line;

@@ -21,7 +21,10 @@ export type ActionType =
   | 'InitializeProjectionPlane'
   | 'InitializeOriginPoint2D'
   | 'InitializeHingeLine'
-  | 'InitializeHalfHingeLine2D';
+  | 'InitializeHalfHingeLine2D'
+  | 'CreatePerpendicularLine'
+  | 'CreateTangentLineToCircleThroughPoint'
+  | 'CreateTangentLineToCircleParallelToLine';
 
 export interface Action {
   id: string;                    // UUID

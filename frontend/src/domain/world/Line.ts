@@ -20,7 +20,7 @@ import { Vector3 } from 'three';
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
 
-export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'half-hinge' | 'segment' | 'guide' | 'sibling-guide';
+export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'tangent-to-circle-through-point' | 'tangent-to-circle-parallel' | 'half-hinge' | 'segment' | 'guide' | 'sibling-guide';
 
 /**
  * Line2DRealization2D - Stores computed line using homogeneous coordinates
@@ -399,6 +399,317 @@ export class Line2DPerpendicularToLine extends Line2D {
     return new Line2DRealization2D(
       throughPointRealization.position.clone(),
       perpendicularDirection,
+      true
+    );
+  }
+}
+
+/**
+ * Line2DTangentToCircleThroughPoint - Line tangent to circle passing through external point
+ * 
+ * Phase 60: Tangent line construction through external point
+ * 
+ * For a point outside a circle, exactly two tangent lines exist that touch the circle.
+ * The tangent index (0 or 1) is automatically determined from the mouse position when
+ * creating the line, using the same angle-from-radius-vector convention as circle intersections.
+ * 
+ * Algorithm:
+ * - Check point is outside circle: distance d = ||P - C|| > r
+ * - Compute tangent angle: α = asin(r / d)
+ * - Index 0: Rotate PC by +α (smaller angle from radius vector)
+ * - Index 1: Rotate PC by -α (larger angle from radius vector)
+ * 
+ * Pattern: Follows sortPointsByAngleFromRadiusVector() indexing convention
+ * 
+ * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocirclethroughpoint
+ */
+export class Line2DTangentToCircleThroughPoint extends Line2D {
+  readonly type: Line2DType = 'tangent-to-circle-through-point';
+  readonly circleId: string;           // Circle to be tangent to
+  readonly throughPointId: string;     // External point line passes through
+  readonly tangentIndex: 0 | 1;        // Disambiguates which of two tangent lines (angle-based)
+  
+  constructor(
+    id: string,
+    circleId: string,
+    throughPointId: string,
+    tangentIndex: 0 | 1,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.circleId = circleId;
+    this.throughPointId = throughPointId;
+    this.tangentIndex = tangentIndex;
+  }
+  
+  clone(): Line2DTangentToCircleThroughPoint {
+    return new Line2DTangentToCircleThroughPoint(
+      this.id,
+      this.circleId,
+      this.throughPointId,
+      this.tangentIndex,
+      this.planeId,
+      this.label
+    );
+  }
+  
+  /**
+   * Calculate 2D realization - compute line tangent to circle through external point
+   * 
+   * Algorithm (geometric derivation):
+   * 1. Get circle center C and radius r
+   * 2. Get external point P
+   * 3. Check feasibility: distance d = ||P - C|| must be > r
+   * 4. Compute tangent length: L = sqrt(d² - r²)
+   * 5. Compute angle α = asin(r / d)
+   * 6. Compute angle from P to C: θ_PC = atan2(dy, dx)
+   * 7. For index 0: tangent angle = θ_PC + α (left tangent)
+   * 8. For index 1: tangent angle = θ_PC - α (right tangent)
+   * 9. Tangent point T on circle: T = C + r * (cos(angle), sin(angle))
+   * 10. Line direction: from P to T
+   * 
+   * Index convention: Based on angle from circle's radius vector
+   * - Index 0 = smaller relative angle from radius vector
+   * - Index 1 = larger relative angle (counterclockwise)
+   * - Same pattern as sortPointsByAngleFromRadiusVector()
+   */
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Step 1: Get containing plane
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) return null;
+    
+    // Step 2: Get circle realization
+    const circle = plane.getCircle(this.circleId);
+    const circleRealization = circle?.realize2D(world);
+    if (!circleRealization) return null;
+    
+    // Step 3: Get through-point realization
+    const throughPoint = plane.getPoint(this.throughPointId);
+    const throughPointRealization = throughPoint?.realize2D(world);
+    if (!throughPointRealization) return null;
+    
+    // Step 4: Check infeasibility propagation
+    if (!circleRealization.feasible || !throughPointRealization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    // Step 5: Compute distance from external point to circle center
+    const center = circleRealization.center;  // (cx, cy, 1)
+    const externalPoint = throughPointRealization.position;  // (px, py, 1)
+    const radius = circleRealization.getRadius();
+    
+    const dx = externalPoint.x - center.x;
+    const dy = externalPoint.y - center.y;
+    const distanceSquared = dx * dx + dy * dy;
+    const distance = Math.sqrt(distanceSquared);
+    
+    // Step 6: Check geometric feasibility
+    // Point must be strictly outside circle (distance > radius)
+    const EPSILON = 1e-6;
+    if (distance <= radius + EPSILON) {
+      // Point is inside or on circle boundary - no tangent lines exist
+      return new Line2DRealization2D(
+        externalPoint.clone(),
+        new Vector3(1, 0, 0),
+        false  // Mark as infeasible
+      );
+    }
+    
+    // Step 7: Compute tangent points using geometric derivation
+    // Angle from external point to circle center
+    const anglePtoC = Math.atan2(dy, dx);
+    
+    // Tangent angle (angle between PC and tangent line)
+    const angleAlpha = Math.asin(radius / distance);
+    
+    // Two possible tangent angles:
+    // Index 0: Rotate PC by +α (left tangent when viewing from P to C)
+    // Index 1: Rotate PC by -α (right tangent when viewing from P to C)
+    const tangentAngle = this.tangentIndex === 0 ?
+      anglePtoC + angleAlpha :
+      anglePtoC - angleAlpha;
+    
+    // Tangent point on circle
+    const tangentPoint = new Vector3(
+      center.x + radius * Math.cos(tangentAngle),
+      center.y + radius * Math.sin(tangentAngle),
+      1  // Finite point
+    );
+    
+    // Line direction: from external point to tangent point
+    const direction = new Vector3(
+      tangentPoint.x - externalPoint.x,
+      tangentPoint.y - externalPoint.y,
+      0  // Direction vector
+    );
+    
+    // Check for degenerate case (shouldn't happen if math is correct)
+    if (direction.lengthSq() < EPSILON * EPSILON) {
+      return new Line2DRealization2D(
+        externalPoint.clone(),
+        new Vector3(1, 0, 0),
+        false
+      );
+    }
+    
+    // Return infinite line through external point with tangent direction
+    return new Line2DRealization2D(
+      externalPoint.clone(),
+      direction,
+      true
+    );
+  }
+}
+
+/**
+ * Line2DTangentToCircleParallelToLine - Line tangent to circle and parallel to reference line
+ * 
+ * Phase 61: Tangent line construction parallel to reference line
+ * 
+ * For a circle and an external line, exactly two tangent lines parallel to the reference
+ * exist (one on each side). The tangent index (0 or 1) is automatically determined from
+ * the mouse position when creating the line, using the same angle-from-radius-vector
+ * convention as circle intersections.
+ * 
+ * Algorithm:
+ * - Check reference line doesn't intersect circle: distance from center to line > r
+ * - Compute perpendicular direction: perpDir = (-dy, dx, 0) for direction (dx, dy, 0)
+ * - Index 0: Tangent point = C + r * perpDir (smaller angle from radius vector)
+ * - Index 1: Tangent point = C - r * perpDir (larger angle from radius vector)
+ * - Tangent line: through tangent point with same direction as reference
+ * 
+ * Pattern: Follows sortPointsByAngleFromRadiusVector() indexing convention
+ * 
+ * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocircleparalleltoline
+ */
+export class Line2DTangentToCircleParallelToLine extends Line2D {
+  readonly type: Line2DType = 'tangent-to-circle-parallel';
+  readonly circleId: string;           // Circle to be tangent to
+  readonly referenceLineId: string;    // Line to be parallel to
+  readonly tangentIndex: 0 | 1;        // Disambiguates which of two tangent lines (angle-based)
+  
+  constructor(
+    id: string,
+    circleId: string,
+    referenceLineId: string,
+    tangentIndex: 0 | 1,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.circleId = circleId;
+    this.referenceLineId = referenceLineId;
+    this.tangentIndex = tangentIndex;
+  }
+  
+  clone(): Line2DTangentToCircleParallelToLine {
+    return new Line2DTangentToCircleParallelToLine(
+      this.id,
+      this.circleId,
+      this.referenceLineId,
+      this.tangentIndex,
+      this.planeId,
+      this.label
+    );
+  }
+  
+  /**
+   * Calculate 2D realization - compute line tangent to circle and parallel to reference
+   * 
+   * Algorithm:
+   * 1. Get circle center C and radius r
+   * 2. Get reference line direction d = (dx, dy, 0)
+   * 3. Check feasibility: distance from C to reference line must be > r
+   * 4. Compute perpendicular direction: perpDir = (-dy, dx, 0) (90° CCW)
+   * 5. For index 0: tangent point = C + r * perpDir (left side)
+   * 6. For index 1: tangent point = C - r * perpDir (right side)
+   * 7. Return line through tangent point with direction d (parallel to reference)
+   * 
+   * Index convention: Based on angle from circle's radius vector
+   * - Index 0 = smaller relative angle from radius vector
+   * - Index 1 = larger relative angle (counterclockwise)
+   * - Same pattern as sortPointsByAngleFromRadiusVector()
+   */
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Step 1: Get containing plane
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) return null;
+    
+    // Step 2: Get circle realization
+    const circle = plane.getCircle(this.circleId);
+    const circleRealization = circle?.realize2D(world);
+    if (!circleRealization) return null;
+    
+    // Step 3: Get reference line realization (can be from any plane)
+    const refLine = world.getLine2D(this.referenceLineId);
+    if (!refLine) return null;
+    
+    const refPlane = world.getProjectionPlaneById(refLine.planeId);
+    const refLineRealization = refPlane?.getLine(this.referenceLineId)?.realize2D(world);
+    if (!refLineRealization) return null;
+    
+    // Step 4: Check infeasibility propagation
+    if (!circleRealization.feasible || !refLineRealization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    // Step 5: Get circle center and radius
+    const center = circleRealization.center;  // (cx, cy, 1)
+    const radius = circleRealization.getRadius();
+    
+    // Step 6: Get reference line direction (normalized for distance calculation)
+    const refDirection = refLineRealization.getDirection().clone().normalize();
+    
+    // Step 7: Compute perpendicular direction (90° CCW rotation)
+    const perpDirection = new Vector3(-refDirection.y, refDirection.x, 0);
+    
+    // Step 8: Check geometric feasibility
+    // Reference line must not intersect circle (distance from center to line > radius)
+    // Distance from point (cx, cy) to line: d = |ax + by + c| / sqrt(a² + b²)
+    // For line with direction (dx, dy) passing through (px, py):
+    // Line equation: -dy * x + dx * y + (dy * px - dx * py) = 0
+    
+    const refPoint = refLineRealization.point1;  // Point on reference line
+    const a = -refDirection.y;
+    const b = refDirection.x;
+    const c = refDirection.y * refPoint.x - refDirection.x * refPoint.y;
+    
+    // Since refDirection is normalized, a² + b² = 1, so no need to divide
+    const distanceToLine = Math.abs(a * center.x + b * center.y + c);
+    
+    const EPSILON = 1e-6;
+    if (distanceToLine <= radius + EPSILON) {
+      // Reference line intersects or is tangent to circle - no parallel tangent lines exist
+      return new Line2DRealization2D(
+        center.clone(),
+        refDirection.clone(),
+        false  // Mark as infeasible
+      );
+    }
+    
+    // Step 9: Compute tangent point position
+    // Two parallel tangent lines exist:
+    // Index 0: tangent point on "left" side (perpendicular direction)
+    // Index 1: tangent point on "right" side (opposite perpendicular)
+    
+    const tangentPoint = this.tangentIndex === 0 ?
+      new Vector3(
+        center.x + radius * perpDirection.x,
+        center.y + radius * perpDirection.y,
+        1  // Finite point
+      ) :
+      new Vector3(
+        center.x - radius * perpDirection.x,
+        center.y - radius * perpDirection.y,
+        1  // Finite point
+      );
+    
+    // Step 10: Return infinite line through tangent point with reference direction
+    // Tangent line is parallel to reference, so same direction
+    return new Line2DRealization2D(
+      tangentPoint,
+      refDirection.clone(),
       true
     );
   }

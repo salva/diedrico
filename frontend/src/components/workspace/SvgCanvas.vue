@@ -143,6 +143,8 @@ import { GuideTool } from '@/tools/GuideTool';
 import { IntersectionTool } from '@/tools/IntersectionTool';
 import { ParallelLineTool } from '@/tools/ParallelLineTool';
 import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
 import type { FreePoint2D } from '@/domain/world/Point';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
@@ -377,6 +379,8 @@ const tools: Record<string, ITool> = {
   'intersection': new IntersectionTool(),
   'parallel-line': new ParallelLineTool(),
   'perpendicular-line': new PerpendicularLineTool(),
+  'tangent-line-to-circle-through-point': new TangentLineToCircleThroughPointTool(),
+  'tangent-line-to-circle-parallel': new TangentLineToCircleParallelToLineTool(),
   // Future tools: etc.
 };
 

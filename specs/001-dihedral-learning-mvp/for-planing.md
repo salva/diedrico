@@ -49,6 +49,7 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
 * [ ] View zooming must work using the mouse position as the center when using the mouse wheel, or the center of the screen when using + or - icons (not implemented yet).
 * [ ] Can't use HalfHL, segments or guides as the base for building a parallel line. But all of them are lines too! Also, it seems that I can't pick the point first and then the base line when building a parallel line.
+* [ ] Move geometric element classes in directories line lines, circles, points, etc.
 
 ## ALREADY PLANNED
 

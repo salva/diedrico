@@ -169,3 +169,120 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
     }
   }
 }
+/**
+ * AddLine2DTangentToCircleThroughPointOp - Operation to add a Line2DTangentToCircleThroughPoint using ProjectionPlane factory method
+ * 
+ * Phase 60: Tangent line to circle through external point
+ * Wraps ProjectionPlane.addLine2DTangentToCircleThroughPoint() in the Operation interface.
+ */
+export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
+  readonly type = 'AddLine2DTangentToCircleThroughPoint';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(
+    private planeId: string,
+    private circleId: string,
+    private throughPointId: string,
+    private tangentIndex: 0 | 1
+  ) {
+    this.parameters = { planeId, circleId, throughPointId, tangentIndex };
+  }
+
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const line = plane.addLine2DTangentToCircleThroughPoint(
+        this.circleId,
+        this.throughPointId,
+        this.tangentIndex,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}
+
+/**
+ * AddLine2DTangentToCircleParallelToLineOp - Operation to add a Line2DTangentToCircleParallelToLine using ProjectionPlane factory method
+ * 
+ * Phase 61: Tangent line to circle parallel to reference line
+ * Wraps ProjectionPlane.addLine2DTangentToCircleParallelToLine() in the Operation interface.
+ */
+export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
+  readonly type = 'AddLine2DTangentToCircleParallelToLine';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(
+    private planeId: string,
+    private circleId: string,
+    private referenceLineId: string,
+    private tangentIndex: 0 | 1
+  ) {
+    this.parameters = { planeId, circleId, referenceLineId, tangentIndex };
+  }
+
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const line = plane.addLine2DTangentToCircleParallelToLine(
+        this.circleId,
+        this.referenceLineId,
+        this.tangentIndex,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}
