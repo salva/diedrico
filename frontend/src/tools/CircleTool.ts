@@ -125,9 +125,14 @@ export class CircleTool extends BaseTool {
         // Extract outputs
         const circleId = result.outputs.circleId;
         
-        // Record ProcessTree action using circleId from outputs
-        // Note: createCircleAction currently expects radius, but will be updated to use two points
-        const action = createCircleAction(circleId, planeId, this.centerPointId!, 0);  // radius=0 as placeholder
+        // Record ProcessTree action with BOTH center and circumference points (T988)
+        // This ensures dependency tracking for parametric updates when either point moves
+        const action = createCircleAction(
+          circleId, 
+          planeId, 
+          this.centerPointId!, 
+          circumferencePointId
+        );
         world.getProcessTree().addAction(action);
         
         // Commit

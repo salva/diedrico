@@ -17,6 +17,7 @@ import { World } from '@/domain/world/World';
 import { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import type { ToolContext } from '@/tools/ITool';
 import { Vector3, Matrix3 } from 'three';
 import { Paper } from '@/domain/presentation/Paper';
@@ -404,6 +405,147 @@ describe('CircleTool', () => {
       const thirdResult = tool.handleClick(thirdClickContext);
       expect(thirdResult.success).toBe(true);
       expect(thirdResult.message).toContain('Selected center point'); // Back to first state
+    });
+  });
+
+  describe('T989: Parametric Updates - Circumference Point Movement', () => {
+    it('should update circle when circumference point moves', () => {
+      // Create center point at (100, 100)
+      const centerCmd = new Command('Create center', world);
+      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+      centerCmd.addAndExecute(centerOp);
+      centerCmd.commit();
+      commandStack.push(centerCmd);
+      const centerPointId = centerOp.outputs.pointId;
+
+      // Create circumference point at (150, 100) - radius should be 50
+      const circumferenceCmd = new Command('Create circumference', world);
+      const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 100, 1));
+      circumferenceCmd.addAndExecute(circumferenceOp);
+      circumferenceCmd.commit();
+      commandStack.push(circumferenceCmd);
+      const circumferencePointId = circumferenceOp.outputs.pointId;
+
+      // Click center point
+      const centerClickContext: ToolContext = {
+        planeId: horizontalPlaneId,
+        planeCoords: new Vector3(100, 100, 1),
+        canvasCoords: new Vector3(100, 100, 1),
+        commandStack,
+        world,
+        paper,
+        paperToPlaneTransform: new Matrix3().identity()
+      };
+      tool.handleClick(centerClickContext);
+
+      // Click circumference point
+      const circumferenceClickContext: ToolContext = {
+        planeId: horizontalPlaneId,
+        planeCoords: new Vector3(150, 100, 1),
+        canvasCoords: new Vector3(150, 100, 1),
+        commandStack,
+        world,
+        paper,
+        paperToPlaneTransform: new Matrix3().identity()
+      };
+      const result = tool.handleClick(circumferenceClickContext);
+      expect(result.success).toBe(true);
+
+      // Get the created circle
+      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+      const circles = plane?.getAllCircles() || [];
+      expect(circles.length).toBe(1);
+      const circle = circles[0];
+
+      // Verify initial radius is 50
+      const initialRealization = circle.realize2D(world);
+      expect(initialRealization).not.toBeNull();
+      expect(initialRealization!.getRadius()).toBeCloseTo(50, 2);
+      expect(initialRealization!.center.x).toBeCloseTo(100, 2);
+      expect(initialRealization!.center.y).toBeCloseTo(100, 2);
+
+      // Move circumference point to (150, 150) - radius should become ~70.7
+      const moveCmd = new Command('Move circumference point', world);
+      const moveOp = new UpdateFreePoint2DPositionOp(
+        horizontalPlaneId,
+        circumferencePointId,
+        new Vector3(150, 150, 1)
+      );
+      moveCmd.addAndExecute(moveOp);
+      moveCmd.commit();
+      commandStack.push(moveCmd);
+
+      // Verify circle updated
+      const updatedRealization = circle.realize2D(world);
+      expect(updatedRealization).not.toBeNull();
+      expect(updatedRealization!.getRadius()).toBeCloseTo(70.71, 2);  // sqrt(50^2 + 50^2)
+      expect(updatedRealization!.center.x).toBeCloseTo(100, 2);  // Center unchanged
+      expect(updatedRealization!.center.y).toBeCloseTo(100, 2);
+    });
+  });
+
+  describe('T992: Regression - Center Point Movement', () => {
+    it('should still update circle when center point moves', () => {
+      // Create center point at (100, 100)
+      const centerCmd = new Command('Create center', world);
+      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+      centerCmd.addAndExecute(centerOp);
+      centerCmd.commit();
+      commandStack.push(centerCmd);
+      const centerPointId = centerOp.outputs.pointId;
+
+      // Create circumference point at (150, 100)
+      const circumferenceCmd = new Command('Create circumference', world);
+      const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 100, 1));
+      circumferenceCmd.addAndExecute(circumferenceOp);
+      circumferenceCmd.commit();
+      commandStack.push(circumferenceCmd);
+
+      // Create circle
+      const centerClickContext: ToolContext = {
+        planeId: horizontalPlaneId,
+        planeCoords: new Vector3(100, 100, 1),
+        canvasCoords: new Vector3(100, 100, 1),
+        commandStack,
+        world,
+        paper,
+        paperToPlaneTransform: new Matrix3().identity()
+      };
+      tool.handleClick(centerClickContext);
+
+      const circumferenceClickContext: ToolContext = {
+        planeId: horizontalPlaneId,
+        planeCoords: new Vector3(150, 100, 1),
+        canvasCoords: new Vector3(150, 100, 1),
+        commandStack,
+        world,
+        paper,
+        paperToPlaneTransform: new Matrix3().identity()
+      };
+      tool.handleClick(circumferenceClickContext);
+
+      // Get circle
+      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+      const circles = plane?.getAllCircles() || [];
+      const circle = circles[0];
+
+      // Move center point to (200, 100) 
+      const moveCmd = new Command('Move center point', world);
+      const moveOp = new UpdateFreePoint2DPositionOp(
+        horizontalPlaneId,
+        centerPointId,
+        new Vector3(200, 100, 1)
+      );
+      moveCmd.addAndExecute(moveOp);
+      moveCmd.commit();
+      commandStack.push(moveCmd);
+
+      // Verify circle center updated, radius unchanged
+      const updatedRealization = circle.realize2D(world);
+      expect(updatedRealization).not.toBeNull();
+      expect(updatedRealization!.center.x).toBeCloseTo(200, 2);  // Center moved
+      expect(updatedRealization!.center.y).toBeCloseTo(100, 2);
+      expect(updatedRealization!.getRadius()).toBeCloseTo(50, 2);  // Radius still 50 (distance from (200,100) to (150,100))
     });
   });
 });
