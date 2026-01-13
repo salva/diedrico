@@ -18,7 +18,6 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Fix circle dependencies, moving the radious point doesn't update the circle.
 * [ ] Add infrastructure for handling tool argument types and automate the argument entry. For instance, IntersectionTool requires two objects with may be lines (any variation) and/or circles. Circle requires two points. We need to envision a system where the type of the (unordered) arguments could be passed and it would handle the data entry (with the mouse).
 * [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
@@ -55,6 +54,23 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] View zooming must work using the mouse position as the center when using the mouse wheel, or the center of the screen when using + or - icons (not implemented yet).
  
 ## ALREADY PLANNED
+
+* [X] **Circle Dependency Tracking: Track Both Center and Circumference Points**
+  - **STATUS**: 📋 PLANNED (Jan 13, 2026)
+  - **Problem**: Circles (Circle2DByCenterAndPoint) only track center point dependency, not circumference point
+  - **Impact**: When circumference point moves, circle does not update (violates parametric behavior)
+  - **Root Cause**: CreateCircleAction only includes centerPointId in inputs array, missing circumferencePointId
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-042 (Circle parametric dependencies)
+  - **Data model**: [data-model.md](./data-model.md#phase-57-circle-dependency-tracking---track-both-center-and-circumference-points) Complete solution architecture
+  - **Tasks**: Phase 57 in [tasks.md](./tasks.md#phase-57-circle-dependency-tracking---track-both-center-and-circumference-points) (T987-T993: 7 tasks)
+  - **Implementation**: Update CreateCircleAction to accept and track circumferencePointId, update CircleTool to pass both IDs
+  - **Testing**: 4 unit tests (circle update, dependency tracking, regression), 1 E2E test
+  - **Acceptance**:
+    - ✅ CreateCircleAction inputs array contains [centerId, circumferencePointId]
+    - ✅ DependencyService tracks both dependencies
+    - ✅ Moving center point updates circle (regression - already works)
+    - ✅ Moving circumference point updates circle (NEW fix)
+    - ✅ ProcessTree shows both points as inputs in Actions Panel
 
 * [X] **Circle Tool: Circumference Point Snapping**
   - **STATUS**: ✅ COMPLETE (Jan 13, 2026) - All tasks (T980-T986) finished

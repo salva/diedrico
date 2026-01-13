@@ -5848,4 +5848,87 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 **Checkpoint**: CircleTool has consistent snapping behavior for both clicks; no duplicate points created; all tests passing.
 
+---
+
+## Phase 57: Circle Dependency Tracking - Track Both Center and Circumference Points
+
+**Purpose**: Fix parametric behavior for circles - track dependencies on BOTH center and circumference points  
+**Reference**: [spec.md](./spec.md#requirements-mandatory) FR-042, [data-model.md](./data-model.md#phase-57-circle-dependency-tracking---track-both-center-and-circumference-points)
+
+**Problem**: Circles created with Circle2DByCenterAndPoint only track dependency on center point, not circumference point. When circumference point moves, circle does not update, violating parametric behavior.
+
+**Root Cause**: CreateCircleAction only includes centerPointId in inputs array, missing circumferencePointId.
+
+**Solution**: Update CreateCircleAction to track both points as dependencies, update CircleTool to pass both IDs.
+
+### Phase 57 Tasks
+
+**CreateCircleAction Update** (T987-T988)
+
+- [ ] T987 Update CreateCircleAction interface and factory function
+  - Add `circumferencePointId: string` parameter to createCircleAction()
+  - Update action `inputs` array: `[centerId, circumferencePointId]` (both points)
+  - Update `parameters` object: add circumferencePointId field
+  - Update description template: `Circle on ${planeId} from center ${centerId} through ${circumferencePointId}`
+  - File: `frontend/src/domain/processTree/actions/CreateCircleAction.ts` 
+  - Verify ActionType enum has CreateCircleCenterPoint (added in Phase 57 planning)
+
+- [ ] T988 Update CircleTool to pass circumferencePointId to action
+  - Modify line ~130 in CircleTool.ts where createCircleAction is called
+  - Pass `circumferencePointId` variable (already captured from tool state)
+  - Remove placeholder radius parameter (not used)
+  - File: `frontend/src/tools/CircleTool.ts`
+
+**Testing** (T989-T992)
+
+- [ ] T989 [P] Unit test: Circle updates when circumference point moves
+  - Create circle with center at (100,100) and circumference at (150,100)
+  - Move circumference point to (150,150)
+  - Assert circle radius updates from 50 to ~70.7
+  - Verify circle realization center stays at (100,100)
+  - File: `frontend/tests/unit/tools/CircleTool.spec.ts`
+
+- [ ] T990 [P] Unit test: DependencyService tracks both points
+  - Create circle (center P1, circumference P2)
+  - Query `dependencyService.getDependencies(circleId)`
+  - Assert returns array containing both P1 and P2 IDs
+  - File: `frontend/tests/unit/services/dependencyService.spec.ts`
+
+- [ ] T991 [P] E2E test: Visual circle update when point dragged
+  - Create circle tool, click center, click circumference
+  - Drag circumference point to new location
+  - Assert circle radius visually updates in real-time
+  - Verify ProcessTree action shows both points as inputs
+  - File: `frontend/tests/e2e/circle-parametric-update.spec.ts`
+
+- [ ] T992 [P] Regression test: Verify center point dependency still works
+  - Create circle, drag center point
+  - Assert circle center position updates
+  - Ensure this behavior was not broken by changes
+  - File: `frontend/tests/unit/tools/CircleTool.spec.ts`
+
+**Documentation** (T993)
+
+- [ ] T993 Update comments in CreateCircleAction
+  - Add comment explaining both points must be tracked for parametric behavior
+  - Reference spec.md FR-042 and data-model.md §DependencyGraph
+  - File: `frontend/src/domain/processTree/actions/CreateCircleAction.ts`
+
+**Acceptance Criteria**:
+1. ✅ CreateCircleAction `inputs` array contains [centerId, circumferencePointId]
+2. ✅ CircleTool passes circumferencePointId to createCircleAction()
+3. ✅ DependencyService.getDependencies(circleId) returns both point IDs
+4. ✅ Moving center point updates circle (regression test - already works)
+5. ✅ Moving circumference point updates circle (NEW - currently broken, fixed by Phase 57)
+6. ✅ Circle realization recalculates radius when either point moves
+7. ✅ ProcessTree Actions Panel shows both points as action inputs
+8. ✅ All unit tests passing (4 new tests + existing tests)
+9. ✅ E2E test verifies visual parametric behavior
+
+**Phase 57 Status**: 📋 PLANNED (Jan 13, 2026)
+
+**Checkpoint**: Circles update correctly when either defining point moves; dependency graph complete; parametric behavior spec satisfied.
+
+---
+
 **Status**: IN PROGRESS (T980-T982 complete, T983-T986 remaining - tests needed)

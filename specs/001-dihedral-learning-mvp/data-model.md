@@ -5307,6 +5307,7 @@ enum ActionType {
   
   // Circle tools
   CreateCircleCenterRadius = "CreateCircleCenterRadius",
+  CreateCircleCenterPoint = "CreateCircleCenterPoint",   // Circle by center and circumference point
   CreateCircleThreePoints = "CreateCircleThreePoints",
   
   // Dihedral tools
@@ -5517,7 +5518,9 @@ interface GraphNode {
 - When an action creates elements, add nodes for action and outputs
 - Determine input dependencies from outputs' construction rules:
   - Segment2D: depends on point1, point2
-  - Circle2D: depends on center (and possibly 3 points)
+  - Line2D: depends on point1, point2 (for two-point lines)
+  - Circle2DByCenterAndPoint: depends on centerPointId AND circumferencePointId (both points)
+  - Circle2DByThreePoints: depends on point1, point2, point3
   - Point3D: depends on projectionH, projectionV
   - etc.
 - Add edges from input elements → action → output elements
@@ -8734,6 +8737,106 @@ Key design principles:
 
 **Next**: Generate API contracts for backend persistence endpoints.
 
+
+---
+
+### Phase 57: Circle Dependency Tracking - Track Both Center and Circumference Points
+
+**Status**: 📋 Planned (2026-01-13)
+
+**Problem Statement**: Circles created with `Circle2DByCenterAndPoint` currently only track dependency on the center point. When the circumference point is moved, the circle does not update, violating the parametric behavior specified in spec.md §Parametric Behavior and Dependencies.
+
+**Root Cause**: The `CreateCircleAction` (ProcessTree action) only includes `centerPointId` in its `inputs` array, omitting the `circumferencePointId`. This causes the DependencyService to only track the center point dependency.
+
+**Evidence**:
+```typescript
+// Current (INCORRECT) - frontend/src/domain/processTree/actions/CreateCircleAction.ts
+return {
+  id: generateActionId(),
+  type: 'action',
+  actionType: 'CreateCircle',
+  timestamp: new Date(),
+  inputs: [centerId],  // ❌ Missing circumferencePointId!
+  outputs: [circleId],
+  parameters: {
+    planeId,
+    centerId,
+    radius  // Placeholder, not actually used
+  },
+  description: `Circle on ${planeId} with radius ${radius}`
+};
+```
+
+**Impact**: When a user moves the circumference point that defines a circle, the circle does not update. This breaks the parametric construction paradigm where derived elements should update automatically when their inputs change.
+
+**Solution**: Update `CreateCircleAction` to track both points as dependencies.
+
+**Required Changes**:
+
+1. **CreateCircleAction Interface** - Update to accept circumferencePointId:
+```typescript
+// frontend/src/domain/processTree/actions/CreateCircleAction.ts
+export interface CreateCircleActionParameters extends ActionParameters {
+  planeId: string;
+  centerId: string;
+  circumferencePointId: string;  // NEW: required for dependency tracking
+}
+
+export function createCircleAction(
+  circleId: string,
+  planeId: string,
+  centerId: string,
+  circumferencePointId: string  // NEW parameter
+): Action {
+  return {
+    id: generateActionId(),
+    type: 'action',
+    actionType: 'CreateCircle',
+    timestamp: new Date(),
+    inputs: [centerId, circumferencePointId],  // ✅ BOTH points tracked
+    outputs: [circleId],
+    parameters: {
+      planeId,
+      centerId,
+      circumferencePointId  // Store for action replay
+    },
+    description: `Circle on ${planeId} from center ${centerId} through ${circumferencePointId}`
+  };
+}
+```
+
+2. **CircleTool Update** - Pass circumferencePointId to createCircleAction:
+```typescript
+// frontend/src/tools/CircleTool.ts (around line 130)
+// OLD: const action = createCircleAction(circleId, planeId, this.centerPointId!, 0);
+// NEW:
+const action = createCircleAction(
+  circleId, 
+  planeId, 
+  this.centerPointId!, 
+  circumferencePointId
+);
+world.getProcessTree().addAction(action);
+```
+
+3. **DependencyService** - No changes needed (automatically picks up inputs from action)
+
+**Testing Requirements**:
+- Unit test: Create circle, move center point → circle updates (already works)
+- Unit test: Create circle, move circumference point → circle updates (NEW, currently fails)
+- E2E test: Visual verification of circle updating when circumference point dragged
+- Regression test: Ensure dependency graph correctly shows both dependencies
+
+**Acceptance Criteria**:
+- [spec.md FR-042] Circle2DByCenterAndPoint updates when either center OR circumference point moves
+- DependencyService.getDependencies(circleId) returns both centerPointId and circumferencePointId
+- Circle realization updates automatically when circumference point is dragged
+- ProcessTree action shows both points as inputs in Actions Panel
+
+**Related**:
+- spec.md §Circle by center and point: "The circle updates if the center or the circumference point moves"
+- spec.md FR-042: Explicit requirement for tracking both dependencies
+- data-model.md §DependencyGraph: Shows Circle2DByCenterAndPoint depends on both points
 
 ---
 
