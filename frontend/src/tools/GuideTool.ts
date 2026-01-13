@@ -21,6 +21,7 @@ import type { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
 import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSiblingGuideAction';
 import type { Point2D } from '@/domain/world/Point';
 import { isSiblingIntersectionPoint2D } from '@/domain/world/Point';
 
@@ -136,9 +137,24 @@ export class GuideTool extends BaseTool {
         const guideId = result.guideId;
         const siblingGuideId = result.siblingGuideId;
         
-        // Record ProcessTree action using guideId from outputs
+        // Record ProcessTree action for primary guide
         const action = createGuideAction(guideId, planeId, this.referenceLineId!, throughPointId);
         world.getProcessTree().addAction(action);
+        
+        // Record ProcessTree action for sibling guide (if created)
+        if (siblingGuideId) {
+          // Get sibling info to find reference line on sibling plane
+          const siblingInfo = world.getSiblingPlaneAndHalfHingeLineForGuide(this.referenceLineId!, planeId);
+          if (siblingInfo) {
+            const siblingAction = createSiblingGuideAction(
+              siblingGuideId, 
+              siblingInfo.siblingPlaneId, 
+              guideId, 
+              siblingInfo.siblingHalfHingeLineId
+            );
+            world.getProcessTree().addAction(siblingAction);
+          }
+        }
         
         // Commit
         cmd.commit();

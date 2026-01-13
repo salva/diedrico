@@ -30,6 +30,7 @@ import { IntersectionSequenceFactory, type IntersectionData } from '@/commands/f
 import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
 import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
 import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
+import { createSiblingIntersectionPointAction } from '@/domain/processTree/actions/CreateSiblingIntersectionPointAction';
 import { 
   areLinesParallel, 
   intersectLineCircle, 
@@ -139,6 +140,7 @@ export class IntersectionTool extends BaseTool {
           cmd, planeId, intersectionData, world
         );
         const pointId = result.pointId;
+        const siblingPointId = result.siblingPointId;
         
         // Record ProcessTree action using specialized action factories
         let action;
@@ -170,6 +172,23 @@ export class IntersectionTool extends BaseTool {
         }
         
         world.getProcessTree().addAction(action);
+        
+        // Record ProcessTree action for sibling intersection (if created)
+        if (siblingPointId) {
+          // Get the sibling plane ID from the point
+          const primaryPoint = world.getPoint2D(pointId);
+          if (primaryPoint) {
+            const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
+            if (siblingPlaneId) {
+              const siblingAction = createSiblingIntersectionPointAction(
+                siblingPointId,
+                siblingPlaneId,
+                pointId
+              );
+              world.getProcessTree().addAction(siblingAction);
+            }
+          }
+        }
         
         // Commit
         cmd.commit();
