@@ -35,7 +35,7 @@ import {
   SiblingIntersectionPoint2D
 } from './Point';
 import type { Line2D, Line2DRealization2D } from './Line';
-import { Line2DByTwoPoints, Line2DParallel } from './Line';
+import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine } from './Line';
 import type { Circle2D, Circle2DRealization2D } from './Circle';
 import { Circle2DByCenterAndPoint } from './Circle';
 import { Segment2DByPoints } from './Segment';
@@ -774,6 +774,50 @@ export abstract class ProjectionPlane {
     }
 
     const line = new Line2DParallel(id, referenceLineId, throughPointId, this.id);
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Add a line perpendicular to a reference line, passing through a point
+   * 
+   * @param referenceLineId The reference line to be perpendicular to (90° angle)
+   * @param throughPointId The point the perpendicular line passes through
+   * @param world World instance for validation
+   * @param id Optional explicit ID for redo operations. Usually you should
+   *           omit this to get auto-generated IDs.
+   * @returns The created Line2DPerpendicularToLine
+   */
+  addLine2DPerpendicularToLine(
+    referenceLineId: string,
+    throughPointId: string,
+    world: import('./World').World,
+    id?: string
+  ): Line2DPerpendicularToLine {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate through-point exists on this plane
+    const throughPoint = this.getPoint(throughPointId);
+    if (!throughPoint) {
+      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+    }
+
+    // Validate reference line exists (could be on any plane)
+    const refLineElement = world.getLine2D(referenceLineId);
+    const referenceLine = refLineElement?.realize2D(world);
+    if (!referenceLine) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, this.id);
     
     this.addLine(line);
     return line;

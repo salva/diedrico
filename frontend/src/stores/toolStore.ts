@@ -10,7 +10,7 @@
 
 import { ref, computed } from 'vue';
 
-export type ToolType = 'select' | 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection' | 'transport' | 'parallel-line';
+export type ToolType = 'select' | 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection' | 'transport' | 'parallel-line' | 'perpendicular-line';
 
 const activeTool = ref<ToolType>('select');
 

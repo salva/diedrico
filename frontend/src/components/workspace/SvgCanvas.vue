@@ -142,6 +142,7 @@ import { CircleTool } from '@/tools/CircleTool';
 import { GuideTool } from '@/tools/GuideTool';
 import { IntersectionTool } from '@/tools/IntersectionTool';
 import { ParallelLineTool } from '@/tools/ParallelLineTool';
+import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
 import type { FreePoint2D } from '@/domain/world/Point';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
@@ -375,6 +376,7 @@ const tools: Record<string, ITool> = {
   'guide': new GuideTool(),
   'intersection': new IntersectionTool(),
   'parallel-line': new ParallelLineTool(),
+  'perpendicular-line': new PerpendicularLineTool(),
   // Future tools: etc.
 };
 

@@ -113,3 +113,59 @@ export class AddLine2DParallelToLineOp implements IOperation {
     }
   }
 }
+
+/**
+ * AddLine2DPerpendicularToLineOp - Operation to add a Line2DPerpendicularToLine using ProjectionPlane factory method
+ * 
+ * Wraps ProjectionPlane.addLine2DPerpendicularToLine() in the Operation interface.
+ */
+export class AddLine2DPerpendicularToLineOp implements IOperation {
+  readonly type = 'AddLine2DPerpendicularToLine';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(
+    private planeId: string,
+    private referenceLineId: string,
+    private throughPointId: string
+  ) {
+    this.parameters = { planeId, referenceLineId, throughPointId };
+  }
+
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      const line = plane.addLine2DPerpendicularToLine(
+        this.referenceLineId,
+        this.throughPointId,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}

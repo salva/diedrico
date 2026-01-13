@@ -153,6 +153,22 @@
 
     <button
       class="tool-button"
+      :class="{ active: toolStore.isToolActive('perpendicular-line') }"
+      @click="selectTool('perpendicular-line')"
+      title="Perpendicular Line Tool - Create line perpendicular to reference through point"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <!-- Two perpendicular lines forming a 90° angle -->
+        <line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="2" />
+        <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" stroke-width="2" />
+        <!-- Small arc to indicate 90° angle -->
+        <path d="M 13 10 L 13 13 L 10 13" fill="none" stroke="currentColor" stroke-width="1" />
+      </svg>
+      <span>Perpendicular</span>
+    </button>
+
+    <button
+      class="tool-button"
       :class="{ active: toolStore.isToolActive('segment') }"
       @click="selectTool('segment')"
       title="Segment Tool (S)"
