@@ -814,7 +814,7 @@ Note that completing these tasks may require asking the user for additional info
   - **Timing**: URGENT - users currently experiencing data loss on any project with deletions or style changes
 
 * [X] Introduce common `Element2D` base class for all 2D geometric elements (Point2D, Line2D, Circle2D).
-  - **STATUS**: ✅ PLANNED - Phase 44 created
+  - **STATUS**: ✅ COMPLETE (Jan 13, 2026) - Phase 44 implemented and tested
   - **Problem**: Point2D, Line2D, Circle2D are three separate abstract hierarchies with no shared ancestor, despite having identical properties (id, planeId, label, visible, type). This creates code duplication and prevents uniform handling in utilities, factories, and tests.
   - **Solution**: Create abstract `Element2D` base class containing common properties (id, planeId, label, visible, type) and abstract methods (clone(), realize2D(world)). Point2D, Line2D, Circle2D extend Element2D.
   - **Benefits**:
@@ -843,10 +843,18 @@ Note that completing these tasks may require asking the user for additional info
     - Element2DRealization2D: Base class created, all three realization types extend it, uniform feasibility checking, all tests pass
   - **Data Model**: Added §Element2D Base Class and §Element2DRealization2D Base Class with complete specifications
   - **Future-Proof**: When Arc2D or other 2D element types added, they extend both Element2D and Element2DRealization2D
+  - **Implementation Complete**: All 16 tasks (T489-T504) finished
+    - ✅ Element2D base class created with id, planeId, label, visible, type properties
+    - ✅ Point2D, Line2D, Circle2D extend Element2D (duplicate properties removed)
+    - ✅ Element2DRealization2D base class created with feasible property
+    - ✅ Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D extend base
+    - ✅ Generic utilities: isElement2D(), getElementsOnPlane(), etc.
+    - ✅ Tests: 19 tests passing for Element2D, 14 tests passing for Element2DRealization2D
+    - ✅ No regressions in existing domain tests
   - **Timing**: After Phase 43 (factories need generic Element2D for test infrastructure)
 
 * [X] Introduce common `Element2DRealization2D` base class for all 2D element realization types.
-  - **STATUS**: ✅ PLANNED - Phase 44 (same phase as Element2D)
+  - **STATUS**: ✅ COMPLETE (Jan 13, 2026) - Phase 44 implemented and tested
   - **Problem**: Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D all have identical `feasible: boolean` property duplicated in each class. No common base prevents generic realization filtering and uniform feasibility checking.
   - **Solution**: Create abstract `Element2DRealization2D` base class with readonly feasible property and `isFeasible()` method. All three realization classes extend this base.
   - **Benefits**:
@@ -866,6 +874,11 @@ Note that completing these tasks may require asking the user for additional info
   - **Success Criteria**: Element2DRealization2D base class created, all three realization types extend it, no duplicate feasible properties, isFeasible() works uniformly, all tests pass
   - **Data Model**: Added §Element2DRealization2D Base Class with complete specification, code examples, migration guide
   - **Architectural Symmetry**: Domain layer has Element2D base, realization layer has Element2DRealization2D base - clean parallel structure
+  - **Implementation Complete**: 7 tasks (T498-T504) finished alongside Element2D tasks
+    - ✅ All realization types extend Element2DRealization2D base
+    - ✅ Uniform isFeasible() method available
+    - ✅ No duplicate feasible properties
+    - ✅ 14 tests passing, all realization tests working
   - **Timing**: Same as Element2D (Phase 44) - both base classes implemented together
 
 * [X] Consider introducing a `Project` class to encapsulate world, commandStack, visualization configuration and metadata for cleaner lifecycle management. Best done when domain model stabilizes.
