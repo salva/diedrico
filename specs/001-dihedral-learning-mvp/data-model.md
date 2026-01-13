@@ -4153,27 +4153,25 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
 
 **Tool Implementation** (TangentLineToCircleThroughPointTool.ts):
 
-Three-step state machine: circle → point → index
+Two-step state machine: circle → point (with automatic index determination from mouse position)
 
 ```typescript
 export class TangentLineToCircleThroughPointTool extends BaseTool {
   readonly name = 'tangent-line-to-circle-through-point';
-  private state: 'waiting-circle' | 'waiting-point' | 'waiting-index' = 'waiting-circle';
+  private state: 'waiting-circle' | 'waiting-point' = 'waiting-circle';
   private circleId?: string;
-  private throughPointId?: string;
   
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-circle') {
       return ['circle'];
     } else if (this.state === 'waiting-point') {
       return ['point'];
-    } else {
-      return [];  // No selection during index input
     }
+    return [];
   }
   
   handleClick(context: ToolContext): ToolResult {
-    const { world, canvasPos, planeId } = context;
+    const { world, canvasPos, planeId, commandStack } = context;
     const plane = world.getProjectionPlaneById(planeId);
     if (!plane) {
       return this.error('Active plane not found');
@@ -4191,11 +4189,13 @@ export class TangentLineToCircleThroughPointTool extends BaseTool {
       return this.success(`Selected circle: ${hit.elementId}. Click point through which tangent passes.`);
       
     } else if (this.state === 'waiting-point') {
-      // Step 2: Select or create point
+      // Step 2: Select or create point, then auto-determine index from mouse position
+      let throughPointId: string;
+      
       const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, ['point']);
       
       if (hit) {
-        this.throughPointId = hit.elementId;
+        throughPointId = hit.elementId;
       } else {
         // Create free point at click location
         const planePos = paperToPlaneTransform.multiplyVector3(canvasPos);
@@ -4204,94 +4204,146 @@ export class TangentLineToCircleThroughPointTool extends BaseTool {
         cmd.addAndExecute(pointOp);
         cmd.commit();
         commandStack.push(cmd);
-        this.throughPointId = pointOp.outputs.pointId;
+        throughPointId = pointOp.outputs.pointId;
       }
       
-      this.state = 'waiting-index';
-      return this.success(`Selected point: ${this.throughPointId}. Enter tangent index (0 or 1).`);
+      // Step 3: Determine index automatically from mouse position
+      const circle = plane.getCircle(this.circleId!);
+      const point = plane.getPoint(throughPointId);
+      const circleRealization = circle?.realize2D(world);
+      const pointRealization = point?.realize2D(world);
+      
+      if (!circleRealization || !pointRealization) {
+        this.reset();
+        return this.error('Circle or point is infeasible');
+      }
+      
+      // Check if point is outside circle
+      const center = circleRealization.center;
+      const externalPoint = pointRealization.position;
+      const radius = circleRealization.getRadius();
+      
+      const dx = externalPoint.x - center.x;
+      const dy = externalPoint.y - center.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance <= radius + 1e-6) {
+        this.reset();
+        return this.error('Point must be outside circle for tangent line construction');
+      }
+      
+      // Compute both tangent points (same algorithm as realize2D)
+      const tangentLength = Math.sqrt(distance * distance - radius * radius);
+      const angleAlpha = Math.asin(radius / distance);
+      
+      // Angle from external point to circle center
+      const anglePtoC = Math.atan2(dy, dx);
+      
+      // Two tangent points on circle:
+      // Index 0: Rotate PC by +α (left tangent, smaller angle from radius vector)
+      // Index 1: Rotate PC by -α (right tangent, larger angle from radius vector)
+      const angle0 = anglePtoC + angleAlpha;
+      const angle1 = anglePtoC - angleAlpha;
+      
+      const tangentPoint0 = new Vector3(
+        center.x + radius * Math.cos(angle0),
+        center.y + radius * Math.sin(angle0),
+        1
+      );
+      
+      const tangentPoint1 = new Vector3(
+        center.x + radius * Math.cos(angle1),
+        center.y + radius * Math.sin(angle1),
+        1
+      );
+      
+      // Determine which tangent point is closer to mouse position
+      // Use angle-from-radius-vector convention (same as circle intersections)
+      const radiusVector = circleRealization.radiusVector;
+      const theta0Ref = Math.atan2(radiusVector.y, radiusVector.x);
+      
+      // Compute relative angles for both tangent points
+      const theta0 = Math.atan2(tangentPoint0.y - center.y, tangentPoint0.x - center.x);
+      const theta1 = Math.atan2(tangentPoint1.y - center.y, tangentPoint1.x - center.x);
+      
+      let deltaTheta0 = theta0 - theta0Ref;
+      let deltaTheta1 = theta1 - theta0Ref;
+      
+      // Normalize to [0, 2π)
+      while (deltaTheta0 < 0) deltaTheta0 += 2 * Math.PI;
+      while (deltaTheta0 >= 2 * Math.PI) deltaTheta0 -= 2 * Math.PI;
+      while (deltaTheta1 < 0) deltaTheta1 += 2 * Math.PI;
+      while (deltaTheta1 >= 2 * Math.PI) deltaTheta1 -= 2 * Math.PI;
+      
+      // Assign indices based on angle ordering
+      // Index 0 = smaller relative angle, Index 1 = larger relative angle
+      const [index0Angle, index1Angle] = deltaTheta0 < deltaTheta1 ? 
+        [deltaTheta0, deltaTheta1] : [deltaTheta1, deltaTheta0];
+      const [index0Point, index1Point] = deltaTheta0 < deltaTheta1 ?
+        [tangentPoint0, tangentPoint1] : [tangentPoint1, tangentPoint0];
+      
+      // Compute mouse angle relative to radius vector
+      const planePos = paperToPlaneTransform.multiplyVector3(canvasPos);
+      const thetaMouse = Math.atan2(planePos.y - center.y, planePos.x - center.x);
+      let deltaMouseAngle = thetaMouse - theta0Ref;
+      while (deltaMouseAngle < 0) deltaMouseAngle += 2 * Math.PI;
+      while (deltaMouseAngle >= 2 * Math.PI) deltaMouseAngle -= 2 * Math.PI;
+      
+      // Select index based on which tangent's angle is closer to mouse
+      const diffToIndex0 = Math.abs(deltaMouseAngle - index0Angle);
+      const diffToIndex1 = Math.abs(deltaMouseAngle - index1Angle);
+      const index: 0 | 1 = diffToIndex0 < diffToIndex1 ? 0 : 1;
+      
+      // Create tangent line
+      const cmd = new Command('Create tangent line to circle through point', world);
+      const result = cmd.addAndExecute(
+        new AddLine2DTangentToCircleThroughPointOp(
+          planeId,
+          this.circleId!,
+          throughPointId,
+          index
+        )
+      );
+      
+      if (!result.success) {
+        this.reset();
+        return this.error(result.error ?? 'Failed to create tangent line');
+      }
+      
+      // Add action to ProcessTree
+      const lineId = result.outputs.lineId;
+      const action = createTangentLineToCircleThroughPointAction(
+        lineId,
+        planeId,
+        this.circleId!,
+        throughPointId,
+        index
+      );
+      world.getProcessTree().addAction(action);
+      
+      cmd.commit();
+      commandStack.push(cmd);
+      
+      this.reset();
+      return this.success(`Created tangent line ${lineId} (auto-selected index ${index} from mouse position)`);
     }
     
     return this.error('Unexpected state');
   }
   
-  handleIndexInput(index: 0 | 1, context: ToolContext): ToolResult {
-    if (this.state !== 'waiting-index') {
-      return this.error('Not ready for index input');
-    }
-    
-    const { world, planeId, commandStack } = context;
-    const plane = world.getProjectionPlaneById(planeId);
-    
-    // Check feasibility BEFORE creating line
-    const circle = plane?.getCircle(this.circleId!);
-    const point = plane?.getPoint(this.throughPointId!);
-    const circleRealization = circle?.realize2D(world);
-    const pointRealization = point?.realize2D(world);
-    
-    if (!circleRealization || !pointRealization) {
-      this.reset();
-      return this.error('Circle or point is infeasible');
-    }
-    
-    // Check if point is outside circle
-    const dx = pointRealization.position.x - circleRealization.center.x;
-    const dy = pointRealization.position.y - circleRealization.center.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const radius = circleRealization.getRadius();
-    
-    if (distance <= radius + 1e-6) {
-      this.reset();
-      return this.error('Point must be outside circle for tangent line construction');
-    }
-    
-    // Create tangent line
-    const cmd = new Command('Create tangent line to circle through point', world);
-    const result = cmd.addAndExecute(
-      new AddLine2DTangentToCircleThroughPointOp(
-        planeId,
-        this.circleId!,
-        this.throughPointId!,
-        index
-      )
-    );
-    
-    if (!result.success) {
-      this.reset();
-      return this.error(result.error ?? 'Failed to create tangent line');
-    }
-    
-    // Add action to ProcessTree
-    const lineId = result.outputs.lineId;
-    const action = createTangentLineToCircleThroughPointAction(
-      lineId,
-      planeId,
-      this.circleId!,
-      this.throughPointId!,
-      index
-    );
-    world.getProcessTree().addAction(action);
-    
-    cmd.commit();
-    commandStack.push(cmd);
-    
-    this.reset();
-    return this.success(`Created tangent line ${lineId} (index ${index})`);
-  }
-  
   reset(): void {
     this.state = 'waiting-circle';
     this.circleId = undefined;
-    this.throughPointId = undefined;
   }
 }
 ```
 
 **UI Integration**:
 
-Toolbar button with index input:
+Toolbar button (no manual index input needed):
 - Icon: Circle with external point and two tangent lines
 - Title: "Tangent Line Tool - Line tangent to circle through external point"
-- After selecting circle and point, show index selector (radio buttons or number input)
+- Index automatically determined from mouse click position relative to circle's radius vector angle
 
 **Testing Strategy**:
 
@@ -4325,9 +4377,10 @@ Toolbar button with index input:
 - Tests: Multiple files in `frontend/tests/{unit,integration,e2e}/`
 
 **Key Architecture Points**:
-- **Three-step workflow**: Circle → Point → Index (tool state machine)
+- **Two-step workflow**: Circle → Point (tool state machine with automatic index determination)
 - **Index validation**: Tool checks point is outside circle BEFORE creating line
-- **Index convention**: Left/right relative to P→C direction (stable under updates)
+- **Index convention**: Angle-based from circle's radius vector (same pattern as circle intersections)
+- **Automatic index selection**: Mouse position determines which tangent (closest angle to radius vector)
 - **Feasibility check**: Tool validates geometry before construction (FR-045)
 - **Operation returns outputs**: Tool reads lineId from operation result
 
@@ -4643,27 +4696,25 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
 
 **Tool Implementation** (TangentLineToCircleParallelToLineTool.ts):
 
-Three-step state machine: circle → reference line → index
+Two-step state machine: circle → reference line (with automatic index determination from mouse position)
 
 ```typescript
 export class TangentLineToCircleParallelToLineTool extends BaseTool {
   readonly name = 'tangent-line-to-circle-parallel';
-  private state: 'waiting-circle' | 'waiting-line' | 'waiting-index' = 'waiting-circle';
+  private state: 'waiting-circle' | 'waiting-line' = 'waiting-circle';
   private circleId?: string;
-  private referenceLineId?: string;
   
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-circle') {
       return ['circle'];
     } else if (this.state === 'waiting-line') {
       return ['line'];
-    } else {
-      return [];  // No selection during index input
     }
+    return [];
   }
   
   handleClick(context: ToolContext): ToolResult {
-    const { world, canvasPos, planeId } = context;
+    const { world, canvasPos, planeId, commandStack } = context;
     const plane = world.getProjectionPlaneById(planeId);
     if (!plane) {
       return this.error('Active plane not found');
@@ -4681,110 +4732,147 @@ export class TangentLineToCircleParallelToLineTool extends BaseTool {
       return this.success(`Selected circle: ${hit.elementId}. Click reference line for parallel tangent.`);
       
     } else if (this.state === 'waiting-line') {
-      // Step 2: Select reference line
+      // Step 2: Select reference line, then auto-determine index from mouse position
       const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, ['line']);
       if (!hit) {
         return this.error('No line found at click location');
       }
       
-      this.referenceLineId = hit.elementId;
-      this.state = 'waiting-index';
-      return this.success(`Selected reference line: ${hit.elementId}. Enter tangent index (0 or 1).`);
+      const referenceLineId = hit.elementId;
+      
+      // Step 3: Determine index automatically from mouse position
+      const circle = plane.getCircle(this.circleId!);
+      const refLine = world.getLine2D(referenceLineId);
+      const circleRealization = circle?.realize2D(world);
+      
+      if (!circleRealization || !refLine) {
+        this.reset();
+        return this.error('Circle or reference line is infeasible');
+      }
+      
+      const refPlane = world.getProjectionPlaneById(refLine.planeId);
+      const refLineRealization = refPlane?.getLine(referenceLineId)?.realize2D(world);
+      if (!refLineRealization) {
+        this.reset();
+        return this.error('Reference line realization failed');
+      }
+      
+      // Check if reference line does not intersect circle
+      const center = circleRealization.center;
+      const radius = circleRealization.getRadius();
+      const refDirection = refLineRealization.getDirection();
+      const refPoint = refLineRealization.point1;
+      
+      const a = -refDirection.y;
+      const b = refDirection.x;
+      const c = refDirection.y * refPoint.x - refDirection.x * refPoint.y;
+      const distanceToLine = Math.abs(a * center.x + b * center.y + c);
+      
+      if (distanceToLine <= radius + 1e-6) {
+        this.reset();
+        return this.error('Reference line must not intersect circle for tangent construction');
+      }
+      
+      // Compute both tangent points on circle (perpendicular to reference direction)
+      const perpDirection = new Vector3(-refDirection.y, refDirection.x, 0);
+      
+      const tangentPoint0 = new Vector3(
+        center.x + radius * perpDirection.x,
+        center.y + radius * perpDirection.y,
+        1
+      );
+      
+      const tangentPoint1 = new Vector3(
+        center.x - radius * perpDirection.x,
+        center.y - radius * perpDirection.y,
+        1
+      );
+      
+      // Determine which tangent point is closer to mouse position
+      // Use angle-from-radius-vector convention (same as circle intersections)
+      const radiusVector = circleRealization.radiusVector;
+      const theta0Ref = Math.atan2(radiusVector.y, radiusVector.x);
+      
+      // Compute relative angles for both tangent points
+      const theta0 = Math.atan2(tangentPoint0.y - center.y, tangentPoint0.x - center.x);
+      const theta1 = Math.atan2(tangentPoint1.y - center.y, tangentPoint1.x - center.x);
+      
+      let deltaTheta0 = theta0 - theta0Ref;
+      let deltaTheta1 = theta1 - theta0Ref;
+      
+      // Normalize to [0, 2π)
+      while (deltaTheta0 < 0) deltaTheta0 += 2 * Math.PI;
+      while (deltaTheta0 >= 2 * Math.PI) deltaTheta0 -= 2 * Math.PI;
+      while (deltaTheta1 < 0) deltaTheta1 += 2 * Math.PI;
+      while (deltaTheta1 >= 2 * Math.PI) deltaTheta1 -= 2 * Math.PI;
+      
+      // Assign indices based on angle ordering
+      // Index 0 = smaller relative angle, Index 1 = larger relative angle
+      const [index0Angle, index1Angle] = deltaTheta0 < deltaTheta1 ? 
+        [deltaTheta0, deltaTheta1] : [deltaTheta1, deltaTheta0];
+      
+      // Compute mouse angle relative to radius vector
+      const planePos = paperToPlaneTransform.multiplyVector3(canvasPos);
+      const thetaMouse = Math.atan2(planePos.y - center.y, planePos.x - center.x);
+      let deltaMouseAngle = thetaMouse - theta0Ref;
+      while (deltaMouseAngle < 0) deltaMouseAngle += 2 * Math.PI;
+      while (deltaMouseAngle >= 2 * Math.PI) deltaMouseAngle -= 2 * Math.PI;
+      
+      // Select index based on which tangent's angle is closer to mouse
+      const diffToIndex0 = Math.abs(deltaMouseAngle - index0Angle);
+      const diffToIndex1 = Math.abs(deltaMouseAngle - index1Angle);
+      const index: 0 | 1 = diffToIndex0 < diffToIndex1 ? 0 : 1;
+      
+      // Create tangent line
+      const cmd = new Command('Create tangent line to circle parallel to line', world);
+      const result = cmd.addAndExecute(
+        new AddLine2DTangentToCircleParallelToLineOp(
+          planeId,
+          this.circleId!,
+          referenceLineId,
+          index
+        )
+      );
+      
+      if (!result.success) {
+        this.reset();
+        return this.error(result.error ?? 'Failed to create tangent line');
+      }
+      
+      // Add action to ProcessTree
+      const lineId = result.outputs.lineId;
+      const action = createTangentLineToCircleParallelToLineAction(
+        lineId,
+        planeId,
+        this.circleId!,
+        referenceLineId,
+        index
+      );
+      world.getProcessTree().addAction(action);
+      
+      cmd.commit();
+      commandStack.push(cmd);
+      
+      this.reset();
+      return this.success(`Created tangent line ${lineId} (auto-selected index ${index} from mouse position)`);
     }
     
     return this.error('Unexpected state');
   }
   
-  handleIndexInput(index: 0 | 1, context: ToolContext): ToolResult {
-    if (this.state !== 'waiting-index') {
-      return this.error('Not ready for index input');
-    }
-    
-    const { world, planeId, commandStack } = context;
-    const plane = world.getProjectionPlaneById(planeId);
-    
-    // Check feasibility BEFORE creating line
-    const circle = plane?.getCircle(this.circleId!);
-    const refLine = world.getLine2D(this.referenceLineId!);
-    const circleRealization = circle?.realize2D(world);
-    
-    if (!circleRealization || !refLine) {
-      this.reset();
-      return this.error('Circle or reference line is infeasible');
-    }
-    
-    // Check if reference line does not intersect circle
-    const refPlane = world.getProjectionPlaneById(refLine.planeId);
-    const refLineRealization = refPlane?.getLine(this.referenceLineId!)?.realize2D(world);
-    if (!refLineRealization) {
-      this.reset();
-      return this.error('Reference line realization failed');
-    }
-    
-    // Compute distance from circle center to reference line
-    const center = circleRealization.center;
-    const radius = circleRealization.getRadius();
-    const refDirection = refLineRealization.getDirection();
-    const refPoint = refLineRealization.point1;
-    
-    const a = -refDirection.y;
-    const b = refDirection.x;
-    const c = refDirection.y * refPoint.x - refDirection.x * refPoint.y;
-    const distanceToLine = Math.abs(a * center.x + b * center.y + c);
-    
-    if (distanceToLine <= radius + 1e-6) {
-      this.reset();
-      return this.error('Reference line must not intersect circle for tangent construction');
-    }
-    
-    // Create tangent line
-    const cmd = new Command('Create tangent line to circle parallel to line', world);
-    const result = cmd.addAndExecute(
-      new AddLine2DTangentToCircleParallelToLineOp(
-        planeId,
-        this.circleId!,
-        this.referenceLineId!,
-        index
-      )
-    );
-    
-    if (!result.success) {
-      this.reset();
-      return this.error(result.error ?? 'Failed to create tangent line');
-    }
-    
-    // Add action to ProcessTree
-    const lineId = result.outputs.lineId;
-    const action = createTangentLineToCircleParallelToLineAction(
-      lineId,
-      planeId,
-      this.circleId!,
-      this.referenceLineId!,
-      index
-    );
-    world.getProcessTree().addAction(action);
-    
-    cmd.commit();
-    commandStack.push(cmd);
-    
-    this.reset();
-    return this.success(`Created tangent line ${lineId} (index ${index})`);
-  }
-  
   reset(): void {
     this.state = 'waiting-circle';
     this.circleId = undefined;
-    this.referenceLineId = undefined;
   }
 }
 ```
 
 **UI Integration**:
 
-Toolbar button with index input:
+Toolbar button (no manual index input needed):
 - Icon: Circle with parallel tangent lines on both sides
 - Title: "Tangent Line Parallel Tool - Line tangent to circle parallel to reference line"
-- After selecting circle and reference line, show index selector (radio buttons or number input)
+- Index automatically determined from mouse click position relative to circle's radius vector angle
 
 **Testing Strategy**:
 
@@ -4818,9 +4906,10 @@ Toolbar button with index input:
 - Tests: Multiple files in `frontend/tests/{unit,integration,e2e}/`
 
 **Key Architecture Points**:
-- **Three-step workflow**: Circle → Reference Line → Index (tool state machine)
+- **Two-step workflow**: Circle → Reference Line (tool state machine with automatic index determination)
 - **Index validation**: Tool checks reference line doesn't intersect circle BEFORE creating line
-- **Index convention**: Left/right relative to reference line direction (stable under updates)
+- **Index convention**: Angle-based from circle's radius vector (same pattern as circle intersections)
+- **Automatic index selection**: Mouse position determines which tangent (closest angle to radius vector)
 - **Feasibility check**: Tool validates geometry before construction (FR-046)
 - **Parallel direction**: Tangent line has same direction as reference line (parallelism)
 

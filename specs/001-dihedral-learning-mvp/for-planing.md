@@ -53,26 +53,30 @@ Note that completing these tasks may require asking the user for additional info
 ## ALREADY PLANNED
 
 * [X] **Line Tangent to Circle Through Point Tool**
-  - **STATUS**: 📋 PLANNED (Jan 14, 2026)
+  - **STATUS**: 📋 PLANNED (Jan 14, 2026) - CORRECTED: Two-step workflow with automatic angle-based indexing
   - **Problem**: Users cannot create lines tangent to circles passing through external points, a fundamental geometric construction in technical drawing
-  - **Context**: For a point outside a circle, exactly two tangent lines exist. An index (0 or 1) disambiguates which tangent to create
-  - **Solution**: Complete implementation pipeline: domain class with geometric algorithm, ProcessTree action/operation, three-step tool (circle → point → index)
+  - **Context**: For a point outside a circle, exactly two tangent lines exist. Index determined automatically from mouse position angle relative to circle's radius vector (same pattern as circle intersections)
+  - **Solution**: Complete implementation pipeline: domain class with geometric algorithm, ProcessTree action/operation, two-step tool (circle → point with automatic index from mouse)
   - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-045 (Line Tangent to Circle Through Point Tool requirement)
-  - **UI**: [spec.md](./spec.md#line-tool-family) Line tool family - "Line tangent to circle through point" workflow (three-step: select circle → select/create point → enter index)
-  - **Data model**: [data-model.md](./data-model.md#line2dtangenttocirclethroughpoint-tangent-line-through-external-point-construction-implementation) Complete implementation with geometric algorithm (~300 lines)
-  - **Tasks**: Phase 60 in [tasks.md](./tasks.md#phase-60-line-tangent-to-circle-through-point-tool) (T1022-T1036: 15 tasks)
+  - **UI**: [spec.md](./spec.md#line-tool-family) Line tool family - "Line tangent to circle through point" workflow (two-step: select circle → select/create point, index auto-determined)
+  - **Data model**: [data-model.md](./data-model.md#line2dtangenttocirclethroughpoint-tangent-line-through-external-point-construction-implementation) Complete implementation with geometric algorithm + automatic index determination (~350 lines)
+  - **Tasks**: Phase 60 in [tasks.md](./tasks.md#phase-60-line-tangent-to-circle-through-point-tool) (T1022-T1036: 15 tasks, T1031 DELETED)
     - T1022-T1023: Domain implementation (Line2DTangentToCircleThroughPoint class, type union)
     - T1024: Factory method (addLine2DTangentToCircleThroughPoint)
     - T1025: ProcessTree action (createTangentLineToCircleThroughPointAction)
     - T1026: Operation (AddLine2DTangentToCircleThroughPointOp)
-    - T1027-T1031: Tool implementation and UI (three-step state machine, index selector)
-    - T1032-T1036: Testing (unit, integration, E2E, tangency verification)
+    - T1027-T1030: Tool implementation (two-step state machine with automatic angle-based indexing)
+    - T1031: [DELETED - no index selector UI needed]
+    - T1032-T1036: Testing (unit, integration, E2E, tangency verification + index stability)
   - **Algorithm**: Given external point P, circle center C, radius r:
     - Check feasibility: distance d = ||P - C|| must be > r
     - Compute angle α = asin(r / d)
-    - Index 0: Rotate PC by +α (left tangent), Index 1: Rotate PC by -α (right tangent)
-    - Direction: `directionPC * cos(α) ± perpDirection * sin(α)`
-  - **Reference Pattern**: Phase 59 PerpendicularLineTool (three-step workflow, selection masks)
+    - Compute both tangent points on circle
+    - Calculate angles relative to circle's radius vector (same as sortPointsByAngleFromRadiusVector())
+    - Determine mouse click angle relative to radius vector
+    - Select index of tangent point whose angle is closest to mouse angle
+    - Index 0 = smaller relative angle, Index 1 = larger relative angle (counterclockwise)
+  - **Reference Pattern**: Circle-circle and line-circle intersection indexing (sortPointsByAngleFromRadiusVector)
   - **Dependencies**: Tracks circleId and throughPointId for parametric updates maintaining tangency
   - **Acceptance**:
     - ✅ Line2DTangentToCircleThroughPoint.realize2D() computes tangent using geometric formula
@@ -80,38 +84,42 @@ Note that completing these tasks may require asking the user for additional info
     - ✅ Factory method validates circle, point, index (0 or 1)
     - ✅ CreateTangentLineToCircleThroughPointAction tracks dependencies [circleId, throughPointId]
     - ✅ AddLine2DTangentToCircleThroughPointOp supports undo/redo
-    - ✅ TangentLineToCircleThroughPointTool: three-step workflow (circle → point → index)
+    - ✅ TangentLineToCircleThroughPointTool: two-step workflow (circle → point with auto-index)
+    - ✅ Tool automatically determines index from mouse position using angle-from-radius-vector pattern
     - ✅ Tool validates point is outside circle BEFORE creating line
-    - ✅ Toolbar has "Tangent (Point)" button with index selector UI
-    - ✅ Tangent line updates when point or circle moves (parametric behavior)
+    - ✅ Toolbar has "Tangent (Point)" button (no index selector UI needed)
+    - ✅ Tangent line updates when point or circle moves (parametric behavior, index stable)
     - ✅ Tangent line is truly tangent: distance from center to line = radius
-    - ✅ All unit tests passing (geometric algorithm with various configurations)
-    - ✅ Integration tests verify parametric updates maintain tangency
-    - ✅ E2E test verifies complete workflow with index selection
+    - ✅ All unit tests passing (geometric algorithm + automatic indexing with various angles)
+    - ✅ Integration tests verify parametric updates maintain tangency and index stability
+    - ✅ E2E test verifies complete workflow with automatic tangent selection from mouse position
   - **Implementation**: Ready for Phase 60 execution
-  - **Notes**: Three-step workflow differs from two-step pattern; index convention stable under parametric updates
+  - **Notes**: Two-step workflow with automatic angle-based indexing (corrected from initial three-step design); follows circle intersection pattern; index stable under parametric updates
 
 * [X] **Line Tangent to Circle Parallel to Reference Line Tool**
-  - **STATUS**: 📋 PLANNED (Jan 14, 2026)
+  - **STATUS**: 📋 PLANNED (Jan 14, 2026) - CORRECTED: Two-step workflow with automatic angle-based indexing
   - **Problem**: Users cannot create lines tangent to circles and parallel to reference lines, essential for constrained technical drawing
-  - **Context**: For a circle and external line, exactly two tangent lines parallel to the reference exist (one on each side). An index (0 or 1) disambiguates which to create
-  - **Solution**: Complete implementation pipeline: domain class with perpendicular offset, ProcessTree action/operation, three-step tool (circle → reference line → index)
+  - **Context**: For a circle and external line, exactly two tangent lines parallel to the reference exist (one on each side). Index determined automatically from mouse position angle relative to circle's radius vector (same pattern as circle intersections)
+  - **Solution**: Complete implementation pipeline: domain class with perpendicular offset, ProcessTree action/operation, two-step tool (circle → reference line with automatic index from mouse)
   - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-046 (Line Tangent to Circle Parallel to Line Tool requirement)
-  - **UI**: [spec.md](./spec.md#line-tool-family) Line tool family - "Line tangent to circle parallel to line" workflow (three-step: select circle → select reference line → enter index)
-  - **Data model**: [data-model.md](./data-model.md#line2dtangenttocircleparalleltoline-tangent-line-parallel-to-reference-line-construction-implementation) Complete implementation with perpendicular offset algorithm (~300 lines)
-  - **Tasks**: Phase 61 in [tasks.md](./tasks.md#phase-61-line-tangent-to-circle-parallel-to-line-tool) (T1037-T1051: 15 tasks)
+  - **UI**: [spec.md](./spec.md#line-tool-family) Line tool family - "Line tangent to circle parallel to line" workflow (two-step: select circle → select reference line, index auto-determined)
+  - **Data model**: [data-model.md](./data-model.md#line2dtangenttocircleparalleltoline-tangent-line-parallel-to-reference-line-construction-implementation) Complete implementation with perpendicular offset algorithm + automatic index determination (~350 lines)
+  - **Tasks**: Phase 61 in [tasks.md](./tasks.md#phase-61-line-tangent-to-circle-parallel-to-line-tool) (T1037-T1051: 15 tasks, T1045 DELETED)
     - T1037-T1038: Domain implementation (Line2DTangentToCircleParallelToLine class, type union)
     - T1039: Factory method (addLine2DTangentToCircleParallelToLine)
     - T1040: Operation (AddLine2DTangentToCircleParallelToLineOp) - action already created in Phase 60
-    - T1041-T1045: Tool implementation and UI (three-step state machine, reuse index selector)
-    - T1046-T1051: Testing (unit, integration, E2E, tangency and parallelism verification)
+    - T1041-T1044: Tool implementation (two-step state machine with automatic angle-based indexing)
+    - T1045: [DELETED - no shared index selector needed]
+    - T1046-T1051: Testing (unit, integration, E2E, tangency and parallelism verification + index stability)
   - **Algorithm**: Given circle center C, radius r, reference line direction d:
     - Compute perpendicular: p = (-dy, dx, 0) (90° CCW)
     - Check feasibility: distance from C to reference line must be > r
-    - Index 0: Tangent point = C + r * p (left side)
-    - Index 1: Tangent point = C - r * p (right side)
-    - Tangent line: through tangent point with direction d (parallel to reference)
-  - **Reference Pattern**: Phase 60 TangentLineToCircleThroughPointTool (same three-step workflow)
+    - Compute both tangent points on circle
+    - Calculate angles relative to circle's radius vector (same as sortPointsByAngleFromRadiusVector())
+    - Determine mouse click angle relative to radius vector
+    - Select index of tangent point whose angle is closest to mouse angle
+    - Index 0 = smaller relative angle, Index 1 = larger relative angle (counterclockwise)
+  - **Reference Pattern**: Circle-circle and line-circle intersection indexing (sortPointsByAngleFromRadiusVector)
   - **Dependencies**: Tracks circleId and referenceLineId for parametric updates maintaining tangency and parallelism
   - **Acceptance**:
     - ✅ Line2DTangentToCircleParallelToLine.realize2D() computes tangent using perpendicular offset
@@ -119,17 +127,18 @@ Note that completing these tasks may require asking the user for additional info
     - ✅ Factory method validates circle, reference line, index (0 or 1)
     - ✅ CreateTangentLineToCircleParallelToLineAction tracks dependencies [circleId, referenceLineId]
     - ✅ AddLine2DTangentToCircleParallelToLineOp supports undo/redo
-    - ✅ TangentLineToCircleParallelToLineTool: three-step workflow (circle → line → index)
+    - ✅ TangentLineToCircleParallelToLineTool: two-step workflow (circle → line with auto-index)
+    - ✅ Tool automatically determines index from mouse position using angle-from-radius-vector pattern
     - ✅ Tool validates reference doesn't intersect circle BEFORE creating line
-    - ✅ Toolbar has "Tangent (Parallel)" button with shared index selector
-    - ✅ Tangent line remains parallel when reference line rotates (parametric behavior)
-    - ✅ Tangent line updates when circle center or radius changes
+    - ✅ Toolbar has "Tangent (Parallel)" button (no index selector UI needed)
+    - ✅ Tangent line remains parallel when reference line rotates (parametric behavior, index stable)
+    - ✅ Tangent line updates when circle center or radius changes (index stable)
     - ✅ Tangent line is truly tangent: distance from center = radius
-    - ✅ All unit tests passing (horizontal, vertical, diagonal references)
-    - ✅ Integration tests verify tangency and parallelism maintained
-    - ✅ E2E test verifies complete workflow with both constraints
+    - ✅ All unit tests passing (horizontal, vertical, diagonal references + automatic indexing)
+    - ✅ Integration tests verify tangency, parallelism, and index stability maintained
+    - ✅ E2E test verifies complete workflow with both constraints and automatic tangent selection
   - **Implementation**: Ready for Phase 61 execution
-  - **Notes**: Simpler algorithm than Phase 60 (perpendicular offset vs angle computation); shares index UI component
+  - **Notes**: Two-step workflow with automatic angle-based indexing (corrected from initial three-step design); simpler perpendicular offset algorithm than Phase 60; follows circle intersection pattern; index stable under parametric updates
 
 * [X] **Circle Dependency Tracking: Track Both Center and Circumference Points**
   - **STATUS**: ✅ COMPLETE (Jan 13, 2026) - Implementation commit 80e7843

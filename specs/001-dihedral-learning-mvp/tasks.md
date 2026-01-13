@@ -6379,23 +6379,25 @@ const circumferencePointId = pointResult.outputs.pointId;
 **T1027: Create TangentLineToCircleThroughPointTool.ts** [TOOL]
 - File: `frontend/src/tools/TangentLineToCircleThroughPointTool.ts` (NEW FILE)
 - Extends BaseTool
-- State machine: 'waiting-circle' | 'waiting-point' | 'waiting-index'
-- Properties: circleId (optional), throughPointId (optional)
+- State machine: 'waiting-circle' | 'waiting-point' (TWO-STEP, no 'waiting-index')
+- Properties: circleId (optional)
 - Implement getSelectionMask():
   - waiting-circle → ['circle']
   - waiting-point → ['point']
-  - waiting-index → [] (no selection, awaiting index input)
 - Implement handleClick():
   - Step 1: Select circle, transition to waiting-point
-  - Step 2: Select/create point, transition to waiting-index
-- Implement handleIndexInput(index: 0 | 1):
-  - Validate point is outside circle (distance check)
-  - Execute AddLine2DTangentToCircleThroughPointOp
-  - Add action to ProcessTree
-  - Commit and push command
-  - Reset state machine
+  - Step 2: Select/create point, THEN automatically determine index from mouse position:
+    * Validate point is outside circle (distance check)
+    * Compute both tangent points on circle
+    * Calculate angles relative to circle's radius vector (same pattern as sortPointsByAngleFromRadiusVector())
+    * Determine which tangent point angle is closer to mouse click angle
+    * Use index of closest tangent (0 = smaller angle, 1 = larger angle)
+    * Execute AddLine2DTangentToCircleThroughPointOp with computed index
+    * Add action to ProcessTree
+    * Commit and push command
+    * Reset state machine
 - Implement reset(): Clear state and stored IDs
-- **Key**: Three-step workflow with feasibility check before line creation
+- **Key**: Two-step workflow with automatic angle-based index selection from mouse position
 
 **T1028: Add 'tangent-line-to-circle-through-point' to ToolType union** [TYPE]
 - File: `frontend/src/stores/toolStore.ts` (line ~13)
@@ -6414,15 +6416,13 @@ const circumferencePointId = pointResult.outputs.pointId;
 - Title: "Tangent Line Through Point Tool - Line tangent to circle through external point"
 - Label: "Tangent (Point)"
 - Activates 'tangent-line-to-circle-through-point' tool
-- **UI consideration**: Button may need index selector (radio buttons or number input after point selection)
+- **Note**: No index selector UI needed - index determined automatically from mouse position
 
-**T1031: Add index input UI control to Toolbar or modal** [UI INPUT]
-- Location: Either in Toolbar.vue or as modal dialog
-- Provide radio buttons or number input for index selection (0 or 1)
-- Show after circle and point are selected (state = 'waiting-index')
-- Label: "Select tangent line: 0 (left) or 1 (right)"
-- On selection, call tool.handleIndexInput(index)
-- **Design choice**: Radio buttons preferred for visual clarity over number input
+**T1031: [DELETED - No longer needed with automatic angle-based indexing]**
+- Previously: "Add index input UI control to Toolbar or modal"
+- Reason: Index now determined automatically from mouse position relative to circle's radius vector
+- Pattern: Follows circle intersection indexing convention (sortPointsByAngleFromRadiusVector)
+
 
 **T1032: Unit test Line2DTangentToCircleThroughPoint.realize2D()** [TESTING (DOMAIN)]
 - File: `frontend/tests/unit/domain/line.spec.ts`
@@ -6450,25 +6450,30 @@ const circumferencePointId = pointResult.outputs.pointId;
 - File: `frontend/tests/unit/tools/TangentLineToCircleThroughPointTool.spec.ts`
 - Test getSelectionMask() returns ['circle'] in waiting-circle state
 - Test getSelectionMask() returns ['point'] in waiting-point state
-- Test getSelectionMask() returns [] in waiting-index state
 - Test step 1: clicking circle stores circleId and transitions state
-- Test step 2: clicking point stores pointId and transitions state
-- Test step 3: handleIndexInput(0) creates tangent line
-- Test step 3: handleIndexInput(1) creates different tangent line
+- Test step 2: clicking point automatically determines index and creates tangent line:
+  * Mock circle with known radius vector angle (e.g., 0°)
+  * Click point with mouse at specific angle relative to circle center
+  * Verify correct index selected based on angle-to-radius-vector calculation
+  * Verify tangent line created with computed index
+- Test automatic index selection with various mouse angles (0°, 45°, 90°, 180°, 270°)
+- Test automatic index selection with various radius vector angles
 - Test feasibility validation: point inside circle → error, no line created
 - Test cancel() resets state machine
-- **Pattern**: Extended from ParallelLineTool pattern with third step
+- **Pattern**: Two-step workflow with automatic angle-based index determination
 
 **T1035: Integration test tangent line parametric updates** [TESTING (INTEGRATION)]
 - File: `frontend/tests/integration/tangentLineToCircleThroughPoint.spec.ts` (NEW FILE)
-- Test creating tangent line through external point
-- Test parametric update: move external point → tangent line updates
-- Test parametric update: move circle center → tangent line updates
-- Test parametric update: change circle radius → tangent line updates
+- Test creating tangent line through external point with automatic index selection
+- Test parametric update: move external point → tangent line updates, index remains stable
+- Test parametric update: move circle center → tangent line updates, index remains stable
+- Test parametric update: change circle radius → tangent line updates, index remains stable
+- Test parametric update: rotate circle's radius vector → verify index convention still correct
 - Test action recorded in ProcessTree with correct inputs/outputs
 - Test DependencyService tracks circleId and throughPointId
 - **Key assertion**: Verify tangent line truly tangent (distance from center to line = radius ± epsilon)
 - **Key assertion**: Verify line passes through external point
+- **Key assertion**: Verify index remains stable across parametric updates (same tangent line)
 
 **T1036: E2E test tangent line through point tool workflow** [TESTING (E2E)]
 - File: `frontend/tests/e2e/tangent-line-through-point-creation.spec.ts` (NEW FILE)
@@ -6476,14 +6481,16 @@ const circumferencePointId = pointResult.outputs.pointId;
 - Create external point using Point tool
 - Activate Tangent Line Through Point tool via toolbar
 - Click circle (verify highlight feedback)
-- Click external point (verify highlight feedback)
-- Select index 0 via UI control (verify tangent line created)
+- Click external point at position closer to one tangent contact point
+- Verify correct tangent line created automatically (index determined from mouse position)
 - Verify tangent line rendered on canvas
 - Measure distance from circle center to line, verify equals radius
 - Verify line passes through external point
 - Move external point farther, verify tangent angle adjusts
 - Test undo/redo preserves tangency relationship
-- **Repeat with index 1**: Verify different tangent line created
+- **Repeat workflow**: Click external point at different position (closer to other tangent)
+- Verify different tangent line created (automatic index selection based on mouse angle)
+- **Visual verification**: User sees immediate tangent line creation after clicking point (no third step)
 
 ### Phase 60 Acceptance Criteria
 
@@ -6493,17 +6500,17 @@ const circumferencePointId = pointResult.outputs.pointId;
 4. Factory method addLine2DTangentToCircleThroughPoint() validates inputs (circle, point, index)
 5. CreateTangentLineToCircleThroughPointAction tracks dependencies [circleId, throughPointId]
 6. AddLine2DTangentToCircleThroughPointOp creates line and supports undo/redo
-7. TangentLineToCircleThroughPointTool follows three-step workflow: circle → point → index
-8. Tool validates point is outside circle BEFORE creating line (FR-011 creation-time validation)
-9. Toolbar has "Tangent (Point)" button with appropriate icon
-10. UI provides index selector (radio buttons or number input)
-11. Tangent line updates when external point moves (parametric update)
-12. Tangent line updates when circle center or radius changes (parametric update)
+7. TangentLineToCircleThroughPointTool follows two-step workflow: circle → point (with automatic index from mouse)
+8. Tool automatically determines index from mouse position using angle-from-radius-vector pattern
+9. Tool validates point is outside circle BEFORE creating line (FR-011 creation-time validation)
+10. Toolbar has "Tangent (Point)" button with appropriate icon (no index selector UI needed)
+11. Tangent line updates when external point moves (parametric update, index remains stable)
+12. Tangent line updates when circle center or radius changes (parametric update, index remains stable)
 13. Tangent line is truly tangent: distance from center to line equals radius (within epsilon)
 14. Tangent line passes through external point exactly
-15. All unit tests passing (domain, operation, tool state machine)
-16. Integration tests verify parametric behavior and tangency constraint
-17. E2E test verifies complete user workflow with index selection
+15. All unit tests passing (domain, operation, tool state machine with angle-based indexing)
+16. Integration tests verify parametric behavior, tangency constraint, and index stability
+17. E2E test verifies complete user workflow with automatic tangent selection from mouse position
 
 **Phase 60 Status**: 📋 PLANNED (Jan 14, 2026)
 
@@ -6596,23 +6603,25 @@ const circumferencePointId = pointResult.outputs.pointId;
 **T1041: Create TangentLineToCircleParallelToLineTool.ts** [TOOL]
 - File: `frontend/src/tools/TangentLineToCircleParallelToLineTool.ts` (NEW FILE)
 - Extends BaseTool
-- State machine: 'waiting-circle' | 'waiting-line' | 'waiting-index'
-- Properties: circleId (optional), referenceLineId (optional)
+- State machine: 'waiting-circle' | 'waiting-line' (TWO-STEP, no 'waiting-index')
+- Properties: circleId (optional)
 - Implement getSelectionMask():
   - waiting-circle → ['circle']
   - waiting-line → ['line']
-  - waiting-index → [] (no selection, awaiting index input)
 - Implement handleClick():
   - Step 1: Select circle, transition to waiting-line
-  - Step 2: Select reference line, transition to waiting-index
-- Implement handleIndexInput(index: 0 | 1):
-  - Validate reference line doesn't intersect circle (distance check)
-  - Execute AddLine2DTangentToCircleParallelToLineOp
-  - Add action to ProcessTree
-  - Commit and push command
-  - Reset state machine
+  - Step 2: Select reference line, THEN automatically determine index from mouse position:
+    * Validate reference line doesn't intersect circle (distance check)
+    * Compute both tangent points on circle (perpendicular to reference direction)
+    * Calculate angles relative to circle's radius vector (same pattern as sortPointsByAngleFromRadiusVector())
+    * Determine which tangent point angle is closer to mouse click angle
+    * Use index of closest tangent (0 = smaller angle, 1 = larger angle)
+    * Execute AddLine2DTangentToCircleParallelToLineOp with computed index
+    * Add action to ProcessTree
+    * Commit and push command
+    * Reset state machine
 - Implement reset(): Clear state and stored IDs
-- **Key**: Three-step workflow with intersection check before line creation
+- **Key**: Two-step workflow with automatic angle-based index selection from mouse position
 
 **T1042: Add 'tangent-line-to-circle-parallel' to ToolType union** [TYPE]
 - File: `frontend/src/stores/toolStore.ts` (line ~13)
@@ -6631,15 +6640,13 @@ const circumferencePointId = pointResult.outputs.pointId;
 - Title: "Tangent Line Parallel Tool - Line tangent to circle parallel to reference line"
 - Label: "Tangent (Parallel)"
 - Activates 'tangent-line-to-circle-parallel' tool
-- **UI consideration**: Button may share index selector UI with Phase 60
+- **Note**: No index selector UI needed - index determined automatically from mouse position
 
-**T1045: Extend index input UI to support both tangent tools** [UI INPUT]
-- Location: Toolbar.vue or modal dialog (reuse Phase 60 component)
-- Show for both tangent tools when state = 'waiting-index'
-- Label for Phase 60: "Select tangent through point: 0 (left) or 1 (right)"
-- Label for Phase 61: "Select tangent parallel: 0 (left) or 1 (right)"
-- On selection, call appropriate tool.handleIndexInput(index)
-- **Design**: Reuse same UI control for both tools (DRY principle)
+**T1045: [DELETED - No longer needed with automatic angle-based indexing]**
+- Previously: "Extend index input UI to support both tangent tools"
+- Reason: Both tangent tools now determine index automatically from mouse position
+- Pattern: Follows circle intersection indexing convention (sortPointsByAngleFromRadiusVector)
+
 
 **T1046: Unit test Line2DTangentToCircleParallelToLine.realize2D()** [TESTING (DOMAIN)]
 - File: `frontend/tests/unit/domain/line.spec.ts`
@@ -6667,25 +6674,32 @@ const circumferencePointId = pointResult.outputs.pointId;
 - File: `frontend/tests/unit/tools/TangentLineToCircleParallelToLineTool.spec.ts`
 - Test getSelectionMask() returns ['circle'] in waiting-circle state
 - Test getSelectionMask() returns ['line'] in waiting-line state
-- Test getSelectionMask() returns [] in waiting-index state
+- Test getSelectionMask() returns ['circle'] in waiting-circle state
+- Test getSelectionMask() returns ['line'] in waiting-line state
 - Test step 1: clicking circle stores circleId and transitions state
-- Test step 2: clicking line stores referenceLineId and transitions state
-- Test step 3: handleIndexInput(0) creates tangent line
-- Test step 3: handleIndexInput(1) creates different tangent line
+- Test step 2: clicking reference line automatically determines index and creates tangent line:
+  * Mock circle with known radius vector angle (e.g., 0°)
+  * Click line with mouse at specific angle relative to circle center
+  * Verify correct index selected based on angle-to-radius-vector calculation
+  * Verify tangent line created with computed index
+- Test automatic index selection with various mouse angles
+- Test automatic index selection with various radius vector angles
 - Test feasibility validation: reference line intersects circle → error, no line created
 - Test cancel() resets state machine
-- **Pattern**: Similar to TangentLineToCircleThroughPointTool tests
+- **Pattern**: Two-step workflow matching TangentLineToCircleThroughPointTool pattern
 
 **T1049: Integration test tangent line parallel parametric updates** [TESTING (INTEGRATION)]
 - File: `frontend/tests/integration/tangentLineToCircleParallel.spec.ts` (NEW FILE)
-- Test creating tangent line parallel to reference line
-- Test parametric update: rotate reference line → tangent line rotates (stays parallel)
-- Test parametric update: move circle center → tangent line moves
-- Test parametric update: change circle radius → tangent line position adjusts
+- Test creating tangent line parallel to reference line with automatic index selection
+- Test parametric update: rotate reference line → tangent line rotates (stays parallel), index remains stable
+- Test parametric update: move circle center → tangent line moves, index remains stable
+- Test parametric update: change circle radius → tangent line position adjusts, index remains stable
+- Test parametric update: rotate circle's radius vector → verify index convention still correct
 - Test action recorded in ProcessTree with correct inputs/outputs
 - Test DependencyService tracks circleId and referenceLineId
 - **Key assertion**: Verify tangent line parallel to reference (dot product of perpendiculars = 0)
 - **Key assertion**: Verify tangent line truly tangent (distance from center = radius ± epsilon)
+- **Key assertion**: Verify index remains stable across parametric updates (same tangent line)
 
 **T1050: E2E test tangent line parallel tool workflow** [TESTING (E2E)]
 - File: `frontend/tests/e2e/tangent-line-parallel-creation.spec.ts` (NEW FILE)
@@ -6693,43 +6707,46 @@ const circumferencePointId = pointResult.outputs.pointId;
 - Create reference line using Line tool (ensure it doesn't intersect circle)
 - Activate Tangent Line Parallel tool via toolbar
 - Click circle (verify highlight feedback)
-- Click reference line (verify highlight feedback)
-- Select index 0 via UI control (verify tangent line created)
+- Click reference line at position closer to one tangent contact point
+- Verify correct tangent line created automatically (index determined from mouse position)
 - Verify tangent line rendered on canvas
 - Verify tangent line is parallel to reference line (visual inspection)
 - Measure distance from circle center to tangent line, verify equals radius
 - Rotate reference line, verify tangent line rotates to stay parallel
 - Test undo/redo preserves tangency and parallelism
-- **Repeat with index 1**: Verify different tangent line created on opposite side
+- **Repeat workflow**: Click reference line at different position (closer to other tangent)
+- Verify different tangent line created (automatic index selection based on mouse angle)
+- **Visual verification**: User sees immediate tangent line creation after clicking line (no third step)
 
 **T1051: Document Phase 60 and Phase 61 completion in data-model.md** [DOCUMENTATION]
 - File: `specs/001-dihedral-learning-mvp/data-model.md`
 - Sections already added: §Line2DTangentToCircleThroughPoint and §Line2DTangentToCircleParallelToLine
 - Add implementation notes after both phases complete
 - Document any deviations from original plan
-- Record lessons learned about three-step tool workflows
-- Document index convention stability under parametric updates
-- **Note**: Both tools share similar architecture, document commonalities
+- Record lessons learned about two-step tool workflows with automatic angle-based indexing
+- Document index convention stability under parametric updates (angle from radius vector pattern)
+- Document how mouse position angle calculation reuses sortPointsByAngleFromRadiusVector() pattern
+- **Note**: Both tools share similar architecture (automatic indexing), document commonalities
 
 ### Phase 61 Acceptance Criteria
 
 1. Line2DTangentToCircleParallelToLine.realize2D() computes correct tangent point using perpendicular direction
-2. Index 0 creates left tangent (center + radius * perpDirection), index 1 creates right tangent (center - radius * perpDirection)
+2. Index determined by angle from radius vector: index 0 = smaller angle, index 1 = larger angle (CCW)
 3. Reference line intersects or is tangent to circle → construction is infeasible (realize2D returns feasible = false)
 4. Factory method addLine2DTangentToCircleParallelToLine() validates inputs (circle, reference line, index)
 5. CreateTangentLineToCircleParallelToLineAction tracks dependencies [circleId, referenceLineId]
 6. AddLine2DTangentToCircleParallelToLineOp creates line and supports undo/redo
-7. TangentLineToCircleParallelToLineTool follows three-step workflow: circle → reference line → index
-8. Tool validates reference line doesn't intersect circle BEFORE creating line (FR-011 validation)
-9. Toolbar has "Tangent (Parallel)" button with appropriate icon
-10. UI index selector works for both tangent tools (reusable component)
-11. Tangent line remains parallel to reference line when reference rotates (parametric update)
-12. Tangent line updates when circle center or radius changes (parametric update)
+7. TangentLineToCircleParallelToLineTool follows two-step workflow: circle → reference line (with automatic index from mouse)
+8. Tool automatically determines index from mouse position using angle-from-radius-vector pattern
+9. Tool validates reference line doesn't intersect circle BEFORE creating line (FR-011 validation)
+10. Toolbar has "Tangent (Parallel)" button with appropriate icon (no index selector UI needed)
+11. Tangent line remains parallel to reference line when reference rotates (parametric update, index stable)
+12. Tangent line updates when circle center or radius changes (parametric update, index stable)
 13. Tangent line is truly tangent: distance from center to line equals radius (within epsilon)
 14. Tangent line is parallel to reference line: same direction vector
-15. All unit tests passing (domain, operation, tool state machine)
-16. Integration tests verify parametric behavior, tangency, and parallelism constraints
-17. E2E test verifies complete user workflow with index selection and constraint verification
+15. All unit tests passing (domain, operation, tool state machine with angle-based indexing)
+16. Integration tests verify parametric behavior, tangency, parallelism, and index stability
+17. E2E test verifies complete user workflow with automatic tangent selection from mouse position
 
 **Phase 61 Status**: 📋 PLANNED (Jan 14, 2026)
 
