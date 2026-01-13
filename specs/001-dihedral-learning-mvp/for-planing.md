@@ -34,8 +34,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
 * [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
 * [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
-* [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
-* [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
 * [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
 * [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
@@ -53,6 +51,85 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Can't use HalfHL, segments or guides as the base for building a parallel line. But all of them are lines too! Also, it seems that I can't pick the point first and then the base line when building a parallel line.
 
 ## ALREADY PLANNED
+
+* [X] **Line Tangent to Circle Through Point Tool**
+  - **STATUS**: 📋 PLANNED (Jan 14, 2026)
+  - **Problem**: Users cannot create lines tangent to circles passing through external points, a fundamental geometric construction in technical drawing
+  - **Context**: For a point outside a circle, exactly two tangent lines exist. An index (0 or 1) disambiguates which tangent to create
+  - **Solution**: Complete implementation pipeline: domain class with geometric algorithm, ProcessTree action/operation, three-step tool (circle → point → index)
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-045 (Line Tangent to Circle Through Point Tool requirement)
+  - **UI**: [spec.md](./spec.md#line-tool-family) Line tool family - "Line tangent to circle through point" workflow (three-step: select circle → select/create point → enter index)
+  - **Data model**: [data-model.md](./data-model.md#line2dtangenttocirclethroughpoint-tangent-line-through-external-point-construction-implementation) Complete implementation with geometric algorithm (~300 lines)
+  - **Tasks**: Phase 60 in [tasks.md](./tasks.md#phase-60-line-tangent-to-circle-through-point-tool) (T1022-T1036: 15 tasks)
+    - T1022-T1023: Domain implementation (Line2DTangentToCircleThroughPoint class, type union)
+    - T1024: Factory method (addLine2DTangentToCircleThroughPoint)
+    - T1025: ProcessTree action (createTangentLineToCircleThroughPointAction)
+    - T1026: Operation (AddLine2DTangentToCircleThroughPointOp)
+    - T1027-T1031: Tool implementation and UI (three-step state machine, index selector)
+    - T1032-T1036: Testing (unit, integration, E2E, tangency verification)
+  - **Algorithm**: Given external point P, circle center C, radius r:
+    - Check feasibility: distance d = ||P - C|| must be > r
+    - Compute angle α = asin(r / d)
+    - Index 0: Rotate PC by +α (left tangent), Index 1: Rotate PC by -α (right tangent)
+    - Direction: `directionPC * cos(α) ± perpDirection * sin(α)`
+  - **Reference Pattern**: Phase 59 PerpendicularLineTool (three-step workflow, selection masks)
+  - **Dependencies**: Tracks circleId and throughPointId for parametric updates maintaining tangency
+  - **Acceptance**:
+    - ✅ Line2DTangentToCircleThroughPoint.realize2D() computes tangent using geometric formula
+    - ✅ Point inside or on circle → infeasible (FR-011 creation-time validation)
+    - ✅ Factory method validates circle, point, index (0 or 1)
+    - ✅ CreateTangentLineToCircleThroughPointAction tracks dependencies [circleId, throughPointId]
+    - ✅ AddLine2DTangentToCircleThroughPointOp supports undo/redo
+    - ✅ TangentLineToCircleThroughPointTool: three-step workflow (circle → point → index)
+    - ✅ Tool validates point is outside circle BEFORE creating line
+    - ✅ Toolbar has "Tangent (Point)" button with index selector UI
+    - ✅ Tangent line updates when point or circle moves (parametric behavior)
+    - ✅ Tangent line is truly tangent: distance from center to line = radius
+    - ✅ All unit tests passing (geometric algorithm with various configurations)
+    - ✅ Integration tests verify parametric updates maintain tangency
+    - ✅ E2E test verifies complete workflow with index selection
+  - **Implementation**: Ready for Phase 60 execution
+  - **Notes**: Three-step workflow differs from two-step pattern; index convention stable under parametric updates
+
+* [X] **Line Tangent to Circle Parallel to Reference Line Tool**
+  - **STATUS**: 📋 PLANNED (Jan 14, 2026)
+  - **Problem**: Users cannot create lines tangent to circles and parallel to reference lines, essential for constrained technical drawing
+  - **Context**: For a circle and external line, exactly two tangent lines parallel to the reference exist (one on each side). An index (0 or 1) disambiguates which to create
+  - **Solution**: Complete implementation pipeline: domain class with perpendicular offset, ProcessTree action/operation, three-step tool (circle → reference line → index)
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-046 (Line Tangent to Circle Parallel to Line Tool requirement)
+  - **UI**: [spec.md](./spec.md#line-tool-family) Line tool family - "Line tangent to circle parallel to line" workflow (three-step: select circle → select reference line → enter index)
+  - **Data model**: [data-model.md](./data-model.md#line2dtangenttocircleparalleltoline-tangent-line-parallel-to-reference-line-construction-implementation) Complete implementation with perpendicular offset algorithm (~300 lines)
+  - **Tasks**: Phase 61 in [tasks.md](./tasks.md#phase-61-line-tangent-to-circle-parallel-to-line-tool) (T1037-T1051: 15 tasks)
+    - T1037-T1038: Domain implementation (Line2DTangentToCircleParallelToLine class, type union)
+    - T1039: Factory method (addLine2DTangentToCircleParallelToLine)
+    - T1040: Operation (AddLine2DTangentToCircleParallelToLineOp) - action already created in Phase 60
+    - T1041-T1045: Tool implementation and UI (three-step state machine, reuse index selector)
+    - T1046-T1051: Testing (unit, integration, E2E, tangency and parallelism verification)
+  - **Algorithm**: Given circle center C, radius r, reference line direction d:
+    - Compute perpendicular: p = (-dy, dx, 0) (90° CCW)
+    - Check feasibility: distance from C to reference line must be > r
+    - Index 0: Tangent point = C + r * p (left side)
+    - Index 1: Tangent point = C - r * p (right side)
+    - Tangent line: through tangent point with direction d (parallel to reference)
+  - **Reference Pattern**: Phase 60 TangentLineToCircleThroughPointTool (same three-step workflow)
+  - **Dependencies**: Tracks circleId and referenceLineId for parametric updates maintaining tangency and parallelism
+  - **Acceptance**:
+    - ✅ Line2DTangentToCircleParallelToLine.realize2D() computes tangent using perpendicular offset
+    - ✅ Reference line intersects or tangent to circle → infeasible (FR-011 validation)
+    - ✅ Factory method validates circle, reference line, index (0 or 1)
+    - ✅ CreateTangentLineToCircleParallelToLineAction tracks dependencies [circleId, referenceLineId]
+    - ✅ AddLine2DTangentToCircleParallelToLineOp supports undo/redo
+    - ✅ TangentLineToCircleParallelToLineTool: three-step workflow (circle → line → index)
+    - ✅ Tool validates reference doesn't intersect circle BEFORE creating line
+    - ✅ Toolbar has "Tangent (Parallel)" button with shared index selector
+    - ✅ Tangent line remains parallel when reference line rotates (parametric behavior)
+    - ✅ Tangent line updates when circle center or radius changes
+    - ✅ Tangent line is truly tangent: distance from center = radius
+    - ✅ All unit tests passing (horizontal, vertical, diagonal references)
+    - ✅ Integration tests verify tangency and parallelism maintained
+    - ✅ E2E test verifies complete workflow with both constraints
+  - **Implementation**: Ready for Phase 61 execution
+  - **Notes**: Simpler algorithm than Phase 60 (perpendicular offset vs angle computation); shares index UI component
 
 * [X] **Circle Dependency Tracking: Track Both Center and Circumference Points**
   - **STATUS**: ✅ COMPLETE (Jan 13, 2026) - Implementation commit 80e7843

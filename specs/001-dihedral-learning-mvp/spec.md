@@ -875,6 +875,32 @@ Contains tools for creating 2D primitives on the active plane. Tools may expose 
   - **Result**: A new line entity is created perpendicular to the reference line and passing through the specified point. Any automatically created point is recorded as an auxiliary action.
   - **Dependency**: The new line remains perpendicular to the reference line and updates if the reference line or the point moves.
 
+- **Line tangent to circle through point**:
+  - **Description**: Creates a line tangent to a circle and passing through an external point.
+  - **Geometric Principle**: For a point outside a circle, there exist exactly two tangent lines that touch the circle. An index (0 or 1) disambiguates which tangent line to create.
+  - **Steps**:
+    1. Activate the tangent-line-through-point tool.
+    2. Select the circle.
+    3. Specify the point (click on existing point, intersection, or empty space).
+    4. Select the tangent index (0 or 1) via UI control (e.g., radio buttons, number input).
+  - **Result**: A new line entity is created that is tangent to the circle and passes through the specified point. Any automatically created point is recorded as an auxiliary action.
+  - **Dependency**: The tangent line updates when either the circle or the point moves, maintaining tangency and passing through the point.
+  - **Infeasibility**: If the point is inside the circle or exactly on the circle, the construction is invalid and blocked at creation time.
+  - **Index Convention**: Index 0 refers to the tangent line that, when viewed from the point toward the circle center, touches the circle on the left side. Index 1 touches on the right side. This convention is stable under parametric updates.
+
+- **Line tangent to circle parallel to reference line**:
+  - **Description**: Creates a line tangent to a circle and parallel to an existing reference line.
+  - **Geometric Principle**: For a circle and an external line, there exist two tangent lines parallel to the reference line (one on each side of the circle). An index (0 or 1) disambiguates which tangent line to create.
+  - **Steps**:
+    1. Activate the tangent-line-parallel tool.
+    2. Select the circle.
+    3. Select the reference line.
+    4. Select the tangent index (0 or 1) via UI control (e.g., radio buttons, number input).
+  - **Result**: A new line entity is created that is tangent to the circle and parallel to the reference line. No auxiliary points are created (line is fully determined by circle and reference direction).
+  - **Dependency**: The tangent line updates when either the circle or the reference line moves, maintaining tangency and parallelism.
+  - **Infeasibility**: If the reference line intersects the circle (secant case) or is tangent to the circle, the construction is invalid and blocked at creation time.
+  - **Index Convention**: Index 0 refers to the tangent line on the left side when facing along the reference line direction. Index 1 is on the right side. This convention is stable under parametric updates.
+
 **Circle** tool family:
 
 **Geometric Principle**: In Diedrico geometry, circles are primarily defined by **two points**: a center point and a radius point on the circumference. The vector from center to radius point serves dual purpose: (1) its magnitude defines the circle radius, and (2) its direction defines angle zero for consistent intersection point indexing.
@@ -1496,6 +1522,8 @@ These use cases cover primitive user actions and micro-interactions. They are in
 - **FR-042**: Circles created by center and circumference point (Circle2DByCenterAndPoint) MUST update when either defining point moves: The system MUST track dependencies on BOTH the center point AND the circumference point, ensuring the circle realization updates automatically when either point is moved, maintaining the parametric behavior specified in §Parametric Behavior and Dependencies.
 - **FR-043**: The system MUST provide a Parallel Line Tool that creates a line passing through a specified point and parallel to a reference line: when the user activates the tool, selects a reference line (or guide), and specifies a point (by clicking on an existing point, intersection, or empty space), the system MUST create a new Line2DParallelToLine element that remains parallel to the reference line and passes through the specified point, automatically updating when either the reference line or the point moves, maintaining the parametric behavior specified in §Parametric Behavior and Dependencies.
 - **FR-044**: The system MUST provide a Perpendicular Line Tool that creates a line passing through a specified point and perpendicular to a reference line: when the user activates the tool, selects a reference line (or guide), and specifies a point (by clicking on an existing point, intersection, or empty space), the system MUST create a new Line2DPerpendicularToLine element that remains perpendicular to the reference line and passes through the specified point, automatically updating when either the reference line or the point moves, maintaining the parametric behavior specified in §Parametric Behavior and Dependencies.
+- **FR-045**: The system MUST provide a Line Tangent to Circle Through Point Tool that creates a line tangent to a specified circle and passing through a specified point: when the user activates the tool, selects a circle, specifies a point (by clicking on an existing point, intersection, or empty space), and selects an index (0 or 1) to disambiguate which of the two tangent lines to create, the system MUST create a new Line2DTangentToCircleThroughPoint element. If the point is inside the circle or exactly on the circle, the system MUST report infeasibility immediately and MUST NOT create a line. The tangent line MUST automatically update when either the circle or the point moves, maintaining the parametric behavior specified in §Parametric Behavior and Dependencies.
+- **FR-046**: The system MUST provide a Line Tangent to Circle Parallel to Line Tool that creates a line tangent to a specified circle and parallel to a specified reference line: when the user activates the tool, selects a circle, selects a reference line (or guide), and selects an index (0 or 1) to disambiguate which of the two tangent lines to create, the system MUST create a new Line2DTangentToCircleParallelToLine element. If the reference line intersects the circle (secant or tangent), the system MUST report infeasibility immediately and MUST NOT create a line. The tangent line MUST automatically update when either the circle or the reference line moves, maintaining the parametric behavior specified in §Parametric Behavior and Dependencies.
 
 ### Assumptions
 

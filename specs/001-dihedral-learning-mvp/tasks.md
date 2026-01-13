@@ -6285,4 +6285,456 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 ---
 
+## Phase 60: Line Tangent to Circle Through Point Tool
+
+**Purpose**: Implement tool for creating lines tangent to circles passing through external points  
+**Reference**: [spec.md](./spec.md#requirements-mandatory) FR-045 (Line Tangent to Circle Through Point Tool requirement), [spec.md](./spec.md#line-tool-family) - Line tool family tangent-through-point variant
+
+**Context**: Tangent lines are fundamental geometric constructions in technical drawing. For a point outside a circle, there exist exactly two tangent lines that touch the circle. An index (0 or 1) disambiguates which tangent line to create. If the point is inside or on the circle, no tangent lines exist (construction is infeasible at creation time per FR-011).
+
+**Geometric Algorithm**: Given external point P and circle with center C and radius r:
+- Compute distance d = ||P - C||
+- Check feasibility: d must be > r (point outside circle)
+- Compute tangent length: L = sqrt(d² - r²)
+- Compute angle α = asin(r / d)
+- Index 0: Rotate PC direction by +α (counter-clockwise, left tangent)
+- Index 1: Rotate PC direction by -α (clockwise, right tangent)
+
+**Architecture**: Follows established patterns from Phase 58 (Parallel Line Tool) and Phase 59 (Perpendicular Line Tool):
+- Domain class: Line2DTangentToCircleThroughPoint extends Line2D
+- Factory method: ProjectionPlane.addLine2DTangentToCircleThroughPoint()
+- ProcessTree action: createTangentLineToCircleThroughPointAction()
+- Operation: AddLine2DTangentToCircleThroughPointOp
+- Tool: TangentLineToCircleThroughPointTool (THREE-step state machine: circle → point → index)
+
+**Key Differences from Previous Line Tools**:
+- **Three-step workflow**: Select circle, select/create point, enter index
+- **Index selection**: UI must provide index input (radio buttons or number input)
+- **Feasibility validation**: Tool checks point is outside circle BEFORE creating line
+- **No auto-creation of auxiliary geometry**: Line is fully determined by circle and point (no auxiliary points needed)
+
+**Testing Strategy**:
+- Unit tests: Verify geometric algorithm with various point-circle configurations
+- Integration tests: Parametric updates when circle or point moves
+- E2E tests: Complete user workflow including index selection and tangency verification
+
+**Data Model**: [data-model.md](./data-model.md#line2dtangenttocirclethroughpoint-tangent-line-through-external-point-construction-implementation) §Line2DTangentToCircleThroughPoint (~300 lines added)
+
+**Tasks**: 15 tasks (T1022-T1036)
+
+---
+
+**T1022: Implement Line2DTangentToCircleThroughPoint.realize2D()** [DOMAIN]
+- File: `frontend/src/domain/world/Line.ts` (NEW class)
+- Create Line2DTangentToCircleThroughPoint class extending Line2D
+- Properties: circleId, throughPointId, tangentIndex (0 | 1)
+- Implement realize2D() method:
+  - Get circle and point realizations
+  - Check feasibility: point must be outside circle (distance > radius)
+  - Compute tangent direction using geometric formula: angle α = asin(r / d)
+  - Index 0: Rotate PC by +α (left tangent)
+  - Index 1: Rotate PC by -α (right tangent)
+  - Return Line2DRealization2D with point and tangent direction
+- Handle edge cases: point inside/on circle → infeasible
+- Handle infeasibility propagation from circle or point
+- **Key formula**: `tangentDirection = directionPC * cos(α) ± perpDirection * sin(α)`
+
+**T1023: Add Line2DTangentToCircleThroughPoint to Line2DType union** [TYPE]
+- File: `frontend/src/domain/world/Line.ts` (line ~23)
+- Add `'tangent-to-circle-through-point'` to Line2DType union
+- Enables type-safe handling of tangent line variant
+
+**T1024: Implement ProjectionPlane.addLine2DTangentToCircleThroughPoint()** [FACTORY]
+- File: `frontend/src/domain/world/ProjectionPlane.ts` (NEW method)
+- Add factory method to create Line2DTangentToCircleThroughPoint
+- Parameters: circleId, throughPointId, tangentIndex (0 | 1), world, id (optional for redo)
+- Validate circle exists on this plane
+- Validate through-point exists on this plane
+- Validate tangent index is 0 or 1
+- Generate hierarchical ID if not provided
+- Create instance and add to plane's lines collection
+- Return created line
+- **Pattern**: Follows addLine2DParallelToLine pattern with additional index parameter
+
+**T1025: Create CreateTangentLineAction.ts with both tangent action functions** [ACTION]
+- File: `frontend/src/domain/processTree/actions/CreateTangentLineAction.ts` (NEW FILE)
+- Export function createTangentLineToCircleThroughPointAction()
+- Parameters: lineId, planeId, circleId, throughPointId, tangentIndex
+- ActionType: 'CreateTangentLineToCircleThroughPoint'
+- inputs: [circleId, throughPointId] for dependency tracking
+- outputs: [lineId]
+- description: "Tangent line to circle {circleId} through point {throughPointId} (index {tangentIndex})"
+- **Also add**: createTangentLineToCircleParallelToLineAction() for Phase 61
+- **Pattern**: Lowercase function name (not class), uses generateActionId()
+
+**T1026: Implement AddLine2DTangentToCircleThroughPointOp** [OPERATION]
+- File: `frontend/src/commands/operations/world/AddLineOp.ts` (NEW class)
+- Create AddLine2DTangentToCircleThroughPointOp class implementing IOperation
+- Properties: planeId, circleId, throughPointId, tangentIndex
+- Implement apply(): calls plane.addLine2DTangentToCircleThroughPoint()
+- Implement undo(): calls plane.removeLine()
+- Store lineId in outputs for redo
+- **Pattern**: Matches AddLine2DPerpendicularToLineOp structure
+
+**T1027: Create TangentLineToCircleThroughPointTool.ts** [TOOL]
+- File: `frontend/src/tools/TangentLineToCircleThroughPointTool.ts` (NEW FILE)
+- Extends BaseTool
+- State machine: 'waiting-circle' | 'waiting-point' | 'waiting-index'
+- Properties: circleId (optional), throughPointId (optional)
+- Implement getSelectionMask():
+  - waiting-circle → ['circle']
+  - waiting-point → ['point']
+  - waiting-index → [] (no selection, awaiting index input)
+- Implement handleClick():
+  - Step 1: Select circle, transition to waiting-point
+  - Step 2: Select/create point, transition to waiting-index
+- Implement handleIndexInput(index: 0 | 1):
+  - Validate point is outside circle (distance check)
+  - Execute AddLine2DTangentToCircleThroughPointOp
+  - Add action to ProcessTree
+  - Commit and push command
+  - Reset state machine
+- Implement reset(): Clear state and stored IDs
+- **Key**: Three-step workflow with feasibility check before line creation
+
+**T1028: Add 'tangent-line-to-circle-through-point' to ToolType union** [TYPE]
+- File: `frontend/src/stores/toolStore.ts` (line ~13)
+- Add to ToolType union for type-safe tool selection
+
+**T1029: Import and register TangentLineToCircleThroughPointTool in SvgCanvas** [REGISTRATION]
+- File: `frontend/src/components/canvas/SvgCanvas.vue`
+- Import TangentLineToCircleThroughPointTool (with other tool imports ~line 145)
+- Register in tools registry: `'tangent-line-to-circle-through-point': new TangentLineToCircleThroughPointTool()`
+- **Location**: In tools Map initialization (~line 378)
+
+**T1030: Add tangent line through point button to Toolbar.vue** [UI BUTTON]
+- File: `frontend/src/components/toolbars/Toolbar.vue`
+- Add button in Line tool family group (after Perpendicular Line button)
+- Icon: Circle with external point and two tangent lines
+- Title: "Tangent Line Through Point Tool - Line tangent to circle through external point"
+- Label: "Tangent (Point)"
+- Activates 'tangent-line-to-circle-through-point' tool
+- **UI consideration**: Button may need index selector (radio buttons or number input after point selection)
+
+**T1031: Add index input UI control to Toolbar or modal** [UI INPUT]
+- Location: Either in Toolbar.vue or as modal dialog
+- Provide radio buttons or number input for index selection (0 or 1)
+- Show after circle and point are selected (state = 'waiting-index')
+- Label: "Select tangent line: 0 (left) or 1 (right)"
+- On selection, call tool.handleIndexInput(index)
+- **Design choice**: Radio buttons preferred for visual clarity over number input
+
+**T1032: Unit test Line2DTangentToCircleThroughPoint.realize2D()** [TESTING (DOMAIN)]
+- File: `frontend/tests/unit/domain/line.spec.ts`
+- Test external point with index 0 (left tangent)
+- Test external point with index 1 (right tangent)
+- Test point far from circle (large angle α)
+- Test point near circle boundary (small angle α)
+- Test point inside circle → infeasible
+- Test point exactly on circle → infeasible
+- Test circle infeasible → propagate infeasibility
+- Test point infeasible → propagate infeasibility
+- **Assertion**: Verify tangent line actually touches circle (distance from center to line = radius)
+
+**T1033: Unit test AddLine2DTangentToCircleThroughPointOp** [TESTING (OPERATION)]
+- File: `frontend/tests/unit/commands/operations/AddLineOp.spec.ts`
+- Test apply() creates line and returns success with lineId
+- Test undo() removes line from plane
+- Test redo() restores line with same ID
+- Test error handling when plane not found
+- Test error handling when circle not found
+- Test error handling when point not found
+- **Pattern**: Matches AddLine2DPerpendicularToLineOp tests
+
+**T1034: Unit test TangentLineToCircleThroughPointTool state machine** [TESTING (TOOL)]
+- File: `frontend/tests/unit/tools/TangentLineToCircleThroughPointTool.spec.ts`
+- Test getSelectionMask() returns ['circle'] in waiting-circle state
+- Test getSelectionMask() returns ['point'] in waiting-point state
+- Test getSelectionMask() returns [] in waiting-index state
+- Test step 1: clicking circle stores circleId and transitions state
+- Test step 2: clicking point stores pointId and transitions state
+- Test step 3: handleIndexInput(0) creates tangent line
+- Test step 3: handleIndexInput(1) creates different tangent line
+- Test feasibility validation: point inside circle → error, no line created
+- Test cancel() resets state machine
+- **Pattern**: Extended from ParallelLineTool pattern with third step
+
+**T1035: Integration test tangent line parametric updates** [TESTING (INTEGRATION)]
+- File: `frontend/tests/integration/tangentLineToCircleThroughPoint.spec.ts` (NEW FILE)
+- Test creating tangent line through external point
+- Test parametric update: move external point → tangent line updates
+- Test parametric update: move circle center → tangent line updates
+- Test parametric update: change circle radius → tangent line updates
+- Test action recorded in ProcessTree with correct inputs/outputs
+- Test DependencyService tracks circleId and throughPointId
+- **Key assertion**: Verify tangent line truly tangent (distance from center to line = radius ± epsilon)
+- **Key assertion**: Verify line passes through external point
+
+**T1036: E2E test tangent line through point tool workflow** [TESTING (E2E)]
+- File: `frontend/tests/e2e/tangent-line-through-point-creation.spec.ts` (NEW FILE)
+- Create circle using Circle tool
+- Create external point using Point tool
+- Activate Tangent Line Through Point tool via toolbar
+- Click circle (verify highlight feedback)
+- Click external point (verify highlight feedback)
+- Select index 0 via UI control (verify tangent line created)
+- Verify tangent line rendered on canvas
+- Measure distance from circle center to line, verify equals radius
+- Verify line passes through external point
+- Move external point farther, verify tangent angle adjusts
+- Test undo/redo preserves tangency relationship
+- **Repeat with index 1**: Verify different tangent line created
+
+### Phase 60 Acceptance Criteria
+
+1. Line2DTangentToCircleThroughPoint.realize2D() computes correct tangent direction using angle α = asin(r/d)
+2. Index 0 creates left tangent (rotation +α CCW), index 1 creates right tangent (rotation -α CW)
+3. Point inside or on circle → construction is infeasible (realize2D returns feasible = false)
+4. Factory method addLine2DTangentToCircleThroughPoint() validates inputs (circle, point, index)
+5. CreateTangentLineToCircleThroughPointAction tracks dependencies [circleId, throughPointId]
+6. AddLine2DTangentToCircleThroughPointOp creates line and supports undo/redo
+7. TangentLineToCircleThroughPointTool follows three-step workflow: circle → point → index
+8. Tool validates point is outside circle BEFORE creating line (FR-011 creation-time validation)
+9. Toolbar has "Tangent (Point)" button with appropriate icon
+10. UI provides index selector (radio buttons or number input)
+11. Tangent line updates when external point moves (parametric update)
+12. Tangent line updates when circle center or radius changes (parametric update)
+13. Tangent line is truly tangent: distance from center to line equals radius (within epsilon)
+14. Tangent line passes through external point exactly
+15. All unit tests passing (domain, operation, tool state machine)
+16. Integration tests verify parametric behavior and tangency constraint
+17. E2E test verifies complete user workflow with index selection
+
+**Phase 60 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: Users can create tangent lines to circles passing through external points; tangent lines maintain tangency when circle or point moves; index selection provides deterministic control over which of two tangent lines to create; fundamental advanced geometric construction for technical drawing.
+
+---
+
+## Phase 61: Line Tangent to Circle Parallel to Line Tool
+
+**Purpose**: Implement tool for creating lines tangent to circles and parallel to reference lines  
+**Reference**: [spec.md](./spec.md#requirements-mandatory) FR-046 (Line Tangent to Circle Parallel to Line Tool requirement), [spec.md](./spec.md#line-tool-family) - Line tool family tangent-parallel variant
+
+**Context**: Tangent lines parallel to a reference line are fundamental for technical drawing constraints. For a circle and an external line (not intersecting), there exist exactly two tangent lines parallel to the reference (one on each side of the circle). An index (0 or 1) disambiguates which tangent line to create. If the reference line intersects or is tangent to the circle, no parallel tangent lines exist (construction is infeasible at creation time per FR-011).
+
+**Geometric Algorithm**: Given circle with center C, radius r, and reference line with direction d:
+- Compute perpendicular direction: p = rotate d by 90° CCW = (-dy, dx, 0)
+- Compute distance from center C to reference line
+- Check feasibility: distance must be > r (reference line external to circle)
+- Index 0: Tangent point = C + r * p (left side when facing along d)
+- Index 1: Tangent point = C - r * p (right side when facing along d)
+- Tangent line: infinite line through tangent point with direction d
+
+**Architecture**: Follows Phase 60 pattern (Tangent Line Through Point Tool):
+- Domain class: Line2DTangentToCircleParallelToLine extends Line2D
+- Factory method: ProjectionPlane.addLine2DTangentToCircleParallelToLine()
+- ProcessTree action: createTangentLineToCircleParallelToLineAction() (already created in T1025)
+- Operation: AddLine2DTangentToCircleParallelToLineOp
+- Tool: TangentLineToCircleParallelToLineTool (THREE-step state machine: circle → reference line → index)
+
+**Key Differences from Phase 60**:
+- **Reference line instead of point**: Second step selects line, not point
+- **Distance validation**: Check reference line doesn't intersect circle (not point outside circle)
+- **Parallel constraint**: Tangent line has same direction as reference line
+- **No auxiliary geometry**: Line fully determined by circle and reference direction
+
+**Testing Strategy**:
+- Unit tests: Horizontal, vertical, and diagonal reference lines with both indices
+- Integration tests: Parametric updates when circle, reference line, or index changes
+- E2E tests: Complete workflow with tangency and parallelism verification
+
+**Data Model**: [data-model.md](./data-model.md#line2dtangenttocircleparalleltoline-tangent-line-parallel-to-reference-line-construction-implementation) §Line2DTangentToCircleParallelToLine (~300 lines added)
+
+**Tasks**: 15 tasks (T1037-T1051)
+
+---
+
+**T1037: Implement Line2DTangentToCircleParallelToLine.realize2D()** [DOMAIN]
+- File: `frontend/src/domain/world/Line.ts` (NEW class)
+- Create Line2DTangentToCircleParallelToLine class extending Line2D
+- Properties: circleId, referenceLineId, tangentIndex (0 | 1)
+- Implement realize2D() method:
+  - Get circle and reference line realizations
+  - Get reference line direction d
+  - Compute perpendicular direction: p = (-dy, dx, 0) (90° CCW)
+  - Compute distance from circle center to reference line
+  - Check feasibility: distance must be > radius (external line)
+  - Index 0: Tangent point = center + radius * p (left side)
+  - Index 1: Tangent point = center - radius * p (right side)
+  - Return Line2DRealization2D with tangent point and reference direction
+- Handle edge cases: reference line intersects/tangent to circle → infeasible
+- Handle infeasibility propagation from circle or reference line
+- **Key formula**: `tangentPoint = center ± radius * perpDirection`
+
+**T1038: Add Line2DTangentToCircleParallelToLine to Line2DType union** [TYPE]
+- File: `frontend/src/domain/world/Line.ts` (line ~23)
+- Add `'tangent-to-circle-parallel'` to Line2DType union
+- Enables type-safe handling of tangent-parallel line variant
+
+**T1039: Implement ProjectionPlane.addLine2DTangentToCircleParallelToLine()** [FACTORY]
+- File: `frontend/src/domain/world/ProjectionPlane.ts` (NEW method)
+- Add factory method to create Line2DTangentToCircleParallelToLine
+- Parameters: circleId, referenceLineId, tangentIndex (0 | 1), world, id (optional)
+- Validate circle exists on this plane
+- Validate reference line exists in world (can be on any plane)
+- Validate tangent index is 0 or 1
+- Generate hierarchical ID if not provided
+- Create instance and add to plane's lines collection
+- Return created line
+- **Pattern**: Similar to addLine2DTangentToCircleThroughPoint but with referenceLineId instead of throughPointId
+
+**T1040: Implement AddLine2DTangentToCircleParallelToLineOp** [OPERATION]
+- File: `frontend/src/commands/operations/world/AddLineOp.ts` (NEW class)
+- Create AddLine2DTangentToCircleParallelToLineOp class implementing IOperation
+- Properties: planeId, circleId, referenceLineId, tangentIndex
+- Implement apply(): calls plane.addLine2DTangentToCircleParallelToLine()
+- Implement undo(): calls plane.removeLine()
+- Store lineId in outputs for redo
+- **Pattern**: Matches AddLine2DTangentToCircleThroughPointOp structure
+
+**T1041: Create TangentLineToCircleParallelToLineTool.ts** [TOOL]
+- File: `frontend/src/tools/TangentLineToCircleParallelToLineTool.ts` (NEW FILE)
+- Extends BaseTool
+- State machine: 'waiting-circle' | 'waiting-line' | 'waiting-index'
+- Properties: circleId (optional), referenceLineId (optional)
+- Implement getSelectionMask():
+  - waiting-circle → ['circle']
+  - waiting-line → ['line']
+  - waiting-index → [] (no selection, awaiting index input)
+- Implement handleClick():
+  - Step 1: Select circle, transition to waiting-line
+  - Step 2: Select reference line, transition to waiting-index
+- Implement handleIndexInput(index: 0 | 1):
+  - Validate reference line doesn't intersect circle (distance check)
+  - Execute AddLine2DTangentToCircleParallelToLineOp
+  - Add action to ProcessTree
+  - Commit and push command
+  - Reset state machine
+- Implement reset(): Clear state and stored IDs
+- **Key**: Three-step workflow with intersection check before line creation
+
+**T1042: Add 'tangent-line-to-circle-parallel' to ToolType union** [TYPE]
+- File: `frontend/src/stores/toolStore.ts` (line ~13)
+- Add to ToolType union for type-safe tool selection
+
+**T1043: Import and register TangentLineToCircleParallelToLineTool in SvgCanvas** [REGISTRATION]
+- File: `frontend/src/components/canvas/SvgCanvas.vue`
+- Import TangentLineToCircleParallelToLineTool (with other tool imports)
+- Register in tools registry: `'tangent-line-to-circle-parallel': new TangentLineToCircleParallelToLineTool()`
+- **Location**: In tools Map initialization
+
+**T1044: Add tangent line parallel button to Toolbar.vue** [UI BUTTON]
+- File: `frontend/src/components/toolbars/Toolbar.vue`
+- Add button in Line tool family group (after Tangent Through Point button)
+- Icon: Circle with two parallel tangent lines on opposite sides
+- Title: "Tangent Line Parallel Tool - Line tangent to circle parallel to reference line"
+- Label: "Tangent (Parallel)"
+- Activates 'tangent-line-to-circle-parallel' tool
+- **UI consideration**: Button may share index selector UI with Phase 60
+
+**T1045: Extend index input UI to support both tangent tools** [UI INPUT]
+- Location: Toolbar.vue or modal dialog (reuse Phase 60 component)
+- Show for both tangent tools when state = 'waiting-index'
+- Label for Phase 60: "Select tangent through point: 0 (left) or 1 (right)"
+- Label for Phase 61: "Select tangent parallel: 0 (left) or 1 (right)"
+- On selection, call appropriate tool.handleIndexInput(index)
+- **Design**: Reuse same UI control for both tools (DRY principle)
+
+**T1046: Unit test Line2DTangentToCircleParallelToLine.realize2D()** [TESTING (DOMAIN)]
+- File: `frontend/tests/unit/domain/line.spec.ts`
+- Test horizontal reference line with index 0 and index 1
+- Test vertical reference line with both indices
+- Test diagonal reference line (45°) with both indices
+- Test reference line intersects circle (secant) → infeasible
+- Test reference line tangent to circle → infeasible
+- Test circle infeasible → propagate infeasibility
+- Test reference line infeasible → propagate infeasibility
+- **Assertion**: Verify tangent line is parallel to reference (same direction)
+- **Assertion**: Verify tangent line touches circle (distance from center to line = radius)
+
+**T1047: Unit test AddLine2DTangentToCircleParallelToLineOp** [TESTING (OPERATION)]
+- File: `frontend/tests/unit/commands/operations/AddLineOp.spec.ts`
+- Test apply() creates line and returns success with lineId
+- Test undo() removes line from plane
+- Test redo() restores line with same ID
+- Test error handling when plane not found
+- Test error handling when circle not found
+- Test error handling when reference line not found
+- **Pattern**: Matches AddLine2DTangentToCircleThroughPointOp tests
+
+**T1048: Unit test TangentLineToCircleParallelToLineTool state machine** [TESTING (TOOL)]
+- File: `frontend/tests/unit/tools/TangentLineToCircleParallelToLineTool.spec.ts`
+- Test getSelectionMask() returns ['circle'] in waiting-circle state
+- Test getSelectionMask() returns ['line'] in waiting-line state
+- Test getSelectionMask() returns [] in waiting-index state
+- Test step 1: clicking circle stores circleId and transitions state
+- Test step 2: clicking line stores referenceLineId and transitions state
+- Test step 3: handleIndexInput(0) creates tangent line
+- Test step 3: handleIndexInput(1) creates different tangent line
+- Test feasibility validation: reference line intersects circle → error, no line created
+- Test cancel() resets state machine
+- **Pattern**: Similar to TangentLineToCircleThroughPointTool tests
+
+**T1049: Integration test tangent line parallel parametric updates** [TESTING (INTEGRATION)]
+- File: `frontend/tests/integration/tangentLineToCircleParallel.spec.ts` (NEW FILE)
+- Test creating tangent line parallel to reference line
+- Test parametric update: rotate reference line → tangent line rotates (stays parallel)
+- Test parametric update: move circle center → tangent line moves
+- Test parametric update: change circle radius → tangent line position adjusts
+- Test action recorded in ProcessTree with correct inputs/outputs
+- Test DependencyService tracks circleId and referenceLineId
+- **Key assertion**: Verify tangent line parallel to reference (dot product of perpendiculars = 0)
+- **Key assertion**: Verify tangent line truly tangent (distance from center = radius ± epsilon)
+
+**T1050: E2E test tangent line parallel tool workflow** [TESTING (E2E)]
+- File: `frontend/tests/e2e/tangent-line-parallel-creation.spec.ts` (NEW FILE)
+- Create circle using Circle tool
+- Create reference line using Line tool (ensure it doesn't intersect circle)
+- Activate Tangent Line Parallel tool via toolbar
+- Click circle (verify highlight feedback)
+- Click reference line (verify highlight feedback)
+- Select index 0 via UI control (verify tangent line created)
+- Verify tangent line rendered on canvas
+- Verify tangent line is parallel to reference line (visual inspection)
+- Measure distance from circle center to tangent line, verify equals radius
+- Rotate reference line, verify tangent line rotates to stay parallel
+- Test undo/redo preserves tangency and parallelism
+- **Repeat with index 1**: Verify different tangent line created on opposite side
+
+**T1051: Document Phase 60 and Phase 61 completion in data-model.md** [DOCUMENTATION]
+- File: `specs/001-dihedral-learning-mvp/data-model.md`
+- Sections already added: §Line2DTangentToCircleThroughPoint and §Line2DTangentToCircleParallelToLine
+- Add implementation notes after both phases complete
+- Document any deviations from original plan
+- Record lessons learned about three-step tool workflows
+- Document index convention stability under parametric updates
+- **Note**: Both tools share similar architecture, document commonalities
+
+### Phase 61 Acceptance Criteria
+
+1. Line2DTangentToCircleParallelToLine.realize2D() computes correct tangent point using perpendicular direction
+2. Index 0 creates left tangent (center + radius * perpDirection), index 1 creates right tangent (center - radius * perpDirection)
+3. Reference line intersects or is tangent to circle → construction is infeasible (realize2D returns feasible = false)
+4. Factory method addLine2DTangentToCircleParallelToLine() validates inputs (circle, reference line, index)
+5. CreateTangentLineToCircleParallelToLineAction tracks dependencies [circleId, referenceLineId]
+6. AddLine2DTangentToCircleParallelToLineOp creates line and supports undo/redo
+7. TangentLineToCircleParallelToLineTool follows three-step workflow: circle → reference line → index
+8. Tool validates reference line doesn't intersect circle BEFORE creating line (FR-011 validation)
+9. Toolbar has "Tangent (Parallel)" button with appropriate icon
+10. UI index selector works for both tangent tools (reusable component)
+11. Tangent line remains parallel to reference line when reference rotates (parametric update)
+12. Tangent line updates when circle center or radius changes (parametric update)
+13. Tangent line is truly tangent: distance from center to line equals radius (within epsilon)
+14. Tangent line is parallel to reference line: same direction vector
+15. All unit tests passing (domain, operation, tool state machine)
+16. Integration tests verify parametric behavior, tangency, and parallelism constraints
+17. E2E test verifies complete user workflow with index selection and constraint verification
+
+**Phase 61 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: Users can create tangent lines to circles that are parallel to reference lines; tangent lines maintain both tangency and parallelism when circle or reference line moves; index selection provides deterministic control; completes advanced geometric construction toolkit for technical drawing with tangent constraints.
+
+---
+
 **Status**: IN PROGRESS (T980-T982 complete, T983-T986 remaining - tests needed)

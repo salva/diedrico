@@ -3836,6 +3836,999 @@ export class PerpendicularLineTool extends BaseTool {
 
 ---
 
+#### Line2DTangentToCircleThroughPoint: Tangent Line Through External Point Construction Implementation
+
+**Purpose**: Create an infinite line tangent to a circle and passing through an external point.
+
+**Geometric Principle**: For a point outside a circle, there exist exactly two tangent lines that touch the circle at two distinct tangent points. An index (0 or 1) is required to disambiguate which tangent line to construct. If the point is inside or exactly on the circle, no tangent lines exist (construction is infeasible).
+
+**Algorithm**: Tangent line computation requires solving the geometric constraint: line passes through external point P and is tangent to circle with center C and radius r.
+
+```typescript
+class Line2DTangentToCircleThroughPoint extends Line2D {
+  readonly type: 'tangent-to-circle-through-point' = 'tangent-to-circle-through-point';
+  readonly circleId: string;
+  readonly throughPointId: string;
+  readonly tangentIndex: 0 | 1;  // Disambiguates which of two tangent lines
+  
+  realize2D(world: World): Line2DRealization2D | null {
+    // Step 1: Get containing plane
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) return null;
+    
+    // Step 2: Get circle realization
+    const circle = plane.getCircle(this.circleId);
+    const circleRealization = circle?.realize2D(world);
+    if (!circleRealization) return null;
+    
+    // Step 3: Get through-point realization
+    const throughPoint = plane.getPoint(this.throughPointId);
+    const throughPointRealization = throughPoint?.realize2D(world);
+    if (!throughPointRealization) return null;
+    
+    // Step 4: Check infeasibility propagation
+    if (!circleRealization.feasible || !throughPointRealization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    // Step 5: Compute distance from external point to circle center
+    const center = circleRealization.center;  // (cx, cy, 1)
+    const externalPoint = throughPointRealization.position;  // (px, py, 1)
+    const radius = circleRealization.getRadius();
+    
+    const dx = externalPoint.x - center.x;
+    const dy = externalPoint.y - center.y;
+    const distanceSquared = dx * dx + dy * dy;
+    const distance = Math.sqrt(distanceSquared);
+    
+    // Step 6: Check geometric feasibility
+    // Point must be strictly outside circle (distance > radius)
+    const EPSILON = 1e-6;
+    if (distance <= radius + EPSILON) {
+      // Point is inside or on circle boundary - no tangent lines exist
+      console.warn(`[Line2DTangentToCircleThroughPoint] Point is inside or on circle, construction is infeasible`);
+      return new Line2DRealization2D(
+        externalPoint.clone(),
+        new Vector3(1, 0, 0),
+        false  // Mark as infeasible
+      );
+    }
+    
+    // Step 7: Compute tangent points using geometric derivation
+    // Given: External point P, circle center C, radius r
+    // Distance d = ||P - C||
+    // Tangent length (from P to tangent point T): L = sqrt(d^2 - r^2)
+    // Angle from PC line to tangent: alpha = asin(r / d)
+    //
+    // Two tangent points T0 and T1:
+    // - T0: rotate PC by +alpha
+    // - T1: rotate PC by -alpha
+    
+    const tangentLength = Math.sqrt(distanceSquared - radius * radius);
+    const angleAlpha = Math.asin(radius / distance);
+    
+    // Direction from center to external point
+    const directionPC = new Vector3(dx / distance, dy / distance, 0);
+    
+    // Compute perpendicular direction (90° CCW rotation)
+    const perpDirection = new Vector3(-directionPC.y, directionPC.x, 0);
+    
+    // Tangent point positions (distance tangentLength from P along tangent line)
+    // The tangent line makes angle (anglePC ± angleAlpha) with x-axis
+    
+    // Compute tangent directions for both indices
+    let tangentDirection: Vector3;
+    
+    if (this.tangentIndex === 0) {
+      // Index 0: Left tangent (rotate PC direction by +alpha, CCW)
+      // tangentDir = directionPC * cos(alpha) + perpDirection * sin(alpha)
+      const cosAlpha = Math.cos(angleAlpha);
+      const sinAlpha = Math.sin(angleAlpha);
+      tangentDirection = new Vector3(
+        directionPC.x * cosAlpha + perpDirection.x * sinAlpha,
+        directionPC.y * cosAlpha + perpDirection.y * sinAlpha,
+        0
+      );
+    } else {
+      // Index 1: Right tangent (rotate PC direction by -alpha, CW)
+      // tangentDir = directionPC * cos(alpha) - perpDirection * sin(alpha)
+      const cosAlpha = Math.cos(angleAlpha);
+      const sinAlpha = Math.sin(angleAlpha);
+      tangentDirection = new Vector3(
+        directionPC.x * cosAlpha - perpDirection.x * sinAlpha,
+        directionPC.y * cosAlpha - perpDirection.y * sinAlpha,
+        0
+      );
+    }
+    
+    // Step 8: Verify tangent direction is not degenerate
+    if (tangentDirection.lengthSq() < 1e-10) {
+      return new Line2DRealization2D(
+        externalPoint.clone(),
+        new Vector3(1, 0, 0),
+        false
+      );
+    }
+    
+    // Step 9: Return infinite line through external point with tangent direction
+    return new Line2DRealization2D(
+      externalPoint.clone(),
+      tangentDirection,
+      true
+    );
+  }
+}
+```
+
+**Index Convention** (stable under parametric updates):
+- **Index 0**: Left tangent line when viewing from external point P toward circle center C
+  - Rotation: +alpha (counter-clockwise)
+  - Touch point: On the left side of line PC
+- **Index 1**: Right tangent line when viewing from P toward C
+  - Rotation: -alpha (clockwise)
+  - Touch point: On the right side of line PC
+
+**Geometric Examples**:
+
+Example 1: Circle at origin (0, 0) with radius 3, external point at (5, 0)
+- Distance d = 5, radius r = 3
+- Tangent length L = sqrt(25 - 9) = 4
+- Angle alpha = asin(3/5) ≈ 36.87°
+- Index 0: Direction ≈ (+0.8, +0.6, 0) (upward-left from point)
+- Index 1: Direction ≈ (+0.8, -0.6, 0) (downward-left from point)
+
+Example 2: Circle at (10, 10) radius 5, external point at (20, 10)
+- Distance d = 10, radius r = 5
+- Tangent length L = sqrt(100 - 25) ≈ 8.66
+- Angle alpha = asin(0.5) = 30°
+- Index 0: Tangent touches circle at top-right
+- Index 1: Tangent touches circle at bottom-right
+
+**Edge Cases and Validation**:
+
+1. **Point inside circle** (distance < radius):
+   - Construction is **infeasible** at creation time
+   - `realize2D()` returns `feasible = false`
+   - UI must detect this and block construction (FR-045)
+
+2. **Point exactly on circle** (distance ≈ radius):
+   - Only one tangent exists (the tangent line at that point)
+   - Treated as infeasible (ambiguous which index to use)
+   - Alternative: Could allow index 0 only, but simpler to block
+
+3. **Point very close to circle** (distance ≈ radius + epsilon):
+   - Two tangent lines exist but nearly coincide
+   - Construction is valid but may have numerical instability
+   - Use EPSILON = 1e-6 for distance comparison
+
+4. **Circle or point is infeasible**:
+   - Propagate infeasibility: `feasible = false`
+   - Do NOT attempt geometric computation
+
+**Dependencies and Parametric Updates**:
+
+Line2DTangentToCircleThroughPoint tracks two dependencies:
+1. **circleId**: When circle center moves or radius changes, tangent line updates
+2. **throughPointId**: When external point moves, tangent line updates
+
+Example parametric behavior:
+```typescript
+// Initial: Circle at (0, 0) radius 3, external point at (5, 0)
+const circle = new Circle2DByCenterAndPoint('c1', 'center', 'radiusPoint', 'plane_H');
+const externalPoint = new FreePoint2D('p1', new Vector3(5, 0, 1), 'plane_H');
+const tangentLine = new Line2DTangentToCircleThroughPoint('t1', 'c1', 'p1', 0, 'plane_H');
+
+// Realize tangent line (index 0 = left tangent)
+const realization1 = tangentLine.realize2D(world);
+// → direction ≈ (+0.8, +0.6, 0) (upward from external point)
+
+// User moves external point farther from circle to (8, 0)
+externalPoint.position = new Vector3(8, 0, 1);
+
+// Re-realize tangent line
+const realization2 = tangentLine.realize2D(world);
+// → direction ≈ (+0.928, +0.371, 0) (shallower angle, still upward)
+// Tangent line automatically adjusts to new point position
+
+// User moves circle center to (1, 1)
+centerPoint.position = new Vector3(1, 1, 1);
+
+// Re-realize tangent line
+const realization3 = tangentLine.realize2D(world);
+// → direction recomputed based on new circle-to-point geometry
+```
+
+**Factory Method** (ProjectionPlane.ts):
+
+```typescript
+addLine2DTangentToCircleThroughPoint(
+  circleId: string,
+  throughPointId: string,
+  tangentIndex: 0 | 1,
+  world: World,
+  id?: string
+): Line2DTangentToCircleThroughPoint {
+  // Validate through-point exists on this plane
+  const throughPoint = this.getPoint(throughPointId);
+  if (!throughPoint) {
+    throw new Error(`Through-point ${throughPointId} not found on plane ${this.id}`);
+  }
+  
+  // Validate circle exists on this plane
+  const circle = this.getCircle(circleId);
+  if (!circle) {
+    throw new Error(`Circle ${circleId} not found on plane ${this.id}`);
+  }
+  
+  // Validate tangent index
+  if (tangentIndex !== 0 && tangentIndex !== 1) {
+    throw new Error(`Invalid tangent index: ${tangentIndex}. Must be 0 or 1.`);
+  }
+  
+  // Generate hierarchical ID if not provided (for redo)
+  const lineId = id ?? this.generateHierarchicalId('line');
+  
+  // Create Line2DTangentToCircleThroughPoint instance
+  const tangentLine = new Line2DTangentToCircleThroughPoint(
+    lineId,
+    circleId,
+    throughPointId,
+    tangentIndex,
+    this.id
+  );
+  
+  // Add to plane's line collection
+  this.addLine(tangentLine);
+  
+  return tangentLine;
+}
+```
+
+**ProcessTree Action** (CreateTangentLineAction.ts):
+
+```typescript
+export function createTangentLineToCircleThroughPointAction(
+  lineId: string,
+  planeId: string,
+  circleId: string,
+  throughPointId: string,
+  tangentIndex: 0 | 1
+): Action {
+  return {
+    id: generateActionId(),
+    type: 'action',
+    actionType: 'CreateTangentLineToCircleThroughPoint',
+    timestamp: new Date(),
+    inputs: [circleId, throughPointId],  // Dependencies for DependencyService
+    outputs: [lineId],
+    parameters: { planeId, circleId, throughPointId, tangentIndex },
+    description: `Tangent line to circle ${circleId} through point ${throughPointId} (index ${tangentIndex})`
+  };
+}
+```
+
+**Operation** (AddLineOp.ts):
+
+```typescript
+export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
+  readonly type = 'AddLine2DTangentToCircleThroughPoint';
+  parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+  
+  constructor(
+    private planeId: string,
+    private circleId: string,
+    private throughPointId: string,
+    private tangentIndex: 0 | 1
+  ) {
+    this.parameters = { planeId, circleId, throughPointId, tangentIndex };
+  }
+  
+  apply(world: World): OperationResult {
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) {
+      return { success: false, error: `Plane ${this.planeId} not found` };
+    }
+    
+    const line = plane.addLine2DTangentToCircleThroughPoint(
+      this.circleId,
+      this.throughPointId,
+      this.tangentIndex,
+      world,
+      this.outputs.lineId  // For redo: reuse ID if already generated
+    );
+    
+    this.outputs = { lineId: line.id };
+    return { success: true, outputs: this.outputs };
+  }
+  
+  undo(world: World): void {
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (plane && this.outputs.lineId) {
+      plane.removeLine(this.outputs.lineId);
+    }
+  }
+}
+```
+
+**Tool Implementation** (TangentLineToCircleThroughPointTool.ts):
+
+Three-step state machine: circle → point → index
+
+```typescript
+export class TangentLineToCircleThroughPointTool extends BaseTool {
+  readonly name = 'tangent-line-to-circle-through-point';
+  private state: 'waiting-circle' | 'waiting-point' | 'waiting-index' = 'waiting-circle';
+  private circleId?: string;
+  private throughPointId?: string;
+  
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-circle') {
+      return ['circle'];
+    } else if (this.state === 'waiting-point') {
+      return ['point'];
+    } else {
+      return [];  // No selection during index input
+    }
+  }
+  
+  handleClick(context: ToolContext): ToolResult {
+    const { world, canvasPos, planeId } = context;
+    const plane = world.getProjectionPlaneById(planeId);
+    if (!plane) {
+      return this.error('Active plane not found');
+    }
+    
+    if (this.state === 'waiting-circle') {
+      // Step 1: Select circle
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, ['circle']);
+      if (!hit) {
+        return this.error('No circle found at click location');
+      }
+      
+      this.circleId = hit.elementId;
+      this.state = 'waiting-point';
+      return this.success(`Selected circle: ${hit.elementId}. Click point through which tangent passes.`);
+      
+    } else if (this.state === 'waiting-point') {
+      // Step 2: Select or create point
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, ['point']);
+      
+      if (hit) {
+        this.throughPointId = hit.elementId;
+      } else {
+        // Create free point at click location
+        const planePos = paperToPlaneTransform.multiplyVector3(canvasPos);
+        const cmd = new Command('Create free point for tangent line', world);
+        const pointOp = new AddFreePoint2DOp(planeId, planePos);
+        cmd.addAndExecute(pointOp);
+        cmd.commit();
+        commandStack.push(cmd);
+        this.throughPointId = pointOp.outputs.pointId;
+      }
+      
+      this.state = 'waiting-index';
+      return this.success(`Selected point: ${this.throughPointId}. Enter tangent index (0 or 1).`);
+    }
+    
+    return this.error('Unexpected state');
+  }
+  
+  handleIndexInput(index: 0 | 1, context: ToolContext): ToolResult {
+    if (this.state !== 'waiting-index') {
+      return this.error('Not ready for index input');
+    }
+    
+    const { world, planeId, commandStack } = context;
+    const plane = world.getProjectionPlaneById(planeId);
+    
+    // Check feasibility BEFORE creating line
+    const circle = plane?.getCircle(this.circleId!);
+    const point = plane?.getPoint(this.throughPointId!);
+    const circleRealization = circle?.realize2D(world);
+    const pointRealization = point?.realize2D(world);
+    
+    if (!circleRealization || !pointRealization) {
+      this.reset();
+      return this.error('Circle or point is infeasible');
+    }
+    
+    // Check if point is outside circle
+    const dx = pointRealization.position.x - circleRealization.center.x;
+    const dy = pointRealization.position.y - circleRealization.center.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const radius = circleRealization.getRadius();
+    
+    if (distance <= radius + 1e-6) {
+      this.reset();
+      return this.error('Point must be outside circle for tangent line construction');
+    }
+    
+    // Create tangent line
+    const cmd = new Command('Create tangent line to circle through point', world);
+    const result = cmd.addAndExecute(
+      new AddLine2DTangentToCircleThroughPointOp(
+        planeId,
+        this.circleId!,
+        this.throughPointId!,
+        index
+      )
+    );
+    
+    if (!result.success) {
+      this.reset();
+      return this.error(result.error ?? 'Failed to create tangent line');
+    }
+    
+    // Add action to ProcessTree
+    const lineId = result.outputs.lineId;
+    const action = createTangentLineToCircleThroughPointAction(
+      lineId,
+      planeId,
+      this.circleId!,
+      this.throughPointId!,
+      index
+    );
+    world.getProcessTree().addAction(action);
+    
+    cmd.commit();
+    commandStack.push(cmd);
+    
+    this.reset();
+    return this.success(`Created tangent line ${lineId} (index ${index})`);
+  }
+  
+  reset(): void {
+    this.state = 'waiting-circle';
+    this.circleId = undefined;
+    this.throughPointId = undefined;
+  }
+}
+```
+
+**UI Integration**:
+
+Toolbar button with index input:
+- Icon: Circle with external point and two tangent lines
+- Title: "Tangent Line Tool - Line tangent to circle through external point"
+- After selecting circle and point, show index selector (radio buttons or number input)
+
+**Testing Strategy**:
+
+1. **Unit tests** (Line2DTangentToCircleThroughPoint.realize2D):
+   - External point with index 0 and index 1
+   - Point far from circle (large angle)
+   - Point near circle boundary (small angle)
+   - Point inside circle → infeasible
+   - Point on circle → infeasible
+   - Circle or point infeasible → propagate infeasibility
+
+2. **Integration tests**: Parametric updates
+   - Move external point → both tangent lines update
+   - Move circle center → tangent lines follow
+   - Change circle radius → tangent angles adjust
+   - Verify action recorded in ProcessTree
+
+3. **E2E tests**: Complete workflow
+   - Create circle and external point
+   - Activate tangent line tool
+   - Select circle, point, index 0 → verify tangent line created
+   - Repeat with index 1 → verify different tangent line
+   - Verify lines are truly tangent (distance from center to line = radius)
+
+**Implementation Files**:
+- Domain: `frontend/src/domain/world/Line.ts` (Line2DTangentToCircleThroughPoint class, NEW)
+- Factory: `frontend/src/domain/world/ProjectionPlane.ts` (addLine2DTangentToCircleThroughPoint, NEW)
+- Action: `frontend/src/domain/processTree/actions/CreateTangentLineAction.ts` (NEW FILE)
+- Operation: `frontend/src/commands/operations/world/AddLineOp.ts` (AddLine2DTangentToCircleThroughPointOp, NEW)
+- Tool: `frontend/src/tools/TangentLineToCircleThroughPointTool.ts` (NEW FILE)
+- Tests: Multiple files in `frontend/tests/{unit,integration,e2e}/`
+
+**Key Architecture Points**:
+- **Three-step workflow**: Circle → Point → Index (tool state machine)
+- **Index validation**: Tool checks point is outside circle BEFORE creating line
+- **Index convention**: Left/right relative to P→C direction (stable under updates)
+- **Feasibility check**: Tool validates geometry before construction (FR-045)
+- **Operation returns outputs**: Tool reads lineId from operation result
+
+**Phase**: Phase 60 (T1022-T1036)  
+**Status**: 📋 PLANNED (Jan 14, 2026)
+
+---
+
+#### Line2DTangentToCircleParallelToLine: Tangent Line Parallel to Reference Line Construction Implementation
+
+**Purpose**: Create an infinite line tangent to a circle and parallel to a reference line.
+
+**Geometric Principle**: For a circle and an external line (not intersecting), there exist exactly two tangent lines parallel to the reference line (one on each side of the circle). An index (0 or 1) is required to disambiguate which tangent line to construct. If the reference line intersects or is tangent to the circle, no parallel tangent lines exist (construction is infeasible).
+
+**Algorithm**: Tangent line parallel to reference requires solving: line is parallel to reference direction and is tangent to circle with center C and radius r.
+
+```typescript
+class Line2DTangentToCircleParallelToLine extends Line2D {
+  readonly type: 'tangent-to-circle-parallel' = 'tangent-to-circle-parallel';
+  readonly circleId: string;
+  readonly referenceLineId: string;
+  readonly tangentIndex: 0 | 1;  // Disambiguates which of two parallel tangent lines
+  
+  realize2D(world: World): Line2DRealization2D | null {
+    // Step 1: Get containing plane
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) return null;
+    
+    // Step 2: Get circle realization
+    const circle = plane.getCircle(this.circleId);
+    const circleRealization = circle?.realize2D(world);
+    if (!circleRealization) return null;
+    
+    // Step 3: Get reference line realization
+    const referenceLine = world.getLine2D(this.referenceLineId);  // Can be on any plane
+    if (!referenceLine) return null;
+    
+    const refPlane = world.getProjectionPlaneById(referenceLine.planeId);
+    const refLineRealization = refPlane?.getLine(this.referenceLineId)?.realize2D(world);
+    if (!refLineRealization) return null;
+    
+    // Step 4: Check infeasibility propagation
+    if (!circleRealization.feasible || !refLineRealization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    // Step 5: Get circle center and radius
+    const center = circleRealization.center;  // (cx, cy, 1)
+    const radius = circleRealization.getRadius();
+    
+    // Step 6: Get reference line direction (normalized)
+    const refDirection = refLineRealization.getDirection();
+    
+    // Step 7: Compute perpendicular direction (90° CCW rotation)
+    const perpDirection = new Vector3(-refDirection.y, refDirection.x, 0);
+    
+    // Step 8: Check geometric feasibility
+    // Reference line must not intersect circle (distance from center to line > radius)
+    // Distance from point (cx, cy) to line: d = |ax + by + c| / sqrt(a^2 + b^2)
+    // For line with direction (dx, dy) passing through (px, py):
+    // Line equation: (y - py) * dx - (x - px) * dy = 0
+    // Rearranged: -dy * x + dx * y + (dy * px - dx * py) = 0
+    
+    const refPoint = refLineRealization.point1;  // Point on reference line
+    const a = -refDirection.y;
+    const b = refDirection.x;
+    const c = refDirection.y * refPoint.x - refDirection.x * refPoint.y;
+    
+    const distanceToLine = Math.abs(a * center.x + b * center.y + c);
+    // Note: a^2 + b^2 = 1 (refDirection is normalized), so no need to divide
+    
+    const EPSILON = 1e-6;
+    if (distanceToLine <= radius + EPSILON) {
+      // Reference line intersects or is tangent to circle - no parallel tangent lines exist
+      console.warn(`[Line2DTangentToCircleParallelToLine] Reference line intersects circle, construction is infeasible`);
+      return new Line2DRealization2D(
+        center.clone(),
+        refDirection.clone(),
+        false  // Mark as infeasible
+      );
+    }
+    
+    // Step 9: Compute tangent point positions
+    // Two parallel tangent lines exist:
+    // - One at distance +radius perpendicular to reference direction
+    // - One at distance -radius perpendicular to reference direction
+    
+    // Tangent points on circle:
+    // T0 = center + radius * perpDirection  (left side, index 0)
+    // T1 = center - radius * perpDirection  (right side, index 1)
+    
+    let tangentPoint: Vector3;
+    
+    if (this.tangentIndex === 0) {
+      // Index 0: Left tangent (perpendicular direction is +90° CCW)
+      tangentPoint = new Vector3(
+        center.x + radius * perpDirection.x,
+        center.y + radius * perpDirection.y,
+        1  // Finite point
+      );
+    } else {
+      // Index 1: Right tangent (perpendicular direction is -90° = 90° CW)
+      tangentPoint = new Vector3(
+        center.x - radius * perpDirection.x,
+        center.y - radius * perpDirection.y,
+        1  // Finite point
+      );
+    }
+    
+    // Step 10: Return infinite line through tangent point with reference direction
+    // Tangent line is parallel to reference, so same direction
+    return new Line2DRealization2D(
+      tangentPoint,
+      refDirection.clone(),
+      true
+    );
+  }
+}
+```
+
+**Index Convention** (stable under parametric updates):
+- **Index 0**: Left tangent line when facing along reference line direction
+  - Tangent point: center + radius * perpendicular direction (90° CCW)
+  - Position: On the left side of reference line
+- **Index 1**: Right tangent line when facing along reference line direction
+  - Tangent point: center - radius * perpendicular direction (90° CW)
+  - Position: On the right side of reference line
+
+**Geometric Examples**:
+
+Example 1: Circle at (0, 0) radius 3, horizontal reference line at y = 5
+- Reference direction: (1, 0, 0) (horizontal, pointing right)
+- Perpendicular: (0, 1, 0) (vertical, pointing up)
+- Distance from center to line: 5 (> radius 3, construction valid)
+- Index 0: Tangent at y = +3 (top of circle)
+- Index 1: Tangent at y = -3 (bottom of circle)
+
+Example 2: Circle at (10, 10) radius 5, vertical reference line at x = 0
+- Reference direction: (0, 1, 0) (vertical, pointing up)
+- Perpendicular: (-1, 0, 0) (horizontal, pointing left)
+- Distance from center to line: 10 (> radius 5, construction valid)
+- Index 0: Tangent at x = 5 (left side of circle)
+- Index 1: Tangent at x = 15 (right side of circle)
+
+**Edge Cases and Validation**:
+
+1. **Reference line intersects circle** (distance < radius):
+   - Construction is **infeasible** at creation time
+   - `realize2D()` returns `feasible = false`
+   - UI must detect this and block construction (FR-046)
+
+2. **Reference line is tangent to circle** (distance ≈ radius):
+   - Only one "parallel tangent" exists (the reference line itself)
+   - Treated as infeasible (ambiguous which index to use)
+   - Alternative: Could allow index 0 = reference line, but simpler to block
+
+3. **Reference line very close to circle** (distance ≈ radius + epsilon):
+   - Two tangent lines exist but very close to each other
+   - Construction is valid but may have numerical instability
+   - Use EPSILON = 1e-6 for distance comparison
+
+4. **Circle or reference line is infeasible**:
+   - Propagate infeasibility: `feasible = false`
+   - Do NOT attempt geometric computation
+
+**Dependencies and Parametric Updates**:
+
+Line2DTangentToCircleParallelToLine tracks two dependencies:
+1. **circleId**: When circle center moves or radius changes, tangent line updates
+2. **referenceLineId**: When reference line rotates or moves, tangent line updates
+
+Example parametric behavior:
+```typescript
+// Initial: Circle at (0, 0) radius 3, horizontal reference line at y = 5
+const circle = new Circle2DByCenterAndPoint('c1', 'center', 'radiusPoint', 'plane_H');
+const referenceLine = new Line2DByTwoPoints('ref', 'p1', 'p2', 'plane_H');
+const tangentLine = new Line2DTangentToCircleParallelToLine('t1', 'c1', 'ref', 0, 'plane_H');
+
+// Realize tangent line (index 0 = left/top tangent)
+const realization1 = tangentLine.realize2D(world);
+// → point = (0, 3, 1), direction = (1, 0, 0)
+// Tangent line at top of circle, parallel to horizontal reference
+
+// User rotates reference line to 45° diagonal
+// Reference direction becomes (0.707, 0.707, 0)
+
+// Re-realize tangent line
+const realization2 = tangentLine.realize2D(world);
+// → point = (-2.12, 2.12, 1), direction = (0.707, 0.707, 0)
+// Tangent line rotates to remain parallel to new reference direction
+
+// User moves circle center to (10, 0)
+centerPoint.position = new Vector3(10, 0, 1);
+
+// Re-realize tangent line
+const realization3 = tangentLine.realize2D(world);
+// → point = (10 - 2.12, 2.12, 1), direction = (0.707, 0.707, 0)
+// Tangent line moves with circle, maintaining parallel orientation
+```
+
+**Factory Method** (ProjectionPlane.ts):
+
+```typescript
+addLine2DTangentToCircleParallelToLine(
+  circleId: string,
+  referenceLineId: string,
+  tangentIndex: 0 | 1,
+  world: World,
+  id?: string
+): Line2DTangentToCircleParallelToLine {
+  // Validate circle exists on this plane
+  const circle = this.getCircle(circleId);
+  if (!circle) {
+    throw new Error(`Circle ${circleId} not found on plane ${this.id}`);
+  }
+  
+  // Validate reference line exists in world (can be on any plane)
+  const refLineElement = world.getLine2D(referenceLineId);
+  if (!refLineElement) {
+    throw new Error(`Reference line ${referenceLineId} not found in world`);
+  }
+  
+  // Validate tangent index
+  if (tangentIndex !== 0 && tangentIndex !== 1) {
+    throw new Error(`Invalid tangent index: ${tangentIndex}. Must be 0 or 1.`);
+  }
+  
+  // Generate hierarchical ID if not provided (for redo)
+  const lineId = id ?? this.generateHierarchicalId('line');
+  
+  // Create Line2DTangentToCircleParallelToLine instance
+  const tangentLine = new Line2DTangentToCircleParallelToLine(
+    lineId,
+    circleId,
+    referenceLineId,
+    tangentIndex,
+    this.id
+  );
+  
+  // Add to plane's line collection
+  this.addLine(tangentLine);
+  
+  return tangentLine;
+}
+```
+
+**ProcessTree Action** (CreateTangentLineAction.ts):
+
+```typescript
+export function createTangentLineToCircleParallelToLineAction(
+  lineId: string,
+  planeId: string,
+  circleId: string,
+  referenceLineId: string,
+  tangentIndex: 0 | 1
+): Action {
+  return {
+    id: generateActionId(),
+    type: 'action',
+    actionType: 'CreateTangentLineToCircleParallelToLine',
+    timestamp: new Date(),
+    inputs: [circleId, referenceLineId],  // Dependencies for DependencyService
+    outputs: [lineId],
+    parameters: { planeId, circleId, referenceLineId, tangentIndex },
+    description: `Tangent line to circle ${circleId} parallel to line ${referenceLineId} (index ${tangentIndex})`
+  };
+}
+```
+
+**Operation** (AddLineOp.ts):
+
+```typescript
+export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
+  readonly type = 'AddLine2DTangentToCircleParallelToLine';
+  parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+  
+  constructor(
+    private planeId: string,
+    private circleId: string,
+    private referenceLineId: string,
+    private tangentIndex: 0 | 1
+  ) {
+    this.parameters = { planeId, circleId, referenceLineId, tangentIndex };
+  }
+  
+  apply(world: World): OperationResult {
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) {
+      return { success: false, error: `Plane ${this.planeId} not found` };
+    }
+    
+    const line = plane.addLine2DTangentToCircleParallelToLine(
+      this.circleId,
+      this.referenceLineId,
+      this.tangentIndex,
+      world,
+      this.outputs.lineId  // For redo: reuse ID if already generated
+    );
+    
+    this.outputs = { lineId: line.id };
+    return { success: true, outputs: this.outputs };
+  }
+  
+  undo(world: World): void {
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (plane && this.outputs.lineId) {
+      plane.removeLine(this.outputs.lineId);
+    }
+  }
+}
+```
+
+**Tool Implementation** (TangentLineToCircleParallelToLineTool.ts):
+
+Three-step state machine: circle → reference line → index
+
+```typescript
+export class TangentLineToCircleParallelToLineTool extends BaseTool {
+  readonly name = 'tangent-line-to-circle-parallel';
+  private state: 'waiting-circle' | 'waiting-line' | 'waiting-index' = 'waiting-circle';
+  private circleId?: string;
+  private referenceLineId?: string;
+  
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-circle') {
+      return ['circle'];
+    } else if (this.state === 'waiting-line') {
+      return ['line'];
+    } else {
+      return [];  // No selection during index input
+    }
+  }
+  
+  handleClick(context: ToolContext): ToolResult {
+    const { world, canvasPos, planeId } = context;
+    const plane = world.getProjectionPlaneById(planeId);
+    if (!plane) {
+      return this.error('Active plane not found');
+    }
+    
+    if (this.state === 'waiting-circle') {
+      // Step 1: Select circle
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, ['circle']);
+      if (!hit) {
+        return this.error('No circle found at click location');
+      }
+      
+      this.circleId = hit.elementId;
+      this.state = 'waiting-line';
+      return this.success(`Selected circle: ${hit.elementId}. Click reference line for parallel tangent.`);
+      
+    } else if (this.state === 'waiting-line') {
+      // Step 2: Select reference line
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, ['line']);
+      if (!hit) {
+        return this.error('No line found at click location');
+      }
+      
+      this.referenceLineId = hit.elementId;
+      this.state = 'waiting-index';
+      return this.success(`Selected reference line: ${hit.elementId}. Enter tangent index (0 or 1).`);
+    }
+    
+    return this.error('Unexpected state');
+  }
+  
+  handleIndexInput(index: 0 | 1, context: ToolContext): ToolResult {
+    if (this.state !== 'waiting-index') {
+      return this.error('Not ready for index input');
+    }
+    
+    const { world, planeId, commandStack } = context;
+    const plane = world.getProjectionPlaneById(planeId);
+    
+    // Check feasibility BEFORE creating line
+    const circle = plane?.getCircle(this.circleId!);
+    const refLine = world.getLine2D(this.referenceLineId!);
+    const circleRealization = circle?.realize2D(world);
+    
+    if (!circleRealization || !refLine) {
+      this.reset();
+      return this.error('Circle or reference line is infeasible');
+    }
+    
+    // Check if reference line does not intersect circle
+    const refPlane = world.getProjectionPlaneById(refLine.planeId);
+    const refLineRealization = refPlane?.getLine(this.referenceLineId!)?.realize2D(world);
+    if (!refLineRealization) {
+      this.reset();
+      return this.error('Reference line realization failed');
+    }
+    
+    // Compute distance from circle center to reference line
+    const center = circleRealization.center;
+    const radius = circleRealization.getRadius();
+    const refDirection = refLineRealization.getDirection();
+    const refPoint = refLineRealization.point1;
+    
+    const a = -refDirection.y;
+    const b = refDirection.x;
+    const c = refDirection.y * refPoint.x - refDirection.x * refPoint.y;
+    const distanceToLine = Math.abs(a * center.x + b * center.y + c);
+    
+    if (distanceToLine <= radius + 1e-6) {
+      this.reset();
+      return this.error('Reference line must not intersect circle for tangent construction');
+    }
+    
+    // Create tangent line
+    const cmd = new Command('Create tangent line to circle parallel to line', world);
+    const result = cmd.addAndExecute(
+      new AddLine2DTangentToCircleParallelToLineOp(
+        planeId,
+        this.circleId!,
+        this.referenceLineId!,
+        index
+      )
+    );
+    
+    if (!result.success) {
+      this.reset();
+      return this.error(result.error ?? 'Failed to create tangent line');
+    }
+    
+    // Add action to ProcessTree
+    const lineId = result.outputs.lineId;
+    const action = createTangentLineToCircleParallelToLineAction(
+      lineId,
+      planeId,
+      this.circleId!,
+      this.referenceLineId!,
+      index
+    );
+    world.getProcessTree().addAction(action);
+    
+    cmd.commit();
+    commandStack.push(cmd);
+    
+    this.reset();
+    return this.success(`Created tangent line ${lineId} (index ${index})`);
+  }
+  
+  reset(): void {
+    this.state = 'waiting-circle';
+    this.circleId = undefined;
+    this.referenceLineId = undefined;
+  }
+}
+```
+
+**UI Integration**:
+
+Toolbar button with index input:
+- Icon: Circle with parallel tangent lines on both sides
+- Title: "Tangent Line Parallel Tool - Line tangent to circle parallel to reference line"
+- After selecting circle and reference line, show index selector (radio buttons or number input)
+
+**Testing Strategy**:
+
+1. **Unit tests** (Line2DTangentToCircleParallelToLine.realize2D):
+   - Horizontal reference line with index 0 and index 1
+   - Vertical reference line
+   - Diagonal reference line (45°)
+   - Reference line intersects circle → infeasible
+   - Reference line tangent to circle → infeasible
+   - Circle or reference line infeasible → propagate infeasibility
+
+2. **Integration tests**: Parametric updates
+   - Rotate reference line → both tangent lines rotate (stay parallel)
+   - Move circle center → tangent lines follow
+   - Change circle radius → tangent line positions adjust
+   - Verify action recorded in ProcessTree
+
+3. **E2E tests**: Complete workflow
+   - Create circle and reference line
+   - Activate tangent line parallel tool
+   - Select circle, reference line, index 0 → verify tangent line created
+   - Repeat with index 1 → verify different tangent line
+   - Verify lines are truly tangent and parallel
+
+**Implementation Files**:
+- Domain: `frontend/src/domain/world/Line.ts` (Line2DTangentToCircleParallelToLine class, NEW)
+- Factory: `frontend/src/domain/world/ProjectionPlane.ts` (addLine2DTangentToCircleParallelToLine, NEW)
+- Action: `frontend/src/domain/processTree/actions/CreateTangentLineAction.ts` (NEW FILE, both functions)
+- Operation: `frontend/src/commands/operations/world/AddLineOp.ts` (AddLine2DTangentToCircleParallelToLineOp, NEW)
+- Tool: `frontend/src/tools/TangentLineToCircleParallelToLineTool.ts` (NEW FILE)
+- Tests: Multiple files in `frontend/tests/{unit,integration,e2e}/`
+
+**Key Architecture Points**:
+- **Three-step workflow**: Circle → Reference Line → Index (tool state machine)
+- **Index validation**: Tool checks reference line doesn't intersect circle BEFORE creating line
+- **Index convention**: Left/right relative to reference line direction (stable under updates)
+- **Feasibility check**: Tool validates geometry before construction (FR-046)
+- **Parallel direction**: Tangent line has same direction as reference line (parallelism)
+
+**Phase**: Phase 61 (T1037-T1051)  
+**Status**: 📋 PLANNED (Jan 14, 2026)
+
+---
+
 // === CIRCLE 2D CONSTRUCTIONS ===
 
 // **DESIGN DECISION**: Circle2D DOES NOT support scalar radius parameter
