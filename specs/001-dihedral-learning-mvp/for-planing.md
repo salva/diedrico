@@ -58,12 +58,13 @@ Note that completing these tasks may require asking the user for additional info
 ## ALREADY PLANNED
 
 * [X] **Distance-Adjusted Hit-Testing**
-  - **STATUS**: IN PROGRESS (Jan 13, 2026) - Algorithm implemented (T969-T970 complete), testing remaining
+  - **STATUS**: COMPLETE (Jan 13, 2026) - All tasks T969-T979 completed
   - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-040 (Distance-adjusted hit-testing)
   - **UI**: [ui-spec.md](./ui-spec.md#distance-adjusted-hit-testing) Distance adjustment: points get visual radius (~5px) subtracted from distance
   - **Data model**: [data-model.md](./data-model.md#distance-adjusted-hit-testing-phase-55) Paper.hitTest() algorithm with distance adjustment
   - **Tasks**: Phase 55 in [tasks.md](./tasks.md#phase-55-distance-adjusted-hit-testing)
   - **Implementation**: Points treated as small circles; adjusted_distance = actual_distance - 5px (in plane space)
+  - **Testing**: Unit tests (paperHitTesting.spec.ts), E2E tests (distance-adjusted-hit-testing.spec.ts)
   - **Acceptance**:
     - When cursor within snap radius of point + line → point is highlighted/selected (distance adjustment gives preference)
     - When cursor within snap radius of multiple points → closest point selected (after adjustment)
