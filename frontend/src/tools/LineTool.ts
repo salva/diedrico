@@ -89,7 +89,7 @@ export class LineTool extends BaseTool {
         const lineId = result.outputs.lineId;
         
         // Record ProcessTree action using lineId from outputs
-        const action = createLineAction(lineId, this.firstPointId!, secondPointId, planeId);
+        const action = createLineAction(lineId, planeId, this.firstPointId!, secondPointId);
         world.getProcessTree().addAction(action);
         
         // Commit

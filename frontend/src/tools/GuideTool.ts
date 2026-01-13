@@ -137,7 +137,7 @@ export class GuideTool extends BaseTool {
         const siblingGuideId = result.siblingGuideId;
         
         // Record ProcessTree action using guideId from outputs
-        const action = createGuideAction(guideId, this.referenceLineId!, throughPointId, planeId);
+        const action = createGuideAction(guideId, planeId, this.referenceLineId!, throughPointId);
         world.getProcessTree().addAction(action);
         
         // Commit

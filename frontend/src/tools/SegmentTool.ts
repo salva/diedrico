@@ -92,7 +92,7 @@ export class SegmentTool extends BaseTool {
         const segmentId = result.outputs.segmentId;
         
         // Record ProcessTree action using segmentId from outputs
-        const action = createSegmentAction(segmentId, this.firstPointId!, secondPointId, planeId);
+        const action = createSegmentAction(segmentId, planeId, this.firstPointId!, secondPointId);
         world.getProcessTree().addAction(action);
         
         // Commit
