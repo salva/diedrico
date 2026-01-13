@@ -1200,6 +1200,31 @@ The system uses distinct cursor styles to provide constant feedback about the cu
 
 **Implementation Note**: Cursor changes should be instantaneous (no delay) to provide immediate feedback. CSS cursor properties are sufficient for most cases. Custom cursor images may be used for snap indicators and special states.
 
+#### Circle Tool: Point Snapping Behavior (Phase 56)
+
+The Circle Tool creates circles defined by two points (center and circumference). Both point selection steps MUST support consistent snapping behavior:
+
+**First Click (Center Point)**:
+- **Behavior**: Uses `Paper.hitTest()` to detect nearby points within snap radius
+- **If point found**: Snaps to existing point, uses as center
+- **If no point found**: Shows error message "No point found at click position. Please click near an existing point for the circle center."
+- **Selection mask**: `['point']` (only points are valid)
+
+**Second Click (Circumference/Radius Point)**:
+- **Behavior**: MUST use `Paper.hitTest()` to detect nearby points within snap radius (consistent with first click)
+- **If point found**: Snaps to existing point, uses as circumference point, creates circle
+- **If no point found**: Creates new free point at click location, uses as circumference point, creates circle
+- **Selection mask**: `['point']` (only points are valid)
+- **Minimum radius validation**: If resulting radius < 1e-3, command is rolled back with error "Radius too small. Please click farther from center."
+
+**Rationale**: Consistent snapping behavior across both clicks prevents accidental point duplication. The second click should preferentially use existing geometry (snap to point) but fall back to creating a new point if no existing point is nearby. This matches the behavior of other construction tools (Line, Segment, Intersection) and follows FR-041.
+
+**User Experience**:
+- User sees orange snap circle when hovering near existing points (both clicks)
+- Creating circles between existing points is easy (both snap automatically)
+- Creating circles with new radius points is still supported (click away from existing points)
+- Reduces clutter from duplicate points at same location
+
 ### Element Interaction
 
 **Selection** (when no tool active):

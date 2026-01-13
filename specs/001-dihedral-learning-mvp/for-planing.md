@@ -47,7 +47,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Ensure Google Drive logout works correctly.
 * [ ] Why are reverse dependencies estored in the process tree? that seems wrong!
 * [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
-* [ ] Check that on circle creation, the radius point really snaps to preexistent points before creating a new one.
 * [ ] Ensure we have a per-plane cache for 2D realizations.
 * [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?
 * [ ] In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. In general don't try to handle unexpected internal states but just report an error instead.
@@ -56,6 +55,22 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] View zooming must work using the mouse position as the center when using the mouse wheel, or the center of the screen when using + or - icons (not implemented yet).
  
 ## ALREADY PLANNED
+
+* [X] **Circle Tool: Circumference Point Snapping**
+  - **STATUS**: PLANNED (Jan 13, 2026)
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-041 (Circle Tool circumference point snapping)
+  - **UI**: [ui-spec.md](./ui-spec.md#circle-tool-point-snapping-behavior-phase-56) Detailed snapping behavior for both clicks
+  - **Data model**: [data-model.md](./data-model.md#circle-tool-circumference-point-snapping-phase-56) Implementation pattern with code examples
+  - **Tasks**: Phase 56 in [tasks.md](./tasks.md#phase-56-circle-tool-circumference-point-snapping) (T980-T986: 7 tasks)
+  - **Implementation**: Add Paper.hitTest() to second click; snap to existing point if found, else create new point
+  - **Testing**: Unit tests (CircleTool.spec.ts), E2E tests (circle-tool-snapping.spec.ts)
+  - **Acceptance**:
+    - Second click snaps to nearby points within snap radius (consistent with first click)
+    - Second click creates new point when no nearby points exist
+    - No duplicate points created when clicking near existing points
+    - Minimum radius validation still works with snapped points
+    - Visual feedback (orange snap circle) shows on hover for both clicks
+    - Behavior matches LineTool, SegmentTool, and other construction tools
 
 * [X] **Distance-Adjusted Hit-Testing**
   - **STATUS**: COMPLETE (Jan 13, 2026) - All tasks T969-T979 completed

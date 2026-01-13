@@ -5735,3 +5735,107 @@ const originPoint = world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_
 **Checkpoint**: Distance-adjusted hit-testing implemented; point-on-line scenarios consistently select point; all unit and E2E tests passing.
 
 **Status**: IN PROGRESS (T969-T970 complete, T971-T979 remaining)
+---
+
+## Phase 56: Circle Tool Circumference Point Snapping
+
+**Purpose**: Add snapping support to CircleTool's second click (circumference point selection), making it consistent with first click (center point) and other construction tools. Currently, second click always creates a new point, leading to duplicate points when clicking near existing ones.
+
+**References**:
+- [spec.md](./spec.md#requirements-mandatory) - FR-041 (Circle Tool circumference point snapping requirement)
+- [ui-spec.md](./ui-spec.md#circle-tool-point-snapping-behavior-phase-56) - Detailed snapping behavior for both clicks
+- [data-model.md](./data-model.md#circle-tool-circumference-point-snapping-phase-56) - Implementation pattern and code examples
+
+**Context**: CircleTool.handleClick() currently has asymmetric behavior. First click uses `Paper.hitTest()` to snap to existing points (lines 58-74), but second click unconditionally creates a new point at the exact click location (lines 82-84). This violates FR-041 and creates duplicate points.
+
+**Current Problem** (CircleTool.ts lines 82-84):
+```typescript
+// Operation 1: Create circumference point at click position
+const circumferencePos = new Vector3(planeCoords.x, planeCoords.y, planeCoords.z);
+const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
+const circumferencePointId = pointResult.outputs.pointId;
+// ❌ ALWAYS creates new point, never checks for nearby existing points
+```
+
+### Phase 56 Tasks
+
+**Implementation** (T980-T982)
+
+- [ ] T980 Add Paper.hitTest() call in second click handler
+  - Add hitTest() call before point creation logic
+  - Use same parameters as first click: canvasPos, snapRadius=50, selectionMask=['point']
+  - Store result in `hit` variable for conditional point creation
+  - File: `frontend/src/tools/CircleTool.ts` (lines ~76-85)
+
+- [ ] T981 Implement conditional point creation
+  - If `hit` exists → use hit.elementId as circumferencePointId (snap to existing point)
+  - If `hit` is null → create new free point with AddFreePoint2DOp (current behavior)
+  - Add console.log for debugging: "Snapped to existing point" vs "Created new circumference point"
+  - Preserve all validation logic (minimum radius check still applies)
+  - File: `frontend/src/tools/CircleTool.ts` (lines ~82-90)
+
+- [ ] T982 Update success/error messages
+  - Success message should indicate whether point was snapped or created
+  - Format: "Created circle {circleId} with center {centerId} and circumference {circumferenceId} (snapped)" or "(created)"
+  - Keep error messages unchanged (minimum radius, validation failures)
+  - File: `frontend/src/tools/CircleTool.ts` (line ~128)
+
+**Testing - Unit Tests** (T983-T985)
+
+- [ ] T983 [P] Unit test: Circle with two existing points (both snap)
+  - Create two points: centerPoint at (100,100), radiusPoint at (150,100)
+  - Activate CircleTool, click near centerPoint (within snap radius) → first click snaps
+  - Click near radiusPoint (within snap radius) → second click snaps
+  - Verify: Circle created with correct centerPointId and circumferencePointId (no new points created)
+  - Verify: Point count remains 2 (no duplicates)
+  - File: `frontend/tests/unit/tools/CircleTool.spec.ts`
+
+- [ ] T984 [P] Unit test: Circle with center existing, circumference new
+  - Create one point: centerPoint at (100,100)
+  - Activate CircleTool, click near centerPoint → first click snaps
+  - Click at (200,100) (away from any points) → second click creates new point
+  - Verify: Circle created with existing centerPointId and new circumferencePointId
+  - Verify: Point count increases to 2 (new circumference point created)
+  - File: `frontend/tests/unit/tools/CircleTool.spec.ts`
+
+- [ ] T985 [P] Unit test: Minimum radius validation with snapped points
+  - Create two points: centerPoint at (100,100), nearPoint at (100,100.0005) (essentially same location)
+  - Activate CircleTool, click near centerPoint → first click snaps
+  - Click near nearPoint → second click snaps
+  - Verify: Command is rolled back with error "Radius too small. Please click farther from center."
+  - Verify: No circle created, point count unchanged
+  - File: `frontend/tests/unit/tools/CircleTool.spec.ts`
+
+**Testing - E2E Tests** (T986)
+
+- [ ] T986 [P] E2E test: Circle creation with point snapping
+  - Create three points: A at (200,200), B at (300,200), C at (350,250)
+  - Activate Circle Tool
+  - **Scenario 1: Both snap**
+    - Click near point A (center) → verify point A highlighted/snapped
+    - Click near point B (circumference) → verify point B highlighted/snapped
+    - Verify: Circle created between A and B, point count still 3
+  - **Scenario 2: Center snap, circumference create**
+    - Reset, activate Circle Tool
+    - Click near point A (center) → verify snap
+    - Click at empty location (400,200) → verify new point created
+    - Verify: Circle created, point count increases to 4
+  - **Scenario 3: Both create**
+    - Reset, activate Circle Tool
+    - Click at empty location (500,200) → verify new point created
+    - Click at empty location (550,200) → verify new point created
+    - Verify: Circle created, point count increases by 2
+  - File: `frontend/tests/e2e/circle-tool-snapping.spec.ts`
+
+**Acceptance Criteria**:
+1. Second click snaps to nearby points within snap radius (50px in canvas space)
+2. Second click creates new point when no nearby points exist
+3. Behavior matches first click and other construction tools (LineTool, SegmentTool)
+4. No duplicate points created when clicking near existing points
+5. Minimum radius validation still prevents degenerate circles (with snapped or created points)
+6. All existing circle creation tests still pass
+7. Visual feedback (orange snap circle) shows on hover for both clicks
+
+**Checkpoint**: CircleTool has consistent snapping behavior for both clicks; no duplicate points created; all tests passing.
+
+**Status**: NOT STARTED

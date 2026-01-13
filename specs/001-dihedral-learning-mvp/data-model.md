@@ -4551,6 +4551,133 @@ This ensures type safety, makes coordinate transforms explicit, and prevents mix
 
 ---
 
+#### Circle Tool: Circumference Point Snapping (Phase 56)
+
+**Problem**: CircleTool currently has inconsistent behavior between first and second click. First click (center point) uses `Paper.hitTest()` to snap to existing points, but second click (circumference/radius point) **always creates a new point** at the exact click location without checking for nearby existing points. This creates duplicate points and violates FR-041 and the general snapping principle.
+
+**Current Behavior** (CircleTool.ts lines 74-90):
+```typescript
+// Second click: Create circumference point and circle
+const cmd = new Command("Create circle", world);
+
+// Operation 1: Create circumference point at click position
+const circumferencePos = new Vector3(planeCoords.x, planeCoords.y, planeCoords.z);
+const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
+const circumferencePointId = pointResult.outputs.pointId;
+// ❌ ALWAYS creates new point, never checks for existing nearby points
+```
+
+**Expected Behavior** (matching first click and other tools):
+- Check for nearby points using `Paper.hitTest()` with selection mask `['point']`
+- If point found within snap radius → use existing point
+- If no point found → create new free point
+- Provides consistent snapping experience and prevents point duplication
+
+**Solution**: Update CircleTool second click to mirror first click pattern:
+
+```typescript
+// CircleTool.ts handleClick() - second click (circumference point)
+else {
+  // Second click: Select/create circumference point and create circle
+  
+  // Use Paper.hitTest() to check for nearby points (consistent with first click)
+  const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
+  const selectionMask = this.getSelectionMask(); // ['point']
+  const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask);
+  
+  try {
+    const cmd = new Command("Create circle", world);
+    let circumferencePointId: string;
+    
+    if (hit) {
+      // Snap to existing point
+      circumferencePointId = hit.elementId;
+      console.log('[CircleTool] Snapped to existing point:', circumferencePointId);
+    } else {
+      // Create new free point at click position
+      const circumferencePos = new Vector3(planeCoords.x, planeCoords.y, planeCoords.z);
+      const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
+      circumferencePointId = pointResult.outputs.pointId;
+      console.log('[CircleTool] Created new circumference point:', circumferencePointId);
+    }
+    
+    // Validate minimum radius before creating circle
+    const plane = world.getProjectionPlaneById(planeId);
+    const centerPoint = plane?.getPoint(this.centerPointId!);
+    const circumferencePoint = plane?.getPoint(circumferencePointId);
+    const centerRealization = centerPoint?.realize2D(world);
+    const circumferenceRealization = circumferencePoint?.realize2D(world);
+    
+    if (centerRealization && circumferenceRealization) {
+      const radius = centerRealization.position.distanceTo(circumferenceRealization.position);
+      if (radius < 1e-3) {
+        cmd.rollback();
+        this.reset();
+        return this.failure('Radius too small. Please click farther from center.');
+      }
+    }
+    
+    // Operation: Create circle using center and circumference points
+    const result = cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(
+      planeId,
+      this.centerPointId!,
+      circumferencePointId
+    ));
+    
+    // ... rest of circle creation logic
+  }
+}
+```
+
+**Implementation Changes**:
+
+1. **Add Paper.hitTest() call**: Check for nearby points within snap radius before creating new point
+2. **Conditional point creation**: Only create new point if no existing point found
+3. **Maintain validation**: Minimum radius check still applies regardless of whether point is snapped or created
+4. **Consistent behavior**: Matches first click behavior and LineTool/SegmentTool patterns
+
+**Benefits**:
+
+1. **Prevents Point Duplication**: Users can click near existing points without creating overlapping duplicates
+2. **Consistent UX**: Both circle clicks use same snapping logic (matches user expectations)
+3. **Matches Other Tools**: LineTool, SegmentTool, IntersectionTool all support snapping at every step
+4. **Follows FR-041**: Implements required snapping for circumference point selection
+5. **Maintains Flexibility**: Users can still create new points by clicking away from existing points
+
+**Edge Cases**:
+
+- **Center and circumference same point**: Minimum radius validation catches this (radius < 1e-3)
+- **Multiple nearby points**: `Paper.hitTest()` returns closest point (using distance-adjusted hit-testing from Phase 55)
+- **Snap radius boundary**: Behavior is predictable - within radius snaps, outside radius creates new
+- **Command rollback**: If radius validation fails, command is rolled back cleanly (no orphaned points)
+
+**Testing Strategy**:
+
+1. **Unit Tests** (CircleTool.spec.ts):
+   - Create circle with two existing points (both snap)
+   - Create circle with center existing, circumference new (snap + create)
+   - Create circle with two new points (both create)
+   - Verify no duplicate points created when clicking near existing points
+   - Verify minimum radius validation still works with snapped points
+
+2. **E2E Tests** (create-circle.spec.ts):
+   - Create two points, then circle between them → should snap to both
+   - Create one point, then circle with new radius point → should snap center only
+   - Verify visual feedback (orange snap circle) shows on hover for both clicks
+   - Verify point count doesn't increase when snapping (no duplicates)
+
+**Acceptance Criteria**:
+
+- ✅ Second click snaps to nearby points (within 50px snap radius)
+- ✅ Second click creates new point when no nearby points exist
+- ✅ Behavior matches first click and other construction tools
+- ✅ No duplicate points created when clicking near existing points
+- ✅ Minimum radius validation still prevents degenerate circles
+- ✅ All existing circle creation tests still pass
+- ✅ New tests verify snapping behavior on second click
+
+---
+
 #### Selection Mask System
 
 **Purpose**: Enable tool-specific filtering of selectable elements based on current tool state, preventing invalid selections and providing focused hover highlighting.
