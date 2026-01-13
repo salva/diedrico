@@ -74,16 +74,30 @@ export class CircleTool extends BaseTool {
       return this.success(`Selected center point: ${hit.elementId}. Click to set circumference point.`);
       
     } else {
-      // Second click: Create circumference point and circle
+      // Second click: Select/create circumference point and create circle
+      
+      // Use Paper.hitTest() to check for nearby points (consistent with first click)
+      const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
+      const selectionMask = this.getSelectionMask(); // ['point']
+      const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask);
       
       try {
-        // Build Command with two operations: create circumference point, then circle
         const cmd = new Command("Create circle", world);
+        let circumferencePointId: string;
+        let wasSnapped = false;
         
-        // Operation 1: Create circumference point at click position
-        const circumferencePos = new Vector3(planeCoords.x, planeCoords.y, planeCoords.z);
-        const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
-        const circumferencePointId = pointResult.outputs.pointId;
+        if (hit) {
+          // Snap to existing point
+          circumferencePointId = hit.elementId;
+          wasSnapped = true;
+          console.log('[CircleTool] Snapped to existing circumference point:', circumferencePointId);
+        } else {
+          // Create new free point at click position
+          const circumferencePos = new Vector3(planeCoords.x, planeCoords.y, planeCoords.z);
+          const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
+          circumferencePointId = pointResult.outputs.pointId;
+          console.log('[CircleTool] Created new circumference point:', circumferencePointId);
+        }
         
         // Validate minimum radius before creating circle
         const plane = world.getProjectionPlaneById(planeId);
@@ -123,11 +137,12 @@ export class CircleTool extends BaseTool {
         commandStack.push(cmd);
         
         const centerPointId = this.centerPointId; // Save before reset
+        const pointStatus = wasSnapped ? 'snapped' : 'created';
         
         // Reset state for next circle
         this.reset();
         
-        return this.success(`Created circle ${circleId} with center ${centerPointId} and circumference ${circumferencePointId}`);
+        return this.success(`Created circle ${circleId} with center ${centerPointId} and circumference ${circumferencePointId} (${pointStatus})`);
         
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
