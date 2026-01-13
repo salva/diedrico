@@ -6115,4 +6115,174 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 ---
 
+## Phase 59: Perpendicular Line Tool - Line Perpendicular to Reference Through Point
+
+**Goal**: Implement complete perpendicular line tool pipeline enabling users to create lines perpendicular to reference lines through specified points, with parametric updates maintaining 90° angle.
+
+**Context**: Line2DPerpendicularToLine domain class already exists with realize2D() fully implemented (90° CCW rotation of reference direction). Need to add factory method, ProcessTree action/operation, two-step tool (select reference line → select/create point), and UI integration. Follows exact same pattern as Phase 58 (Parallel Line Tool) but uses perpendicular direction calculation.
+
+**Architecture**: Complete MVC implementation:
+- **Domain**: Line2DPerpendicularToLine.realize2D() already implemented (rotates reference direction 90° CCW)
+- **Factory**: ProjectionPlane.addLine2DPerpendicularToLine() validates inputs and creates instance
+- **ProcessTree**: CreatePerpendicularLineAction tracks dependencies [referenceLineId, throughPointId]
+- **Operation**: AddLine2DPerpendicularToLineOp for undo/redo
+- **Tool**: PerpendicularLineTool with two-step state machine ('waiting-line' → 'waiting-point')
+- **UI**: Toolbar button in Line tool family, tool registration in SvgCanvas
+
+**Reference Implementation**: Phase 58 (ParallelLineTool.ts) - same two-step pattern, selection masks, Paper.hitTest() usage
+
+**Key Difference from Parallel**: Perpendicular direction uses `new Vector3(-dy, dx, 0)` rotation instead of direct clone
+
+### Phase 59 Tasks
+
+**T1008: Implement addLine2DPerpendicularToLine() factory method** ✅ DOMAIN
+- File: `frontend/src/domain/world/ProjectionPlane.ts`
+- Add factory method following addLine2DParallelToLine() pattern
+- Validate through-point exists on plane using `this.points.has(throughPointId)`
+- Validate reference line exists in world using `world.getLine2D(referenceLineId)`
+- Generate hierarchical ID if not provided: `id ?? this.generateHierarchicalId('line')`
+- Create Line2DPerpendicularToLine instance and add to `this.lines` Map
+- Return created instance
+- **Note**: Domain class Line2DPerpendicularToLine already exists with realize2D() implemented
+
+**T1009: Add Line2DPerpendicularToLine to ProjectionPlane imports** ✅ INFRASTRUCTURE
+- File: `frontend/src/domain/world/ProjectionPlane.ts`
+- Add Line2DPerpendicularToLine to imports from './Line'
+- Example: `import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine } from './Line';`
+- **Critical**: Prevents runtime "Line2DPerpendicularToLine is not defined" error
+
+**T1010: Create CreatePerpendicularLineAction.ts file** ✅ PROCESSTREE
+- File: `frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts` (NEW)
+- Create `createPerpendicularLineAction()` function (lowercase naming)
+- Parameters: `lineId, planeId, referenceLineId, throughPointId`
+- Return Action with:
+  - `id: generateActionId()`
+  - `actionType: 'CreatePerpendicularLine'`
+  - `timestamp: new Date()`
+  - `inputs: [referenceLineId, throughPointId]` for dependency tracking
+  - `outputs: [lineId]`
+  - `parameters: { planeId, referenceLineId, throughPointId }`
+- Add generateActionId() helper function
+- **Pattern**: Matches CreateParallelLineAction.ts exactly
+
+**T1011: Add AddLine2DPerpendicularToLineOp to AddLineOp.ts** ✅ OPERATION
+- File: `frontend/src/commands/operations/world/AddLineOp.ts`
+- Create AddLine2DPerpendicularToLineOp class implementing Operation interface
+- Constructor: `planeId, referenceLineId, throughPointId`
+- apply(): Call `plane.addLine2DPerpendicularToLine()`, return `{ success: true, outputs: { lineId } }`
+- undo(): Call `plane.removeLine(this.outputs.lineId)`
+- Store `outputs: { lineId?: string }` for redo
+- **Pattern**: Matches AddLine2DParallelToLineOp exactly
+
+**T1012: Create PerpendicularLineTool.ts file** ✅ TOOL
+- File: `frontend/src/tools/PerpendicularLineTool.ts` (NEW)
+- Create PerpendicularLineTool class extending BaseTool
+- State machine: `'waiting-line' | 'waiting-point'`
+- Store `referenceLineId?: string` during multi-step workflow
+- getSelectionMask(): Return `['line']` when waiting-line, `['point']` when waiting-point
+- handleClick():
+  - Step 1 (waiting-line): Store referenceLineId, transition to waiting-point
+  - Step 2 (waiting-point): Execute AddLine2DPerpendicularToLineOp, get lineId from outputs, add CreatePerpendicularLineAction to ProcessTree, commit, push to CommandStack
+- cancel(): Reset state machine
+- **Pattern**: Matches ParallelLineTool.ts exactly (90° rotation vs parallel direction is handled by domain realize2D())
+
+**T1013: Add 'perpendicular-line' to ToolType union** ✅ UI TYPES
+- File: `frontend/src/stores/toolStore.ts`
+- Add `'perpendicular-line'` to ToolType union type
+- No other changes needed (store already handles dynamic tool types)
+
+**T1014: Import PerpendicularLineTool in SvgCanvas.vue** ✅ UI INTEGRATION
+- File: `frontend/src/components/workspace/SvgCanvas.vue`
+- Add import: `import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';`
+- Add to tools registry (around line 377): `'perpendicular-line': new PerpendicularLineTool()`
+- **Pattern**: Matches ParallelLineTool registration
+
+**T1015: Add perpendicular line button to Toolbar.vue** ✅ UI BUTTON
+- File: `frontend/src/components/toolbars/Toolbar.vue`
+- Add button in Line tool family group (after Parallel Line button)
+- Icon: Two lines crossing at 90° angle
+- Title: "Perpendicular Line Tool - Create line perpendicular to reference through point"
+- Label: "Perpendicular"
+- Activates 'perpendicular-line' tool via toolStore.setActiveTool()
+- **Visual**: Should clearly show 90° angle symbol
+
+**T1016: Unit test Line2DPerpendicularToLine.realize2D()** ✅ TESTING (DOMAIN)
+- File: `frontend/tests/unit/domain/line.spec.ts`
+- Test horizontal reference → vertical perpendicular
+- Test diagonal reference (45°) → 135° perpendicular
+- Test vertical reference → horizontal left perpendicular
+- Test infeasibility propagation from reference line
+- Test infeasibility propagation from through-point
+- Test degenerate direction handling (lengthSq < 1e-10)
+- **Expectation**: 90° angle maintained exactly with Vector3 dot product ≈ 0
+
+**T1017: Unit test AddLine2DPerpendicularToLineOp** ✅ TESTING (OPERATION)
+- File: `frontend/tests/unit/commands/operations/AddLineOp.spec.ts`
+- Test apply() creates line and returns success with lineId
+- Test undo() removes line from plane
+- Test redo() restores line with same ID
+- Test error handling when plane not found
+- Test error handling when reference line not found
+- **Pattern**: Matches AddLine2DParallelToLineOp tests
+
+**T1018: Unit test PerpendicularLineTool state machine** ✅ TESTING (TOOL)
+- File: `frontend/tests/unit/tools/PerpendicularLineTool.spec.ts`
+- Test getSelectionMask() returns ['line'] in waiting-line state
+- Test getSelectionMask() returns ['point'] in waiting-point state
+- Test step 1: clicking line stores referenceLineId and transitions state
+- Test step 2: clicking point creates perpendicular line
+- Test cancel() resets state machine
+- **Pattern**: Matches ParallelLineTool.spec.ts
+
+**T1019: Integration test perpendicular line parametric updates** ✅ TESTING (INTEGRATION)
+- File: `frontend/tests/integration/perpendicularLine.spec.ts`
+- Test creating perpendicular line through existing point
+- Test parametric update: rotate reference line → perpendicular maintains 90° angle
+- Test parametric update: move through-point → perpendicular passes through new position
+- Test action recorded in ProcessTree with correct inputs/outputs
+- Test DependencyService tracks both referenceLineId and throughPointId
+- Verify 90° angle using dot product of direction vectors ≈ 0
+- **Key assertion**: `referenceLine.direction.dot(perpendicularLine.direction)` ≈ 0 within tolerance
+
+**T1020: E2E test perpendicular line tool workflow** ✅ TESTING (E2E)
+- File: `frontend/tests/e2e/perpendicular-line-creation.spec.ts`
+- Create reference line using Point tool + Line tool
+- Activate Perpendicular Line tool via toolbar button
+- Click reference line (verify highlight feedback)
+- Click empty space (verify free point auto-created)
+- Verify perpendicular line rendered on canvas
+- Move reference line point, verify perpendicular rotates to maintain 90°
+- Measure angle between lines, verify 90° ± 0.1° tolerance
+- Test undo/redo preserves perpendicular relationship
+- **Visual verification**: Lines appear visually perpendicular to user
+
+**T1021: Document Phase 59 completion in data-model.md** ✅ DOCUMENTATION
+- File: `specs/001-dihedral-learning-mvp/data-model.md`
+- Section already added: §Line2DPerpendicularToLine: Perpendicular Line Construction Implementation
+- Add implementation notes after Phase 59 completion
+- Document any deviations from original plan
+- Record lessons learned for future tool implementations
+
+### Phase 59 Acceptance Criteria
+
+1. ✅ Line2DPerpendicularToLine.realize2D() already implemented with 90° rotation
+2. ✅ Factory method addLine2DPerpendicularToLine() validates inputs and creates instance
+3. ✅ CreatePerpendicularLineAction tracks both referenceLineId and throughPointId dependencies
+4. ✅ AddLine2DPerpendicularToLineOp creates line and supports undo/redo
+5. ✅ PerpendicularLineTool follows two-step workflow: select reference line → select/create point
+6. ✅ Toolbar has "Perpendicular Line" button with 90° angle icon
+7. ✅ Line remains perpendicular (90° angle) when reference line rotates (parametric update)
+8. ✅ Line passes through specified point when point moves (parametric update)
+9. ✅ Infeasibility propagates correctly from reference line or through-point
+10. ✅ Tool supports auto-creation of free points when clicking empty space
+11. ✅ All unit tests passing (realize2D, operation, tool state machine)
+12. ✅ Integration tests verify 90° angle maintained across parametric updates
+13. ✅ E2E test verifies complete user workflow with visual perpendicularity
+
+**Phase 59 Status**: 📋 PLANNED (Jan 13, 2026)
+
+**Checkpoint**: Users can create perpendicular lines through specified points; perpendicular lines maintain exact 90° angle when reference line rotates; fundamental geometric construction complements parallel line tool for complete dihedral drawing capability.
+
+---
+
 **Status**: IN PROGRESS (T980-T982 complete, T983-T986 remaining - tests needed)

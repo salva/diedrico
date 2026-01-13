@@ -3358,6 +3358,479 @@ export class ParallelLineTool extends BaseTool {
 - **Action naming**: Use lowercase function name `createParallelLineAction` (not `CreateParallelLineAction`)
 - **Operation result**: Returns `{ success: true, outputs: {...} }` (not `{ ok: true, ... }`)
 
+#### Line2DPerpendicularToLine: Perpendicular Line Construction Implementation
+
+**Purpose**: Create an infinite line perpendicular to a reference line passing through a specified point.
+
+**Algorithm**: Perpendicular lines require 90-degree counter-clockwise rotation of the reference direction:
+
+```typescript
+class Line2DPerpendicularToLine extends Line2D {
+  readonly type: 'perpendicular-to-line' = 'perpendicular-to-line';
+  readonly referenceLineId: string;
+  readonly throughPointId: string;
+  
+  realize2D(world: World): Line2DRealization2D | null {
+    // Step 1: Get containing plane
+    const plane = world.getProjectionPlane(this.planeId);
+    if (!plane) return null;
+    
+    // Step 2: Get reference line realization
+    const referenceLine = plane.getLine(this.referenceLineId)?.realize2D(world);
+    if (!referenceLine) return null;
+    
+    // Step 3: Get through-point realization
+    const throughPoint = plane.getPoint(this.throughPointId)?.realize2D(world);
+    if (!throughPoint) return null;
+    
+    // Step 4: Handle infeasibility propagation
+    // If reference line or through-point are infeasible, propagate infeasibility
+    if (!referenceLine.feasible || !throughPoint.feasible) {
+      // Return fallback line with infeasible flag
+      const fallbackPoint = new Vector3(0, 0, 1);
+      const fallbackDirection = new Vector3(1, 0, 0);
+      return new Line2DRealization2D(fallbackPoint, fallbackDirection, false);
+    }
+    
+    // Step 5: Extract reference direction
+    const referenceDirection = referenceLine.getDirection();
+    
+    // CRITICAL: Perpendicular direction = 90° CCW rotation
+    // If reference direction is (dx, dy, 0), perpendicular is (-dy, dx, 0)
+    const perpendicularDirection = new Vector3(
+      -referenceDirection.y,  // -dy
+      referenceDirection.x,   // dx
+      0                       // Direction vector (z=0)
+    );
+    
+    // Step 6: Check for degenerate case (shouldn't happen if reference line is valid)
+    if (perpendicularDirection.lengthSq() < 1e-10) {
+      return new Line2DRealization2D(
+        throughPoint.position.clone(),
+        new Vector3(1, 0, 0),  // Fallback direction
+        false
+      );
+    }
+    
+    // Step 7: Create perpendicular line realization
+    // Line passes through the specified point with perpendicular direction
+    return new Line2DRealization2D(
+      throughPoint.position,      // Through-point (z=1)
+      perpendicularDirection,     // Perpendicular direction (z=0)
+      true                        // Feasible
+    );
+  }
+}
+```
+
+**Homogeneous Coordinates**:
+- **Input**: Reference line realization with `point1` (z=1, point on line) and `point2` (z=0, direction vector)
+- **Output**: Perpendicular line realization with `throughPoint.position` (z=1) and `perpendicularDirection` (z=0)
+- **Key property**: `perpendicularDirection = rotate90CCW(referenceDirection)`
+
+**Comparison with Line2DParallel**:
+
+```typescript
+// Parallel: No rotation (direct clone)
+const referenceDirection = referenceLine.point2.clone();
+const parallelDirection = referenceDirection;  // ← Same direction
+
+// Perpendicular: 90-degree CCW rotation
+const referenceDirection = referenceLine.getDirection();
+const perpendicularDirection = new Vector3(
+  -referenceDirection.y,  // ← 90° CCW rotation
+  referenceDirection.x,
+  0
+);
+```
+
+**Geometric Examples**:
+
+```typescript
+// Example 1: Horizontal reference line
+// Reference direction: (1, 0, 0) → horizontal
+// Perpendicular: (-0, 1, 0) = (0, 1, 0) → vertical
+
+// Example 2: Diagonal reference line
+// Reference direction: (1, 1, 0) / √2 → 45° northeast
+// Perpendicular: (-1/√2, 1/√2, 0) → 135° northwest (90° CCW)
+
+// Example 3: Vertical reference line
+// Reference direction: (0, 1, 0) → vertical
+// Perpendicular: (-1, 0, 0) → horizontal left (90° CCW)
+```
+
+**Dependencies and Parametric Updates**:
+
+Line2DPerpendicularToLine tracks two dependencies:
+1. **referenceLineId**: When reference line rotates or moves, perpendicular line updates to maintain 90° angle
+2. **throughPointId**: When through-point moves, perpendicular line updates to pass through new position
+
+Example parametric behavior:
+```typescript
+// Initial state: Horizontal reference line (direction = [1, 0, 0])
+const referenceLine = new Line2DByTwoPoints('ref', 'p1', 'p2', 'plane_H');
+const perpendicularLine = new Line2DPerpendicularToLine('perp', 'ref', 'p3', 'plane_H');
+
+// Realize perpendicular line
+const realization1 = perpendicularLine.realize2D(world);
+// → point1 = p3.position (e.g., [5, 10, 1])
+// → point2 = [0, 1, 0] (vertical direction, 90° to horizontal)
+
+// User moves p2, rotating reference line to 45°
+world.movePoint('p2', new Vector3(100, 100, 1));
+
+// DependencyService detects 'ref' changed, invalidates 'perp'
+// Next render, perpendicular line realizes again
+const realization2 = perpendicularLine.realize2D(world);
+// → point1 = [5, 10, 1] (same through-point)
+// → point2 = [-0.707, 0.707, 0] (135° direction, 90° CCW from 45° ref)
+
+// User moves through-point p3
+world.movePoint('p3', new Vector3(20, 30, 1));
+
+// DependencyService detects 'p3' changed, invalidates 'perp'
+const realization3 = perpendicularLine.realize2D(world);
+// → point1 = [20, 30, 1] (new through-point position)
+// → point2 = [-0.707, 0.707, 0] (same 135° direction)
+```
+
+**Infeasibility Propagation**:
+
+Line2DPerpendicularToLine becomes infeasible if:
+1. Reference line is infeasible (e.g., reference's defining points coincide)
+2. Through-point is infeasible (e.g., intersection doesn't exist)
+3. Reference direction degenerates to zero vector (pathological case)
+
+Infeasibility handling:
+```typescript
+if (!referenceLine.feasible || !throughPoint.feasible) {
+  // Return fallback line with infeasible=false flag
+  return new Line2DRealization2D(
+    new Vector3(0, 0, 1),   // Arbitrary fallback point
+    new Vector3(1, 0, 0),   // Arbitrary fallback direction
+    false                   // infeasible flag
+  );
+}
+
+// Check for degenerate reference direction
+if (perpendicularDirection.lengthSq() < 1e-10) {
+  return new Line2DRealization2D(
+    throughPoint.position.clone(),
+    new Vector3(1, 0, 0),  // Fallback direction
+    false                  // infeasible flag
+  );
+}
+```
+
+**Factory Method**:
+
+```typescript
+// ProjectionPlane.ts
+addLine2DPerpendicularToLine(
+  referenceLineId: string,
+  throughPointId: string,
+  world: World,
+  id?: string
+): Line2DPerpendicularToLine {
+  // Validate through-point exists on this plane
+  if (!this.points.has(throughPointId)) {
+    throw new Error(`Through-point ${throughPointId} not found on plane ${this.id}`);
+  }
+  
+  // Validate reference line exists in world (can be on any plane)
+  const referenceLine = world.getLine2D(referenceLineId);
+  if (!referenceLine) {
+    throw new Error(`Reference line ${referenceLineId} not found in world`);
+  }
+  
+  // Generate hierarchical ID if not provided (for redo)
+  const lineId = id ?? this.generateHierarchicalId('line');
+  
+  // Create Line2DPerpendicularToLine instance
+  const perpendicularLine = new Line2DPerpendicularToLine(
+    lineId,
+    referenceLineId,
+    throughPointId,
+    this.id,  // planeId
+    lineId    // label
+  );
+  
+  // Add to lines Map
+  this.lines.set(lineId, perpendicularLine);
+  
+  return perpendicularLine;
+}
+```
+
+**ProcessTree Action**:
+
+```typescript
+// CreatePerpendicularLineAction.ts
+export function createPerpendicularLineAction(
+  lineId: string,
+  planeId: string,
+  referenceLineId: string,
+  throughPointId: string
+): Action {
+  return {
+    id: generateActionId(),
+    type: 'action',
+    actionType: 'CreatePerpendicularLine',
+    timestamp: new Date(),
+    inputs: [referenceLineId, throughPointId],   // Dependencies
+    outputs: [lineId],                            // Created element
+    parameters: { planeId, referenceLineId, throughPointId },
+    description: `Perpendicular line on ${planeId}`
+  };
+}
+
+function generateActionId(): string {
+  return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+```
+
+**Operation**:
+
+```typescript
+// AddLineOp.ts
+export class AddLine2DPerpendicularToLineOp implements Operation {
+  outputs: { lineId?: string } = {};
+  
+  constructor(
+    private planeId: string,
+    private referenceLineId: string,
+    private throughPointId: string
+  ) {}
+  
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      // Create line (pass stored ID if available for redo)
+      const line = plane.addLine2DPerpendicularToLine(
+        this.referenceLineId,
+        this.throughPointId,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+  
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}
+```
+
+**Tool Implementation** (Two-Step Pattern):
+
+```typescript
+// PerpendicularLineTool.ts
+export class PerpendicularLineTool extends BaseTool {
+  readonly name = 'perpendicular-line';
+  private state: 'waiting-line' | 'waiting-point' = 'waiting-line';
+  private referenceLineId?: string;
+  
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-line') {
+      // Step 1: Select reference line
+      return ['line'];  // Also works with guides/segments as they extend Line2D
+    } else {
+      // Step 2: Select or create through-point
+      return ['point'];
+    }
+  }
+  
+  handleClick(context: ToolContext): ToolResult {
+    const { world, planeId, canvasPos, commandStack } = context;
+    const plane = world.getProjectionPlaneById(planeId);
+    if (!plane) {
+      return this.failure(`Plane ${planeId} not found`);
+    }
+    
+    // Get paper.js paper for hit-testing
+    const paper = context.paper;
+    if (!paper) {
+      return this.failure('Paper.js not initialized');
+    }
+    
+    // Prepare hit-testing context
+    const selectionMask = this.getSelectionMask();
+    const paperToPlaneTransform = context.paperToPlaneTransform;
+    
+    // Hit-test to find elements
+    const hit = paper.hitTest(
+      canvasPos,
+      50,  // snap radius
+      planeId,
+      paperToPlaneTransform,
+      world,
+      selectionMask
+    );
+    
+    if (this.state === 'waiting-line') {
+      // Step 1: Store reference line
+      if (!hit || hit.type !== 'line') {
+        return this.failure('Please click on a line');
+      }
+      
+      this.referenceLineId = hit.elementId;
+      this.state = 'waiting-point';
+      return this.success(`Selected reference line: ${hit.elementId}`);
+      
+    } else {
+      // Step 2: Create perpendicular line
+      let throughPointId: string;
+      
+      // If hit a point, use it; otherwise create free point
+      if (hit && hit.type === 'point') {
+        throughPointId = hit.elementId;
+      } else {
+        // Convert canvas position to plane position
+        const planePos = paperToPlaneTransform.transformPoint(canvasPos);
+        
+        // Create free point in Command
+        const cmd = new Command("Create perpendicular line", world);
+        const pointResult = cmd.addAndExecute(
+          new AddFreePoint2DOp(planeId, planePos)
+        );
+        throughPointId = pointResult.outputs.pointId!;
+        
+        // Create perpendicular line
+        const lineResult = cmd.addAndExecute(
+          new AddLine2DPerpendicularToLineOp(planeId, this.referenceLineId!, throughPointId)
+        );
+        const lineId = lineResult.outputs.lineId!;
+        
+        // Record ProcessTree action (Tool adds action, not Operation)
+        const action = createPerpendicularLineAction(
+          lineId,
+          planeId,
+          this.referenceLineId!,
+          throughPointId
+        );
+        world.getProcessTree().addAction(action);
+        
+        // Commit and push
+        cmd.commit();
+        commandStack.push(cmd);
+        
+        const refId = this.referenceLineId;
+        this.reset();
+        
+        return this.success(`Created perpendicular line ${lineId} perpendicular to ${refId} through new point ${throughPointId}`);
+      }
+      
+      // Existing point case
+      try {
+        const cmd = new Command("Create perpendicular line", world);
+        
+        // Execute operation and get outputs
+        const result = cmd.addAndExecute(
+          new AddLine2DPerpendicularToLineOp(planeId, this.referenceLineId!, throughPointId)
+        );
+        
+        const lineId = result.outputs.lineId;
+        
+        // Record ProcessTree action (Tool adds action, not Operation)
+        const action = createPerpendicularLineAction(
+          lineId,
+          planeId,
+          this.referenceLineId!,
+          throughPointId
+        );
+        world.getProcessTree().addAction(action);
+        
+        // Commit and push
+        cmd.commit();
+        commandStack.push(cmd);
+        
+        const refId = this.referenceLineId;
+        this.reset();
+        
+        return this.success(`Created perpendicular line ${lineId} perpendicular to ${refId} through ${throughPointId}`);
+        
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.reset();
+        return this.failure(`Failed to create perpendicular line: ${message}`);
+      }
+    }
+  }
+  
+  cancel(): void {
+    this.reset();
+  }
+  
+  private reset(): void {
+    this.state = 'waiting-line';
+    this.referenceLineId = undefined;
+  }
+}
+```
+
+**Testing Requirements**:
+
+1. **Unit test**: Line2DPerpendicularToLine.realize2D()
+   - Reference line horizontal → perpendicular vertical
+   - Reference line at 45° → perpendicular at 135°
+   - Reference line vertical → perpendicular horizontal left
+   - Infeasibility propagation from reference line
+   - Infeasibility propagation from through-point
+   - Degenerate direction handling
+
+2. **Integration test**: Parametric updates
+   - Rotate reference line → perpendicular updates to maintain 90° angle
+   - Move through-point → perpendicular passes through new position
+   - Verify action recorded in ProcessTree
+   - Verify 90° angle maintained across various reference rotations
+
+3. **E2E test**: Complete workflow
+   - Create reference line with Point tool + Line tool
+   - Activate Perpendicular Line tool
+   - Click reference line (verify highlight)
+   - Click empty space (verify free point auto-creation)
+   - Verify perpendicular line rendered at 90° angle
+   - Move reference point → verify perpendicular rotates to maintain 90°
+   - Measure angle → verify exactly 90° with tolerance ±0.1°
+
+**Implementation Files**:
+- Domain: `frontend/src/domain/world/Line.ts` (Line2DPerpendicularToLine class already exists, ~lines 309-395)
+- Factory: `frontend/src/domain/world/ProjectionPlane.ts` (addLine2DPerpendicularToLine method, NEW)
+- Action: `frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts` (NEW FILE)
+- Operation: `frontend/src/commands/operations/world/AddLineOp.ts` (AddLine2DPerpendicularToLineOp class, NEW)
+- Tool: `frontend/src/tools/PerpendicularLineTool.ts` (NEW FILE)
+- Tests: Multiple files in `frontend/tests/{unit,integration,e2e}/`
+
+**Key Architecture Points**:
+- **Tool adds action**: PerpendicularLineTool calls `createPerpendicularLineAction()` and adds it via `world.getProcessTree().addAction()` AFTER operation executes
+- **Operation does NOT add action**: AddLine2DPerpendicularToLineOp only creates the line domain object
+- **Action naming**: Use lowercase function name `createPerpendicularLineAction` (not `CreatePerpendicularLineAction`)
+- **Operation result**: Returns `{ success: true, outputs: {...} }` (not `{ ok: true, ... }`)
+- **Domain class exists**: Line2DPerpendicularToLine already fully implemented with realize2D() method
+- **90° rotation formula**: `perpendicularDirection = new Vector3(-dy, dx, 0)` for reference direction `(dx, dy, 0)`
+
 **Phase**: Phase 58 (T994-T1007)  
 **Status**: 📋 PLANNED (Jan 13, 2026)
 

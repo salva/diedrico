@@ -34,7 +34,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
 * [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
 * [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
-* [ ] Add tool for creating line perpendicular to another one passing by given point.
 * [ ] Add tool for creating line tangent to circle passing by given point (needs an index to indicate which side to use, similar to intersection points with circles).
 * [ ] Add tool for creating line tangent to circle and parallel to line (needs index also)
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
@@ -51,7 +50,8 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Adding new elements just expands all subprocesses in the process tree
 * [ ] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
 * [ ] View zooming must work using the mouse position as the center when using the mouse wheel, or the center of the screen when using + or - icons (not implemented yet).
- 
+* [ ] Can't use HalfHL, segments or guides as the base for building a parallel line. But all of them are lines too! Also, it seems that I can't pick the point first and then the base line when building a parallel line.
+
 ## ALREADY PLANNED
 
 * [X] **Circle Dependency Tracking: Track Both Center and Circumference Points**
@@ -110,6 +110,41 @@ Note that completing these tasks may require asking the user for additional info
     - ✅ E2E test verifies complete user workflow
   - **Implementation**: Ready for Phase 58 execution
   - **Notes**: All planning documentation complete; implementation follows established patterns from Line2DPerpendicularToLine and GuideTool
+
+* [X] **Perpendicular Line Tool: Line Perpendicular to Reference Through Point**
+  - **STATUS**: 📋 PLANNED (Jan 13, 2026)
+  - **Problem**: Users cannot create lines perpendicular to existing lines, a fundamental geometric construction in dihedral drawing
+  - **Context**: Line2DPerpendicularToLine domain class already exists with realize2D() fully implemented (90° CCW rotation)
+  - **Solution**: Complete implementation pipeline: factory method, ProcessTree action/operation, two-step tool following ParallelLineTool pattern
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-044 (Perpendicular Line Tool requirement)
+  - **UI**: [spec.md](./spec.md#line-tool-family) Line tool family - "Perpendicular line through point" workflow (two-step: select reference line → select/create point)
+  - **Data model**: [data-model.md](./data-model.md#line2dperpendiculartoline-perpendicular-line-construction-implementation) Complete implementation specification with 90° rotation algorithm
+  - **Tasks**: Phase 59 in [tasks.md](./tasks.md#phase-59-perpendicular-line-tool---line-perpendicular-to-reference-through-point) (T1008-T1021: 14 tasks)
+    - T1008-T1009: Factory method and import
+    - T1010: ProcessTree action (CreatePerpendicularLineAction)
+    - T1011: Operation (AddLine2DPerpendicularToLineOp)
+    - T1012-T1015: Tool implementation and UI integration
+    - T1016-T1020: Testing (unit, integration, E2E)
+    - T1021: Documentation
+  - **Algorithm**: `perpendicularDirection = new Vector3(-dy, dx, 0)` for reference direction (dx, dy, 0)
+  - **Reference Pattern**: Phase 58 ParallelLineTool.ts (same two-step pattern, selection masks, Paper.hitTest() usage)
+  - **Dependencies**: Tracks referenceLineId and throughPointId for parametric updates maintaining 90° angle
+  - **Acceptance**:
+    - ✅ Line2DPerpendicularToLine.realize2D() already implemented with 90° rotation
+    - ✅ Factory method addLine2DPerpendicularToLine() validates inputs and creates instance
+    - ✅ CreatePerpendicularLineAction tracks dependencies [referenceLineId, throughPointId]
+    - ✅ AddLine2DPerpendicularToLineOp creates line and supports undo/redo
+    - ✅ PerpendicularLineTool follows two-step workflow
+    - ✅ Toolbar has "Perpendicular Line" button with 90° angle icon
+    - ✅ Line remains perpendicular (90° angle) when reference line rotates
+    - ✅ Line passes through point when point moves
+    - ✅ Infeasibility propagates from reference line or through-point
+    - ✅ Tool supports auto-creation of free points
+    - ✅ All unit tests passing (realize2D with 90° angle verification)
+    - ✅ Integration tests verify parametric 90° angle maintenance
+    - ✅ E2E test verifies complete user workflow
+  - **Implementation**: Ready for Phase 59 execution
+  - **Notes**: Domain class already complete; follows exact same pattern as Phase 58 but with 90° rotation instead of parallel direction
 
 * [X] **Circle Tool: Circumference Point Snapping**
   - **STATUS**: ✅ COMPLETE (Jan 13, 2026) - All tasks (T980-T986) finished
