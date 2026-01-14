@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Matrix3 } from 'three';
 import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
 import { World } from '../../../src/domain/world/World';
-import { type Point2D, FreePoint2D, IntersectionPoint2D } from '../../../src/domain/world/Point';
+import { type Point2D, FreePoint2D, Point2DLineLineIntersection } from '../../../src/domain/world/Point';
 import { BaseProjectionPlane } from '../../../src/domain/world/ProjectionPlane';
 import { RenderLayer, Paper, type PointPrimitive } from '../../../src/domain/presentation/Paper';
 
@@ -23,24 +23,24 @@ describe('PaperService', () => {
     planeTransforms = new Map();
 
     // World initializes base projection planes P_H and P_V automatically
-    // Get the projection planes from World
-    const projPlaneH = world.projectionPlanes.get('proj_plane_H') as BaseProjectionPlane;
-    const projPlaneV = world.projectionPlanes.get('proj_plane_V') as BaseProjectionPlane;
+    // Get the projection planes from World using labels (Phase 53+)
+    const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+    const projPlaneV = world.getProjectionPlaneByLabel('P_V');
 
     // Get plane-to-paper transformation matrices directly
     const phRealization = projPlaneH.realize2D();
-    planeTransforms.set('proj_plane_H', phRealization.planeToPaper2D);
+    planeTransforms.set(projPlaneH.id!, phRealization.planeToPaper2D);
 
     const pvRealization = projPlaneV.realize2D();
-    planeTransforms.set('proj_plane_V', pvRealization.planeToPaper2D);
+    planeTransforms.set(projPlaneV.id!, pvRealization.planeToPaper2D);
   });
 
   describe('Point Primitive Generation', () => {
     it('should generate PointPrimitive for free point on P_H', () => {
       // Create a free point at (100, 50) on P_H
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-1', new Vector3(100, 50, 1), projPlaneH.id!, 'a_H');
-      world.addPoint2D(point);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+      point.label = 'a_H';
 
       // Generate primitives
       const context: PrimitiveContext = {
@@ -80,8 +80,14 @@ describe('PaperService', () => {
 
     it('should generate PointPrimitive for intersection point on P_V', () => {
       // Create an intersection point at (80, 120) on P_V
-      const projPlaneV = world.projectionPlanes.get('proj_plane_V');
-      const point = new IntersectionPoint2D('test-point-2', 'line-1', 'line-2', 0, projPlaneV.id!, 'b_V');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const point = new Point2DLineLineIntersection(
+        `${projPlaneV.id}/test-point-2`,
+        `${projPlaneV.id}/line-1`,
+        `${projPlaneV.id}/line-2`,
+        projPlaneV.id!,
+        'b_V'
+      );
       world.addPoint2D(point);
 
       // Generate primitives
@@ -111,9 +117,9 @@ describe('PaperService', () => {
     });
 
     it('should apply highlight style when point is highlighted', () => {
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-3', new Vector3(50, 50, 1), projPlaneH.id!, 'c_H');
-      world.addPoint2D(point);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      point.label = 'c_H';
 
       // Create context with hovered entity (hoveredIds triggers hover styling)
       const context: PrimitiveContext = {
@@ -134,9 +140,9 @@ describe('PaperService', () => {
     });
 
     it('should apply snap target style when point is active snap target', () => {
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-4', new Vector3(75, 100, 1), projPlaneH.id!, 'd_H');
-      world.addPoint2D(point);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(75, 100, 1), world);
+      point.label = 'd_H';
 
       // Create context with snap target
       const context: PrimitiveContext = {
@@ -158,13 +164,13 @@ describe('PaperService', () => {
 
     it('should handle multiple points on different planes', () => {
       // Point on P_H
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const pointH = new FreePoint2D('test-point-5', new Vector3(10, 20, 1), projPlaneH.id!, 'e_H');
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const pointH = new FreePoint2D(`${projPlaneH.id}/test-point-5`, new Vector3(10, 20, 1), projPlaneH.id!, 'e_H');
       world.addPoint2D(pointH);
 
       // Point on P_V
-      const projPlaneV = world.projectionPlanes.get('proj_plane_V');
-      const pointV = new FreePoint2D('test-point-6', new Vector3(30, 40, 1), projPlaneV.id!, 'e_V');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const pointV = new FreePoint2D(`${projPlaneV.id}/test-point-6`, new Vector3(30, 40, 1), projPlaneV.id!, 'e_V');
       world.addPoint2D(pointV);
 
       const context: PrimitiveContext = {
@@ -192,14 +198,17 @@ describe('PaperService', () => {
     });
 
     it('should skip points with missing plane transforms', () => {
-      // Create a point on a plane that doesn't have a transform
-      const point = new FreePoint2D('test-point-no-transform', new Vector3(50, 50, 1), "proj_plane_H", 'g');
-      point.planeId = 'unknown-plane';
-      world.addPoint2D(point);
+      // Create a valid point but don't add its plane to the transforms map
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      point.label = 'g';
+
+      // Create context without the plane's transform
+      const emptyTransforms = new Map<string, Matrix3>();
 
       const context: PrimitiveContext = {
         world,
-        planeTransforms, // Doesn't have 'unknown-plane'
+        planeTransforms: emptyTransforms, // Missing the plane's transform
       };
 
       const primitives = paperService.generatePrimitives(context);
@@ -213,8 +222,8 @@ describe('PaperService', () => {
   describe('Coordinate Transformation', () => {
     it('should correctly apply plane-to-paper transformation matrix', () => {
       // Test with identity matrix (u,v) → (x,y) with offset
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-7', new Vector3(0, 0, 1), projPlaneH.id!, 'h_H');
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = new FreePoint2D(`${projPlaneH.id}/test-point-7`, new Vector3(0, 0, 1), projPlaneH.id!, 'h_H');
       world.addPoint2D(point);
 
       const context: PrimitiveContext = {
@@ -234,9 +243,9 @@ describe('PaperService', () => {
     });
 
     it('should handle negative plane coordinates', () => {
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-8', new Vector3(-50, -100, 1), projPlaneH.id!, 'i_H');
-      world.addPoint2D(point);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(-50, -100, 1), world);
+      point.label = 'i_H';
 
       const context: PrimitiveContext = {
         world,
@@ -257,15 +266,24 @@ describe('PaperService', () => {
 
   describe('Style Resolution', () => {
     it('should use different styles for free vs intersection points', () => {
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
       
       // Free point
-      const freePoint = new FreePoint2D('test-point-9', new Vector3(10, 10, 1), projPlaneH.id!, 'j_H');
-      world.addPoint2D(freePoint);
+      const freePoint = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      freePoint.label = 'j_H';
+
+      // Create lines for intersection
+      const line1Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const line1Point2 = projPlaneH.addFreePoint2D(new Vector3(10, 0, 1), world);
+      const line1 = projPlaneH.addLine2DBetweenTwoPoints(line1Point1.id!, line1Point2.id!, world);
+      
+      const line2Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 10, 1), world);
+      const line2Point2 = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      const line2 = projPlaneH.addLine2DBetweenTwoPoints(line2Point1.id!, line2Point2.id!, world);
 
       // Intersection point
-      const intersectionPoint = new IntersectionPoint2D('test-point-10', 'line-1', 'line-2', 0, projPlaneH.id!, 'k_H');
-      world.addPoint2D(intersectionPoint);
+      const intersectionPoint = projPlaneH.addLineLineIntersection(line1.id!, line2.id!, world);
+      intersectionPoint.label = 'k_H';
 
       const context: PrimitiveContext = {
         world,
@@ -286,13 +304,22 @@ describe('PaperService', () => {
     });
 
     it('should apply different highlight styles for free vs intersection points', () => {
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
       
-      const freePoint = new FreePoint2D('test-point-11', new Vector3(10, 10, 1), projPlaneH.id!, 'l_H');
-      world.addPoint2D(freePoint);
+      const freePoint = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      freePoint.label = 'l_H';
 
-      const intersectionPoint = new IntersectionPoint2D('test-point-12', 'line-1', 'line-2', 0, projPlaneH.id!, 'm_H');
-      world.addPoint2D(intersectionPoint);
+      // Create lines for intersection
+      const line1Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const line1Point2 = projPlaneH.addFreePoint2D(new Vector3(10, 0, 1), world);
+      const line1 = projPlaneH.addLine2DBetweenTwoPoints(line1Point1.id!, line1Point2.id!, world);
+      
+      const line2Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 10, 1), world);
+      const line2Point2 = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      const line2 = projPlaneH.addLine2DBetweenTwoPoints(line2Point1.id!, line2Point2.id!, world);
+
+      const intersectionPoint = projPlaneH.addLineLineIntersection(line1.id!, line2.id!, world);
+      intersectionPoint.label = 'm_H';
 
       const context: PrimitiveContext = {
         world,
@@ -315,9 +342,9 @@ describe('PaperService', () => {
     it('should update paper with generated primitives', () => {
       const paper = new Paper();
 
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-13', new Vector3(50, 75, 1), projPlaneH.id!, 'n_H');
-      world.addPoint2D(point);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(50, 75, 1), world);
+      point.label = 'n_H';
 
       const context: PrimitiveContext = {
         world,
@@ -357,9 +384,9 @@ describe('PaperService', () => {
       };
       paper.setPrimitive(oldPrimitive);
 
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-14', new Vector3(10, 20, 1), projPlaneH.id!, 'o_H');
-      world.addPoint2D(point);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(10, 20, 1), world);
+      point.label = 'o_H';
 
       const context: PrimitiveContext = {
         world,
@@ -379,14 +406,14 @@ describe('PaperService', () => {
     it('should handle incremental entity update', () => {
       const paper = new Paper();
 
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
       
       // Add initial points
-      const point1 = new FreePoint2D('test-point-15', new Vector3(10, 10, 1), projPlaneH.id!, 'p_H');
-      world.addPoint2D(point1);
+      const point1 = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+      point1.label = 'p_H';
 
-      const point2 = new FreePoint2D('test-point-16', new Vector3(20, 20, 1), projPlaneH.id!, 'q_H');
-      world.addPoint2D(point2);
+      const point2 = projPlaneH.addFreePoint2D(new Vector3(20, 20, 1), world);
+      point2.label = 'q_H';
 
       const context: PrimitiveContext = {
         world,
@@ -402,9 +429,12 @@ describe('PaperService', () => {
       expect(point2Initial).toBeDefined();
 
       // Manually update point1's realization (simulating a move)
-      const realization1 = world.getPoint2DRealization(point1.id!);
-      if (realization1) {
-        realization1.position = new Vector3(30, 30, 1);
+      const projectionPlane = world.getProjectionPlaneByLabel('P_H');
+      const point = projectionPlane.getPoint(point1.id!);
+      const realization1 = point?.realize2D(world);
+      if (realization1 && point) {
+        // Update point position
+        (point as FreePoint2D).position = new Vector3(30, 30, 1);
       }
 
       // Incremental update
@@ -424,14 +454,14 @@ describe('PaperService', () => {
 
   describe('Active Plane Opacity (FR-002)', () => {
     it('should apply 100% opacity to elements on active plane', () => {
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-active', new Vector3(100, 50, 1), projPlaneH!.id!, 'a_H');
-      world.addPoint2D(point);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+      point.label = 'a_H';
 
       const context: PrimitiveContext = {
         world,
         planeTransforms,
-        activePlaneId: 'proj_plane_H' // Point is on active plane
+        activePlaneId: projPlaneH!.id! // Use actual plane ID
       };
 
       const primitives = paperService.generatePrimitives(context);
@@ -442,9 +472,9 @@ describe('PaperService', () => {
     });
 
     it('should apply 50% opacity to elements on inactive plane', () => {
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const point = new FreePoint2D('test-point-inactive', new Vector3(100, 50, 1), projPlaneH!.id!, 'a_H');
-      world.addPoint2D(point);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+      point.label = 'a_H';
 
       const context: PrimitiveContext = {
         world,
@@ -497,20 +527,20 @@ describe('PaperService', () => {
     });
 
     it('should maintain opacity when switching active planes', () => {
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
-      const projPlaneV = world.projectionPlanes.get('proj_plane_V');
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
-      const pointH = new FreePoint2D('point-H', new Vector3(100, 50, 1), projPlaneH!.id!, 'a_H');
-      const pointV = new FreePoint2D('point-V', new Vector3(80, 120, 1), projPlaneV!.id!, 'a_V');
+      const pointH = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+      pointH.label = 'a_H';
       
-      world.addPoint2D(pointH);
-      world.addPoint2D(pointV);
+      const pointV = projPlaneV.addFreePoint2D(new Vector3(80, 120, 1), world);
+      pointV.label = 'a_V';
 
       // Test with P_H active
       let context: PrimitiveContext = {
         world,
         planeTransforms,
-        activePlaneId: 'proj_plane_H'
+        activePlaneId: projPlaneH!.id!
       };
 
       let primitives = paperService.generatePrimitives(context);
@@ -524,7 +554,7 @@ describe('PaperService', () => {
       context = {
         world,
         planeTransforms,
-        activePlaneId: 'proj_plane_V'
+        activePlaneId: projPlaneV!.id!
       };
 
       primitives = paperService.generatePrimitives(context);

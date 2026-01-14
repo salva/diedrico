@@ -7102,3 +7102,275 @@ const circumferencePointId = pointResult.outputs.pointId;
 ---
 
 **Status**: IN PROGRESS (T980-T982 complete, T983-T986 remaining - tests needed)
+### Phase 64: Tool Argument Collection Framework
+
+**Goal**: Create declarative framework for tools that collect multiple geometric arguments, automating state management, selection mask updates, and UI feedback.
+
+**Context**: Current tools (CircleTool, TangentLineTool, IntersectionTool) duplicate ~70% of code for argument collection. Framework will reduce tool code by 65-75% while ensuring consistent UX.
+
+**Reference**: [data-model.md §Tool Argument Collection Framework](./data-model.md#tool-argument-collection-framework-phase-64), [ui-spec.md §Tool Argument Collection Framework](./ui-spec.md#tool-argument-collection-framework-phase-64)
+
+**Tasks**:
+
+#### T1078: Design and document framework architecture  
+- Complete architectural design for argument collection framework
+- Design interfaces (ToolArgumentSpec, ToolArgumentSet, CollectionContext)
+- Design base class ArgumentCollectorTool with abstract/implemented methods
+- Document state machine and UI feedback patterns
+- **Acceptance**: Complete architecture documented
+
+#### T1079: Implement core framework interfaces
+- Create ArgumentCollectorTool.ts and ToolArgumentTypes.ts
+- Implement ToolArgumentSpec, ToolArgumentSet, CollectionContext interfaces
+- Ensure strong typing for all properties
+- **Acceptance**: All interfaces defined with type safety
+
+#### T1080: Implement ArgumentCollectorTool base class
+- Implement abstract methods (getArgumentSets, execute, getToolName)
+- Implement automated methods (handleClick, getSelectionMask, getStatusMessage, reset, cancel)
+- Implement private helpers (tryAddArgument, updateViableSets, findCompletedSet, etc.)
+- Unit tests for all methods
+- **Acceptance**: Base class complete with all logic automated
+
+#### T1081: Implement state management and validation
+- Complete viable sets tracking state machine
+- Implement three validation layers (type, argument-level, set-level)
+- Handle edge cases (no viable sets, multiple viable, single viable)
+- Unit tests for state transitions
+- **Acceptance**: State machine handles all paths correctly
+
+#### T1082: Migrate CircleTool to framework
+- Refactor CircleTool as proof-of-concept (150 → ~40 lines, 70% reduction)
+- Extend ArgumentCollectorTool, define single argument set
+- Remove manual state management code
+- Integration tests for argument collection
+- **Acceptance**: CircleTool migrated with 70%+ code reduction
+
+#### T1083: Migrate ParallelLineTool and PerpendicularLineTool
+- Migrate both tools with any-order collection support
+- Define argument sets for each
+- Remove manual state tracking
+- Unit tests for both argument orders
+- **Acceptance**: Both tools migrated with 70%+ code reduction
+
+#### T1084: Migrate TangentLineTool (multi-method)
+- Migrate tool with two construction methods (250 → ~80 lines, 68% reduction)
+- Define two argument sets (circle+point, circle+line)
+- Add validators (point outside circle, line not intersecting)
+- Integration tests for both paths
+- **Acceptance**: TangentLineTool migrated with 65%+ code reduction
+
+#### T1085: Migrate IntersectionTool (three methods)
+- Migrate most complex tool (300 → ~100 lines, 67% reduction)
+- Define three argument sets (line+line, line+circle, circle+circle)
+- Handle index selection for sets 1 and 2
+- Integration tests for all three intersection types
+- **Acceptance**: IntersectionTool migrated with 65%+ code reduction
+
+#### T1086: Remove old tool implementations
+- Clean up manual state management from all migrated tools
+- Remove state properties, manual masks, manual UI feedback generation
+- Run full test suite to verify no regressions
+- **Acceptance**: All manual code removed
+
+#### T1087: Unit tests for framework and migrated tools
+- Comprehensive tests for ArgumentCollectorTool base class
+- Tests for all 5 migrated tools with various scenarios
+- Coverage target >90% for base class
+- **Acceptance**: All unit tests passing with high coverage
+
+#### T1088: Integration tests for argument collection workflows
+- Integration tests for multi-step argument collection
+- Test all 5 tools with correct/incorrect argument orders
+- Verify selection mask updates and status messages
+- Test edge cases and error handling
+- **Acceptance**: All integration tests passing
+
+#### T1089: E2E tests for multi-method tools
+- End-to-end Playwright tests for user workflows
+- TangentLineTool: both paths (circle+point, circle+line)
+- IntersectionTool: all three paths with index selection
+- Verify UI feedback (status bar, highlighting, tool reset)
+- **Acceptance**: All E2E tests passing
+
+#### T1090: Documentation and commit
+- Update spec.md FR-049, data-model.md Phase 64, ui-spec.md Phase 64
+- Comprehensive commit message (problem, solution, 70% code reduction: 1060→320 lines)
+- **Acceptance**: All documentation updated, Phase 64 committed
+
+### Phase 64 Acceptance Criteria
+
+1. ArgumentCollectorTool base class implemented
+2. All interfaces defined (ToolArgumentSpec, ToolArgumentSet, CollectionContext)
+3. Automated argument collection, validation, completion detection
+4. CircleTool migrated (70%+ reduction)
+5. ParallelLineTool migrated (70%+ reduction)
+6. PerpendicularLineTool migrated (70%+ reduction)
+7. TangentLineTool migrated (65%+ reduction, two methods)
+8. IntersectionTool migrated (65%+ reduction, three methods)
+9. All unit tests passing (>90% coverage)
+10. All integration and E2E tests passing
+11. No behavioral regressions
+12. Consistent UI feedback across all tools
+13. Documentation complete
+
+**Phase 64 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: Tools use declarative argument collection framework; 70% code reduction across 5 tools (1060 → 320 lines); consistent UX for all multi-argument tools; easy to add new tools.
+
+---
+## Phase 65: Test Factory Method Migration - Use ProjectionPlane Factory Methods
+
+**Goal**: Refactor all tests to use ProjectionPlane factory methods for element creation instead of direct constructors with hard-coded IDs.
+
+**Context**: Tests violate architecture by creating elements with `new FreePoint2D('hardcoded-id', ...)` instead of using factory methods that auto-generate hierarchical IDs. This creates technical debt and bypasses validation.
+
+**Reference**: [data-model.md §Phase 65](./data-model.md#phase-65-test-factory-method-migration---use-projectionplane-factory-methods-for-element-creation)
+
+**Scope**: Test files only (production code already uses factories correctly)
+
+**Tasks**:
+
+### Phase 65.1: Service Test Migration (paperService.spec.ts, renderService.spec.ts)
+
+#### T1091: Audit and plan paperService.spec.ts migration
+- Count instances of direct constructor calls (19 identified)
+- Identify element types used (FreePoint2D, Point2DLineLineIntersection, etc.)
+- Plan migration order (simple to complex)
+- **Acceptance**: Migration plan documented with instance count
+
+#### T1092: Migrate paperService.spec.ts point creation
+- Replace all `new FreePoint2D('hardcoded-id', ...)` with `plane.addFreePoint2D(...)`
+- Replace all intersection point constructors with factory methods
+- Update test assertions to use auto-generated IDs
+- **Acceptance**: All 19 point instances migrated, tests pass
+
+#### T1093: Migrate paperService.spec.ts line/circle creation (if any)
+- Replace line constructors with `plane.addLine2DBetweenTwoPoints(...)`
+- Replace circle constructors with `plane.addCircle2DByCenterAndPoint(...)`
+- Update dependent tests
+- **Acceptance**: All line/circle instances migrated, tests pass
+
+#### T1094: Audit and plan renderService.spec.ts migration
+- Count instances of direct constructor calls (9 identified)
+- Identify test patterns (mostly FreePoint2D and IntersectionPoint2D)
+- **Acceptance**: Migration plan documented
+
+#### T1095: Migrate renderService.spec.ts
+- Replace all direct constructor calls with factory methods
+- Update test setup to use auto-generated IDs
+- Ensure rendering tests still verify correct behavior
+- **Acceptance**: All 9 instances migrated, tests pass
+
+#### T1096: Verify Phase 65.1 completion
+- Run all service tests: `npm test -- paperService.spec.ts renderService.spec.ts`
+- Verify no `new FreePoint2D('hardcoded-id', ...)` patterns remain in service tests
+- Check test readability improved
+- **Acceptance**: All service tests pass, no hardcoded IDs remain
+
+### Phase 65.2: Domain Test Migration (paperHitTesting.spec.ts, line.spec.ts)
+
+#### T1097: Audit and plan paperHitTesting.spec.ts migration
+- Count instances (15+ identified)
+- Identify hit-testing test patterns
+- Plan migration preserving test intent
+- **Acceptance**: Migration plan documented
+
+#### T1098: Migrate paperHitTesting.spec.ts
+- Replace all point/line constructors with factory methods
+- Update hit-testing assertions to work with auto-generated IDs
+- Preserve test coverage for distance-adjusted hit-testing
+- **Acceptance**: All instances migrated, tests pass
+
+#### T1099: Audit and plan line.spec.ts migration
+- Count instances of Line2D constructor calls
+- Identify domain logic tests vs rendering tests
+- **Acceptance**: Migration plan documented
+
+#### T1100: Migrate line.spec.ts
+- Replace direct Line2D constructors with factory methods
+- Create points via factory, then create lines referencing point IDs
+- Ensure Line2DRealization tests still work correctly
+- **Acceptance**: All instances migrated, tests pass
+
+#### T1101: Audit remaining domain tests
+- Search for constructor patterns in other domain test files
+- Identify any circle.spec.ts, segment.spec.ts, guide.spec.ts files
+- Document instances found
+- **Acceptance**: Complete list of remaining domain tests
+
+#### T1102: Migrate remaining domain tests
+- Apply factory pattern to all identified domain tests
+- Update assertions to use auto-generated IDs
+- Maintain test coverage and intent
+- **Acceptance**: All domain tests migrated, tests pass
+
+#### T1103: Verify Phase 65.2 completion
+- Run all domain tests: `npm test -- tests/unit/domain/`
+- Verify no direct constructors with hardcoded IDs remain
+- Check test suite still has high coverage
+- **Acceptance**: All domain tests pass, no hardcoded IDs
+
+### Phase 65.3: Integration/E2E Test Migration and Final Audit
+
+#### T1104: Audit integration tests
+- Search integration test directory for constructor patterns
+- Count instances in pointCreation.spec.ts and others
+- Document migration complexity
+- **Acceptance**: Complete audit of integration tests
+
+#### T1105: Migrate integration tests
+- Apply factory pattern to integration tests
+- Ensure multi-step workflows still test correctly
+- Verify command execution tests work with auto-generated IDs
+- **Acceptance**: All integration tests migrated, tests pass
+
+#### T1106: Audit E2E tests (Playwright)
+- Search E2E test files for any hardcoded ID usage
+- Verify E2E tests use user actions (not direct element creation)
+- Document any migrations needed
+- **Acceptance**: E2E test audit complete
+
+#### T1107: Migrate E2E tests (if needed)
+- Update any E2E setup code to use factory methods
+- Ensure E2E tests interact through UI (not domain directly)
+- **Acceptance**: E2E tests follow best practices
+
+#### T1108: Final codebase audit
+- Run grep search for `new FreePoint2D\(` across entire test directory
+- Run grep search for `new Line2DByTwoPoints\(` across test directory
+- Run grep search for other element constructors
+- Document any remaining instances
+- **Acceptance**: Complete audit showing zero hardcoded ID patterns
+
+#### T1109: Update test documentation and patterns
+- Document factory method test pattern in test README or guidelines
+- Provide examples of correct test patterns
+- Update any test templates or generators
+- **Acceptance**: Test patterns documented for future reference
+
+#### T1110: Final verification and commit
+- Run full test suite: `npm test`
+- Verify all 1111 tests still pass (or more if new tests added)
+- Check for improved test readability
+- Commit with message: "Phase 65: Migrate all tests to use ProjectionPlane factory methods"
+- **Acceptance**: All tests pass, Phase 65 committed
+
+### Phase 65 Acceptance Criteria
+
+1. ✅ All test files use ProjectionPlane factory methods exclusively
+2. ✅ Zero instances of `new FreePoint2D('hardcoded-id', ...)` in tests
+3. ✅ Zero instances of `new Line2DByTwoPoints('hardcoded-id', ...)` in tests
+4. ✅ All element constructors with hardcoded IDs removed from tests
+5. ✅ Tests capture auto-generated IDs from factory return values
+6. ✅ All tests pass (1111/1111 or better)
+7. ✅ Test code is more readable and maintainable
+8. ✅ Factory method validation benefits tests (type safety, input validation)
+9. ✅ Test patterns documented for future contributors
+10. ✅ Grep audit confirms no hardcoded ID patterns remain
+
+**Phase 65 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: All tests use architectural factory methods; element creation properly encapsulated; IDs consistently auto-generated; tests are clearer and more maintainable.
+
+---

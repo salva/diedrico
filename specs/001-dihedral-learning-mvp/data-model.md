@@ -5556,6 +5556,287 @@ function convertStringArrayToMask(strings: string[]): SelectionMask {
 
 ---
 
+#### Tool Argument Collection Framework (Phase 64)
+
+**Context**: Tools like TangentLineTool, CircleTool, and IntersectionTool require collecting multiple geometric arguments before executing construction. Current implementation duplicates state management, selection mask logic, and UI feedback across all tools.
+
+**Problem**: Each tool manually implements:
+- State machine for tracking collected arguments
+- Selection mask updates as arguments are collected
+- UI feedback (status messages showing progress)
+- Validation logic (checking argument compatibility)
+- Any-order argument collection (e.g., circle then point OR point then circle)
+- Support for alternative construction methods (e.g., tangent via circle+point OR circle+line)
+
+This leads to:
+- **Code duplication**: ~50-100 lines of boilerplate per tool
+- **Inconsistent UX**: Different tools handle argument collection differently
+- **Maintenance burden**: Bug fixes must be replicated across all tools
+- **Brittle state management**: Easy to introduce bugs when adding new arguments
+- **Limited extensibility**: Hard to add new argument combinations
+
+**Solution**: Create ArgumentCollectorTool base class that automates argument collection, selection mask management, and UI feedback through declarative argument specifications.
+
+**Benefits**:
+- **DRY Principle**: Argument collection logic implemented once, reused by all tools
+- **Consistent UX**: All tools provide same feedback patterns and interaction model
+- **Type Safety**: Argument specs validated at compile time
+- **Declarative API**: Tools declare what they need, framework handles how to collect it
+- **Extensibility**: Easy to add new argument sets or validation rules
+- **Maintainability**: Bug fixes and improvements benefit all tools automatically
+- **Testability**: Base class logic tested independently, tool tests focus on business logic
+
+**Architecture Overview**:
+
+```typescript
+// 1. Argument Specification (declarative)
+interface ToolArgumentSpec {
+  name: string;                    // e.g., "referenceLine", "throughPoint", "circle"
+  mask: SelectionMask;             // What element types are acceptable
+  validator?: (element: Element2D, context: CollectionContext) => boolean;
+}
+
+// 2. Argument Set (mutually exclusive combinations)
+interface ToolArgumentSet {
+  arguments: ToolArgumentSpec[];   // Required arguments for this construction method
+  label?: string;                  // e.g., "Through Point", "Parallel to Line"
+  validator?: (collected: Map<string, Element2D>) => boolean;  // Cross-argument validation
+}
+
+// 3. Collection Context (provided to validators)
+interface CollectionContext {
+  world: World;                    // Access to world data
+  plane: ProjectionPlane;          // Active plane
+  collected: Map<string, Element2D>;  // Arguments collected so far
+}
+
+// 4. Base Tool Class
+abstract class ArgumentCollectorTool extends BaseTool {
+  // === Abstract Methods (tool-specific) ===
+  
+  /**
+   * Define all valid argument set combinations
+   * Tools with single method return array with one set
+   * Tools with multiple methods return array with multiple sets (mutually exclusive)
+   */
+  abstract getArgumentSets(): ToolArgumentSet[];
+  
+  /**
+   * Execute construction with completed argument set
+   * @param setIndex - Which argument set was completed (0-based)
+   * @param args - Collected arguments as Map<name, element>
+   */
+  abstract execute(setIndex: number, args: Map<string, Element2D>): void;
+  
+  // === Implemented by Base Class (automatic) ===
+  
+  private collectedArgs = new Map<string, Element2D>();
+  private viableSets: Set<number> = new Set();  // Which sets are still possible
+  
+  /**
+   * Handle element selection (called by mouse click handler)
+   * Automatically adds argument, updates viable sets, checks for completion
+   */
+  handleClick(hitResult: Element2D | null, paperPoint: Vector3): void {
+    if (!hitResult) return;
+    
+    // Try to add element to collection
+    const added = this.tryAddArgument(hitResult);
+    if (!added) return;  // Element doesn't match any viable argument spec
+    
+    // Update which argument sets are still viable
+    this.updateViableSets();
+    
+    // Check if exactly one set is complete
+    const completedSet = this.findCompletedSet();
+    if (completedSet !== null) {
+      this.execute(completedSet, this.collectedArgs);
+      this.reset();
+    } else {
+      // Update UI feedback for next step
+      this.updateStatusMessage();
+    }
+  }
+  
+  /**
+   * Get current selection mask (union of all viable next arguments)
+   * Automatically computed based on viable sets and collected args
+   */
+  getSelectionMask(): SelectionMask {
+    const nextSpecs = this.getViableNextArgumentSpecs();
+    const masks = nextSpecs.map(spec => spec.mask);
+    return SelectionMask.union(...masks);
+  }
+  
+  /**
+   * Get status message for UI feedback
+   * Automatically generated based on tool name, viable sets, collected args
+   */
+  getStatusMessage(): string {
+    const toolName = this.getToolName();
+    const argCount = this.collectedArgs.size;
+    const viableCount = this.viableSets.size;
+    
+    if (argCount === 0) {
+      // Initial state: show all options
+      return `${toolName}: ${this.getInitialPrompt()}`;
+    } else if (viableCount > 1) {
+      // Multiple options still viable
+      return `${toolName} (${viableCount} options): ${this.getNextArgumentPrompt()}`;
+    } else {
+      // Single option remaining
+      return `${toolName}: ${this.getNextArgumentPrompt()}`;
+    }
+  }
+  
+  /**
+   * Reset tool state (called after execution or cancel)
+   */
+  reset(): void {
+    this.collectedArgs.clear();
+    this.viableSets = new Set(this.getArgumentSets().map((_, i) => i));
+    this.updateStatusMessage();
+  }
+  
+  /**
+   * Cancel current collection (ESC key)
+   */
+  cancel(): void {
+    this.reset();
+  }
+  
+  // === Private Helper Methods ===
+  
+  private tryAddArgument(element: Element2D): boolean {
+    const specs = this.getViableNextArgumentSpecs();
+    
+    for (const spec of specs) {
+      // Check if element matches this spec's mask
+      if (!spec.mask.matches(this.getElementType(element))) continue;
+      
+      // Check if argument-level validator passes
+      if (spec.validator) {
+        const context: CollectionContext = {
+          world: this.getWorld(),
+          plane: this.getActivePlane(),
+          collected: this.collectedArgs
+        };
+        if (!spec.validator(element, context)) continue;
+      }
+      
+      // Add to collection
+      this.collectedArgs.set(spec.name, element);
+      return true;
+    }
+    
+    return false;  // Element doesn't match any viable spec
+  }
+  
+  private updateViableSets(): void {
+    const sets = this.getArgumentSets();
+    
+    // Remove sets that are no longer viable
+    for (const setIdx of Array.from(this.viableSets)) {
+      const set = sets[setIdx];
+      
+      // Check if collected args are compatible with this set
+      for (const [name, element] of this.collectedArgs) {
+        const spec = set.arguments.find(s => s.name === name);
+        
+        // Argument not in this set → set is not viable
+        if (!spec) {
+          this.viableSets.delete(setIdx);
+          break;
+        }
+        
+        // Argument doesn't match spec's mask → set is not viable
+        if (!spec.mask.matches(this.getElementType(element))) {
+          this.viableSets.delete(setIdx);
+          break;
+        }
+      }
+    }
+  }
+  
+  private findCompletedSet(): number | null {
+    const sets = this.getArgumentSets();
+    
+    for (const setIdx of this.viableSets) {
+      const set = sets[setIdx];
+      
+      // Check if all arguments in this set are collected
+      const allCollected = set.arguments.every(spec => 
+        this.collectedArgs.has(spec.name)
+      );
+      
+      if (!allCollected) continue;
+      
+      // Run set-level validator if present
+      if (set.validator && !set.validator(this.collectedArgs)) {
+        continue;
+      }
+      
+      return setIdx;
+    }
+    
+    return null;
+  }
+  
+  private getViableNextArgumentSpecs(): ToolArgumentSpec[] {
+    const sets = this.getArgumentSets();
+    const specs: ToolArgumentSpec[] = [];
+    const seen = new Set<string>();  // Prevent duplicates
+    
+    for (const setIdx of this.viableSets) {
+      const set = sets[setIdx];
+      
+      for (const spec of set.arguments) {
+        // Skip if already collected
+        if (this.collectedArgs.has(spec.name)) continue;
+        
+        // Skip if already added (avoid duplicates from multiple sets)
+        if (seen.has(spec.name)) continue;
+        
+        specs.push(spec);
+        seen.add(spec.name);
+      }
+    }
+    
+    return specs;
+  }
+  
+  private getInitialPrompt(): string {
+    const specs = this.getViableNextArgumentSpecs();
+    const types = specs.map(s => this.getArgumentTypeName(s)).join(', ');
+    return `Select ${types}`;
+  }
+  
+  private getNextArgumentPrompt(): string {
+    const specs = this.getViableNextArgumentSpecs();
+    const types = specs.map(s => this.getArgumentTypeName(s)).join(' or ');
+    return `Select ${types}`;
+  }
+  
+  private getArgumentTypeName(spec: ToolArgumentSpec): string {
+    // Convert mask to human-readable name
+    // E.g., TypeMask('point') → "point"
+    //       HierarchyMask('line', ...) → "line"
+    //       UnionMask([point, circle]) → "point or circle"
+    return spec.mask.toString().toLowerCase();
+  }
+}
+```
+
+(See full usage examples, migration strategy, and acceptance criteria in complete data-model.md Phase 64 section)
+
+**Code Size Reduction**: ~70% across 5 tools (1060 lines → 320 lines)
+
+**Phase**: Phase 64 (T1078-T1090)  
+**Status**: 📋 PLANNED (Jan 14, 2026)  
+**Dependencies**: Phase 63 (Class-based SelectionMask architecture)
+
+---
+
 //=== CIRCLE 2D CONSTRUCTIONS ===
 
 // **DESIGN DECISION**: Circle2D DOES NOT support scalar radius parameter
@@ -11407,4 +11688,158 @@ world.getProcessTree().addAction(action);
 **Problem Statement**: Phase 22.5 unified segment and line realizations to use `Line2DRealization2D`, but the deprecated `Segment2DRealization2D` class is still used in Paper.ts.
 
 **Solution**: Replace Segment2DRealization2D with Line2DRealization2D in Paper.ts, then delete deprecated class.
+
+---
+
+### Phase 65: Test Factory Method Migration - Use ProjectionPlane Factory Methods for Element Creation
+
+**Status**: 📋 Planned (2026-01-14)
+
+**Problem Statement**: Tests currently create elements directly using constructors with hard-coded IDs (e.g., `new FreePoint2D('hardcoded-id', ...)`) instead of using ProjectionPlane factory methods that auto-generate hierarchical IDs. This violates the architecture where **only factory methods should generate element IDs**.
+
+**Context**: 
+- Phase 45 introduced hierarchical element IDs (`{planeId}/{localId}` format)
+- ProjectionPlane class provides factory methods (addFreePoint2D, addLine2DBetweenTwoPoints, etc.) that auto-generate IDs
+- Tests still use old pattern: manual ID construction + direct constructor calls
+- This creates technical debt and violates encapsulation
+
+**Affected Test Files**:
+- paperService.spec.ts (19 instances)
+- paperHitTesting.spec.ts (15+ instances)
+- renderService.spec.ts (9 instances)
+- line.spec.ts (multiple instances)
+- Potentially others across the test suite
+
+**Architectural Violation Example**:
+```typescript
+// WRONG (current tests):
+const point = new FreePoint2D('hardcoded-id', new Vector3(100, 50, 1), planeId, 'label');
+world.addPoint2D(point);
+
+// CORRECT (required pattern):
+const plane = world.getProjectionPlaneByLabel('P_H');
+const point = plane.addFreePoint2D(new Vector3(100, 50, 1), world);
+// point.id is auto-generated hierarchically as "proj_plane_H/point2d_1"
+```
+
+**Factory Methods Available on ProjectionPlane**:
+- `addFreePoint2D(position, world, id?): FreePoint2D`
+- `addLineLineIntersection(line1Id, line2Id, world, id?): Point2DLineLineIntersection`
+- `addLineCircleIntersection(lineId, circleId, index, world, id?): Point2DLineCircleIntersection`
+- `addCircleCircleIntersection(circle1Id, circle2Id, index, world, id?): Point2DCircleCircleIntersection`
+- `addLine2DBetweenTwoPoints(point1Id, point2Id, world, id?): Line2DByTwoPoints`
+- `addLine2DParallelToLine(referenceLineId, throughPointId, world, id?): Line2DParallel`
+- `addLine2DPerpendicularToLine(referenceLineId, throughPointId, world, id?): Line2DPerpendicularToLine`
+- `addLine2DTangentToCircleThroughPoint(circleId, throughPointId, tangentIndex, world, id?): Line2DTangentToCircleThroughPoint`
+- `addLine2DTangentToCircleParallelToLine(circleId, referenceLineId, tangentIndex, world, id?): Line2DTangentToCircleParallelToLine`
+- `addSegment2DBetweenPoints(point1Id, point2Id, world, id?): Segment2DByPoints`
+- `addCircle2DByCenterAndPoint(centerPointId, circumferencePointId, world, id?): Circle2DByCenterAndPoint`
+- `addGuide2D(referenceLineId, throughPointId, world, id?): Guide2D`
+- `addSiblingGuide2D(primaryGuideId, referenceLineId, world, id?): SiblingGuide2D`
+- `addSiblingIntersectionPoint(primaryIntersectionId, world, id?): SiblingIntersectionPoint2D`
+
+**Migration Pattern for Points**:
+```typescript
+// BEFORE:
+const point1 = new FreePoint2D('test-point-1', new Vector3(10, 20, 1), planeId, 'a');
+const point2 = new FreePoint2D('test-point-2', new Vector3(30, 40, 1), planeId, 'b');
+world.addPoint2D(point1);
+world.addPoint2D(point2);
+
+// AFTER:
+const plane = world.getProjectionPlaneByLabel('P_H');
+const point1 = plane.addFreePoint2D(new Vector3(10, 20, 1), world);
+point1.label = 'a';  // Set label after creation if needed
+const point2 = plane.addFreePoint2D(new Vector3(30, 40, 1), world);
+point2.label = 'b';
+```
+
+**Migration Pattern for Lines**:
+```typescript
+// BEFORE:
+const line = new Line2DByTwoPoints('test-line-1', point1.id, point2.id, planeId, 'line_AB');
+world.addLine2D(line);
+
+// AFTER:
+const line = plane.addLine2DBetweenTwoPoints(point1.id!, point2.id!, world);
+line.label = 'line_AB';  // Set label after creation if needed
+```
+
+**Migration Pattern for Circles**:
+```typescript
+// BEFORE:
+const circle = new Circle2DByCenterAndPoint('test-circle-1', centerId, circumferenceId, planeId);
+world.addCircle2D(circle);
+
+// AFTER:
+const circle = plane.addCircle2DByCenterAndPoint(centerId, circumferenceId, world);
+```
+
+**Migration Pattern for Intersections**:
+```typescript
+// BEFORE:
+const intersection = new Point2DLineLineIntersection('test-int-1', line1Id, line2Id, planeId, 'int_AB');
+world.addPoint2D(intersection);
+
+// AFTER:
+const intersection = plane.addLineLineIntersection(line1Id, line2Id, world);
+intersection.label = 'int_AB';
+```
+
+**Benefits of Migration**:
+1. **Consistent ID Generation**: All IDs follow hierarchical format `{planeId}/{localId}`
+2. **Encapsulation**: ID generation logic stays in one place (ProjectionPlane)
+3. **Type Safety**: Factory methods validate inputs (e.g., points exist, IDs match)
+4. **Future-Proof**: Changes to ID format only require updating factory methods
+5. **Simplified Tests**: Less boilerplate, clearer intent (create point vs construct+add)
+6. **Validation**: Factory methods validate element constraints before creation
+
+**Optional id Parameter**:
+- Factory methods accept optional `id?` parameter **ONLY for redo operations**
+- Tests should **NEVER** pass explicit IDs
+- Redo operations need to recreate elements with their previous IDs
+- Tests should capture returned element's auto-generated ID
+
+**Test Pattern After Migration**:
+```typescript
+it('should create line between two points', () => {
+  const plane = world.getProjectionPlaneByLabel('P_H');
+  
+  // Create points using factory (IDs auto-generated)
+  const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+  const p2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+  
+  // Create line using factory (ID auto-generated)
+  const line = plane.addLine2DBetweenTwoPoints(p1.id!, p2.id!, world);
+  
+  // Test using returned objects
+  expect(line).toBeDefined();
+  expect(line.point1Id).toBe(p1.id);
+  expect(line.point2Id).toBe(p2.id);
+  
+  // Test realization
+  const realization = line.realize2D(world);
+  expect(realization?.feasible).toBe(true);
+});
+```
+
+**Scope**: This phase migrates **test files only**. Production code (tools, commands) already uses factory methods correctly.
+
+**Implementation Strategy**:
+- Phase 65.1: Migration of service tests (paperService.spec.ts, renderService.spec.ts)
+- Phase 65.2: Migration of domain tests (paperHitTesting.spec.ts, line.spec.ts, etc.)
+- Phase 65.3: Audit remaining test files for any stragglers
+
+**Acceptance Criteria**:
+1. ✅ All test files use ProjectionPlane factory methods for element creation
+2. ✅ No direct constructor calls with hard-coded IDs in tests
+3. ✅ All tests pass after migration (no behavior change)
+4. ✅ Tests capture auto-generated IDs from returned elements
+5. ✅ Labels set as properties after creation (not in constructor)
+6. ✅ Test code is simpler and more readable
+7. ✅ grep search confirms no `new FreePoint2D('hardcoded-id', ...)` patterns remain
+
+**Related Phases**:
+- Phase 45: Hierarchical Element IDs (introduced `{planeId}/{localId}` format)
+- Phase 46: Remove Hardcoded IDs (removed hardcoded IDs from production code)
 
