@@ -588,28 +588,93 @@ At any moment, **exactly one tool is active**.
 
 #### Tool Families and Sub-Tools
 
-Tools are grouped into **functional families**, each represented by a primary button with a dropdown menu:
+**Concept**: Tools are grouped into **functional families**, each represented by a primary button with a dropdown menu. This pattern is inspired by GeoGebra Classic's toolbar organization.
 
 **Example: Point Tool Family**
 ```
 [Point ▼]
   ├─ Free Point
-  ├─ Intersection Point
-  ├─ Point on Element
-  └─ Midpoint
+  └─ Intersection Point
 ```
 
-**Behavior**:
-- Click button: Activates the last-used sub-tool from that family
-- Click dropdown arrow: Shows menu of all sub-tools in family
-- Select sub-tool from menu: Activates that sub-tool and updates button face
-- Button face shows currently active sub-tool (icon + optional label)
+**Example: Line Tool Family**
+```
+[Line ▼]
+  ├─ Line by Two Points
+  ├─ Parallel Line
+  ├─ Perpendicular Line
+  ├─ Tangent to Circle (Through Point)
+  └─ Tangent to Circle (Parallel to Line)
+```
+
+**Example: Circle Tool Family**
+```
+[Circle ▼]
+  └─ Circle by Center and Point
+```
+
+**Example: Other Tool Families**
+```
+[Segment ▼]
+  └─ Segment by Two Points
+
+[Guide ▼]
+  └─ Guide (Perpendicular to Hinge Line)
+
+[Transport ▼]
+  └─ Transport Point via Guide
+```
+
+**Toolbar Button Behavior**:
+
+1. **Initial State**: Button shows default sub-tool (typically the first/most common)
+   - Example: Point button initially shows "Free Point" icon + label
+   
+2. **Click Button (Main Area)**: Activates the last-used sub-tool from that family
+   - If user previously used "Parallel Line", clicking Line button activates Parallel Line
+   - If no sub-tool used yet, activates the default (first in list)
+   
+3. **Click Dropdown Arrow**: Shows menu of all sub-tools in family
+   - Menu displays all available construction variants
+   - Current sub-tool highlighted/checked in menu
+   
+4. **Select Sub-Tool from Menu**: Activates that sub-tool and updates button face
+   - Button icon changes to selected sub-tool's icon
+   - Button label updates (if labels shown)
+   - Selected sub-tool becomes the new "last-used" for this family
+
+**Last-Used Sub-Tool Memory**:
+
+- System remembers the last-used sub-tool for EACH family independently
+- Memory persists across tool switches (selecting different family, then returning)
+- Memory persists across sessions (saved to localStorage or preferences)
+- Clicking a family button always activates its last-used sub-tool for efficiency
+
+**Example User Workflow**:
+
+1. User clicks "Line" button → activates "Line by Two Points" (default)
+2. User creates several lines using two points
+3. User opens Line dropdown, selects "Parallel Line"
+4. User creates a parallel line
+5. User switches to Point tool to add more points
+6. User clicks "Line" button again → activates "Parallel Line" (last-used)
+7. User doesn't need to re-select Parallel Line from dropdown
 
 **Benefits**:
-- Compact toolbar (fewer top-level buttons)
-- Groups conceptually related operations
-- Makes user intent explicit (user chooses specific variant)
-- Last-used sub-tool becomes default for efficiency
+
+- **Compact toolbar**: Fewer top-level buttons (6-8 families vs 20+ individual tools)
+- **Groups conceptually related operations**: All line variants together, all point variants together
+- **Makes user intent explicit**: User chooses specific construction variant, not inferred
+- **Last-used memory reduces clicks**: Most common workflows don't require dropdown navigation
+- **Scalable**: Easy to add new sub-tools without cluttering toolbar
+
+**Visual Design Requirements**:
+
+- Button face MUST show currently active sub-tool icon
+- Dropdown arrow MUST be visually distinct from main button area
+- Active sub-tool MUST be highlighted/checked in dropdown menu
+- Button MUST have active state when any sub-tool from family is active
+- Tooltip MUST show currently active sub-tool name (not just family name)
 
 #### Sequential Interaction Flow
 #### Element Variations and Tool Architecture
@@ -995,19 +1060,62 @@ Upon completing all tool steps successfully:
 
 #### Completion and Repetition
 
-After successful operation completion:
+After successful operation completion, tools follow one of two consistent behavior patterns:
 
-**Option A: Tool Remains Active** (for frequently repeated operations like points, segments):
-- Tool stays active with same settings
-- User can immediately perform same operation again
-- Explicit deactivation required (ESC, select different tool, or explicit "Done" button)
+**Option A: Tool Remains Active** (for frequently repeated operations):
 
-**Option B: Tool Returns to Neutral** (for infrequent or complex operations):
-- Tool deactivates automatically after completion
-- Cursor returns to selection mode
-- User must reactivate tool for another operation
+- **When to Use**: Primitives and common constructions (Point, Line, Segment, Circle)
+- **Behavior**:
+  - Tool stays active with same settings after completion
+  - User can immediately perform same operation again
+  - Tool state resets (e.g., LineTool returns to "waiting for first point")
+  - Explicit deactivation required: ESC key, click different tool, or click Selection Tool
+- **User Experience**: Efficient for repetitive work (e.g., adding many points, creating multiple segments)
+- **Examples**:
+  - **Free Point Tool**: After creating point at (100, 50), tool remains active; user can immediately click to create another point
+  - **Line Tool**: After creating line between A and B, tool returns to "waiting for first point"; user can immediately start next line
+  - **Circle Tool**: After creating circle, tool returns to "waiting for center"; user can immediately create another circle
+  - **Segment Tool**: After creating segment, tool remains active for next segment
 
-**Consistency**: Each tool family has consistent behavior (all point tools use same pattern, all transport tools use same pattern, etc.)
+**Option B: Tool Returns to Selection** (for infrequent or complex operations):
+
+- **When to Use**: Complex constructions, one-off operations (Tangent, Intersection, Transport, Perpendicular/Parallel)
+- **Behavior**:
+  - Tool automatically deactivates after successful completion
+  - Selection Tool becomes active (cursor returns to selection mode)
+  - User must explicitly reactivate tool for another operation
+- **User Experience**: Prevents accidental repeated operations, returns to neutral state
+- **Examples**:
+  - **Intersection Tool**: After creating intersection point, tool deactivates; user typically selects/moves result rather than creating another intersection
+  - **Tangent Line Tools**: After creating tangent line, tool deactivates; tangent construction is usually one-off
+  - **Transport Tool**: After transporting point via guide, tool deactivates; transport is typically followed by other operations
+  - **Parallel/Perpendicular Line Tools**: After creating constrained line, tool deactivates; user typically continues with different construction
+
+**Consistency Rule**: All tools within the same **conceptual family** MUST follow the same pattern:
+
+- **Point Family**: Option A (stays active) - all point tools remain active after creation
+- **Line Family (Basic)**: Option A (stays active) - Line by Two Points remains active
+- **Line Family (Constrained)**: Option B (returns to selection) - Parallel, Perpendicular, Tangent deactivate
+- **Segment Family**: Option A (stays active) - remains active for repetitive use
+- **Circle Family**: Option A (stays active) - remains active for multiple circles
+- **Guide Family**: Option B (returns to selection) - guides are typically one-off
+- **Intersection Family**: Option B (returns to selection) - intersections are derived, not repeated
+- **Transport Family**: Option B (returns to selection) - transport followed by other work
+
+**Rationale for Split**:
+
+- **Basic primitives** (Point, Line, Segment, Circle): Users often create many in succession → stay active
+- **Constrained constructions** (Parallel, Perpendicular, Tangent): Usually one-off operations → return to selection
+- **Derived elements** (Intersection): Created from existing geometry, then manipulated → return to selection
+- **Transport operations**: Multi-step operations typically followed by different work → return to selection
+
+**UI Indication**:
+
+- Tool tooltips MUST indicate completion behavior:
+  - Option A: "Point Tool (P) - Stays active after creation"
+  - Option B: "Tangent Line Tool - Returns to selection after creation"
+- Status bar MAY show hint: "Press ESC to deselect tool" for Option A tools
+- Tool button remains highlighted for Option A, deselects for Option B
 
 #### Operation Cancellation
 

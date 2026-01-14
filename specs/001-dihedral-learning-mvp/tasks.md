@@ -7374,3 +7374,234 @@ const circumferencePointId = pointResult.outputs.pointId;
 **Checkpoint**: All tests use architectural factory methods; element creation properly encapsulated; IDs consistently auto-generated; tests are clearer and more maintainable.
 
 ---
+## Phase 67: Toolbar Behavior - Tool Families, Completion Patterns, and Last-Used Memory
+
+**Goal**: Implement toolbar organization with tool families (dropdown menus), last-used sub-tool memory, and configurable completion behavior (stay-active vs return-to-selection).
+
+**Context**: Current toolbar has flat buttons (12+ tools), no grouping, all tools stay active after completion. Need GeoGebra-style families with dropdowns, smart last-used memory, and completion patterns based on tool usage frequency.
+
+**Reference**: [spec.md FR-050, FR-051](./spec.md#requirements-mandatory), [ui-spec.md §Tool Families](./ui-spec.md#tool-families-and-sub-tools), [data-model.md §Phase 67](./data-model.md#phase-67-toolbar-behavior---tool-families-completion-patterns-and-last-used-memory)
+
+### Phase 67.1: ToolStore Enhancement (T1121-T1123)
+
+#### T1121: Define ToolFamilyConfig and ToolConfig interfaces
+
+- File: `frontend/src/types/ToolConfig.ts` (NEW)
+- Create TypeScript interfaces:
+  ```typescript
+  export interface ToolConfig {
+    id: string;
+    label: string;
+    icon: string;
+    shortcut?: string;
+    tooltip: string;
+    completionBehavior: 'stay-active' | 'return-to-selection';
+  }
+  
+  export interface ToolFamilyConfig {
+    id: string;
+    label: string;
+    icon: string;
+    defaultTool: string;
+    tools: ToolConfig[];
+  }
+  ```
+- Export types for use in toolStore and UI components
+- **Acceptance**: Interfaces defined, type-safe, exported
+
+#### T1122: Add lastUsedByFamily state and methods to toolStore
+
+- File: `frontend/src/stores/toolStore.ts`
+- Add state: `lastUsedByFamily: Record<string, string>` (family ID → tool ID)
+- Add method: `activateToolFamily(familyId: string)` - activates last-used or default
+- Add method: `selectSubTool(familyId, toolId)` - activates tool + updates last-used
+- Add method: `getToolFamily(toolId)` - find family containing tool
+- Add method: `getToolConfig(toolId)` - get config for tool
+- Add method: `getCompletionBehavior(toolId)` - get completion behavior
+- Load lastUsedByFamily from localStorage on init
+- **Acceptance**: Methods work, last-used state managed correctly
+
+#### T1123: Add localStorage persistence for last-used preferences
+
+- File: `frontend/src/stores/toolStore.ts`
+- Add `saveToLocalStorage()` method - saves lastUsedByFamily map
+- Add `loadFromLocalStorage()` method - restores lastUsedByFamily on init
+- Call save after selectSubTool()
+- Storage key: `diedrico-tool-last-used`
+- **Acceptance**: Preferences persist across page refreshes
+
+### Phase 67.2: Tool Completion Behavior (T1124-T1127)
+
+#### T1124: Add completionBehavior property to BaseTool
+
+- File: `frontend/src/tools/BaseTool.ts`
+- Add abstract property: `readonly completionBehavior: 'stay-active' | 'return-to-selection'`
+- **Acceptance**: All tool subclasses must declare completion behavior
+
+#### T1125: Add handleCompletion() method to BaseTool
+
+- File: `frontend/src/tools/BaseTool.ts`
+- Add protected method:
+  ```typescript
+  protected handleCompletion(toolStore: ToolStore): void {
+    if (this.completionBehavior === 'return-to-selection') {
+      toolStore.setTool('select');
+    } else {
+      // Stay active - subclass already called reset()
+    }
+  }
+  ```
+- **Acceptance**: Method defined, switches tool or stays based on config
+
+#### T1126: Configure completion behavior for all existing tools
+
+- Files: All tool files in `frontend/src/tools/`
+- Add completionBehavior property to each tool:
+  - `stay-active`: PointTool, LineTool, SegmentTool, CircleTool
+  - `return-to-selection`: ParallelLineTool, PerpendicularLineTool, TangentLine*, IntersectionTool, GuideTool, TransportTool
+- **Acceptance**: All 12 tools have completion behavior configured
+
+#### T1127: Update tool handleClick() to call handleCompletion()
+
+- Files: All tool files
+- After successful operation (right before return this.success(...)):
+  - Call `this.handleCompletion(context.toolStore)`
+- Ensure reset() called BEFORE handleCompletion() for stay-active tools
+- **Acceptance**: Tools switch or stay active based on config after completion
+
+### Phase 67.3: Tool Family Definitions (T1128-T1129)
+
+#### T1128: Create TOOL_FAMILIES configuration data
+
+- File: `frontend/src/config/toolFamilies.ts` (NEW)
+- Define `TOOL_FAMILIES: ToolFamilyConfig[]` with 6 families:
+  - Point family: free-point, intersection
+  - Line family: line-by-two-points, parallel-line, perpendicular-line, tangent-*
+  - Segment family: segment
+  - Circle family: circle
+  - Guide family: guide
+  - Transport family: transport
+- Include icons, labels, shortcuts, tooltips, completion behaviors
+- Export constant
+- **Acceptance**: All current tools defined in family structure
+
+#### T1129: Integrate TOOL_FAMILIES into toolStore
+
+- File: `frontend/src/stores/toolStore.ts`
+- Import TOOL_FAMILIES
+- Add to store state
+- Implement getToolFamily() using TOOL_FAMILIES
+- Implement getToolConfig() using TOOL_FAMILIES
+- Implement getCompletionBehavior() using config lookup
+- **Acceptance**: Store can query tool metadata from TOOL_FAMILIES
+
+### Phase 67.4: UI Components (T1130-T1133)
+
+#### T1130: Create ToolFamilyButton.vue component
+
+- File: `frontend/src/components/toolbars/ToolFamilyButton.vue` (NEW)
+- Props: `family: ToolFamilyConfig`
+- Template:
+  - Main button (click → activateLastUsed)
+  - Dropdown arrow button (click → toggle menu)
+  - Dropdown menu (v-if showing, click item → selectSubTool)
+- Computed: isAnyToolActive, activeToolConfig, activeToolIcon, activeToolTooltip
+- Methods: activateLastUsed(), toggleDropdown(), selectTool()
+- **Acceptance**: Component renders, dropdown works, activates tools correctly
+
+#### T1131: Add dropdown menu styling
+
+- File: `frontend/src/components/toolbars/ToolFamilyButton.vue`
+- CSS classes:
+  - .tool-family-button - container (display: flex)
+  - .tool-button-main - main button area
+  - .tool-button-dropdown - dropdown arrow button
+  - .tool-dropdown-menu - absolute positioned menu
+  - .tool-menu-item - menu items with hover state
+  - .checkmark - visual indicator for active tool
+- Position dropdown below button, right-aligned
+- **Acceptance**: Dropdown styled, visually clear, accessible
+
+#### T1132: Update Toolbar.vue to use ToolFamilyButton
+
+- File: `frontend/src/components/toolbars/Toolbar.vue`
+- Import ToolFamilyButton and TOOL_FAMILIES
+- Replace individual tool buttons with:
+  ```vue
+  <ToolFamilyButton
+    v-for="family in TOOL_FAMILIES"
+    :key="family.id"
+    :family="family"
+  />
+  ```
+- Keep Selection Tool as standalone button (not in family)
+- **Acceptance**: Toolbar shows 1 selection + 6 family buttons
+
+#### T1133: Handle keyboard shortcuts with families
+
+- File: `frontend/src/components/toolbars/Toolbar.vue`
+- Update handleKeyDown() to:
+  - Look up tool ID by shortcut
+  - Activate tool directly (not family)
+  - Update last-used for that tool's family
+- Shortcuts still work (P for point, L for line, etc.)
+- **Acceptance**: Keyboard shortcuts activate specific sub-tools, update last-used
+
+### Phase 67.5: Testing (T1134-T1137)
+
+#### T1134: Unit tests - toolStore last-used memory
+
+- File: `frontend/tests/unit/stores/toolStore.spec.ts`
+- Test activateToolFamily() with no last-used → uses default
+- Test activateToolFamily() with last-used → uses last-used
+- Test selectSubTool() → updates last-used map
+- Test last-used persists across tool switches
+- Test localStorage save/load
+- **Acceptance**: 100% coverage of last-used logic
+
+#### T1135: Unit tests - tool completion behavior
+
+- File: `frontend/tests/unit/tools/*.spec.ts`
+- For each tool:
+  - Test successful operation → correct completion behavior (stay-active or return-to-selection)
+  - Mock toolStore.setTool() calls
+  - Verify tool state reset for stay-active tools
+- **Acceptance**: All tools tested for completion behavior
+
+#### T1136: E2E tests - dropdown interaction and tool family switching
+
+- File: `frontend/tests/e2e/toolbar-families.spec.ts` (NEW)
+- Test click family button → activates last-used (or default)
+- Test click dropdown arrow → shows menu
+- Test click menu item → activates that tool
+- Test active tool shown with checkmark in menu
+- Test button face updates with active sub-tool icon
+- **Acceptance**: Dropdown UI works end-to-end
+
+#### T1137: E2E tests - last-used memory across sessions
+
+- File: `frontend/tests/e2e/toolbar-families.spec.ts`
+- Test: select sub-tool → reload page → click family button → last-used activated
+- Test: different sub-tools for different families remembered independently
+- **Acceptance**: Last-used persists across page reloads
+
+### Phase 67 Acceptance Criteria
+
+1. ✅ Toolbar organized into 6 tool families + Selection Tool (7 buttons total)
+2. ✅ Each family button has dropdown arrow showing sub-tools
+3. ✅ Clicking button activates last-used sub-tool (or default if none)
+4. ✅ Clicking dropdown shows all sub-tools with active one checkmarked
+5. ✅ Last-used preference persists across sessions (localStorage)
+6. ✅ Primitive tools (Point, Line, Segment, Circle) stay active after completion
+7. ✅ Complex tools (Tangent, Intersection, Parallel, Perpendicular, Guide, Transport) return to selection after completion
+8. ✅ Tool tooltips indicate completion behavior
+9. ✅ Keyboard shortcuts still work and update last-used
+10. ✅ All unit tests and E2E tests passing
+11. ✅ Toolbar more compact (~40% fewer buttons visible)
+12. ✅ User experience improved (fewer clicks for common workflows)
+
+**Phase 67 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: Toolbar transformed into modern tool family organization with smart last-used memory and context-appropriate completion behavior.
+
+---

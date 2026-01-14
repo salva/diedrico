@@ -11843,3 +11843,22 @@ it('should create line between two points', () => {
 - Phase 45: Hierarchical Element IDs (introduced `{planeId}/{localId}` format)
 - Phase 46: Remove Hardcoded IDs (removed hardcoded IDs from production code)
 
+
+---
+
+### Phase 67: Toolbar Behavior - Tool Families, Completion Patterns, and Last-Used Memory
+
+**Status**: 📋 PLANNED (2026-01-14)
+
+**Problem Statement**: Current toolbar has flat button structure, no tool families, all tools use same completion behavior. Creates cluttered toolbar and inconsistent UX.
+
+**Context**: ui-spec.md and spec.md (FR-050, FR-051) require tool families with dropdowns, last-used memory, and completion behavior patterns.
+
+**Key Requirements**:
+1. Tool families with dropdown menus (inspired by GeoGebra Classic)
+2. Last-used sub-tool memory per family (persists across sessions)
+3. Completion behavior: Option A (stays active) for primitives, Option B (returns to selection) for complex tools
+
+**Architecture** - See data-model.md §Phase 67 for complete ToolFamilyConfig, ToolConfig interfaces, enhanced ToolStore, tool family definitions, BaseTool changes, and ToolFamilyButton.vue component.
+
+**Related Requirements**: FR-050 (tool families), FR-051 (completion behavior), Phase 64 (ArgumentCollectorTool - compatible)

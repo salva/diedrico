@@ -19,7 +19,6 @@ Note that completing these tasks may require asking the user for additional info
 ## FOR PLANING
 
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
-* [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Verify if 3D visualization support is already planned. If not, plan and implement it.
 * [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
@@ -51,6 +50,73 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Indexes for intersection points between to circles must be determined according to the relative position of the points against the line defined by the two circles center. 
 
 ## ALREADY PLANNED
+
+* [X] **Toolbar Behavior - Tool Families and Completion Patterns (Phase 67)**
+  - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Ready for implementation
+  - **Goal**: Implement GeoGebra-style toolbar organization with tool families (dropdown menus), last-used sub-tool memory, and context-appropriate completion behavior
+  - **Current State**: Flat toolbar with 12+ individual buttons, all tools stay active after completion, no grouping or organization
+  - **Inspiration**: GeoGebra Classic toolbar organization patterns
+  - **Problem**: Current implementation creates cluttered UI and inconsistent UX:
+    1. **No tool families**: Each tool variant has separate button (Point, Intersection as separate buttons)
+    2. **No last-used memory**: User must reselect sub-tool from dropdown every time (if dropdowns existed)
+    3. **Inconsistent completion**: All tools use same behavior (stay active) regardless of usage patterns
+    4. **Cluttered toolbar**: 12+ buttons visible, will worsen as more tools added
+    5. **No visual grouping**: Related tools (Line, Parallel, Perpendicular, Tangents) scattered across toolbar
+  - **Solution**: Implement three-part enhancement
+  - **Part 1: Tool Families (FR-050)**:
+    - Group related tools under dropdown menus (Point family, Line family, etc.)
+    - Button face shows currently active sub-tool (icon + label)
+    - Click button → activates last-used sub-tool from family
+    - Click dropdown arrow → shows menu of all sub-tools
+    - 6 tool families (Point, Line, Segment, Circle, Guide, Transport) + Selection Tool = 7 buttons total
+  - **Part 2: Last-Used Memory (FR-050)**:
+    - Remember last-used sub-tool per family independently
+    - Persist across tool switches (selecting different family then returning)
+    - Persist across sessions (localStorage)
+    - Reduces clicks for common workflows (no need to re-select from dropdown)
+  - **Part 3: Completion Behavior (FR-051)**:
+    - **Option A (stays active)**: Primitives (Point, Line, Segment, Circle) remain active after completion for repetitive work
+    - **Option B (returns to selection)**: Complex/infrequent tools (Tangent, Intersection, Parallel, Perpendicular, Transport, Guide) deactivate after completion
+    - Consistent within tool families
+    - Tool tooltips indicate completion behavior
+  - **Architecture Components**:
+    - ToolFamilyConfig and ToolConfig interfaces (types/ToolConfig.ts)
+    - Enhanced toolStore with lastUsedByFamily state map
+    - localStorage persistence for preferences
+    - BaseTool.completionBehavior property ('stay-active' | 'return-to-selection')
+    - BaseTool.handleCompletion() method for post-operation behavior
+    - ToolFamilyButton.vue component (dropdown button UI)
+    - TOOL_FAMILIES configuration data (6 families defined)
+  - **Implementation Phases**:
+    - Phase 67.1: ToolStore Enhancement (T1121-T1123: 3 tasks)
+    - Phase 67.2: Tool Completion Behavior (T1124-T1127: 4 tasks)
+    - Phase 67.3: Tool Family Definitions (T1128-T1129: 2 tasks)
+    - Phase 67.4: UI Components (T1130-T1133: 4 tasks)
+    - Phase 67.5: Testing (T1134-T1137: 4 tasks)
+  - **Benefits**:
+    - **Compact toolbar**: ~40% fewer visible buttons (7 vs 12+)
+    - **Better organization**: Related tools grouped logically
+    - **Fewer clicks**: Last-used memory eliminates dropdown navigation for common workflows
+    - **Consistent UX**: All tools provide same interaction patterns
+    - **Context-appropriate behavior**: Tools deactivate when expected, stay active when useful
+    - **Scalable**: Easy to add new sub-tools without cluttering toolbar
+  - **Acceptance Criteria**:
+    1. ✅ Toolbar organized into 6 tool families + Selection Tool (7 buttons total)
+    2. ✅ Each family button has dropdown showing sub-tools
+    3. ✅ Clicking button activates last-used sub-tool (or default)
+    4. ✅ Last-used preference persists across sessions (localStorage)
+    5. ✅ Primitive tools stay active after completion (Point, Line, Segment, Circle)
+    6. ✅ Complex tools return to selection after completion (others)
+    7. ✅ Tool tooltips indicate completion behavior
+    8. ✅ Keyboard shortcuts work and update last-used
+    9. ✅ All tests passing (unit + E2E)
+    10. ✅ Toolbar more compact and organized
+  - **Spec**: [spec.md](spec.md) FR-050 (Tool Families), FR-051 (Completion Behavior)
+  - **UI**: [ui-spec.md](ui-spec.md#tool-families-and-sub-tools) Tool families section with examples
+  - **Data model**: [data-model.md](data-model.md#phase-67-toolbar-behavior---tool-families-completion-patterns-and-last-used-memory) Complete architecture
+  - **Tasks**: Phase 67 in [tasks.md](tasks.md#phase-67-toolbar-behavior---tool-families-completion-patterns-and-last-used-memory) (T1121-T1137: 17 tasks)
+  - **Related Phases**: Phase 64 (ArgumentCollectorTool - compatible, no changes needed)
+  - **Notes**: Inspired by GeoGebra Classic's proven toolbar organization; improves UX without changing tool functionality; all existing tools migrate seamlessly
 
 * [ ] **Test Architecture Compliance (Phase 66)**
   - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Ready for implementation
