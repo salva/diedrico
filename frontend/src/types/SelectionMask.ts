@@ -7,6 +7,8 @@
  * Reference: data-model.md §Class-Based Selection Mask Architecture (Phase 63)
  */
 
+import type { Element2D } from '@/domain/world/Element2D';
+
 /**
  * Element types that can be matched by selection masks.
  * These map to domain entity types from Paper.getElementType().
@@ -18,6 +20,64 @@ export type SelectableElementType =
   | 'guide'           // Specifically Guide2D/SiblingGuide2D only
   | 'half-hinge-line' // Specifically HalfHingeLine2D only
   | 'circle';         // Any Circle2D
+
+/**
+ * Map domain element to its SelectableElementType
+ * 
+ * This function maps concrete element types (e.g., Point2DType = 'free') 
+ * to abstract selectable types (e.g., SelectableElementType = 'point').
+ * 
+ * @param element - Domain element (Point2D, Line2D, etc.)
+ * @returns SelectableElementType for selection mask matching
+ */
+export function getSelectableType(element: Element2D): SelectableElementType {
+  // Check element.type discriminator
+  if (element.type) {
+    // Point2D (all subtypes map to 'point')
+    if (element.type === 'free' || element.type === 'intersection' || 
+        element.type === 'line-line-intersection' || element.type === 'line-circle-intersection' ||
+        element.type === 'circle-circle-intersection' || element.type === 'sibling-intersection') {
+      return 'point';
+    }
+    // Circle2D (all subtypes map to 'circle')
+    if (element.type === 'by-center-and-point' || element.type === 'by-three-points') {
+      return 'circle';
+    }
+    // HalfHingeLine2D
+    if (element.type === 'half-hinge') {
+      return 'half-hinge-line';
+    }
+    // Guide2D and SiblingGuide2D
+    if (element.type === 'guide' || element.type === 'sibling-guide') {
+      return 'guide';
+    }
+    // Segment2DByPoints
+    if (element.type === 'segment') {
+      return 'segment';
+    }
+    // Regular lines (Line2DByTwoPoints, etc.)
+    if (element.type === 'by-two-points' || element.type === 'parallel' || element.type === 'perpendicular') {
+      return 'line';
+    }
+  }
+  
+  // Fallback: check element structure/class
+  if ('position' in element || 'element1Id' in element) {
+    return 'point';
+  }
+  if ('point1Id' in element && 'point2Id' in element && !('radius' in element)) {
+    return 'segment';
+  }
+  if ('radius' in element || 'centerPointId' in element) {
+    return 'circle';
+  }
+  if ('halfHingeLineId' in element || 'hingeLineId' in element) {
+    return 'guide';
+  }
+  
+  // Default fallback
+  return 'point';
+}
 
 /**
  * Abstract base class for all selection masks
@@ -95,6 +155,14 @@ export abstract class SelectionMask {
   }
   
   /**
+   * Create mask that matches nothing (for tools that don't select existing elements)
+   * Use this for tools like PointTool that only create new elements.
+   */
+  static none(): NoneMask {
+    return new NoneMask();
+  }
+  
+  /**
    * Create mask matching any Line2D subtype (lines, segments, guides, half-hinge-lines)
    * Replaces 'any-line' string from Phase 62
    */
@@ -106,6 +174,7 @@ export abstract class SelectionMask {
    * Create mask matching any of the provided masks (logical OR)
    * @param masks - Array of masks to combine
    * @returns UnionMask that matches if any child mask matches
+   * @throws Error if no masks provided (ambiguous: use SelectionMask.none() explicitly for "match nothing")
    */
   static union(...masks: SelectionMask[]): SelectionMask {
     if (masks.length === 0) {
@@ -130,6 +199,30 @@ export abstract class SelectionMask {
       return masks[0]; // Optimize single-element case
     }
     return new IntersectionMask(masks);
+  }
+}
+
+/**
+ * Matches nothing - for tools that don't select existing elements
+ * 
+ * Use this for tools that only create new elements (e.g., PointTool creates free points,
+ * doesn't select existing points).
+ * 
+ * When NoneMask is used:
+ * - Paper.hitTest() returns null (no element selected)
+ * - ToolContext.planeCoords still contains the click position
+ * - Tool uses the position to create new elements at clicked location
+ * 
+ * Example:
+ * - \"No selection allowed\": none()
+ */
+export class NoneMask extends SelectionMask {
+  matches(elementType: SelectableElementType): boolean {
+    return false; // Never matches anything - ensures hitTest returns null
+  }
+
+  toString(): string {
+    return 'None';
   }
 }
 

@@ -29,7 +29,8 @@ describe('viewStore', () => {
       expect(state).toEqual({
         zoom: 1.0,
         panX: 0,
-        panY: 0
+        panY: 0,
+        gridVisible: true
       });
     });
   });
@@ -200,7 +201,8 @@ describe('viewStore', () => {
       expect(viewStore.viewportState.value).toEqual({
         zoom: 2.0,
         panX: 100,
-        panY: 100
+        panY: 100,
+        gridVisible: true
       });
     });
   });

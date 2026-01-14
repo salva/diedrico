@@ -32,7 +32,7 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       panY: 0,
       zoom: 1.0
     };
-    paper.setViewport(viewportTransform);
+    paper.setViewportTransform(viewportTransform);
     
     planeId = getHorizontalPlaneId(world);
     const plane = world.getProjectionPlaneById(planeId);
@@ -51,14 +51,13 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       const plane = world.getProjectionPlaneById(planeId)!;
       
       // Create point at origin
-      const point = new FreePoint2D(`${planeId}/point_1`, new Vector3(0, 0, 1), planeId, 'A');
-      plane.addPoint(point);
+      const point = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      point.label = 'A';
       
       // Create line through origin
-      const pointB = new FreePoint2D(`${planeId}/point_2`, new Vector3(10, 0, 1), planeId, 'B');
-      plane.addPoint(pointB);
-      const line = new DirectLine2D(`${planeId}/line_1`, point.id, pointB.id, planeId);
-      plane.addLine(line);
+      const pointB = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+      pointB.label = 'B';
+      const line = plane.addLine2DBetweenTwoPoints(point.id!, pointB.id!, world);
       
       // Hit-test at (3, 0) - 3px from point, ~3px from line
       // Point adjusted distance: 3 - 5 = -2
@@ -86,16 +85,15 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       const plane = world.getProjectionPlaneById(planeId)!;
       
       // Create point far away at (10, 0)
-      const point = new FreePoint2D(`${planeId}/point_1`, new Vector3(10, 0, 1), planeId, 'A');
-      plane.addPoint(point);
+      const point = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+      point.label = 'A';
       
       // Create line near test position
-      const pointB = new FreePoint2D(`${planeId}/point_2`, new Vector3(0, 0, 1), planeId, 'B');
-      const pointC = new FreePoint2D(`${planeId}/point_3`, new Vector3(10, 0, 1), planeId, 'C');
-      plane.addPoint(pointB);
-      plane.addPoint(pointC);
-      const line = new DirectLine2D(`${planeId}/line_1`, pointB.id, pointC.id, planeId);
-      plane.addLine(line);
+      const pointB = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      pointB.label = 'B';
+      const pointC = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+      pointC.label = 'C';
+      const line = plane.addLine2DBetweenTwoPoints(pointB.id!, pointC.id!, world);
       
       // Hit-test at (2, 0) - 8px from point, ~0px from line
       // Point adjusted distance: 8 - 5 = 3
@@ -123,16 +121,15 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       const plane = world.getProjectionPlaneById(planeId)!;
       
       // Create point at (7, 0)
-      const point = new FreePoint2D(`${planeId}/point_1`, new Vector3(7, 0, 1), planeId, 'A');
-      plane.addPoint(point);
+      const point = plane.addFreePoint2D(new Vector3(7, 0, 1), world);
+      point.label = 'A';
       
       // Create horizontal line at y=6
-      const pointB = new FreePoint2D(`${planeId}/point_2`, new Vector3(0, 6, 1), planeId, 'B');
-      const pointC = new FreePoint2D(`${planeId}/point_3`, new Vector3(10, 6, 1), planeId, 'C');
-      plane.addPoint(pointB);
-      plane.addPoint(pointC);
-      const line = new DirectLine2D(`${planeId}/line_1`, pointB.id, pointC.id, planeId);
-      plane.addLine(line);
+      const pointB = plane.addFreePoint2D(new Vector3(0, 6, 1), world);
+      pointB.label = 'B';
+      const pointC = plane.addFreePoint2D(new Vector3(10, 6, 1), world);
+      pointC.label = 'C';
+      const line = plane.addLine2DBetweenTwoPoints(pointB.id!, pointC.id!, world);
       
       // Hit-test at (4, 3) - approximately 5px from point, 3px from line
       // Point adjusted distance: 5 - 5 = 0
@@ -160,10 +157,10 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       const plane = world.getProjectionPlaneById(planeId)!;
       
       // Create two points
-      const pointA = new FreePoint2D(`${planeId}/point_1`, new Vector3(0, 0, 1), planeId, 'A');
-      const pointB = new FreePoint2D(`${planeId}/point_2`, new Vector3(10, 0, 1), planeId, 'B');
-      plane.addPoint(pointA);
-      plane.addPoint(pointB);
+      const pointA = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      pointA.label = 'A';
+      const pointB = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+      pointB.label = 'B';
       
       // Hit-test at (2, 0) - 2px from A, 8px from B
       // A adjusted distance: 2 - 5 = -3
@@ -191,14 +188,13 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       const plane = world.getProjectionPlaneById(planeId)!;
       
       // Create point at origin
-      const point = new FreePoint2D(`${planeId}/point_1`, new Vector3(0, 0, 1), planeId, 'A');
-      plane.addPoint(point);
+      const point = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      point.label = 'A';
       
       // Create line through origin
-      const pointB = new FreePoint2D(`${planeId}/point_2`, new Vector3(10, 0, 1), planeId, 'B');
-      plane.addPoint(pointB);
-      const line = new DirectLine2D(`${planeId}/line_1`, point.id, pointB.id, planeId);
-      plane.addLine(line);
+      const pointB = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+      pointB.label = 'B';
+      const line = plane.addLine2DBetweenTwoPoints(point.id!, pointB.id!, world);
       
       // Hit-test at origin with mask that excludes points
       const canvasPos = new Vector3(0, 0, 1);
@@ -225,8 +221,8 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       const plane = world.getProjectionPlaneById(planeId)!;
       
       // Create point at origin
-      const point = new FreePoint2D(`${planeId}/point_1`, new Vector3(0, 0, 1), planeId, 'A');
-      plane.addPoint(point);
+      const point = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      point.label = 'A';
       
       // Hit-test exactly 5px away
       // Point adjusted distance: 5 - 5 = 0 (should be selectable)
@@ -249,8 +245,8 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       const plane = world.getProjectionPlaneById(planeId)!;
       
       // Create point at origin
-      const point = new FreePoint2D(`${planeId}/point_1`, new Vector3(0, 0, 1), planeId, 'A');
-      plane.addPoint(point);
+      const point = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+      point.label = 'A';
       
       // Hit-test at 2px away (inside 5px visual radius)
       // Point adjusted distance: 2 - 5 = -3 (negative, but valid)

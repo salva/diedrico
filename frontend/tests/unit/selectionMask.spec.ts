@@ -19,7 +19,7 @@ import { HalfHingeLine2D } from '@/domain/world/Line';
 import { Segment2D } from '@/domain/world/Segment';
 import { Circle2D } from '@/domain/world/Circle';
 import { Guide2D } from '@/domain/world/Guide';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 // Tool imports for testing getSelectionMask()
 import { PointTool } from '@/tools/PointTool';
@@ -43,40 +43,46 @@ describe('Selection Mask System', () => {
     it('PointTool returns empty mask (creates points, does not select)', () => {
       const tool = new PointTool();
       const mask = tool.getSelectionMask();
-      expect(mask).toEqual([]);
+      expect(mask.toString()).toEqual('None');
     });
 
     it('LineTool returns point-only mask', () => {
       const tool = new LineTool();
       const mask = tool.getSelectionMask();
-      expect(mask).toEqual(['point']);
+      expect(mask.matches('point')).toBe(true);
+      expect(mask.matches('line')).toBe(false);
     });
 
     it('SegmentTool returns point-only mask', () => {
       const tool = new SegmentTool();
       const mask = tool.getSelectionMask();
-      expect(mask).toEqual(['point']);
+      expect(mask.matches('point')).toBe(true);
+      expect(mask.matches('line')).toBe(false);
     });
 
     it('CircleTool returns point-only mask', () => {
       const tool = new CircleTool();
       const mask = tool.getSelectionMask();
-      expect(mask).toEqual(['point']);
+      expect(mask.matches('point')).toBe(true);
+      expect(mask.matches('line')).toBe(false);
     });
 
-    it('IntersectionTool returns line mask', () => {
+    it('IntersectionTool returns line and circle mask', () => {
       const tool = new IntersectionTool();
       const mask = tool.getSelectionMask();
-      expect(mask).toContain('line');
-      expect(mask).toContain('half-hinge-line');
+      expect(mask.matches('line')).toBe(true);
+      expect(mask.matches('half-hinge-line')).toBe(true);
+      expect(mask.matches('segment')).toBe(true);
+      expect(mask.matches('guide')).toBe(true);
+      expect(mask.matches('circle')).toBe(true);
     });
 
     describe('GuideTool dynamic mask', () => {
-      it('returns line and point mask in waiting-line state', () => {
+      it('returns half-hinge-line and point mask in initial state', () => {
         const tool = new GuideTool();
         const mask = tool.getSelectionMask();
-        expect(mask).toContain('line');
-        expect(mask).toContain('half-hinge-line');
+        expect(mask.matches('half-hinge-line')).toBe(true);
+        expect(mask.matches('point')).toBe(true);
       });
 
       // Note: Testing state transitions requires actually clicking with the tool
@@ -104,7 +110,7 @@ describe('Selection Mask System', () => {
 
       // Hit test with point excluded from mask
       const queryPos = new Vector3(100, 100, 1);
-      const mask: SelectionMask = ['line']; // Only lines allowed
+      const mask = SelectionMask.line(); // Only lines allowed
       
       const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
       
@@ -119,7 +125,7 @@ describe('Selection Mask System', () => {
 
       // Hit test with point included in mask
       const queryPos = new Vector3(100, 100, 1);
-      const mask: SelectionMask = ['point'];
+      const mask = SelectionMask.point();
       
       const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
       
@@ -138,7 +144,7 @@ describe('Selection Mask System', () => {
 
       // Hit test on the line with line excluded from mask
       const queryPos = new Vector3(100, 100, 1); // On the line
-      const mask: SelectionMask = ['point']; // Only points allowed
+      const mask = SelectionMask.point(); // Only points allowed
       
       const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
       
@@ -158,7 +164,7 @@ describe('Selection Mask System', () => {
 
       // Hit test on the line with line included in mask
       const queryPos = new Vector3(100, 100, 1); // On the line
-      const mask: SelectionMask = ['line'];
+      const mask = SelectionMask.line();
       
       const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
       
@@ -174,7 +180,7 @@ describe('Selection Mask System', () => {
 
       // Hit test with empty mask
       const queryPos = new Vector3(100, 100, 1);
-      const mask: SelectionMask = []; // Nothing selectable
+      const mask = SelectionMask.none(); // Nothing selectable
       
       const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
       
@@ -189,7 +195,7 @@ describe('Selection Mask System', () => {
 
       // Hit test with mask including both points and lines
       const queryPos = new Vector3(100, 100, 1);
-      const mask: SelectionMask = ['point', 'line'];
+      const mask = SelectionMask.union(SelectionMask.point(), SelectionMask.line());
       
       const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
       
@@ -211,7 +217,7 @@ describe('Selection Mask System', () => {
       const queryPos = new Vector3(100, 100, 1);
 
       // Hit test with only 'half-hinge-line' in mask (should not hit regular line)
-      const mask1: SelectionMask = ['half-hinge-line'];
+      const mask1 = SelectionMask.halfHingeLine();
       const hit1 = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask1);
       
       // Should not hit regular line when mask only has 'half-hinge-line'
@@ -221,7 +227,7 @@ describe('Selection Mask System', () => {
       }
 
       // Hit test with 'line' in mask (should hit regular line)
-      const mask2: SelectionMask = ['line'];
+      const mask2 = SelectionMask.line();
       const hit2 = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask2);
       
       // Should hit regular line

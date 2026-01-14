@@ -15,19 +15,21 @@ describe('World Initialization Integration', () => {
     it('should initialize World with all fundamental elements', () => {
       const world = new World();
 
-      // Verify semantic references are set
-      expect(world.horizontalPlaneId).toBeDefined();
-      expect(world.verticalPlaneId).toBeDefined();
-      expect(world.mainHingeLineId).toBeDefined();
-      expect(world.horizontalOriginId).toBeDefined();
-      expect(world.verticalOriginId).toBeDefined();
-
-      // Verify projection planes exist
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      // Verify semantic references work via label-based access
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const mainHingeLine = world.getMainHingeLine();
       
       expect(projPlaneH).toBeDefined();
       expect(projPlaneV).toBeDefined();
+      expect(mainHingeLine).toBeDefined();
+
+      // Verify origin points exist on planes
+      const originH = projPlaneH.getPoint2DByLabel('O_H');
+      const originV = projPlaneV.getPoint2DByLabel('O_V');
+      
+      expect(originH).toBeDefined();
+      expect(originV).toBeDefined();
 
       // Verify 3D planes exist
       const planes = Array.from((world as any).planes.values());
@@ -41,11 +43,11 @@ describe('World Initialization Integration', () => {
     it('should create origin points at (0,0)', () => {
       const world = new World();
 
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
-      const originH = projPlaneH?.getAllPoints()[0];
-      const originV = projPlaneV?.getAllPoints()[0];
+      const originH = projPlaneH.getPoint2DByLabel('O_H');
+      const originV = projPlaneV.getPoint2DByLabel('O_V');
 
       expect(originH?.position.x).toBe(0);
       expect(originH?.position.y).toBe(0);
@@ -56,11 +58,11 @@ describe('World Initialization Integration', () => {
     it('should create locked origin points', () => {
       const world = new World();
 
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
-      const originH = projPlaneH?.getAllPoints()[0];
-      const originV = projPlaneV?.getAllPoints()[0];
+      const originH = projPlaneH.getPoint2DByLabel('O_H');
+      const originV = projPlaneV.getPoint2DByLabel('O_V');
 
       expect(originH?.locked).toBe(true);
       expect(originV?.locked).toBe(true);
@@ -69,20 +71,22 @@ describe('World Initialization Integration', () => {
     it('should create half hinge lines on both planes', () => {
       const world = new World();
 
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
-      const linesH = projPlaneH?.getAllLines() || [];
-      const linesV = projPlaneV?.getAllLines() || [];
+      const linesH = projPlaneH.getAllLines();
+      const linesV = projPlaneV.getAllLines();
 
-      const halfHingeH = linesH.find(l => l.type === 'half-hinge');
-      const halfHingeV = linesV.find(l => l.type === 'half-hinge');
+      const halfHingeH = linesH.find((l: any) => l.type === 'half-hinge');
+      const halfHingeV = linesV.find((l: any) => l.type === 'half-hinge');
 
       expect(halfHingeH).toBeDefined();
       expect(halfHingeV).toBeDefined();
     });
 
-    it('should set origin point in 3D space', () => {
+    // NOTE: Skipped - World no longer maintains a 3D originPoint property
+    // Origin exists as 2D points (O_H, O_V) on each projection plane
+    it.skip('should set origin point in 3D space', () => {
       const world = new World();
 
       expect(world.originPoint).toBeDefined();
@@ -97,21 +101,27 @@ describe('World Initialization Integration', () => {
     it('should re-initialize World after clear()', () => {
       const world = new World();
 
-      // Store initial IDs
-      const initialHPlaneId = world.horizontalPlaneId;
-      const initialVPlaneId = world.verticalPlaneId;
+      // Store initial labels to verify re-initialization
+      const planeHBefore = world.getProjectionPlaneByLabel('P_H');
+      const planeVBefore = world.getProjectionPlaneByLabel('P_V');
+      const initialHPlaneId = planeHBefore.id;
+      const initialVPlaneId = planeVBefore.id;
 
       // Clear and verify re-initialization
       world.clear();
 
-      // Should have new IDs (re-initialized)
-      expect(world.horizontalPlaneId).toBeDefined();
-      expect(world.verticalPlaneId).toBeDefined();
-      expect(world.mainHingeLineId).toBeDefined();
+      // Should have new instances (re-initialized)
+      const planeHAfter = world.getProjectionPlaneByLabel('P_H');
+      const planeVAfter = world.getProjectionPlaneByLabel('P_V');
+      const mainHingeLineAfter = world.getMainHingeLine();
+      
+      expect(planeHAfter).toBeDefined();
+      expect(planeVAfter).toBeDefined();
+      expect(mainHingeLineAfter).toBeDefined();
 
       // Verify all elements exist again
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = planeHAfter;
+      const projPlaneV = planeVAfter;
       
       expect(projPlaneH).toBeDefined();
       expect(projPlaneV).toBeDefined();
@@ -139,15 +149,15 @@ describe('World Initialization Integration', () => {
     it('should link projection planes to 3D planes', () => {
       const world = new World();
 
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
 
-      expect(projPlaneH?.plane3DId).toBeDefined();
-      expect(projPlaneV?.plane3DId).toBeDefined();
+      expect(projPlaneH.plane3DId).toBeDefined();
+      expect(projPlaneV.plane3DId).toBeDefined();
 
       // Verify 3D planes exist
-      const plane3DH = (world as any).planes.get(projPlaneH?.plane3DId);
-      const plane3DV = (world as any).planes.get(projPlaneV?.plane3DId);
+      const plane3DH = (world as any).planes.get(projPlaneH.plane3DId);
+      const plane3DV = (world as any).planes.get(projPlaneV.plane3DId);
 
       expect(plane3DH).toBeDefined();
       expect(plane3DV).toBeDefined();
@@ -156,21 +166,23 @@ describe('World Initialization Integration', () => {
     it('should link hinge line to both projection planes', () => {
       const world = new World();
 
-      const hingeLine = (world as any).hingeLines.get(world.mainHingeLineId);
+      const hingeLine = world.getMainHingeLine();
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
       expect(hingeLine).toBeDefined();
-      expect(hingeLine.plane1Id).toBe(world.horizontalPlaneId);
-      expect(hingeLine.plane2Id).toBe(world.verticalPlaneId);
+      expect(hingeLine.plane1Id).toBe(projPlaneH.id);
+      expect(hingeLine.plane2Id).toBe(projPlaneV.id);
     });
 
     it('should validate parametric consistency of half hinge lines', () => {
       const world = new World();
 
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
-      const halfHingeH = projPlaneH?.getAllLines().find(l => l.type === 'half-hinge');
-      const halfHingeV = projPlaneV?.getAllLines().find(l => l.type === 'half-hinge');
+      const halfHingeH = projPlaneH.getAllLines().find((l: any) => l.type === 'half-hinge');
+      const halfHingeV = projPlaneV.getAllLines().find((l: any) => l.type === 'half-hinge');
 
       // Both should have same point and direction (parametric consistency)
       expect(halfHingeH).toBeDefined();
@@ -187,14 +199,15 @@ describe('World Initialization Integration', () => {
     it('should use generated IDs without hardcoding', () => {
       const world = new World();
 
-      // Verify IDs follow expected patterns
-      expect(world.horizontalPlaneId).toMatch(/^proj_plane_\d+$/);
-      expect(world.verticalPlaneId).toMatch(/^proj_plane_\d+$/);
-      expect(world.mainHingeLineId).toMatch(/^hinge_line_\d+$/);
+      const hingeLine = world.getMainHingeLine();
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+
+      // Verify hinge line label follows expected pattern (label = id for hinge lines)
+      expect(hingeLine.label).toMatch(/^HL_\d+$/);
+      expect(hingeLine.id).toBe(hingeLine.label); // ID and label are the same
 
       // Verify point IDs follow hierarchical pattern
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const originH = projPlaneH?.getAllPoints()[0];
+      const originH = projPlaneH.getPoint2DByLabel('O_H');
       
       if (originH) {
         expect(originH.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
@@ -212,7 +225,7 @@ describe('World Initialization Integration', () => {
       const processTree = world.getProcessTree();
 
       const subprocesses = processTree.root.children.filter(
-        child => child.type === 'subprocess'
+        (child: any) => child.type === 'subprocess'
       );
 
       expect(subprocesses.length).toBeGreaterThan(0);
@@ -223,7 +236,7 @@ describe('World Initialization Integration', () => {
       const processTree = world.getProcessTree();
 
       const initSubprocess = processTree.root.children.find(
-        child => child.type === 'subprocess' && 'name' in child
+        (child: any) => child.type === 'subprocess' && 'name' in child
       );
 
       expect(initSubprocess).toBeDefined();

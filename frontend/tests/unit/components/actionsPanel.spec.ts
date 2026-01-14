@@ -95,7 +95,7 @@ describe('ActionsPanel', () => {
     const p2 = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
     world.getProcessTree().addAction(createAction('CreateFreePoint', [p2.id]));
     
-    const line = planeH.addLine2DByTwoPoints(p1.id, p2.id, world);
+    const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
     world.getProcessTree().addAction(createAction('CreateLine', [line.id], [p1.id, p2.id]));
     
     await wrapper.vm.$nextTick();
@@ -185,7 +185,7 @@ describe('ActionsPanel', () => {
     const planeH = world.getProjectionPlaneByLabel('P_H');
     const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
     const p2 = planeH.addFreePoint2D(new Vector3(100, 0, 1), world);
-    const line = planeH.addLine2DByTwoPoints(p1.id, p2.id, world);
+    const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
     world.getProcessTree().addAction(createAction('CreateLine', [line.id], [p1.id, p2.id]));
     
     await wrapper.vm.$nextTick();

@@ -301,7 +301,7 @@ const dependencies = computed(() => {
     }
   }
   
-  const segment = props.world.getSegment2DById(props.elementId);
+  const segment = props.world.getSegment2D(props.elementId);
   if (segment) {
     const segmentByPoints = segment as any;
     if (segmentByPoints.point1Id && segmentByPoints.point2Id) {
@@ -309,7 +309,7 @@ const dependencies = computed(() => {
     }
   }
   
-  const circle = props.world.getCircle2DById(props.elementId);
+  const circle = props.world.getCircle2D(props.elementId);
   if (circle) {
     const circleByCenterRadius = circle as any;
     if (circleByCenterRadius.centerId) {
@@ -317,7 +317,7 @@ const dependencies = computed(() => {
     }
   }
   
-  const guide = props.world.getGuide2DById(props.elementId);
+  const guide = props.world.getGuide2D(props.elementId);
   if (guide) {
     const guidePerp = guide as any;
     if (guidePerp.lineId) {

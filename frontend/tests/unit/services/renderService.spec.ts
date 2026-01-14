@@ -11,7 +11,7 @@ import { Vector3, Vector4 } from 'three';
  * - Constitution Principle IV: No special-case rendering
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { 
   renderPoint, 
   renderPlane, 
@@ -20,12 +20,21 @@ import {
   applySelectionState
 } from '@/services/RenderService';
 import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization2D } from '@/domain/world/Point';
-import { Plane3D } from "@/domain/world/Plane";
+import { Plane3D, Plane3DFixed } from "@/domain/world/Plane";
+import { World } from '@/domain/world/World';
 
 describe('RenderService', () => {
+  let world: World;
+  let projPlaneH: any;
+
+  beforeEach(() => {
+    world = new World();
+    projPlaneH = world.getProjectionPlaneByLabel('P_H');
+  });
+
   describe('renderPoint', () => {
     it('should render free point as SVG circle attributes', () => {
-      const point = new FreePoint2D('point_1', new Vector3(100, 50, 1), "plane_H");
+      const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
       const realization = new Point2DRealization2D(new Vector3(100, 50, 1));
       
       const attrs = renderPoint(point, realization, 400, 400);
@@ -39,7 +48,16 @@ describe('RenderService', () => {
     });
 
     it('should render derived point with different styling', () => {
-      const point = new IntersectionPoint2D('point_2', 'line_1', 'circle_2', 0, "plane_H");
+      // Create lines to intersect
+      const line1Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const line1Point2 = projPlaneH.addFreePoint2D(new Vector3(100, 0, 1), world);
+      const line1 = projPlaneH.addLine2DBetweenTwoPoints(line1Point1.id!, line1Point2.id!, world);
+      
+      const line2Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 100, 1), world);
+      const line2Point2 = projPlaneH.addFreePoint2D(new Vector3(100, 100, 1), world);
+      const line2 = projPlaneH.addLine2DBetweenTwoPoints(line2Point1.id!, line2Point2.id!, world);
+      
+      const point = projPlaneH.addLineLineIntersection(line1.id!, line2.id!, world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       
       const attrs = renderPoint(point, realization);
@@ -49,7 +67,7 @@ describe('RenderService', () => {
     });
 
     it('should handle negative coordinates', () => {
-      const point = new FreePoint2D('test-point-1', new Vector3(-50, -30, 1), "plane_H");
+      const point = projPlaneH.addFreePoint2D(new Vector3(-50, -30, 1), world);
       const realization = new Point2DRealization2D(new Vector3(-50, -30, 1));
       
       const attrs = renderPoint(point, realization, 400, 400);
@@ -59,7 +77,7 @@ describe('RenderService', () => {
     });
 
     it('should handle custom canvas origin', () => {
-      const point = new FreePoint2D('test-point-2', new Vector3(10, 20, 1), "plane_H");
+      const point = projPlaneH.addFreePoint2D(new Vector3(10, 20, 1), world);
       const realization = new Point2DRealization2D(new Vector3(10, 20, 1));
       
       const attrs = renderPoint(point, realization, 200, 300);
@@ -69,7 +87,7 @@ describe('RenderService', () => {
     });
 
     it('should handle point without ID', () => {
-      const point = new FreePoint2D('test-point-3', new Vector3(0, 0, 1), "plane_H");
+      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       
       const attrs = renderPoint(point, realization);
@@ -80,8 +98,12 @@ describe('RenderService', () => {
 
   describe('renderPlane', () => {
     it('should render P_H plane as SVG rectangle attributes', () => {
-      const planeH = Plane3D.createPH();
-      planeH.id = 'proj_plane_H';
+      // Create P_H: horizontal plane (z=0), normal=(0,0,1)
+      const planeH = new Plane3DFixed(
+        'proj_plane_H',
+        new Vector4(0, 0, 0, 1),  // Point on plane
+        new Vector4(0, 0, 1, 0)   // Normal vector
+      );
       
       const attrs = renderPlane(planeH, 400, 400);
       
@@ -97,8 +119,12 @@ describe('RenderService', () => {
     });
 
     it('should render P_V plane with different color', () => {
-      const planeV = Plane3D.createPV();
-      planeV.id = 'proj_plane_V';
+      // Create P_V: vertical plane (y=0), normal=(0,1,0)
+      const planeV = new Plane3DFixed(
+        'proj_plane_V',
+        new Vector4(0, 0, 0, 1),  // Point on plane
+        new Vector4(0, 1, 0, 0)   // Normal vector
+      );
       
       const attrs = renderPlane(planeV, 400, 400);
       
@@ -106,7 +132,11 @@ describe('RenderService', () => {
     });
 
     it('should handle custom plane boundaries', () => {
-      const plane = Plane3D.createPH();
+      const plane = new Plane3DFixed(
+        'test_plane',
+        new Vector4(0, 0, 0, 1),
+        new Vector4(0, 0, 1, 0)
+      );
       plane.setBoundaries(-100, 200, -150, 250);
       
       const attrs = renderPlane(plane, 400, 400);
@@ -216,7 +246,7 @@ describe('RenderService', () => {
 
   describe('applyHoverState', () => {
     it('should apply hover styling to point attributes', () => {
-      const point = new FreePoint2D('point_1', new Vector3(0, 0, 1), "plane_H");
+      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       const baseAttrs = renderPoint(point, realization);
       
@@ -227,7 +257,11 @@ describe('RenderService', () => {
     });
 
     it('should apply hover styling to plane attributes', () => {
-      const plane = Plane3D.createPH();
+      const plane = new Plane3DFixed(
+        'test_plane',
+        new Vector4(0, 0, 0, 1),
+        new Vector4(0, 0, 1, 0)
+      );
       const baseAttrs = renderPlane(plane);
       
       const hoverAttrs = applyHoverState(baseAttrs);
@@ -237,7 +271,7 @@ describe('RenderService', () => {
     });
 
     it('should preserve other attributes', () => {
-      const point = new FreePoint2D('point_1', new Vector3(50, 50, 1), "plane_H");
+      const point = projPlaneH.addFreePoint2D(new Vector3(50, 50, 1), world);
       const realization = new Point2DRealization2D(new Vector3(50, 50, 1));
       const baseAttrs = renderPoint(point, realization);
       
@@ -252,7 +286,7 @@ describe('RenderService', () => {
 
   describe('applySelectionState', () => {
     it('should apply selection styling to point attributes', () => {
-      const point = new FreePoint2D('point_1', new Vector3(0, 0, 1), "plane_H");
+      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       const baseAttrs = renderPoint(point, realization);
       
@@ -274,7 +308,7 @@ describe('RenderService', () => {
     });
 
     it('should distinguish from hover state', () => {
-      const point = new FreePoint2D('test-point-4', new Vector3(0, 0, 1), "plane_H");
+      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       const baseAttrs = renderPoint(point, realization);
       
@@ -292,7 +326,7 @@ describe('RenderService', () => {
   describe('Constitution Principle IV compliance', () => {
     it('should render fixed elements using same logic as user elements', () => {
       // Origin point O - should use generic point rendering
-      const originPoint = new FreePoint2D('O', new Vector3(0, 0, 1), "plane_H");
+      const originPoint = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       originPoint.label = 'Origin';
       
@@ -306,7 +340,11 @@ describe('RenderService', () => {
     });
 
     it('should render P_H using same logic as auxiliary planes', () => {
-      const planeH = Plane3D.createPH();
+      const planeH = new Plane3DFixed(
+        'proj_plane_H',
+        new Vector4(0, 0, 0, 1),
+        new Vector4(0, 0, 1, 0)
+      );
       const auxiliaryPlane = new Plane3D(
         new Vector4(0, 0, 10, 1),
         new Vector4(0, 0, 1, 0)

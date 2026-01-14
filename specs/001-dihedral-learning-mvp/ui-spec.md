@@ -800,6 +800,131 @@ Step 2: Select point
 - Filter hit test results to match mask
 - Filter hover highlights to match mask
 
+#### Tool Argument Collection Framework (Phase 64)
+
+**Purpose**: Provide consistent UI feedback and interaction patterns for tools that collect multiple geometric arguments, supporting both single-method and multi-method construction tools.
+
+**Scope**: Tools using ArgumentCollectorTool base class (see data-model.md §Tool Argument Collection Framework)
+
+**UI Feedback Components**:
+
+1. **Status Bar Message**:
+   - Shows current construction method and progress
+   - Updates dynamically as arguments are collected
+   - Examples:
+     - Initial: `"Tangent Line: Select circle, point, or line"`
+     - After circle selected: `"Tangent Line (2 options): Select point or line"`
+     - After circle + point: `"Creating tangent line through point..."`
+
+2. **Visual Element Highlighting**:
+   - Elements matching current selection mask highlight on hover
+   - Selection mask automatically computed as union of all viable next arguments
+   - Highlighting reflects viability (elements that would eliminate all options are NOT highlighted)
+
+3. **Cursor Feedback**:
+   - Standard cursor for valid selections
+   - No special cursor needed (highlighting provides sufficient feedback)
+
+**Status Message Format**:
+
+```
+[Tool Name]: [Action Description]
+[Tool Name] ([N] options): [Action Description]
+Creating [element type]...
+```
+
+**Examples by Construction Method Count**:
+
+**Single Method** (e.g., Circle by Center + Circumference Point):
+```
+Initial: "Circle: Select center point"
+After center: "Circle: Select circumference point"
+On completion: "Creating circle..."
+```
+
+**Two Methods** (e.g., Tangent Line):
+```
+Initial: "Tangent Line: Select circle, point, or line"
+After circle: "Tangent Line (2 options): Select point or line"
+  → After circle + point: "Creating tangent line through point..."
+  → After circle + line: "Creating tangent line parallel to line..."
+```
+
+**Mutually Exclusive Arguments** (framework constraint):
+- Only argument combinations that differ by element TYPE are supported
+- Tools requiring same-type arguments (e.g., "2 points" vs "3 points") use SEPARATE tools
+- UI never needs to disambiguate between same-type combinations
+
+**Dynamic Selection Mask**:
+
+The selection mask updates automatically as arguments are collected:
+
+1. **Initial mask** = union of all possible first arguments
+2. **After first argument** = union of valid next arguments for remaining viable sets
+3. **Mask narrows** as options are eliminated
+
+**Example: Tangent Line Tool**
+```
+Argument Sets:
+  Set 0: [circle, point]
+  Set 1: [circle, line]
+
+State 1 (no args):
+  Viable sets: [0, 1]
+  Selection mask: union(circle, point, line) = circle | point | line
+  All three element types highlighted on hover
+
+State 2 (circle selected):
+  Viable sets: [0, 1]
+  Selection mask: union(point, line) = point | line
+  Only points and lines highlighted on hover
+
+State 3 (circle + point selected):
+  Viable sets: [0]
+  Construction executes immediately (set 0 complete)
+```
+
+**User Interaction Flow**:
+
+1. User activates tool
+2. Status bar shows initial prompt with all options
+3. User clicks valid element (highlighted on hover)
+4. System:
+   - Adds argument to collection
+   - Updates viable argument sets
+   - Updates selection mask
+   - Updates status bar message
+5. Repeat until exactly one argument set is complete
+6. Tool executes construction automatically
+
+**Cancellation**:
+- ESC key: Cancels argument collection, resets tool
+- Status bar shows initial prompt again
+- Already-collected arguments are discarded
+
+**Error Handling**:
+- Invalid combinations detected before construction
+- Set-level validators check argument compatibility
+- Non-modal error message if all sets become invalid
+- Tool stays active for retry
+
+**Design Principles**:
+- **No modal dialogs**: All feedback through status bar and highlighting
+- **Immediate feedback**: Status updates on every argument addition
+- **Progressive disclosure**: Show only viable options at each step
+- **Automatic execution**: No "OK" button needed when arguments complete
+- **Forgiving workflow**: Any-order collection, cancel anytime with ESC
+
+**Accessibility**:
+- Status messages are screen-reader friendly
+- Keyboard navigation supported (tab to cycle through valid elements)
+- High-contrast highlighting for visual clarity
+
+**Performance**:
+- Mask updates must be < 50ms (imperceptible to user)
+- Highlighting must be < 100ms (smooth hover feedback)
+- Status message updates must be synchronous with argument addition
+
 #### Continuous Visual Feedback
 
 The system provides **constant feedback** during tool operation:

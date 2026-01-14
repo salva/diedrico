@@ -208,7 +208,7 @@ describe('PropertiesDialog', () => {
       const pos2 = new Vector3(10, 10, 1);
       const point1 = planeH.addFreePoint2D(pos1, world);
       const point2 = planeH.addFreePoint2D(pos2, world);
-      const line = planeH.addLine2DByTwoPoints(point1.id, point2.id, world);
+      const line = planeH.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
       const lineId = line.id;
       
       const wrapper = mount(PropertiesDialog, {

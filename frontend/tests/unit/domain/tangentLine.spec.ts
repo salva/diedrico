@@ -50,7 +50,7 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
 
   it('should create tangent line that touches circle (index 0)', () => {
     // Setup: Circle at origin with radius 5, external point at (10, 0)
-    const plane = world.getProjectionPlaneById('P_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     // Add circle
     const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
@@ -90,7 +90,7 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
 
   it('should create tangent line that touches circle (index 1)', () => {
     // Setup: Same circle, test other tangent
-    const plane = world.getProjectionPlaneById('P_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
     const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
@@ -122,7 +122,7 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
 
   it('should work with external point at an angle', () => {
     // Test with external point not on axis
-    const plane = world.getProjectionPlaneById('P_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
     const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
@@ -157,7 +157,7 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
 
   it('should work with different circle positions', () => {
     // Test with circle not at origin
-    const plane = world.getProjectionPlaneById('P_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     const center = plane.addFreePoint2D(new Vector3(100, 200, 1), world);
     const edgePoint = plane.addFreePoint2D(new Vector3(130, 200, 1), world);
@@ -189,7 +189,7 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
   });
 
   it('should be infeasible when point is inside circle', () => {
-    const plane = world.getProjectionPlaneById('P_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
     const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
@@ -240,7 +240,7 @@ describe('Line2DTangentToCircleParallelToLine - Geometric Correctness', () => {
   }
 
   it('should create tangent line parallel to reference that touches circle', () => {
-    const plane = world.getProjectionPlaneById('P_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     // Circle at origin with radius 5
     const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
@@ -279,7 +279,7 @@ describe('Line2DTangentToCircleParallelToLine - Geometric Correctness', () => {
   });
 
   it('should create parallel tangents on both sides of circle', () => {
-    const plane = world.getProjectionPlaneById('P_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
     const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
@@ -314,7 +314,7 @@ describe('Line2DTangentToCircleParallelToLine - Geometric Correctness', () => {
   });
 
   it('should be infeasible when reference line intersects circle', () => {
-    const plane = world.getProjectionPlaneById('P_H')!;
+    const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
     const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);

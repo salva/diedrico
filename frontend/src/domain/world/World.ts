@@ -832,6 +832,52 @@ export class World {
   }
 
   /**
+   * Get Segment2D by hierarchical ID (Phase 45)
+   * Type-safe variant of getElement2D() for segments
+   * Segments are stored as Line2D subtypes with type 'segment'
+   * 
+   * @param id Hierarchical ID in format "{planeId}/{localId}"
+   * @returns Segment2D or undefined if not found or not a segment
+   */
+  getSegment2D(id: string): Segment2D | undefined {
+    try {
+      const containerId = getContainerIdFromElementId(id);
+      const plane = this.getProjectionPlaneById(containerId);
+      const line = plane?.getLine(id);
+      // Segments extend Line2D with type 'segment'
+      if (line && line.type === 'segment') {
+        return line as Segment2D;
+      }
+      return undefined;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  /**
+   * Get Guide2D by hierarchical ID (Phase 45)
+   * Type-safe variant of getElement2D() for guides
+   * Guides are stored as Line2D subtypes
+   * 
+   * @param id Hierarchical ID in format "{planeId}/{localId}"
+   * @returns Guide2D or undefined if not found or not a guide
+   */
+  getGuide2D(id: string): Guide2D | undefined {
+    try {
+      const containerId = getContainerIdFromElementId(id);
+      const plane = this.getProjectionPlaneById(containerId);
+      const line = plane?.getLine(id);
+      // Guides extend Line2D with type 'guide' or 'sibling-guide'
+      if (line && (line.type === 'guide' || line.type === 'sibling-guide')) {
+        return line as Guide2D;
+      }
+      return undefined;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  /**
    * Get all planes
    */
   getAllPlanes(): Plane3D[] {

@@ -64,9 +64,9 @@ export class PointTool extends BaseTool {
 
   /**
    * Get selection mask - point tool creates new points, doesn't select existing elements
-   * Empty union means nothing is selectable (user clicks anywhere to create)
+   * Uses explicit NoneMask to indicate nothing is selectable
    */
   getSelectionMask(): SelectionMask {
-    return SelectionMask.union(); // Nothing selectable - creates free points at click position
+    return SelectionMask.none(); // Nothing selectable - creates free points at click position
   }
 }

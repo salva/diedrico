@@ -1,185 +1,104 @@
 /**
- * PerpendicularLineTool - Tool for creating lines perpendicular to a reference line through a point
+ * PerpendicularLineTool - Tool for creating lines perpendicular to a reference line through a point (Phase 64)
  * 
- * Implements flexible two-click workflow (Phase 62):
- * - Accepts arguments in either order: point→line or line→point
- * - Accepts any Line2D subtype as reference (lines, segments, guides, half-hinge-lines)
+ * Migrated to ArgumentCollectorTool framework.
+ * Framework automatically handles flexible workflow (point→line OR line→point).
  * 
- * Workflow:
- * 1. First click: Select reference line (any Line2D) OR point
- * 2. Second click: Select the other argument (opposite of first)
- * 3. Create perpendicular line
+ * Arguments:
+ * - referenceLineId: Any Line2D subtype (lines, segments, guides, half-hinge-lines)
+ * - throughPointId: Point2D through which perpendicular line passes
  * 
- * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-047
+ * Code reduction: 186 lines → ~106 lines (43% reduction)
+ * 
+ * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-044 (Perpendicular Line Tool)
  */
 
-import { Vector3 } from 'three';
-import { BaseTool } from './BaseTool';
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolContext, ToolResult } from './ITool';
+import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+import type { Point2D } from '@/domain/world/Point';
+import type { Line2D } from '@/domain/world/Line';
+import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { AddLine2DPerpendicularToLineOp } from '@/commands/operations/world/AddLineOp';
 import { createPerpendicularLineAction } from '@/domain/processTree/actions/CreatePerpendicularLineAction';
-import { SelectionMask } from '@/types/SelectionMask';
 
 /**
- * PerpendicularLineTool state machine (Phase 62: flexible workflow):
- * - State 'waiting-first': Waiting for either point or reference line (any Line2D)
- * - State 'waiting-second': First argument selected, waiting for the other type
+ * PerpendicularLineTool using ArgumentCollectorTool framework
+ * 
+ * Framework handles:
+ * - Any-order collection (point→line OR line→point automatically)
+ * - Selection mask computation (union of point and anyLine)
+ * - UI feedback showing what's been selected and what's next
+ * - Automatic execution when both arguments collected
  */
-export class PerpendicularLineTool extends BaseTool {
+export class PerpendicularLineTool extends ArgumentCollectorTool {
   readonly name = 'perpendicular-line';
-  private state: 'waiting-first' | 'waiting-second' = 'waiting-first';
-  private referenceLineId?: string;
-  private throughPointId?: string;
 
   /**
-   * Handle click event for perpendicular line creation
-   * 
-   * Flexible two-click workflow (Phase 62):
-   * 1. First click: Accept either point or any-line reference
-   * 2. Second click: Accept the opposite type
-   * 3. Create perpendicular line once both collected
+   * Define argument specification
+   * Single set with point and any-line arguments
    */
-  handleClick(context: ToolContext): ToolResult {
-    const { planeId, planeCoords, canvasCoords, commandStack, world, paper, paperToPlaneTransform } = context;
-    
-    // Validate coordinates
-    if (!this.validateCoordinates(planeCoords)) {
-      return this.failure('Invalid coordinates');
-    }
-    
-    // Validate plane exists
-    if (!this.validatePlane(planeId, world)) {
-      return this.failure(`Plane not found: ${planeId}`);
-    }
-
-    // Use Paper.hitTest() for spatial queries with correct coordinate transforms
-    const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-    const selectionMask = this.getSelectionMask();
-    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask);
-    
-    console.log('[PerpendicularLineTool] Paper.hitTest() result:', hit);
-    
-    if (!hit) {
-      if (this.state === 'waiting-first') {
-        return this.failure('No point or line found at click position.');
-      } else {
-        const expectedType = this.referenceLineId ? 'point' : 'line';
-        return this.failure(`No ${expectedType} found at click position.`);
+  protected getArgumentSets(): ToolArgumentSet[] {
+    return [
+      {
+        arguments: [
+          { 
+            name: 'referenceLine', 
+            mask: SelectionMask.anyLine() // Accepts lines, segments, guides, half-hinge-lines
+          },
+          { 
+            name: 'throughPoint', 
+            mask: SelectionMask.point() 
+          }
+        ]
       }
-    }
+    ];
+  }
 
-    // State machine with flexible argument order
-    if (this.state === 'waiting-first') {
-      // First click: Accept either point or any-line
-      if (hit.elementType === 'point') {
-        this.throughPointId = hit.elementId;
-        this.state = 'waiting-second';
-        return this.success(`Selected point: ${hit.elementId}. Now select reference line.`);
-      } else {
-        // any-line type (line, segment, guide, half-hinge-line)
-        this.referenceLineId = hit.elementId;
-        this.state = 'waiting-second';
-        return this.success(`Selected reference ${hit.elementType}: ${hit.elementId}. Now select through-point.`);
-      }
+  /**
+   * Execute perpendicular line creation when both arguments collected
+   */
+  protected execute(
+    _setIndex: number, // Unused: only one argument set
+    args: Map<string, Element2D>,
+    context: ToolContext
+  ): ToolResult {
+    const { planeId, commandStack, world } = context;
+    
+    const referenceLine = args.get('referenceLine') as Line2D;
+    const throughPoint = args.get('throughPoint') as Point2D;
+    
+    try {
+      const cmd = new Command("Create perpendicular line", world);
       
-    } else {
-      // Second click: Complete the pair
-      if (this.referenceLineId) {
-        // First was line, second must be point
-        this.throughPointId = hit.elementId;
-      } else {
-        // First was point, second must be line
-        this.referenceLineId = hit.elementId;
-      }
+      // Create perpendicular line using collected arguments
+      const result = cmd.addAndExecute(
+        new AddLine2DPerpendicularToLineOp(planeId, referenceLine.id, throughPoint.id)
+      );
       
-      try {
-        // Build Command directly
-        const cmd = new Command("Create perpendicular line", world);
-        
-        // Use return value from addAndExecute
-        const result = cmd.addAndExecute(
-          new AddLine2DPerpendicularToLineOp(planeId, this.referenceLineId!, this.throughPointId!)
-        );
-        
-        // Extract outputs
-        const lineId = result.outputs.lineId;
-        
-        // Record ProcessTree action using lineId from outputs
-        const action = createPerpendicularLineAction(
-          lineId,
-          planeId,
-          this.referenceLineId!,
-          this.throughPointId!
-        );
-        world.getProcessTree().addAction(action);
-        
-        // Commit
-        cmd.commit();
-        
-        // Push to stack
-        commandStack.push(cmd);
-        
-        const referenceLineId = this.referenceLineId; // Save before reset
-        
-        // Reset state for next line
-        this.reset();
-        
-        return this.success(`Created perpendicular line ${lineId} perpendicular to ${referenceLineId} through ${this.throughPointId}`);
-        
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        this.reset();
-        return this.failure(`Failed to create perpendicular line: ${message}`);
-      }
+      const lineId = result.outputs.lineId;
+      
+      // Record ProcessTree action for dependency tracking
+      const action = createPerpendicularLineAction(
+        lineId,
+        planeId,
+        referenceLine.id,
+        throughPoint.id
+      );
+      world.getProcessTree().addAction(action);
+      
+      // Commit and push
+      cmd.commit();
+      commandStack.push(cmd);
+      
+      return this.success(
+        `Created perpendicular line ${lineId} perpendicular to ${referenceLine.id} through ${throughPoint.id}`
+      );
+      
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return this.failure(`Failed to create perpendicular line: ${message}`);
     }
-  }
-
-  /**
-   * Cancel current perpendicular line creation
-   */
-  cancel(): void {
-    this.reset();
-  }
-
-  /**
-   * Get selection mask - flexible workflow (Phase 62)
-   * 
-   * Returns:
-   * - waiting-first: union(point(), anyLine()) - accept either first
-   * - waiting-second: point() if line selected first, anyLine() if point selected first
-   */
-  getSelectionMask(): SelectionMask {
-    if (this.state === 'waiting-first') {
-      // Accept either point or any-line first (Phase 63: use union for OR logic)
-      return SelectionMask.union(SelectionMask.point(), SelectionMask.anyLine());
-    } else {
-      // Return opposite of what was selected first
-      if (this.referenceLineId) {
-        return SelectionMask.point(); // Line selected first, need point
-      } else {
-        return SelectionMask.anyLine(); // Point selected first, need line
-      }
-    }
-  }
-
-  /**
-   * Get current tool state
-   */
-  getState(): Record<string, any> {
-    return {
-      state: this.state,
-      referenceLineId: this.referenceLineId,
-      throughPointId: this.throughPointId
-    };
-  }
-
-  /**
-   * Reset tool state
-   */
-  private reset(): void {
-    this.state = 'waiting-first';
-    this.referenceLineId = undefined;
-    this.throughPointId = undefined;
   }
 }

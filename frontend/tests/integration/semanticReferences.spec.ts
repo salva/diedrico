@@ -43,7 +43,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       
       expect(mainHingeLine).toBeDefined();
       expect(mainHingeLine.id).toBeTruthy();
-      expect(mainHingeLine.id).toMatch(/^hinge_line_\d+$/); // Generated ID format
+      expect(mainHingeLine.id).toMatch(/^HL_\d+$/); // Label-based ID format (id = label)
     });
 
     it.skip('should provide access to horizontal origin point - SKIPPED: origin tracking not fully implemented', () => {
@@ -107,8 +107,8 @@ describe('Semantic Entity References (Phase 46)', () => {
       // Hinge line ID should NOT be the old hardcoded value
       expect(mainHingeLine.id).not.toBe('HL_HV');
       
-      // Hinge line ID should be generated format
-      expect(mainHingeLine.id).toMatch(/^hinge_line_\d+$/);
+      // Hinge line ID should be label-based format (id = label)
+      expect(mainHingeLine.id).toMatch(/^HL_\d+$/);
     });
   });
 

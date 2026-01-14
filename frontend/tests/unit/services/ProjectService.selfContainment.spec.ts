@@ -44,11 +44,17 @@ import {
 describe('ProjectService Self-Containment Tests', () => {
   let world: World;
   let commandStack: CommandStack;
-  const planeId = 'proj_plane_H'; // Fixed plane ID that exists in every World
+  let planeId: string; // Plane ID determined from World initialization
 
   beforeEach(() => {
     world = new World();
     commandStack = new CommandStack();
+    // Get the actual plane ID after World initialization
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    if (!planeH || !planeH.id) {
+      throw new Error('P_H plane not found after World initialization');
+    }
+    planeId = planeH.id;
   });
 
   /**

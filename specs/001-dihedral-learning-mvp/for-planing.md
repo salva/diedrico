@@ -18,7 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Show contextual tool feedback: display what the user has already done and what is expected next. For instance, "Creating line: pick two points", or "Creating line: point A selected, pick second point".
+* [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
 * [ ] Implement proper toolbar behaviour as described in ui-specs.md (similar to Geogebra classic).
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Verify if 3D visualization support is already planned. If not, plan and implement it.
@@ -51,6 +51,55 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Indexes for intersection points between to circles must be determined according to the relative position of the points against the line defined by the two circles center. 
 
 ## ALREADY PLANNED
+
+* [ ] **Test Architecture Compliance (Phase 66)**
+  - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Ready for implementation
+  - **Goal**: Reach 90% test pass rate by fixing tests to comply with architectural decisions
+  - **Current State**: 80.3% pass rate (57/71 tests), 48 test errors due to architectural violations
+  - **Principle**: **TESTS MUST OBEY ARCHITECTURE. App code cannot be bent to make tests pass.**
+  - **Problem**: Tests violate core architectural principles:
+    1. **Wrong method names**: Tests call `addLine2DByTwoPoints` (doesn't exist) instead of `addLine2DBetweenTwoPoints`
+    2. **World facade violations**: Tests call `world.getSegment2D()` violating "2D elements only via ProjectionPlane"
+    3. **Paper API misuse**: Tests call `paper.setViewport()` which may not exist in current API
+    4. **Test setup failures**: Tests don't properly retrieve planes before using them
+    5. **Static factory abuse**: Tests call `Plane3D.createPH()` violating "no hard-coded factories" rule
+  - **Error Analysis** (48 instances):
+    - 11 failures: `getSegment2D` - must use `plane.getSegment(id)` instead
+    - 10 failures: `addLine2DByTwoPoints` - must use `addLine2DBetweenTwoPoints`
+    - 8 failures: `plane` undefined - must retrieve plane properly in setup
+    - 7 failures: `paper.setViewport` - must use correct Paper API or remove if obsolete
+    - 4 failures: `createPH` - must use generic construction or InitializationFactory
+    - 4 failures: `getSegment2DById` - must use `plane.getSegment(id)`
+    - 2 failures: `addSegment2DByPoints` - must check correct method name on ProjectionPlane
+    - 1 failure: `togglePoint2DVisibility` - must use element.visible = false pattern
+    - 1 failure: `createPV` - must use generic construction
+  - **Solution**: **Fix all tests to use correct architecture** - zero app code changes
+  - **Impact**: Fixes estimated 40-50 test failures, raises pass rate from 80.3% to ~90%+
+  - **Affected Test Files**:
+    - elementsPanel.spec.ts (wrong factory method names)
+    - propertiesDialog.spec.ts (World facade violations)
+    - paperHitTesting.spec.ts (Paper API usage)
+    - tangentLine.spec.ts (missing plane setup)
+    - renderService.spec.ts (Plane3D static factories)
+    - ProjectService.selfContainment.spec.ts (plane not initialized)
+  - **Tasks** (to be added to tasks.md):
+    - T1111: Fix elementsPanel.spec.ts - use `addLine2DBetweenTwoPoints` instead of `addLine2DByTwoPoints`
+    - T1112: Fix propertiesDialog.spec.ts - access segments via `plane.getSegment(id)` not `world.getSegment2D(id)`
+    - T1113: Fix paperHitTesting.spec.ts - use correct Paper API or remove viewport tests if obsolete
+    - T1114: Fix tangentLine.spec.ts - ensure plane is retrieved in beforeEach with proper error checking
+    - T1115: Fix renderService.spec.ts - remove `Plane3D.createPH()` calls, use World initialization
+    - T1116: Fix ProjectService.selfContainment.spec.ts - initialize World properly with planes
+    - T1117: Audit all test files for World facade violations (getSegment2D, togglePoint2DVisibility, etc.)
+    - T1118: Fix visibility toggling tests - use `element.visible = !element.visible` pattern
+    - T1119: Run full test suite and verify 90%+ pass rate
+    - T1120: Document test architecture patterns in data-model.md if missing
+  - **Architectural Principles Enforced**:
+    - ✅ 2D elements accessible ONLY through ProjectionPlane objects
+    - ✅ NO backward compatibility methods in app code
+    - ✅ World has NO methods for managing 2D objects
+    - ✅ NO hard-coded factories (createPH, createPV) except in InitializationFactory
+    - ✅ Tests follow same architecture as production code
+  - **Notes**: Zero changes to app code; all fixes in test files only; enforces architectural discipline
 
 * [X] **Test Factory Method Migration**
   - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Phase 65 ready for implementation

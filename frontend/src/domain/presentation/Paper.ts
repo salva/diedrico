@@ -509,6 +509,16 @@ export class Paper {
   private getElementType(entity: any, world: World): SelectableElementType {
     // Check entity.type discriminator (most reliable)
     if (entity.type) {
+      // Point2D (all subtypes map to 'point')
+      if (entity.type === 'free' || entity.type === 'intersection' || 
+          entity.type === 'line-line-intersection' || entity.type === 'line-circle-intersection' ||
+          entity.type === 'circle-circle-intersection' || entity.type === 'sibling-intersection') {
+        return 'point';
+      }
+      // Circle2D (all subtypes map to 'circle')
+      if (entity.type === 'by-center-and-point' || entity.type === 'by-three-points') {
+        return 'circle';
+      }
       // HalfHingeLine2D
       if (entity.type === 'half-hinge') {
         return 'half-hinge-line';

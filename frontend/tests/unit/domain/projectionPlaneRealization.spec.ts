@@ -85,8 +85,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
   describe('Line realization computation', () => {
     it('ProjectionPlane.realizeLine2D() should compute and cache line realization', () => {
-      const line = new Line2DByTwoPoints(planeH.id + '/line1', p1Id, p2Id, planeH.id);
-      world.addLine2D(line);
+      const line = planeH.addLine2DBetweenTwoPoints(p1Id, p2Id, world);
       
       // Verify cache is empty initially
       expect(planeH.getLineRealization2D(line.id)).toBeUndefined();
@@ -132,8 +131,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
     it('ProjectionPlane.realizeCircle2D() should compute and cache circle realization', () => {
       // Create circumference point
       const p2 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circle = new Circle2DByCenterAndPoint(planeH.id + '/c1', p1Id, p2.id, planeH.id);
-      world.addCircle2D(circle);
+      const circle = planeH.addCircle2DByCenterAndPoint(p1Id, p2.id, world);
       
       // Verify cache is empty initially
       expect(planeH.getCircleRealization2D(circle.id)).toBeUndefined();

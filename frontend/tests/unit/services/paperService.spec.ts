@@ -81,14 +81,17 @@ describe('PaperService', () => {
     it('should generate PointPrimitive for intersection point on P_V', () => {
       // Create an intersection point at (80, 120) on P_V
       const projPlaneV = world.getProjectionPlaneByLabel('P_V');
-      const point = new Point2DLineLineIntersection(
-        `${projPlaneV.id}/test-point-2`,
-        `${projPlaneV.id}/line-1`,
-        `${projPlaneV.id}/line-2`,
-        projPlaneV.id!,
-        'b_V'
-      );
-      world.addPoint2D(point);
+      // Create two lines to intersect
+      const line1Point1 = projPlaneV.addFreePoint2D(new Vector3(0, 0, 1), world);
+      const line1Point2 = projPlaneV.addFreePoint2D(new Vector3(100, 0, 1), world);
+      const line1 = projPlaneV.addLine2DBetweenTwoPoints(line1Point1.id!, line1Point2.id!, world);
+      
+      const line2Point1 = projPlaneV.addFreePoint2D(new Vector3(0, 100, 1), world);
+      const line2Point2 = projPlaneV.addFreePoint2D(new Vector3(100, 100, 1), world);
+      const line2 = projPlaneV.addLine2DBetweenTwoPoints(line2Point1.id!, line2Point2.id!, world);
+      
+      const point = projPlaneV.addLineLineIntersection(line1.id!, line2.id!, world);
+      point.label = 'b_V';
 
       // Generate primitives
       const context: PrimitiveContext = {
@@ -165,13 +168,13 @@ describe('PaperService', () => {
     it('should handle multiple points on different planes', () => {
       // Point on P_H
       const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const pointH = new FreePoint2D(`${projPlaneH.id}/test-point-5`, new Vector3(10, 20, 1), projPlaneH.id!, 'e_H');
-      world.addPoint2D(pointH);
+      const pointH = projPlaneH.addFreePoint2D(new Vector3(10, 20, 1), world);
+      pointH.label = 'e_H';
 
       // Point on P_V
       const projPlaneV = world.getProjectionPlaneByLabel('P_V');
-      const pointV = new FreePoint2D(`${projPlaneV.id}/test-point-6`, new Vector3(30, 40, 1), projPlaneV.id!, 'e_V');
-      world.addPoint2D(pointV);
+      const pointV = projPlaneV.addFreePoint2D(new Vector3(30, 40, 1), world);
+      pointV.label = 'e_V';
 
       const context: PrimitiveContext = {
         world,
@@ -223,8 +226,8 @@ describe('PaperService', () => {
     it('should correctly apply plane-to-paper transformation matrix', () => {
       // Test with identity matrix (u,v) → (x,y) with offset
       const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const point = new FreePoint2D(`${projPlaneH.id}/test-point-7`, new Vector3(0, 0, 1), projPlaneH.id!, 'h_H');
-      world.addPoint2D(point);
+      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+      point.label = 'h_H';
 
       const context: PrimitiveContext = {
         world,
