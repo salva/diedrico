@@ -530,28 +530,17 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
       anglePtoC + angleAlpha :
       anglePtoC - angleAlpha;
     
-    // Tangent point on circle
-    const tangentPoint = new Vector3(
-      center.x + radius * Math.cos(tangentAngle),
-      center.y + radius * Math.sin(tangentAngle),
-      1  // Finite point
-    );
-    
-    // Line direction: from external point to tangent point
+    // Line direction: PERPENDICULAR to radius at tangent point
+    // Radius direction at tangent point: (cos(tangentAngle), sin(tangentAngle))
+    // Perpendicular (90° CCW rotation): (-sin(tangentAngle), cos(tangentAngle))
     const direction = new Vector3(
-      tangentPoint.x - externalPoint.x,
-      tangentPoint.y - externalPoint.y,
+      -Math.sin(tangentAngle),
+      Math.cos(tangentAngle),
       0  // Direction vector
     );
     
-    // Check for degenerate case (shouldn't happen if math is correct)
-    if (direction.lengthSq() < EPSILON * EPSILON) {
-      return new Line2DRealization2D(
-        externalPoint.clone(),
-        new Vector3(1, 0, 0),
-        false
-      );
-    }
+    // Note: This tangent line passes through BOTH the external point AND the tangent point
+    // because the geometry ensures the line from P perpendicular to radius at T passes through P
     
     // Return infinite line through external point with tangent direction
     return new Line2DRealization2D(
@@ -645,8 +634,7 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
     const refLine = world.getLine2D(this.referenceLineId);
     if (!refLine) return null;
     
-    const refPlane = world.getProjectionPlaneById(refLine.planeId);
-    const refLineRealization = refPlane?.getLine(this.referenceLineId)?.realize2D(world);
+    const refLineRealization = refLine.realize2D(world);
     if (!refLineRealization) return null;
     
     // Step 4: Check infeasibility propagation
