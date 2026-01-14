@@ -17,6 +17,7 @@ import { SelectionMask } from '@/types/SelectionMask';
 
 export class PointTool extends BaseTool {
   readonly name = 'point';
+  readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
 
   /**
    * Handle click to create a free point
@@ -53,6 +54,9 @@ export class PointTool extends BaseTool {
       
       // Push to stack
       commandStack.push(cmd);
+
+      // Handle tool completion (stays active for repeated use)
+      this.handleCompletion(context.toolStore);
 
       return this.success(`Created point ${pointId}`);
       

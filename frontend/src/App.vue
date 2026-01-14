@@ -108,6 +108,7 @@ import { CommandStack } from './commands/CommandStack';
 import { Command } from './commands/Command';
 import { DeletionSequenceFactory } from './commands/factories/DeletionSequenceFactory';
 import { useToolStore } from './stores/toolStore';
+import { TOOL_FAMILIES } from './config/toolFamilies';
 import { useSelectionStore } from './stores/selectionStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useAuthStore } from './stores/authStore';
@@ -153,6 +154,8 @@ const projectNameDisplayRef = ref<InstanceType<typeof ProjectNameDisplay> | null
 
 // Tool state
 const toolStore = useToolStore();
+// Initialize tool families configuration
+toolStore.setToolFamilies(TOOL_FAMILIES);
 const activeTool = toolStore.currentTool;
 
 // Selection state (T271)

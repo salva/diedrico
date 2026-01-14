@@ -18,6 +18,7 @@ import type { CommandStack } from '@/commands/CommandStack';
 import type { World } from '@/domain/world/World';
 import type { Paper } from '@/domain/presentation/Paper';
 import type { SelectionMask } from '@/types/SelectionMask';
+import type { useToolStore } from '@/stores/toolStore';
 
 /**
  * Context provided to tools when handling user input
@@ -30,6 +31,7 @@ export interface ToolContext {
   world: World;             // World for validation and queries
   paper: Paper;             // Paper for spatial queries (hit testing, snapping)
   paperToPlaneTransform: any;  // Transform matrix from paper to plane coordinates (Matrix3 | undefined)
+  toolStore: ReturnType<typeof useToolStore>; // Tool store for managing tool state and completion behavior
 }
 
 /**

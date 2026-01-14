@@ -34,6 +34,7 @@ import { createParallelLineAction } from '@/domain/processTree/actions/CreatePar
  */
 export class ParallelLineTool extends ArgumentCollectorTool {
   readonly name = 'parallel-line';
+  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
 
   /**
    * Define argument specification
@@ -60,7 +61,7 @@ export class ParallelLineTool extends ArgumentCollectorTool {
    * Execute parallel line creation when both arguments collected
    */
   protected execute(
-    setIndex: number,
+    _setIndex: number, // Unused: only one argument set
     args: Map<string, import('@/types/ToolArgumentCollector').ArgumentValue>,
     context: ToolContext
   ): ToolResult {
@@ -91,6 +92,9 @@ export class ParallelLineTool extends ArgumentCollectorTool {
       // Commit and push
       cmd.commit();
       commandStack.push(cmd);
+      
+      // Handle tool completion (returns to selection mode)
+      this.handleCompletion(context.toolStore);
       
       return this.success(
         `Created parallel line ${lineId} parallel to ${referenceLine.id} through ${throughPoint.id}`

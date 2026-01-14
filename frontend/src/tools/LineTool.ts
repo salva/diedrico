@@ -24,6 +24,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class LineTool extends BaseTool {
   readonly name = 'line';
+  readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
   private state: 'waiting-first' | 'waiting-second' = 'waiting-first';
   private firstPointId?: string;
 
@@ -102,6 +103,9 @@ export class LineTool extends BaseTool {
         
         // Reset state for next line
         this.reset();
+        
+        // Handle tool completion (stays active for repeated use)
+        this.handleCompletion(context.toolStore);
         
         return this.success(`Created line ${lineId} between ${firstPointId} and ${secondPointId}`);
         

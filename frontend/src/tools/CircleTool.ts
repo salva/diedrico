@@ -34,6 +34,7 @@ import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAct
  */
 export class CircleTool extends ArgumentCollectorTool {
   readonly name = 'circle';
+  readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
 
   /**
    * Define argument specification
@@ -113,6 +114,9 @@ export class CircleTool extends ArgumentCollectorTool {
       // Commit and push
       cmd.commit();
       commandStack.push(cmd);
+      
+      // Handle tool completion (stays active for repeated use)
+      this.handleCompletion(context.toolStore);
       
       return this.success(
         `Created circle ${circleId} with center ${center.id} and circumference ${circumferencePoint.id}`

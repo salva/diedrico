@@ -33,6 +33,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class TangentLineToCircleParallelToLineTool extends BaseTool {
   readonly name = 'tangent-line-to-circle-parallel';
+  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
   private state: 'waiting-circle' | 'waiting-line' = 'waiting-circle';
   private circleId?: string;
 
@@ -120,6 +121,9 @@ export class TangentLineToCircleParallelToLineTool extends BaseTool {
         
         // Reset state for next line
         this.reset();
+        
+        // Handle tool completion (returns to selection mode)
+        this.handleCompletion(context.toolStore);
         
         return this.success(`Created tangent line ${lineId} to circle ${circleId} parallel to line ${referenceLineId} (index: ${tangentIndex})`);
         

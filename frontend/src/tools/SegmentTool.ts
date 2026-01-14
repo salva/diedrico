@@ -27,6 +27,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class SegmentTool extends BaseTool {
   readonly name = 'segment';
+  readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
   private state: 'waiting-first' | 'waiting-second' = 'waiting-first';
   private firstPointId?: string;
 
@@ -105,6 +106,9 @@ export class SegmentTool extends BaseTool {
         
         // Reset state for next segment
         this.reset();
+        
+        // Handle tool completion (stays active for repeated use)
+        this.handleCompletion(context.toolStore);
         
         return this.success(`Created segment ${segmentId} between ${firstPointId} and ${secondPointId}`);
         

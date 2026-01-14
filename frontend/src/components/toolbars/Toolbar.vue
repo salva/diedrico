@@ -99,7 +99,7 @@
     <div class="toolbar-separator"></div>
     
     <!-- Tool buttons -->
-    <!-- Phase 54.5: Selection Tool -->
+    <!-- Phase 54.5: Selection Tool (standalone, not in family) -->
     <button
       class="tool-button"
       :class="{ active: toolStore.isToolActive('select') }"
@@ -113,149 +113,12 @@
       <span>Select</span>
     </button>
     
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('point') }"
-      @click="selectTool('point')"
-      title="Point Tool (P)"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <circle cx="10" cy="10" r="4" fill="currentColor" />
-      </svg>
-      <span>Point</span>
-    </button>
-    
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('line') }"
-      @click="selectTool('line')"
-      title="Line Tool (L)"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <line x1="2" y1="18" x2="18" y2="2" stroke="currentColor" stroke-width="2" />
-      </svg>
-      <span>Line</span>
-    </button>
-
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('parallel-line') }"
-      @click="selectTool('parallel-line')"
-      title="Parallel Line Tool - Create line parallel to reference through point"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <!-- Two parallel lines -->
-        <line x1="2" y1="6" x2="18" y2="6" stroke="currentColor" stroke-width="2" />
-        <line x1="2" y1="14" x2="18" y2="14" stroke="currentColor" stroke-width="2" />
-      </svg>
-      <span>Parallel</span>
-    </button>
-
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('perpendicular-line') }"
-      @click="selectTool('perpendicular-line')"
-      title="Perpendicular Line Tool - Create line perpendicular to reference through point"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <!-- Two perpendicular lines forming a 90° angle -->
-        <line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="2" />
-        <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" stroke-width="2" />
-        <!-- Small arc to indicate 90° angle -->
-        <path d="M 13 10 L 13 13 L 10 13" fill="none" stroke="currentColor" stroke-width="1" />
-      </svg>
-      <span>Perpendicular</span>
-    </button>
-
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('tangent-line-to-circle-through-point') }"
-      @click="selectTool('tangent-line-to-circle-through-point')"
-      title="Tangent Line Through Point - Create line tangent to circle through external point"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <!-- Circle -->
-        <circle cx="10" cy="10" r="5" fill="none" stroke="currentColor" stroke-width="1.5" />
-        <!-- External point -->
-        <circle cx="16" cy="8" r="1.5" fill="currentColor" />
-        <!-- Tangent line -->
-        <line x1="10" y1="5" x2="16" y2="8" stroke="currentColor" stroke-width="2" />
-      </svg>
-      <span>Tangent (Point)</span>
-    </button>
-
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('tangent-line-to-circle-parallel') }"
-      @click="selectTool('tangent-line-to-circle-parallel')"
-      title="Tangent Line Parallel - Create line tangent to circle parallel to reference line"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <!-- Circle -->
-        <circle cx="10" cy="10" r="5" fill="none" stroke="currentColor" stroke-width="1.5" />
-        <!-- Reference line (dashed) -->
-        <line x1="2" y1="3" x2="18" y2="3" stroke="currentColor" stroke-width="1" stroke-dasharray="2,2" opacity="0.6" />
-        <!-- Tangent line (parallel to reference) -->
-        <line x1="2" y1="15" x2="18" y2="15" stroke="currentColor" stroke-width="2" />
-      </svg>
-      <span>Tangent (Parallel)</span>
-    </button>
-
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('segment') }"
-      @click="selectTool('segment')"
-      title="Segment Tool (S)"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <line x1="2" y1="18" x2="18" y2="2" stroke="currentColor" stroke-width="3" />
-        <circle cx="2" cy="18" r="2" fill="currentColor" />
-        <circle cx="18" cy="2" r="2" fill="currentColor" />
-      </svg>
-      <span>Segment</span>
-    </button>
-
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('circle') }"
-      @click="selectTool('circle')"
-      title="Circle Tool (C)"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" fill="none" />
-        <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-      </svg>
-      <span>Circle</span>
-    </button>
-
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('guide') }"
-      @click="selectTool('guide')"
-      title="Guide Tool (G)"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" stroke-width="2" stroke-dasharray="3,2" />
-        <path d="M 10 5 L 10 15" stroke="currentColor" stroke-width="1.5" />
-      </svg>
-      <span>Guide</span>
-    </button>
-
-    <button
-      class="tool-button"
-      :class="{ active: toolStore.isToolActive('intersection') }"
-      @click="selectTool('intersection')"
-      title="Intersection Tool (I)"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <!-- Two crossing lines -->
-        <line x1="2" y1="18" x2="18" y2="2" stroke="currentColor" stroke-width="2" />
-        <line x1="2" y1="2" x2="18" y2="18" stroke="currentColor" stroke-width="2" />
-        <!-- Intersection point -->
-        <circle cx="10" cy="10" r="2.5" fill="currentColor" />
-      </svg>
-      <span>Intersection</span>
-    </button>
+    <!-- Phase 67: Tool Family Buttons with Dropdowns -->
+    <ToolFamilyButton
+      v-for="family in TOOL_FAMILIES"
+      :key="family.id"
+      :family="family"
+    />
 
     <!-- T406: Login Status Widget at far right -->
     <LoginStatusWidget
@@ -272,6 +135,8 @@ import { useViewStore } from '@/stores/viewStore';
 import { CommandStack } from '@/commands/CommandStack';
 import LoginStatusWidget from '@/components/LoginStatusWidget.vue';
 import PlaneSelector from '@/components/toolbars/PlaneSelector.vue';
+import ToolFamilyButton from '@/components/toolbars/ToolFamilyButton.vue';
+import { TOOL_FAMILIES } from '@/config/toolFamilies';
 
 /**
  * Toolbar.vue - Tool selection toolbar
@@ -321,11 +186,28 @@ function selectTool(tool: 'select' | 'point' | 'line' | 'circle' | 'segment' | '
 /**
  * Handle global keyboard shortcuts
  * Phase 54.5: Esc activates Selection Tool
+ * Phase 67: Letter shortcuts activate specific sub-tools and update last-used
  */
 function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     selectTool('select');
     event.preventDefault();
+    return;
+  }
+  
+  // Handle letter shortcuts for tools
+  const key = event.key.toUpperCase();
+  
+  // Find tool with matching shortcut across all families
+  for (const family of TOOL_FAMILIES) {
+    for (const tool of family.tools) {
+      if (tool.shortcut === key) {
+        // Activate tool directly and update last-used for its family
+        toolStore.selectSubTool(family.id, tool.id);
+        event.preventDefault();
+        return;
+      }
+    }
   }
 }
 

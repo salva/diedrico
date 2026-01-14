@@ -781,7 +781,8 @@ function handleCanvasClick(event: MouseEvent) {
     commandStack,
     world,
     paper,
-    paperToPlaneTransform: paperToPlane
+    paperToPlaneTransform: paperToPlane,
+    toolStore
   });
   
   if (result.success) {

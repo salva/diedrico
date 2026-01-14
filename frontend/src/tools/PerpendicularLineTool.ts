@@ -16,6 +16,7 @@
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolContext, ToolResult } from './ITool';
 import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+import type { Element2D } from '@/domain/world/Element2D';
 import type { Point2D } from '@/domain/world/Point';
 import type { Line2D } from '@/domain/world/Line';
 import { SelectionMask } from '@/types/SelectionMask';
@@ -34,6 +35,7 @@ import { createPerpendicularLineAction } from '@/domain/processTree/actions/Crea
  */
 export class PerpendicularLineTool extends ArgumentCollectorTool {
   readonly name = 'perpendicular-line';
+  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
 
   /**
    * Define argument specification
@@ -61,13 +63,13 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
    */
   protected execute(
     _setIndex: number, // Unused: only one argument set
-    args: Map<string, Element2D>,
+    args: Map<string, import('@/types/ToolArgumentCollector').ArgumentValue>,
     context: ToolContext
   ): ToolResult {
     const { planeId, commandStack, world } = context;
     
-    const referenceLine = args.get('referenceLine') as Line2D;
-    const throughPoint = args.get('throughPoint') as Point2D;
+    const referenceLine = args.get('referenceLine')!.element as Line2D;
+    const throughPoint = args.get('throughPoint')!.element as Point2D;
     
     try {
       const cmd = new Command("Create perpendicular line", world);
@@ -91,6 +93,9 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
       // Commit and push
       cmd.commit();
       commandStack.push(cmd);
+      
+      // Handle tool completion (returns to selection mode)
+      this.handleCompletion(context.toolStore);
       
       return this.success(
         `Created perpendicular line ${lineId} perpendicular to ${referenceLine.id} through ${throughPoint.id}`

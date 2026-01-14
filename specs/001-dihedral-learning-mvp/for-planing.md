@@ -18,6 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] Generate nice color vector images for the toolbar buttoms.
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Verify if 3D visualization support is already planned. If not, plan and implement it.

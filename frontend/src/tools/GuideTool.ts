@@ -33,6 +33,7 @@ import { isSiblingIntersectionPoint2D } from '@/domain/world/Point';
  */
 export class GuideTool extends BaseTool {
   readonly name = 'guide';
+  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
   private state: 'waiting-first' | 'waiting-line' | 'waiting-point' = 'waiting-first';
   private referenceLineId?: string;
   private throughPointId?: string;
@@ -170,6 +171,9 @@ export class GuideTool extends BaseTool {
         const message = siblingGuideId 
           ? `Created guide ${guideId} and sibling ${siblingGuideId}` 
           : `Created guide ${guideId} perpendicular to ${referenceLineId} through ${throughPointId}`;
+        
+        // Handle tool completion (returns to selection mode)
+        this.handleCompletion(context.toolStore);
         
         return this.success(message);
         

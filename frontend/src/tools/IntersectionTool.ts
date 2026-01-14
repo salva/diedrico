@@ -47,6 +47,7 @@ import { Circle2D } from '@/domain/world/Circle';
  */
 export class IntersectionTool extends BaseTool {
   readonly name = 'intersection';
+  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
   private state: 'waiting-first-element' | 'waiting-second-element' = 'waiting-first-element';
   private firstElementId?: string;
 
@@ -198,6 +199,9 @@ export class IntersectionTool extends BaseTool {
         
         // Reset state for next intersection
         this.reset();
+        
+        // Handle tool completion (returns to selection mode)
+        this.handleCompletion(context.toolStore);
         
         return this.success('Intersection point created');
         
