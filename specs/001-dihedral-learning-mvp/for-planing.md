@@ -18,7 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Generate nice color vector images for the toolbar buttoms.
+* [ ] Generate nice (and self explained) color vector images for the toolbar buttoms. Remove the texts from the buttoms. Make all the buttoms the same size. 
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Verify if 3D visualization support is already planned. If not, plan and implement it.
@@ -53,7 +53,7 @@ Note that completing these tasks may require asking the user for additional info
 ## ALREADY PLANNED
 
 * [X] **Toolbar Behavior - Tool Families and Completion Patterns (Phase 67)**
-  - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Ready for implementation
+  - **STATUS**: ✅ COMPLETE (Jan 14, 2026) - Commit 99f4dbb
   - **Goal**: Implement GeoGebra-style toolbar organization with tool families (dropdown menus), last-used sub-tool memory, and context-appropriate completion behavior
   - **Current State**: Flat toolbar with 12+ individual buttons, all tools stay active after completion, no grouping or organization
   - **Inspiration**: GeoGebra Classic toolbar organization patterns
