@@ -560,7 +560,7 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
       tangentAngle: tangentAngle * 180 / Math.PI,
       tangentPoint: { x: tangentPoint.x, y: tangentPoint.y },
       direction: { x: direction.x, y: direction.y },
-      index
+      index: this.tangentIndex
     });
     
     // Return infinite line through external point with tangent direction
