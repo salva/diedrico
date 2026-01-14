@@ -32,7 +32,7 @@
       >
         <span class="tool-icon">{{ tool.icon }}</span>
         <span class="tool-label">{{ tool.label }}</span>
-        <span v-if="tool.shortcut" class="tool-shortcut">({{ tool.shortcut }})</span>
+        <span v-if="tool.shortcut" class="tool-shortcut">{{ tool.shortcut }}</span>
         <span v-if="toolStore.isToolActive(tool.id as any)" class="checkmark">✓</span>
       </div>
     </div>
@@ -91,9 +91,14 @@ function activateLastUsed() {
 
 function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value;
+  if (isDropdownOpen.value) {
+    console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
+    console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
+  }
 }
 
 function selectTool(toolId: string) {
+  console.log('[ToolFamilyButton] Selecting tool:', toolId);
   toolStore.selectSubTool(props.family.id, toolId);
   isDropdownOpen.value = false;
 }
@@ -191,7 +196,7 @@ onUnmounted(() => {
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  min-width: 200px;
+  min-width: 220px;
 }
 
 .tool-menu-item {
@@ -202,6 +207,8 @@ onUnmounted(() => {
   gap: 8px;
   transition: background 0.15s;
   border-bottom: 1px solid #eee;
+  color: #333;
+  white-space: nowrap;
 }
 
 .tool-menu-item:last-child {
@@ -218,15 +225,30 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+.tool-menu-item .tool-icon {
+  font-size: 16px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.tool-menu-item .tool-label {
+  flex: 1;
+  font-size: 13px;
+}
+
 .tool-shortcut {
   margin-left: auto;
   font-size: 11px;
-  color: #666;
+  color: #999;
+  padding: 2px 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
 }
 
 .checkmark {
-  margin-left: auto;
+  margin-left: 8px;
   color: #2196f3;
   font-weight: bold;
+  font-size: 14px;
 }
 </style>
