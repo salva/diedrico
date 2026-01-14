@@ -17,7 +17,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
 import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
@@ -201,11 +201,11 @@ export class GuideTool extends BaseTool {
    */
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-first') {
-      return ['half-hinge-line', 'point'];
+      return SelectionMask.union(SelectionMask.halfHingeLine(), SelectionMask.point());
     } else if (this.state === 'waiting-line') {
-      return ['half-hinge-line'];
+      return SelectionMask.halfHingeLine();
     } else {
-      return ['point'];
+      return SelectionMask.point();
     }
   }
 

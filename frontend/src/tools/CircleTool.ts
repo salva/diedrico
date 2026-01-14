@@ -19,7 +19,7 @@ import { Command } from '@/commands/Command';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * CircleTool state machine:
@@ -168,7 +168,7 @@ export class CircleTool extends BaseTool {
    * Get selection mask - circle tool only selects points for both steps
    */
   getSelectionMask(): SelectionMask {
-    return ['point'];
+    return SelectionMask.point();
   }
 
   /**

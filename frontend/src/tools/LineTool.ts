@@ -15,7 +15,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * LineTool state machine:
@@ -124,7 +124,7 @@ export class LineTool extends BaseTool {
    * Get selection mask - line tool only selects points
    */
   getSelectionMask(): SelectionMask {
-    return ['point'];
+    return SelectionMask.point();
   }
 
   /**

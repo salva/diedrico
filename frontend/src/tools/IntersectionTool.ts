@@ -24,7 +24,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { IntersectionSequenceFactory, type IntersectionData } from '@/commands/factories/IntersectionSequenceFactory';
 import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
@@ -388,7 +388,7 @@ export class IntersectionTool extends BaseTool {
    * All line types (lines, segments, guides, half-hinge-lines) and circles can participate in intersections.
    */
   getSelectionMask(): SelectionMask {
-    return ['line', 'segment', 'half-hinge-line', 'guide', 'circle'];
+    return SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle());
   }
 
   /**

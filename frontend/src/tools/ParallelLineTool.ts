@@ -19,7 +19,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddLine2DParallelToLineOp } from '@/commands/operations/world/AddLineOp';
 import { createParallelLineAction } from '@/domain/processTree/actions/CreateParallelLineAction';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * ParallelLineTool state machine (Phase 62: flexible workflow):
@@ -147,18 +147,18 @@ export class ParallelLineTool extends BaseTool {
    * 
    * Returns:
    * - waiting-first: ['point', 'any-line'] - accept either first
-   * - waiting-second: ['point'] if line selected first, ['any-line'] if point selected first
+   * - waiting-second: point() if line selected first, anyLine() if point selected first
    */
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-first') {
-      // Accept either point or any-line first
-      return ['point', 'any-line'];
+      // Accept either point or any-line first (Phase 63: use union for OR logic)
+      return SelectionMask.union(SelectionMask.point(), SelectionMask.anyLine());
     } else {
       // Return opposite of what was selected first
       if (this.referenceLineId) {
-        return ['point']; // Line selected first, need point
+        return SelectionMask.point(); // Line selected first, need point
       } else {
-        return ['any-line']; // Point selected first, need line
+        return SelectionMask.anyLine(); // Point selected first, need line
       }
     }
   }

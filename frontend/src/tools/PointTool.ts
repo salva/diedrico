@@ -13,7 +13,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 export class PointTool extends BaseTool {
   readonly name = 'point';
@@ -64,9 +64,9 @@ export class PointTool extends BaseTool {
 
   /**
    * Get selection mask - point tool creates new points, doesn't select existing elements
-   * Empty mask means nothing is selectable (user clicks anywhere to create)
+   * Empty union means nothing is selectable (user clicks anywhere to create)
    */
   getSelectionMask(): SelectionMask {
-    return []; // Nothing selectable - creates free points at click position
+    return SelectionMask.union(); // Nothing selectable - creates free points at click position
   }
 }

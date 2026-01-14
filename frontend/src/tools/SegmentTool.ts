@@ -18,7 +18,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
 import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * SegmentTool state machine:
@@ -127,7 +127,7 @@ export class SegmentTool extends BaseTool {
    * Get selection mask - segment tool only selects points
    */
   getSelectionMask(): SelectionMask {
-    return ['point'];
+    return SelectionMask.point();
   }
 
   /**

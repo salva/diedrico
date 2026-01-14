@@ -24,7 +24,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
 import { createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * TangentLineToCircleParallelToLineTool state machine:
@@ -245,14 +245,14 @@ export class TangentLineToCircleParallelToLineTool extends BaseTool {
    * Get selection mask - Phase 62: hierarchical any-line selector
    * 
    * Returns:
-   * - waiting-circle: ['circle']
-   * - waiting-line: ['any-line'] - accepts all Line2D subtypes (line, segment, guide, half-hinge-line)
+   * - waiting-circle: circle()
+   * - waiting-line: anyLine() - accepts all Line2D subtypes (line, segment, guide, half-hinge-line)
    */
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-circle') {
-      return ['circle'];
+      return SelectionMask.circle();
     } else {
-      return ['any-line'];  // Phase 62: accepts all Line2D subtypes
+      return SelectionMask.anyLine();  // Phase 62: accepts all Line2D subtypes
     }
   }
 

@@ -19,7 +19,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddLine2DTangentToCircleThroughPointOp } from '@/commands/operations/world/AddLineOp';
 import { createTangentLineToCircleThroughPointAction } from '@/domain/processTree/actions/CreateTangentLineAction';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * TangentLineToCircleThroughPointTool state machine:
@@ -244,9 +244,9 @@ export class TangentLineToCircleThroughPointTool extends BaseTool {
    */
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-circle') {
-      return ['circle'];
+      return SelectionMask.circle();
     } else {
-      return ['point'];
+      return SelectionMask.point();
     }
   }
 

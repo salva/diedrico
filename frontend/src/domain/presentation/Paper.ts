@@ -368,8 +368,8 @@ export class Paper {
     // Test points (only from active plane)
     if (activePlane) {
       for (const point of activePlane.getAllPoints()) {
-        // Filter by selection mask if provided
-        if (selectionMask && !selectionMask.includes('point')) {
+        // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
+        if (selectionMask && !selectionMask.matches('point')) {
           continue;
         }
         
@@ -401,16 +401,9 @@ export class Paper {
         // Get actual element type
         const elementType = this.getElementType(line, world);
         
-        // Filter by selection mask if provided
-        if (selectionMask) {
-          // Hierarchical matching: 'any-line' matches all Line2D subclasses
-          const isLineType = ['line', 'segment', 'guide', 'half-hinge-line'].includes(elementType);
-          const matchesMask = selectionMask.includes(elementType) || 
-                              (selectionMask.includes('any-line') && isLineType);
-          
-          if (!matchesMask) {
-            continue; // Skip this element - doesn't match selection mask
-          }
+        // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
+        if (selectionMask && !selectionMask.matches(elementType)) {
+          continue; // Skip this element - doesn't match selection mask
         }
         
         const realization = activePlane.realizeLine2D(line, world);
@@ -436,8 +429,8 @@ export class Paper {
     // Test circles (only from active plane)
     if (activePlane) {
       for (const circle of activePlane.getAllCircles()) {
-        // Filter by selection mask if provided
-        if (selectionMask && !selectionMask.includes('circle')) {
+        // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
+        if (selectionMask && !selectionMask.matches('circle')) {
           continue;
         }
         
@@ -466,8 +459,8 @@ export class Paper {
       for (const line of plane.getAllLines()) {
         if (line.type !== 'guide') continue;
         
-        // Filter by selection mask if provided
-        if (selectionMask && !selectionMask.includes('guide')) {
+        // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
+        if (selectionMask && !selectionMask.matches('guide')) {
           continue;
         }
         

@@ -19,7 +19,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddLine2DPerpendicularToLineOp } from '@/commands/operations/world/AddLineOp';
 import { createPerpendicularLineAction } from '@/domain/processTree/actions/CreatePerpendicularLineAction';
-import type { SelectionMask } from '@/types/SelectionMask';
+import { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * PerpendicularLineTool state machine (Phase 62: flexible workflow):
@@ -146,19 +146,19 @@ export class PerpendicularLineTool extends BaseTool {
    * Get selection mask - flexible workflow (Phase 62)
    * 
    * Returns:
-   * - waiting-first: ['point', 'any-line'] - accept either first
-   * - waiting-second: ['point'] if line selected first, ['any-line'] if point selected first
+   * - waiting-first: union(point(), anyLine()) - accept either first
+   * - waiting-second: point() if line selected first, anyLine() if point selected first
    */
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-first') {
-      // Accept either point or any-line first
-      return ['point', 'any-line'];
+      // Accept either point or any-line first (Phase 63: use union for OR logic)
+      return SelectionMask.union(SelectionMask.point(), SelectionMask.anyLine());
     } else {
       // Return opposite of what was selected first
       if (this.referenceLineId) {
-        return ['point']; // Line selected first, need point
+        return SelectionMask.point(); // Line selected first, need point
       } else {
-        return ['any-line']; // Point selected first, need line
+        return SelectionMask.anyLine(); // Point selected first, need line
       }
     }
   }
