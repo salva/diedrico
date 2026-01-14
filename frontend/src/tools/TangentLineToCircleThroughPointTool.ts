@@ -129,9 +129,14 @@ export class TangentLineToCircleThroughPointTool extends BaseTool {
   /**
    * Determine which tangent line (index 0 or 1) to create based on mouse position
    * 
+   * Index Convention:
+   * Given circle with center A, external point B, and tangent point C:
+   * - Index 0: Positive angle BAC (counterclockwise from AB to AC when viewed from A)
+   * - Index 1: Negative angle BAC (clockwise from AB to AC when viewed from A)
+   * 
    * Algorithm:
    * 1. Get circle center and external point positions
-   * 2. Compute both tangent angles: anglePtoC ± asin(r/d)
+   * 2. Compute both tangent angles: angleCP ± acos(r/d)
    * 3. Compute tangent points for both angles
    * 4. Calculate angle from center to each tangent point
    * 5. Compare to mouse position angle from center
@@ -175,15 +180,19 @@ export class TangentLineToCircleThroughPointTool extends BaseTool {
     const dy = externalPoint.y - center.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Angle from center to external point
-    const anglePtoC = Math.atan2(dy, dx);
+    // Angle from center to external point (angle of vector CP)
+    const angleCP = Math.atan2(dy, dx);
 
-    // Half-angle of tangent cone
-    const angleAlpha = Math.asin(radius / distance);
+    // Angle from CP to tangent line (angle at center in right triangle CPT)
+    // In right triangle with right angle at tangent point T:
+    // cos(angle at C) = adjacent/hypotenuse = r/d
+    const angleBeta = Math.acos(radius / distance);
 
-    // Two tangent angles
-    const tangentAngle0 = anglePtoC + angleAlpha;  // Index 0
-    const tangentAngle1 = anglePtoC - angleAlpha;  // Index 1
+    // Two tangent angles (from center to tangent points)
+    // Index 0: counterclockwise from CP (positive angle from AB to AC)
+    // Index 1: clockwise from CP (negative angle from AB to AC)
+    const tangentAngle0 = angleCP + angleBeta;  // Index 0
+    const tangentAngle1 = angleCP - angleBeta;  // Index 1
 
     // Tangent points
     const tangentPoint0 = new Vector3(

@@ -461,18 +461,21 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
    * 1. Get circle center C and radius r
    * 2. Get external point P
    * 3. Check feasibility: distance d = ||P - C|| must be > r
-   * 4. Compute tangent length: L = sqrt(d² - r²)
-   * 5. Compute angle α = asin(r / d)
-   * 6. Compute angle from P to C: θ_PC = atan2(dy, dx)
-   * 7. For index 0: tangent angle = θ_PC + α (left tangent)
-   * 8. For index 1: tangent angle = θ_PC - α (right tangent)
+   * 4. In right triangle CPT (right angle at T):
+   *    - Hypotenuse = d (distance from C to P)
+   *    - Adjacent = r (radius, from C to T)
+   *    - cos(β) = r/d, so β = acos(r/d)
+   * 5. Compute angle from C to P: θ_CP = atan2(dy, dx)
+   * 6. Two tangent points at angles: θ_CP ± β
+   * 7. For index 0: tangent angle = θ_CP + β (counterclockwise)
+   * 8. For index 1: tangent angle = θ_CP - β (clockwise)
    * 9. Tangent point T on circle: T = C + r * (cos(angle), sin(angle))
    * 10. Line direction: from P to T
    * 
-   * Index convention: Based on angle from circle's radius vector
-   * - Index 0 = smaller relative angle from radius vector
-   * - Index 1 = larger relative angle (counterclockwise)
-   * - Same pattern as sortPointsByAngleFromRadiusVector()
+   * Index Convention:
+   * Given circle center A, external point B, tangent point C:
+   * - Index 0: Positive angle BAC (counterclockwise from AB to AC)
+   * - Index 1: Negative angle BAC (clockwise from AB to AC)
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Step 1: Get containing plane
