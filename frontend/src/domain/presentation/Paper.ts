@@ -398,11 +398,18 @@ export class Paper {
     // Test lines (includes HalfHingeLine2D on active plane)
     if (activePlane) {
       for (const line of activePlane.getAllLines()) {
-        // Filter by selection mask if provided
+        // Get actual element type
         const elementType = this.getElementType(line, world);
+        
+        // Filter by selection mask if provided
         if (selectionMask) {
-          if (!selectionMask.includes(elementType)) {
-            continue;
+          // Hierarchical matching: 'any-line' matches all Line2D subclasses
+          const isLineType = ['line', 'segment', 'guide', 'half-hinge-line'].includes(elementType);
+          const matchesMask = selectionMask.includes(elementType) || 
+                              (selectionMask.includes('any-line') && isLineType);
+          
+          if (!matchesMask) {
+            continue; // Skip this element - doesn't match selection mask
           }
         }
         

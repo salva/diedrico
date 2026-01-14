@@ -1,12 +1,16 @@
 /**
  * ParallelLineTool - Tool for creating lines parallel to a reference line through a point
  * 
- * Implements two-click workflow:
- * 1. First click: Select reference line
- * 2. Second click: Select through-point (snaps to existing point)
+ * Implements flexible two-click workflow (Phase 62):
+ * - Accepts arguments in either order: point→line or line→point
+ * - Accepts any Line2D subtype as reference (lines, segments, guides, half-hinge-lines)
+ * 
+ * Workflow:
+ * 1. First click: Select reference line (any Line2D) OR point
+ * 2. Second click: Select the other argument (opposite of first)
  * 3. Create parallel line
  * 
- * Reference: specs/001-dihedral-learning-mvp/spec.md §Line tool family - Parallel line through point
+ * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-047
  */
 
 import { Vector3 } from 'three';
@@ -18,21 +22,23 @@ import { createParallelLineAction } from '@/domain/processTree/actions/CreatePar
 import type { SelectionMask } from '@/types/SelectionMask';
 
 /**
- * ParallelLineTool state machine:
- * - State 'waiting-line': Waiting for reference line
- * - State 'waiting-point': Reference line selected, waiting for through-point
+ * ParallelLineTool state machine (Phase 62: flexible workflow):
+ * - State 'waiting-first': Waiting for either point or reference line (any Line2D)
+ * - State 'waiting-second': First argument selected, waiting for the other type
  */
 export class ParallelLineTool extends BaseTool {
   readonly name = 'parallel-line';
-  private state: 'waiting-line' | 'waiting-point' = 'waiting-line';
+  private state: 'waiting-first' | 'waiting-second' = 'waiting-first';
   private referenceLineId?: string;
+  private throughPointId?: string;
 
   /**
    * Handle click event for parallel line creation
    * 
-   * Two-click workflow:
-   * 1. First click: Record reference line
-   * 2. Second click: Create parallel line
+   * Flexible two-click workflow (Phase 62):
+   * 1. First click: Accept either point or any-line reference
+   * 2. Second click: Accept the opposite type
+   * 3. Create parallel line once both collected
    */
   handleClick(context: ToolContext): ToolResult {
     const { planeId, planeCoords, canvasCoords, commandStack, world, paper, paperToPlaneTransform } = context;
@@ -55,20 +61,37 @@ export class ParallelLineTool extends BaseTool {
     console.log('[ParallelLineTool] Paper.hitTest() result:', hit);
     
     if (!hit) {
-      const expectedType = this.state === 'waiting-line' ? 'line' : 'point';
-      return this.failure(`No ${expectedType} found at click position.`);
+      if (this.state === 'waiting-first') {
+        return this.failure('No point or line found at click position.');
+      } else {
+        const expectedType = this.referenceLineId ? 'point' : 'line';
+        return this.failure(`No ${expectedType} found at click position.`);
+      }
     }
 
-    // State machine
-    if (this.state === 'waiting-line') {
-      // First click: Record reference line
-      this.referenceLineId = hit.elementId;
-      this.state = 'waiting-point';
-      return this.success(`Selected reference line: ${hit.elementId}`);
+    // State machine with flexible argument order
+    if (this.state === 'waiting-first') {
+      // First click: Accept either point or any-line
+      if (hit.elementType === 'point') {
+        this.throughPointId = hit.elementId;
+        this.state = 'waiting-second';
+        return this.success(`Selected point: ${hit.elementId}. Now select reference line.`);
+      } else {
+        // any-line type (line, segment, guide, half-hinge-line)
+        this.referenceLineId = hit.elementId;
+        this.state = 'waiting-second';
+        return this.success(`Selected reference ${hit.elementType}: ${hit.elementId}. Now select through-point.`);
+      }
       
     } else {
-      // Second click: Create parallel line
-      const throughPointId = hit.elementId;
+      // Second click: Complete the pair
+      if (this.referenceLineId) {
+        // First was line, second must be point
+        this.throughPointId = hit.elementId;
+      } else {
+        // First was point, second must be line
+        this.referenceLineId = hit.elementId;
+      }
       
       try {
         // Build Command directly
@@ -76,7 +99,7 @@ export class ParallelLineTool extends BaseTool {
         
         // Use return value from addAndExecute
         const result = cmd.addAndExecute(
-          new AddLine2DParallelToLineOp(planeId, this.referenceLineId!, throughPointId)
+          new AddLine2DParallelToLineOp(planeId, this.referenceLineId!, this.throughPointId!)
         );
         
         // Extract outputs
@@ -87,7 +110,7 @@ export class ParallelLineTool extends BaseTool {
           lineId,
           planeId,
           this.referenceLineId!,
-          throughPointId
+          this.throughPointId!
         );
         world.getProcessTree().addAction(action);
         
@@ -102,7 +125,7 @@ export class ParallelLineTool extends BaseTool {
         // Reset state for next line
         this.reset();
         
-        return this.success(`Created parallel line ${lineId} parallel to ${referenceLineId} through ${throughPointId}`);
+        return this.success(`Created parallel line ${lineId} parallel to ${referenceLineId} through ${this.throughPointId}`);
         
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -120,13 +143,23 @@ export class ParallelLineTool extends BaseTool {
   }
 
   /**
-   * Get selection mask - parallel line tool selects lines first, then points
+   * Get selection mask - flexible workflow (Phase 62)
+   * 
+   * Returns:
+   * - waiting-first: ['point', 'any-line'] - accept either first
+   * - waiting-second: ['point'] if line selected first, ['any-line'] if point selected first
    */
   getSelectionMask(): SelectionMask {
-    if (this.state === 'waiting-line') {
-      return ['line'];  // Also works with guides/segments as they extend Line2D
+    if (this.state === 'waiting-first') {
+      // Accept either point or any-line first
+      return ['point', 'any-line'];
     } else {
-      return ['point'];
+      // Return opposite of what was selected first
+      if (this.referenceLineId) {
+        return ['point']; // Line selected first, need point
+      } else {
+        return ['any-line']; // Point selected first, need line
+      }
     }
   }
 
@@ -136,7 +169,8 @@ export class ParallelLineTool extends BaseTool {
   getState(): Record<string, any> {
     return {
       state: this.state,
-      referenceLineId: this.referenceLineId
+      referenceLineId: this.referenceLineId,
+      throughPointId: this.throughPointId
     };
   }
 
@@ -144,7 +178,8 @@ export class ParallelLineTool extends BaseTool {
    * Reset tool state
    */
   private reset(): void {
-    this.state = 'waiting-line';
+    this.state = 'waiting-first';
     this.referenceLineId = undefined;
+    this.throughPointId = undefined;
   }
 }

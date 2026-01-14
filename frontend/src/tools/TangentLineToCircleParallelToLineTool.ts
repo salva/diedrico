@@ -2,15 +2,20 @@
  * TangentLineToCircleParallelToLineTool - Tool for creating tangent lines to circle parallel to reference line
  * 
  * Phase 61: Two-step workflow with automatic angle-based indexing
+ * Phase 62: Accepts any Line2D subtype as reference (lines, segments, guides, half-hinge-lines)
+ * 
  * 1. First click: Select circle
- * 2. Second click: Select reference line
+ * 2. Second click: Select reference line (any Line2D subtype)
  * 3. Automatic: Determine tangent index based on mouse position angle from radius vector
  * 4. Create tangent line
  * 
  * The tool automatically determines which of the two tangent lines to create based on
  * which tangent point is closer (in angle) to the mouse position at the time of creation.
  * 
- * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-046
+ * Note: Workflow order is NOT reversed (must select circle first) as geometric construction
+ * requires circle context.
+ * 
+ * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-046, §FR-047
  */
 
 import { Vector3 } from 'three';
@@ -237,13 +242,17 @@ export class TangentLineToCircleParallelToLineTool extends BaseTool {
   }
 
   /**
-   * Get selection mask - tangent tool selects circles first, then lines
+   * Get selection mask - Phase 62: hierarchical any-line selector
+   * 
+   * Returns:
+   * - waiting-circle: ['circle']
+   * - waiting-line: ['any-line'] - accepts all Line2D subtypes (line, segment, guide, half-hinge-line)
    */
   getSelectionMask(): SelectionMask {
     if (this.state === 'waiting-circle') {
       return ['circle'];
     } else {
-      return ['line'];
+      return ['any-line'];  // Phase 62: accepts all Line2D subtypes
     }
   }
 

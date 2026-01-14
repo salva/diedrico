@@ -4389,6 +4389,132 @@ Toolbar button (no manual index input needed):
 
 ---
 
+#### Hierarchical Selection Masks: Respecting Domain Model Class Hierarchy (Phase 62)
+
+**Problem**: Current selection mask system is flat (strings like 'line', 'segment', 'guide', 'half-hinge-line'), but domain model has hierarchy where Segment2DByPoints, Guide2D, SiblingGuide2D, and HalfHingeLine2D all extend Line2D. Tools using `['line']` mask exclude these subtypes, preventing valid geometric operations.
+
+**Current Issues**:
+1. ParallelLineTool can't use segments/guides/half-hinge-lines as reference
+2. PerpendicularLineTool can't use segments/guides/half-hinge-lines as reference
+3. TangentLineToCircleParallelToLineTool can't use segments/guides/half-hinge-lines as reference
+4. All three tools enforce rigid workflow: must select line first, then point (can't reverse order)
+
+**Root Cause**: Paper.getElementType() returns specific types ('segment', 'guide', 'half-hinge-line', 'line'), then selection mask filter rejects subtypes not explicitly listed.
+
+**Solution**:
+1. Add 'any-line' SelectableElementType that matches all Line2D subclasses
+2. Update Paper.hitTest() to handle 'any-line' by accepting any element extending Line2D
+3. Add flexible workflow support: tools accept arguments in either order
+4. Update affected tools to use 'any-line' and support reversed workflows
+
+**SelectionMask Type Extension**:
+```typescript
+/**
+ * Element types that can be included in selection masks.
+ * These map to domain entity types that tools can interact with.
+ */
+export type SelectableElementType = 
+  | 'point'           // Any Point2D (free, intersection, on-element)
+  | 'line'            // Specifically regular lines (Line2DByTwoPoints, etc.) - EXCLUDES subtypes
+  | 'any-line'        // ANY element extending Line2D (lines, segments, guides, half-hinge-lines)
+  | 'half-hinge-line' // Specifically HalfHingeLine2D only
+  | 'segment'         // Specifically Segment2DByPoints only
+  | 'circle'          // Any Circle2D
+  | 'guide';          // Specifically Guide2D/SiblingGuide2D only
+```
+
+**Paper.hitTest() Implementation**:
+```typescript
+// In Paper.hitTest() line filtering section
+for (const line of activePlane.getAllLines()) {
+  const elementType = this.getElementType(line, world);
+  
+  // Filter by selection mask if provided
+  if (selectionMask) {
+    // Check for 'any-line' hierarchical match
+    const isLineType = ['line', 'segment', 'guide', 'half-hinge-line'].includes(elementType);
+    const matchesMask = selectionMask.includes(elementType) || 
+                        (selectionMask.includes('any-line') && isLineType);
+    
+    if (!matchesMask) {
+      continue; // Skip this element
+    }
+  }
+  
+  // ... rest of hit testing logic
+}
+```
+
+**Flexible Workflow Pattern**:
+```typescript
+// ParallelLineTool (and similar tools)
+export class ParallelLineTool extends BaseTool {
+  private state: 'waiting-first' | 'waiting-second' = 'waiting-first';
+  private referenceLineId?: string;
+  private throughPointId?: string;
+
+  handleClick(context: ToolContext): ToolResult {
+    const selectionMask = this.getSelectionMask();
+    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask);
+    
+    if (!hit) return this.failure('No valid element found');
+
+    if (this.state === 'waiting-first') {
+      // First click: Accept either line or point
+      if (hit.elementType === 'point') {
+        this.throughPointId = hit.elementId;
+      } else {
+        // any-line type (line, segment, guide, half-hinge-line)
+        this.referenceLineId = hit.elementId;
+      }
+      this.state = 'waiting-second';
+      return this.success(`Selected ${hit.elementType}: ${hit.elementId}`);
+      
+    } else {
+      // Second click: Accept the other type
+      if (this.referenceLineId) {
+        // First was line, second must be point
+        this.throughPointId = hit.elementId;
+      } else {
+        // First was point, second must be line
+        this.referenceLineId = hit.elementId;
+      }
+      
+      // Create parallel line
+      const result = cmd.addAndExecute(
+        new AddLine2DParallelToLineOp(planeId, this.referenceLineId!, this.throughPointId!)
+      );
+      // ... complete operation
+    }
+  }
+
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-first') {
+      return ['point', 'any-line'];  // Accept either first
+    } else {
+      // Return opposite of what was selected first
+      return this.referenceLineId ? ['point'] : ['any-line'];
+    }
+  }
+}
+```
+
+**Affected Tools**:
+- ParallelLineTool: Change from `['line']` to `['any-line']`, support reversed workflow
+- PerpendicularLineTool: Change from `['line']` to `['any-line']`, support reversed workflow
+- TangentLineToCircleParallelToLineTool: Change from `['line']` to `['any-line']` for reference line selection
+
+**Benefits**:
+- **Geometric correctness**: All Line2D subtypes are valid references for parallel/perpendicular constructions
+- **User flexibility**: Users can work in natural order (e.g., mark point first, then pick reference)
+- **Consistency**: Selection mask respects domain model class hierarchy
+- **Backwards compatible**: Existing `['line']` masks still work (just more restrictive)
+
+**Testing**:
+- Unit tests: Verify 'any-line' matches all Line2D subtypes
+- Integration tests: Create parallel/perpendicular lines using segments, guides, half-hinge-lines
+- E2E tests: Both workflow orders (line→point and point→line)
+
 #### Line2DTangentToCircleParallelToLine: Tangent Line Parallel to Reference Line Construction Implementation
 
 **Purpose**: Create an infinite line tangent to a circle and parallel to a reference line.

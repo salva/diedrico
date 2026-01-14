@@ -6754,4 +6754,171 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 ---
 
+## Phase 62: Hierarchical Selection Masks & Flexible Tool Workflows
+
+**Goal**: Allow tools to accept all Line2D subtypes (segments, guides, half-hinge-lines) as references and support flexible workflow ordering (point-first or line-first).
+
+**Problem**: Current selection mask system is flat (strings) but domain model has hierarchy. Tools using `['line']` exclude valid Line2D subtypes. Tools enforce rigid workflow order.
+
+**Solution**: Add 'any-line' hierarchical selector + flexible state machine supporting either argument order.
+
+**Reference**: 
+- [spec.md](./spec.md) FR-047 (Hierarchical Selection Masks requirement)
+- [data-model.md](./data-model.md#hierarchical-selection-masks-respecting-domain-model-class-hierarchy-phase-62) Complete implementation specification
+
+**T1052: Add 'any-line' to SelectionMask type** [TYPE]
+- Open: `frontend/src/types/SelectionMask.ts`
+- Add: `'any-line'` to SelectableElementType union (with JSDoc: "ANY element extending Line2D")
+- Update JSDoc: Clarify 'line' is for regular lines only (excludes subtypes)
+- Update JSDoc: Document 'any-line' matches lines, segments, guides, half-hinge-lines
+
+**T1053: Implement hierarchical matching in Paper.hitTest()** [PRESENTATION]
+- Open: `frontend/src/domain/presentation/Paper.ts`
+- Locate: Line filtering section in hitTest() (around line 400)
+- Update: Filtering logic to handle 'any-line':
+  ```typescript
+  const isLineType = ['line', 'segment', 'guide', 'half-hinge-line'].includes(elementType);
+  const matchesMask = selectionMask.includes(elementType) || 
+                      (selectionMask.includes('any-line') && isLineType);
+  if (!matchesMask) continue;
+  ```
+- Add comment: Explain hierarchical matching for 'any-line'
+
+**T1054: Refactor ParallelLineTool for flexible workflow** [TOOL]
+- Open: `frontend/src/tools/ParallelLineTool.ts`
+- Change state: `'waiting-first' | 'waiting-second'` (not 'waiting-line' | 'waiting-point')
+- Add properties: `referenceLineId?: string` and `throughPointId?: string`
+- Update handleClick():
+  - First click: Accept either point or any-line, store in appropriate property
+  - Second click: Accept the other type (opposite of first)
+  - Create parallel line once both arguments collected
+- Update getSelectionMask():
+  - State 'waiting-first': return `['point', 'any-line']`
+  - State 'waiting-second': return `['point']` if line selected first, else `['any-line']`
+- Update success messages: Show "Selected point" or "Selected reference line"
+
+**T1055: Refactor PerpendicularLineTool for flexible workflow** [TOOL]
+- Open: `frontend/src/tools/PerpendicularLineTool.ts`
+- Apply same pattern as T1054 (flexible workflow with 'any-line')
+- Change selection mask from `['line']` to `['any-line']`
+- Support both orderings: point→line and line→point
+
+**T1056: Update TangentLineToCircleParallelToLineTool selection mask** [TOOL]
+- Open: `frontend/src/tools/TangentLineToCircleParallelToLineTool.ts`
+- Update getSelectionMask(): Change `['line']` to `['any-line']` for reference line selection
+- Keep workflow: circle first, then any-line (no reversal needed - circle is unique)
+- Update comments: Document acceptance of segments/guides/half-hinge-lines as reference
+
+**T1057: Unit test hierarchical selection in Paper.hitTest()** [TESTING (PRESENTATION)]
+- Create: `tests/unit/presentation/paperHitTestHierarchical.spec.ts`
+- Test 1: 'any-line' mask matches regular Line2DByTwoPoints
+- Test 2: 'any-line' mask matches Segment2DByPoints
+- Test 3: 'any-line' mask matches Guide2D
+- Test 4: 'any-line' mask matches HalfHingeLine2D
+- Test 5: 'line' mask excludes segments/guides/half-hinge-lines (backwards compat)
+- Test 6: Specific masks still work ('segment', 'guide', 'half-hinge-line')
+
+**T1058: Unit test ParallelLineTool flexible workflow** [TESTING (TOOL)]
+- Create: `tests/unit/tools/ParallelLineToolFlexible.spec.ts`
+- Test 1: Line-first workflow (existing behavior)
+- Test 2: Point-first workflow (new behavior)
+- Test 3: Using segment as reference line
+- Test 4: Using guide as reference line
+- Test 5: Using half-hinge-line as reference line
+- Test 6: getSelectionMask() returns correct masks for each state
+- Test 7: Cancel resets state properly
+
+**T1059: Unit test PerpendicularLineTool flexible workflow** [TESTING (TOOL)]
+- Create: `tests/unit/tools/PerpendicularLineToolFlexible.spec.ts`
+- Same test structure as T1058 but for perpendicular lines
+
+**T1060: Integration test: Parallel line from segment** [TESTING (INTEGRATION)]
+- Create: `tests/integration/parallelLineFromSegment.spec.ts`
+- Setup: Create segment between two points
+- Action: Use ParallelLineTool to create parallel line through third point using segment as reference
+- Verify: Parallel line has same direction as segment
+- Verify: Parallel line passes through third point
+- Verify: Parametric update when segment moves
+
+**T1061: Integration test: Parallel line from guide** [TESTING (INTEGRATION)]
+- Create: `tests/integration/parallelLineFromGuide.spec.ts`
+- Setup: Create guide from half-hinge-line
+- Action: Use ParallelLineTool with guide as reference
+- Verify: Parallel line perpendicular to half-hinge-line (same as guide)
+- Verify: Parametric update when guide parameters change
+
+**T1062: Integration test: Perpendicular to segment** [TESTING (INTEGRATION)]
+- Create: `tests/integration/perpendicularToSegment.spec.ts`
+- Setup: Create segment
+- Action: Create perpendicular line through point using segment as reference
+- Verify: Angle between segment and perpendicular is 90° (within epsilon)
+- Verify: Parametric update maintains 90° angle
+
+**T1063: E2E test: Create parallel line with reversed workflow** [TESTING (E2E)]
+- File: `tests/e2e/parallel-line-reversed-workflow.spec.ts`
+- Scenario 1: Point-first workflow
+  1. Activate Parallel Line Tool
+  2. Click point (or empty space to create)
+  3. Click existing line
+  4. Verify parallel line created
+- Scenario 2: Using segment as reference
+  1. Activate Parallel Line Tool  
+  2. Click segment
+  3. Click point
+  4. Verify parallel line parallel to segment
+- Scenario 3: Using guide as reference
+  1. Create guide from half-hinge-line
+  2. Use guide as reference for parallel line
+  3. Verify works correctly
+
+**T1064: E2E test: Tangent parallel using segment/guide** [TESTING (E2E)]
+- File: `tests/e2e/tangent-parallel-any-line.spec.ts`
+- Scenario 1: Tangent parallel to segment
+  1. Create circle
+  2. Create segment (external to circle)
+  3. Use TangentLineToCircleParallelToLineTool
+  4. Select circle, then segment
+  5. Verify tangent line parallel to segment
+- Scenario 2: Tangent parallel to guide
+  1. Create circle
+  2. Create guide
+  3. Create tangent parallel to guide
+  4. Verify parallelism and tangency
+
+**T1065: Update ui-spec.md with flexible workflow documentation** [DOCUMENTATION]
+- Open: `specs/001-dihedral-learning-mvp/ui-spec.md`
+- Locate: Parallel Line Tool section
+- Add: Documentation for flexible workflow (both orderings accepted)
+- Add: Documentation for 'any-line' support (segments, guides, half-hinge-lines)
+- Update: Perpendicular Line Tool section with same pattern
+- Update: Tangent Parallel Tool section noting 'any-line' support
+
+**T1066: Update for-planing.md** [DOCUMENTATION]
+- Open: `specs/001-dihedral-learning-mvp/for-planing.md`
+- Move item from FOR PLANING to ALREADY PLANNED section
+- Mark as complete with Phase 62 reference
+- Add summary of solution: hierarchical selection + flexible workflows
+
+### Phase 62 Acceptance Criteria
+
+1. SelectionMask type includes 'any-line' option
+2. Paper.hitTest() with 'any-line' mask matches all Line2D subtypes (lines, segments, guides, half-hinge-lines)
+3. Existing specific masks still work ('line' excludes subtypes for backwards compatibility)
+4. ParallelLineTool accepts point-first or line-first workflow
+5. ParallelLineTool can use segments as reference lines
+6. ParallelLineTool can use guides as reference lines
+7. ParallelLineTool can use half-hinge-lines as reference lines
+8. PerpendicularLineTool has same flexibility as ParallelLineTool
+9. TangentLineToCircleParallelToLineTool can use segments/guides/half-hinge-lines as reference
+10. All unit tests pass (hierarchical matching, flexible workflows)
+11. Integration tests verify geometric correctness with all line types
+12. E2E tests verify user can work in preferred order and use all line types
+13. No regressions in existing tools or workflows
+
+**Phase 62 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: Selection mask system respects domain model class hierarchy; users can use segments, guides, and half-hinge-lines as references for parallel/perpendicular constructions; users can provide tool arguments in their preferred order; geometric construction workflow becomes more flexible and intuitive.
+
+---
+
 **Status**: IN PROGRESS (T980-T982 complete, T983-T986 remaining - tests needed)

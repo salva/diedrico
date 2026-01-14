@@ -48,10 +48,50 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Adding new elements just expands all subprocesses in the process tree
 * [ ] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
 * [ ] View zooming must work using the mouse position as the center when using the mouse wheel, or the center of the screen when using + or - icons (not implemented yet).
-* [ ] Can't use HalfHL, segments or guides as the base for building a parallel line. But all of them are lines too! Also, it seems that I can't pick the point first and then the base line when building a parallel line.
 * [ ] Move geometric element classes in directories line lines, circles, points, etc.
+* [ ] Indexes for intersection points between lines and circles should be determined based on the direction of the line. If we define the line as L = P + s * V, we have two intersections L1 and L2 determined by s1 and s2. Index 0 must be the one with the lesser s.
+* [ ] Indexes for intersection points between to circles must be determined according to the relative position of the points against the line defined by the two circles center. 
 
 ## ALREADY PLANNED
+
+* [X] **Hierarchical Selection Masks & Flexible Tool Workflows**
+  - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Phase 62 implementation ready
+  - **Problem**: Tools can't use segments, guides, or half-hinge-lines as references for parallel/perpendicular/tangent constructions, even though they're all Line2D subtypes. Tools enforce rigid workflow order (must select line first, then point).
+  - **Context**: Selection mask system uses flat strings ('line', 'segment', 'guide'), but domain has hierarchy (all extend Line2D). Paper.getElementType() returns specific types, so `['line']` mask excludes valid geometric references.
+  - **Solution**: Add 'any-line' hierarchical selector + flexible tool state machines supporting either argument order
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-047 (Hierarchical Selection Masks requirement)
+  - **Data model**: [data-model.md](./data-model.md#hierarchical-selection-masks-respecting-domain-model-class-hierarchy-phase-62) Complete implementation with flexible workflow pattern
+  - **Tasks**: Phase 62 in [tasks.md](./tasks.md#phase-62-hierarchical-selection-masks--flexible-tool-workflows) (T1052-T1066: 15 tasks)
+    - T1052-T1053: Hierarchical selection mask type and Paper.hitTest() implementation
+    - T1054-T1056: Refactor tools (ParallelLineTool, PerpendicularLineTool, TangentLineToCircleParallelToLineTool)
+    - T1057-T1062: Unit and integration testing
+    - T1063-T1064: E2E testing (reversed workflows, all line types)
+    - T1065-T1066: Documentation updates
+  - **Technical Changes**:
+    - SelectableElementType: Add 'any-line' (matches all Line2D subclasses)
+    - Paper.hitTest(): Check `selectionMask.includes('any-line') && isLineType`
+    - Tool pattern: Accept either argument first, complete after both collected
+    - Selection mask: Return `['point', 'any-line']` for flexible first step
+  - **Affected Tools**:
+    - ParallelLineTool: 'any-line' mask + point-first or line-first workflow
+    - PerpendicularLineTool: 'any-line' mask + point-first or line-first workflow
+    - TangentLineToCircleParallelToLineTool: 'any-line' mask for reference (keep circle-first workflow)
+  - **Acceptance**:
+    - ✅ 'any-line' mask matches lines, segments, guides, half-hinge-lines
+    - ✅ ParallelLineTool accepts arguments in either order
+    - ✅ ParallelLineTool uses segment/guide/half-hinge-line as reference
+    - ✅ PerpendicularLineTool has same flexibility
+    - ✅ TangentLineToCircleParallelToLineTool uses segment/guide/half-hinge-line as reference
+    - ✅ Backwards compatible: 'line' still excludes subtypes
+    - ✅ All unit, integration, and E2E tests pass
+    - ✅ No regressions in existing tools
+  - **Benefits**:
+    - **Geometric correctness**: All Line2D subtypes valid for parallel/perpendicular
+    - **User flexibility**: Work in natural order (mark point first if desired)
+    - **Consistency**: Selection respects domain model hierarchy
+    - **Extensibility**: Pattern applies to future hierarchical element types
+  - **Implementation**: Ready for Phase 62 execution
+  - **Notes**: Addresses longstanding UX limitation; makes tools more intuitive and forgiving
 
 * [X] **Line Tangent to Circle Through Point Tool**
   - **STATUS**: 📋 PLANNED (Jan 14, 2026) - CORRECTED: Two-step workflow with automatic angle-based indexing
