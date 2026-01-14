@@ -517,30 +517,37 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
     }
     
     // Step 7: Compute tangent points using geometric derivation
-    // Angle from external point to circle center
-    const anglePtoC = Math.atan2(dy, dx);
+    // Angle from center to external point
+    const angleCP = Math.atan2(dy, dx);
     
-    // Tangent angle (angle between PC and tangent line)
-    const angleAlpha = Math.asin(radius / distance);
+    // In right triangle CPT (C=center, P=external point, T=tangent point):
+    // - Angle at T = 90° (radius perpendicular to tangent line)
+    // - CT = r (radius), CP = d (distance)
+    // - cos(angle at C) = r/d
+    // - Therefore: angle between CP and CT = arccos(r/d)
+    const angleBeta = Math.acos(radius / distance);
     
-    // Two possible tangent angles:
-    // Index 0: Rotate PC by +α (left tangent when viewing from P to C)
-    // Index 1: Rotate PC by -α (right tangent when viewing from P to C)
+    // Two possible tangent points (rotate CP by ±β):
+    // Index 0: Rotate CP by +β (counterclockwise)
+    // Index 1: Rotate CP by -β (clockwise)
     const tangentAngle = this.tangentIndex === 0 ?
-      anglePtoC + angleAlpha :
-      anglePtoC - angleAlpha;
+      angleCP + angleBeta :
+      angleCP - angleBeta;
     
-    // Line direction: PERPENDICULAR to radius at tangent point
-    // Radius direction at tangent point: (cos(tangentAngle), sin(tangentAngle))
-    // Perpendicular (90° CCW rotation): (-sin(tangentAngle), cos(tangentAngle))
-    const direction = new Vector3(
-      -Math.sin(tangentAngle),
-      Math.cos(tangentAngle),
-      0  // Direction vector
+    // Tangent point on circle
+    const tangentPoint = new Vector3(
+      center.x + radius * Math.cos(tangentAngle),
+      center.y + radius * Math.sin(tangentAngle),
+      1  // Finite point
     );
     
-    // Note: This tangent line passes through BOTH the external point AND the tangent point
-    // because the geometry ensures the line from P perpendicular to radius at T passes through P
+    // Line direction: from external point P to tangent point T
+    // This creates a line that is tangent to the circle at T
+    const direction = new Vector3(
+      tangentPoint.x - externalPoint.x,
+      tangentPoint.y - externalPoint.y,
+      0  // Direction vector
+    );
     
     // Return infinite line through external point with tangent direction
     return new Line2DRealization2D(
