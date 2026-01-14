@@ -19,7 +19,6 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
 
   beforeEach(() => {
     world = new World();
-    world.initialize();
   });
 
   /**
@@ -217,7 +216,6 @@ describe('Line2DTangentToCircleParallelToLine - Geometric Correctness', () => {
 
   beforeEach(() => {
     world = new World();
-    world.initialize();
   });
 
   function distanceFromPointToLine(
