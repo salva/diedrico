@@ -400,20 +400,14 @@ function handleElementSelect(elementId: string) {
 }
 
 function handleVisibilityToggle(elementId: string) {
-  // Determine element type from ID prefix and call appropriate World method
-  if (elementId.startsWith('point2d_')) {
-    world.togglePoint2DVisibility(elementId);
-  } else if (elementId.startsWith('line2d_')) {
-    world.toggleLine2DVisibility(elementId);
-  } else if (elementId.startsWith('segment2d_')) {
-    world.toggleSegment2DVisibility(elementId);
-  } else if (elementId.startsWith('circle2d_')) {
-    world.toggleCircle2DVisibility(elementId);
-  } else if (elementId.startsWith('guide2d_')) {
-    world.toggleGuide2DVisibility(elementId);
+  // Architecture: Access elements through World.getElement2D (uses hierarchical ID)
+  // and toggle visible property directly
+  const element = world.getElement2D(elementId);
+  if (element) {
+    element.visible = !element.visible;
+    // Notify world of change for reactivity
+    world.markDirty();
   }
-  
-  // World.notifyChange() is called internally, which will trigger UI update
 }
 </script>
 
