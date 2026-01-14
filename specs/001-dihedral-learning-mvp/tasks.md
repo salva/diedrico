@@ -6915,9 +6915,189 @@ const circumferencePointId = pointResult.outputs.pointId;
 12. E2E tests verify user can work in preferred order and use all line types
 13. No regressions in existing tools or workflows
 
-**Phase 62 Status**: 📋 PLANNED (Jan 14, 2026)
+**Phase 62 Status**: ✅ COMPLETE (Jan 14, 2026) - Core implementation finished, testing pending
 
 **Checkpoint**: Selection mask system respects domain model class hierarchy; users can use segments, guides, and half-hinge-lines as references for parallel/perpendicular constructions; users can provide tool arguments in their preferred order; geometric construction workflow becomes more flexible and intuitive.
+
+---
+
+### Phase 63: Class-Based Selection Mask Architecture
+
+**Goal**: Refactor selection mask system from string-based to class-based architecture for type safety, composability, and extensibility.
+
+**Context**: Phase 62 introduced 'any-line' string to solve hierarchy problem. While functional, string-based system limits type safety and composability. Class-based architecture enables compile-time validation and complex queries.
+
+**Reference**: [data-model.md §Class-Based Selection Mask Architecture](./data-model.md#class-based-selection-mask-architecture-phase-63)
+
+**Tasks**:
+
+#### T1067: Analyze current selection mask usage patterns
+- **Description**: Audit all selection mask usage across codebase
+- **Files to audit**:
+  - All tool classes (getSelectionMask() implementations)
+  - Paper.ts (hitTest() selection filtering logic)
+  - SelectionMask.ts (current type definition)
+- **Document patterns**:
+  - Simple type matching ('point', 'line')
+  - Hierarchical matching ('any-line')
+  - Multiple type unions (['point', 'line'])
+  - Complex scenarios (IntersectionTool: circle or line)
+- **Identify extension points**: Where do new mask types need to integrate?
+- **Output**: Documentation of usage patterns and migration strategy
+- **Acceptance**: Complete audit of all selection mask usage with categorized patterns
+
+#### T1068: Design SelectionMask class hierarchy
+- **Description**: Design complete class-based architecture
+- **Base class**: Abstract SelectionMask with matches() method
+- **Concrete classes**:
+  - TypeMask: Exact type matching (replaces string literals)
+  - HierarchyMask: Type + subtypes (replaces 'any-line')
+  - UnionMask: Logical OR (replaces string arrays)
+  - IntersectionMask: Logical AND (new capability)
+- **Factory methods**: Static methods for common patterns (point(), anyLine(), union())
+- **Type guards**: isTypeMask(), isHierarchyMask(), etc.
+- **Document in data-model.md**: Complete class definitions with usage examples
+- **Acceptance**: Complete design documented with all class definitions and relationships
+
+#### T1069: Implement SelectionMask base class
+- **Description**: Create abstract base class in frontend/src/types/SelectionMask.ts
+- **Abstract method**: matches(elementType: SelectableElementType): boolean
+- **Abstract method**: toString(): string (for debugging)
+- **Factory methods**: Static methods for all common patterns
+- **Type guards**: Implement all type guard functions
+- **Unit tests**: Test factory methods return correct instances
+- **Acceptance**: Base class implemented with complete API surface
+
+#### T1070: Implement concrete SelectionMask classes
+- **Description**: Implement all four concrete mask classes
+- **TypeMask**:
+  - Constructor takes single SelectableElementType
+  - matches() checks exact equality
+  - getType() accessor method
+- **HierarchyMask**:
+  - Constructor takes base type + subtype array
+  - matches() uses Set for O(1) lookup
+  - getBaseType() and getSubtypes() accessors
+- **UnionMask**:
+  - Constructor takes array of SelectionMask
+  - matches() uses some() with short-circuit
+  - getMasks() accessor
+  - Validates non-empty array
+- **IntersectionMask**:
+  - Constructor takes array of SelectionMask
+  - matches() uses every() with short-circuit
+  - getMasks() accessor
+  - Validates non-empty array
+- **Unit tests**: Test matches() logic for each class with all element types
+- **Acceptance**: All four concrete classes implemented with unit tests passing
+
+#### T1071: Update Paper.hitTest() for class-based masks
+- **Description**: Refactor Paper.ts hitTest() to accept SelectionMask class
+- **Change parameter type**: From string[] to SelectionMask
+- **Replace matching logic**: Remove string conditionals, use mask.matches(elementType)
+- **Simplify code**: Remove isLineType special case logic
+- **Optional**: Add backward compatibility overload temporarily
+- **Unit tests**: Test hitTest() with each mask type
+- **Acceptance**: hitTest() uses polymorphic dispatch, no string matching logic
+
+#### T1072: Create migration utilities
+- **Description**: Create helpers for migrating from string-based to class-based masks
+- **Conversion function**: convertStringArrayToMask(strings: string[]): SelectionMask
+  - Maps 'any-line' → SelectionMask.anyLine()
+  - Maps other strings → TypeMask
+  - Wraps multiple in UnionMask
+- **Deprecation warnings**: Add console.warn() for string-based usage
+- **Documentation**: Document migration path in data-model.md
+- **Unit tests**: Test conversion function with various inputs
+- **Acceptance**: Migration utilities complete with tests
+
+#### T1073: Migrate tool selection masks
+- **Description**: Update all tools to return SelectionMask classes
+- **Migration order**:
+  1. Simple tools: PointTool (if exists), CircleTool - single TypeMask
+  2. Union tools: ParallelLineTool, PerpendicularLineTool - union(point(), anyLine())
+  3. Complex tools: IntersectionTool - union(circle(), anyLine())
+- **For each tool**:
+  - Update getSelectionMask() return type
+  - Replace string arrays with SelectionMask.union() or factory methods
+  - Verify existing unit tests still pass
+- **Regression tests**: Run tool tests after each migration
+- **Acceptance**: All tools use SelectionMask classes, all tests passing
+
+#### T1074: Remove string-based APIs
+- **Description**: Remove backward compatibility layer and string types
+- **Remove overloads**: Paper.hitTest() has single signature
+- **Remove type union**: SelectionMask no longer includes string[]
+- **Remove conversion function**: Delete convertStringArrayToMask()
+- **Update imports**: Ensure all files import SelectionMask class correctly
+- **Final regression**: Run complete test suite
+- **Acceptance**: No string-based mask APIs remain, all tests passing
+
+#### T1075: Unit tests for SelectionMask classes
+- **Description**: Comprehensive unit tests for all mask classes
+- **Test file**: frontend/tests/unit/types/SelectionMask.spec.ts
+- **Test coverage**:
+  - TypeMask: matches() for exact type, doesn't match other types
+  - HierarchyMask: matches base type and all subtypes
+  - UnionMask: matches any child mask, short-circuit behavior
+  - IntersectionMask: matches all child masks, short-circuit behavior
+  - Factory methods: Return correct instance types
+  - Edge cases: Empty arrays throw errors, single-element unions work
+  - toString(): Produces readable output
+  - Type guards: Correctly identify mask types
+- **Acceptance**: >90% code coverage, all edge cases tested
+
+#### T1076: Integration tests for Paper.hitTest()
+- **Description**: Integration tests for hitTest() with all mask types
+- **Test file**: frontend/tests/integration/paperHitTestingClassMasks.spec.ts
+- **Test scenarios**:
+  - TypeMask with each element type
+  - HierarchyMask matches all Line2D subtypes
+  - UnionMask matches multiple types
+  - Complex nested masks (union of unions)
+  - Distance-adjusted hit-testing still works
+  - Selection highlighting correct for all mask types
+- **Regression checks**: Compare behavior with Phase 62 string-based system
+- **Performance**: Benchmark mask.matches() vs string.includes()
+- **Acceptance**: All integration tests passing, no behavioral regressions, performance equivalent
+
+#### T1077: Update documentation and commit
+- **Description**: Update all documentation and commit Phase 63 changes
+- **Documentation updates**:
+  - spec.md: FR-048 already added
+  - data-model.md: Phase 63 section already complete
+  - ui-spec.md: Update tool descriptions if needed (minimal changes)
+  - Add code comments explaining mask class usage
+- **Commit message**: Comprehensive Phase 63 summary
+  - Problem: String-based limitations
+  - Solution: Class-based architecture
+  - Changes: List all modified files
+  - Benefits: Type safety, composability, extensibility
+  - Migration: Note backward compatibility approach
+  - Testing: Note all tests passing
+- **Acceptance**: All documentation updated, Phase 63 committed
+
+### Phase 63 Acceptance Criteria
+
+1. SelectionMask base class with abstract matches() method exists
+2. TypeMask implemented for exact type matching
+3. HierarchyMask implemented for type + subtypes (replaces 'any-line')
+4. UnionMask implemented for logical OR queries
+5. IntersectionMask implemented for logical AND queries
+6. Factory methods work (SelectionMask.point(), SelectionMask.anyLine(), etc.)
+7. Paper.hitTest() accepts SelectionMask class, not string[]
+8. All tools migrated to use SelectionMask classes
+9. String-based APIs removed or deprecated
+10. All unit tests passing (>90% coverage for mask classes)
+11. All integration tests passing (hitTest() with all mask types)
+12. No behavioral regressions from Phase 62
+13. Performance equivalent or better than string-based system
+14. Full type safety - compiler catches invalid mask construction
+15. Documentation complete (spec.md FR-048, data-model.md Phase 63)
+
+**Phase 63 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: Selection mask system uses type-safe class-based architecture; complex selection queries possible through composition; IDE provides full autocomplete support; architectural foundation for future mask extensions (NotMask, PropertyMask, etc.).
 
 ---
 

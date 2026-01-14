@@ -26,7 +26,7 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
-* [ ] check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
+* [ ] Check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
 * [ ] Do not use type aliases in the code.
 * [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
 * [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
@@ -35,7 +35,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
 * [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
-* [ ] Refactor the selection mask to use classes instead of strings. Strings can not handle hierarchy constructions which we are using pervasively.
 * [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
 * [ ] Activate or fix undo & redo buttoms.
 * [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
@@ -53,6 +52,80 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Indexes for intersection points between to circles must be determined according to the relative position of the points against the line defined by the two circles center. 
 
 ## ALREADY PLANNED
+
+* [X] **Class-Based Selection Mask Architecture**
+  - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Phase 63 implementation ready
+  - **Problem**: Current selection mask system uses string literals ('point', 'line', 'any-line') which limits type safety, expressiveness, and extensibility. Complex queries (like "any line except guides") are not possible. String-based system from Phase 62 solves immediate hierarchy needs but lacks architectural robustness for future requirements.
+  - **Context**: Phase 62 introduced 'any-line' string to handle Line2D hierarchy. While functional, string arrays have limitations:
+    - No compile-time type checking (typos caught only at runtime)
+    - Limited composability (can't express complex queries)
+    - Poor extensibility (new selectors pollute global string union)
+    - Weak IDE support (string literals have limited autocomplete)
+    - Scattered matching logic (conditionals spread across Paper.hitTest())
+  - **Solution**: Refactor to class-based architecture with SelectionMask base class and concrete implementations (TypeMask, HierarchyMask, UnionMask, IntersectionMask). Enables type-safe, composable queries via polymorphic matches() method.
+  - **Spec**: [spec.md](./spec.md#requirements-mandatory) FR-048 (Class-Based Selection Mask Architecture requirement)
+  - **Data model**: [data-model.md](./data-model.md#class-based-selection-mask-architecture-phase-63) Complete architecture with all class definitions, usage examples, migration strategy
+  - **Tasks**: Phase 63 in [tasks.md](./tasks.md#phase-63-class-based-selection-mask-architecture) (T1067-T1077: 11 tasks)
+    - T1067: Analyze current selection mask usage patterns (audit all tools, Paper.hitTest())
+    - T1068: Design SelectionMask class hierarchy (base class + 4 concrete implementations)
+    - T1069: Implement SelectionMask base class (abstract matches(), factory methods)
+    - T1070: Implement concrete classes (TypeMask, HierarchyMask, UnionMask, IntersectionMask)
+    - T1071: Update Paper.hitTest() to accept SelectionMask class (polymorphic dispatch)
+    - T1072: Create migration utilities (string[] converter, deprecation warnings)
+    - T1073: Migrate all tools to class-based masks (systematic tool-by-tool migration)
+    - T1074: Remove string-based APIs (cleanup backward compatibility)
+    - T1075: Unit tests for all mask classes (>90% coverage)
+    - T1076: Integration tests for Paper.hitTest() with all mask types
+    - T1077: Update documentation and commit Phase 63
+  - **Technical Architecture**:
+    - **SelectionMask** (abstract base): matches(elementType), toString(), factory methods
+    - **TypeMask**: Single exact type (replaces 'point', 'line' strings)
+    - **HierarchyMask**: Type + subtypes (replaces 'any-line' from Phase 62)
+    - **UnionMask**: Logical OR composition (replaces string arrays)
+    - **IntersectionMask**: Logical AND composition (new capability)
+    - **Factory methods**: SelectionMask.point(), SelectionMask.anyLine(), SelectionMask.union()
+    - **Type guards**: isTypeMask(), isHierarchyMask(), isUnionMask(), isIntersectionMask()
+  - **Migration Strategy**:
+    1. Implement all classes with unit tests
+    2. Update Paper.hitTest() with optional backward compatibility
+    3. Create string[] → SelectionMask conversion utility
+    4. Migrate tools systematically (simple first, complex later)
+    5. Remove string-based APIs and backward compatibility
+  - **Usage Pattern**:
+    ```typescript
+    // BEFORE (Phase 62): ['point', 'any-line']
+    // AFTER (Phase 63):
+    SelectionMask.union(
+      SelectionMask.point(),
+      SelectionMask.anyLine()
+    )
+    ```
+  - **Benefits**:
+    - **Type Safety**: Compiler catches invalid mask construction at compile time
+    - **Composability**: Complex queries via union/intersection (e.g., "any line except guides")
+    - **Extensibility**: Add new mask types without polluting core type definitions
+    - **IDE Support**: Full autocomplete with factory methods
+    - **Maintainability**: Matching logic encapsulated in classes, not scattered conditionals
+    - **Testability**: Each mask class independently testable with focused unit tests
+  - **Future Extensions** (out of scope for Phase 63):
+    - NotMask for negation ("all except guides")
+    - ConstructibleMask for user-creatable elements only
+    - VisibilityMask for visible elements only
+    - PropertyMask for filtering by element properties
+    - PredicateMask for arbitrary predicate functions
+  - **Acceptance**:
+    - ✅ SelectionMask base class with matches() method
+    - ✅ All four concrete classes implemented (Type, Hierarchy, Union, Intersection)
+    - ✅ Factory methods for common patterns
+    - ✅ Paper.hitTest() uses class-based masks with polymorphic dispatch
+    - ✅ All tools migrated to SelectionMask classes
+    - ✅ String-based APIs removed
+    - ✅ All unit tests passing (>90% coverage)
+    - ✅ All integration tests passing (no regressions from Phase 62)
+    - ✅ Full type safety throughout codebase
+    - ✅ Documentation complete (FR-048, Phase 63 section, migration guide)
+  - **Implementation**: Ready for Phase 63 execution
+  - **Notes**: Builds on Phase 62's 'any-line' solution; provides architectural foundation for future mask extensions; enables complex selection patterns not possible with strings; maintains backward compatibility during migration for smooth transition
 
 * [X] **Hierarchical Selection Masks & Flexible Tool Workflows**
   - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Phase 62 implementation ready

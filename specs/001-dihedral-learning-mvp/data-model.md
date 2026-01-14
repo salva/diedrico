@@ -5070,7 +5070,493 @@ Toolbar button (no manual index input needed):
 
 ---
 
-// === CIRCLE 2D CONSTRUCTIONS ===
+#### Class-Based Selection Mask Architecture (Phase 63)
+
+**Context**: Phase 62 introduced 'any-line' string selector to handle Line2D hierarchy. While this solves the immediate problem, the string-based system has architectural limitations preventing type-safe, composable selection queries.
+
+**Problem**: Selection masks are string arrays (['point', 'line', 'any-line']) which limits:
+- **Type safety**: Typos only caught at runtime, no compiler help
+- **Extensibility**: New selectors pollute global string union type
+- **Composability**: Can't express complex queries like "any line except guides"
+- **IDE support**: String literals have poor autocomplete
+- **Maintainability**: Matching logic scattered across Paper.hitTest() conditionals
+
+**Solution**: Refactor to class-based architecture with abstract SelectionMask base class and concrete implementations providing polymorphic matches() method.
+
+**Benefits**:
+- **Type Safety**: Compiler catches invalid mask construction at compile time
+- **Composability**: Union/intersection of masks through class composition
+- **Extensibility**: Add new mask types without changing core SelectionMask type
+- **Expressiveness**: Complex selection patterns ("any line subtype except guides", "constructible elements only")
+- **IDE Support**: Full autocomplete with factory methods (SelectionMask.point(), SelectionMask.anyLine())
+- **Testability**: Each mask class has focused, independent unit tests
+- **Maintainability**: Matching logic encapsulated in mask classes, not scattered conditionals
+
+**Class Hierarchy**:
+
+```typescript
+/**
+ * Base class for all selection masks
+ * 
+ * Selection masks determine which element types can be selected/hit-tested.
+ * Concrete implementations provide different matching strategies.
+ */
+abstract class SelectionMask {
+  /**
+   * Check if element type matches this mask's criteria
+   * @param elementType - Type from Paper.getElementType()
+   * @returns true if element matches, false otherwise
+   */
+  abstract matches(elementType: SelectableElementType): boolean;
+
+  /**
+   * Human-readable description for debugging
+   */
+  abstract toString(): string;
+
+  // === Factory Methods for Common Patterns ===
+  
+  static point(): TypeMask { 
+    return new TypeMask('point'); 
+  }
+  
+  static line(): TypeMask { 
+    return new TypeMask('line'); 
+  }
+  
+  static segment(): TypeMask { 
+    return new TypeMask('segment'); 
+  }
+  
+  static guide(): TypeMask { 
+    return new TypeMask('guide'); 
+  }
+  
+  static circle(): TypeMask { 
+    return new TypeMask('circle'); 
+  }
+  
+  static halfHingeLine(): TypeMask { 
+    return new TypeMask('half-hinge-line'); 
+  }
+  
+  /**
+   * Hierarchical selector matching all Line2D subtypes
+   * Replaces 'any-line' string from Phase 62
+   */
+  static anyLine(): HierarchyMask { 
+    return new HierarchyMask('line', ['segment', 'guide', 'half-hinge-line']);
+  }
+  
+  /**
+   * Match any of the provided masks (logical OR)
+   */
+  static union(...masks: SelectionMask[]): UnionMask {
+    return new UnionMask(masks);
+  }
+  
+  /**
+   * Match all of the provided masks (logical AND)
+   */
+  static intersection(...masks: SelectionMask[]): IntersectionMask {
+    return new IntersectionMask(masks);
+  }
+}
+
+/**
+ * Matches single exact element type
+ * Replaces simple string literals: 'point', 'line', 'circle'
+ * 
+ * Example: TypeMask('point') matches only 'point', not derived types
+ */
+class TypeMask extends SelectionMask {
+  constructor(private readonly type: SelectableElementType) {
+    super();
+  }
+
+  matches(elementType: SelectableElementType): boolean {
+    return elementType === this.type;
+  }
+
+  toString(): string {
+    return `Type(${this.type})`;
+  }
+
+  getType(): SelectableElementType {
+    return this.type;
+  }
+}
+
+/**
+ * Matches type and all its subtypes in domain hierarchy
+ * Replaces 'any-line' string from Phase 62
+ * 
+ * Example: HierarchyMask('line', ['segment', 'guide', 'half-hinge-line'])
+ * matches 'line', 'segment', 'guide', 'half-hinge-line'
+ */
+class HierarchyMask extends SelectionMask {
+  private readonly allTypes: Set<SelectableElementType>;
+
+  constructor(
+    private readonly baseType: SelectableElementType,
+    private readonly subtypes: SelectableElementType[]
+  ) {
+    super();
+    this.allTypes = new Set([baseType, ...subtypes]);
+  }
+
+  matches(elementType: SelectableElementType): boolean {
+    return this.allTypes.has(elementType);
+  }
+
+  toString(): string {
+    return `Hierarchy(${this.baseType} + [${this.subtypes.join(', ')}])`;
+  }
+
+  getBaseType(): SelectableElementType {
+    return this.baseType;
+  }
+
+  getSubtypes(): readonly SelectableElementType[] {
+    return this.subtypes;
+  }
+}
+
+/**
+ * Matches if ANY child mask matches (logical OR)
+ * Replaces string arrays: ['point', 'line'] → UnionMask([TypeMask('point'), TypeMask('line')])
+ * 
+ * Enables complex queries:
+ * - "point or any line": union(point(), anyLine())
+ * - "segment or guide": union(segment(), guide())
+ */
+class UnionMask extends SelectionMask {
+  constructor(private readonly masks: SelectionMask[]) {
+    super();
+    if (masks.length === 0) {
+      throw new Error('UnionMask requires at least one child mask');
+    }
+  }
+
+  matches(elementType: SelectableElementType): boolean {
+    // Short-circuit: return true on first match
+    return this.masks.some(mask => mask.matches(elementType));
+  }
+
+  toString(): string {
+    return `Union(${this.masks.map(m => m.toString()).join(' | ')})`;
+  }
+
+  getMasks(): readonly SelectionMask[] {
+    return this.masks;
+  }
+}
+
+/**
+ * Matches if ALL child masks match (logical AND)
+ * New capability - enables complex filtering
+ * 
+ * Future use cases:
+ * - "constructible elements only" (intersection with ConstructibleMask)
+ * - "visible elements only" (intersection with VisibilityMask)
+ * - "any line except guides" (intersection with anyLine() and NotMask(guide()))
+ * 
+ * Note: Most practical use cases are future extensions.
+ * Included for architectural completeness and symmetry with UnionMask.
+ */
+class IntersectionMask extends SelectionMask {
+  constructor(private readonly masks: SelectionMask[]) {
+    super();
+    if (masks.length === 0) {
+      throw new Error('IntersectionMask requires at least one child mask');
+    }
+  }
+
+  matches(elementType: SelectableElementType): boolean {
+    // Short-circuit: return false on first non-match
+    return this.masks.every(mask => mask.matches(elementType));
+  }
+
+  toString(): string {
+    return `Intersection(${this.masks.map(m => m.toString()).join(' & ')})`;
+  }
+
+  getMasks(): readonly SelectionMask[] {
+    return this.masks;
+  }
+}
+
+// === Type Guards ===
+
+function isTypeMask(mask: SelectionMask): mask is TypeMask {
+  return mask instanceof TypeMask;
+}
+
+function isHierarchyMask(mask: SelectionMask): mask is HierarchyMask {
+  return mask instanceof HierarchyMask;
+}
+
+function isUnionMask(mask: SelectionMask): mask is UnionMask {
+  return mask instanceof UnionMask;
+}
+
+function isIntersectionMask(mask: SelectionMask): mask is IntersectionMask {
+  return mask instanceof IntersectionMask;
+}
+```
+
+**Usage Examples**:
+
+```typescript
+// === BEFORE (Phase 62 - string-based) ===
+
+class ParallelLineTool extends BaseTool {
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-first') {
+      return ['point', 'any-line'];  // String array
+    } else {
+      return this.referenceLineId ? ['point'] : ['any-line'];
+    }
+  }
+}
+
+// Paper.hitTest() usage:
+if (selectionMask.includes(elementType) || 
+    (selectionMask.includes('any-line') && isLineType)) {
+  // Scattered conditional logic
+}
+
+// === AFTER (Phase 63 - class-based) ===
+
+class ParallelLineTool extends BaseTool {
+  getSelectionMask(): SelectionMask {
+    if (this.state === 'waiting-first') {
+      // Union of point and any line type
+      return SelectionMask.union(
+        SelectionMask.point(),
+        SelectionMask.anyLine()
+      );
+    } else {
+      // Return opposite of what was selected first
+      return this.referenceLineId 
+        ? SelectionMask.point() 
+        : SelectionMask.anyLine();
+    }
+  }
+}
+
+// Paper.hitTest() usage:
+const mask = tool.getSelectionMask();
+if (mask.matches(elementType)) {
+  // Clean polymorphic dispatch - no conditional logic needed
+}
+
+// === Complex Query Examples (future capabilities) ===
+
+// Example 1: Any line OR circle
+const mask1 = SelectionMask.union(
+  SelectionMask.anyLine(),
+  SelectionMask.circle()
+);
+
+// Example 2: Points and circles only
+const mask2 = SelectionMask.union(
+  SelectionMask.point(),
+  SelectionMask.circle()
+);
+
+// Example 3 (future - requires NotMask): Any line except guides
+const mask3 = SelectionMask.intersection(
+  SelectionMask.anyLine(),
+  new NotMask(SelectionMask.guide())
+);
+```
+
+**Paper.hitTest() Integration**:
+
+```typescript
+// === BEFORE (Phase 62) ===
+
+hitTest(
+  canvasPos: Vector3,
+  snapRadius: number,
+  planeId: string,
+  paperToPlaneTransform: Matrix3,
+  world: World,
+  selectionMask: SelectionMask  // string[] type
+): HitTestResult | null {
+  // ... distance calculations ...
+  
+  for (const element of elements) {
+    const elementType = this.getElementType(element);
+    
+    // String-based matching with special cases
+    const isLineType = ['line', 'segment', 'guide', 'half-hinge-line'].includes(elementType);
+    const matchesMask = selectionMask.includes(elementType) || 
+                        (selectionMask.includes('any-line') && isLineType);
+    
+    if (!matchesMask) continue;
+    
+    // ... rest of hit testing ...
+  }
+}
+
+// === AFTER (Phase 63) ===
+
+hitTest(
+  canvasPos: Vector3,
+  snapRadius: number,
+  planeId: string,
+  paperToPlaneTransform: Matrix3,
+  world: World,
+  mask: SelectionMask  // SelectionMask class
+): HitTestResult | null {
+  // ... distance calculations ...
+  
+  for (const element of elements) {
+    const elementType = this.getElementType(element);
+    
+    // Clean polymorphic dispatch - no special cases
+    if (!mask.matches(elementType)) continue;
+    
+    // ... rest of hit testing ...
+  }
+}
+```
+
+**Migration Strategy**:
+
+**Phase 1: Implement Classes** (T1067-T1070)
+- Create SelectionMask.ts with base class and all concrete implementations
+- Add factory methods for common patterns
+- Implement type guards
+- Unit test all mask classes independently
+
+**Phase 2: Update Paper.hitTest()** (T1071)
+- Change parameter type from string[] to SelectionMask class
+- Replace string matching logic with mask.matches() polymorphic dispatch
+- Optional: Add backward compatibility overload during migration
+
+**Phase 3: Create Migration Utilities** (T1072)
+- Helper function to convert string[] to SelectionMask classes
+- Add @deprecated warnings to string-based APIs
+- Document migration path for any external code
+
+**Phase 4: Migrate Tools** (T1073)
+- Update each tool's getSelectionMask() to return SelectionMask class
+- Start with simple tools (PointTool, CircleTool - single type)
+- Progress to complex tools (ParallelLineTool, IntersectionTool - unions)
+- Verify no behavioral changes via existing tests
+
+**Phase 5: Remove String-Based APIs** (T1074)
+- Remove backward compatibility layer
+- Update Paper.hitTest() signature (single overload)
+- Remove string[] from SelectionMask type union
+- Final regression test sweep
+
+**Backward Compatibility** (optional during migration):
+
+```typescript
+// Temporary overload during migration Phase:
+
+function hitTest(mask: SelectionMask): HitTestResult | null;
+function hitTest(mask: string[]): HitTestResult | null;  // @deprecated
+function hitTest(mask: SelectionMask | string[]): HitTestResult | null {
+  // Convert string[] to SelectionMask class if needed
+  const maskObj = Array.isArray(mask) 
+    ? convertStringArrayToMask(mask)
+    : mask;
+  
+  if (Array.isArray(mask)) {
+    console.warn('[DEPRECATED] String-based selection masks are deprecated. Use SelectionMask classes.');
+  }
+  
+  // Use maskObj.matches() for actual logic
+  // ...
+}
+
+function convertStringArrayToMask(strings: string[]): SelectionMask {
+  const masks = strings.map(s => {
+    if (s === 'any-line') return SelectionMask.anyLine();
+    return new TypeMask(s as SelectableElementType);
+  });
+  
+  return masks.length === 1 
+    ? masks[0] 
+    : SelectionMask.union(...masks);
+}
+```
+
+**Performance Considerations**:
+
+- **Class instantiation**: Cache common singletons (SelectionMask.point() can return same instance)
+- **matches() method**: O(1) for TypeMask, O(1) for HierarchyMask (Set lookup), O(n) for Union/Intersection
+- **UnionMask short-circuit**: Returns true on first match (no unnecessary checks)
+- **IntersectionMask short-circuit**: Returns false on first non-match
+- **Expected impact**: Negligible - matching happens once per element during hit-testing, overhead < 1μs
+- **Benchmark**: Compare string.includes() vs mask.matches() (expect similar performance)
+
+**Testing Strategy**:
+
+**Unit Tests** (T1075):
+- Test each mask class independently
+- Test matches() method for all SelectableElementType values
+- Test factory methods return correct instances
+- Test composition (union/intersection) with multiple masks
+- Test edge cases: empty unions (should throw), single-element unions
+- Test toString() produces readable output for debugging
+- Test type guards (isTypeMask, isHierarchyMask, etc.)
+
+**Integration Tests** (T1076):
+- Test Paper.hitTest() with TypeMask (exact type matching)
+- Test Paper.hitTest() with HierarchyMask (hierarchical matching)
+- Test Paper.hitTest() with UnionMask (multiple type matching)
+- Test Paper.hitTest() with complex nested masks
+- Test all tools with new mask system
+- Verify no behavioral changes from Phase 62 (regression tests)
+- Test visual feedback (highlighting) remains unchanged
+
+**Regression Tests**:
+- Run complete E2E test suite after migration
+- Verify all tool workflows still function correctly
+- Check selection highlighting in UI
+- Performance benchmark (before/after comparison)
+
+**Future Extensions** (out of scope for Phase 63):
+
+- **NotMask**: Negation for "all except" queries (`NotMask(guide())` = everything except guides)
+- **ConstructibleMask**: Filter to only user-constructible elements (exclude fixed system elements)
+- **VisibilityMask**: Filter to only visible elements (exclude hidden)
+- **PropertyMask**: Filter by element properties (`PropertyMask('locked', false)` = only unlocked)
+- **PredicateMask**: Accept arbitrary predicate function for maximum flexibility
+- **Caching**: Memoize expensive mask compositions for performance
+
+**Acceptance Criteria**:
+
+✓ SelectionMask base class with abstract matches() method implemented  
+✓ TypeMask for exact type matching implemented  
+✓ HierarchyMask for type + subtypes implemented (replaces 'any-line')  
+✓ UnionMask for logical OR queries implemented  
+✓ IntersectionMask for logical AND queries implemented  
+✓ Factory methods for common patterns (point(), anyLine(), union(), etc.)  
+✓ Type guards for all mask classes (isTypeMask, isHierarchyMask, etc.)  
+✓ Paper.hitTest() accepts SelectionMask class instead of string[]  
+✓ All tools migrated to use SelectionMask classes  
+✓ String-based APIs removed or deprecated  
+✓ All unit tests passing (mask classes independently tested)  
+✓ All integration tests passing (Paper.hitTest() with all mask types)  
+✓ No behavioral regressions from Phase 62  
+✓ Full type safety - no string literals in mask construction  
+✓ Documentation updated (spec.md §FR-048, data-model.md, ui-spec.md)  
+✓ Code committed with comprehensive Phase 63 message
+
+**Phase**: Phase 63 (T1067-T1077)  
+**Status**: 📋 PLANNED (Jan 14, 2026)  
+**Dependencies**: Phase 62 (string-based 'any-line' selector provides functional baseline)
+
+---
+
+//=== CIRCLE 2D CONSTRUCTIONS ===
 
 // **DESIGN DECISION**: Circle2D DOES NOT support scalar radius parameter
 // 

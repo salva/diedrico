@@ -1525,6 +1525,8 @@ These use cases cover primitive user actions and micro-interactions. They are in
 
 - **FR-047**: The system MUST implement hierarchical selection masks that respect the domain model's class hierarchy: when a tool specifies 'any-line' in its selection mask, the system MUST allow selection of any element that extends Line2D, including regular lines (Line2DByTwoPoints, Line2DParallel, Line2DPerpendicular), segments (Segment2DByPoints), guides (Guide2D, SiblingGuide2D), and half-hinge lines (HalfHingeLine2D). Additionally, tools MUST support flexible workflow ordering: the Parallel Line Tool, Perpendicular Line Tool, and Tangent Parallel Tool MUST accept input parameters in either order (point first then line, or line first then point), allowing users to work in their preferred sequence without constraining the construction workflow.
 
+- **FR-048**: The system MUST implement a class-based selection mask architecture to enable type-safe, composable selection queries: the system MUST provide a SelectionMask base class with concrete implementations (TypeMask for exact type matching, HierarchyMask for type hierarchies, UnionMask for logical OR queries, IntersectionMask for logical AND queries) that replace string-based selection masks. The Paper.hitTest() method MUST accept SelectionMask class instances and use polymorphic matches() method dispatch for element type checking. All construction tools MUST use class-based masks through factory methods (SelectionMask.point(), SelectionMask.anyLine(), SelectionMask.union()) ensuring compile-time type safety and enabling complex selection patterns not possible with string literals.
+
 ### Assumptions
 
 - The MVP includes at least two default projection planes (Horizontal and Vertical) and their hinge line.
