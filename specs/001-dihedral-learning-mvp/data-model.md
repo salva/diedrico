@@ -4395,6 +4395,13 @@ Toolbar button (no manual index input needed):
 
 **Geometric Principle**: For a circle and an external line (not intersecting), there exist exactly two tangent lines parallel to the reference line (one on each side of the circle). An index (0 or 1) is required to disambiguate which tangent line to construct. If the reference line intersects or is tangent to the circle, no parallel tangent lines exist (construction is infeasible).
 
+**Index Convention**:
+- **Index 0**: Tangent line is positioned **between** the reference line and the circle center (closer to reference line)
+- **Index 1**: Circle center is positioned **between** the reference line and the tangent line (farther from reference line)
+
+In other words, moving perpendicular from the reference line:
+- Reference line → Index 0 tangent → Circle center → Index 1 tangent
+
 **Algorithm**: Tangent line parallel to reference requires solving: line is parallel to reference direction and is tangent to circle with center C and radius r.
 
 ```typescript
@@ -4464,30 +4471,49 @@ class Line2DTangentToCircleParallelToLine extends Line2D {
     }
     
     // Step 9: Compute tangent point positions
-    // Two parallel tangent lines exist:
-    // - One at distance +radius perpendicular to reference direction
-    // - One at distance -radius perpendicular to reference direction
+    // Two parallel tangent lines exist based on signed distance:
+    // - Index 0: tangent closer to reference line (between ref and center)
+    // - Index 1: tangent farther from reference line (center between ref and tangent)
     
-    // Tangent points on circle:
-    // T0 = center + radius * perpDirection  (left side, index 0)
-    // T1 = center - radius * perpDirection  (right side, index 1)
+    // Determine which side of reference line the center is on
+    // Signed distance (positive if center is on +perpDirection side)
+    const signedDistance = a * center.x + b * center.y + c;
+    
+    // If signedDistance > 0: center is on +perpDirection side of reference line
+    //   Index 0 (closer): center - radius * perpDirection
+    //   Index 1 (farther): center + radius * perpDirection
+    // If signedDistance < 0: center is on -perpDirection side of reference line  
+    //   Index 0 (closer): center + radius * perpDirection
+    //   Index 1 (farther): center - radius * perpDirection
     
     let tangentPoint: Vector3;
     
-    if (this.tangentIndex === 0) {
-      // Index 0: Left tangent (perpendicular direction is +90° CCW)
-      tangentPoint = new Vector3(
-        center.x + radius * perpDirection.x,
-        center.y + radius * perpDirection.y,
-        1  // Finite point
-      );
+    if (signedDistance > 0) {
+      // Center is on +perpDirection side
+      tangentPoint = this.tangentIndex === 0 ?
+        new Vector3(
+          center.x - radius * perpDirection.x,
+          center.y - radius * perpDirection.y,
+          1
+        ) :
+        new Vector3(
+          center.x + radius * perpDirection.x,
+          center.y + radius * perpDirection.y,
+          1
+        );
     } else {
-      // Index 1: Right tangent (perpendicular direction is -90° = 90° CW)
-      tangentPoint = new Vector3(
-        center.x - radius * perpDirection.x,
-        center.y - radius * perpDirection.y,
-        1  // Finite point
-      );
+      // Center is on -perpDirection side
+      tangentPoint = this.tangentIndex === 0 ?
+        new Vector3(
+          center.x + radius * perpDirection.x,
+          center.y + radius * perpDirection.y,
+          1
+        ) :
+        new Vector3(
+          center.x - radius * perpDirection.x,
+          center.y - radius * perpDirection.y,
+          1
+        );
     }
     
     // Step 10: Return infinite line through tangent point with reference direction

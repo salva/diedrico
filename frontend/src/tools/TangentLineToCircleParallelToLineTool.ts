@@ -129,13 +129,16 @@ export class TangentLineToCircleParallelToLineTool extends BaseTool {
   /**
    * Determine which tangent line (index 0 or 1) to create based on mouse position
    * 
+   * Index Convention:
+   * - Index 0: Tangent closer to reference line (between ref and center)
+   * - Index 1: Tangent farther from reference line (center between ref and tangent)
+   * 
    * Algorithm:
-   * 1. Get circle center and reference line direction
-   * 2. Compute perpendicular direction (-dy, dx) rotated 90° CCW
-   * 3. Compute both tangent points: center ± r * perpDirection
-   * 4. Calculate angle from center to each tangent point
-   * 5. Compare to mouse position angle from center
-   * 6. Return index of tangent point closer to mouse angle
+   * 1. Get circle center and reference line
+   * 2. Compute signed distance from center to reference line
+   * 3. Compute both tangent positions based on perpendicular offset
+   * 4. Determine which tangent is closer to mouse by distance
+   * 5. Map to index based on which is closer to reference line
    * 
    * @param planeId Plane ID
    * @param circleId Circle ID
@@ -169,48 +172,61 @@ export class TangentLineToCircleParallelToLineTool extends BaseTool {
     const center = circleReal.center;
     const radius = circleReal.getRadius();
 
-    // Reference line direction (normalized from homogeneous point2)
+    // Reference line direction (normalized)
     const refDirection = refLine.point2.clone().normalize();
 
     // Perpendicular direction (90° CCW rotation)
     const perpDirection = new Vector3(-refDirection.y, refDirection.x, 0);
 
-    // Two tangent points
-    const tangentPoint0 = new Vector3(
-      center.x + radius * perpDirection.x,
-      center.y + radius * perpDirection.y,
-      1
-    );
-    const tangentPoint1 = new Vector3(
-      center.x - radius * perpDirection.x,
-      center.y - radius * perpDirection.y,
-      1
-    );
+    // Compute signed distance from center to reference line
+    const refPoint = refLine.point1;
+    const a = -refDirection.y;
+    const b = refDirection.x;
+    const c = refDirection.y * refPoint.x - refDirection.x * refPoint.y;
+    const signedDistance = a * center.x + b * center.y + c;
 
-    // Angles from center to tangent points
-    const angle0 = Math.atan2(tangentPoint0.y - center.y, tangentPoint0.x - center.x);
-    const angle1 = Math.atan2(tangentPoint1.y - center.y, tangentPoint1.x - center.x);
-
-    // Mouse angle from center
-    const mouseAngle = Math.atan2(mousePos.y - center.y, mousePos.x - center.x);
-
-    // Compute angular distances (handle wrap-around)
-    const dist0 = this.angularDistance(angle0, mouseAngle);
-    const dist1 = this.angularDistance(angle1, mouseAngle);
-
-    // Return index of closest tangent point to mouse
-    return dist0 <= dist1 ? 0 : 1;
-  }
-
-  /**
-   * Compute angular distance between two angles (always positive, in [0, π])
-   */
-  private angularDistance(angle1: number, angle2: number): number {
-    let diff = Math.abs(angle1 - angle2);
-    if (diff > Math.PI) {
-      diff = 2 * Math.PI - diff;
+    // Compute two tangent points
+    let closerTangent: Vector3;  // Closer to reference line (index 0)
+    let fartherTangent: Vector3; // Farther from reference line (index 1)
+    
+    if (signedDistance > 0) {
+      // Center on +perpDirection side
+      closerTangent = new Vector3(
+        center.x - radius * perpDirection.x,
+        center.y - radius * perpDirection.y,
+        1
+      );
+      fartherTangent = new Vector3(
+        center.x + radius * perpDirection.x,
+        center.y + radius * perpDirection.y,
+        1
+      );
+    } else {
+      // Center on -perpDirection side
+      closerTangent = new Vector3(
+        center.x + radius * perpDirection.x,
+        center.y + radius * perpDirection.y,
+        1
+      );
+      fartherTangent = new Vector3(
+        center.x - radius * perpDirection.x,
+        center.y - radius * perpDirection.y,
+        1
+      );
     }
-    return diff;
+
+    // Calculate distances from mouse to each tangent point
+    const distToCloser = Math.hypot(
+      mousePos.x - closerTangent.x,
+      mousePos.y - closerTangent.y
+    );
+    const distToFarther = Math.hypot(
+      mousePos.x - fartherTangent.x,
+      mousePos.y - fartherTangent.y
+    );
+
+    // Return index of tangent closer to mouse
+    return distToCloser <= distToFarther ? 0 : 1;
   }
 
   /**

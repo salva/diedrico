@@ -635,14 +635,15 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
    * 2. Get reference line direction d = (dx, dy, 0)
    * 3. Check feasibility: distance from C to reference line must be > r
    * 4. Compute perpendicular direction: perpDir = (-dy, dx, 0) (90° CCW)
-   * 5. For index 0: tangent point = C + r * perpDir (left side)
-   * 6. For index 1: tangent point = C - r * perpDir (right side)
-   * 7. Return line through tangent point with direction d (parallel to reference)
+   * 5. Determine signed distance from center to reference line
+   * 6. For index 0: tangent closer to reference (between ref and center)
+   * 7. For index 1: tangent farther from reference (center between ref and tangent)
+   * 8. Return line through tangent point with direction d (parallel to reference)
    * 
-   * Index convention: Based on angle from circle's radius vector
-   * - Index 0 = smaller relative angle from radius vector
-   * - Index 1 = larger relative angle (counterclockwise)
-   * - Same pattern as sortPointsByAngleFromRadiusVector()
+   * Index Convention:
+   * - Index 0: Tangent is between reference line and circle center
+   * - Index 1: Circle center is between reference line and tangent
+   * Order from reference: ref line → index 0 → center → index 1
    */
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Step 1: Get containing plane
@@ -701,21 +702,43 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
     }
     
     // Step 9: Compute tangent point position
-    // Two parallel tangent lines exist:
-    // Index 0: tangent point on "left" side (perpendicular direction)
-    // Index 1: tangent point on "right" side (opposite perpendicular)
+    // Index 0: tangent closer to reference (between ref and center)
+    // Index 1: tangent farther from reference (center between ref and tangent)
     
-    const tangentPoint = this.tangentIndex === 0 ?
-      new Vector3(
-        center.x + radius * perpDirection.x,
-        center.y + radius * perpDirection.y,
-        1  // Finite point
-      ) :
-      new Vector3(
-        center.x - radius * perpDirection.x,
-        center.y - radius * perpDirection.y,
-        1  // Finite point
-      );
+    // Determine signed distance to know which side of reference the center is on
+    // signedDistance > 0: center is on +perpDirection side
+    // signedDistance < 0: center is on -perpDirection side
+    const signedDistance = a * center.x + b * center.y + c;
+    
+    let tangentPoint: Vector3;
+    
+    if (signedDistance > 0) {
+      // Center on +perpDirection side: index 0 is closer (subtract), index 1 is farther (add)
+      tangentPoint = this.tangentIndex === 0 ?
+        new Vector3(
+          center.x - radius * perpDirection.x,
+          center.y - radius * perpDirection.y,
+          1  // Finite point
+        ) :
+        new Vector3(
+          center.x + radius * perpDirection.x,
+          center.y + radius * perpDirection.y,
+          1  // Finite point
+        );
+    } else {
+      // Center on -perpDirection side: index 0 is closer (add), index 1 is farther (subtract)
+      tangentPoint = this.tangentIndex === 0 ?
+        new Vector3(
+          center.x + radius * perpDirection.x,
+          center.y + radius * perpDirection.y,
+          1  // Finite point
+        ) :
+        new Vector3(
+          center.x - radius * perpDirection.x,
+          center.y - radius * perpDirection.y,
+          1  // Finite point
+        );
+    }
     
     // DEBUG: Log parallel tangent calculation
     console.log('[TangentLine] Parallel to Line:', {
