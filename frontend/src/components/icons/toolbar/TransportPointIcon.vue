@@ -48,7 +48,3 @@
 <script setup lang="ts">
 import { ICON_COLORS } from '@/constants/colors';
 </script>
-
-<script setup lang="ts">
-import { ICON_COLORS } from '@/constants/colors';
-</script>
