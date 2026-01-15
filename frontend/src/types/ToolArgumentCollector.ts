@@ -31,6 +31,11 @@ import type { Vector3 } from 'three';
  * - element is the circle/line selected
  * - planeCoords determines index (angle-based) via mouse position
  * 
+ * Phase 73: Extended for polymorphic tools with geometric solution disambiguation:
+ * - clickPositions stores all mouse click positions during argument collection
+ * - Used by selectClosestSolution() to choose between multiple geometric solutions
+ * - Example: Circle-circle constructions may have 2-6 possible solutions
+ * 
  * This structure ensures every argument captures complete "what happened" record.
  */
 export interface ArgumentValue {
@@ -39,6 +44,20 @@ export interface ArgumentValue {
   
   /** Position in plane coordinates where user clicked */
   planeCoords: Vector3;
+  
+  /** 
+   * All click positions during argument collection (Phase 73)
+   * Used for distance-based geometric solution disambiguation
+   * 
+   * For polymorphic tools (e.g., Line between two circles):
+   * - Each click position is recorded when collecting an argument
+   * - selectClosestSolution() uses these to choose from multiple solutions
+   * - Example: [clickPos1, clickPos2] for two-circle line construction
+   * 
+   * For simple tools (non-polymorphic):
+   * - May be undefined or contain single position (backward compatible)
+   */
+  clickPositions?: Vector3[];
 }
 
 /**
@@ -121,7 +140,7 @@ export interface ToolArgumentSet {
    * @param context - Current collection context (world, plane, collected arguments)
    * @returns Validation result with optional error message
    */
-  setValidator?: (args: Map<string, import('../tools/ArgumentCollectorTool').ArgumentValue>, context: CollectionContext) => ValidationResult;  
+  setValidator?: (args: Map<string, ArgumentValue>, context: CollectionContext) => ValidationResult;  
   /**
    * Optional execution callback for this specific argument set
    * 
