@@ -10,6 +10,17 @@
  */
 
 import type { ToolFamilyConfig } from '@/types/ToolConfig';
+import FreePointIcon from '@/components/icons/toolbar/FreePointIcon.vue';
+import IntersectionPointIcon from '@/components/icons/toolbar/IntersectionPointIcon.vue';
+import LineByTwoPointsIcon from '@/components/icons/toolbar/LineByTwoPointsIcon.vue';
+import ParallelLineIcon from '@/components/icons/toolbar/ParallelLineIcon.vue';
+import PerpendicularLineIcon from '@/components/icons/toolbar/PerpendicularLineIcon.vue';
+import TangentThroughPointIcon from '@/components/icons/toolbar/TangentThroughPointIcon.vue';
+import TangentParallelIcon from '@/components/icons/toolbar/TangentParallelIcon.vue';
+import SegmentIcon from '@/components/icons/toolbar/SegmentIcon.vue';
+import CircleIcon from '@/components/icons/toolbar/CircleIcon.vue';
+import GuideLineIcon from '@/components/icons/toolbar/GuideLineIcon.vue';
+import TransportPointIcon from '@/components/icons/toolbar/TransportPointIcon.vue';
 
 /**
  * Tool families configuration
@@ -26,13 +37,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'point-family',
     label: 'Point',
-    icon: '●', // Circle emoji as point
+    icon: FreePointIcon,
     defaultTool: 'point',
     tools: [
       {
         id: 'point',
         label: 'Free Point',
-        icon: '●',
+        icon: FreePointIcon,
         shortcut: 'P',
         tooltip: 'Create free point - Click to place point (P)',
         completionBehavior: 'stay-active'
@@ -40,7 +51,7 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
       {
         id: 'intersection',
         label: 'Intersection Point',
-        icon: '⨯', // Multiplication X as intersection
+        icon: IntersectionPointIcon,
         shortcut: 'I',
         tooltip: 'Create intersection point - Select two elements (I)',
         completionBehavior: 'return-to-selection'
@@ -50,13 +61,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'line-family',
     label: 'Line',
-    icon: '─', // Horizontal line
+    icon: LineByTwoPointsIcon,
     defaultTool: 'line',
     tools: [
       {
         id: 'line',
         label: 'Line Through Points',
-        icon: '─',
+        icon: LineByTwoPointsIcon,
         shortcut: 'L',
         tooltip: 'Create line through two points (L)',
         completionBehavior: 'stay-active'
@@ -64,28 +75,28 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
       {
         id: 'parallel-line',
         label: 'Parallel Line',
-        icon: '∥', // Parallel symbol
+        icon: ParallelLineIcon,
         tooltip: 'Create line parallel to reference through point',
         completionBehavior: 'return-to-selection'
       },
       {
         id: 'perpendicular-line',
         label: 'Perpendicular Line',
-        icon: '⟂', // Perpendicular symbol
+        icon: PerpendicularLineIcon,
         tooltip: 'Create line perpendicular to reference through point',
         completionBehavior: 'return-to-selection'
       },
       {
         id: 'tangent-line-to-circle-through-point',
         label: 'Tangent (Point)',
-        icon: '⟋', // Tangent-like symbol
+        icon: TangentThroughPointIcon,
         tooltip: 'Create tangent line to circle through external point',
         completionBehavior: 'return-to-selection'
       },
       {
         id: 'tangent-line-to-circle-parallel',
         label: 'Tangent (Parallel)',
-        icon: '⟋∥', // Tangent + parallel
+        icon: TangentParallelIcon,
         tooltip: 'Create tangent line to circle parallel to reference',
         completionBehavior: 'return-to-selection'
       }
@@ -94,13 +105,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'segment-family',
     label: 'Segment',
-    icon: '─●', // Line with endpoint
+    icon: SegmentIcon,
     defaultTool: 'segment',
     tools: [
       {
         id: 'segment',
         label: 'Segment',
-        icon: '─●',
+        icon: SegmentIcon,
         shortcut: 'S',
         tooltip: 'Create segment between two points (S)',
         completionBehavior: 'stay-active'
@@ -110,13 +121,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'circle-family',
     label: 'Circle',
-    icon: '○', // Circle emoji
+    icon: CircleIcon,
     defaultTool: 'circle',
     tools: [
       {
         id: 'circle',
         label: 'Circle',
-        icon: '○',
+        icon: CircleIcon,
         shortcut: 'C',
         tooltip: 'Create circle - Pick center then circumference point (C)',
         completionBehavior: 'stay-active'
@@ -126,13 +137,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'guide-family',
     label: 'Guide',
-    icon: '┆', // Dashed vertical line
+    icon: GuideLineIcon,
     defaultTool: 'guide',
     tools: [
       {
         id: 'guide',
         label: 'Guide',
-        icon: '┆',
+        icon: GuideLineIcon,
         shortcut: 'G',
         tooltip: 'Create guide perpendicular to hinge line (G)',
         completionBehavior: 'return-to-selection'
@@ -142,13 +153,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'transport-family',
     label: 'Transport',
-    icon: '↔', // Bidirectional arrow
+    icon: TransportPointIcon,
     defaultTool: 'transport',
     tools: [
       {
         id: 'transport',
         label: 'Transport',
-        icon: '↔',
+        icon: TransportPointIcon,
         shortcut: 'T',
         tooltip: 'Transport distance or point (T) - Not yet implemented',
         completionBehavior: 'return-to-selection'

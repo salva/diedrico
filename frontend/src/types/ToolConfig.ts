@@ -8,6 +8,8 @@
  * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
  */
 
+import type { Component } from 'vue';
+
 /**
  * Configuration for an individual tool
  */
@@ -18,8 +20,8 @@ export interface ToolConfig {
   /** Display label for UI */
   label: string;
   
-  /** Icon identifier (can be emoji or icon class) */
-  icon: string;
+  /** Icon component (Vue SFC component) */
+  icon: Component;
   
   /** Optional keyboard shortcut */
   shortcut?: string;
@@ -41,8 +43,8 @@ export interface ToolFamilyConfig {
   /** Display label for family button */
   label: string;
   
-  /** Icon shown on family button */
-  icon: string;
+  /** Icon component shown on family button */
+  icon: Component;
   
   /** Tool ID to use if no last-used preference exists */
   defaultTool: string;
