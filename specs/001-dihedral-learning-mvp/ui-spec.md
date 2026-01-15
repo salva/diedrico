@@ -1784,6 +1784,161 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 
 ---
 
+## Toolbar Icon-Only Design (Phase 68)
+
+### Design Philosophy
+
+Toolbar buttons use **icon-only** design with no text labels. Icons must be **self-explanatory** through visual metaphor and consistent color-coding. The design follows Material Design principles with a pedagogical color scheme that teaches construction method semantics.
+
+### Button Specifications
+
+**Size and Layout**:
+- Button size: 40×40px square
+- Icon size: 24×24px (centered within button)
+- Padding: 0 (icon fills button with flexbox centering)
+- Border: 1px solid #ccc (normal state)
+- Border-radius: 4px
+- Background: white (normal), #e8e8e8 (hover), #4A90E2 (active/selected)
+
+**Visual States**:
+- **Normal**: White background, #ccc border, colored icon
+- **Hover**: #e8e8e8 background, #999 border, colored icon
+- **Active/Selected**: #4A90E2 background, white icon (inverted colors)
+- **Disabled**: 0.4 opacity, no hover effects
+
+**Accessibility**:
+- All buttons have `aria-label` with descriptive text
+- Tooltips appear on hover (500ms delay) with tool name and keyboard shortcut
+- Keyboard navigation: Tab moves between buttons, Enter/Space activates
+
+### Color System
+
+**Material Design Palette** (defined in `constants/colors.ts`):
+
+```typescript
+export const ICON_COLORS = {
+  primary: '#2196F3',    // Material Blue 500 - Created/output elements
+  secondary: '#FF9800',  // Material Orange 500 - Argument/input elements
+  neutral: '#757575',    // Material Grey 600 - Context/reference elements
+  inactive: '#9E9E9E',   // Material Grey 500 - Disabled state
+}
+```
+
+**Color Semantics** (Pedagogical):
+- **Blue (#2196F3)**: Elements **created** by the tool (output)
+- **Orange (#FF9800)**: Elements **required** as arguments (input)
+- **Grey (#757575)**: Neutral context elements (grid, reference)
+- **Black (#000000)**: Single-operation actions (no geometric construction)
+
+### Icon Design Patterns
+
+**Construction Tools** (create geometric elements):
+- **Two-color pattern**: Blue for created element + Orange for required arguments
+- **Visual flow**: Arguments → Tool → Created element (left-to-right or implied)
+- **Examples**:
+  - **Line Tool**: Orange points (args) → Blue line (created)
+  - **Circle Tool**: Orange center point + Orange circumference point → Blue circle (created)
+  - **Parallel Line**: Orange reference line + Orange point → Blue parallel line (created)
+
+**Action Buttons** (non-geometric operations):
+- **Monochrome pattern**: Single color, no orange arguments
+- **Color**: Blue (#2196F3) for primary actions
+- **Examples**:
+  - **Undo/Redo**: Blue curved arrow (no geometric arguments)
+  - **New File**: Blue document with plus (no geometric arguments)
+  - **Zoom In/Out**: Blue magnifying glass (no geometric arguments)
+
+**Context Buttons** (view/navigation):
+- **Grey pattern**: Neutral grey (#757575) for non-construction tools
+- **Examples**:
+  - **Grid Toggle**: Grey grid lines (0.6 opacity)
+  - **Pan**: Grey hand icon
+
+**Selection Tool**:
+- **Monochrome**: Blue pointer/cursor icon (special status as default tool)
+
+### Icon Catalog
+
+**Tool Family Icons** (Geometric Construction):
+
+1. **Selection Tool**: Blue pointer cursor (default tool indicator)
+2. **Free Point**: Single blue filled circle (no arguments, user places freely)
+3. **Intersection Point**: Two blue crossing lines with orange point at intersection
+4. **Line by Two Points**: Blue diagonal line with orange endpoint circles
+5. **Segment**: Blue line segment with orange endpoint circles (finite)
+6. **Parallel Line**: Orange reference line + orange point → blue parallel line
+7. **Perpendicular Line**: Orange reference line + orange point → blue perpendicular line with 90° symbol
+8. **Tangent Through Point**: Orange circle + orange external point → blue tangent line
+9. **Tangent Parallel**: Orange circle + orange reference line → blue tangent line
+10. **Circle**: Orange center point + orange circumference point → blue circle
+11. **Guide Line**: Orange hinge line + orange point → blue guide with perpendicular marker
+12. **Transport Point**: Orange source point + orange guide → blue transported point
+
+**File Control Icons** (Actions):
+
+13. **New File**: Blue document outline with orange plus sign
+14. **Open File**: Blue folder outline with arrow
+15. **Save File**: Blue floppy disk icon (monochrome)
+
+**History Control Icons** (Actions):
+
+16. **Undo**: Blue curved arrow pointing left
+17. **Redo**: Blue curved arrow pointing right
+
+**Navigation Icons** (Context):
+
+18. **Grid Toggle**: Grey grid pattern (6 lines, 0.6 opacity)
+19. **Zoom In**: Blue magnifying glass with plus
+20. **Zoom Out**: Blue magnifying glass with minus
+21. **Zoom Fit**: Blue frame with arrows pointing inward
+22. **Pan**: Grey open hand icon
+
+**Plane Control Icons**:
+
+23. **Active Plane**: Blue rectangle with label indicator (context)
+
+### Icon Design Rules
+
+**Consistency Requirements**:
+1. **Viewbox**: All icons use `viewBox="0 0 24 24"` (24×24 unit coordinate system)
+2. **Stroke width**: 1.5px for primary elements, 1px for details
+3. **Geometric simplicity**: Use basic shapes (circles, lines, paths) - no complex illustrations
+4. **Color application**:
+   - Construction tools: Two-color (blue + orange) showing inputs and outputs
+   - Action buttons: Monochrome blue (no geometric arguments)
+   - Context buttons: Monochrome grey (neutral, non-construction)
+5. **Metaphor clarity**: Icon must communicate tool purpose without text
+6. **Contrast**: Ensure sufficient contrast for accessibility (WCAG AA minimum)
+
+**Anti-Patterns** (What to avoid):
+- ❌ **Inconsistent colors**: Don't mix color schemes (some black, some blue/orange)
+- ❌ **Text labels**: No text within icons (icon-only design)
+- ❌ **Overly complex**: Avoid detailed illustrations, use simple geometric shapes
+- ❌ **Ambiguous metaphors**: Icon must clearly represent tool function
+- ❌ **Inconsistent stroke widths**: Maintain uniform stroke width across similar elements
+- ❌ **Poor contrast**: Ensure colors are distinguishable for colorblind users
+
+### Implementation Notes
+
+**Component Structure**:
+- Each icon is a Vue SFC in `frontend/src/components/icons/toolbar/`
+- Icons import `ICON_COLORS` from `constants/colors.ts`
+- Icons use `:fill` or `:stroke` bindings for dynamic color application
+- Icons are stateless presentational components (no props except size)
+
+**Integration**:
+- Toolbar.vue imports icon components from `@/components/icons/toolbar`
+- ToolConfig interface uses `icon: Component` type (not string)
+- Tool families display icon of currently active sub-tool
+- Icon size controlled by `.button-icon` CSS class (24×24px)
+
+**Future Enhancements**:
+- High-contrast mode: Increase stroke width and contrast ratios
+- Colorblind mode: Use patterns/shapes instead of colors for semantics
+- Customization: Allow users to choose alternative icon sets or color schemes
+
+---
+
 ## Accessibility and Usability
 
 ### Keyboard Navigation
