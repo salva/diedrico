@@ -1533,6 +1533,10 @@ These use cases cover primitive user actions and micro-interactions. They are in
 
 - **FR-051**: The system MUST implement consistent tool completion behavior based on tool usage patterns. Frequently-used tools (Point, Line, Segment, Circle) MUST remain active after successful operation completion (Option A: "stays active"), allowing immediate repetition of the same construction without reactivation. These tools MUST require explicit deactivation via ESC key, clicking a different tool, or selecting the Selection Tool. Infrequently-used or complex tools (Tangent, Intersection, Transport) SHOULD automatically return to Selection Tool after operation completion (Option B: "returns to neutral"). All tools within the same conceptual family MUST follow the same completion behavior pattern for consistency. The system MUST clearly document which completion behavior each tool uses in tool tooltips. [Phase 67 - Toolbar Behavior]
 
+- **FR-052**: The system MUST provide icon-only toolbar buttons with self-explanatory SVG illustrations that show both the geometric element being created AND the required argument elements used to define it. Icons MUST use color-coding to distinguish elements: primary color (#2196F3 blue) for the element being created, secondary color (#FF9800 orange) for required arguments/inputs. All toolbar buttons MUST have uniform size (~40×40px) regardless of button type or tool family. Text labels MUST be removed from all toolbar buttons (main buttons, family dropdowns, and dropdown menu items), with tooltips providing detailed descriptions on hover. Icon design MUST illustrate the construction method clearly (e.g., Point tool: single point, Line tool: line with two highlighted points, Circle tool: circle with highlighted center and circumference points, Parallel Line tool: two parallel lines with one highlighted plus a point on the other highlighted). This applies to all toolbar groups: Selection Tool, File Operations, History Controls, Active Plane Selector, 2D Drawing Tools, Dihedral Tools, 3D Creation Tools, and Navigation Tools. [Phase 68 - Toolbar Icon-Only Design]
+
+- **FR-053**: The system MUST determine intersection point indices for line-circle intersections based on the parametric line direction: when computing intersections between a line L = P + s × V and a circle, where two intersection points exist at parameter values s₁ and s₂, the system MUST assign index 0 to the intersection with the lesser parameter value (min(s₁, s₂)) and index 1 to the intersection with the greater parameter value (max(s₁, s₂)). This ensures stable, predictable indexing that follows the natural ordering along the line's direction vector, maintains index consistency when line parameters change, and provides intuitive behavior for users who understand lines as directional entities. The system MUST use this parameter-based indexing algorithm in place of the current angle-based sorting from the circle's radius vector for all line-circle intersection calculations. [Phase 71 - Parameter-Based Line-Circle Intersection Indexing]
+
 ### Assumptions
 
 - The MVP includes at least two default projection planes (Horizontal and Vertical) and their hinge line.
@@ -1554,6 +1558,226 @@ These use cases cover primitive user actions and micro-interactions. They are in
 - **InfeasibilityState**: The status indicating an action/result cannot currently be computed.
 - **VisualStyle**: User-editable, non-geometric styling properties with optional inheritance.
 - **ViewState**: Pan/zoom state for 2D view, camera state for 3D view, visibility toggles.
+
+### FR-054: Center-Line-Based Circle-Circle Intersection Indexing *(mandatory)*
+
+When two circles intersect at two points, the indices (0 and 1) must be determined by the relative angular position of the points with respect to the line connecting the two circle centers.
+
+**Indexing Convention**:
+- Define the **center line** as the directed line from circle1's center (C1) to circle2's center (C2)
+- For each intersection point I, compute the **signed angle** from the center line:
+  - `θ_centerLine = atan2(C2.y - C1.y, C2.x - C1.x)` (angle of center line)
+  - `θ_I = atan2(I.y - C1.y, I.x - C1.x)` (angle from C1 to I)
+  - `Δθ = θ_I - θ_centerLine` (relative angle, normalized to [-π, π])
+- **Index 0** = intersection with **positive relative angle** (counterclockwise from center line)
+- **Index 1** = intersection with **negative relative angle** (clockwise from center line)
+
+**Rationale**:
+- **Geometric consistency**: Center line is the natural reference axis for two-circle configuration
+- **Intuitive ordering**: Uses standard counterclockwise convention (positive = index 0)
+- **Index stability**: When circles move, same physical point maintains same index (angular ordering preserved)
+- **Symmetry breaking**: Provides deterministic ordering based on which side of center line
+- **Natural for tools**: "Index 0 = above the center line" is conceptually clear
+
+**Current Implementation**: Uses angle from circle1's radius vector (sortPointsByAngleFromRadiusVector). This works but is less intuitive than center-line-based ordering for circle-circle cases.
+
+**Implementation**: See Phase 72 in [data-model.md](./data-model.md#phase-72-center-line-based-circle-circle-intersection-indexing) for complete algorithm and migration strategy.
+
+### FR-055: Polymorphic Line Tool - Context-Sensitive Line Construction *(mandatory)*
+
+The system MUST provide a unified Line Tool that dynamically determines construction method based on selected element types and mouse position to disambiguate between multiple geometric solutions.
+
+**Construction Methods**:
+
+1. **Line Between Two Points**: When both arguments are points (explicitly selected or intersections), create Line2DByTwoPoints
+2. **Line Through Point Perpendicular to Line**: When arguments are a point and a line (in any order), create Line2DPerpendicularToLine through the point, perpendicular to the selected line
+3. **Line Through Point Tangent to Circle**: When arguments are a point and a circle (in any order):
+   - If point is outside circle: create Line2DTangentToCircleThroughPoint
+   - Index (0 or 1) determined by mouse position relative to circle's radius vector (angle-based selection)
+   - If point is inside/on circle: report infeasibility
+4. **Line Between Two Circles**: When both arguments are circles, create line with one of six possible construction methods based on mouse position:
+   - **External Tangent 1**: Tangent on the "above" side of both circles
+   - **External Tangent 2**: Tangent on the "below" side of both circles
+   - **Internal Tangent 1**: Tangent crossing between circles (top-left to bottom-right)
+   - **Internal Tangent 2**: Tangent crossing between circles (bottom-left to top-right)
+   - **Perpendicular to Centers**: Line perpendicular to the center line
+   - **Through Centers**: Line passing through both circle centers
+   - Disambiguation: System calculates all six solutions, finds their intersection points with both circles, and selects the solution whose intersection points are collectively closest to the two mouse click positions
+
+**Mouse-Based Disambiguation**:
+- For point-circle tangents: Use angle of mouse click relative to circle's radius vector (same pattern as intersection indexing)
+- For circle-circle constructions: Store both mouse click positions (first circle click, second circle click), calculate all six solutions, measure total distance from click positions to solution intersection points, select solution with minimum distance
+
+**ArgumentCollectorTool Integration**: Tool declares six argument sets (point+point, point+line, line+point, point+circle, circle+point, circle+circle). Framework automatically determines which construction method is viable based on collected arguments.
+
+**Acceptance Criteria**:
+- Line Tool button shows unified icon (line with construction points highlighted)
+- Tool accepts arguments in any order for all methods except circle-circle (circles must be distinct)
+- Mouse position correctly disambiguates tangent lines (point-circle and circle-circle cases)
+- For circle-circle, all six geometric solutions are calculated and distance-based selection works correctly
+- Tool provides clear status messages showing current construction method and next expected argument
+- Invalid combinations (e.g., point inside circle for tangent) report infeasibility immediately
+
+### FR-056: Polymorphic Segment Tool - Context-Sensitive Segment Construction *(mandatory)*
+
+The system MUST provide a unified Segment Tool that creates segments between two geometric elements based on their types, following similar polymorphic construction patterns as the Line Tool.
+
+**Construction Methods**:
+
+1. **Segment Between Two Points**: When both arguments are points, create Segment2DByPoints
+2. **Segment From Point to Line**: When arguments are a point and a line (any order):
+   - Create Segment2DPointToLine from the point perpendicular to the line
+   - Endpoint on line computed as perpendicular foot
+3. **Segment From Point Tangent to Circle**: When arguments are a point and a circle (any order):
+   - If point is outside circle: create Segment2DPointToCircleTangent
+   - Index (0 or 1) determined by mouse position relative to circle's radius vector
+   - Segment endpoints: point and tangent touch point on circle
+   - If point is inside/on circle: report infeasibility
+4. **Segment Between Two Circles**: When both arguments are circles:
+   - Similar to Line Tool but creates segment with endpoints at tangent touch points
+   - Same six construction methods (external tangents, internal tangents, perpendicular, through centers)
+   - Same mouse-based disambiguation pattern
+
+**Element Variations Required**:
+- Segment2DByPoints (exists)
+- Segment2DPointToLine (new - perpendicular segment from point to line)
+- Segment2DPointToCircleTangent (new - tangent segment from point to circle)
+- Segment2DCircleToCircle (new - six variation flags: external1, external2, internal1, internal2, perpendicular, throughCenters)
+
+**Acceptance Criteria**:
+- Segment Tool creates bounded segments (not infinite lines) for all construction methods
+- Endpoints are always computable and explicit (no implicit points)
+- Parametric behavior: segments update when defining elements move
+- Mouse disambiguation works identically to Line Tool
+- Clear visual distinction between segments and lines in rendering
+
+### FR-057: Polymorphic Circle Tool - Multiple Circle Construction Methods *(mandatory)*
+
+The system MUST extend the Circle Tool to support multiple construction methods with different argument combinations, enabling radius-based and constraint-based circle creation.
+
+**Construction Methods**:
+
+1. **Circle By Center and Circumference Point**: (exists) When both arguments are points, create Circle2DByCenterAndPoint
+2. **Circle By Center and Radius (Point)**: When first argument is center point and second is a point defining radius:
+   - Create Circle2DByCenterAndRadiusPoint
+   - Radius = distance from center to radius-defining point
+   - Parametric: radius updates when radius-defining point moves
+3. **Circle By Center Tangent to Line**: When arguments are a point (center) and a line (tangent constraint):
+   - Create Circle2DByCenterTangentToLine
+   - Radius = perpendicular distance from center to line
+   - If center is on the line: radius = 0 (degenerate, report infeasibility)
+4. **Circle By Center Tangent to Circle**: When arguments are a point (center) and a circle (tangent constraint):
+   - Create Circle2DByCenterTangentToCircle
+   - Two solutions exist (external tangent: radius = d + r, internal tangent: radius = d - r)
+   - Mouse position determines which solution (external vs internal)
+   - If center is inside reference circle and internal tangent chosen: infeasible
+5. **Circle Through Three Points**: When three points are selected:
+   - Create Circle2DByThreePoints
+   - Compute circumcircle using three-point circle formula
+   - If points are collinear: report infeasibility
+6. **Circle Tangent to Three Lines**: When three lines are selected:
+   - Create Circle2DByThreeTangentLines
+   - Compute incircle/excircle using angle bisector method
+   - Four solutions exist (one incircle, three excircles)
+   - Mouse position disambiguation: compute all four solutions, select circle whose center is closest to average of three click positions
+   - If lines are parallel or don't form triangle: report infeasibility
+7. **Circle Tangent to Two Lines Through Point**: When two lines and one point are selected:
+   - Create Circle2DByTwoTangentLinesAndPoint
+   - Two solutions exist (two possible circles tangent to both lines passing through point)
+   - Mouse position determines which solution
+8. **Circle Tangent to Line and Circle Through Point**: When one line, one circle, and one point are selected:
+   - Create Circle2DByLineTangentCircleTangentAndPoint
+   - Multiple solutions possible depending on geometry
+   - Mouse position disambiguation based on distance to click positions
+
+**ArgumentCollectorTool Integration**: Tool declares multiple ToolArgumentSet entries for each construction method. Framework automatically determines viable construction method as arguments are collected.
+
+**Acceptance Criteria**:
+- Circle Tool supports all eight construction methods
+- Mouse position correctly disambiguates multiple solutions
+- All circle variations implement parametric behavior (update when defining elements move)
+- Clear status messages indicate construction method and required arguments
+- Infeasibility validation works for all edge cases (collinear points, parallel lines, impossible tangency)
+- Three-constraint methods (three points, three lines) work with ArgumentCollectorTool's three-argument support
+
+### FR-058: Mouse-Position-Based Geometric Solution Disambiguation *(mandatory)*
+
+The system MUST implement a general-purpose algorithm for selecting between multiple valid geometric solutions based on mouse click positions during construction.
+
+**General Algorithm**:
+
+1. **Collect mouse positions**: Store canvas coordinates for each element selection click during tool argument collection
+2. **Compute all solutions**: For the given construction method, calculate ALL geometrically valid solutions (e.g., all six tangent lines between two circles)
+3. **Extract solution features**: For each solution, identify key geometric points (intersection points, tangent touch points, etc.)
+4. **Measure distances**: For each solution, compute sum of squared distances from mouse click positions to solution feature points
+5. **Select minimum**: Choose the solution with smallest total distance (closest match to user intent)
+
+**Distance Calculation Details**:
+- Use plane coordinates (not canvas pixels) for consistent distance measurement across zoom levels
+- For circle-circle tangent lines: measure distance from click positions to the four tangent touch points (two per circle)
+- For circle constructions with multiple solutions: measure distance from click positions to circle centers
+- For three-constraint constructions: use average click position for disambiguation
+
+**Implementation Requirements**:
+- Store mouse positions in ArgumentValue type: `{ element: Element2D, position: Vector3 }` (position in plane coordinates)
+- ArgumentCollectorTool.handleClick() already captures plane coordinates, extend to store in collected arguments
+- Each tool's execute() method receives mouse positions via ArgumentValue map
+- Geometric solution methods return all possible solutions as array (e.g., computeCircleCircleTangentLines() returns array of six solutions)
+
+**Acceptance Criteria**:
+- Mouse position disambiguation works consistently across all polymorphic tools
+- User can reliably select desired solution by clicking near where they want the result
+- Distance calculation accounts for zoom level (uses plane coordinates, not pixels)
+- Clear visual feedback during construction shows which solution will be selected
+- Edge cases handled: coincident solutions, solutions at infinity, degenerate cases
+
+### FR-059: Toolbar Reorganization - Polymorphic Tool Families *(mandatory)*
+
+The system MUST reorganize the toolbar to reflect polymorphic tool architecture, where each tool family button activates context-sensitive tools that determine construction method dynamically.
+
+**Tool Family Changes**:
+
+1. **Line Family** (replace current multiple buttons):
+   - Single "Line" button with polymorphic behavior (FR-055)
+   - Dropdown removed - construction method determined by selected elements
+   - Button tooltip: "Line - construction method depends on selected elements"
+   
+2. **Segment Family** (replace current single button):
+   - Single "Segment" button with polymorphic behavior (FR-056)
+   - Dropdown removed - construction method determined by selected elements
+   - Button tooltip: "Segment - construction method depends on selected elements"
+
+3. **Circle Family** (expand from current single method):
+   - Single "Circle" button with polymorphic behavior (FR-057)
+   - Supports eight construction methods dynamically
+   - Button tooltip: "Circle - supports multiple construction methods"
+
+4. **Point Family** (unchanged):
+   - Keep "Free Point" and "Intersection Point" as separate explicit choices
+   - Rationale: Point construction is unambiguous and doesn't need polymorphism
+
+5. **Guide/Transport Family** (unchanged):
+   - Keep explicit guide and transport tools
+   - Rationale: Dihedral-specific operations with clear intent
+
+**Removed Buttons** (functionality moved to polymorphic tools):
+- "Parallel Line" button → Line Tool with point+line arguments
+- "Perpendicular Line" button → Line Tool with point+line arguments  
+- "Tangent (Point)" button → Line Tool with point+circle arguments
+- "Tangent (Parallel)" button → Line Tool with circle+line arguments (future - not in initial scope)
+
+**New UI Patterns**:
+- Tool status message dynamically updates: "Line: Select first element (point, line, or circle)"
+- After first selection: "Line through point: Select second element (point, line, or circle)"
+- Visual feedback highlights viable next arguments based on ArgumentCollectorTool viable sets
+- Mouse position preview shows which solution will be selected (for ambiguous cases)
+
+**Acceptance Criteria**:
+- Toolbar is more compact (fewer buttons due to polymorphic consolidation)
+- Tool families correctly activate polymorphic tools
+- Status messages clearly communicate current construction method and next expected argument
+- Users can intuitively discover construction methods by selecting different element types
+- No loss of functionality compared to previous explicit tool buttons
 
 ## Success Criteria *(mandatory)*
 

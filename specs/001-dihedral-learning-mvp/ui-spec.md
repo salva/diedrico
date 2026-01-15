@@ -648,6 +648,349 @@ At any moment, **exactly one tool is active**.
 - System remembers the last-used sub-tool for EACH family independently
 - Memory persists across tool switches (selecting different family, then returning)
 - Memory persists across sessions (saved to localStorage or preferences)
+
+### Toolbar Icon-Only Design (Phase 68)
+
+**Purpose**: Replace text-based toolbar buttons with self-explanatory SVG icons that illustrate both the geometric construction being performed and the required input elements. This reduces visual clutter, creates a more professional appearance, and makes the toolbar more compact while maintaining clarity through illustrative iconography.
+
+#### Design Principles
+
+1. **Illustrative Over Symbolic**: Icons show the actual geometric construction, not abstract symbols
+2. **Color-Coded Elements**: Distinguish between created elements (primary) and arguments (secondary)
+3. **Consistent Visual Language**: All icons follow same style, line weight, and proportions
+4. **Self-Explanatory**: Users should understand tool function from icon alone
+5. **Scalable Vector Graphics**: SVG format ensures crisp rendering at any resolution
+
+#### Color Palette
+
+**Primary Color (Created Element)**: `#2196F3` (Material Blue 500)
+- Used for: The geometric element being created by the tool
+- Example: In Line tool, the line itself is blue
+
+**Secondary Color (Argument Elements)**: `#FF9800` (Material Orange 500)
+- Used for: Required input elements (points, lines, circles used to define the construction)
+- Example: In Line tool, the two defining points are orange
+
+**Neutral Color (Context/Background)**: `#757575` (Material Grey 600)
+- Used for: Reference elements, guides, or background geometry
+- Example: In Parallel Line tool, the reference line is grey
+
+**Inactive State**: `#9E9E9E` (Material Grey 500)
+- Used for: Disabled buttons
+
+**Rationale**: Material Design colors chosen for accessibility (WCAG AA contrast), international recognition, and professional appearance. Blue conveys creation/output, orange conveys input/interaction.
+
+#### Icon Dimensions & Specifications
+
+**SVG Canvas**: 24×24px nominal size (consistent with Material Design icons)
+**Visual Content Area**: 20×20px (2px padding on all sides for breathing room)
+**Line Weight**: 1.5px for standard lines, 2px for emphasis, 1px for thin/background elements
+**Point Radius**: 2px filled circles for defining points, 1.5px for intersection indicators
+**Button Size**: 40×40px (consistent across all toolbar buttons)
+**Icon Placement**: Centered within button, no text labels
+
+#### Icon Design Catalog
+
+##### Group 1: Selection & File Operations
+
+**Selection Tool** (`[↖]`)
+- **Icon**: Arrow cursor/pointer (classic selection arrow)
+- **Colors**: Neutral (#757575) for arrow shaft, primary (#2196F3) for tip
+- **Details**: 45° angle, fills most of 20×20px area
+- **SVG Elements**: Polygon for arrow shape
+
+**New Project** (`[+]`)
+- **Icon**: Document with plus symbol
+- **Colors**: Primary (#2196F3) for document outline, plus symbol in center
+- **Details**: Rectangular document with folded corner, centered plus
+- **SVG Elements**: Path for document, plus sign (horizontal + vertical lines)
+
+**Open Project** (`[📁]`)
+- **Icon**: Folder with upward arrow
+- **Colors**: Primary (#2196F3) for folder, neutral (#757575) for arrow
+- **Details**: Open folder with arrow emerging from center
+- **SVG Elements**: Path for folder shape, arrow pointing up
+
+##### Group 2: History Controls
+
+**Undo** (`[⟲]`)
+- **Icon**: Curved arrow pointing counter-clockwise (left)
+- **Colors**: Primary (#2196F3)
+- **Details**: Clean curved arrow, arrowhead on left end
+- **SVG Elements**: Path with arc and arrowhead
+
+**Redo** (`[⟳]`)
+- **Icon**: Curved arrow pointing clockwise (right)
+- **Colors**: Primary (#2196F3)
+- **Details**: Mirror of Undo icon
+- **SVG Elements**: Path with arc and arrowhead
+
+##### Group 3: 2D Drawing Tools (Tool Families)
+
+**Point Tool Family**
+- **Free Point**: Single point (filled circle)
+  - **Colors**: Primary (#2196F3) for the point
+  - **Details**: 4px radius filled circle, centered
+  - **SVG Elements**: Circle (cx="12" cy="12" r="4")
+
+- **Intersection Point**: Two intersecting lines with point at intersection
+  - **Colors**: Secondary (#FF9800) for lines, primary (#2196F3) for intersection point
+  - **Details**: Two lines crossing at center, point highlighted at intersection
+  - **SVG Elements**: Two line elements, circle at intersection
+
+**Line Tool Family**
+- **Line by Two Points**: Line segment with two highlighted endpoints
+  - **Colors**: Primary (#2196F3) for line, secondary (#FF9800) for two endpoint circles
+  - **Details**: Diagonal line from bottom-left to top-right, 2px circles at ends
+  - **SVG Elements**: Line, two circles
+
+- **Parallel Line**: Two parallel lines, one highlighted with point on other
+  - **Colors**: Neutral (#757575) for reference line, primary (#2196F3) for new line, secondary (#FF9800) for defining point
+  - **Details**: Two horizontal parallel lines, point on reference line
+  - **SVG Elements**: Two lines, one circle
+
+- **Perpendicular Line**: Two perpendicular lines with right-angle symbol, point at junction
+  - **Colors**: Neutral (#757575) for reference line, primary (#2196F3) for perpendicular line, secondary (#FF9800) for defining point
+  - **Details**: Horizontal reference line, vertical perpendicular line, small right-angle square at junction, point on reference
+  - **SVG Elements**: Two lines, small square for right angle, circle
+
+- **Tangent (Point)**: Circle with external point and tangent line
+  - **Colors**: Secondary (#FF9800) for circle and point, primary (#2196F3) for tangent line
+  - **Details**: Small circle (6px radius), external point, line tangent to circle passing through point
+  - **SVG Elements**: Circle, line, point circle
+
+- **Tangent (Parallel)**: Circle with reference line and parallel tangent
+  - **Colors**: Neutral (#757575) for reference line, secondary (#FF9800) for circle, primary (#2196F3) for tangent line
+  - **Details**: Small circle, horizontal reference line above, tangent line parallel to reference
+  - **SVG Elements**: Circle, two parallel lines
+
+**Segment Tool Family**
+- **Segment by Two Points**: Line segment with endpoints, endpoint markers emphasized
+  - **Colors**: Primary (#2196F3) for segment, secondary (#FF9800) for endpoint circles with extra emphasis (larger or outlined)
+  - **Details**: Similar to Line tool but endpoints have visual weight (filled circles 3px radius)
+  - **SVG Elements**: Line, two larger circles at ends
+
+**Circle Tool Family**
+- **Circle by Center and Point**: Circle with center point and circumference point highlighted
+  - **Colors**: Primary (#2196F3) for circle outline, secondary (#FF9800) for center point and circumference point
+  - **Details**: Circle (8px radius), center point (2px), circumference point (2px) with small radial line connecting them
+  - **SVG Elements**: Circle, two point circles, optional radius line
+
+**Arc Tool Family** (if implemented)
+- **Arc by Three Points**: Arc with three defining points
+  - **Colors**: Primary (#2196F3) for arc, secondary (#FF9800) for three points
+  - **Details**: Curved arc spanning ~90-120°, three points along arc
+  - **SVG Elements**: Path (arc), three circles
+
+##### Group 4: Dihedral Tools
+
+**Guide Tool**
+- **Icon**: Perpendicular line to hinge line with point
+  - **Colors**: Neutral (#757575) for hinge line (horizontal, dashed), primary (#2196F3) for guide (vertical, solid), secondary (#FF9800) for defining point
+  - **Details**: Horizontal dashed line (hinge), vertical solid line perpendicular to it, point on hinge
+  - **SVG Elements**: Line (dashed), line (solid), circle, small right-angle marker
+
+**Transport Tool** (if implemented)
+- **Icon**: Two parallel lines (guides) with point moving between them
+  - **Colors**: Neutral (#757575) for guides, secondary (#FF9800) for source point, primary (#2196F3) for transported point, dotted line connecting them
+  - **Details**: Two vertical parallel lines, point on left guide, arrow/dotted line to right guide
+  - **SVG Elements**: Two lines, two circles, arrow or dashed connecting line
+
+##### Group 5: 3D Creation Tools (if implemented)
+
+**3D Point Tool**
+- **Icon**: Two 2D points (projections) connected to 3D point
+  - **Colors**: Secondary (#FF9800) for 2D projections, primary (#2196F3) for 3D point, dotted lines connecting
+  - **Details**: Two points in different planes (visual suggestion), converging to 3D point
+  - **SVG Elements**: Three circles, dotted projection lines
+
+##### Group 6: Navigation Tools
+
+**Pan Tool** (if separate button, or Shift+drag indicator)
+- **Icon**: Hand cursor or four-directional arrows
+  - **Colors**: Neutral (#757575)
+  - **Details**: Open hand or cross-arrows
+  - **SVG Elements**: Path for hand shape or arrow cross
+
+**Zoom In** (`[+🔍]`)
+- **Icon**: Magnifying glass with plus symbol
+  - **Colors**: Neutral (#757575) for glass, primary (#2196F3) for plus
+  - **Details**: Circular lens with handle, plus in lens
+  - **SVG Elements**: Circle, line (handle), plus symbol
+
+**Zoom Out** (`[-🔍]`)
+- **Icon**: Magnifying glass with minus symbol
+  - **Colors**: Neutral (#757575) for glass, primary (#2196F3) for minus
+  - **Details**: Circular lens with handle, minus in lens
+  - **SVG Elements**: Circle, line (handle), minus symbol
+
+**Fit View** (`[⤢]`)
+- **Icon**: Frame with inward arrows or maximize/expand icon
+  - **Colors**: Primary (#2196F3)
+  - **Details**: Rectangle with arrows pointing inward from corners
+  - **SVG Elements**: Rectangle, four small arrows
+
+##### Group 7: Active Plane Selector
+
+**Plane Dropdown** (shows active plane icon + label in dropdown only)
+- **Icon**: Representation of projection planes in dihedral configuration
+  - **Colors**: Primary (#2196F3) for active plane, neutral (#757575) for other planes
+  - **Details**: Simplified L-shape or two rectangles meeting at hinge
+  - **SVG Elements**: Two rectangles meeting at angle
+
+#### Button Layout & Styling
+
+**Button Structure**:
+```html
+<button class="toolbar-button" :class="{ active: isActive }" :title="tooltip">
+  <svg class="toolbar-icon" width="24" height="24" viewBox="0 0 24 24">
+    <!-- SVG content here -->
+  </svg>
+</button>
+```
+
+**CSS Specifications**:
+```css
+.toolbar-button {
+  width: 40px;
+  height: 40px;
+  padding: 8px;          /* 8px padding gives 24px icon space */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.toolbar-button:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.toolbar-button.active {
+  background: #e3f2fd;  /* Light blue background */
+  border-color: #2196f3; /* Blue border */
+}
+
+.toolbar-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+```
+
+**Tool Family Dropdown Button**:
+```html
+<div class="tool-family-button">
+  <button class="tool-button-main">
+    <svg class="toolbar-icon"><!-- Active sub-tool icon --></svg>
+  </button>
+  <button class="tool-button-dropdown">
+    <svg width="10" height="10"><path d="M 2 4 L 5 7 L 8 4"/></svg>
+  </button>
+</div>
+```
+
+**Dropdown Menu Items** (icon-only, no text):
+```html
+<div class="tool-menu-item" :class="{ active: isActive }">
+  <svg class="toolbar-icon"><!-- Sub-tool icon --></svg>
+  <span class="checkmark" v-if="isActive">✓</span>
+</div>
+```
+
+#### Tooltips
+
+With icon-only buttons, **tooltips are critical** for discoverability:
+
+**Format**: `[Tool Name] - [Brief Description] ([Keyboard Shortcut])`
+
+**Examples**:
+- Selection Tool: `"Selection Tool - Pick, move, and edit objects"`
+- Free Point: `"Free Point - Click to place point (P)"`
+- Line by Two Points: `"Line - Create line through two points (L)"`
+- Parallel Line: `"Parallel Line - Create line parallel to reference through point"`
+- Circle: `"Circle - Pick center then circumference point (C)"`
+- Undo: `"Undo last action (Ctrl+Z)"`
+
+**Tooltip Timing**:
+- Delay: 500ms (half second) before showing
+- Position: Below button for top toolbar, adjust if near screen edge
+- Style: Dark background (#424242), white text, 4px border-radius, subtle shadow
+
+#### Responsive Behavior
+
+**Wide Screens (>1200px)**:
+- All buttons 40×40px with 4px gaps between groups
+- All tool family dropdowns visible
+
+**Medium Screens (800-1200px)**:
+- Buttons remain 40×40px but groups may wrap to second row
+- Toolbar becomes two rows if needed
+
+**Narrow Screens (<800px)**:
+- Overflow menu ("More ⋮") groups less-used tools
+- Priority buttons remain visible: Selection, File Ops, History, Drawing Tools
+- Navigation tools move to overflow
+
+#### Implementation Notes
+
+**Icon Components**: Each icon as separate Vue component in `frontend/src/components/icons/`
+- Example: `PointToolIcon.vue`, `LineToolIcon.vue`, etc.
+- Props: `size` (default 24), `color` (for overrides), `secondaryColor`
+
+**Icon Library**: All icons in `frontend/src/components/icons/index.ts` for centralized exports
+
+**Color Constants**: Define in `frontend/src/constants/colors.ts`:
+```typescript
+export const ICON_COLORS = {
+  primary: '#2196F3',    // Created element
+  secondary: '#FF9800',  // Argument elements
+  neutral: '#757575',    // Context/reference
+  inactive: '#9E9E9E'    // Disabled state
+};
+```
+
+**Accessibility**:
+- All buttons have `aria-label` matching tooltip text
+- Active state indicated with `aria-pressed="true"`
+- Keyboard navigation: Tab through buttons, Enter/Space to activate
+- Focus visible: 2px blue outline offset 2px
+
+#### Migration Strategy
+
+1. **Phase 1**: Create all SVG icon components (15-20 icons)
+2. **Phase 2**: Update ToolFamilyButton.vue to use icons instead of emoji/text
+3. **Phase 3**: Update Toolbar.vue to remove text labels from all buttons
+4. **Phase 4**: Update dropdown menus to icon-only with checkmarks
+5. **Phase 5**: Ensure consistent 40×40px button sizing across all groups
+6. **Phase 6**: Visual regression testing to verify icon clarity
+7. **Phase 7**: Usability testing to confirm icons are self-explanatory
+
+#### Acceptance Criteria
+
+- ✅ All toolbar buttons are icon-only (no text labels visible on buttons)
+- ✅ All icons follow 24×24px SVG standard with 2px padding
+- ✅ All buttons are uniform 40×40px size
+- ✅ Color palette correctly applied: blue for created elements, orange for arguments
+- ✅ Icons are visually distinct and recognizable
+- ✅ Tooltips provide clear descriptions on hover
+- ✅ Dropdown menus use icons with checkmark for active tool
+- ✅ Active state clearly indicated (blue background + border)
+- ✅ Icons scale properly at different zoom levels (SVG advantage)
+- ✅ Keyboard navigation and accessibility fully functional
+- ✅ All toolbar groups (Selection, File, History, Plane, Drawing, Dihedral, Nav) updated
+- ✅ No regressions in toolbar functionality
+- ✅ Visual regression tests pass (icon rendering consistent)
+- ✅ E2E tests verify toolbar interactions work with icons
 - Clicking a family button always activates its last-used sub-tool for efficiency
 
 **Example User Workflow**:
@@ -1173,6 +1516,350 @@ The toolbar system **does not introduce implicit inferences**:
 **Requirement**: All automatically created elements MUST appear as auxiliary actions in the ProcessTree, clearly distinguishing them from manually created primary elements.
 
 **Pedagogical Value**: Every entity used as input must exist explicitly. Each construction reflects exactly the user's decisions. Students understand the complete dependency chain.
+
+### Polymorphic Tool Behavior (Phases 73-75)
+
+**Purpose**: Unified tools that dynamically determine construction method based on selected element types, with mouse-position-based disambiguation for multiple geometric solutions. Reduces toolbar clutter while maintaining explicit construction intent.
+
+#### Design Rationale
+
+**Problem with Explicit Tools**: Previous toolbar had separate buttons for each construction method (Line by Two Points, Parallel Line, Perpendicular Line, Tangent Lines), leading to:
+- Cluttered toolbar with 10+ buttons
+- Cognitive load: users must predict which tool they need
+- Rigid workflow: must select tool before knowing which elements to select
+
+**Polymorphic Solution**: Single tool button that adapts to selected elements:
+- **Line Tool**: Automatically becomes "line through two points", "perpendicular line", "tangent to circle", or "between two circles" based on what user selects
+- **Segment Tool**: Similar polymorphic behavior for bounded geometry
+- **Circle Tool**: Supports center+point, center+radius, tangent constraints, three-point/three-line constructions
+
+**Benefits**:
+- **Fewer buttons**: Line family consolidated from 6 buttons to 1
+- **Natural workflow**: Select elements first, tool adapts to choices
+- **Discoverable**: Users learn construction methods by experimentation
+- **Consistent**: Same interaction pattern across all polymorphic tools
+
+#### Polymorphic Line Tool
+
+**Activation**: Click "Line" button (single unified button, no dropdown needed)
+
+**Construction Methods** (determined by selected elements):
+
+| First Selection | Second Selection | Construction Method | Result Element Type |
+|-----------------|------------------|---------------------|---------------------|
+| Point | Point | Line through two points | Line2DByTwoPoints |
+| Point | Line | Perpendicular from point | Line2DPerpendicularToLine |
+| Line | Point | Perpendicular from point | Line2DPerpendicularToLine |
+| Point | Circle | Tangent through point | Line2DTangentToCircleThroughPoint |
+| Circle | Point | Tangent through point | Line2DTangentToCircleThroughPoint |
+| Circle | Circle | Tangent between circles | Line2DCircleToCircle |
+
+**Status Messages** (dynamic feedback):
+```
+Initial:     "Line: Select first element (point, line, or circle)"
+After point: "Line through point: Select second element (point, line, or circle)"
+After line:  "Line from line: Select point for perpendicular construction"
+After circle:"Line from circle: Select point (tangent) or circle (tangent between circles)"
+```
+
+**Mouse-Based Disambiguation**:
+
+- **Point + Circle**: Two tangent lines exist. System:
+  1. Calculates both tangent lines
+  2. Measures angle of mouse click relative to circle's radius vector
+  3. Selects tangent whose touch point angle is closest to click angle
+  4. Visual preview shows selected tangent before finalizing
+
+- **Circle + Circle**: Six possible constructions:
+  - External tangent 1 (both circles on same side)
+  - External tangent 2 (both circles on opposite side)
+  - Internal tangent 1 (crossing tangent, upper-left to lower-right)
+  - Internal tangent 2 (crossing tangent, lower-left to upper-right)
+  - Perpendicular to center line
+  - Through circle centers
+  
+  System:
+  1. Calculates all six geometric solutions
+  2. For each solution, finds intersection/touch points with both circles
+  3. Measures total distance from two click positions to solution feature points
+  4. Selects solution with minimum total distance
+  5. Visual preview shows all six solutions with selected one highlighted
+
+**Visual Feedback**:
+- **Selection hints**: Valid next elements highlighted on hover
+- **Solution preview**: For ambiguous cases, shows selected solution before confirming
+- **Infeasibility indicator**: If construction is impossible (e.g., point inside circle for tangent), clear message shown
+
+**Keyboard Shortcuts**: `L` activates Line Tool (same as before)
+
+#### Polymorphic Segment Tool
+
+**Similar Pattern to Line Tool**, but creates bounded segments:
+
+| First Selection | Second Selection | Construction Method | Result Element Type |
+|-----------------|------------------|---------------------|---------------------|
+| Point | Point | Segment between points | Segment2DByPoints |
+| Point | Line | Perpendicular segment to line | Segment2DPointToLine |
+| Line | Point | Perpendicular segment to line | Segment2DPointToLine |
+| Point | Circle | Tangent segment | Segment2DPointToCircleTangent |
+| Circle | Point | Tangent segment | Segment2DPointToCircleTangent |
+| Circle | Circle | Tangent segment between circles | Segment2DCircleToCircle |
+
+**Key Difference from Line**: Segments have explicit endpoints, always bounded
+
+**Mouse Disambiguation**: Identical algorithm to Line Tool
+
+**Keyboard Shortcut**: `S` activates Segment Tool
+
+#### Polymorphic Circle Tool
+
+**Activation**: Click "Circle" button
+
+**Construction Methods** (8 total):
+
+| Arguments | Construction Method | Result Element Type |
+|-----------|---------------------|---------------------|
+| 2 points | Center + circumference point | Circle2DByCenterAndPoint |
+| Point + Point (radius mode) | Center + radius-defining point | Circle2DByCenterAndRadiusPoint |
+| Point + Line | Center tangent to line | Circle2DByCenterTangentToLine |
+| Point + Circle | Center tangent to circle | Circle2DByCenterTangentToCircle |
+| 3 points | Circle through three points | Circle2DByThreePoints |
+| 3 lines | Circle tangent to three lines | Circle2DByThreeTangentLines |
+| 2 lines + 1 point | Tangent to lines through point | Circle2DByTwoTangentLinesAndPoint |
+| 1 line + 1 circle + 1 point | Tangent to line & circle, through point | Circle2DByLineTangentCircleTangentAndPoint |
+
+**Status Messages**:
+```
+Initial:       "Circle: Select first element (point, line, or circle)"
+After point:   "Circle with center: Select circumference point, radius point, tangent line, or tangent circle"
+After 2 points:"Circle: Select third point for three-point circle, or finalize with current center+circumference"
+After line:    "Circle tangent to line: Select second line, point for center, or third line for three-tangent circle"
+```
+
+**Argument Collection Strategy**:
+- Tool uses ArgumentCollectorTool framework with 8 ToolArgumentSet definitions
+- Framework automatically tracks viable construction methods as elements are selected
+- Selection mask dynamically updates to union of all viable next arguments
+
+**Mouse Disambiguation**:
+- **Point + Circle**: Two solutions (external/internal tangency). Mouse click on circle determines which.
+- **Three Lines**: Four solutions (incircle + three excircles). Center closest to average of three clicks selected.
+- **Three Points**: Single solution (circumcircle), no disambiguation needed.
+
+**Keyboard Shortcut**: `C` activates Circle Tool
+
+#### Toolbar Organization Changes
+
+**Before (Explicit Tools)**:
+```
+[Point▼] [Line▼] [Segment] [Circle] [Parallel▼] [Perpendicular▼] [Tangent▼] [Guide▼] [Transport▼]
+9 buttons (some with dropdowns)
+```
+
+**After (Polymorphic Tools)**:
+```
+[Point▼] [Line] [Segment] [Circle] [Guide▼] [Transport▼]
+6 buttons (3 fewer, more compact)
+```
+
+**Removed Buttons** (functionality absorbed):
+- Parallel Line → Line Tool with point+line arguments
+- Perpendicular Line → Line Tool with point+line arguments
+- Tangent (Point) → Line Tool with point+circle arguments
+- Tangent (Parallel) → Line Tool with circle+line arguments (future extension)
+
+**Retained Explicit Tools**:
+- **Point Tool Family**: Keeps Free Point vs Intersection Point as separate choices (unambiguous, no polymorphism needed)
+- **Guide Tool**: Dihedral-specific tool, keeps explicit button
+- **Transport Tool**: Dihedral-specific tool, keeps explicit button
+
+#### User Interaction Flow
+
+**Example: Creating Perpendicular Line**
+
+Previous workflow (explicit tool):
+1. Think: "I need a perpendicular line"
+2. Find and click "Perpendicular Line" button in toolbar
+3. Click reference line
+4. Click/create point for perpendicular
+
+New workflow (polymorphic tool):
+1. Click "Line" button (or just start if already active)
+2. Click any point
+3. Click any line
+4. System automatically recognizes: "line from point, reference line selected → create perpendicular"
+
+**Example: Creating Tangent Line to Circle Through Point**
+
+Previous workflow:
+1. Think: "I need tangent to circle through external point"
+2. Find and click "Tangent (Point)" button
+3. Click circle
+4. Click external point
+5. System might ask for index selection (0 or 1)
+
+New workflow:
+1. Click "Line" button
+2. Click circle (anywhere on circumference, position matters for later disambiguation)
+3. Click external point (position determines which of two tangents)
+4. System automatically:
+   - Calculates both tangent lines
+   - Measures angle of point click relative to circle
+   - Selects tangent closest to click position
+   - Shows preview before finalizing
+
+**Example: Creating Tangent Between Two Circles**
+
+New workflow (6 solutions):
+1. Click "Line" button
+2. Click first circle (note position of click on circumference)
+3. Click second circle (note position of click on circumference)
+4. System automatically:
+   - Calculates all 6 tangent lines (2 external, 2 internal, perpendicular, through-centers)
+   - Measures distance from both click positions to each solution's touch points
+   - Selects solution with minimum total distance
+   - Shows preview with all 6 solutions, selected one highlighted
+   - User can press `Tab` to cycle through solutions before confirming
+
+#### Visual Feedback During Construction
+
+**Step 1: Tool Activated**
+- Status bar: "Line: Select first element (point, line, or circle)"
+- Canvas: All selectable elements highlighted on hover (points, lines, circles)
+
+**Step 2: First Element Selected (e.g., Point)**
+- Status bar: "Line through point: Select second element (point, line, or circle)"
+- Canvas: 
+  - Selected point emphasized (larger, different color)
+  - Valid next elements highlighted on hover
+  - Invalid elements (e.g., the same point) not highlighted
+
+**Step 3: Second Element Hovered (e.g., Circle)**
+- Status bar: "Line tangent to circle through point - click near desired tangent"
+- Canvas:
+  - Preview of both possible tangent lines shown faintly
+  - As mouse moves around circle, one tangent highlights based on angle
+  - Real-time visual feedback shows which solution will be selected
+
+**Step 4: Second Element Clicked**
+- System finalizes construction
+- New line created and added to world
+- Tool remains active (stays-active behavior for primitive tools)
+- Ready for next construction
+
+#### Implementation Architecture
+
+**ArgumentCollectorTool Extension**:
+- Each polymorphic tool defines multiple ToolArgumentSet entries
+- Example for Line Tool:
+  ```typescript
+  getArgumentSets(): ToolArgumentSet[] {
+    return [
+      {
+        arguments: [
+          { name: 'point1', mask: SelectionMask.point() },
+          { name: 'point2', mask: SelectionMask.point() }
+        ],
+        label: 'Line through two points'
+      },
+      {
+        arguments: [
+          { name: 'point', mask: SelectionMask.point() },
+          { name: 'line', mask: SelectionMask.anyLine() }
+        ],
+        label: 'Perpendicular line from point'
+      },
+      // ... more sets for other combinations
+    ];
+  }
+  ```
+
+**Mouse Position Storage**:
+- ArgumentCollectorTool stores mouse position with each collected argument:
+  ```typescript
+  type ArgumentValue = {
+    element: Element2D;
+    position: Vector3;  // Plane coordinates of click
+  };
+  ```
+- execute() method receives full map with positions for disambiguation
+
+**Geometric Solution Computation**:
+- New utility functions in Intersections.ts:
+  ```typescript
+  computeCircleCircleTangentLines(c1, c2): TangentSolution[]
+  // Returns array of 6 solutions with metadata
+  
+  selectClosestSolution(solutions, clickPositions): TangentSolution
+  // Distance-based selection algorithm
+  ```
+
+**Visual Preview System**:
+- Preview layer in Paper.ts renders candidate solutions
+- Real-time update as mouse moves (for angle-based disambiguation)
+- Selected solution emphasized, others shown faintly
+
+#### Accessibility and Discoverability
+
+**First-Time Users**:
+- Tooltips explain polymorphic behavior: "Line - adapts to selected elements"
+- Status messages guide through each step
+- Visual feedback shows viable construction methods in real-time
+
+**Keyboard-Only Users**:
+- Tab cycles through valid elements for selection
+- Space/Enter confirms selection
+- For ambiguous cases, Tab cycles through solutions before confirming
+
+**Screen Readers**:
+- ARIA live regions announce status changes
+- Solution previews announced: "2 possible tangent lines, solution 1 selected"
+
+**Help System**:
+- Context-sensitive help explains current construction method
+- Examples shown for each polymorphic combination
+
+#### Testing Strategy
+
+**Unit Tests**:
+- Each construction method tested independently
+- Mouse disambiguation algorithm verified with edge cases
+- ArgumentCollectorTool polymorphic behavior tested
+
+**Integration Tests**:
+- Full workflows for each construction combination
+- Verify correct element types created
+- Parametric updates work after polymorphic construction
+
+**E2E Tests**:
+- User workflows with Playwright
+- Mouse click position disambiguation verified
+- Visual feedback rendering checked
+- Tool state persistence tested
+
+**Usability Testing**:
+- First-time user can discover construction methods
+- Experienced users work faster with polymorphic tools
+- Ambiguous case disambiguation is intuitive
+
+#### Acceptance Criteria
+
+- ✅ Line Tool supports 6 construction methods dynamically
+- ✅ Segment Tool supports 6 construction methods dynamically
+- ✅ Circle Tool supports 8 construction methods dynamically
+- ✅ Mouse position correctly disambiguates multiple solutions
+- ✅ Status messages clearly communicate current construction method
+- ✅ Visual feedback shows viable next arguments and solution previews
+- ✅ Tool families consolidated (fewer toolbar buttons)
+- ✅ ArgumentCollectorTool framework extended to support polymorphism
+- ✅ Geometric solution computation algorithms implemented
+- ✅ All construction methods create correct element variations
+- ✅ Parametric behavior works for all polymorphic constructions
+- ✅ Keyboard shortcuts work (L=Line, S=Segment, C=Circle)
+- ✅ Accessibility features functional (ARIA, keyboard-only, screen readers)
+- ✅ All unit, integration, and E2E tests passing
+- ✅ Documentation complete (FR-055 through FR-059, Phase 73-75 sections)
+- ✅ No regressions in existing tool behavior
 
 ---
 

@@ -7605,3 +7605,1354 @@ const circumferencePointId = pointResult.outputs.pointId;
 **Checkpoint**: Toolbar transformed into modern tool family organization with smart last-used memory and context-appropriate completion behavior.
 
 ---
+
+## Phase 68: Toolbar Icon-Only Design - SVG Illustrations with Color-Coded Construction Methods
+
+**Reference**: [spec.md](./spec.md) FR-052, [ui-spec.md](./ui-spec.md#toolbar-icon-only-design-phase-68), [data-model.md](./data-model.md#phase-68-toolbar-icon-only-design---svg-illustrations-with-color-coded-construction-methods)
+
+**Status**: 📋 PLANNED (Jan 15, 2026)
+
+**Goal**: Replace text-based toolbar buttons with professional SVG icon illustrations that show both the created element and required arguments using color-coding (blue for created, orange for arguments)
+
+**Dependencies**: Phase 67 (Tool Families) must be complete
+
+**Total Tasks**: 32 tasks (T1138-T1169)
+
+### Phase 68.1: SVG Icon Component Creation (T1138-T1152)
+
+#### T1138: Create icon infrastructure
+**Description**: Set up icon component structure and color constants
+**Steps**:
+1. Create `frontend/src/components/icons/` directory structure:
+   - `index.ts` (central exports)
+   - `toolbar/` subdirectory
+2. Create `frontend/src/constants/colors.ts` with ICON_COLORS:
+   ```typescript
+   export const ICON_COLORS = {
+     primary: '#2196F3',    // Created element
+     secondary: '#FF9800',  // Argument elements
+     neutral: '#757575',    // Context/reference
+     inactive: '#9E9E9E'    // Disabled state
+   } as const;
+   ```
+3. Create base icon component template as reference
+**Files**: `frontend/src/components/icons/`, `frontend/src/constants/colors.ts`
+**Acceptance**: Directory structure exists, ICON_COLORS constant defined
+
+#### T1139: Create SelectionToolIcon.vue
+**Description**: Arrow cursor icon for selection tool
+**SVG Spec**: Arrow pointer at 45° angle, blue tip, grey shaft
+**Colors**: Primary for tip, neutral for shaft
+**Size**: 24×24px viewBox, arrow fills ~18×18px area
+**Files**: `frontend/src/components/icons/toolbar/SelectionToolIcon.vue`
+
+#### T1140: Create FreePointIcon.vue
+**Description**: Single point icon
+**SVG Spec**: Filled circle, radius 4px, centered
+**Colors**: Primary (#2196F3)
+**Files**: `frontend/src/components/icons/toolbar/FreePointIcon.vue`
+
+#### T1141: Create IntersectionPointIcon.vue
+**Description**: Two intersecting lines with point at intersection
+**SVG Spec**: Two lines crossing at center, point at intersection
+**Colors**: Secondary for lines, primary for intersection point
+**Files**: `frontend/src/components/icons/toolbar/IntersectionPointIcon.vue`
+
+#### T1142: Create LineByTwoPointsIcon.vue
+**Description**: Line with two highlighted endpoints
+**SVG Spec**: Diagonal line from bottom-left to top-right, 2px circles at ends
+**Colors**: Primary for line (1.5px stroke), secondary for endpoint circles (r=2px)
+**Reference**: See data-model.md Phase 68 for complete template example
+**Files**: `frontend/src/components/icons/toolbar/LineByTwoPointsIcon.vue`
+
+#### T1143: Create ParallelLineIcon.vue
+**Description**: Two parallel lines, one highlighted with point on other
+**SVG Spec**: Two horizontal parallel lines (4px apart), point on reference line
+**Colors**: Neutral for reference line (top), primary for new line (bottom), secondary for point (r=2px on reference)
+**Files**: `frontend/src/components/icons/toolbar/ParallelLineIcon.vue`
+
+#### T1144: Create PerpendicularLineIcon.vue
+**Description**: Two perpendicular lines with right-angle symbol
+**SVG Spec**: Horizontal reference line, vertical perpendicular line, small right-angle square at junction (2×2px), point on reference
+**Colors**: Neutral for reference (horizontal), primary for perpendicular (vertical), secondary for point
+**Files**: `frontend/src/components/icons/toolbar/PerpendicularLineIcon.vue`
+
+#### T1145: Create TangentThroughPointIcon.vue
+**Description**: Circle with external point and tangent line
+**SVG Spec**: Circle (r=6px, centered), external point (4px away), tangent line touching circle
+**Colors**: Secondary for circle (1px stroke) and point (r=2px), primary for tangent line (1.5px stroke)
+**Files**: `frontend/src/components/icons/toolbar/TangentThroughPointIcon.vue`
+
+#### T1146: Create TangentParallelIcon.vue
+**Description**: Circle with reference line and parallel tangent
+**SVG Spec**: Circle (r=6px), horizontal reference line above, tangent line parallel to reference
+**Colors**: Neutral for reference line, secondary for circle (1px stroke), primary for tangent (1.5px stroke)
+**Files**: `frontend/src/components/icons/toolbar/TangentParallelIcon.vue`
+
+#### T1147: Create SegmentByPointsIcon.vue
+**Description**: Segment with emphasized endpoints
+**SVG Spec**: Line segment with larger endpoint circles (r=3px filled)
+**Colors**: Primary for segment (1.5px stroke), secondary for endpoints (r=3px)
+**Files**: `frontend/src/components/icons/toolbar/SegmentByPointsIcon.vue`
+
+#### T1148: Create CircleByCenterPointIcon.vue
+**Description**: Circle with center and circumference points highlighted
+**SVG Spec**: Circle (r=7px), center point (r=2px), circumference point (r=2px), optional thin radius line
+**Colors**: Primary for circle outline (1.5px stroke), secondary for both points
+**Files**: `frontend/src/components/icons/toolbar/CircleByCenterPointIcon.vue`
+
+#### T1149: Create GuideIcon.vue
+**Description**: Perpendicular line to dashed hinge line with point
+**SVG Spec**: Horizontal dashed line (hinge), vertical solid line perpendicular, point on hinge, small right-angle marker
+**Colors**: Neutral for hinge (dashed), primary for guide (solid), secondary for point
+**Files**: `frontend/src/components/icons/toolbar/GuideIcon.vue`
+
+#### T1150: Create file operation icons (NewProjectIcon, OpenProjectIcon)
+**Description**: Document with plus, folder with arrow
+**SVG Specs**: 
+- New: Rectangular document with folded corner, centered plus
+- Open: Open folder with upward arrow
+**Colors**: Primary for main shapes, neutral for arrows
+**Files**: `frontend/src/components/icons/toolbar/NewProjectIcon.vue`, `OpenProjectIcon.vue`
+
+#### T1151: Create history icons (UndoIcon, RedoIcon)
+**Description**: Curved arrows for undo/redo
+**SVG Specs**: Curved arrows with arrowheads (counter-clockwise for undo, clockwise for redo)
+**Colors**: Primary
+**Files**: `frontend/src/components/icons/toolbar/UndoIcon.vue`, `RedoIcon.vue`
+
+#### T1152: Create navigation icons (PanIcon, ZoomInIcon, ZoomOutIcon, FitViewIcon)
+**Description**: Hand cursor, magnifying glasses with +/-, frame with arrows
+**SVG Specs**: Follow ui-spec.md specifications
+**Colors**: Neutral for bases, primary for symbols
+**Files**: `frontend/src/components/icons/toolbar/{Pan,ZoomIn,ZoomOut,FitView}Icon.vue`
+
+### Phase 68.2: Update Type Definitions (T1153)
+
+#### T1153: Update ToolConfig interfaces to use Component type
+**Description**: Change icon property from string (emoji) to Component (Vue component)
+**Steps**:
+1. Update `frontend/src/types/ToolConfig.ts`:
+   ```typescript
+   import type { Component } from 'vue';
+   
+   export interface ToolConfig {
+     id: string;
+     label: string;  // Used in tooltip only now
+     icon: Component;  // Changed from string to Component
+     shortcut?: string;
+     tooltip: string;
+     completionBehavior: 'stay-active' | 'return-to-selection';
+   }
+   
+   export interface ToolFamilyConfig {
+     id: string;
+     label: string;  // Used in tooltip only
+     icon: Component;  // Changed from string to Component
+     defaultTool: string;
+     tools: ToolConfig[];
+   }
+   ```
+2. Update imports in toolFamilies.ts
+**Files**: `frontend/src/types/ToolConfig.ts`
+**Acceptance**: Types updated, TypeScript compiles without icon-related errors
+
+### Phase 68.3: Update Tool Families Configuration (T1154)
+
+#### T1154: Update toolFamilies.ts to use icon components
+**Description**: Replace emoji strings with imported icon components
+**Steps**:
+1. Add imports:
+   ```typescript
+   import {
+     FreePointIcon,
+     IntersectionPointIcon,
+     LineByTwoPointsIcon,
+     ParallelLineIcon,
+     PerpendicularLineIcon,
+     TangentThroughPointIcon,
+     TangentParallelIcon,
+     SegmentByPointsIcon,
+     CircleByCenterPointIcon,
+     GuideIcon,
+     TransportIcon
+   } from '@/components/icons';
+   ```
+2. Replace all `icon: '●'` with `icon: FreePointIcon` etc.
+3. Ensure labels remain for tooltips
+**Files**: `frontend/src/config/toolFamilies.ts`
+**Acceptance**: All tool families use icon components, no emoji strings
+
+### Phase 68.4: Update ToolFamilyButton Component (T1155-T1156)
+
+#### T1155: Refactor ToolFamilyButton.vue template to use icon components
+**Description**: Replace emoji text rendering with `<component :is>` for icons
+**Steps**:
+1. Update main button:
+   ```vue
+   <button class="tool-button-main" :title="activeToolTooltip" :aria-label="activeToolTooltip">
+     <component :is="activeToolIcon" :size="24" class="toolbar-icon" />
+   </button>
+   ```
+2. Update dropdown menu items:
+   ```vue
+   <div class="tool-menu-item" :title="tool.tooltip" :aria-label="tool.tooltip">
+     <component :is="tool.icon" :size="24" class="toolbar-icon" />
+     <span v-if="isActive" class="checkmark">✓</span>
+   </div>
+   ```
+3. Remove all text labels (tool.label) from template
+4. Keep tooltips on title attributes
+**Files**: `frontend/src/components/toolbars/ToolFamilyButton.vue`
+**Acceptance**: Buttons show icons only, no text, tooltips work
+
+#### T1156: Update ToolFamilyButton.vue styles for icon-only layout
+**Description**: Adjust CSS for icon-only buttons with uniform sizing
+**Steps**:
+1. Set button dimensions:
+   ```css
+   .tool-button-main { width: 32px; height: 40px; padding: 8px; }
+   .tool-button-dropdown { width: 16px; height: 40px; }
+   .tool-menu-item { min-height: 40px; padding: 8px 12px; }
+   ```
+2. Remove text-related styles (.tool-label)
+3. Ensure icon sizing: `.toolbar-icon { width: 24px; height: 24px; flex-shrink: 0; }`
+4. Keep checkmark styling
+**Files**: `frontend/src/components/toolbars/ToolFamilyButton.vue`
+**Acceptance**: Buttons uniform 40px height, icons centered, no layout breaks
+
+### Phase 68.5: Update Toolbar Component (T1157-T1160)
+
+#### T1157: Update Toolbar.vue - Selection and File Operations buttons
+**Description**: Convert to icon-only with components
+**Steps**:
+1. Import icon components:
+   ```typescript
+   import { SelectionToolIcon, NewProjectIcon, OpenProjectIcon } from '@/components/icons';
+   ```
+2. Update Selection button:
+   ```vue
+   <button class="toolbar-button" title="Selection Tool - Pick, move, and edit objects">
+     <SelectionToolIcon :size="24" />
+   </button>
+   ```
+3. Update New/Open buttons similarly
+4. Remove text `<span>` elements
+**Files**: `frontend/src/components/toolbars/Toolbar.vue` (template section)
+**Acceptance**: Selection, New, Open buttons show icons only
+
+#### T1158: Update Toolbar.vue - History and Navigation buttons
+**Description**: Convert Undo, Redo, Pan, Zoom buttons to icons
+**Steps**:
+1. Import: `UndoIcon, RedoIcon, ZoomInIcon, ZoomOutIcon, FitViewIcon`
+2. Update each button template with icon component
+3. Remove text labels, keep tooltips
+4. Ensure disabled state works (`:disabled="!canUndo"`)
+**Files**: `frontend/src/components/toolbars/Toolbar.vue`
+**Acceptance**: History and nav buttons icon-only, disabled states work
+
+#### T1159: Update PlaneSelector component for icon-only style
+**Description**: Ensure Active Plane dropdown matches icon-only aesthetic
+**Steps**:
+1. Review `frontend/src/components/toolbars/PlaneSelector.vue`
+2. Remove text if present, or ensure minimal text (plane label in dropdown only)
+3. Consider adding PlaneIcon for button face
+4. Ensure 40px height consistency
+**Files**: `frontend/src/components/toolbars/PlaneSelector.vue`
+**Acceptance**: Plane selector matches toolbar style, ~40px height
+
+#### T1160: Update Toolbar.vue global styles for uniform button sizing
+**Description**: Ensure all buttons have consistent 40×40px sizing
+**Steps**:
+1. Update `.toolbar-button` class:
+   ```css
+   .toolbar-button {
+     width: 40px;
+     height: 40px;
+     padding: 8px;
+     /* ... existing styles ... */
+   }
+   ```
+2. Update `.file-button`, `.history-button`, `.nav-button` to inherit from or match `.toolbar-button`
+3. Ensure icon sizing consistent: `.toolbar-button svg { width: 24px; height: 24px; }`
+4. Test hover, active, disabled states
+**Files**: `frontend/src/components/toolbars/Toolbar.vue` (style section)
+**Acceptance**: All toolbar buttons uniform 40×40px, consistent gaps, proper states
+
+### Phase 68.6: Styling & Responsive Polish (T1161-T1163)
+
+#### T1161: Add focus-visible styles for accessibility
+**Description**: Ensure keyboard navigation has clear focus indicators
+**Steps**:
+1. Add to toolbar button styles:
+   ```css
+   .toolbar-button:focus-visible,
+   .tool-button-main:focus-visible,
+   .tool-button-dropdown:focus-visible {
+     outline: 2px solid #2196f3;
+     outline-offset: 2px;
+   }
+   ```
+2. Test with Tab key navigation
+3. Ensure focus ring doesn't overlap adjacent buttons
+**Files**: Toolbar.vue, ToolFamilyButton.vue styles
+**Acceptance**: Focus indicator visible and clear on all buttons
+
+#### T1162: Test responsive behavior at different screen widths
+**Description**: Verify toolbar layout at narrow/medium/wide screen sizes
+**Steps**:
+1. Test at 1920px, 1200px, 800px, 600px widths
+2. Verify buttons don't overlap or break layout
+3. Check if overflow menu is needed (implement if specified)
+4. Ensure dropdowns open correctly near screen edges
+**Manual Testing**: Browser DevTools responsive mode
+**Acceptance**: Toolbar functional at all tested widths
+
+#### T1163: Verify icon rendering at different zoom levels
+**Description**: Ensure SVG icons remain crisp at 50%, 100%, 150%, 200% zoom
+**Steps**:
+1. Test with browser zoom (Ctrl +/-, Cmd +/-)
+2. Check icon clarity and proportions at each level
+3. Verify colors remain correct
+4. Ensure no pixelation or distortion
+**Manual Testing**: Browser zoom controls
+**Acceptance**: Icons crisp and clear at all zoom levels (SVG advantage)
+
+### Phase 68.7: Testing (T1164-T1167)
+
+#### T1164: Visual regression tests for icon rendering
+**Description**: Capture screenshots and verify icon appearance
+**Steps**:
+1. Create Playwright visual regression test:
+   ```typescript
+   test('toolbar icons render correctly', async ({ page }) => {
+     await page.goto('/');
+     await expect(page.locator('.toolbar')).toHaveScreenshot('toolbar-icons.png');
+     
+     // Test each button individually
+     await expect(page.locator('[aria-label="Selection Tool"]')).toHaveScreenshot('selection-icon.png');
+     // ... etc for each button
+   });
+   ```
+2. Generate baseline screenshots
+3. Run on different browsers (Chromium, Firefox, WebKit)
+**Files**: `frontend/tests/e2e/toolbar-icons.spec.ts`
+**Acceptance**: Visual tests pass, icons render consistently
+
+#### T1165: E2E tests for toolbar interactions with icons
+**Description**: Verify all toolbar functionality works with icon-only buttons
+**Steps**:
+1. Test tool activation:
+   ```typescript
+   test('clicking line tool icon activates line tool', async ({ page }) => {
+     await page.goto('/');
+     await page.click('[aria-label*="Line"]');
+     await expect(page.locator('[aria-label*="Line"]')).toHaveClass(/active/);
+   });
+   ```
+2. Test dropdown menus open/close
+3. Test last-used memory (click different sub-tools, verify button face updates)
+4. Test keyboard shortcuts still work
+5. Test hover tooltips appear
+**Files**: `frontend/tests/e2e/toolbar-icons-interactions.spec.ts`
+**Acceptance**: All toolbar interactions functional, no regressions
+
+#### T1166: Accessibility audit
+**Description**: Verify ARIA labels, keyboard navigation, screen reader compatibility
+**Steps**:
+1. Run axe-core accessibility tests:
+   ```typescript
+   test('toolbar icons are accessible', async ({ page }) => {
+     await page.goto('/');
+     const results = await new AxeBuilder({ page }).analyze();
+     expect(results.violations).toEqual([]);
+   });
+   ```
+2. Manual test with keyboard:
+   - Tab through all buttons
+   - Enter/Space activates tools
+   - Arrow keys navigate dropdowns (if implemented)
+   - Escape closes dropdowns
+3. Test with screen reader (VoiceOver/NVDA)
+4. Verify all buttons have aria-label or title
+**Tools**: axe DevTools, keyboard only, screen reader
+**Acceptance**: WCAG 2.1 AA compliance, no accessibility violations
+
+#### T1167: Usability testing - icon comprehension
+**Description**: Verify users understand icons without text
+**Steps**:
+1. Create quick usability survey:
+   - Show toolbar screenshot
+   - Ask users to identify each tool
+   - Measure accuracy (target: >80% correct identification)
+2. Test with 5-10 users (mix of familiar/new users)
+3. Gather feedback on icon clarity
+4. Iterate on confusing icons if needed
+**Manual Testing**: User interviews/surveys
+**Acceptance**: >80% correct tool identification, positive feedback on clarity
+
+### Phase 68.8: Documentation & Commit (T1168-T1169)
+
+#### T1168: Update component documentation
+**Description**: Document icon components and usage patterns
+**Steps**:
+1. Add JSDoc comments to icon components
+2. Update README in `frontend/src/components/icons/`
+3. Document color palette usage in colors.ts
+4. Add examples to Storybook (if used)
+**Files**: Icon component files, README
+**Acceptance**: Clear documentation for future icon additions
+
+#### T1169: Commit Phase 68 implementation
+**Description**: Create comprehensive commit with Phase 68 changes
+**Steps**:
+1. Run all tests (unit, integration, E2E)
+2. Verify no regressions in existing functionality
+3. Stage all changes
+4. Create commit:
+   ```bash
+   git add -A
+   git commit -m "Phase 68: Toolbar Icon-Only Design with SVG Illustrations
+
+   Implemented FR-052 - Icon-only toolbar buttons with color-coded SVG
+   illustrations showing both created elements and required arguments.
+
+   Changes:
+   - Created 20+ SVG icon components with color-coding (blue for created,
+     orange for arguments)
+   - Removed all text labels from toolbar buttons and dropdowns
+   - Updated ToolFamilyButton and Toolbar components to use icon components
+   - Ensured uniform 40x40px button sizing across all toolbar groups
+   - Added comprehensive tooltips and ARIA labels for accessibility
+   - Maintained all Phase 67 functionality (tool families, last-used memory)
+
+   Testing:
+   - Visual regression tests for icon rendering
+   - E2E tests for toolbar interactions
+   - Accessibility audit (WCAG 2.1 AA compliant)
+   - Usability testing verified icon comprehension
+
+   Files: 20+ new icon components, updated Toolbar.vue, ToolFamilyButton.vue,
+          toolFamilies.ts, ToolConfig.ts, colors.ts, test files
+
+   Phase 68 complete - Toolbar now has professional icon-only design"
+   ```
+5. Push to repository
+**Acceptance**: Phase 68 fully committed, all tests passing
+
+### Phase 68 Acceptance Criteria
+
+1. ✅ All toolbar buttons are icon-only (no text labels on buttons)
+2. ✅ All icons use 24×24px SVG with 40×40px button size
+3. ✅ Icons use correct color-coding: blue (#2196F3) for created elements, orange (#FF9800) for arguments
+4. ✅ All icons are visually distinct and recognizable
+5. ✅ Tooltips provide clear descriptions on all buttons
+6. ✅ Dropdown menus show icons with checkmarks for active tool
+7. ✅ Active state clearly indicated (blue background + border)
+8. ✅ All toolbar groups updated (Selection, File, History, Plane, Drawing, Dihedral, Nav)
+9. ✅ No regressions in toolbar functionality (tool families, last-used memory still work)
+10. ✅ Keyboard navigation fully functional (Tab, Enter, Space, Escape)
+11. ✅ ARIA labels correct for screen readers
+12. ✅ Icons render crisply at different zoom levels (50%-200%)
+13. ✅ Visual regression tests pass
+14. ✅ E2E tests verify toolbar interactions work
+15. ✅ Accessibility audit passes (WCAG 2.1 AA)
+16. ✅ Usability testing shows >80% icon comprehension
+
+**Phase 68 Status**: 📋 PLANNED (Jan 15, 2026)
+
+**Checkpoint**: Toolbar transformed into professional icon-only interface with self-explanatory SVG illustrations showing construction methods through color-coded elements (blue for created, orange for arguments).
+
+---
+
+## Phase 71: Parameter-Based Line-Circle Intersection Indexing
+
+**Reference**: [spec.md](./spec.md) FR-053, [data-model.md](./data-model.md#phase-71-parameter-based-line-circle-intersection-indexing)
+
+**Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Goal**: Replace angle-based intersection indexing with parameter-based indexing for line-circle intersections to align with line's directional definition (L = P + s × V)
+
+**Problem**: Current implementation uses `sortPointsByAngleFromRadiusVector()` which orders intersections by angle from circle's radius vector. While correct, this ignores line directionality and provides counter-intuitive indices for users thinking parametrically.
+
+**Solution**: Index line-circle intersections by parameter s along line direction: index 0 = lesser s (earlier along direction), index 1 = greater s (later along direction)
+
+**Dependencies**: None (refactoring existing intersection logic)
+
+**Total Tasks**: 14 tasks (T1170-T1183)
+
+### Phase 71.1: Core Algorithm Implementation (T1170-T1172)
+
+#### T1170: Implement sortLineCircleIntersectionsByParameter() function
+**Description**: Create new sorting function for line-circle intersections based on line parameter s
+**File**: `frontend/src/domain/calculations/Intersections.ts`
+**Steps**:
+1. Add function after `sortPointsByAngleFromRadiusVector()` (around line 130)
+2. Implement algorithm:
+   ```typescript
+   function sortLineCircleIntersectionsByParameter(
+     points: Vector3[],
+     line: Line2DRealization2D
+   ): Vector3[] {
+     if (points.length <= 1) return points;
+     const P = line.point1;
+     const V = line.direction;
+     const pointsWithParams = points.map(point => {
+       const toPoint = point.clone().sub(P);
+       const s = toPoint.dot(V) / V.lengthSq();
+       return { point, s };
+     });
+     pointsWithParams.sort((a, b) => a.s - b.s);
+     return pointsWithParams.map(item => item.point);
+   }
+   ```
+3. Add comprehensive JSDoc comment explaining algorithm and rationale
+4. Include @see references to FR-053 and Phase 71 in data-model.md
+**Acceptance**: Function compiles, no syntax errors, JSDoc complete
+
+#### T1171: Update intersectLineCircle() to use parameter-based sorting
+**Description**: Replace angle-based sorting with parameter-based sorting for secant case
+**File**: `frontend/src/domain/calculations/Intersections.ts` (lines 400-415)
+**Changes**:
+```typescript
+// BEFORE:
+const sortedPoints = sortPointsByAngleFromRadiusVector(unsortedPoints, circle);
+
+// AFTER:
+const sortedPoints = sortLineCircleIntersectionsByParameter(unsortedPoints, line);
+```
+**Acceptance**: Code compiles, intersectLineCircle() uses new sorting function
+
+#### T1172: Update Point2DLineCircleIntersection JSDoc comments
+**Description**: Update class documentation to reflect parameter-based indexing
+**File**: `frontend/src/domain/world/Point.ts` (lines 320-323)
+**Changes**:
+- Replace "Points are indexed by angle from the circle's radius vector"
+- With "Points are indexed by parameter s along the line direction (L = P + s×V)"
+- Add explanation: "Index 0 = lesser s (earlier along direction), Index 1 = greater s (later)"
+- Add @see references to FR-053 and Phase 71
+**Acceptance**: JSDoc accurately describes new parameter-based indexing
+
+### Phase 71.2: Test Suite Updates (T1173-T1178)
+
+#### T1173: Update Line-Circle Intersection Ordering test suite description
+**Description**: Update test suite comments to reflect parameter-based indexing
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts` (lines 859-877)
+**Changes**:
+- Update suite description: "Line-Circle Intersection Ordering (T326)" → "Line-Circle Intersection Parameter-Based Ordering (T326, Phase 71)"
+- Replace comment explaining angle-based algorithm with parameter-based algorithm
+- Document new indexing convention: index 0 = lesser s, index 1 = greater s
+**Acceptance**: Test suite comments accurately describe new algorithm
+
+#### T1174: Rewrite horizontal line intersection test (parameter-based)
+**Description**: Update test expectations from angle-based to parameter-based
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts` (lines 878-903)
+**Steps**:
+1. Keep test geometry (horizontal line y=1, circle center origin, radius 3)
+2. Replace `computeRelativeAngle()` calls with parameter computation:
+   ```typescript
+   const P = line.point1;
+   const V = line.direction;
+   const s0 = result.points[0].clone().sub(P).dot(V) / V.lengthSq();
+   const s1 = result.points[1].clone().sub(P).dot(V) / V.lengthSq();
+   ```
+3. Update expectations: `expect(s0).toBeLessThan(s1);` (index 0 has lesser s)
+4. Verify physical ordering matches for this geometry
+**Acceptance**: Test passes with parameter-based expectations
+
+#### T1175: Update remaining line-circle intersection ordering tests
+**Description**: Rewrite all line-circle ordering tests with parameter-based logic
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts` (lines 904-1010)
+**Tests to update** (4 tests):
+- "should order line-circle intersections with radius at 90°"
+- "should order line-circle intersections with radius at 180°"
+- "should order line-circle intersections with vertical line"
+- "should handle line-circle tangent (single intersection)"
+**Changes**: Replace angle computation with parameter computation, update expectations
+**Acceptance**: All 4 tests pass with parameter-based logic
+
+#### T1176: Add test for negative parameter values
+**Description**: Test case where intersection occurs before line's origin point (negative s)
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts` (new test after T1175)
+**Test**:
+```typescript
+it('should handle intersections with negative parameters (before line origin)', () => {
+  // Circle: center at origin, radius 3
+  const circle = new Circle2DRealization2D(
+    new Vector3(0, 0, 1),
+    new Vector3(3, 0, 0)
+  );
+  // Line: starts at (5, 0), direction left (-1, 0)
+  const line = new Line2DRealization2D(
+    new Vector3(5, 0, 1),   // Point P
+    new Vector3(-1, 0, 0)   // Direction V (pointing left)
+  );
+  
+  const result = intersectLineCircle(line, circle);
+  expect(result.type).toBe('secant');
+  expect(result.points).toHaveLength(2);
+  
+  // Both intersections are to the left of P (negative s values)
+  const P = line.point1;
+  const V = line.direction;
+  const s0 = result.points[0].clone().sub(P).dot(V) / V.lengthSq();
+  const s1 = result.points[1].clone().sub(P).dot(V) / V.lengthSq();
+  
+  expect(s0).toBeLessThan(s1);  // Index 0 still has lesser s
+  expect(s0).toBeGreaterThan(0); // Closer intersection (s ≈ 2)
+  expect(s1).toBeGreaterThan(s0); // Farther intersection (s ≈ 8)
+});
+```
+**Acceptance**: Test passes, verifies correct ordering for negative parameters
+
+#### T1177: Add test for index stability under line rotation
+**Description**: Verify same physical point keeps same index when line rotates
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts` (new test after T1176)
+**Test**:
+```typescript
+it('should maintain index stability when line rotates', () => {
+  const circle = new Circle2DRealization2D(
+    new Vector3(0, 0, 1),
+    new Vector3(3, 0, 0)
+  );
+  
+  // Test with multiple line orientations
+  const angles = [0, 45, 90, 135, 180, 270];
+  
+  for (const angleDeg of angles) {
+    const angleRad = (angleDeg * Math.PI) / 180;
+    const line = new Line2DRealization2D(
+      new Vector3(0, 0, 1),  // Origin
+      new Vector3(Math.cos(angleRad), Math.sin(angleRad), 0)
+    );
+    
+    const result = intersectLineCircle(line, circle);
+    if (result.points.length === 2) {
+      const P = line.point1;
+      const V = line.direction;
+      const s0 = result.points[0].clone().sub(P).dot(V) / V.lengthSq();
+      const s1 = result.points[1].clone().sub(P).dot(V) / V.lengthSq();
+      
+      // Index 0 always has lesser s regardless of line orientation
+      expect(s0).toBeLessThan(s1);
+    }
+  }
+});
+```
+**Acceptance**: Test passes, verifies stable index assignment across rotations
+
+#### T1178: Verify circle-circle tests unchanged
+**Description**: Ensure circle-circle intersection tests still pass (no changes expected)
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts` (lines 594-858)
+**Steps**:
+1. Run "Circle-Circle Intersection Ordering (T325)" test suite
+2. Verify all tests pass without modifications
+3. Confirm sortPointsByAngleFromRadiusVector() still used for circle-circle
+**Acceptance**: All circle-circle ordering tests pass, no changes needed
+
+### Phase 71.3: Integration Testing (T1179-T1180)
+
+#### T1179: Test line-circle intersection tools with new indexing
+**Description**: Integration test for IntersectionTool with line-circle intersections
+**File**: `frontend/tests/integration/tools/IntersectionTool.spec.ts` (if exists, else create)
+**Tests**:
+1. Create horizontal line and circle
+2. Use IntersectionTool to create intersection point at index 0
+3. Verify point has lesser parameter s
+4. Create intersection point at index 1
+5. Verify point has greater parameter s
+6. Move line (rotate) and verify indices remain stable
+**Acceptance**: Integration tests pass, tool behavior matches new indexing
+
+#### T1180: Test parametric updates maintain index stability
+**Description**: Verify intersection indices stable when line or circle parameters change
+**File**: `frontend/tests/integration/parametric/lineCircleIntersection.spec.ts` (new file)
+**Test**:
+```typescript
+it('should maintain intersection indices when line rotates', () => {
+  const world = createTestWorld();
+  const plane = world.getProjectionPlaneByLabel('P_H')!;
+  
+  // Create circle and line
+  const circle = plane.addCircle2DByCenterAndPoint(
+    plane.addFreePoint2D(new Vector3(0, 0, 1), world).id,
+    plane.addFreePoint2D(new Vector3(3, 0, 0), world).id,
+    world
+  );
+  const line = plane.addLine2DBetweenTwoPoints(
+    plane.addFreePoint2D(new Vector3(-5, 0, 1), world).id,
+    plane.addFreePoint2D(new Vector3(5, 0, 1), world).id,
+    world
+  );
+  
+  // Create both intersection points
+  const int0 = plane.addLineCircleIntersectionPoint2D(line.id, circle.id, 0, world);
+  const int1 = plane.addLineCircleIntersectionPoint2D(line.id, circle.id, 1, world);
+  
+  // Get initial parameter values
+  const real0Initial = int0.realize2D(world);
+  const real1Initial = int1.realize2D(world);
+  
+  // Rotate line by moving endpoint
+  const linePoints = world.getLine2D(line.id)!;
+  // ... move point to rotate line ...
+  
+  // Verify indices still correspond to same physical points
+  const real0After = int0.realize2D(world);
+  const real1After = int1.realize2D(world);
+  
+  // Parameters may change but relative order preserved
+  expect(computeParameter(real0After, line)).toBeLessThan(computeParameter(real1After, line));
+});
+```
+**Acceptance**: Test passes, indices stable under parametric updates
+
+### Phase 71.4: Documentation & Commit (T1181-T1183)
+
+#### T1181: Update intersection calculation documentation
+**Description**: Update code comments explaining line-circle intersection indexing
+**Files**:
+- `frontend/src/domain/calculations/Intersections.ts`: Main JSDoc for intersectLineCircle()
+- `frontend/src/domain/world/Point.ts`: Point2DLineCircleIntersection class comment
+**Changes**:
+- Emphasize parameter-based indexing in all comments
+- Add examples showing index 0 = lesser s, index 1 = greater s
+- Reference FR-053 and Phase 71 in JSDoc
+**Acceptance**: All relevant JSDoc updated and accurate
+
+#### T1182: Update test suite comments
+**Description**: Ensure all test comments reflect parameter-based indexing
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts`
+**Changes**:
+- Update "INTERSECTION ORDERING TESTS" section comment (line 594-608)
+- Clarify line-circle uses parameter-based, circle-circle uses angle-based
+- Add explanation of algorithm differences and rationales
+**Acceptance**: Test comments clearly explain both indexing approaches
+
+#### T1183: Commit Phase 71 implementation
+**Description**: Create comprehensive commit with Phase 71 changes
+**Steps**:
+1. Run all tests (unit, integration)
+2. Verify no regressions in intersection calculations
+3. Verify circle-circle intersections unchanged
+4. Stage all changes
+5. Create commit:
+   ```bash
+   git add -A
+   git commit -m "Phase 71: Parameter-Based Line-Circle Intersection Indexing
+
+   Implemented FR-053 - Line-circle intersection points now indexed by
+   parameter s along line direction (L = P + s×V) instead of angle from
+   circle's radius vector.
+
+   Changes:
+   - Added sortLineCircleIntersectionsByParameter() function in Intersections.ts
+   - Updated intersectLineCircle() to use parameter-based sorting for secant case
+   - Replaced angle-based test expectations with parameter-based expectations
+   - Added tests for negative parameters and index stability under rotation
+   - Updated JSDoc comments in Point.ts and Intersections.ts
+
+   Rationale:
+   - Lines are directional entities (L = P + s×V), parameter s provides natural ordering
+   - Index 0 = lesser s (first along direction), Index 1 = greater s (later)
+   - Provides intuitive behavior for users thinking in terms of line direction
+   - Index stability maintained: same physical point keeps same index when line rotates
+
+   Benefits:
+   - Semantic alignment with line's parametric definition
+   - Directional intuition: 'index 0 = first along direction'
+   - User expectation: 'first intersection after point A' gets index 0
+
+   Testing:
+   - Updated ~15-20 line-circle intersection tests with parameter-based logic
+   - Added tests for negative parameters (intersection before line origin)
+   - Added index stability test (rotation preserves which point has which index)
+   - Verified circle-circle intersections unchanged (still use angle-based)
+
+   Files: Intersections.ts, Point.ts, intersections.spec.ts, 
+          IntersectionTool.spec.ts (if applicable), new integration tests
+
+   Phase 71 complete - Line-circle intersections now use parameter-based indexing"
+   ```
+6. Push to repository
+**Acceptance**: Phase 71 fully committed, all tests passing
+
+### Phase 71 Acceptance Criteria
+
+1. ✅ sortLineCircleIntersectionsByParameter() function implemented correctly
+2. ✅ intersectLineCircle() uses parameter-based sorting (no longer uses sortPointsByAngleFromRadiusVector())
+3. ✅ Point2DLineCircleIntersection JSDoc updated to document parameter-based indexing
+4. ✅ Index 0 always has lesser parameter s than index 1 (verified in all tests)
+5. ✅ Line-Circle Intersection Ordering test suite updated (5+ tests)
+6. ✅ New test added for negative parameters (intersection before line origin)
+7. ✅ New test added for index stability (rotation preserves index assignment)
+8. ✅ Circle-circle intersections still use angle-based sorting (no changes)
+9. ✅ sortPointsByAngleFromRadiusVector() function unchanged (still exists for circle-circle)
+10. ✅ All unit tests passing (no regressions in intersection calculations)
+11. ✅ Integration tests pass (IntersectionTool works with new indexing)
+12. ✅ Documentation complete (FR-053, Phase 71 in data-model.md, JSDoc comments, test comments)
+13. ✅ Parametric updates maintain index stability (integration test verifies)
+14. ✅ No breaking changes to circle-circle intersections
+15. ✅ Code compiles without errors or warnings
+
+**Phase 71 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: Line-circle intersection points indexed by parameter s along line direction, providing intuitive directional ordering that aligns with line's parametric definition (L = P + s×V).
+
+---
+## Phase 72: Center-Line-Based Circle-Circle Intersection Indexing
+
+**Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Goal**: Replace angle-based indexing of circle-circle intersections with center-line-based indexing for intuitive, geometrically consistent ordering.
+
+**Context**: Circle-circle intersection points currently use sortPointsByAngleFromRadiusVector() (same as used for circle in general). User requirement: "Indexes for intersection points between two circles must be determined according to the relative position of the points against the line defined by the two circles center."
+
+**Spec**: [spec.md](./spec.md) FR-054 (Center-Line-Based Circle-Circle Intersection Indexing)
+
+**Data Model**: [data-model.md](./data-model.md#phase-72-center-line-based-circle-circle-intersection-indexing) Complete specification with algorithm and rationale
+
+### Phase 72.1: Core Algorithm Implementation (T1184-T1186)
+
+#### T1184: Implement sortCircleCircleIntersectionsByCenterLine() function
+**Description**: Create new sorting function using center line parameterization
+**File**: `frontend/src/domain/calculations/Intersections.ts` (after line 196)
+**Steps**:
+1. Add function signature with full JSDoc comment
+2. Handle edge cases (0 or 1 points, coincident centers)
+3. Compute center line vector: `V = C₂ - C₁`
+4. For each point: compute `t = (I - C₁) · V / |V|²`
+5. Sort by t ascending
+6. Return sorted points
+**Reference**: Phase 72 algorithm section in data-model.md
+**Code Size**: ~70 lines (similar to sortLineCircleIntersectionsByParameter from Phase 71)
+**Acceptance**: Function compiles, handles edge cases, returns points sorted by t
+
+#### T1185: Update intersectCircleCircle() to use center-line-based sorting
+**Description**: Replace sortPointsByAngleFromRadiusVector() with new function
+**File**: `frontend/src/domain/calculations/Intersections.ts` (lines 627-632)
+**Steps**:
+1. Replace function call: `sortPointsByAngleFromRadiusVector(unsortedPoints, circle1)` → `sortCircleCircleIntersectionsByCenterLine(unsortedPoints, circle1, circle2)`
+2. Update return message: "sorted by angle from circle1's radius vector" → "sorted by distance along center line"
+3. Verify secant case still returns 2 points
+**Acceptance**: Function uses new sorting, message updated, tangent/none cases unchanged
+
+#### T1186: Update header comment in Intersections.ts
+**Description**: Update general comment about sorting conventions
+**File**: `frontend/src/domain/calculations/Intersections.ts` (lines 150-154)
+**Steps**:
+1. Replace: "Circle-circle intersections use angle-based sorting (sortPointsByAngleFromRadiusVector)"
+2. With: "Circle-circle intersections use center-line-based sorting (sortCircleCircleIntersectionsByCenterLine)"
+3. Add: "Line-circle intersections use parameter-based sorting (sortLineCircleIntersectionsByParameter)."
+**Acceptance**: Comment accurately describes current sorting conventions
+
+### Phase 72.2: Documentation Updates (T1187)
+
+#### T1187: Update Point2DCircleCircleIntersection JSDoc
+**Description**: Replace angle-based documentation with center-line explanation
+**File**: `frontend/src/domain/world/Point.ts` (lines 474-478)
+**Steps**:
+1. Replace: "Points are indexed by angle from the first circle's radius vector."
+2. With: "Points are indexed by signed distance along the center line (C1 → C2)."
+3. Add index convention: "Index 0 = intersection with lesser t (closer to circle1's center)"
+4. Add: "Index 1 = intersection with greater t (closer to circle2's center)"
+5. Add explanation of intuitive ordering and stability
+6. Add @see references to FR-054 and Phase 72
+**Acceptance**: JSDoc accurately describes center-line-based indexing convention
+
+### Phase 72.3: Unit Test Updates (T1188-T1194)
+
+#### T1188: Replace Circle-Circle Intersection Ordering test suite
+**Description**: Rewrite angle-based tests with center-line-based expectations
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts` (lines 594-858)
+**Steps**:
+1. Rename suite: "Circle-Circle Intersection Center-Line-Based Ordering (T325, Phase 72)"
+2. Add `computeParameter()` helper function:
+   ```typescript
+   function computeParameter(
+     point: Vector3,
+     C1: Vector3,
+     C2: Vector3
+   ): number {
+     const toPoint = new Vector3(point.x - C1.x, point.y - C1.y, 0);
+     const centerLine = new Vector3(C2.x - C1.x, C2.y - C1.y, 0);
+     return toPoint.dot(centerLine) / centerLine.lengthSq();
+   }
+   ```
+3. Update 5 existing tests to use center-line-based expectations
+4. Remove all computeRelativeAngle() calls
+**Reference**: Phase 71 test migration pattern (similar transformation)
+**Acceptance**: All 5 tests pass with center-line-based logic
+
+#### T1189: Test 1 - Horizontal center line (circles side-by-side)
+**Description**: Verify index 0 closer to circle1, index 1 closer to circle2
+**Test Setup**:
+- Circle1: center (0, 0), radius 3
+- Circle2: center (5, 0), radius 3
+- Intersection points should be at x ≈ 2.5 (on perpendicular bisector)
+**Verification**:
+```typescript
+const C1 = new Vector3(0, 0, 1);
+const C2 = new Vector3(5, 0, 1);
+const t0 = computeParameter(result.points[0], C1, C2);
+const t1 = computeParameter(result.points[1], C1, C2);
+
+expect(t0).toBeLessThan(t1);  // Index 0 has lesser t
+expect(t0).toBeCloseTo(0.5, 1);  // Both near midpoint
+expect(t1).toBeCloseTo(0.5, 1);
+
+// Verify index 0 is closer to C1
+const dist0ToC1 = result.points[0].distanceTo(C1);
+const dist0ToC2 = result.points[0].distanceTo(C2);
+expect(dist0ToC1).toBeLessThan(dist0ToC2);
+```
+**Acceptance**: Test passes, index 0 closer to C1, t₀ < t₁
+
+#### T1190: Test 2 - Vertical center line (circles stacked)
+**Description**: Verify ordering along vertical axis
+**Test Setup**:
+- Circle1: center (0, 0), radius 2
+- Circle2: center (0, 4), radius 2
+**Verification**:
+- Compute t for both points
+- Verify t₀ < t₁
+- Verify index 0 has lower y-coordinate (closer to C1)
+**Acceptance**: Test passes, correct vertical ordering
+
+#### T1191: Test 3 - Diagonal center line (arbitrary angle)
+**Description**: Verify ordering works for non-axis-aligned center lines
+**Test Setup**:
+- Circle1: center (0, 0), radius 2
+- Circle2: center (3, 4), radius 2 (diagonal direction)
+**Verification**:
+- Compute t for both points
+- Verify t₀ < t₁
+- Verify projection onto center line determines order
+**Acceptance**: Test passes, diagonal ordering correct
+
+#### T1192: Test 4 - Equal radii, symmetric intersections
+**Description**: Verify ordering for symmetric configuration
+**Test Setup**:
+- Circle1: center (-2, 0), radius 3
+- Circle2: center (2, 0), radius 3
+- Intersections at (0, ±√5) - equidistant from both centers
+**Verification**:
+- Both points have t ≈ 0.5
+- Verify t₀ < t₁ (deterministic ordering despite symmetry)
+- Ordering determined by y-coordinate (perpendicular to center line)
+**Acceptance**: Test passes, symmetric case handled correctly
+
+#### T1193: Test 5 - Unequal radii
+**Description**: Verify ordering for asymmetric circles
+**Test Setup**:
+- Circle1: center (0, 0), radius 5
+- Circle2: center (6, 0), radius 2
+**Verification**:
+- Compute t for both points
+- Verify 0 < t₀ < t₁ < 1
+- Verify index 0 closer to circle1
+**Acceptance**: Test passes, unequal radii handled correctly
+
+#### T1194: Test 6 - Index stability under circle movement
+**Description**: Verify same physical point keeps same index when circles move
+**Test Setup**:
+- Start: Circle1 at (0, 0), Circle2 at (5, 0), both radius 3
+- Get initial intersection points
+- Move circle2 to various positions: (6, 0), (4, 0), (5, 1)
+- Track which physical point (upper vs lower) has which index
+**Verification**:
+```typescript
+const initialPoints = intersectCircleCircle(circle1, circle2).points;
+const upperPoint = initialPoints[0].y > initialPoints[1].y ? 0 : 1;
+
+// Move circle2 and re-intersect
+circle2.center = new Vector3(6, 0, 1);
+const newPoints = intersectCircleCircle(circle1, circle2).points;
+const newUpperPoint = newPoints[0].y > newPoints[1].y ? 0 : 1;
+
+// Same physical point (upper) should maintain same index
+expect(newUpperPoint).toBe(upperPoint);
+```
+**Acceptance**: Test passes, index assignment stable across moves
+
+### Phase 72.4: Edge Case Tests (T1195-T1197)
+
+#### T1195: Test - Externally tangent circles (1 intersection)
+**Description**: Verify single intersection point at t ≈ 0.5
+**Test Setup**:
+- Circle1: center (0, 0), radius 3
+- Circle2: center (6, 0), radius 3
+- Tangent at (3, 0)
+**Verification**:
+- Result has 1 point
+- Index 0 returns this point
+- t ≈ 0.5 (midpoint of center line)
+**Acceptance**: Test passes, tangent case correct
+
+#### T1196: Test - Internally tangent circles (1 intersection)
+**Description**: Verify single intersection at circle boundary
+**Test Setup**:
+- Circle1: center (0, 0), radius 5
+- Circle2: center (3, 0), radius 2
+- Tangent at (5, 0)
+**Verification**:
+- Result has 1 point at (5, 0)
+- Index 0 returns this point
+- t = 1 (at circle1's boundary toward circle2)
+**Acceptance**: Test passes, internal tangent correct
+
+#### T1197: Test - No intersection (circles too far)
+**Description**: Verify empty result when circles don't intersect
+**Test Setup**:
+- Circle1: center (0, 0), radius 2
+- Circle2: center (10, 0), radius 2
+**Verification**:
+- Result has 0 points
+- Type is 'none'
+**Acceptance**: Test passes, non-intersecting case handled
+
+### Phase 72.5: Finalization (T1198-T1201)
+
+#### T1198: Verify line-circle tests unchanged
+**Description**: Ensure Phase 71 tests still pass (no regressions)
+**File**: `frontend/tests/unit/calculations/intersections.spec.ts` (lines 859-1047)
+**Steps**:
+1. Run "Line-Circle Intersection Parameter-Based Ordering (T326, Phase 71)" suite
+2. Run "Line-Circle Intersection Edge Cases (Phase 71)" suite
+3. Verify all 10 tests pass without modifications
+**Acceptance**: All Phase 71 tests pass, no side effects
+
+#### T1199: Run full test suite
+**Description**: Verify no regressions in broader codebase
+**Steps**:
+1. Run `npm test` in frontend directory
+2. Check for any new failures
+3. Verify total test count unchanged or increased
+**Expected**: All tests pass (or same failures as before Phase 72)
+**Acceptance**: No new test failures introduced
+
+#### T1200: Update for-planing.md
+**Description**: Move feature to ALREADY PLANNED section
+**File**: `specs/001-dihedral-learning-mvp/for-planing.md`
+**Steps**:
+1. Remove from FOR PLANING section (line 48-49)
+2. Add to ALREADY PLANNED section with:
+   - Status: ✅ COMPLETE (date)
+   - Full specification summary
+   - Algorithm overview
+   - Benefits achieved
+   - Files modified
+**Acceptance**: for-planing.md updated, feature marked complete
+
+#### T1201: Create git commit
+**Description**: Commit Phase 72 implementation
+**Commit Message**:
+```
+feat: Phase 72 - Center-Line-Based Circle-Circle Intersection Indexing
+
+Replace angle-based indexing with center-line-based indexing for
+circle-circle intersection points. Provides more intuitive, geometrically
+consistent ordering.
+
+Algorithm:
+- For circles with centers C1 and C2, define center line C1 → C2
+- Compute signed distance parameter: t = (I - C1) · (C2 - C1) / |C2 - C1|²
+- Index 0 = intersection with lesser t (closer to C1)
+- Index 1 = intersection with greater t (closer to C2)
+
+Rationale:
+- Center line is natural axis of symmetry for two-circle configuration
+- "Index 0 = closer to first circle" is conceptually clear and intuitive
+- Index assignment stable under parametric updates (t-ordering preserved)
+- Symmetric definition (not dependent on arbitrary radius vectors)
+- Predictable for construction tools
+
+Changes:
+- New sortCircleCircleIntersectionsByCenterLine() function (~70 lines)
+- intersectCircleCircle() uses center-line sorting
+- Point2DCircleCircleIntersection JSDoc updated
+- 6 unit tests rewritten with center-line expectations
+- 3 edge case tests added (tangent cases, no intersection)
+- sortPointsByAngleFromRadiusVector() kept unchanged (used elsewhere)
+- Phase 71 line-circle tests unchanged (no regressions)
+
+Testing:
+- 9 tests updated/added (6 rewritten + 3 new edge cases)
+- All tests verify t₀ < t₁ invariant
+- Index stability verified under circle movement
+- Symmetric configurations handled correctly
+
+Breaking Change:
+- Existing circle-circle intersection indices may swap
+- Projects saved with angle-based indices need migration
+- Recommendation: Schema bump + automatic recalculation on load
+
+Files Modified:
+- frontend/src/domain/calculations/Intersections.ts
+- frontend/src/domain/world/Point.ts
+- frontend/tests/unit/calculations/intersections.spec.ts
+- specs/001-dihedral-learning-mvp/spec.md (FR-054)
+- specs/001-dihedral-learning-mvp/data-model.md (Phase 72)
+- specs/001-dihedral-learning-mvp/tasks.md (T1184-T1201)
+- specs/001-dihedral-learning-mvp/for-planing.md (status update)
+
+Refs: FR-054, Phase 72
+```
+**Steps**:
+1. Stage all modified files
+2. Create commit with message above
+3. Verify commit includes all Phase 72 changes
+**Acceptance**: Git commit created, all files committed
+
+**Acceptance Criteria Summary**:
+1. ✅ sortCircleCircleIntersectionsByCenterLine() implemented (~70 lines)
+2. ✅ intersectCircleCircle() uses center-line sorting
+3. ✅ Header comment and JSDoc updated
+4. ✅ 6 unit tests rewritten (horizontal, vertical, diagonal, symmetric, unequal, stability)
+5. ✅ 3 edge case tests added (tangent, internal tangent, no intersection)
+6. ✅ Phase 71 tests unchanged (no regressions)
+7. ✅ Full test suite passes
+8. ✅ FR-054 documented in spec.md
+9. ✅ Phase 72 documented in data-model.md
+10. ✅ 18 tasks (T1184-T1201) documented in tasks.md
+11. ✅ for-planing.md updated
+12. ✅ Git commit created
+
+**Phase 72 Status**: 📋 PLANNED (Jan 14, 2026)
+
+**Checkpoint**: Circle-circle intersection points indexed by parameter t along center line, providing intuitive geometric ordering that respects the natural axis of symmetry for two-circle configurations.
+
+---
+---
+
+## Phase 73: Polymorphic Line Tool - Context-Sensitive Line Construction
+
+**Goal**: Consolidate Line, Parallel Line, Perpendicular Line, and Tangent Line tools into single polymorphic Line Tool that dynamically determines construction method based on selected element types.
+
+**Related**: FR-055 (Polymorphic Line Tool), Phase 73 in data-model.md, ui-spec.md §Polymorphic Tool Behavior
+
+### Phase 73.1: Geometric Algorithms for Circle-Circle Lines
+
+**T1202**: Implement `computeExternalTangents(c1, c2): TangentSolution[]`
+- Compute both external tangent lines to two circles
+- Return empty array if circles overlap
+- Include touch points and line direction in solution
+- **Tests**: Horizontal, vertical, diagonal, unequal radii, tangent circles, overlapping circles
+
+**T1203**: Implement `computeInternalTangents(c1, c2): TangentSolution[]`
+- Compute both internal (crossing) tangent lines
+- Return empty array if circles overlap significantly
+- Use angle bisector construction method
+- **Tests**: Separated circles, near-tangent, overlapping
+
+**T1204**: Implement `computePerpendicularLine(c1, c2): LineSolution`
+- Line perpendicular to center line, through midpoint
+- Always feasible (any two distinct circles)
+- **Tests**: Horizontal, vertical, diagonal centers
+
+**T1205**: Implement `computeThroughCentersLine(c1, c2): LineSolution | null`
+- Line passing through both circle centers
+- Return null if centers coincide (degenerate case)
+- **Tests**: Various center configurations, coincident centers
+
+**T1206**: Implement `selectClosestSolution(solutions, clickPositions): Solution`
+- Distance-based disambiguation algorithm
+- Sum of squared distances from clicks to solution feature points
+- **Tests**: 3 solutions with different distances, ties, single solution
+
+### Phase 73.2: New Line Element Variations
+
+**T1207**: Implement `Line2DCircleToCircleTangent` (external tangent)
+- Constructor with `circle1Id`, `circle2Id`, `index: 0 | 1`
+- realize2D() using `computeExternalTangents()` with index selection
+- Infeasibility check for overlapping circles
+- **Tests**: Horizontal, vertical, index 0 vs 1, parametric updates, infeasibility
+
+**T1208**: Implement `Line2DCircleToCircleInternal` (internal/crossing tangent)
+- Similar structure to external but uses `computeInternalTangents()`
+- **Tests**: Crossing behavior, index selection, parametric updates
+
+**T1209**: Implement `Line2DCircleToCirclePerpendicular`
+- realize2D() using `computePerpendicularLine()`
+- Always feasible (no index needed)
+- **Tests**: Various circle positions, parametric updates
+
+**T1210**: Implement `Line2DCircleToCircleThroughCenters`
+- realize2D() using `computeThroughCentersLine()`
+- Infeasibility for coincident centers
+- **Tests**: Normal cases, degenerate case, parametric updates
+
+**T1211**: Extend Line2D type union to include new variations
+- Update type definition in Line.ts
+- Verify type guards work correctly
+- **Tests**: Type checking, instanceof checks
+
+### Phase 73.3: Mouse Position Storage & Disambiguation
+
+**T1212**: Extend `ArgumentValue` type to store mouse position
+- Add `position: Vector3` field (plane coordinates)
+- Update ArgumentCollectorTool.handleClick() to capture plane coords
+- **Tests**: Position correctly stored for each argument
+
+**T1213**: Implement GeometricSolution interface hierarchy
+- `GeometricSolution` base interface with `getFeaturePoints()`, `label`, `createElement()`
+- Concrete implementations for all solution types
+- **Tests**: Feature point extraction, labels, element creation
+
+**T1214**: Integrate `selectClosestSolution()` into tool execution
+- Tool receives ArgumentValue map with mouse positions
+- Compute all solutions, filter by feasibility
+- Use disambiguation for ambiguous cases
+- **Tests**: Circle-circle with 6 solutions, correct solution selected
+
+### Phase 73.4: Polymorphic Line Tool Implementation
+
+**T1215**: Refactor LineTool to extend ArgumentCollectorTool
+- Define six ToolArgumentSet entries (point+point, point+line, line+point, point+circle, circle+point, circle+circle)
+- Remove old manual state management code
+- **Tests**: Tool accepts arguments in any order (where applicable)
+
+**T1216**: Implement execute methods for each construction method
+- `executeLineByTwoPoints()`
+- `executePerpendicularLine()` (handles both argument orders)
+- `executeTangentThroughPoint()` (handles both argument orders)
+- `executeCircleToCircleLine()` (6-solution disambiguation)
+- **Tests**: Each method creates correct element type
+
+**T1217**: Implement dynamic status message generation
+- Status depends on collected arguments and viable sets
+- Clear guidance for next expected argument
+- Solution method announced for ambiguous cases
+- **Tests**: Messages for all construction combinations
+
+**T1218**: Implement visual preview system for solution disambiguation
+- Preview layer shows all solutions faintly
+- Selected solution highlighted
+- Real-time update as mouse moves (for circle-circle)
+- **Tests**: Preview renders correctly, selected solution emphasized
+
+### Phase 73.5: ProcessTree Integration
+
+**T1219**: Define `CreateLineCircleToCircleAction` interface
+- Action type for all circle-circle line variations
+- Stores `variation` and `index` in metadata
+- Includes `mousePositions` for disambiguation record
+- **Tests**: Action serialization/deserialization
+
+**T1220**: Implement `AddLineCircleToCircleOp` operation
+- Execute creates appropriate line variation
+- Undo removes line
+- Supports all four variation types
+- **Tests**: Execute, undo, redo for all variations
+
+**T1221**: Add factory methods to ProjectionPlane
+- `addLine2DCircleToCircleTangent()`
+- `addLine2DCircleToCircleInternal()`
+- `addLine2DCircleToCirclePerpendicular()`
+- `addLine2DCircleToCircleThroughCenters()`
+- **Tests**: Factory methods create elements with correct IDs
+
+### Phase 73.6: Testing & Documentation
+
+**T1222**: Unit tests for all geometric algorithms (15+ tests)
+- External tangents: various configurations, edge cases
+- Internal tangents: crossing behavior, overlaps
+- Perpendicular and through-centers: degenerate cases
+- **Acceptance**: >90% coverage, all edge cases handled
+
+**T1223**: Integration tests for parametric updates (8+ tests)
+- Circle moves → tangent lines update correctly
+- Index stability under parametric changes
+- Infeasibility propagation
+- **Acceptance**: All tests passing, no regressions
+
+**T1224**: E2E tests for user workflows (10+ tests)
+- Create perpendicular line (point→line, line→point)
+- Create tangent through point (point→circle, circle→point)
+- Create circle-circle tangent with disambiguation
+- Tool stays active after construction
+- **Acceptance**: All workflows work end-to-end
+
+**T1225**: Update FR-055 in spec.md (COMPLETE - already done in planning)
+**T1226**: Update Phase 73 in data-model.md (COMPLETE - already done in planning)
+**T1227**: Update ui-spec.md §Polymorphic Tool Behavior (COMPLETE - already done in planning)
+
+**T1228**: Update toolbar configuration
+- Remove Parallel Line, Perpendicular Line, Tangent buttons
+- Update Line button to activate polymorphic LineTool
+- Update tooltips
+- **Tests**: Toolbar renders correctly, tools activate properly
+
+**T1229**: Git commit Phase 73 implementation
+- Comprehensive commit message documenting all changes
+- Include rationale for polymorphic consolidation
+- List all new element types and construction methods
+- **Acceptance**: Commit created, pushed to feature branch
+
+---
+
+## Phase 74: Polymorphic Segment Tool - Context-Sensitive Segment Construction
+
+**Goal**: Extend polymorphic pattern to Segment Tool, supporting segment creation between points, to lines, to circles, and between circles.
+
+**Related**: FR-056 (Polymorphic Segment Tool), Phase 74 in data-model.md
+
+**Note**: Phase 74 follows identical patterns to Phase 73. Tasks are similar but for Segment2D variations instead of Line2D. Key differences:
+- Segments have explicit endpoints (bounded geometry)
+- Four new segment variations: Segment2DPointToLine, Segment2DPointToCircleTangent, Segment2DCircleToCircle (6 variations)
+- Reuses geometric algorithms from Phase 73
+
+**Task Count**: T1230-T1249 (20 tasks, structure mirrors Phase 73)
+
+---
+
+## Phase 75: Polymorphic Circle Tool - Multiple Circle Construction Methods
+
+**Goal**: Extend Circle Tool to support eight construction methods: center+point, center+radius, center+tangent-line, center+tangent-circle, three-point, three-line, two-lines+point, line+circle+point.
+
+**Related**: FR-057 (Polymorphic Circle Tool), Phase 75 in data-model.md
+
+**Note**: Phase 75 is most complex due to:
+- Eight construction methods (vs six for Line/Segment)
+- Three-argument constructions (three points, three lines)
+- Multiple solution disambiguation for tangency constraints
+- New geometric algorithms: circumcircle, incircle/excircle
+
+**Task Count**: T1250-T1279 (30 tasks)
+
+### Key Tasks Overview
+
+- **T1250-T1254**: Geometric algorithms (circumcircle, incircle, excircles, tangency computations)
+- **T1255-T1261**: Seven new Circle2D variations
+- **T1262-T1265**: ArgumentCollectorTool support for 3-argument sets
+- **T1266-T1271**: Polymorphic CircleTool implementation
+- **T1272-T1275**: ProcessTree actions/operations
+- **T1276-T1279**: Testing & documentation
+
+---
+
+## Summary: Polymorphic Tool Reorganization (Phases 73-75)
+
+**Total Tasks**: T1202-T1279 (78 tasks)
+- Phase 73 (Line): 28 tasks
+- Phase 74 (Segment): 20 tasks  
+- Phase 75 (Circle): 30 tasks
+
+**Total Estimated Effort**: 14-19 days
+- Phase 73: 5-7 days
+- Phase 74: 3-4 days
+- Phase 75: 6-8 days
+
+**Key Deliverables**:
+- 3 polymorphic tools replacing 9 explicit tools
+- 15 new element variations (4 Line, 4 Segment, 7 Circle)
+- Mouse-based disambiguation for ambiguous constructions
+- Complete ArgumentCollectorTool framework for polymorphism
+- Comprehensive test coverage (100+ new tests)
+- Complete documentation (FR-055 through FR-059, Phases 73-75)
+
+**Toolbar Impact**: 
+- Before: 9 buttons (Point▼, Line▼, Segment, Circle, Parallel▼, Perpendicular▼, Tangent▼, Guide▼, Transport▼)
+- After: 6 buttons (Point▼, Line, Segment, Circle, Guide▼, Transport▼)
+- 33% reduction in toolbar buttons while increasing functionality
+

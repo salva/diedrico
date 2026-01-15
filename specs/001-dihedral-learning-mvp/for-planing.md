@@ -47,9 +47,22 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Move geometric element variation classes in directories line lines, circles, points, etc.
 * [ ] Add instructions about how to use the project.
 * [ ] Use an automated browser for building UI tests.
-* [ ] Rationalize and restructure the tool organization.
+* [ ] Move all the geometric calculations (for example intersactions) into a helper modulo of its own in order to avoid code duplication.
 
 ## ALREADY PLANNED
+
+* [X] **Polymorphic Tool Reorganization (Phases 73-75)**
+  - **STATUS**: ✅ PLANNED (Jan 15, 2026) - Ready for implementation in three phases
+  - **Purpose**: Consolidate toolbar by replacing explicit construction tools with polymorphic tools that dynamically determine construction method based on selected element types
+  - **Scope**: Three phases covering Line Tool (Phase 73), Segment Tool (Phase 74), and Circle Tool (Phase 75) reorganization with mouse-based disambiguation for ambiguous geometric solutions
+  - **Toolbar Impact**: Reduces from 9 to 6 buttons (33% reduction) while increasing functionality
+  - **Key Features**: Context-sensitive construction, mouse-based solution disambiguation, ArgumentCollectorTool polymorphism, real-time visual previews
+  - **Estimated Effort**: 14-19 days (Phase 73: 5-7 days, Phase 74: 3-4 days, Phase 75: 6-8 days)
+  - **Tasks**: T1202-T1279 (78 tasks total)
+  - **Documentation**: FR-055 through FR-059 (spec.md), Phase 73-75 (data-model.md), Polymorphic Tool Behavior section (ui-spec.md), detailed tasks (tasks.md)
+  - **Dependencies**: Phase 64 (ArgumentCollectorTool), Phase 68 (Icon-only toolbar), Phase 72 (Circle intersection indexing)
+  - **Deliverables**: 15 new element variations (4 Line, 4 Segment, 7 Circle), geometric algorithms for all constructions, comprehensive test coverage (100+ tests)
+  - **Notes**: Complete planning documentation ready. Implementation proceeds phase-by-phase starting with Phase 73 (Line Tool) to validate polymorphic pattern before extending to other tools.
 
 * [X] **GPL 3.0 License Integration**
   - **STATUS**: ✅ COMPLETE (Jan 15, 2026) - License added and documented
