@@ -40,7 +40,11 @@ import {
   Line2DParallel, 
   Line2DPerpendicularToLine,
   Line2DTangentToCircleThroughPoint,
-  Line2DTangentToCircleParallelToLine
+  Line2DTangentToCircleParallelToLine,
+  Line2DCircleToCircleExternal,
+  Line2DCircleToCircleInternal,
+  Line2DCircleToCirclePerpendicular,
+  Line2DCircleToCircleThroughCenters
 } from './Line';
 import type { Circle2D, Circle2DRealization2D } from './Circle';
 import { Circle2DByCenterAndPoint } from './Circle';
@@ -937,6 +941,238 @@ export abstract class ProjectionPlane {
       circleId,
       referenceLineId,
       tangentIndex,
+      this.id
+    );
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Factory method: Create and add Line2DCircleToCircleExternal (Phase 73)
+   * 
+   * Creates external tangent line to two circles. Mouse position determines which
+   * of the two possible tangents (index 0 or 1) is selected.
+   * 
+   * @param circle1Id ID of first circle
+   * @param circle2Id ID of second circle
+   * @param tangentIndex Which external tangent (0 = "above", 1 = "below")
+   * @param world World context for validation and ID generation
+   * @param id Optional ID - ONLY for redo operations
+   * @returns The created Line2DCircleToCircleExternal
+   */
+  addLine2DCircleToCircleExternal(
+    circle1Id: string,
+    circle2Id: string,
+    tangentIndex: 0 | 1,
+    world: import('./World').World,
+    id?: string
+  ): Line2DCircleToCircleExternal {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate circles exist on this plane
+    const circle1 = this.getCircle(circle1Id);
+    const circle2 = this.getCircle(circle2Id);
+    
+    if (!circle1) {
+      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist on this plane.`);
+    }
+    if (!circle2) {
+      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist on this plane.`);
+    }
+
+    // Validate circles are distinct
+    if (circle1Id === circle2Id) {
+      throw new Error(`Cannot create line between a circle and itself. circle1Id and circle2Id must be different.`);
+    }
+
+    // Validate tangent index
+    if (tangentIndex !== 0 && tangentIndex !== 1) {
+      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const line = new Line2DCircleToCircleExternal(
+      id,
+      circle1Id,
+      circle2Id,
+      tangentIndex,
+      this.id
+    );
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Factory method: Create and add Line2DCircleToCircleInternal (Phase 73)
+   * 
+   * Creates internal (crossing) tangent line to two circles. Mouse position determines
+   * which of the two possible tangents (index 0 or 1) is selected.
+   * 
+   * @param circle1Id ID of first circle
+   * @param circle2Id ID of second circle
+   * @param tangentIndex Which internal tangent (0 or 1)
+   * @param world World context for validation and ID generation
+   * @param id Optional ID - ONLY for redo operations
+   * @returns The created Line2DCircleToCircleInternal
+   */
+  addLine2DCircleToCircleInternal(
+    circle1Id: string,
+    circle2Id: string,
+    tangentIndex: 0 | 1,
+    world: import('./World').World,
+    id?: string
+  ): Line2DCircleToCircleInternal {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate circles exist on this plane
+    const circle1 = this.getCircle(circle1Id);
+    const circle2 = this.getCircle(circle2Id);
+    
+    if (!circle1) {
+      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist on this plane.`);
+    }
+    if (!circle2) {
+      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist on this plane.`);
+    }
+
+    // Validate circles are distinct
+    if (circle1Id === circle2Id) {
+      throw new Error(`Cannot create line between a circle and itself. circle1Id and circle2Id must be different.`);
+    }
+
+    // Validate tangent index
+    if (tangentIndex !== 0 && tangentIndex !== 1) {
+      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const line = new Line2DCircleToCircleInternal(
+      id,
+      circle1Id,
+      circle2Id,
+      tangentIndex,
+      this.id
+    );
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Factory method: Create and add Line2DCircleToCirclePerpendicular (Phase 73)
+   * 
+   * Creates line perpendicular to the line connecting two circle centers.
+   * Always well-defined for distinct circles.
+   * 
+   * @param circle1Id ID of first circle
+   * @param circle2Id ID of second circle
+   * @param world World context for validation and ID generation
+   * @param id Optional ID - ONLY for redo operations
+   * @returns The created Line2DCircleToCirclePerpendicular
+   */
+  addLine2DCircleToCirclePerpendicular(
+    circle1Id: string,
+    circle2Id: string,
+    world: import('./World').World,
+    id?: string
+  ): Line2DCircleToCirclePerpendicular {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate circles exist on this plane
+    const circle1 = this.getCircle(circle1Id);
+    const circle2 = this.getCircle(circle2Id);
+    
+    if (!circle1) {
+      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist on this plane.`);
+    }
+    if (!circle2) {
+      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist on this plane.`);
+    }
+
+    // Validate circles are distinct
+    if (circle1Id === circle2Id) {
+      throw new Error(`Cannot create line between a circle and itself. circle1Id and circle2Id must be different.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const line = new Line2DCircleToCirclePerpendicular(
+      id,
+      circle1Id,
+      circle2Id,
+      this.id
+    );
+    
+    this.addLine(line);
+    return line;
+  }
+
+  /**
+   * Factory method: Create and add Line2DCircleToCircleThroughCenters (Phase 73)
+   * 
+   * Creates line passing through both circle centers.
+   * Always well-defined for distinct circles.
+   * 
+   * @param circle1Id ID of first circle
+   * @param circle2Id ID of second circle
+   * @param world World context for validation and ID generation
+   * @param id Optional ID - ONLY for redo operations
+   * @returns The created Line2DCircleToCircleThroughCenters
+   */
+  addLine2DCircleToCircleThroughCenters(
+    circle1Id: string,
+    circle2Id: string,
+    world: import('./World').World,
+    id?: string
+  ): Line2DCircleToCircleThroughCenters {
+    if (!this.id) {
+      throw new Error('Cannot add line to plane without ID');
+    }
+
+    // Validate circles exist on this plane
+    const circle1 = this.getCircle(circle1Id);
+    const circle2 = this.getCircle(circle2Id);
+    
+    if (!circle1) {
+      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist on this plane.`);
+    }
+    if (!circle2) {
+      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist on this plane.`);
+    }
+
+    // Validate circles are distinct
+    if (circle1Id === circle2Id) {
+      throw new Error(`Cannot create line between a circle and itself. circle1Id and circle2Id must be different.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateLine2DId(world);
+    }
+
+    const line = new Line2DCircleToCircleThroughCenters(
+      id,
+      circle1Id,
+      circle2Id,
       this.id
     );
     

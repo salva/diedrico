@@ -286,3 +286,226 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
     }
   }
 }
+/**
+ * AddLine2DCircleToCircleExternalOp - Operation to add external tangent between two circles (Phase 73)
+ * 
+ * Wraps ProjectionPlane.addLine2DCircleToCircleExternal() in the Operation interface.
+ */
+export class AddLine2DCircleToCircleExternalOp implements IOperation {
+  readonly type = 'AddLine2DCircleToCircleExternal';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(
+    private planeId: string,
+    private circle1Id: string,
+    private circle2Id: string,
+    private tangentIndex: 0 | 1
+  ) {
+    this.parameters = { planeId, circle1Id, circle2Id, tangentIndex };
+  }
+
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      const line = plane.addLine2DCircleToCircleExternal(
+        this.circle1Id,
+        this.circle2Id,
+        this.tangentIndex,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}
+
+/**
+ * AddLine2DCircleToCircleInternalOp - Operation to add internal tangent between two circles (Phase 73)
+ * 
+ * Wraps ProjectionPlane.addLine2DCircleToCircleInternal() in the Operation interface.
+ */
+export class AddLine2DCircleToCircleInternalOp implements IOperation {
+  readonly type = 'AddLine2DCircleToCircleInternal';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(
+    private planeId: string,
+    private circle1Id: string,
+    private circle2Id: string,
+    private tangentIndex: 0 | 1
+  ) {
+    this.parameters = { planeId, circle1Id, circle2Id, tangentIndex };
+  }
+
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      const line = plane.addLine2DCircleToCircleInternal(
+        this.circle1Id,
+        this.circle2Id,
+        this.tangentIndex,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}
+
+/**
+ * AddLine2DCircleToCirclePerpendicularOp - Operation to add perpendicular between two circles (Phase 73)
+ * 
+ * Wraps ProjectionPlane.addLine2DCircleToCirclePerpendicular() in the Operation interface.
+ */
+export class AddLine2DCircleToCirclePerpendicularOp implements IOperation {
+  readonly type = 'AddLine2DCircleToCirclePerpendicular';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(
+    private planeId: string,
+    private circle1Id: string,
+    private circle2Id: string
+  ) {
+    this.parameters = { planeId, circle1Id, circle2Id };
+  }
+
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      const line = plane.addLine2DCircleToCirclePerpendicular(
+        this.circle1Id,
+        this.circle2Id,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}
+
+/**
+ * AddLine2DCircleToCircleThroughCentersOp - Operation to add through-centers line (Phase 73)
+ * 
+ * Wraps ProjectionPlane.addLine2DCircleToCircleThroughCenters() in the Operation interface.
+ */
+export class AddLine2DCircleToCircleThroughCentersOp implements IOperation {
+  readonly type = 'AddLine2DCircleToCircleThroughCenters';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(
+    private planeId: string,
+    private circle1Id: string,
+    private circle2Id: string
+  ) {
+    this.parameters = { planeId, circle1Id, circle2Id };
+  }
+
+  apply(world: World): OperationResult {
+    try {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        throw new Error(`Plane not found: ${this.planeId}`);
+      }
+      
+      const line = plane.addLine2DCircleToCircleThroughCenters(
+        this.circle1Id,
+        this.circle2Id,
+        world,
+        this.outputs.lineId
+      );
+      this.outputs = { lineId: line.id };
+      return {
+        success: true,
+        outputs: this.outputs
+      };
+    } catch (error) {
+      return {
+        success: false,
+        outputs: {},
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  undo(world: World): void {
+    if (this.outputs.lineId) {
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) {
+        plane.removeLine(this.outputs.lineId);
+      }
+    }
+  }
+}

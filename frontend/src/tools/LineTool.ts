@@ -31,7 +31,13 @@ import { Vector3 } from 'three';
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
-import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+import {
+  AddLine2DByTwoPointsOp,
+  AddLine2DCircleToCircleExternalOp,
+  AddLine2DCircleToCircleInternalOp,
+  AddLine2DCircleToCirclePerpendicularOp,
+  AddLine2DCircleToCircleThroughCentersOp
+} from '@/commands/operations/world/AddLineOp';
 import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
 import { SelectionMask } from '@/types/SelectionMask';
 import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
@@ -191,8 +197,13 @@ export class LineTool extends ArgumentCollectorTool {
     // Import CircleGeometry
     const { computeExternalTangents, selectClosestSolution } = require('@/domain/calculations/CircleGeometry');
     
+    // Validate different circles
+    if (circle1.id === circle2.id) {
+      return this.failure('Cannot create line: same circle selected twice');
+    }
+    
     try {
-      const { planeId, world } = context;
+      const { planeId, world, commandStack, toolStore } = context;
       
       // Get circle realizations
       const c1Real = circle1.realize2D(world);
@@ -216,9 +227,29 @@ export class LineTool extends ArgumentCollectorTool {
         return this.failure('Failed to select tangent solution');
       }
       
-      // TODO Phase 73.5: Create Line2DCircleToCircleExternal element
-      // For now, return success with selected solution info
-      return this.success(`Would create external tangent: ${selected.label} (index ${selected.index})`);
+      // Build Command
+      const cmd = new Command("Create external tangent between circles", world);
+      
+      // Execute operation with selected tangent index
+      const result = cmd.addAndExecute(
+        new AddLine2DCircleToCircleExternalOp(planeId, circle1.id, circle2.id, selected.index as 0 | 1)
+      );
+      
+      // Extract outputs
+      const lineId = result.outputs.lineId;
+      
+      // Record ProcessTree action
+      const action = createLineAction(lineId, planeId, circle1.id, circle2.id);
+      world.getProcessTree().addAction(action);
+      
+      // Commit and push
+      cmd.commit();
+      commandStack.push(cmd);
+      
+      // Handle completion
+      this.handleCompletion(toolStore);
+      
+      return this.success(`Created external tangent ${lineId} (${selected.label})`);
       
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -236,8 +267,13 @@ export class LineTool extends ArgumentCollectorTool {
     
     const { computeInternalTangents, selectClosestSolution } = require('@/domain/calculations/CircleGeometry');
     
+    // Validate different circles
+    if (circle1.id === circle2.id) {
+      return this.failure('Cannot create line: same circle selected twice');
+    }
+    
     try {
-      const { planeId, world } = context;
+      const { planeId, world, commandStack, toolStore } = context;
       
       const c1Real = circle1.realize2D(world);
       const c2Real = circle2.realize2D(world);
@@ -258,8 +294,29 @@ export class LineTool extends ArgumentCollectorTool {
         return this.failure('Failed to select tangent solution');
       }
       
-      // TODO Phase 73.5: Create Line2DCircleToCircleInternal element
-      return this.success(`Would create internal tangent: ${selected.label} (index ${selected.index})`);
+      // Build Command
+      const cmd = new Command("Create internal tangent between circles", world);
+      
+      // Execute operation with selected tangent index
+      const result = cmd.addAndExecute(
+        new AddLine2DCircleToCircleInternalOp(planeId, circle1.id, circle2.id, selected.index as 0 | 1)
+      );
+      
+      // Extract outputs
+      const lineId = result.outputs.lineId;
+      
+      // Record ProcessTree action
+      const action = createLineAction(lineId, planeId, circle1.id, circle2.id);
+      world.getProcessTree().addAction(action);
+      
+      // Commit and push
+      cmd.commit();
+      commandStack.push(cmd);
+      
+      // Handle completion
+      this.handleCompletion(toolStore);
+      
+      return this.success(`Created internal tangent ${lineId} (${selected.label})`);
       
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -276,8 +333,13 @@ export class LineTool extends ArgumentCollectorTool {
     
     const { computePerpendicularLine } = require('@/domain/calculations/CircleGeometry');
     
+    // Validate different circles
+    if (circle1.id === circle2.id) {
+      return this.failure('Cannot create line: same circle selected twice');
+    }
+    
     try {
-      const { planeId, world } = context;
+      const { planeId, world, commandStack, toolStore } = context;
       
       const c1Real = circle1.realize2D(world);
       const c2Real = circle2.realize2D(world);
@@ -292,8 +354,29 @@ export class LineTool extends ArgumentCollectorTool {
         return this.failure('No perpendicular line exists (circles coincide)');
       }
       
-      // TODO Phase 73.5: Create Line2DCircleToCirclePerpendicular element
-      return this.success(`Would create perpendicular: ${solution.label}`);
+      // Build Command
+      const cmd = new Command("Create perpendicular between circle centers", world);
+      
+      // Execute operation
+      const result = cmd.addAndExecute(
+        new AddLine2DCircleToCirclePerpendicularOp(planeId, circle1.id, circle2.id)
+      );
+      
+      // Extract outputs
+      const lineId = result.outputs.lineId;
+      
+      // Record ProcessTree action
+      const action = createLineAction(lineId, planeId, circle1.id, circle2.id);
+      world.getProcessTree().addAction(action);
+      
+      // Commit and push
+      cmd.commit();
+      commandStack.push(cmd);
+      
+      // Handle completion
+      this.handleCompletion(toolStore);
+      
+      return this.success(`Created perpendicular ${lineId}`);
       
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -310,8 +393,13 @@ export class LineTool extends ArgumentCollectorTool {
     
     const { computeThroughCentersLine } = require('@/domain/calculations/CircleGeometry');
     
+    // Validate different circles
+    if (circle1.id === circle2.id) {
+      return this.failure('Cannot create line: same circle selected twice');
+    }
+    
     try {
-      const { planeId, world } = context;
+      const { planeId, world, commandStack, toolStore } = context;
       
       const c1Real = circle1.realize2D(world);
       const c2Real = circle2.realize2D(world);
@@ -326,8 +414,29 @@ export class LineTool extends ArgumentCollectorTool {
         return this.failure('No through-centers line exists (circles coincide)');
       }
       
-      // TODO Phase 73.5: Create Line2DCircleToCircleThroughCenters element
-      return this.success(`Would create through-centers line: ${solution.label}`);
+      // Build Command
+      const cmd = new Command("Create line through circle centers", world);
+      
+      // Execute operation
+      const result = cmd.addAndExecute(
+        new AddLine2DCircleToCircleThroughCentersOp(planeId, circle1.id, circle2.id)
+      );
+      
+      // Extract outputs
+      const lineId = result.outputs.lineId;
+      
+      // Record ProcessTree action
+      const action = createLineAction(lineId, planeId, circle1.id, circle2.id);
+      world.getProcessTree().addAction(action);
+      
+      // Commit and push
+      cmd.commit();
+      commandStack.push(cmd);
+      
+      // Handle completion
+      this.handleCompletion(toolStore);
+      
+      return this.success(`Created through-centers line ${lineId}`);
       
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
