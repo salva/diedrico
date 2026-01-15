@@ -39,6 +39,22 @@ export function useViewStore() {
   }
 
   /**
+   * Zoom in (increase by 20%)
+   * Phase 68: Icon-only toolbar zoom buttons
+   */
+  function zoomIn() {
+    setZoom(zoom.value * 1.2);
+  }
+
+  /**
+   * Zoom out (decrease by 20%)
+   * Phase 68: Icon-only toolbar zoom buttons
+   */
+  function zoomOut() {
+    setZoom(zoom.value / 1.2);
+  }
+
+  /**
    * Set pan offset
    * @param x Horizontal pan offset in canvas pixels
    * @param y Vertical pan offset in canvas pixels
@@ -125,6 +141,8 @@ export function useViewStore() {
     
     // Actions
     setZoom,
+    zoomIn,
+    zoomOut,
     setPan,
     adjustPan,
     adjustZoom,

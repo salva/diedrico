@@ -10,6 +10,7 @@
       @click="handleCanvasClick"
       @dblclick="handleDoubleClick"
       @mousemove="handleMouseMove"
+      @wheel.prevent="handleWheel"
     >
       <!-- Background grid (T275) - Zoom-adaptive grid display -->
       <g v-if="viewStore.gridVisible.value" class="background-grid">
@@ -856,6 +857,36 @@ function handleMouseDown(event: MouseEvent) {
     startX: event.clientX,
     startY: event.clientY
   };
+}
+
+/**
+ * Handle mouse wheel for zooming centered on cursor position
+ * Phase 70: Mouse-position-centered zooming
+ * - Mouse wheel zoom: Centers on cursor position (intuitive)
+ * - Zoom buttons (+/-): Center on viewport center (unchanged from Phase 68)
+ */
+function handleWheel(event: WheelEvent) {
+  if (!svgElement.value) return;
+
+  // Get cursor position in viewport/canvas coordinates
+  const svg = svgElement.value;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return;
+  
+  const canvasPoint = pt.matrixTransform(ctm.inverse());
+
+  // Calculate zoom delta from wheel event
+  // Negative deltaY = scroll up = zoom in
+  // Positive deltaY = scroll down = zoom out
+  // Use smaller factor (0.1) than button zoom (0.2) for finer control
+  const zoomFactor = event.deltaY > 0 ? -0.1 : 0.1;
+
+  // Call adjustZoom with focus point to zoom toward cursor
+  viewStore.adjustZoom(zoomFactor, canvasPoint.x, canvasPoint.y);
 }
 
 /**

@@ -6,10 +6,24 @@
  * - Default tool for each family
  * - Tool configurations (icons, labels, shortcuts, completion behavior)
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+ * Reference: 
+ * - specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+ * - specs/001-dihedral-learning-mvp/data-model.md - Phase 68 (SVG icon components)
  */
 
 import type { ToolFamilyConfig } from '@/types/ToolConfig';
+import { markRaw } from 'vue';
+import FreePointIcon from '@/components/icons/toolbar/FreePointIcon.vue';
+import IntersectionPointIcon from '@/components/icons/toolbar/IntersectionPointIcon.vue';
+import LineByTwoPointsIcon from '@/components/icons/toolbar/LineByTwoPointsIcon.vue';
+import ParallelLineIcon from '@/components/icons/toolbar/ParallelLineIcon.vue';
+import PerpendicularLineIcon from '@/components/icons/toolbar/PerpendicularLineIcon.vue';
+import TangentThroughPointIcon from '@/components/icons/toolbar/TangentThroughPointIcon.vue';
+import TangentParallelIcon from '@/components/icons/toolbar/TangentParallelIcon.vue';
+import SegmentIcon from '@/components/icons/toolbar/SegmentIcon.vue';
+import CircleIcon from '@/components/icons/toolbar/CircleIcon.vue';
+import GuideLineIcon from '@/components/icons/toolbar/GuideLineIcon.vue';
+import TransportPointIcon from '@/components/icons/toolbar/TransportPointIcon.vue';
 
 /**
  * Tool families configuration
@@ -26,13 +40,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'point-family',
     label: 'Point',
-    icon: '●', // Circle emoji as point
+    icon: markRaw(FreePointIcon),
     defaultTool: 'point',
     tools: [
       {
         id: 'point',
         label: 'Free Point',
-        icon: '●',
+        icon: markRaw(FreePointIcon),
         shortcut: 'P',
         tooltip: 'Create free point - Click to place point (P)',
         completionBehavior: 'stay-active'
@@ -40,23 +54,23 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
       {
         id: 'intersection',
         label: 'Intersection Point',
-        icon: '⨯', // Multiplication X as intersection
+        icon: markRaw(IntersectionPointIcon),
         shortcut: 'I',
         tooltip: 'Create intersection point - Select two elements (I)',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       }
     ]
   },
   {
     id: 'line-family',
     label: 'Line',
-    icon: '─', // Horizontal line
+    icon: markRaw(LineByTwoPointsIcon),
     defaultTool: 'line',
     tools: [
       {
         id: 'line',
         label: 'Line Through Points',
-        icon: '─',
+        icon: markRaw(LineByTwoPointsIcon),
         shortcut: 'L',
         tooltip: 'Create line through two points (L)',
         completionBehavior: 'stay-active'
@@ -64,43 +78,43 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
       {
         id: 'parallel-line',
         label: 'Parallel Line',
-        icon: '∥', // Parallel symbol
+        icon: markRaw(ParallelLineIcon),
         tooltip: 'Create line parallel to reference through point',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       },
       {
         id: 'perpendicular-line',
         label: 'Perpendicular Line',
-        icon: '⟂', // Perpendicular symbol
+        icon: markRaw(PerpendicularLineIcon),
         tooltip: 'Create line perpendicular to reference through point',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       },
       {
         id: 'tangent-line-to-circle-through-point',
         label: 'Tangent (Point)',
-        icon: '⟋', // Tangent-like symbol
+        icon: markRaw(TangentThroughPointIcon),
         tooltip: 'Create tangent line to circle through external point',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       },
       {
         id: 'tangent-line-to-circle-parallel',
         label: 'Tangent (Parallel)',
-        icon: '⟋∥', // Tangent + parallel
+        icon: markRaw(TangentParallelIcon),
         tooltip: 'Create tangent line to circle parallel to reference',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       }
     ]
   },
   {
     id: 'segment-family',
     label: 'Segment',
-    icon: '─●', // Line with endpoint
+    icon: markRaw(SegmentIcon),
     defaultTool: 'segment',
     tools: [
       {
         id: 'segment',
         label: 'Segment',
-        icon: '─●',
+        icon: markRaw(SegmentIcon),
         shortcut: 'S',
         tooltip: 'Create segment between two points (S)',
         completionBehavior: 'stay-active'
@@ -110,13 +124,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'circle-family',
     label: 'Circle',
-    icon: '○', // Circle emoji
+    icon: markRaw(CircleIcon),
     defaultTool: 'circle',
     tools: [
       {
         id: 'circle',
         label: 'Circle',
-        icon: '○',
+        icon: markRaw(CircleIcon),
         shortcut: 'C',
         tooltip: 'Create circle - Pick center then circumference point (C)',
         completionBehavior: 'stay-active'
@@ -126,32 +140,32 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
     id: 'guide-family',
     label: 'Guide',
-    icon: '┆', // Dashed vertical line
+    icon: markRaw(GuideLineIcon),
     defaultTool: 'guide',
     tools: [
       {
         id: 'guide',
         label: 'Guide',
-        icon: '┆',
+        icon: markRaw(GuideLineIcon),
         shortcut: 'G',
         tooltip: 'Create guide perpendicular to hinge line (G)',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       }
     ]
   },
   {
     id: 'transport-family',
     label: 'Transport',
-    icon: '↔', // Bidirectional arrow
+    icon: markRaw(TransportPointIcon),
     defaultTool: 'transport',
     tools: [
       {
         id: 'transport',
         label: 'Transport',
-        icon: '↔',
+        icon: markRaw(TransportPointIcon),
         shortcut: 'T',
         tooltip: 'Transport distance or point (T) - Not yet implemented',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       }
     ]
   }

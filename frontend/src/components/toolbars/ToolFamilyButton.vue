@@ -6,9 +6,9 @@
       :class="{ active: isAnyToolActive }"
       @click="activateLastUsed"
       :title="activeToolTooltip"
+      :aria-label="activeToolTooltip"
     >
-      <span class="tool-icon">{{ activeToolIcon }}</span>
-      <span class="tool-label">{{ family.label }}</span>
+      <component :is="activeToolIcon" v-if="activeToolIcon" class="tool-icon-svg" />
     </button>
     
     <!-- Dropdown arrow button -->
@@ -17,6 +17,7 @@
       :class="{ active: isAnyToolActive, open: isDropdownOpen }"
       @click="toggleDropdown"
       title="Show all tools in family"
+      aria-label="Show all tools in family"
     >
       <span class="dropdown-arrow">▼</span>
     </button>
@@ -29,9 +30,9 @@
         class="tool-menu-item"
         :class="{ active: toolStore.isToolActive(tool.id as any) }"
         @click="selectTool(tool.id)"
+        :title="tool.tooltip"
       >
-        <span class="tool-icon">{{ tool.icon }}</span>
-        <span class="tool-label">{{ tool.label }}</span>
+        <component :is="tool.icon" v-if="tool.icon" class="tool-icon-svg-small" />
         <span v-if="tool.shortcut" class="tool-shortcut">{{ tool.shortcut }}</span>
         <span v-if="toolStore.isToolActive(tool.id as any)" class="checkmark">✓</span>
       </div>
@@ -40,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, resolveDynamicComponent } from 'vue';
 import type { ToolFamilyConfig } from '@/types/ToolConfig';
 import { useToolStore } from '@/stores/toolStore';
 
@@ -76,7 +77,9 @@ const activeToolConfig = computed(() => {
 });
 
 const activeToolIcon = computed(() => {
-  return activeToolConfig.value?.icon || props.family.icon;
+  const icon = activeToolConfig.value?.icon || props.family.icon;
+  console.log('[ToolFamilyButton] activeToolIcon:', icon, 'type:', typeof icon);
+  return icon;
 });
 
 const activeToolTooltip = computed(() => {
@@ -129,7 +132,7 @@ onUnmounted(() => {
 
 .tool-button-main,
 .tool-button-dropdown {
-  padding: 8px 12px;
+  padding: 0;
   border: 1px solid #ccc;
   background: white;
   cursor: pointer;
@@ -137,18 +140,21 @@ onUnmounted(() => {
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
 }
 
 .tool-button-main {
   border-right: none;
   border-radius: 4px 0 0 4px;
+  width: 40px;
+  height: 40px;
 }
 
 .tool-button-dropdown {
   border-radius: 0 4px 4px 0;
-  padding: 8px 6px;
   border-left: 1px solid #ddd;
+  width: 20px;
+  height: 40px;
 }
 
 .tool-button-main:hover,
@@ -185,6 +191,19 @@ onUnmounted(() => {
   transform: rotate(180deg);
 }
 
+.tool-icon-svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.tool-icon-svg-small {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex-shrink: 0;
+}
+
 /* Dropdown menu */
 .tool-dropdown-menu {
   position: absolute;
@@ -204,11 +223,12 @@ onUnmounted(() => {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   transition: background 0.15s;
   border-bottom: 1px solid #eee;
   color: #333;
   white-space: nowrap;
+  min-height: 40px;
 }
 
 .tool-menu-item:last-child {
@@ -223,17 +243,6 @@ onUnmounted(() => {
   background: #e3f2fd;
   color: #2196f3;
   font-weight: 500;
-}
-
-.tool-menu-item .tool-icon {
-  font-size: 16px;
-  min-width: 20px;
-  text-align: center;
-}
-
-.tool-menu-item .tool-label {
-  flex: 1;
-  font-size: 13px;
 }
 
 .tool-shortcut {

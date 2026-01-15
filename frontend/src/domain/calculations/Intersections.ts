@@ -128,6 +128,146 @@ function sortPointsByAngleFromRadiusVector(
 }
 
 /**
+ * Sort line-circle intersection points by parameter s along line direction
+ * 
+ * Given line L = P + s × V and intersection points, computes the parameter
+ * values s₁ and s₂ and orders points by ascending s value.
+ * 
+ * This ensures:
+ * - Index 0 = first intersection along line direction (lesser s)
+ * - Index 1 = second intersection along line direction (greater s)
+ * - Stable under parametric updates (order preserved when line rotates)
+ * - Intuitive for users thinking in terms of line direction
+ * 
+ * **Algorithm**:
+ * For any point I on line L = P + s×V, the parameter s = (I - P) · V / |V|²
+ * Computing s gives signed distance along direction V (negative if before P, positive if after P)
+ * Sorting by s gives natural directional ordering: index 0 = closer to start of line direction
+ * 
+ * **Rationale**:
+ * Lines are parametric entities (L = P + s×V), not radial. Using s respects line definition
+ * and provides intuitive behavior: "first intersection" = earlier along line direction.
+ * 
+ * **Contrast with Circle-Circle**:
+ * Circle-circle intersections use center-line-based sorting (sortCircleCircleIntersectionsByCenterLine)
+ * by signed angle from the line connecting centers. This distinguishes points based on which
+ * side of the center line they lie (counterclockwise = positive = index 0).
+ * 
+ * @param points Intersection points (1 or 2 points)
+ * @param line Line realization with point1 (P) and direction (V)
+ * @returns Points sorted by ascending parameter value s
+ * 
+ * @see specs/001-dihedral-learning-mvp/spec.md FR-053
+ * @see specs/001-dihedral-learning-mvp/data-model.md Phase 71
+ */
+function sortLineCircleIntersectionsByParameter(
+  points: Vector3[],
+  line: Line2DRealization2D
+): Vector3[] {
+  if (points.length <= 1) {
+    return points; // Only one intersection (tangent) - no sorting needed
+  }
+
+  // Line definition: L = P + s*V
+  const P = line.point1;           // Point on line
+  const V = line.getDirection();   // Direction vector
+  
+  // For each intersection point I, compute parameter s such that I = P + s*V
+  // Since I is on line: (I - P) = s*V
+  // Project (I - P) onto V: s = (I - P) · V / |V|²
+  
+  const pointsWithParams = points.map(point => {
+    const toPoint = point.clone().sub(P);  // Vector from P to intersection point
+    const s = toPoint.dot(V) / V.lengthSq();  // Parameter value
+    return { point, s };
+  });
+  
+  // Sort by parameter s ascending (lesser s first)
+  pointsWithParams.sort((a, b) => a.s - b.s);
+  
+  // Return sorted points
+  return pointsWithParams.map(item => item.point);
+}
+
+/**
+ * Sort circle-circle intersection points by signed angle from center line.
+ * 
+ * For two circles with centers C1 and C2, the center line is the directed line
+ * from C1 to C2. Each intersection point I has a signed angle relative to this line:
+ *   θ_centerLine = atan2(C2.y - C1.y, C2.x - C1.x)
+ *   θ_I = atan2(I.y - C1.y, I.x - C1.x)
+ *   Δθ = θ_I - θ_centerLine (normalized to [-π, π])
+ * 
+ * Points are sorted by relative angle descending (positive angle first):
+ * - Index 0 = intersection with positive Δθ (counterclockwise from center line)
+ * - Index 1 = intersection with negative Δθ (clockwise from center line)
+ * 
+ * This provides geometrically consistent, intuitive ordering that distinguishes
+ * the two intersection points based on which side of the center line they lie.
+ * 
+ * **Rationale**:
+ * - Center line is natural reference axis for two-circle configuration
+ * - "Index 0 = above center line" is visually intuitive
+ * - Follows standard counterclockwise = positive convention
+ * - Index stable under parametric updates (angular ordering preserved)
+ * 
+ * **Key Insight**: Both intersection points are equidistant from both centers
+ * (by definition of circle intersection). They differ only in angular position
+ * relative to the center line. Signed angle provides natural ordering.
+ * 
+ * @param points Array of 0, 1, or 2 intersection points
+ * @param circle1 First circle (defines origin of center line)
+ * @param circle2 Second circle (defines direction of center line)
+ * @returns Sorted array where points[0] has positive angle, points[1] has negative angle
+ * 
+ * @see specs/001-dihedral-learning-mvp/spec.md FR-054
+ * @see specs/001-dihedral-learning-mvp/data-model.md Phase 72
+ */
+function sortCircleCircleIntersectionsByCenterLine(
+  points: Vector3[],
+  circle1: Circle2DRealization2D,
+  circle2: Circle2DRealization2D
+): Vector3[] {
+  // Edge case: 0 or 1 points need no sorting
+  if (points.length <= 1) {
+    return points;
+  }
+
+  // Compute center line angle
+  const C1 = circle1.center;
+  const C2 = circle2.center;
+  const theta_centerLine = Math.atan2(C2.y - C1.y, C2.x - C1.x);
+
+  // Edge case: circles have same center (should never happen in valid intersections)
+  if (Math.abs(C2.x - C1.x) < 1e-10 && Math.abs(C2.y - C1.y) < 1e-10) {
+    console.warn('[sortCircleCircleIntersectionsByCenterLine] Circles have same center, returning unsorted');
+    return points;
+  }
+
+  // Compute signed angle for each point
+  const pointsWithAngles = points.map(point => {
+    const theta_I = Math.atan2(point.y - C1.y, point.x - C1.x);
+    let deltaTheta = theta_I - theta_centerLine;
+    
+    // Normalize to [-π, π] range
+    while (deltaTheta > Math.PI) {
+      deltaTheta -= 2 * Math.PI;
+    }
+    while (deltaTheta < -Math.PI) {
+      deltaTheta += 2 * Math.PI;
+    }
+    
+    return { point, deltaTheta };
+  });
+
+  // Sort by deltaTheta descending (positive angle first = index 0)
+  pointsWithAngles.sort((a, b) => b.deltaTheta - a.deltaTheta);
+
+  // Return sorted points
+  return pointsWithAngles.map(item => item.point);
+}
+
+/**
  * Result of a line-line intersection calculation
  */
 export interface LineLineIntersectionResult {
@@ -405,17 +545,17 @@ export function intersectLineCircle(
     const x2 = P0.x + t2 * d.x;
     const y2 = P0.y + t2 * d.y;
     
-    // Sort points by angle relative to circle's radius vector
+    // Sort points by parameter s along line direction
     const unsortedPoints = [
       new Vector3(x1, y1, 1),
       new Vector3(x2, y2, 1)
     ];
-    const sortedPoints = sortPointsByAngleFromRadiusVector(unsortedPoints, circle);
+    const sortedPoints = sortLineCircleIntersectionsByParameter(unsortedPoints, line);
     
     return {
       points: sortedPoints,
       type: 'secant',
-      message: `Line intersects circle at 2 points (sorted by angle from radius vector)`
+      message: `Line intersects circle at 2 points (sorted by parameter along line direction)`
     };
   }
 }
@@ -561,16 +701,16 @@ export function intersectCircleCircle(
   const x2 = p2x - h * perp_x;
   const y2 = p2y - h * perp_y;
   
-  // Sort points by angle relative to first circle's radius vector
+  // Sort points by signed angle relative to center line
   const unsortedPoints = [
     new Vector3(x1, y1, 1),
     new Vector3(x2, y2, 1)
   ];
-  const sortedPoints = sortPointsByAngleFromRadiusVector(unsortedPoints, circle1);
+  const sortedPoints = sortCircleCircleIntersectionsByCenterLine(unsortedPoints, circle1, circle2);
   
   return {
     points: sortedPoints,
     type: 'secant',
-    message: `Circles intersect at 2 points (sorted by angle from circle1's radius vector)`
+    message: `Circles intersect at 2 points (sorted by signed angle from center line)`
   };
 }

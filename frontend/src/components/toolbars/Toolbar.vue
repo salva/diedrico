@@ -6,24 +6,18 @@
         class="file-button"
         @click="handleNew"
         title="New Project (Ctrl+N)"
+        aria-label="New Project"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20">
-          <rect x="4" y="2" width="12" height="16" rx="1" stroke="currentColor" stroke-width="2" fill="none" />
-          <line x1="10" y1="7" x2="10" y2="13" stroke="currentColor" stroke-width="2" />
-          <line x1="7" y1="10" x2="13" y2="10" stroke="currentColor" stroke-width="2" />
-        </svg>
-        <span>New</span>
+        <NewFileIcon class="button-icon" />
       </button>
       
       <button
         class="file-button"
         @click="handleOpen"
         title="Open Project (Ctrl+O)"
+        aria-label="Open Project"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20">
-          <path d="M 3 7 L 3 17 C 3 17.5 3.5 18 4 18 L 16 18 C 16.5 18 17 17.5 17 17 L 17 6 C 17 5.5 16.5 5 16 5 L 9 5 L 7 3 L 4 3 C 3.5 3 3 3.5 3 4 Z" stroke="currentColor" stroke-width="1.5" fill="none" />
-        </svg>
-        <span>Open</span>
+        <OpenFileIcon class="button-icon" />
       </button>
     </div>
     
@@ -36,11 +30,9 @@
         :disabled="!canUndo"
         @click="handleUndo"
         title="Undo (Ctrl+Z)"
+        aria-label="Undo"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20">
-          <path d="M 12 4 L 8 8 L 12 12 M 8 8 L 18 8 C 18 8 18 16 12 16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <span>Undo</span>
+        <UndoIcon class="button-icon" />
       </button>
       
       <button
@@ -48,11 +40,9 @@
         :disabled="!canRedo"
         @click="handleRedo"
         title="Redo (Ctrl+Y)"
+        aria-label="Redo"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20">
-          <path d="M 8 4 L 12 8 L 8 12 M 12 8 L 2 8 C 2 8 2 16 8 16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <span>Redo</span>
+        <RedoIcon class="button-icon" />
       </button>
     </div>
     
@@ -67,32 +57,29 @@
     <div class="navigation-controls">
       <button
         class="nav-button"
-        @click="handleToggleGrid"
-        :class="{ active: gridVisible }"
-        title="Toggle Grid (G)"
+        @click="handleZoomIn"
+        title="Zoom In (Ctrl+=)"
+        aria-label="Zoom In"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20">
-          <line x1="5" y1="2" x2="5" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5" />
-          <line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5" />
-          <line x1="15" y1="2" x2="15" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5" />
-          <line x1="2" y1="5" x2="18" y2="5" stroke="currentColor" stroke-width="1" opacity="0.5" />
-          <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" stroke-width="1" opacity="0.5" />
-          <line x1="2" y1="15" x2="18" y2="15" stroke="currentColor" stroke-width="1" opacity="0.5" />
-        </svg>
-        <span>Grid</span>
+        <ZoomInIcon class="button-icon" />
+      </button>
+
+      <button
+        class="nav-button"
+        @click="handleZoomOut"
+        title="Zoom Out (Ctrl+-)"
+        aria-label="Zoom Out"
+      >
+        <ZoomOutIcon class="button-icon" />
       </button>
 
       <button
         class="nav-button"
         @click="handleFitToView"
         title="Fit to View (Ctrl+0)"
+        aria-label="Fit to View"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20">
-          <rect x="3" y="3" width="14" height="14" rx="1" stroke="currentColor" stroke-width="1.5" fill="none" />
-          <path d="M 6 6 L 8 8 M 6 6 L 6 8 M 6 6 L 8 6" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" />
-          <path d="M 14 14 L 12 12 M 14 14 L 14 12 M 14 14 L 12 14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" />
-        </svg>
-        <span>Fit</span>
+        <ZoomFitIcon class="button-icon" />
       </button>
     </div>
     
@@ -105,12 +92,9 @@
       :class="{ active: toolStore.isToolActive('select') }"
       @click="selectTool('select')"
       title="Selection Tool - Pick, move, and edit objects (Esc)"
+      aria-label="Selection Tool"
     >
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <!-- Pointer/arrow cursor icon -->
-        <path d="M 3 2 L 3 16 L 7 12 L 10 18 L 12 17 L 9 11 L 14 11 Z" fill="currentColor" />
-      </svg>
-      <span>Select</span>
+      <SelectionToolIcon class="button-icon" />
     </button>
     
     <!-- Phase 67: Tool Family Buttons with Dropdowns -->
@@ -129,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed, onMounted, onUnmounted } from 'vue';
+import { inject, computed, onMounted, onUnmounted, markRaw } from 'vue';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { CommandStack } from '@/commands/CommandStack';
@@ -137,6 +121,14 @@ import LoginStatusWidget from '@/components/LoginStatusWidget.vue';
 import PlaneSelector from '@/components/toolbars/PlaneSelector.vue';
 import ToolFamilyButton from '@/components/toolbars/ToolFamilyButton.vue';
 import { TOOL_FAMILIES } from '@/config/toolFamilies';
+import SelectionToolIcon from '@/components/icons/toolbar/SelectionToolIcon.vue';
+import NewFileIcon from '@/components/icons/toolbar/NewFileIcon.vue';
+import OpenFileIcon from '@/components/icons/toolbar/OpenFileIcon.vue';
+import UndoIcon from '@/components/icons/toolbar/UndoIcon.vue';
+import RedoIcon from '@/components/icons/toolbar/RedoIcon.vue';
+import ZoomInIcon from '@/components/icons/toolbar/ZoomInIcon.vue';
+import ZoomOutIcon from '@/components/icons/toolbar/ZoomOutIcon.vue';
+import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
 
 /**
  * Toolbar.vue - Tool selection toolbar
@@ -145,7 +137,9 @@ import { TOOL_FAMILIES } from '@/config/toolFamilies';
  * file operations (New, Open), and history controls (Undo/Redo).
  * Manages active tool state via tool store.
  * 
- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+ * Reference: 
+ * - specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+ * - specs/001-dihedral-learning-mvp/data-model.md - Phase 68 (Icon-only design)
  */
 
 interface Emits {
@@ -252,10 +246,17 @@ function handleOpen() {
 }
 
 /**
- * Toggle grid visibility (T276)
+ * Handle zoom in (Phase 68 icon-only design)
  */
-function handleToggleGrid() {
-  viewStore.toggleGrid();
+function handleZoomIn() {
+  viewStore.zoomIn();
+}
+
+/**
+ * Handle zoom out (Phase 68 icon-only design)
+ */
+function handleZoomOut() {
+  viewStore.zoomOut();
 }
 
 /**
@@ -297,10 +298,11 @@ function handleSignOut() {
 
 .file-button {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 6px 10px;
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+  height: 40px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
@@ -311,16 +313,6 @@ function handleSignOut() {
 .file-button:hover {
   background-color: #e8e8e8;
   border-color: #999;
-}
-
-.file-button span {
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.file-button svg {
-  width: 18px;
-  height: 18px;
 }
 
 .history-controls {
@@ -337,10 +329,11 @@ function handleSignOut() {
 
 .history-button {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 6px 10px;
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+  height: 40px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
@@ -358,16 +351,6 @@ function handleSignOut() {
   cursor: not-allowed;
 }
 
-.history-button span {
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.history-button svg {
-  width: 18px;
-  height: 18px;
-}
-
 .navigation-controls {
   display: flex;
   gap: 4px;
@@ -375,10 +358,11 @@ function handleSignOut() {
 
 .nav-button {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 6px 10px;
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+  height: 40px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
@@ -397,22 +381,13 @@ function handleSignOut() {
   border-color: #4A90E2;
 }
 
-.nav-button span {
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.nav-button svg {
-  width: 18px;
-  height: 18px;
-}
-
 .tool-button {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+  height: 40px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
@@ -426,18 +401,14 @@ function handleSignOut() {
 }
 
 .tool-button.active {
-  background-color: #4A90E2;
-  color: #fff;
-  border-color: #4A90E2;
+  background-color: #e3f2fd;
+  border-color: #2196f3;
 }
 
-.tool-button span {
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.tool-button svg {
-  width: 20px;
-  height: 20px;
+/* Phase 68: Icon sizing */
+.button-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 </style>

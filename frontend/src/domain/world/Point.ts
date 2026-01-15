@@ -318,7 +318,17 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
  * 
  * The rule is: "intersection of line and circle at index"
  * Line-circle intersection produces 0, 1 (tangent), or 2 points.
- * Points are indexed by angle from the circle's radius vector.
+ * 
+ * **Indexing Convention (Phase 71)**:
+ * Points are indexed by parameter s along the line direction (L = P + s×V).
+ * - Index 0 = intersection with lesser s (earlier along line direction)
+ * - Index 1 = intersection with greater s (later along line direction)
+ * 
+ * This provides intuitive directional ordering and maintains index stability
+ * when the line rotates (same physical point keeps same index).
+ * 
+ * @see specs/001-dihedral-learning-mvp/spec.md FR-053
+ * @see specs/001-dihedral-learning-mvp/data-model.md Phase 71
  */
 export class Point2DLineCircleIntersection extends IntersectionPoint2D {
   readonly type: 'line-circle-intersection' = 'line-circle-intersection';
@@ -440,7 +450,16 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
  * 
  * The rule is: "intersection of circle1 and circle2 at index"
  * Circle-circle intersection produces 0, 1 (tangent), or 2 points.
- * Points are indexed by angle from the first circle's radius vector.
+ * Points are indexed by signed angle from the center line (C1 → C2).
+ * - Index 0 = intersection with positive angle (counterclockwise from center line)
+ * - Index 1 = intersection with negative angle (clockwise from center line)
+ * 
+ * This provides intuitive, geometrically consistent ordering based on which
+ * side of the natural axis (center line) each intersection point lies.
+ * Index assignment is stable under parametric updates.
+ * 
+ * @see specs/001-dihedral-learning-mvp/spec.md FR-054
+ * @see specs/001-dihedral-learning-mvp/data-model.md Phase 72
  */
 export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
   readonly type: 'circle-circle-intersection' = 'circle-circle-intersection';
