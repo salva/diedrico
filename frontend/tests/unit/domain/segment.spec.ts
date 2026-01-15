@@ -160,4 +160,220 @@ describe('Segment2D', () => {
       expect(realization.point2.y).toBe(40);
     });
   });
+
+  describe('Segment2DPointToLine (Phase 74.1)', () => {
+    it('should create perpendicular segment from point to horizontal line', () => {
+      // Create horizontal line
+      const lineP1 = planeH.addFreePoint2D(new Vector3(0, 50, 1), world);
+      const lineP2 = planeH.addFreePoint2D(new Vector3(100, 50, 1), world);
+      const line = planeH.addLine2DBetweenTwoPoints(lineP1.id, lineP2.id, world);
+      
+      // Create point above line
+      const point = planeH.addFreePoint2D(new Vector3(50, 80, 1), world);
+      
+      // Create perpendicular segment
+      const segment = planeH.addSegment2DPointToLine(point.id, line.id, world);
+      const real = segment.realize2D(world);
+      
+      expect(real).toBeDefined();
+      expect(real!.feasible).toBe(true);
+      expect(real!.point1.x).toBeCloseTo(50, 1);
+      expect(real!.point1.y).toBeCloseTo(80, 1);
+      expect(real!.point2.x).toBeCloseTo(50, 1);
+      expect(real!.point2.y).toBeCloseTo(50, 1); // Foot on line
+    });
+
+    it('should create perpendicular segment from point to vertical line', () => {
+      const lineP1 = planeH.addFreePoint2D(new Vector3(40, 0, 1), world);
+      const lineP2 = planeH.addFreePoint2D(new Vector3(40, 100, 1), world);
+      const line = planeH.addLine2DBetweenTwoPoints(lineP1.id, lineP2.id, world);
+      
+      const point = planeH.addFreePoint2D(new Vector3(70, 50, 1), world);
+      
+      const segment = planeH.addSegment2DPointToLine(point.id, line.id, world);
+      const real = segment.realize2D(world);
+      
+      expect(real!.feasible).toBe(true);
+      expect(real!.point1.x).toBeCloseTo(70, 1);
+      expect(real!.point2.x).toBeCloseTo(40, 1);
+      expect(real!.point2.y).toBeCloseTo(50, 1);
+    });
+  });
+
+  describe('Segment2DPointToCircleTangent (Phase 74.1)', () => {
+    it('should create tangent segment from external point (index 0)', () => {
+      const center = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const radiusPoint = planeH.addFreePoint2D(new Vector3(70, 50, 1), world);
+      const circle = planeH.addCircle2DByCenterAndPoint(center.id, radiusPoint.id, world);
+      
+      // Point to the right of circle (external)
+      const point = planeH.addFreePoint2D(new Vector3(100, 50, 1), world);
+      
+      const segment = planeH.addSegment2DPointToCircleTangent(point.id, circle.id, 0, world);
+      const real = segment.realize2D(world);
+      
+      expect(real).toBeDefined();
+      expect(real!.feasible).toBe(true);
+      
+      // Segment starts at point
+      expect(real!.point1.x).toBeCloseTo(100, 1);
+      expect(real!.point1.y).toBeCloseTo(50, 1);
+      
+      // Segment ends at tangent touch point on circle
+      const touchDist = Math.sqrt(
+        Math.pow(real!.point2.x - 50, 2) + 
+        Math.pow(real!.point2.y - 50, 2)
+      );
+      expect(touchDist).toBeCloseTo(20, 1); // Radius is 20
+    });
+
+    it('should create tangent segment with index 1 (other tangent)', () => {
+      const center = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const radiusPoint = planeH.addFreePoint2D(new Vector3(70, 50, 1), world);
+      const circle = planeH.addCircle2DByCenterAndPoint(center.id, radiusPoint.id, world);
+      
+      const point = planeH.addFreePoint2D(new Vector3(100, 50, 1), world);
+      
+      const segment0 = planeH.addSegment2DPointToCircleTangent(point.id, circle.id, 0, world);
+      const segment1 = planeH.addSegment2DPointToCircleTangent(point.id, circle.id, 1, world);
+      
+      const real0 = segment0.realize2D(world);
+      const real1 = segment1.realize2D(world);
+      
+      expect(real0!.feasible).toBe(true);
+      expect(real1!.feasible).toBe(true);
+      
+      // Touch points should be different
+      expect(real0!.point2.y).not.toBeCloseTo(real1!.point2.y, 1);
+    });
+
+    it('should be infeasible if point is inside circle', () => {
+      const center = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const radiusPoint = planeH.addFreePoint2D(new Vector3(80, 50, 1), world);
+      const circle = planeH.addCircle2DByCenterAndPoint(center.id, radiusPoint.id, world);
+      
+      // Point inside circle
+      const point = planeH.addFreePoint2D(new Vector3(55, 50, 1), world);
+      
+      const segment = planeH.addSegment2DPointToCircleTangent(point.id, circle.id, 0, world);
+      const real = segment.realize2D(world);
+      
+      expect(real!.feasible).toBe(false);
+    });
+  });
+
+  describe('Segment2DCircleToCircleExternal (Phase 74.1)', () => {
+    it('should create external tangent segment (index 0)', () => {
+      const c1center = planeH.addFreePoint2D(new Vector3(30, 50, 1), world);
+      const c1radius = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const circle1 = planeH.addCircle2DByCenterAndPoint(c1center.id, c1radius.id, world);
+      
+      const c2center = planeH.addFreePoint2D(new Vector3(90, 50, 1), world);
+      const c2radius = planeH.addFreePoint2D(new Vector3(110, 50, 1), world);
+      const circle2 = planeH.addCircle2DByCenterAndPoint(c2center.id, c2radius.id, world);
+      
+      const segment = planeH.addSegment2DCircleToCircleExternal(circle1.id, circle2.id, 0, world);
+      const real = segment.realize2D(world);
+      
+      expect(real).toBeDefined();
+      expect(real!.feasible).toBe(true);
+      
+      // Both endpoints should be on their respective circles
+      const dist1 = Math.sqrt(
+        Math.pow(real!.point1.x - 30, 2) + 
+        Math.pow(real!.point1.y - 50, 2)
+      );
+      expect(dist1).toBeCloseTo(20, 1);
+      
+      const dist2 = Math.sqrt(
+        Math.pow(real!.point2.x - 90, 2) + 
+        Math.pow(real!.point2.y - 50, 2)
+      );
+      expect(dist2).toBeCloseTo(20, 1);
+    });
+
+    it('should be infeasible if circles overlap', () => {
+      const c1center = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const c1radius = planeH.addFreePoint2D(new Vector3(70, 50, 1), world);
+      const circle1 = planeH.addCircle2DByCenterAndPoint(c1center.id, c1radius.id, world);
+      
+      const c2center = planeH.addFreePoint2D(new Vector3(60, 50, 1), world);
+      const c2radius = planeH.addFreePoint2D(new Vector3(80, 50, 1), world);
+      const circle2 = planeH.addCircle2DByCenterAndPoint(c2center.id, c2radius.id, world);
+      
+      const segment = planeH.addSegment2DCircleToCircleExternal(circle1.id, circle2.id, 0, world);
+      const real = segment.realize2D(world);
+      
+      expect(real!.feasible).toBe(false);
+    });
+  });
+
+  describe('Segment2DCircleToCircleInternal (Phase 74.1)', () => {
+    it('should create internal tangent segment', () => {
+      const c1center = planeH.addFreePoint2D(new Vector3(30, 50, 1), world);
+      const c1radius = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const circle1 = planeH.addCircle2DByCenterAndPoint(c1center.id, c1radius.id, world);
+      
+      const c2center = planeH.addFreePoint2D(new Vector3(90, 50, 1), world);
+      const c2radius = planeH.addFreePoint2D(new Vector3(110, 50, 1), world);
+      const circle2 = planeH.addCircle2DByCenterAndPoint(c2center.id, c2radius.id, world);
+      
+      const segment = planeH.addSegment2DCircleToCircleInternal(circle1.id, circle2.id, 0, world);
+      const real = segment.realize2D(world);
+      
+      expect(real).toBeDefined();
+      expect(real!.feasible).toBe(true);
+    });
+  });
+
+  describe('Segment2DCircleToCirclePerpendicular (Phase 74.1)', () => {
+    it('should create perpendicular segment between circles', () => {
+      const c1center = planeH.addFreePoint2D(new Vector3(30, 50, 1), world);
+      const c1radius = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const circle1 = planeH.addCircle2DByCenterAndPoint(c1center.id, c1radius.id, world);
+      
+      const c2center = planeH.addFreePoint2D(new Vector3(90, 50, 1), world);
+      const c2radius = planeH.addFreePoint2D(new Vector3(110, 50, 1), world);
+      const circle2 = planeH.addCircle2DByCenterAndPoint(c2center.id, c2radius.id, world);
+      
+      const segment = planeH.addSegment2DCircleToCirclePerpendicular(circle1.id, circle2.id, world);
+      const real = segment.realize2D(world);
+      
+      expect(real).toBeDefined();
+      expect(real!.feasible).toBe(true);
+      
+      // Segment should be perpendicular to center line (horizontal in this case)
+      // So segment should be vertical
+      const dx = real!.point2.x - real!.point1.x;
+      const dy = real!.point2.y - real!.point1.y;
+      
+      // Perpendicular to horizontal = vertical
+      expect(Math.abs(dx)).toBeLessThan(0.1);
+      expect(Math.abs(dy)).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Segment2DCircleToCircleThroughCenters (Phase 74.1)', () => {
+    it('should create segment connecting circle centers', () => {
+      const c1center = planeH.addFreePoint2D(new Vector3(30, 50, 1), world);
+      const c1radius = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const circle1 = planeH.addCircle2DByCenterAndPoint(c1center.id, c1radius.id, world);
+      
+      const c2center = planeH.addFreePoint2D(new Vector3(90, 70, 1), world);
+      const c2radius = planeH.addFreePoint2D(new Vector3(110, 70, 1), world);
+      const circle2 = planeH.addCircle2DByCenterAndPoint(c2center.id, c2radius.id, world);
+      
+      const segment = planeH.addSegment2DCircleToCircleThroughCenters(circle1.id, circle2.id, world);
+      const real = segment.realize2D(world);
+      
+      expect(real).toBeDefined();
+      expect(real!.feasible).toBe(true);
+      
+      // Segment endpoints should be at circle centers
+      expect(real!.point1.x).toBeCloseTo(30, 1);
+      expect(real!.point1.y).toBeCloseTo(50, 1);
+      expect(real!.point2.x).toBeCloseTo(90, 1);
+      expect(real!.point2.y).toBeCloseTo(70, 1);
+    });
+  });
 });

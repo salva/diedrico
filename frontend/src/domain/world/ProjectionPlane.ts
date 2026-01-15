@@ -48,6 +48,15 @@ import {
 } from './Line';
 import type { Circle2D, Circle2DRealization2D } from './Circle';
 import { Circle2DByCenterAndPoint } from './Circle';
+import { 
+  Segment2DByPoints,
+  Segment2DPointToLine,
+  Segment2DPointToCircleTangent,
+  Segment2DCircleToCircleExternal,
+  Segment2DCircleToCircleInternal,
+  Segment2DCircleToCirclePerpendicular,
+  Segment2DCircleToCircleThroughCenters
+} from './Segment';
 import { Segment2DByPoints } from './Segment';
 import { Guide2D, SiblingGuide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
@@ -1224,6 +1233,237 @@ export abstract class ProjectionPlane {
     const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id);
     
     this.addLine(segment);  // Segments are stored as lines
+    return segment;
+  }
+
+  /**
+   * Factory method: Create perpendicular segment from point to line (Phase 74.1)
+   * 
+   * @param pointId ID of the point
+   * @param lineId ID of the line (any Line2D subtype)
+   * @param world World context for validation and ID generation
+   * @param id Optional ID
+   * @returns The created Segment2DPointToLine
+   */
+  addSegment2DPointToLine(
+    pointId: string,
+    lineId: string,
+    world: import('./World').World,
+    id?: string
+  ): Segment2DPointToLine {
+    if (!this.id) {
+      throw new Error('Cannot add segment to plane without ID');
+    }
+
+    // Validate point and line exist
+    const point = this.getPoint(pointId);
+    const line = this.getLine(lineId);
+    
+    if (!point) {
+      throw new Error(`Invalid pointId: ${pointId}. Point does not exist on this plane.`);
+    }
+    if (!line) {
+      throw new Error(`Invalid lineId: ${lineId}. Line does not exist on this plane.`);
+    }
+
+    if (!id) {
+      id = this.generateSegment2DId(world);
+    }
+
+    const segment = new Segment2DPointToLine(id, pointId, lineId, this.id);
+    
+    this.addLine(segment);
+    return segment;
+  }
+
+  /**
+   * Factory method: Create tangent segment from point to circle (Phase 74.1)
+   * 
+   * @param pointId ID of the point (must be outside circle)
+   * @param circleId ID of the circle
+   * @param tangentIndex Which tangent solution (0 or 1)
+   * @param world World context
+   * @param id Optional ID
+   * @returns The created Segment2DPointToCircleTangent
+   */
+  addSegment2DPointToCircleTangent(
+    pointId: string,
+    circleId: string,
+    tangentIndex: 0 | 1,
+    world: import('./World').World,
+    id?: string
+  ): Segment2DPointToCircleTangent {
+    if (!this.id) {
+      throw new Error('Cannot add segment to plane without ID');
+    }
+
+    // Validate point and circle exist
+    const point = this.getPoint(pointId);
+    const circle = this.getCircle(circleId);
+    
+    if (!point) {
+      throw new Error(`Invalid pointId: ${pointId}. Point does not exist on this plane.`);
+    }
+    if (!circle) {
+      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist on this plane.`);
+    }
+
+    if (tangentIndex !== 0 && tangentIndex !== 1) {
+      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+    }
+
+    if (!id) {
+      id = this.generateSegment2DId(world);
+    }
+
+    const segment = new Segment2DPointToCircleTangent(id, pointId, circleId, tangentIndex, this.id);
+    
+    this.addLine(segment);
+    return segment;
+  }
+
+  /**
+   * Factory method: Create external tangent segment between two circles (Phase 74.1)
+   */
+  addSegment2DCircleToCircleExternal(
+    circle1Id: string,
+    circle2Id: string,
+    tangentIndex: 0 | 1,
+    world: import('./World').World,
+    id?: string
+  ): Segment2DCircleToCircleExternal {
+    if (!this.id) {
+      throw new Error('Cannot add segment to plane without ID');
+    }
+
+    const circle1 = this.getCircle(circle1Id);
+    const circle2 = this.getCircle(circle2Id);
+    
+    if (!circle1) {
+      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist on this plane.`);
+    }
+    if (!circle2) {
+      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist on this plane.`);
+    }
+    if (circle1Id === circle2Id) {
+      throw new Error(`Cannot create tangent from a circle to itself. circle1Id and circle2Id must be different.`);
+    }
+
+    if (tangentIndex !== 0 && tangentIndex !== 1) {
+      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+    }
+
+    if (!id) {
+      id = this.generateSegment2DId(world);
+    }
+
+    const segment = new Segment2DCircleToCircleExternal(id, circle1Id, circle2Id, tangentIndex, this.id);
+    
+    this.addLine(segment);
+    return segment;
+  }
+
+  /**
+   * Factory method: Create internal tangent segment between two circles (Phase 74.1)
+   */
+  addSegment2DCircleToCircleInternal(
+    circle1Id: string,
+    circle2Id: string,
+    tangentIndex: 0 | 1,
+    world: import('./World').World,
+    id?: string
+  ): Segment2DCircleToCircleInternal {
+    if (!this.id) {
+      throw new Error('Cannot add segment to plane without ID');
+    }
+
+    const circle1 = this.getCircle(circle1Id);
+    const circle2 = this.getCircle(circle2Id);
+    
+    if (!circle1 || !circle2) {
+      throw new Error(`Invalid circle IDs.`);
+    }
+    if (circle1Id === circle2Id) {
+      throw new Error(`Cannot create tangent from a circle to itself.`);
+    }
+
+    if (tangentIndex !== 0 && tangentIndex !== 1) {
+      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+    }
+
+    if (!id) {
+      id = this.generateSegment2DId(world);
+    }
+
+    const segment = new Segment2DCircleToCircleInternal(id, circle1Id, circle2Id, tangentIndex, this.id);
+    
+    this.addLine(segment);
+    return segment;
+  }
+
+  /**
+   * Factory method: Create perpendicular segment between circles (Phase 74.1)
+   */
+  addSegment2DCircleToCirclePerpendicular(
+    circle1Id: string,
+    circle2Id: string,
+    world: import('./World').World,
+    id?: string
+  ): Segment2DCircleToCirclePerpendicular {
+    if (!this.id) {
+      throw new Error('Cannot add segment to plane without ID');
+    }
+
+    const circle1 = this.getCircle(circle1Id);
+    const circle2 = this.getCircle(circle2Id);
+    
+    if (!circle1 || !circle2) {
+      throw new Error(`Invalid circle IDs.`);
+    }
+    if (circle1Id === circle2Id) {
+      throw new Error(`Cannot create segment from a circle to itself.`);
+    }
+
+    if (!id) {
+      id = this.generateSegment2DId(world);
+    }
+
+    const segment = new Segment2DCircleToCirclePerpendicular(id, circle1Id, circle2Id, this.id);
+    
+    this.addLine(segment);
+    return segment;
+  }
+
+  /**
+   * Factory method: Create segment through circle centers (Phase 74.1)
+   */
+  addSegment2DCircleToCircleThroughCenters(
+    circle1Id: string,
+    circle2Id: string,
+    world: import('./World').World,
+    id?: string
+  ): Segment2DCircleToCircleThroughCenters {
+    if (!this.id) {
+      throw new Error('Cannot add segment to plane without ID');
+    }
+
+    const circle1 = this.getCircle(circle1Id);
+    const circle2 = this.getCircle(circle2Id);
+    
+    if (!circle1 || !circle2) {
+      throw new Error(`Invalid circle IDs.`);
+    }
+    if (circle1Id === circle2Id) {
+      throw new Error(`Cannot create segment from a circle to itself.`);
+    }
+
+    if (!id) {
+      id = this.generateSegment2DId(world);
+    }
+
+    const segment = new Segment2DCircleToCircleThroughCenters(id, circle1Id, circle2Id, this.id);
+    
+    this.addLine(segment);
     return segment;
   }
 
