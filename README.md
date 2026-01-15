@@ -210,7 +210,21 @@ Contributions are welcome! However, please note:
 
 ## 📄 License
 
-[Add license information here]
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+**In brief**: You are free to use, modify, and distribute this software, but any derivative works must also be licensed under GPL v3.0. This ensures that educational tools remain open and accessible to all.
+
+Key permissions:
+- ✅ **Commercial use**: Use in commercial environments
+- ✅ **Modification**: Adapt and improve the software
+- ✅ **Distribution**: Share with others
+- ✅ **Private use**: Use privately without sharing modifications
+
+Key requirements:
+- 📋 **Disclose source**: Provide source code when distributing
+- 📋 **License and copyright notice**: Include license and copyright
+- 📋 **Same license**: Derivative works must use GPL v3.0
+- 📋 **State changes**: Document modifications made
 
 ## 🙏 Acknowledgments
 

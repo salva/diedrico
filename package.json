@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Educational web application for teaching dihedral/orthographic projection",
   "private": true,
+  "license": "GPL-3.0-or-later",
   "workspaces": [
     "frontend",
     "backend"

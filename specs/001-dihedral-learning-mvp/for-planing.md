@@ -51,6 +51,36 @@ Note that completing these tasks may require asking the user for additional info
 
 ## ALREADY PLANNED
 
+* [X] **GPL 3.0 License Integration**
+  - **STATUS**: ✅ COMPLETE (Jan 15, 2026) - License added and documented
+  - **Purpose**: Establish open-source licensing to ensure educational tool remains accessible
+  - **Implementation**:
+    - Downloaded official GPL 3.0 license text to `/LICENSE`
+    - Updated README.md with comprehensive license section explaining permissions and requirements
+    - Added `"license": "GPL-3.0-or-later"` to all package.json files (root, frontend, backend)
+  - **License Choice Rationale**:
+    - **GPL 3.0**: Strong copyleft ensures derivative works remain open source
+    - **Educational focus**: Protects educational nature of the project
+    - **Community**: Encourages collaboration while preventing proprietary forks
+    - **Commercial use allowed**: Can be used in educational institutions commercially
+  - **Key License Features**:
+    - ✅ Permits commercial use, modification, distribution, and private use
+    - 📋 Requires source code disclosure, license notices, same license for derivatives
+    - 📋 Requires documentation of changes made to the code
+    - 🛡️ Provides no warranty and limits liability
+  - **Files Modified**:
+    - Created [LICENSE](../../LICENSE): Official GPL 3.0 license text
+    - Updated [README.md](../../README.md): Added license section with clear explanation
+    - Updated [package.json](../../package.json): Added license field
+    - Updated [frontend/package.json](../../frontend/package.json): Added license field
+    - Updated [backend/package.json](../../backend/package.json): Added license field
+  - **Benefits**:
+    - **Legal clarity**: Clear licensing terms for users and contributors
+    - **Open source**: Ensures educational tool remains freely accessible
+    - **Protection**: Prevents proprietary forks while allowing commercial use
+    - **Standard compliance**: Uses widely recognized OSI-approved license
+  - **Notes**: GPL 3.0 chosen over MIT/Apache for strong copyleft protection; ensures all improvements to educational tool remain open source
+
 * [X] **Project README.md Documentation**
   - **STATUS**: ✅ COMPLETE (Jan 15, 2026) - Comprehensive README added
   - **Purpose**: Provide clear project introduction, setup instructions, and development guidelines
