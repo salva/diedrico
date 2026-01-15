@@ -1156,6 +1156,11 @@ function fitToView() {
   let maxY = -Infinity;
   
   for (const prim of allPrimitives) {
+    // Skip primitives with undefined geometry
+    if (!prim.geometry) {
+      continue;
+    }
+    
     if (prim.type === 'point') {
       const p = prim.geometry as { x: number; y: number };
       minX = Math.min(minX, p.x);
