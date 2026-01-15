@@ -20,7 +20,7 @@ import { Vector3 } from 'three';
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
 
-export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'tangent-to-circle-through-point' | 'tangent-to-circle-parallel' | 'half-hinge' | 'segment' | 'guide' | 'sibling-guide';
+export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'tangent-to-circle-through-point' | 'tangent-to-circle-parallel' | 'circle-to-circle-external' | 'circle-to-circle-internal' | 'circle-to-circle-perpendicular' | 'circle-to-circle-through-centers' | 'half-hinge' | 'segment' | 'guide' | 'sibling-guide';
 
 /**
  * Line2DRealization2D - Stores computed line using homogeneous coordinates
@@ -755,6 +755,387 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
     return new Line2DRealization2D(
       tangentPoint,
       refDirection.clone(),
+      true
+    );
+  }
+}
+
+/**
+ * Line2DCircleToCircleExternal - External tangent line to two circles
+ * 
+ * Phase 73: Polymorphic Line Tool - circle-circle constructions
+ * 
+ * External tangents touch both circles on the same side relative to the center line.
+ * For two distinct circles, exactly two external tangent lines exist (unless one
+ * circle is inside the other).
+ * 
+ * The tangent index (0 or 1) is automatically determined from mouse position when
+ * creating the line:
+ * - Index 0: "above" tangent (positive perpendicular direction)
+ * - Index 1: "below" tangent (negative perpendicular direction)
+ * 
+ * Algorithm: Uses computeExternalTangents() from CircleGeometry module
+ * 
+ * @see frontend/src/domain/calculations/CircleGeometry.ts#computeExternalTangents
+ * @see specs/001-dihedral-learning-mvp/data-model.md#phase-73-polymorphic-line-tool
+ */
+export class Line2DCircleToCircleExternal extends Line2D {
+  readonly type: Line2DType = 'circle-to-circle-external';
+  readonly circle1Id: string;          // First circle
+  readonly circle2Id: string;          // Second circle
+  readonly tangentIndex: 0 | 1;        // Disambiguates which external tangent
+  
+  constructor(
+    id: string,
+    circle1Id: string,
+    circle2Id: string,
+    tangentIndex: 0 | 1,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.circle1Id = circle1Id;
+    this.circle2Id = circle2Id;
+    this.tangentIndex = tangentIndex;
+  }
+  
+  clone(): Line2DCircleToCircleExternal {
+    return new Line2DCircleToCircleExternal(
+      this.id,
+      this.circle1Id,
+      this.circle2Id,
+      this.tangentIndex,
+      this.planeId,
+      this.label
+    );
+  }
+  
+  /**
+   * Calculate 2D realization - external tangent line to two circles
+   * 
+   * Uses CircleGeometry.computeExternalTangents() algorithm which computes
+   * both external tangents by offsetting circles in perpendicular direction.
+   */
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Import CircleGeometry at runtime to avoid circular dependency
+    const { computeExternalTangents } = require('../calculations/CircleGeometry');
+    
+    // Get plane
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) return null;
+    
+    // Get circle realizations
+    const circle1 = plane.getCircle(this.circle1Id);
+    const circle2 = plane.getCircle(this.circle2Id);
+    const c1Realization = circle1?.realize2D(world);
+    const c2Realization = circle2?.realize2D(world);
+    
+    if (!c1Realization || !c2Realization) return null;
+    
+    // Check infeasibility propagation
+    if (!c1Realization.feasible || !c2Realization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    // Compute external tangents
+    const tangents = computeExternalTangents(c1Realization, c2Realization);
+    
+    // Check if tangent exists
+    if (tangents.length === 0 || this.tangentIndex >= tangents.length) {
+      // No tangent exists (one circle inside the other) - mark infeasible
+      return new Line2DRealization2D(
+        c1Realization.center.clone(),
+        new Vector3(1, 0, 0),
+        false
+      );
+    }
+    
+    // Get the selected tangent solution
+    const solution = tangents[this.tangentIndex];
+    
+    // Return infinite line through first touch point with tangent direction
+    return new Line2DRealization2D(
+      solution.touchPoint1,
+      solution.direction,
+      true
+    );
+  }
+}
+
+/**
+ * Line2DCircleToCircleInternal - Internal (crossing) tangent line to two circles
+ * 
+ * Phase 73: Polymorphic Line Tool - circle-circle constructions
+ * 
+ * Internal tangents cross between the circles, touching them on opposite sides
+ * relative to the center line. For two separated circles, exactly two internal
+ * tangent lines exist (none if circles overlap).
+ * 
+ * The tangent index (0 or 1) is automatically determined from mouse position:
+ * - Index 0: "upper-left" crossing tangent
+ * - Index 1: "lower-right" crossing tangent
+ * 
+ * Algorithm: Uses computeInternalTangents() from CircleGeometry module
+ * 
+ * @see frontend/src/domain/calculations/CircleGeometry.ts#computeInternalTangents
+ * @see specs/001-dihedral-learning-mvp/data-model.md#phase-73-polymorphic-line-tool
+ */
+export class Line2DCircleToCircleInternal extends Line2D {
+  readonly type: Line2DType = 'circle-to-circle-internal';
+  readonly circle1Id: string;          // First circle
+  readonly circle2Id: string;          // Second circle
+  readonly tangentIndex: 0 | 1;        // Disambiguates which internal tangent
+  
+  constructor(
+    id: string,
+    circle1Id: string,
+    circle2Id: string,
+    tangentIndex: 0 | 1,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.circle1Id = circle1Id;
+    this.circle2Id = circle2Id;
+    this.tangentIndex = tangentIndex;
+  }
+  
+  clone(): Line2DCircleToCircleInternal {
+    return new Line2DCircleToCircleInternal(
+      this.id,
+      this.circle1Id,
+      this.circle2Id,
+      this.tangentIndex,
+      this.planeId,
+      this.label
+    );
+  }
+  
+  /**
+   * Calculate 2D realization - internal tangent line to two circles
+   * 
+   * Uses CircleGeometry.computeInternalTangents() algorithm which computes
+   * both internal tangents using homothety center method.
+   */
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Import CircleGeometry at runtime to avoid circular dependency
+    const { computeInternalTangents } = require('../calculations/CircleGeometry');
+    
+    // Get plane
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) return null;
+    
+    // Get circle realizations
+    const circle1 = plane.getCircle(this.circle1Id);
+    const circle2 = plane.getCircle(this.circle2Id);
+    const c1Realization = circle1?.realize2D(world);
+    const c2Realization = circle2?.realize2D(world);
+    
+    if (!c1Realization || !c2Realization) return null;
+    
+    // Check infeasibility propagation
+    if (!c1Realization.feasible || !c2Realization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    // Compute internal tangents
+    const tangents = computeInternalTangents(c1Realization, c2Realization);
+    
+    // Check if tangent exists
+    if (tangents.length === 0 || this.tangentIndex >= tangents.length) {
+      // No tangent exists (circles overlap) - mark infeasible
+      return new Line2DRealization2D(
+        c1Realization.center.clone(),
+        new Vector3(1, 0, 0),
+        false
+      );
+    }
+    
+    // Get the selected tangent solution
+    const solution = tangents[this.tangentIndex];
+    
+    // Return infinite line through first touch point with tangent direction
+    return new Line2DRealization2D(
+      solution.touchPoint1,
+      solution.direction,
+      true
+    );
+  }
+}
+
+/**
+ * Line2DCircleToCirclePerpendicular - Line perpendicular to center line of two circles
+ * 
+ * Phase 73: Polymorphic Line Tool - circle-circle constructions
+ * 
+ * This line is always well-defined for two distinct circles. It passes through
+ * the midpoint of the centers and is perpendicular to the line connecting them.
+ * 
+ * Algorithm: Uses computePerpendicularLine() from CircleGeometry module
+ * 
+ * @see frontend/src/domain/calculations/CircleGeometry.ts#computePerpendicularLine
+ * @see specs/001-dihedral-learning-mvp/data-model.md#phase-73-polymorphic-line-tool
+ */
+export class Line2DCircleToCirclePerpendicular extends Line2D {
+  readonly type: Line2DType = 'circle-to-circle-perpendicular';
+  readonly circle1Id: string;          // First circle
+  readonly circle2Id: string;          // Second circle
+  
+  constructor(
+    id: string,
+    circle1Id: string,
+    circle2Id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.circle1Id = circle1Id;
+    this.circle2Id = circle2Id;
+  }
+  
+  clone(): Line2DCircleToCirclePerpendicular {
+    return new Line2DCircleToCirclePerpendicular(
+      this.id,
+      this.circle1Id,
+      this.circle2Id,
+      this.planeId,
+      this.label
+    );
+  }
+  
+  /**
+   * Calculate 2D realization - line perpendicular to center line
+   * 
+   * Uses CircleGeometry.computePerpendicularLine() algorithm which computes
+   * perpendicular through midpoint of centers.
+   */
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Import CircleGeometry at runtime to avoid circular dependency
+    const { computePerpendicularLine } = require('../calculations/CircleGeometry');
+    
+    // Get plane
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) return null;
+    
+    // Get circle realizations
+    const circle1 = plane.getCircle(this.circle1Id);
+    const circle2 = plane.getCircle(this.circle2Id);
+    const c1Realization = circle1?.realize2D(world);
+    const c2Realization = circle2?.realize2D(world);
+    
+    if (!c1Realization || !c2Realization) return null;
+    
+    // Check infeasibility propagation
+    if (!c1Realization.feasible || !c2Realization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    // Compute perpendicular line
+    const solution = computePerpendicularLine(c1Realization, c2Realization);
+    
+    // Check if line exists
+    if (!solution) {
+      // Circles coincide - no perpendicular exists
+      return new Line2DRealization2D(
+        c1Realization.center.clone(),
+        new Vector3(1, 0, 0),
+        false
+      );
+    }
+    
+    // Return infinite line through midpoint with perpendicular direction
+    return new Line2DRealization2D(
+      solution.pointOnLine,
+      solution.direction,
+      true
+    );
+  }
+}
+
+/**
+ * Line2DCircleToCircleThroughCenters - Line passing through both circle centers
+ * 
+ * Phase 73: Polymorphic Line Tool - circle-circle constructions
+ * 
+ * This line is always well-defined for two distinct circles. It passes through
+ * both circle centers.
+ * 
+ * Algorithm: Uses computeThroughCentersLine() from CircleGeometry module
+ * 
+ * @see frontend/src/domain/calculations/CircleGeometry.ts#computeThroughCentersLine
+ * @see specs/001-dihedral-learning-mvp/data-model.md#phase-73-polymorphic-line-tool
+ */
+export class Line2DCircleToCircleThroughCenters extends Line2D {
+  readonly type: Line2DType = 'circle-to-circle-through-centers';
+  readonly circle1Id: string;          // First circle
+  readonly circle2Id: string;          // Second circle
+  
+  constructor(
+    id: string,
+    circle1Id: string,
+    circle2Id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.circle1Id = circle1Id;
+    this.circle2Id = circle2Id;
+  }
+  
+  clone(): Line2DCircleToCircleThroughCenters {
+    return new Line2DCircleToCircleThroughCenters(
+      this.id,
+      this.circle1Id,
+      this.circle2Id,
+      this.planeId,
+      this.label
+    );
+  }
+  
+  /**
+   * Calculate 2D realization - line through both circle centers
+   * 
+   * Uses CircleGeometry.computeThroughCentersLine() algorithm which computes
+   * line in direction from center1 to center2.
+   */
+  realize2D(world: import('./World').World): Line2DRealization2D | null {
+    // Import CircleGeometry at runtime to avoid circular dependency
+    const { computeThroughCentersLine } = require('../calculations/CircleGeometry');
+    
+    // Get plane
+    const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) return null;
+    
+    // Get circle realizations
+    const circle1 = plane.getCircle(this.circle1Id);
+    const circle2 = plane.getCircle(this.circle2Id);
+    const c1Realization = circle1?.realize2D(world);
+    const c2Realization = circle2?.realize2D(world);
+    
+    if (!c1Realization || !c2Realization) return null;
+    
+    // Check infeasibility propagation
+    if (!c1Realization.feasible || !c2Realization.feasible) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+    
+    // Compute through-centers line
+    const solution = computeThroughCentersLine(c1Realization, c2Realization);
+    
+    // Check if line exists
+    if (!solution) {
+      // Circles coincide - no through-centers line exists
+      return new Line2DRealization2D(
+        c1Realization.center.clone(),
+        new Vector3(1, 0, 0),
+        false
+      );
+    }
+    
+    // Return infinite line through first center with direction toward second center
+    return new Line2DRealization2D(
+      solution.pointOnLine,
+      solution.direction,
       true
     );
   }
