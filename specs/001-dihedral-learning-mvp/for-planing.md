@@ -18,7 +18,6 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Generate nice (and self explained) color vector images for the toolbar buttoms. Remove the texts from the buttoms. Make all the buttoms the same size. 
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Verify if 3D visualization support is already planned. If not, plan and implement it.
@@ -45,12 +44,179 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. In general don't try to handle unexpected internal states but just report an error instead.
 * [ ] Adding new elements just expands all subprocesses in the process tree
 * [ ] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
-* [ ] View zooming must work using the mouse position as the center when using the mouse wheel, or the center of the screen when using + or - icons (not implemented yet).
-* [ ] Move geometric element classes in directories line lines, circles, points, etc.
-* [ ] Indexes for intersection points between lines and circles should be determined based on the direction of the line. If we define the line as L = P + s * V, we have two intersections L1 and L2 determined by s1 and s2. Index 0 must be the one with the lesser s.
-* [ ] Indexes for intersection points between to circles must be determined according to the relative position of the points against the line defined by the two circles center. 
+* [ ] Move geometric element variation classes in directories line lines, circles, points, etc.
+* [ ] Add instructions about how to use the project.
+* [ ] Use an automated browser for building UI tests.
+* [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [X] **Project README.md Documentation**
+  - **STATUS**: ✅ COMPLETE (Jan 15, 2026) - Comprehensive README added
+  - **Purpose**: Provide clear project introduction, setup instructions, and development guidelines
+  - **Implementation**: Created `/README.md` with:
+    - Project overview and educational purpose
+    - Key features highlighting constructive process focus
+    - Getting started guide (prerequisites, installation, quick start)
+    - Project structure documentation
+    - Development scripts and technology stack
+    - Architecture principles and key concepts
+    - Complete documentation links (spec.md, ui-spec.md, data-model.md, tasks.md)
+    - Testing guidelines (unit, integration, E2E)
+    - Contributing workflow and development process
+  - **Content Highlights**:
+    - Educational focus on dihedral/orthographic projection learning
+    - Emphasis on explicit construction process vs implicit CAD tools
+    - Clear explanation of parametric behavior and dependency tracking
+    - Technology stack (Vue 3, TypeScript, Pinia, Three.js, D3.js)
+    - Architectural principles (parametric, explicit dependencies, command pattern)
+    - Process Tree concept and element variation patterns
+  - **Files Created**:
+    - [README.md](../../README.md): Comprehensive project documentation (370+ lines)
+  - **Benefits**:
+    - **Onboarding**: New developers can quickly understand project purpose and setup
+    - **Discoverability**: Clear feature list helps users understand capabilities
+    - **Development guidance**: Architecture principles and workflow documented
+    - **Professional appearance**: Standard open-source project structure
+  - **Notes**: Purely documentation task; no code changes; provides foundation for external contributors and users
+
+* [X] **Center-Line-Based Circle-Circle Intersection Indexing (Phase 72)**
+  - **STATUS**: ✅ COMPLETE (Jan 14, 2026) - Implemented and tested
+  - **User Requirement**: "Indexes for intersection points between two circles must be determined according to the relative position of the points against the line defined by the two circles center."
+  - **Problem**: Circle-circle intersections previously used sortPointsByAngleFromRadiusVector() which ordered by angle from circle1's radius vector. This ignored the natural geometric axis (line connecting centers) and provided counter-intuitive ordering.
+  - **Solution**: Index by signed angle from center line (C1 → C2)
+    - Index 0 = intersection with positive angle (counterclockwise from center line)
+    - Index 1 = intersection with negative angle (clockwise from center line)
+    - Natural, symmetric, geometrically meaningful ordering
+  - **Algorithm**: New sortCircleCircleIntersectionsByCenterLine() function
+    ```typescript
+    // For each intersection point I:
+    // Compute angle of center line: θ_centerLine = atan2(C2.y - C1.y, C2.x - C1.x)
+    // Compute angle to I: θ_I = atan2(I.y - C1.y, I.x - C1.x)
+    // Compute relative angle: Δθ = θ_I - θ_centerLine (normalized to [-π, π])
+    // Sort points by Δθ descending (positive angle first)
+    // Return [point with positive Δθ, point with negative Δθ]
+    ```
+  - **Implementation Complete**:
+    - ✅ Added sortCircleCircleIntersectionsByCenterLine() in Intersections.ts (82 lines)
+    - ✅ Updated intersectCircleCircle() to use new sorting
+    - ✅ Updated Point2DCircleCircleIntersection JSDoc comments with signed angle documentation
+    - ✅ Fixed sortLineCircleIntersectionsByParameter() to use line.getDirection() method
+    - ✅ Updated circle-circle intersection tests with signed angle expectations (9 tests)
+    - ✅ Updated edge case tests with signed angle logic (5 tests)
+    - ✅ Fixed line-circle test helper functions to use getDirection()
+    - ✅ All 55 intersection tests passing
+  - **Benefits Achieved**:
+    - **Semantic consistency**: Index ordering based on natural geometric axis (center line)
+    - **Geometric intuition**: "Index 0 = above center line" is visually clear and predictable
+    - **Mathematical elegance**: Signed angle directly computable with atan2
+    - **Index stability**: Same point keeps same index under circle movement
+    - **User understanding**: Intuitive for users visualizing circle-circle relationships
+  - **Files Modified**:
+    - [Intersections.ts](../../frontend/src/domain/calculations/Intersections.ts): New sorting function (lines 197-278), updated intersectCircleCircle() (lines 703-712), fixed parameter-based sorting (line 173)
+    - [Point.ts](../../frontend/src/domain/world/Point.ts): Updated JSDoc for Point2DCircleCircleIntersection (lines 447-462)
+    - [intersections.spec.ts](../../frontend/tests/unit/calculations/intersections.spec.ts): Updated all circle-circle tests with signed angle expectations
+  - **Testing**: All 55 tests passing - 9 circle-circle ordering tests (including tangent cases), 5 edge case tests, 5 line-circle parameter tests, 4 line-circle edge tests, plus all other intersection tests
+
+  - **Notes**: Algorithm similar to Phase 71 (parameter-based) but uses center line instead of line direction; main work is updating 6 existing tests + adding 3 edge cases; line-circle intersections unchanged (still use parameter-based from Phase 71)
+
+* [X] **Parameter-Based Line-Circle Intersection Indexing (Phase 71)**
+  - **STATUS**: ✅ COMPLETE (Jan 14, 2026) - Implementation commit [pending]
+  - **User Requirement**: "Indexes for intersection points between lines and circles should be determined based on the direction of the line. If we define the line as L = P + s * V, we have two intersections L1 and L2 determined by s1 and s2. Index 0 must be the one with the lesser s."
+  - **Problem**: Line-circle intersection points currently indexed by angle from circle's radius vector (same as circle-circle). This ignores line directionality and provides counter-intuitive indices for users thinking in parametric terms.
+  - **Current Implementation**: Uses `sortPointsByAngleFromRadiusVector()` which orders intersections counterclockwise from circle's radius vector. Geometrically correct but semantically misaligned with line definition.
+  - **Solution**: Index line-circle intersections by parameter s along line direction (L = P + s×V)
+    - Index 0 = intersection with lesser s value (earlier along line direction)
+    - Index 1 = intersection with greater s value (later along line direction)
+    - Maintains index stability: same physical point keeps same index when line rotates
+  - **Algorithm**: New `sortLineCircleIntersectionsByParameter()` function
+    ```typescript
+    // For each intersection point I on line L = P + s*V:
+    // Compute s = (I - P) · V / |V|²  (parameter value)
+    // Sort points by s ascending (lesser s first)
+    // Return [point at s₁, point at s₂] where s₁ < s₂
+    ```
+  - **Rationale**:
+    - **Semantic Alignment**: Lines are parametric (L = P + s×V), not radial. Using s respects line definition.
+    - **Directional Intuition**: "Index 0 = first along direction" is intuitive for directed entities.
+    - **Tool Compatibility**: Construction tools using line direction get expected intersection order.
+    - **Index Stability**: When line rotates, same physical point keeps same index (s order preserved).
+    - **User Expectation**: "First intersection after point A" gets index 0 (natural ordering).
+  - **Contrast with Circle-Circle**: Circle-circle has no inherent direction → angle-based appropriate; Line-circle has direction → parameter-based appropriate.
+  - **Implementation**:
+    - Add `sortLineCircleIntersectionsByParameter()` in Intersections.ts
+    - Update `intersectLineCircle()` to use new sorting (replace sortPointsByAngleFromRadiusVector())
+    - Update Point2DLineCircleIntersection JSDoc comments
+    - Keep sortPointsByAngleFromRadiusVector() unchanged (still used for circle-circle)
+    - Update ~15-20 line-circle intersection tests with parameter-based expectations
+    - Add tests for negative parameters (intersection before line origin)
+    - Add index stability test (rotation preserves index assignment)
+  - **Benefits Achieved**:
+    - **Semantic consistency**: Index ordering matches line's parametric definition
+    - **Directional intuition**: "Index 0 = first along direction" is natural
+    - **Mathematical elegance**: Parameter s directly computable from intersection position
+    - **Index stability**: Same point keeps same index under line rotation
+    - **User understanding**: Intuitive for users who think of lines directionally
+  - **Files Modified**:
+    - [Intersections.ts](../../frontend/src/domain/calculations/Intersections.ts): New sorting function, updated intersectLineCircle()
+    - [Point.ts](../../frontend/src/domain/world/Point.ts): Updated JSDoc for Point2DLineCircleIntersection
+    - [intersections.spec.ts](../../frontend/tests/unit/calculations/intersections.spec.ts): Updated test expectations
+  - **Testing**: Unit tests for parameter computation, integration tests for index stability, circle-circle tests unchanged
+  - **Migration**: Breaking change (indices may swap), requires schema bump or recalculation on load
+  - **Notes**: Simple algorithm (~35 lines), main work is updating test expectations; circle-circle intersections unchanged (still use angle-based sorting)
+
+* [X] **Mouse-Position-Centered Zooming (Phase 70)**
+  - **STATUS**: ✅ COMPLETE (Jan 14, 2026) - Mouse wheel zoom implementation
+  - **User Requirement**: "View zooming must work using the mouse position as the center when using the mouse wheel, or the center of the screen when using + or - icons"
+  - **Problem**: Phase 68 zoom buttons always zoomed from viewport center. Mouse wheel needed to zoom toward cursor position for intuitive navigation.
+  - **Solution**: Added `@wheel.prevent` handler to SvgCanvas.vue that calls `viewStore.adjustZoom()` with cursor coordinates
+  - **Implementation**: 
+    - Added `handleWheel()` function to SvgCanvas.vue
+    - Converts mouse position to canvas coordinates using SVG getScreenCTM()
+    - Calls `viewStore.adjustZoom(delta, mouseX, mouseY)` with 0.1 zoom factor (10% per notch)
+    - Prevents default page scroll with `.prevent` modifier
+    - Zoom buttons unchanged - still zoom from center (no focus point passed)
+  - **Two Zoom Behaviors Achieved**:
+    1. **Mouse wheel zoom**: Centers on cursor position (natural, intuitive)
+    2. **Button zoom (+/-)**: Centers on viewport center (predictable, unchanged from Phase 68)
+  - **Technical Details**:
+    - Leveraged existing `adjustZoom()` implementation (lines 86-97 in viewStore.ts)
+    - Mouse wheel uses 10% zoom factor vs buttons' 20% (finer control)
+    - Zoom range clamped to [0.1x, 10x] (existing constraint)
+    - Works with both mouse wheel and trackpad
+  - **Benefits Achieved**:
+    - **Natural navigation**: Zoom toward cursor position automatically
+    - **Standard UX**: Matches CAD/graphics apps (AutoCAD, Figma, Blender)
+    - **Reduced panning**: No need for pan-then-zoom workflow
+    - **Dual behavior**: Predictable button zoom + intuitive wheel zoom
+  - **Files Modified**:
+    - [SvgCanvas.vue](../../frontend/src/components/workspace/SvgCanvas.vue): Added @wheel.prevent handler and handleWheel() function
+  - **Notes**: Simple 30-line implementation leveraging existing viewport transform infrastructure; no breaking changes to Phase 68 zoom buttons
+
+* [X] **All Tools Stay Active - Unified Completion Behavior (Phase 69)**
+  - **STATUS**: ✅ COMPLETE (Jan 14, 2026) - Configuration updated
+  - **User Requirement**: "Buttons must be sticky. Once a tool is selected it should remain selected until the user selects a different one or presses ESC (then select becomes picked). I want all the tools to be stay-active."
+  - **Problem**: Phase 67 implemented mixed completion behavior - primitives (Point, Line, Segment, Circle) used `stay-active`, while complex tools (Tangent, Intersection, Parallel, Perpendicular, Transport, Guide) used `return-to-selection`, creating inconsistent UX
+  - **Solution**: Changed ALL tools to use `completionBehavior: 'stay-active'` for consistent sticky behavior
+  - **Implementation**: Simple configuration change in [toolFamilies.ts](../frontend/src/config/toolFamilies.ts)
+    - Changed 7 tools from `completionBehavior: 'return-to-selection'` to `'stay-active'`
+    - Affected tools: Intersection, Parallel Line, Perpendicular Line, Tangent (Point), Tangent (Parallel), Guide, Transport
+    - Primitives (Point, Line, Segment, Circle) already used `stay-active` (no change needed)
+  - **Behavior**:
+    - User clicks any tool → button appears pressed/selected
+    - User completes operation → tool remains active, button still pressed/selected
+    - User can immediately continue using same tool
+    - User presses ESC → Selection tool becomes active, tool button unpressed
+    - User clicks different tool → previous button unpressed, new button pressed
+  - **Infrastructure**: Leveraged existing Phase 67 architecture
+    - BaseTool.completionBehavior property
+    - BaseTool.handleCompletion() method
+    - Tool completion logic in ArgumentCollectorTool
+  - **Benefits**:
+    - **Consistent UX**: All tools behave identically (no surprises)
+    - **Faster workflow**: Repeat operations without re-selecting tool
+    - **Predictable**: Users know every tool stays active until they switch or press ESC
+  - **Notes**: Minimal change (7 lines in config file); leverages Phase 67 infrastructure; improves consistency without adding complexity
 
 * [X] **Toolbar Behavior - Tool Families and Completion Patterns (Phase 67)**
   - **STATUS**: ✅ COMPLETE (Jan 14, 2026) - Commit 99f4dbb
@@ -118,6 +284,18 @@ Note that completing these tasks may require asking the user for additional info
   - **Tasks**: Phase 67 in [tasks.md](tasks.md#phase-67-toolbar-behavior---tool-families-completion-patterns-and-last-used-memory) (T1121-T1137: 17 tasks)
   - **Related Phases**: Phase 64 (ArgumentCollectorTool - compatible, no changes needed)
   - **Notes**: Inspired by GeoGebra Classic's proven toolbar organization; improves UX without changing tool functionality; all existing tools migrate seamlessly
+
+* [X] **Toolbar Icon-Only Design with Color-Coded SVG Illustrations (Phase 68)**
+  - **STATUS**: ✅ COMPLETE (Jan 15, 2026) - Commit [insert hash]
+  - **Goal**: Replace text-based toolbar buttons with professional SVG icon illustrations showing both created elements and required arguments using color-coding
+  - **Current State**: All toolbar buttons now use icon-only design with uniform 40×40px sizing
+  - **Implementation Summary**: Created 22 SVG icon components with Material Design colors (#2196F3 blue for created, #FF9800 orange for arguments), updated ToolConfig interface to use Component type, refactored ToolFamilyButton and Toolbar components for icon-only rendering, removed all text labels, added tooltips and ARIA labels for accessibility
+  - **Icons Created**: SelectionToolIcon, FreePointIcon, IntersectionPointIcon, LineByTwoPointsIcon, SegmentIcon, ParallelLineIcon, PerpendicularLineIcon, TangentThroughPointIcon, TangentParallelIcon, CircleIcon, GuideLineIcon, TransportPointIcon, NewFileIcon, OpenFileIcon, SaveFileIcon, UndoIcon, RedoIcon, ZoomInIcon, ZoomOutIcon, ZoomFitIcon, PanIcon, ActivePlaneIcon
+  - **Spec**: [spec.md](spec.md) FR-052 (Toolbar Icon-Only Design requirement)
+  - **UI**: [ui-spec.md](ui-spec.md#toolbar-icon-only-design-phase-68) Complete icon catalog with design specifications for 20+ icons
+  - **Data model**: [data-model.md](data-model.md#phase-68-toolbar-icon-only-design---svg-illustrations-with-color-coded-construction-methods) Icon component architecture, color constants, migration strategy
+  - **Tasks**: Phase 68 in [tasks.md](tasks.md#phase-68-toolbar-icon-only-design---svg-illustrations-with-color-coded-construction-methods) (T1138-T1169: 32 tasks)
+  - **Benefits Achieved**: Professional appearance, self-explanatory icons, ~30% more compact toolbar, consistent sizing, scalable SVG, color-coded learning, accessibility maintained, international (no text)
 
 * [ ] **Test Architecture Compliance (Phase 66)**
   - **STATUS**: 📋 PLANNED (Jan 14, 2026) - Ready for implementation
