@@ -1030,8 +1030,6 @@ onUnmounted(() => {
   z-index: 100;
   background: white;
 }
-  position: relative;
-}
 
 .app-footer {
   /* StatusBar component handles its own styling */
