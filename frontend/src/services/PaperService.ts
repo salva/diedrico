@@ -620,7 +620,10 @@ export class PaperService {
     planeId: string,
     context: PrimitiveContext
   ): LinePrimitive {
-    const isHighlighted = context.highlightedEntityIds?.has(hingeLine.id) || false;
+    // Check hover/selection state (prefer new fields, fallback to legacy highlightedEntityIds)
+    const isHovered = context.hoveredIds?.has(hingeLine.id) || false;
+    const isSelected = context.selectedIds?.has(hingeLine.id) || false;
+    const isHighlighted = isSelected || isHovered || context.highlightedEntityIds?.has(hingeLine.id) || false;
 
     // Transform point on hinge line (includes translation)
     const paperPoint = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
@@ -684,7 +687,10 @@ export class PaperService {
     planeId: string,
     context: PrimitiveContext
   ): LinePrimitive {
-    const isHighlighted = context.highlightedEntityIds?.has(halfHinge.id) || false;
+    // Check hover/selection state (prefer new fields, fallback to legacy highlightedEntityIds)
+    const isHovered = context.hoveredIds?.has(halfHinge.id) || false;
+    const isSelected = context.selectedIds?.has(halfHinge.id) || false;
+    const isHighlighted = isSelected || isHovered || context.highlightedEntityIds?.has(halfHinge.id) || false;
 
     // Transform point on hinge line (includes translation)
     const paperPoint = realization.point1.clone().applyMatrix3(planeToPaperMatrix);
