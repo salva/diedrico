@@ -148,74 +148,34 @@ export function areLinesParallel(
 }
 
 /**
- * Sort line-circle intersection points by projection onto line direction.
- * Index 0 = smaller projection (earlier along line), Index 1 = larger projection (further along line)
+ * Sort intersection points by projection onto a direction vector.
+ * Index 0 = larger projection (more positive), Index 1 = smaller projection (more negative)
+ * 
+ * This generic function handles both line-circle and circle-circle intersection ordering:
+ * - Line-circle: direction = line direction, reference = point on line
+ * - Circle-circle: direction = perpendicular to center-line, reference = first circle center
  * 
  * @param points Array of intersection points (typically 2)
- * @param line The line involved in the intersection
- * @returns Sorted array with index 0 = smaller projection along line direction
+ * @param direction Direction vector to project onto (defines "left" vs "right")
+ * @param referencePoint Reference point for computing relative positions
+ * @returns Sorted array with index 0 = larger (more positive) projection
  */
-function sortLineCircleIntersectionsByDirection(
+function sortIntersectionsByProjection(
   points: Vector3[],
-  line: Line2DRealization2D
+  direction: { x: number; y: number },
+  referencePoint: Vector3
 ): Vector3[] {
   if (points.length < 2) return points;
   
-  // Get line direction vector
-  const V = line.getDirection();
-  
-  // Reference point on line
-  const P = line.point1;
-  
-  // Project each point onto line direction
+  // Project each point onto direction vector (from reference point)
   const projectionsAndPoints = points.map(point => {
-    const dx = point.x - P.x;
-    const dy = point.y - P.y;
-    const projection = dx * V.x + dy * V.y;
+    const dx = point.x - referencePoint.x;
+    const dy = point.y - referencePoint.y;
+    const projection = dx * direction.x + dy * direction.y;
     return { projection, point };
   });
   
-  // Sort by projection ascending (smaller first = index 0)
-  projectionsAndPoints.sort((a, b) => a.projection - b.projection);
-  
-  return projectionsAndPoints.map(item => item.point);
-}
-
-/**
- * Sort circle-circle intersection points by projection onto perpendicular to center-line direction.
- * Index 0 = positive projection (above center-line), Index 1 = negative projection (below center-line)
- * 
- * @param points Array of intersection points (typically 2)
- * @param circle1 First circle
- * @param circle2 Second circle
- * @returns Sorted array with index 0 = positive perpendicular projection
- */
-function sortCircleCircleIntersectionsByPerpendicular(
-  points: Vector3[],
-  circle1: Circle2DRealization2D,
-  circle2: Circle2DRealization2D
-): Vector3[] {
-  if (points.length < 2) return points;
-  
-  // Center-line direction: c1 → c2
-  const c1 = circle1.center;
-  const c2 = circle2.center;
-  const dirX = c2.x - c1.x;
-  const dirY = c2.y - c1.y;
-  
-  // Perpendicular to center-line: (-dirY, dirX)
-  const perpX = -dirY;
-  const perpY = dirX;
-  
-  // Project each point onto perpendicular direction (from c1)
-  const projectionsAndPoints = points.map(point => {
-    const dx = point.x - c1.x;
-    const dy = point.y - c1.y;
-    const projection = dx * perpX + dy * perpY;
-    return { projection, point };
-  });
-  
-  // Sort by projection descending (positive first = index 0)
+  // Sort by projection descending (larger/more positive first = index 0)
   projectionsAndPoints.sort((a, b) => b.projection - a.projection);
   
   return projectionsAndPoints.map(item => item.point);
@@ -304,7 +264,8 @@ export function intersectLineCircle(
       new Vector3(x1, y1, 1),
       new Vector3(x2, y2, 1)
     ];
-    return sortLineCircleIntersectionsByDirection(unsortedPoints, line);
+    // Sort by projection along line direction
+    return sortIntersectionsByProjection(unsortedPoints, line.getDirection(), line.point1);
   }
 }
 
@@ -408,5 +369,8 @@ export function intersectCircleCircle(
     new Vector3(x1, y1, 1),
     new Vector3(x2, y2, 1)
   ];
-  return sortCircleCircleIntersectionsByPerpendicular(unsortedPoints, circle1, circle2);
+  // Sort by projection along perpendicular to center-line
+  // Perpendicular to (dx, dy) is (-dy, dx)
+  const perpDirection = { x: -dy / d, y: dx / d };
+  return sortIntersectionsByProjection(unsortedPoints, perpDirection, c1);
 }
