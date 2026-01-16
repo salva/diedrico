@@ -1176,9 +1176,13 @@ export abstract class ProjectionPlane {
       throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
     }
 
-    // Validate primary is an intersection type
-    if (!primaryPoint.type.includes('intersection')) {
-      throw new Error(`Primary point must be an intersection type, got: ${primaryPoint.type}`);
+    // Validate primary is an intersection type using instanceof
+    const isIntersection = primaryPoint instanceof Point2DLineLineIntersection ||
+                           primaryPoint instanceof Point2DLineCircleIntersection ||
+                           primaryPoint instanceof Point2DCircleCircleIntersection;
+    
+    if (!isIntersection) {
+      throw new Error(`Primary point must be an intersection type, got: ${primaryPoint.constructor.name}`);
     }
 
     // Generate unique ID if not provided
