@@ -155,6 +155,9 @@ export class Command {
       throw new Error('Cannot commit empty command');
     }
     this._status = CommandStatus.Committed;
+    
+    // Notify world that changes have been made (for reactive UI updates)
+    this.world.markDirty();
   }
 
   /**
@@ -185,6 +188,9 @@ export class Command {
     }
     
     this._status = CommandStatus.Undone;
+    
+    // Notify world that changes have been made (for reactive UI updates)
+    this.world.markDirty();
   }
 
   /**
@@ -205,6 +211,9 @@ export class Command {
     }
     
     this._status = CommandStatus.Committed;
+    
+    // Notify world that changes have been made (for reactive UI updates)
+    this.world.markDirty();
   }
 
   /**
