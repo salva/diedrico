@@ -59,7 +59,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { World } from '../../domain/world/World';
 import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
-import type { ThreeViewDisplayOptions } from '../../types/ThreeViewDisplayOptions';
 import { useViewStore } from '../../stores/viewStore';
 
 // Component refs
@@ -208,10 +207,105 @@ function render2DElements() {
 }
 
 /**
+ * Render hinge line (HL_HV) in 3D space (Phase 25.2 - T229)
+ * 
+ * The hinge line is the intersection of P_H and P_V planes.
+ * It extends infinitely along the X-axis in the default configuration.
+ */
+function renderHingeLine() {
+  if (!displayOptions.value.showPlanes) return;
+
+  // Remove existing hinge line
+  const existing = scene.children.find(child => child.userData.type === 'hinge-line');
+  if (existing) {
+    scene.remove(existing);
+  }
+
+  try {
+    const hingeLine = world.getMainHingeLine();
+    
+    // Get both planes
+    const pH = world.getProjectionPlaneByLabel('P_H');
+    const pV = world.getProjectionPlaneByLabel('P_V');
+    
+    if (!pH || !pV) {
+      console.warn('[ThreeView] Cannot render hinge line: P_H or P_V not found');
+      return;
+    }
+    
+    // Get 3D realizations
+    const pHRealization = world.getProjectionPlane3DRealization(pH.id!);
+    const pVRealization = world.getProjectionPlane3DRealization(pV.id!);
+    
+    if (!pHRealization || !pVRealization) {
+      console.warn('[ThreeView] Cannot render hinge line: plane realizations not found');
+      return;
+    }
+    
+    // The hinge line is the intersection of the two planes
+    // For the default configuration (P_H is XZ plane, P_V is XY plane),
+    // the intersection is along the X-axis
+    // We'll render a long line segment along the intersection
+    
+    // In the default configuration:
+    // - P_H normal = (0, 1, 0) - points up (Y-axis)
+    // - P_V normal = (0, 0, 1) - points forward (Z-axis)
+    // - Intersection direction = P_H_normal × P_V_normal
+    
+    // Extract plane normals from transformation matrices
+    // The third column (indices 8, 9, 10) of planeTo3D matrix is the plane's normal
+    const pHNormal = new THREE.Vector3(
+      pHRealization.planeTo3D.elements[8],
+      pHRealization.planeTo3D.elements[9],
+      pHRealization.planeTo3D.elements[10]
+    ).normalize();
+    
+    const pVNormal = new THREE.Vector3(
+      pVRealization.planeTo3D.elements[8],
+      pVRealization.planeTo3D.elements[9],
+      pVRealization.planeTo3D.elements[10]
+    ).normalize();
+    
+    // Intersection direction = cross product of normals
+    const direction = new THREE.Vector3().crossVectors(pHNormal, pVNormal).normalize();
+    
+    // Get origin point (intersection should pass through origin)
+    const origin = new THREE.Vector3(
+      pHRealization.planeTo3D.elements[9],
+      pHRealization.planeTo3D.elements[10],
+      pHRealization.planeTo3D.elements[11]
+    );
+    
+    // Create line extending in both directions from origin
+    const lineLength = 40; // Extend 20 units in each direction
+    const start = origin.clone().add(direction.clone().multiplyScalar(-lineLength / 2));
+    const end = origin.clone().add(direction.clone().multiplyScalar(lineLength / 2));
+    
+    // Create dashed line geometry
+    const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+    const material = new THREE.LineDashedMaterial({
+      color: 0x333333,  // Dark gray per spec
+      dashSize: 0.5,
+      gapSize: 0.3,
+      linewidth: 2
+    });
+    
+    const line = new THREE.Line(geometry, material);
+    line.computeLineDistances(); // Required for dashed lines
+    line.userData.type = 'hinge-line';
+    line.userData.hingeLineId = hingeLine.id;
+    scene.add(line);
+  } catch (error) {
+    console.warn('[ThreeView] Error rendering hinge line:', error);
+  }
+}
+
+/**
  * Handle display option changes
  */
 function handleDisplayChange() {
   renderProjectionPlanes();
+  renderHingeLine();
   render2DElements();
 }
 
@@ -273,6 +367,7 @@ onMounted(() => {
     worldVersion,
     () => {
       renderProjectionPlanes();
+      renderHingeLine();
       render2DElements();
     }
   );
@@ -281,10 +376,11 @@ onMounted(() => {
   watch(
     displayOptions,
     (newOptions, oldOptions) => {
-      // Re-render planes if showPlanes or showGrid changed
+      // Re-render planes and hinge line if showPlanes or showGrid changed
       if (newOptions.showPlanes !== oldOptions?.showPlanes || 
           newOptions.showGrid !== oldOptions?.showGrid) {
         renderProjectionPlanes();
+        renderHingeLine();
       }
       
       // Re-render 2D elements if show2DElementsOnPlanes changed
