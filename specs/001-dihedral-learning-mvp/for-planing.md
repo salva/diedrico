@@ -20,7 +20,6 @@ Note that completing these tasks may require asking the user for additional info
 
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
 * [ ] Add support for moving semi-free points and distances along guide lines.
-* [ ] Verify if 3D visualization support is already planned. If not, plan and implement it.
 * [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
@@ -141,6 +140,55 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [X] **3D Visualization of 2D Elements on Planes (Phase 77)**
+  - **STATUS**: 📋 PLANNED (Jan 16, 2026) - Ready for implementation
+  - **User Requirement**: "The first step is to add the 3D visualization of the 2D elements in its planes."
+  - **Problem**: Users cannot see how 2D elements relate spatially across different projection planes. Existing 3D view shows only plane surfaces, not the geometric constructions.
+  - **Solution**: Render all 2D elements (points, lines, segments, circles) positioned on their projection planes in 3D space using Three.js
+  - **Key Features**:
+    - Transform 2D plane-local coordinates to 3D world coordinates using projection plane matrices
+    - Map element types to Three.js primitives: points→spheres, lines→line segments, circles→3D curves
+    - Active plane emphasis: full opacity (100%) vs non-active (50%)
+    - Automatic updates when 2D elements change position or visibility
+    - Read-only visualization (no selection, creation, or editing in 3D view)
+    - Proper depth testing and occlusion handling
+    - Z-fighting prevention (offset elements from plane surface)
+    - Display toggle in 3D view controls: "Show 2D Elements on Planes"
+    - **Plane generality**: Treats ALL projection planes equally (default planes P_H/P_V and any user-created auxiliary planes)
+  - **Architecture**:
+    - **Element2DRenderer3D** service: Main rendering engine with geometry caching
+    - **Element-specific renderers**: PointRenderer3D, LineRenderer3D, SegmentRenderer3D, CircleRenderer3D
+    - **Coordinate transformation**: 2D (u,v) → ProjectionPlane matrix → 3D (x,y,z) Three.js Vector3
+    - **Visual style resolution**: Match 2D colors, apply active plane emphasis, adjust opacity for 3D context
+    - **Performance optimization**: Geometry caching, object pooling, incremental updates, LOD for >500 elements
+    - **Plane iteration**: Iterates through `world.getProjectionPlanes()` - no special handling for P_H/P_V
+  - **Spec**: [spec.md](./spec.md) FR-053 (3D Visualization Requirement)
+  - **UI**: [ui-spec.md](./ui-spec.md#3d-visualization-of-2d-elements-on-planes-phase-77) Complete visual specification with rendering details
+  - **Data model**: [data-model.md](./data-model.md#phase-77-3d-visualization-of-2d-elements-on-planes) Complete architecture with Three.js integration
+  - **Tasks**: Phase 77 in [tasks.md](./tasks.md#phase-77-3d-visualization-of-2d-elements-on-planes) (T1185-T1205: 21 tasks)
+    - Phase 77.1: Core rendering service with coordinate transformation and caching (5 tasks)
+    - Phase 77.2: Element-specific renderers for points, lines, segments, circles (4 tasks)
+    - Phase 77.3: Integration with ThreeView component and reactive updates (4 tasks)
+    - Phase 77.4: Comprehensive testing (unit, integration, visual regression, performance) (5 tasks)
+    - Phase 77.5: Documentation and polish (3 tasks)
+  - **Benefits**:
+    - **Spatial Understanding**: See how all planes and their elements relate in 3D
+    - **Multi-Plane Relationships**: Understand geometric relationships across ALL planes (default and user-created)
+    - **Pedagogical Value**: Reinforce dihedral projection concepts visually
+    - **Debugging Aid**: Verify geometric constructions are positioned correctly in 3D
+    - **Read-Only**: Maintains learning focus on 2D constructive process
+  - **Acceptance Criteria**:
+    - ✅ Toggle enables/disables 2D element rendering in 3D view
+    - ✅ All element types render at correct 3D positions
+    - ✅ Active plane emphasis applied (100% vs 50% opacity)
+    - ✅ Proper depth testing and z-fighting prevention
+    - ✅ Automatic updates on element changes
+    - ✅ Performance acceptable (60fps with 200 elements)
+    - ✅ Display preference persists across sessions
+    - ✅ Comprehensive test coverage (unit + integration + E2E)
+  - **Implementation**: Ready for Phase 77 execution (5 sub-phases, 21 tasks)
+  - **Notes**: Leverages existing Three.js infrastructure from 3D view overlay; purely additive feature with no breaking changes
 
 * [X] **Type Property Elimination - Pure instanceof Pattern (Phase 75)**
   - **STATUS**: ✅ COMPLETED (Jan 17, 2026) - Type discriminators completely removed from Element2D hierarchy

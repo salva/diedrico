@@ -1612,6 +1612,96 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 
 **Pedagogical Purpose**: Helps students understand how 2D projections relate to 3D space. Provides spatial context without allowing direct 3D editing (which would bypass the learning process of constructing through projections).
 
+### 3D Visualization of 2D Elements on Planes (Phase 77)
+
+**Purpose**: Display 2D constructive elements positioned on their projection planes in 3D space to help users understand the spatial relationships between different planes and their geometric constructions.
+
+**Enabled/Disabled State**:
+- Toggle button in 3D view controls: "Show 2D Elements on Planes" (☐/☑)
+- Default: Disabled (3D view shows only projection plane surfaces initially)
+- When enabled: All visible 2D elements rendered at their 3D positions on planes
+- When disabled: Only projection plane surfaces and 3D elements (if any) shown
+
+**Element Transformation**:
+- Each 2D element (Point2D, Line2D, Segment2D, Circle2D) is transformed from plane-local coordinates to 3D world coordinates
+- Transformation uses ProjectionPlane's 3D position and orientation matrices
+- Elements rendered "on" their planes: positioned at correct 3D location but visually appear on plane surface
+
+**Visual Rendering**:
+
+**Points (Point2D)**:
+- Rendered as small spheres in Three.js
+- Sphere radius: ~0.3-0.5 units (scaled appropriately for 3D view)
+- Color: Same as 2D view element color
+- Opacity: Slightly reduced from 2D view (e.g., 80%) for 3D context clarity
+- Free points vs derived points: Same visual treatment as 2D (spheres vs cubes, or color differentiation)
+
+**Lines (Line2D, Guide2D)**:
+- Rendered as Three.js Line objects
+- Clipped to projection plane boundaries (not infinite in 3D view)
+- Line width: Similar to 2D view but adjusted for 3D visibility
+- Color: Same as 2D view
+- Opacity: Slightly reduced (e.g., 70%)
+- Guides: Dashed line pattern maintained in 3D
+
+**Segments (Segment2D)**:
+- Rendered as Three.js Line objects with defined endpoints
+- Same visual style as lines but with bounded length
+- Color and opacity follow 2D view settings
+
+**Circles (Circle2D)**:
+- Rendered as Three.js geometry (either BufferGeometry with circle vertices or EllipseCurve)
+- Circle lies on projection plane surface in 3D space
+- Rendered as continuous curve (not segmented unless necessary for performance)
+- Color and opacity follow 2D view settings
+- Line width consistent with 2D representation
+
+**Active Plane Emphasis**:
+- Elements on active plane: Full opacity from 2D settings (e.g., 100%)
+- Elements on non-active planes: Reduced opacity (e.g., 50% of 2D opacity)
+- Matches 2D view emphasis pattern for consistency
+
+**Depth and Occlusion**:
+- Three.js depth testing enabled: Elements behind planes or other elements are properly occluded
+- Projection plane surfaces are semi-transparent, allowing elements to be visible through planes
+- Z-fighting prevention: Elements offset slightly from plane surface (e.g., +0.01 units in plane normal direction)
+
+**Performance Considerations**:
+- Element geometry updated only when elements change (not every frame)
+- Use Three.js object pooling for point spheres to minimize garbage collection
+- Large numbers of elements (>500) may use simplified geometry or LOD (Level of Detail)
+- Option to disable 2D element rendering in 3D view if performance degrades
+
+**Interaction**:
+- No selection: Clicking 2D elements in 3D view does NOT select them (read-only)
+- Hover tooltips: May show element names/IDs when hovering (optional feature)
+- Highlighting: When element selected in 2D view, corresponding 3D representation highlights with same color
+- Unified hover: When hovering element in 3D view, corresponding 2D element highlights in 2D view (and vice versa)
+
+**Display Options Integration**:
+- New toggle in 3D View Controls panel: "☑ Show 2D Elements on Planes"
+- Independent from "Show 3D Elements" toggle
+- Independent from "Show Linking Visuals" toggle
+- Can be enabled simultaneously with other display options
+
+**Visual Hierarchy**:
+1. Projection plane surfaces (semi-transparent rectangles) - foundational layer
+2. 2D elements on planes (points, lines, circles) - primary content layer
+3. 3D elements (if any exist) - derived element layer
+4. Linking visuals (optional dashed connections) - auxiliary layer
+
+**Camera and Lighting**:
+- Three.js default lighting (ambient + directional) for visibility
+- Elements should be clearly visible from all camera angles
+- No dramatic shadows or complex lighting (keep it simple and clear)
+
+**Benefits**:
+- **Spatial Understanding**: See how all planes and their elements relate in 3D
+- **Multi-Plane Relationships**: Understand geometric relationships across planes
+- **Pedagogical Value**: Reinforce dihedral projection concepts visually
+- **Debugging Aid**: Verify geometric constructions are positioned correctly in 3D
+- **Read-Only**: Maintains learning focus on 2D constructive process
+
 ---
 
 ## Dialogs and Modals

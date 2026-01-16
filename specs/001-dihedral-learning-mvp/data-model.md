@@ -12155,3 +12155,314 @@ realize2D(world: World): Point2DRealization2D {
 **Testing**: Integration tests verify corrupted state throws TypeError. Tests expecting silent failures updated to expect crashes.
 
 **Related Phases**: Phase 75 (Type Property Elimination - instanceof pattern), Phase 63 (Class-Based Selection Masks)
+---
+
+### Phase 77: 3D Visualization of 2D Elements on Planes
+
+**Status**: 📋 PLANNED (2026-01-16)
+
+**Problem Statement**: Users currently cannot see how 2D elements relate spatially across different projection planes. The existing 3D view overlay shows only projection plane surfaces but not the 2D geometric constructions. This limits spatial understanding of multi-plane dihedral constructions.
+
+**User Requirement**: "The first step is to add the 3D visualization of the 2D elements in its planes."
+
+**Context**: 
+- 3D view overlay already exists with Three.js infrastructure (OrbitControls, camera, renderer)
+- Projection planes have 3D transformation matrices for positioning in 3D space
+- 2D elements (Point2D, Line2D, Segment2D, Circle2D) store plane-local coordinates
+- Need to transform 2D coordinates to 3D positions and render on projection planes
+
+**Key Requirements (FR-053)**:
+1. Display all visible 2D elements positioned on their projection planes in 3D space
+2. Transform 2D plane-local coordinates through projection plane's 3D transformation matrix
+3. Map 2D element types to appropriate 3D geometric primitives (points→spheres, lines→line segments, circles→3D curves)
+4. Maintain visual hierarchy (active plane emphasized, proper depth testing and occlusion)
+5. Update automatically when 2D elements change position or visibility
+6. Read-only visualization (no selection, creation, or editing in 3D view)
+
+**Architecture**:
+
+**Component Structure**:
+```
+ThreeView.vue (existing 3D view overlay component)
+├── Three.js Scene (existing)
+├── Three.js Camera (existing, OrbitControls)
+├── Three.js Renderer (existing)
+├── PlaneRenderer3D (existing - renders projection plane surfaces)
+└── Element2DRenderer3D (NEW - renders 2D elements in 3D space)
+    ├── PointRenderer3D (points → spheres)
+    ├── LineRenderer3D (lines → line segments)
+    ├── SegmentRenderer3D (segments → bounded line segments)
+    └── CircleRenderer3D (circles → 3D curves on planes)
+```
+
+**New Service: Element2DRenderer3D**:
+```typescript
+/**
+ * Service responsible for rendering 2D elements in 3D space
+ * Transforms 2D plane-local coordinates to 3D world coordinates
+ * Creates and manages Three.js geometry for each element type
+ */
+class Element2DRenderer3D {
+  private scene: THREE.Scene;
+  private geometryCache: Map<string, THREE.Object3D>; // element.id → Three.js object
+  
+  /**
+   * Main entry point: render all visible 2D elements from World
+   * Iterates through ALL projection planes (default and user-created)
+   */
+  renderElements(world: World, displayOptions: ThreeViewDisplayOptions): void {
+    // 1. Clear previous geometry (or update if using object pooling)
+    // 2. For each projection plane in world.getProjectionPlanes():
+    //    a. Get plane's 3D transformation matrix
+    //    b. For each 2D element on plane:
+    //       - Transform element's 2D coordinates to 3D
+    //       - Create/update Three.js geometry based on element type
+    //       - Apply visual styles (color, opacity, emphasis)
+    //       - Add to scene
+  }
+  
+  /**
+   * Transform 2D element coordinates to 3D world coordinates
+   */
+  private transform2DTo3D(
+    element: Element2D,
+    plane: ProjectionPlane,
+    world: World
+  ): THREE.Vector3 | THREE.Vector3[] {
+    // 1. Get element's 2D realization (plane-local <u,v> coordinates)
+    // 2. Get plane's 3D transformation matrix from PlaneRealization3D
+    // 3. Apply transformation: 3D_point = plane.transform3D * [u, v, 1]
+    // 4. Return Three.js Vector3 in world coordinates
+  }
+  
+  // Element type-specific renderers:
+  private renderPoint3D(point: Point2D, position3D: THREE.Vector3, style: ResolvedStyle): void
+  private renderLine3D(line: Line2D, endpoints3D: [THREE.Vector3, THREE.Vector3], style: ResolvedStyle): void
+  private renderSegment3D(segment: Segment2D, endpoints3D: [THREE.Vector3, THREE.Vector3], style: ResolvedStyle): void
+  private renderCircle3D(circle: Circle2D, center3D: THREE.Vector3, radius: number, planeNormal: THREE.Vector3, style: ResolvedStyle): void
+}
+```
+
+**Coordinate Transformation Flow**:
+```
+Element2D (plane-local <u,v>)
+   ↓ realize2D()
+Point2DRealization (plane-local <u,v,1> Vector3)
+   ↓ ProjectionPlane.get3DTransformMatrix()
+3D World Coordinates (x,y,z Vector3 for Three.js)
+   ↓ Element2DRenderer3D
+Three.js Geometry (spheres, lines, curves)
+```
+
+**Three.js Geometry Mapping**:
+
+**Point2D → THREE.Mesh with SphereGeometry**:
+```typescript
+const geometry = new THREE.SphereGeometry(0.3, 16, 16); // radius 0.3 units
+const material = new THREE.MeshBasicMaterial({
+  color: style.color,
+  opacity: style.opacity * (isActivePlane ? 1.0 : 0.5),
+  transparent: true
+});
+const sphere = new THREE.Mesh(geometry, material);
+sphere.position.copy(position3D);
+```
+
+**Line2D → THREE.Line with BufferGeometry**:
+```typescript
+// Lines clipped to plane boundaries
+const points = [startPoint3D, endPoint3D];
+const geometry = new THREE.BufferGeometry().setFromPoints(points);
+const material = new THREE.LineBasicMaterial({
+  color: style.color,
+  opacity: style.opacity * (isActivePlane ? 0.7 : 0.35),
+  linewidth: style.lineWidth,
+  transparent: true
+});
+const line = new THREE.Line(geometry, material);
+```
+
+**Segment2D → THREE.Line** (same as Line2D but with actual endpoints):
+```typescript
+// Segments use their defined endpoints, not clipped
+const geometry = new THREE.BufferGeometry().setFromPoints([start3D, end3D]);
+// Material same as Line2D
+```
+
+**Circle2D → THREE.Line with EllipseCurve**:
+```typescript
+// Circle as curve on plane surface
+const curve = new THREE.EllipseCurve(
+  center3D.x, center3D.z,  // Note: depends on plane orientation
+  radius, radius,
+  0, 2 * Math.PI,
+  false,
+  0
+);
+const points = curve.getPoints(64); // 64 segments for smooth circle
+const geometry = new THREE.BufferGeometry().setFromPoints(
+  points.map(p => new THREE.Vector3(p.x, center3D.y, p.y))
+);
+const material = new THREE.LineBasicMaterial({
+  color: style.color,
+  opacity: style.opacity * (isActivePlane ? 0.7 : 0.35),
+  transparent: true
+});
+const circle = new THREE.Line(geometry, material);
+```
+
+**Visual Style Application**:
+
+**Active Plane Emphasis**:
+- Elements on active plane: Full opacity from 2D settings (100%)
+- Elements on non-active planes: Reduced opacity (50% of 2D opacity)
+- Matches 2D view de-emphasis pattern
+
+**Color and Line Width**:
+- Color: Same as element's 2D color (from ResolvedStyle)
+- Line width: Adjusted for 3D visibility (Three.js LineBasicMaterial.linewidth)
+- Note: Three.js doesn't support variable line width in WebGL; may need alternative (THREE.Line2 from examples)
+
+**Depth Testing and Z-Fighting Prevention**:
+```typescript
+// Enable depth testing for proper occlusion
+material.depthTest = true;
+material.depthWrite = true;
+
+// Offset elements slightly from plane surface to prevent z-fighting
+const offset = planeNormal.clone().multiplyScalar(0.01); // 0.01 units above plane
+position3D.add(offset);
+```
+
+**Display Options Integration**:
+
+**New Toggle in ThreeView.vue**:
+```typescript
+interface ThreeViewDisplayOptions {
+  showPlanes: boolean;              // Existing
+  show2DElementsOnPlanes: boolean;  // NEW - Phase 77
+  showLinkingVisuals: boolean;      // Existing
+  showGrid: boolean;                // Existing
+}
+```
+
+**Control UI**:
+- Checkbox in 3D view controls panel: "☑ Show 2D Elements on Planes"
+- Default: `false` (disabled initially)
+- Stored in viewStore for persistence
+
+**Performance Considerations**:
+
+**Geometry Caching**:
+```typescript
+// Cache Three.js objects by element ID
+private geometryCache = new Map<string, THREE.Object3D>();
+
+// Update only when elements change, not every frame
+updateElement(elementId: string, element: Element2D, world: World): void {
+  const cached = this.geometryCache.get(elementId);
+  if (cached && !element.needsUpdate) {
+    return; // No update needed
+  }
+  // Update geometry...
+}
+```
+
+**Object Pooling**:
+- Reuse Three.js geometries for points (many points use same sphere geometry)
+- Pool material instances to reduce memory allocation
+- Update positions rather than destroying/recreating objects
+
+**LOD (Level of Detail)**:
+- For scenes with >500 elements, use simplified geometry
+- Optional: Frustum culling to skip rendering elements outside camera view
+
+**Interaction and Highlighting**:
+
+**Read-Only**:
+- No raycasting for element selection in 3D view
+- Clicking elements does nothing (maintains read-only principle)
+
+**Unified Hover** (future enhancement):
+- When hovering element in 2D view → highlight corresponding 3D geometry
+- When hovering element in 3D view → highlight corresponding 2D element
+- Uses same highlighting mechanism as 2D view (emit events to viewStore)
+
+**Update Strategy**:
+
+**Reactive Updates**:
+```typescript
+// In ThreeView.vue, watch for world changes
+watch(() => worldStore.world, () => {
+  if (displayOptions.show2DElementsOnPlanes) {
+    element2DRenderer.renderElements(worldStore.world, displayOptions);
+  }
+}, { deep: true });
+
+// Watch for element visibility changes
+watch(() => worldStore.elementVisibilityMap, () => {
+  element2DRenderer.updateVisibility(worldStore.elementVisibilityMap);
+});
+```
+
+**Incremental Updates** (optimization):
+- Track which elements changed since last frame
+- Update only affected Three.js objects, not entire scene
+- Use World's change notification system
+
+**Testing Strategy**:
+
+**Unit Tests** (vitest):
+- `Element2DRenderer3D.spec.ts`: Test coordinate transformations, geometry creation
+- Mock Three.js scene and verify correct objects added
+
+**Integration Tests**:
+- Verify 2D elements appear in 3D view at correct positions
+- Verify toggle enables/disables rendering
+- Verify active plane emphasis applied correctly
+
+**Visual Regression Tests** (Playwright):
+- Capture 3D view screenshots with 2D elements enabled
+- Verify elements positioned correctly across multiple planes
+- Verify occlusion and depth testing work properly
+
+**Files to Create/Modify**:
+
+**New Files**:
+- `frontend/src/services/Element2DRenderer3D.ts`: Main rendering service
+- `frontend/src/services/renderers3d/PointRenderer3D.ts`: Point-specific rendering
+- `frontend/src/services/renderers3d/LineRenderer3D.ts`: Line-specific rendering  
+- `frontend/src/services/renderers3d/SegmentRenderer3D.ts`: Segment-specific rendering
+- `frontend/src/services/renderers3d/CircleRenderer3D.ts`: Circle-specific rendering
+- `frontend/tests/unit/services/Element2DRenderer3D.spec.ts`: Unit tests
+- `frontend/tests/integration/threeView.spec.ts`: Integration tests
+
+**Modified Files**:
+- `frontend/src/components/ThreeView.vue`: Integrate Element2DRenderer3D, add display toggle
+- `frontend/src/stores/viewStore.ts`: Add `show2DElementsOnPlanes` option
+- `frontend/src/types/ThreeViewDisplayOptions.ts`: Add new display option type
+
+**Benefits**:
+- **Spatial Understanding**: See how 2D constructions relate spatially across all projection planes
+- **Multi-Plane Visualization**: Understand geometric relationships across all planes (default planes and any user-created auxiliary planes)
+- **Pedagogical Value**: Reinforce dihedral projection concepts visually
+- **Debugging Aid**: Verify geometric constructions positioned correctly in 3D space
+- **Read-Only**: Maintains learning focus on 2D constructive process
+
+**Acceptance Criteria**:
+1. ✅ Toggle "Show 2D Elements on Planes" in 3D view controls enables/disables feature
+2. ✅ All visible 2D elements (points, lines, segments, circles) render at correct 3D positions
+3. ✅ Elements on active plane rendered with full opacity, non-active planes at 50% opacity
+4. ✅ Depth testing enabled: elements behind planes properly occluded
+5. ✅ Z-fighting prevented: elements offset slightly from plane surfaces
+6. ✅ Colors match 2D view element colors (from ResolvedStyle)
+7. ✅ Automatic updates when 2D elements change position or visibility
+8. ✅ Performance acceptable for scenes with up to 200 elements (target 60fps)
+9. ✅ No interaction: clicking 3D elements does nothing (read-only)
+10. ✅ Display option persists across sessions (saved in viewStore)
+
+**Related Requirements**: FR-053 (3D Visualization Requirement), FR-035 (3D display options)
+
+**Related Phases**: 
+- Phase 25 (3D View Panel - provides Three.js infrastructure)
+- Phase 68 (Toolbar Icons - may add 3D view toggle icon)

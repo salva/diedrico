@@ -7759,3 +7759,341 @@ const circumferencePointId = pointResult.outputs.pointId;
 **Checkpoint**: Domain layer uses direct property access, crashes immediately with clear TypeError when invariants violated. Code is simpler, bugs are caught early.
 
 ---
+
+## Phase 77: 3D Visualization of 2D Elements on Planes
+
+**Goal**: Render all 2D elements (points, lines, segments, circles) on their projection planes in 3D space to enhance spatial understanding of multi-plane dihedral constructions.
+
+**Context**: Existing 3D view overlay has Three.js infrastructure but only shows projection plane surfaces. Need to transform 2D plane-local coordinates to 3D world coordinates and render appropriate Three.js geometry.
+
+**User Requirement**: "The first step is to add the 3D visualization of the 2D elements in its planes."
+
+**Reference**: 
+- [spec.md FR-053](./spec.md#requirements-mandatory) - 3D Visualization Requirement
+- [ui-spec.md §3D Visualization of 2D Elements on Planes](./ui-spec.md#3d-visualization-of-2d-elements-on-planes-phase-77) - UI Specification
+- [data-model.md §Phase 77](./data-model.md#phase-77-3d-visualization-of-2d-elements-on-planes) - Architecture
+
+**Key Features**:
+- Transform 2D coordinates to 3D using projection plane matrices
+- Map element types to Three.js primitives (points→spheres, lines→line segments, circles→curves)
+- Active plane emphasis (100% opacity vs 50% for non-active)
+- Automatic updates when elements change
+- Read-only visualization (no interaction)
+
+### Phase 77.1: Core Rendering Service (T1185-T1189)
+
+#### T1185: Create Element2DRenderer3D service class
+
+- File: `frontend/src/services/Element2DRenderer3D.ts` (NEW)
+- Implement base service with:
+  ```typescript
+  class Element2DRenderer3D {
+    private scene: THREE.Scene;
+    private geometryCache: Map<string, THREE.Object3D>;
+    
+    constructor(scene: THREE.Scene);
+    renderElements(world: World, displayOptions: ThreeViewDisplayOptions): void;
+    updateVisibility(visibilityMap: Map<string, boolean>): void;
+    clear(): void;
+    private transform2DTo3D(element: Element2D, plane: ProjectionPlane, world: World): THREE.Vector3 | THREE.Vector3[];
+  }
+  ```
+- **Acceptance**: Service class created with method stubs
+
+#### T1186: Implement coordinate transformation
+
+- File: `frontend/src/services/Element2DRenderer3D.ts`
+- Implement `transform2DTo3D()` method:
+  - Get element's 2D realization (plane-local <u,v> coordinates)
+  - Get plane's 3D transformation matrix
+  - Apply matrix transformation to convert to 3D world coordinates
+  - Return Three.js Vector3
+- Handle different element types (point, line endpoints, circle center+radius)
+- **Acceptance**: Unit test verifies correct 3D coordinates for known 2D positions
+
+#### T1187: Implement geometry caching system
+
+- File: `frontend/src/services/Element2DRenderer3D.ts`
+- Implement `geometryCache` Map to store Three.js objects by element ID
+- Cache management:
+  - Check cache before creating new geometry
+  - Update existing geometry positions when elements move
+  - Remove from cache when elements deleted
+  - Clear cache on full re-render
+- **Acceptance**: Cache reduces geometry creation, updates are efficient
+
+#### T1188: [P] Implement z-fighting prevention
+
+- File: `frontend/src/services/Element2DRenderer3D.ts`
+- Offset elements slightly from plane surface:
+  - Get plane normal vector
+  - Offset by 0.01 units in normal direction
+  - Apply to all element positions before rendering
+- Enable depth testing: `material.depthTest = true`, `material.depthWrite = true`
+- **Acceptance**: Elements don't flicker or z-fight with plane surfaces
+
+#### T1189: [P] Implement visual style resolution
+
+- File: `frontend/src/services/Element2DRenderer3D.ts`
+- Helper method: `resolveVisualStyle(element: Element2D, plane: ProjectionPlane)`
+  - Get element's resolved style (color, opacity, lineWidth)
+  - Apply active plane emphasis: full opacity for active, 50% for non-active
+  - Return styled Three.js material properties
+- **Acceptance**: Materials created with correct colors and opacity
+
+### Phase 77.2: Element-Specific Renderers (T1190-T1193)
+
+#### T1190: Implement Point3D renderer
+
+- File: `frontend/src/services/renderers3d/PointRenderer3D.ts` (NEW)
+- Create Three.js sphere geometry for points:
+  ```typescript
+  export function renderPoint3D(
+    position3D: THREE.Vector3,
+    style: MaterialStyle,
+    isActivePlane: boolean
+  ): THREE.Mesh {
+    const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+    const material = new THREE.MeshBasicMaterial({
+      color: style.color,
+      opacity: style.opacity * (isActivePlane ? 1.0 : 0.5),
+      transparent: true
+    });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.copy(position3D);
+    return sphere;
+  }
+  ```
+- **Acceptance**: Points render as spheres at correct 3D positions
+
+#### T1191: Implement Line3D renderer
+
+- File: `frontend/src/services/renderers3d/LineRenderer3D.ts` (NEW)
+- Create Three.js line geometry:
+  ```typescript
+  export function renderLine3D(
+    startPoint3D: THREE.Vector3,
+    endPoint3D: THREE.Vector3,
+    style: MaterialStyle,
+    isActivePlane: boolean
+  ): THREE.Line {
+    const points = [startPoint3D, endPoint3D];
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({
+      color: style.color,
+      opacity: style.opacity * (isActivePlane ? 0.7 : 0.35),
+      transparent: true
+    });
+    return new THREE.Line(geometry, material);
+  }
+  ```
+- Clip lines to projection plane boundaries
+- **Acceptance**: Lines render as line segments clipped to planes
+
+#### T1192: Implement Segment3D renderer
+
+- File: `frontend/src/services/renderers3d/SegmentRenderer3D.ts` (NEW)
+- Same as Line3D but uses segment's actual endpoints (no clipping)
+- Reuse Line3D rendering logic with different parameters
+- **Acceptance**: Segments render with defined endpoints
+
+#### T1193: Implement Circle3D renderer
+
+- File: `frontend/src/services/renderers3d/CircleRenderer3D.ts` (NEW)
+- Create Three.js circle geometry on plane:
+  ```typescript
+  export function renderCircle3D(
+    center3D: THREE.Vector3,
+    radius: number,
+    planeNormal: THREE.Vector3,
+    style: MaterialStyle,
+    isActivePlane: boolean
+  ): THREE.Line {
+    // Create circle as curve with 64 segments
+    const curve = new THREE.EllipseCurve(
+      0, 0, radius, radius,
+      0, 2 * Math.PI, false, 0
+    );
+    const points = curve.getPoints(64);
+    // Transform points to 3D plane position
+    const points3D = points.map(p => {
+      // Rotate to match plane orientation
+      // Translate to center position
+    });
+    const geometry = new THREE.BufferGeometry().setFromPoints(points3D);
+    const material = new THREE.LineBasicMaterial({
+      color: style.color,
+      opacity: style.opacity * (isActivePlane ? 0.7 : 0.35),
+      transparent: true
+    });
+    return new THREE.Line(geometry, material);
+  }
+  ```
+- Handle plane orientation (circles lie flat on planes)
+- **Acceptance**: Circles render as smooth curves on plane surfaces
+
+### Phase 77.3: Integration with ThreeView (T1194-T1197)
+
+#### T1194: Add display option to ThreeViewDisplayOptions
+
+- File: `frontend/src/types/ThreeViewDisplayOptions.ts`
+- Add new field:
+  ```typescript
+  export interface ThreeViewDisplayOptions {
+    showPlanes: boolean;              // Existing
+    show2DElementsOnPlanes: boolean;  // NEW
+    showLinkingVisuals: boolean;      // Existing
+    showGrid: boolean;                // Existing
+  }
+  ```
+- **Acceptance**: Type updated with new option
+
+#### T1195: Integrate Element2DRenderer3D into ThreeView.vue
+
+- File: `frontend/src/components/ThreeView.vue`
+- Import and instantiate Element2DRenderer3D
+- Call `renderElements()` when:
+  - Display option `show2DElementsOnPlanes` is enabled
+  - World data changes (reactive watch)
+  - Camera moves or view updates
+- Clear renderer when option disabled
+- **Acceptance**: 2D elements appear in 3D view when toggle enabled
+
+#### T1196: Add toggle control to 3D view UI
+
+- File: `frontend/src/components/ThreeView.vue`
+- Add checkbox in controls panel:
+  ```vue
+  <label>
+    <input type="checkbox" v-model="displayOptions.show2DElementsOnPlanes" />
+    Show 2D Elements on Planes
+  </label>
+  ```
+- Default: `false` (disabled initially)
+- **Acceptance**: Toggle enables/disables 2D element rendering
+
+#### T1197: Implement reactive updates
+
+- File: `frontend/src/components/ThreeView.vue`
+- Watch world changes:
+  ```typescript
+  watch(() => worldStore.world, () => {
+    if (displayOptions.show2DElementsOnPlanes) {
+      element2DRenderer.renderElements(worldStore.world, displayOptions);
+    }
+  }, { deep: true });
+  ```
+- Watch element visibility changes
+- Update only changed elements (not full re-render)
+- **Acceptance**: 3D view updates automatically when 2D elements change
+
+### Phase 77.4: Testing (T1198-T1202)
+
+#### T1198: [P] Unit test for Element2DRenderer3D
+
+- File: `frontend/tests/unit/services/Element2DRenderer3D.spec.ts` (NEW)
+- Test coordinate transformation:
+  - Mock ProjectionPlane with known transformation matrix
+  - Verify 2D point (u,v) transforms to correct 3D (x,y,z)
+  - Test for both P_H and P_V planes
+- Test geometry caching:
+  - Verify cache hit/miss behavior
+  - Verify updates don't recreate geometry unnecessarily
+- **Acceptance**: All unit tests pass for coordinate transforms and caching
+
+#### T1199: [P] Unit test for element-specific renderers
+
+- Files: 
+  - `frontend/tests/unit/services/renderers3d/PointRenderer3D.spec.ts` (NEW)
+  - `frontend/tests/unit/services/renderers3d/LineRenderer3D.spec.ts` (NEW)
+  - `frontend/tests/unit/services/renderers3d/CircleRenderer3D.spec.ts` (NEW)
+- Test each renderer:
+  - Verify correct Three.js geometry type created
+  - Verify material properties (color, opacity)
+  - Verify active plane emphasis applied
+- Mock Three.js Scene and verify objects added
+- **Acceptance**: All renderer unit tests pass
+
+#### T1200: [P] Integration test for 3D visualization
+
+- File: `frontend/tests/integration/threeView.spec.ts` (NEW or extend existing)
+- Test scenarios:
+  - Create 2D points on P_H, verify they appear in 3D view at correct positions
+  - Create line on P_V, verify it renders on vertical plane
+  - Move point in 2D view, verify 3D position updates
+  - Toggle display option, verify elements appear/disappear
+  - Change active plane, verify opacity emphasis changes
+- **Acceptance**: Integration tests verify end-to-end 3D rendering
+
+#### T1201: [P] Visual regression test with Playwright
+
+- File: `frontend/tests/e2e/threeView.spec.ts` (extend existing)
+- E2E scenarios:
+  - Open project with multiple 2D elements on different planes
+  - Enable "Show 2D Elements on Planes" toggle
+  - Rotate 3D camera to different angles
+  - Capture screenshots from multiple viewpoints
+  - Verify elements positioned correctly across planes
+- Test occlusion: elements behind planes are hidden
+- **Acceptance**: Visual regression tests pass, screenshots look correct
+
+#### T1202: Performance test with many elements
+
+- File: `frontend/tests/integration/threeView.performance.spec.ts` (NEW)
+- Create scene with 200+ elements across multiple planes
+- Enable 3D visualization
+- Measure:
+  - Initial render time
+  - Frame rate during camera rotation (target: 60fps)
+  - Memory usage (geometry caching effectiveness)
+- **Acceptance**: Performance meets targets (60fps with 200 elements)
+
+### Phase 77.5: Documentation and Polish (T1203-T1205)
+
+#### T1203: Update viewStore with display option
+
+- File: `frontend/src/stores/viewStore.ts`
+- Add `show2DElementsOnPlanes: false` to default state
+- Persist option to localStorage
+- Restore on application load
+- **Acceptance**: Display preference persists across sessions
+
+#### T1204: [P] Add tooltips and help text
+
+- File: `frontend/src/components/ThreeView.vue`
+- Tooltip for toggle: "Display 2D geometric elements positioned on their projection planes in 3D space"
+- Help icon with explanation of read-only nature
+- **Acceptance**: User guidance available in UI
+
+#### T1205: Git commit Phase 77
+
+- Commit message: "Phase 77: 3D Visualization of 2D Elements on Planes"
+- Include summary:
+  - FR-053 implemented
+  - Element2DRenderer3D service with geometry caching
+  - Point, Line, Segment, Circle renderers
+  - Integration with ThreeView
+  - Tests passing, performance acceptable
+- **Acceptance**: Phase 77 committed with comprehensive changes
+
+### Phase 77 Acceptance Criteria
+
+1. ✅ Toggle "Show 2D Elements on Planes" in 3D view controls enables/disables feature
+2. ✅ All visible 2D elements (points, lines, segments, circles) render at correct 3D positions
+3. ✅ Elements on active plane rendered with full opacity, non-active planes at 50% opacity
+4. ✅ Depth testing enabled: elements behind planes properly occluded
+5. ✅ Z-fighting prevented: elements offset slightly from plane surfaces
+6. ✅ Colors match 2D view element colors (from ResolvedStyle)
+7. ✅ Automatic updates when 2D elements change position or visibility
+8. ✅ Performance acceptable for scenes with up to 200 elements (target 60fps)
+9. ✅ No interaction: clicking 3D elements does nothing (read-only)
+10. ✅ Display option persists across sessions (saved in viewStore)
+11. ✅ All unit tests pass (coordinate transforms, renderers, caching)
+12. ✅ Integration tests verify end-to-end 3D visualization
+13. ✅ Visual regression tests pass with correct element positioning
+
+**Phase 77 Status**: 📋 PLANNED (Jan 16, 2026)
+
+**Checkpoint**: 3D view displays 2D elements positioned on projection planes in 3D space, enhancing spatial understanding of multi-plane dihedral constructions. Read-only visualization maintains learning focus on 2D constructive process.
+
+---
