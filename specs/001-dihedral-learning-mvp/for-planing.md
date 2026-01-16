@@ -18,60 +18,40 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] **3D Derivation from 2D Projections - Core Dihedral Geometry Algorithm (Phase 25.2 - BLOCKING)**
-  - **STATUS**: 📋 NOT PLANNED (Jan 16, 2026) - Core algorithm missing, blocks Phase 25 completion
-  - **Problem**: Current implementation only renders 2D elements *positioned on their planes* in 3D space (Phase 77). It does NOT derive actual 3D objects from their 2D projections. Given point A_H on P_H and A_V on P_V, we cannot yet calculate the actual 3D point A in space.
+* [ ] **Rendering User-Defined 3D Elements (Phase 25.2 - T230-T233)**
+  - **STATUS**: 📋 PLANNED (Jan 16, 2026) - Ready for specification and implementation
+  - **User Requirement**: "i don't want the app interpreting the dihedrical drawings. The user should explicitly define the realtions between 2d and 3d elements!"
+  - **Purpose**: Render 3D geometric elements (points, lines, etc.) that users explicitly create and define, NOT automatically derived from 2D projections
   - **What's Implemented**:
-    - ✅ Phase 77: Visualize 2D elements on planes in 3D (just shows where they exist on each plane)
-    - ✅ Phase 25.2 (T229): Render hinge line in 3D
-  - **What's MISSING**:
-    - ❌ **3D Point Derivation (T230)**: Given projections on two planes, calculate actual 3D position
-    - ❌ **3D Line Derivation (T231)**: Given line projections, calculate actual 3D line
-    - ❌ **Generic Algorithm (T233)**: Must work for ANY two planes, not just P_H/P_V
-    - ❌ **Homogeneous Coordinates (Principle V)**: Intersection of projection rays from each plane
-  - **Core Algorithm** (not implemented):
-    ```typescript
-    // Given: point1 in plane1 coords (u1, v1), point2 in plane2 coords (u2, v2)
-    // Find: actual 3D point P that projects to both
-    //
-    // Algorithm:
-    // 1. Convert plane coords to 3D rays perpendicular to each plane
-    // 2. Find intersection of the two rays (should meet at unique 3D point)
-    // 3. Handle degenerate cases (parallel planes, rays don't intersect)
-    //
-    // For P_H (horizontal) and P_V (vertical):
-    // - Point on P_H at (u, v) means 3D point has x=u, z=v, y=?
-    // - Point on P_V at (u, v) means 3D point has x=u, y=v, z=?
-    // - Both agree on x=u, so 3D point is (u, y_from_P_V, z_from_P_H)
-    //
-    // For arbitrary planes: solve ray-ray intersection using plane normals and transformations
-    ```
-  - **Why This Matters**:
-    - Without this, we can only show projections, not reconstruct 3D geometry
-    - This is the CORE pedagogical concept of dihedral projection
-    - Blocks: T232 (render derived 3D objects), T236-T238 (visual polish), T240-T241 (testing)
-    - Blocks: Any feature that needs actual 3D positions (measurements, 3D intersections, etc.)
-  - **Requirements**:
-    - Must work for ANY pair of projection planes (Principle IV - no P_H/P_V hardcoding)
-    - Must use homogeneous coordinates (Principle V)
-    - Must handle degenerate cases (parallel planes, overlapping projections)
-    - Must be testable independently (unit tests for geometry calculations)
+    - ✅ Phase 77: Visualize 2D elements on planes in 3D (shows where they exist on each plane)
+    - ✅ Phase 25.2 (T229): Render hinge line in 3D space
+    - ✅ 3D scene infrastructure with planes, camera controls, display toggles
+  - **What's NEEDED**:
+    - ❌ **3D Element Rendering (T230-T232)**: Display user-created 3D points, lines, segments, circles in 3D view
+    - ❌ **Generic 3D Geometry (T233)**: 3D element positioning and transformations using proper 3D math
+    - ❌ **Visual distinction**: 3D elements must be visually distinct from 2D elements on planes
+  - **Key Distinction**:
+    - **Phase 77** (implemented): Renders 2D elements ON their planes in 3D space (e.g., Point2D at (u,v) on P_H)
+    - **Phase 25.2 T230-T233** (planned): Renders actual 3D elements in 3D space (e.g., Point3D at (x,y,z) in world coordinates)
+    - **No automatic derivation**: Users will explicitly create 3D elements through UI/commands (future feature)
+  - **Architecture Clarification**:
+    - Users will explicitly define which 2D elements are projections of which 3D elements
+    - Relationships are USER-DEFINED, not calculated by the app
+    - T230-T233 focus on RENDERING once relationships exist, not on deriving them
   - **Planning Needed**:
-    1. Research homogeneous coordinate algorithms for ray-ray intersection
-    2. Design API: `derive3DPointFromProjections(plane1, point1, plane2, point2): Point3D`
-    3. Implement generic ray-ray intersection solver
-    4. Handle edge cases (parallel planes, numerical precision)
-    5. Add unit tests for derivation calculations
-    6. Integrate into ThreeView to render derived 3D objects
-    7. Update spec.md, data-model.md, tasks.md with detailed algorithm
-  - **User Question Needed**: How should the system handle:
-    - **Underconstrained**: Only one projection provided (infinite solutions)
-    - **Overconstrained**: Three+ projections that don't agree (no solution)
-    - **Degenerate**: Parallel planes (ray-ray intersection fails)
-    - **UI Integration**: Should 3D objects be automatically derived, or user-triggered?
-  - **Estimated Complexity**: HIGH - this is core geometric algorithm, needs careful design
-  - **Priority**: HIGH - blocks completion of Phase 25 and future 3D features
-  - **Note**: This is NOT about visualization (Phase 77 handles that). This is about solving the fundamental dihedral geometry problem: reconstructing 3D objects from their 2D projections.
+    1. Define 3D element data model (Point3D, Line3D, etc. classes)
+    2. Design API for user-defined 2D↔3D relationships
+    3. Update spec.md with 3D element creation workflow
+    4. Add 3D element rendering to ThreeView.vue
+    5. Visual styling for 3D elements (distinct from 2D elements on planes)
+    6. Update tasks.md T230-T233 to reflect rendering focus (not derivation)
+  - **Questions**:
+    - How do users create 3D elements? (Tools? Commands? Import?)
+    - How do users define 2D↔3D relationships? (Link dialog? Property panel?)
+    - Should 3D elements project onto planes automatically, or is that manual too?
+    - What visual style distinguishes 3D elements from 2D elements on planes?
+  - **Priority**: MEDIUM - Infrastructure complete, but 3D element creation workflow not yet designed
+  - **Note**: This is about rendering user-defined 3D geometry, NOT solving the dihedral projection problem. The app teaches dihedral projection by letting users work with projections, not by automating the reconstruction.
 
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
 * [ ] Add support for moving semi-free points and distances along guide lines.
@@ -197,42 +177,42 @@ Note that completing these tasks may require asking the user for additional info
 ## ALREADY PLANNED
 
 * [X] **3D View Panel Infrastructure (Phase 25.1 - PARTIAL)**
-  - **STATUS**: ⚠️ INFRASTRUCTURE COMPLETE, CORE ALGORITHM MISSING (Jan 16, 2026)
+  - **STATUS**: ⚠️ INFRASTRUCTURE COMPLETE, 3D ELEMENT RENDERING PENDING (Jan 16, 2026)
   - **What's Implemented**:
     - ✅ **Phase 25.1 (T226-T228)**: ThreeView.vue component with Three.js scene, camera, OrbitControls, lighting (commit 298d91d)
     - ✅ **Phase 25.2 (T229)**: Hinge line rendering as dashed gray line (commit 13a83e7)
     - ✅ **Phase 25.3 (T234-T235)**: Camera controls via OrbitControls (orbit, pan, zoom)
-    - ✅ **Display toggles**: Show Planes, Show Grid with tooltips
+    - ✅ **Display toggles**: Show Planes, Show Grid, Show 2D Elements on Planes with tooltips
     - ✅ **Integration**: Mounted as 400×300px floating overlay in App.vue
     - ✅ **Reactive updates**: Watches worldVersion for automatic re-rendering
-  - **What's MISSING (BLOCKING)**:
-    - ❌ **Phase 25.2 (T230-T233)**: 3D derivation from 2D projections - CORE ALGORITHM NOT IMPLEMENTED
-    - ❌ **T230**: Derive 3D point from projections on two planes using homogeneous coordinates
-    - ❌ **T231**: Derive 3D lines from 2D line projections
-    - ❌ **T232**: Render derived 3D objects (depends on T230-T231)
-    - ❌ **T233**: Generic algorithm for ANY plane pair (Principle IV)
+    - ✅ **Phase 77**: 2D elements visualized on their planes in 3D space
+  - **What's PENDING**:
+    - ❌ **Phase 25.2 (T230-T233)**: Rendering user-defined 3D elements (points, lines, etc.) in 3D space
+    - ❌ **T230-T232**: Display 3D geometric elements that users explicitly create
+    - ❌ **T233**: Generic 3D geometry handling (proper 3D transformations)
     - ❌ **Phase 25.4 (T236-T239)**: Visual polish (per-plane toggles, selection sync)
-    - ❌ **Phase 25.5 (T240-T241)**: Testing for 3D derivation calculations
+    - ❌ **Phase 25.5 (T240-T241)**: Testing for 3D view interaction
   - **Current State**: 
-    - 3D view shows projection planes and hinge line correctly
-    - Can visualize 2D elements positioned on planes (via Phase 77)
-    - CANNOT reconstruct actual 3D objects from their 2D projections (fundamental dihedral problem)
-  - **Why This Matters**:
-    - Phase 77 shows WHERE elements exist on each plane (visualization)
-    - Phase 25.2 (T230-T233) would show THE ACTUAL 3D OBJECT those projections represent (reconstruction)
-    - This is the CORE pedagogical concept: "given horizontal and vertical projections, find the 3D point"
+    - 3D view shows projection planes, hinge line, and 2D elements on planes
+    - Can visualize complete 2D geometry in 3D space (Phase 77)
+    - CANNOT yet render user-defined 3D elements (T230-T233 pending specification)
+  - **Architectural Clarity**:
+    - **NO automatic interpretation**: App does NOT derive 3D objects from 2D projections
+    - **User-defined relationships**: Users will explicitly create 3D elements and define relationships to 2D projections
+    - **Phase 77** (done): Shows 2D elements positioned on planes
+    - **T230-T233** (pending): Will show user-created 3D elements in world space
   - **Next Steps**:
-    - See "3D Derivation from 2D Projections" in FOR PLANNING section
-    - Need to design and implement ray-ray intersection algorithm
-    - Must work generically for any plane pair (not hardcoded for P_H/P_V)
-    - Requires specification, data model, and comprehensive testing
+    - See "Rendering User-Defined 3D Elements" in FOR PLANNING section
+    - Need to design 3D element creation workflow (how users create 3D points, lines, etc.)
+    - Need to specify how users define 2D↔3D relationships
+    - Update tasks.md T230-T233 to focus on rendering (not automatic derivation)
   - **Commits**:
     - 298d91d: Phase 25.1 - ThreeView component infrastructure
     - 13a83e7: Phase 25.2 (T229) - Hinge line rendering
     - e7413aa, 228365d: ViewStore persistence and tooltips
   - **Tasks**: Phase 25 in [tasks.md](./tasks.md) (T226-T241: 16 tasks, 6 complete, 10 pending)
-  - **Related**: Phase 77 (shows 2D elements on planes), Phase 25.2 blocking item (3D derivation algorithm)
-  - **Note**: Infrastructure is excellent, but without the core derivation algorithm (T230-T233), the 3D view is limited to showing planes and hinge line. The pedagogical value of reconstructing 3D objects from projections is not yet realized.
+  - **Related**: Phase 77 (shows 2D elements on planes - complete)
+  - **Note**: Infrastructure complete and working well. T230-T233 pending workflow design for user-defined 3D elements. This is a pedagogical tool where users work with projections explicitly, not an automatic 3D reconstruction engine.
 
 * [X] **3D Visualization of 2D Elements on Planes (Phase 77)**
   - **STATUS**: ✅ COMPLETE (Jan 16, 2026) - 2D element rendering in 3D space fully implemented
