@@ -163,11 +163,11 @@ export abstract class SelectionMask {
   }
   
   /**
-   * Create mask matching any Line2D subtype (lines, segments, guides, half-hinge-lines)
+   * Create mask matching any Line2D subtype (lines, segments, guides, perpendiculars, parallels, half-hinge-lines)
    * Replaces 'any-line' string from Phase 62
    */
   static anyLine(): HierarchyMask {
-    return new HierarchyMask('line', ['segment', 'guide', 'half-hinge-line']);
+    return new HierarchyMask('line', ['segment', 'guide', 'perpendicular', 'parallel', 'half-hinge-line']);
   }
   
   /**
