@@ -38,7 +38,7 @@ describe('Segment2D', () => {
       const segment = new Segment2DByPoints(planeH.id + '/seg1', point1Id, point2Id, planeH.id);
       
       expect(segment.id).toBe(planeH.id + '/seg1');
-      expect(segment.type).toBe('segment');  // Phase 22.5: unified line type
+      expect(segment instanceof Segment2D).toBe(true);  // Phase 22.5: unified line type
       expect(segment.point1Id).toBe(point1Id);
       expect(segment.point2Id).toBe(point2Id);
       expect(segment.planeId).toBe(planeH.id);

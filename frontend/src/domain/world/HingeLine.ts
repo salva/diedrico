@@ -32,7 +32,6 @@ import { Element3D } from './Element3D';
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
  */
 export class HalfHingeLine2D extends Line2D {
-  readonly type: 'half-hinge' = 'half-hinge';
   readonly hingeLineId: string;  // Parent HingeLine
   readonly point: Vector3;       // Point on the line (homogeneous: u, v, 1)
   readonly direction: Vector3;   // Direction vector (homogeneous: du, dv, 0)

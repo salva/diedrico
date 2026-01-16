@@ -2152,6 +2152,208 @@ export abstract class Element2D extends Element {
 type Element2DRealization = Point2DRealization2D | Line2DRealization2D | Circle2DRealization2D;
 ```
 
+---
+
+## Domain Purity Principle & Type Checking Pattern (Phase 73)
+
+**Purpose**: Establish architectural guidelines for type checking and method placement to maintain clean separation between domain logic (geometry) and external concerns (operations, services, UI).
+
+### The Domain Purity Principle
+
+**Rule**: Domain classes (Point2D, Line2D, Circle2D, etc.) contain ONLY geometric logic and properties. They must NOT contain methods that cross architectural boundaries into:
+- Operation layer (creation, deletion, modification operations)
+- Service layer (rendering, persistence, UI concerns)
+- Business logic layer (workflow, validation beyond geometric feasibility)
+
+### What Belongs in Domain Classes
+
+✅ **Geometric Properties and Methods** (ALLOWED):
+- Construction parameters (point IDs, radii, etc.)
+- Geometric computations (`realize2D()`, distance calculations)
+- Geometric predicates (`isBounded()`, `isFeasible()`, `isDegenerate()`)
+- Coordinate transformations
+- Cloning and serialization of geometric data
+
+❌ **External Concerns** (FORBIDDEN):
+- Operation selection (`getDeletionOp()`, `getConstructionOp()`)
+- UI rendering logic (`getRenderStyle()`, `getIcon()`)
+- Workflow coordination (`shouldCreateSibling()`)
+- Service method dispatch
+
+### Type Checking Pattern: instanceof Chains
+
+**Phase 73 Decision**: Use `instanceof` chains in external code instead of polluting domain classes with dispatch methods.
+
+#### Pattern: instanceof Chains for External Dispatch
+
+```typescript
+// DeletionSequenceFactory.ts - External operation selection
+function getRemoveOp(element: Element2D, planeId: string): Operation {
+  // Use instanceof chains for type-safe dispatch
+  if (element instanceof FreePoint2D) {
+    return new RemoveFreePoint2DOp(planeId, element.id);
+  }
+  if (element instanceof Point2DLineLineIntersection) {
+    return new RemoveLineLineIntersectionPoint2DOp(planeId, element.id);
+  }
+  if (element instanceof Segment2DByPoints) {
+    return new RemoveSegment2DOp(planeId, element.id);
+  }
+  if (element instanceof Guide2D || element instanceof SiblingGuide2D) {
+    return new RemoveGuide2DOp(planeId, element.id);
+  }
+  if (element instanceof Line2D) {
+    return new RemoveLine2DOp(planeId, element.id);
+  }
+  throw new Error(`Unknown element type: ${element.constructor.name}`);
+}
+```
+
+**Benefits of instanceof Chains**:
+- ✅ **Domain Purity**: No operation/service methods in geometric classes
+- ✅ **Type Safety**: Compiler verifies class existence, catches typos
+- ✅ **Approachable**: Straightforward if/else logic, easy to understand
+- ✅ **IDE Support**: Autocomplete, refactoring, find usages work correctly
+- ✅ **Extensibility**: New subclasses automatically match base class checks
+
+#### Anti-Pattern: Dispatch Methods in Domain (WRONG)
+
+```typescript
+// ❌ WRONG: Pollutes domain class with operation concern
+abstract class Point2D extends Element2D {
+  abstract getDeletionOp(): Operation;  // ❌ Operation selection doesn't belong here!
+}
+
+class FreePoint2D extends Point2D {
+  getDeletionOp(): Operation {
+    return new RemoveFreePoint2DOp(this.planeId, this.id);
+  }
+}
+
+// ❌ WRONG: Crosses architectural boundary
+abstract class Line2D extends Element2D {
+  abstract getRenderStyle(): RenderStyle;  // ❌ UI concern doesn't belong here!
+}
+```
+
+**Why This is Wrong**:
+- Violates single responsibility principle (domain + operation selection)
+- Creates coupling between domain layer and operation layer
+- Domain classes grow with every new external concern
+- Difficult to test domain logic in isolation
+
+### When to Use String Discriminators vs instanceof
+
+**String Discriminators** (`readonly type: string`) **ARE LEGITIMATE** for:
+
+✅ **Serialization** (ALWAYS NEEDED):
+```typescript
+// Writing to JSON: need string type discriminator
+const json = JSON.stringify({
+  type: element.type,  // String needed for JSON
+  id: element.id,
+  // ...
+});
+```
+
+✅ **TypeScript Discriminated Unions** (TYPE NARROWING):
+```typescript
+// TypeScript narrows type based on discriminator
+function handlePoint(point: Point2D) {
+  switch (point.type) {
+    case 'free':
+      // TypeScript knows point is FreePoint2D here
+      break;
+    case 'line-line-intersection':
+      // TypeScript knows point is Point2DLineLineIntersection here
+      break;
+  }
+}
+```
+
+✅ **Primitive Rendering Dispatch** (RENDER LAYER):
+```typescript
+// Rendering layer needs to distinguish point/line/circle primitives
+function renderPrimitive(primitive: RenderPrimitive) {
+  switch (primitive.type) {
+    case 'point': return renderPoint(primitive);
+    case 'line': return renderLine(primitive);
+    case 'circle': return renderCircle(primitive);
+  }
+}
+```
+
+❌ **NOT LEGITIMATE** for:
+- Business logic type checking (use instanceof)
+- Operation selection (use instanceof chains)
+- Element filtering (use instanceof)
+- Type guards (use instanceof)
+
+### Example: isBounded() Geometric Method (CORRECT)
+
+```typescript
+// Line.ts - Geometric property method (ALLOWED)
+abstract class Line2D extends Element2D {
+  /**
+   * Check if this line is bounded (finite segment) or unbounded (infinite line)
+   * Pure geometric property distinguishing segments from infinite lines
+   */
+  isBounded(): boolean {
+    return false;  // Lines are unbounded by default
+  }
+}
+
+// Segment.ts - Override for bounded case
+class Segment2DByPoints extends Line2D {
+  override isBounded(): boolean {
+    return true;  // Segments are bounded
+  }
+}
+
+// Point.ts - Use geometric method (CORRECT)
+class Point2DLineLineIntersection extends Point2D {
+  realize2D(world: World): Point2DRealization2D {
+    // ...
+    // Check if line is a segment using geometric predicate
+    if (line1.isBounded() && !isPointOnSegment(result, line1Realization)) {
+      return new Point2DRealization2D(result, false);
+    }
+    // ...
+  }
+}
+```
+
+**Why isBounded() is Correct**:
+- ✅ Geometric property (bounded vs unbounded is geometric)
+- ✅ No external concerns (pure geometry)
+- ✅ Reusable across all geometric contexts
+- ✅ Single responsibility (describes geometric nature)
+
+### Migration: Phase 73 Changes
+
+**Changes Made**:
+1. Added `isBounded()` geometric method to Line2D (returns false) and Segment2DByPoints (returns true)
+2. Replaced `.type === 'segment'` with `line.isBounded()` in Point.ts (3 instances)
+3. Replaced `.type === 'guide'` with `instanceof Guide2D` in Guide.ts type guards (2 instances)
+4. Replaced `.type === 'segment' | 'guide' | 'half-hinge'` with `instanceof` chains in:
+   - DeletionSequenceFactory.ts (3 instances)
+   - World.ts (10 instances - sibling helpers, HHL detection, filters)
+
+**String Discriminators Preserved** (legitimate uses):
+- Serialization (all domain classes keep `readonly type: string`)
+- TypeScript discriminated unions (switch statements on .type)
+- Primitive rendering dispatch (Paper.ts, SVGRenderer.ts)
+- IntersectionData type field (legitimate discriminated union for API structure)
+- Element2DUtils.getElementsByType() (filtering by exact type string)
+
+**Total Impact**:
+- Eliminated: ~18 unnecessary string checks
+- Preserved: ~25 legitimate string discriminator uses
+- Added: 1 geometric method (isBounded())
+- Zero pollution of domain classes with external concerns
+
+---
+
 ### Updated Point2D Hierarchy
 
 ```typescript
@@ -11862,3 +12064,94 @@ it('should create line between two points', () => {
 **Architecture** - See data-model.md §Phase 67 for complete ToolFamilyConfig, ToolConfig interfaces, enhanced ToolStore, tool family definitions, BaseTool changes, and ToolFamilyButton.vue component.
 
 **Related Requirements**: FR-050 (tool families), FR-051 (completion behavior), Phase 64 (ArgumentCollectorTool - compatible)
+
+---
+
+### Phase 76: Fail-Fast Error Handling - Eliminate Optional Chaining Anti-Patterns
+
+**Status**: ✅ IMPLEMENTED (2026-01-17)
+
+**Problem Statement**: Codebase has 200+ uses of optional chaining operator (`?.`) that hide bugs by silently handling unexpected null/undefined values. When internal invariants are violated (element not found, plane missing), code returns undefined and execution continues with corrupted state instead of failing fast.
+
+**User Requirement**: "In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. In general don't try to handle unexpected internal states but just report an error instead. I don't want code which hides bugs and returns bad results. Internal errors must not be hidden. Instead they must cause the app to die so we can see them and fix them."
+
+**Architectural Principle: Pragmatic Fail-Fast**
+
+**Invariants**: Internal state must always be valid. If element IDs exist, elements must exist. If plane IDs exist, planes must exist.
+
+**Solution**: Remove defensive optional chaining (`?.`) and let JavaScript's natural TypeError handle violations:
+
+```typescript
+// BEFORE (hides bugs):
+const plane = world.getProjectionPlaneById(this.planeId);
+const point1 = plane?.getPoint(this.point1Id);  // Returns undefined if plane is null
+const p1Realization = point1?.realize2D(world);  // Returns undefined if point1 is undefined
+// Continues with undefined, produces garbage results
+
+// AFTER (fail-fast):
+const plane = world.getProjectionPlaneById(this.planeId);
+const point1 = plane.getPoint(this.point1Id);  // Natural TypeError if plane is null
+const p1Realization = point1.realize2D(world);  // Natural TypeError if point1 is undefined
+// Crashes immediately with stack trace showing exactly what was null and where
+```
+
+**Instrumentation Philosophy**: Do NOT add explicit guards preemptively. Only instrument with explicit checks if natural errors prove confusing in practice. Most TypeErrors are perfectly clear:
+
+```typescript
+// TypeError: Cannot read properties of undefined (reading 'getPoint')
+// Stack trace shows exact line and what was null - no custom error needed!
+
+// ONLY add guards if error would be confusing:
+// - When error message would be cryptic to users
+// - When debugging context is needed for complex failure modes
+// - After errors are found to happen (not before!)
+```
+
+**Categories of Uses**:
+
+**LEGITIMATE (keep `?.`):**
+- Optional configuration: `options?.visibleOnly` - external API can omit options
+- Optional UI state: `tooltipText?.length` - DOM elements may not exist yet
+- External data: `match?.groups` - regex may not match, legitimate null case
+- Test assertions: `hit?.elementType` - testing that hit can be null
+
+**ILLEGITIMATE (remove `?.`, use `.`):**
+- Domain invariants: `plane?.getPoint()` → `plane.getPoint()` - plane MUST exist
+- Parent elements: `point1?.realize2D()` → `point1.realize2D()` - point MUST exist
+- Cached realizations: `primaryPoint?.realize2D()` → `primaryPoint.realize2D()`
+- Dependency graph: `plane?.getAllLines()` → `plane.getAllLines()`
+
+**Implementation Pattern**: Mechanical removal - just change `?.` to `.` throughout domain layer:
+
+```typescript
+// Point.ts - Line-Line Intersection
+realize2D(world: World): Point2DRealization2D {
+  const plane = world.getProjectionPlaneById(this.planeId);
+  const l1 = plane.getLine(this.line1Id);        // Changed from plane?.getLine
+  const l2 = plane.getLine(this.line2Id);        // Changed from plane?.getLine
+  const line1 = l1.realize2D(world);              // Changed from l1?.realize2D
+  const line2 = l2.realize2D(world);              // Changed from l2?.realize2D
+  // Natural TypeError if any parent is null - shows exact problem location
+}
+```
+
+**Impact Analysis**:
+- **Domain layer** (~150 instances removed): Point.ts (14), Line.ts (25), ProjectionPlane.ts (35), Circle.ts (~20), World.ts (6), Guide.ts (1)
+- **Test layer** (~50 instances): Most kept (testing optional behavior is legitimate)
+- **Benefits**:
+  - **Faster debugging**: Crash at corruption point with stack trace, not later with garbage data
+  - **Natural errors**: JavaScript's TypeError shows exactly what was null and where
+  - **Minimal code**: No defensive guards, no boilerplate - just simple, direct code
+  - **Pragmatic**: Only instrument if errors prove confusing (not preemptively)
+
+**Files Modified**:
+- [Point.ts](../../frontend/src/domain/world/Point.ts): Removed 14 illegitimate `?.` uses
+- [Line.ts](../../frontend/src/domain/world/Line.ts): Removed 25 illegitimate `?.` uses
+- [Circle.ts](../../frontend/src/domain/world/Circle.ts): Removed ~20 illegitimate `?.` uses
+- [ProjectionPlane.ts](../../frontend/src/domain/world/ProjectionPlane.ts): Removed 35 illegitimate `?.` uses
+- [World.ts](../../frontend/src/domain/world/World.ts), [Guide.ts](../../frontend/src/domain/world/Guide.ts), [Segment.ts](../../frontend/src/domain/world/Segment.ts): Removed remaining instances
+- Tests updated to expect natural TypeError behavior where appropriate
+
+**Testing**: Integration tests verify corrupted state throws TypeError. Tests expecting silent failures updated to expect crashes.
+
+**Related Phases**: Phase 75 (Type Property Elimination - instanceof pattern), Phase 63 (Class-Based Selection Masks)

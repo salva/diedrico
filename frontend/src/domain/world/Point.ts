@@ -20,6 +20,7 @@ import type { World } from './World';
 import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
+import { HalfHingeLine2D } from './HingeLine';
 
 export type Point2DType = 
   | 'free' 
@@ -83,8 +84,6 @@ export class Point3DRealization3D {
  * Extends Element2D to provide common properties and interface for all 2D elements
  */
 export abstract class Point2D extends Element2D {
-  abstract readonly type: Point2DType;
-
   constructor(
     id: string,
     planeId: string,
@@ -112,7 +111,6 @@ export abstract class Point2D extends Element2D {
  * The rule is: "user placed it at this position"
  */
 export class FreePoint2D extends Point2D {
-  readonly type: 'free' = 'free';
   readonly position: Vector3;  // The defining position in plane coordinates (u, v, 1) - IMMUTABLE RULE
   locked?: boolean;  // If true, point cannot be moved or deleted
 
@@ -190,7 +188,6 @@ export abstract class IntersectionPoint2D extends Point2D {
  * Line-line intersection produces at most one point (or none if parallel/coincident).
  */
 export class Point2DLineLineIntersection extends IntersectionPoint2D {
-  readonly type: 'line-line-intersection' = 'line-line-intersection';
   line1Id: string;  // ID of first line
   line2Id: string;  // ID of second line
 
@@ -228,10 +225,10 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
    */
   realize2D(world: World): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
-    const l1 = plane?.getLine(this.line1Id);
-    const l2 = plane?.getLine(this.line2Id);
-    const line1 = l1?.realize2D(world);
-    const line2 = l2?.realize2D(world);
+    const l1 = plane.getLine(this.line1Id);
+    const l2 = plane.getLine(this.line2Id);
+    const line1 = l1.realize2D(world);
+    const line2 = l2.realize2D(world);
     
     // Check if parent elements are infeasible - propagate infeasibility
     if ((line1 && !line1.feasible) || (line2 && !line2.feasible)) {
@@ -244,10 +241,10 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
-    const result = intersectLineLine(line1, line2);
+    const intersectionPoint = intersectLineLine(line1, line2);
     
-    if (result.type !== 'point' || !result.point) {
-      console.warn('[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident):', result.type, result.message);
+    if (!intersectionPoint) {
+      console.warn('[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
@@ -260,24 +257,24 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
     // An infinite line has point2.z=0 (direction vector)
     
     // Check line1 if it's a segment
-    if (line1Domain && line1Domain.type === 'segment' && line1.point2.z === 1) {
+    if (line1Domain && line1Domain.isBounded() && line1.point2.z === 1) {
       // Segment: check if intersection is between point1 and point2
-      if (!this.isPointOnSegment(result.point, line1)) {
+      if (!this.isPointOnSegment(intersectionPoint, line1)) {
         console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)');
-        return new Point2DRealization2D(result.point, false);
+        return new Point2DRealization2D(intersectionPoint, false);
       }
     }
     
     // Check line2 if it's a segment
-    if (line2Domain && line2Domain.type === 'segment' && line2.point2.z === 1) {
+    if (line2Domain && line2Domain.isBounded() && line2.point2.z === 1) {
       // Segment: check if intersection is between point1 and point2
-      if (!this.isPointOnSegment(result.point, line2)) {
+      if (!this.isPointOnSegment(intersectionPoint, line2)) {
         console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)');
-        return new Point2DRealization2D(result.point, false);
+        return new Point2DRealization2D(intersectionPoint, false);
       }
     }
     
-    return new Point2DRealization2D(result.point, true);
+    return new Point2DRealization2D(intersectionPoint, true);
   }
   
   /**
@@ -321,7 +318,6 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
  * Points are indexed by angle from the circle's radius vector.
  */
 export class Point2DLineCircleIntersection extends IntersectionPoint2D {
-  readonly type: 'line-circle-intersection' = 'line-circle-intersection';
   lineId: string;    // ID of the line
   circleId: string;  // ID of the circle
   index: number;     // Index to identify which intersection (0 or 1)
@@ -363,10 +359,10 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
    */
   realize2D(world: World): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
-    const l = plane?.getLine(this.lineId);
-    const c = plane?.getCircle(this.circleId);
-    const line = l?.realize2D(world);
-    const circle = c?.realize2D(world);
+    const l = plane.getLine(this.lineId);
+    const c = plane.getCircle(this.circleId);
+    const line = l.realize2D(world);
+    const circle = c.realize2D(world);
     
     // Check if parent elements are infeasible - propagate infeasibility
     if ((line && !line.feasible) || (circle && !circle.feasible)) {
@@ -379,19 +375,19 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
-    const result = intersectLineCircle(line, circle);
+    const intersectionPoints = intersectLineCircle(line, circle);
     
-    if (result.points.length === 0) {
+    if (intersectionPoints.length === 0) {
       console.warn('[Point2DLineCircleIntersection] Line and circle do not intersect');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
     // Return the point at the specified index
-    const point = result.points[Math.min(this.index, result.points.length - 1)];
+    const point = intersectionPoints[Math.min(this.index, intersectionPoints.length - 1)];
     
     // Check if the line is actually a segment and if intersection is within bounds
     const lineDomain = world.getLine2D(this.lineId);
-    if (lineDomain && lineDomain.type === 'segment' && line.point2.z === 1) {
+    if (lineDomain && lineDomain.isBounded() && line.point2.z === 1) {
       // Segment: check if intersection is between point1 and point2
       if (!this.isPointOnSegment(point, line)) {
         console.warn('[Point2DLineCircleIntersection] Intersection falls outside segment bounds');
@@ -443,7 +439,6 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
  * Points are indexed by angle from the first circle's radius vector.
  */
 export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
-  readonly type: 'circle-circle-intersection' = 'circle-circle-intersection';
   circle1Id: string;  // ID of first circle
   circle2Id: string;  // ID of second circle
   index: number;      // Index to identify which intersection (0 or 1)
@@ -485,10 +480,10 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
    */
   realize2D(world: World): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
-    const c1 = plane?.getCircle(this.circle1Id);
-    const c2 = plane?.getCircle(this.circle2Id);
-    const circle1 = c1?.realize2D(world);
-    const circle2 = c2?.realize2D(world);
+    const c1 = plane.getCircle(this.circle1Id);
+    const c2 = plane.getCircle(this.circle2Id);
+    const circle1 = c1.realize2D(world);
+    const circle2 = c2.realize2D(world);
     
     // Check if parent elements are infeasible - propagate infeasibility
     if ((circle1 && !circle1.feasible) || (circle2 && !circle2.feasible)) {
@@ -501,14 +496,14 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
-    const result = intersectCircleCircle(circle1, circle2);
+    const intersectionPoints = intersectCircleCircle(circle1, circle2);
     
-    if (result.points.length === 0) {
-      console.warn('[Point2DCircleCircleIntersection] Circles do not intersect:', result.type);
+    if (intersectionPoints.length === 0) {
+      console.warn('[Point2DCircleCircleIntersection] Circles do not intersect');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
-    const point = result.points[Math.min(this.index, result.points.length - 1)];
+    const point = intersectionPoints[Math.min(this.index, intersectionPoints.length - 1)];
     return new Point2DRealization2D(point, true);
   }
 }
@@ -529,7 +524,6 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
  * 4. Return the resulting 2D position
  */
 export class SiblingIntersectionPoint2D extends Point2D {
-  readonly type: 'sibling-intersection' = 'sibling-intersection';
   primaryIntersectionId: string;  // ID of the primary intersection point this sibling derives from
 
   constructor(
@@ -577,7 +571,7 @@ export class SiblingIntersectionPoint2D extends Point2D {
     // Get primary intersection point's 2D realization
     // Use world.getPoint2D() which handles hierarchical IDs properly
     const primaryPoint = world.getPoint2D(this.primaryIntersectionId);
-    const primaryRealization = primaryPoint?.realize2D(world);
+    const primaryRealization = primaryPoint.realize2D(world);
     if (!primaryRealization) {
       console.warn(`[SiblingIntersectionPoint2D] Cannot get realization for primary ${this.primaryIntersectionId}`);
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
@@ -598,15 +592,15 @@ export class SiblingIntersectionPoint2D extends Point2D {
       const elemB = world.getLine2D(primaryIntersection.elementBId);
       
       // Check if either element is a HalfHingeLine2D
-      const primaryHHL = (elemA?.type === 'half-hinge' ? elemA : elemB?.type === 'half-hinge' ? elemB : null) as any;
+      const primaryHHL = (elemA instanceof HalfHingeLine2D ? elemA : elemB instanceof HalfHingeLine2D ? elemB : null) as any;
       if (primaryHHL) {
         // Find corresponding HalfHingeLine2D on sibling plane
         const hingeLineId = primaryHHL.hingeLineId;
         const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPointDomain);
         if (siblingPlaneId) {
           const siblingPlane = world.getProjectionPlaneById(siblingPlaneId);
-          const siblingHHL = siblingPlane?.getAllLines()
-            .find(line => line.type === 'half-hinge' && (line as any).hingeLineId === hingeLineId) as any;
+          const siblingHHL = siblingPlane.getAllLines()
+            .find((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === hingeLineId);
           
           if (siblingHHL) {
             // Validate parametric consistency: Q=Q', D=D'
@@ -643,19 +637,19 @@ export class SiblingIntersectionPoint2D extends Point2D {
 
 // Type guards for Point2D types
 export function isFreePoint2D(point: Point2D): point is FreePoint2D {
-  return point.type === 'free';
+  return point instanceof FreePoint2D;
 }
 
 export function isLineLineIntersection(point: Point2D): point is Point2DLineLineIntersection {
-  return point.type === 'line-line-intersection';
+  return point instanceof Point2DLineLineIntersection;
 }
 
 export function isLineCircleIntersection(point: Point2D): point is Point2DLineCircleIntersection {
-  return point.type === 'line-circle-intersection';
+  return point instanceof Point2DLineCircleIntersection;
 }
 
 export function isCircleCircleIntersection(point: Point2D): point is Point2DCircleCircleIntersection {
-  return point.type === 'circle-circle-intersection';
+  return point instanceof Point2DCircleCircleIntersection;
 }
 
 export function isIntersectionPoint2D(point: Point2D): point is IntersectionPoint2D {
@@ -663,5 +657,5 @@ export function isIntersectionPoint2D(point: Point2D): point is IntersectionPoin
 }
 
 export function isSiblingIntersectionPoint2D(point: Point2D): point is SiblingIntersectionPoint2D {
-  return point.type === 'sibling-intersection';
+  return point instanceof SiblingIntersectionPoint2D;
 }

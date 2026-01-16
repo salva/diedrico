@@ -70,12 +70,6 @@ export abstract class Element2D extends Element {
   /** Whether element is visible in canvas (default: true) */
   visible: boolean = true;
   
-  /** 
-   * Element type discriminator (e.g., 'free', 'by-two-points', 'intersection-line-line')
-   * Narrows to Point2DType | Line2DType | Circle2DType in subclasses
-   */
-  abstract readonly type: string;
-  
   /**
    * Construct a 2D element
    * 

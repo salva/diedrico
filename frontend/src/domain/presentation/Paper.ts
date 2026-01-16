@@ -46,7 +46,9 @@ import { Vector3, Matrix3 } from 'three';
 import type { World } from '../world/World';
 import type { Line2DRealization2D } from '../world/Line';
 import type { Circle2DRealization2D } from '../world/Circle';
+import type { Element2D } from '../world/Element2D';
 import type { SelectionMask, SelectableElementType } from '@/types/SelectionMask';
+import { getSelectableType } from '@/types/SelectionMask';
 
 /**
  * Visual style attributes resolved and ready for rendering
@@ -334,6 +336,8 @@ export class Paper {
     world: World,
     selectionMask?: SelectionMask
   ): HitResult | null {
+    console.log('[Paper.hitTest] Starting hit test with mask:', selectionMask?.toString());
+    
     if (!activePlaneId || !paperToPlaneTransform) {
       // No active plane or transform - cannot perform hit testing
       return null;
@@ -369,7 +373,9 @@ export class Paper {
     if (activePlane) {
       for (const point of activePlane.getAllPoints()) {
         // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
-        if (selectionMask && !selectionMask.matches('point')) {
+        const matchesPoint = !selectionMask || selectionMask.matches('point');
+        console.log(`[Paper.hitTest] Point ${point.id} - matches: ${matchesPoint}`);
+        if (!matchesPoint) {
           continue;
         }
         
@@ -402,7 +408,9 @@ export class Paper {
         const elementType = this.getElementType(line, world);
         
         // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
-        if (selectionMask && !selectionMask.matches(elementType)) {
+        const matchesLine = !selectionMask || selectionMask.matches(elementType);
+        console.log(`[Paper.hitTest] Line ${line.id} (type: ${elementType}) - matches: ${matchesLine}`);
+        if (!matchesLine) {
           continue; // Skip this element - doesn't match selection mask
         }
         
@@ -414,6 +422,7 @@ export class Paper {
         const distance = this.distanceToLineInPlaneSpace(planePos, realization);
         
         if (distance < minDistance) {
+          console.log(`[Paper.hitTest] Line ${line.id} is new closest hit (distance: ${distance})`);
           closestHit = {
             elementId: line.id,
             elementType: elementType,  // Use actual element type, not hardcoded 'line'
@@ -452,40 +461,10 @@ export class Paper {
       }
     }
     
-    // Note: Segments are handled above in lines iteration (they're Line2D with type='segment')
+    // Note: Segments, guides, and hinge lines are all handled in the line iteration above
+    // (they're all Line2D subclasses tested from the active plane)
     
-    // Test guides (always pickable - belong to both planes)
-    for (const plane of world.projectionPlanes.values()) {
-      for (const line of plane.getAllLines()) {
-        if (line.type !== 'guide') continue;
-        
-        // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
-        if (selectionMask && !selectionMask.matches('guide')) {
-          continue;
-        }
-        
-        // Guides don't filter by plane - they're universal construction aids
-        const realization = plane.realizeLine2D(line, world);
-        if (!realization) continue;
-        
-        const distance = this.distanceToLineInPlaneSpace(planePos, realization);
-        
-        if (distance < minDistance) {
-          closestHit = {
-            elementId: line.id,
-            elementType: 'guide',
-            primitiveId: line.id,
-            distance: distance * this.viewportTransform.zoom,
-            snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
-          };
-          minDistance = distance;
-        }
-      }
-    }
-    
-    // Test hinge lines (HalfHingeLine2D - Line2D entities with type 'half-hinge')
-    // Already included in line iteration above, no separate loop needed
-    
+    console.log('[Paper.hitTest] Result:', closestHit ? `${closestHit.elementId} (${closestHit.elementType})` : 'null');
     return closestHit;
   }
 
@@ -506,57 +485,12 @@ export class Paper {
    * @param world - World instance for accessing entity details
    * @returns SelectableElementType for this entity
    */
-  private getElementType(entity: any, world: World): SelectableElementType {
-    // Check entity.type discriminator (most reliable)
-    if (entity.type) {
-      // Point2D (all subtypes map to 'point')
-      if (entity.type === 'free' || entity.type === 'intersection' || 
-          entity.type === 'line-line-intersection' || entity.type === 'line-circle-intersection' ||
-          entity.type === 'circle-circle-intersection' || entity.type === 'sibling-intersection') {
-        return 'point';
-      }
-      // Circle2D (all subtypes map to 'circle')
-      if (entity.type === 'by-center-and-point' || entity.type === 'by-three-points') {
-        return 'circle';
-      }
-      // HalfHingeLine2D
-      if (entity.type === 'half-hinge') {
-        return 'half-hinge-line';
-      }
-      // Guide2D and SiblingGuide2D
-      if (entity.type === 'guide' || entity.type === 'sibling-guide') {
-        return 'guide';
-      }
-      // Segment2DByPoints
-      if (entity.type === 'segment') {
-        return 'segment';
-      }
-      // Regular lines (Line2DByTwoPoints, etc.)
-      if (entity.type === 'by-two-points' || entity.type === 'parallel' || entity.type === 'perpendicular') {
-        return 'line';
-      }
-    }
-    
-    // Fallback: check entity structure/class
-    // Note: In TypeScript with proper type guards, we'd use instanceof or discriminated unions
-    // For now, check common properties to identify entity type
-    if ('position' in entity || 'element1Id' in entity) {
-      return 'point';
-    }
-    if ('point1Id' in entity && 'point2Id' in entity && !('radius' in entity)) {
-      // Has two point IDs but no radius = segment or line
-      // This is a simplified check - real code would check entity.kind or type property
-      return 'segment';
-    }
-    if ('radius' in entity || 'centerPointId' in entity) {
-      return 'circle';
-    }
-    if ('halfHingeLineId' in entity || 'hingeLineId' in entity) {
-      return 'guide';
-    }
-    
-    // Default fallback
-    return 'point';
+  /**
+   * Get selectable element type for hit testing
+   * Phase 63: Delegates to getSelectableType() which uses instanceof checks
+   */
+  private getElementType(entity: Element2D, world: World): SelectableElementType {
+    return getSelectableType(entity);
   }
 
   /**

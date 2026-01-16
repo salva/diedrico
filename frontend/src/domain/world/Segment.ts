@@ -23,7 +23,6 @@ export type Segment2DType = 'segment';  // Phase 22.5: Use 'segment' to match Li
  * Phase 22.5: Now extends Line2D base class
  */
 export class Segment2DByPoints extends Line2D {
-  readonly type: 'segment' = 'segment';
   readonly point1Id: string;  // ID of first endpoint
   readonly point2Id: string;  // ID of second endpoint
 
@@ -48,6 +47,13 @@ export class Segment2DByPoints extends Line2D {
       this.label
     );
   }
+  
+  /**
+   * Override isBounded() - segments are bounded by definition
+   */
+  override isBounded(): boolean {
+    return true;  // Segments are always bounded
+  }
 
   /**
    * Calculate 2D realization - returns Line2DRealization2D for segment
@@ -59,10 +65,10 @@ export class Segment2DByPoints extends Line2D {
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get both endpoint realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
-    const p1 = plane?.getPoint(this.point1Id);
-    const p2 = plane?.getPoint(this.point2Id);
-    const p1Realization = p1?.realize2D(world);
-    const p2Realization = p2?.realize2D(world);
+    const p1 = plane.getPoint(this.point1Id);
+    const p2 = plane.getPoint(this.point2Id);
+    const p1Realization = p1.realize2D(world);
+    const p2Realization = p2.realize2D(world);
 
     if (!p1Realization || !p2Realization) {
       return null;  // Cannot compute segment without both endpoints

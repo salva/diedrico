@@ -7605,3 +7605,157 @@ const circumferencePointId = pointResult.outputs.pointId;
 **Checkpoint**: Toolbar transformed into modern tool family organization with smart last-used memory and context-appropriate completion behavior.
 
 ---
+## Phase 76: Fail-Fast Error Handling - Eliminate Optional Chaining Anti-Patterns
+
+**Goal**: Remove defensive optional chaining (`?.`) from domain layer to enable fail-fast error detection with natural JavaScript TypeErrors.
+
+**Context**: Codebase has 200+ uses of `?.` that hide bugs by silently handling null/undefined values. When invariants violated (element not found), code returns undefined and continues with corrupted state instead of crashing with clear error.
+
+**User Requirement**: "In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. I don't want code which hides bugs and returns bad results. Internal errors must not be hidden. Instead they must cause the app to die so we can see them and fix them."
+
+**Reference**: [for-planing.md Phase 76](./for-planing.md#fail-fast-error-handling---eliminate-optional-chaining-anti-patterns-phase-76), [data-model.md §Phase 76](./data-model.md#phase-76-fail-fast-error-handling---eliminate-optional-chaining-anti-patterns)
+
+**Principle**: Just remove `?.` and let JavaScript crash naturally. Only add explicit guards if natural errors prove confusing in practice (instrument after, not before).
+
+### Phase 76.1: Audit and Classification (T1170-T1171)
+
+#### T1170: Grep audit of all ?. uses across codebase
+
+- Run: `grep -r '\?\.' frontend/src/domain/**/*.ts frontend/src/tools/**/*.ts > phase76-audit.txt`
+- Review ~200 matches, categorize:
+  - **Illegitimate (domain invariants)**: `plane?.getPoint()`, `element?.realize2D()`, `point1?.realize2D()` 
+  - **Legitimate (external/optional)**: `options?.visibleOnly`, `hit?.elementType`, `match?.groups`
+- Count instances per file: Point.ts (14), Line.ts (25), ProjectionPlane.ts (35), Circle.ts (~20), etc.
+- **Acceptance**: Audit complete, all uses categorized
+
+#### T1171: Document refactoring plan with file-by-file breakdown
+
+- Update data-model.md with specific line numbers and patterns to change
+- List files in order: Point.ts → Line.ts → Circle.ts → ProjectionPlane.ts → others
+- **Acceptance**: Clear plan for mechanical removal
+
+### Phase 76.2: Domain Layer Refactoring (T1172-T1178)
+
+#### T1172: Refactor Point.ts - remove 14 instances of ?.
+
+- File: `frontend/src/domain/world/Point.ts`
+- **Pattern**: Change `plane?.getLine()` → `plane.getLine()`, `l1?.realize2D()` → `l1.realize2D()`
+- Affected methods:
+  - `Point2DLineLineIntersection.realize2D()`: Lines 228-231 (4 instances)
+  - `Point2DLineCircleIntersection.realize2D()`: Lines 362-365 (4 instances)
+  - `Point2DCircleCircleIntersection.realize2D()`: Lines 483-486 (4 instances)
+  - `SiblingIntersectionPoint2D.realize2D()`: Lines 574, 602 (2 instances)
+- **Keep legitimate**: Test assertions checking optional hits
+- **Acceptance**: All illegitimate `?.` removed, tests run
+
+#### T1173: Refactor Line.ts - remove 25 instances of ?.
+
+- File: `frontend/src/domain/world/Line.ts`
+- **Pattern**: Change `plane?.getPoint()` → `plane.getPoint()`, `point1?.realize2D()` → `point1.realize2D()`
+- Target: Line2DByTwoPoints.realize2D(), Line2DParallel.realize2D(), Line2DPerpendicular.realize2D()
+- **Acceptance**: All illegitimate `?.` removed from line realize methods
+
+#### T1174: Refactor Circle.ts - remove ~20 instances of ?.
+
+- File: `frontend/src/domain/world/Circle.ts`
+- **Pattern**: Same - remove defensive chaining from element lookups and realization calls
+- Target: Circle2DByCenterAndPoint.realize2D(), Circle2DByThreePoints.realize2D()
+- **Acceptance**: All illegitimate `?.` removed from circle realize methods
+
+#### T1175: Refactor ProjectionPlane.ts - remove 35 instances of ?.
+
+- File: `frontend/src/domain/world/ProjectionPlane.ts`
+- **Pattern**: Remove defensive chaining from internal element queries
+- Target: Methods that traverse dependency graphs
+- **Acceptance**: All illegitimate `?.` removed from plane methods
+
+#### T1176: Refactor Segment.ts - remove 4 instances of ?.
+
+- File: `frontend/src/domain/world/Segment.ts`
+- **Pattern**: `point1?.realize2D()` → `point1.realize2D()`
+- **Acceptance**: All illegitimate `?.` removed from segment realize
+
+#### T1177: Refactor World.ts - remove 6 instances of ?.
+
+- File: `frontend/src/domain/world/World.ts`
+- **Pattern**: Remove defensive chaining from world queries
+- **Acceptance**: All illegitimate `?.` removed from world methods
+
+#### T1178: Refactor Guide.ts and remaining files - remove ~10 instances
+
+- Files: `frontend/src/domain/world/Guide.ts`, `frontend/src/tools/IntersectionTool.ts`, others
+- **Pattern**: Same mechanical removal
+- **Acceptance**: grep search shows <10 illegitimate uses remain in domain
+
+### Phase 76.3: Test Suite Verification (T1179-T1180)
+
+#### T1179: Run full test suite and identify failures
+
+- Run: `npm run test` in frontend/
+- Identify tests expecting silent failures (checking for undefined instead of expecting throw)
+- Document failing tests with reason
+- **Acceptance**: Test failures catalogued, patterns identified
+
+#### T1180: Fix tests expecting silent failures
+
+- Update tests to expect natural TypeError behavior:
+  ```typescript
+  // BEFORE:
+  expect(result).toBeUndefined();
+  
+  // AFTER:
+  expect(() => point.realize2D(world)).toThrow(TypeError);
+  expect(() => point.realize2D(world)).toThrow(/Cannot read properties of undefined/);
+  ```
+- Fix any test setup issues causing legitimate nulls
+- **Acceptance**: All tests pass with fail-fast behavior
+
+### Phase 76.4: Integration Testing (T1181)
+
+#### T1181: Add integration test for fail-fast behavior
+
+- File: `frontend/tests/integration/failFast.spec.ts` (NEW)
+- Test corrupted state scenarios:
+  - Missing plane → TypeError on `plane.getPoint()`
+  - Missing element → TypeError on `element.realize2D()`
+  - Verify stack trace shows exact line and what was null
+- **Acceptance**: Integration test verifies natural TypeError crashes
+
+### Phase 76.5: Final Verification and Documentation (T1182-T1184)
+
+#### T1182: Run final grep audit
+
+- Run: `grep -r '\?\.' frontend/src/domain/**/*.ts | grep -v 'test' | grep -v 'options\?\.' | grep -v 'match\?\.'`
+- Verify no illegitimate defensive chaining remains
+- Document any edge cases kept (with justification)
+- **Acceptance**: grep confirms clean domain layer
+
+#### T1183: Update documentation
+
+- Update data-model.md §Phase 76 with actual implementation results
+- Add examples of fail-fast crashes with natural TypeErrors
+- Document philosophy: instrument after errors found, not before
+- **Acceptance**: Documentation reflects pragmatic approach
+
+#### T1184: Git commit Phase 76
+
+- Commit message: "Phase 76: Eliminate optional chaining anti-patterns - fail-fast error handling"
+- Include summary: ~150 instances removed, natural TypeError provides clear debugging
+- **Acceptance**: Phase 76 committed
+
+### Phase 76 Acceptance Criteria
+
+1. ✅ All illegitimate `?.` uses removed from domain layer (~150 instances)
+2. ✅ All legitimate `?.` uses preserved (options, UI state, test assertions)
+3. ✅ No explicit guards added preemptively (only if errors prove confusing)
+4. ✅ Integration test verifies corrupted state throws natural TypeError with stack trace
+5. ✅ All existing tests pass or updated to expect fail-fast behavior
+6. ✅ Data-model.md documents pragmatic fail-fast principle
+7. ✅ Grep audit confirms no defensive optional chaining in domain layer
+8. ✅ Code simpler and more direct (no boilerplate guards)
+
+**Phase 76 Status**: ✅ IMPLEMENTED (Jan 17, 2026)
+
+**Checkpoint**: Domain layer uses direct property access, crashes immediately with clear TypeError when invariants violated. Code is simpler, bugs are caught early.
+
+---

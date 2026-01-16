@@ -72,8 +72,6 @@ export class Circle2DRealization2D extends Element2DRealization2D {
  * Extends Element2D to provide common properties and interface for all 2D elements
  */
 export abstract class Circle2D extends Element2D {
-  abstract readonly type: Circle2DType;
-
   constructor(id: string, planeId: string, label?: string) {
     super(id, planeId, label);
   }
@@ -93,7 +91,6 @@ export abstract class Circle2D extends Element2D {
  * Radius is computed as distance from center to circumference point.
  */
 export class Circle2DByCenterAndPoint extends Circle2D {
-  readonly type: 'by-center-and-point' = 'by-center-and-point';
   readonly centerPointId: string;        // ID of center point
   readonly circumferencePointId: string; // ID of point on circumference
 
@@ -129,10 +126,10 @@ export class Circle2DByCenterAndPoint extends Circle2D {
   realize2D(world: import('./World').World): Circle2DRealization2D | null {
     // Get both point realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
-    const centerPoint = plane?.getPoint(this.centerPointId);
-    const circumferencePoint = plane?.getPoint(this.circumferencePointId);
-    const centerRealization = centerPoint?.realize2D(world);
-    const circumferenceRealization = circumferencePoint?.realize2D(world);
+    const centerPoint = plane.getPoint(this.centerPointId);
+    const circumferencePoint = plane.getPoint(this.circumferencePointId);
+    const centerRealization = centerPoint.realize2D(world);
+    const circumferenceRealization = circumferencePoint.realize2D(world);
 
     if (!centerRealization || !circumferenceRealization) {
       return null;  // Cannot compute circle without both points
@@ -172,7 +169,6 @@ export class Circle2DByCenterAndPoint extends Circle2D {
  * For MVP, we focus on simpler circle definitions.
  */
 export class Circle2DByThreePoints extends Circle2D {
-  readonly type: 'by-three-points' = 'by-three-points';
   readonly point1Id: string;
   readonly point2Id: string;
   readonly point3Id: string;
@@ -215,12 +211,12 @@ export class Circle2DByThreePoints extends Circle2D {
   realize2D(world: import('./World').World): Circle2DRealization2D | null {
     // Get all three point realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
-    const point1 = plane?.getPoint(this.point1Id);
-    const point2 = plane?.getPoint(this.point2Id);
-    const point3 = plane?.getPoint(this.point3Id);
-    const p1Realization = point1?.realize2D(world);
-    const p2Realization = point2?.realize2D(world);
-    const p3Realization = point3?.realize2D(world);
+    const point1 = plane.getPoint(this.point1Id);
+    const point2 = plane.getPoint(this.point2Id);
+    const point3 = plane.getPoint(this.point3Id);
+    const p1Realization = point1.realize2D(world);
+    const p2Realization = point2.realize2D(world);
+    const p3Realization = point3.realize2D(world);
 
     if (!p1Realization || !p2Realization || !p3Realization) {
       return null;  // Cannot compute circle without all three points

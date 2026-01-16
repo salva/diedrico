@@ -44,11 +44,10 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result.type).toBe('point');
-      expect(result.point).not.toBeNull();
-      expect(result.point!.x).toBeCloseTo(3, 6);
-      expect(result.point!.y).toBeCloseTo(2, 6);
-      expect(result.point!.z).toBe(1); // homogeneous coordinate
+      expect(result).not.toBeNull();
+      expect(result!.x).toBeCloseTo(3, 6);
+      expect(result!.y).toBeCloseTo(2, 6);
+      expect(result!.z).toBe(1); // homogeneous coordinate
     });
     
     it('should find intersection of diagonal lines', () => {
@@ -70,11 +69,10 @@ describe('Intersections', () => {
       
       // Intersection: y = x and y = -x + 4
       // x = -x + 4 => 2x = 4 => x = 2, y = 2
-      expect(result.type).toBe('point');
-      expect(result.point).not.toBeNull();
-      expect(result.point!.x).toBeCloseTo(2, 6);
-      expect(result.point!.y).toBeCloseTo(2, 6);
-      expect(result.point!.z).toBe(1);
+      expect(result).not.toBeNull();
+      expect(result!.x).toBeCloseTo(2, 6);
+      expect(result!.y).toBeCloseTo(2, 6);
+      expect(result!.z).toBe(1);
     });
     
     it('should detect parallel horizontal lines', () => {
@@ -92,9 +90,7 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result.type).toBe('parallel');
-      expect(result.point).toBeNull();
-      expect(result.message).toContain('parallel');
+      expect(result).toBeNull();
     });
     
     it('should detect parallel vertical lines', () => {
@@ -112,8 +108,7 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result.type).toBe('parallel');
-      expect(result.point).toBeNull();
+      expect(result).toBeNull();
     });
     
     it('should detect parallel diagonal lines', () => {
@@ -131,8 +126,7 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result.type).toBe('parallel');
-      expect(result.point).toBeNull();
+      expect(result).toBeNull();
     });
     
     it('should detect coincident lines', () => {
@@ -150,9 +144,7 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result.type).toBe('coincident');
-      expect(result.point).toBeNull();
-      expect(result.message).toContain('coincident');
+      expect(result).toBeNull();
     });
     
     it('should handle lines with non-unit direction vectors', () => {
@@ -171,9 +163,9 @@ describe('Intersections', () => {
       const result = intersectLineLine(line1, line2);
       
       // Should still find correct intersection at (4, 1)
-      expect(result.type).toBe('point');
-      expect(result.point!.x).toBeCloseTo(4, 6);
-      expect(result.point!.y).toBeCloseTo(1, 6);
+      expect(result).not.toBeNull();
+      expect(result!.x).toBeCloseTo(4, 6);
+      expect(result!.y).toBeCloseTo(1, 6);
     });
     
     it('should produce homogeneous points with z=1', () => {
@@ -189,8 +181,8 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result.point).not.toBeNull();
-      expect(result.point!.z).toBe(1); // Homogeneous coordinate
+      expect(result).not.toBeNull();
+      expect(result!.z).toBe(1); // Homogeneous coordinate
     });
     
     it('should handle intersection at origin', () => {
@@ -208,9 +200,9 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result.type).toBe('point');
-      expect(result.point!.x).toBeCloseTo(0, 6);
-      expect(result.point!.y).toBeCloseTo(0, 6);
+      expect(result).not.toBeNull();
+      expect(result!.x).toBeCloseTo(0, 6);
+      expect(result!.y).toBeCloseTo(0, 6);
     });
     
     it('should handle intersection with negative coordinates', () => {
@@ -228,9 +220,9 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result.type).toBe('point');
-      expect(result.point!.x).toBeCloseTo(-5, 6);
-      expect(result.point!.y).toBeCloseTo(-3, 6);
+      expect(result).not.toBeNull();
+      expect(result!.x).toBeCloseTo(-5, 6);
+      expect(result!.y).toBeCloseTo(-3, 6);
     });
   });
   
@@ -307,16 +299,15 @@ describe('Intersections', () => {
       
       const result = intersectLineCircle(line, circle);
       
-      expect(result.type).toBe('secant');
-      expect(result.points).toHaveLength(2);
+      expect(result).toHaveLength(2); // Secant - 2 points
       
       // Intersection points should be at (-5, 0) and (5, 0)
-      const x1 = result.points[0].x;
-      const x2 = result.points[1].x;
+      const x1 = result[0].x;
+      const x2 = result[1].x;
       expect(Math.min(x1, x2)).toBeCloseTo(-5, 6);
       expect(Math.max(x1, x2)).toBeCloseTo(5, 6);
-      expect(result.points[0].y).toBeCloseTo(0, 6);
-      expect(result.points[1].y).toBeCloseTo(0, 6);
+      expect(result[0].y).toBeCloseTo(0, 6);
+      expect(result[1].y).toBeCloseTo(0, 6);
     });
 
     it('should find secant intersection - vertical line through circle center', () => {
@@ -331,16 +322,15 @@ describe('Intersections', () => {
       
       const result = intersectLineCircle(line, circle);
       
-      expect(result.type).toBe('secant');
-      expect(result.points).toHaveLength(2);
+      expect(result).toHaveLength(2); // Secant - 2 points
       
       // Intersection points should be at (3, -2) and (3, 6)
-      const y1 = result.points[0].y;
-      const y2 = result.points[1].y;
+      const y1 = result[0].y;
+      const y2 = result[1].y;
       expect(Math.min(y1, y2)).toBeCloseTo(-2, 6);
       expect(Math.max(y1, y2)).toBeCloseTo(6, 6);
-      expect(result.points[0].x).toBeCloseTo(3, 6);
-      expect(result.points[1].x).toBeCloseTo(3, 6);
+      expect(result[0].x).toBeCloseTo(3, 6);
+      expect(result[1].x).toBeCloseTo(3, 6);
     });
 
     it('should find tangent intersection', () => {
@@ -355,11 +345,10 @@ describe('Intersections', () => {
       
       const result = intersectLineCircle(line, circle);
       
-      expect(result.type).toBe('tangent');
-      expect(result.points).toHaveLength(1);
-      expect(result.points[0].x).toBeCloseTo(0, 6);
-      expect(result.points[0].y).toBeCloseTo(3, 6);
-      expect(result.points[0].z).toBe(1);
+      expect(result).toHaveLength(1); // Tangent - 1 point
+      expect(result[0].x).toBeCloseTo(0, 6);
+      expect(result[0].y).toBeCloseTo(3, 6);
+      expect(result[0].z).toBe(1);
     });
 
     it('should detect no intersection - line too far', () => {
@@ -374,8 +363,7 @@ describe('Intersections', () => {
       
       const result = intersectLineCircle(line, circle);
       
-      expect(result.type).toBe('none');
-      expect(result.points).toHaveLength(0);
+      expect(result).toHaveLength(0); // No intersection
     });
 
     it('should find diagonal secant intersection', () => {
@@ -390,12 +378,11 @@ describe('Intersections', () => {
       
       const result = intersectLineCircle(line, circle);
       
-      expect(result.type).toBe('secant');
-      expect(result.points).toHaveLength(2);
+      expect(result).toHaveLength(2); // Secant - 2 points
       
       // Points should be at (-1, -1) and (1, 1)
       // Distance from origin: sqrt(1^2 + 1^2) = sqrt(2) = radius
-      for (const point of result.points) {
+      for (const point of result) {
         const dist = Math.sqrt(point.x * point.x + point.y * point.y);
         expect(dist).toBeCloseTo(Math.sqrt(2), 6);
         expect(point.x).toBeCloseTo(point.y, 6); // On line y=x
@@ -414,12 +401,11 @@ describe('Intersections', () => {
       
       const result = intersectLineCircle(line, circle);
       
-      expect(result.type).toBe('secant');
-      expect(result.points).toHaveLength(2);
+      expect(result).toHaveLength(2); // Secant - 2 points
       
       // Intersection at (10, -5±7) = (10, -12) and (10, 2)
-      const y1 = result.points[0].y;
-      const y2 = result.points[1].y;
+      const y1 = result[0].y;
+      const y2 = result[1].y;
       expect(Math.min(y1, y2)).toBeCloseTo(-12, 6);
       expect(Math.max(y1, y2)).toBeCloseTo(2, 6);
     });
@@ -430,7 +416,7 @@ describe('Intersections', () => {
       
       const result = intersectLineCircle(line, circle);
       
-      for (const point of result.points) {
+      for (const point of result) {
         expect(point.z).toBe(1);
       }
     });
@@ -446,18 +432,17 @@ describe('Intersections', () => {
       
       const result = intersectCircleCircle(circle1, circle2);
       
-      expect(result.type).toBe('secant');
-      expect(result.points).toHaveLength(2);
+      expect(result).toHaveLength(2);
       
       // Intersection points should be on vertical line x=0
-      expect(result.points[0].x).toBeCloseTo(0, 5);
-      expect(result.points[1].x).toBeCloseTo(0, 5);
+      expect(result[0].x).toBeCloseTo(0, 5);
+      expect(result[1].x).toBeCloseTo(0, 5);
       
       // Check symmetry around x-axis
-      expect(Math.abs(result.points[0].y)).toBeCloseTo(Math.abs(result.points[1].y), 5);
+      expect(Math.abs(result[0].y)).toBeCloseTo(Math.abs(result[1].y), 5);
       
       // Verify points are on both circles
-      for (const point of result.points) {
+      for (const point of result) {
         const dist1 = Math.sqrt((point.x + 2)**2 + point.y**2);
         const dist2 = Math.sqrt((point.x - 2)**2 + point.y**2);
         expect(dist1).toBeCloseTo(3, 5);
@@ -474,10 +459,9 @@ describe('Intersections', () => {
       
       const result = intersectCircleCircle(circle1, circle2);
       
-      expect(result.type).toBe('tangent');
-      expect(result.points).toHaveLength(1);
-      expect(result.points[0].x).toBeCloseTo(3, 6);
-      expect(result.points[0].y).toBeCloseTo(0, 6);
+      expect(result).toHaveLength(1);
+      expect(result[0].x).toBeCloseTo(3, 6);
+      expect(result[0].y).toBeCloseTo(0, 6);
     });
 
     it('should find internal tangent intersection', () => {
@@ -489,10 +473,9 @@ describe('Intersections', () => {
       
       const result = intersectCircleCircle(circle1, circle2);
       
-      expect(result.type).toBe('tangent');
-      expect(result.points).toHaveLength(1);
-      expect(result.points[0].x).toBeCloseTo(5, 6);
-      expect(result.points[0].y).toBeCloseTo(0, 6);
+      expect(result).toHaveLength(1);
+      expect(result[0].x).toBeCloseTo(5, 6);
+      expect(result[0].y).toBeCloseTo(0, 6);
     });
 
     it('should detect no intersection - circles too far apart', () => {
@@ -504,8 +487,7 @@ describe('Intersections', () => {
       
       const result = intersectCircleCircle(circle1, circle2);
       
-      expect(result.type).toBe('none');
-      expect(result.points).toHaveLength(0);
+      expect(result).toHaveLength(0);
     });
 
     it('should detect no intersection - one circle inside the other', () => {
@@ -517,8 +499,7 @@ describe('Intersections', () => {
       
       const result = intersectCircleCircle(circle1, circle2);
       
-      expect(result.type).toBe('none');
-      expect(result.points).toHaveLength(0);
+      expect(result).toHaveLength(0);
     });
 
     it('should detect coincident circles', () => {
@@ -528,8 +509,7 @@ describe('Intersections', () => {
       
       const result = intersectCircleCircle(circle1, circle2);
       
-      expect(result.type).toBe('coincident');
-      expect(result.points).toHaveLength(0);
+      expect(result).toHaveLength(0);
     });
 
     it('should find secant intersection - different radii', () => {
@@ -541,11 +521,10 @@ describe('Intersections', () => {
       
       const result = intersectCircleCircle(circle1, circle2);
       
-      expect(result.type).toBe('secant');
-      expect(result.points).toHaveLength(2);
+      expect(result).toHaveLength(2);
       
       // Verify points are on both circles
-      for (const point of result.points) {
+      for (const point of result) {
         const dist1 = Math.sqrt(point.x**2 + point.y**2);
         const dist2 = Math.sqrt((point.x - 4)**2 + point.y**2);
         expect(dist1).toBeCloseTo(5, 5);
@@ -565,8 +544,7 @@ describe('Intersections', () => {
       // Distance between centers: sqrt((2-(-3))^2 + (-1-4)^2) = sqrt(25+25) = sqrt(50) ≈ 7.07
       // r1 + r2 = 2 + 6 = 8 > 7.07, so they should intersect
       // |r1 - r2| = 4 < 7.07, so not one inside the other
-      expect(result.type).toBe('secant');
-      expect(result.points).toHaveLength(2);
+      expect(result).toHaveLength(2);
     });
 
     it('should produce homogeneous points with z=1', () => {
@@ -575,7 +553,7 @@ describe('Intersections', () => {
       
       const result = intersectCircleCircle(circle1, circle2);
       
-      for (const point of result.points) {
+      for (const point of result) {
         expect(point.z).toBe(1);
       }
     });
@@ -590,8 +568,7 @@ describe('Intersections', () => {
       const result = intersectCircleCircle(circle1, circle2);
       
       // Distance = 10, sum of radii = 6, so no intersection
-      expect(result.type).toBe('none');
-      expect(result.points).toHaveLength(0);
+      expect(result).toHaveLength(0);
     });
 
     // ============================================================================
@@ -606,186 +583,94 @@ describe('Intersections', () => {
 
     describe('Circle-Circle Intersection Ordering (T325)', () => {
       /**
-       * Helper function to compute relative angle from a point to a circle's radius vector
+       * Helper function to compute perpendicular projection from center-line
+       * Positive = above center-line, Negative = below center-line
        */
-      function computeRelativeAngle(point: Vector3, circle: Circle2DRealization2D): number {
-        const center = circle.center;
-        const radiusVector = circle.radiusVector;
+      function computePerpendicularProjection(
+        point: Vector3,
+        circle1: Circle2DRealization2D,
+        circle2: Circle2DRealization2D
+      ): number {
+        const c1 = circle1.center;
+        const c2 = circle2.center;
         
-        const theta = Math.atan2(point.y - center.y, point.x - center.x);
-        const theta0 = Math.atan2(radiusVector.y, radiusVector.x);
-        let deltaTheta = theta - theta0;
+        // Center-line direction: c1 → c2
+        const dirX = c2.x - c1.x;
+        const dirY = c2.y - c1.y;
         
-        // Normalize to [0, 2π)
-        while (deltaTheta < 0) {
-          deltaTheta += 2 * Math.PI;
-        }
-        while (deltaTheta >= 2 * Math.PI) {
-          deltaTheta -= 2 * Math.PI;
-        }
+        // Perpendicular to center-line: (-dirY, dirX)
+        const perpX = -dirY;
+        const perpY = dirX;
         
-        return deltaTheta;
+        // Project point onto perpendicular
+        const dx = point.x - c1.x;
+        const dy = point.y - c1.y;
+        return dx * perpX + dy * perpY;
       }
 
-      it('should order intersections with radius vector at 0° (horizontal right)', () => {
-        // Circle 1: center at origin, radius vector pointing right (0°)
+      it('should order intersections by perpendicular projection from center-line (horizontal)', () => {
+        // Circle 1: center at origin
         const circle1 = new Circle2DRealization2D(
           new Vector3(0, 0, 1),   // center
-          new Vector3(3, 0, 0)    // radius vector at 0°
+          new Vector3(3, 0, 0)    // radius vector
         );
         
-        // Circle 2: center at (4, 0), creates two intersections
+        // Circle 2: center at (4, 0), center-line is horizontal
         const circle2 = new Circle2DRealization2D(
           new Vector3(4, 0, 1),   // center
-          new Vector3(3, 0, 0)    // radius vector (doesn't affect ordering for circle1)
+          new Vector3(3, 0, 0)    // radius vector
         );
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        // Compute relative angles from circle1's radius vector
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
+        // Compute perpendicular projections from center-line
+        const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+        const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
         
-        // Index 0 must have smaller angle than index 1
-        expect(angle0).toBeLessThan(angle1);
+        // Index 0 must have positive projection (above center-line)
+        // Index 1 must have negative projection (below center-line)
+        expect(proj0).toBeGreaterThan(0); // Index 0 above center-line
+        expect(proj1).toBeLessThan(0);    // Index 1 below center-line
         
         // Intersection points should be symmetric about x-axis
-        // Point at negative y should have larger angle (below x-axis)
-        expect(result.points[0].y).toBeGreaterThan(0); // Index 0 above x-axis (smaller angle)
-        expect(result.points[1].y).toBeLessThan(0);    // Index 1 below x-axis (larger angle)
+        expect(result[0].y).toBeGreaterThan(0); // Index 0 above
+        expect(result[1].y).toBeLessThan(0);    // Index 1 below
       });
 
-      it('should order intersections with radius vector at 45°', () => {
-        // Circle 1: center at origin, radius vector at 45°
+      it('should order intersections by perpendicular projection (horizontal center-line, different radii)', () => {
+        // Circle 1: smaller circle
         const circle1 = new Circle2DRealization2D(
           new Vector3(0, 0, 1),
-          new Vector3(3 * Math.cos(Math.PI/4), 3 * Math.sin(Math.PI/4), 0) // 45°
+          new Vector3(2, 0, 0)
         );
         
-        // Circle 2: center at (4, 0)
+        // Circle 2: larger circle, center-line is horizontal
         const circle2 = new Circle2DRealization2D(
-          new Vector3(4, 0, 1),
-          new Vector3(3, 0, 0)
+          new Vector3(3, 0, 1),
+          new Vector3(2.5, 0, 0)
         );
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
+        const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+        const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
         
-        expect(angle0).toBeLessThan(angle1);
+        expect(proj0).toBeGreaterThan(0); // Index 0 above
+        expect(proj1).toBeLessThan(0);    // Index 1 below
       });
 
-      it('should order intersections with radius vector at 90° (vertical up)', () => {
-        // Circle 1: center at origin, radius vector pointing up (90°)
-        const circle1 = new Circle2DRealization2D(
-          new Vector3(0, 0, 1),
-          new Vector3(0, 3, 0)    // 90°
-        );
-        
-        // Circle 2: center at (4, 0)
-        const circle2 = new Circle2DRealization2D(
-          new Vector3(4, 0, 1),
-          new Vector3(3, 0, 0)
-        );
-        
-        const result = intersectCircleCircle(circle1, circle2);
-        
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
-        
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
-        
-        expect(angle0).toBeLessThan(angle1);
-        
-        // With radius at 90°, the point with positive y and closer to right should be index 0
-        // (measuring counterclockwise from 90°)
-      });
-
-      it('should order intersections with radius vector at 135°', () => {
-        // Circle 1: radius vector at 135°
-        const circle1 = new Circle2DRealization2D(
-          new Vector3(0, 0, 1),
-          new Vector3(3 * Math.cos(3*Math.PI/4), 3 * Math.sin(3*Math.PI/4), 0)
-        );
-        
-        const circle2 = new Circle2DRealization2D(
-          new Vector3(4, 0, 1),
-          new Vector3(3, 0, 0)
-        );
-        
-        const result = intersectCircleCircle(circle1, circle2);
-        
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
-        
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
-        
-        expect(angle0).toBeLessThan(angle1);
-      });
-
-      it('should order intersections with radius vector at 180° (horizontal left)', () => {
-        // Circle 1: radius vector pointing left (180°)
-        const circle1 = new Circle2DRealization2D(
-          new Vector3(0, 0, 1),
-          new Vector3(-3, 0, 0)   // 180°
-        );
-        
-        const circle2 = new Circle2DRealization2D(
-          new Vector3(4, 0, 1),
-          new Vector3(3, 0, 0)
-        );
-        
-        const result = intersectCircleCircle(circle1, circle2);
-        
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
-        
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
-        
-        expect(angle0).toBeLessThan(angle1);
-      });
-
-      it('should order intersections with radius vector at 270° (vertical down)', () => {
-        // Circle 1: radius vector pointing down (270°)
-        const circle1 = new Circle2DRealization2D(
-          new Vector3(0, 0, 1),
-          new Vector3(0, -3, 0)   // 270°
-        );
-        
-        const circle2 = new Circle2DRealization2D(
-          new Vector3(4, 0, 1),
-          new Vector3(3, 0, 0)
-        );
-        
-        const result = intersectCircleCircle(circle1, circle2);
-        
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
-        
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
-        
-        expect(angle0).toBeLessThan(angle1);
-      });
-
-      it('should maintain ordering with vertical circle centers', () => {
-        // Circle 1: center at (0, 0), radius vector at 0°
+      it('should order intersections by perpendicular projection (vertical center-line)', () => {
+        // Circle 1: center at origin
         const circle1 = new Circle2DRealization2D(
           new Vector3(0, 0, 1),
           new Vector3(3, 0, 0)
         );
         
-        // Circle 2: center above circle1
+        // Circle 2: center above circle1 (vertical center-line)
         const circle2 = new Circle2DRealization2D(
           new Vector3(0, 4, 1),
           new Vector3(3, 0, 0)
@@ -793,23 +678,29 @@ describe('Intersections', () => {
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
+        const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+        const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
         
-        expect(angle0).toBeLessThan(angle1);
+        // For vertical center-line, perpendicular is horizontal
+        // Index 0 should be on positive side (left of vertical line, since perp points left)
+        expect(proj0).toBeGreaterThan(0);
+        expect(proj1).toBeLessThan(0);
         
         // Points should be symmetric about y-axis
-        expect(Math.abs(result.points[0].x)).toBeCloseTo(Math.abs(result.points[1].x), 5);
+        expect(Math.abs(result[0].x)).toBeCloseTo(Math.abs(result[1].x), 5);
+        // Check which side each is on based on perpendicular calculation
+        // Perpendicular to (0,1) is (-1,0), so positive proj means negative x
+        expect(result[0].x).toBeLessThan(0); // Index 0 on left
+        expect(result[1].x).toBeGreaterThan(0);    // Index 1 on right
       });
 
-      it('should maintain ordering with diagonal circle centers', () => {
+      it('should order intersections by perpendicular projection (diagonal center-line)', () => {
         // Circle 1: center at origin
         const circle1 = new Circle2DRealization2D(
           new Vector3(0, 0, 1),
-          new Vector3(3, 0, 0)    // radius at 0°
+          new Vector3(3, 0, 0)
         );
         
         // Circle 2: center at 45° from origin
@@ -820,190 +711,110 @@ describe('Intersections', () => {
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
+        const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+        const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
         
-        expect(angle0).toBeLessThan(angle1);
+        expect(proj0).toBeGreaterThan(0); // Index 0 above center-line
+        expect(proj1).toBeLessThan(0);    // Index 1 below center-line
       });
 
-      it('should handle ordering with very small angular separation', () => {
-        // Create circles where intersections are very close in angle
+      it('should order intersections regardless of radius vector orientation', () => {
+        // Test that radius vector doesn't affect ordering - only center-line matters
+        // Circle 1: radius vector pointing down (270°)
+        const circle1 = new Circle2DRealization2D(
+          new Vector3(0, 0, 1),
+          new Vector3(0, -3, 0)   // 270°
+        );
+        
+        // Circle 2: radius vector pointing left (180°)
+        const circle2 = new Circle2DRealization2D(
+          new Vector3(4, 0, 1),
+          new Vector3(-3, 0, 0)   // 180°
+        );
+        
+        const result = intersectCircleCircle(circle1, circle2);
+        
+        expect(result).toHaveLength(2);
+        
+        const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+        const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
+        
+        // Ordering is based on center-line, not radius vectors
+        expect(proj0).toBeGreaterThan(0);
+        expect(proj1).toBeLessThan(0);
+      });
+
+      it('should handle ordering with nearly overlapping circles', () => {
+        // Create circles with large overlap (close centers)
         const circle1 = new Circle2DRealization2D(
           new Vector3(0, 0, 1),
           new Vector3(5, 0, 0)
         );
         
-        // Circle 2 offset slightly up
+        // Circle 2 very close, slightly offset
         const circle2 = new Circle2DRealization2D(
-          new Vector3(8, 0.5, 1),
+          new Vector3(2, 0.5, 1),
           new Vector3(5, 0, 0)
         );
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        if (result.type === 'secant') {
-          expect(result.points).toHaveLength(2);
+        if (result.length === 2) {
+          const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+          const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
           
-          const angle0 = computeRelativeAngle(result.points[0], circle1);
-          const angle1 = computeRelativeAngle(result.points[1], circle1);
-          
-          // Even with small separation, ordering must be consistent
-          expect(angle0).toBeLessThan(angle1);
+          // Even with close circles, ordering must be consistent
+          expect(proj0).toBeGreaterThan(0);
+          expect(proj1).toBeLessThan(0);
         }
       });
-    });
 
-    describe('Line-Circle Intersection Ordering (T326)', () => {
-      function computeRelativeAngle(point: Vector3, circle: Circle2DRealization2D): number {
-        const center = circle.center;
-        const radiusVector = circle.radiusVector;
-        
-        const theta = Math.atan2(point.y - center.y, point.x - center.x);
-        const theta0 = Math.atan2(radiusVector.y, radiusVector.x);
-        let deltaTheta = theta - theta0;
-        
-        while (deltaTheta < 0) {
-          deltaTheta += 2 * Math.PI;
-        }
-        while (deltaTheta >= 2 * Math.PI) {
-          deltaTheta -= 2 * Math.PI;
-        }
-        
-        return deltaTheta;
-      }
-
-      it('should order line-circle intersections with horizontal line, radius at 0°', () => {
-        // Circle: center at origin, radius vector at 0°
-        const circle = new Circle2DRealization2D(
+      it('should handle ordering with small circles far apart', () => {
+        // Small circles with precise intersection
+        const circle1 = new Circle2DRealization2D(
           new Vector3(0, 0, 1),
-          new Vector3(3, 0, 0)
+          new Vector3(1.5, 0, 0)
         );
         
-        // Horizontal line above center: y = 1
-        const line = new Line2DRealization2D(
-          new Vector3(0, 1, 1),
-          new Vector3(1, 0, 0)
+        const circle2 = new Circle2DRealization2D(
+          new Vector3(2, 0, 1),
+          new Vector3(1.5, 0, 0)
         );
         
-        const result = intersectLineCircle(line, circle);
+        const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        const angle0 = computeRelativeAngle(result.points[0], circle);
-        const angle1 = computeRelativeAngle(result.points[1], circle);
+        const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+        const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
         
-        expect(angle0).toBeLessThan(angle1);
-        
-        // Point with positive x should be index 0 (smaller angle from 0°)
-        expect(result.points[0].x).toBeGreaterThan(result.points[1].x);
-      });
-
-      it('should order line-circle intersections with vertical line, radius at 0°', () => {
-        // Circle: center at origin
-        const circle = new Circle2DRealization2D(
-          new Vector3(0, 0, 1),
-          new Vector3(3, 0, 0)
-        );
-        
-        // Vertical line right of center: x = 1
-        const line = new Line2DRealization2D(
-          new Vector3(1, 0, 1),
-          new Vector3(0, 1, 0)
-        );
-        
-        const result = intersectLineCircle(line, circle);
-        
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
-        
-        const angle0 = computeRelativeAngle(result.points[0], circle);
-        const angle1 = computeRelativeAngle(result.points[1], circle);
-        
-        expect(angle0).toBeLessThan(angle1);
-        
-        // Point with positive y should be index 0 (smaller angle, upper quadrant)
-        expect(result.points[0].y).toBeGreaterThan(0);
-        expect(result.points[1].y).toBeLessThan(0);
-      });
-
-      it('should order line-circle intersections with diagonal line, radius at 45°', () => {
-        // Circle: center at origin, radius at 45°
-        const circle = new Circle2DRealization2D(
-          new Vector3(0, 0, 1),
-          new Vector3(3 * Math.cos(Math.PI/4), 3 * Math.sin(Math.PI/4), 0)
-        );
-        
-        // Diagonal line: y = -x + 1
-        const line = new Line2DRealization2D(
-          new Vector3(0, 1, 1),
-          new Vector3(1, -1, 0).normalize()
-        );
-        
-        const result = intersectLineCircle(line, circle);
-        
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
-        
-        const angle0 = computeRelativeAngle(result.points[0], circle);
-        const angle1 = computeRelativeAngle(result.points[1], circle);
-        
-        expect(angle0).toBeLessThan(angle1);
-      });
-
-      it('should order line-circle intersections with radius at 90°', () => {
-        // Circle: radius pointing up (90°)
-        const circle = new Circle2DRealization2D(
-          new Vector3(0, 0, 1),
-          new Vector3(0, 3, 0)
-        );
-        
-        // Horizontal line: y = 1
-        const line = new Line2DRealization2D(
-          new Vector3(0, 1, 1),
-          new Vector3(1, 0, 0)
-        );
-        
-        const result = intersectLineCircle(line, circle);
-        
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
-        
-        const angle0 = computeRelativeAngle(result.points[0], circle);
-        const angle1 = computeRelativeAngle(result.points[1], circle);
-        
-        expect(angle0).toBeLessThan(angle1);
-      });
-
-      it('should order line-circle intersections with radius at 180°', () => {
-        // Circle: radius pointing left (180°)
-        const circle = new Circle2DRealization2D(
-          new Vector3(0, 0, 1),
-          new Vector3(-3, 0, 0)
-        );
-        
-        // Horizontal line: y = 1
-        const line = new Line2DRealization2D(
-          new Vector3(0, 1, 1),
-          new Vector3(1, 0, 0)
-        );
-        
-        const result = intersectLineCircle(line, circle);
-        
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
-        
-        const angle0 = computeRelativeAngle(result.points[0], circle);
-        const angle1 = computeRelativeAngle(result.points[1], circle);
-        
-        expect(angle0).toBeLessThan(angle1);
+        expect(proj0).toBeGreaterThan(0);
+        expect(proj1).toBeLessThan(0);
       });
     });
 
     describe('Edge Cases for Intersection Ordering (T327)', () => {
+      /**
+       * Helper function for circle-circle perpendicular projection
+       */
+      function computePerpendicularProjection(
+        point: Vector3,
+        circle1: Circle2DRealization2D,
+        circle2: Circle2DRealization2D
+      ): number {
+        const c1 = circle1.center;
+        const c2 = circle2.center;
+        const dirX = c2.x - c1.x;
+        const dirY = c2.y - c1.y;
+        const perpX = -dirY;
+        const perpY = dirX;
+        const dx = point.x - c1.x;
+        const dy = point.y - c1.y;
+        return dx * perpX + dy * perpY;
+      }
+
       function computeRelativeAngle(point: Vector3, circle: Circle2DRealization2D): number {
         const center = circle.center;
         const radiusVector = circle.radiusVector;
@@ -1037,11 +848,10 @@ describe('Intersections', () => {
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('tangent');
-        expect(result.points).toHaveLength(1);
+        expect(result).toHaveLength(1);
         
         // Single point doesn't need ordering, but angle should be computable
-        const angle = computeRelativeAngle(result.points[0], circle1);
+        const angle = computeRelativeAngle(result[0], circle1);
         expect(angle).toBeGreaterThanOrEqual(0);
         expect(angle).toBeLessThan(2 * Math.PI);
       });
@@ -1061,11 +871,10 @@ describe('Intersections', () => {
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('tangent');
-        expect(result.points).toHaveLength(1);
+        expect(result).toHaveLength(1);
         
         // Angle should be exactly 0 (on the radius vector)
-        const angle = computeRelativeAngle(result.points[0], circle1);
+        const angle = computeRelativeAngle(result[0], circle1);
         expect(angle).toBeCloseTo(0, 10);
       });
 
@@ -1084,11 +893,10 @@ describe('Intersections', () => {
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
+        const angle0 = computeRelativeAngle(result[0], circle1);
+        const angle1 = computeRelativeAngle(result[1], circle1);
         
         expect(angle0).toBeLessThan(angle1);
       });
@@ -1108,18 +916,18 @@ describe('Intersections', () => {
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
+        const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+        const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
         
-        expect(angle0).toBeLessThan(angle1);
+        // Center-line is vertical (0, 0) to (0, 4), perpendicular is horizontal (-1, 0)
+        // Positive projection = left side, negative = right side
+        expect(proj0).toBeGreaterThan(0);
+        expect(proj1).toBeLessThan(0);
         
         // Points should be symmetric about y-axis (same |x|, opposite signs)
-        expect(result.points[0].x).toBeGreaterThan(0);
-        expect(result.points[1].x).toBeLessThan(0);
-        expect(Math.abs(result.points[0].x)).toBeCloseTo(Math.abs(result.points[1].x), 5);
+        expect(Math.abs(result[0].x)).toBeCloseTo(Math.abs(result[1].x), 5);
       });
 
       it('should handle circles with same center y-coordinate (horizontally aligned)', () => {
@@ -1137,21 +945,41 @@ describe('Intersections', () => {
         
         const result = intersectCircleCircle(circle1, circle2);
         
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        const angle0 = computeRelativeAngle(result.points[0], circle1);
-        const angle1 = computeRelativeAngle(result.points[1], circle1);
+        const proj0 = computePerpendicularProjection(result[0], circle1, circle2);
+        const proj1 = computePerpendicularProjection(result[1], circle1, circle2);
         
-        expect(angle0).toBeLessThan(angle1);
+        // Center-line is vertical (0, 0) to (0, 4)
+        // Perpendicular is horizontal
+        expect(proj0).toBeGreaterThan(0); // Index 0 on left (positive perp)
+        expect(proj1).toBeLessThan(0);    // Index 1 on right (negative perp)
         
-        // Points should be symmetric about x-axis
-        expect(result.points[0].y).toBeGreaterThan(0);
-        expect(result.points[1].y).toBeLessThan(0);
+        // Points should be symmetric about y-axis
+        expect(Math.abs(result[0].x)).toBeCloseTo(Math.abs(result[1].x), 5);
       });
     });
 
     describe('Real-World Regression Test (T328)', () => {
+      /**
+       * Helper function for circle-circle perpendicular projection
+       */
+      function computePerpendicularProjection(
+        point: Vector3,
+        circle1: Circle2DRealization2D,
+        circle2: Circle2DRealization2D
+      ): number {
+        const c1 = circle1.center;
+        const c2 = circle2.center;
+        const dirX = c2.x - c1.x;
+        const dirY = c2.y - c1.y;
+        const perpX = -dirY;
+        const perpY = dirX;
+        const dx = point.x - c1.x;
+        const dy = point.y - c1.y;
+        return dx * perpX + dy * perpY;
+      }
+
       /**
        * Real-world scenario: User creates two circles and marks their intersection points.
        * 
@@ -1199,36 +1027,28 @@ describe('Intersections', () => {
         const result = intersectCircleCircle(circleA, circleB);
         
         // Verify intersection type
-        expect(result.type).toBe('secant');
-        expect(result.points).toHaveLength(2);
+        expect(result).toHaveLength(2);
         
-        // Compute relative angles from Circle A's radius vector
-        const center = circleA.center;
-        const radiusVector = circleA.radiusVector;
-        const theta0 = Math.atan2(radiusVector.y, radiusVector.x); // Should be 0 (horizontal)
+        // Compute perpendicular projection from center-line
+        const proj0 = computePerpendicularProjection(result[0], circleA, circleB);
+        const proj1 = computePerpendicularProjection(result[1], circleA, circleB);
         
-        const angles = result.points.map(point => {
-          const theta = Math.atan2(point.y - center.y, point.x - center.x);
-          let deltaTheta = theta - theta0;
-          while (deltaTheta < 0) deltaTheta += 2 * Math.PI;
-          while (deltaTheta >= 2 * Math.PI) deltaTheta -= 2 * Math.PI;
-          return deltaTheta;
-        });
-        
-        // Verify ordering: angle[0] < angle[1]
-        expect(angles[0]).toBeLessThan(angles[1]);
+        // Verify ordering: proj0 > 0 (above center-line), proj1 < 0 (below center-line)
+        expect(proj0).toBeGreaterThan(0);
+        expect(proj1).toBeLessThan(0);
         
         // Verify geometric properties
-        // Upper point (index 0) should have positive y relative to center
-        // Lower point (index 1) should have negative y relative to center
-        expect(result.points[0].y).toBeGreaterThan(center.y);
-        expect(result.points[1].y).toBeLessThan(center.y);
+        // Upper point (index 0) should have positive y relative to center line (y=3)
+        // Lower point (index 1) should have negative y relative to center line
+        const centerY = 3;
+        expect(result[0].y).toBeGreaterThan(centerY);
+        expect(result[1].y).toBeLessThan(centerY);
         
-        // Both points should have same x coordinate (on vertical line of intersection)
-        expect(result.points[0].x).toBeCloseTo(result.points[1].x, 5);
+        // Points should be symmetric about the horizontal center-line
+        expect(Math.abs(result[0].y - centerY)).toBeCloseTo(Math.abs(result[1].y - centerY), 5);
         
         // Verify points are on both circles
-        for (const point of result.points) {
+        for (const point of result) {
           const distA = Math.sqrt((point.x - 2)**2 + (point.y - 3)**2);
           const distB = Math.sqrt((point.x - 8)**2 + (point.y - 3)**2);
           expect(distA).toBeCloseTo(5, 5);

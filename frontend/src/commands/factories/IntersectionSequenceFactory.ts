@@ -1,36 +1,45 @@
 /**
  * IntersectionSequenceFactory - Factory for creating intersection point sequences
  * 
+ * Phase 74: Refactored to eliminate IntersectionData string discriminator.
+ * Instead of one method with type string dispatch, provides 3 type-specific methods.
+ * Callers use instanceof checks to determine which method to call.
+ * 
  * Encapsulates the operation sequence for creating intersection points between:
  * - Line-Line intersections
  * - Line-Circle intersections (with index for multiple intersections)
  * - Circle-Circle intersections (with index for multiple intersections)
  * 
- * Phase 42: Now handles HalfHingeLine2D intersections by creating sibling points
+ * Phase 42: Handles HalfHingeLine2D intersections by creating sibling points
  * on the complementary plane (follows same pattern as SiblingGuide2D from Phase 36).
  * 
  * Pattern: Open Command - Receives an open Command, adds operations to it.
  * 
  * Benefits:
- * - Separates geometric logic from tool interaction logic
- * - Type-safe operation selection based on intersection type
+ * - No string discriminator round-trip (instanceof → string → dispatch)
+ * - Type-safe: each method knows exactly what it handles
+ * - Callers use instanceof directly, matching Phase 73 architectural principle
  * - Testable without tool infrastructure
  * - Reusable across different UIs or automation contexts
  * 
  * Example:
  * ```typescript
  * const cmd = new Command('Create intersection', world);
- * const result = IntersectionSequenceFactory.createIntersection(
- *   cmd, planeId, intersectionData, world
- * );
- * // result.pointId: ID of created intersection point
- * // result.siblingPointId: ID of sibling point (if HHL intersection)
+ * const element1 = world.getLine2D(id1);
+ * const element2 = world.getLine2D(id2);
  * 
- * // Tool handles: process tree action, commit, push to stack, feedback
+ * // Caller uses instanceof to select method
+ * let result;
+ * if (element1 instanceof Line2D && element2 instanceof Line2D) {
+ *   result = IntersectionSequenceFactory.createLineLineIntersection(
+ *     cmd, planeId, id1, id2, world
+ *   );
+ * }
  * ```
  * 
  * @see frontend/src/commands/factories/README.md
  * @see data-model.md §HalfHingeLine2D Intersection Sibling Behavior
+ * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
  */
 
 import { Command } from '../Command';
@@ -41,7 +50,21 @@ import { AddSiblingIntersectionPoint2DOp } from '../operations/world/AddSiblingI
 import type { World } from '@/domain/world/World';
 
 /**
- * Intersection data specifying the type and parameters for intersection creation
+ * Result of intersection creation with optional sibling point
+ */
+export interface IntersectionResult {
+  pointId: string;
+  siblingPointId?: string;
+}
+
+/**
+ * DEPRECATED: Use typed factory methods instead.
+ * Legacy interface for backward compatibility with tests.
+ * 
+ * @deprecated Use instanceof to determine types and call typed methods directly:
+ * - createLineLineIntersection() for Line2D × Line2D
+ * - createLineCircleIntersection() for Line2D × Circle2D
+ * - createCircleCircleIntersection() for Circle2D × Circle2D
  */
 export interface IntersectionData {
   type: 'line-line' | 'line-circle' | 'circle-circle';
@@ -57,31 +80,35 @@ export interface IntersectionData {
  */
 export class IntersectionSequenceFactory {
   /**
-   * Create an intersection point with the appropriate operation type.
+   * DEPRECATED: Legacy method for backward compatibility.
    * 
-   * If either element is a HalfHingeLine2D, automatically creates a sibling
-   * intersection point on the complementary plane (following Phase 36 sibling pattern).
+   * @deprecated Use typed methods instead:
+   * ```typescript
+   * // Instead of:
+   * factory.createIntersection(cmd, planeId, {type: 'line-line', ...}, world)
    * 
-   * @param cmd - Open Command to add operations to
-   * @param planeId - ID of the projection plane
-   * @param intersectionData - Specification of intersection type and elements
-   * @param world - World instance for HHL detection and sibling plane resolution
-   * @returns Object with pointId and optional siblingPointId
-   * @throws Error if intersection type is unknown or operation fails
+   * // Use instanceof to select method:
+   * if (element1 instanceof Line2D && element2 instanceof Line2D) {
+   *   factory.createLineLineIntersection(cmd, planeId, line1.id, line2.id, world);
+   * }
+   * ```
+   * 
+   * This wrapper exists only for test compatibility. New code should use typed methods.
    */
   static createIntersection(
     cmd: Command,
     planeId: string,
     intersectionData: IntersectionData,
     world: World
-  ): { pointId: string; siblingPointId?: string } {
-    // Create the appropriate operation based on intersection type
-    let operation;
+  ): IntersectionResult {
+    // Dispatch to typed methods based on string discriminator
     if (intersectionData.type === 'line-line') {
-      operation = new AddLineLineIntersectionPoint2DOp(
+      return this.createLineLineIntersection(
+        cmd,
         planeId,
         intersectionData.element1Id,
-        intersectionData.element2Id
+        intersectionData.element2Id,
+        world
       );
     } else if (intersectionData.type === 'line-circle') {
       // Validate line-circle specific parameters
@@ -89,11 +116,13 @@ export class IntersectionSequenceFactory {
         throw new Error('Line-circle intersection requires lineId, circleId, and index');
       }
       
-      operation = new AddLineCircleIntersectionPoint2DOp(
+      return this.createLineCircleIntersection(
+        cmd,
         planeId,
         intersectionData.lineId,
         intersectionData.circleId,
-        intersectionData.index
+        intersectionData.index,
+        world
       );
     } else if (intersectionData.type === 'circle-circle') {
       // Validate circle-circle specific parameters
@@ -101,16 +130,105 @@ export class IntersectionSequenceFactory {
         throw new Error('Circle-circle intersection requires index');
       }
       
-      operation = new AddCircleCircleIntersectionPoint2DOp(
+      return this.createCircleCircleIntersection(
+        cmd,
         planeId,
         intersectionData.element1Id,
         intersectionData.element2Id,
-        intersectionData.index
+        intersectionData.index,
+        world
       );
     } else {
       throw new Error(`Unknown intersection type: ${(intersectionData as IntersectionData).type}`);
     }
+  }
+  /**
+   * Create a line-line intersection point.
+   * 
+   * If either line is a HalfHingeLine2D, automatically creates a sibling
+   * intersection point on the complementary plane.
+   * 
+   * @param cmd - Open Command to add operations to
+   * @param planeId - ID of the projection plane
+   * @param line1Id - ID of first line
+   * @param line2Id - ID of second line
+   * @param world - World instance for HHL detection and sibling plane resolution
+   * @returns Object with pointId and optional siblingPointId
+   * @throws Error if operation fails
+   */
+  static createLineLineIntersection(
+    cmd: Command,
+    planeId: string,
+    line1Id: string,
+    line2Id: string,
+    world: World
+  ): IntersectionResult {
+    const operation = new AddLineLineIntersectionPoint2DOp(planeId, line1Id, line2Id);
+    return this.executeWithSiblingSupport(cmd, operation, planeId, world);
+  }
 
+  /**
+   * Create a line-circle intersection point.
+   * 
+   * If the line is a HalfHingeLine2D, automatically creates a sibling
+   * intersection point on the complementary plane.
+   * 
+   * @param cmd - Open Command to add operations to
+   * @param planeId - ID of the projection plane
+   * @param lineId - ID of the line
+   * @param circleId - ID of the circle
+   * @param index - Which intersection point (0 or 1) when two exist
+   * @param world - World instance for HHL detection and sibling plane resolution
+   * @returns Object with pointId and optional siblingPointId
+   * @throws Error if operation fails
+   */
+  static createLineCircleIntersection(
+    cmd: Command,
+    planeId: string,
+    lineId: string,
+    circleId: string,
+    index: number,
+    world: World
+  ): IntersectionResult {
+    const operation = new AddLineCircleIntersectionPoint2DOp(planeId, lineId, circleId, index);
+    return this.executeWithSiblingSupport(cmd, operation, planeId, world);
+  }
+
+  /**
+   * Create a circle-circle intersection point.
+   * 
+   * Circles do not create sibling intersections (circles cannot be HalfHingeLines).
+   * 
+   * @param cmd - Open Command to add operations to
+   * @param planeId - ID of the projection plane
+   * @param circle1Id - ID of first circle
+   * @param circle2Id - ID of second circle
+   * @param index - Which intersection point (0 or 1) when two exist
+   * @param world - World instance for validation
+   * @returns Object with pointId and optional siblingPointId
+   * @throws Error if operation fails
+   */
+  static createCircleCircleIntersection(
+    cmd: Command,
+    planeId: string,
+    circle1Id: string,
+    circle2Id: string,
+    index: number,
+    world: World
+  ): IntersectionResult {
+    const operation = new AddCircleCircleIntersectionPoint2DOp(planeId, circle1Id, circle2Id, index);
+    return this.executeWithSiblingSupport(cmd, operation, planeId, world);
+  }
+
+  /**
+   * Execute intersection operation and create sibling if needed (shared logic)
+   */
+  private static executeWithSiblingSupport(
+    cmd: Command,
+    operation: AddLineLineIntersectionPoint2DOp | AddLineCircleIntersectionPoint2DOp | AddCircleCircleIntersectionPoint2DOp,
+    planeId: string,
+    world: World
+  ): IntersectionResult {
     // Execute primary operation and extract outputs
     const result = cmd.addAndExecute(operation);
     const pointId = result.outputs.pointId;

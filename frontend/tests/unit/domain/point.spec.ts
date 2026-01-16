@@ -29,7 +29,7 @@ describe('Point2D', () => {
       expect(point.position.x).toBe(10);
       expect(point.position.y).toBe(20);
       expect(point.position.z).toBe(1);
-      expect(point.type).toBe('free');
+      expect(point instanceof FreePoint2D).toBe(true);
     });
 
     it('should create a line-line intersection point', () => {
@@ -37,13 +37,13 @@ describe('Point2D', () => {
 
       expect(point.line1Id).toBe('plane_H/line_1');
       expect(point.line2Id).toBe('plane_H/line_2');
-      expect(point.type).toBe('line-line-intersection');
+      expect(point instanceof Point2DLineLineIntersection).toBe(true);
     });
 
     it('should default to free type', () => {
       const point = new FreePoint2D('plane_H/test-point-3', new Vector3(10, 20, 1), "plane_H");
 
-      expect(point.type).toBe('free');
+      expect(point instanceof FreePoint2D).toBe(true);
     });
 
     it('should accept optional label', () => {
@@ -116,7 +116,7 @@ describe('Point2D', () => {
       point.position = new Vector3(30, 40, 1);
 
       expect(point.id).toBe('plane_H/point_1');
-      expect(point.type).toBe('free');
+      expect(point instanceof FreePoint2D).toBe(true);
       expect(point.label).toBe('Point A');
       expect(point.planeId).toBe('plane_H');
     });
@@ -133,7 +133,7 @@ describe('Point2D', () => {
       expect(clone.position.x).toBe(10);
       expect(clone.position.y).toBe(20);
       expect(clone.position.z).toBe(1);
-      expect(clone.type).toBe('free');
+      expect(clone instanceof FreePoint2D).toBe(true);
       expect(clone.label).toBe('Point A');
       expect(clone.planeId).toBe('plane_H');
       expect(clone.id).toBe('plane_H/point_1');
@@ -203,7 +203,7 @@ describe('Point2D', () => {
         );
 
         expect(sibling.id).toBe(planeVId + '/sibling-point');
-        expect(sibling.type).toBe('sibling-intersection');
+        expect(sibling instanceof SiblingIntersectionPoint2D).toBe(true);
         expect(sibling.primaryIntersectionId).toBe(primaryPointId);
         expect(sibling.planeId).toBe(planeVId);
         expect(sibling.label).toBe('Sibling Point');
@@ -233,7 +233,7 @@ describe('Point2D', () => {
 
         expect(clone).not.toBe(original);
         expect(clone.id).toBe(planeVId + '/sibling-1');
-        expect(clone.type).toBe('sibling-intersection');
+        expect(clone instanceof SiblingIntersectionPoint2D).toBe(true);
         expect(clone.primaryIntersectionId).toBe(primaryPointId);
         expect(clone.planeId).toBe(planeVId);
         expect(clone.label).toBe('Original Sibling');
@@ -386,9 +386,9 @@ describe('Point2D', () => {
         const planeV = world.getProjectionPlaneById(planeVId)!;
         
         const halfHingeH = Array.from(planeH.lines.values())
-          .find(line => line.type === 'half-hinge') as any;
+          .find((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D);
         const halfHingeV = Array.from(planeV.lines.values())
-          .find(line => line.type === 'half-hinge') as any;
+          .find((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D);
         
         expect(halfHingeH).toBeDefined();
         expect(halfHingeV).toBeDefined();

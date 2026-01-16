@@ -19,6 +19,8 @@
  * Reference: specs/001-dihedral-learning-mvp/data-model.md - Coordinate Transformations
  */
 
+import { FreePoint2D } from '@/domain/world/Point';
+
 import { Vector3 } from 'three';
 import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
 
@@ -71,7 +73,7 @@ export function renderPoint(
   // Generic point rendering: all points are rendered as circles
   // Visual distinction via styling (free vs derived), not shape
   // Derived points include: intersection types and sibling-intersection
-  const isFreePoint = point.type === 'free';
+  const isFreePoint = point instanceof FreePoint2D;
   const radius = isFreePoint ? 5 : 4;
   const fill = isFreePoint ? '#4A90E2' : '#E94E77';
   const stroke = '#333333';

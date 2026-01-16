@@ -24,134 +24,6 @@ import type { Line2DRealization2D } from '../world/Line';
 import type { Circle2DRealization2D } from '../world/Circle';
 
 /**
- * Sort intersection points by angle relative to circle's radius vector
- * 
- * Per data-model.md §Intersection Point Indexing on Circles:
- * When multiple points intersect a circle, they must be indexed by their angular 
- * position relative to the circle's radius vector (angle zero reference).
- * 
- * This ensures stable, predictable indexing that is preserved under parametric
- * updates to the circle's defining elements.
- * 
- * ┌─────────────────────────────────────────────────────────────────────┐
- * │ ALGORITHM: Angle-based sorting for circle intersection points       │
- * │                                                                      │
- * │  Given:                                                              │
- * │    • Circle with center C and radius vector R                       │
- * │    • Intersection points P₀, P₁, ... Pₙ on the circle              │
- * │                                                                      │
- * │  Steps:                                                              │
- * │    1. Compute reference angle: θ₀ = atan2(R.y, R.x)                │
- * │    2. For each point Pᵢ:                                            │
- * │         θᵢ = atan2(Pᵢ.y - C.y, Pᵢ.x - C.x)                         │
- * │         Δθᵢ = θᵢ - θ₀                                               │
- * │         Normalize Δθᵢ to range [0, 2π)                             │
- * │    3. Sort points by Δθᵢ ascending                                  │
- * │    4. Assign indices: index 0 = smallest Δθ, index 1 = next, etc.  │
- * │                                                                      │
- * │  Visual Example:                                                     │
- * │                                                                      │
- * │                    P₁ (Δθ ≈ 1.1 rad)                               │
- * │                     ●                                                │
- * │                   ╱   ╲                                              │
- * │                 ╱       ╲                                            │
- * │               ╱           ╲                                          │
- * │             ╱               ╲                                        │
- * │           ●─────────C────────●─────> R (θ₀ = 0°)                   │
- * │             ╲               ╱                                        │
- * │               ╲           ╱                                          │
- * │                 ╲       ╱                                            │
- * │                   ╲   ╱                                              │
- * │                     ●                                                │
- * │                    P₀ (Δθ ≈ 5.2 rad)                               │
- * │                                                                      │
- * │    Circle center C = (0, 0)                                          │
- * │    Radius vector R = (1, 0) → θ₀ = 0                               │
- * │    Point P₀ = (0.7, -0.7) → θ = -0.79 rad → Δθ = 5.49 rad         │
- * │    Point P₁ = (0.7, 0.7)  → θ = 0.79 rad  → Δθ = 0.79 rad         │
- * │                                                                      │
- * │    After sorting: [P₁ (Δθ=0.79), P₀ (Δθ=5.49)]                    │
- * │    Indices:       [index 0,        index 1]                         │
- * │                                                                      │
- * │  Result: Points ordered counterclockwise from radius vector         │
- * └─────────────────────────────────────────────────────────────────────┘
- * 
- * **Why this matters:**
- * - Ensures intersection point indices remain stable when circle parameters change
- * - Provides predictable, user-understandable ordering (counterclockwise from radius)
- * - Critical for dependent constructions that reference specific intersection indices
- * - Prevents index swapping that would break geometric relationships
- * 
- * **References:**
- * - specs/001-dihedral-learning-mvp/data-model.md §Intersection Point Indexing
- * - Phase 33 test suite: frontend/tests/unit/calculations/intersections.spec.ts
- * 
- * @param points Intersection points to sort (must all lie on the circle)
- * @param circle Circle realization containing center C and radius vector R
- * @returns Points sorted by relative angle Δθ ascending (counterclockwise from R)
- */
-function sortPointsByAngleFromRadiusVector(
-  points: Vector3[],
-  circle: Circle2DRealization2D
-): Vector3[] {
-  if (points.length <= 1) {
-    return points; // No sorting needed
-  }
-
-  const center = circle.center;
-  const radiusVector = circle.radiusVector;
-  
-  // Compute reference angle from radius vector
-  const theta0 = Math.atan2(radiusVector.y, radiusVector.x);
-  
-  // Compute relative angle for each point
-  const pointsWithAngles = points.map(point => {
-    const theta = Math.atan2(point.y - center.y, point.x - center.x);
-    let deltaTheta = theta - theta0;
-    
-    // Normalize to [0, 2π) range
-    while (deltaTheta < 0) {
-      deltaTheta += 2 * Math.PI;
-    }
-    while (deltaTheta >= 2 * Math.PI) {
-      deltaTheta -= 2 * Math.PI;
-    }
-    
-    return { point, deltaTheta };
-  });
-  
-  // Sort by deltaTheta ascending
-  pointsWithAngles.sort((a, b) => a.deltaTheta - b.deltaTheta);
-  
-  // Return sorted points
-  return pointsWithAngles.map(item => item.point);
-}
-
-/**
- * Result of a line-line intersection calculation
- */
-export interface LineLineIntersectionResult {
-  /**
-   * Intersection point in homogeneous coordinates (x, y, 1)
-   * Null if lines are parallel or coincident
-   */
-  point: Vector3 | null;
-  
-  /**
-   * Type of intersection result
-   * - 'point': Single intersection point (normal case)
-   * - 'parallel': Lines are parallel (no intersection)
-   * - 'coincident': Lines are coincident (infinite intersections)
-   */
-  type: 'point' | 'parallel' | 'coincident';
-  
-  /**
-   * Human-readable message describing the result
-   */
-  message?: string;
-}
-
-/**
  * Convert line from parametric form to implicit form using homogeneous coordinates
  * 
  * Parametric form: P(t) = P0 + t * d where P0 = (x0, y0, 1), d = (dx, dy, 0)
@@ -203,12 +75,12 @@ function lineToImplicitForm(line: Line2DRealization2D): Vector3 {
  * 
  * @param line1 First line in parametric form
  * @param line2 Second line in parametric form
- * @returns Intersection result with point (if exists) and type
+ * @returns Intersection point in homogeneous coordinates, or null if parallel/coincident
  */
 export function intersectLineLine(
   line1: Line2DRealization2D,
   line2: Line2DRealization2D
-): LineLineIntersectionResult {
+): Vector3 | null {
   // Convert to implicit form
   const L1 = lineToImplicitForm(line1);
   const L2 = lineToImplicitForm(line2);
@@ -238,24 +110,8 @@ export function intersectLineLine(
   // Check for parallel lines (w ≈ 0)
   const epsilon = 1e-10;
   if (Math.abs(w) < epsilon) {
-    // Lines are parallel or coincident
-    // Check if they're coincident by testing if one point from line1 satisfies line2
-    const testPoint = line1.point1;
-    const dist = Math.abs(a2 * testPoint.x + b2 * testPoint.y + c2);
-    
-    if (dist < epsilon) {
-      return {
-        point: null,
-        type: 'coincident',
-        message: 'Lines are coincident (overlap completely)'
-      };
-    } else {
-      return {
-        point: null,
-        type: 'parallel',
-        message: 'Lines are parallel (no intersection)'
-      };
-    }
+    // Lines are parallel or coincident - no unique intersection point
+    return null;
   }
   
   // Convert from homogeneous to Cartesian coordinates
@@ -264,11 +120,7 @@ export function intersectLineLine(
   const y = py / w;
   
   // Return as point in homogeneous form (x, y, 1)
-  return {
-    point: new Vector3(x, y, 1),
-    type: 'point',
-    message: `Intersection at (${x.toFixed(2)}, ${y.toFixed(2)})`
-  };
+  return new Vector3(x, y, 1);
 }
 
 /**
@@ -296,27 +148,77 @@ export function areLinesParallel(
 }
 
 /**
- * Result of a line-circle intersection calculation
+ * Sort line-circle intersection points by projection onto line direction.
+ * Index 0 = smaller projection (earlier along line), Index 1 = larger projection (further along line)
+ * 
+ * @param points Array of intersection points (typically 2)
+ * @param line The line involved in the intersection
+ * @returns Sorted array with index 0 = smaller projection along line direction
  */
-export interface LineCircleIntersectionResult {
-  /**
-   * Intersection points in homogeneous coordinates (x, y, 1)
-   * Empty array if no intersections, 1 element if tangent, 2 elements if secant
-   */
-  points: Vector3[];
+function sortLineCircleIntersectionsByDirection(
+  points: Vector3[],
+  line: Line2DRealization2D
+): Vector3[] {
+  if (points.length < 2) return points;
   
-  /**
-   * Type of intersection result
-   * - 'none': No intersection (line misses circle)
-   * - 'tangent': One intersection point (line is tangent to circle)
-   * - 'secant': Two intersection points (line cuts through circle)
-   */
-  type: 'none' | 'tangent' | 'secant';
+  // Get line direction vector
+  const V = line.getDirection();
   
-  /**
-   * Human-readable message describing the result
-   */
-  message?: string;
+  // Reference point on line
+  const P = line.point1;
+  
+  // Project each point onto line direction
+  const projectionsAndPoints = points.map(point => {
+    const dx = point.x - P.x;
+    const dy = point.y - P.y;
+    const projection = dx * V.x + dy * V.y;
+    return { projection, point };
+  });
+  
+  // Sort by projection ascending (smaller first = index 0)
+  projectionsAndPoints.sort((a, b) => a.projection - b.projection);
+  
+  return projectionsAndPoints.map(item => item.point);
+}
+
+/**
+ * Sort circle-circle intersection points by projection onto perpendicular to center-line direction.
+ * Index 0 = positive projection (above center-line), Index 1 = negative projection (below center-line)
+ * 
+ * @param points Array of intersection points (typically 2)
+ * @param circle1 First circle
+ * @param circle2 Second circle
+ * @returns Sorted array with index 0 = positive perpendicular projection
+ */
+function sortCircleCircleIntersectionsByPerpendicular(
+  points: Vector3[],
+  circle1: Circle2DRealization2D,
+  circle2: Circle2DRealization2D
+): Vector3[] {
+  if (points.length < 2) return points;
+  
+  // Center-line direction: c1 → c2
+  const c1 = circle1.center;
+  const c2 = circle2.center;
+  const dirX = c2.x - c1.x;
+  const dirY = c2.y - c1.y;
+  
+  // Perpendicular to center-line: (-dirY, dirX)
+  const perpX = -dirY;
+  const perpY = dirX;
+  
+  // Project each point onto perpendicular direction (from c1)
+  const projectionsAndPoints = points.map(point => {
+    const dx = point.x - c1.x;
+    const dy = point.y - c1.y;
+    const projection = dx * perpX + dy * perpY;
+    return { projection, point };
+  });
+  
+  // Sort by projection descending (positive first = index 0)
+  projectionsAndPoints.sort((a, b) => b.projection - a.projection);
+  
+  return projectionsAndPoints.map(item => item.point);
 }
 
 /**
@@ -331,18 +233,18 @@ export interface LineCircleIntersectionResult {
  * 6. Substitute t back into line equation to get intersection points
  * 
  * Edge cases:
- * - No intersection: discriminant < 0
- * - Tangent: discriminant = 0 (one point)
- * - Secant: discriminant > 0 (two points)
+ * - No intersection: discriminant < 0 (returns empty array)
+ * - Tangent: discriminant = 0 (returns array with 1 point)
+ * - Secant: discriminant > 0 (returns array with 2 points, sorted by projection on line direction)
  * 
  * @param line Line in parametric form
  * @param circle Circle with center and radius
- * @returns Intersection result with 0, 1, or 2 points
+ * @returns Array of intersection points (0, 1, or 2 points)
  */
 export function intersectLineCircle(
   line: Line2DRealization2D,
   circle: Circle2DRealization2D
-): LineCircleIntersectionResult {
+): Vector3[] {
   const P0 = line.point1;
   const d = line.getDirection();
   const C = circle.center;
@@ -378,22 +280,14 @@ export function intersectLineCircle(
   
   if (discriminant < -epsilon) {
     // No intersection
-    return {
-      points: [],
-      type: 'none',
-      message: 'Line does not intersect circle'
-    };
+    return [];
   } else if (Math.abs(discriminant) < epsilon) {
     // Tangent - one intersection point
     const t = -b / (2 * a);
     const x = P0.x + t * d.x;
     const y = P0.y + t * d.y;
     
-    return {
-      points: [new Vector3(x, y, 1)],
-      type: 'tangent',
-      message: `Line is tangent to circle at (${x.toFixed(2)}, ${y.toFixed(2)})`
-    };
+    return [new Vector3(x, y, 1)];
   } else {
     // Secant - two intersection points
     const sqrtDisc = Math.sqrt(discriminant);
@@ -405,44 +299,13 @@ export function intersectLineCircle(
     const x2 = P0.x + t2 * d.x;
     const y2 = P0.y + t2 * d.y;
     
-    // Sort points by angle relative to circle's radius vector
+    // Two intersection points (secant case)
     const unsortedPoints = [
       new Vector3(x1, y1, 1),
       new Vector3(x2, y2, 1)
     ];
-    const sortedPoints = sortPointsByAngleFromRadiusVector(unsortedPoints, circle);
-    
-    return {
-      points: sortedPoints,
-      type: 'secant',
-      message: `Line intersects circle at 2 points (sorted by angle from radius vector)`
-    };
+    return sortLineCircleIntersectionsByDirection(unsortedPoints, line);
   }
-}
-
-/**
- * Result of a circle-circle intersection calculation
- */
-export interface CircleCircleIntersectionResult {
-  /**
-   * Intersection points in homogeneous coordinates (x, y, 1)
-   * Empty array if no intersections, 1 element if tangent, 2 elements if intersecting
-   */
-  points: Vector3[];
-  
-  /**
-   * Type of intersection result
-   * - 'none': No intersection (circles don't touch)
-   * - 'tangent': One intersection point (circles touch at one point)
-   * - 'secant': Two intersection points (circles overlap)
-   * - 'coincident': Circles are the same (infinite intersections)
-   */
-  type: 'none' | 'tangent' | 'secant' | 'coincident';
-  
-  /**
-   * Human-readable message describing the result
-   */
-  message?: string;
 }
 
 /**
@@ -455,20 +318,20 @@ export interface CircleCircleIntersectionResult {
  * 4. Solve line-circle intersection for either circle
  * 
  * Edge cases:
- * - No intersection: |c1 - c2| > r1 + r2 (circles too far apart)
- * - No intersection: |c1 - c2| < |r1 - r2| (one circle inside the other)
- * - Tangent: |c1 - c2| = r1 + r2 or |c1 - c2| = |r1 - r2|
- * - Secant: otherwise (two points)
- * - Coincident: same center and same radius
+ * - No intersection: |c1 - c2| > r1 + r2 (circles too far apart) - returns empty array
+ * - No intersection: |c1 - c2| < |r1 - r2| (one circle inside the other) - returns empty array
+ * - Tangent: |c1 - c2| = r1 + r2 or |c1 - c2| = |r1 - r2| - returns array with 1 point
+ * - Secant: otherwise - returns array with 2 points (sorted by perpendicular projection)
+ * - Coincident: same center and same radius - returns empty array
  * 
  * @param circle1 First circle
  * @param circle2 Second circle
- * @returns Intersection result with 0, 1, or 2 points
+ * @returns Array of intersection points (0, 1, or 2 points)
  */
 export function intersectCircleCircle(
   circle1: Circle2DRealization2D,
   circle2: Circle2DRealization2D
-): CircleCircleIntersectionResult {
+): Vector3[] {
   const c1 = circle1.center;
   const r1 = circle1.getRadius();
   const c2 = circle2.center;
@@ -483,29 +346,17 @@ export function intersectCircleCircle(
   
   // Check if circles are coincident (same center and same radius)
   if (d < epsilon && Math.abs(r1 - r2) < epsilon) {
-    return {
-      points: [],
-      type: 'coincident',
-      message: 'Circles are coincident (same circle)'
-    };
+    return []; // Coincident circles
   }
   
   // Check if circles are too far apart
   if (d > r1 + r2 + epsilon) {
-    return {
-      points: [],
-      type: 'none',
-      message: 'Circles are too far apart (no intersection)'
-    };
+    return []; // No intersection
   }
   
   // Check if one circle is inside the other
   if (d < Math.abs(r1 - r2) - epsilon) {
-    return {
-      points: [],
-      type: 'none',
-      message: 'One circle is inside the other (no intersection)'
-    };
+    return []; // No intersection
   }
   
   // Check if circles are externally tangent
@@ -515,11 +366,7 @@ export function intersectCircleCircle(
     const x = c1.x + t * dx;
     const y = c1.y + t * dy;
     
-    return {
-      points: [new Vector3(x, y, 1)],
-      type: 'tangent',
-      message: `Circles are externally tangent at (${x.toFixed(2)}, ${y.toFixed(2)})`
-    };
+    return [new Vector3(x, y, 1)];
   }
   
   // Check if circles are internally tangent
@@ -529,11 +376,7 @@ export function intersectCircleCircle(
     const x = c1.x + t * dx;
     const y = c1.y + t * dy;
     
-    return {
-      points: [new Vector3(x, y, 1)],
-      type: 'tangent',
-      message: `Circles are internally tangent at (${x.toFixed(2)}, ${y.toFixed(2)})`
-    };
+    return [new Vector3(x, y, 1)];
   }
   
   // Two intersection points (secant case)
@@ -561,16 +404,9 @@ export function intersectCircleCircle(
   const x2 = p2x - h * perp_x;
   const y2 = p2y - h * perp_y;
   
-  // Sort points by angle relative to first circle's radius vector
   const unsortedPoints = [
     new Vector3(x1, y1, 1),
     new Vector3(x2, y2, 1)
   ];
-  const sortedPoints = sortPointsByAngleFromRadiusVector(unsortedPoints, circle1);
-  
-  return {
-    points: sortedPoints,
-    type: 'secant',
-    message: `Circles intersect at 2 points (sorted by angle from circle1's radius vector)`
-  };
+  return sortCircleCircleIntersectionsByPerpendicular(unsortedPoints, circle1, circle2);
 }

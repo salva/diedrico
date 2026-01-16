@@ -112,8 +112,6 @@ export class Line2DRealization2D extends Element2DRealization2D {
  * Extends Element2D to provide common properties and interface for all 2D elements
  */
 export abstract class Line2D extends Element2D {
-  abstract readonly type: Line2DType;
-  
   constructor(
     id: string,
     planeId: string,
@@ -132,6 +130,16 @@ export abstract class Line2D extends Element2D {
    * Returns line equation in the projection plane's intrinsic coordinates
    */
   abstract realize2D(world: import('./World').World): Line2DRealization2D | null;
+  
+  /**
+   * Check if this line is bounded (finite segment) or unbounded (infinite line)
+   * Geometric property: segments are bounded, lines are unbounded
+   * 
+   * @returns false for infinite lines (default), true for segments
+   */
+  isBounded(): boolean {
+    return false;  // Lines are unbounded by default
+  }
 }
 
 /**
@@ -139,7 +147,6 @@ export abstract class Line2D extends Element2D {
  * The rule is: "line through point1 and point2"
  */
 export class Line2DByTwoPoints extends Line2D {
-  readonly type: 'by-two-points' = 'by-two-points';
   readonly point1Id: string;  // ID of first point on line
   readonly point2Id: string;  // ID of second point on line
   
@@ -175,10 +182,10 @@ export class Line2DByTwoPoints extends Line2D {
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get both points from world
     const plane = world.getProjectionPlaneById(this.planeId);
-    const point1 = plane?.getPoint(this.point1Id);
-    const point2 = plane?.getPoint(this.point2Id);
-    const p1Realization = point1?.realize2D(world);
-    const p2Realization = point2?.realize2D(world);
+    const point1 = plane.getPoint(this.point1Id);
+    const point2 = plane.getPoint(this.point2Id);
+    const p1Realization = point1.realize2D(world);
+    const p2Realization = point2.realize2D(world);
     
     if (!p1Realization || !p2Realization) {
       return null;  // Cannot compute line without both points
@@ -222,7 +229,6 @@ export class Line2DByTwoPoints extends Line2D {
  * TODO: Implement in later phase when parallel line tool is added
  */
 export class Line2DParallel extends Line2D {
-  readonly type: 'parallel' = 'parallel';
   readonly referenceLineId: string;  // Line to be parallel to
   readonly throughPointId: string;   // Point the new line passes through
   
@@ -251,8 +257,8 @@ export class Line2DParallel extends Line2D {
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get reference line realization from world
     const plane = world.getProjectionPlaneById(this.planeId);
-    const refLine = plane?.getLine(this.referenceLineId);
-    const referenceLine = refLine?.realize2D(world);
+    const refLine = plane.getLine(this.referenceLineId);
+    const referenceLine = refLine.realize2D(world);
     if (!referenceLine) {
       return null;  // Cannot compute line without reference line
     }
@@ -263,8 +269,8 @@ export class Line2DParallel extends Line2D {
     }
 
     // Get through-point realization from world
-    const throughPoint = plane?.getPoint(this.throughPointId);
-    const throughPointRealization = throughPoint?.realize2D(world);
+    const throughPoint = plane.getPoint(this.throughPointId);
+    const throughPointRealization = throughPoint.realize2D(world);
     if (!throughPointRealization) {
       return null;  // Cannot compute line without through-point
     }
@@ -353,8 +359,8 @@ export class Line2DPerpendicularToLine extends Line2D {
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get reference line realization from world
     const plane = world.getProjectionPlaneById(this.planeId);
-    const refLine = plane?.getLine(this.referenceLineId);
-    const referenceLine = refLine?.realize2D(world);
+    const refLine = plane.getLine(this.referenceLineId);
+    const referenceLine = refLine.realize2D(world);
     if (!referenceLine) {
       return null;  // Cannot compute line without reference line
     }
@@ -365,8 +371,8 @@ export class Line2DPerpendicularToLine extends Line2D {
     }
 
     // Get through-point realization from world
-    const throughPoint = plane?.getPoint(this.throughPointId);
-    const throughPointRealization = throughPoint?.realize2D(world);
+    const throughPoint = plane.getPoint(this.throughPointId);
+    const throughPointRealization = throughPoint.realize2D(world);
     if (!throughPointRealization) {
       return null;  // Cannot compute line without through-point
     }
@@ -480,16 +486,15 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Step 1: Get containing plane
     const plane = world.getProjectionPlaneById(this.planeId);
-    if (!plane) return null;
     
     // Step 2: Get circle realization
     const circle = plane.getCircle(this.circleId);
-    const circleRealization = circle?.realize2D(world);
+    const circleRealization = circle.realize2D(world);
     if (!circleRealization) return null;
     
     // Step 3: Get through-point realization
     const throughPoint = plane.getPoint(this.throughPointId);
-    const throughPointRealization = throughPoint?.realize2D(world);
+    const throughPointRealization = throughPoint.realize2D(world);
     if (!throughPointRealization) return null;
     
     // Step 4: Check infeasibility propagation
@@ -648,16 +653,14 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Step 1: Get containing plane
     const plane = world.getProjectionPlaneById(this.planeId);
-    if (!plane) return null;
     
     // Step 2: Get circle realization
     const circle = plane.getCircle(this.circleId);
-    const circleRealization = circle?.realize2D(world);
+    const circleRealization = circle.realize2D(world);
     if (!circleRealization) return null;
     
     // Step 3: Get reference line realization (can be from any plane)
     const refLine = world.getLine2D(this.referenceLineId);
-    if (!refLine) return null;
     
     const refLineRealization = refLine.realize2D(world);
     if (!refLineRealization) return null;

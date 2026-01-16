@@ -29,6 +29,8 @@ import {
   RemoveGuide2DOp 
 } from '@/commands/operations/world/RemoveElementOps';
 import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 
 /**
  * DeletionSequenceFactory - Factory for cascade deletion sequences
@@ -105,10 +107,10 @@ export class DeletionSequenceFactory {
         // Check if it's a line (includes segments and guides)
         const line = plane.getLine(elementId);
         if (line) {
-          // Determine specific line subtype for appropriate removal operation
-          if (line.type === 'segment') {
+          // Determine specific line subtype using instanceof for type-safe dispatch
+          if (line instanceof Segment2DByPoints) {
             cmd.addAndExecute(new RemoveSegment2DOp(planeId, elementId));
-          } else if (line.type === 'guide' || line.type === 'sibling-guide') {
+          } else if (line instanceof Guide2D || line instanceof SiblingGuide2D) {
             cmd.addAndExecute(new RemoveGuide2DOp(planeId, elementId));
           } else {
             cmd.addAndExecute(new RemoveLine2DOp(planeId, elementId));

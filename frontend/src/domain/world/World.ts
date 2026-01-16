@@ -82,9 +82,9 @@
 
 import { Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
-import { Point2D, Point3DRealization3D } from './Point';
+import { Point2D, Point3DRealization3D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
 import { Line2D } from './Line';
-import { Segment2D } from './Segment';
+import { Segment2D, Segment2DByPoints } from './Segment';
 import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
@@ -791,7 +791,7 @@ export class World {
     try {
       const containerId = getContainerIdFromElementId(id);
       const plane = this.getProjectionPlaneById(containerId);
-      return plane?.getPoint(id);
+      return plane.getPoint(id);
     } catch (error) {
       return undefined;
     }
@@ -808,7 +808,7 @@ export class World {
     try {
       const containerId = getContainerIdFromElementId(id);
       const plane = this.getProjectionPlaneById(containerId);
-      return plane?.getLine(id);
+      return plane.getLine(id);
     } catch (error) {
       return undefined;
     }
@@ -825,7 +825,7 @@ export class World {
     try {
       const containerId = getContainerIdFromElementId(id);
       const plane = this.getProjectionPlaneById(containerId);
-      return plane?.getCircle(id);
+      return plane.getCircle(id);
     } catch (error) {
       return undefined;
     }
@@ -843,9 +843,9 @@ export class World {
     try {
       const containerId = getContainerIdFromElementId(id);
       const plane = this.getProjectionPlaneById(containerId);
-      const line = plane?.getLine(id);
-      // Segments extend Line2D with type 'segment'
-      if (line && line.type === 'segment') {
+      const line = plane.getLine(id);
+      // Segments extend Line2D
+      if (line && line instanceof Segment2DByPoints) {
         return line as Segment2D;
       }
       return undefined;
@@ -866,9 +866,9 @@ export class World {
     try {
       const containerId = getContainerIdFromElementId(id);
       const plane = this.getProjectionPlaneById(containerId);
-      const line = plane?.getLine(id);
-      // Guides extend Line2D with type 'guide' or 'sibling-guide'
-      if (line && (line.type === 'guide' || line.type === 'sibling-guide')) {
+      const line = plane.getLine(id);
+      // Guides extend Line2D
+      if (line && line instanceof Guide2D) {
         return line as Guide2D;
       }
       return undefined;
@@ -943,7 +943,7 @@ export class World {
     
     const allLines = plane.getAllLines();
     return allLines.filter((line): line is HalfHingeLine2D => 
-      line.type === 'half-hinge'
+      line instanceof HalfHingeLine2D
     );
   }
 
@@ -956,7 +956,7 @@ export class World {
   getHingeLineFromHalfHingeLine(halfHingeLineId: string): HingeLine | undefined {
     // Get the HalfHingeLine2D by searching all planes
     const halfHingeLine = this.getLine2D(halfHingeLineId);
-    if (!halfHingeLine || halfHingeLine.type !== 'half-hinge') {
+    if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
       return undefined;
     }
     
@@ -980,37 +980,34 @@ export class World {
    * @returns Sibling plane ID if HHL intersection, undefined otherwise
    */
   getSiblingPlaneForIntersection(intersectionPoint: Point2D): string | undefined {
-    // Determine element IDs based on intersection type
+    // Determine element IDs based on intersection type using instanceof
     let element1Id: string | undefined;
     let element2Id: string | undefined;
 
-    if (intersectionPoint.type === 'line-line-intersection') {
-      const llIntersection = intersectionPoint as any;
-      element1Id = llIntersection.line1Id;
-      element2Id = llIntersection.line2Id;
-    } else if (intersectionPoint.type === 'line-circle-intersection') {
-      const lcIntersection = intersectionPoint as any;
-      element1Id = lcIntersection.lineId;
-      element2Id = lcIntersection.circleId;
-    } else if (intersectionPoint.type === 'circle-circle-intersection') {
-      const ccIntersection = intersectionPoint as any;
-      element1Id = ccIntersection.circle1Id;
-      element2Id = ccIntersection.circle2Id;
+    if (intersectionPoint instanceof Point2DLineLineIntersection) {
+      element1Id = intersectionPoint.line1Id;
+      element2Id = intersectionPoint.line2Id;
+    } else if (intersectionPoint instanceof Point2DLineCircleIntersection) {
+      element1Id = intersectionPoint.lineId;
+      element2Id = intersectionPoint.circleId;
+    } else if (intersectionPoint instanceof Point2DCircleCircleIntersection) {
+      element1Id = intersectionPoint.circle1Id;
+      element2Id = intersectionPoint.circle2Id;
     } else {
       // Not a standard intersection type
       return undefined;
     }
 
-    // Check if either element is a HalfHingeLine2D
+    // Check if either element is a HalfHingeLine2D using instanceof
     const element1 = element1Id ? this.getLine2D(element1Id) : undefined;
     const element2 = element2Id ? this.getLine2D(element2Id) : undefined;
 
     let halfHingeLine: HalfHingeLine2D | undefined;
 
-    if (element1 && element1.type === 'half-hinge') {
-      halfHingeLine = element1 as HalfHingeLine2D;
-    } else if (element2 && element2.type === 'half-hinge') {
-      halfHingeLine = element2 as HalfHingeLine2D;
+    if (element1 && element1 instanceof HalfHingeLine2D) {
+      halfHingeLine = element1;
+    } else if (element2 && element2 instanceof HalfHingeLine2D) {
+      halfHingeLine = element2;
     }
 
     if (!halfHingeLine) {
@@ -1079,7 +1076,7 @@ export class World {
 
     // Find HalfHingeLine2D with same hingeLineId in sibling plane
     const siblingHalfHingeLine = siblingPlane.getAllLines().find(
-      (line) => line.type === 'half-hinge' && (line as HalfHingeLine2D).hingeLineId === halfHL.hingeLineId
+      (line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === halfHL.hingeLineId
     );
 
     if (!siblingHalfHingeLine) {

@@ -8,10 +8,17 @@
  */
 
 import type { Element2D } from '@/domain/world/Element2D';
+import { Point2D } from '@/domain/world/Point';
+import { Line2D } from '@/domain/world/Line';
+import { Circle2D } from '@/domain/world/Circle';
+import { Guide2D } from '@/domain/world/Guide';
+import { SiblingGuide2D } from '@/domain/world/Guide';
+import { Segment2DByPoints } from '@/domain/world/Segment';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 
 /**
  * Element types that can be matched by selection masks.
- * These map to domain entity types from Paper.getElementType().
+ * Maps to domain class hierarchy (Point2D, Line2D, Circle2D).
  */
 export type SelectableElementType = 
   | 'point'           // Any Point2D (free, intersection, on-element)
@@ -22,60 +29,40 @@ export type SelectableElementType =
   | 'circle';         // Any Circle2D
 
 /**
- * Map domain element to its SelectableElementType
+ * Map domain element to its SelectableElementType using class hierarchy
  * 
- * This function maps concrete element types (e.g., Point2DType = 'free') 
- * to abstract selectable types (e.g., SelectableElementType = 'point').
+ * Phase 63: Uses instanceof checks to leverage TypeScript class hierarchy.
+ * Order matters - checks most specific classes first, then falls back to base classes.
+ * This automatically handles all subclasses (e.g., Line2DPerpendicular extends Line2D).
  * 
  * @param element - Domain element (Point2D, Line2D, etc.)
  * @returns SelectableElementType for selection mask matching
  */
 export function getSelectableType(element: Element2D): SelectableElementType {
-  // Check element.type discriminator
-  if (element.type) {
-    // Point2D (all subtypes map to 'point')
-    if (element.type === 'free' || element.type === 'intersection' || 
-        element.type === 'line-line-intersection' || element.type === 'line-circle-intersection' ||
-        element.type === 'circle-circle-intersection' || element.type === 'sibling-intersection') {
-      return 'point';
-    }
-    // Circle2D (all subtypes map to 'circle')
-    if (element.type === 'by-center-and-point' || element.type === 'by-three-points') {
-      return 'circle';
-    }
-    // HalfHingeLine2D
-    if (element.type === 'half-hinge') {
-      return 'half-hinge-line';
-    }
-    // Guide2D and SiblingGuide2D
-    if (element.type === 'guide' || element.type === 'sibling-guide') {
-      return 'guide';
-    }
-    // Segment2DByPoints
-    if (element.type === 'segment') {
-      return 'segment';
-    }
-    // Regular lines (Line2DByTwoPoints, etc.)
-    if (element.type === 'by-two-points' || element.type === 'parallel' || element.type === 'perpendicular') {
-      return 'line';
-    }
-  }
-  
-  // Fallback: check element structure/class
-  if ('position' in element || 'element1Id' in element) {
-    return 'point';
-  }
-  if ('point1Id' in element && 'point2Id' in element && !('radius' in element)) {
-    return 'segment';
-  }
-  if ('radius' in element || 'centerPointId' in element) {
-    return 'circle';
-  }
-  if ('halfHingeLineId' in element || 'hingeLineId' in element) {
+  // Check most specific line types first (order matters!)
+  if (element instanceof Guide2D || element instanceof SiblingGuide2D) {
     return 'guide';
   }
+  if (element instanceof HalfHingeLine2D) {
+    return 'half-hinge-line';
+  }
+  if (element instanceof Segment2DByPoints) {
+    return 'segment';
+  }
   
-  // Default fallback
+  // Base types (catch all remaining subclasses)
+  if (element instanceof Point2D) {
+    return 'point';
+  }
+  if (element instanceof Line2D) {
+    return 'line';  // Catches Line2DByTwoPoints, Line2DPerpendicular, Line2DParallel, etc.
+  }
+  if (element instanceof Circle2D) {
+    return 'circle';
+  }
+  
+  // Fallback (should never reach here with valid Element2D)
+  console.warn('[getSelectableType] Unknown element type:', element.constructor.name);
   return 'point';
 }
 
@@ -163,11 +150,12 @@ export abstract class SelectionMask {
   }
   
   /**
-   * Create mask matching any Line2D subtype (lines, segments, guides, perpendiculars, parallels, half-hinge-lines)
-   * Replaces 'any-line' string from Phase 62
+   * Create mask matching any Line2D subtype
+   * Phase 63: All Line2D subclasses (perpendicular, parallel, by-two-points) map to 'line',
+   * plus specialized line types (segment, guide, half-hinge-line)
    */
   static anyLine(): HierarchyMask {
-    return new HierarchyMask('line', ['segment', 'guide', 'perpendicular', 'parallel', 'half-hinge-line']);
+    return new HierarchyMask('line', ['segment', 'guide', 'half-hinge-line']);
   }
   
   /**
@@ -217,7 +205,7 @@ export abstract class SelectionMask {
  * - \"No selection allowed\": none()
  */
 export class NoneMask extends SelectionMask {
-  matches(elementType: SelectableElementType): boolean {
+  matches(_elementType: SelectableElementType): boolean {
     return false; // Never matches anything - ensures hitTest returns null
   }
 
