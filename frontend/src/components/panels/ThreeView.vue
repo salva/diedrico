@@ -5,15 +5,24 @@
     <!-- 3D View Controls -->
     <div class="three-controls">
       <div class="control-group">
-        <label class="control-label">
+        <label 
+          class="control-label"
+          title="Show or hide projection plane surfaces (P_H, P_V, and auxiliary planes)"
+        >
           <input type="checkbox" v-model="displayOptions.showPlanes" @change="handleDisplayChange" />
           Show Planes
         </label>
-        <label class="control-label">
+        <label 
+          class="control-label"
+          title="Display 2D geometric elements (points, lines, circles) positioned on their planes in 3D space"
+        >
           <input type="checkbox" v-model="displayOptions.show2DElementsOnPlanes" @change="handleDisplayChange" />
           Show 2D Elements on Planes
         </label>
-        <label class="control-label">
+        <label 
+          class="control-label"
+          title="Show coordinate grid on each projection plane for spatial reference"
+        >
           <input type="checkbox" v-model="displayOptions.showGrid" @change="handleDisplayChange" />
           Show Grid
         </label>
