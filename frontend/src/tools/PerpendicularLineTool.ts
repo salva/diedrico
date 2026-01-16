@@ -35,7 +35,7 @@ import { createPerpendicularLineAction } from '@/domain/processTree/actions/Crea
  */
 export class PerpendicularLineTool extends ArgumentCollectorTool {
   readonly name = 'perpendicular-line';
-  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
+  readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
 
   /**
    * Define argument specification

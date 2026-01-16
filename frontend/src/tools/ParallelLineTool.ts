@@ -34,7 +34,7 @@ import { createParallelLineAction } from '@/domain/processTree/actions/CreatePar
  */
 export class ParallelLineTool extends ArgumentCollectorTool {
   readonly name = 'parallel-line';
-  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
+  readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
 
   /**
    * Define argument specification

@@ -28,7 +28,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class TangentLineToCircleThroughPointTool extends BaseTool {
   readonly name = 'tangent-line-to-circle-through-point';
-  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
+  readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
   private state: 'waiting-circle' | 'waiting-point' = 'waiting-circle';
   private circleId?: string;
 

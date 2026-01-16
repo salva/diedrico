@@ -33,7 +33,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class TangentLineToCircleParallelToLineTool extends BaseTool {
   readonly name = 'tangent-line-to-circle-parallel';
-  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
+  readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
   private state: 'waiting-circle' | 'waiting-line' = 'waiting-circle';
   private circleId?: string;
 

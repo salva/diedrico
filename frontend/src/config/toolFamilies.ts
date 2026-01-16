@@ -54,7 +54,7 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         icon: IntersectionPointIcon,
         shortcut: 'I',
         tooltip: 'Create intersection point - Select two elements (I)',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       }
     ]
   },
@@ -77,28 +77,28 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         label: 'Parallel Line',
         icon: ParallelLineIcon,
         tooltip: 'Create line parallel to reference through point',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       },
       {
         id: 'perpendicular-line',
         label: 'Perpendicular Line',
         icon: PerpendicularLineIcon,
         tooltip: 'Create line perpendicular to reference through point',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       },
       {
         id: 'tangent-line-to-circle-through-point',
         label: 'Tangent (Point)',
         icon: TangentThroughPointIcon,
         tooltip: 'Create tangent line to circle through external point',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       },
       {
         id: 'tangent-line-to-circle-parallel',
         label: 'Tangent (Parallel)',
         icon: TangentParallelIcon,
         tooltip: 'Create tangent line to circle parallel to reference',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       }
     ]
   },
@@ -146,7 +146,7 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         icon: GuideLineIcon,
         shortcut: 'G',
         tooltip: 'Create guide perpendicular to hinge line (G)',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       }
     ]
   },
@@ -162,7 +162,7 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         icon: TransportPointIcon,
         shortcut: 'T',
         tooltip: 'Transport distance or point (T) - Not yet implemented',
-        completionBehavior: 'return-to-selection'
+        completionBehavior: 'stay-active'
       }
     ]
   }

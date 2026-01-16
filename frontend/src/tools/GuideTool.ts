@@ -33,7 +33,7 @@ import { isSiblingIntersectionPoint2D } from '@/domain/world/Point';
  */
 export class GuideTool extends BaseTool {
   readonly name = 'guide';
-  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
+  readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
   private state: 'waiting-first' | 'waiting-line' | 'waiting-point' = 'waiting-first';
   private referenceLineId?: string;
   private throughPointId?: string;

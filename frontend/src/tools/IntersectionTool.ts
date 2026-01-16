@@ -47,7 +47,7 @@ import { Circle2D } from '@/domain/world/Circle';
  */
 export class IntersectionTool extends BaseTool {
   readonly name = 'intersection';
-  readonly completionBehavior = 'return-to-selection' as const; // Complex tools return to selection
+  readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
   private state: 'waiting-first-element' | 'waiting-second-element' = 'waiting-first-element';
   private firstElementId?: string;
 
