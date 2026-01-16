@@ -814,6 +814,14 @@ function handleWheel(event: WheelEvent) {
   
   const canvasPoint = pt.matrixTransform(ctm.inverse());
 
+  // Get current viewport state BEFORE zoom
+  const oldViewport = viewStore.viewportState.value;
+  console.log('[Zoom] BEFORE:', {
+    mouseCanvas: { x: canvasPoint.x, y: canvasPoint.y },
+    zoom: oldViewport.zoom,
+    pan: { x: oldViewport.panX, y: oldViewport.panY }
+  });
+
   // Zoom factor: 10% per wheel notch (finer control than buttons' 20%)
   // deltaY > 0 = scroll down = zoom out (negative delta)
   // deltaY < 0 = scroll up = zoom in (positive delta)
@@ -821,6 +829,14 @@ function handleWheel(event: WheelEvent) {
 
   // Use mouse position as zoom focus point
   viewStore.adjustZoom(delta, canvasPoint.x, canvasPoint.y);
+
+  // Get viewport state AFTER zoom
+  const newViewport = viewStore.viewportState.value;
+  console.log('[Zoom] AFTER:', {
+    zoom: newViewport.zoom,
+    pan: { x: newViewport.panX, y: newViewport.panY },
+    delta: delta
+  });
 }
 
 /**

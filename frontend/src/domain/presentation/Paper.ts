@@ -336,8 +336,6 @@ export class Paper {
     world: World,
     selectionMask?: SelectionMask
   ): HitResult | null {
-    console.log('[Paper.hitTest] Starting hit test with mask:', selectionMask?.toString());
-    
     if (!activePlaneId || !paperToPlaneTransform) {
       // No active plane or transform - cannot perform hit testing
       return null;
@@ -374,7 +372,6 @@ export class Paper {
       for (const point of activePlane.getAllPoints()) {
         // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
         const matchesPoint = !selectionMask || selectionMask.matches('point');
-        console.log(`[Paper.hitTest] Point ${point.id} - matches: ${matchesPoint}`);
         if (!matchesPoint) {
           continue;
         }
@@ -409,7 +406,6 @@ export class Paper {
         
         // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
         const matchesLine = !selectionMask || selectionMask.matches(elementType);
-        console.log(`[Paper.hitTest] Line ${line.id} (type: ${elementType}) - matches: ${matchesLine}`);
         if (!matchesLine) {
           continue; // Skip this element - doesn't match selection mask
         }
@@ -422,7 +418,6 @@ export class Paper {
         const distance = this.distanceToLineInPlaneSpace(planePos, realization);
         
         if (distance < minDistance) {
-          console.log(`[Paper.hitTest] Line ${line.id} is new closest hit (distance: ${distance})`);
           closestHit = {
             elementId: line.id,
             elementType: elementType,  // Use actual element type, not hardcoded 'line'
@@ -464,7 +459,6 @@ export class Paper {
     // Note: Segments, guides, and hinge lines are all handled in the line iteration above
     // (they're all Line2D subclasses tested from the active plane)
     
-    console.log('[Paper.hitTest] Result:', closestHit ? `${closestHit.elementId} (${closestHit.elementType})` : 'null');
     return closestHit;
   }
 
