@@ -10,6 +10,7 @@
       @click="handleCanvasClick"
       @dblclick="handleDoubleClick"
       @mousemove="handleMouseMove"
+      @wheel.prevent="handleWheel"
     >
       <!-- Background grid (T275) - Zoom-adaptive grid display -->
       <g v-if="viewStore.gridVisible.value" class="background-grid">
@@ -793,6 +794,33 @@ function handleCanvasClick(event: MouseEvent) {
   } else {
     console.error('[SvgCanvas] Tool operation failed:', result.message);
   }
+}
+
+/**
+ * Handle mouse wheel for zoom with mouse position as center (Phase 70)
+ * Prevents default page scroll and zooms toward cursor position
+ */
+function handleWheel(event: WheelEvent) {
+  if (!svgElement.value) return;
+
+  // Get mouse position in canvas coordinates
+  const svg = svgElement.value;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return;
+  
+  const canvasPoint = pt.matrixTransform(ctm.inverse());
+
+  // Zoom factor: 10% per wheel notch (finer control than buttons' 20%)
+  // deltaY > 0 = scroll down = zoom out (negative delta)
+  // deltaY < 0 = scroll up = zoom in (positive delta)
+  const delta = event.deltaY > 0 ? -0.1 : 0.1;
+
+  // Use mouse position as zoom focus point
+  viewStore.adjustZoom(delta, canvasPoint.x, canvasPoint.y);
 }
 
 /**
