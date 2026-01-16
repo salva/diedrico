@@ -170,13 +170,13 @@ function renderProjectionPlanes() {
     const matrix = planeRealization.planeTo3D;
     const mat4 = new THREE.Matrix4();
     // Matrix4x3.elements is flat array [m11, m12, m13, m21, m22, m23, m31, m32, m33, m41, m42, m43]
-    // Convert to THREE.Matrix4 (column-major, 4x4 with last row [0,0,0,1])
+    // stored in row-major order. Convert to THREE.Matrix4 (row-major, 4x4 with last row [0,0,0,1])
     const e = matrix.elements;
     mat4.set(
-      e[0], e[3], e[6], e[9],   // Column 0
-      e[1], e[4], e[7], e[10],  // Column 1
-      e[2], e[5], e[8], e[11],  // Column 2
-      0, 0, 0, 1                // Column 3
+      e[0], e[1], e[2], e[9],   // Row 0: [m11, m12, m13, m41]
+      e[3], e[4], e[5], e[10],  // Row 1: [m21, m22, m23, m42]
+      e[6], e[7], e[8], e[11],  // Row 2: [m31, m32, m33, m43]
+      0, 0, 0, 1                // Row 3: [0, 0, 0, 1]
     );
     planeMesh.applyMatrix4(mat4);
 
