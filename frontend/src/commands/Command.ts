@@ -127,6 +127,11 @@ export class Command {
       // Store operation for undo
       this.operations.push(operation);
       
+      // Notify world that changes have been made (for immediate reactive UI updates)
+      // This ensures 3D view and other reactive components update as each operation executes,
+      // not waiting for the entire command to be committed
+      this.world.markDirty();
+      
       return result;
     } catch (error) {
       // Operation failed, rollback entire command
@@ -155,9 +160,7 @@ export class Command {
       throw new Error('Cannot commit empty command');
     }
     this._status = CommandStatus.Committed;
-    
-    // Notify world that changes have been made (for reactive UI updates)
-    this.world.markDirty();
+    // Note: No need to call markDirty() here - it's called after each operation in addAndExecute()
   }
 
   /**
