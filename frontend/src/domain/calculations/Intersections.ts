@@ -307,49 +307,30 @@ export function intersectCircleCircle(
   
   // Check if circles are coincident (same center and same radius)
   if (d < epsilon && Math.abs(r1 - r2) < epsilon) {
-    return []; // Coincident circles
+    return [];
   }
   
-  // Check if circles are too far apart
-  if (d > r1 + r2 + epsilon) {
-    return []; // No intersection
-  }
-  
-  // Check if one circle is inside the other
-  if (d < Math.abs(r1 - r2) - epsilon) {
-    return []; // No intersection
-  }
-  
-  // Check if circles are externally tangent
-  if (Math.abs(d - (r1 + r2)) < epsilon) {
-    // One point at c1 + (r1/d) * (c2 - c1)
-    const t = r1 / d;
-    const x = c1.x + t * dx;
-    const y = c1.y + t * dy;
-    
-    return [new Vector3(x, y, 1)];
-  }
-  
-  // Check if circles are internally tangent
-  if (Math.abs(d - Math.abs(r1 - r2)) < epsilon) {
-    // One point at c1 + (r1/d) * (c2 - c1) or c1 - (r1/d) * (c2 - c1)
-    const t = r1 / d * (r1 > r2 ? 1 : -1);
-    const x = c1.x + t * dx;
-    const y = c1.y + t * dy;
-    
-    return [new Vector3(x, y, 1)];
-  }
-  
-  // Two intersection points (secant case)
-  // Use the formula from computational geometry:
+  // General solution using radical axis formula:
   // a = (r1² - r2² + d²) / (2*d)
   // h = sqrt(r1² - a²)
   // 
   // Point P2 = c1 + (a/d) * (c2 - c1) is on the line between centers
   // The two intersection points are perpendicular to this line at distance h
+  //
+  // Edge cases handled naturally:
+  // - Too far apart: h² < 0 (no real sqrt)
+  // - Inside each other: h² < 0 (no real sqrt)
+  // - Tangent: h = 0 (both points identical)
   
   const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
-  const h = Math.sqrt(r1 * r1 - a * a);
+  const hSquared = r1 * r1 - a * a;
+  
+  // No intersection if h² < 0
+  if (hSquared < -epsilon) {
+    return [];
+  }
+  
+  const h = Math.sqrt(Math.max(0, hSquared));
   
   // Point on line between centers
   const p2x = c1.x + (a / d) * dx;
@@ -369,6 +350,12 @@ export function intersectCircleCircle(
     new Vector3(x1, y1, 1),
     new Vector3(x2, y2, 1)
   ];
+  
+  // If h ≈ 0, both points are identical (tangent case) - return only one
+  if (Math.abs(h) < epsilon) {
+    return [unsortedPoints[0]];
+  }
+  
   // Sort by projection along perpendicular to center-line
   // Perpendicular to (dx, dy) is (-dy, dx)
   const perpDirection = { x: -dy / d, y: dx / d };
