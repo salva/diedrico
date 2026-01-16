@@ -94,8 +94,8 @@ export function useViewStore() {
   /**
    * Adjust zoom by delta factor
    * @param delta Zoom delta (positive = zoom in, negative = zoom out)
-   * @param focusX Optional focus point X (zoom toward this point)
-   * @param focusY Optional focus point Y (zoom toward this point)
+   * @param focusX Optional focus point X in canvas coordinates (zoom toward this point)
+   * @param focusY Optional focus point Y in canvas coordinates (zoom toward this point)
    */
   function adjustZoom(delta: number, focusX?: number, focusY?: number) {
     const oldZoom = zoom.value;
@@ -103,13 +103,17 @@ export function useViewStore() {
     
     // If focus point provided, adjust pan to zoom toward that point
     if (focusX !== undefined && focusY !== undefined) {
-      // Convert focus point from viewport to paper coordinates
-      const paperFocusX = (focusX - panX.value) / oldZoom;
-      const paperFocusY = (focusY - panY.value) / oldZoom;
+      // Convert focus point from canvas to paper coordinates
+      // Viewport transformation: canvas = (paper + pan) * zoom
+      // Inverse: paper = canvas / zoom - pan
+      const paperFocusX = focusX / oldZoom - panX.value;
+      const paperFocusY = focusY / oldZoom - panY.value;
       
-      // After zoom, adjust pan to keep focus point in same viewport position
-      panX.value = focusX - paperFocusX * newZoom;
-      panY.value = focusY - paperFocusY * newZoom;
+      // After zoom, adjust pan to keep focus point in same canvas position
+      // We want: focusX = (paperFocusX + newPanX) * newZoom
+      // Solving for newPanX: newPanX = focusX / newZoom - paperFocusX
+      panX.value = focusX / newZoom - paperFocusX;
+      panY.value = focusY / newZoom - paperFocusY;
     }
     
     zoom.value = newZoom;
