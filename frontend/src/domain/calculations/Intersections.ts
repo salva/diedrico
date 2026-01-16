@@ -305,8 +305,8 @@ export function intersectCircleCircle(
   
   const epsilon = 1e-10;
   
-  // Check if circles are coincident (same center and same radius)
-  if (d < epsilon && Math.abs(r1 - r2) < epsilon) {
+  // Same center: either coincident (r1=r2) or concentric (r1≠r2), no intersection either way
+  if (d < epsilon) {
     return [];
   }
   
