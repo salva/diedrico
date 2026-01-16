@@ -60,6 +60,11 @@
           @update-3d-coordinates="handleCoordinateUpdate"
           @update-active-plane="handleActivePlaneUpdate"
         />
+        
+        <!-- 3D View Overlay (Phase 25) -->
+        <div class="three-view-overlay" v-if="show3DView">
+          <ThreeView />
+        </div>
       </div>
     </main>
 
@@ -102,6 +107,7 @@ import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
 import ActionsPanel from './components/panels/ActionsPanel.vue';
 import ElementsPanel from './components/panels/ElementsPanel.vue';
+import ThreeView from './components/panels/ThreeView.vue';
 import StartupDialog from './components/dialogs/StartupDialog.vue';
 import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
 import { CommandStack } from './commands/CommandStack';
@@ -196,6 +202,9 @@ const activePlaneName = computed(() => {
 
 // 3D coordinates state
 const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
+
+// 3D view toggle state (Phase 25)
+const show3DView = ref(true);  // Enabled by default for testing
 
 // Startup and authentication state
 const showStartupDialog = ref(false);
@@ -1006,6 +1015,21 @@ onUnmounted(() => {
 .canvas-area {
   flex: 1;
   overflow: hidden;
+  position: relative;
+}
+
+.three-view-overlay {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 400px;
+  height: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  z-index: 100;
+  background: white;
+}
   position: relative;
 }
 
