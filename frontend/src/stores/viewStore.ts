@@ -14,12 +14,14 @@
  */
 
 import { ref, computed } from 'vue';
+import type { ThreeViewDisplayOptions } from '../types/ThreeViewDisplayOptions';
 
 export interface ViewportState {
   zoom: number;
   panX: number;
   panY: number;
   gridVisible: boolean;
+  threeViewOptions: ThreeViewDisplayOptions;
 }
 
 // Default viewport state (identity transform)
@@ -27,6 +29,37 @@ const zoom = ref(1.0);
 const panX = ref(0);
 const panY = ref(0);
 const gridVisible = ref(true); // Grid visible by default
+
+// 3D view display options with localStorage persistence
+const STORAGE_KEY = 'diedrico-threeview-options';
+
+function loadThreeViewOptions(): ThreeViewDisplayOptions {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn('Failed to load 3D view options from localStorage:', e);
+  }
+  // Default options
+  return {
+    showPlanes: true,
+    show2DElementsOnPlanes: false,
+    showLinkingVisuals: false,
+    showGrid: true
+  };
+}
+
+function saveThreeViewOptions(options: ThreeViewDisplayOptions) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(options));
+  } catch (e) {
+    console.warn('Failed to save 3D view options to localStorage:', e);
+  }
+}
+
+const threeViewOptions = ref<ThreeViewDisplayOptions>(loadThreeViewOptions());
 
 export function useViewStore() {
   /**
@@ -106,13 +139,36 @@ export function useViewStore() {
   }
 
   /**
+   * Update 3D view display options (Phase 77.5 - T1203)
+   * @param options New display options
+   */
+  function setThreeViewOptions(options: ThreeViewDisplayOptions) {
+    threeViewOptions.value = { ...options };
+    saveThreeViewOptions(options);
+  }
+
+  /**
+   * Update a single 3D view display option
+   * @param key Option key
+   * @param value New value
+   */
+  function updateThreeViewOption<K extends keyof ThreeViewDisplayOptions>(
+    key: K,
+    value: ThreeViewDisplayOptions[K]
+  ) {
+    threeViewOptions.value[key] = value;
+    saveThreeViewOptions(threeViewOptions.value);
+  }
+
+  /**
    * Get current viewport state as immutable object
    */
   const viewportState = computed<ViewportState>(() => ({
     zoom: zoom.value,
     panX: panX.value,
     panY: panY.value,
-    gridVisible: gridVisible.value
+    gridVisible: gridVisible.value,
+    threeViewOptions: threeViewOptions.value
   }));
 
   return {
@@ -121,6 +177,7 @@ export function useViewStore() {
     panX: computed(() => panX.value),
     panY: computed(() => panY.value),
     gridVisible: computed(() => gridVisible.value),
+    threeViewOptions: computed(() => threeViewOptions.value),
     viewportState,
     
     // Actions
@@ -130,6 +187,8 @@ export function useViewStore() {
     adjustZoom,
     resetViewport,
     toggleGrid,
-    setGridVisible
+    setGridVisible,
+    setThreeViewOptions,
+    updateThreeViewOption
   };
 }

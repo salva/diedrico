@@ -51,7 +51,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { World } from '../../domain/world/World';
 import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
 import type { ThreeViewDisplayOptions } from '../../types/ThreeViewDisplayOptions';
-import { defaultThreeViewDisplayOptions } from '../../types/ThreeViewDisplayOptions';
+import { useViewStore } from '../../stores/viewStore';
 
 // Component refs
 const containerRef = ref<HTMLDivElement>();
@@ -65,8 +65,9 @@ let controls: OrbitControls;
 let element2DRenderer: Element2DRenderer3D;
 let animationFrameId: number;
 
-// Display options
-const displayOptions = ref<ThreeViewDisplayOptions>({ ...defaultThreeViewDisplayOptions });
+// View store for display options persistence (Phase 77.5 - T1203)
+const viewStore = useViewStore();
+const displayOptions = viewStore.threeViewOptions;
 
 // World instance (injected from App.vue)
 const world = inject<World>('world')!;  // Non-null assertion - World is required
@@ -267,16 +268,26 @@ onMounted(() => {
     }
   );
 
-  // Watch display options
+  // Watch display options changes (persisted via viewStore)
   watch(
-    () => displayOptions.value.show2DElementsOnPlanes,
-    (enabled) => {
-      if (!enabled) {
-        element2DRenderer.clear();
-      } else {
-        render2DElements();
+    displayOptions,
+    (newOptions, oldOptions) => {
+      // Re-render planes if showPlanes or showGrid changed
+      if (newOptions.showPlanes !== oldOptions?.showPlanes || 
+          newOptions.showGrid !== oldOptions?.showGrid) {
+        renderProjectionPlanes();
       }
-    }
+      
+      // Re-render 2D elements if show2DElementsOnPlanes changed
+      if (newOptions.show2DElementsOnPlanes !== oldOptions?.show2DElementsOnPlanes) {
+        if (!newOptions.show2DElementsOnPlanes) {
+          element2DRenderer.clear();
+        } else {
+          render2DElements();
+        }
+      }
+    },
+    { deep: true }
   );
 });
 
