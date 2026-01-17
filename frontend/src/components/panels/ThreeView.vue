@@ -113,8 +113,8 @@ function initThreeScene() {
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
   controls.screenSpacePanning = false;
-  controls.minDistance = 5;
-  controls.maxDistance = 100;
+  controls.minDistance = 2;      // Allow closer zoom (was 5)
+  controls.maxDistance = 500;    // Allow much further zoom out (was 100)
   controls.maxPolarAngle = Math.PI; // Allow full rotation
 
   // Add lighting
