@@ -8097,3 +8097,98 @@ const circumferencePointId = pointResult.outputs.pointId;
 **Checkpoint**: 3D view displays 2D elements positioned on projection planes in 3D space, enhancing spatial understanding of multi-plane dihedral constructions. Read-only visualization maintains learning focus on 2D constructive process.
 
 ---
+
+## Phase 78: Grid Coordinate Labels at Viewport Borders
+
+**Purpose**: Display plane-local (u,v) coordinate values along viewport borders for numerical spatial orientation  
+**Reference**: [spec.md](./spec.md) FR-054 (Grid Coordinate Labels), [ui-spec.md](./ui-spec.md) Grid Coordinate Labels section, [data-model.md](./data-model.md) Grid Coordinate Labels architecture
+
+**User Story**: "The idea is to have the uv values for the grid main lines at the border of the visible rectangle. So that the user has a numerical orientation about where he is placing the elements"
+
+**Implementation Requirements**:
+- Labels display only for **major grid lines** (every 5th line, same as emphasized grid lines)
+- Coordinate values are **paper coordinates** (plane-local u,v), NOT canvas pixels
+- Labels positioned at intersections of major grid lines with viewport edges (top, bottom, left, right)
+- U-coordinates (horizontal) displayed along top and bottom edges
+- V-coordinates (vertical) displayed along left and right edges
+- Labels update dynamically during pan/zoom operations
+- Labels only visible when grid is visible (respect gridVisible toggle)
+- Typography: 10-12px sans-serif, dark gray (#333333) with white stroke outline for legibility
+- Z-order: Labels above grid lines but below geometric elements
+
+**Architecture Notes**:
+- Leverage existing grid calculation logic in SvgCanvas.vue gridLines computed property
+- Use same viewport bounds calculation (offsetX, offsetY, viewportWidth, viewportHeight)
+- Use same grid spacing logic (10/20/50 units based on zoom level)
+- Filter for major lines only (x % majorSpacing === 0, y % majorSpacing === 0)
+- Render as SVG `<text>` elements for consistency with existing SVG rendering pipeline
+
+### Phase 78.1: Core Label Computation (T1206-T1209: 4 tasks)
+
+- [X] T1206 [P] Add GridLabel interface to SvgCanvas.vue: `{ key: string, value: number, position: number, edge: 'top'|'bottom'|'left'|'right' }`
+- [X] T1207 [P] Implement computeHorizontalLabels() function: given offsetX, viewportWidth, majorSpacing, edge → returns GridLabel[] for U-coordinates
+- [X] T1208 [P] Implement computeVerticalLabels() function: given offsetY, viewportHeight, majorSpacing, edge → returns GridLabel[] for V-coordinates
+- [X] T1209 [P] Add gridLabels computed property: returns `{ top: GridLabel[], bottom: GridLabel[], left: GridLabel[], right: GridLabel[] }` using existing viewport state
+
+**Checkpoint**: ✅ Computed property calculates label positions and values for all four edges
+
+### Phase 78.2: SVG Rendering (T1210-T1213: 4 tasks)
+
+- [X] T1210 [P] Add SVG `<g class="grid-coordinate-labels">` group in SvgCanvas.vue template after grid lines group
+- [X] T1211 [P] Render top/bottom U-coordinate labels: `<text>` elements with x=label.position, y=8 or canvasHeight-8, text-anchor="middle"
+- [X] T1212 [P] Render left/right V-coordinate labels: `<text>` elements with x=8 or canvasWidth-8, y=label.position, text-anchor="start"/"end", dominant-baseline="middle"
+- [X] T1213 [P] Add CSS styles for .grid-label: font-family, font-size 11px, fill #333333, white stroke outline (stroke-width 3px, paint-order stroke fill)
+
+**Checkpoint**: ✅ Labels rendered at viewport edges with proper positioning and styling
+
+### Phase 78.3: Dynamic Updates and Visibility (T1214-T1216: 3 tasks)
+
+- [X] T1214 [P] Verify gridLabels computed property reacts to viewport.value changes (pan: panX/panY, zoom: zoom)
+- [X] T1215 [P] Verify gridLabels respects viewStore.gridVisible toggle (labels hidden when grid hidden)
+- [X] T1216 [P] Test label updates during zoom transitions: verify spacing adapts when grid spacing changes (10→20→50 unit transitions)
+
+**Checkpoint**: ✅ Labels update dynamically with viewport changes and respect grid visibility
+
+### Phase 78.4: Edge Cases and Polish (T1217-T1219: 3 tasks)
+
+- [X] T1217 [P] Add culling logic: only render labels with position in range [-10, canvasWidth/Height + 10] to avoid off-screen labels
+- [X] T1218 [P] Verify origin (0,0) label displays correctly when visible in viewport
+- [X] T1219 [P] Test legibility with white stroke outline over complex geometry and various zoom levels
+
+**Checkpoint**: ✅ Labels render only when visible, origin clearly marked, legible over all backgrounds
+
+### Phase 78.5: Testing and Documentation (T1220-T1223: 4 tasks)
+
+- [X] T1220 [P] Manual testing: pan viewport, verify correct coordinates displayed at edges
+- [X] T1221 [P] Manual testing: zoom in/out, verify labels adapt with grid spacing changes and remain legible
+- [X] T1222 [P] Manual testing: toggle grid visibility, verify labels hide/show correctly
+- [ ] T1223 [P] Git commit Phase 78: "Grid Coordinate Labels at Viewport Borders"
+
+**Checkpoint**: ✅ Feature fully tested and committed
+
+**Acceptance Criteria**:
+- ✅ Coordinate labels display along all four viewport edges (top, bottom, left, right)
+- ✅ Labels show plane-local (u,v) coordinate values, not canvas pixels
+- ✅ Only major grid lines (every 5th line) have labels
+- ✅ Labels update dynamically during pan and zoom operations
+- ✅ Labels respect grid visibility toggle (hidden when grid hidden)
+- ✅ Typography is clear and legible (11px, dark gray with white stroke outline)
+- ✅ Labels positioned correctly: top/bottom centered over grid lines, left/right aligned alongside grid lines
+- ✅ No performance degradation (< 20 SVG text elements, efficiently computed)
+- ✅ Origin (0,0) clearly labeled when visible in viewport
+
+**Benefits**:
+- **Immediate spatial orientation**: Users know exactly where they are in coordinate space without calculation
+- **Precise element placement**: Enables targeting specific numeric coordinates for exercises
+- **Educational value**: Reinforces understanding of plane-local coordinate systems
+- **Low cognitive load**: No mental math required to determine positions
+- **Minimal implementation cost**: Leverages existing grid calculation logic (~150 lines of code)
+- **Excellent performance**: Computed property caching, minimal DOM nodes, efficient viewport culling
+
+**Related Phases**: Phase 6 (Viewport Transformation and Pan/Zoom), Phase 10 (Grid Display)
+
+**Phase 78 Status**: 📋 PLANNED (Jan 17, 2026)
+
+**Notes**: Purely additive feature with zero breaking changes; complements existing grid visualization; educational value for understanding coordinate systems
+
+---

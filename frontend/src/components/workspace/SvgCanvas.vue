@@ -80,6 +80,59 @@
         opacity="0.8"
         class="snap-indicator"
       />
+      
+      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+        <!-- Top edge labels (U-coordinates) -->
+        <text
+          v-for="label in gridLabels.top"
+          :key="label.key"
+          :x="label.position"
+          :y="12"
+          class="grid-label"
+          text-anchor="middle"
+        >
+          {{ label.value }}
+        </text>
+        
+        <!-- Bottom edge labels (U-coordinates) -->
+        <text
+          v-for="label in gridLabels.bottom"
+          :key="label.key"
+          :x="label.position"
+          :y="canvasHeight - 4"
+          class="grid-label"
+          text-anchor="middle"
+        >
+          {{ label.value }}
+        </text>
+        
+        <!-- Left edge labels (V-coordinates) -->
+        <text
+          v-for="label in gridLabels.left"
+          :key="label.key"
+          :x="4"
+          :y="label.position"
+          class="grid-label"
+          text-anchor="start"
+          dominant-baseline="middle"
+        >
+          {{ label.value }}
+        </text>
+        
+        <!-- Right edge labels (V-coordinates) -->
+        <text
+          v-for="label in gridLabels.right"
+          :key="label.key"
+          :x="canvasWidth - 4"
+          :y="label.position"
+          class="grid-label"
+          text-anchor="end"
+          dominant-baseline="middle"
+        >
+          {{ label.value }}
+        </text>
+      </g>
     </svg>
     
     <!-- Hover tooltip -->
@@ -600,6 +653,125 @@ const gridLines = computed(() => {
   
   return lines;
 });
+
+/**
+ * Phase 78: Grid Coordinate Labels
+ * GridLabel interface for coordinate label display at viewport borders
+ */
+interface GridLabel {
+  key: string;
+  value: number;
+  position: number;
+  edge: 'top' | 'bottom' | 'left' | 'right';
+}
+
+/**
+ * Compute horizontal labels (U-coordinates) for top/bottom edges
+ * Shows plane-local u values for major grid lines at viewport borders
+ */
+function computeHorizontalLabels(
+  offsetX: number,
+  viewportWidth: number,
+  majorSpacing: number,
+  edge: 'top' | 'bottom',
+  zoom: number
+): GridLabel[] {
+  const labels: GridLabel[] = [];
+  
+  // Find major grid lines within viewport
+  const startX = Math.floor(offsetX / majorSpacing) * majorSpacing;
+  const endX = Math.ceil((offsetX + viewportWidth) / majorSpacing) * majorSpacing;
+  
+  for (let x = startX; x <= endX; x += majorSpacing) {
+    // Convert paper coordinate to screen position
+    const screenX = (x + viewport.value.panX) * zoom;
+    
+    // Only show labels for visible positions (with small margin for edge labels)
+    if (screenX >= -10 && screenX <= canvasWidth.value + 10) {
+      labels.push({
+        key: `${edge}-${x}`,
+        value: x,
+        position: screenX,
+        edge,
+      });
+    }
+  }
+  
+  return labels;
+}
+
+/**
+ * Compute vertical labels (V-coordinates) for left/right edges
+ * Shows plane-local v values for major grid lines at viewport borders
+ */
+function computeVerticalLabels(
+  offsetY: number,
+  viewportHeight: number,
+  majorSpacing: number,
+  edge: 'left' | 'right',
+  zoom: number
+): GridLabel[] {
+  const labels: GridLabel[] = [];
+  
+  // Find major grid lines within viewport
+  const startY = Math.floor(offsetY / majorSpacing) * majorSpacing;
+  const endY = Math.ceil((offsetY + viewportHeight) / majorSpacing) * majorSpacing;
+  
+  for (let y = startY; y <= endY; y += majorSpacing) {
+    // Convert paper coordinate to screen position
+    const screenY = (y + viewport.value.panY) * zoom;
+    
+    // Only show labels for visible positions (with small margin for edge labels)
+    if (screenY >= -10 && screenY <= canvasHeight.value + 10) {
+      labels.push({
+        key: `${edge}-${y}`,
+        value: y,
+        position: screenY,
+        edge,
+      });
+    }
+  }
+  
+  return labels;
+}
+
+/**
+ * Computed property: Grid coordinate labels for all four viewport edges
+ * Displays plane-local (u,v) coordinates to help users orient element placement
+ */
+const gridLabels = computed(() => {
+  if (!viewStore.gridVisible.value) {
+    return { top: [], bottom: [], left: [], right: [] };
+  }
+  
+  const zoom = viewport.value.zoom;
+  
+  // Determine grid spacing based on zoom level (same as gridLines)
+  let spacing: number;
+  if (zoom < 0.5) {
+    spacing = 50;
+  } else if (zoom < 2.0) {
+    spacing = 20;
+  } else {
+    spacing = 10;
+  }
+  
+  const majorSpacing = spacing * 5; // Labels only for major lines
+  
+  // Calculate viewport bounds in paper coordinates
+  const viewportWidth = canvasWidth.value / zoom;
+  const viewportHeight = canvasHeight.value / zoom;
+  const offsetX = -viewport.value.panX;
+  const offsetY = -viewport.value.panY;
+  
+  return {
+    top: computeHorizontalLabels(offsetX, viewportWidth, majorSpacing, 'top', zoom),
+    bottom: computeHorizontalLabels(offsetX, viewportWidth, majorSpacing, 'bottom', zoom),
+    left: computeVerticalLabels(offsetY, viewportHeight, majorSpacing, 'left', zoom),
+    right: computeVerticalLabels(offsetY, viewportHeight, majorSpacing, 'right', zoom),
+  };
+});
+
 
 // Render primitives to SVG attributes
 const renderedPoints = computed(() => {
@@ -1345,5 +1517,17 @@ defineExpose({
   z-index: 1000;
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Phase 78: Grid coordinate labels */
+.grid-label {
+  font-family: sans-serif;
+  font-size: 11px;
+  fill: #333333;
+  stroke: #ffffff;
+  stroke-width: 3;
+  paint-order: stroke;
+  pointer-events: none;
+  user-select: none;
 }
 </style>

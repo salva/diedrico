@@ -224,6 +224,84 @@ The left side of the interface contains a vertical stack of two panels. These pa
 
 **Rendering Principle**: This panel reflects the current state of the world. All elements are displayed dynamically based on their existence in the world model.
 
+---
+
+## Grid Coordinate Labels (Phase 78)
+
+**Purpose**: Display plane-local (u,v) coordinate values at viewport borders to provide numerical spatial orientation without requiring users to mentally calculate positions.
+
+**Positioning and Layout**:
+- Labels appear at the intersections of **major grid lines** with viewport edges
+- **Top edge**: U-coordinate labels (horizontal axis values)
+- **Bottom edge**: U-coordinate labels (horizontal axis values)
+- **Left edge**: V-coordinate labels (vertical axis values)
+- **Right edge**: V-coordinate labels (vertical axis values)
+- Labels positioned in small margin area at viewport borders
+
+**Label Content**:
+- Display actual plane-local coordinate values in current units (e.g., "0", "50", "100", "-50")
+- Format: Plain numbers without units suffix (implicit units understood by user)
+- Precision: Integer values for grid intersections (no decimal places unless grid spacing < 1)
+- Origin (0, 0) clearly marked when visible in viewport
+
+**Visual Styling**:
+- **Font**: Sans-serif, 11px size, medium weight
+- **Color**: Dark gray (#333333) with sufficient contrast against white/light backgrounds
+- **Background**: White stroke outline (stroke-width 3px, paint-order stroke fill) for legibility over complex geometry
+- **Positioning offset**: 8px from viewport edge
+- **Alignment**: Top/bottom labels centered horizontally over grid line; left/right labels aligned start/end alongside grid line
+
+**Dynamic Behavior**:
+- Labels update automatically during pan operations (new coordinates appear/disappear as viewport moves)
+- Labels update automatically during zoom operations (spacing adjusts with grid density, values recalculated)
+- Only labels for grid lines **currently intersecting viewport edges** are displayed (no off-screen labels)
+- When grid spacing changes due to zoom (10 → 20 → 50 unit transitions), labels adjust to new grid line positions
+- Labels respect grid visibility toggle: when grid hidden, labels also hidden
+
+**Layout Integration**:
+- Labels rendered as **SVG text elements** within the same SVG canvas as the grid and geometry
+- Z-order: Labels above grid lines but below geometric elements (layer order: grid → labels → geometry)
+
+**Responsive Design**:
+- At very high zoom (grid spacing > 200px on screen), labels remain readable and properly spaced
+- At very low zoom (grid spacing < 20px on screen), labels may be omitted to avoid overcrowding (only show every 2nd or 3rd major grid line)
+- On small viewports (< 800px width), consider reducing label font size to 10px
+
+**Accessibility**:
+- Labels use semantic SVG `<text>` elements
+- Color contrast meets WCAG AA standards (minimum 4.5:1 ratio)
+- Text remains readable at all zoom levels within practical range (0.1x - 10x)
+
+**Example Layout** (ASCII representation):
+```
+┌─────────────────────────────────────────────────────────┐
+│  -50    0    50   100   150   200   250   300   350    │ ← Top U-coordinates
+├─────────────────────────────────────────────────────────┤
+│     |     |     |     |     |     |     |     |        │
+│ -50 ┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼────    │
+│     |     |     |     |     |     |     |     |        │
+│   0 ┼─────┼─────O─────┼─────┼─────┼─────┼─────┼────    │ ← V-coords on left
+│     |     |     |     |     |     |     |     |        │
+│  50 ┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼────    │
+│     |     |     |     |     |     |     |     |        │
+│ 100 ┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼────    │
+│     |     |     |     |     |     |     |     |        │
+├─────────────────────────────────────────────────────────┤
+│  -50    0    50   100   150   200   250   300   350    │ ← Bottom U-coordinates
+└─────────────────────────────────────────────────────────┘
+                                                   ↑
+                                         V-coords on right
+```
+
+**Benefits**:
+- Users immediately know their position in coordinate space
+- Enables precise placement without mental calculation
+- Reinforces understanding of plane-local coordinate systems
+- Reduces cognitive load when working with specific numeric positions
+- Particularly useful for exercises with prescribed coordinates
+
+---
+
 ### Process Tree Panel (Constructive Actions)
 
 **Purpose**: Shows the hierarchical construction history—the sequence of actions that built the current world state.

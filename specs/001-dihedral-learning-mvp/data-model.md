@@ -12377,6 +12377,204 @@ updateElement(elementId: string, element: Element2D, world: World): void {
 - For scenes with >500 elements, use simplified geometry
 - Optional: Frustum culling to skip rendering elements outside camera view
 
+---
+
+### Grid Coordinate Labels (Phase 78)
+
+**Purpose**: Display plane-local (u,v) coordinate values at viewport borders to provide numerical spatial orientation for element placement.
+
+**Architecture**:
+
+**Component Structure**:
+```typescript
+// Computed property in SvgCanvas.vue
+const gridLabels = computed(() => {
+  if (!viewStore.gridVisible.value) return { top: [], bottom: [], left: [], right: [] };
+  
+  const zoom = viewport.value.zoom;
+  const spacing = getCurrentGridSpacing(zoom); // Uses same logic as gridLines
+  const majorSpacing = spacing * 5;
+  
+  // Calculate viewport bounds in paper coordinates
+  const viewportWidth = canvasWidth.value / zoom;
+  const viewportHeight = canvasHeight.value / zoom;
+  const offsetX = -viewport.value.panX;
+  const offsetY = -viewport.value.panY;
+  
+  // Find major grid lines that intersect viewport edges
+  return {
+    top: computeHorizontalLabels(offsetX, viewportWidth, majorSpacing, 'top'),
+    bottom: computeHorizontalLabels(offsetX, viewportWidth, majorSpacing, 'bottom'),
+    left: computeVerticalLabels(offsetY, viewportHeight, majorSpacing, 'left'),
+    right: computeVerticalLabels(offsetY, viewportHeight, majorSpacing, 'right')
+  };
+});
+
+interface GridLabel {
+  key: string;           // Unique identifier (e.g., "top-u-100")
+  value: number;         // Coordinate value to display (e.g., 100)
+  position: number;      // Screen position in canvas pixels (x for top/bottom, y for left/right)
+  edge: 'top' | 'bottom' | 'left' | 'right';  // Which edge
+}
+
+function computeHorizontalLabels(
+  offsetX: number,
+  viewportWidth: number,
+  majorSpacing: number,
+  edge: 'top' | 'bottom'
+): GridLabel[] {
+  const labels: GridLabel[] = [];
+  
+  // Round to nearest major grid line
+  const startX = Math.floor(offsetX / majorSpacing) * majorSpacing;
+  const endX = Math.ceil((offsetX + viewportWidth) / majorSpacing) * majorSpacing;
+  
+  for (let x = startX; x <= endX; x += majorSpacing) {
+    const screenX = (x + viewport.value.panX) * viewport.value.zoom;
+    
+    // Only include if within viewport (with small margin)
+    if (screenX >= -10 && screenX <= canvasWidth.value + 10) {
+      labels.push({
+        key: `${edge}-u-${x}`,
+        value: x,
+        position: screenX,
+        edge
+      });
+    }
+  }
+  
+  return labels;
+}
+
+function computeVerticalLabels(
+  offsetY: number,
+  viewportHeight: number,
+  majorSpacing: number,
+  edge: 'left' | 'right'
+): GridLabel[] {
+  const labels: GridLabel[] = [];
+  
+  // Round to nearest major grid line
+  const startY = Math.floor(offsetY / majorSpacing) * majorSpacing;
+  const endY = Math.ceil((offsetY + viewportHeight) / majorSpacing) * majorSpacing;
+  
+  for (let y = startY; y <= endY; y += majorSpacing) {
+    const screenY = (y + viewport.value.panY) * viewport.value.zoom;
+    
+    // Only include if within viewport (with small margin)
+    if (screenY >= -10 && screenY <= canvasHeight.value + 10) {
+      labels.push({
+        key: `${edge}-v-${y}`,
+        value: y,
+        position: screenY,
+        edge
+      });
+    }
+  }
+  
+  return labels;
+}
+```
+
+**SVG Rendering**:
+```vue
+<!-- In SvgCanvas.vue template -->
+<g v-if="viewStore.gridVisible.value" class="grid-coordinate-labels">
+  <!-- Top edge U-coordinates -->
+  <text
+    v-for="label in gridLabels.top"
+    :key="label.key"
+    :x="label.position"
+    :y="8"
+    text-anchor="middle"
+    class="grid-label grid-label-top"
+  >
+    {{ label.value }}
+  </text>
+  
+  <!-- Bottom edge U-coordinates -->
+  <text
+    v-for="label in gridLabels.bottom"
+    :key="label.key"
+    :x="label.position"
+    :y="canvasHeight - 8"
+    text-anchor="middle"
+    class="grid-label grid-label-bottom"
+  >
+    {{ label.value }}
+  </text>
+  
+  <!-- Left edge V-coordinates -->
+  <text
+    v-for="label in gridLabels.left"
+    :key="label.key"
+    :x="8"
+    :y="label.position"
+    text-anchor="start"
+    dominant-baseline="middle"
+    class="grid-label grid-label-left"
+  >
+    {{ label.value }}
+  </text>
+  
+  <!-- Right edge V-coordinates -->
+  <text
+    v-for="label in gridLabels.right"
+    :key="label.key"
+    :x="canvasWidth - 8"
+    :y="label.position"
+    text-anchor="end"
+    dominant-baseline="middle"
+    class="grid-label grid-label-right"
+  >
+    {{ label.value }}
+  </text>
+</g>
+```
+
+**CSS Styling**:
+```css
+.grid-label {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  fill: #333333;
+  pointer-events: none; /* Don't interfere with canvas interactions */
+  user-select: none;
+  /* White stroke outline for legibility */
+  paint-order: stroke fill;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+```
+
+**Performance Considerations**:
+- **Efficient updates**: gridLabels computed property only recalculates when viewport or grid visibility changes
+- **Minimal DOM nodes**: Only labels for visible grid lines rendered (typically 10-20 labels total)
+- **No overdraw**: Labels culled outside viewport bounds with small margin
+- **Reactive caching**: Vue's computed() automatically caches results until dependencies change
+
+**Coordinate System Consistency**:
+- Labels display **paper coordinates** (plane-local u,v), NOT canvas pixels
+- Same coordinate system as grid lines themselves (uses offsetX/offsetY from viewport.panX/panY)
+- Values match what users see when inspecting element properties
+- Origin (0,0) clearly labeled when visible in viewport
+
+**Grid Spacing Adaptation**:
+- Uses same `getCurrentGridSpacing()` logic as grid lines (10/20/50 units based on zoom)
+- Only labels **major grid lines** (every 5th line, e.g., 0, 50, 100, 150...)
+- At extreme zoom levels, may skip labels to avoid overcrowding (future enhancement)
+
+**Benefits**:
+- **Zero cognitive load**: Users see coordinates directly without mental math
+- **Precise placement**: Enables targeting specific numeric coordinates
+- **Educational value**: Reinforces plane-local coordinate system understanding
+- **Low implementation cost**: Leverages existing grid calculation logic
+- **Minimal performance impact**: < 20 SVG text elements, reactively updated
+
+---
+
 **Interaction and Highlighting**:
 
 **Read-Only**:

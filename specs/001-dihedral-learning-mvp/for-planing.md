@@ -54,6 +54,7 @@ Note that completing these tasks may require asking the user for additional info
   - **Note**: This is about rendering user-defined 3D geometry, NOT solving the dihedral projection problem. The app teaches dihedral projection by letting users work with projections, not by automating the reconstruction.
 
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
+* [ ] Display coordinate values in the screen border fot the grid main lines.
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
@@ -175,6 +176,54 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [X] **Grid Coordinate Labels at Viewport Borders (Phase 78)**
+  - **STATUS**: 📋 PLANNED (Jan 17, 2026) - Ready for implementation
+  - **User Requirement**: "Display coordinate values in the screen border for the grid main lines. The idea is to have the uv values for the grid main lines at the border of the visible rectangle. So that the user has a numerical orientation about where he is placing the elements"
+  - **Purpose**: Display plane-local (u,v) coordinate values along viewport borders to provide immediate numerical spatial orientation without mental calculation
+  - **What's Needed**:
+    - ✅ **Spec**: FR-054 in spec.md defining functional requirements
+    - ✅ **UI Spec**: Complete visual specification in ui-spec.md with positioning, styling, dynamic behavior
+    - ✅ **Data Model**: Architecture in data-model.md with TypeScript interfaces, computation logic, SVG rendering approach
+    - ✅ **Tasks**: Phase 78 in tasks.md (T1206-T1223: 18 tasks across 5 sub-phases)
+  - **Architecture**:
+    - Computed property `gridLabels` in SvgCanvas.vue calculates label positions and values
+    - Uses existing viewport state (panX, panY, zoom) and grid spacing logic
+    - Renders as SVG `<text>` elements at viewport edges (top, bottom, left, right)
+    - U-coordinates (horizontal) displayed along top/bottom edges
+    - V-coordinates (vertical) displayed along left/right edges
+    - Only major grid lines labeled (every 5th line, e.g., 0, 50, 100, 150...)
+    - Typography: 11px sans-serif, dark gray (#333333) with white stroke outline for legibility
+    - Z-order: Labels above grid lines but below geometric elements
+  - **Implementation Highlights**:
+    - **computeHorizontalLabels()**: Calculates U-coordinate labels for top/bottom edges
+    - **computeVerticalLabels()**: Calculates V-coordinate labels for left/right edges
+    - **GridLabel interface**: `{ key, value, position, edge }` for type-safe label data
+    - **Dynamic updates**: Automatically reacts to viewport changes (pan/zoom) and grid visibility toggle
+    - **Efficient rendering**: Only visible labels rendered (viewport culling), < 20 SVG text elements
+    - **Coordinate consistency**: Displays paper coordinates (plane-local u,v), NOT canvas pixels
+  - **Benefits**:
+    - **Zero cognitive load**: Users see coordinates directly without mental calculation
+    - **Precise placement**: Enables targeting specific numeric positions for exercises
+    - **Educational value**: Reinforces understanding of plane-local coordinate systems
+    - **Low implementation cost**: ~150 lines of code, leverages existing grid logic
+    - **Excellent performance**: Computed property caching, minimal DOM, efficient updates
+  - **Spec**: [spec.md](./spec.md) FR-054 (Grid Coordinate Labels requirement)
+  - **UI**: [ui-spec.md](./ui-spec.md#grid-coordinate-labels-phase-78) Complete visual specification with ASCII diagrams
+  - **Data model**: [data-model.md](./data-model.md#grid-coordinate-labels-phase-78) Complete architecture with TypeScript examples
+  - **Tasks**: Phase 78 in [tasks.md](./tasks.md#phase-78-grid-coordinate-labels-at-viewport-borders) (T1206-T1223: 18 tasks, 5 sub-phases)
+  - **Acceptance Criteria**:
+    - ✅ Labels display along all four viewport edges (top, bottom, left, right)
+    - ✅ Shows plane-local (u,v) coordinates, not canvas pixels
+    - ✅ Only major grid lines (every 5th) have labels
+    - ✅ Updates dynamically during pan/zoom operations
+    - ✅ Respects grid visibility toggle
+    - ✅ Clear, legible typography (11px with white stroke outline)
+    - ✅ Correct positioning: top/bottom centered, left/right aligned
+    - ✅ No performance impact (< 20 text elements, efficiently computed)
+    - ✅ Origin (0,0) clearly labeled when visible
+  - **Related**: Phase 6 (Viewport Transformation), Phase 10 (Grid Display)
+  - **Notes**: Purely additive feature with zero breaking changes; complements existing grid visualization; high educational value for spatial understanding; ready for immediate implementation
 
 * [X] **3D View Panel Infrastructure (Phase 25.1 - PARTIAL)**
   - **STATUS**: ⚠️ INFRASTRUCTURE COMPLETE, 3D ELEMENT RENDERING PENDING (Jan 16, 2026)
