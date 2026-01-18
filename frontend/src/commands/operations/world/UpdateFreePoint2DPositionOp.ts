@@ -51,11 +51,11 @@ export class UpdateFreePoint2DPositionOp implements IOperation {
         throw new Error(`Point not found: ${this.pointId}`);
       }
 
-      if (existing.type !== 'free') {
-        throw new Error(`Cannot move non-free point: ${this.pointId} (${existing.type})`);
+      if (!(existing instanceof FreePoint2D)) {
+        throw new Error(`Cannot move non-free point: ${this.pointId} (${existing.constructor.name})`);
       }
 
-      const freePoint = existing as FreePoint2D;
+      const freePoint = existing;
       if (freePoint.locked) {
         throw new Error(`Cannot move locked point: ${this.pointId}`);
       }
