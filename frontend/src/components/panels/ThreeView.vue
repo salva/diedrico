@@ -54,7 +54,7 @@
  * @see specs/001-dihedral-learning-mvp/tasks.md#phase-25-3d-view-panel
  */
 
-import { ref, onMounted, onUnmounted, watch, inject, computed } from 'vue';
+import { ref, onMounted, onUnmounted, watch, inject } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { World } from '../../domain/world/World';
@@ -80,8 +80,10 @@ const displayOptions = viewStore.threeViewOptions;
 // World instance (injected from App.vue)
 const world = inject<World>('world')!;  // Non-null assertion - World is required
 
-// Track World version for reactivity
-const worldVersion = computed(() => world.getVersion());
+// Phase 80: Reactivity trigger for World changes
+// World is not reactive (performance reasons), so we use a local ref that increments
+// when World notifies us of changes via the observer pattern
+const renderTick = ref(0);
 
 /**
  * Initialize Three.js scene and infrastructure
@@ -362,9 +364,16 @@ onMounted(() => {
   initThreeScene();
   window.addEventListener('resize', handleResize);
 
-  // Watch world version changes (World is not reactive)
+  // Phase 80: Subscribe to World changes using observer pattern
+  // Increment renderTick whenever World changes, triggering reactive updates
+  const handleWorldChange = () => {
+    renderTick.value++;
+  };
+  world.subscribeToChanges(handleWorldChange);
+
+  // Watch renderTick (reactive) to re-render when World changes
   watch(
-    worldVersion,
+    renderTick,
     () => {
       renderProjectionPlanes();
       renderHingeLine();
@@ -394,9 +403,19 @@ onMounted(() => {
     },
     { deep: true }
   );
+
+  // Store handleWorldChange for cleanup
+  (window as any).__threeViewWorldChangeHandler = handleWorldChange;
 });
 
 onUnmounted(() => {
+  // Phase 80: Unsubscribe from World changes
+  const handleWorldChange = (window as any).__threeViewWorldChangeHandler;
+  if (handleWorldChange) {
+    world.unsubscribeFromChanges(handleWorldChange);
+    delete (window as any).__threeViewWorldChangeHandler;
+  }
+  
   cleanup();
 });
 </script>

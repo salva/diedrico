@@ -116,6 +116,7 @@ export class World {
   
   private nextId: number;
   private _version: number = 0;  // For tracking changes and triggering UI updates
+  private changeListeners: Array<() => void> = [];  // Phase 80: Observer pattern for view updates
 
   // Phase 46: Semantic references to initial entities (track by role, not hardcoded ID)
   // These are set during initialization and provide semantic access to the initial planes
@@ -165,10 +166,37 @@ export class World {
   }
 
   /**
+   * Subscribe to World change notifications (Phase 80)
+   * 
+   * Observers will be notified whenever World.markDirty() is called,
+   * which happens after every Command operation completes.
+   * 
+   * @param callback Function to call when World changes
+   */
+  subscribeToChanges(callback: () => void): void {
+    this.changeListeners.push(callback);
+  }
+
+  /**
+   * Unsubscribe from World change notifications (Phase 80)
+   * 
+   * @param callback Function to remove from listeners
+   */
+  unsubscribeFromChanges(callback: () => void): void {
+    const index = this.changeListeners.indexOf(callback);
+    if (index > -1) {
+      this.changeListeners.splice(index, 1);
+    }
+  }
+
+  /**
    * Notify that world has changed (increment version)
+   * Phase 80: Also notifies all subscribed observers
    */
   private notifyChange(): void {
     this._version++;
+    // Notify all subscribers (ThreeView, other views)
+    this.changeListeners.forEach(listener => listener());
   }
 
   /**

@@ -18,43 +18,10 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] **Rendering User-Defined 3D Elements (Phase 25.2 - T230-T233)**
-  - **STATUS**: 📋 PLANNED (Jan 16, 2026) - Ready for specification and implementation
-  - **User Requirement**: "i don't want the app interpreting the dihedrical drawings. The user should explicitly define the realtions between 2d and 3d elements!"
-  - **Purpose**: Render 3D geometric elements (points, lines, etc.) that users explicitly create and define, NOT automatically derived from 2D projections
-  - **What's Implemented**:
-    - ✅ Phase 77: Visualize 2D elements on planes in 3D (shows where they exist on each plane)
-    - ✅ Phase 25.2 (T229): Render hinge line in 3D space
-    - ✅ 3D scene infrastructure with planes, camera controls, display toggles
-  - **What's NEEDED**:
-    - ❌ **3D Element Rendering (T230-T232)**: Display user-created 3D points, lines, segments, circles in 3D view
-    - ❌ **Generic 3D Geometry (T233)**: 3D element positioning and transformations using proper 3D math
-    - ❌ **Visual distinction**: 3D elements must be visually distinct from 2D elements on planes
-  - **Key Distinction**:
-    - **Phase 77** (implemented): Renders 2D elements ON their planes in 3D space (e.g., Point2D at (u,v) on P_H)
-    - **Phase 25.2 T230-T233** (planned): Renders actual 3D elements in 3D space (e.g., Point3D at (x,y,z) in world coordinates)
-    - **No automatic derivation**: Users will explicitly create 3D elements through UI/commands (future feature)
-  - **Architecture Clarification**:
-    - Users will explicitly define which 2D elements are projections of which 3D elements
-    - Relationships are USER-DEFINED, not calculated by the app
-    - T230-T233 focus on RENDERING once relationships exist, not on deriving them
-  - **Planning Needed**:
-    1. Define 3D element data model (Point3D, Line3D, etc. classes)
-    2. Design API for user-defined 2D↔3D relationships
-    3. Update spec.md with 3D element creation workflow
-    4. Add 3D element rendering to ThreeView.vue
-    5. Visual styling for 3D elements (distinct from 2D elements on planes)
-    6. Update tasks.md T230-T233 to reflect rendering focus (not derivation)
-  - **Questions**:
-    - How do users create 3D elements? (Tools? Commands? Import?)
-    - How do users define 2D↔3D relationships? (Link dialog? Property panel?)
-    - Should 3D elements project onto planes automatically, or is that manual too?
-    - What visual style distinguishes 3D elements from 2D elements on planes?
-  - **Priority**: MEDIUM - Infrastructure complete, but 3D element creation workflow not yet designed
-  - **Note**: This is about rendering user-defined 3D geometry, NOT solving the dihedral projection problem. The app teaches dihedral projection by letting users work with projections, not by automating the reconstruction.
-
+* [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
+* [ ] Represent planes in 3d
+* [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
-* [ ] Display coordinate values in the screen border fot the grid main lines.
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
@@ -176,6 +143,312 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [X] **3D View Automatic Updates - renderTick Reactivity (Phase 80)**
+  - **STATUS**: 📋 PLANNED (Jan 18, 2026) - Ready for implementation
+  - **User Issue**: "3d view is not automatically updated when new objects are added. it doesn't update when i create 2d elements, any of them. It updates when i disable/enable the display of 2d objects"
+  - **Root Cause Analysis**:
+    - **Problem**: ThreeView.vue watches `worldVersion` computed property: `const worldVersion = computed(() => world.getVersion())`
+    - **Why it fails**: World is a plain JavaScript object (not reactive). When `world.getVersion()` returns a number, Vue cannot establish a reactive dependency because World itself is not wrapped in Vue's reactivity system
+    - **Why toggle works**: Display options are reactive refs in ViewStore, so toggling checkboxes triggers the watch on `displayOptions`
+    - **Architecture issue**: ThreeView tried to watch World directly, but World is non-reactive by design (performance - it contains thousands of geometric calculations)
+  - **Current (Broken) Implementation**:
+    ```typescript
+    // ThreeView.vue - DOES NOT WORK
+    const world = inject<World>('world')!;
+    const worldVersion = computed(() => world.getVersion()); // Not reactive!
+    
+    watch(worldVersion, () => {
+      renderProjectionPlanes();
+      renderHingeLine();
+      render2DElements();
+    }); // Never triggers when elements added
+    ```
+  - **Solution**: Use renderTick pattern (same as SvgCanvas)
+    - **Pattern**: Local `ref` that increments when World changes
+    - **SvgCanvas already does this**: Has `renderTick` ref, increments it when commands execute
+    - **Two approaches**:
+      1. **Approach A** (Simpler): ThreeView gets its own renderTick, World.markDirty() increments a global counter
+      2. **Approach B** (Cleaner): SvgCanvas provides renderTick, ThreeView injects and watches it
+    - **Chosen**: Approach A - each view manages its own renderTick, World.markDirty() notifies all views
+  - **Implementation Architecture**:
+    ```typescript
+    // ThreeView.vue - NEW IMPLEMENTATION
+    const world = inject<World>('world')!;
+    const renderTick = ref(0); // Local reactive trigger
+    
+    // Subscribe to World changes
+    onMounted(() => {
+      world.subscribeToChanges(() => {
+        renderTick.value++; // Increment on any World change
+      });
+    });
+    
+    // Watch renderTick (reactive) instead of worldVersion (non-reactive)
+    watch(renderTick, () => {
+      renderProjectionPlanes();
+      renderHingeLine();
+      render2DElements();
+    });
+    
+    // Or simpler: Use watchEffect with renderTick dependency
+    watchEffect(() => {
+      renderTick.value; // Establish dependency
+      renderProjectionPlanes();
+      renderHingeLine();
+      render2DElements();
+    });
+    ```
+  - **World.ts Changes** (Add subscription mechanism):
+    ```typescript
+    // World.ts - ADD OBSERVER PATTERN
+    private changeListeners: Array<() => void> = [];
+    
+    subscribeToChanges(callback: () => void): void {
+      this.changeListeners.push(callback);
+    }
+    
+    unsubscribeFromChanges(callback: () => void): void {
+      const index = this.changeListeners.indexOf(callback);
+      if (index > -1) this.changeListeners.splice(index, 1);
+    }
+    
+    private notifyChange(): void {
+      this._version++;
+      // Notify all subscribers (ThreeView, other views)
+      this.changeListeners.forEach(listener => listener());
+    }
+    ```
+  - **Benefits**:
+    - **Immediate updates**: 3D view updates as soon as elements are created/modified/deleted
+    - **Consistent with SvgCanvas**: Uses same renderTick pattern for World synchronization
+    - **Lightweight**: Single ref increment, no deep reactivity overhead
+    - **Observable pattern**: Clean subscription mechanism, easy to add more observers
+    - **Testable**: Can mock World.subscribeToChanges() in tests
+  - **Implementation Tasks** (Phase 80 - T1224-T1235):
+    1. **T1224**: Update spec.md FR-053 (3D Visualization) with automatic update requirement
+    2. **T1225**: Update ui-spec.md Phase 25 with renderTick reactivity pattern
+    3. **T1226**: Update data-model.md with World observer pattern and view synchronization
+    4. **T1227**: Add subscribeToChanges/unsubscribeFromChanges to World.ts
+    5. **T1228**: Update World.markDirty() to notify all change listeners
+    6. **T1229**: Add renderTick ref to ThreeView.vue
+    7. **T1230**: Subscribe to World changes in ThreeView onMounted
+    8. **T1231**: Replace worldVersion watch with renderTick watch/watchEffect
+    9. **T1232**: Add unsubscribe in ThreeView onUnmounted (cleanup)
+    10. **T1233**: Test: Create point → verify 3D view updates
+    11. **T1234**: Test: Create line, segment, circle → verify all update 3D view
+    12. **T1235**: Final commit with documentation
+  - **Testing Scenarios**:
+    - ✅ Create free point → 3D view shows sphere on plane immediately
+    - ✅ Create line → 3D view shows line segment on plane
+    - ✅ Move point → 3D view updates point position
+    - ✅ Create circle → 3D view shows circle on plane
+    - ✅ Delete element → 3D view removes element
+    - ✅ Toggle display options → still works (uses displayOptions watch)
+    - ✅ Multiple rapid operations → 3D view stays synchronized
+  - **Alternative Considered**: Making World reactive with Vue.reactive()
+    - **Rejected**: World contains complex geometric calculations, making it reactive would add massive overhead
+    - **Better**: Explicit notification pattern (markDirty → notify listeners) is lightweight and clear
+  - **Related**: Phase 77 (2D elements on planes - rendering works, just needs update trigger), Phase 25.1 (3D view infrastructure complete)
+  - **Priority**: HIGH - Core functionality broken, users cannot see their work in 3D view
+  - **Breaking Changes**: None - purely additive (adds observer pattern to World)
+  - **Migration**: No data migration needed, only code changes
+  - **Note**: This is a reactivity architecture fix, not a rendering fix. The rendering code (Phase 77) works correctly, it just wasn't being triggered when World changed.
+
+* [X] **Fix Grid to Use Plane Intrinsic Coordinates (Phase 79)**
+  - **STATUS**: ✅ COMPLETE (Jan 17, 2026) - Grid now uses plane intrinsic (u,v) coordinates
+  - **User Requirement**: "Grid must be derived also from the active projection plane, from its origin point and intrinsic u and v vectors. From there, after transforming those to plane and then screen pixels, a sensible scale must be picked (for instance, (u,v) x 100) and that used to draw the grid"
+  - **Problem**: Current grid implementation (T275 from Phase 10) is fundamentally broken:
+    - Uses hardcoded paper coordinates (offsetX, offsetY) instead of plane intrinsic (u,v)
+    - Grid spacing (10, 20, 50) is arbitrary and not related to plane coordinate system
+    - Grid labels show paper coordinates, not actual plane (u,v) values
+    - Grid is NOT derived from active projection plane's coordinate system
+    - No relationship between grid and plane transformation matrices
+  - **Current Implementation** (INCORRECT):
+    ```typescript
+    // SvgCanvas.vue lines 588-656
+    // WRONG: Uses paper coordinates directly
+    const offsetX = -viewport.value.panX;  // Paper offset, not plane coordinates!
+    const offsetY = -viewport.value.panY;
+    const startX = Math.floor(offsetX / spacing) * spacing;
+    
+    // WRONG: Labels show paper coordinates
+    value: x,  // This is paper coordinate, not plane (u,v)!
+    ```
+  - **Correct Architecture**:
+    1. Get active projection plane from World
+    2. Get plane's planeToPaper2D transformation matrix
+    3. Define grid in plane intrinsic coordinates: u = {..., -100, -50, 0, 50, 100, ...}, v = {..., -100, -50, 0, 50, 100, ...}
+    4. Transform each grid line from (u,v) → paper (x,y) using planeToPaper2D
+    5. Apply viewport transform (pan, zoom) to get screen coordinates
+    6. Grid labels show actual (u,v) values, not transformed paper coordinates
+  - **Adaptive Grid Spacing (Zoom-Dependent)**:
+    - **CRITICAL**: Grid spacing MUST adapt to zoom level to remain visually useful
+    - **Major lines** always at multiples of powers of 10: 10^n (e.g., 0.1, 1, 10, 100, 1000)
+    - **Minor lines** divide major intervals using subdivision factor (2, 5, or 10)
+    - Minor spacing = 10^n / subdivision, giving sequence: ..., 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, ...
+    - Spacing is in **plane intrinsic (u,v) units**, not paper coordinates
+    - **Adaptive Subdivisions** (prevent visual clutter):
+      - **CRITICAL**: Number of subdivisions adapts to pixel density
+      - Algorithm calculates minSpacing = minPixelsPerCell / zoom (where minPixelsPerCell = 15)
+      - For each power of 10 starting from floor(log₁₀(minSpacing)):
+        - Try subdivisions in order: 10, 5, 2 (preference for smallest cells)
+        - Calculate spacing = 10^n / subdivision
+        - If spacing ≥ minSpacing, use this combination
+      - Result determines both minor spacing and major spacing (10^n)
+      - Subdivision options: 2, 5, or 10 (major line every 2nd, 5th, or 10th minor line)
+      - Example at zoom=1.0: minSpacing=15 → chooses 20 (=100/5) → major=100, subdivision=5
+      - Example at zoom=0.1: minSpacing=150 → chooses 200 (=1000/5) → major=1000, subdivision=5
+      - Example at zoom=10.0: minSpacing=1.5 → chooses 2 (=10/5) → major=10, subdivision=5
+    - Major lines emphasized with darker color (#C0C0C0 vs #E0E0E0 for minor)
+    - Grid labels show actual (u,v) values at major lines only
+    - Origin (0,0) clearly visible when in viewport (intersection of u=0 and v=0 lines)
+    - Hinge line at v=0 naturally aligns with grid horizontal lines
+  - **Transformation Pipeline**:
+    ```typescript
+    // Step 1: Determine adaptive spacing based on zoom
+    const minPixelsPerCell = 15;  // Minimum pixels per minor grid cell
+    const minSpacing = minPixelsPerCell / zoom; // Minimum spacing in plane units
+    
+    // Find smallest spacing from sequence: 10^n/10, 10^n/5, 10^n/2
+    const logMin = Math.log10(minSpacing);
+    const basePower = Math.floor(logMin);
+    
+    let spacing, subdivision, majorSpacing;
+    for (let n = basePower; n < basePower + 3; n++) {
+      const base = Math.pow(10, n);  // Major line spacing (10^n)
+      
+      // Try subdivisions: 10, 5, 2 (preference for smallest cells)
+      for (const sub of [10, 5, 2]) {
+        const sp = base / sub; // Minor line spacing
+        if (sp >= minSpacing) {
+          spacing = sp;
+          subdivision = sub;
+          majorSpacing = base;
+          break;
+        }
+      }
+      if (spacing) break;
+    }
+    
+    // Step 2: Calculate viewport bounds in plane intrinsic coordinates
+    const plane = world.getActiveProjectionPlane();
+    const paperToPlane = plane.paperToPlane2D;
+    
+    // Transform canvas corners to plane coordinates to find visible range
+    const topLeft_paper = new Vector3(-viewport.panX, -viewport.panY, 1);
+    const bottomRight_paper = new Vector3(
+      (-viewport.panX + canvasWidth / zoom), 
+      (-viewport.panY + canvasHeight / zoom), 
+      1
+    );
+    const topLeft_plane = paperToPlane.applyToVector(topLeft_paper);
+    const bottomRight_plane = paperToPlane.applyToVector(bottomRight_paper);
+    
+    // Step 3: Generate grid lines in plane coordinates
+    const uMin = Math.floor(topLeft_plane.x / spacing) * spacing;
+    const uMax = Math.ceil(bottomRight_plane.x / spacing) * spacing;
+    const vMin = Math.floor(topLeft_plane.y / spacing) * spacing;
+    const vMax = Math.ceil(bottomRight_plane.y / spacing) * spacing;
+    
+    // Step 4: For each vertical line at u = uValue:
+    for (let u = uMin; u <= uMax; u += spacing) {
+      const p1_plane = new Vector3(u, vMin, 1);  // Plane intrinsic (homogeneous)
+      const p2_plane = new Vector3(u, vMax, 1);
+      
+      const p1_paper = plane.planeToPaper2D.applyToVector(p1_plane);  // Transform to paper
+      const p2_paper = plane.planeToPaper2D.applyToVector(p2_plane);
+      
+      const screenX1 = (p1_paper.x + viewport.panX) * zoom;  // Screen coords
+      const screenY1 = (p1_paper.y + viewport.panY) * zoom;
+      const screenX2 = (p2_paper.x + viewport.panX) * zoom;
+      const screenY2 = (p2_paper.y + viewport.panY) * zoom;
+      
+      const isMajor = Math.abs(u % majorSpacing) < 0.01;  // Check if at 10^n interval
+      
+      // Render line from (screenX1, screenY1) to (screenX2, screenY2)
+      // Color: isMajor ? '#C0C0C0' : '#E0E0E0'
+      // Label: Only if isMajor (show u value)
+    }
+    ```
+  - **Benefits**:
+    - **Correct coordinates**: Grid shows actual plane (u,v) values
+    - **Origin visible**: (0,0) clearly marked when in viewport
+    - **Hinge line alignment**: HL at v=0 aligns with u-axis grid lines
+    - **Per-plane grids**: Different planes can have different transformations
+    - **Architectural consistency**: Uses same transformation as elements
+  - **Migration Impact**:
+    - Complete rewrite of gridLines computed property (lines 588-656)
+    - Complete rewrite of gridLabels computed property (lines 737-768)
+    - Add dependency on worldStore to get active plane
+    - Breaking change: existing grid code is fundamentally wrong
+  - **Tasks** (to be added to tasks.md after full specification):
+    - Phase 79.1: Update spec.md with corrected grid coordinate system requirement
+    - Phase 79.2: Update ui-spec.md with grid visual specification using plane coordinates
+    - Phase 79.3: Update data-model.md with grid architecture (transformation pipeline)
+    - Phase 79.4: Implement plane-based grid line generation in SvgCanvas.vue
+    - Phase 79.5: Implement plane-based grid label computation
+    - Phase 79.6: Add unit tests for coordinate transformation
+    - Phase 79.7: Add integration tests for grid display with different planes
+    - Phase 79.8: Test grid behavior with pan/zoom operations
+    - Phase 79.9: Verify origin (0,0) and hinge line (v=0) alignment
+    - Phase 79.10: Final commit with comprehensive documentation
+  - **Design Decisions** (Answered):
+    1. ✅ Major lines always at powers of 10 (10^n), minor spacing = 10^n/subdivision where subdivision ∈ {2, 5, 10}
+    2. ✅ Each projection plane shows its own grid when active (derived from plane's coordinate system)
+    3. ✅ Grid always centered at plane's origin (0,0) - this is the natural coordinate system origin
+    4. ✅ Grid line style unchanged: #C0C0C0 major (at 10^n), #E0E0E0 minor
+  - **Future Considerations** (TODO):
+    - **Non-orthogonal planes**: Current default planes (P_H, P_V) have orthogonal u,v vectors aligned with paper axes
+    - **Arbitrary plane orientations**: Future auxiliary planes may have u,v vectors at arbitrary angles in paper space
+    - **Grid rendering impact**: u-lines and v-lines would appear as arbitrary directions in paper space (not just horizontal/vertical)
+    - **Label positioning impact**: Grid coordinate labels must be positioned relative to actual grid line orientations
+    - **Architecture already supports this**: Transformation matrices (planeToPaper2D) handle arbitrary orientations
+    - **Implementation TODO**: When non-orthogonal planes are introduced, verify grid rendering and label placement work correctly
+  - **Key Insight**: Adaptive spacing + subdivisions keep grid visually useful at all zoom levels
+    - **Powers of 10**: Major lines always at clean multiples (0.1, 1, 10, 100, 1000)
+    - **Subdivision adaptation**: Smallest possible subdivision (10 > 5 > 2) that meets pixel threshold
+    - Combined effect: Grid density stays in comfortable visual range across all zoom levels
+    - Example: At zoom=1.0, chooses spacing=20 (100/5), giving majors at 0, 100, 200, minors every 20
+    - Example: At zoom=0.1, chooses spacing=200 (1000/5), giving majors at 0, 1000, 2000, minors every 200
+    - Example: At zoom=10.0, chooses spacing=2 (10/5), giving majors at 0, 10, 20, minors every 2
+  - **Related Phases**: Phase 10 (original grid, now incorrect), Phase 78 (grid labels), Phase 6 (viewport transformation)
+  - **Priority**: HIGH - Current grid shows wrong coordinates, misleading for users
+
+* [ ] **Rendering User-Defined 3D Elements (Phase 25.2 - T230-T233)**
+  - **STATUS**: 📋 PLANNED (Jan 16, 2026) - Ready for specification and implementation
+  - **User Requirement**: "i don't want the app interpreting the dihedrical drawings. The user should explicitly define the realtions between 2d and 3d elements!"
+  - **Purpose**: Render 3D geometric elements (points, lines, etc.) that users explicitly create and define, NOT automatically derived from 2D projections
+  - **What's Implemented**:
+    - ✅ Phase 77: Visualize 2D elements on planes in 3D (shows where they exist on each plane)
+    - ✅ Phase 25.2 (T229): Render hinge line in 3D space
+    - ✅ 3D scene infrastructure with planes, camera controls, display toggles
+  - **What's NEEDED**:
+    - ❌ **3D Element Rendering (T230-T232)**: Display user-created 3D points, lines, segments, circles in 3D view
+    - ❌ **Generic 3D Geometry (T233)**: 3D element positioning and transformations using proper 3D math
+    - ❌ **Visual distinction**: 3D elements must be visually distinct from 2D elements on planes
+  - **Key Distinction**:
+    - **Phase 77** (implemented): Renders 2D elements ON their planes in 3D space (e.g., Point2D at (u,v) on P_H)
+    - **Phase 25.2 T230-T233** (planned): Renders actual 3D elements in 3D space (e.g., Point3D at (x,y,z) in world coordinates)
+    - **No automatic derivation**: Users will explicitly create 3D elements through UI/commands (future feature)
+  - **Architecture Clarification**:
+    - Users will explicitly define which 2D elements are projections of which 3D elements
+    - Relationships are USER-DEFINED, not calculated by the app
+    - T230-T233 focus on RENDERING once relationships exist, not on deriving them
+  - **Planning Needed**:
+    1. Define 3D element data model (Point3D, Line3D, etc. classes)
+    2. Design API for user-defined 2D↔3D relationships
+    3. Update spec.md with 3D element creation workflow
+    4. Add 3D element rendering to ThreeView.vue
+    5. Visual styling for 3D elements (distinct from 2D elements on planes)
+    6. Update tasks.md T230-T233 to reflect rendering focus (not derivation)
+  - **Questions**:
+    - How do users create 3D elements? (Tools? Commands? Import?)
+    - How do users define 2D↔3D relationships? (Link dialog? Property panel?)
+    - Should 3D elements project onto planes automatically, or is that manual too?
+    - What visual style distinguishes 3D elements from 2D elements on planes?
+  - **Priority**: MEDIUM - Infrastructure complete, but 3D element creation workflow not yet designed
+  - **Note**: This is about rendering user-defined 3D geometry, NOT solving the dihedral projection problem. The app teaches dihedral projection by letting users work with projections, not by automating the reconstruction.
 
 * [X] **Grid Coordinate Labels at Viewport Borders (Phase 78)**
   - **STATUS**: 📋 PLANNED (Jan 17, 2026) - Ready for implementation
