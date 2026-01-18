@@ -7,7 +7,7 @@
       <div class="control-group">
         <label 
           class="control-label"
-          title="Show or hide projection plane surfaces (P_H, P_V, and auxiliary planes)"
+          title="Show or hide projection plane surfaces in 3D view"
         >
           <input type="checkbox" v-model="displayOptions.showPlanes" @change="handleDisplayChange" />
           Show Planes
@@ -160,8 +160,12 @@ function renderProjectionPlanes() {
     // Create plane mesh (semi-transparent)
     const planeSize = 20; // Size of visual plane representation
     const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+    
+    // Use plane's color property (hex string like '#2196F3')
+    const planeColor = parseInt(plane.color.replace('#', '0x'));
+    
     const material = new THREE.MeshBasicMaterial({
-      color: plane.id === 'P_H' ? 0x4CAF50 : 0x2196F3, // Green for P_H, Blue for P_V
+      color: planeColor,
       side: THREE.DoubleSide,
       transparent: true,
       opacity: 0.3
@@ -209,10 +213,10 @@ function render2DElements() {
 }
 
 /**
- * Render hinge line (HL_HV) in 3D space (Phase 25.2 - T229)
+ * Render hinge line in 3D space (Phase 25.2 - T229)
  * 
- * The hinge line is the intersection of P_H and P_V planes.
- * It extends infinitely along the X-axis in the default configuration.
+ * Renders the main hinge line (intersection of two projection planes) generically
+ * by computing the cross product of the plane normals from their transformation matrices.
  */
 function renderHingeLine() {
   if (!displayOptions.value.showPlanes) return;
@@ -226,56 +230,46 @@ function renderHingeLine() {
   try {
     const hingeLine = world.getMainHingeLine();
     
-    // Get both planes
-    const pH = world.getProjectionPlaneByLabel('P_H');
-    const pV = world.getProjectionPlaneByLabel('P_V');
+    // Get both planes from hinge line (generic - works for any two planes)
+    const plane1 = world.getProjectionPlaneById(hingeLine.plane1Id);
+    const plane2 = world.getProjectionPlaneById(hingeLine.plane2Id);
     
-    if (!pH || !pV) {
-      console.warn('[ThreeView] Cannot render hinge line: P_H or P_V not found');
+    if (!plane1 || !plane2) {
+      console.warn('[ThreeView] Cannot render hinge line: planes not found');
       return;
     }
     
     // Get 3D realizations
-    const pHRealization = world.getProjectionPlane3DRealization(pH.id!);
-    const pVRealization = world.getProjectionPlane3DRealization(pV.id!);
+    const plane1Realization = world.getProjectionPlane3DRealization(plane1.id!);
+    const plane2Realization = world.getProjectionPlane3DRealization(plane2.id!);
     
-    if (!pHRealization || !pVRealization) {
+    if (!plane1Realization || !plane2Realization) {
       console.warn('[ThreeView] Cannot render hinge line: plane realizations not found');
       return;
     }
     
-    // The hinge line is the intersection of the two planes
-    // For the default configuration (P_H is XZ plane, P_V is XY plane),
-    // the intersection is along the X-axis
-    // We'll render a long line segment along the intersection
-    
-    // In the default configuration:
-    // - P_H normal = (0, 1, 0) - points up (Y-axis)
-    // - P_V normal = (0, 0, 1) - points forward (Z-axis)
-    // - Intersection direction = P_H_normal × P_V_normal
-    
-    // Extract plane normals from transformation matrices
+    // Extract plane normals from transformation matrices (generic algorithm)
     // The third column (indices 8, 9, 10) of planeTo3D matrix is the plane's normal
-    const pHNormal = new THREE.Vector3(
-      pHRealization.planeTo3D.elements[8],
-      pHRealization.planeTo3D.elements[9],
-      pHRealization.planeTo3D.elements[10]
+    const plane1Normal = new THREE.Vector3(
+      plane1Realization.planeTo3D.elements[8],
+      plane1Realization.planeTo3D.elements[9],
+      plane1Realization.planeTo3D.elements[10]
     ).normalize();
     
-    const pVNormal = new THREE.Vector3(
-      pVRealization.planeTo3D.elements[8],
-      pVRealization.planeTo3D.elements[9],
-      pVRealization.planeTo3D.elements[10]
+    const plane2Normal = new THREE.Vector3(
+      plane2Realization.planeTo3D.elements[8],
+      plane2Realization.planeTo3D.elements[9],
+      plane2Realization.planeTo3D.elements[10]
     ).normalize();
     
-    // Intersection direction = cross product of normals
-    const direction = new THREE.Vector3().crossVectors(pHNormal, pVNormal).normalize();
+    // Intersection direction = cross product of normals (generic for any two planes)
+    const direction = new THREE.Vector3().crossVectors(plane1Normal, plane2Normal).normalize();
     
-    // Get origin point (intersection should pass through origin)
+    // Get origin point - use plane1's origin (translation from matrix)
     const origin = new THREE.Vector3(
-      pHRealization.planeTo3D.elements[9],
-      pHRealization.planeTo3D.elements[10],
-      pHRealization.planeTo3D.elements[11]
+      plane1Realization.planeTo3D.elements[9],
+      plane1Realization.planeTo3D.elements[10],
+      plane1Realization.planeTo3D.elements[11]
     );
     
     // Create line extending in both directions from origin
