@@ -213,86 +213,87 @@ function render2DElements() {
 }
 
 /**
- * Render hinge line in 3D space (Phase 25.2 - T229)
+ * Render all hinge lines in 3D space (Phase 25.2 - T229)
  * 
- * Renders the main hinge line (intersection of two projection planes) generically
- * by computing the cross product of the plane normals from their transformation matrices.
+ * Iterates through ALL hinge lines in the world (no special "main" hinge line treatment).
+ * Computes intersection direction generically using cross product of plane normals.
  */
-function renderHingeLine() {
+function renderHingeLines() {
   if (!displayOptions.value.showPlanes) return;
 
-  // Remove existing hinge line
-  const existing = scene.children.find(child => child.userData.type === 'hinge-line');
-  if (existing) {
-    scene.remove(existing);
-  }
+  // Remove existing hinge lines
+  const existingLines = scene.children.filter(child => child.userData.type === 'hinge-line');
+  existingLines.forEach(line => scene.remove(line));
 
   try {
-    const hingeLine = world.getMainHingeLine();
+    // Iterate through ALL hinge lines (generic - works for any plane combinations)
+    const hingeLines = world.getAllHingeLines();
     
-    // Get both planes from hinge line (generic - works for any two planes)
-    const plane1 = world.getProjectionPlaneById(hingeLine.plane1Id);
-    const plane2 = world.getProjectionPlaneById(hingeLine.plane2Id);
+    for (const hingeLine of hingeLines) {
+      // Get both planes from hinge line (generic - works for any two planes)
+      const plane1 = world.getProjectionPlaneById(hingeLine.plane1Id);
+      const plane2 = world.getProjectionPlaneById(hingeLine.plane2Id);
+      
+      if (!plane1 || !plane2) {
+        console.warn('[ThreeView] Cannot render hinge line: planes not found', hingeLine.id);
+        continue;
+      }
     
-    if (!plane1 || !plane2) {
-      console.warn('[ThreeView] Cannot render hinge line: planes not found');
-      return;
+      // Get 3D realizations
+      const plane1Realization = world.getProjectionPlane3DRealization(plane1.id!);
+      const plane2Realization = world.getProjectionPlane3DRealization(plane2.id!);
+      
+      if (!plane1Realization || !plane2Realization) {
+        console.warn('[ThreeView] Cannot render hinge line: plane realizations not found', hingeLine.id);
+        continue;
+      }
+      
+      // Extract plane normals from transformation matrices (generic algorithm)
+      // The third column (indices 8, 9, 10) of planeTo3D matrix is the plane's normal
+      const plane1Normal = new THREE.Vector3(
+        plane1Realization.planeTo3D.elements[8],
+        plane1Realization.planeTo3D.elements[9],
+        plane1Realization.planeTo3D.elements[10]
+      ).normalize();
+      
+      const plane2Normal = new THREE.Vector3(
+        plane2Realization.planeTo3D.elements[8],
+        plane2Realization.planeTo3D.elements[9],
+        plane2Realization.planeTo3D.elements[10]
+      ).normalize();
+      
+      // Intersection direction = cross product of normals (generic for any two planes)
+      const direction = new THREE.Vector3().crossVectors(plane1Normal, plane2Normal).normalize();
+      
+      // Get origin point - use plane1's origin (translation from matrix)
+      const origin = new THREE.Vector3(
+        plane1Realization.planeTo3D.elements[9],
+        plane1Realization.planeTo3D.elements[10],
+        plane1Realization.planeTo3D.elements[11]
+      );
+      
+      // Create line extending in both directions from origin
+      const lineLength = 40; // Extend 20 units in each direction
+      const start = origin.clone().add(direction.clone().multiplyScalar(-lineLength / 2));
+      const end = origin.clone().add(direction.clone().multiplyScalar(lineLength / 2));
+      
+      // Create dashed line geometry
+      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+      const material = new THREE.LineDashedMaterial({
+        color: 0x333333,  // Dark gray per spec
+        dashSize: 0.5,
+        gapSize: 0.3,
+        linewidth: 2
+      });
+      
+      const line = new THREE.Line(geometry, material);
+      line.computeLineDistances(); // Required for dashed lines
+      line.userData.type = 'hinge-line';
+      line.userData.hingeLineId = hingeLine.id;
+      scene.add(line);
     }
-    
-    // Get 3D realizations
-    const plane1Realization = world.getProjectionPlane3DRealization(plane1.id!);
-    const plane2Realization = world.getProjectionPlane3DRealization(plane2.id!);
-    
-    if (!plane1Realization || !plane2Realization) {
-      console.warn('[ThreeView] Cannot render hinge line: plane realizations not found');
-      return;
-    }
-    
-    // Extract plane normals from transformation matrices (generic algorithm)
-    // The third column (indices 8, 9, 10) of planeTo3D matrix is the plane's normal
-    const plane1Normal = new THREE.Vector3(
-      plane1Realization.planeTo3D.elements[8],
-      plane1Realization.planeTo3D.elements[9],
-      plane1Realization.planeTo3D.elements[10]
-    ).normalize();
-    
-    const plane2Normal = new THREE.Vector3(
-      plane2Realization.planeTo3D.elements[8],
-      plane2Realization.planeTo3D.elements[9],
-      plane2Realization.planeTo3D.elements[10]
-    ).normalize();
-    
-    // Intersection direction = cross product of normals (generic for any two planes)
-    const direction = new THREE.Vector3().crossVectors(plane1Normal, plane2Normal).normalize();
-    
-    // Get origin point - use plane1's origin (translation from matrix)
-    const origin = new THREE.Vector3(
-      plane1Realization.planeTo3D.elements[9],
-      plane1Realization.planeTo3D.elements[10],
-      plane1Realization.planeTo3D.elements[11]
-    );
-    
-    // Create line extending in both directions from origin
-    const lineLength = 40; // Extend 20 units in each direction
-    const start = origin.clone().add(direction.clone().multiplyScalar(-lineLength / 2));
-    const end = origin.clone().add(direction.clone().multiplyScalar(lineLength / 2));
-    
-    // Create dashed line geometry
-    const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
-    const material = new THREE.LineDashedMaterial({
-      color: 0x333333,  // Dark gray per spec
-      dashSize: 0.5,
-      gapSize: 0.3,
-      linewidth: 2
-    });
-    
-    const line = new THREE.Line(geometry, material);
-    line.computeLineDistances(); // Required for dashed lines
-    line.userData.type = 'hinge-line';
-    line.userData.hingeLineId = hingeLine.id;
-    scene.add(line);
   } catch (error) {
-    console.warn('[ThreeView] Error rendering hinge line:', error);
+    console.warn('[ThreeView] Error rendering hinge lines:', error);
   }
 }
 
@@ -301,7 +302,7 @@ function renderHingeLine() {
  */
 function handleDisplayChange() {
   renderProjectionPlanes();
-  renderHingeLine();
+  renderHingeLines();
   render2DElements();
 }
 
@@ -370,7 +371,7 @@ onMounted(() => {
     renderTick,
     () => {
       renderProjectionPlanes();
-      renderHingeLine();
+      renderHingeLines();
       render2DElements();
     }
   );
@@ -379,11 +380,11 @@ onMounted(() => {
   watch(
     displayOptions,
     (newOptions, oldOptions) => {
-      // Re-render planes and hinge line if showPlanes or showGrid changed
+      // Re-render planes and hinge lines if showPlanes or showGrid changed
       if (newOptions.showPlanes !== oldOptions?.showPlanes || 
           newOptions.showGrid !== oldOptions?.showGrid) {
         renderProjectionPlanes();
-        renderHingeLine();
+        renderHingeLines();
       }
       
       // Re-render 2D elements if show2DElementsOnPlanes changed
