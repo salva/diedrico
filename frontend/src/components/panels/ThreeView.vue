@@ -145,6 +145,8 @@ function initThreeScene() {
  * Render projection planes in 3D space
  */
 function renderProjectionPlanes() {
+  console.log('[ThreeView] renderProjectionPlanes called, showPlanes=', displayOptions.value.showPlanes);
+  
   if (!displayOptions.value.showPlanes) return;
 
   // Clear existing plane geometry
@@ -153,9 +155,19 @@ function renderProjectionPlanes() {
     .forEach(child => scene.remove(child));
 
   // Render each projection plane
+  const planeCount = world.projectionPlanes.size;
+  console.log('[ThreeView] Number of projection planes:', planeCount);
+  
   for (const plane of world.projectionPlanes.values()) {
+    console.log('[ThreeView] Processing plane:', plane.id, 'color:', plane.color);
+    
     const planeRealization = world.getProjectionPlane3DRealization(plane.id!);
-    if (!planeRealization) continue;
+    console.log('[ThreeView] Plane realization for', plane.id, ':', planeRealization);
+    
+    if (!planeRealization) {
+      console.warn('[ThreeView] No 3D realization for plane', plane.id);
+      continue;
+    }
 
     // Create plane mesh (semi-transparent)
     const planeSize = 20; // Size of visual plane representation
@@ -163,6 +175,7 @@ function renderProjectionPlanes() {
     
     // Use plane's color property (hex string like '#2196F3')
     const planeColor = parseInt(plane.color.replace('#', '0x'));
+    console.log('[ThreeView] Plane color:', plane.color, '→', planeColor.toString(16));
     
     const material = new THREE.MeshBasicMaterial({
       color: planeColor,
@@ -178,17 +191,23 @@ function renderProjectionPlanes() {
     // Matrix4x3.elements is flat array [m11, m12, m13, m21, m22, m23, m31, m32, m33, m41, m42, m43]
     // stored in row-major order. Convert to THREE.Matrix4 (row-major, 4x4 with last row [0,0,0,1])
     const e = matrix.elements;
+    console.log('[ThreeView] planeTo3D matrix elements:', e);
+    
     mat4.set(
       e[0], e[1], e[2], e[9],   // Row 0: [m11, m12, m13, m41]
       e[3], e[4], e[5], e[10],  // Row 1: [m21, m22, m23, m42]
       e[6], e[7], e[8], e[11],  // Row 2: [m31, m32, m33, m43]
       0, 0, 0, 1                // Row 3: [0, 0, 0, 1]
     );
+    console.log('[ThreeView] THREE.Matrix4 after set:', mat4.toArray());
+    
     planeMesh.applyMatrix4(mat4);
+    console.log('[ThreeView] planeMesh position after transform:', planeMesh.position.toArray());
 
     planeMesh.userData.type = 'projection-plane';
     planeMesh.userData.planeId = plane.id;
     scene.add(planeMesh);
+    console.log('[ThreeView] Added plane mesh to scene');
 
     // Add plane border (grid)
     if (displayOptions.value.showGrid) {
