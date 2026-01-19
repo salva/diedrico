@@ -532,8 +532,11 @@ export class World {
     // Phase 22.5.3: Clear realizations from ProjectionPlane caches
     // Use dependency service to cascade invalidation to all dependents
     this.dependencyService.invalidateCascade(pointId, (id: string) => {
-      // Clear 3D realization cache (still at World level)
+      // Clear all 3D realization caches (Phase 78: includes 3D elements)
       this.pointRealizations3D.delete(id);
+      this.lineRealizations3D.delete(id);
+      this.segmentRealizations3D.delete(id);
+      this.planeRealizations3D.delete(id);
       
       // Clear 2D realization caches in all planes
       for (const plane of this.projectionPlanes.values()) {
@@ -559,8 +562,11 @@ export class World {
     // Phase 22.5.3: Clear realizations from ProjectionPlane caches
     // Use dependency service to cascade invalidation to all dependents
     this.dependencyService.invalidateCascade(lineId, (id: string) => {
-      // Clear 3D realization cache (still at World level)
+      // Clear all 3D realization caches (Phase 78: includes 3D elements)
       this.pointRealizations3D.delete(id);
+      this.lineRealizations3D.delete(id);
+      this.segmentRealizations3D.delete(id);
+      this.planeRealizations3D.delete(id);
       
       // Clear 2D realization caches in all planes
       for (const plane of this.projectionPlanes.values()) {
