@@ -14,14 +14,14 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
-import type { Element2D } from '@/domain/world/Element2D';
 import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
 import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 
 /**
  * CircleTool using ArgumentCollectorTool framework
@@ -78,54 +78,35 @@ export class CircleTool extends ArgumentCollectorTool {
   }
 
   /**
-   * Execute circle creation when both points collected
+   * Execute circle creation operations
    */
-  protected execute(
-    setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, import('@/types/ToolArgumentCollector').ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
-    const { planeId, commandStack, world } = context;
+  ): void {
+    const { planeId } = context;
     
     const center = args.get('center')!.element as Point2D;
     const circumferencePoint = args.get('circumferencePoint')!.element as Point2D;
     
-    try {
-      const cmd = new Command("Create circle", world);
-      
-      // Create circle using collected points
-      const result = cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(
-        planeId,
-        center.id,
-        circumferencePoint.id
-      ));
-      
-      const circleId = result.outputs.circleId;
-      
-      // Record ProcessTree action with both points for dependency tracking
-      const action = createCircleAction(
-        circleId,
-        planeId,
-        center.id,
-        circumferencePoint.id
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      
-      // Commit and push
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      // Handle tool completion (stays active for repeated use)
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(
-        `Created circle ${circleId} with center ${center.id} and circumference ${circumferencePoint.id}`
-      );
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create circle: ${message}`);
-    }
+    // Create circle using collected points
+    const result = cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(
+      planeId,
+      center.id,
+      circumferencePoint.id
+    ));
+    
+    const circleId = result.outputs.circleId;
+    
+    // Record ProcessTree action with both points for dependency tracking
+    const action = createCircleAction(
+      circleId,
+      planeId,
+      center.id,
+      circumferencePoint.id
+    );
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
   }
 }
 

@@ -14,9 +14,8 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
-import type { Element2D } from '@/domain/world/Element2D';
 import type { Point2D } from '@/domain/world/Point';
 import type { Line2D } from '@/domain/world/Line';
 import { SelectionMask } from '@/types/SelectionMask';
@@ -60,51 +59,36 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
   }
 
   /**
-   * Execute perpendicular line creation when both arguments collected
+   * Execute perpendicular line creation operations
    */
-  protected execute(
-    _setIndex: number, // Unused: only one argument set
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, import('@/types/ToolArgumentCollector').ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
-    const { planeId, commandStack, world } = context;
+  ): void {
+    const { planeId } = context;
     
     const referenceLine = args.get('referenceLine')!.element as Line2D;
     const throughPoint = args.get('throughPoint')!.element as Point2D;
     
-    try {
-      const cmd = new Command("Create perpendicular line", world);
-      
-      // Create perpendicular line using collected arguments
-      const result = cmd.addAndExecute(
-        new AddLine2DPerpendicularToLineOp(planeId, referenceLine.id, throughPoint.id)
-      );
-      
-      const lineId = result.outputs.lineId;
-      
-      // Record ProcessTree action for dependency tracking
-      const action = createPerpendicularLineAction(
-        lineId,
-        planeId,
-        referenceLine.id,
-        throughPoint.id
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      
-      // Commit and push
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      // Handle tool completion (returns to selection mode)
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(
-        `Created perpendicular line ${lineId} perpendicular to ${referenceLine.id} through ${throughPoint.id}`
-      );
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create perpendicular line: ${message}`);
-    }
+    // Create perpendicular line using collected arguments
+    const result = cmd.addAndExecute(
+      new AddLine2DPerpendicularToLineOp(planeId, referenceLine.id, throughPoint.id)
+    );
+    
+    const lineId = result.outputs.lineId;
+    
+    // Record ProcessTree action for dependency tracking
+    const action = createPerpendicularLineAction(
+      lineId,
+      planeId,
+      referenceLine.id,
+      throughPoint.id
+    );
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+  }
+
+  protected getCommandDescription(): string {
+    return "Create perpendicular line";
   }
 }

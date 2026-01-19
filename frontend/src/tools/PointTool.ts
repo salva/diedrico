@@ -12,7 +12,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
@@ -53,42 +53,27 @@ export class PointTool extends ArgumentCollectorTool {
   }
 
   /**
-   * Execute point creation at captured position
+   * Execute point creation operations
    */
-  protected execute(
-    _setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
+  ): void {
     const positionArg = args.get('position')!;
     const planeCoords = positionArg.planeCoords;
-    const { planeId, commandStack, world } = context;
+    const { planeId } = context;
 
-    try {
-      const cmd = new Command("Create free point", world);
-      
-      // Use return value from addAndExecute
-      const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planeCoords));
-      
-      // Extract outputs
-      const pointId = result.outputs.pointId;
-      
-      // Record ProcessTree action
-      const action = createPointAction(pointId, planeId, planeCoords);
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      
-      // Commit and push
-      cmd.commit();
-      commandStack.push(cmd);
+    // Create free point operation
+    const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planeCoords));
+    const pointId = result.outputs.pointId;
+    
+    // Record ProcessTree action
+    const action = createPointAction(pointId, planeId, planeCoords);
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+  }
 
-      // Handle tool completion (stays active for repeated use)
-      this.handleCompletion(context.toolStore);
-
-      return this.success(`Created point ${pointId}`);
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create point: ${message}`);
-    }
+  protected getCommandDescription(): string {
+    return "Create free point";
   }
 }

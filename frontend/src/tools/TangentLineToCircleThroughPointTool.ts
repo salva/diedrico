@@ -15,7 +15,7 @@
 
 import { Vector3 } from 'three';
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
@@ -61,14 +61,14 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
   }
 
   /**
-   * Execute tangent line creation when both elements collected
+   * Execute tangent line creation operations
    * Uses mouse position from second click to determine which tangent to create
    */
-  protected execute(
-    _setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
+  ): void {
     const circle = args.get('circle')!.element!;
     const throughPoint = args.get('throughPoint')!.element!;
     
@@ -78,51 +78,37 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
     
     const circleId = circle.id;
     const throughPointId = throughPoint.id;
-    const { planeId, commandStack, world } = context;
+    const { planeId, world } = context;
 
-    try {
-      // Determine tangent index based on mouse position
-      const tangentIndex = this.determineTangentIndex(
-        planeId,
-        circleId,
-        throughPointId,
-        mousePos,
-        world
-      );
-      
-      const cmd = new Command("Create tangent line to circle through point", world);
-      
-      // Use return value from addAndExecute
-      const result = cmd.addAndExecute(
-        new AddLine2DTangentToCircleThroughPointOp(planeId, circleId, throughPointId, tangentIndex)
-      );
-      
-      // Extract outputs
-      const lineId = result.outputs.lineId;
-      
-      // Record ProcessTree action
-      const action = createTangentLineToCircleThroughPointAction(
-        lineId,
-        planeId,
-        circleId,
-        throughPointId,
-        tangentIndex
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      
-      // Commit and push
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      // Handle tool completion (stays active for repeated use)
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(`Created tangent line ${lineId} (index ${tangentIndex})`);
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create tangent line: ${message}`);
-    }
+    // Determine tangent index based on mouse position
+    const tangentIndex = this.determineTangentIndex(
+      planeId,
+      circleId,
+      throughPointId,
+      mousePos,
+      world
+    );
+    
+    // Create tangent line
+    const result = cmd.addAndExecute(
+      new AddLine2DTangentToCircleThroughPointOp(planeId, circleId, throughPointId, tangentIndex)
+    );
+    
+    const lineId = result.outputs.lineId;
+    
+    // Record ProcessTree action
+    const action = createTangentLineToCircleThroughPointAction(
+      lineId,
+      planeId,
+      circleId,
+      throughPointId,
+      tangentIndex
+    );
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+  }
+
+  protected getCommandDescription(): string {
+    return "Create tangent line to circle through point";
   }
 
   /**

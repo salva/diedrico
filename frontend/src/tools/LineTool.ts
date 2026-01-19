@@ -14,7 +14,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import type { Element2D } from '@/domain/world/Element2D';
 import type { Point2D } from '@/domain/world/Point';
@@ -70,41 +70,23 @@ export class LineTool extends ArgumentCollectorTool {
   }
 
   /**
-   * Execute line creation when both points collected
+   * Execute line creation operations
    */
-  protected execute(
-    _setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
+  ): void {
     const point1 = args.get('point1')!.element as Point2D;
     const point2 = args.get('point2')!.element as Point2D;
-    const { planeId, commandStack, world } = context;
+    const { planeId } = context;
 
-    try {
-      // Build Command directly
-      const cmd = new Command("Create line", world);
-      
-      // Create line operation
-      const result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1.id, point2.id));
-      const lineId = result.outputs.lineId;
-      
-      // Record ProcessTree action
-      const action = createLineAction(lineId, planeId, point1.id, point2.id);
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      
-      // Commit and push
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      // Handle tool completion (stays active for repeated use)
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(`Created line ${lineId} between ${point1.id} and ${point2.id}`);
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create line: ${message}`);
-    }
+    // Create line operation
+    const result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1.id, point2.id));
+    const lineId = result.outputs.lineId;
+    
+    // Record ProcessTree action
+    const action = createLineAction(lineId, planeId, point1.id, point2.id);
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
   }
 }

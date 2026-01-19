@@ -14,7 +14,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
@@ -66,11 +66,11 @@ export class Create3DLineTool extends ArgumentCollectorTool {
     ];
   }
 
-  protected execute(
-    _setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
+  ): void {
     const proj1 = args.get('projection1')!.element!;
     const proj2 = args.get('projection2')!.element!;
     
@@ -78,43 +78,27 @@ export class Create3DLineTool extends ArgumentCollectorTool {
     const projection2Id = proj2.id;
     const plane1Id = proj1.planeId;
     const plane2Id = proj2.planeId;
-    
-    const { commandStack, world } = context;
 
-    try {
-      const cmd = new Command("Create 3D line from projections", world);
-      
-      const result = cmd.addAndExecute(new Add3DLineOp(
-        projection1Id,
-        projection2Id,
-        plane1Id,
-        plane2Id
-      ));
-      
-      const line3dId = result.outputs.lineId;
-      
-      const action = createAdd3DLineAction(
-        line3dId,
-        projection1Id,
-        projection2Id,
-        plane1Id,
-        plane2Id
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(
-        `Created 3D line ${line3dId} from projections: ` +
-        `${projection1Id} (${plane1Id}) and ${projection2Id} (${plane2Id})`
-      );
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create 3D line: ${message}`);
-    }
+    const result = cmd.addAndExecute(new Add3DLineOp(
+      projection1Id,
+      projection2Id,
+      plane1Id,
+      plane2Id
+    ));
+    
+    const line3dId = result.outputs.lineId;
+    
+    const action = createAdd3DLineAction(
+      line3dId,
+      projection1Id,
+      projection2Id,
+      plane1Id,
+      plane2Id
+    );
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+  }
+
+  protected getCommandDescription(): string {
+    return "Create 3D line from projections";
   }
 }

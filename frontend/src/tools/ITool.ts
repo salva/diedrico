@@ -60,21 +60,6 @@ export interface ITool {
   handleClick(context: ToolContext): ToolResult;
   
   /**
-   * Get the selection mask for the current tool step.
-   * Defines which element types can be selected/highlighted.
-   * 
-   * @returns Array of element types that can be selected.
-   *          Empty array means no elements are selectable.
-   * 
-   * Example implementations:
-   * - Line tool: always returns ['point']
-   * - Guide tool: returns ['half-hinge-line', 'point'] initially,
-   *              then ['point'] after picking HHL,
-   *              or ['half-hinge-line'] after picking point
-   */
-  getSelectionMask(): SelectionMask;
-  
-  /**
    * Optional: Cancel ongoing multi-step operation
    */
   cancel?(): void;

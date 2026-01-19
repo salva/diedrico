@@ -266,7 +266,8 @@ export class GoogleDriveService {
       if (error.message?.includes('401')) {
         throw new Error('Authentication expired. Please sign in again.');
       }
-      throw new Error(`Failed to fetch user profile: ${error.message || error}`);
+      const errorMsg = error.message || error.result?.error?.message || JSON.stringify(error);
+      throw new Error(`Failed to fetch user profile: ${errorMsg}`);
     }
   }
 
@@ -338,7 +339,8 @@ export class GoogleDriveService {
       } else if (error.status === 404) {
         throw new Error('Diedrico folder not found.');
       }
-      throw new Error(`Failed to list files: ${error.message || error}`);
+      const errorMsg = error.message || error.result?.error?.message || JSON.stringify(error);
+      throw new Error(`Failed to list files: ${errorMsg}`);
     }
   }
 
@@ -441,7 +443,9 @@ export class GoogleDriveService {
       } else if (!navigator.onLine) {
         throw new Error('No internet connection. Please check your network.');
       }
-      throw new Error(`Failed to load file: ${error.message || error}`);
+      // Better error message formatting
+      const errorMsg = error.message || error.result?.error?.message || JSON.stringify(error);
+      throw new Error(`Failed to load file: ${errorMsg}`);
     }
   }
 
@@ -490,7 +494,8 @@ export class GoogleDriveService {
       } else if (!navigator.onLine) {
         throw new Error('No internet connection. Changes will be saved when you\'re back online.');
       }
-      throw new Error(`Failed to save file: ${error.message || error}`);
+      const errorMsg = error.message || error.result?.error?.message || JSON.stringify(error);
+      throw new Error(`Failed to save file: ${errorMsg}`);
     }
   }
 
@@ -588,7 +593,8 @@ export class GoogleDriveService {
       } else if (error.status === 404) {
         throw new Error('File not found. It may have been deleted.');
       }
-      throw new Error(`Failed to rename file: ${error.message || error}`);
+      const errorMsg = error.message || error.result?.error?.message || JSON.stringify(error);
+      throw new Error(`Failed to rename file: ${errorMsg}`);
     }
   }
 

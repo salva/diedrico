@@ -14,7 +14,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
@@ -82,13 +82,13 @@ export class Create3DPointTool extends ArgumentCollectorTool {
   }
 
   /**
-   * Execute 3D point creation when both projections collected and validated
+   * Execute 3D point creation operations
    */
-  protected execute(
-    _setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
+  ): void {
     const proj1 = args.get('projection1')!.element!;
     const proj2 = args.get('projection2')!.element!;
     
@@ -96,48 +96,29 @@ export class Create3DPointTool extends ArgumentCollectorTool {
     const projection2Id = proj2.id;
     const plane1Id = proj1.planeId;
     const plane2Id = proj2.planeId;
-    
-    const { commandStack, world } = context;
 
-    try {
-      const cmd = new Command("Create 3D point from projections", world);
-      
-      // Execute Add3DPointOp
-      const result = cmd.addAndExecute(new Add3DPointOp(
-        projection1Id,
-        projection2Id,
-        plane1Id,
-        plane2Id
-      ));
-      
-      // Extract outputs
-      const point3dId = result.outputs.pointId;
-      
-      // Register ProcessTree action for dependency tracking
-      const action = createAdd3DPointAction(
-        point3dId,
-        projection1Id,
-        projection2Id,
-        plane1Id,
-        plane2Id
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      
-      // Commit and push
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      // Handle tool completion (stays active for repeated use)
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(
-        `Created 3D point ${point3dId} from projections: ` +
-        `${projection1Id} (${plane1Id}) and ${projection2Id} (${plane2Id})`
-      );
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create 3D point: ${message}`);
-    }
+    // Execute Add3DPointOp
+    const result = cmd.addAndExecute(new Add3DPointOp(
+      projection1Id,
+      projection2Id,
+      plane1Id,
+      plane2Id
+    ));
+    
+    const point3dId = result.outputs.pointId;
+    
+    // Register ProcessTree action for dependency tracking
+    const action = createAdd3DPointAction(
+      point3dId,
+      projection1Id,
+      projection2Id,
+      plane1Id,
+      plane2Id
+    );
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+  }
+
+  protected getCommandDescription(): string {
+    return "Create 3D point from projections";
   }
 }

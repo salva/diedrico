@@ -24,7 +24,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
@@ -76,7 +76,7 @@ export class GuideTool extends ArgumentCollectorTool {
   }
 
   /**
-   * Execute guide creation when both elements collected
+   * Execute guide creation operations
    * 
    * Creates:
    * - Primary guide on active plane
@@ -86,72 +86,53 @@ export class GuideTool extends ArgumentCollectorTool {
    * - createGuideAction (primary guide)
    * - createSiblingGuideAction (sibling guide)
    */
-  protected execute(
-    _setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
+  ): void {
     const referenceLine = args.get('referenceLine')!.element!;
     const throughPoint = args.get('throughPoint')!.element!;
     const referenceLineId = referenceLine.id;
     const throughPointId = throughPoint.id;
-    const { planeId, commandStack, world } = context;
+    const { planeId, world } = context;
 
-    try {
-      const cmd = new Command("Create guide", world);
-      
-      // Use factory to create guide with sibling
-      // This creates both primary and sibling guides automatically
-      const result = GuideSequenceFactory.createGuideWithSibling(
-        cmd, 
-        planeId, 
-        referenceLineId, 
-        throughPointId, 
-        world
-      );
-      
-      const guideId = result.guideId;
-      const siblingGuideId = result.siblingGuideId;
-      
-      // Record ProcessTree action for primary guide
-      const primaryAction = createGuideAction(
-        guideId, 
-        planeId, 
-        referenceLineId, 
-        throughPointId
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(primaryAction));
-      
-      // Record ProcessTree action for sibling guide
-      // HalfHingeLine2D.getSiblingInfo() provides sibling plane and sibling HHL info
-      const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
-      
-      if (!siblingInfo) {
-        throw new Error(`Failed to get sibling info for half-hinge-line ${referenceLineId}`);
-      }
-      
-      const siblingAction = createSiblingGuideAction(
-        siblingGuideId, 
-        siblingInfo.siblingPlaneId, 
-        guideId, 
-        siblingInfo.siblingHalfHingeLineId
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
-      
-      // Commit and push
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      // Handle tool completion (stays active for repeated use)
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(
-        `Created guide ${guideId} and sibling ${siblingGuideId}`
-      );
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create guide: ${message}`);
+    // Use factory to create guide with sibling
+    // This creates both primary and sibling guides automatically
+    const result = GuideSequenceFactory.createGuideWithSibling(
+      cmd, 
+      planeId, 
+      referenceLineId, 
+      throughPointId, 
+      world
+    );
+    
+    const guideId = result.guideId;
+    const siblingGuideId = result.siblingGuideId;
+    
+    // Record ProcessTree action for primary guide
+    const primaryAction = createGuideAction(
+      guideId, 
+      planeId, 
+      referenceLineId, 
+      throughPointId
+    );
+    cmd.addAndExecute(new AddProcessTreeActionOp(primaryAction));
+    
+    // Record ProcessTree action for sibling guide
+    // HalfHingeLine2D.getSiblingInfo() provides sibling plane and sibling HHL info
+    const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+    
+    if (!siblingInfo) {
+      throw new Error(`Failed to get sibling info for half-hinge-line ${referenceLineId}`);
     }
+    
+    const siblingAction = createSiblingGuideAction(
+      siblingGuideId, 
+      siblingInfo.siblingPlaneId, 
+      guideId, 
+      siblingInfo.siblingHalfHingeLineId
+    );
+    cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
   }
 }

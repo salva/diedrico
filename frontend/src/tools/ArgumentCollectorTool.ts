@@ -39,8 +39,9 @@
 
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext, ToolResult, ITool } from './ITool';
 import { SelectionMask, getSelectableType, NoneMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
 import type { 
   ToolArgumentSpec, 
   ToolArgumentSet, 
@@ -62,7 +63,7 @@ import type {
  * - reset(): Clear collected arguments
  * - cancel(): Abort collection and reset
  */
-export abstract class ArgumentCollectorTool extends BaseTool {
+export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
   /** Map of collected arguments (argument name → {element, position}) */
   private collected: Map<string, ArgumentValue> = new Map();
   
@@ -87,31 +88,70 @@ export abstract class ArgumentCollectorTool extends BaseTool {
   protected abstract getArgumentSets(): ToolArgumentSet[];
   
   /**
+   * Execute operations inside command (to be implemented by subclasses)
+   * 
+   * Subclasses implement this method with just the operation logic.
+   * The framework handles command creation, commit/rollback, and error handling.
+   * 
+   * @param cmd - Command to add operations to
+   * @param args - Map of collected arguments (name → {element, planeCoords})
+   * @param context - Tool execution context (world, commandStack, etc.)
+   */
+  protected abstract executeOperations(
+    cmd: Command,
+    args: Map<string, ArgumentValue>,
+    context: ToolContext
+  ): void;
+
+  /**
+   * Get command description for this tool
+   * Override to customize command name in undo/redo stack
+   */
+  protected getCommandDescription(): string {
+    return `Create ${this.name}`;
+  }
+
+  /**
    * Execute geometric construction when arguments are complete
    * 
    * Called automatically when exactly one viable set has all arguments collected,
    * BUT ONLY if the completed set does not have its own execute callback.
    * 
-   * Framework has already validated all arguments (type, argument-level, set-level).
-   * 
-   * Single-method tools: Implement this method (setIndex always 0, can be ignored)
-   * Multi-method tools: Either implement this with if/switch on setIndex,
-   *                     OR provide execute callback in each ToolArgumentSet (cleaner)
+   * Framework handles:
+   * - Command creation
+   * - Operation execution (via executeOperations)
+   * - Commit on success / Rollback on error
+   * - Command stack management
+   * - Tool completion
    * 
    * @param setIndex - Index of the completed argument set in getArgumentSets()
    * @param args - Map of collected arguments (name → {element, planeCoords})
    * @param context - Tool execution context (world, commandStack, etc.)
-   * @returns Tool result (success/failure message)
+   * @throws Error if operation fails (will be caught by handleClick)
    */
   protected execute(
     _setIndex: number, 
-    _args: Map<string, ArgumentValue>,
-    _context: ToolContext
-  ): ToolResult {
-    throw new Error(
-      `Tool ${this.name}: No execute() implementation found. ` +
-      `Either implement execute() method or provide execute callback in ToolArgumentSet.`
-    );
+    args: Map<string, ArgumentValue>,
+    context: ToolContext
+  ): void {
+    const { commandStack, world } = context;
+    const cmd = new Command(this.getCommandDescription(), world);
+    
+    try {
+      // Execute tool-specific operations
+      this.executeOperations(cmd, args, context);
+    } catch (error) {
+      // Rollback on error
+      cmd.rollback();
+      throw error; // Re-throw to be handled by handleClick
+    }
+
+    // Commit and push to stack
+    cmd.commit();
+    commandStack.push(cmd);
+      
+    // Handle tool completion
+    this.handleCompletion(context.toolStore);
   }
   
   // === Automated Methods (Framework Implementation) ===
@@ -132,15 +172,7 @@ export abstract class ArgumentCollectorTool extends BaseTool {
   handleClick(context: ToolContext): ToolResult {
     const { planeId, canvasCoords, world, paper, paperToPlaneTransform } = context;
     
-    // Validate plane
-    if (!this.validatePlane(planeId, world)) {
-      return this.failure(`Plane not found: ${planeId}`);
-    }
-    
-    const plane = world.getProjectionPlaneById(planeId);
-    if (!plane) {
-      return this.failure(`Plane not found: ${planeId}`);
-    }
+    const plane = world.getProjectionPlaneById(planeId)!;
     
     // Initialize viable sets on first click
     if (this.viableSets.length === 0) {
@@ -165,7 +197,7 @@ export abstract class ArgumentCollectorTool extends BaseTool {
       const hasNoneMask = viableSpecs.some(spec => spec.mask instanceof NoneMask);
       
       if (!hasNoneMask) {
-        return this.failure('No selectable element found at click position.');
+        return { success: false, message: 'No selectable element found at click position.' };
       }
       
       // SelectionMask.none() - use null element with mouse position
@@ -177,7 +209,7 @@ export abstract class ArgumentCollectorTool extends BaseTool {
       // Element hit - get element and create ArgumentValue
       const element = world.getElement2D(hit.elementId);
       if (!element) {
-        return this.failure(`Element not found: ${hit.elementId}`);
+        return { success: false, message: `Element not found: ${hit.elementId}` };
       }
       
       argumentValue = {
@@ -196,7 +228,7 @@ export abstract class ArgumentCollectorTool extends BaseTool {
     const result = this.tryAddArgument(argumentValue, collectionContext);
     
     if (!result.success) {
-      return this.failure(result.error || 'Cannot add element as argument');
+      return { success: false, message: result.error || 'Cannot add element as argument' };
     }
     
     // Update viable sets
@@ -209,19 +241,29 @@ export abstract class ArgumentCollectorTool extends BaseTool {
       const argumentSets = this.getArgumentSets();
       const completedSet = argumentSets[completedSetIndex];
       
-      // Execute construction using set's callback or tool's execute method
-      const executeResult = completedSet.execute 
-        ? completedSet.execute(this.collected, context)
-        : this.execute(completedSetIndex, this.collected, context);
-      
-      // Reset after execution
-      this.reset();
-      
-      return executeResult;
+      try {
+        // Execute construction using set's callback or tool's execute method
+        if (completedSet.execute) {
+          const executeResult = completedSet.execute(this.collected, context);
+          // Reset after execution
+          this.reset();
+          return executeResult;
+        } else {
+          this.execute(completedSetIndex, this.collected, context);
+          // Reset after execution
+          this.reset();
+          return { success: true, message: `${this.getCommandDescription()} completed successfully` };
+        }
+      } catch (error) {
+        // Reset on error
+        this.reset();
+        const message = error instanceof Error ? error.message : String(error);
+        return { success: false, message: `Failed to ${this.getCommandDescription().toLowerCase()}: ${message}` };
+      }
     }
     
     // Return status showing progress
-    return this.success(this.getStatusMessage());
+    return { success: true, message: this.getStatusMessage() };
   }
   
   /**

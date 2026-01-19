@@ -17,7 +17,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import type { Element2D } from '@/domain/world/Element2D';
 import type { Point2D } from '@/domain/world/Point';
@@ -73,41 +73,23 @@ export class SegmentTool extends ArgumentCollectorTool {
   }
 
   /**
-   * Execute segment creation when both points collected
+   * Execute segment creation operations
    */
-  protected execute(
-    _setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
+  ): void {
     const point1 = args.get('point1')!.element as Point2D;
     const point2 = args.get('point2')!.element as Point2D;
-    const { planeId, commandStack, world } = context;
+    const { planeId } = context;
 
-    try {
-      // Build Command directly
-      const cmd = new Command("Create segment", world);
-      
-      // Create segment operation
-      const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1.id, point2.id));
-      const segmentId = result.outputs.segmentId;
-      
-      // Record ProcessTree action
-      const action = createSegmentAction(segmentId, planeId, point1.id, point2.id);
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      
-      // Commit and push
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      // Handle tool completion (stays active for repeated use)
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(`Created segment ${segmentId} between ${point1.id} and ${point2.id}`);
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create segment: ${message}`);
-    }
+    // Create segment operation
+    const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1.id, point2.id));
+    const segmentId = result.outputs.segmentId;
+    
+    // Record ProcessTree action
+    const action = createSegmentAction(segmentId, planeId, point1.id, point2.id);
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
   }
 }

@@ -1085,11 +1085,13 @@ function handleCanvasClick(event: MouseEvent) {
     toolStore
   });
   
+  // Trigger reactivity regardless of success/failure
+  // Even on failure, rollback or partial state changes may need visual refresh
+  renderTick.value++;
+  console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+  
   if (result.success) {
     console.log('[SvgCanvas] Tool operation succeeded:', result.message);
-    // Trigger reactivity - World was mutated via command
-    renderTick.value++;
-    console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
   } else {
     console.error('[SvgCanvas] Tool operation failed:', result.message);
   }

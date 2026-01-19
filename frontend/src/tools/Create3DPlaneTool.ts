@@ -14,7 +14,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext, ToolResult } from './ITool';
+import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
@@ -64,11 +64,11 @@ export class Create3DPlaneTool extends ArgumentCollectorTool {
     ];
   }
 
-  protected execute(
-    _setIndex: number,
+  protected executeOperations(
+    cmd: Command,
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): ToolResult {
+  ): void {
     const trace1 = args.get('trace1')!.element!;
     const trace2 = args.get('trace2')!.element!;
     
@@ -76,34 +76,16 @@ export class Create3DPlaneTool extends ArgumentCollectorTool {
     const trace2Id = trace2.id;
     const plane1Id = trace1.planeId;
     const plane2Id = trace2.planeId;
-    
-    const { commandStack, world } = context;
 
-    try {
-      const cmd = new Command("Create 3D plane from traces", world);
-      
-      const result = cmd.addAndExecute(new Add3DPlaneOp(
-        trace1Id,
-        trace2Id,
-        plane1Id,
-        plane2Id
-      ));
-      
-      const plane3dId = result.outputs.planeId;
-      
-      cmd.commit();
-      commandStack.push(cmd);
-      
-      this.handleCompletion(context.toolStore);
-      
-      return this.success(
-        `Created 3D plane ${plane3dId} from traces: ` +
-        `${trace1Id} (${plane1Id}) and ${trace2Id} (${plane2Id})`
-      );
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return this.failure(`Failed to create 3D plane: ${message}`);
-    }
+    cmd.addAndExecute(new Add3DPlaneOp(
+      trace1Id,
+      trace2Id,
+      plane1Id,
+      plane2Id
+    ));
+  }
+
+  protected getCommandDescription(): string {
+    return "Create 3D plane from traces";
   }
 }
