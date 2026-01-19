@@ -24,6 +24,7 @@ import { Command } from '@/commands/Command';
 import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
 import { SelectionMask } from '@/types/SelectionMask';
 import { createAdd3DPointAction } from '@/domain/processTree/actions/Element3DActions';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 
 /**
  * Create3DPointTool state machine:
@@ -133,7 +134,7 @@ export class Create3DPointTool extends BaseTool {
           this.firstPlaneId!,
           secondPlaneId
         );
-        world.getProcessTree().addAction(action);
+        cmd.addAndExecute(new AddProcessTreeActionOp(action));
         
         // Commit
         cmd.commit();

@@ -8273,3 +8273,140 @@ const circumferencePointId = pointResult.outputs.pointId;
 **Phase 79 Status**: 🔄 IN PROGRESS (Jan 17, 2026)
 
 ---
+
+---
+
+## Phase 81: ProcessTree Action Registration as Undoable Operation
+
+**Status**: 📋 PLANNED (Jan 19, 2026)
+
+**Problem**: Tools call `world.getProcessTree().addAction()` outside commands, so undo removes elements but leaves orphaned ProcessTree actions, causing stale dependencies.
+
+**Solution**: Create `AddProcessTreeActionOp` to wrap action registration as undoable operation, add `ProcessTree.removeAction()` method, update all tools to use the operation.
+
+### T1185: Implement ProcessTree.removeAction() Method
+- Add `removeAction(actionId: string): ActionNode | null` method to ProcessTree class
+- Search tree for action by ID, remove from parent ActionGroup
+- If ActionGroup becomes empty, remove it from parent Subprocess
+- Call `notifyChange()` after removal
+- Return removed ActionNode for potential redo
+- Add private helper `removeEmptyActionGroup(actionGroupId: string)` 
+- Test: Unit tests for removing actions from various tree structures
+- **Files**: `frontend/src/domain/processTree/ProcessTree.ts`
+
+### T1186: Create AddProcessTreeActionOp Operation
+- Create new file `frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts`
+- Implement IOperation interface with apply/undo methods
+- apply(): Call `world.getProcessTree().addAction(this.action)`, store actionId and actionGroupId in outputs, rebuild dependency maps
+- undo(): Call `world.getProcessTree().removeAction(this.outputs.actionId)`, rebuild dependency maps
+- Constructor takes Action parameter, stores in parameters object
+- Test: Unit tests for apply/undo behavior
+- **Files**: `frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts` (NEW)
+
+### T1187: Update PointTool to Use AddProcessTreeActionOp
+- Import AddProcessTreeActionOp
+- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+- Verify action is now inside command (will be undone when command is undone)
+- Test: Integration test - create point, undo, verify ProcessTree action removed
+- **Files**: `frontend/src/tools/PointTool.ts`
+
+### T1188: Update LineTool to Use AddProcessTreeActionOp
+- Import AddProcessTreeActionOp
+- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+- Verify action is now inside command
+- Test: Integration test - create line, undo, verify ProcessTree action removed
+- **Files**: `frontend/src/tools/LineTool.ts`
+
+### T1189: Update CircleTool to Use AddProcessTreeActionOp
+- Import AddProcessTreeActionOp
+- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+- Verify action is now inside command
+- Test: Integration test - create circle, undo, verify ProcessTree action removed
+- **Files**: `frontend/src/tools/CircleTool.ts`
+
+### T1190: Update Create3DPointTool to Use AddProcessTreeActionOp
+- Import AddProcessTreeActionOp
+- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+- Verify action is now inside command
+- Test: Integration test - create 3D point, undo, verify ProcessTree action removed
+- **Files**: `frontend/src/tools/Create3DPointTool.ts`
+
+### T1191: Update Create3DLineTool to Use AddProcessTreeActionOp
+- Import AddProcessTreeActionOp
+- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+- Verify action is now inside command
+- Test: Integration test - create 3D line, undo, verify ProcessTree action removed
+- **Files**: `frontend/src/tools/Create3DLineTool.ts`
+
+### T1192: Update Remaining Tools That Register ProcessTree Actions
+- Search codebase for all remaining `world.getProcessTree().addAction()` calls in tools
+- Update GuideTool and any other tools found
+- Import AddProcessTreeActionOp in each
+- Replace direct calls with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+- Test: Integration tests for each tool - create element, undo, verify action removed
+- **Files**: `frontend/src/tools/GuideTool.ts`, possibly others
+
+### T1193: Write Integration Test - Undo Removes ProcessTree Action
+- Create test file `frontend/tests/integration/processTreeUndo.test.ts`
+- Test: Create line via LineTool → verify ProcessTree has action → undo → verify action removed
+- Test: Create point via PointTool → verify ProcessTree has action → undo → verify action removed
+- Test: Create 3D line via Create3DLineTool → verify ProcessTree has action → undo → verify action removed
+- Verify DependencyService maps don't reference deleted elements after undo
+- Use grep or tree traversal to confirm action ID not in ProcessTree after undo
+- **Files**: `frontend/tests/integration/processTreeUndo.test.ts` (NEW)
+
+### T1194: Write Integration Test - Redo Restores ProcessTree Action
+- Extend processTreeUndo.test.ts with redo tests
+- Test: Create line → undo → redo → verify action restored in ProcessTree
+- Test: Create point → undo → redo → verify action restored
+- Test: Create 3D line → undo → redo → verify action restored
+- Verify DependencyService maps correctly track restored elements
+- Verify actionGroupId is same after redo (or new one if needed)
+- **Files**: `frontend/tests/integration/processTreeUndo.test.ts`
+
+### T1195: Verify No Direct ProcessTree.addAction() Calls in Tools
+- Run grep search: `grep -r "world.getProcessTree().addAction" frontend/src/tools/`
+- Verify no matches (all should use AddProcessTreeActionOp now)
+- If any found, update those tools
+- Document pattern in code comments where AddProcessTreeActionOp is used
+- **Files**: All tool files (verification only)
+
+### T1196: Run Full Test Suite - Verify No Regressions
+- Run `npm test` to ensure all existing tests pass
+- Focus on undo/redo tests - verify they still work with new operation
+- Check that operations work without ProcessTree actions (for tests that don't use tools)
+- Verify backward compatibility - old commands without AddProcessTreeActionOp still undo/redo correctly
+- Fix any broken tests
+- **Files**: All test files
+
+### T1197: Commit Phase 81 - ProcessTree Action Registration as Operation
+- Verify all tasks T1185-T1196 complete
+- Run final test suite to confirm no regressions
+- Commit with message:
+  ```
+  Phase 81: ProcessTree action registration as undoable operation
+  
+  Fix undo/redo bug where ProcessTree actions remained after element deletion.
+  
+  Changes:
+  - AddProcessTreeActionOp wraps action registration as undoable operation
+  - ProcessTree.removeAction() removes actions by ID  
+  - All tools updated to use AddProcessTreeActionOp inside commands
+  - Integration tests verify actions removed/restored on undo/redo
+  
+  Result: ProcessTree and World stay synchronized through undo/redo cycles.
+  No more orphaned dependency entries after undo.
+  ```
+- Push changes
+- **Files**: All modified files
+
+**Phase 81 Dependencies**:
+- Depends on Phase 78 (3D element tools that introduced the bug)
+- Depends on Phase 47 (ProcessTree infrastructure)
+
+**Phase 81 Benefits**:
+- ProcessTree and World synchronized through undo/redo
+- No orphaned dependency entries  
+- DependencyService always has valid references
+- Proper Command pattern implementation
+

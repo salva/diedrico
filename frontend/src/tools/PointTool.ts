@@ -47,7 +47,7 @@ export class PointTool extends BaseTool {
       
       // Record ProcessTree action using pointId from outputs
       const action = createPointAction(pointId, planeId, planeCoords);
-      world.getProcessTree().addAction(action);
+      cmd.addAndExecute(new AddProcessTreeActionOp(action));
       
       // Commit
       cmd.commit();

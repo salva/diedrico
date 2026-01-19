@@ -25,6 +25,7 @@ import { Command } from '@/commands/Command';
 import { AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
 import { createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
 import { SelectionMask } from '@/types/SelectionMask';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 
 /**
  * TangentLineToCircleParallelToLineTool state machine:
@@ -109,7 +110,7 @@ export class TangentLineToCircleParallelToLineTool extends BaseTool {
           referenceLineId,
           tangentIndex
         );
-        world.getProcessTree().addAction(action);
+        cmd.addAndExecute(new AddProcessTreeActionOp(action));
         
         // Commit
         cmd.commit();

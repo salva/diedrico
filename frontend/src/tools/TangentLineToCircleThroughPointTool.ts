@@ -20,6 +20,7 @@ import { Command } from '@/commands/Command';
 import { AddLine2DTangentToCircleThroughPointOp } from '@/commands/operations/world/AddLineOp';
 import { createTangentLineToCircleThroughPointAction } from '@/domain/processTree/actions/CreateTangentLineAction';
 import { SelectionMask } from '@/types/SelectionMask';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 
 /**
  * TangentLineToCircleThroughPointTool state machine:
@@ -104,7 +105,7 @@ export class TangentLineToCircleThroughPointTool extends BaseTool {
           throughPointId,
           tangentIndex
         );
-        world.getProcessTree().addAction(action);
+        cmd.addAndExecute(new AddProcessTreeActionOp(action));
         
         // Commit
         cmd.commit();

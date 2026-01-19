@@ -23,6 +23,7 @@ import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { AddLine2DPerpendicularToLineOp } from '@/commands/operations/world/AddLineOp';
 import { createPerpendicularLineAction } from '@/domain/processTree/actions/CreatePerpendicularLineAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 
 /**
  * PerpendicularLineTool using ArgumentCollectorTool framework
@@ -88,7 +89,7 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
         referenceLine.id,
         throughPoint.id
       );
-      world.getProcessTree().addAction(action);
+      cmd.addAndExecute(new AddProcessTreeActionOp(action));
       
       // Commit and push
       cmd.commit();

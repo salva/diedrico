@@ -14,8 +14,7 @@ import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
-import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
-import { SelectionMask } from '@/types/SelectionMask';
+import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';import { SelectionMask } from '@/types/SelectionMask';
 
 /**
  * LineTool state machine:
@@ -91,7 +90,7 @@ export class LineTool extends BaseTool {
         
         // Record ProcessTree action using lineId from outputs
         const action = createLineAction(lineId, planeId, this.firstPointId!, secondPointId);
-        world.getProcessTree().addAction(action);
+        cmd.addAndExecute(new AddProcessTreeActionOp(action));
         
         // Commit
         cmd.commit();

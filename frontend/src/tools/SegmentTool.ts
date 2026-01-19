@@ -18,6 +18,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
 import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -94,7 +95,7 @@ export class SegmentTool extends BaseTool {
         
         // Record ProcessTree action using segmentId from outputs
         const action = createSegmentAction(segmentId, planeId, this.firstPointId!, secondPointId);
-        world.getProcessTree().addAction(action);
+        cmd.addAndExecute(new AddProcessTreeActionOp(action));
         
         // Commit
         cmd.commit();

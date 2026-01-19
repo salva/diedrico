@@ -140,7 +140,7 @@ export class GuideTool extends BaseTool {
       
       // Record ProcessTree action for primary guide
       const action = createGuideAction(guideId, planeId, this.referenceLineId!, throughPointId);
-      world.getProcessTree().addAction(action);
+      cmd.addAndExecute(new AddProcessTreeActionOp(action));
       
       // Record ProcessTree action for sibling guide (always created for HHL guides)
       const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, this.referenceLineId!, planeId)!;
@@ -150,7 +150,7 @@ export class GuideTool extends BaseTool {
         guideId, 
         siblingInfo.siblingHalfHingeLineId
       );
-      world.getProcessTree().addAction(siblingAction);
+      cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
       
       // Commit
       cmd.commit();

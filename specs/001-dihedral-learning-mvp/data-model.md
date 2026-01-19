@@ -13369,3 +13369,212 @@ function computeAdaptiveGridParams(zoom: number): AdaptiveGridParams {
 - Phase 6 (Viewport transformation - provides pan/zoom state)
 
 **Breaking Changes**: Complete rewrite of grid implementation—existing grid code fundamentally broken and must be replaced.
+
+---
+
+## ProcessTree Action Registration as Undoable Operation (Phase 81)
+
+### Problem
+
+**Current Architecture (BROKEN)**: Tools directly call `world.getProcessTree().addAction()` OUTSIDE the command:
+
+```typescript
+// In LineTool, PointTool, Create3DLineTool, etc.
+const cmd = new Command("Create line", world);
+const result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(...));
+const lineId = result.outputs.lineId;
+
+// BUG: ProcessTree action added OUTSIDE command - not undoable!
+const action = createLineAction(lineId, planeId, point1Id, point2Id);
+world.getProcessTree().addAction(action);  // ← NOT inside command
+
+cmd.commit();
+commandStack.push(cmd);
+
+// Later: User undos
+// → Line deleted (operation undone)
+// → ProcessTree action REMAINS (orphaned entry)
+// → DependencyService has stale reference to deleted line
+```
+
+**Consequences**:
+1. **Orphaned Actions**: Undo removes element but leaves ProcessTree action
+2. **Stale Dependencies**: DependencyService references non-existent elements
+3. **Broken Cascade**: `invalidateRealization()` fails when traversing orphaned dependencies
+4. **Corrupted State**: ProcessTree and World desynchronized after undo/redo cycles
+
+### Solution: AddProcessTreeActionOp
+
+Wrap ProcessTree action registration as an undoable operation:
+
+```typescript
+/**
+ * Operation: Register ProcessTree action (undoable)
+ * 
+ * Adds an action to ProcessTree as part of a command, ensuring
+ * the action is removed when the command is undone.
+ */
+export class AddProcessTreeActionOp implements IOperation {
+  readonly type = 'AddProcessTreeAction';
+  readonly parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(private action: Action) {
+    this.parameters = { action };
+  }
+
+  apply(world: World): OperationResult {
+    // Add action to ProcessTree, get generated ActionGroup ID
+    const actionGroup = world.getProcessTree().addAction(this.action);
+    
+    // Store IDs for undo
+    this.outputs = { 
+      actionId: this.action.id,
+      actionGroupId: actionGroup.id 
+    };
+    
+    // Rebuild dependency maps to include new action
+    world.getDependencyService().rebuildDependencyMaps();
+    
+    return {
+      success: true,
+      outputs: this.outputs
+    };
+  }
+
+  undo(world: World): void {
+    // Remove action from ProcessTree
+    if (this.outputs.actionId) {
+      world.getProcessTree().removeAction(this.outputs.actionId);
+      
+      // Rebuild dependency maps to remove action's dependencies
+      world.getDependencyService().rebuildDependencyMaps();
+    }
+  }
+}
+```
+
+### ProcessTree.removeAction() Implementation
+
+Add method to ProcessTree for removing actions by ID:
+
+```typescript
+/**
+ * Remove an action from the ProcessTree by ID
+ * 
+ * Searches the tree for the action, removes it from its parent ActionGroup.
+ * If the ActionGroup becomes empty, it is also removed from its parent.
+ * 
+ * @param actionId ID of action to remove
+ * @returns Removed ActionNode for potential redo, or null if not found
+ */
+removeAction(actionId: string): ActionNode | null {
+  let removedAction: ActionNode | null = null;
+  let parentGroup: ActionGroup | null = null;
+  let actionIndex = -1;
+
+  // Find action in tree
+  this.traverseTree(this.root, (node: ProcessNode) => {
+    if (node.type === 'actionGroup') {
+      const group = node as ActionGroup;
+      const index = group.children.findIndex(a => a.id === actionId);
+      if (index !== -1) {
+        removedAction = group.children[index];
+        parentGroup = group;
+        actionIndex = index;
+      }
+    }
+  });
+
+  if (!removedAction || !parentGroup) {
+    return null;  // Action not found
+  }
+
+  // Remove action from ActionGroup
+  parentGroup.children.splice(actionIndex, 1);
+
+  // If ActionGroup is now empty, remove it from parent
+  if (parentGroup.children.length === 0) {
+    this.removeEmptyActionGroup(parentGroup.id);
+  }
+
+  this.notifyChange();
+  return removedAction;
+}
+
+/**
+ * Remove an empty ActionGroup from its parent
+ */
+private removeEmptyActionGroup(actionGroupId: string): void {
+  this.traverseTree(this.root, (node: ProcessNode) => {
+    if (node.type === 'subprocess') {
+      const subprocess = node as Subprocess;
+      const index = subprocess.children.findIndex(
+        child => child.type === 'actionGroup' && child.id === actionGroupId
+      );
+      if (index !== -1) {
+        subprocess.children.splice(index, 1);
+      }
+    }
+  });
+}
+```
+
+### Tool Pattern (Updated)
+
+All tools now use AddProcessTreeActionOp inside commands:
+
+```typescript
+// In LineTool.ts (and all other tools)
+const cmd = new Command("Create line", world);
+
+// Operation 1: Create line
+const result = cmd.addAndExecute(
+  new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id)
+);
+const lineId = result.outputs.lineId;
+
+// Operation 2: Register ProcessTree action (NOW UNDOABLE)
+const action = createLineAction(lineId, planeId, point1Id, point2Id);
+cmd.addAndExecute(new AddProcessTreeActionOp(action));
+
+cmd.commit();
+commandStack.push(cmd);
+
+// Later: User undos
+// → AddProcessTreeActionOp.undo() removes action from ProcessTree
+// → AddLine2DByTwoPointsOp.undo() removes line from World
+// → ProcessTree and World stay synchronized ✓
+```
+
+### Benefits
+
+1. **Synchronized State**: ProcessTree and World always match after undo/redo
+2. **No Orphaned Actions**: Undo removes both element and its ProcessTree entry
+3. **Valid Dependencies**: DependencyService never has stale references
+4. **Consistent Pattern**: All state changes wrapped as operations
+5. **Proper Redo**: Redo restores both element and ProcessTree action
+6. **Clean Architecture**: Command pattern properly implemented
+
+### Migration Checklist
+
+**Tools to Update** (replace direct `world.getProcessTree().addAction()` with AddProcessTreeActionOp):
+- ✓ PointTool
+- ✓ LineTool  
+- ✓ CircleTool
+- ✓ Create3DPointTool
+- ✓ Create3DLineTool
+- ✓ GuideTool
+- ✓ Any other tools that register ProcessTree actions
+
+**Files Modified**:
+- `frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts` (NEW)
+- `frontend/src/domain/processTree/ProcessTree.ts` (add removeAction method)
+- `frontend/src/tools/*.ts` (10+ tool files updated)
+
+**Testing**:
+- Integration test: Create element → undo → verify action removed
+- Integration test: Create element → undo → redo → verify restored
+- Unit test: ProcessTree.removeAction() for various tree structures
+- Regression test: All existing undo/redo tests still pass
+

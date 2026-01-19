@@ -109,7 +109,7 @@ export class CircleTool extends ArgumentCollectorTool {
         center.id,
         circumferencePoint.id
       );
-      world.getProcessTree().addAction(action);
+      cmd.addAndExecute(new AddProcessTreeActionOp(action));
       
       // Commit and push
       cmd.commit();

@@ -37,7 +37,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
 * [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
-* [ ] Add all the missing Ops for inserting and removing specific actions from the process tree. Then, ensure that the operations are inserted in the commands so that the Process tree is keep syncroniced with the world!
 * [ ] Activate or fix undo & redo buttoms.
 * [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
 * [ ] Ensure Google Drive logout works correctly.
@@ -145,6 +144,19 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **ProcessTree Action Registration as Operation (Phase 81)** - ✅ PLANNED (Jan 19, 2026)
+  - **User Requirement**: "ok, i see, the issue is that that should also be wrapped as an Op so the action is removed when the command is undone!"
+  - **Problem**: Tools call `world.getProcessTree().addAction()` OUTSIDE commands → undo removes elements but leaves orphaned ProcessTree actions → DependencyService has stale references
+  - **Solution**: Create `AddProcessTreeActionOp` to wrap action registration as undoable operation, add `ProcessTree.removeAction()` method, update all tools
+  - **Architecture**: 
+    - New operation: `AddProcessTreeActionOp` with apply() → `world.getProcessTree().addAction()`, undo() → `world.getProcessTree().removeAction()`
+    - ProcessTree API: Add `removeAction(actionId: string)` method (finds action, removes from parent ActionGroup, cleans empty groups)
+    - Tools: Replace `world.getProcessTree().addAction(action)` with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+  - **Impact**: 10+ tools affected (PointTool, LineTool, CircleTool, Create3DPointTool, Create3DLineTool, GuideTool, etc.)
+  - **Specifications**: data-model.md §ProcessTree Action Registration (updated ~200 lines)
+  - **Tasks**: tasks.md Phase 81 (T1185-T1197: 13 tasks - implement operation, update tools, tests)
+  - **Status**: All planning documents updated, ready for implementation
 
 * [x] **3D Element Creation Toolbar and Tools (Phase 78)** - ✅ PLANNED (Jan 18, 2026)
   - **User Request**: Add toolbar with 4 tools for creating 3D elements from 2D projections

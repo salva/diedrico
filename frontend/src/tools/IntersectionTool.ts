@@ -36,6 +36,7 @@ import { createLineLineIntersectionPointAction } from '@/domain/processTree/acti
 import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
 import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
 import { createSiblingIntersectionPointAction } from '@/domain/processTree/actions/CreateSiblingIntersectionPointAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 import { 
   areLinesParallel, 
   intersectLineCircle, 
@@ -172,7 +173,7 @@ export class IntersectionTool extends BaseTool {
             this.firstElementId!,
             secondElementId
           );
-          world.getProcessTree().addAction(action);
+          cmd.addAndExecute(new AddProcessTreeActionOp(action));
           actionCreated = true;
           
         } else if (element1 instanceof Line2D && element2 instanceof Circle2D) {
@@ -201,7 +202,7 @@ export class IntersectionTool extends BaseTool {
             secondElementId,
             index
           );
-          world.getProcessTree().addAction(action);
+          cmd.addAndExecute(new AddProcessTreeActionOp(action));
           actionCreated = true;
           
         } else if (element1 instanceof Circle2D && element2 instanceof Line2D) {
@@ -230,7 +231,7 @@ export class IntersectionTool extends BaseTool {
             this.firstElementId!,
             index
           );
-          world.getProcessTree().addAction(action);
+          cmd.addAndExecute(new AddProcessTreeActionOp(action));
           actionCreated = true;
           
         } else if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
@@ -259,7 +260,7 @@ export class IntersectionTool extends BaseTool {
             secondElementId,
             index
           );
-          world.getProcessTree().addAction(action);
+          cmd.addAndExecute(new AddProcessTreeActionOp(action));
           actionCreated = true;
           
         } else {
@@ -283,7 +284,7 @@ export class IntersectionTool extends BaseTool {
                 siblingPlaneId,
                 pointId
               );
-              world.getProcessTree().addAction(siblingAction);
+              cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
             }
           }
         }

@@ -24,6 +24,7 @@ import { Command } from '@/commands/Command';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { SelectionMask } from '@/types/SelectionMask';
 import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 
 /**
  * Create3DLineTool state machine:
@@ -112,7 +113,7 @@ export class Create3DLineTool extends BaseTool {
           this.firstPlaneId!,
           secondPlaneId
         );
-        world.getProcessTree().addAction(action);
+        cmd.addAndExecute(new AddProcessTreeActionOp(action));
         
         cmd.commit();
         commandStack.push(cmd);
