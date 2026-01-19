@@ -136,20 +136,25 @@ export class Line3DFromProjections extends Element3D {
       // The 3D plane contains all 3D points that project onto the 2D line
       
       // For plane 1: Get the 3D line direction by lifting the 2D line
+      // Matrix4x3 is stored row-major: [m11,m12,m13, m21,m22,m23, m31,m32,m33, m41,m42,m43]
+      // Row 1 (x): M[0]*u + M[1]*v + M[2]*w
+      // Row 2 (y): M[3]*u + M[4]*v + M[5]*w
+      // Row 3 (z): M[6]*u + M[7]*v + M[8]*w
+      // Row 4 (w): M[9]*u + M[10]*v + M[11]*w
       const M1 = plane1Real.planeTo3D.elements;  // Matrix4x3 stored row-major
       const P1_3d = new Vector4(
-        M1[0] * p1_2d.x + M1[1] * p1_2d.y + M1[2] * 0 + M1[3],
-        M1[4] * p1_2d.x + M1[5] * p1_2d.y + M1[6] * 0 + M1[7],
-        M1[8] * p1_2d.x + M1[9] * p1_2d.y + M1[10] * 0 + M1[11],
-        1
+        M1[0] * p1_2d.x + M1[1] * p1_2d.y + M1[2],
+        M1[3] * p1_2d.x + M1[4] * p1_2d.y + M1[5],
+        M1[6] * p1_2d.x + M1[7] * p1_2d.y + M1[8],
+        M1[9] * p1_2d.x + M1[10] * p1_2d.y + M1[11]
       );
       
       const p1_plus_d1 = { x: p1_2d.x + d1_2d.x, y: p1_2d.y + d1_2d.y };
       const P2_3d = new Vector4(
-        M1[0] * p1_plus_d1.x + M1[1] * p1_plus_d1.y + M1[2] * 0 + M1[3],
-        M1[4] * p1_plus_d1.x + M1[5] * p1_plus_d1.y + M1[6] * 0 + M1[7],
-        M1[8] * p1_plus_d1.x + M1[9] * p1_plus_d1.y + M1[10] * 0 + M1[11],
-        1
+        M1[0] * p1_plus_d1.x + M1[1] * p1_plus_d1.y + M1[2],
+        M1[3] * p1_plus_d1.x + M1[4] * p1_plus_d1.y + M1[5],
+        M1[6] * p1_plus_d1.x + M1[7] * p1_plus_d1.y + M1[8],
+        M1[9] * p1_plus_d1.x + M1[10] * p1_plus_d1.y + M1[11]
       );
       
       // Direction of the 2D line lifted to 3D
@@ -200,18 +205,18 @@ export class Line3DFromProjections extends Element3D {
       // Similarly for plane 2
       const M2 = plane2Real.planeTo3D.elements;
       const Q1_3d = new Vector4(
-        M2[0] * p2_2d.x + M2[1] * p2_2d.y + M2[2] * 0 + M2[3],
-        M2[4] * p2_2d.x + M2[5] * p2_2d.y + M2[6] * 0 + M2[7],
-        M2[8] * p2_2d.x + M2[9] * p2_2d.y + M2[10] * 0 + M2[11],
-        1
+        M2[0] * p2_2d.x + M2[1] * p2_2d.y + M2[2],
+        M2[3] * p2_2d.x + M2[4] * p2_2d.y + M2[5],
+        M2[6] * p2_2d.x + M2[7] * p2_2d.y + M2[8],
+        M2[9] * p2_2d.x + M2[10] * p2_2d.y + M2[11]
       );
       
       const p2_plus_d2 = { x: p2_2d.x + d2_2d.x, y: p2_2d.y + d2_2d.y };
       const Q2_3d = new Vector4(
-        M2[0] * p2_plus_d2.x + M2[1] * p2_plus_d2.y + M2[2] * 0 + M2[3],
-        M2[4] * p2_plus_d2.x + M2[5] * p2_plus_d2.y + M2[6] * 0 + M2[7],
-        M2[8] * p2_plus_d2.x + M2[9] * p2_plus_d2.y + M2[10] * 0 + M2[11],
-        1
+        M2[0] * p2_plus_d2.x + M2[1] * p2_plus_d2.y + M2[2],
+        M2[3] * p2_plus_d2.x + M2[4] * p2_plus_d2.y + M2[5],
+        M2[6] * p2_plus_d2.x + M2[7] * p2_plus_d2.y + M2[8],
+        M2[9] * p2_plus_d2.x + M2[10] * p2_plus_d2.y + M2[11]
       );
       
       const lineDir2_3d = new Vector4(

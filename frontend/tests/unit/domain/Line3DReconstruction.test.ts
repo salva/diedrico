@@ -137,12 +137,12 @@ describe('Line3D Reconstruction from Projections', () => {
   it('should reconstruct a line parallel to y-axis', () => {
     // Setup: Line from (5,0,3) to (5,10,3)
     // P_H: vertical line from (5,0) to (5,10)
-    // P_V: nearly a point at (5,3) - both endpoints have same x,z
+    // P_V: appears as nearly a point at (5,3) - use tiny offset
     const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
     const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
 
     const lineH = createLine2D(P_H, 5, 0, 5, 10, 'lineH');
-    const lineV = createLine2D(P_V, 5, 3, 5, 3, 'lineV');
+    const lineV = createLine2D(P_V, 5, 3, 5.0001, 3.0001, 'lineV');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_y');
 
     const realization = world.get3DLine(line3D)?.realize3D(world);
@@ -165,12 +165,12 @@ describe('Line3D Reconstruction from Projections', () => {
 
   it('should reconstruct a line parallel to z-axis', () => {
     // Setup: Line from (5,3,0) to (5,3,10)
-    // P_H: nearly a point at (5,3)
+    // P_H: appears as nearly a point at (5,3) - use tiny offset
     // P_V: vertical line from (5,0) to (5,10)
     const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
     const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
 
-    const lineH = createLine2D(P_H, 5, 3, 5, 3, 'lineH');
+    const lineH = createLine2D(P_H, 5, 3, 5.0001, 3.0001, 'lineH');
     const lineV = createLine2D(P_V, 5, 0, 5, 10, 'lineV');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_z');
 
