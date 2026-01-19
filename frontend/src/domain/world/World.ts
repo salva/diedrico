@@ -548,6 +548,9 @@ export class World {
     
     // Rebuild dependency maps to reflect any changes
     this.dependencyService.rebuildDependencyMaps();
+    
+    // Notify UI to re-render
+    this.markDirty();
   }
 
   // ========================================
@@ -578,6 +581,9 @@ export class World {
     
     // Rebuild dependency maps to reflect any changes
     this.dependencyService.rebuildDependencyMaps();
+    
+    // Notify UI to re-render
+    this.markDirty();
   }
 
 

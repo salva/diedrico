@@ -18,6 +18,7 @@
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Line3DFromProjections } from '@/domain/world/Line3D';
+import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
 
 export class Add3DLineOp implements IOperation {
   readonly type = 'Add3DLine';
@@ -105,6 +106,18 @@ export class Add3DLineOp implements IOperation {
       
       // Add to World storage
       world.add3DLine(line);
+      
+      // Register dependency: 3D line depends on its 2D projection lines
+      // This ensures cache invalidation cascades correctly when 2D projections change
+      const action = createAdd3DLineAction(
+        lineId,
+        this.projection1Id,
+        this.projection2Id,
+        this.plane1Id,
+        this.plane2Id,
+        this.label
+      );
+      world.addAction(action);
       
       // Store outputs for undo
       this.outputs = { lineId };

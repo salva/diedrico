@@ -24,6 +24,7 @@
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Point3DFromProjections } from '@/domain/world/Point3D';
+import { createAdd3DPointAction } from '@/domain/processTree/actions/Element3DActions';
 
 export class Add3DPointOp implements IOperation {
   readonly type = 'Add3DPoint';
@@ -112,6 +113,18 @@ export class Add3DPointOp implements IOperation {
       
       // Add to World storage
       world.add3DPoint(point);
+      
+      // Register dependency: 3D point depends on its 2D projection points
+      // This ensures cache invalidation cascades correctly when 2D projections change
+      const action = createAdd3DPointAction(
+        pointId,
+        this.projection1Id,
+        this.projection2Id,
+        this.plane1Id,
+        this.plane2Id,
+        this.label
+      );
+      world.addAction(action);
       
       // Store outputs for undo
       this.outputs = { pointId };
