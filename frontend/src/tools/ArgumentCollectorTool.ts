@@ -40,7 +40,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult } from './ITool';
-import { SelectionMask, getSelectableType } from '@/types/SelectionMask';
+import { SelectionMask, getSelectableType, NoneMask } from '@/types/SelectionMask';
 import type { 
   ToolArgumentSpec, 
   ToolArgumentSet, 
@@ -153,24 +153,38 @@ export abstract class ArgumentCollectorTool extends BaseTool {
     const selectionMask = this.getSelectionMask();
     const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask);
     
-    if (!hit) {
-      return this.failure('No selectable element found at click position.');
-    }
-    
-    // Get element
-    const element = world.getElement2D(hit.elementId);
-    if (!element) {
-      return this.failure(`Element not found: ${hit.elementId}`);
-    }
-    
     // Extract position from context
     const { planeCoords } = context;
     
-    // Create ArgumentValue with element and position
-    const argumentValue: ArgumentValue = {
-      element,
-      planeCoords
-    };
+    // Create ArgumentValue - either with selected element or null (for SelectionMask.none())
+    let argumentValue: ArgumentValue;
+    
+    if (!hit) {
+      // No element hit - check if any viable next argument accepts SelectionMask.none()
+      const viableSpecs = this.getViableNextArgumentSpecs();
+      const hasNoneMask = viableSpecs.some(spec => spec.mask instanceof NoneMask);
+      
+      if (!hasNoneMask) {
+        return this.failure('No selectable element found at click position.');
+      }
+      
+      // SelectionMask.none() - use null element with mouse position
+      argumentValue = {
+        element: null,
+        planeCoords
+      };
+    } else {
+      // Element hit - get element and create ArgumentValue
+      const element = world.getElement2D(hit.elementId);
+      if (!element) {
+        return this.failure(`Element not found: ${hit.elementId}`);
+      }
+      
+      argumentValue = {
+        element,
+        planeCoords
+      };
+    }
     
     // Try to add argument
     const collectionContext: CollectionContext = {
@@ -343,11 +357,21 @@ export abstract class ArgumentCollectorTool extends BaseTool {
           continue;
         }
         
-        // Check if element matches this argument's SelectionMask
-        // Use getSelectableType() to map concrete types (e.g., 'free') to abstract types (e.g., 'point')
-        if (element && spec.mask.matches(getSelectableType(element))) {
-          // Apply argument-level validator if specified
-          if (spec.validator) {
+        // Check if argument matches this spec
+        let matches = false;
+        
+        if (element) {
+          // Element provided - check if it matches SelectionMask
+          // Use getSelectableType() to map concrete types (e.g., 'free') to abstract types (e.g., 'point')
+          matches = spec.mask.matches(getSelectableType(element));
+        } else {
+          // No element (null) - check if spec accepts SelectionMask.none()
+          matches = spec.mask instanceof NoneMask;
+        }
+        
+        if (matches) {
+          // Apply argument-level validator if specified (only for non-null elements)
+          if (spec.validator && element) {
             const validationResult = spec.validator(element, context);
             if (!validationResult.valid) {
               return { 
@@ -394,10 +418,20 @@ export abstract class ArgumentCollectorTool extends BaseTool {
           return false;
         }
         
-        // Check if element type matches spec (extract element from ArgumentValue)
-        // Use getSelectableType() to map concrete types (e.g., 'free') to abstract types (e.g., 'point')
+        // Check if argument matches spec (extract element from ArgumentValue)
         const element = argValue.element;
-        if (!element || !spec.mask.matches(getSelectableType(element))) {
+        
+        let matches = false;
+        if (element) {
+          // Element provided - check if it matches SelectionMask
+          // Use getSelectableType() to map concrete types (e.g., 'free') to abstract types (e.g., 'point')
+          matches = spec.mask.matches(getSelectableType(element));
+        } else {
+          // No element (null) - check if spec accepts SelectionMask.none()
+          matches = spec.mask instanceof NoneMask;
+        }
+        
+        if (!matches) {
           return false;
         }
       }

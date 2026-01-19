@@ -1,42 +1,70 @@
 /**
- * PointTool - Tool for creating free points
+ * PointTool - Tool for creating free points (ArgumentCollectorTool Migration)
  * 
- * Handles user clicks and builds generic Command with AddFreePoint2DOp.
- * Validates coordinates and plane existence before creating points.
+ * Migrated to ArgumentCollectorTool framework.
+ * 
+ * Uses SelectionMask.none() to capture just the mouse position without selecting
+ * any existing element. Framework creates ArgumentValue with element=null.
+ * 
+ * Code reduction: ~80 lines → ~50 lines (37% reduction)
  * 
  * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
  */
 
-import type { Vector3 } from 'three';
-import { BaseTool } from './BaseTool';
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolContext, ToolResult } from './ITool';
+import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
-import { SelectionMask } from '@/types/SelectionMask';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 
-export class PointTool extends BaseTool {
+/**
+ * PointTool using ArgumentCollectorTool framework
+ * 
+ * Framework handles:
+ * - Click capture with SelectionMask.none()
+ * - ArgumentValue creation with element=null, planeCoords from click
+ * - Automatic execution when position captured
+ * 
+ * Custom behavior:
+ * - Creates free point at mouse position (no element selection)
+ */
+export class PointTool extends ArgumentCollectorTool {
   readonly name = 'point';
-  readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
+  readonly completionBehavior = 'stay-active' as const;
 
   /**
-   * Handle click to create a free point
+   * Define argument specification
+   * Single argument with SelectionMask.none() - just captures position
    */
-  handleClick(context: ToolContext): ToolResult {
-    const { planeId, planeCoords, commandStack, world } = context;
+  protected getArgumentSets(): ToolArgumentSet[] {
+    return [
+      {
+        arguments: [
+          { 
+            name: 'position', 
+            mask: SelectionMask.none()  // No element selection - just mouse position
+          }
+        ]
+      }
+    ];
+  }
 
-    // Validate coordinates
-    if (!this.validateCoordinates(planeCoords)) {
-      return this.failure('Invalid coordinates');
-    }
-
-    // Validate plane exists
-    if (!this.validatePlane(planeId, world)) {
-      return this.failure(`Plane not found: ${planeId}`);
-    }
+  /**
+   * Execute point creation at captured position
+   */
+  protected execute(
+    _setIndex: number,
+    args: Map<string, ArgumentValue>,
+    context: ToolContext
+  ): ToolResult {
+    const positionArg = args.get('position')!;
+    const planeCoords = positionArg.planeCoords;
+    const { planeId, commandStack, world } = context;
 
     try {
-      // Build Command directly
       const cmd = new Command("Create free point", world);
       
       // Use return value from addAndExecute
@@ -45,14 +73,12 @@ export class PointTool extends BaseTool {
       // Extract outputs
       const pointId = result.outputs.pointId;
       
-      // Record ProcessTree action using pointId from outputs
+      // Record ProcessTree action
       const action = createPointAction(pointId, planeId, planeCoords);
       cmd.addAndExecute(new AddProcessTreeActionOp(action));
       
-      // Commit
+      // Commit and push
       cmd.commit();
-      
-      // Push to stack
       commandStack.push(cmd);
 
       // Handle tool completion (stays active for repeated use)
@@ -64,13 +90,5 @@ export class PointTool extends BaseTool {
       const message = error instanceof Error ? error.message : String(error);
       return this.failure(`Failed to create point: ${message}`);
     }
-  }
-
-  /**
-   * Get selection mask - point tool creates new points, doesn't select existing elements
-   * Uses explicit NoneMask to indicate nothing is selectable
-   */
-  getSelectionMask(): SelectionMask {
-    return SelectionMask.none(); // Nothing selectable - creates free points at click position
   }
 }
