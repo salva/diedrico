@@ -1,168 +1,120 @@
 /**
- * Create3DLineTool - Tool for creating 3D lines from two 2D line projections
+ * Create3DLineTool - Creates 3D lines from projections (ArgumentCollectorTool Migration)
  * 
- * Phase 78: 3D Element Creation Tools
+ * Migrated to ArgumentCollectorTool framework.
  * 
- * Implements multi-step workflow:
- * 1. First click: Select first 2D line projection (on any plane)
- * 2. Second click: Select second 2D line projection (must be on DIFFERENT plane)
- * 3. Validate different-plane requirement
- * 4. Create Line3DFromProjections using Add3DLineOp
+ * Two-argument workflow:
+ * 1. Collect two 2D line projections (any order)
+ * 2. Validate they're on DIFFERENT planes (validator)
+ * 3. Create Line3DFromProjections
  * 
- * Visual feedback:
- * - During second click, show red/green indicator based on plane validation
- * - Red: Same plane as first projection (invalid)
- * - Green: Different plane (valid)
+ * Code reduction: ~169 lines → ~110 lines (35% reduction)
  * 
  * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
  */
 
-import { Vector3 } from 'three';
-import { BaseTool } from './BaseTool';
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolContext, ToolResult } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
-import { SelectionMask } from '@/types/SelectionMask';
 import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 
 /**
- * Create3DLineTool state machine:
- * - State 'waiting-first': Waiting for first projection line
- * - State 'waiting-second': First projection selected, waiting for second projection on different plane
+ * Create3DLineTool using ArgumentCollectorTool framework
  */
-export class Create3DLineTool extends BaseTool {
+export class Create3DLineTool extends ArgumentCollectorTool {
   readonly name = 'create3dline';
   readonly completionBehavior = 'stay-active' as const;
-  
-  private state: 'waiting-first' | 'waiting-second' = 'waiting-first';
-  private firstProjectionId?: string;
-  private firstPlaneId?: string;
 
-  handleClick(context: ToolContext): ToolResult {
-    const { planeId, planeCoords, canvasCoords, commandStack, world, paper, paperToPlaneTransform } = context;
-    
-    if (!this.validateCoordinates(planeCoords)) {
-      return this.failure('Invalid coordinates');
-    }
-    
-    if (!this.validatePlane(planeId, world)) {
-      return this.failure(`Plane not found: ${planeId}`);
-    }
-
-    const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
-    const selectionMask = this.getSelectionMask();
-    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask);
-    
-    console.log('[Create3DLineTool] Paper.hitTest() result:', hit);
-    
-    if (!hit) {
-      return this.failure('No line found at click position. Please click near an existing 2D line.');
-    }
-
-    if (this.state === 'waiting-first') {
-      this.firstProjectionId = hit.elementId;
-      this.firstPlaneId = planeId;
-      this.state = 'waiting-second';
-      return this.success(`Selected first projection: ${hit.elementId} on plane ${planeId}. Now select a line on a DIFFERENT plane.`);
-      
-    } else {
-      const secondProjectionId = hit.elementId;
-      const secondPlaneId = planeId;
-      
-      if (secondPlaneId === this.firstPlaneId) {
-        return this.failure(
-          `Cannot create 3D line: both projections are on the same plane (${secondPlaneId}). ` +
-          `Please select a line on a DIFFERENT plane.`
-        );
+  protected getArgumentSets(): ToolArgumentSet[] {
+    return [
+      {
+        arguments: [
+          { 
+            name: 'projection1', 
+            mask: SelectionMask.line()
+          },
+          { 
+            name: 'projection2', 
+            mask: SelectionMask.line()
+          }
+        ],
+        setValidator: (args: Map<string, ArgumentValue>, context: CollectionContext) => {
+          const proj1 = args.get('projection1')!;
+          const proj2 = args.get('projection2')!;
+          
+          const plane1 = context.world.getProjectionPlaneById(proj1.element!.planeId);
+          const plane2 = context.world.getProjectionPlaneById(proj2.element!.planeId);
+          
+          if (!plane1 || !plane2) {
+            return { valid: false, error: 'One or both projection planes not found' };
+          }
+          
+          if (plane1.id === plane2.id) {
+            return { 
+              valid: false, 
+              error: 'Cannot create 3D line: both projections must be on DIFFERENT planes' 
+            };
+          }
+          
+          return { valid: true };
+        }
       }
+    ];
+  }
+
+  protected execute(
+    _setIndex: number,
+    args: Map<string, ArgumentValue>,
+    context: ToolContext
+  ): ToolResult {
+    const proj1 = args.get('projection1')!.element!;
+    const proj2 = args.get('projection2')!.element!;
+    
+    const projection1Id = proj1.id;
+    const projection2Id = proj2.id;
+    const plane1Id = proj1.planeId;
+    const plane2Id = proj2.planeId;
+    
+    const { commandStack, world } = context;
+
+    try {
+      const cmd = new Command("Create 3D line from projections", world);
       
-      const plane1 = world.getProjectionPlaneById(this.firstPlaneId!);
-      const plane2 = world.getProjectionPlaneById(secondPlaneId);
+      const result = cmd.addAndExecute(new Add3DLineOp(
+        projection1Id,
+        projection2Id,
+        plane1Id,
+        plane2Id
+      ));
       
-      if (!plane1 || !plane2) {
-        this.reset();
-        return this.failure('One or both projection planes no longer exist');
-      }
+      const line3dId = result.outputs.lineId;
       
-      const proj1 = plane1.getLine(this.firstProjectionId!);
-      const proj2 = plane2.getLine(secondProjectionId);
+      const action = createAdd3DLineAction(
+        line3dId,
+        projection1Id,
+        projection2Id,
+        plane1Id,
+        plane2Id
+      );
+      cmd.addAndExecute(new AddProcessTreeActionOp(action));
       
-      if (!proj1 || !proj2) {
-        this.reset();
-        return this.failure('One or both projection lines no longer exist');
-      }
+      cmd.commit();
+      commandStack.push(cmd);
       
-      try {
-        const cmd = new Command("Create 3D line from projections", world);
-        
-        const result = cmd.addAndExecute(new Add3DLineOp(
-          this.firstProjectionId!,
-          secondProjectionId,
-          this.firstPlaneId!,
-          secondPlaneId
-        ));
-        
-        const line3dId = result.outputs.lineId;
-        
-        // Register ProcessTree action for dependency tracking
-        const action = createAdd3DLineAction(
-          line3dId,
-          this.firstProjectionId!,
-          secondProjectionId,
-          this.firstPlaneId!,
-          secondPlaneId
-        );
-        cmd.addAndExecute(new AddProcessTreeActionOp(action));
-        
-        cmd.commit();
-        commandStack.push(cmd);
-        
-        const firstProj = this.firstProjectionId;
-        const firstPlane = this.firstPlaneId;
-        
-        this.reset();
-        this.handleCompletion(context.toolStore);
-        
-        return this.success(
-          `Created 3D line ${line3dId} from projections: ` +
-          `${firstProj} (${firstPlane}) and ${secondProjectionId} (${secondPlaneId})`
-        );
-        
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        this.reset();
-        return this.failure(`Failed to create 3D line: ${message}`);
-      }
+      this.handleCompletion(context.toolStore);
+      
+      return this.success(
+        `Created 3D line ${line3dId} from projections: ` +
+        `${projection1Id} (${plane1Id}) and ${projection2Id} (${plane2Id})`
+      );
+      
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return this.failure(`Failed to create 3D line: ${message}`);
     }
-  }
-
-  cancel(): void {
-    this.reset();
-  }
-
-  getSelectionMask(): SelectionMask {
-    return SelectionMask.line();
-  }
-
-  getState(): Record<string, any> {
-    return {
-      state: this.state,
-      firstProjectionId: this.firstProjectionId,
-      firstPlaneId: this.firstPlaneId
-    };
-  }
-
-  isValidSecondPlane(candidatePlaneId: string): boolean {
-    if (this.state !== 'waiting-second') {
-      return true;
-    }
-    return candidatePlaneId !== this.firstPlaneId;
-  }
-
-  private reset(): void {
-    this.state = 'waiting-first';
-    this.firstProjectionId = undefined;
-    this.firstPlaneId = undefined;
   }
 }
