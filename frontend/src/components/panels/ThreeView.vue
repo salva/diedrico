@@ -89,7 +89,14 @@ const renderTick = ref(0);
  * Initialize Three.js scene and infrastructure
  */
 function initThreeScene() {
-  if (!containerRef.value || !canvasRef.value) return;
+  console.log('[ThreeView] initThreeScene called');
+  console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
+  console.log('[ThreeView] World projection planes:', Array.from(world.projectionPlanes.keys()));
+  
+  if (!containerRef.value || !canvasRef.value) {
+    console.warn('[ThreeView] containerRef or canvasRef is null!');
+    return;
+  }
 
   // Create scene
   scene = new THREE.Scene();
@@ -170,7 +177,7 @@ function renderProjectionPlanes() {
     }
 
     // Create plane mesh (semi-transparent)
-    const planeSize = 20; // Size of visual plane representation
+    const planeSize = 100; // Size of visual plane representation (increased for visibility)
     const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
     
     // Use plane's color property (hex string like '#2196F3')
@@ -187,19 +194,54 @@ function renderProjectionPlanes() {
 
     // Apply transformation from planeRealization.planeTo3D matrix
     const matrix = planeRealization.planeTo3D;
-    const mat4 = new THREE.Matrix4();
-    // Matrix4x3.elements is flat array [m11, m12, m13, m21, m22, m23, m31, m32, m33, m41, m42, m43]
-    // stored in row-major order. Convert to THREE.Matrix4 (row-major, 4x4 with last row [0,0,0,1])
     const e = matrix.elements;
     console.log('[ThreeView] planeTo3D matrix elements:', e);
     
+    // Matrix4x3 transforms (u,v,1) → (x,y,z,w) for homogeneous 2D→3D conversion
+    // Elements: [m11,m12,m13, m21,m22,m23, m31,m32,m33, m41,m42,m43]
+    // Row 1: x = m11*u + m12*v + m13*1
+    // Row 2: y = m21*u + m22*v + m23*1  
+    // Row 3: z = m31*u + m32*v + m33*1
+    // Row 4: w = m41*u + m42*v + m43*1 (homogeneous coordinate, should = 1)
+    
+    // For Three.js, we need a 4x4 matrix where:
+    // - First 3 columns = basis vectors (u direction, v direction, normal)
+    // - Fourth column = translation (origin point in 3D)
+    
+    // Extract basis vectors:
+    // U-axis direction: transform (1,0,0) → (m11, m21, m31) / w
+    // V-axis direction: transform (0,1,0) → (m12, m22, m32) / w
+    // Normal direction: cross product of U and V axes
+    // Origin: transform (0,0,1) → (m13, m23, m33) / m43
+    
+    const originW = e[11]; // m43 - homogeneous w for origin point
+    const originX = e[2] / originW;  // m13 / w
+    const originY = e[5] / originW;  // m23 / w
+    const originZ = e[8] / originW;  // m33 / w
+    
+    console.log('[ThreeView] Plane origin in 3D:', [originX, originY, originZ]);
+    
+    // Compute the normal as the cross product of U-axis and V-axis
+    // U-axis: first column [e[0], e[3], e[6]]
+    // V-axis: second column [e[1], e[4], e[7]]
+    // Normal = U × V
+    const uAxis = new THREE.Vector3(e[0], e[3], e[6]);
+    const vAxis = new THREE.Vector3(e[1], e[4], e[7]);
+    const normal = new THREE.Vector3().crossVectors(uAxis, vAxis).normalize();
+    
+    console.log('[ThreeView] U-axis:', [uAxis.x, uAxis.y, uAxis.z]);
+    console.log('[ThreeView] V-axis:', [vAxis.x, vAxis.y, vAxis.z]);
+    console.log('[ThreeView] Normal:', [normal.x, normal.y, normal.z]);
+    
+    // Build THREE.Matrix4 with correct basis and translation
+    const mat4 = new THREE.Matrix4();
     mat4.set(
-      e[0], e[1], e[2], e[9],   // Row 0: [m11, m12, m13, m41]
-      e[3], e[4], e[5], e[10],  // Row 1: [m21, m22, m23, m42]
-      e[6], e[7], e[8], e[11],  // Row 2: [m31, m32, m33, m43]
-      0, 0, 0, 1                // Row 3: [0, 0, 0, 1]
+      e[0], e[1], normal.x, originX,   // Row 0: [Ux, Vx, Nx, Tx]
+      e[3], e[4], normal.y, originY,   // Row 1: [Uy, Vy, Ny, Ty]
+      e[6], e[7], normal.z, originZ,   // Row 2: [Uz, Vz, Nz, Tz]
+      0,    0,    0,        1           // Row 3: [0, 0, 0, 1]
     );
-    console.log('[ThreeView] THREE.Matrix4 after set:', mat4.toArray());
+    console.log('[ThreeView] THREE.Matrix4:', mat4.toArray());
     
     planeMesh.applyMatrix4(mat4);
     console.log('[ThreeView] planeMesh position after transform:', planeMesh.position.toArray());
@@ -229,6 +271,153 @@ function render2DElements() {
   }
 
   element2DRenderer.renderElements(world, displayOptions.value);
+}
+
+/**
+ * Render 3D elements in 3D space (Phase 78)
+ * 
+ * Renders user-created 3D elements (points, lines, segments) with thicker/wider visual style.
+ * 3D elements are reconstructed from 2D projections and displayed in true 3D coordinates.
+ */
+function render3DElements() {
+  // Remove existing 3D elements
+  scene.children
+    .filter(child => child.userData.type === '3d-element')
+    .forEach(child => scene.remove(child));
+
+  try {
+    // Render 3D Points
+    const points3D = world.getAll3DPoints();
+    console.log('[ThreeView] render3DElements called - found', points3D.length, '3D points');
+    
+    for (const point of points3D) {
+      console.log('[ThreeView] Processing 3D point:', point.id, point.kind);
+      
+      const realization = world.get3DPointRealization(point.id!);
+      console.log('[ThreeView] Got realization:', {
+        exists: !!realization,
+        feasible: realization?.isFeasible
+      });
+      
+      if (!realization || !realization.isFeasible) {
+        console.warn('[ThreeView] Skipping point - not feasible');
+        continue;
+      }
+      
+      const [x, y, z] = realization.getCartesian();
+      console.log('[ThreeView] Point 3D coordinates:', { x, y, z });
+      
+      // Create sphere for 3D point (thicker than 2D points)
+      const geometry = new THREE.SphereGeometry(0.15, 16, 16); // Radius 0.15 (vs 0.1 for 2D)
+      const material = new THREE.MeshStandardMaterial({
+        color: point.visualStyle?.color || '#FF6B35', // Orange for 3D elements
+        emissive: 0x000000,
+        metalness: 0.3,
+        roughness: 0.7
+      });
+      const sphere = new THREE.Mesh(geometry, material);
+      sphere.position.set(x, y, z);
+      sphere.userData.type = '3d-element';
+      sphere.userData.elementType = 'point';
+      sphere.userData.elementId = point.id;
+      scene.add(sphere);
+    }
+
+    // Render 3D Lines
+    const lines3D = world.getAll3DLines();
+    console.log('[ThreeView] Rendering', lines3D.length, '3D lines');
+    
+    for (const line of lines3D) {
+      const realization = world.get3DLineRealization(line.id!);
+      if (!realization || !realization.isFeasible) continue;
+      
+      // Get point and direction on the line for rendering (extend far in both directions)
+      const pointOnLine = realization.point;
+      const direction = realization.getDirection();
+      
+      const lineLength = 50; // Extend 25 units in each direction
+      const start = new THREE.Vector3(
+        pointOnLine.x - direction.x * lineLength / 2,
+        pointOnLine.y - direction.y * lineLength / 2,
+        pointOnLine.z - direction.z * lineLength / 2
+      );
+      const end = new THREE.Vector3(
+        pointOnLine.x + direction.x * lineLength / 2,
+        pointOnLine.y + direction.y * lineLength / 2,
+        pointOnLine.z + direction.z * lineLength / 2
+      );
+      
+      // Create line geometry (thicker than 2D lines)
+      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+      const material = new THREE.LineBasicMaterial({
+        color: line.visualStyle?.color || '#FF6B35',
+        linewidth: 3 // Thicker than 2D (though linewidth may not work on all platforms)
+      });
+      const lineObj = new THREE.Line(geometry, material);
+      lineObj.userData.type = '3d-element';
+      lineObj.userData.elementType = 'line';
+      lineObj.userData.elementId = line.id;
+      scene.add(lineObj);
+    }
+
+    // Render 3D Segments
+    const segments3D = world.getAll3DSegments();
+    console.log('[ThreeView] Rendering', segments3D.length, '3D segments');
+    
+    for (const segment of segments3D) {
+      const realization = world.get3DSegmentRealization(segment.id!);
+      if (!realization || !realization.isFeasible) continue;
+      
+      // Get endpoints from Vector4 and convert to Vector3
+      const start = new THREE.Vector3(
+        realization.startPoint.x,
+        realization.startPoint.y,
+        realization.startPoint.z
+      );
+      const end = new THREE.Vector3(
+        realization.endPoint.x,
+        realization.endPoint.y,
+        realization.endPoint.z
+      );
+      
+      // Create segment geometry (thicker than 2D segments)
+      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+      const material = new THREE.LineBasicMaterial({
+        color: segment.visualStyle?.color || '#FF6B35',
+        linewidth: 3
+      });
+      const segmentObj = new THREE.Line(geometry, material);
+      segmentObj.userData.type = '3d-element';
+      segmentObj.userData.elementType = 'segment';
+      segmentObj.userData.elementId = segment.id;
+      scene.add(segmentObj);
+      
+      // Add endpoint spheres
+      const endpointGeometry = new THREE.SphereGeometry(0.12, 12, 12);
+      const endpointMaterial = new THREE.MeshStandardMaterial({
+        color: segment.visualStyle?.color || '#FF6B35',
+        emissive: 0x000000,
+        metalness: 0.3,
+        roughness: 0.7
+      });
+      
+      const startSphere = new THREE.Mesh(endpointGeometry, endpointMaterial);
+      startSphere.position.copy(start);
+      startSphere.userData.type = '3d-element';
+      scene.add(startSphere);
+      
+      const endSphere = new THREE.Mesh(endpointGeometry, endpointMaterial);
+      endSphere.position.copy(end);
+      endSphere.userData.type = '3d-element';
+      scene.add(endSphere);
+    }
+
+    // Note: 3D Planes rendering omitted for now - can be added later if needed
+    // (Plane3DFromTraces would be rendered as semi-transparent planes)
+
+  } catch (error) {
+    console.warn('[ThreeView] Error rendering 3D elements:', error);
+  }
 }
 
 /**
@@ -323,6 +512,7 @@ function handleDisplayChange() {
   renderProjectionPlanes();
   renderHingeLines();
   render2DElements();
+  render3DElements(); // Phase 78
 }
 
 /**
@@ -392,6 +582,7 @@ onMounted(() => {
       renderProjectionPlanes();
       renderHingeLines();
       render2DElements();
+      render3DElements(); // Phase 78
     }
   );
 

@@ -39,10 +39,10 @@ describe('Circle2D', () => {
     const point2 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 50, 1), planeId);
     const point3 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(-50, 0, 1), planeId);
     
-    world.addPoint2D(centerPoint);
-    world.addPoint2D(point1);
-    world.addPoint2D(point2);
-    world.addPoint2D(point3);
+    plane.addPoint(centerPoint);
+    plane.addPoint(point1);
+    plane.addPoint(point2);
+    plane.addPoint(point3);
     
     centerPointId = centerPoint.id;
     point1Id = point1.id;
@@ -83,7 +83,7 @@ describe('Circle2D', () => {
       const plane = getHorizontalPlane(world);
       const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), planeId + '/missing', point1Id, planeId);
       
-      world.addCircle2D(circle);
+      plane.addCircle(circle);
       const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       expect(realization).toBeUndefined();
@@ -93,7 +93,7 @@ describe('Circle2D', () => {
       const plane = getHorizontalPlane(world);
       const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, planeId + '/missing', planeId);
       
-      world.addCircle2D(circle);
+      plane.addCircle(circle);
       const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       expect(realization).toBeUndefined();
@@ -103,10 +103,10 @@ describe('Circle2D', () => {
       const plane = getHorizontalPlane(world);
       // Create coincident point
       const coincident = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
-      world.addPoint2D(coincident);
+      plane.addPoint(coincident);
       
       const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, coincident.id, planeId);
-      world.addCircle2D(circle);
+      plane.addCircle(circle);
       const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       // Should return infeasible realization for degenerate circle
@@ -131,7 +131,7 @@ describe('Circle2D', () => {
       const plane = getHorizontalPlane(world);
       const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), point1Id, point2Id, point3Id, planeId);
       
-      world.addCircle2D(circle);
+      plane.addCircle(circle);
       const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       expect(realization).toBeDefined();
@@ -146,7 +146,7 @@ describe('Circle2D', () => {
       const plane = getHorizontalPlane(world);
       const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), planeId + '/missing', point2Id, point3Id, planeId);
       
-      world.addCircle2D(circle);
+      plane.addCircle(circle);
       const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       expect(realization).toBeUndefined();
@@ -158,12 +158,12 @@ describe('Circle2D', () => {
       const collinear1 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
       const collinear2 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(10, 0, 1), planeId);
       const collinear3 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(20, 0, 1), planeId);
-      world.addPoint2D(collinear1);
-      world.addPoint2D(collinear2);
-      world.addPoint2D(collinear3);
+      plane.addPoint(collinear1);
+      plane.addPoint(collinear2);
+      plane.addPoint(collinear3);
       
       const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), collinear1.id, collinear2.id, collinear3.id, planeId);
-      world.addCircle2D(circle);
+      plane.addCircle(circle);
       const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       // Should return infeasible realization for collinear points (no unique circle)

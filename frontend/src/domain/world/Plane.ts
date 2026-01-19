@@ -47,6 +47,20 @@ export abstract class Plane3D extends Element3D {
   };
 
   /**
+   * Compute 3D realization (plane equation)
+   * For most planes, returns the stored normal vector
+   */
+  realize3D(_world: any): any {
+    // Import here to avoid circular dependency
+    const { Plane3DRealization3D } = require('./Element3DRealization3D');
+    // Return plane equation: ax + by + cz + d = 0
+    // d = -normal · point
+    const d = -(this.normal.x * this.point.x + this.normal.y * this.point.y + this.normal.z * this.point.z);
+    const equation = new (require('three').Vector4)(this.normal.x, this.normal.y, this.normal.z, d);
+    return new Plane3DRealization3D(equation);
+  }
+
+  /**
    * Get the plane equation parameters
    * For planes defined by point + normal: n·(P - P₀) = 0
    * Concrete implementations may use different representations
@@ -201,5 +215,82 @@ export class Plane3DFixed extends Plane3D {
       cloned.boundaries = { ...this.boundaries };
     }
     return cloned;
+  }
+}
+
+/**
+ * Plane3DFromTraces - Plane from two trace lines (user-constructed - Phase 78)
+ * 
+ * Stores ONLY IDs of defining elements (trace lines), no numeric data.
+ * realize3D() reconstructs plane equation from trace coordinates.
+ */
+export class Plane3DFromTraces extends Plane3D {
+  readonly kind = 'Plane3DFromTraces';
+  label: string;
+  
+  // Defining relations (ONLY IDs, no numeric data)
+  trace1: string;      // First trace (Line2D ID on first plane)
+  trace2: string;      // Second trace (Line2D ID on second plane)
+  plane1Id: string;    // Which plane trace1 is on
+  plane2Id: string;    // Which plane trace2 is on (must be different)
+  
+  visualStyle?: any;
+
+  constructor(
+    id: string,
+    label: string,
+    trace1: string,
+    trace2: string,
+    plane1Id: string,
+    plane2Id: string
+  ) {
+    // Initialize with placeholder point and normal (will be computed in realize3D)
+    super(id, new Vector4(0, 0, 0, 1), new Vector4(0, 0, 1, 0), 'auxiliary', label);
+    this.label = label;
+    this.trace1 = trace1;
+    this.trace2 = trace2;
+    this.plane1Id = plane1Id;
+    this.plane2Id = plane2Id;
+  }
+
+  realize3D(_world: any): any {
+    // Import here to avoid circular dependency
+    const { Plane3DRealization3D } = require('./Element3DRealization3D');
+    const { Vector4 } = require('three');
+    
+    // TODO: Implement GeometryUtils3D.reconstructPlaneFromTraces
+    // For now, return placeholder (horizontal plane)
+    const equation = new Vector4(0, 0, 1, 0);
+    return new Plane3DRealization3D(equation);
+  }
+
+  getEquation(): { point: Vector4; normal: Vector4 } {
+    return {
+      point: this.point.clone(),
+      normal: this.normal.clone()
+    };
+  }
+
+  getDependencies(): string[] {
+    return [this.trace1, this.trace2, this.plane1Id, this.plane2Id];
+  }
+
+  clone(): Plane3DFromTraces {
+    return new Plane3DFromTraces(
+      this.id,
+      this.label,
+      this.trace1,
+      this.trace2,
+      this.plane1Id,
+      this.plane2Id
+    );
+  }
+
+  /**
+   * Validate that traces are on different planes
+   * Called during creation to enforce Phase 78 requirement
+   */
+  static validateDifferentPlanes(plane1Id: string, plane2Id: string): boolean {
+    return plane1Id !== plane2Id;
   }
 }

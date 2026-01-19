@@ -161,8 +161,8 @@ Every workspace contains a special **origin point** named `O`:
 - Type: `Point3DByCoordinates` (not derived from projections)
 - Geometrically, it sits at the intersection of projection planes `P_H` and `P_V` (on the hinge line `HL_HV`).
 - Its 2D projections are **stored as 2D Point objects** in the World:
-  - `O_H` on `P_H`: locked Point with local coordinates (0, -200) — on the hinge line
-  - `O_V` on `P_V`: locked Point with local coordinates (0, 200) — on the hinge line
+  - `O_H` on `P_H`: locked Point with local coordinates (0, 0) — on the hinge line
+  - `O_V` on `P_V`: locked Point with local coordinates (0, 0) — on the hinge line
 - The 3D point `O` is **defined by** its two projections `O_H` and `O_V` (standard dihedral geometry).
 - The origin point is **always present** from the moment a workspace is created.
 - It is always visible and cannot be deleted or moved (points are locked).
@@ -193,11 +193,13 @@ The hinge line between `P_H` and `P_V`:
 - `HL_HV` is a **3D element** defined as the intersection of two planes.
 - Type: `Line3DFromPlaneIntersection`
 - Defined by: intersection of `P_H` and `P_V`
+- 3D position: X-axis where y=0 AND z=0 (parametric: (x, 0, 0) for all x)
 - Its 2D projections (`HL_HV_H`, `HL_HV_V`) appear as horizontal lines on each plane:
-  - `HL_HV_H` on `P_H`: horizontal line at y = -200
-  - `HL_HV_V` on `P_V`: horizontal line at y = 200
+  - `HL_HV_H` on `P_H`: horizontal line at v = 0 (plane intrinsic coordinates)
+  - `HL_HV_V` on `P_V`: horizontal line at v = 0 (plane intrinsic coordinates)
 - Visual appearance: dashed gray line (#333333)
 - The hinge line is the "fold line" or "ground line" in traditional dihedral drawings
+- Position is derived from plane intersection, not hardcoded (v=0 is the geometric result)
 - It is **always present** and cannot be deleted
 
 ### Coordinate System (Monge Projection)
@@ -262,7 +264,7 @@ Each projection plane has its own 2D coordinate system defined by the plane's ba
      │        O────→ X         │
      │                         │
      └─────────────────────────┘
-     ══════════════════════════ HL_HV (X-axis, y=200 on P_V paper)
+     ══════════════════════════ HL_HV (X-axis: y=0 z=0 in 3D, v=0 in planes)
      ┌─────────────────────────┐
      │        O────→ X         │
      │        |                │
@@ -271,15 +273,15 @@ Each projection plane has its own 2D coordinate system defined by the plane's ba
      │  P_H (Horizontal/Top)   │
      │  (rotated down 90°)     │
      └─────────────────────────┘
-                                  (y=-200 on P_H paper is the HL)
+                                  (v=0 in plane intrinsic coordinates)
 ```
 
-#### Y Coordinate Behavior on P_H Paper
+#### Y Coordinate Behavior on P_H
 
-Relative to the hinge line on P_H:
-- **Above HL** (y < -200 on paper): Y < 0 in 3D (closer to viewer)
-- **At HL** (y = -200 on paper): Y = 0 in 3D (on hinge line)
-- **Below HL** (y > -200 on paper): Y > 0 in 3D (farther from viewer)
+Relative to the hinge line on P_H (using plane intrinsic v coordinate):
+- **Away from HL** (v > 0): Y < 0 in 3D (toward viewer, below horizontal plane)
+- **At HL** (v = 0): Y = 0 in 3D (on hinge line, the X-axis)
+- **Toward viewer from HL** (v < 0): Y > 0 in 3D (away from viewer, above horizontal plane)
 
 #### Reconstructing 3D from 2D Projections
 
@@ -1039,23 +1041,31 @@ Contains tools to define 3D elements from existing 2D constructions. All operati
     1. Activate the 3D-point tool.
     2. Select a point on the first projection plane (e.g., `a_H` on `P_H`).
     3. Select the corresponding point on the second projection plane (e.g., `a_V` on `P_V`).
-  - **Result**: A new 3D point entity (e.g., `A`) is created and visualized in the 3D overlay, linked to its 2D projections.
-  - **Compatibility**: The selected 2D points must be geometrically compatible according to dihedral projection rules (e.g., aligned perpendicular to the hinge line).
-  - **Infeasibility**: If the projections are incompatible, no 3D point is created, immediate non-modal feedback is provided, and no action entry is added to history.
+  - **Result**: A new 3D point entity is created with ID format `point3d_N` (e.g., `point3d_45`), label equals ID, and visualized in the 3D overlay.
+  - **Validation Requirements**:
+    - **MANDATORY**: The two selected points MUST be on different projection planes (same-plane selection is invalid)
+    - **Geometric compatibility**: Points must be compatible according to dihedral projection rules (aligned perpendicular to hinge line)
+  - **Visual Style**: Initially rendered wider/thicker than 2D elements (configurable in future)
+  - **Infeasibility**: If projections are on same plane or geometrically incompatible, no 3D point is created, immediate non-modal feedback is provided, and no action entry is added to history.
   - **Dependency**: The 3D point updates if either 2D projection moves.
+  - **No auto-projection**: System does NOT automatically create projections on other planes.
 
 **3D Line** tool:
 
 - **Create 3D line from projections**:
-  - **Description**: Defines a 3D line from two compatible 2D line projections.
+  - **Description**: Defines a 3D line from two compatible 2D line projections on different planes.
   - **Steps**:
     1. Activate the 3D-line tool.
     2. Select a 2D line on the first projection plane.
     3. Select the corresponding 2D line on the second projection plane.
-  - **Result**: A new 3D line entity is created and visualized in the 3D overlay.
-  - **Compatibility**: The 2D lines must represent projections of the same 3D line according to dihedral rules.
-  - **Infeasibility**: If the projections are incompatible, no 3D line is created and feedback is provided.
+  - **Result**: A new 3D line entity is created with ID format `line3d_N` (e.g., `line3d_12`), label equals ID, and visualized in the 3D overlay.
+  - **Validation Requirements**:
+    - **MANDATORY**: The two selected lines MUST be on different projection planes
+    - **Geometric compatibility**: Lines must represent projections of the same 3D line according to dihedral rules
+  - **Visual Style**: Initially rendered wider/thicker than 2D elements (configurable in future)
+  - **Infeasibility**: If projections are on same plane or geometrically incompatible, no 3D line is created and feedback is provided.
   - **Dependency**: The 3D line updates if either 2D projection changes.
+  - **No auto-projection**: System does NOT automatically create projections on other planes.
 
 **3D Segment** tool:
 
@@ -1065,11 +1075,15 @@ Contains tools to define 3D elements from existing 2D constructions. All operati
     1. Activate the 3D-segment tool.
     2. Select a 2D segment on the first projection plane.
     3. Select the corresponding 2D segment on the second projection plane.
-  - **Result**: A new 3D segment entity is created and visualized in the 3D overlay.
-  - **Compatibility**: The 2D segments must represent projections of the same 3D segment, and their endpoints must correspond correctly.
-  - **Endpoint correspondence**: The system checks that endpoints map consistently between projections.
-  - **Infeasibility**: If the segments are incompatible or endpoints do not correspond, no 3D segment is created and feedback is provided.
+  - **Result**: A new 3D segment entity is created with ID format `segment3d_N` (e.g., `segment3d_7`), label equals ID, and visualized in the 3D overlay.
+  - **Validation Requirements**:
+    - **MANDATORY**: The two selected segments MUST be on different projection planes
+    - **Geometric compatibility**: Segments must represent projections of the same 3D segment
+    - **Endpoint correspondence**: Endpoints must map consistently between projections
+  - **Visual Style**: Initially rendered wider/thicker than 2D elements (configurable in future)
+  - **Infeasibility**: If segments are on same plane, geometrically incompatible, or endpoints do not correspond, no 3D segment is created and feedback is provided.
   - **Dependency**: The 3D segment updates if either 2D projection changes.
+  - **No auto-projection**: System does NOT automatically create projections on other planes.
 
 **3D Plane** tool:
 
@@ -1079,10 +1093,14 @@ Contains tools to define 3D elements from existing 2D constructions. All operati
     1. Activate the 3D-plane tool.
     2. Select the trace on the first projection plane (e.g., the horizontal trace).
     3. Select the trace on the second projection plane (e.g., the vertical trace).
-  - **Result**: A new 3D plane entity is created and visualized in the 3D overlay as a bounded or semi-infinite surface.
-  - **Compatibility**: The traces must be compatible according to dihedral projection rules (typically intersecting at the hinge line).
-  - **Infeasibility**: If the traces are incompatible, no 3D plane is created and feedback is provided.
+  - **Result**: A new 3D plane entity is created with ID format `plane3d_N` (e.g., `plane3d_3`), label equals ID, and visualized in the 3D overlay as a bounded or semi-infinite surface.
+  - **Validation Requirements**:
+    - **MANDATORY**: The two selected traces MUST be on different projection planes
+    - **Geometric compatibility**: Traces must be compatible according to dihedral projection rules (typically intersecting at hinge line)
+  - **Visual Style**: Initially rendered wider/thicker than 2D elements (configurable in future)
+  - **Infeasibility**: If traces are on same plane or incompatible, no 3D plane is created and feedback is provided.
   - **Dependency**: The 3D plane updates if either trace changes.
+  - **No auto-projection**: System does NOT automatically create projections on other planes.
 
 **General behavior for invalid 3D creation**:
 
@@ -1538,6 +1556,8 @@ These use cases cover primitive user actions and micro-interactions. They are in
 - **FR-053**: The system MUST provide a 3D visualization overlay that displays 2D elements positioned on their projection planes in 3D space: when enabled via display options, the 3D view MUST render all 2D elements (points, lines, segments, circles) at their correct 3D positions by transforming their 2D plane-local coordinates through the projection plane's 3D transformation matrix. The 3D view MUST use Three.js for rendering with proper depth testing, occlusion, and perspective camera. Each 2D element type MUST map to an appropriate 3D geometric primitive (points → spheres, lines → infinite line segments, segments → bounded line segments, circles → 3D curves on planes). The 3D visualization MUST update automatically when 2D elements change position or visibility. Elements MUST maintain visual hierarchy: projection plane surfaces rendered as semi-transparent rectangles, 2D elements on planes rendered with same colors and styles as 2D view but adjusted for 3D context, and active plane elements emphasized through stronger opacity. The 3D view MUST remain read-only: no element selection, creation, or editing allowed—purely for spatial understanding. [Phase 77 - 3D Visualization of 2D Elements on Planes]
 
 - **FR-054**: The system MUST display coordinate values (u, v) along the viewport borders for main grid lines to provide numerical spatial orientation: coordinate labels MUST appear at the intersections of major grid lines with the viewport edges (top, bottom, left, right borders). U-coordinates (horizontal) MUST be displayed along the top and bottom edges; V-coordinates (vertical) MUST be displayed along the left and right edges. Labels MUST update dynamically as the user pans or zooms the viewport, showing only the coordinates visible within the current view. The coordinate display MUST respect the grid visibility toggle—labels only appear when the grid is visible. Typography MUST be clear and readable (minimum 10px font size) without obstructing the workspace. Labels MUST be positioned outside the drawable canvas area or use subtle backgrounds to ensure legibility over complex drawings. The coordinate values MUST reflect the plane-local (u,v) coordinate system, NOT canvas pixel coordinates. [Phase 78 - Grid Coordinate Labels]
+
+- **FR-055**: The system MUST render the grid using the active projection plane's intrinsic coordinate system (u, v vectors), not arbitrary paper/canvas coordinates: the grid MUST be derived from the active plane's origin point (0, 0) and intrinsic u and v basis vectors, transformed through the plane's planeToPaper2D matrix to screen coordinates. Major grid lines MUST always be at multiples of powers of 10 (10^n where n is any integer, e.g., 0.1, 1, 10, 100, 1000), with the specific power chosen to maintain visual clarity at the current zoom level. Subdivisions between major lines MUST be exactly 2, 5, or 10, dividing each major interval into smaller cells. The subdivision count MUST be chosen to keep minor grid cells at or above a minimum pixel threshold (15 pixels), selecting the largest subdivision (10 > 5 > 2) that meets this requirement—this ensures maximum grid detail while preventing visual clutter. The algorithm MUST calculate minSpacing = minPixelsPerCell / zoom, then find the smallest value from the sequence (10^n/10, 10^n/5, 10^n/2) that is ≥ minSpacing, determining both the minor spacing and the corresponding major spacing (10^n). Major grid lines (at 10^n intervals) MUST be emphasized with darker color (#C0C0C0) compared to minor lines (#E0E0E0). Grid labels MUST display actual plane-local (u, v) coordinate values at major lines only, not transformed paper/canvas pixel coordinates. The plane's origin (0, 0) MUST be clearly visible when in viewport, marked by the intersection of u=0 and v=0 lines. The hinge line at v=0 MUST naturally align with horizontal grid lines on default planes. Each projection plane MUST show its own grid when active, derived from that plane's unique coordinate system and transformation matrices. The grid architecture MUST support future non-orthogonal planes where u, v vectors may be at arbitrary angles—transformation matrices already handle arbitrary orientations. [Phase 79 - Plane-Based Grid Coordinates]
 
 ### Assumptions
 

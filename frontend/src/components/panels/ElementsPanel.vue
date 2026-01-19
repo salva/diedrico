@@ -121,6 +121,11 @@
         </div>
         
         <div v-if="!is3DSectionCollapsed" class="section-content">
+          <!-- Empty state message for 3D -->
+          <div v-if="!threeDElements.hasElements" class="empty-state">
+            <p>No 3D elements yet. Use the 3D tools to create points, lines, and other objects from projections.</p>
+          </div>
+          
           <ElementTypeGroup
             v-if="threeDElements.points.length > 0"
             title="Points"
@@ -139,6 +144,13 @@
             v-if="threeDElements.segments.length > 0"
             title="Segments"
             :elements="threeDElements.segments"
+            @select="handleElementSelect"
+            @toggle-visibility="handleVisibilityToggle"
+          />
+          <ElementTypeGroup
+            v-if="threeDElements.planes.length > 0"
+            title="Planes"
+            :elements="threeDElements.planes"
             @select="handleElementSelect"
             @toggle-visibility="handleVisibilityToggle"
           />
@@ -298,20 +310,34 @@ const threeDElements = computed(() => {
   worldVersion.value; // Create dependency
   forceUpdate.value; // Create dependency
   
-  // TODO: 3D elements not implemented yet
+  console.log('[ElementsPanel] Computing 3D elements');
+  
+  // Fetch 3D elements from World (Phase 78)
+  const points = world.getAll3DPoints();
+  const lines = world.getAll3DLines();
+  const segments = world.getAll3DSegments();
+  const planes = world.getAll3DPlanesUser();
+  
+  console.log('[ElementsPanel] 3D elements:', {
+    points: points.length,
+    lines: lines.length,
+    segments: segments.length,
+    planes: planes.length
+  });
+  
   return {
-    points: [],
-    lines: [],
-    segments: []
+    points: points.map(formatElement),
+    lines: lines.map(formatElement),
+    segments: segments.map(formatElement),
+    planes: planes.map(formatElement),
+    hasElements: points.length + lines.length + segments.length + planes.length > 0
   };
 });
 
 const hasAnyElements = computed(() => {
   return horizontalElements.value.hasElements ||
          verticalElements.value.hasElements ||
-         threeDElements.value.points.length > 0 ||
-         threeDElements.value.lines.length > 0 ||
-         threeDElements.value.segments.length > 0;
+         threeDElements.value.hasElements;
 });
 
 // Helper functions

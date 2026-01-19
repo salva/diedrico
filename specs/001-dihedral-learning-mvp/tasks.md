@@ -8192,3 +8192,84 @@ const circumferencePointId = pointResult.outputs.pointId;
 **Notes**: Purely additive feature with zero breaking changes; complements existing grid visualization; educational value for understanding coordinate systems
 
 ---
+
+## Phase 79: Fix Grid to Use Plane Intrinsic Coordinates
+
+**Purpose**: Fix fundamentally broken grid implementation to use active projection plane's intrinsic (u, v) coordinate system with adaptive spacing and subdivisions.
+
+**Problem**: Current grid (T275 from Phase 10) uses hardcoded paper coordinates instead of plane intrinsic (u, v) coordinates. Grid spacing is arbitrary, grid labels show wrong values, and no relationship to plane transformation matrices.
+
+**Solution**: Generate grid from plane origin (0, 0) and intrinsic basis vectors, transform through planeToPaper2D matrix. Implement adaptive spacing (50u/20u/10u/5u) and subdivisions (2/5/10) based on zoom/pixel density.
+
+**Requirements**: FR-055 (Plane-Based Grid Requirement)
+
+**Tasks**: T1224-T1233 (10 tasks across 5 sub-phases)
+
+**Estimated Effort**: 8-12 hours (complete rewrite of grid system)
+
+### Phase 79.1: Specification Updates (T1224-T1226: 3 tasks)
+
+- [ ] T1224 [P] Add FR-055 to spec.md: Functional requirement for grid using plane intrinsic (u, v) coordinates with adaptive spacing and subdivisions
+- [ ] T1225 [P] Add Phase 79 section to ui-spec.md: Visual specification for plane-based grid rendering with transformation pipeline
+- [ ] T1226 [P] Add Phase 79 section to data-model.md: Complete technical architecture with TypeScript interfaces, adaptive algorithms, transformation pipeline
+
+**Checkpoint**: Specification documented with functional requirements, visual design, and technical architecture
+
+### Phase 79.2: Core Grid Implementation (T1227-T1229: 3 tasks)
+
+- [ ] T1227 [P] Implement `computeAdaptiveGridParams(zoom)` function in SvgCanvas.vue: Returns `{ spacing, subdivision, majorSpacing }` based on zoom level (50u/20u/10u/5u) and pixel density (15px threshold for subdivisions 2/5/10)
+- [ ] T1228 [P] Rewrite `gridLines` computed property: Get active plane, transform viewport bounds to plane coordinates using `paperToPlane2D`, generate grid lines in (u, v) coordinates, transform each line through `planeToPaper2D` to screen
+- [ ] T1229 [P] Add `GridLineData` interface: `{ key, startX, startY, endX, endY, isMajor, coordinateValue, axis }` with proper TypeScript typing
+
+**Checkpoint**: Grid lines generated from plane coordinates and transformed to screen
+
+### Phase 79.3: Grid Label Integration (T1230: 1 task)
+
+- [ ] T1230 [P] Update Phase 78 `gridLabels` computed property to use plane coordinates: Transform viewport bounds to plane coordinates, compute labels at plane (u, v) multiples of majorSpacing, transform label positions to screen, display actual (u, v) values NOT paper coordinates
+
+**Checkpoint**: Grid labels display actual plane (u, v) coordinates matching grid lines
+
+### Phase 79.4: Testing and Verification (T1231-T1232: 2 tasks)
+
+- [ ] T1231 [P] Manual testing: Test grid at multiple zoom levels (0.3, 1.0, 4.0), verify adaptive spacing (50u/20u/10u/5u) and subdivisions (2/5/10) work correctly, verify origin (0, 0) visible as intersection of u=0 and v=0 lines, verify hinge line at v=0 aligns with horizontal major grid lines
+- [ ] T1232 [P] Manual testing: Change active plane, verify grid immediately updates to new plane's coordinate system, pan/zoom extensively, verify grid labels show correct (u, v) values at all times, toggle grid visibility on/off
+
+**Checkpoint**: Grid correctly derived from plane coordinates at all zoom levels and plane configurations
+
+### Phase 79.5: Documentation and Commit (T1233: 1 task)
+
+- [ ] T1233 [P] Git commit Phase 79: "Fix grid to use plane intrinsic (u,v) coordinates with adaptive spacing/subdivisions. BREAKING CHANGE: Complete rewrite of grid system from Phase 10 - grid now correctly derived from active projection plane's coordinate system instead of hardcoded paper offsets."
+
+**Checkpoint**: Feature complete, tested, and committed with comprehensive message
+
+**Acceptance Criteria**:
+- ✅ Grid lines generated from plane (u, v) coordinates, transformed via planeToPaper2D
+- ✅ Grid labels display actual (u, v) values, NOT paper coordinates
+- ✅ Adaptive spacing: 50u (zoom<0.5), 20u (0.5≤zoom<2), 10u (2≤zoom<5), 5u (zoom≥5)
+- ✅ Adaptive subdivisions: 2, 5, or 10 based on pixel density (15px minimum threshold)
+- ✅ Origin (0, 0) clearly visible when in viewport (intersection of u=0, v=0)
+- ✅ Hinge line at v=0 aligns with horizontal major grid lines on default planes
+- ✅ Active plane change immediately updates grid to new plane's coordinate system
+- ✅ Major lines (#C0C0C0) emphasized compared to minor lines (#E0E0E0)
+- ✅ Grid respects visibility toggle—hidden when grid visibility off
+- ✅ No special-case logic—all planes (default and auxiliary) use same grid algorithm
+
+**Benefits**:
+- **Correct coordinates**: Grid shows actual plane (u, v) values, not arbitrary paper offsets
+- **Origin visible**: (0, 0) clearly marked when in viewport
+- **Hinge line alignment**: HL at v=0 aligns with grid on default planes
+- **Per-plane consistency**: Each plane's grid derived from its coordinate system
+- **Architectural generality**: Supports future non-orthogonal planes without code changes
+- **Visual clarity**: Adaptive spacing/subdivisions keep grid useful at all zoom levels
+- **Educational value**: Reinforces understanding that planes have intrinsic coordinate systems
+
+**Related Phases**:
+- Phase 10 (Original grid implementation - now incorrect, must be replaced)
+- Phase 78 (Grid Coordinate Labels - must be updated to use plane coordinates)
+- Phase 6 (Viewport transformation - provides pan/zoom state)
+
+**Breaking Changes**: Complete rewrite of grid implementation—existing grid code from Phase 10 fundamentally broken and must be replaced.
+
+**Phase 79 Status**: 🔄 IN PROGRESS (Jan 17, 2026)
+
+---

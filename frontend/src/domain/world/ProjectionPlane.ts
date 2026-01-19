@@ -1381,7 +1381,7 @@ export class BaseProjectionPlane extends ProjectionPlane {
   static createPH(): BaseProjectionPlane {
     // P_H: Horizontal projection plane at z=0
     // Transform: x' = u + 800, y' = -v + 500 (flip v so P_H content goes upward)
-    // HL_HV at v=0 → y' = 500 (shared hinge line at canvas middle)
+    // HL_HV at v=0 (plane intrinsic) → y' = 500 (hinge line at canvas middle)
     // Positive v (away from HL) → y' < 500 (above the hinge line on screen)
     // Matrix3.set() uses ROW-MAJOR: set(n11, n12, n13, n21, n22, n23, n31, n32, n33)
     // Matrix layout:
@@ -1429,7 +1429,7 @@ export class BaseProjectionPlane extends ProjectionPlane {
       threeDToPlane,
       true,   // Active by default
       true,   // Visible
-      '#2196F3',  // Blue
+      '#808080',  // Default gray (no special color)
       undefined
     );
   }
@@ -1441,8 +1441,8 @@ export class BaseProjectionPlane extends ProjectionPlane {
   static createPV(): BaseProjectionPlane {
     // P_V: Vertical projection plane at y=0
     // Transform: x' = u + 800, y' = v + 500
-    // HL_HV at y=200 in plane → y' = 200 + 500 = 700 (lower third of 1000px canvas)
-    // Center at y=0 in plane → y' = 500 (middle of canvas)
+    // HL_HV at v=0 (plane intrinsic) → y' = 500 (hinge line at canvas middle)
+    // Positive v (away from HL) → y' > 500 (below the hinge line on screen)
     // Matrix3.set() uses ROW-MAJOR: set(n11, n12, n13, n21, n22, n23, n31, n32, n33)
     // Matrix layout:
     // [n11  n12  n13]   [1  0  800]
@@ -1489,7 +1489,7 @@ export class BaseProjectionPlane extends ProjectionPlane {
       threeDToPlane,
       false,  // Not active by default
       true,   // Visible
-      '#4CAF50',  // Green
+      '#808080',  // Default gray (no special color)
       undefined
     );
   }

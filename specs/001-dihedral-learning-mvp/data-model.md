@@ -562,12 +562,26 @@ World
 │   │   ├── points: Map<string, Point2D>
 │   │   ├── lines: Map<string, Line2D>      // Includes segments, guides, HalfHingeLine2D (2D entities)
 │   │   ├── circles: Map<string, Circle2D>
-│   │   └── arcs: Map<string, Arc2D>
+│   │   ├── arcs: Map<string, Arc2D>
+│   │   ├── pointRealizations: Map<string, Point2DRealization2D>    // 2D realization cache
+│   │   ├── lineRealizations: Map<string, Line2DRealization2D>      // 2D realization cache
+│   │   ├── circleRealizations: Map<string, Circle2DRealization2D>  // 2D realization cache
+│   │   └── arcRealizations: Map<string, Arc2DRealization2D>        // 2D realization cache
 │   └── ProjectionPlane "proj_plane_V"
 │       ├── points: Map<string, Point2D>
-│       └── lines: Map<string, Line2D>      // Includes HalfHingeLine2D (2D entities)
+│       ├── lines: Map<string, Line2D>      // Includes HalfHingeLine2D (2D entities)
+│       ├── pointRealizations: Map<string, Point2DRealization2D>
+│       └── lineRealizations: Map<string, Line2DRealization2D>
 ├── hingeLines: Map<string, HingeLine>      // 3D entities (NOT HalfHingeLine2D)
 ├── planes: Map<string, Plane3D>            // 3D geometric definitions
+├── points3D: Map<string, Point3D>          // User-created 3D points (Phase 78) - DOMAIN LAYER
+├── lines3D: Map<string, Line3D>            // User-created 3D lines (Phase 78) - DOMAIN LAYER
+├── segments3D: Map<string, Segment3D>      // User-created 3D segments (Phase 78) - DOMAIN LAYER
+├── planes3DUser: Map<string, Plane3D>      // User-created 3D planes (Phase 78) - DOMAIN LAYER
+├── pointRealizations3D: Map<string, Point3DRealization3D>      // 3D realization cache (Phase 78)
+├── lineRealizations3D: Map<string, Line3DRealization3D>        // 3D realization cache (Phase 78)
+├── segmentRealizations3D: Map<string, Segment3DRealization3D>  // 3D realization cache (Phase 78)
+├── planeRealizations3D: Map<string, Plane3DRealization3D>      // 3D realization cache (Phase 78)
 └── processTree: ProcessTree                 // Construction history
 ```
 
@@ -6342,38 +6356,240 @@ Line intersection produces two points:
 
 See Phase 33 tasks for implementation.
 
-// Realization types for 3D elements
-type Element3DRealization =
-  | Point3DRealization
-  | Line3DRealization
-  | Segment3DRealization
-  | Plane3DRealization;
+// ============================================================================
+// ELEMENT 3D REALIZATIONS (Computed Numeric Geometry)
+// ============================================================================
 
-interface Point3DRealization {
-  position: Vector4;                // Position in 3D space (x, y, z, 1) - ONLY NUMERIC DATA
+/**
+ * Base class for all 3D element realizations (Point3DRealization3D, Line3DRealization3D, etc.)
+ * 
+ * Mirrors Element2DRealization2D architecture:
+ * - Contains ONLY numeric data (Vector4 coordinates)
+ * - NO structural information (id, planeId) - that stays in Element3D
+ * - Extends Realization to inherit feasible property
+ * 
+ * Architectural symmetry: Realization → Element3DRealization3D mirrors Realization → Element2DRealization2D
+ * 
+ * Phase 78: Introduced for user-created 3D elements from 2D projections
+ */
+export abstract class Element3DRealization3D extends Realization {
+  /**
+   * Constructor for all 3D element realizations
+   * 
+   * @param feasible - Whether the geometric computation succeeded (default: true)
+   */
+  constructor(feasible: boolean = true) {
+    super(feasible);
+  }
+}
+
+/**
+ * Point3DRealization3D - Stores computed 3D position for a point
+ * Result of realize3D() geometric calculation
+ * 
+ * Contains ONLY numeric data (Vector4). Structural information (id, projection IDs) stays in Point3D.
+ */
+export class Point3DRealization3D extends Element3DRealization3D {
+  position: Vector4;                // Position in 3D space [x, y, z, 1] - ONLY NUMERIC DATA
   
-  // NO pointId - that's the map key in world.pointRealizations3D
+  constructor(position: Vector4, feasible: boolean = true) {
+    super(feasible);
+    this.position = position;
+  }
   
-  // Implementation: TypeScript class
-  // constructor(position: Vector4)
-  // getPosition(): Vector4
+  /**
+   * Get position as Vector4 (homogeneous coordinates)
+   */
+  getPosition(): Vector4 {
+    return this.position;
+  }
   
-  // Computed from 2D projections using 3D reconstruction
+  /**
+   * Get position as Cartesian coordinates [x, y, z]
+   * Useful for rendering (converts from homogeneous)
+   */
+  getCartesian(): [number, number, number] {
+    // For regular points w=1, but handle general case
+    const w = this.position.w || 1;
+    return [
+      this.position.x / w,
+      this.position.y / w,
+      this.position.z / w
+    ];
+  }
 }
 
-interface Line3DRealization {
-  point: [number, number, number, number];     // [x, y, z, 1] - point on line (homogeneous)
-  direction: [number, number, number, number]; // [dx, dy, dz, 0] - direction vector (normalized, w=0)
+/**
+ * Line3DRealization3D - Stores computed 3D line (point + direction)
+ * Result of realize3D() geometric calculation
+ * 
+ * Representation: parametric form p(t) = point + t * direction
+ * - point: Vector4 [x, y, z, 1] - any point on the line
+ * - direction: Vector4 [dx, dy, dz, 0] - normalized direction (w=0 for vectors)
+ * 
+ * Contains ONLY numeric data. Structural information (id, projection IDs) stays in Line3D.
+ */
+export class Line3DRealization3D extends Element3DRealization3D {
+  point: Vector4;                   // Point on line [x, y, z, 1] - w=1 for points
+  direction: Vector4;               // Direction vector [dx, dy, dz, 0] - w=0 for vectors
+  
+  constructor(point: Vector4, direction: Vector4, feasible: boolean = true) {
+    super(feasible);
+    this.point = point;
+    this.direction = direction.clone().normalize();  // Store normalized
+  }
+  
+  /**
+   * Evaluate line at parameter t: p(t) = point + t * direction
+   */
+  getPointAt(t: number): Vector4 {
+    return new Vector4(
+      this.point.x + t * this.direction.x,
+      this.point.y + t * this.direction.y,
+      this.point.z + t * this.direction.z,
+      1  // Result is a point
+    );
+  }
+  
+  /**
+   * Get direction as Vector4 (normalized)
+   */
+  getDirection(): Vector4 {
+    return this.direction;
+  }
 }
 
-interface Segment3DRealization {
-  startPoint: [number, number, number, number]; // [x1, y1, z1, 1] - start point (homogeneous)
-  endPoint: [number, number, number, number];   // [x2, y2, z2, 1] - end point (homogeneous)
+/**
+ * Segment3DRealization3D - Stores computed 3D segment (two endpoints)
+ * Result of realize3D() geometric calculation
+ * 
+ * Representation: two finite points
+ * - startPoint: Vector4 [x1, y1, z1, 1]
+ * - endPoint: Vector4 [x2, y2, z2, 1]
+ * 
+ * Contains ONLY numeric data. Structural information (id, projection IDs) stays in Segment3D.
+ */
+export class Segment3DRealization3D extends Element3DRealization3D {
+  startPoint: Vector4;              // Start point [x1, y1, z1, 1]
+  endPoint: Vector4;                // End point [x2, y2, z2, 1]
+  
+  constructor(startPoint: Vector4, endPoint: Vector4, feasible: boolean = true) {
+    super(feasible);
+    this.startPoint = startPoint;
+    this.endPoint = endPoint;
+  }
+  
+  /**
+   * Get segment length in 3D space
+   */
+  getLength(): number {
+    const dx = this.endPoint.x - this.startPoint.x;
+    const dy = this.endPoint.y - this.startPoint.y;
+    const dz = this.endPoint.z - this.startPoint.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+  
+  /**
+   * Evaluate segment at parameter t ∈ [0, 1]
+   * t=0 → startPoint, t=1 → endPoint
+   */
+  getPointAt(t: number): Vector4 {
+    const clampedT = Math.max(0, Math.min(1, t));
+    return new Vector4(
+      this.startPoint.x + clampedT * (this.endPoint.x - this.startPoint.x),
+      this.startPoint.y + clampedT * (this.endPoint.y - this.startPoint.y),
+      this.startPoint.z + clampedT * (this.endPoint.z - this.startPoint.z),
+      1
+    );
+  }
+  
+  /**
+   * Get direction vector (unnormalized, from start to end)
+   */
+  getDirection(): Vector4 {
+    return new Vector4(
+      this.endPoint.x - this.startPoint.x,
+      this.endPoint.y - this.startPoint.y,
+      this.endPoint.z - this.startPoint.z,
+      0  // Vector, not point
+    );
+  }
 }
 
-interface Plane3DRealization {
-  normal: [number, number, number, number]; // [a, b, c, d] - plane equation: ax + by + cz + d = 0
+/**
+ * Plane3DRealization3D - Stores computed 3D plane equation
+ * Result of realize3D() geometric calculation
+ * 
+ * Representation: implicit form ax + by + cz + d = 0
+ * - normal: Vector4 [a, b, c, d] - plane equation coefficients
+ *   - [a, b, c] is the normal vector (may or may not be normalized)
+ *   - d is the distance term
+ * 
+ * Contains ONLY numeric data. Structural information (id, trace IDs) stays in Plane3D.
+ */
+export class Plane3DRealization3D extends Element3DRealization3D {
+  normal: Vector4;                  // Plane equation [a, b, c, d]: ax + by + cz + d = 0
+  
+  constructor(normal: Vector4, feasible: boolean = true) {
+    super(feasible);
+    this.normal = normal;
+  }
+  
+  /**
+   * Get normal vector as Vector4 [a, b, c, 0] (direction only)
+   */
+  getNormalVector(): Vector4 {
+    return new Vector4(this.normal.x, this.normal.y, this.normal.z, 0);
+  }
+  
+  /**
+   * Evaluate plane equation at point p: ax + by + cz + d
+   * Returns 0 if point is on plane, positive/negative if above/below
+   */
+  evaluateAt(point: Vector4): number {
+    return this.normal.x * point.x +
+           this.normal.y * point.y +
+           this.normal.z * point.z +
+           this.normal.w;
+  }
+  
+  /**
+   * Get distance from point to plane (signed)
+   */
+  distanceToPoint(point: Vector4): number {
+    const normalMagnitude = Math.sqrt(
+      this.normal.x * this.normal.x +
+      this.normal.y * this.normal.y +
+      this.normal.z * this.normal.z
+    );
+    return this.evaluateAt(point) / normalMagnitude;
+  }
+  
+  /**
+   * Project point onto plane (orthogonal projection)
+   */
+  projectPoint(point: Vector4): Vector4 {
+    const dist = this.distanceToPoint(point);
+    const normalVec = this.getNormalVector();
+    const normalizedNormal = normalVec.clone().normalize();
+    
+    return new Vector4(
+      point.x - dist * normalizedNormal.x,
+      point.y - dist * normalizedNormal.y,
+      point.z - dist * normalizedNormal.z,
+      1
+    );
+  }
 }
+
+/**
+ * Union type for all 3D element realizations
+ */
+type Element3DRealization3D =
+  | Point3DRealization3D
+  | Line3DRealization3D
+  | Segment3DRealization3D
+  | Plane3DRealization3D
 ```
 
 **Homogeneous Coordinates**:
@@ -6894,64 +7110,211 @@ class PaperService {
 
 **Purpose**: 3D geometric entity derived from compatible 2D projections or defined by geometric rules
 
-**Subtypes**:
+**Architectural Principle**: 3D elements follow the same Element + Realization pattern as 2D elements:
+- **Element3D classes** store high-level definitions and relationships (IDs of source 2D elements)
+- **Element3DRealization3D classes** store computed numerical geometry (Vector4 coordinates) for rendering
+- **Lazy evaluation**: realize3D() computes coordinates from 2D projections on-demand, cached in World
+
+**Class Hierarchy**:
 ```typescript
 type Element3D = Point3D | Line3D | Segment3D | Plane3D;
 
-// Point defined by explicit 3D coordinates (e.g., origin O)
-interface Point3DByCoordinates {
-  kind: 'Point3DByCoordinates';
+/**
+ * Base class for all 3D elements (user-created and system)
+ * 
+ * Mirrors Element2D architecture:
+ * - Stores high-level definitions (WHAT the element is)
+ * - No numeric coordinates (those are in realizations)
+ * - realize3D() method computes Element3DRealization3D
+ * 
+ * Architectural symmetry: Element → Element3D mirrors Element → Element2D
+ */
+abstract class Element3D extends Element {
   id: ElementId;
+  createdBy: ActionId;
+  visualStyle: VisualStyle;
+  
+  /**
+   * Compute 3D geometric realization from defining data
+   * 
+   * @param world - World context for resolving dependencies (2D projections, planes)
+   * @returns Element3DRealization3D with numeric coordinates, or infeasible if computation fails
+   * 
+   * Implementation varies by subclass:
+   * - Point3DFromProjections: reconstruct from two 2D point projections
+   * - Line3DFromProjections: reconstruct from two 2D line projections
+   * - Segment3DFromProjections: reconstruct from two 2D segment projections
+   * - Plane3DFromTraces: reconstruct from two 2D trace lines
+   * - Point3DByCoordinates: return fixed coordinates (system elements)
+   * - Line3DFromPlaneIntersection: compute from two plane equations
+   */
+  abstract realize3D(world: World): Element3DRealization3D;
+  
+  /**
+   * Get IDs of 2D/3D elements this element depends on
+   * Used for dependency tracking and update propagation
+   */
+  abstract getDependencies(): ElementId[];
+}
+
+// ============================================================================
+// POINT 3D CLASSES (Domain Layer - Definitions)
+// ============================================================================
+
+/**
+ * Abstract base class for all 3D point types
+ */
+abstract class Point3D extends Element3D {
+  abstract realize3D(world: World): Point3DRealization3D;
+}
+
+/**
+ * Point3DByCoordinates - Point with explicit 3D coordinates (e.g., origin O)
+ * System element with fixed position
+ */
+class Point3DByCoordinates extends Point3D {
+  kind: 'Point3DByCoordinates';
   name: string;                     // "O" for origin
   
   // Defining data (hardcoded coordinates)
-  coordinates: [number, number, number, number];  // [x, y, z, 1] - homogeneous 3D coordinates
+  coordinates: Vector4;             // Position [x, y, z, 1] - stored as Vector4
   
   // Computed projections (element IDs, not geometric data)
   projectionH: Point2DId;           // Projection on P_H
   projectionV: Point2DId;           // Projection on P_V
   
-  // Metadata and relationships
-  createdBy: ActionId;              // "system:init" for O
-  visualStyle: VisualStyle;
+  realize3D(world: World): Point3DRealization3D {
+    // Return fixed coordinates as realization
+    return new Point3DRealization3D(this.coordinates);
+  }
+  
+  getDependencies(): ElementId[] {
+    return [];  // No dependencies - coordinates are fixed
+  }
 }
 
-// Point derived from two 2D projections
-interface Point3DFromProjections {
+/**
+ * Point3DFromProjections - Point derived from two 2D projections
+ * User-created element (Phase 78)
+ */
+class Point3DFromProjections extends Point3D {
   kind: 'Point3DFromProjections';
-  id: ElementId;
-  name: string;                     // "A", "B", etc. (uppercase)
+  label: string;                    // Equal to ID: "point3d_45" (Phase 78)
   
-  // Defining relations
-  projectionH: Point2DId;           // Projection on P_H
-  projectionV: Point2DId;           // Projection on P_V
+  // Defining relations (ONLY IDs, no numeric data)
+  projection1: Point2DId;           // Projection on first plane
+  projection2: Point2DId;           // Projection on second plane (must be different)
+  plane1Id: Plane3DId;              // Which plane projection1 is on
+  plane2Id: Plane3DId;              // Which plane projection2 is on
   
-  // Metadata and relationships
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
+  realize3D(world: World): Point3DRealization3D {
+    // 1. Get 2D projections and their planes
+    const plane1 = world.getPlane3D(this.plane1Id);
+    const plane2 = world.getPlane3D(this.plane2Id);
+    const proj1Element = plane1.getPoint(this.projection1);
+    const proj2Element = plane2.getPoint(this.projection2);
+    
+    // 2. Realize 2D projections to get coordinates
+    const proj1Realization = proj1Element.realize2D(world);
+    const proj2Realization = proj2Element.realize2D(world);
+    
+    if (!proj1Realization.isFeasible() || !proj2Realization.isFeasible()) {
+      return new Point3DRealization3D(new Vector4(0, 0, 0, 1), false);  // Infeasible
+    }
+    
+    // 3. Reconstruct 3D point from two 2D projections
+    const position3D = GeometryUtils3D.reconstructPointFrom2Projections(
+      proj1Realization.position,  // Vector3 in plane1 coords
+      proj2Realization.position,  // Vector3 in plane2 coords
+      plane1,
+      plane2
+    );
+    
+    // 4. Validate geometric compatibility (perpendicular to hinge line)
+    const isCompatible = this.validateProjectionCompatibility(position3D, world);
+    
+    return new Point3DRealization3D(position3D, isCompatible);
+  }
+  
+  getDependencies(): ElementId[] {
+    return [this.projection1, this.projection2, this.plane1Id, this.plane2Id];
+  }
+  
+  private validateProjectionCompatibility(position: Vector4, world: World): boolean {
+    // Check that projections are geometrically compatible
+    // (aligned perpendicular to hinge line)
+    // Implementation in GeometryValidator
+    return GeometryValidator.areProjectionsCompatible(
+      position, this.projection1, this.projection2, world
+    );
+  }
 }
 
 type Point3D = Point3DByCoordinates | Point3DFromProjections;
 
-// Line derived from two 2D line projections
-interface Line3DFromProjections {
-  kind: 'Line3DFromProjections';
-  id: ElementId;
-  name: string;                     // "L1", "L2", etc.
-  
-  // Defining relations
-  projectionH: Line2DId;            // Projection on P_H
-  projectionV: Line2DId;            // Projection on P_V
-  
-  // Metadata and relationships
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
+// ============================================================================
+// LINE 3D CLASSES (Domain Layer - Definitions)
+// ============================================================================
+
+/**
+ * Abstract base class for all 3D line types
+ */
+abstract class Line3D extends Element3D {
+  abstract realize3D(world: World): Line3DRealization3D;
 }
 
-// Line defined as intersection of two planes (e.g., hinge lines)
-interface Line3DFromPlaneIntersection {
+/**
+ * Line3DFromProjections - Line derived from two 2D line projections
+ * User-created element (Phase 78)
+ */
+class Line3DFromProjections extends Line3D {
+  kind: 'Line3DFromProjections';
+  label: string;                    // Equal to ID: "line3d_12" (Phase 78)
+  
+  // Defining relations (ONLY IDs)
+  projection1: Line2DId;            // Projection on first plane
+  projection2: Line2DId;            // Projection on second plane (must be different)
+  plane1Id: Plane3DId;
+  plane2Id: Plane3DId;
+  
+  realize3D(world: World): Line3DRealization3D {
+    // Similar pattern to Point3DFromProjections
+    // Reconstruct 3D line from two 2D line projections
+    const plane1 = world.getPlane3D(this.plane1Id);
+    const plane2 = world.getPlane3D(this.plane2Id);
+    const line1 = plane1.getLine(this.projection1);
+    const line2 = plane2.getLine(this.projection2);
+    
+    const line1Real = line1.realize2D(world);
+    const line2Real = line2.realize2D(world);
+    
+    if (!line1Real.isFeasible() || !line2Real.isFeasible()) {
+      return new Line3DRealization3D(
+        new Vector4(0, 0, 0, 1),
+        new Vector4(0, 0, 1, 0),
+        false
+      );
+    }
+    
+    // Reconstruct 3D line from projections
+    const { point, direction } = GeometryUtils3D.reconstructLineFrom2Projections(
+      line1Real, line2Real, plane1, plane2
+    );
+    
+    return new Line3DRealization3D(point, direction);
+  }
+  
+  getDependencies(): ElementId[] {
+    return [this.projection1, this.projection2, this.plane1Id, this.plane2Id];
+  }
+}
+
+/**
+ * Line3DFromPlaneIntersection - Line as intersection of two planes (e.g., hinge lines)
+ * System element
+ */
+class Line3DFromPlaneIntersection extends Line3D {
   kind: 'Line3DFromPlaneIntersection';
-  id: ElementId;
   name: string;                     // "HL_HV", "BHL_AB", etc.
   
   // Defining relations
@@ -6962,67 +7325,187 @@ interface Line3DFromPlaneIntersection {
   projectionH: Line2DId;            // Projection on P_H
   projectionV: Line2DId;            // Projection on P_V
   
-  // Metadata and relationships
-  createdBy: ActionId;              // "system:init" for HL_HV
-  visualStyle: VisualStyle;
+  realize3D(world: World): Line3DRealization3D {
+    // Compute intersection of two plane equations
+    const p1 = world.getPlane3D(this.plane1);
+    const p2 = world.getPlane3D(this.plane2);
+    
+    const p1Real = p1.realize3D(world);
+    const p2Real = p2.realize3D(world);
+    
+    const { point, direction } = GeometryUtils3D.intersectPlanes(
+      p1Real.normal, p2Real.normal
+    );
+    
+    return new Line3DRealization3D(point, direction);
+  }
+  
+  getDependencies(): ElementId[] {
+    return [this.plane1, this.plane2];
+  }
 }
 
 type Line3D = Line3DFromProjections | Line3DFromPlaneIntersection;
 
-interface Segment3D {
-  id: ElementId;
-  name: string;                     // "S1", "S2", etc.
+// ============================================================================
+// SEGMENT 3D CLASSES (Domain Layer - Definitions)
+// ============================================================================
+
+/**
+ * Segment3DFromProjections - Segment derived from two 2D segment projections
+ * User-created element (Phase 78)
+ */
+class Segment3DFromProjections extends Element3D {
+  kind: 'Segment3DFromProjections';
+  label: string;                    // Equal to ID: "segment3d_7" (Phase 78)
   
-  // Defining relations
-  point1: Point3DId;                // 3D endpoints
-  point2: Point3DId;
+  // Defining relations (ONLY IDs)
+  projection1: Segment2DId;         // Projection on first plane
+  projection2: Segment2DId;         // Projection on second plane (must be different)
+  plane1Id: Plane3DId;
+  plane2Id: Plane3DId;
   
-  // Metadata and relationships
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
+  realize3D(world: World): Segment3DRealization3D {
+    // Reconstruct 3D segment from two 2D segment projections
+    const plane1 = world.getPlane3D(this.plane1Id);
+    const plane2 = world.getPlane3D(this.plane2Id);
+    const seg1 = plane1.getSegment(this.projection1);
+    const seg2 = plane2.getSegment(this.projection2);
+    
+    const seg1Real = seg1.realize2D(world);
+    const seg2Real = seg2.realize2D(world);
+    
+    if (!seg1Real.isFeasible() || !seg2Real.isFeasible()) {
+      return new Segment3DRealization3D(
+        new Vector4(0, 0, 0, 1),
+        new Vector4(0, 0, 0, 1),
+        false
+      );
+    }
+    
+    // Reconstruct 3D segment endpoints
+    const { startPoint, endPoint } = GeometryUtils3D.reconstructSegmentFrom2Projections(
+      seg1Real, seg2Real, plane1, plane2
+    );
+    
+    return new Segment3DRealization3D(startPoint, endPoint);
+  }
+  
+  getDependencies(): ElementId[] {
+    return [this.projection1, this.projection2, this.plane1Id, this.plane2Id];
+  }
 }
 
-// Plane from two trace lines (user-constructed planes - future)
-interface Plane3DByTraces {
-  kind: 'Plane3DByTraces';
-  id: ElementId;
-  name: string;                     // "Pi1", "Pi2", etc.
-  
-  // Defining relations
-  traceH: Line2DId;                 // Horizontal trace
-  traceV: Line2DId;                 // Vertical trace
-  
-  // Metadata and relationships
-  createdBy: ActionId;
-  visualStyle: VisualStyle;
+type Segment3D = Segment3DFromProjections;
+
+// ============================================================================
+// PLANE 3D CLASSES (Domain Layer - Definitions)
+// ============================================================================
+
+/**
+ * Abstract base class for all 3D plane types
+ */
+abstract class Plane3D extends Element3D {
+  abstract realize3D(world: World): Plane3DRealization3D;
 }
 
-// Fixed plane with hard-coded equation (P_H, P_V only - Phase 28)
-interface Plane3DFixed {
+/**
+ * Plane3DFromTraces - Plane from two trace lines (user-constructed - Phase 78)
+ */
+class Plane3DFromTraces extends Plane3D {
+  kind: 'Plane3DFromTraces';
+  label: string;                    // Equal to ID: "plane3d_3" (Phase 78)
+  
+  // Defining relations (ONLY IDs)
+  trace1: Line2DId;                 // First trace (on first plane)
+  trace2: Line2DId;                 // Second trace (on second plane, must be different)
+  plane1Id: Plane3DId;              // Which plane trace1 is on
+  plane2Id: Plane3DId;              // Which plane trace2 is on
+  
+  realize3D(world: World): Plane3DRealization3D {
+    // Reconstruct plane equation from two trace lines
+    const plane1 = world.getPlane3D(this.plane1Id);
+    const plane2 = world.getPlane3D(this.plane2Id);
+    const trace1Line = plane1.getLine(this.trace1);
+    const trace2Line = plane2.getLine(this.trace2);
+    
+    const trace1Real = trace1Line.realize2D(world);
+    const trace2Real = trace2Line.realize2D(world);
+    
+    if (!trace1Real.isFeasible() || !trace2Real.isFeasible()) {
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
+    // Reconstruct plane equation from traces
+    const normal = GeometryUtils3D.reconstructPlaneFromTraces(
+      trace1Real, trace2Real, plane1, plane2
+    );
+    
+    return new Plane3DRealization3D(normal);
+  }
+  
+  getDependencies(): ElementId[] {
+    return [this.trace1, this.trace2, this.plane1Id, this.plane2Id];
+  }
+}
+
+/**
+ * Plane3DFixed - Fixed plane with hard-coded equation (P_H, P_V only - Phase 28)
+ * System element
+ */
+class Plane3DFixed extends Plane3D {
   kind: 'Plane3DFixed';
-  id: ElementId;
   name: string;                     // "P_H" or "P_V"
   orientation: 'horizontal' | 'vertical';  // Determines equation
   
-  // Metadata and relationships
-  createdBy: ActionId;              // Always "system:init"
-  visualStyle: VisualStyle;
-}
-
-// Plane defined by point and normal vector (legacy - replaced by Plane3DFixed for P_H/P_V)
-interface Plane3DByPointAndNormal {
-  kind: 'Plane3DByPointAndNormal';
-  id: ElementId;
-  name: string;                     // "P_H", "P_V", etc.
-  origin: Point3DId;                // Point on plane (e.g., O)
-  normal: [number, number, number, number];  // Normal vector [nx, ny, nz, 0] - homogeneous
+  realize3D(world: World): Plane3DRealization3D {
+    // Return fixed plane equation
+    if (this.orientation === 'horizontal') {
+      // P_H: z = 0 → normal = [0, 0, 1, 0]
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0));
+    } else {
+      // P_V: y = 0 → normal = [0, 1, 0, 0]
+      return new Plane3DRealization3D(new Vector4(0, 1, 0, 0));
+    }
+  }
   
-  // Metadata and relationships
-  createdBy: ActionId;              // "system:init" for P_H, P_V
-  visualStyle: VisualStyle;
+  getDependencies(): ElementId[] {
+    return [];  // No dependencies - equation is fixed
+  }
 }
 
-type Plane3D = Plane3DFixed | Plane3DByTraces | Plane3DByPointAndNormal;
+/**
+ * Plane3DByPointAndNormal - Plane defined by point and normal vector (legacy)
+ * May be used for auxiliary construction planes in future
+ */
+class Plane3DByPointAndNormal extends Plane3D {
+  kind: 'Plane3DByPointAndNormal';
+  name: string;                     // User-defined name
+  origin: Point3DId;                // Point on plane
+  normal: Vector4;                  // Normal vector [nx, ny, nz, 0] - direction
+  
+  realize3D(world: World): Plane3DRealization3D {
+    const originPoint = world.getPoint3D(this.origin);
+    const originReal = originPoint.realize3D(world);
+    
+    if (!originReal.isFeasible()) {
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
+    // Compute plane equation: normal · (p - origin) = 0
+    // → ax + by + cz + d = 0 where d = -normal · origin
+    const d = -this.normal.dot(originReal.position);
+    const equation = new Vector4(this.normal.x, this.normal.y, this.normal.z, d);
+    
+    return new Plane3DRealization3D(equation);
+  }
+  
+  getDependencies(): ElementId[] {
+    return [this.origin];
+  }
+}
+
+type Plane3D = Plane3DFixed | Plane3DFromTraces | Plane3DByPointAndNormal;
 ```
 
 **Special System Elements**:
@@ -7059,12 +7542,12 @@ The following elements are always present from workspace initialization (`create
 
 **Validation Rules**:
 - **Point3DByCoordinates**: Coordinates must be valid numbers
-- **Point3DFromProjections**: `projectionH` and `projectionV` must exist, must be compatible (transportable via guide or geometrically consistent)
-- **Line3DFromProjections**: `projectionH` and `projectionV` must exist, must be compatible projections of same 3D line
+- **Point3DFromProjections**: `projection1` and `projection2` must exist, must be on DIFFERENT projection planes (Phase 78), must be geometrically compatible (aligned perpendicular to hinge line)
+- **Line3DFromProjections**: `projection1` and `projection2` must exist, must be on DIFFERENT projection planes (Phase 78), must be compatible projections of same 3D line
 - **Line3DFromPlaneIntersection**: `plane1` and `plane2` must exist and intersect (not parallel)
-- **Segment3D**: `point1` and `point2` must exist, must not be coincident
+- **Segment3DFromProjections**: `projection1` and `projection2` must exist, must be on DIFFERENT projection planes (Phase 78), endpoints must correspond correctly
 - **Plane3DFixed**: Orientation must be 'horizontal' or 'vertical', used only for initialization
-- **Plane3DByTraces**: `traceH` and `traceV` must exist, must not be parallel (define unique plane)
+- **Plane3DFromTraces**: `trace1` and `trace2` must exist, must be on DIFFERENT projection planes (Phase 78), must intersect at hinge line (typically)
 - **Plane3DByPointAndNormal**: `origin` must exist, `normal` must be non-zero vector
 
 **Compatibility Check**:
@@ -12664,3 +13147,225 @@ watch(() => worldStore.elementVisibilityMap, () => {
 **Related Phases**: 
 - Phase 25 (3D View Panel - provides Three.js infrastructure)
 - Phase 68 (Toolbar Icons - may add 3D view toggle icon)
+
+---
+
+### Plane-Based Grid Rendering (Phase 79)
+
+**Purpose**: Fix fundamentally broken grid implementation to use active projection plane's intrinsic (u, v) coordinate system with adaptive spacing and subdivisions.
+
+**Problem Statement** (Current Implementation is INCORRECT):
+- Grid currently uses hardcoded paper coordinates (`offsetX = -viewport.panX`, `offsetY = -viewport.panY`)
+- Grid spacing (10, 20, 50) is arbitrary, NOT related to plane coordinate system
+- Grid labels show paper coordinates, NOT actual plane (u, v) values
+- Grid is NOT derived from active projection plane's transformation matrices
+- No relationship between grid and plane basis vectors
+
+**Architectural Fix**:
+
+Grid MUST be generated from plane intrinsic coordinates and transformed to screen:
+```
+Plane (u, v) --[planeToPaper2D]--> Paper (x, y) --[viewport transform]--> Screen (pixels)
+```
+
+**Data Structures**:
+
+```typescript
+interface GridLineData {
+  key: string;                    // Unique identifier (e.g., "u-100", "v--50")
+  startX: number;                 // Screen coordinate (pixels)
+  startY: number;                 // Screen coordinate (pixels)
+  endX: number;                   // Screen coordinate (pixels)
+  endY: number;                   // Screen coordinate (pixels)
+  isMajor: boolean;              // True if major line (darker color)
+  coordinateValue: number;        // Actual (u or v) value for labeling
+  axis: 'u' | 'v';               // Which axis this line represents
+}
+
+interface AdaptiveGridParams {
+  spacing: number;                // Base spacing in plane units (5, 10, 20, or 50)
+  subdivision: number;            // Major line every Nth minor (2, 5, or 10)
+  majorSpacing: number;           // spacing × subdivision
+}
+```
+
+**Core Algorithm**:
+
+```typescript
+// In SvgCanvas.vue computed property
+const gridLines = computed((): GridLineData[] => {
+  if (!viewStore.gridVisible.value) return [];
+  
+  // Get active projection plane
+  const world = worldStore.world;
+  if (!world) return [];
+  const plane = world.getActiveProjectionPlane();
+  if (!plane) return [];
+  
+  const zoom = viewport.value.zoom;
+  const { spacing, subdivision, majorSpacing } = computeAdaptiveGridParams(zoom);
+  
+  // Calculate viewport bounds in plane coordinates
+  const canvasW = canvasWidth.value;
+  const canvasH = canvasHeight.value;
+  const paperToPlane = plane.paperToPlane2D;
+  
+  // Transform canvas corners to plane coordinates
+  const topLeft_paper = new Vector3(-viewport.value.panX, -viewport.value.panY, 1);
+  const bottomRight_paper = new Vector3(
+    (-viewport.value.panX + canvasW / zoom),
+    (-viewport.value.panY + canvasH / zoom),
+    1
+  );
+  
+  const topLeft_plane = paperToPlane.applyToVector(topLeft_paper);
+  const bottomRight_plane = paperToPlane.applyToVector(bottomRight_paper);
+  
+  // Calculate grid range in plane coordinates
+  const uMin = Math.floor(Math.min(topLeft_plane.x, bottomRight_plane.x) / spacing) * spacing;
+  const uMax = Math.ceil(Math.max(topLeft_plane.x, bottomRight_plane.x) / spacing) * spacing;
+  const vMin = Math.floor(Math.min(topLeft_plane.y, bottomRight_plane.y) / spacing) * spacing;
+  const vMax = Math.ceil(Math.max(topLeft_plane.y, bottomRight_plane.y) / spacing) * spacing;
+  
+  const lines: GridLineData[] = [];
+  
+  // Generate vertical lines (constant u, varying v)
+  for (let u = uMin; u <= uMax; u += spacing) {
+    const p1_plane = new Vector3(u, vMin, 1);  // Homogeneous coordinates
+    const p2_plane = new Vector3(u, vMax, 1);
+    
+    // Transform to paper coordinates
+    const p1_paper = plane.planeToPaper2D.applyToVector(p1_plane);
+    const p2_paper = plane.planeToPaper2D.applyToVector(p2_plane);
+    
+    // Transform to screen coordinates
+    const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
+    const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
+    const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
+    const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+    
+    // Determine if major line
+    const isMajor = Math.abs(u % majorSpacing) < 0.01;
+    
+    lines.push({
+      key: `u-${u}`,
+      startX: screenX1,
+      startY: screenY1,
+      endX: screenX2,
+      endY: screenY2,
+      isMajor,
+      coordinateValue: u,
+      axis: 'u'
+    });
+  }
+  
+  // Generate horizontal lines (constant v, varying u)
+  for (let v = vMin; v <= vMax; v += spacing) {
+    const p1_plane = new Vector3(uMin, v, 1);
+    const p2_plane = new Vector3(uMax, v, 1);
+    
+    const p1_paper = plane.planeToPaper2D.applyToVector(p1_plane);
+    const p2_paper = plane.planeToPaper2D.applyToVector(p2_plane);
+    
+    const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
+    const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
+    const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
+    const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+    
+    const isMajor = Math.abs(v % majorSpacing) < 0.01;
+    
+    lines.push({
+      key: `v-${v}`,
+      startX: screenX1,
+      startY: screenY1,
+      endX: screenX2,
+      endY: screenY2,
+      isMajor,
+      coordinateValue: v,
+      axis: 'v'
+    });
+  }
+  
+  return lines;
+});
+
+function computeAdaptiveGridParams(zoom: number): AdaptiveGridParams {
+  const minPixelsPerCell = 15; // Minimum pixels per minor grid cell
+  const minSpacing = minPixelsPerCell / zoom; // Minimum spacing in plane units
+  
+  // Find the smallest spacing from sequence: ..., 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, ...
+  // These are 10^n/10, 10^n/5, 10^n/2 for integer n
+  
+  const logMin = Math.log10(minSpacing);
+  const basePower = Math.floor(logMin);
+  
+  // Try powers of 10 starting from basePower
+  for (let n = basePower; n < basePower + 3; n++) {
+    const base = Math.pow(10, n);  // Major line spacing (10^n)
+    
+    // Try subdivisions in order of preference (10 > 5 > 2 gives smallest cells)
+    for (const subdivision of [10, 5, 2]) {
+      const spacing = base / subdivision; // Minor line spacing
+      if (spacing >= minSpacing) {
+        return {
+          spacing,           // Minor line spacing (spacing between all lines)
+          subdivision,       // Number of minor intervals per major interval
+          majorSpacing: base // Major line spacing (10^n)
+        };
+      }
+    }
+  }
+  
+  // Fallback (shouldn't reach here)
+  return { spacing: 1, subdivision: 10, majorSpacing: 10 };
+}
+```
+
+**SVG Rendering**:
+
+```vue
+<!-- In SvgCanvas.vue template -->
+<g v-if="viewStore.gridVisible.value" class="grid">
+  <line
+    v-for="line in gridLines"
+    :key="line.key"
+    :x1="line.startX"
+    :y1="line.startY"
+    :x2="line.endX"
+    :y2="line.endY"
+    :stroke="line.isMajor ? '#C0C0C0' : '#E0E0E0'"
+    stroke-width="1"
+    vector-effect="non-scaling-stroke"
+  />
+</g>
+```
+
+**Benefits**:
+- **Correct coordinates**: Grid shows actual plane (u, v) values
+- **Origin visible**: (0, 0) clearly marked when in viewport
+- **Hinge line alignment**: HL at v=0 aligns with grid on default planes
+- **Per-plane consistency**: Each plane's grid derived from its coordinate system
+- **Architectural generality**: Supports future non-orthogonal planes without code changes
+- **Visual clarity**: Adaptive spacing/subdivisions keep grid useful at all zoom levels
+- **Educational value**: Reinforces understanding that planes have intrinsic coordinate systems
+
+**Acceptance Criteria**:
+1. ✅ Grid lines generated from plane (u, v) coordinates, transformed via planeToPaper2D
+2. ✅ Grid labels display actual (u, v) values, NOT paper coordinates
+3. ✅ Adaptive spacing: 50u (zoom<0.5), 20u (0.5≤zoom<2), 10u (2≤zoom<5), 5u (zoom≥5)
+4. ✅ Adaptive subdivisions: 2, 5, or 10 based on pixel density (15px minimum threshold)
+5. ✅ Origin (0, 0) clearly visible when in viewport (intersection of u=0, v=0)
+6. ✅ Hinge line at v=0 aligns with horizontal major grid lines on default planes
+7. ✅ Active plane change immediately updates grid to new plane's coordinate system
+8. ✅ Major lines (#C0C0C0) emphasized compared to minor lines (#E0E0E0)
+9. ✅ Grid respects visibility toggle—hidden when grid visibility off
+10. ✅ No special-case logic—all planes (default and auxiliary) use same grid algorithm
+
+**Related Requirements**: FR-055 (Plane-Based Grid Requirement)
+
+**Related Phases**:
+- Phase 10 (Original grid implementation - now incorrect, must be replaced)
+- Phase 78 (Grid Coordinate Labels - must be updated to use plane coordinates)
+- Phase 6 (Viewport transformation - provides pan/zoom state)
+
+**Breaking Changes**: Complete rewrite of grid implementation—existing grid code fundamentally broken and must be replaced.

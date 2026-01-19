@@ -56,7 +56,9 @@ export function useViewport(options: ViewportOptions) {
     const dx = event.clientX - lastMouseX.value;
     const dy = event.clientY - lastMouseY.value;
     
-    viewStore.adjustPan(dx, dy);
+    // Adjust pan by dividing by zoom - at high zoom, screen pixels translate to smaller world movement
+    const currentZoom = viewStore.viewportState.value.zoom;
+    viewStore.adjustPan(dx / currentZoom, dy / currentZoom);
     
     lastMouseX.value = event.clientX;
     lastMouseY.value = event.clientY;

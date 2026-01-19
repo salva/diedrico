@@ -183,19 +183,17 @@ const activePlaneName = computed(() => {
   if (!planeId) return '';
   
   // Determine plane name based on semantic role
-  try {
-    const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
-    if (planeId === horizontalPlane.id) {
-      return 'P_H (Horizontal)';
+  // Check all planes to find matching label
+  for (const plane of world.getAllProjectionPlanes()) {
+    if (plane.id === planeId) {
+      if (plane.name === 'P_H') {
+        return 'P_H (Horizontal)';
+      } else if (plane.name === 'P_V') {
+        return 'P_V (Vertical)';
+      }
+      break;
     }
-  } catch {}
-  
-  try {
-    const verticalPlane = world.getProjectionPlaneByLabel('P_V');
-    if (planeId === verticalPlane.id) {
-      return 'P_V (Vertical)';
-    }
-  } catch {}
+  }
   
   return planeId;
 });

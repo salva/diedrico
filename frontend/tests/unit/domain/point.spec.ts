@@ -328,7 +328,7 @@ describe('Point2D', () => {
         // Update primary coordinates by creating a new point at same ID
         const planeHId = getHorizontalPlaneId(world);
         const primaryPoint = new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), planeHId);
-        world.addPoint2D(primaryPoint);
+        planeH.addPoint(primaryPoint);
         // Phase 22.5.3: Clear cache from plane, not World
         const planeH = getHorizontalPlane(world);
         planeH?.clearPointRealization2D(primaryPointId);

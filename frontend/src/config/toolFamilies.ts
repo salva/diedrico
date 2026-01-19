@@ -21,17 +21,22 @@ import SegmentIcon from '@/components/icons/toolbar/SegmentIcon.vue';
 import CircleIcon from '@/components/icons/toolbar/CircleIcon.vue';
 import GuideLineIcon from '@/components/icons/toolbar/GuideLineIcon.vue';
 import TransportPointIcon from '@/components/icons/toolbar/TransportPointIcon.vue';
+import Create3DPointIcon from '@/components/icons/toolbar/Create3DPointIcon.vue';
+import Create3DLineIcon from '@/components/icons/toolbar/Create3DLineIcon.vue';
+import Create3DSegmentIcon from '@/components/icons/toolbar/Create3DSegmentIcon.vue';
+import Create3DPlaneIcon from '@/components/icons/toolbar/Create3DPlaneIcon.vue';
 
 /**
  * Tool families configuration
  * 
- * Six tool families + Selection Tool (separate button):
+ * Seven tool families + Selection Tool (separate button):
  * 1. Point Family: free-point, intersection
  * 2. Line Family: line-by-two-points, parallel-line, perpendicular-line, tangent-*
  * 3. Segment Family: segment
  * 4. Circle Family: circle
  * 5. Guide Family: guide
  * 6. Transport Family: transport (placeholder - not yet implemented)
+ * 7. 3D Elements Family: create3dpoint, create3dline, create3dsegment, create3dplane (Phase 78)
  */
 export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
@@ -162,6 +167,42 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         icon: TransportPointIcon,
         shortcut: 'T',
         tooltip: 'Transport distance or point (T) - Not yet implemented',
+        completionBehavior: 'stay-active'
+      }
+    ]
+  },
+  {
+    id: '3d-elements-family',
+    label: '3D Elements',
+    icon: Create3DPointIcon,
+    defaultTool: 'create3dpoint',
+    tools: [
+      {
+        id: 'create3dpoint',
+        label: '3D Point',
+        icon: Create3DPointIcon,
+        tooltip: 'Create 3D point from two 2D projections on different planes',
+        completionBehavior: 'stay-active'
+      },
+      {
+        id: 'create3dline',
+        label: '3D Line',
+        icon: Create3DLineIcon,
+        tooltip: 'Create 3D line from two 2D line projections on different planes',
+        completionBehavior: 'stay-active'
+      },
+      {
+        id: 'create3dsegment',
+        label: '3D Segment',
+        icon: Create3DSegmentIcon,
+        tooltip: 'Create 3D segment from two 2D segment projections on different planes',
+        completionBehavior: 'stay-active'
+      },
+      {
+        id: 'create3dplane',
+        label: '3D Plane',
+        icon: Create3DPlaneIcon,
+        tooltip: 'Create 3D plane from two trace lines on different planes',
         completionBehavior: 'stay-active'
       }
     ]

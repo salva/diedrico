@@ -33,6 +33,14 @@ import { Element } from './Element';
 
 export abstract class Element3D extends Element {
   /**
+   * Compute 3D geometric realization from defining data
+   * 
+   * @param world - World context for resolving dependencies (2D projections, planes)
+   * @returns Element3DRealization3D with numeric coordinates, or infeasible if computation fails
+   */
+  abstract realize3D(world: any): any;  // Using any to avoid circular dependencies
+
+  /**
    * Get dependencies - IDs of elements this 3D element depends on
    * 
    * Examples:

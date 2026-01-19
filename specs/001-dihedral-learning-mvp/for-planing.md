@@ -18,10 +18,12 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] Add a shortcut for changing the active projection plane to the next one. Using Tab for instance.
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
-* [ ] Represent planes in 3d
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
+* [ ] In 3D rotation axis seems to be hardcoded or be limited. For instance, I am not able to rotate the view around the viewer-O axis
+* [ ] When the user selects a guide, the 3D view must show the plane perpendicular to it and highlight any intersection with other 3d elements.
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
@@ -143,6 +145,55 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **3D Element Creation Toolbar and Tools (Phase 78)** - ✅ PLANNED (Jan 18, 2026)
+  - **User Request**: Add toolbar with 4 tools for creating 3D elements from 2D projections
+  - **Architecture**: Domain classes (Point3D, Line3D, Segment3D, Plane3D), Operations (Add3D*Op), Tools (Create3D*Tool), World integration, ThreeView rendering
+  - **Key Requirements**: 
+    - MANDATORY different-plane validation (no same-plane projections)
+    - Immediate non-modal validation feedback
+    - ID format: point3d_N, line3d_N, segment3d_N, plane3d_N
+    - Visual style: Initially wider/thicker than 2D elements
+    - World Elements panel: Add "3D Elements" section
+  - **Specifications**: spec.md §3D Elements (updated), data-model.md §3D Elements (updated)
+  - **Tasks**: tasks.md Phase 78 (T950-T967: 18 tasks)
+  - **Status**: All planning documents updated, ready for implementation
+
+* [X] **Projection Plane 3D Visualization (Phase 25.1 - Complete)**
+  - **STATUS**: ✅ COMPLETE (Jan 16, 2026) - Default planes P_H and P_V already rendered in 3D
+  - **Current Implementation**: ThreeView.vue renders projection planes as:
+    - Semi-transparent rectangles (20×20 units) using THREE.PlaneGeometry
+    - Colors: P_H = Green (#4CAF50), P_V = Blue (#2196F3)  
+    - Opacity: 0.3 (30% transparent), double-sided rendering
+    - Positioned using plane's planeTo3D transformation matrix
+    - Grid overlay: THREE.GridHelper (20×20 cells) when "Show Grid" enabled
+  - **Architecture**: Generic implementation supports ALL projection planes (not just P_H/P_V)
+    - Iterates through `world.projectionPlanes.values()` - treats all planes equally
+    - Gets plane's 3D transformation via `world.getProjectionPlane3DRealization(plane.id)`
+    - Applies transformation matrix to position plane geometry in 3D space
+  - **Toggle Control**: "Show Planes" checkbox in 3D view controls
+  - **Files Modified**:
+    - [ThreeView.vue](../../frontend/src/components/panels/ThreeView.vue#L141-L196): renderProjectionPlanes() function
+    - [World.ts](../../frontend/src/domain/world/World.ts#L524-L548): getProjectionPlane3DRealization() method
+  - **What Works**:
+    - ✅ P_H and P_V displayed as semi-transparent surfaces in 3D view
+    - ✅ Grid overlay on each plane for spatial reference
+    - ✅ Proper 3D positioning using transformation matrices
+    - ✅ Toggle visibility of plane surfaces
+    - ✅ Architecture supports future auxiliary planes (no hardcoded P_H/P_V logic)
+  - **What's NOT Implemented**:
+    - ❌ **Auxiliary plane CREATION**: No UI/tools to create auxiliary projection planes (Plane by Traces)
+    - ❌ **Auxiliary plane DATA MODEL**: `AuxiliaryProjectionPlane` class exists but incomplete
+    - ❌ **Unfolding geometry**: Auxiliary planes need geometric unfolding algorithms (traces → transformation matrices)
+  - **Future Work** (when auxiliary planes are added):
+    - User creates auxiliary plane via "Plane by Traces" tool
+    - System computes plane's 3D position from trace lines on P_H and P_V
+    - renderProjectionPlanes() automatically includes new plane (no code changes needed)
+    - Grid and 2D elements work automatically due to generic architecture
+  - **Note**: The task "Represent planes in 3d" is misleading - planes ARE represented in 3D. The missing feature is auxiliary plane CREATION, not visualization. Once auxiliary planes exist in World, they'll automatically render correctly.
+  - **Related**: Phase 77 (2D elements on planes - complete), Phase 25.2 (3D elements - pending specification)
+  - **Spec**: [spec.md](./spec.md) FR-053 (3D Visualization), [ui-spec.md](./ui-spec.md#3d-view-controls-ui)
+  - **Commit**: 298d91d (Phase 25.1 - ThreeView component infrastructure)
 
 * [X] **3D View Automatic Updates - renderTick Reactivity (Phase 80)**
   - **STATUS**: 📋 PLANNED (Jan 18, 2026) - Ready for implementation

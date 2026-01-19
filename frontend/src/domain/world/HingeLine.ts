@@ -60,6 +60,56 @@ export class HalfHingeLine2D extends Line2D {
   }
 
   /**
+   * Find the sibling HalfHingeLine2D in the other plane.
+   * 
+   * Static method for navigating from one HalfHingeLine2D to its sibling
+   * in the paired projection plane. Used when creating sibling elements
+   * (guides, intersection points, etc.)
+   * 
+   * Navigation: HalfHingeLine2D → HingeLine → getOtherPlane() → find matching HHL
+   * 
+   * @param world World instance to navigate
+   * @param halfHingeLineId ID of the HalfHingeLine2D in the current plane
+   * @param currentPlaneId ID of the current plane
+   * @returns Object with siblingPlaneId and siblingHalfHingeLineId, or undefined if not a HHL
+   */
+  static getSiblingInfo(
+    world: import('./World').World,
+    halfHingeLineId: string,
+    currentPlaneId: string
+  ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
+    console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
+    
+    // Get current plane and HalfHingeLine2D
+    const currentPlane = world.getProjectionPlaneById(currentPlaneId)!;
+    const halfHingeLine = currentPlane.getLine(halfHingeLineId);
+    
+    if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
+      console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
+      return undefined;
+    }
+
+    // Get parent HingeLine and sibling plane
+    const hingeLine = world.getHingeLineById(halfHingeLine.hingeLineId)!;
+    const siblingPlaneId = hingeLine.getOtherPlane(currentPlaneId)!;
+    const siblingPlane = world.getProjectionPlaneById(siblingPlaneId)!;
+
+    console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
+
+    // Find HalfHingeLine2D with same hingeLineId in sibling plane
+    const siblingHalfHingeLine = siblingPlane.getAllLines().find(
+      (line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === halfHingeLine.hingeLineId
+    )!;
+
+    console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
+
+    return {
+      siblingPlaneId,
+      siblingHalfHingeLineId: siblingHalfHingeLine.id
+    };
+  }
+
+  /**
    * Realize this half-hinge line (returns geometric data directly)
    * HalfHingeLine2D stores its geometry directly, no computation needed
    * 
@@ -111,6 +161,26 @@ export class HingeLine extends Element3D {
     this.plane1Id = plane1Id;
     this.plane2Id = plane2Id;
     this.line3D = line3D;
+  }
+
+  /**
+   * Compute 3D realization (line in 3D space)
+   */
+  realize3D(_world: any): any {
+    // Import here to avoid circular dependency
+    const { Line3DRealization3D } = require('./Element3DRealization3D');
+    const { Vector4 } = require('three');
+    
+    // Return stored 3D representation or default
+    if (this.line3D) {
+      return new Line3DRealization3D(this.line3D.point, this.line3D.direction);
+    }
+    
+    // Default: origin point, x-axis direction
+    return new Line3DRealization3D(
+      new Vector4(0, 0, 0, 1),
+      new Vector4(1, 0, 0, 0)
+    );
   }
 
   /**

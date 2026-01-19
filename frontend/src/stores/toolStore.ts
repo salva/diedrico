@@ -15,7 +15,7 @@
 import { ref, computed } from 'vue';
 import type { ToolFamilyConfig, ToolConfig } from '../types/ToolConfig';
 
-export type ToolType = 'select' | 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection' | 'transport' | 'parallel-line' | 'perpendicular-line' | 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel';
+export type ToolType = 'select' | 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection' | 'transport' | 'parallel-line' | 'perpendicular-line' | 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel' | 'create3dpoint' | 'create3dline' | 'create3dsegment' | 'create3dplane';
 
 const STORAGE_KEY = 'diedrico-tool-last-used';
 

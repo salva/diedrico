@@ -302,7 +302,140 @@ The left side of the interface contains a vertical stack of two panels. These pa
 
 ---
 
-### Process Tree Panel (Constructive Actions)
+## Plane-Based Grid Rendering (Phase 79)
+
+**Purpose**: Render grid using active projection plane's intrinsic coordinate system (u, v) with adaptive spacing and subdivisions to ensure grid remains visually useful across all zoom levels.
+
+**Architectural Principle**: Grid is NOT derived from arbitrary paper/canvas coordinates—it is generated from the plane's origin (0, 0) and intrinsic basis vectors, then transformed through planeToPaper2D matrix to screen space.
+
+**Coordinate System Transformation**:
+1. Define grid lines in plane intrinsic coordinates: u = {..., -100, -50, 0, 50, 100, ...}, v = {..., -100, -50, 0, 50, 100, ...}
+2. Transform each grid line endpoint from (u, v) → paper (x, y) using `plane.planeToPaper2D.applyToVector()`
+3. Apply viewport transform (pan, zoom) to get final screen coordinates
+4. Grid labels display actual (u, v) values, NOT transformed paper/canvas pixel values
+
+**Adaptive Grid Spacing** (Powers of 10):
+- **Major grid lines** always positioned at multiples of powers of 10: 10^n (where n is any integer)
+  - Examples: 0.01, 0.1, 1, 10, 100, 1000, 10000
+  - Specific power (n) chosen dynamically based on zoom level to maintain visual clarity
+- **Minor grid lines** divide each major interval using subdivision factor (2, 5, or 10)
+  - Minor spacing = 10^n / subdivision
+  - Possible values: 10^n/10, 10^n/5, 10^n/2
+  - Examples: ..., 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, ...
+- Spacing is in **plane intrinsic (u, v) units**, not paper/canvas pixels
+
+**Adaptive Subdivisions** (Pixel Density-Based):
+- Subdivision count (2, 5, or 10) adapts to prevent grid line overcrowding:
+  - Algorithm:
+    1. Calculate minimum spacing: `minSpacing = minPixelsPerCell / zoom` (where minPixelsPerCell = 15)
+    2. For each power of 10 starting from floor(log₁₀(minSpacing)):
+       - Try subdivisions in order: 10, 5, 2 (preference for smallest cells)
+       - Calculate: `spacing = 10^n / subdivision`
+       - If `spacing ≥ minSpacing`, use this combination
+    3. Result: `{ spacing, subdivision, majorSpacing: 10^n }`
+- Examples:
+  - At zoom=1.0: minSpacing=15 → chooses 20 (=100/5) → major=100, subdivision=5
+  - At zoom=0.1: minSpacing=150 → chooses 200 (=1000/5) → major=1000, subdivision=5
+  - At zoom=10.0: minSpacing=1.5 → chooses 2 (=10/5) → major=10, subdivision=5
+  - At zoom=0.01: minSpacing=1500 → chooses 2000 (=10000/5) → major=10000, subdivision=5
+
+**Visual Styling**:
+- **Minor grid lines**: Light gray (#E0E0E0), 1px stroke width
+- **Major grid lines**: Darker gray (#C0C0C0), 1px stroke width, emphasized for orientation
+- **Origin lines** (u=0, v=0): Same as major lines but intersect at origin (0, 0)
+- **Hinge line alignment**: On default planes (P_H, P_V), hinge line at v=0 naturally aligns with horizontal major grid lines
+- Z-order: Grid below all geometric elements and coordinate labels
+
+**Grid Line Rendering**:
+- **U-lines** (vertical in default planes): For each u = uMin to uMax (step = spacing):
+  - Start point: (u, vMin) in plane coordinates
+  - End point: (u, vMax) in plane coordinates  
+  - Transform both through planeToPaper2D, then viewport
+  - Determine if major: `Math.abs(u % majorSpacing) < 0.01` (where majorSpacing = 10^n)
+- **V-lines** (horizontal in default planes): For each v = vMin to vMax (step = spacing):
+  - Start point: (uMin, v) in plane coordinates
+  - End point: (uMax, v) in plane coordinates
+  - Transform both through planeToPaper2D, then viewport
+  - Determine if major: `Math.abs(v % majorSpacing) < 0.01` (where majorSpacing = 10^n)
+
+**Viewport Bounds Calculation**:
+- Transform canvas corners to plane coordinates to find visible range:
+  ```typescript
+  const topLeft_paper = new Vector3(-viewport.panX, -viewport.panY, 1);
+  const bottomRight_paper = new Vector3(
+    (-viewport.panX + canvasWidth / zoom),
+    (-viewport.panY + canvasHeight / zoom), 
+    1
+  );
+  const topLeft_plane = plane.paperToPlane2D.applyToVector(topLeft_paper);
+  const bottomRight_plane = plane.paperToPlane2D.applyToVector(bottomRight_paper);
+  const uMin = Math.floor(topLeft_plane.x / spacing) * spacing;
+  const uMax = Math.ceil(bottomRight_plane.x / spacing) * spacing;
+  const vMin = Math.floor(topLeft_plane.y / spacing) * spacing;
+  const vMax = Math.ceil(bottomRight_plane.y / spacing) * spacing;
+  ```
+
+**Dynamic Behavior**:
+- Grid updates automatically during pan operations (new grid lines appear/disappear)
+- Grid updates automatically during zoom operations:
+  - Spacing transitions occur at zoom thresholds (0.5, 2.0, 5.0)
+  - Subdivision adjusts to maintain minimum pixel density (15px per major line spacing)
+- Grid responds to active plane changes:
+  - Different planes may have different coordinate system orientations
+  - Grid always derived from active plane's transformation matrices
+- Grid respects visibility toggle: when hidden, no grid lines or labels rendered
+
+**Per-Plane Grids**:
+- Each projection plane shows its own grid when active
+- Different planes may have different u, v vector orientations (future non-orthogonal planes)
+- Grid rendering logic identical for all planes—uses plane's planeToPaper2D transformation
+- No special-case logic for default planes (P_H, P_V) vs auxiliary planes
+
+**Future Consideration** (Non-Orthogonal Planes):
+- Current default planes (P_H, P_V) have orthogonal u, v vectors aligned with paper axes
+- Future auxiliary planes may have u, v vectors at arbitrary angles in paper space
+- Grid rendering already supports this: u-lines and v-lines appear as arbitrary directions after planeToPaper2D transformation
+- Coordinate labels positioned relative to actual grid line orientations
+- Architecture transparent: transformation matrices handle all orientation complexity
+
+**Layout Integration**:
+- Grid rendered as **SVG line elements** within main 2D viewport canvas
+- Grid generation occurs in computed property `gridLines` in SvgCanvas.vue
+- Reactively updates based on: viewport state (panX, panY, zoom), active plane, grid visibility toggle
+
+**Benefits**:
+- **Correct coordinates**: Grid shows actual plane (u, v) values, not arbitrary paper offsets
+- **Origin visible**: (0, 0) clearly marked when in viewport (intersection of u=0 and v=0 lines)
+- **Hinge line alignment**: HL at v=0 aligns with grid horizontal lines on default planes
+- **Per-plane consistency**: Each plane's grid derived from its unique coordinate system
+- **Architectural generality**: Supports future non-orthogonal planes without code changes
+- **Visual clarity**: Adaptive spacing/subdivisions keep grid useful across all zoom levels
+- **Educational value**: Reinforces understanding that planes have intrinsic coordinate systems
+
+**Example Grid at Different Zoom Levels**:
+```
+Zoom 0.3 (very zoomed out):
+- Spacing: 50u
+- Subdivision: 2 (15 pixels/cell × 2 ≥ 15px threshold)
+- Major lines every 100u: -200, -100, 0, 100, 200, 300...
+- Minor lines every 50u: -150, -50, 50, 150, 250...
+
+Zoom 1.0 (default):
+- Spacing: 20u
+- Subdivision: 5 (20 pixels/cell × 5 = 100px ≥ 15px threshold)
+- Major lines every 100u: -200, -100, 0, 100, 200, 300...
+- Minor lines every 20u: -80, -60, -40, -20, 20, 40, 60, 80...
+
+Zoom 4.0 (zoomed in):
+- Spacing: 5u
+- Subdivision: 10 (20 pixels/cell × 10 = 200px ≥ 15px threshold)
+- Major lines every 50u: -100, -50, 0, 50, 100, 150...
+- Minor lines every 5u: -45, -40, -35, -30, -25, -20...
+```
+
+---
+
+###Process Tree Panel (Constructive Actions)
 
 **Purpose**: Shows the hierarchical construction history—the sequence of actions that built the current world state.
 

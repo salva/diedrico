@@ -1,6 +1,7 @@
 import { Command } from '../Command';
 import { World } from '../../domain/world/World';
 import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '../operations/world/AddGuideOp';
+import { HalfHingeLine2D } from '../../domain/world/HingeLine';
 
 /**
  * Factory for creating guide operation sequences.
@@ -16,19 +17,18 @@ import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '../operati
  */
 export class GuideSequenceFactory {
   /**
-   * Creates a guide with conditional sibling on complementary plane.
+   * Creates a guide with its sibling on the complementary plane.
    * 
-   * If the reference line is a HalfHingeLine2D and sibling plane information
-   * is available, automatically creates a sibling guide using coordinate
-   * correspondence.
+   * Guides MUST be perpendicular to HalfHingeLines. The sibling guide is
+   * automatically created in the paired plane using coordinate correspondence.
    * 
    * @param cmd - Open Command to add operations to
    * @param planeId - ID of plane where primary guide is created
-   * @param referenceLineId - ID of line to create perpendicular guide to
+   * @param referenceLineId - ID of HalfHingeLine2D to create perpendicular guide to
    * @param throughPointId - ID of point guide should pass through
-   * @param world - World instance for conditional logic
+   * @param world - World instance for navigation
    * 
-   * @returns Object with guideId and optional siblingGuideId
+   * @returns Object with guideId and siblingGuideId (both always present)
    * 
    * @example
    * ```typescript
@@ -51,46 +51,43 @@ export class GuideSequenceFactory {
     referenceLineId: string,
     throughPointId: string,
     world: World
-  ): { guideId: string; siblingGuideId?: string } {
+  ): { guideId: string; siblingGuideId: string } {
+    console.log(`[GuideSequenceFactory] createGuideWithSibling called: plane=${planeId}, refLine=${referenceLineId}, point=${throughPointId}`);
+    
     // Create primary guide
     const result = cmd.addAndExecute(
       new AddGuide2DPerpendicularToLineOp(planeId, referenceLineId, throughPointId)
     );
     const guideId = result.outputs.guideId;
     
-    let siblingGuideId: string | undefined;
+    console.log(`[GuideSequenceFactory] Primary guide created: ${guideId}`);
     
-    try {
-      // Check if reference line is HalfHingeLine and get sibling info
-      const siblingInfo = world.getSiblingPlaneAndHalfHingeLineForGuide(referenceLineId, planeId);
-      
-      if (siblingInfo) {
-        // Create sibling guide using coordinate correspondence
-        const siblingResult = cmd.addAndExecute(
-          new AddSiblingGuide2DOp(
-            siblingInfo.siblingPlaneId,
-            guideId,
-            siblingInfo.siblingHalfHingeLineId
-          )
-        );
-        siblingGuideId = siblingResult.outputs.siblingGuideId;
-        
-        // Update bidirectional links
-        const primaryGuide = world.getLine2D(guideId);
-        
-        if (primaryGuide && 'siblingGuideId' in primaryGuide) {
-          (primaryGuide as any).siblingGuideId = siblingGuideId;
-        }
-        
-        console.log(
-          `[GuideSequenceFactory] Created sibling guide ${siblingGuideId} ` +
-          `in plane ${siblingInfo.siblingPlaneId}`
-        );
-      }
-    } catch (siblingError) {
-      // Sibling creation failed - log but don't fail the entire operation
-      console.warn('[GuideSequenceFactory] Failed to create sibling guide:', siblingError);
-    }
+    console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
+    
+    // Guides MUST be on HalfHingeLines - getSiblingInfo will return the paired plane
+    // If undefined, that's a bug (guide created on non-HHL line)
+    const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId)!;
+    
+    console.log(`[GuideSequenceFactory] Sibling plane: ${siblingInfo.siblingPlaneId}, HHL: ${siblingInfo.siblingHalfHingeLineId}`);
+    
+    // Create sibling guide using coordinate correspondence
+    const siblingResult = cmd.addAndExecute(
+      new AddSiblingGuide2DOp(
+        siblingInfo.siblingPlaneId,
+        guideId,
+        siblingInfo.siblingHalfHingeLineId
+      )
+    );
+    const siblingGuideId = siblingResult.outputs.siblingGuideId;
+    
+    // Update bidirectional links
+    const primaryGuide = world.getLine2D(guideId)!;
+    (primaryGuide as any).siblingGuideId = siblingGuideId;
+    
+    console.log(
+      `[GuideSequenceFactory] Created sibling guide ${siblingGuideId} ` +
+      `in plane ${siblingInfo.siblingPlaneId}`
+    );
     
     return { guideId, siblingGuideId };
   }

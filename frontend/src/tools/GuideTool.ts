@@ -23,6 +23,7 @@ import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory'
 import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
 import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSiblingGuideAction';
 import type { Point2D } from '@/domain/world/Point';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { isSiblingIntersectionPoint2D } from '@/domain/world/Point';
 
 /**
@@ -122,66 +123,50 @@ export class GuideTool extends BaseTool {
     if (this.referenceLineId && this.throughPointId) {
       const throughPointId = this.throughPointId;
       
-      try {
-        // Build Command directly
-        const cmd = new Command("Create guide", world);
-        
-        // Use factory to create guide with conditional sibling
-        const result = GuideSequenceFactory.createGuideWithSibling(
-          cmd, 
-          planeId, 
-          this.referenceLineId!, 
-          throughPointId, 
-          world
-        );
-        
-        const guideId = result.guideId;
-        const siblingGuideId = result.siblingGuideId;
-        
-        // Record ProcessTree action for primary guide
-        const action = createGuideAction(guideId, planeId, this.referenceLineId!, throughPointId);
-        world.getProcessTree().addAction(action);
-        
-        // Record ProcessTree action for sibling guide (if created)
-        if (siblingGuideId) {
-          // Get sibling info to find reference line on sibling plane
-          const siblingInfo = world.getSiblingPlaneAndHalfHingeLineForGuide(this.referenceLineId!, planeId);
-          if (siblingInfo) {
-            const siblingAction = createSiblingGuideAction(
-              siblingGuideId, 
-              siblingInfo.siblingPlaneId, 
-              guideId, 
-              siblingInfo.siblingHalfHingeLineId
-            );
-            world.getProcessTree().addAction(siblingAction);
-          }
-        }
-        
-        // Commit
-        cmd.commit();
-        
-        // Push to stack
-        commandStack.push(cmd);
-        
-        const referenceLineId = this.referenceLineId; // Save before reset
-        
-        // Reset state for next guide
-        this.reset();
-        
-        const message = siblingGuideId 
-          ? `Created guide ${guideId} and sibling ${siblingGuideId}` 
-          : `Created guide ${guideId} perpendicular to ${referenceLineId} through ${throughPointId}`;
-        
-        // Handle tool completion (returns to selection mode)
-        this.handleCompletion(context.toolStore);
-        
-        return this.success(message);
-        
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        this.reset();
-        return this.failure(`Failed to create guide: ${message}`);
-      }
+      // Build Command directly
+      const cmd = new Command("Create guide", world);
+      
+      // Use factory to create guide with sibling
+      const result = GuideSequenceFactory.createGuideWithSibling(
+        cmd, 
+        planeId, 
+        this.referenceLineId!, 
+        throughPointId, 
+        world
+      );
+      
+      const guideId = result.guideId;
+      const siblingGuideId = result.siblingGuideId;
+      
+      // Record ProcessTree action for primary guide
+      const action = createGuideAction(guideId, planeId, this.referenceLineId!, throughPointId);
+      world.getProcessTree().addAction(action);
+      
+      // Record ProcessTree action for sibling guide (always created for HHL guides)
+      const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, this.referenceLineId!, planeId)!;
+      const siblingAction = createSiblingGuideAction(
+        siblingGuideId, 
+        siblingInfo.siblingPlaneId, 
+        guideId, 
+        siblingInfo.siblingHalfHingeLineId
+      );
+      world.getProcessTree().addAction(siblingAction);
+      
+      // Commit
+      cmd.commit();
+      
+      // Push to stack
+      commandStack.push(cmd);
+      
+      // Reset state for next guide
+      this.reset();
+      
+      const message = `Created guide ${guideId} and sibling ${siblingGuideId}`;
+      
+      // Handle tool completion (returns to selection mode)
+      this.handleCompletion(context.toolStore);
+      
+      return this.success(message);
     }
     
     // Should never reach here

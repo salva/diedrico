@@ -199,7 +199,11 @@ import { ParallelLineTool } from '@/tools/ParallelLineTool';
 import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
 import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
 import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
-import type { FreePoint2D } from '@/domain/world/Point';
+import { Create3DPointTool } from '@/tools/Create3DPointTool';
+import { Create3DLineTool } from '@/tools/Create3DLineTool';
+import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+import { FreePoint2D } from '@/domain/world/Point';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
@@ -247,7 +251,7 @@ const viewport = computed<ViewportTransform>(() => {
 });
 
 // Setup viewport interactions (pan/zoom)
-useViewport({ element: svgElement });
+const viewportComposable = useViewport({ element: svgElement });
 
 // Services
 const paperService = new PaperService();
@@ -299,7 +303,7 @@ const viewportPan = ref<{
 let ignoreNextClick = false;
 
 function isMovableFreePoint(point: any): point is FreePoint2D {
-  return point?.type === 'free' && !point?.locked;
+  return point instanceof FreePoint2D && !point.locked;
 }
 
 function endPointDrag(commit: boolean): void {
@@ -309,7 +313,7 @@ function endPointDrag(commit: boolean): void {
 
   try {
     if (cmd) {
-      if (commit && (cmd as any).operations?.length > 0) {
+      if (commit && (cmd as any).operations && (cmd as any).operations.length > 0) {
         cmd.commit();
         commandStack.push(cmd);
       } else {
@@ -405,7 +409,7 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
     }
   }
   
-  return element?.label || elementId;
+  return element ? element.label || elementId : elementId;
 }
 
 // World instance - injected from App.vue
@@ -435,7 +439,11 @@ const tools: Record<string, ITool> = {
   'perpendicular-line': new PerpendicularLineTool(),
   'tangent-line-to-circle-through-point': new TangentLineToCircleThroughPointTool(),
   'tangent-line-to-circle-parallel': new TangentLineToCircleParallelToLineTool(),
-  // Future tools: etc.
+  // Phase 78: 3D Element Creation Tools
+  'create3dpoint': new Create3DPointTool(),
+  'create3dline': new Create3DLineTool(),
+  'create3dsegment': new Create3DSegmentTool(),
+  'create3dplane': new Create3DPlaneTool(),
 };
 
 // Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
@@ -576,30 +584,80 @@ const primitives = computed(() => {
 });
 
 /**
- * Generate grid lines for background grid (T275)
+ * Phase 79: Plane-Based Grid with Adaptive Spacing/Subdivisions
  * 
- * Grid adapts to zoom level:
- * - Low zoom (< 0.5): 50 unit spacing
- * - Medium zoom (0.5-2.0): 20 unit spacing
- * - High zoom (> 2.0): 10 unit spacing
+ * Grid uses the active projection plane's intrinsic (u,v) coordinate system
+ * Transformation pipeline: Plane (u,v) → Paper (x,y) → Screen (pixels)
  * 
- * Every 5th line is emphasized (major line)
+ * Major Grid Lines (Powers of 10):
+ * - Major lines always at multiples of 10^n (e.g., 0.1, 1, 10, 100, 1000)
+ * - Power of 10 chosen based on zoom level to keep reasonable density
+ * 
+ * Subdivisions (2, 5, or 10):
+ * - Minor lines divide each major interval by 2, 5, or 10
+ * - Subdivision chosen to keep minor cells >= minimum pixel threshold (15px)
+ * - Preference: smallest subdivision that meets threshold (10 > 5 > 2)
+ * 
+ * Algorithm:
+ * - Calculate minimum spacing in plane units: minSpacing = minPixelsPerCell / zoom
+ * - Find smallest value from sequence: 10^n/10, 10^n/5, 10^n/2 that is >= minSpacing
+ * - This determines both minor spacing and major spacing (10^n)
+ * - Example at zoom=1.0: minSpacing=15, chooses 20 (=100/5), major=100, subdivision=5
+ * - Example at zoom=0.1: minSpacing=150, chooses 200 (=1000/5), major=1000, subdivision=5
  */
-const gridLines = computed(() => {
-  if (!viewStore.gridVisible.value) return [];
+
+/**
+ * Compute adaptive grid parameters based on zoom level
+ * Major lines at powers of 10, subdivisions are 2, 5, or 10
+ */
+function computeAdaptiveGridParams(zoom: number): {
+  spacing: number;
+  subdivision: number;
+  majorSpacing: number;
+} {
+  const minPixelsPerCell = 15; // Minimum pixels per minor grid cell
+  const minSpacing = minPixelsPerCell / zoom; // Minimum spacing in plane units
   
-  const zoom = viewport.value.zoom;
+  // Find the smallest spacing from sequence: ..., 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, ...
+  // These are 10^n/10, 10^n/5, 10^n/2 for integer n
   
-  // Determine grid spacing based on zoom level
-  let spacing: number;
-  if (zoom < 0.5) {
-    spacing = 50;
-  } else if (zoom < 2.0) {
-    spacing = 20;
-  } else {
-    spacing = 10;
+  const logMin = Math.log10(minSpacing);
+  const basePower = Math.floor(logMin);
+  
+  // Try powers of 10 starting from basePower
+  for (let n = basePower; n < basePower + 3; n++) {
+    const base = Math.pow(10, n);
+    
+    // Try subdivisions in order of preference (10 > 5 > 2 gives smallest cells)
+    for (const subdivision of [10, 5, 2]) {
+      const spacing = base / subdivision; // Minor line spacing
+      if (spacing >= minSpacing) {
+        return {
+          spacing,           // Minor line spacing (spacing between all lines)
+          subdivision,       // Number of minor intervals per major interval
+          majorSpacing: base // Major line spacing (10^n)
+        };
+      }
+    }
   }
   
+  // Fallback (shouldn't reach here)
+  return { spacing: 1, subdivision: 10, majorSpacing: 10 };
+}
+
+const gridLines = computed(() => {
+  if (!viewStore.gridVisible.value) return [];
+
+  const activePlaneId = world.getActivePlaneId();
+  const plane = world.getProjectionPlaneById(activePlaneId);
+  if (!plane) return [];
+
+  // Get plane realization which contains transformation matrices
+  const planeRealization = plane.realize2D();
+
+  const zoom = viewport.value.zoom;
+  const { spacing, subdivision, majorSpacing } = computeAdaptiveGridParams(zoom);
+
   const lines: Array<{
     key: string;
     x1: number;
@@ -608,54 +666,101 @@ const gridLines = computed(() => {
     y2: number;
     major: boolean;
   }> = [];
-  
-  // Calculate viewport bounds in paper coordinates
+
+  // Step 1: Calculate viewport bounds in paper coordinates
   const viewportWidth = canvasWidth.value / zoom;
   const viewportHeight = canvasHeight.value / zoom;
   const offsetX = -viewport.value.panX;
   const offsetY = -viewport.value.panY;
-  
-  // Round to nearest grid spacing
-  const startX = Math.floor(offsetX / spacing) * spacing;
-  const endX = Math.ceil((offsetX + viewportWidth) / spacing) * spacing;
-  const startY = Math.floor(offsetY / spacing) * spacing;
-  const endY = Math.ceil((offsetY + viewportHeight) / spacing) * spacing;
-  
-  // Generate vertical lines
-  for (let x = startX; x <= endX; x += spacing) {
-    const isMajor = Math.abs(x % (spacing * 5)) < 0.01;
-    const screenX = (x + viewport.value.panX) * zoom;
-    
+
+  // Viewport corners in paper coordinates
+  const topLeft_paper = new Vector3(offsetX, offsetY, 1);
+  const topRight_paper = new Vector3(offsetX + viewportWidth, offsetY, 1);
+  const bottomLeft_paper = new Vector3(offsetX, offsetY + viewportHeight, 1);
+  const bottomRight_paper = new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1);
+
+  // Step 2: Transform viewport corners to plane (u,v) coordinates
+  const topLeft_plane = topLeft_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+  const topRight_plane = topRight_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+  const bottomLeft_plane = bottomLeft_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+  const bottomRight_plane = bottomRight_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+
+  // Step 3: Compute axis-aligned bounding box in plane (u,v) coordinates
+  const uValues = [topLeft_plane.x, topRight_plane.x, bottomLeft_plane.x, bottomRight_plane.x];
+  const vValues = [topLeft_plane.y, topRight_plane.y, bottomLeft_plane.y, bottomRight_plane.y];
+
+  const uMin = Math.min(...uValues);
+  const uMax = Math.max(...uValues);
+  const vMin = Math.min(...vValues);
+  const vMax = Math.max(...vValues);
+
+  // Step 4: Round to nearest grid spacing (add margin for partial grid lines at edges)
+  const uStart = Math.floor(uMin / spacing) * spacing;
+  const uEnd = Math.ceil(uMax / spacing) * spacing;
+  const vStart = Math.floor(vMin / spacing) * spacing;
+  const vEnd = Math.ceil(vMax / spacing) * spacing;
+
+  // Step 5: Generate vertical grid lines (constant u)
+  for (let u = uStart; u <= uEnd; u += spacing) {
+    const isMajor = Math.abs(u % majorSpacing) < 0.01;
+
+    // Define line in plane (u,v): (u, vMin) to (u, vMax)
+    const p1_plane = new Vector3(u, vMin, 1);
+    const p2_plane = new Vector3(u, vMax, 1);
+
+    // Transform to paper coordinates
+    const p1_paper = p1_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    const p2_paper = p2_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
+
+    // Transform to screen coordinates
+    const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
+    const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
+    const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
+    const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+
     lines.push({
-      key: `v-${x}`,
-      x1: screenX,
-      y1: 0,
-      x2: screenX,
-      y2: canvasHeight.value,
+      key: `u-${u}`,
+      x1: screenX1,
+      y1: screenY1,
+      x2: screenX2,
+      y2: screenY2,
       major: isMajor,
     });
   }
-  
-  // Generate horizontal lines
-  for (let y = startY; y <= endY; y += spacing) {
-    const isMajor = Math.abs(y % (spacing * 5)) < 0.01;
-    const screenY = (y + viewport.value.panY) * zoom;
-    
+
+  // Step 6: Generate horizontal grid lines (constant v)
+  for (let v = vStart; v <= vEnd; v += spacing) {
+    const isMajor = Math.abs(v % majorSpacing) < 0.01;
+
+    // Define line in plane (u,v): (uMin, v) to (uMax, v)
+    const p1_plane = new Vector3(uMin, v, 1);
+    const p2_plane = new Vector3(uMax, v, 1);
+
+    // Transform to paper coordinates
+    const p1_paper = p1_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    const p2_paper = p2_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
+
+    // Transform to screen coordinates
+    const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
+    const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
+    const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
+    const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+
     lines.push({
-      key: `h-${y}`,
-      x1: 0,
-      y1: screenY,
-      x2: canvasWidth.value,
-      y2: screenY,
+      key: `v-${v}`,
+      x1: screenX1,
+      y1: screenY1,
+      x2: screenX2,
+      y2: screenY2,
       major: isMajor,
     });
   }
-  
+
   return lines;
 });
 
 /**
- * Phase 78: Grid Coordinate Labels
+ * Phase 78: Grid Coordinate Labels (Updated for Phase 79 plane-based grid)
  * GridLabel interface for coordinate label display at viewport borders
  */
 interface GridLabel {
@@ -666,109 +771,131 @@ interface GridLabel {
 }
 
 /**
- * Compute horizontal labels (U-coordinates) for top/bottom edges
- * Shows plane-local u values for major grid lines at viewport borders
- */
-function computeHorizontalLabels(
-  offsetX: number,
-  viewportWidth: number,
-  majorSpacing: number,
-  edge: 'top' | 'bottom',
-  zoom: number
-): GridLabel[] {
-  const labels: GridLabel[] = [];
-  
-  // Find major grid lines within viewport
-  const startX = Math.floor(offsetX / majorSpacing) * majorSpacing;
-  const endX = Math.ceil((offsetX + viewportWidth) / majorSpacing) * majorSpacing;
-  
-  for (let x = startX; x <= endX; x += majorSpacing) {
-    // Convert paper coordinate to screen position
-    const screenX = (x + viewport.value.panX) * zoom;
-    
-    // Only show labels for visible positions (with small margin for edge labels)
-    if (screenX >= -10 && screenX <= canvasWidth.value + 10) {
-      labels.push({
-        key: `${edge}-${x}`,
-        value: x,
-        position: screenX,
-        edge,
-      });
-    }
-  }
-  
-  return labels;
-}
-
-/**
- * Compute vertical labels (V-coordinates) for left/right edges
- * Shows plane-local v values for major grid lines at viewport borders
- */
-function computeVerticalLabels(
-  offsetY: number,
-  viewportHeight: number,
-  majorSpacing: number,
-  edge: 'left' | 'right',
-  zoom: number
-): GridLabel[] {
-  const labels: GridLabel[] = [];
-  
-  // Find major grid lines within viewport
-  const startY = Math.floor(offsetY / majorSpacing) * majorSpacing;
-  const endY = Math.ceil((offsetY + viewportHeight) / majorSpacing) * majorSpacing;
-  
-  for (let y = startY; y <= endY; y += majorSpacing) {
-    // Convert paper coordinate to screen position
-    const screenY = (y + viewport.value.panY) * zoom;
-    
-    // Only show labels for visible positions (with small margin for edge labels)
-    if (screenY >= -10 && screenY <= canvasHeight.value + 10) {
-      labels.push({
-        key: `${edge}-${y}`,
-        value: y,
-        position: screenY,
-        edge,
-      });
-    }
-  }
-  
-  return labels;
-}
-
-/**
  * Computed property: Grid coordinate labels for all four viewport edges
- * Displays plane-local (u,v) coordinates to help users orient element placement
+ * Displays plane-local (u,v) coordinates aligned with the plane-based grid
+ * Labels are placed along major grid lines only
  */
 const gridLabels = computed(() => {
   if (!viewStore.gridVisible.value) {
     return { top: [], bottom: [], left: [], right: [] };
   }
-  
-  const zoom = viewport.value.zoom;
-  
-  // Determine grid spacing based on zoom level (same as gridLines)
-  let spacing: number;
-  if (zoom < 0.5) {
-    spacing = 50;
-  } else if (zoom < 2.0) {
-    spacing = 20;
-  } else {
-    spacing = 10;
+
+  const activePlaneId = world.getActivePlaneId();
+  const plane = world.getProjectionPlaneById(activePlaneId);
+  if (!plane) {
+    return { top: [], bottom: [], left: [], right: [] };
   }
-  
-  const majorSpacing = spacing * 5; // Labels only for major lines
-  
+
+  // Get plane realization which contains transformation matrices
+  const planeRealization = plane.realize2D();
+
+  const zoom = viewport.value.zoom;
+  const { majorSpacing } = computeAdaptiveGridParams(zoom);
+
   // Calculate viewport bounds in paper coordinates
   const viewportWidth = canvasWidth.value / zoom;
   const viewportHeight = canvasHeight.value / zoom;
   const offsetX = -viewport.value.panX;
   const offsetY = -viewport.value.panY;
-  
+
+  // Viewport corners in paper coordinates
+  const topLeft_paper = new Vector3(offsetX, offsetY, 1);
+  const topRight_paper = new Vector3(offsetX + viewportWidth, offsetY, 1);
+  const bottomLeft_paper = new Vector3(offsetX, offsetY + viewportHeight, 1);
+  const bottomRight_paper = new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1);
+
+  // Transform to plane (u,v) coordinates
+  const topLeft_plane = topLeft_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+  const topRight_plane = topRight_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+  const bottomLeft_plane = bottomLeft_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+  const bottomRight_plane = bottomRight_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+
+  // Compute bounding box in plane coordinates
+  const uValues = [topLeft_plane.x, topRight_plane.x, bottomLeft_plane.x, bottomRight_plane.x];
+  const vValues = [topLeft_plane.y, topRight_plane.y, bottomLeft_plane.y, bottomRight_plane.y];
+  const uMin = Math.min(...uValues);
+  const uMax = Math.max(...uValues);
+  const vMin = Math.min(...vValues);
+  const vMax = Math.max(...vValues);
+
+  // Round to major grid lines
+  const uStart = Math.floor(uMin / majorSpacing) * majorSpacing;
+  const uEnd = Math.ceil(uMax / majorSpacing) * majorSpacing;
+  const vStart = Math.floor(vMin / majorSpacing) * majorSpacing;
+  const vEnd = Math.ceil(vMax / majorSpacing) * majorSpacing;
+
+  const topLabels: GridLabel[] = [];
+  const bottomLabels: GridLabel[] = [];
+  const leftLabels: GridLabel[] = [];
+  const rightLabels: GridLabel[] = [];
+
+  // Generate U-coordinate labels for top/bottom edges
+  for (let u = uStart; u <= uEnd; u += majorSpacing) {
+    // Top edge: take the topmost v value in viewport
+    const p_plane_top = new Vector3(u, vMin, 1);
+    const p_paper_top = p_plane_top.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    const screenX_top = (p_paper_top.x + viewport.value.panX) * zoom;
+
+    if (screenX_top >= -10 && screenX_top <= canvasWidth.value + 10) {
+      topLabels.push({
+        key: `top-${u}`,
+        value: u,
+        position: screenX_top,
+        edge: 'top',
+      });
+    }
+
+    // Bottom edge: take the bottommost v value in viewport
+    const p_plane_bottom = new Vector3(u, vMax, 1);
+    const p_paper_bottom = p_plane_bottom.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    const screenX_bottom = (p_paper_bottom.x + viewport.value.panX) * zoom;
+
+    if (screenX_bottom >= -10 && screenX_bottom <= canvasWidth.value + 10) {
+      bottomLabels.push({
+        key: `bottom-${u}`,
+        value: u,
+        position: screenX_bottom,
+        edge: 'bottom',
+      });
+    }
+  }
+
+  // Generate V-coordinate labels for left/right edges
+  for (let v = vStart; v <= vEnd; v += majorSpacing) {
+    // Left edge: take the leftmost u value in viewport
+    const p_plane_left = new Vector3(uMin, v, 1);
+    const p_paper_left = p_plane_left.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    const screenY_left = (p_paper_left.y + viewport.value.panY) * zoom;
+
+    if (screenY_left >= -10 && screenY_left <= canvasHeight.value + 10) {
+      leftLabels.push({
+        key: `left-${v}`,
+        value: v,
+        position: screenY_left,
+        edge: 'left',
+      });
+    }
+
+    // Right edge: take the rightmost u value in viewport
+    const p_plane_right = new Vector3(uMax, v, 1);
+    const p_paper_right = p_plane_right.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    const screenY_right = (p_paper_right.y + viewport.value.panY) * zoom;
+
+    if (screenY_right >= -10 && screenY_right <= canvasHeight.value + 10) {
+      rightLabels.push({
+        key: `right-${v}`,
+        value: v,
+        position: screenY_right,
+        edge: 'right',
+      });
+    }
+  }
+
   return {
-    top: computeHorizontalLabels(offsetX, viewportWidth, majorSpacing, 'top', zoom),
-    bottom: computeHorizontalLabels(offsetX, viewportWidth, majorSpacing, 'bottom', zoom),
-    left: computeVerticalLabels(offsetY, viewportHeight, majorSpacing, 'left', zoom),
-    right: computeVerticalLabels(offsetY, viewportHeight, majorSpacing, 'right', zoom),
+    top: topLabels,
+    bottom: bottomLabels,
+    left: leftLabels,
+    right: rightLabels,
   };
 });
 
@@ -1045,7 +1172,8 @@ function handleMouseDown(event: MouseEvent) {
   // Check if we hit a movable point
   if (hit && hit.elementType === 'point') {
     const plane = world.getProjectionPlaneById(activePlane.value);
-    const point = plane?.getPoint(hit.elementId);
+    if (!plane) throw new Error(`Active plane not found: ${activePlane.value}`);
+    const point = plane.getPoint(hit.elementId);
     
     if (point && isMovableFreePoint(point)) {
       // Start point drag (T954)
@@ -1160,7 +1288,9 @@ function handleMouseMove(event: MouseEvent) {
     const dx = event.clientX - viewportPan.value.startX;
     const dy = event.clientY - viewportPan.value.startY;
     
-    viewStore.adjustPan(dx, dy);
+    // Adjust pan by dividing by zoom - at high zoom, screen pixels translate to smaller world movement
+    const zoom = viewport.value.zoom;
+    viewStore.adjustPan(dx / zoom, dy / zoom);
     
     viewportPan.value.startX = event.clientX;
     viewportPan.value.startY = event.clientY;
@@ -1230,7 +1360,8 @@ function handleMouseMove(event: MouseEvent) {
   // Get active tool's selection mask
   const activeToolName = toolStore.currentTool.value;
   const activeTool = tools[activeToolName];
-  const selectionMask = activeTool?.getSelectionMask();
+  // 'select' is a special mode (not a tool), allow hover on all elements
+  const selectionMask = activeTool ? activeTool.getSelectionMask() : undefined;
   
   // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
@@ -1254,7 +1385,7 @@ function handleMouseMove(event: MouseEvent) {
   
   // Update hover state in Paper only if it changed
   const previousHovered = paper.getHoveredElement();
-  const newHovered = hit?.elementId;
+  const newHovered = hit ? hit.elementId : undefined;
   
   if (previousHovered !== newHovered) {
     paper.setHoveredElement(newHovered);
@@ -1317,6 +1448,12 @@ function handleMouseMove(event: MouseEvent) {
 // Commit point move on global mouseup (even if mouseup happens outside SVG)
 // T957: Handle viewport pan end
 function handleGlobalMouseUp() {
+  // Check if viewport pan via useViewport (Shift+drag or middle-click drag) was active
+  // If so, suppress next click to prevent unwanted tool actions
+  if (viewportComposable.isPanning.value) {
+    ignoreNextClick = true;
+  }
+  
   // End viewport pan
   if (viewportPan.value.active) {
     viewportPan.value = {

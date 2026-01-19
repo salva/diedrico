@@ -110,7 +110,7 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
 
     it('should work for segments (Line2D subtypes)', () => {
       const segment = new Segment2DByPoints(planeH.id + '/seg1', p1Id, p2Id, planeH.id);
-      world.addSegment2D(segment);
+      planeH.addLine(segment);
       
       // Compute via ProjectionPlane
       const realization = planeH.realizeLine2D(segment, world);

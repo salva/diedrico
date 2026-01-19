@@ -255,7 +255,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const lineId = planeH.generateLine2DId(world);
       const guideId = planeH.generateLine2DId(world);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
-      world.addLine2D(line);
+      planeH.addLine(line);
       
       const guide = new Guide2D(guideId, lineId, p1Id, planeH.id);
       
@@ -267,7 +267,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const lineId = planeH.generateLine2DId(world);
       const guideId = planeH.generateLine2DId(world);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
-      world.addLine2D(line);
+      planeH.addLine(line);
       
       const guide = new Guide2D(guideId, lineId, p1Id, planeH.id);
       const realization = guide.realize2D(world);

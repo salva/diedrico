@@ -180,17 +180,18 @@ export class Element2DRenderer3D {
     // Get visual style
     const style = this.resolveVisualStyle(line, isActivePlane);
 
-    // Create line geometry
-    const points = [start3D, end3D];
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({
+    // Create thicker line using TubeGeometry for better visibility
+    const lineCurve = new THREE.LineCurve3(start3D, end3D);
+    const tubeRadius = 0.15; // Thicker lines for visibility
+    const geometry = new THREE.TubeGeometry(lineCurve, 1, tubeRadius, 8, false);
+    const material = new THREE.MeshBasicMaterial({
       color: style.color,
       opacity: style.opacity * 0.7, // Reduced opacity for lines
       transparent: true,
       depthTest: true,
       depthWrite: true
     });
-    const lineObject = new THREE.Line(geometry, material);
+    const lineObject = new THREE.Mesh(geometry, material);
 
     // Add to scene and cache
     this.scene.add(lineObject);
@@ -223,17 +224,18 @@ export class Element2DRenderer3D {
     // Get visual style
     const style = this.resolveVisualStyle(line, isActivePlane);
 
-    // Create line geometry
-    const points = [start3D, end3D];
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({
+    // Create thicker line using TubeGeometry for better visibility
+    const curve = new THREE.LineCurve3(start3D, end3D);
+    const tubeRadius = 0.15; // Thicker lines for visibility
+    const geometry = new THREE.TubeGeometry(curve, 1, tubeRadius, 8, false);
+    const material = new THREE.MeshBasicMaterial({
       color: style.color,
       opacity: style.opacity * 0.7,
       transparent: true,
       depthTest: true,
       depthWrite: true
     });
-    const lineObject = new THREE.Line(geometry, material);
+    const lineObject = new THREE.Mesh(geometry, material);
 
     // Add to scene and cache
     this.scene.add(lineObject);
@@ -266,7 +268,7 @@ export class Element2DRenderer3D {
 
     // Create circle as a curve with 64 segments for smoothness
     const radius = realization2D.getRadius();
-    const curve = new THREE.EllipseCurve(
+    const ellipseCurve = new THREE.EllipseCurve(
       0, 0,                        // Center offset (we'll position the geometry)
       radius, radius,              // Radii
       0, 2 * Math.PI,             // Start/end angle
@@ -274,7 +276,7 @@ export class Element2DRenderer3D {
       0                            // Rotation
     );
     
-    const points2D = curve.getPoints(64);
+    const points2D = ellipseCurve.getPoints(64);
     
     // Transform circle points to 3D
     // We need to transform each point from the circle's local space to the plane's 3D space
@@ -295,16 +297,18 @@ export class Element2DRenderer3D {
       return; // Not enough points to form a circle
     }
 
-    // Create line geometry for the circle
-    const geometry = new THREE.BufferGeometry().setFromPoints(points3D);
-    const material = new THREE.LineBasicMaterial({
+    // Create thicker circle using TubeGeometry for better visibility
+    const circleCurve = new THREE.CatmullRomCurve3(points3D, true); // true = closed curve
+    const tubeRadius = 0.15; // Thicker lines for visibility
+    const geometry = new THREE.TubeGeometry(circleCurve, points3D.length, tubeRadius, 8, true);
+    const material = new THREE.MeshBasicMaterial({
       color: style.color,
       opacity: style.opacity * 0.7,
       transparent: true,
       depthTest: true,
       depthWrite: true
     });
-    const circleObject = new THREE.LineLoop(geometry, material); // LineLoop closes the path
+    const circleObject = new THREE.Mesh(geometry, material); // Mesh instead of LineLoop
 
     // Add to scene and cache
     this.scene.add(circleObject);

@@ -82,17 +82,25 @@
 
 import { Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
-import { Point2D, Point3DRealization3D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
+import { Point2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
 import { Line2D } from './Line';
 import { Segment2D, Segment2DByPoints } from './Segment';
 import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
-import { Plane3D, Plane3DFixed } from './Plane';
+import { Plane3D, Plane3DFixed, Plane3DFromTraces } from './Plane';
 import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D, BaseProjectionPlane } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
 import { Element2D } from './Element2D';
+
+// Phase 78: 3D element domain types
+import type { Point3D } from './Point3D';
+import type { Line3D } from './Line3D';
+import type { Segment3D } from './Segment3D';
+
+// Phase 78: 3D element realization types (Element3DRealization3D.ts)
+import { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plane3DRealization3D } from './Element3DRealization3D';
 import { getContainerIdFromElementId } from './ElementId';
 import { Command } from '@/commands/Command';
 import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
@@ -102,6 +110,12 @@ export class World {
   private hingeLines: Map<string, HingeLine>;
   private planes: Map<string, Plane3D>;
   projectionPlanes: Map<string, ProjectionPlane>;  // 2D projection planes (public for rendering)
+  
+  // Phase 78: User-created 3D elements (domain layer - definitions)
+  private points3D: Map<string, Point3D>;        // User-created 3D points from projections
+  private lines3D: Map<string, Line3D>;          // User-created 3D lines from projections
+  private segments3D: Map<string, Segment3D>;    // User-created 3D segments from projections
+  private planes3DUser: Map<string, Plane3D>;    // User-created 3D planes from traces
   
   // Construction history
   private processTree: ProcessTree;
@@ -114,35 +128,49 @@ export class World {
   private projectionPlaneRealizations2D: Map<string, ProjectionPlaneRealization2D>;  // Computed plane 2D transforms
   private projectionPlaneRealizations3D: Map<string, ProjectionPlaneRealization3D>;  // Computed plane 3D transforms
   
+  // Phase 78: 3D element realization caches (computed numeric geometry)
+  private lineRealizations3D: Map<string, Line3DRealization3D>;       // Computed 3D line geometry
+  private segmentRealizations3D: Map<string, Segment3DRealization3D>; // Computed 3D segment geometry
+  private planeRealizations3D: Map<string, Plane3DRealization3D>;     // Computed 3D plane equations
+  
   private nextId: number;
   private _version: number = 0;  // For tracking changes and triggering UI updates
   private changeListeners: Array<() => void> = [];  // Phase 80: Observer pattern for view updates
 
-  // Phase 46: Semantic references to initial entities (track by role, not hardcoded ID)
-  // These are set during initialization and provide semantic access to the initial planes
-  private horizontalPlaneId!: string;    // ID of horizontal projection plane (formerly 'proj_plane_H')
-  private verticalPlaneId!: string;      // ID of vertical projection plane (formerly 'proj_plane_V')
-  private horizontalOriginId!: string;   // ID of origin point on horizontal plane
-  private verticalOriginId!: string;     // ID of origin point on vertical plane
-  private mainHingeLineId!: string;      // ID of main hinge line connecting the two planes
-  private activePlaneId!: string;        // ID of currently active projection plane (set by initialization factory)
-  
-  // Phase 46: ID generation counters for automatic ID assignment
-  private projPlaneCounter: number = 0;
-  private planeCounter: number = 0;
-  private hingeLineCounter: number = 0;
+  // Active plane tracking
+  private activePlaneId?: string;  // Currently active projection plane for user interactions
 
   // Fixed elements (always present)
   originPoint?: Vector4;  // O at (0,0,0) in 3D space
+  
+  // Phase 78: ID generation counters for 3D elements
+  private point3DCounter: number = 0;
+  private line3DCounter: number = 0;
+  private segment3DCounter: number = 0;
+  private plane3DUserCounter: number = 0;
 
   constructor() {
     // Phase 22.5.3: Element storage removed - stored in ProjectionPlane
     this.hingeLines = new Map();
     this.planes = new Map();
     this.projectionPlanes = new Map();
+    
+    // Phase 78: Initialize 3D element storage
+    this.points3D = new Map();
+    this.lines3D = new Map();
+    this.segments3D = new Map();
+    this.planes3DUser = new Map();
+    
+    // Initialize realization caches
     this.pointRealizations3D = new Map();
     this.projectionPlaneRealizations2D = new Map();
     this.projectionPlaneRealizations3D = new Map();
+    
+    // Phase 78: Initialize 3D realization caches
+    this.lineRealizations3D = new Map();
+    this.segmentRealizations3D = new Map();
+    this.planeRealizations3D = new Map();
+    
     this.nextId = 1;
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService(this.processTree);
@@ -251,26 +279,46 @@ export class World {
 
   /**
    * Phase 46: Generate unique projection plane ID
+   * Uses shared nextId counter to ensure global uniqueness
    * @returns Unique projection plane ID (e.g., 'proj_plane_1', 'proj_plane_2')
    */
   generateProjPlaneId(): string {
-    return `proj_plane_${++this.projPlaneCounter}`;
+    return `proj_plane_${this.nextId++}`;
   }
 
   /**
    * Phase 46: Generate unique 3D plane ID
+   * Uses shared nextId counter to ensure global uniqueness
    * @returns Unique plane ID (e.g., 'plane_1', 'plane_2')
    */
   generatePlaneId(): string {
-    return `plane_${++this.planeCounter}`;
+    return `plane_${this.nextId++}`;
   }
 
   /**
    * Phase 46: Generate unique hinge line ID
+   * Uses shared nextId counter to ensure global uniqueness
    * @returns Unique hinge line ID (e.g., 'HL_1', 'HL_2')
    */
   generateHingeLineId(): string {
-    return `HL_${++this.hingeLineCounter}`;
+    return `HL_${this.nextId++}`;
+  }
+
+  /**
+   * Get the currently active projection plane ID
+   * @returns Active plane ID or undefined if not set
+   */
+  getActivePlaneId(): string | undefined {
+    return this.activePlaneId;
+  }
+
+  /**
+   * Set the currently active projection plane
+   * @param planeId ID of the plane to make active
+   */
+  setActivePlaneId(planeId: string): void {
+    this.activePlaneId = planeId;
+    this.notifyChange();
   }
 
   /**
@@ -300,7 +348,6 @@ export class World {
    * 
    * Creates a projection plane associated with a 3D plane and adds it to World.
    * If projPlaneId is not provided, generates a new ID.
-   * Sets semantic references (horizontalPlaneId/verticalPlaneId) on World.
    * 
    * @param plane3DId - ID of associated 3D plane
    * @param orientation - 'horizontal' or 'vertical'
@@ -323,13 +370,6 @@ export class World {
     
     this.projectionPlanes.set(id, projPlane);
     
-    // Set semantic reference on World
-    if (orientation === 'horizontal') {
-      this.horizontalPlaneId = id;
-    } else {
-      this.verticalPlaneId = id;
-    }
-    
     return projPlane;
   }
 
@@ -339,7 +379,6 @@ export class World {
    * Creates a 3D HingeLine object connecting two projection planes.
    * Does NOT create the 2D half hinge lines - those are separate operations.
    * If hingeLineId is not provided, generates a new ID.
-   * Sets mainHingeLineId semantic reference on World.
    * 
    * @param horizontalPlaneId - ID of horizontal projection plane
    * @param verticalPlaneId - ID of vertical projection plane
@@ -361,41 +400,7 @@ export class World {
     );
     
     this.hingeLines.set(id, hingeLine);
-    this.mainHingeLineId = id;
     
-    return hingeLine;
-  }
-
-  /**
-   * Get active projection plane ID
-   * @returns ID of currently active projection plane
-   */
-  getActivePlaneId(): string {
-    return this.activePlaneId;
-  }
-
-  /**
-   * Set active projection plane (used by operations)
-   * @param planeId ID of plane to make active
-   */
-  setActivePlaneId(planeId: string): void {
-    if (!this.projectionPlanes.has(planeId)) {
-      throw new Error(`[World] Cannot set active plane: plane ${planeId} does not exist`);
-    }
-    this.activePlaneId = planeId;
-    this.notifyChange();
-  }
-
-
-  /**
-   * Phase 46: Get main hinge line (semantic access)
-   * @returns Main hinge line connecting horizontal and vertical planes
-   */
-  getMainHingeLine(): HingeLine {
-    const hingeLine = this.hingeLines.get(this.mainHingeLineId);
-    if (!hingeLine) {
-      throw new Error('[World] Main hinge line not found');
-    }
     return hingeLine;
   }
 
@@ -426,34 +431,6 @@ export class World {
     return undefined;
   }
 
-  /**
-   * Add a point to the world
-   * Point must already have an ID assigned
-   * @param point Point to add
-   * @returns The added point
-   * 
-   * Phase 22.5: Dual storage - stores in both World and ProjectionPlane during migration
-   */
-  addPoint2D(point: Point2D): Point2D {
-    // Phase 22.5.3: Store ONLY in ProjectionPlane (plane-only storage)
-    const plane = this.projectionPlanes.get(point.planeId);
-    if (plane) {
-      plane.addPoint(point);
-    } else {
-      console.warn(`Cannot add point ${point.id} to plane ${point.planeId}: plane not found`);
-    }
-    
-    this.notifyChange();
-    
-    // Realization will be computed lazily on first access via getPoint2DRealization()
-    
-    return point;
-  }
-
-  /**
-   * Get the 2D realization for a point (cached or computed on-demand)
-   * Implements RealizationContext interface for recursive realization lookup
-   */
   /**
    * Get the 3D realization for a point (cached or computed on-demand)
    * Computes 3D position by transforming the 2D realization using the projection plane's 3D transform
@@ -539,17 +516,12 @@ export class World {
     }
 
     // Call realize3D() on the plane
-    try {
-      realization = plane.realize3D();
-      
-      // Cache the result
-      this.projectionPlaneRealizations3D.set(planeId, realization);
-      
-      return realization;
-    } catch (error) {
-      // 3D realization not yet implemented for this plane type
-      return undefined;
-    }
+    realization = plane.realize3D();
+    
+    // Cache the result
+    this.projectionPlaneRealizations3D.set(planeId, realization);
+    
+    return realization;
   }
 
   /**
@@ -580,34 +552,6 @@ export class World {
   // ========================================
 
   /**
-   * Add a line to the world
-   * @param line Line to add
-   * @returns The added line
-   * 
-   * Phase 22.5.3: Plane-only storage - lines stored in ProjectionPlane
-   */
-  addLine2D(line: Line2D): Line2D {
-    // Phase 22.5.3: Store ONLY in ProjectionPlane (plane-only storage)
-    const plane = this.projectionPlanes.get(line.planeId);
-    if (plane) {
-      plane.addLine(line);
-    } else {
-      console.warn(`Cannot add line ${line.id} to plane ${line.planeId}: plane not found`);
-    }
-    
-    this.notifyChange();
-    // Realization will be computed lazily on first access via getLine2DRealization()
-    return line;
-  }
-
-  /**
-   * Get 2D realization (line equation) for a line
-   * Computes and caches the line equation in 2D plane coordinates
-   * 
-   * @param lineId ID of line to get realization for
-   * @returns Line2DRealization2D if line exists and can be computed, undefined otherwise
-   */
-  /**
    * Invalidate line realization cache for a specific line
    * Call this when the line's dependencies change
    */
@@ -632,50 +576,9 @@ export class World {
 
 
 
-  /**
-   * Add a segment to the world (generic version - prefer addSegment2DBetweenPoints factory method)
-   * @param segment Segment to add (must have ID already set)
-   * @returns The added segment
-   * 
-   * Phase 22.5: Segments are now Line2D - store in both segments (old) and lines (unified) maps
-   */
-  addSegment2D(segment: Segment2D): Segment2D {
-    // Phase 22.5.3: Store ONLY in ProjectionPlane (plane-only storage)
-    // Segments are Line2D now, use addLine()
-    const plane = this.projectionPlanes.get(segment.planeId);
-    if (plane) {
-      plane.addLine(segment);  // Segments are Line2D, use addLine()
-    } else {
-      console.warn(`Cannot add segment ${segment.id} to plane ${segment.planeId}: plane not found`);
-    }
-    
-    this.notifyChange();
-    return segment;
-  }
-
-
-
   // ========================================
   // CIRCLE METHODS
   // ========================================
-
-  /**
-   * Add a circle to the world
-   * 
-   * Phase 22.5.3: Plane-only storage - circles stored in ProjectionPlane
-   */
-  addCircle2D(circle: Circle2D): Circle2D {
-    // Phase 22.5.3: Store ONLY in ProjectionPlane (plane-only storage)
-    const plane = this.projectionPlanes.get(circle.planeId);
-    if (plane) {
-      plane.addCircle(circle);
-    } else {
-      console.warn(`Cannot add circle ${circle.id} to plane ${circle.planeId}: plane not found`);
-    }
-    
-    this.notifyChange();
-    return circle;
-  }
 
   /**
    * Remove a circle from the world (generic version - prefer removeCircle2D factory method)
@@ -702,24 +605,8 @@ export class World {
   // Guide Methods
   // ========================================
 
-  /**
-   * Add a guide to the world (generic version - prefer addGuide2D factory method)
-   */
-  addGuide2DGeneric(guide: Guide2D): Guide2D {
-    // Phase 22.5.3: Store ONLY in ProjectionPlane (plane-only storage)
-    // Guides are Line2D now, use addLine()
-    const plane = this.projectionPlanes.get(guide.planeId);
-    if (plane) {
-      plane.addLine(guide);  // Guides are Line2D, use addLine()
-    } else {
-      console.warn(`Cannot add guide ${guide.id} to plane ${guide.planeId}: plane not found`);
-    }
-    
-    this.notifyChange();
-    return guide;
-  }
-
-
+  // Guides are added directly to planes via plane.addLine()
+  // Operations should call world.markDirty() after modifications
 
   // ========================================
   // Plane Methods
@@ -790,22 +677,17 @@ export class World {
    * world.getElement2D("proj_plane_V/line2d_5")   // Line2DByTwoPoints
    */
   getElement2D(id: string): Element2D | undefined {
-    try {
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      
-      if (!plane) {
-        return undefined;
-      }
-      
-      // Try each element type
-      return plane.getPoint(id) ||
-             plane.getLine(id) ||
-             plane.getCircle(id);
-    } catch (error) {
-      // Invalid ID format
+    const containerId = getContainerIdFromElementId(id);
+    const plane = this.getProjectionPlaneById(containerId);
+    
+    if (!plane) {
       return undefined;
     }
+    
+    // Try each element type
+    return plane.getPoint(id) ||
+           plane.getLine(id) ||
+           plane.getCircle(id);
   }
 
   /**
@@ -816,13 +698,9 @@ export class World {
    * @returns Point2D or undefined if not found or not a point
    */
   getPoint2D(id: string): Point2D | undefined {
-    try {
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      return plane.getPoint(id);
-    } catch (error) {
-      return undefined;
-    }
+    const containerId = getContainerIdFromElementId(id);
+    const plane = this.getProjectionPlaneById(containerId);
+    return plane?.getPoint(id);
   }
 
   /**
@@ -833,13 +711,9 @@ export class World {
    * @returns Line2D or undefined if not found or not a line
    */
   getLine2D(id: string): Line2D | undefined {
-    try {
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      return plane.getLine(id);
-    } catch (error) {
-      return undefined;
-    }
+    const containerId = getContainerIdFromElementId(id);
+    const plane = this.getProjectionPlaneById(containerId);
+    return plane?.getLine(id);
   }
 
   /**
@@ -850,13 +724,9 @@ export class World {
    * @returns Circle2D or undefined if not found or not a circle
    */
   getCircle2D(id: string): Circle2D | undefined {
-    try {
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      return plane.getCircle(id);
-    } catch (error) {
-      return undefined;
-    }
+    const containerId = getContainerIdFromElementId(id);
+    const plane = this.getProjectionPlaneById(containerId);
+    return plane?.getCircle(id);
   }
 
   /**
@@ -868,18 +738,14 @@ export class World {
    * @returns Segment2D or undefined if not found or not a segment
    */
   getSegment2D(id: string): Segment2D | undefined {
-    try {
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      const line = plane.getLine(id);
-      // Segments extend Line2D
-      if (line && line instanceof Segment2DByPoints) {
-        return line as Segment2D;
-      }
-      return undefined;
-    } catch (error) {
-      return undefined;
+    const containerId = getContainerIdFromElementId(id);
+    const plane = this.getProjectionPlaneById(containerId);
+    const line = plane?.getLine(id);
+    // Segments extend Line2D
+    if (line && line instanceof Segment2DByPoints) {
+      return line as Segment2D;
     }
+    return undefined;
   }
 
   /**
@@ -891,18 +757,14 @@ export class World {
    * @returns Guide2D or undefined if not found or not a guide
    */
   getGuide2D(id: string): Guide2D | undefined {
-    try {
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      const line = plane.getLine(id);
-      // Guides extend Line2D
-      if (line && line instanceof Guide2D) {
-        return line as Guide2D;
-      }
-      return undefined;
-    } catch (error) {
-      return undefined;
+    const containerId = getContainerIdFromElementId(id);
+    const plane = this.getProjectionPlaneById(containerId);
+    const line = plane?.getLine(id);
+    // Guides extend Line2D
+    if (line && line instanceof Guide2D) {
+      return line as Guide2D;
     }
+    return undefined;
   }
 
   /**
@@ -1055,69 +917,6 @@ export class World {
     return siblingPlaneId || undefined;
   }
 
-  /**
-   * Get sibling plane and corresponding HalfHingeLine2D for a guide
-   * 
-   * Given a HalfHingeLine2D ID and the current plane, returns the sibling plane ID
-   * and the corresponding HalfHingeLine2D in that plane.
-   * 
-   * Algorithm:
-   * 1. Get HalfHingeLine2D from ID
-   * 2. Get parent HingeLine via hingeLineId
-   * 3. Get other plane via HingeLine.getOtherPlane()
-   * 4. Find HalfHingeLine2D in sibling plane with same hingeLineId
-   * 
-   * @param halfHingeLineId ID of the HalfHingeLine2D in current plane
-   * @param currentPlaneId ID of the current plane
-   * @returns Object with siblingPlaneId and siblingHalfHingeLineId, or undefined if not found
-   */
-  getSiblingPlaneAndHalfHingeLineForGuide(
-    halfHingeLineId: string,
-    currentPlaneId: string
-  ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
-    // Get HalfHingeLine2D
-    const halfHingeLine = this.getLine2D(halfHingeLineId);
-    if (!halfHingeLine || halfHingeLine.type !== 'half-hinge') {
-      return undefined;
-    }
-
-    const halfHL = halfHingeLine as HalfHingeLine2D;
-
-    // Get parent HingeLine
-    const hingeLine = this.getHingeLineById(halfHL.hingeLineId);
-    if (!hingeLine) {
-      console.warn(`[World.getSiblingPlaneAndHalfHingeLineForGuide] HingeLine ${halfHL.hingeLineId} not found`);
-      return undefined;
-    }
-
-    // Get sibling plane
-    const siblingPlaneId = hingeLine.getOtherPlane(currentPlaneId);
-    if (!siblingPlaneId) {
-      return undefined;
-    }
-
-    // Find corresponding HalfHingeLine2D in sibling plane
-    const siblingPlane = this.getProjectionPlaneById(siblingPlaneId);
-    if (!siblingPlane) {
-      return undefined;
-    }
-
-    // Find HalfHingeLine2D with same hingeLineId in sibling plane
-    const siblingHalfHingeLine = siblingPlane.getAllLines().find(
-      (line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === halfHL.hingeLineId
-    );
-
-    if (!siblingHalfHingeLine) {
-      console.warn(`[World.getSiblingPlaneAndHalfHingeLineForGuide] No matching HalfHingeLine2D found in sibling plane ${siblingPlaneId}`);
-      return undefined;
-    }
-
-    return {
-      siblingPlaneId,
-      siblingHalfHingeLineId: siblingHalfHingeLine.id
-    };
-  }
-
   // ========================================
   // Convenience Getter Methods for UI
   // These methods aggregate data from all ProjectionPlanes
@@ -1137,5 +936,252 @@ export class World {
    * @param pointId ID of the point
    * @returns Point if found, undefined otherwise
    */
+
+  // ========================================
+  // Phase 78: 3D Element Storage and Access
+  // ========================================
+
+  /**
+   * Generate unique ID for 3D point
+   * Format: "point3d_N" where N is auto-incremented
+   */
+  generate3DPointId(): string {
+    return `point3d_${++this.point3DCounter}`;
+  }
+
+  /**
+   * Generate unique ID for 3D line
+   * Format: "line3d_N" where N is auto-incremented
+   */
+  generate3DLineId(): string {
+    return `line3d_${++this.line3DCounter}`;
+  }
+
+  /**
+   * Generate unique ID for 3D segment
+   * Format: "segment3d_N" where N is auto-incremented
+   */
+  generate3DSegmentId(): string {
+    return `segment3d_${++this.segment3DCounter}`;
+  }
+
+  /**
+   * Generate unique ID for user-created 3D plane
+   * Format: "plane3d_N" where N is auto-incremented
+   */
+  generate3DPlaneId(): string {
+    return `plane3d_${++this.plane3DUserCounter}`;
+  }
+
+  /**
+   * Add 3D point to World
+   */
+  add3DPoint(point: Point3D): void {
+    this.points3D.set(point.id!, point);
+    this.notifyChange();
+  }
+
+  /**
+   * Get 3D point by ID
+   */
+  get3DPoint(id: string): Point3D | undefined {
+    return this.points3D.get(id);
+  }
+
+  /**
+   * Remove 3D point from World
+   */
+  remove3DPoint(id: string): void {
+    this.points3D.delete(id);
+    this.pointRealizations3D.delete(id);
+    this.notifyChange();
+  }
+
+  /**
+   * Get all 3D points
+   */
+  getAll3DPoints(): Point3D[] {
+    return Array.from(this.points3D.values());
+  }
+
+  /**
+   * Add 3D line to World
+   */
+  add3DLine(line: Line3D): void {
+    this.lines3D.set(line.id!, line);
+    this.notifyChange();
+  }
+
+  /**
+   * Get 3D line by ID
+   */
+  get3DLine(id: string): Line3D | undefined {
+    return this.lines3D.get(id);
+  }
+
+  /**
+   * Remove 3D line from World
+   */
+  remove3DLine(id: string): void {
+    this.lines3D.delete(id);
+    this.lineRealizations3D.delete(id);
+    this.notifyChange();
+  }
+
+  /**
+   * Get all 3D lines
+   */
+  getAll3DLines(): Line3D[] {
+    return Array.from(this.lines3D.values());
+  }
+
+  /**
+   * Add 3D segment to World
+   */
+  add3DSegment(segment: Segment3D): void {
+    this.segments3D.set(segment.id!, segment);
+    this.notifyChange();
+  }
+
+  /**
+   * Get 3D segment by ID
+   */
+  get3DSegment(id: string): Segment3D | undefined {
+    return this.segments3D.get(id);
+  }
+
+  /**
+   * Remove 3D segment from World
+   */
+  remove3DSegment(id: string): void {
+    this.segments3D.delete(id);
+    this.segmentRealizations3D.delete(id);
+    this.notifyChange();
+  }
+
+  /**
+   * Get all 3D segments
+   */
+  getAll3DSegments(): Segment3D[] {
+    return Array.from(this.segments3D.values());
+  }
+
+  /**
+   * Add user-created 3D plane to World
+   */
+  add3DPlaneUser(plane: Plane3D): void {
+    this.planes3DUser.set(plane.id!, plane);
+    this.notifyChange();
+  }
+
+  /**
+   * Get user-created 3D plane by ID
+   */
+  get3DPlaneUser(id: string): Plane3D | undefined {
+    return this.planes3DUser.get(id);
+  }
+
+  /**
+   * Remove user-created 3D plane from World
+   */
+  remove3DPlaneUser(id: string): void {
+    this.planes3DUser.delete(id);
+    this.planeRealizations3D.delete(id);
+    this.notifyChange();
+  }
+
+  /**
+   * Get all user-created 3D planes
+   */
+  getAll3DPlanesUser(): Plane3D[] {
+    return Array.from(this.planes3DUser.values());
+  }
+
+  /**
+   * Get 3D point realization (computed geometry)
+   * Uses cache for performance
+   */
+  get3DPointRealization(id: string): Point3DRealization3D | undefined {
+    // Check cache first
+    if (this.pointRealizations3D.has(id)) {
+      return this.pointRealizations3D.get(id);
+    }
+
+    // Compute and cache
+    const point = this.get3DPoint(id);
+    if (!point) return undefined;
+
+    const realization = point.realize3D(this);
+    this.pointRealizations3D.set(id, realization);
+    return realization;
+  }
+
+  /**
+   * Get 3D line realization (computed geometry)
+   * Uses cache for performance
+   */
+  get3DLineRealization(id: string): Line3DRealization3D | undefined {
+    // Check cache first
+    if (this.lineRealizations3D.has(id)) {
+      return this.lineRealizations3D.get(id);
+    }
+
+    // Compute and cache
+    const line = this.get3DLine(id);
+    if (!line) return undefined;
+
+    const realization = line.realize3D(this);
+    this.lineRealizations3D.set(id, realization);
+    return realization;
+  }
+
+  /**
+   * Get 3D segment realization (computed geometry)
+   * Uses cache for performance
+   */
+  get3DSegmentRealization(id: string): Segment3DRealization3D | undefined {
+    // Check cache first
+    if (this.segmentRealizations3D.has(id)) {
+      return this.segmentRealizations3D.get(id);
+    }
+
+    // Compute and cache
+    const segment = this.get3DSegment(id);
+    if (!segment) return undefined;
+
+    const realization = segment.realize3D(this);
+    this.segmentRealizations3D.set(id, realization);
+    return realization;
+  }
+
+  /**
+   * Get 3D plane realization (computed geometry)
+   * Uses cache for performance
+   */
+  get3DPlaneRealization(id: string): Plane3DRealization3D | undefined {
+    // Check cache first
+    if (this.planeRealizations3D.has(id)) {
+      return this.planeRealizations3D.get(id);
+    }
+
+    // Compute and cache
+    const plane = this.get3DPlaneUser(id);
+    if (!plane) return undefined;
+
+    const realization = plane.realize3D(this);
+    this.planeRealizations3D.set(id, realization);
+    return realization;
+  }
+
+  /**
+   * Clear 3D realization caches
+   * Called when 2D elements change to invalidate dependent 3D elements
+   */
+  clear3DRealizationCaches(): void {
+    this.pointRealizations3D.clear();
+    this.lineRealizations3D.clear();
+    this.segmentRealizations3D.clear();
+    this.planeRealizations3D.clear();
+  }
 }
 
