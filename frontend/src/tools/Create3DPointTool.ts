@@ -23,6 +23,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
 import { SelectionMask } from '@/types/SelectionMask';
+import { createAdd3DPointAction } from '@/domain/processTree/actions/Element3DActions';
 
 /**
  * Create3DPointTool state machine:
@@ -124,8 +125,15 @@ export class Create3DPointTool extends BaseTool {
         // Extract outputs
         const point3dId = result.outputs.pointId;
         
-        // TODO: Add ProcessTree action for 3D point creation
-        // (will be implemented when ProcessTree supports 3D elements)
+        // Register ProcessTree action for dependency tracking
+        const action = createAdd3DPointAction(
+          point3dId,
+          this.firstProjectionId!,
+          secondProjectionId,
+          this.firstPlaneId!,
+          secondPlaneId
+        );
+        world.getProcessTree().addAction(action);
         
         // Commit
         cmd.commit();

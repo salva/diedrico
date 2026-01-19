@@ -23,6 +23,7 @@ import type { ToolContext, ToolResult } from './ITool';
 import { Command } from '@/commands/Command';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { SelectionMask } from '@/types/SelectionMask';
+import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
 
 /**
  * Create3DLineTool state machine:
@@ -102,6 +103,16 @@ export class Create3DLineTool extends BaseTool {
         ));
         
         const line3dId = result.outputs.lineId;
+        
+        // Register ProcessTree action for dependency tracking
+        const action = createAdd3DLineAction(
+          line3dId,
+          this.firstProjectionId!,
+          secondProjectionId,
+          this.firstPlaneId!,
+          secondPlaneId
+        );
+        world.getProcessTree().addAction(action);
         
         cmd.commit();
         commandStack.push(cmd);
