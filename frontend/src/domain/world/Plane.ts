@@ -19,6 +19,8 @@
 
 import { Vector3, Vector4 } from 'three';
 import { Element3D } from './Element3D';
+import { Plane3DRealization3D } from './Element3DRealization3D';
+import { applyMatrix4x3 } from '@/utils/threeUtils';
 
 export interface Plane3DCoordinateSystem {
   origin: Vector4;     // Origin point on the plane (x, y, z, 1)
@@ -50,13 +52,11 @@ export abstract class Plane3D extends Element3D {
    * Compute 3D realization (plane equation)
    * For most planes, returns the stored normal vector
    */
-  realize3D(_world: any): any {
-    // Import here to avoid circular dependency
-    const { Plane3DRealization3D } = require('./Element3DRealization3D');
+  realize3D(_world: any): Plane3DRealization3D {
     // Return plane equation: ax + by + cz + d = 0
     // d = -normal · point
     const d = -(this.normal.x * this.point.x + this.normal.y * this.point.y + this.normal.z * this.point.z);
-    const equation = new (require('three').Vector4)(this.normal.x, this.normal.y, this.normal.z, d);
+    const equation = new Vector4(this.normal.x, this.normal.y, this.normal.z, d);
     return new Plane3DRealization3D(equation);
   }
 
@@ -253,14 +253,176 @@ export class Plane3DFromTraces extends Plane3D {
     this.plane2Id = plane2Id;
   }
 
-  realize3D(_world: any): any {
-    // Import here to avoid circular dependency
-    const { Plane3DRealization3D } = require('./Element3DRealization3D');
-    const { Vector4 } = require('three');
+  realize3D(world: any): Plane3DRealization3D {
+    // Reconstruct 3D plane from two trace lines on different projection planes
+    // Algorithm:
+    // 1. Get 2D realizations of both trace lines
+    // 2. Transform 2D points/directions to 3D using projection plane transformation matrices
+    // 3. Compute plane normal as cross product of 3D line directions
+    // 4. Use any point on either line to compute d
+    // 5. Verify that the second line's point lies on the plane (compatibility check)
     
-    // TODO: Implement GeometryUtils3D.reconstructPlaneFromTraces
-    // For now, return placeholder (horizontal plane)
-    const equation = new Vector4(0, 0, 1, 0);
+    console.log('[Plane3DFromTraces] realize3D called for plane:', this.id, 'trace1:', this.trace1, 'trace2:', this.trace2);
+    
+    // Get Line2D objects
+    const trace1Line = world.getLine2D(this.trace1);
+    const trace2Line = world.getLine2D(this.trace2);
+    
+    console.log('[Plane3DFromTraces] trace1Line:', trace1Line, 'trace2Line:', trace2Line);
+    
+    if (!trace1Line || !trace2Line) {
+      console.warn('[Plane3DFromTraces] Missing trace lines');
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
+    // Get 2D realizations
+    const line1_2D = trace1Line.realize2D(world);
+    const line2_2D = trace2Line.realize2D(world);
+    
+    console.log('[Plane3DFromTraces] line1_2D:', line1_2D, 'line2_2D:', line2_2D);
+    console.log('[Plane3DFromTraces] Line1 2D coords - point1:', line1_2D.point1, 'point2:', line1_2D.point2);
+    console.log('[Plane3DFromTraces] Line2 2D coords - point1:', line2_2D.point1, 'point2:', line2_2D.point2);
+    
+    // Check if any endpoints are sibling points
+    const line1Point1 = world.getPoint2D(trace1Line.point1Id);
+    const line1Point2 = world.getPoint2D(trace1Line.point2Id);
+    const line2Point1 = world.getPoint2D(trace2Line.point1Id);
+    const line2Point2 = world.getPoint2D(trace2Line.point2Id);
+    console.log('[Plane3DFromTraces] Line1 point objects:', { 
+      point1: { id: line1Point1?.id, type: line1Point1?.constructor.name, siblingId: (line1Point1 as any)?.siblingPointId },
+      point2: { id: line1Point2?.id, type: line1Point2?.constructor.name, siblingId: (line1Point2 as any)?.siblingPointId }
+    });
+    console.log('[Plane3DFromTraces] Line2 point objects:', { 
+      point1: { id: line2Point1?.id, type: line2Point1?.constructor.name, siblingId: (line2Point1 as any)?.siblingPointId },
+      point2: { id: line2Point2?.id, type: line2Point2?.constructor.name, siblingId: (line2Point2 as any)?.siblingPointId }
+    });
+    
+    if (!line1_2D || !line2_2D || !line1_2D.feasible || !line2_2D.feasible) {
+      console.warn('[Plane3DFromTraces] Infeasible trace lines', { line1_2D, line2_2D });
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
+    // Get projection planes
+    console.log('[Plane3DFromTraces] trace1Line.planeId:', trace1Line.planeId, 'trace2Line.planeId:', trace2Line.planeId);
+    const plane1 = world.getProjectionPlaneById(trace1Line.planeId);
+    const plane2 = world.getProjectionPlaneById(trace2Line.planeId);
+    console.log('[Plane3DFromTraces] plane1:', plane1, 'plane2:', plane2);
+    
+    if (!plane1 || !plane2 || !plane1.id || !plane2.id) {
+      console.warn('[Plane3DFromTraces] Missing projection planes', { plane1, plane2, plane1Id: plane1?.id, plane2Id: plane2?.id });
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
+    // Get projection plane 3D realizations for transformation matrices
+    const planeRealization1 = world.getProjectionPlane3DRealization(plane1.id);
+    const planeRealization2 = world.getProjectionPlane3DRealization(plane2.id);
+    
+    console.log('[Plane3DFromTraces] planeRealization1:', planeRealization1, 'planeRealization2:', planeRealization2);
+    
+    if (!planeRealization1 || !planeRealization2) {
+      console.warn('[Plane3DFromTraces] Missing projection plane realizations', { planeRealization1, planeRealization2 });
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
+    // Transform line1 from 2D to 3D
+    // line1_2D.point1 is a point (z=1), line1_2D.point2 is a direction (z=0)
+    // To get two 3D points: p1 and p1+direction
+    const p1_4D = applyMatrix4x3(line1_2D.point1, planeRealization1.planeTo3D);
+    const p1_3D = new Vector3(p1_4D.x, p1_4D.y, p1_4D.z);
+    
+    // Add direction to get second point
+    const p1_plus_d1 = new Vector3(
+      line1_2D.point1.x + line1_2D.point2.x,
+      line1_2D.point1.y + line1_2D.point2.y,
+      1  // Keep z=1 for the point
+    );
+    const p2_4D = applyMatrix4x3(p1_plus_d1, planeRealization1.planeTo3D);
+    const p2_3D = new Vector3(p2_4D.x, p2_4D.y, p2_4D.z);
+    
+    console.log('[Plane3DFromTraces] Line 1 in 3D: p1_3D:', p1_3D, 'p2_3D:', p2_3D);
+    
+    // Compute direction of line1 in 3D
+    const d1 = new Vector3(
+      p2_3D.x - p1_3D.x,
+      p2_3D.y - p1_3D.y,
+      p2_3D.z - p1_3D.z
+    );
+    
+    console.log('[Plane3DFromTraces] d1:', d1);
+    
+    // Transform line2 from 2D to 3D
+    // line2_2D.point1 is a point (z=1), line2_2D.point2 is a direction (z=0)
+    const p3_4D = applyMatrix4x3(line2_2D.point1, planeRealization2.planeTo3D);
+    const p3_3D = new Vector3(p3_4D.x, p3_4D.y, p3_4D.z);
+    
+    // Add direction to get second point
+    const p3_plus_d2 = new Vector3(
+      line2_2D.point1.x + line2_2D.point2.x,
+      line2_2D.point1.y + line2_2D.point2.y,
+      1  // Keep z=1 for the point
+    );
+    const p4_4D = applyMatrix4x3(p3_plus_d2, planeRealization2.planeTo3D);
+    const p4_3D = new Vector3(p4_4D.x, p4_4D.y, p4_4D.z);
+    
+    console.log('[Plane3DFromTraces] Line 2 in 3D: p3_3D:', p3_3D, 'p4_3D:', p4_3D);
+    
+    // Compute direction of line2 in 3D
+    const d2 = new Vector3(
+      p4_3D.x - p3_3D.x,
+      p4_3D.y - p3_3D.y,
+      p4_3D.z - p3_3D.z
+    );
+    
+    console.log('[Plane3DFromTraces] d2:', d2);
+    
+    // Normal = d1 × d2 (cross product of line directions)
+    const normal = new Vector4(
+      d1.y * d2.z - d1.z * d2.y,
+      d1.z * d2.x - d1.x * d2.z,
+      d1.x * d2.y - d1.y * d2.x,
+      0
+    );
+    
+    console.log('[Plane3DFromTraces] normal (before normalization):', normal);
+    
+    // Check if normal is degenerate (lines are parallel)
+    const normalLength = Math.sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+    
+    console.log('[Plane3DFromTraces] normalLength:', normalLength);
+    
+    if (normalLength < 1e-10) {
+      console.warn('[Plane3DFromTraces] Degenerate plane (parallel traces)', { normalLength, d1, d2 });
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
+    // Normalize normal vector
+    const a = normal.x / normalLength;
+    const b = normal.y / normalLength;
+    const c = normal.z / normalLength;
+    
+    // Compute d from plane equation: ax + by + cz + d = 0
+    // Using any point on line1: d = -(a*p1.x + b*p1.y + c*p1.z)
+    const d = -(a * p1_3D.x + b * p1_3D.y + c * p1_3D.z);
+    
+    console.log('[Plane3DFromTraces] Plane equation: a=', a, 'b=', b, 'c=', c, 'd=', d);
+    
+    // COMPATIBILITY CHECK: Verify that line2's point lies on the computed plane
+    // If the traces are valid projections of the same 3D plane, line2's point should lie on it
+    const distance = Math.abs(a * p3_3D.x + b * p3_3D.y + c * p3_3D.z + d);
+    
+    console.log('[Plane3DFromTraces] Compatibility check distance:', distance);
+    
+    if (distance > 1e-6) {
+      console.warn('[Plane3DFromTraces] Incompatible traces: line2 point does not lie on computed plane', {
+        distance,
+        line1Point: [p1_3D.x, p1_3D.y, p1_3D.z],
+        line2Point: [p3_3D.x, p3_3D.y, p3_3D.z],
+        planeEquation: [a, b, c, d]
+      });
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
+    const equation = new Vector4(a, b, c, d);
     return new Plane3DRealization3D(equation);
   }
 

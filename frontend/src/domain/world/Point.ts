@@ -21,6 +21,7 @@ import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
 import { HalfHingeLine2D } from './HingeLine';
+import { assert } from '@/utils/assert';
 
 export type Point2DType = 
   | 'free' 
@@ -225,19 +226,22 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
    */
   realize2D(world: World): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Point2DLineLineIntersection] plane ${this.planeId} not found for point ${this.id}`);
     const l1 = plane.getLine(this.line1Id);
     const l2 = plane.getLine(this.line2Id);
+    
+    assert(l1, `[Point2DLineLineIntersection] line1 ${this.line1Id} not found on plane ${this.planeId} for point ${this.id}`);
+    assert(l2, `[Point2DLineLineIntersection] line2 ${this.line2Id} not found on plane ${this.planeId} for point ${this.id}`);
+    
     const line1 = l1.realize2D(world);
     const line2 = l2.realize2D(world);
     
-    // Check if parent elements are infeasible - propagate infeasibility
-    if ((line1 && !line1.feasible) || (line2 && !line2.feasible)) {
-      console.warn('[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible');
-      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-    }
+    assert(line1, `[Point2DLineLineIntersection] line1.realize2D() returned null for ${this.line1Id}`);
+    assert(line2, `[Point2DLineLineIntersection] line2.realize2D() returned null for ${this.line2Id}`);
     
-    if (!line1 || !line2) {
-      console.warn('[Point2DLineLineIntersection] Cannot get line realizations');
+    // Check if parent elements are infeasible - propagate infeasibility
+    if (!line1.feasible || !line2.feasible) {
+      console.warn('[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
@@ -359,19 +363,22 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
    */
   realize2D(world: World): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Point2DLineCircleIntersection] plane ${this.planeId} not found for point ${this.id}`);
     const l = plane.getLine(this.lineId);
     const c = plane.getCircle(this.circleId);
+    
+    assert(l, `[Point2DLineCircleIntersection] line ${this.lineId} not found on plane ${this.planeId} for point ${this.id}`);
+    assert(c, `[Point2DLineCircleIntersection] circle ${this.circleId} not found on plane ${this.planeId} for point ${this.id}`);
+    
     const line = l.realize2D(world);
     const circle = c.realize2D(world);
     
-    // Check if parent elements are infeasible - propagate infeasibility
-    if ((line && !line.feasible) || (circle && !circle.feasible)) {
-      console.warn('[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible');
-      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-    }
+    assert(line, `[Point2DLineCircleIntersection] line.realize2D() returned null for ${this.lineId}`);
+    assert(circle, `[Point2DLineCircleIntersection] circle.realize2D() returned null for ${this.circleId}`);
     
-    if (!line || !circle) {
-      console.warn('[Point2DLineCircleIntersection] Cannot get line or circle realization');
+    // Check if parent elements are infeasible - propagate infeasibility
+    if (!line.feasible || !circle.feasible) {
+      console.warn('[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
@@ -480,19 +487,22 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
    */
   realize2D(world: World): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Point2DCircleCircleIntersection] plane ${this.planeId} not found for point ${this.id}`);
     const c1 = plane.getCircle(this.circle1Id);
     const c2 = plane.getCircle(this.circle2Id);
+    
+    assert(c1, `[Point2DCircleCircleIntersection] circle1 ${this.circle1Id} not found on plane ${this.planeId} for point ${this.id}`);
+    assert(c2, `[Point2DCircleCircleIntersection] circle2 ${this.circle2Id} not found on plane ${this.planeId} for point ${this.id}`);
+    
     const circle1 = c1.realize2D(world);
     const circle2 = c2.realize2D(world);
     
-    // Check if parent elements are infeasible - propagate infeasibility
-    if ((circle1 && !circle1.feasible) || (circle2 && !circle2.feasible)) {
-      console.warn('[Point2DCircleCircleIntersection] Parent element is infeasible, marking this as infeasible');
-      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-    }
+    assert(circle1, `[Point2DCircleCircleIntersection] circle1.realize2D() returned null for ${this.circle1Id}`);
+    assert(circle2, `[Point2DCircleCircleIntersection] circle2.realize2D() returned null for ${this.circle2Id}`);
     
-    if (!circle1 || !circle2) {
-      console.warn('[Point2DCircleCircleIntersection] Cannot get circle realizations');
+    // Check if parent elements are infeasible - propagate infeasibility
+    if (!circle1.feasible || !circle2.feasible) {
+      console.warn('[Point2DCircleCircleIntersection] Parent element is infeasible, marking this as infeasible');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
@@ -571,11 +581,9 @@ export class SiblingIntersectionPoint2D extends Point2D {
     // Get primary intersection point's 2D realization
     // Use world.getPoint2D() which handles hierarchical IDs properly
     const primaryPoint = world.getPoint2D(this.primaryIntersectionId);
+    assert(primaryPoint, `[SiblingIntersectionPoint2D] Primary point ${this.primaryIntersectionId} not found for point ${this.id}`);
     const primaryRealization = primaryPoint.realize2D(world);
-    if (!primaryRealization) {
-      console.warn(`[SiblingIntersectionPoint2D] Cannot get realization for primary ${this.primaryIntersectionId}`);
-      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-    }
+    assert(primaryRealization, `[SiblingIntersectionPoint2D] primaryPoint.realize2D() returned null for ${this.primaryIntersectionId}`);
     
     // Propagate infeasibility from primary
     if (!primaryRealization.feasible) {
@@ -599,6 +607,7 @@ export class SiblingIntersectionPoint2D extends Point2D {
         const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPointDomain);
         if (siblingPlaneId) {
           const siblingPlane = world.getProjectionPlaneById(siblingPlaneId);
+          assert(siblingPlane, `[SiblingIntersectionPoint2D] Sibling plane ${siblingPlaneId} not found for point ${this.id}`);
           const siblingHHL = siblingPlane.getAllLines()
             .find((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === hingeLineId);
           

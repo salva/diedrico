@@ -73,14 +73,26 @@ const treeVersion = computed(() => processTree.getVersion());
 let intervalId: number | null = null;
 const forceUpdate = ref(0);
 let lastVersion = processTree.getVersion();
+let isUpdating = false;
 
 onMounted(() => {
   intervalId = window.setInterval(() => {
+    // Skip update if already in progress to avoid race conditions
+    if (isUpdating) {
+      return;
+    }
+    
     // Check if tree version actually changed
     const currentVersion = processTree.getVersion();
     if (currentVersion !== lastVersion) {
       lastVersion = currentVersion;
-      forceUpdate.value++;
+      isUpdating = true;
+      
+      // Use nextTick to ensure DOM is stable before triggering re-render
+      Promise.resolve().then(() => {
+        forceUpdate.value++;
+        isUpdating = false;
+      });
     }
   }, 100);
 });
@@ -88,6 +100,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (intervalId !== null) {
     clearInterval(intervalId);
+    intervalId = null;
   }
 });
 

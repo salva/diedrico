@@ -412,8 +412,67 @@ function render3DElements() {
       scene.add(endSphere);
     }
 
-    // Note: 3D Planes rendering omitted for now - can be added later if needed
-    // (Plane3DFromTraces would be rendered as semi-transparent planes)
+    // Render 3D Planes (user-created, Phase 78)
+    const planes3D = world.getAll3DPlanesUser();
+    console.log('[ThreeView] Rendering', planes3D.length, '3D planes');
+    
+    for (const plane of planes3D) {
+      const realization = world.get3DPlaneRealization(plane.id!);
+      if (!realization || !realization.isFeasible()) {
+        console.warn('[ThreeView] Skipping plane - not feasible:', plane.id);
+        continue;
+      }
+      
+      // Get plane equation: ax + by + cz + d = 0
+      // normal = (a, b, c, d) where (a,b,c) is the normal vector
+      const normalVec = realization.getNormalVector();  // Gets (a, b, c, 0)
+      const normalDir = new THREE.Vector3(normalVec.x, normalVec.y, normalVec.z).normalize();
+      
+      // Find a point on the plane by solving for a coordinate
+      // If a != 0: x = -d/a (when y=0, z=0)
+      // If b != 0: y = -d/b (when x=0, z=0)
+      // If c != 0: z = -d/c (when x=0, y=0)
+      let planeOrigin = new THREE.Vector3(0, 0, 0);
+      const d = realization.normal.w;
+      
+      if (Math.abs(normalVec.x) > 0.01) {
+        planeOrigin.x = -d / normalVec.x;
+      } else if (Math.abs(normalVec.y) > 0.01) {
+        planeOrigin.y = -d / normalVec.y;
+      } else if (Math.abs(normalVec.z) > 0.01) {
+        planeOrigin.z = -d / normalVec.z;
+      }
+      
+      // Create plane geometry (semi-transparent, larger than projection planes)
+      const planeSize = 150;
+      const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+      
+      // Use a distinct color for user-created planes (purple/magenta)
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x9C27B0,  // Purple for user-created planes
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.4  // More opaque than projection planes
+      });
+      const planeMesh = new THREE.Mesh(geometry, material);
+      
+      // Orient plane to match normal direction
+      // The plane geometry starts in XY plane with normal (0,0,1)
+      // We need to rotate it to align with our normal
+      planeMesh.position.copy(planeOrigin);
+      planeMesh.lookAt(
+        planeOrigin.x + normalDir.x,
+        planeOrigin.y + normalDir.y,
+        planeOrigin.z + normalDir.z
+      );
+      
+      planeMesh.userData.type = '3d-element';
+      planeMesh.userData.elementType = 'plane';
+      planeMesh.userData.elementId = plane.id;
+      scene.add(planeMesh);
+      
+      console.log('[ThreeView] Added 3D plane:', plane.id, 'at origin:', planeOrigin.toArray(), 'normal:', normalDir.toArray());
+    }
 
   } catch (error) {
     console.warn('[ThreeView] Error rendering 3D elements:', error);

@@ -279,12 +279,9 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     if (this.viableSets.length === 0) {
       const argumentSets = this.getArgumentSets();
       this.viableSets = argumentSets.map((_, index) => index);
-      console.log(`[${this.name}] getSelectionMask: Initialized viableSets to`, this.viableSets);
     }
     
     const viableSpecs = this.getViableNextArgumentSpecs();
-    console.log(`[${this.name}] getSelectionMask: collected=`, Array.from(this.collected.keys()), 
-                'viableSpecs=', viableSpecs.map(s => s.name));
     
     if (viableSpecs.length === 0) {
       // No viable next arguments (shouldn't happen during normal operation)
@@ -296,7 +293,6 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     
     // Compute union of selection masks
     const mask = SelectionMask.union(...masks);
-    console.log(`[${this.name}] getSelectionMask: returning mask=`, mask.toString());
     return mask;
   }
   

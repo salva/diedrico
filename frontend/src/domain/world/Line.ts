@@ -19,6 +19,7 @@
 import { Vector3 } from 'three';
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
+import { assert } from '@/utils/assert';
 
 export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'tangent-to-circle-through-point' | 'tangent-to-circle-parallel' | 'half-hinge' | 'segment' | 'guide' | 'sibling-guide';
 
@@ -184,12 +185,15 @@ export class Line2DByTwoPoints extends Line2D {
     const plane = world.getProjectionPlaneById(this.planeId);
     const point1 = plane.getPoint(this.point1Id);
     const point2 = plane.getPoint(this.point2Id);
+    
+    assert(point1, `[Line2DByTwoPoints] point1 ${this.point1Id} not found on plane ${this.planeId} for line ${this.id}`);
+    assert(point2, `[Line2DByTwoPoints] point2 ${this.point2Id} not found on plane ${this.planeId} for line ${this.id}`);
+    
     const p1Realization = point1.realize2D(world);
     const p2Realization = point2.realize2D(world);
     
-    if (!p1Realization || !p2Realization) {
-      return null;  // Cannot compute line without both points
-    }
+    assert(p1Realization, `[Line2DByTwoPoints] point1.realize2D() returned null for ${this.point1Id}`);
+    assert(p2Realization, `[Line2DByTwoPoints] point2.realize2D() returned null for ${this.point2Id}`);
     
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible) {
@@ -258,10 +262,10 @@ export class Line2DParallel extends Line2D {
     // Get reference line realization from world
     const plane = world.getProjectionPlaneById(this.planeId);
     const refLine = plane.getLine(this.referenceLineId);
+    assert(refLine, `[Line2DParallel] reference line ${this.referenceLineId} not found on plane ${this.planeId} for line ${this.id}`);
+    
     const referenceLine = refLine.realize2D(world);
-    if (!referenceLine) {
-      return null;  // Cannot compute line without reference line
-    }
+    assert(referenceLine, `[Line2DParallel] refLine.realize2D() returned null for ${this.referenceLineId}`);
 
     // Check if reference line is infeasible - propagate infeasibility
     if (!referenceLine.feasible) {
@@ -270,10 +274,10 @@ export class Line2DParallel extends Line2D {
 
     // Get through-point realization from world
     const throughPoint = plane.getPoint(this.throughPointId);
+    assert(throughPoint, `[Line2DParallel] through point ${this.throughPointId} not found on plane ${this.planeId} for line ${this.id}`);
+    
     const throughPointRealization = throughPoint.realize2D(world);
-    if (!throughPointRealization) {
-      return null;  // Cannot compute line without through-point
-    }
+    assert(throughPointRealization, `[Line2DParallel] throughPoint.realize2D() returned null for ${this.throughPointId}`);
 
     // Check if through-point is infeasible - propagate infeasibility
     if (!throughPointRealization.feasible) {
@@ -359,11 +363,11 @@ export class Line2DPerpendicularToLine extends Line2D {
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get reference line realization from world
     const plane = world.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Line2DPerpendicular] plane ${this.planeId} not found for line ${this.id}`);
     const refLine = plane.getLine(this.referenceLineId);
+    assert(refLine, `[Line2DPerpendicular] reference line ${this.referenceLineId} not found on plane ${this.planeId} for line ${this.id}`);
     const referenceLine = refLine.realize2D(world);
-    if (!referenceLine) {
-      return null;  // Cannot compute line without reference line
-    }
+    assert(referenceLine, `[Line2DPerpendicular] refLine.realize2D() returned null for ${this.referenceLineId}`);
 
     // Check if reference line is infeasible - propagate infeasibility
     if (!referenceLine.feasible) {
@@ -372,10 +376,9 @@ export class Line2DPerpendicularToLine extends Line2D {
 
     // Get through-point realization from world
     const throughPoint = plane.getPoint(this.throughPointId);
+    assert(throughPoint, `[Line2DPerpendicular] through point ${this.throughPointId} not found on plane ${this.planeId} for line ${this.id}`);
     const throughPointRealization = throughPoint.realize2D(world);
-    if (!throughPointRealization) {
-      return null;  // Cannot compute line without through-point
-    }
+    assert(throughPointRealization, `[Line2DPerpendicular] throughPoint.realize2D() returned null for ${this.throughPointId}`);
 
     // Check if through-point is infeasible - propagate infeasibility
     if (!throughPointRealization.feasible) {
@@ -489,13 +492,15 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
     
     // Step 2: Get circle realization
     const circle = plane.getCircle(this.circleId);
+    assert(circle, `[TangentLineToCircleThroughPoint] circle ${this.circleId} not found on plane ${this.planeId} for line ${this.id}`);
     const circleRealization = circle.realize2D(world);
-    if (!circleRealization) return null;
+    assert(circleRealization, `[TangentLineToCircleThroughPoint] circle.realize2D() returned null for ${this.circleId}`);
     
     // Step 3: Get through-point realization
     const throughPoint = plane.getPoint(this.throughPointId);
+    assert(throughPoint, `[TangentLineToCircleThroughPoint] through point ${this.throughPointId} not found on plane ${this.planeId} for line ${this.id}`);
     const throughPointRealization = throughPoint.realize2D(world);
-    if (!throughPointRealization) return null;
+    assert(throughPointRealization, `[TangentLineToCircleThroughPoint] throughPoint.realize2D() returned null for ${this.throughPointId}`);
     
     // Step 4: Check infeasibility propagation
     if (!circleRealization.feasible || !throughPointRealization.feasible) {
@@ -656,14 +661,16 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
     
     // Step 2: Get circle realization
     const circle = plane.getCircle(this.circleId);
+    assert(circle, `[TangentLineToCircleParallel] circle ${this.circleId} not found on plane ${this.planeId} for line ${this.id}`);
     const circleRealization = circle.realize2D(world);
-    if (!circleRealization) return null;
+    assert(circleRealization, `[TangentLineToCircleParallel] circle.realize2D() returned null for ${this.circleId}`);
     
     // Step 3: Get reference line realization (can be from any plane)
     const refLine = world.getLine2D(this.referenceLineId);
+    assert(refLine, `[TangentLineToCircleParallel] reference line ${this.referenceLineId} not found`);
     
     const refLineRealization = refLine.realize2D(world);
-    if (!refLineRealization) return null;
+    assert(refLineRealization, `[TangentLineToCircleParallel] refLine.realize2D() returned null for ${this.referenceLineId}`);
     
     // Step 4: Check infeasibility propagation
     if (!circleRealization.feasible || !refLineRealization.feasible) {
