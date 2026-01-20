@@ -348,10 +348,19 @@ export class Element2DRenderer3D {
     // Domain uses left-handed system, Three.js uses right-handed (Y-axis inverted)
     const position3D = domainToThreeJS(position4D);
     
-    // Apply z-fighting prevention offset
-    // TODO: Compute plane normal from transformation matrix
-    // For now, offset a fixed small amount in Z direction
-    position3D.z += 0.01;
+    // Apply z-fighting prevention offset along plane normal
+    // Extract U and V basis vectors from transformation matrix (in domain coordinates)
+    const e = planeRealization.planeTo3D.elements;
+    const uAxisDomain = new THREE.Vector3(e[0], e[3], e[6]);
+    const vAxisDomain = new THREE.Vector3(e[1], e[4], e[7]);
+    
+    // Compute normal in domain coordinates, then convert to Three.js
+    const normalDomain = new THREE.Vector3().crossVectors(uAxisDomain, vAxisDomain);
+    const normal = new THREE.Vector3(normalDomain.x, -normalDomain.y, normalDomain.z);
+    normal.normalize();
+    
+    // Offset along normal to prevent z-fighting with plane surface
+    position3D.add(normal.multiplyScalar(0.01));
 
     return position3D;
   }
