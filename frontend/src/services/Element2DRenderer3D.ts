@@ -25,7 +25,7 @@ import type { Point2D } from '../domain/world/Point';
 import type { Line2D } from '../domain/world/Line';
 import type { Circle2D } from '../domain/world/Circle';
 import type { ThreeViewDisplayOptions } from '../types/ThreeViewDisplayOptions';
-import { applyMatrix4x3 } from '../utils/threeUtils';
+import { applyMatrix4x3, domainToThreeJS } from '../utils/threeUtils';
 
 /**
  * Material style properties for Three.js rendering
@@ -341,11 +341,12 @@ export class Element2DRenderer3D {
       return null;
     }
 
-    // Apply 4x3 transformation matrix (returns Vector4)
+    // Apply 4x3 transformation matrix (returns Vector4 in domain coordinates)
     const position4D = applyMatrix4x3(point2D, planeRealization.planeTo3D);
     
-    // Convert to Vector3 (drop homogeneous coordinate)
-    const position3D = new THREE.Vector3(position4D.x, position4D.y, position4D.z);
+    // Convert from domain coordinates to Three.js rendering coordinates
+    // Domain uses left-handed system, Three.js uses right-handed (Y-axis inverted)
+    const position3D = domainToThreeJS(position4D);
     
     // Apply z-fighting prevention offset
     // TODO: Compute plane normal from transformation matrix

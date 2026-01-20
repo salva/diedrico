@@ -193,7 +193,7 @@ export function mat4x3(
  * 
  * @param vector Input 3D vector (typically homogeneous 2D: u, v, 1)
  * @param matrix 4x3 transformation matrix
- * @returns New 4D vector (homogeneous 3D: x, y, z, w)
+ * @returns New 4D vector (homogeneous 3D: x, y, z, w) in DOMAIN coordinates
  */
 export function applyMatrix4x3(vector: Vector3, matrix: Matrix4x3): Vector4 {
   const e = matrix.elements;
@@ -206,6 +206,44 @@ export function applyMatrix4x3(vector: Vector3, matrix: Matrix4x3): Vector4 {
     e[3] * x + e[4] * y + e[5] * z,
     e[6] * x + e[7] * y + e[8] * z,
     e[9] * x + e[10] * y + e[11] * z
+  );
+}
+
+/**
+ * Convert domain coordinates to Three.js rendering coordinates
+ * 
+ * The domain model uses a LEFT-HANDED coordinate system (Monge projection)
+ * where the viewer is at (0, -∞, 0) looking along +Y toward the origin.
+ * 
+ * Three.js uses a RIGHT-HANDED coordinate system.
+ * 
+ * Conversion: threeY = -domainY (invert Y-axis)
+ * 
+ * @param domainPosition Position in domain coordinates (Vector4 with homogeneous w)
+ * @returns Position in Three.js coordinates (Vector3)
+ * @see specs/001-dihedral-learning-mvp/data-model.md §Coordinate System Note
+ */
+export function domainToThreeJS(domainPosition: Vector4): Vector3 {
+  return new Vector3(
+    domainPosition.x,
+    -domainPosition.y,  // Invert Y-axis for right-handed system
+    domainPosition.z
+  );
+}
+
+/**
+ * Convert domain direction vector to Three.js rendering coordinates
+ * 
+ * Same as domainToThreeJS but for direction vectors (no homogeneous coordinate)
+ * 
+ * @param domainDirection Direction in domain coordinates (Vector3)
+ * @returns Direction in Three.js coordinates (Vector3)
+ */
+export function domainDirectionToThreeJS(domainDirection: Vector3): Vector3 {
+  return new Vector3(
+    domainDirection.x,
+    -domainDirection.y,  // Invert Y-axis for right-handed system
+    domainDirection.z
   );
 }
 

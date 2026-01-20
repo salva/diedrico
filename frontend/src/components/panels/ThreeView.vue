@@ -60,6 +60,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { World } from '../../domain/world/World';
 import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
 import { useViewStore } from '../../stores/viewStore';
+import { domainDirectionToThreeJS, domainToThreeJS } from '../../utils/threeUtils';
+import { Vector4 } from 'three';
 
 // Component refs
 const containerRef = ref<HTMLDivElement>();
@@ -219,27 +221,38 @@ function renderProjectionPlanes() {
     const originY = e[5] / originW;  // m23 / w
     const originZ = e[8] / originW;  // m33 / w
     
-    console.log('[ThreeView] Plane origin in 3D:', [originX, originY, originZ]);
+    console.log('[ThreeView] Plane origin in 3D (domain coords):', [originX, originY, originZ]);
     
-    // Compute the normal as the cross product of U-axis and V-axis
+    // Compute the normal as the cross product of U-axis and V-axis (in domain coords)
     // U-axis: first column [e[0], e[3], e[6]]
     // V-axis: second column [e[1], e[4], e[7]]
-    // Normal = U × V
-    const uAxis = new THREE.Vector3(e[0], e[3], e[6]);
-    const vAxis = new THREE.Vector3(e[1], e[4], e[7]);
+    const uAxisDomain = new THREE.Vector3(e[0], e[3], e[6]);
+    const vAxisDomain = new THREE.Vector3(e[1], e[4], e[7]);
+    
+    // Convert axes to Three.js coordinates (invert Y)
+    const uAxis = domainDirectionToThreeJS(uAxisDomain);
+    const vAxis = domainDirectionToThreeJS(vAxisDomain);
+    
+    // Normal in Three.js coordinates
     const normal = new THREE.Vector3().crossVectors(uAxis, vAxis).normalize();
     
-    console.log('[ThreeView] U-axis:', [uAxis.x, uAxis.y, uAxis.z]);
-    console.log('[ThreeView] V-axis:', [vAxis.x, vAxis.y, vAxis.z]);
-    console.log('[ThreeView] Normal:', [normal.x, normal.y, normal.z]);
+    // Origin in Three.js coordinates
+    const originThree = new THREE.Vector3(originX, -originY, originZ);
     
-    // Build THREE.Matrix4 with correct basis and translation
+    console.log('[ThreeView] U-axis (domain):', [uAxisDomain.x, uAxisDomain.y, uAxisDomain.z]);
+    console.log('[ThreeView] V-axis (domain):', [vAxisDomain.x, vAxisDomain.y, vAxisDomain.z]);
+    console.log('[ThreeView] U-axis (three):', [uAxis.x, uAxis.y, uAxis.z]);
+    console.log('[ThreeView] V-axis (three):', [vAxis.x, vAxis.y, vAxis.z]);
+    console.log('[ThreeView] Normal (three):', [normal.x, normal.y, normal.z]);
+    console.log('[ThreeView] Origin (three):', [originThree.x, originThree.y, originThree.z]);
+    
+    // Build THREE.Matrix4 with Three.js coordinate basis and translation
     const mat4 = new THREE.Matrix4();
     mat4.set(
-      e[0], e[1], normal.x, originX,   // Row 0: [Ux, Vx, Nx, Tx]
-      e[3], e[4], normal.y, originY,   // Row 1: [Uy, Vy, Ny, Ty]
-      e[6], e[7], normal.z, originZ,   // Row 2: [Uz, Vz, Nz, Tz]
-      0,    0,    0,        1           // Row 3: [0, 0, 0, 1]
+      uAxis.x, vAxis.x, normal.x, originThree.x,   // Row 0: [Ux, Vx, Nx, Tx]
+      uAxis.y, vAxis.y, normal.y, originThree.y,   // Row 1: [Uy, Vy, Ny, Ty]
+      uAxis.z, vAxis.z, normal.z, originThree.z,   // Row 2: [Uz, Vz, Nz, Tz]
+      0,       0,       0,        1                 // Row 3: [0, 0, 0, 1]
     );
     console.log('[ThreeView] THREE.Matrix4:', mat4.toArray());
     
@@ -305,7 +318,12 @@ function render3DElements() {
       }
       
       const [x, y, z] = realization.getCartesian();
-      console.log('[ThreeView] Point 3D coordinates:', { x, y, z });
+      console.log('[ThreeView] Point 3D coordinates (domain):', { x, y, z });
+      
+      // Convert from domain (left-handed) to Three.js (right-handed) coordinates
+      const domainPos = new Vector4(x, y, z, 1);
+      const threePos = domainToThreeJS(domainPos);
+      console.log('[ThreeView] Point 3D coordinates (three):', threePos);
       
       // Create sphere for 3D point (thicker than 2D points)
       const geometry = new THREE.SphereGeometry(0.15, 16, 16); // Radius 0.15 (vs 0.1 for 2D)
@@ -316,7 +334,7 @@ function render3DElements() {
         roughness: 0.7
       });
       const sphere = new THREE.Mesh(geometry, material);
-      sphere.position.set(x, y, z);
+      sphere.position.copy(threePos);
       sphere.userData.type = '3d-element';
       sphere.userData.elementType = 'point';
       sphere.userData.elementId = point.id;
@@ -332,8 +350,12 @@ function render3DElements() {
       if (!realization || !realization.isFeasible) continue;
       
       // Get point and direction on the line for rendering (extend far in both directions)
-      const pointOnLine = realization.point;
-      const direction = realization.getDirection();
+      const pointOnLineDomain = realization.point;
+      const directionDomain = realization.getDirection();
+      
+      // Convert from domain to Three.js coordinates
+      const pointOnLine = domainToThreeJS(pointOnLineDomain);
+      const direction = domainDirectionToThreeJS(new THREE.Vector3(directionDomain.x, directionDomain.y, directionDomain.z));
       
       const lineLength = 50; // Extend 25 units in each direction
       const start = new THREE.Vector3(
@@ -368,17 +390,9 @@ function render3DElements() {
       const realization = world.get3DSegmentRealization(segment.id!);
       if (!realization || !realization.isFeasible) continue;
       
-      // Get endpoints from Vector4 and convert to Vector3
-      const start = new THREE.Vector3(
-        realization.startPoint.x,
-        realization.startPoint.y,
-        realization.startPoint.z
-      );
-      const end = new THREE.Vector3(
-        realization.endPoint.x,
-        realization.endPoint.y,
-        realization.endPoint.z
-      );
+      // Get endpoints from Vector4 and convert to Three.js coordinates
+      const start = domainToThreeJS(realization.startPoint);
+      const end = domainToThreeJS(realization.endPoint);
       
       // Create segment geometry (thicker than 2D segments)
       const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
