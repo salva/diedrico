@@ -18,6 +18,9 @@
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Plane3DFromTraces } from '@/domain/world/Plane';
+import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
+import { Vector3 } from 'three';
+import { applyMatrix4x3 } from '@/utils/threeUtils';
 
 export class Add3DPlaneOp implements IOperation {
   readonly type = 'Add3DPlane';
@@ -78,6 +81,37 @@ export class Add3DPlaneOp implements IOperation {
       
       if (!trace1Real || !trace2Real || !trace1Real.isFeasible() || !trace2Real.isFeasible()) {
         throw new Error('Cannot create 3D plane: one or both traces are not geometrically feasible');
+      }
+      
+      // CRITICAL VALIDATION: Verify that traces intersect in 3D
+      // Transform traces to 3D and check intersection
+      const plane1Realization = world.getProjectionPlane3DRealization(this.plane1Id);
+      const plane2Realization = world.getProjectionPlane3DRealization(this.plane2Id);
+      
+      if (!plane1Realization || !plane2Realization) {
+        throw new Error('Cannot create 3D plane: projection plane realizations not available');
+      }
+      
+      // Transform trace1 from 2D to 3D
+      const p1_4D = applyMatrix4x3(trace1Real.point1, plane1Realization.planeTo3D);
+      const p1_3D = new Vector3(p1_4D.x, p1_4D.y, p1_4D.z);
+      const d1_3D = new Vector3(trace1Real.point2.x, trace1Real.point2.y, trace1Real.point2.z);
+      
+      // Transform trace2 from 2D to 3D
+      const p2_4D = applyMatrix4x3(trace2Real.point1, plane2Realization.planeTo3D);
+      const p2_3D = new Vector3(p2_4D.x, p2_4D.y, p2_4D.z);
+      const d2_3D = new Vector3(trace2Real.point2.x, trace2Real.point2.y, trace2Real.point2.z);
+      
+      try {
+        // This will throw an error if traces are parallel or skew (don't intersect)
+        computeLineLineIntersection3D(
+          { point: p1_3D, direction: d1_3D },
+          { point: p2_3D, direction: d2_3D }
+        );
+      } catch (error) {
+        throw new Error(
+          `Cannot create 3D plane: ${error instanceof Error ? error.message : 'Traces do not intersect'}`
+        );
       }
       
       // Use stored ID if available (for redo), otherwise generate new one

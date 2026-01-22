@@ -20,8 +20,7 @@
 import { Vector3, Vector4 } from 'three';
 import { Element3D } from './Element3D';
 import { Plane3DRealization3D } from './Element3DRealization3D';
-import { applyMatrix4x3 } from '@/utils/threeUtils';
-
+import { applyMatrix4x3 } from '@/utils/threeUtils';import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
 export interface Plane3DCoordinateSystem {
   origin: Vector4;     // Origin point on the plane (x, y, z, 1)
   uAxis: Vector4;      // U-axis direction (normalized) (x, y, z, 0)
@@ -375,6 +374,20 @@ export class Plane3DFromTraces extends Plane3D {
     
     console.log('[Plane3DFromTraces] d2:', d2);
     
+    // CRITICAL VALIDATION: Check if traces intersect (they must for a valid plane)
+    // Traces of the same 3D plane MUST intersect at a point
+    try {
+      const intersection = computeLineLineIntersection3D(
+        { point: p1_3D, direction: d1 },
+        { point: p3_3D, direction: d2 }
+      );
+      console.log('[Plane3DFromTraces] Traces intersect at:', intersection);
+    } catch (error) {
+      // Lines are parallel or skew - not a valid 3D plane
+      console.warn('[Plane3DFromTraces] Invalid traces:', error instanceof Error ? error.message : String(error));
+      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    }
+    
     // Normal = d1 × d2 (cross product of line directions)
     const normal = new Vector4(
       d1.y * d2.z - d1.z * d2.y,
@@ -385,13 +398,13 @@ export class Plane3DFromTraces extends Plane3D {
     
     console.log('[Plane3DFromTraces] normal (before normalization):', normal);
     
-    // Check if normal is degenerate (lines are parallel)
+    // Check if normal is degenerate (this should never happen after intersection check)
     const normalLength = Math.sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
     
     console.log('[Plane3DFromTraces] normalLength:', normalLength);
     
     if (normalLength < 1e-10) {
-      console.warn('[Plane3DFromTraces] Degenerate plane (parallel traces)', { normalLength, d1, d2 });
+      console.warn('[Plane3DFromTraces] Degenerate plane (parallel traces) - should not reach here', { normalLength, d1, d2 });
       return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
     }
     
