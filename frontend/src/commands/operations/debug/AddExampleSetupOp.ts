@@ -100,21 +100,21 @@ export class AddExampleSetupOp implements IOperation {
     // === Create T1 on P_H (horizontal trace line) ===
     // Points for T1: horizontal line through middle of P_H
     const t1_p1_result = cmd.addAndExecute(new AddFreePoint2DOp(
-      P_H.id,
+      P_H.id!,
       new Vector3(150, 0, 1)  // x, y, z=1 (homogeneous)
     ));
     const t1_p1_id = t1_p1_result.outputs.pointId as string;
     this.createdElementIds.push(t1_p1_id);
 
     const t1_p2_result = cmd.addAndExecute(new AddFreePoint2DOp(
-      P_H.id,
+      P_H.id!,
       new Vector3(450, 0, 1)  // x, y, z=1
     ));
     const t1_p2_id = t1_p2_result.outputs.pointId as string;
     this.createdElementIds.push(t1_p2_id);
 
     const t1_result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
-      P_H.id,
+      P_H.id!,
       t1_p1_id,
       t1_p2_id
     ));
@@ -130,21 +130,21 @@ export class AddExampleSetupOp implements IOperation {
     // === Create T2 on P_V (diagonal trace line) ===
     // Points for T2: diagonal line on P_V
     const t2_p1_result = cmd.addAndExecute(new AddFreePoint2DOp(
-      P_V.id,
+      P_V.id!,
       new Vector3(200, 0, 1)  // on ground line
     ));
     const t2_p1_id = t2_p1_result.outputs.pointId as string;
     this.createdElementIds.push(t2_p1_id);
 
     const t2_p2_result = cmd.addAndExecute(new AddFreePoint2DOp(
-      P_V.id,
+      P_V.id!,
       new Vector3(400, 150, 1)  // raised above ground line
     ));
     const t2_p2_id = t2_p2_result.outputs.pointId as string;
     this.createdElementIds.push(t2_p2_id);
 
     const t2_result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
-      P_V.id,
+      P_V.id!,
       t2_p1_id,
       t2_p2_id
     ));
@@ -161,21 +161,21 @@ export class AddExampleSetupOp implements IOperation {
     // This is where T2 would appear after unfolding the 3D plane onto P_H
     // For simplicity, we create a diagonal line with similar slope
     const t2p_p1_result = cmd.addAndExecute(new AddFreePoint2DOp(
-      P_H.id,
+      P_H.id!,
       new Vector3(200, 80, 1)  // approximate unfolded position
     ));
     const t2p_p1_id = t2p_p1_result.outputs.pointId as string;
     this.createdElementIds.push(t2p_p1_id);
 
     const t2p_p2_result = cmd.addAndExecute(new AddFreePoint2DOp(
-      P_H.id,
+      P_H.id!,
       new Vector3(400, 120, 1)  // approximate unfolded position with slope
     ));
     const t2p_p2_id = t2p_p2_result.outputs.pointId as string;
     this.createdElementIds.push(t2p_p2_id);
 
     const t2p_result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
-      P_H.id,
+      P_H.id!,
       t2p_p1_id,
       t2p_p2_id
     ));
@@ -206,7 +206,7 @@ export class AddExampleSetupOp implements IOperation {
 
     // Create projection on P_H
     const p_h_result = cmd.addAndExecute(new AddFreePoint2DOp(
-      P_H.id,
+      P_H.id!,
       new Vector3(300, 50, 1)
     ));
     const p_h_id = p_h_result.outputs.pointId as string;
@@ -220,7 +220,7 @@ export class AddExampleSetupOp implements IOperation {
 
     // Create projection on P_V (same x-coordinate)
     const p_v_result = cmd.addAndExecute(new AddFreePoint2DOp(
-      P_V.id,
+      P_V.id!,
       new Vector3(300, 100, 1)
     ));
     const p_v_id = p_v_result.outputs.pointId as string;
@@ -231,150 +231,5 @@ export class AddExampleSetupOp implements IOperation {
     if (p_v) {
       p_v.label = 'A_V';
     }
-  }
-}
-
-
-  /**
-   * Add setup for testing projection plane creation
-   * 
-   * Creates:
-   * - T1: Horizontal line on P_H (hinge trace)
-   * - T2: Diagonal line on P_V (other trace)
-   * - T2': Horizontal line on P_H (position line, approximate expected position)
-   * 
-   * After running this, user can activate CreateProjectionPlaneTool and select:
-   * 1. T1 (labeled "T1_H")
-   * 2. T2 (labeled "T2_V")
-   * 3. T2' (labeled "T2'_H")
-   */
-  private addProjectionPlaneSetup(cmd: Command, world: World): void {
-    // Get P_H and P_V (horizontal and vertical projection planes)
-    const planes = world.getProjectionPlanes();
-    const P_H = planes.find(p => p.name === 'P_H');
-    const P_V = planes.find(p => p.name === 'P_V');
-
-    if (!P_H || !P_V) {
-      throw new Error('Standard projection planes P_H and P_V not found');
-    }
-
-    // === Create T1 on P_H (horizontal trace line) ===
-    // Points for T1: horizontal line through middle of P_H
-    const t1_p1_result = cmd.addAndExecute(new AddFreePointOp(
-      150,  // x
-      0,    // y (on ground line)
-      P_H.id,
-      'T1_start'
-    ));
-    const t1_p1_id = t1_p1_result.outputs.pointId as string;
-    this.createdElementIds.push(t1_p1_id);
-
-    const t1_p2_result = cmd.addAndExecute(new AddFreePointOp(
-      450,  // x
-      0,    // y (on ground line)
-      P_H.id,
-      'T1_end'
-    ));
-    const t1_p2_id = t1_p2_result.outputs.pointId as string;
-    this.createdElementIds.push(t1_p2_id);
-
-    const t1_result = cmd.addAndExecute(new AddLineByTwoPointsOp(
-      t1_p1_id,
-      t1_p2_id,
-      'T1_H'
-    ));
-    const t1_id = t1_result.outputs.lineId as string;
-    this.createdElementIds.push(t1_id);
-
-    // === Create T2 on P_V (diagonal trace line) ===
-    // Points for T2: diagonal line on P_V
-    const t2_p1_result = cmd.addAndExecute(new AddFreePointOp(
-      200,  // x
-      0,    // y (on ground line)
-      P_V.id,
-      'T2_start'
-    ));
-    const t2_p1_id = t2_p1_result.outputs.pointId as string;
-    this.createdElementIds.push(t2_p1_id);
-
-    const t2_p2_result = cmd.addAndExecute(new AddFreePointOp(
-      400,  // x
-      150,  // y (raised above ground line)
-      P_V.id,
-      'T2_end'
-    ));
-    const t2_p2_id = t2_p2_result.outputs.pointId as string;
-    this.createdElementIds.push(t2_p2_id);
-
-    const t2_result = cmd.addAndExecute(new AddLineByTwoPointsOp(
-      t2_p1_id,
-      t2_p2_id,
-      'T2_V'
-    ));
-    const t2_id = t2_result.outputs.lineId as string;
-    this.createdElementIds.push(t2_id);
-
-    // === Create T2' on P_H (position line - approximate expected position) ===
-    // This is where T2 would appear after unfolding the 3D plane onto P_H
-    // For simplicity, we create a horizontal line slightly above the ground line
-    const t2p_p1_result = cmd.addAndExecute(new AddFreePointOp(
-      200,  // x (aligned with T2 start)
-      80,   // y (approximate unfolded position)
-      P_H.id,
-      'T2\'_start'
-    ));
-    const t2p_p1_id = t2p_p1_result.outputs.pointId as string;
-    this.createdElementIds.push(t2p_p1_id);
-
-    const t2p_p2_result = cmd.addAndExecute(new AddFreePointOp(
-      400,  // x (aligned with T2 end)
-      120,  // y (approximate unfolded position with slope)
-      P_H.id,
-      'T2\'_end'
-    ));
-    const t2p_p2_id = t2p_p2_result.outputs.pointId as string;
-    this.createdElementIds.push(t2p_p2_id);
-
-    const t2p_result = cmd.addAndExecute(new AddLineByTwoPointsOp(
-      t2p_p1_id,
-      t2p_p2_id,
-      'T2\'_H'
-    ));
-    const t2p_id = t2p_result.outputs.lineId as string;
-    this.createdElementIds.push(t2p_id);
-  }
-
-  /**
-   * Add setup for testing 3D point creation
-   * 
-   * Creates:
-   * - Two points on P_H and P_V representing projections of a 3D point
-   */
-  private addBasic3DPointSetup(cmd: Command, world: World): void {
-    const planes = world.getProjectionPlanes();
-    const P_H = planes.find(p => p.name === 'P_H');
-    const P_V = planes.find(p => p.name === 'P_V');
-
-    if (!P_H || !P_V) {
-      throw new Error('Standard projection planes P_H and P_V not found');
-    }
-
-    // Create projection on P_H
-    const p_h_result = cmd.addAndExecute(new AddFreePointOp(
-      300,
-      50,
-      P_H.id,
-      'A_H'
-    ));
-    this.createdElementIds.push(p_h_result.outputs.pointId as string);
-
-    // Create projection on P_V (same x-coordinate)
-    const p_v_result = cmd.addAndExecute(new AddFreePointOp(
-      300,
-      100,
-      P_V.id,
-      'A_V'
-    ));
-    this.createdElementIds.push(p_v_result.outputs.pointId as string);
   }
 }
