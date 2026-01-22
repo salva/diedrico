@@ -27,21 +27,19 @@ interface Line3D {
 }
 
 /**
- * Compute intersection point of two 3D lines (or closest point if skew)
+ * Compute intersection point of two 3D lines
  * 
  * Lines in parametric form:
  * - L1: P1 + s * d1
  * - L2: P2 + t * d2
  * 
- * For true intersection: P1 + s * d1 = P2 + t * d2
- * Solves for s and t using least squares approach.
- * 
- * For skew or parallel lines, returns the closest point on L1 to L2.
- * This is adequate for valid trace configurations where lines should intersect.
+ * For projection plane traces, the lines MUST intersect (they are traces of the same 3D plane).
+ * If lines don't intersect within tolerance, throws an error indicating invalid trace selection.
  * 
  * @param line1 - First line { point: Vector3, direction: Vector3 }
  * @param line2 - Second line { point: Vector3, direction: Vector3 }
- * @returns Intersection point (or closest point on L1 if lines are skew/parallel)
+ * @returns Intersection point
+ * @throws Error if lines are parallel or skew (don't intersect within numerical tolerance)
  */
 export function computeLineLineIntersection3D(line1: Line3D, line2: Line3D): Vector3 {
   const p1 = line1.point;
@@ -53,7 +51,6 @@ export function computeLineLineIntersection3D(line1: Line3D, line2: Line3D): Vec
   const w = new Vector3().subVectors(p1, p2);
   
   // Solve using dot products
-  // We want to find s such that the distance between P1 + s*d1 and P2 + t*d2 is minimized
   const a = d1.dot(d1);  // Always 1 if normalized
   const b = d1.dot(d2);
   const c = d2.dot(d2);  // Always 1 if normalized
@@ -62,17 +59,34 @@ export function computeLineLineIntersection3D(line1: Line3D, line2: Line3D): Vec
   
   const denom = a * c - b * b;  // = 1 - b² for normalized vectors
   
+  // Check for parallel lines
   if (Math.abs(denom) < 1e-10) {
-    // Lines are parallel or coincident
-    // Return point on first line closest to second line's origin
-    return p1.clone();
+    throw new Error('Traces are parallel - they do not define a valid 3D plane');
   }
   
-  // Parameter s for point on L1 closest to L2
+  // Compute parameters for closest points on both lines
   const s = (b * e - c * d) / denom;
+  const t = (a * e - b * d) / denom;
   
-  // Intersection point (or closest point) on line1
-  return p1.clone().addScaledVector(d1, s);
+  // Compute closest points
+  const point1 = p1.clone().addScaledVector(d1, s);
+  const point2 = p2.clone().addScaledVector(d2, t);
+  
+  // Verify lines actually intersect (not skew)
+  const distance = point1.distanceTo(point2);
+  if (distance > 1e-6) {
+    throw new Error(
+      `Traces are skew (don't intersect) - distance: ${distance.toFixed(6)}. ` +
+      `They do not define a valid 3D plane.`
+    );
+  }
+  
+  // Return intersection point (average of closest points for numerical stability)
+  return new Vector3(
+    (point1.x + point2.x) / 2,
+    (point1.y + point2.y) / 2,
+    (point1.z + point2.z) / 2
+  );
 }
 
 /**

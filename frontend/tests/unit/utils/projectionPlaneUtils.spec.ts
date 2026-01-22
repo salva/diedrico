@@ -79,7 +79,7 @@ describe('computeLineLineIntersection3D', () => {
   });
   
   describe('Parallel lines', () => {
-    it('should return point on first line for parallel lines', () => {
+    it('should throw error for parallel lines (invalid traces)', () => {
       // Line 1: along X-axis, at y=0
       const line1 = {
         point: new Vector3(0, 0, 0),
@@ -92,16 +92,12 @@ describe('computeLineLineIntersection3D', () => {
         direction: new Vector3(1, 0, 0)
       };
       
-      const result = computeLineLineIntersection3D(line1, line2);
-      
-      // Should return point on line1 (origin in this case)
-      expect(result.x).toBeCloseTo(0, 10);
-      expect(result.y).toBeCloseTo(0, 10);
-      expect(result.z).toBeCloseTo(0, 10);
+      // Should throw error - parallel lines don't define a valid plane
+      expect(() => computeLineLineIntersection3D(line1, line2)).toThrow('parallel');
     });
     
-    it('should not crash for coincident lines', () => {
-      // Both lines along X-axis through origin
+    it('should not throw for coincident lines (same line, tolerance)', () => {
+      // Both lines along X-axis through origin (coincident within tolerance)
       const line1 = {
         point: new Vector3(0, 0, 0),
         direction: new Vector3(1, 0, 0)
@@ -112,17 +108,13 @@ describe('computeLineLineIntersection3D', () => {
         direction: new Vector3(1, 0, 0)
       };
       
-      const result = computeLineLineIntersection3D(line1, line2);
-      
-      // Should return line1's point (no crash)
-      expect(result.x).toBeCloseTo(0, 10);
-      expect(result.y).toBeCloseTo(0, 10);
-      expect(result.z).toBeCloseTo(0, 10);
+      // Coincident lines are technically parallel, should throw
+      expect(() => computeLineLineIntersection3D(line1, line2)).toThrow('parallel');
     });
   });
   
   describe('Skew lines', () => {
-    it('should return closest point on line1 for skew lines', () => {
+    it('should throw error for skew lines (invalid traces)', () => {
       // Line 1: along X-axis at z=0
       const line1 = {
         point: new Vector3(0, 0, 0),
@@ -135,15 +127,11 @@ describe('computeLineLineIntersection3D', () => {
         direction: new Vector3(0, 1, 0)
       };
       
-      const result = computeLineLineIntersection3D(line1, line2);
-      
-      // Closest point on line1 to line2 should be at (0, 0, 0)
-      expect(result.x).toBeCloseTo(0, 10);
-      expect(result.y).toBeCloseTo(0, 10);
-      expect(result.z).toBeCloseTo(0, 10);
+      // Should throw error - skew lines don't define a valid plane
+      expect(() => computeLineLineIntersection3D(line1, line2)).toThrow('skew');
     });
     
-    it('should handle skew lines with offset', () => {
+    it('should throw error for skew lines with offset', () => {
       // Line 1: along X-axis at y=0, z=0
       const line1 = {
         point: new Vector3(5, 0, 0),
@@ -156,12 +144,8 @@ describe('computeLineLineIntersection3D', () => {
         direction: new Vector3(0, 0, 1)
       };
       
-      const result = computeLineLineIntersection3D(line1, line2);
-      
-      // Closest point on line1 should be at x=10, y=0, z=0
-      expect(result.x).toBeCloseTo(10, 10);
-      expect(result.y).toBeCloseTo(0, 10);
-      expect(result.z).toBeCloseTo(0, 10);
+      // Should throw error - skew lines don't define a valid plane
+      expect(() => computeLineLineIntersection3D(line1, line2)).toThrow('skew');
     });
   });
   
