@@ -64,21 +64,20 @@ export class QuickProjectionSetupTool implements ITool {
 
     const cmd = new Command('Quick projection setup', world);
 
-    // CRITICAL: For traces to intersect, they must both pass through the hinge line!
-    // A1 = (0, 0) on hinge line on P_H
-    const a1Pos = new Vector3(0, 0, 1);
+    // Create A1 on P_H
+    const a1Pos = new Vector3(-20, 20, 1);
     const { pointId: a1Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a1Pos);
     const a1Point = world.getPoint2D(a1Id);
     if (a1Point) a1Point.label = 'A1';
 
-    // A2 = (100, 50) off the hinge line on P_H
-    const a2Pos = new Vector3(100, 50, 1);
+    // Create A2 on P_H  
+    const a2Pos = new Vector3(0, 10, 1);
     const { pointId: a2Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a2Pos);
     const a2Point = world.getPoint2D(a2Id);
     if (a2Point) a2Point.label = 'A2';
 
-    // B1 = (0, 0) on hinge line on P_V (same 3D point as A1!)
-    const b1Pos = new Vector3(0, 0, 1);
+    // Create B1 on P_V
+    const b1Pos = new Vector3(0, 20, 1);
     const { pointId: b1Id } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, b1Pos);
     const b1Point = world.getPoint2D(b1Id);
     if (b1Point) b1Point.label = 'B1';

@@ -93,14 +93,41 @@ export class Add3DPlaneOp implements IOperation {
       }
       
       // Transform trace1 from 2D to 3D
+      // trace1Real.point1 is a point (w=1), trace1Real.point2 is a direction (w=0)
       const p1_4D = applyMatrix4x3(trace1Real.point1, plane1Realization.planeTo3D);
       const p1_3D = new Vector3(p1_4D.x, p1_4D.y, p1_4D.z);
-      const d1_3D = new Vector3(trace1Real.point2.x, trace1Real.point2.y, trace1Real.point2.z);
+      
+      // Transform direction by applying to point1 + direction
+      const p1_plus_d1 = new Vector3(
+        trace1Real.point1.x + trace1Real.point2.x,
+        trace1Real.point1.y + trace1Real.point2.y,
+        1  // Keep w=1 for point
+      );
+      const p1d_4D = applyMatrix4x3(p1_plus_d1, plane1Realization.planeTo3D);
+      const p1d_3D = new Vector3(p1d_4D.x, p1d_4D.y, p1d_4D.z);
+      const d1_3D = new Vector3(
+        p1d_3D.x - p1_3D.x,
+        p1d_3D.y - p1_3D.y,
+        p1d_3D.z - p1_3D.z
+      );
       
       // Transform trace2 from 2D to 3D
       const p2_4D = applyMatrix4x3(trace2Real.point1, plane2Realization.planeTo3D);
       const p2_3D = new Vector3(p2_4D.x, p2_4D.y, p2_4D.z);
-      const d2_3D = new Vector3(trace2Real.point2.x, trace2Real.point2.y, trace2Real.point2.z);
+      
+      // Transform direction by applying to point1 + direction
+      const p2_plus_d2 = new Vector3(
+        trace2Real.point1.x + trace2Real.point2.x,
+        trace2Real.point1.y + trace2Real.point2.y,
+        1  // Keep w=1 for point
+      );
+      const p2d_4D = applyMatrix4x3(p2_plus_d2, plane2Realization.planeTo3D);
+      const p2d_3D = new Vector3(p2d_4D.x, p2d_4D.y, p2d_4D.z);
+      const d2_3D = new Vector3(
+        p2d_3D.x - p2_3D.x,
+        p2d_3D.y - p2_3D.y,
+        p2d_3D.z - p2_3D.z
+      );
       
       try {
         // This will throw an error if traces are parallel or skew (don't intersect)
