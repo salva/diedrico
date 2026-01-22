@@ -8410,3 +8410,658 @@ const circumferencePointId = pointResult.outputs.pointId;
 - DependencyService always has valid references
 - Proper Command pattern implementation
 
+---
+
+## Phase 82: Create Projection Plane Tool
+
+**Purpose**: Enable users to create auxiliary projection planes by unfolding 3D planes onto paper  
+**Reference**: 
+- [ui-spec.md §Create Projection Plane Tool](./ui-spec.md#create-projection-plane-tool) - UI workflow (lines 1205-1335)
+- [spec.md](./spec.md) FR-056 (lines 1577-1579) - Functional requirement
+- [data-model.md §Phase 82](./data-model.md#phase-82-create-projection-plane-tool) - Implementation architecture
+
+**Status**: 📋 PLANNED (2026-01-17)
+
+**Implementation Requirements**:
+- **3-Step Sequential Tool**: Extends ArgumentCollectorTool base class with validators
+- **Validation**: T1 and T2 on different planes, T2' on same plane as T1, geometric compatibility
+- **Matrix Computation**: Compute planeToPaper, planeTo3D, threeDToPlane from T1, T2, T2'
+- **T2' Warning System**: Warning (not error) if position differs by >1 pixel
+- **Command Pattern**: All operations undoable (AddPlane3DByTracesOp, AddProjectionPlaneOp, AddHingeLineOp)
+- **ProcessTree Action**: Register with full dependency tracking
+
+**⚠️ CRITICAL**: Read [ui-spec.md §Create Projection Plane Tool](./ui-spec.md#create-projection-plane-tool) to understand pedagogical goals and T2' dual purpose.
+
+### T1198 [P]: Create Plane3DByTraces Domain Class
+- Create `frontend/src/domain/world/Plane3D.ts` (if not exists) with Plane3D base class
+- Add Plane3DByTraces subclass extending Plane3D
+- Fields: `traceHId: string`, `traceVId: string`
+- Implement `realize3D(world: World): Plane3DRealization`
+  - Get trace lines from world
+  - Transform trace 2D coordinates to 3D using plane transformations
+  - Compute plane normal from cross product of trace directions
+  - Return Plane3DRealization with normal and distance
+- Handle degenerate case: parallel traces → infeasible realization
+- Implement `getDependencies()`: return [traceHId, traceVId]
+- Implement `clone()` method
+- Test: Unit test in `frontend/tests/unit/domain/plane3d.spec.ts`
+  - Create plane from two non-parallel traces → verify normal computed correctly
+  - Create plane from parallel traces → verify infeasible
+  - Verify dependencies returned correctly
+- **Files**: `frontend/src/domain/world/Plane3D.ts` (add Plane3DByTraces class)
+
+### T1199 [P]: Create Matrix Computation Utilities
+- Create `frontend/src/utils/projectionPlaneUtils.ts`
+- Function: `computeProjectionPlaneMatrices(t1HingeTraceId, t2OtherTraceId, t2PrimeLineId, world): ProjectionPlaneMatrices`
+  - Get lines T1, T2, T2' from world
+  - Compute 3D plane Q from T1 and T2 (use Plane3DByTraces.realize3D)
+  - Compute coordinate system: origin = plane-X-axis intersection, U-axis = T1 direction, V-axis from T2' orientation
+  - Build Matrix3 for planeToPaper (auxiliary plane layout position)
+  - Build Matrix4x3 for planeTo3D (u,v → x,y,z transformation)
+  - Build Matrix3x4 for threeDToPlane (x,y,z → u,v transformation)
+  - Return { planeToPaper, planeTo3D, threeDToPlane }
+- Function: `computeExpectedT2Prime(t1HingeTraceId, t2OtherTraceId, world): Line2DRealization2D`
+  - Compute where T2 should appear after unfolding
+  - Used for T2' validation warning
+- Function: `computeAuxiliaryPlaneLayout(world): {x: number, y: number}`
+  - Stack auxiliary planes vertically below P_V
+  - Return paper-space offset for new plane
+- Test: Unit tests in `frontend/tests/unit/utils/projectionPlaneUtils.spec.ts`
+  - Test matrix computation with known T1, T2, T2' → verify matrices correct
+  - Test expected T2' position computation
+  - Test layout computation with 0, 1, 2 auxiliary planes
+- **Files**: `frontend/src/utils/projectionPlaneUtils.ts` (NEW)
+
+### T1200 [P]: Create AddPlane3DByTracesOp Operation
+- Create `frontend/src/commands/operations/world/AddPlane3DOp.ts`
+- Class: AddPlane3DByTracesOp implements IOperation
+- Constructor: `(traceHId: string, traceVId: string)`
+- Parameters: Store { traceHId, traceVId }
+- Outputs: { plane3DId?: string }
+- `apply(world: World)`:
+  - Generate plane3DId if not in outputs (for redo)
+  - Create Plane3DByTraces instance
+  - Add to world via world.addPlane3D(plane3D)
+  - Store plane3DId in outputs
+  - Return { success: true, outputs }
+- `undo(world: World)`:
+  - Remove plane via world.removePlane3D(outputs.plane3DId)
+- Test: Unit test in `frontend/tests/unit/commands/operations/AddPlane3DOp.spec.ts`
+  - Apply operation → verify plane added to world
+  - Undo operation → verify plane removed
+  - Redo operation → verify plane re-added with same ID
+- **Files**: `frontend/src/commands/operations/world/AddPlane3DOp.ts` (NEW)
+
+### T1201 [P]: Create AddAuxiliaryProjectionPlaneOp Operation
+- **CRITICAL**: This is a NEW operation, NOT AddProjectionPlaneFixedOp (which is bootstrap only for P_H, P_V)
+- Create `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts`
+- Class: AddAuxiliaryProjectionPlaneOp implements IOperation
+- Constructor: `(plane3DId: string, t1HingeTraceId: string, t2OtherTraceId: string, t2PrimeLineId: string)`
+- **Stores trace IDs** (dependencies), NOT transformation matrices
+- Parameters: Store { plane3DId, t1HingeTraceId, t2OtherTraceId, t2PrimeLineId }
+- Outputs: { projPlaneId?: string }
+- `apply(world: World)`:
+  - Generate projPlaneId if not in outputs
+  - Auto-generate name: `P_A${world.getProjectionPlanes().length - 1}` (P_A1, P_A2, ...)
+  - Create AuxiliaryProjectionPlane instance with trace dependencies (matrices computed via realize3D())
+  - Add to world via world.addProjectionPlane(projPlane)
+  - Store projPlaneId in outputs
+  - Return { success: true, outputs }
+- `undo(world: World)`:
+  - Remove projection plane via world.removeProjectionPlane(outputs.projPlaneId)
+- **Realization Pattern**: Plane computes matrices from traces when realize3D() is called
+- **Parametric Behavior**: Matrices recalculate when trace lines move
+- Test: Unit test in `frontend/tests/unit/commands/operations/AddAuxiliaryProjectionPlaneOp.spec.ts`
+  - Apply operation → verify projection plane added with trace dependencies
+  - Verify realize3D() computes matrices correctly
+  - Move trace line → verify matrices recalculate
+  - Undo operation → verify plane removed
+  - Redo operation → verify plane re-added with same ID and dependencies
+- **Files**: `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts` (NEW)
+
+### T1202 [P]: Create AddHingeLineOp Operation
+- Create `frontend/src/commands/operations/world/AddHingeLineOp.ts`
+- Class: AddHingeLineOp implements IOperation
+- Constructor: `(hingeTraceId: string, plane1Id: string, plane2Id: string)`
+- Parameters: Store { hingeTraceId, plane1Id, plane2Id }
+- Outputs: { hingeLineId?: string }
+- `apply(world: World)`:
+  - Generate hingeLineId if not in outputs
+  - Auto-generate name: `HL_${plane1Id}_${plane2Id}` (shortened if needed)
+  - Create HingeLine instance
+  - Add to world via world.addHingeLine(hingeLine)
+  - Store hingeLineId in outputs
+  - Return { success: true, outputs }
+- `undo(world: World)`:
+  - Remove hinge line via world.removeHingeLine(outputs.hingeLineId)
+- Test: Unit test in `frontend/tests/unit/commands/operations/AddHingeLineOp.spec.ts`
+  - Apply operation → verify hinge line added
+  - Undo operation → verify hinge line removed
+  - Redo operation → verify hinge line re-added with same ID
+- **Files**: `frontend/src/commands/operations/world/AddHingeLineOp.ts` (NEW)
+
+### T1203: Create ProcessTree Action for Projection Plane Creation
+- Create `frontend/src/domain/processTree/actions/CreateProjectionPlaneAction.ts`
+- Function: `createProjectionPlaneAction(projPlaneId, t1HingeTraceId, t2OtherTraceId, t2PrimeLineId): Action`
+- Action type: 'CreateProjectionPlane'
+- Inputs: [t1HingeTraceId, t2OtherTraceId, t2PrimeLineId] (dependencies)
+- Outputs: [projPlaneId]
+- Parameters: { t1HingeTraceId, t2OtherTraceId, t2PrimeLineId }
+- Description: "Create projection plane from T1=..., T2=..."
+- Test: Unit test in `frontend/tests/unit/processTree/CreateProjectionPlaneAction.spec.ts`
+  - Verify action structure correct
+  - Verify dependencies and outputs set correctly
+- **Files**: `frontend/src/domain/processTree/actions/CreateProjectionPlaneAction.ts` (NEW)
+
+### T1204: Create CreateProjectionPlaneTool Base Structure
+- Create `frontend/src/tools/CreateProjectionPlaneTool.ts`
+- Import ArgumentCollectorTool base class
+- Define tool class extending ArgumentCollectorTool
+- Constructor: Define 3 ToolArgumentSpecs (t1HingeTrace, t2OtherTrace, t2PrimePositionLine)
+- Step 1 spec:
+  - name: 't1HingeTrace', type: 'line'
+  - description: 'Select hinge trace T1 (line on first plane)'
+  - selectionMask: ['any-line']
+  - planeHint: 'any'
+- Step 2 spec:
+  - name: 't2OtherTrace', type: 'line'
+  - description: 'Select other trace T2 (line on different plane)'
+  - selectionMask: ['any-line']
+  - planeHint: 'different-from-t1'
+  - validator: Check T2 on different plane than T1
+- Step 3 spec:
+  - name: 't2PrimePositionLine', type: 'line'
+  - description: 'Draw T2\' (where T2 should appear on new plane)'
+  - selectionMask: ['any-line']
+  - planeHint: 'same-as-t1'
+  - validator: Check T2' on same plane as T1, compute position warning
+- Implement `executeWithArguments(args, context)`: placeholder for now
+- Test: Unit test in `frontend/tests/unit/tools/CreateProjectionPlaneTool.spec.ts`
+  - Verify tool structure created correctly
+  - Verify selection masks correct for each step
+- **Files**: `frontend/src/tools/CreateProjectionPlaneTool.ts` (NEW)
+
+### T1205: Implement Step 1 Validator (T1 Selection)
+- In CreateProjectionPlaneTool, step 1 spec
+- No validator needed (any line on any plane is valid for T1)
+- Add planeHint handling: 'any' means accept lines from any projection plane
+- Test: Unit test for step 1
+  - Select line on P_H → verify accepted
+  - Select line on P_V → verify accepted
+  - Select segment/guide/half-hinge-line → verify accepted (any-line mask)
+- **Files**: `frontend/src/tools/CreateProjectionPlaneTool.ts`
+
+### T1206: Implement Step 2 Validator (T2 Different Plane Check)
+- In CreateProjectionPlaneTool, step 2 spec
+- Validator function: `(args, context) => {...}`
+  - Get T1 line from world: `world.getLine2D(args.t1HingeTrace)`
+  - Get T2 line from world: `world.getLine2D(args.t2OtherTrace)`
+  - Check both exist, return error if not found
+  - Compare planeIds: `t1Line.planeId === t2Line.planeId`
+  - If same: return `{ valid: false, message: 'T2 must be on a different plane than T1' }`
+  - If different: return `{ valid: true }`
+- Test: Unit test for step 2 validator
+  - T1 on P_H, T2 on P_V → valid
+  - T1 on P_H, T2 on P_H → invalid with error message
+  - T1 on P_V, T2 on P_V → invalid
+- **Files**: `frontend/src/tools/CreateProjectionPlaneTool.ts`
+
+### T1207: Implement Step 3 Validator (T2' Same Plane + Position Warning)
+- In CreateProjectionPlaneTool, step 3 spec
+- Validator function: `(args, context) => {...}`
+  - Get T1 line: `world.getLine2D(args.t1HingeTrace)`
+  - Get T2' line: `world.getLine2D(args.t2PrimePositionLine)`
+  - Check both exist
+  - Compare planeIds: `t1Line.planeId !== t2PrimeLine.planeId`
+  - If different planes: return `{ valid: false, message: 'T2\' must be on the same plane as T1' }`
+  - Compute expected T2' position: `computeExpectedT2Prime(args.t1HingeTrace, args.t2OtherTrace, world)`
+  - Get actual T2' realization: `t2PrimeLine.realize2D(world)`
+  - Compute line distance: `computeLineDistance(expected, actual)`
+  - If distance > 1.0 pixels: return `{ valid: true, warning: '...' }`
+  - Otherwise: return `{ valid: true }`
+- Test: Unit test for step 3 validator
+  - T2' on same plane as T1 → valid
+  - T2' on different plane than T1 → invalid
+  - T2' position matches expected → no warning
+  - T2' position differs by 2 pixels → warning but valid
+- **Files**: `frontend/src/tools/CreateProjectionPlaneTool.ts`
+
+### T1208: Implement executeWithArguments Method
+- In CreateProjectionPlaneTool, implement `executeWithArguments(args, context)`
+- Build Command: `const cmd = new Command('Create projection plane', world)`
+- Operation 1: Compute matrices using `computeProjectionPlaneMatrices()`
+- Operation 2: AddPlane3DByTracesOp
+  - `cmd.addAndExecute(new AddPlane3DByTracesOp(args.t1HingeTrace, args.t2OtherTrace))`
+  - Get plane3DId from result
+- Operation 3: AddProjectionPlaneOp
+  - `cmd.addAndExecute(new AddProjectionPlaneOp(plane3DId, matrices.planeToPaper, matrices.planeTo3D, matrices.threeDToPlane))`
+  - Get projPlaneId from result
+- Operation 4: AddHingeLineOp
+  - Get T1's planeId: `world.getLine2D(args.t1HingeTrace).planeId`
+  - `cmd.addAndExecute(new AddHingeLineOp(args.t1HingeTrace, t1PlaneId, projPlaneId))`
+  - Get hingeLineId from result
+- Operation 5: AddProcessTreeActionOp
+  - Create action: `createProjectionPlaneAction(projPlaneId, args.t1HingeTrace, args.t2OtherTrace, args.t2PrimePositionLine)`
+  - `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+- Commit and push: `cmd.commit(); commandStack.push(cmd)`
+- Return: `this.success('Created projection plane ...')`
+- Wrap in try-catch, return `this.failure(...)` on error
+- Test: Integration test in `frontend/tests/integration/createProjectionPlane.test.ts`
+  - Create lines T1 on P_H, T2 on P_V, T2' on P_H
+  - Activate tool, select T1, T2, T2'
+  - Verify projection plane created in world
+  - Verify transformation matrices present
+  - Verify hinge line created
+  - Verify ProcessTree action recorded
+- **Files**: `frontend/src/tools/CreateProjectionPlaneTool.ts`
+
+### T1209: Add Tool to Toolbar
+- Open `frontend/src/components/toolbars/Toolbar.vue`
+- Add button for Create Projection Plane tool
+- Icon: Two planes with fold line between them (design icon or use placeholder)
+- Title: "Create Projection Plane - Unfold 3D plane onto paper"
+- Position: Tools section, after existing plane/geometry tools
+- Click handler: Activate CreateProjectionPlaneTool
+- Test: Manual test - verify button appears and activates tool
+- **Files**: `frontend/src/components/toolbars/Toolbar.vue`
+
+### T1210: Implement Visual Feedback for T2' Expected Position
+- In CreateProjectionPlaneTool, during step 3 (T2' selection)
+- Compute expected T2' position using `computeExpectedT2Prime()`
+- Render expected position as dashed yellow guide line overlay on canvas
+- Update overlay on every mouse move during step 3
+- Remove overlay when step 3 completes or tool canceled
+- Test: Manual test
+  - Activate tool, select T1, select T2
+  - Verify yellow dashed line appears showing expected T2' position
+  - Draw actual T2' line (may differ from expected)
+  - Verify warning appears if position differs
+- **Files**: `frontend/src/tools/CreateProjectionPlaneTool.ts`, `frontend/src/components/canvas/SvgCanvas.vue`
+
+### T1211: Write Unit Tests for Plane3DByTraces
+- Test file: `frontend/tests/unit/domain/plane3d.spec.ts`
+- Test 1: Non-parallel traces define unique plane
+  - Create two traces on different planes (not parallel)
+  - Create Plane3DByTraces
+  - Call realize3D()
+  - Verify normal vector perpendicular to both trace directions
+  - Verify distance (d) computed correctly
+  - Verify feasible = true
+- Test 2: Parallel traces are infeasible
+  - Create two parallel traces on different planes
+  - Create Plane3DByTraces
+  - Call realize3D()
+  - Verify feasible = false
+  - Verify fallback normal returned
+- Test 3: getDependencies returns trace IDs
+  - Create Plane3DByTraces
+  - Call getDependencies()
+  - Verify returns [traceHId, traceVId]
+- **Files**: `frontend/tests/unit/domain/plane3d.spec.ts` (NEW)
+
+### T1212: Write Unit Tests for Matrix Computation
+- Test file: `frontend/tests/unit/utils/projectionPlaneUtils.spec.ts`
+- Test 1: computeProjectionPlaneMatrices with known inputs
+  - Create world with T1 (horizontal on P_H), T2 (vertical on P_V), T2' (horizontal on P_H, parallel to T1)
+  - Call computeProjectionPlaneMatrices()
+  - Verify planeToPaper is Matrix3 with correct layout offset
+  - Verify planeTo3D is Matrix4x3 with U-axis = T1 direction, V-axis perpendicular
+  - Verify threeDToPlane is inverse of planeTo3D
+- Test 2: computeExpectedT2Prime
+  - Create world with T1, T2
+  - Call computeExpectedT2Prime()
+  - Verify returns Line2DRealization2D
+  - Verify position/direction match expected unfolding geometry
+- Test 3: computeAuxiliaryPlaneLayout
+  - World with 0 auxiliary planes → verify layout below P_V
+  - World with 1 auxiliary plane → verify layout below first auxiliary
+  - World with 2 auxiliary planes → verify layout below second auxiliary
+- **Files**: `frontend/tests/unit/utils/projectionPlaneUtils.spec.ts` (NEW)
+
+### T1213: Write Unit Tests for Operations
+- Test file: `frontend/tests/unit/commands/operations/projectionPlaneOps.spec.ts`
+- Test 1: AddPlane3DByTracesOp
+  - Create mock world
+  - Create operation with trace IDs
+  - Call apply() → verify plane added
+  - Call undo() → verify plane removed
+  - Call apply() again (redo) → verify plane re-added with same ID
+- Test 2: AddProjectionPlaneOp
+  - Create mock world
+  - Create operation with plane3DId and matrices
+  - Call apply() → verify projection plane added
+  - Verify matrices stored correctly
+  - Call undo() → verify plane removed
+  - Call apply() again (redo) → verify plane re-added
+- Test 3: AddHingeLineOp
+  - Create mock world
+  - Create operation with hingeTraceId, plane1Id, plane2Id
+  - Call apply() → verify hinge line added
+  - Call undo() → verify hinge line removed
+  - Call apply() again (redo) → verify hinge line re-added
+- **Files**: `frontend/tests/unit/commands/operations/projectionPlaneOps.spec.ts` (NEW)
+
+### T1214: Write Integration Test - Full Tool Workflow
+- Test file: `frontend/tests/integration/createProjectionPlaneTool.test.ts`
+- Test 1: Complete 3-step workflow
+  - Initialize world with P_H, P_V
+  - Create line T1 on P_H (horizontal)
+  - Create line T2 on P_V (vertical)
+  - Create line T2' on P_H (horizontal, parallel to T1)
+  - Activate CreateProjectionPlaneTool
+  - Simulate click on T1 → verify step 1 complete
+  - Simulate click on T2 → verify step 2 complete
+  - Simulate click on T2' → verify step 3 complete, plane created
+  - Verify world.getProjectionPlanes().length === 3 (P_H, P_V, P_A1)
+  - Verify new plane has transformation matrices
+  - Verify hinge line created connecting P_H and P_A1
+  - Verify ProcessTree action recorded
+- Test 2: Validation - T2 on same plane as T1
+  - Activate tool, select T1 on P_H
+  - Select T2 also on P_H
+  - Verify error message: "T2 must be on a different plane than T1"
+  - Verify step 2 not completed
+- Test 3: Validation - T2' on different plane than T1
+  - Activate tool, select T1 on P_H, select T2 on P_V
+  - Select T2' on P_V (wrong plane)
+  - Verify error message: "T2' must be on the same plane as T1"
+  - Verify step 3 not completed
+- Test 4: Warning - T2' position differs
+  - Create T1, T2, T2' with T2' at incorrect position (2 pixels off)
+  - Complete tool workflow
+  - Verify warning message appears
+  - Verify plane still created (warning, not error)
+- **Files**: `frontend/tests/integration/createProjectionPlaneTool.test.ts` (NEW)
+
+### T1215: Write E2E Test - User Creates Auxiliary Plane
+- Test file: `frontend/tests/e2e/createProjectionPlane.spec.ts`
+- Test: User creates auxiliary projection plane
+  - Open application
+  - Click Point tool, create 4 points on P_H
+  - Click Line tool, create line T1 from points (horizontal on P_H)
+  - Switch to P_V, create 2 points
+  - Click Line tool, create line T2 (vertical on P_V)
+  - Switch back to P_H, create 2 more points
+  - Click Line tool, create line T2' (horizontal on P_H, parallel to T1)
+  - Click "Create Projection Plane" tool button
+  - Click T1 line → verify highlighted, status message "Selected T1"
+  - Click T2 line → verify highlighted, status message "Selected T2"
+  - Click T2' line → verify highlighted
+  - Verify new projection plane appears on canvas below P_V
+  - Verify plane labeled "P_A1"
+  - Verify hinge line visible between P_H and P_A1
+  - Verify ProcessTree shows "Create projection plane" action
+- Test: User gets validation error
+  - Activate tool, click T1 on P_H
+  - Click T2 also on P_H (same plane)
+  - Verify error message appears: "T2 must be on a different plane than T1"
+  - Verify tool still active (waiting for valid T2)
+- **Files**: `frontend/tests/e2e/createProjectionPlane.spec.ts` (NEW)
+
+### T1216: Update World Methods for Plane/HingeLine Management
+- Open `frontend/src/domain/world/World.ts`
+- Add methods if not present:
+  - `addPlane3D(plane: Plane3D): void` - Add to planes3D map
+  - `removePlane3D(planeId: string): void` - Remove from planes3D map
+  - `getPlane3D(planeId: string): Plane3D | undefined` - Lookup plane
+  - `addProjectionPlane(plane: ProjectionPlane): void` - Add to projectionPlanes map
+  - `removeProjectionPlane(planeId: string): void` - Remove from projectionPlanes map
+  - `addHingeLine(hingeLine: HingeLine): void` - Add to hingeLines map
+  - `removeHingeLine(hingeLineId: string): void` - Remove from hingeLines map
+  - `getHingeLine(hingeLineId: string): HingeLine | undefined` - Lookup hinge line
+- Test: Unit test in `frontend/tests/unit/domain/world.spec.ts`
+  - Test each add/remove/get method
+  - Verify map storage works correctly
+  - Test removing non-existent ID (should not throw)
+- **Files**: `frontend/src/domain/world/World.ts`
+
+### T1217: Verify ArgumentCollectorTool Base Class Supports Validators
+- Open `frontend/src/tools/ArgumentCollectorTool.ts`
+- Review ToolArgumentSpec interface
+- Verify `validator?: (args: CollectedArguments, context: ToolContext) => ValidationResult` field exists
+- ValidationResult interface: `{ valid: boolean; message?: string; warning?: string }`
+- Verify ArgumentCollectorTool calls validator before advancing to next step
+- If validator returns valid=false, show error message, stay on current step
+- If validator returns valid=true with warning, show warning message, allow advancement
+- Test: Unit test for ArgumentCollectorTool validator handling
+  - Mock tool with validator that rejects input → verify stays on step
+  - Mock tool with validator that warns → verify advances with warning shown
+- **Files**: `frontend/src/tools/ArgumentCollectorTool.ts`
+
+### T1218: Test Undo/Redo for Projection Plane Creation
+- Test file: `frontend/tests/integration/createProjectionPlane.test.ts`
+- Test: Create projection plane → undo → verify removed
+  - Create lines T1, T2, T2'
+  - Use tool to create projection plane
+  - Verify plane exists in world
+  - Call commandStack.undo()
+  - Verify projection plane removed from world
+  - Verify hinge line removed
+  - Verify ProcessTree action removed
+  - Verify Plane3D removed
+- Test: Create projection plane → undo → redo → verify restored
+  - Create projection plane via tool
+  - Undo
+  - Call commandStack.redo()
+  - Verify projection plane re-added to world
+  - Verify hinge line re-added
+  - Verify ProcessTree action re-added
+  - Verify Plane3D re-added
+  - Verify all IDs same as before undo
+- **Files**: `frontend/tests/integration/createProjectionPlane.test.ts`
+
+### T1219: Test Parametric Update - Move Trace Lines
+- Test file: `frontend/tests/integration/createProjectionPlane.test.ts`
+- Test: Move T1 → verify plane transformation updates
+  - Create projection plane from T1, T2, T2'
+  - Move point defining T1 (change T1 position/angle)
+  - Realize projection plane (force recomputation)
+  - Verify planeTo3D matrix updated (U-axis follows new T1 direction)
+  - Verify elements on projection plane render at updated positions
+- Test: Move T2 → verify plane transformation updates
+  - Create projection plane
+  - Move point defining T2
+  - Realize projection plane
+  - Verify plane normal updated (T1 × T2 cross product)
+  - Verify plane reoriented in 3D space
+- **Files**: `frontend/tests/integration/createProjectionPlane.test.ts`
+
+---
+
+## Phase 82.1: Fix Auxiliary Projection Plane Grid Coordinate System
+
+**Purpose**: Correct coordinate system computation for auxiliary projection planes  
+**Reference**: [data-model.md §Phase 82.1](./data-model.md#phase-821-fix-auxiliary-projection-plane-grid-coordinate-system)
+
+**Context**: Grid rendering for auxiliary projection planes is geometrically incorrect due to improper coordinate system computation. Must implement complete algorithm for planeToPaper (paper layout), planeTo3D, and threeDToPlane transformations using proper geometric constraints.
+
+### T1220a: [P] Add computeLineLineIntersection3D helper function
+- Create helper function in `frontend/src/utils/projectionPlaneUtils.ts`
+- Function signature:
+  ```typescript
+  function computeLineLineIntersection3D(
+    line1: { point: THREE.Vector3; direction: THREE.Vector3 },
+    line2: { point: THREE.Vector3; direction: THREE.Vector3 }
+  ): THREE.Vector3
+  ```
+- Implementation:
+  - Use parametric line equations: L1 = P1 + s*d1, L2 = P2 + t*d2
+  - Solve for s using least squares: s = (b*e - c*d) / (a*c - b*b)
+  - Handle parallel lines (denom < 1e-10) by returning point on first line
+  - Return intersection point: P1 + s*d1
+- Add comprehensive JSDoc explaining the math
+- **Files**: `frontend/src/utils/projectionPlaneUtils.ts`
+
+### T1220b: Reimplement computeProjectionPlaneMatrices - Part 1 (planeToPaper)
+- Replace planeToPaper computation with correct algorithm
+- Implementation (homogeneous coordinates with Matrix3):
+  - Get T1 and T2' as paper lines (both on same plane P1)
+  - Origin_paper = intersection of T1 and T2' on paper
+  - U_paper = normalized direction of T1 on paper (Vector3 with w=0)
+  - V_paper = perpendicular to U_paper (±90° rotation)
+  - Orientation: get point on T2, project to P1 paper, check which side of origin
+  - Build Matrix3: columns are (u_paper, v_paper, origin_paper) with homogeneous row
+- Update comments explaining paper layout constraints:
+  - v=0 line coincides with T1 on paper
+  - Origin at T1-T2' intersection
+  - v perpendicular to T1, oriented via T2 side test
+- **Files**: `frontend/src/utils/projectionPlaneUtils.ts`
+
+### T1220c: Reimplement computeProjectionPlaneMatrices - Part 2 (3D transforms)
+- Replace planeTo3D and threeDToPlane computation with correct algorithm
+- Implementation for planeTo3D (Matrix4x3):
+  - Get T1 and T2 as 3D lines
+  - U_3d = normalized direction of T1 in 3D
+  - V_3d = double cross product: normalize(t1 × (t1 × t2))
+  - Orient V_3d to match paper V direction (project to P1, check alignment)
+  - Origin_3d = computeLineLineIntersection3D(t1Line3D, t2Line3D)
+  - Build Matrix4x3: columns are (u_3d, v_3d, origin_3d)
+- Implementation for threeDToPlane (Matrix3x4):
+  - Inverse using dot products: u = (point - origin) · u_3d, v = (point - origin) · v_3d
+  - Build Matrix3x4 with pre-computed dot products
+- Remove all old orientation flipping heuristics
+- Update comments explaining 3D geometric constraints:
+  - u along hinge T1, v perpendicular via double cross product
+  - Origin at T1-T2 3D intersection
+  - v orientation consistent with paper v
+- **Files**: `frontend/src/utils/projectionPlaneUtils.ts`
+
+### T1220d: [P] Add unit tests for computeLineLineIntersection3D
+- Create test file: `frontend/tests/unit/utils/projectionPlaneUtils.spec.ts` (if doesn't exist)
+- Test cases:
+  - **Intersecting lines**: Verify returns correct intersection point (tolerance 1e-10)
+  - **Parallel lines**: Verify returns point on first line (no crash)
+  - **Skew lines**: Verify returns closest point on first line
+  - **Perpendicular lines**: Verify intersection computed correctly
+- Use known geometric configurations with expected results
+- **Files**: `frontend/tests/unit/utils/projectionPlaneUtils.spec.ts`
+
+### T1220e: [P] Add unit tests for coordinate system computation
+- Test `computeProjectionPlaneMatrices()` with known trace configurations
+- Test cases for **planeToPaper**:
+  - v=0 line coincides with T1 on paper (distance < 0.01)
+  - Origin at T1-T2' intersection (distance < 0.01)
+  - U along T1 direction (dot product > 0.99)
+  - V perpendicular to U (|dot product| < 0.01)
+  - V orientation: T2 point has positive v-coordinate
+- Test cases for **planeTo3D / threeDToPlane**:
+  - U perpendicular to V in 3D (|dot product| < 1e-6)
+  - U and V normalized (|length - 1| < 1e-6)
+  - U and V lie in plane Q (plane equation satisfied within 1e-6)
+  - Origin on T1 in 3D (distance < 1e-6)
+  - Origin on T2 in 3D (distance < 1e-6)
+  - Round-trip: plane → 3D → plane ≈ identity (tolerance 1e-6)
+- **Known configuration**: T1 horizontal, T2 vertical → verify exact matrix values
+- **Files**: `frontend/tests/unit/utils/projectionPlaneUtils.spec.ts`
+
+### T1220f: Integration test with QuickProjectionSetupTool
+- Use QuickProjectionSetupTool to create auxiliary projection plane
+- Verify in 3D view:
+  - Grid renders correctly aligned with 3D plane
+  - Grid lines are perpendicular
+  - Grid origin is at T1-T2 intersection
+- Manual verification steps:
+  - Activate QuickProjectionSetupTool
+  - Check 3D view for new plane with grid
+  - Verify grid orientation matches plane geometry
+  - Verify no visual artifacts or misalignment
+- **Files**: Manual testing in browser (no automated test file)
+
+### T1220g: Commit Phase 82.1 - Fix Auxiliary Projection Plane Grid Coordinate System
+- Verify all tasks T1220a-T1220f complete
+- Run unit tests: `npm test projectionPlaneUtils`
+- Verify all tests pass
+- Commit with message:
+  ```
+  Phase 82.1: Fix Auxiliary Projection Plane Grid Coordinate System
+  
+  Correct geometric computation of coordinate system for auxiliary projection planes.
+  
+  Mathematical Fixes:
+  - planeToPaper: Origin at T1-T2' paper intersection, U along T1, V perpendicular with T2 side test
+  - planeTo3D: V-axis uses stable double cross product t1 × (t1 × t2), origin at T1-T2 3D intersection
+  - threeDToPlane: Inverse via dot products with orthonormal basis
+  - Remove all orientation flipping heuristics (no longer needed)
+  
+  Implementation:
+  - Add computeLineLineIntersection3D() helper for 3D line intersection
+  - Reimplement computeProjectionPlaneMatrices() with complete algorithm
+  - All transformations use homogeneous coordinates (Matrix3, Matrix4x3, Matrix3x4)
+  - Comprehensive unit tests for all geometric constraints
+  
+  Geometric Constraints Satisfied:
+  - Paper: v=0 on T1, origin at T1-T2' intersection, v perpendicular to u
+  - 3D: u along T1, v perpendicular in-plane, origin at T1-T2 intersection
+  - Consistency: paper and 3D v-axis orientations match
+  
+  Benefits:
+  - Grids geometrically correct (perpendicular axes, proper origin)
+  - No ambiguity in plane orientation
+  - Stable computation with no edge cases or artifacts
+  - Full test coverage for coordinate system properties
+  
+  Technical Details:
+  - Double cross product ensures V perpendicular to U AND lies in plane Q
+  - T1-T2 intersection provides natural 3D origin
+  - T1-T2' intersection provides natural paper origin
+  - T2 side test ensures consistent orientation across paper and 3D
+  
+  Refs: data-model.md §Phase 82.1, ui-spec.md §Phase 82.1
+  ```
+- Push changes
+- **Files**: `frontend/src/utils/projectionPlaneUtils.ts`, `frontend/tests/unit/utils/projectionPlaneUtils.spec.ts`
+
+**Checkpoint**: Auxiliary projection plane grids render with correct coordinate system
+
+---
+
+### T1220: Commit Phase 82 - Create Projection Plane Tool
+- Verify all tasks T1198-T1219 complete
+- Run full test suite: `npm test`
+- Verify no regressions in existing tests
+- Run E2E test: `npm run test:e2e`
+- Verify tool works end-to-end in application
+- Commit with message:
+  ```
+  Phase 82: Create Projection Plane Tool
+  
+  Enable users to create auxiliary projection planes by unfolding 3D planes onto paper.
+  
+  New Features:
+  - 3-step sequential tool: T1 hinge trace → T2 other trace → T2' position line
+  - Validation: T1/T2 on different planes, T2'/T1 on same plane
+  - Matrix computation: planeToPaper, planeTo3D, threeDToPlane from 3 inputs
+  - T2' warning system: position tolerance ±1 pixel (pedagogical, not blocking)
+  - Undo/redo support: Full command pattern integration
+  
+  Domain Classes:
+  - Plane3DByTraces: 3D plane defined by two trace lines
+  - ProjectionPlane: 2D surface with transformation matrices
+  - HingeLine: 3D fold between projection planes
+  
+  Operations:
+  - AddPlane3DByTracesOp, AddProjectionPlaneOp, AddHingeLineOp (all undoable)
+  
+  Benefits:
+  - Enables advanced dihedral constructions requiring auxiliary planes
+  - Pedagogically sound 3-step process reinforces unfolding geometry
+  - Parametric: planes update when trace lines move
+  - Extensible architecture for future multi-plane constructions
+  
+  Refs: FR-056, ui-spec.md §Create Projection Plane Tool
+  ```
+- Push changes
+- **Files**: All Phase 82 files
+
+**Phase 82 Dependencies**:
+- Depends on Phase 2 (ArgumentCollectorTool base class)
+- Depends on Phase 47 (ProcessTree infrastructure)
+- Depends on Phase 81 (AddProcessTreeActionOp pattern)
+
+**Phase 82 Benefits**:
+- Enables complex dihedral problems requiring auxiliary projection planes
+- Educational tool reinforcing understanding of 3D unfolding geometry
+- Parametric system: planes update automatically when dependencies change
+- Full undo/redo support maintaining system consistency
+- Extensible foundation for advanced plane-based constructions
+

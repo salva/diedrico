@@ -1,9 +1,9 @@
 /**
- * Unit tests for World initialization operations (Phase 47, updated Phase 28)
+ * Unit tests for World initialization operations (Phase 47, updated Phase 83)
  * 
  * Tests all 6 initialization operation classes:
  * - AddPlane3DFixedOp (formerly AddPlane3DOp)
- * - AddProjectionPlaneOp
+ * - AddProjectionPlaneFixedOp (formerly AddProjectionPlaneOp)
  * - AddOriginPoint2DOp
  * - AddHingeLineOp
  * - AddHalfHingeLine2DOp
@@ -11,11 +11,12 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Vector3, Vector4 } from 'three';
+import { Vector3, Vector4, Matrix3 } from 'three';
+import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { World } from '@/domain/world/World';
 import {
   AddPlane3DFixedOp,
-  AddProjectionPlaneOp,
+  AddProjectionPlaneFixedOp,
   AddOriginPoint2DOp,
   AddHingeLineOp,
   AddHalfHingeLine2DOp,
@@ -24,6 +25,47 @@ import {
 
 describe('Initialization Operations', () => {
   let world: World;
+
+  // Helper functions to create standard transformation matrices
+  function createPHMatrices() {
+    const planeToPaper = new Matrix3().set(
+      1, 0, 800,
+      0, 1, 500,
+      0, 0, 1
+    );
+    const planeTo3D = new Matrix4x3().set(
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 0,
+      0, 0, 1
+    );
+    const threeDToPlane = new Matrix3x4().set(
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 0, 1
+    );
+    return { planeToPaper, planeTo3D, threeDToPlane };
+  }
+
+  function createPVMatrices() {
+    const planeToPaper = new Matrix3().set(
+      1, 0, 800,
+      0, -1, 500,
+      0, 0, 1
+    );
+    const planeTo3D = new Matrix4x3().set(
+      1, 0, 0,
+      0, 0, 0,
+      0, 1, 0,
+      0, 0, 1
+    );
+    const threeDToPlane = new Matrix3x4().set(
+      1, 0, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    );
+    return { planeToPaper, planeTo3D, threeDToPlane };
+  }
 
   beforeEach(() => {
     world = new World();
@@ -133,7 +175,7 @@ describe('Initialization Operations', () => {
     });
   });
 
-  describe('AddProjectionPlaneOp', () => {
+  describe('AddProjectionPlaneFixedOp', () => {
     beforeEach(() => {
       // Create 3D plane first
       const point = new Vector4(0, 0, 0, 1);
@@ -141,8 +183,15 @@ describe('Initialization Operations', () => {
       new AddPlane3DFixedOp(point, normal, 'plane_3d_test', 'P_H').apply(world);
     });
 
-    it('should create projection plane', () => {
-      const op = new AddProjectionPlaneOp('plane_3d_test', 'horizontal', 'proj_plane_test');
+    it('should create projection plane with explicit matrices', () => {
+      const matrices = createPHMatrices();
+      const op = new AddProjectionPlaneFixedOp(
+        'plane_3d_test',
+        matrices.planeToPaper,
+        matrices.planeTo3D,
+        matrices.threeDToPlane,
+        'proj_plane_test'
+      );
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
@@ -154,7 +203,14 @@ describe('Initialization Operations', () => {
     });
 
     it('should undo projection plane creation', () => {
-      const op = new AddProjectionPlaneOp('plane_3d_test', 'horizontal', 'proj_undo');
+      const matrices = createPHMatrices();
+      const op = new AddProjectionPlaneFixedOp(
+        'plane_3d_test',
+        matrices.planeToPaper,
+        matrices.planeTo3D,
+        matrices.threeDToPlane,
+        'proj_undo'
+      );
       op.apply(world);
       
       expect(world.getProjectionPlaneById('proj_undo')).toBeDefined();
@@ -164,14 +220,21 @@ describe('Initialization Operations', () => {
       expect(world.getProjectionPlaneById('proj_undo')).toBeUndefined();
     });
 
-    it('should have valid parameters', () => {
-      const op = new AddProjectionPlaneOp('plane_3d', 'vertical', 'proj_test');
+    it('should have valid parameters with matrix arrays', () => {
+      const matrices = createPVMatrices();
+      const op = new AddProjectionPlaneFixedOp(
+        'plane_3d',
+        matrices.planeToPaper,
+        matrices.planeTo3D,
+        matrices.threeDToPlane,
+        'proj_test'
+      );
       
-      expect(op.parameters).toEqual({
-        plane3DId: 'plane_3d',
-        orientation: 'vertical',
-        projPlaneId: 'proj_test'
-      });
+      expect(op.parameters.plane3DId).toBe('plane_3d');
+      expect(op.parameters.projPlaneId).toBe('proj_test');
+      expect(op.parameters.planeToPaper2D).toBeDefined();
+      expect(op.parameters.planeTo3D).toBeDefined();
+      expect(op.parameters.threeDToPlane).toBeDefined();
     });
   });
 
@@ -180,7 +243,8 @@ describe('Initialization Operations', () => {
       const point = new Vector4(0, 0, 0, 1);
       const normal = new Vector4(0, 0, 1, 0);
       new AddPlane3DFixedOp(point, normal, 'plane_3d', 'P_H').apply(world);
-      new AddProjectionPlaneOp('plane_3d', 'horizontal', 'proj_plane').apply(world);
+      const matrices = createPHMatrices();
+      new AddProjectionPlaneFixedOp('plane_3d', matrices.planeToPaper, matrices.planeTo3D, matrices.threeDToPlane, 'proj_plane').apply(world);
     });
 
     it('should create locked origin point', () => {
@@ -229,8 +293,10 @@ describe('Initialization Operations', () => {
       const normalV = new Vector4(0, 1, 0, 0);
       new AddPlane3DFixedOp(pointV, normalV, 'plane_V', 'P_V').apply(world);
       
-      new AddProjectionPlaneOp('plane_H', 'horizontal', 'proj_H').apply(world);
-      new AddProjectionPlaneOp('plane_V', 'vertical', 'proj_V').apply(world);
+      const matricesH = createPHMatrices();
+      const matricesV = createPVMatrices();
+      new AddProjectionPlaneFixedOp('plane_H', matricesH.planeToPaper, matricesH.planeTo3D, matricesH.threeDToPlane, 'proj_H').apply(world);
+      new AddProjectionPlaneFixedOp('plane_V', matricesV.planeToPaper, matricesV.planeTo3D, matricesV.threeDToPlane, 'proj_V').apply(world);
     });
 
     it('should create hinge line', () => {
@@ -278,10 +344,12 @@ describe('Initialization Operations', () => {
 
       // Create two distinct planes so hinge line construction is valid
       new AddPlane3DFixedOp(point, normal, 'plane_3d_h', 'P_H').apply(world);
-      new AddProjectionPlaneOp('plane_3d_h', 'horizontal', 'proj_plane_h').apply(world);
+      const matricesH = createPHMatrices();
+      new AddProjectionPlaneFixedOp('plane_3d_h', matricesH.planeToPaper, matricesH.planeTo3D, matricesH.threeDToPlane, 'proj_plane_h').apply(world);
 
       new AddPlane3DFixedOp(point, normal, 'plane_3d_v', 'P_V').apply(world);
-      new AddProjectionPlaneOp('plane_3d_v', 'vertical', 'proj_plane_v').apply(world);
+      const matricesV = createPVMatrices();
+      new AddProjectionPlaneFixedOp('plane_3d_v', matricesV.planeToPaper, matricesV.planeTo3D, matricesV.threeDToPlane, 'proj_plane_v').apply(world);
 
       // Parent hinge line must exist before creating half-hinge lines
       new AddHingeLineOp('proj_plane_h', 'proj_plane_v', 'hl_test').apply(world);

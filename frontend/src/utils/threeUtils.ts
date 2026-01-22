@@ -173,6 +173,24 @@ export class Matrix4x3 {
     m.elements = [...this.elements];
     return m;
   }
+
+  /**
+   * Convert matrix to array (for serialization)
+   */
+  toArray(): number[] {
+    return [...this.elements];
+  }
+
+  /**
+   * Set matrix from array (for deserialization)
+   */
+  fromArray(array: number[]): Matrix4x3 {
+    if (array.length !== 12) {
+      throw new Error('Matrix4x3.fromArray: array must have 12 elements');
+    }
+    this.elements = [...array];
+    return this;
+  }
 }
 
 /**
@@ -290,6 +308,24 @@ export class Matrix3x4 {
     const m = new Matrix3x4();
     m.elements = [...this.elements];
     return m;
+  }
+
+  /**
+   * Convert matrix to array (for serialization)
+   */
+  toArray(): number[] {
+    return [...this.elements];
+  }
+
+  /**
+   * Set matrix from array (for deserialization)
+   */
+  fromArray(array: number[]): Matrix3x4 {
+    if (array.length !== 12) {
+      throw new Error('Matrix3x4.fromArray: array must have 12 elements');
+    }
+    this.elements = [...array];
+    return this;
   }
 }
 

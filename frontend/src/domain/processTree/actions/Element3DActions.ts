@@ -77,6 +77,41 @@ export function createAdd3DLineAction(
   };
 }
 
+export interface Add3DPlaneActionParameters extends ActionParameters {
+  planeId: string;
+  trace1Id: string;
+  trace2Id: string;
+  plane1Id: string;
+  plane2Id: string;
+  label?: string;
+}
+
+/**
+ * Create an action for adding a 3D plane from two trace lines
+ * 
+ * Dependencies: The 3D plane depends on its two trace line projections.
+ * When a trace line changes, the 3D plane must be invalidated and reconstructed.
+ */
+export function createAdd3DPlaneAction(
+  planeId: string,
+  trace1Id: string,
+  trace2Id: string,
+  plane1Id: string,
+  plane2Id: string,
+  label?: string
+): Action {
+  return {
+    id: generateActionId(),
+    type: 'action',
+    actionType: 'Add3DPlane',
+    timestamp: new Date(),
+    inputs: [trace1Id, trace2Id],  // Depends on 2D trace lines
+    outputs: [planeId],             // Produces 3D plane
+    parameters: { planeId, trace1Id, trace2Id, plane1Id, plane2Id, label },
+    description: label ? `Add 3D plane ${label}` : `Add 3D plane`
+  };
+}
+
 function generateActionId(): string {
   return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }

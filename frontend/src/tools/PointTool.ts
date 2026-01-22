@@ -16,9 +16,7 @@ import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
-import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
 
 /**
  * PointTool using ArgumentCollectorTool framework
@@ -64,13 +62,8 @@ export class PointTool extends ArgumentCollectorTool {
     const planeCoords = positionArg.planeCoords;
     const { planeId } = context;
 
-    // Create free point operation
-    const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planeCoords));
-    const pointId = result.outputs.pointId;
-    
-    // Record ProcessTree action
-    const action = createPointAction(pointId, planeId, planeCoords);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    // Use factory to create free point with ProcessTree action
+    PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords);
   }
 
   protected getCommandDescription(): string {

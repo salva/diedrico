@@ -17,9 +17,10 @@
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
  */
 
-import { Vector3, Vector4 } from 'three';
+import { Vector3, Vector4, Matrix3 } from 'three';
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import {
   createInitializePlane3DAction,
   createInitializeProjectionPlaneAction,
@@ -103,30 +104,44 @@ export class AddPlane3DFixedOp implements IOperation {
 }
 
 /**
- * AddProjectionPlaneOp - Create a projection plane
+ * AddProjectionPlaneFixedOp - Create a projection plane with explicit transformation matrices
  * 
  * Creates a projection plane (proj_plane_1, proj_plane_2, etc.) associated with a 3D plane.
+ * Takes explicit transformation matrices instead of orientation string for generic plane creation.
  */
-export class AddProjectionPlaneOp implements IOperation {
-  readonly type = 'AddProjectionPlane';
+export class AddProjectionPlaneFixedOp implements IOperation {
+  readonly type = 'AddProjectionPlaneFixed';
   readonly parameters: Record<string, any>;
   outputs: Record<string, any> = {};
   
   constructor(
     private readonly plane3DId: string,
-    private readonly orientation: 'horizontal' | 'vertical',
-    private readonly projPlaneId?: string
+    private readonly planeToPaper2D: Matrix3,
+    private readonly planeTo3D: Matrix4x3,
+    private readonly threeDToPlane: Matrix3x4,
+    private readonly projPlaneId?: string,
+    private readonly name?: string
   ) {
-    this.parameters = { plane3DId, orientation, projPlaneId };
+    this.parameters = { 
+      plane3DId, 
+      planeToPaper2D: planeToPaper2D.toArray(), 
+      planeTo3D: planeTo3D.toArray(),
+      threeDToPlane: threeDToPlane.toArray(),
+      projPlaneId,
+      name
+    };
   }
 
   apply(world: World): OperationResult {
     try {
       // Call element factory method - it handles ID generation and semantic references
       const projPlane = world.addProjectionPlane(
-        this.plane3DId, 
-        this.orientation, 
-        this.projPlaneId || this.outputs.projPlaneId
+        this.plane3DId,
+        this.planeToPaper2D,
+        this.planeTo3D,
+        this.threeDToPlane,
+        this.projPlaneId || this.outputs.projPlaneId,
+        this.name
       );
       
       // Store ID in outputs for redo support
@@ -136,7 +151,7 @@ export class AddProjectionPlaneOp implements IOperation {
       const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
       if (initSubprocess) {
         world.addAction(
-          createInitializeProjectionPlaneAction(projPlane.id, this.plane3DId, this.orientation),
+          createInitializeProjectionPlaneAction(projPlane.id, this.plane3DId, 'base'),
           undefined,
           initSubprocess.id
         );
@@ -157,13 +172,6 @@ export class AddProjectionPlaneOp implements IOperation {
   undo(world: World): void {
     if (this.outputs.projPlaneId) {
       (world as any).projectionPlanes.delete(this.outputs.projPlaneId);
-      
-      // Clear semantic reference
-      if (this.orientation === 'horizontal') {
-        (world as any).horizontalPlaneId = undefined;
-      } else {
-        (world as any).verticalPlaneId = undefined;
-      }
     }
   }
 
@@ -171,7 +179,9 @@ export class AddProjectionPlaneOp implements IOperation {
     return {
       type: this.type,
       plane3DId: this.plane3DId,
-      orientation: this.orientation,
+      planeToPaper2D: this.planeToPaper2D.toArray(),
+      planeTo3D: this.planeTo3D.toArray(),
+      threeDToPlane: this.threeDToPlane.toArray(),
       projPlaneId: this.outputs.projPlaneId
     };
   }

@@ -20,9 +20,7 @@ import type { Point2D } from '@/domain/world/Point';
 import type { Line2D } from '@/domain/world/Line';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddLine2DPerpendicularToLineOp } from '@/commands/operations/world/AddLineOp';
-import { createPerpendicularLineAction } from '@/domain/processTree/actions/CreatePerpendicularLineAction';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
 
 /**
  * PerpendicularLineTool using ArgumentCollectorTool framework
@@ -71,21 +69,13 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
     const referenceLine = args.get('referenceLine')!.element as Line2D;
     const throughPoint = args.get('throughPoint')!.element as Point2D;
     
-    // Create perpendicular line using collected arguments
-    const result = cmd.addAndExecute(
-      new AddLine2DPerpendicularToLineOp(planeId, referenceLine.id, throughPoint.id)
-    );
-    
-    const lineId = result.outputs.lineId;
-    
-    // Record ProcessTree action for dependency tracking
-    const action = createPerpendicularLineAction(
-      lineId,
+    // Factory handles operation AND ProcessTree action
+    LineSequenceFactory.createPerpendicularLine(
+      cmd,
       planeId,
       referenceLine.id,
       throughPoint.id
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
   }
 
   protected getCommandDescription(): string {

@@ -26,6 +26,13 @@
           <input type="checkbox" v-model="displayOptions.showGrid" @change="handleDisplayChange" />
           Show Grid
         </label>
+        <label 
+          class="control-label"
+          title="Show coordinate axes (X/Y/Z) at origin for spatial reference and debugging"
+        >
+          <input type="checkbox" v-model="displayOptions.showReferenceAxes" @change="handleDisplayChange" />
+          Show Reference Axes
+        </label>
       </div>
     </div>
   </div>
@@ -57,6 +64,7 @@
 import { ref, onMounted, onUnmounted, watch, inject } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import type { World } from '../../domain/world/World';
 import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
 import { useViewStore } from '../../stores/viewStore';
@@ -71,6 +79,7 @@ const canvasRef = ref<HTMLCanvasElement>();
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
+let labelRenderer: CSS2DRenderer;  // Phase 82: For axis labels
 let controls: OrbitControls;
 let element2DRenderer: Element2DRenderer3D;
 let animationFrameId: number;
@@ -107,7 +116,24 @@ function initThreeScene() {
   // Create camera
   const aspect = containerRef.value.clientWidth / containerRef.value.clientHeight;
   camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
-  camera.position.set(15, 15, 15); // Positioned to see both planes
+  
+  // Position camera at domain direction (1,1,1) looking at origin (0,0,0)
+  // Domain direction (1,1,1) represents top-right-back in domain coordinates
+  const cameraDistance = 30;
+  const domainDirection = new THREE.Vector3(1, 1, 1).normalize(); // Normalize as Vector3
+  const cameraPos = domainDirectionToThreeJS(domainDirection);
+  camera.position.set(
+    cameraPos.x * cameraDistance,
+    cameraPos.y * cameraDistance,
+    cameraPos.z * cameraDistance
+  );
+  
+  // Set camera up vector to align with domain Z axis (vertical)
+  // Domain Z (0,0,1) stays as (0,0,1) in Three.js (Z unchanged)
+  const domainUpDirection = new THREE.Vector3(0, 0, 1);
+  const upVector = domainDirectionToThreeJS(domainUpDirection);
+  camera.up.set(upVector.x, upVector.y, upVector.z);
+  
   camera.lookAt(0, 0, 0);
 
   // Create renderer
@@ -118,6 +144,14 @@ function initThreeScene() {
   });
   renderer.setSize(containerRef.value.clientWidth, containerRef.value.clientHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
+
+  // Create CSS2DRenderer for labels (Phase 82)
+  labelRenderer = new CSS2DRenderer();
+  labelRenderer.setSize(containerRef.value.clientWidth, containerRef.value.clientHeight);
+  labelRenderer.domElement.style.position = 'absolute';
+  labelRenderer.domElement.style.top = '0px';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  containerRef.value.appendChild(labelRenderer.domElement);
 
   // Create orbit controls
   controls = new OrbitControls(camera, renderer.domElement);
@@ -136,141 +170,113 @@ function initThreeScene() {
   directionalLight.position.set(10, 10, 10);
   scene.add(directionalLight);
 
-  // Add coordinate axes helper
-  const axesHelper = new THREE.AxesHelper(10);
-  scene.add(axesHelper);
-
   // Initialize Element2DRenderer3D service
   element2DRenderer = new Element2DRenderer3D(scene);
 
-  // Render initial planes
+  // Render initial state
   renderProjectionPlanes();
+  renderHingeLines();
+  render2DElements();
+  render3DElements();  // Render 3D elements including planes on initial load
+
+  // Render reference axes (Phase 82)
+  renderReferenceAxes();
 
   // Start animation loop
   animate();
 }
 
 /**
- * Render projection planes in 3D space
+ * Render projection plane grids in 3D space
+ * 
+ * Projection planes are 2D coordinate systems, NOT 3D surfaces.
+ * We only render their grids to show their orientation in space.
  */
 function renderProjectionPlanes() {
   console.log('[ThreeView] renderProjectionPlanes called, showPlanes=', displayOptions.value.showPlanes);
   
-  if (!displayOptions.value.showPlanes) return;
+  if (!displayOptions.value.showPlanes || !displayOptions.value.showGrid) return;
 
-  // Clear existing plane geometry
+  // Clear existing projection plane grids
   scene.children
-    .filter(child => child.userData.type === 'projection-plane')
+    .filter(child => child.userData.type === 'projection-plane-grid')
     .forEach(child => scene.remove(child));
 
-  // Render each projection plane
-  const planeCount = world.projectionPlanes.size;
-  console.log('[ThreeView] Number of projection planes:', planeCount);
+  // Get all projection planes and render their grids
+  const projectionPlanes = Array.from(world.projectionPlanes.values());
   
-  for (const plane of world.projectionPlanes.values()) {
-    console.log('[ThreeView] Processing plane:', plane.id, 'color:', plane.color);
+  console.log('[ThreeView] Number of projection planes:', projectionPlanes.length);
+  
+  for (const projPlane of projectionPlanes) {
+    console.log('[ThreeView] Processing projection plane:', projPlane.id);
     
-    const planeRealization = world.getProjectionPlane3DRealization(plane.id!);
-    console.log('[ThreeView] Plane realization for', plane.id, ':', planeRealization);
+    const planeRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+    console.log('[ThreeView] Plane realization for', projPlane.id, ':', planeRealization);
     
     if (!planeRealization) {
-      console.warn('[ThreeView] No 3D realization for plane', plane.id);
+      console.warn('[ThreeView] No 3D realization for projection plane', projPlane.id);
       continue;
     }
 
-    // Create plane mesh (semi-transparent)
-    const planeSize = 100; // Size of visual plane representation (increased for visibility)
-    const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+    // Extract transformation from projection plane realization
+    const matrixDomain = planeRealization.planeTo3D;
+    const e = matrixDomain.elements;
     
-    // Use plane's color property (hex string like '#2196F3')
-    const planeColor = parseInt(plane.color.replace('#', '0x'));
-    console.log('[ThreeView] Plane color:', plane.color, '→', planeColor.toString(16));
+    // Extract origin point in DOMAIN coordinates
+    const originW = e[11]; // m43 - homogeneous w
+    const Ox = e[2] / originW;  // m13 / w
+    const Oy = e[5] / originW;  // m23 / w
+    const Oz = e[8] / originW;  // m33 / w
     
-    const material = new THREE.MeshBasicMaterial({
-      color: planeColor,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.3
-    });
-    const planeMesh = new THREE.Mesh(geometry, material);
-
-    // Apply transformation from planeRealization.planeTo3D matrix
-    const matrix = planeRealization.planeTo3D;
-    const e = matrix.elements;
-    console.log('[ThreeView] planeTo3D matrix elements:', e);
+    // Extract U-axis and V-axis directions in DOMAIN coordinates
+    const Ux = e[0], Uy = e[3], Uz = e[6];
+    const Vx = e[1], Vy = e[4], Vz = e[7];
     
-    // Matrix4x3 transforms (u,v,1) → (x,y,z,w) for homogeneous 2D→3D conversion
-    // Elements: [m11,m12,m13, m21,m22,m23, m31,m32,m33, m41,m42,m43]
-    // Row 1: x = m11*u + m12*v + m13*1
-    // Row 2: y = m21*u + m22*v + m23*1  
-    // Row 3: z = m31*u + m32*v + m33*1
-    // Row 4: w = m41*u + m42*v + m43*1 (homogeneous coordinate, should = 1)
-    
-    // For Three.js, we need a 4x4 matrix where:
-    // - First 3 columns = basis vectors (u direction, v direction, normal)
-    // - Fourth column = translation (origin point in 3D)
-    
-    // Extract basis vectors:
-    // U-axis direction: transform (1,0,0) → (m11, m21, m31) / w
-    // V-axis direction: transform (0,1,0) → (m12, m22, m32) / w
-    // Normal direction: cross product of U and V axes
-    // Origin: transform (0,0,1) → (m13, m23, m33) / m43
-    
-    const originW = e[11]; // m43 - homogeneous w for origin point
-    const originX = e[2] / originW;  // m13 / w
-    const originY = e[5] / originW;  // m23 / w
-    const originZ = e[8] / originW;  // m33 / w
-    
-    console.log('[ThreeView] Plane origin in 3D (domain coords):', [originX, originY, originZ]);
-    
-    // Compute the normal as the cross product of U-axis and V-axis (in domain coords)
-    // U-axis: first column [e[0], e[3], e[6]]
-    // V-axis: second column [e[1], e[4], e[7]]
-    const uAxisDomain = new THREE.Vector3(e[0], e[3], e[6]);
-    const vAxisDomain = new THREE.Vector3(e[1], e[4], e[7]);
-    
-    // Convert axes to Three.js coordinates (invert Y)
-    const uAxis = domainDirectionToThreeJS(uAxisDomain);
-    const vAxis = domainDirectionToThreeJS(vAxisDomain);
-    
-    // Normal in Three.js coordinates
+    // Compute normal as cross product
+    const uAxis = new THREE.Vector3(Ux, Uy, Uz);
+    const vAxis = new THREE.Vector3(Vx, Vy, Vz);
     const normal = new THREE.Vector3().crossVectors(uAxis, vAxis).normalize();
+    const Nx = normal.x, Ny = normal.y, Nz = normal.z;
     
-    // Origin in Three.js coordinates
-    const originThree = new THREE.Vector3(originX, -originY, originZ);
-    
-    console.log('[ThreeView] U-axis (domain):', [uAxisDomain.x, uAxisDomain.y, uAxisDomain.z]);
-    console.log('[ThreeView] V-axis (domain):', [vAxisDomain.x, vAxisDomain.y, vAxisDomain.z]);
-    console.log('[ThreeView] U-axis (three):', [uAxis.x, uAxis.y, uAxis.z]);
-    console.log('[ThreeView] V-axis (three):', [vAxis.x, vAxis.y, vAxis.z]);
-    console.log('[ThreeView] Normal (three):', [normal.x, normal.y, normal.z]);
-    console.log('[ThreeView] Origin (three):', [originThree.x, originThree.y, originThree.z]);
-    
-    // Build THREE.Matrix4 with Three.js coordinate basis and translation
+    // Build THREE.Matrix4 transformation matrix
     const mat4 = new THREE.Matrix4();
     mat4.set(
-      uAxis.x, vAxis.x, normal.x, originThree.x,   // Row 0: [Ux, Vx, Nx, Tx]
-      uAxis.y, vAxis.y, normal.y, originThree.y,   // Row 1: [Uy, Vy, Ny, Ty]
-      uAxis.z, vAxis.z, normal.z, originThree.z,   // Row 2: [Uz, Vz, Nz, Tz]
-      0,       0,       0,        1                 // Row 3: [0, 0, 0, 1]
+      Ux,  Uy,  Uz,  0,
+      Vx,  Vy,  Vz,  0,
+      Nx,  Ny,  Nz,  0,
+      Ox,  Oy,  Oz,  1
     );
-    console.log('[ThreeView] THREE.Matrix4:', mat4.toArray());
+    // Apply Y-negation for domain→Three.js conversion
+    const e4 = mat4.elements;
+    e4[1] = -e4[1];   e4[5] = -e4[5];   e4[9] = -e4[9];   e4[13] = -e4[13];
+
+    // Render only the grid (not the plane surface)
+    // Create a grid without center axis lines (GridHelper adds prominent center lines)
+    const gridSize = 150;  // Match the size of 3D plane surfaces
+    const divisions = 20;
+    const step = gridSize / divisions;
+    const halfSize = gridSize / 2;
     
-    planeMesh.applyMatrix4(mat4);
-    console.log('[ThreeView] planeMesh position after transform:', planeMesh.position.toArray());
-
-    planeMesh.userData.type = 'projection-plane';
-    planeMesh.userData.planeId = plane.id;
-    scene.add(planeMesh);
-    console.log('[ThreeView] Added plane mesh to scene');
-
-    // Add plane border (grid)
-    if (displayOptions.value.showGrid) {
-      const gridHelper = new THREE.GridHelper(planeSize, 20, 0x888888, 0xcccccc);
-      gridHelper.applyMatrix4(mat4);
-      gridHelper.userData.type = 'projection-plane';
-      scene.add(gridHelper);
+    const vertices = [];
+    for (let i = 0; i <= divisions; i++) {
+      const coord = -halfSize + i * step;
+      // Lines parallel to U-axis
+      vertices.push(-halfSize, coord, 0);
+      vertices.push(halfSize, coord, 0);
+      // Lines parallel to V-axis
+      vertices.push(coord, -halfSize, 0);
+      vertices.push(coord, halfSize, 0);
     }
+    
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    const material = new THREE.LineBasicMaterial({ color: 0xcccccc, opacity: 0.5, transparent: true });
+    const gridMesh = new THREE.LineSegments(geometry, material);
+    gridMesh.applyMatrix4(mat4);
+    gridMesh.userData.type = 'projection-plane-grid';
+    gridMesh.userData.planeId = projPlane.id;
+    scene.add(gridMesh);
+    console.log('[ThreeView] Added projection plane grid for', projPlane.id);
   }
 }
 
@@ -297,6 +303,11 @@ function render3DElements() {
   scene.children
     .filter(child => child.userData.type === '3d-element')
     .forEach(child => scene.remove(child));
+
+  // Early return if planes are hidden - this controls visibility of 3D plane surfaces
+  if (!displayOptions.value.showPlanes) {
+    return;
+  }
 
   try {
     // Render 3D Points
@@ -426,66 +437,58 @@ function render3DElements() {
       scene.add(endSphere);
     }
 
-    // Render 3D Planes (user-created, Phase 78)
-    const planes3D = world.getAll3DPlanesUser();
+    // Render 3D Planes (geometric surfaces)
+    const planes3D = world.getAllPlanes();
     console.log('[ThreeView] Rendering', planes3D.length, '3D planes');
     
     for (const plane of planes3D) {
-      const realization = world.get3DPlaneRealization(plane.id!);
-      if (!realization || !realization.isFeasible()) {
+      const planeRealization = world.get3DPlaneRealization(plane.id!);
+      if (!planeRealization || !planeRealization.feasible) {
         console.warn('[ThreeView] Skipping plane - not feasible:', plane.id);
         continue;
       }
-      
-      // Get plane equation: ax + by + cz + d = 0
-      // normal = (a, b, c, d) where (a,b,c) is the normal vector
-      const normalVec = realization.getNormalVector();  // Gets (a, b, c, 0)
-      const normalDir = new THREE.Vector3(normalVec.x, normalVec.y, normalVec.z).normalize();
-      
-      // Find a point on the plane by solving for a coordinate
-      // If a != 0: x = -d/a (when y=0, z=0)
-      // If b != 0: y = -d/b (when x=0, z=0)
-      // If c != 0: z = -d/c (when x=0, y=0)
-      let planeOrigin = new THREE.Vector3(0, 0, 0);
-      const d = realization.normal.w;
-      
-      if (Math.abs(normalVec.x) > 0.01) {
-        planeOrigin.x = -d / normalVec.x;
-      } else if (Math.abs(normalVec.y) > 0.01) {
-        planeOrigin.y = -d / normalVec.y;
-      } else if (Math.abs(normalVec.z) > 0.01) {
-        planeOrigin.z = -d / normalVec.z;
-      }
-      
-      // Create plane geometry (semi-transparent, larger than projection planes)
+
+      // Create plane mesh (semi-transparent surface)
       const planeSize = 150;
       const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
       
-      // Use a distinct color for user-created planes (purple/magenta)
       const material = new THREE.MeshBasicMaterial({
-        color: 0x9C27B0,  // Purple for user-created planes
+        color: 0xBDBDBD,  // Light gray for 3D planes (provides neutral background for blue 2D elements)
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.4  // More opaque than projection planes
+        opacity: 0.4
       });
       const planeMesh = new THREE.Mesh(geometry, material);
+
+      // Extract plane equation: ax + by + cz + d = 0
+      const normal = planeRealization.normal;
+      const normalVec = new THREE.Vector3(normal.x, normal.y, normal.z);
+      normalVec.normalize();
       
-      // Orient plane to match normal direction
-      // The plane geometry starts in XY plane with normal (0,0,1)
-      // We need to rotate it to align with our normal
-      planeMesh.position.copy(planeOrigin);
-      planeMesh.lookAt(
-        planeOrigin.x + normalDir.x,
-        planeOrigin.y + normalDir.y,
-        planeOrigin.z + normalDir.z
+      // Find a point on the plane: P = -d * N / |N|^2
+      const d = normal.w;
+      const normalLengthSq = normal.x * normal.x + normal.y * normal.y + normal.z * normal.z;
+      const originPoint = new THREE.Vector3(
+        -d * normal.x / normalLengthSq,
+        -d * normal.y / normalLengthSq,
+        -d * normal.z / normalLengthSq
       );
       
+      // Apply domain→Three.js Y-negation
+      originPoint.y = -originPoint.y;
+      normalVec.y = -normalVec.y;
+      
+      // Orient plane mesh to match the normal
+      const defaultNormal = new THREE.Vector3(0, 0, 1);
+      const quaternion = new THREE.Quaternion();
+      quaternion.setFromUnitVectors(defaultNormal, normalVec);
+      
+      planeMesh.quaternion.copy(quaternion);
+      planeMesh.position.copy(originPoint);
       planeMesh.userData.type = '3d-element';
       planeMesh.userData.elementType = 'plane';
       planeMesh.userData.elementId = plane.id;
       scene.add(planeMesh);
-      
-      console.log('[ThreeView] Added 3D plane:', plane.id, 'at origin:', planeOrigin.toArray(), 'normal:', normalDir.toArray());
     }
 
   } catch (error) {
@@ -579,6 +582,97 @@ function renderHingeLines() {
 }
 
 /**
+ * Render reference coordinate axes at origin (Phase 82)
+ * 
+ * Displays DOMAIN coordinate system axes (Monge projection) with labels:
+ * - X: Red, points right (same in both systems)
+ * - Y: Green, points away from viewer (depth, inverted to -Y in Three.js)
+ * - Z: Blue, points up (vertical in domain, rendered as Y in Three.js)
+ * 
+ * Domain coordinate system (Monge):
+ * - +X = right
+ * - +Y = away from viewer (into screen)
+ * - +Z = up (vertical)
+ * 
+ * Helps understand domain model coordinates and their conversion to Three.js rendering.
+ */
+function renderReferenceAxes() {
+  // Remove existing reference axes and labels
+  scene.children
+    .filter(child => child.userData.type === 'reference-axis' || child.userData.type === 'reference-axis-label')
+    .forEach(child => scene.remove(child));
+  
+  if (!displayOptions.value.showReferenceAxes) {
+    return;  // Axes hidden
+  }
+  
+  const origin = new THREE.Vector3(0, 0, 0);
+  const axisLength = 15;  // Units in Three.js world space
+  
+  // Domain X-axis: convert (1,0,0) domain direction to Three.js
+  const xDirDomain = new THREE.Vector3(1, 0, 0);
+  const xDir = domainDirectionToThreeJS(xDirDomain);
+  const xArrow = new THREE.ArrowHelper(xDir, origin, axisLength, 0xFF0000, 1, 0.5);
+  xArrow.userData.type = 'reference-axis';
+  xArrow.userData.axis = 'x';
+  scene.add(xArrow);
+  createAxisLabel('X', xDir, axisLength);
+  
+  // Domain Y-axis: convert (0,1,0) domain direction to Three.js
+  // In Monge projection, Y points away from viewer (depth)
+  const yDirDomain = new THREE.Vector3(0, 1, 0);
+  const yDir = domainDirectionToThreeJS(yDirDomain);
+  const yArrow = new THREE.ArrowHelper(yDir, origin, axisLength, 0x00FF00, 1, 0.5);
+  yArrow.userData.type = 'reference-axis';
+  yArrow.userData.axis = 'y';
+  scene.add(yArrow);
+  createAxisLabel('Y', yDir, axisLength);
+  
+  // Domain Z-axis: convert (0,0,1) domain direction to Three.js
+  // In Monge projection, Z is the vertical axis (up)
+  const zDirDomain = new THREE.Vector3(0, 0, 1);
+  const zDir = domainDirectionToThreeJS(zDirDomain);
+  const zArrow = new THREE.ArrowHelper(zDir, origin, axisLength, 0x0000FF, 1, 0.5);
+  zArrow.userData.type = 'reference-axis';
+  zArrow.userData.axis = 'z';
+  scene.add(zArrow);
+  createAxisLabel('Z', zDir, axisLength);
+}
+
+/**
+ * Create a CSS2D label for an axis arrow (Phase 82)
+ * 
+ * @param text - Label text (e.g., "X", "Y", "Z")
+ * @param direction - Unit direction vector of the axis
+ * @param length - Length of the arrow in world units
+ */
+function createAxisLabel(text: string, direction: THREE.Vector3, length: number) {
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'axis-label';
+  labelDiv.textContent = text;
+  labelDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+  labelDiv.style.padding = '4px 6px';
+  labelDiv.style.border = '1px solid #333';
+  labelDiv.style.borderRadius = '3px';
+  labelDiv.style.fontSize = '14px';
+  labelDiv.style.fontWeight = 'bold';
+  labelDiv.style.fontFamily = 'sans-serif';
+  labelDiv.style.color = '#333';
+  labelDiv.style.userSelect = 'none';
+  labelDiv.style.zIndex = '1000';
+  
+  const label = new CSS2DObject(labelDiv);
+  label.userData.type = 'reference-axis-label';
+  
+  // Position at arrow tip + 1 unit offset to clear arrow head
+  const labelPosition = direction.clone().multiplyScalar(length + 1);
+  label.position.copy(labelPosition);
+  
+  // Add label directly to scene (not to arrow) for proper positioning
+  scene.add(label);
+}
+
+/**
  * Handle display option changes
  */
 function handleDisplayChange() {
@@ -586,6 +680,7 @@ function handleDisplayChange() {
   renderHingeLines();
   render2DElements();
   render3DElements(); // Phase 78
+  renderReferenceAxes(); // Phase 82
 }
 
 /**
@@ -596,13 +691,14 @@ function animate() {
   
   controls.update(); // Required for damping
   renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);  // Phase 82: Render CSS2D labels
 }
 
 /**
  * Handle window resize
  */
 function handleResize() {
-  if (!containerRef.value || !camera || !renderer) return;
+  if (!containerRef.value || !camera || !renderer || !labelRenderer) return;
 
   const width = containerRef.value.clientWidth;
   const height = containerRef.value.clientHeight;
@@ -611,6 +707,7 @@ function handleResize() {
   camera.updateProjectionMatrix();
 
   renderer.setSize(width, height);
+  labelRenderer.setSize(width, height);  // Phase 82: Resize label renderer
 }
 
 /**

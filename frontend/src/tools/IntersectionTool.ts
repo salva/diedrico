@@ -24,11 +24,6 @@ import type { Element2D } from '@/domain/world/Element2D';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
-import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
-import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
-import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
-import { createSiblingIntersectionPointAction } from '@/domain/processTree/actions/CreateSiblingIntersectionPointAction';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 import { 
   areLinesParallel, 
   intersectLineCircle, 
@@ -98,11 +93,8 @@ export class IntersectionTool extends ArgumentCollectorTool {
     const planeCoords = elem2Value.planeCoords; // Use second click position for index calculation
     const { planeId, world } = context;
 
-    let pointId: string;
-    let siblingPointId: string | null = null;
-    let actionCreated = false;
-    
     // Determine intersection type and create appropriate intersection
+    // Factory handles operation AND ProcessTree actions (including siblings)
     if (element1 instanceof Line2D && element2 instanceof Line2D) {
       // Line-Line intersection
       
@@ -118,22 +110,10 @@ export class IntersectionTool extends ArgumentCollectorTool {
         throw new Error('Lines are parallel and do not intersect.');
       }
       
-      // Create line-line intersection
-      const result = IntersectionSequenceFactory.createLineLineIntersection(
+      // Factory handles operation AND ProcessTree actions
+      IntersectionSequenceFactory.createLineLineIntersection(
         cmd, planeId, element1.id, element2.id, world
       );
-      pointId = result.pointId;
-      siblingPointId = result.siblingPointId ?? null;
-      
-      // Record ProcessTree action
-      const action = createLineLineIntersectionPointAction(
-        pointId,
-        planeId,
-        element1.id,
-        element2.id
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      actionCreated = true;
       
     } else if (element1 instanceof Line2D && element2 instanceof Circle2D) {
       // Line-Circle intersection (element1 is line, element2 is circle)
@@ -145,23 +125,10 @@ export class IntersectionTool extends ArgumentCollectorTool {
         throw new Error('Line and circle do not intersect.');
       }
       
-      // Create line-circle intersection
-      const result = IntersectionSequenceFactory.createLineCircleIntersection(
+      // Factory handles operation AND ProcessTree actions
+      IntersectionSequenceFactory.createLineCircleIntersection(
         cmd, planeId, element1.id, element2.id, index, world
       );
-      pointId = result.pointId;
-      siblingPointId = result.siblingPointId ?? null;
-      
-      // Record ProcessTree action
-      const action = createLineCircleIntersectionPointAction(
-        pointId,
-        planeId,
-        element1.id,
-        element2.id,
-        index
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      actionCreated = true;
       
     } else if (element1 instanceof Circle2D && element2 instanceof Line2D) {
       // Line-Circle intersection (element1 is circle, element2 is line)
@@ -173,23 +140,10 @@ export class IntersectionTool extends ArgumentCollectorTool {
         throw new Error('Circle and line do not intersect.');
       }
       
-      // Create line-circle intersection
-      const result = IntersectionSequenceFactory.createLineCircleIntersection(
+      // Factory handles operation AND ProcessTree actions
+      IntersectionSequenceFactory.createLineCircleIntersection(
         cmd, planeId, element2.id, element1.id, index, world
       );
-      pointId = result.pointId;
-      siblingPointId = result.siblingPointId ?? null;
-      
-      // Record ProcessTree action
-      const action = createLineCircleIntersectionPointAction(
-        pointId,
-        planeId,
-        element2.id,
-        element1.id,
-        index
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      actionCreated = true;
       
     } else if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
       // Circle-Circle intersection
@@ -201,46 +155,13 @@ export class IntersectionTool extends ArgumentCollectorTool {
         throw new Error('Circles do not intersect.');
       }
       
-      // Create circle-circle intersection
-      const result = IntersectionSequenceFactory.createCircleCircleIntersection(
+      // Factory handles operation AND ProcessTree actions
+      IntersectionSequenceFactory.createCircleCircleIntersection(
         cmd, planeId, element1.id, element2.id, index, world
       );
-      pointId = result.pointId;
-      siblingPointId = result.siblingPointId ?? null;
-      
-      // Record ProcessTree action
-      const action = createCircleCircleIntersectionPointAction(
-        pointId,
-        planeId,
-        element1.id,
-        element2.id,
-        index
-      );
-      cmd.addAndExecute(new AddProcessTreeActionOp(action));
-      actionCreated = true;
       
     } else {
       throw new Error('Unsupported element type combination for intersection.');
-    }
-    
-    if (!actionCreated) {
-      throw new Error('Failed to create ProcessTree action');
-    }
-    
-    // Record ProcessTree action for sibling intersection (if created)
-    if (siblingPointId) {
-      const primaryPoint = world.getPoint2D(pointId);
-      if (primaryPoint) {
-        const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
-        if (siblingPlaneId) {
-          const siblingAction = createSiblingIntersectionPointAction(
-            siblingPointId,
-            siblingPlaneId,
-            pointId
-          );
-          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
-        }
-      }
     }
   }
 

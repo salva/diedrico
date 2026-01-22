@@ -18,6 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Add a shortcut for changing the active projection plane to the next one. Using Tab for instance.
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
@@ -144,6 +145,78 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **Fix Auxiliary Projection Plane Grid Coordinate System (Phase 82.1)** - ✅ PLANNED (Jan 22, 2026)
+  - **User Requirement**: "the grid for the auxiliary projection plane is not being correctly calculated. We need to determine for that plane the directions for its intrinsic vector base <u, v>"
+  - **Problem**: Auxiliary projection plane grids render incorrectly due to improper coordinate system computation (V-axis uses cross with plane normal, origin is arbitrary point on T1)
+  - **Solution**: Use stable double cross product for V-axis `v = normalize(t1 × (t1 × t2))` and geometric T1-T2 intersection for origin
+  - **Mathematical Specification**:
+    - U-axis: `u = normalize(t1_direction)` (already correct - direction of hinge T1)
+    - V-axis: `v = normalize(t1 × (t1 × t2))` where t1, t2 are 3D direction vectors
+      - Double cross product ensures V is perpendicular to U AND lies in plane P (no ambiguity)
+    - Origin: Intersection of T1 and T2 in 3D space (natural meeting point of defining traces)
+  - **Implementation**: 
+    - Add `computeLineLineIntersection3D()` helper in projectionPlaneUtils.ts
+    - Update `computeProjectionPlaneMatrices()` V-axis and origin calculations
+    - Remove orientation flipping logic (no longer needed with stable V-axis)
+  - **UI Impact**: Grids on auxiliary projection planes now geometrically correct, axes perpendicular, origin at trace intersection
+  - **Specifications**:
+    - ui-spec.md §Phase 82.1 (lines 1917+): User-visible grid alignment fix
+    - data-model.md §Phase 82.1 (lines 13777+): Technical algorithm specification (~190 lines)
+  - **Tasks**: tasks.md Phase 82.1 (T1220a-T1220g: 7 tasks)
+    - Helper function: computeLineLineIntersection3D (with tests for parallel/skew/intersecting lines)
+    - Update: V-axis computation with double cross product
+    - Update: Origin computation with T1-T2 intersection
+    - Unit tests: Orthogonality, normalization, plane containment, origin on traces
+    - Integration test: Verify grid renders correctly with QuickProjectionSetupTool
+  - **Benefits**:
+    - Geometrically correct grids (perpendicular axes, proper origin)
+    - No ambiguity in plane orientation
+    - Stable computation with no edge cases or flipping artifacts
+  - **Status**: All planning documents complete, ready for implementation
+
+* [x] **Create Projection Plane Tool (Phase 82)** - ✅ PLANNED (Jan 17, 2026)
+  - **User Requirement**: "Add support for defining new projection planes (folding a 3d plane over other already existing projection plane)"
+  - **Problem**: Application only has two fixed projection planes (P_H, P_V). Many dihedral problems require auxiliary projection planes at specific orientations.
+  - **Solution**: Implement 3-step sequential tool using ArgumentCollectorTool: (1) T1 hinge trace selection, (2) T2 other trace selection, (3) T2' position line construction
+  - **Architecture**:
+    - **Base Class**: `ProjectionPlane` (abstract) declares `realize3D() → ProjectionPlaneRealization3D`
+    - **Fixed Planes**: `BaseProjectionPlane` extends ProjectionPlane (P_H, P_V with pre-computed matrices)
+    - **Auxiliary Planes**: `AuxiliaryProjectionPlane` extends ProjectionPlane (computes matrices from trace dependencies)
+    - Tool: `CreateProjectionPlaneTool` extends ArgumentCollectorTool with validators
+    - Domain classes: `Plane3DByTraces` (3D plane from two traces), `HingeLine` (fold between planes)
+    - Operations: `AddPlane3DByTracesOp`, `AddAuxiliaryProjectionPlaneOp` (stores trace IDs, NOT matrices), `AddHingeLineOp` (all undoable)
+    - **Realization Pattern**: Both BaseProjectionPlane and AuxiliaryProjectionPlane implement realize3D() returning ProjectionPlaneRealization3D (same type)
+    - **Parametric Behavior**: AuxiliaryProjectionPlane matrices recalculate automatically when trace lines move (follows Point3DFromProjections pattern)
+    - **Fixed vs Auxiliary**: BaseProjectionPlane returns constant matrices, AuxiliaryProjectionPlane computes from traces using `computeProjectionPlaneMatrices(t1, t2, t2')`
+    - Validation: T1/T2 on different planes, T2'/T1 on same plane, geometric compatibility
+    - T2' dual purpose: (a) orientation selector (which way to unfold), (b) educational requirement (forces understanding)
+    - Warning system: Position tolerance ±1 pixel (pedagogical warning, not blocking error)
+  - **Pedagogical Goals** (ui-spec.md §Create Projection Plane Tool):
+    - User constructs T2' to learn unfolding geometry (not auto-computed)
+    - System validates T2' position with visual feedback (yellow dashed expected line)
+    - Warning if position differs, but creation still allowed
+  - **Key Requirements (FR-056)**:
+    - 3-step sequential workflow with validation at each step
+    - System computes transformation matrices from T1, T2, T2' inputs
+    - Parametric: planes update when trace lines move
+    - Full undo/redo support maintaining system consistency
+  - **Specifications**:
+    - spec.md FR-056 (lines 1577-1579): Functional requirement
+    - ui-spec.md §Create Projection Plane Tool (lines 1205-1335): UI workflow and pedagogical rationale (~130 lines)
+    - data-model.md §Phase 82 (lines 13686+): Implementation architecture (~430 lines)
+  - **Tasks**: tasks.md Phase 82 (T1198-T1220: 23 tasks)
+    - Domain: Plane3DByTraces class, matrix computation utilities
+    - Operations: 3 new operations (all undoable)
+    - Tool: CreateProjectionPlaneTool with 3-step validation
+    - Visual feedback: Expected T2' position overlay
+    - Testing: Unit (6 tasks), integration (3 tasks), E2E (1 task)
+  - **Benefits**:
+    - Enables complex dihedral constructions requiring auxiliary planes
+    - Pedagogically sound 3-step process reinforces spatial reasoning
+    - Parametric system: planes update automatically when dependencies change
+    - Extensible foundation for advanced plane-based constructions
+  - **Status**: All planning documents complete, ready for implementation
 
 * [x] **ProcessTree Action Registration as Operation (Phase 81)** - ✅ PLANNED (Jan 19, 2026)
   - **User Requirement**: "ok, i see, the issue is that that should also be wrapped as an Op so the action is removed when the command is undone!"

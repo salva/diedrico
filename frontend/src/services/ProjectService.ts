@@ -17,7 +17,8 @@
 import { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
-import { Vector4 } from 'three';
+import { Vector4, Matrix3 } from 'three';
+import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 
 // Import all operation classes for deserialization
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -37,7 +38,7 @@ import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddInterse
 import {
   CreateInitializationSubprocessOp,
   AddPlane3DFixedOp,
-  AddProjectionPlaneOp,
+  AddProjectionPlaneFixedOp,
   AddOriginPoint2DOp,
   AddHingeLineOp,
   AddHalfHingeLine2DOp,
@@ -264,8 +265,18 @@ export class ProjectService {
         );
         return new AddPlane3DFixedOp(point, normal, parameters.planeId, parameters.label);
       
-      case 'AddProjectionPlane':
-        return new AddProjectionPlaneOp(parameters.projPlaneId, parameters.planeId, parameters.orientation);
+      case 'AddProjectionPlaneFixed':
+        // Deserialize transformation matrices
+        const planeToPaper2D = new Matrix3().fromArray(parameters.planeToPaper2D);
+        const planeTo3D = new Matrix4x3().fromArray(parameters.planeTo3D);
+        const threeDToPlane = new Matrix3x4().fromArray(parameters.threeDToPlane);
+        return new AddProjectionPlaneFixedOp(
+          parameters.plane3DId,
+          planeToPaper2D,
+          planeTo3D,
+          threeDToPlane,
+          parameters.projPlaneId
+        );
       
       case 'AddOriginPoint2D':
         return new AddOriginPoint2DOp(parameters.projPlaneId, parameters.localPosition);

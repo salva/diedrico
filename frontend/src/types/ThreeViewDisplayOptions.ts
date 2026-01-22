@@ -14,6 +14,9 @@ export interface ThreeViewDisplayOptions {
   
   /** Show 3D coordinate grid */
   showGrid: boolean;
+  
+  /** Show reference coordinate axes (X/Y/Z) at origin (Phase 82) */
+  showReferenceAxes: boolean;
 }
 
 /**
@@ -23,5 +26,6 @@ export const defaultThreeViewDisplayOptions: ThreeViewDisplayOptions = {
   showPlanes: true,
   show2DElementsOnPlanes: false,  // Disabled by default
   showLinkingVisuals: false,
-  showGrid: true
+  showGrid: true,
+  showReferenceAxes: true  // Enabled by default for orientation
 };

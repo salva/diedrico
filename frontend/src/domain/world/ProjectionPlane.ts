@@ -1,5 +1,18 @@
 /**
- * ProjectionPlane - 2D surface where 2D elements exist
+ * ProjectionPlane - Abstract base class for all projection planes
+ * 
+ * ARCHITECTURAL PRINCIPLE - Shared Realization Pattern:
+ * Both BaseProjectionPlane (fixed P_H, P_V) and AuxiliaryProjectionPlane (user-created)
+ * extend this class and implement realize3D() returning ProjectionPlaneRealization3D.
+ * 
+ * This ensures uniform treatment:
+ * - World.getProjectionPlane3DRealization() works for ALL plane types
+ * - Rendering code (ThreeView, SvgCanvas) treats all planes uniformly
+ * - No special-casing based on plane type
+ * 
+ * Two subclasses with different computation strategies:
+ * - BaseProjectionPlane: realize3D() returns pre-computed constant matrices
+ * - AuxiliaryProjectionPlane: realize3D() computes matrices from trace dependencies
  * 
  * This class represents the DEFINITION/RULE of a projection plane.
  * Actual transformation matrices are stored in PlaneRealization objects.
@@ -25,6 +38,7 @@
 import { Matrix3, Vector3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { buildElementId } from './ElementId';
+import { computeProjectionPlaneMatrices } from '@/utils/projectionPlaneUtils';
 import type { Point2D, Point2DRealization2D } from './Point';
 import { 
   FreePoint2D,
@@ -1314,14 +1328,18 @@ export abstract class ProjectionPlane {
    * Calculate the 2D realization (transformation matrices) for this projection plane
    * For base planes: returns predetermined transforms
    * For auxiliary planes: computes from trace/hinge geometry
+   * 
+   * @param world - World instance for element lookup (auxiliary planes need this)
    */
-  abstract realize2D(): ProjectionPlaneRealization2D;
+  abstract realize2D(world: any): ProjectionPlaneRealization2D;
 
   /**
    * Calculate the 3D realization (transformation matrix) for this projection plane
    * Transforms plane intrinsic coordinates to 3D space coordinates
+   * 
+   * @param world - World instance for element lookup (auxiliary planes need this)
    */
-  abstract realize3D(): ProjectionPlaneRealization3D;
+  abstract realize3D(world: any): ProjectionPlaneRealization3D;
 }
 
 /**
@@ -1373,132 +1391,14 @@ export class BaseProjectionPlane extends ProjectionPlane {
     }
     return cloned;
   }
-
-  /**
-   * Create P_H (horizontal projection plane)
-   * Fixed position: horizontal plane at z=0
-   */
-  static createPH(): BaseProjectionPlane {
-    // P_H: Horizontal projection plane at z=0
-    // Transform: x' = u + 800, y' = -v + 500 (flip v so P_H content goes upward)
-    // HL_HV at v=0 (plane intrinsic) → y' = 500 (hinge line at canvas middle)
-    // Positive v (away from HL) → y' < 500 (above the hinge line on screen)
-    // Matrix3.set() uses ROW-MAJOR: set(n11, n12, n13, n21, n22, n23, n31, n32, n33)
-    // Matrix layout:
-    // [n11  n12  n13]   [ 1   0  800]
-    // [n21  n22  n23] = [ 0  -1  500]
-    // [n31  n32  n33]   [ 0   0    1]
-    const planeToPaper = new Matrix3().set(
-      1, 0, 800,     // Row 1: x' = 1*u + 0*v + 800*1 (center horizontally)
-      0, -1, 500,    // Row 2: y' = 0*u + (-1)*v + 500*1 (flip and center, P_H above HL)
-      0, 0, 1        // Row 3: w' = 0*u + 0*v + 1*1
-    );
-    
-    // Compute inverse - standard matrix inversion works for any transform
-    const paperToPlane = planeToPaper.clone().invert();
-    
-    // 3D transformation: (u,v,1) → (x,y,z,w) using Matrix4x3
-    // Forward: Plane to 3D
-    // [x]   [1  0  0]   [u]
-    // [y] = [0  1  0] × [v]
-    // [z]   [0  0  0]   [1]
-    // [w]   [0  0  1]
-    const planeTo3D = new Matrix4x3().set(
-      1, 0, 0,  // Row 1: x = u
-      0, 1, 0,  // Row 2: y = v
-      0, 0, 0,  // Row 3: z = 0 (horizontal plane at z=0)
-      0, 0, 1   // Row 4: w = 1 (homogeneous)
-    );
-    
-    // Inverse: 3D to Plane
-    // [u]   [1  0  0  0]   [x]
-    // [v] = [0  1  0  0] × [y]
-    // [1]   [0  0  0  1]   [z]
-    //                      [w]
-    const threeDToPlane = new Matrix3x4().set(
-      1, 0, 0, 0,  // Row 1: u = x
-      0, 1, 0, 0,  // Row 2: v = y (project z component away)
-      0, 0, 0, 1   // Row 3: 1 = w (homogeneous)
-    );
-    
-    return new BaseProjectionPlane(
-      'P_H',
-      planeToPaper,
-      paperToPlane,
-      planeTo3D,
-      threeDToPlane,
-      true,   // Active by default
-      true,   // Visible
-      '#808080',  // Default gray (no special color)
-      undefined
-    );
-  }
-
-  /**
-   * Create P_V (vertical projection plane)
-   * Fixed position: vertical plane at y=0
-   */
-  static createPV(): BaseProjectionPlane {
-    // P_V: Vertical projection plane at y=0
-    // Transform: x' = u + 800, y' = v + 500
-    // HL_HV at v=0 (plane intrinsic) → y' = 500 (hinge line at canvas middle)
-    // Positive v (away from HL) → y' > 500 (below the hinge line on screen)
-    // Matrix3.set() uses ROW-MAJOR: set(n11, n12, n13, n21, n22, n23, n31, n32, n33)
-    // Matrix layout:
-    // [n11  n12  n13]   [1  0  800]
-    // [n21  n22  n23] = [0  1  500]
-    // [n31  n32  n33]   [0  0    1]
-    const planeToPaper = new Matrix3().set(
-      1, 0, 800,     // Row 1: x' = 1*u + 0*v + 800*1 (center horizontally)
-      0, 1, 500,     // Row 2: y' = 0*u + 1*v + 500*1 (center vertically)
-      0, 0, 1        // Row 3: w' = 0*u + 0*v + 1*1
-    );
-    
-    // Compute inverse - standard matrix inversion works for any transform
-    const paperToPlane = planeToPaper.clone().invert();
-    
-    // 3D transformation: (u,v,1) → (x,y,z,w) using Matrix4x3
-    // Forward: Plane to 3D
-    // [x]   [1  0  0]   [u]
-    // [y] = [0  0  0] × [v]
-    // [z]   [0  1  0]   [1]
-    // [w]   [0  0  1]
-    const planeTo3D = new Matrix4x3().set(
-      1, 0, 0,  // Row 1: x = u
-      0, 0, 0,  // Row 2: y = 0 (vertical plane at y=0)
-      0, 1, 0,  // Row 3: z = v
-      0, 0, 1   // Row 4: w = 1 (homogeneous)
-    );
-    
-    // Inverse: 3D to Plane
-    // [u]   [1  0  0  0]   [x]
-    // [v] = [0  0  1  0] × [y]
-    // [1]   [0  0  0  1]   [z]
-    //                      [w]
-    const threeDToPlane = new Matrix3x4().set(
-      1, 0, 0, 0,  // Row 1: u = x
-      0, 0, 1, 0,  // Row 2: v = z (project y component away)
-      0, 0, 0, 1   // Row 3: 1 = w (homogeneous)
-    );
-    
-    return new BaseProjectionPlane(
-      'P_V',
-      planeToPaper,
-      paperToPlane,
-      planeTo3D,
-      threeDToPlane,
-      false,  // Not active by default
-      true,   // Visible
-      '#808080',  // Default gray (no special color)
-      undefined
-    );
-  }
   
   /**
    * Calculate the 2D transformation realization for this base plane
    * Returns the predetermined transformation matrices as a realization object.
+   * 
+   * @param world - World instance (not used for base planes, but required for API uniformity)
    */
-  realize2D(): ProjectionPlaneRealization2D {
+  realize2D(world: any): ProjectionPlaneRealization2D {
     if (!this.id) {
       throw new Error('Cannot create realization for plane without ID');
     }
@@ -1512,8 +1412,10 @@ export class BaseProjectionPlane extends ProjectionPlane {
   /**
    * Calculate the 3D transformation realization for this base plane
    * Returns the predetermined transformation matrices (forward and inverse) as a realization object.
+   * 
+   * @param world - World instance (not used for base planes, but required for API uniformity)
    */
-  realize3D(): ProjectionPlaneRealization3D {
+  realize3D(world: any): ProjectionPlaneRealization3D {
     if (!this.id) {
       throw new Error('Cannot create realization for plane without ID');
     }
@@ -1526,45 +1428,51 @@ export class BaseProjectionPlane extends ProjectionPlane {
 }
 
 /**
- * AuxiliaryProjectionPlane - For extra projection planes with dynamic transformations
+ * AuxiliaryProjectionPlane - User-created projection planes with dynamic transformations
  * 
- * The rule is: "plane defined by dependencies (hinge line + supporting 3D plane)"
- * These planes compute their transformations from geometric dependencies:
- * - The trace used as hinge line (traceH or traceV)
- * - The supporting 3D plane definition
+ * CRITICAL DISTINCTION:
+ * - BaseProjectionPlane (P_H, P_V): Bootstrap only, pre-computed matrices, no dependencies
+ * - AuxiliaryProjectionPlane: User-created, matrices computed via realize3D() from traces
+ * 
+ * Realization Pattern (like Point3DFromProjections, Plane3DFromTraces):
+ * - Constructor stores trace IDs (dependencies), NOT matrices
+ * - realize3D() computes matrices on demand from current trace positions using computeProjectionPlaneMatrices()
+ * - Matrices recalculate automatically when traces move (parametric behavior)
+ * - Returns ProjectionPlaneRealization3D (SAME TYPE as BaseProjectionPlane)
  * 
  * The transformation is computed through geometric unfolding:
- * 1. Identify traces on P_H and P_V
- * 2. User selects which trace to use as hinge
- * 3. 180° rotation around hinge, away from origin
- * 4. Coordinate system: u along hinge, v perpendicular outward
- * 
- * Transformations are computed and cached in ProjectionPlaneRealization2D/ProjectionPlaneRealization3D, not stored here.
+ * 1. Determine 3D plane Q from T1 and T2 traces (using Plane3DFromTraces)
+ * 2. Compute coordinate system: origin, U-axis (from T1), V-axis (from T2' orientation)
+ * 3. Build transformation matrices via computeProjectionPlaneMatrices()
  */
 export class AuxiliaryProjectionPlane extends ProjectionPlane {
   // Dependencies for computing transformation (the RULE)
-  hingeLineId: string;     // ID of the trace line used as hinge (on P_H or P_V)
-  hingeOnPlaneId: string;  // ID of base plane where hinge lies ('P_H' or 'P_V')
+  readonly t1HingeTraceId: string;      // Trace line used as hinge (T1)
+  readonly t2OtherTraceId: string;      // Other trace line on different plane (T2)
+  readonly t2PrimeLineId: string;       // Position/orientation line on same plane as T1 (T2')
 
   constructor(
     name: string,
-    hingeLineId: string,
-    hingeOnPlaneId: string,
+    t1HingeTraceId: string,
+    t2OtherTraceId: string,
+    t2PrimeLineId: string,
     isActive: boolean = false,
     isVisible: boolean = true,
     color: string = '#000000',
     plane3DId?: string
   ) {
     super(name, isActive, isVisible, color, plane3DId);
-    this.hingeLineId = hingeLineId;
-    this.hingeOnPlaneId = hingeOnPlaneId;
+    this.t1HingeTraceId = t1HingeTraceId;
+    this.t2OtherTraceId = t2OtherTraceId;
+    this.t2PrimeLineId = t2PrimeLineId;
   }
 
   clone(): AuxiliaryProjectionPlane {
     const cloned = new AuxiliaryProjectionPlane(
       this.name,
-      this.hingeLineId,
-      this.hingeOnPlaneId,
+      this.t1HingeTraceId,
+      this.t2OtherTraceId,
+      this.t2PrimeLineId,
       this.isActive,
       this.isVisible,
       this.color,
@@ -1577,36 +1485,91 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
   }
 
   /**
-   * Calculate the 2D transformation realization for this auxiliary plane
-   * Computes transformation matrices from hinge line and supporting 3D plane geometry.
-   * 
-   * TODO: Implement geometric computation:
-   * 1. Get hinge line realization from context
-   * 2. Compute 180° rotation around hinge
-   * 3. Build coordinate system (u along hinge, v perpendicular)
-   * 4. Generate planeToPaper and paperToPlane matrices
+   * Get dependencies - returns IDs of trace lines this plane depends on
+   * Used for invalidation tracking when traces move
    */
-  realize2D(): ProjectionPlaneRealization2D {
-    if (!this.id) {
-      throw new Error('Cannot create realization for plane without ID');
-    }
-    
-    // TODO: Implement computation from hingeLineId and hingeOnPlaneId
-    // For now, throw error since auxiliary planes are not yet supported
-    throw new Error('Auxiliary projection plane realization not yet implemented');
+  getDependencies(): string[] {
+    return [this.t1HingeTraceId, this.t2OtherTraceId, this.t2PrimeLineId];
   }
 
   /**
    * Calculate the 3D transformation realization for this auxiliary plane
-   * Computes transformation matrix from hinge line and supporting 3D plane geometry.
+   * Computes transformation matrices from trace dependencies using computeProjectionPlaneMatrices().
+   * 
+   * @param world - World instance for element lookup
+   * @returns ProjectionPlaneRealization3D with computed transformation matrices
    */
-  realize3D(): ProjectionPlaneRealization3D {
+  realize3D(world: any): ProjectionPlaneRealization3D {
     if (!this.id) {
       throw new Error('Cannot create realization for plane without ID');
     }
     
-    // TODO: Implement computation from hingeLineId and hingeOnPlaneId
-    // For now, throw error since auxiliary planes are not yet supported
-    throw new Error('Auxiliary projection plane 3D realization not yet implemented');
+    try {
+      // Compute transformation matrices from trace dependencies
+      const matrices = computeProjectionPlaneMatrices(
+        this.t1HingeTraceId,
+        this.t2OtherTraceId,
+        this.t2PrimeLineId,
+        world
+      );
+      
+      return new ProjectionPlaneRealization3D(
+        this.id,
+        matrices.planeTo3D,
+        matrices.threeDToPlane
+      );
+      
+    } catch (error) {
+      console.error('[AuxiliaryProjectionPlane] Failed to compute realization:', error);
+      // Return fallback identity matrices
+      return new ProjectionPlaneRealization3D(
+        this.id,
+        new Matrix4x3(),
+        new Matrix3x4()
+      );
+    }
+  }
+
+  /**
+   * Calculate the 2D realization (transformation matrices) for this auxiliary plane
+   * Unlike base planes, this requires World context to resolve trace dependencies.
+   * 
+   * @param world - World instance for element lookup
+   * @returns ProjectionPlaneRealization2D with computed transformation matrices
+   */
+  realize2D(world: any): ProjectionPlaneRealization2D {
+    if (!this.id) {
+      throw new Error('Cannot create realization for plane without ID');
+    }
+    
+    try {
+      // Compute transformation matrices
+      const matrices = computeProjectionPlaneMatrices(
+        this.t1HingeTraceId,
+        this.t2OtherTraceId,
+        this.t2PrimeLineId,
+        world
+      );
+      
+      // Compute paperToPlane as inverse of planeToPaper
+      const paperToPlane = matrices.planeToPaper.clone().invert();
+      
+      return new ProjectionPlaneRealization2D(
+        this.id,
+        matrices.planeToPaper,
+        paperToPlane
+      );
+      
+    } catch (error) {
+      console.error('[AuxiliaryProjectionPlane] Failed to compute 2D realization:', error);
+      // Return fallback identity matrices
+      const identityMatrix = new Matrix3();
+      identityMatrix.identity();
+      return new ProjectionPlaneRealization2D(
+        this.id,
+        identityMatrix.clone(),
+        identityMatrix.clone()
+      );
+    }
   }
 }

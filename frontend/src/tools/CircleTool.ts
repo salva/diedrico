@@ -19,9 +19,7 @@ import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
 import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
-import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
 
 /**
  * CircleTool using ArgumentCollectorTool framework
@@ -90,23 +88,13 @@ export class CircleTool extends ArgumentCollectorTool {
     const center = args.get('center')!.element as Point2D;
     const circumferencePoint = args.get('circumferencePoint')!.element as Point2D;
     
-    // Create circle using collected points
-    const result = cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(
-      planeId,
-      center.id,
-      circumferencePoint.id
-    ));
-    
-    const circleId = result.outputs.circleId;
-    
-    // Record ProcessTree action with both points for dependency tracking
-    const action = createCircleAction(
-      circleId,
+    // Factory handles operation AND ProcessTree action
+    CircleSequenceFactory.createCircleByCenterAndPoint(
+      cmd,
       planeId,
       center.id,
       circumferencePoint.id
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
   }
 }
 

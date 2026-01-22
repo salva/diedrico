@@ -344,23 +344,24 @@ export class Element2DRenderer3D {
     // Apply 4x3 transformation matrix (returns Vector4 in domain coordinates)
     const position4D = applyMatrix4x3(point2D, planeRealization.planeTo3D);
     
-    // Convert from domain coordinates to Three.js rendering coordinates
-    // Domain uses left-handed system, Three.js uses right-handed (Y-axis inverted)
-    const position3D = domainToThreeJS(position4D);
-    
-    // Apply z-fighting prevention offset along plane normal
+    // Apply z-fighting prevention offset along plane normal (in domain coordinates)
     // Extract U and V basis vectors from transformation matrix (in domain coordinates)
     const e = planeRealization.planeTo3D.elements;
     const uAxisDomain = new THREE.Vector3(e[0], e[3], e[6]);
     const vAxisDomain = new THREE.Vector3(e[1], e[4], e[7]);
     
-    // Compute normal in domain coordinates, then convert to Three.js
+    // Compute normal in domain coordinates
     const normalDomain = new THREE.Vector3().crossVectors(uAxisDomain, vAxisDomain);
-    const normal = new THREE.Vector3(normalDomain.x, -normalDomain.y, normalDomain.z);
-    normal.normalize();
+    normalDomain.normalize();
     
-    // Offset along normal to prevent z-fighting with plane surface
-    position3D.add(normal.multiplyScalar(0.01));
+    // Offset position in domain coordinates (before conversion to Three.js)
+    position4D.x += normalDomain.x * 0.01;
+    position4D.y += normalDomain.y * 0.01;
+    position4D.z += normalDomain.z * 0.01;
+    
+    // Convert from domain coordinates to Three.js rendering coordinates
+    // This MUST be the last operation - converts left-handed to right-handed system
+    const position3D = domainToThreeJS(position4D);
 
     return position3D;
   }

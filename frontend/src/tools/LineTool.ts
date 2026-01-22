@@ -20,9 +20,7 @@ import type { Element2D } from '@/domain/world/Element2D';
 import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
-import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
 
 /**
  * LineTool using ArgumentCollectorTool framework
@@ -81,12 +79,7 @@ export class LineTool extends ArgumentCollectorTool {
     const point2 = args.get('point2')!.element as Point2D;
     const { planeId } = context;
 
-    // Create line operation
-    const result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1.id, point2.id));
-    const lineId = result.outputs.lineId;
-    
-    // Record ProcessTree action
-    const action = createLineAction(lineId, planeId, point1.id, point2.id);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    // Factory handles operation AND ProcessTree action
+    LineSequenceFactory.createLineByTwoPoints(cmd, planeId, point1.id, point2.id);
   }
 }

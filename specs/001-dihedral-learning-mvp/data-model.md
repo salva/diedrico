@@ -12862,6 +12862,197 @@ updateElement(elementId: string, element: Element2D, world: World): void {
 
 ---
 
+### Reference Coordinate Axes (Phase 82)
+
+**Purpose**: Display labeled coordinate axes at scene origin to provide clear spatial orientation and enable debugging of coordinate system transformations between left-handed domain model and right-handed Three.js rendering.
+
+**Architecture**:
+
+**CSS2DRenderer Integration**:
+```typescript
+// In ThreeView.vue, add CSS2DRenderer instance
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+
+let labelRenderer: CSS2DRenderer;
+
+function initThreeScene() {
+  // ... existing renderer setup ...
+  
+  // Create label renderer for text overlays
+  labelRenderer = new CSS2DRenderer();
+  labelRenderer.setSize(containerRef.value.clientWidth, containerRef.value.clientHeight);
+  labelRenderer.domElement.style.position = 'absolute';
+  labelRenderer.domElement.style.top = '0px';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  containerRef.value.appendChild(labelRenderer.domElement);
+}
+
+function animate() {
+  // ... existing animation code ...
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);  // Render labels after main scene
+}
+```
+
+**Reference Axes Implementation**:
+```typescript
+// ArrowHelper configuration
+const AXIS_LENGTH = 15;  // Units in Three.js world space
+const AXIS_COLOR_X = 0xFF0000;  // Red for X-axis (i)
+const AXIS_COLOR_Y = 0x00FF00;  // Green for Y-axis (j)
+const AXIS_COLOR_Z = 0x0000FF;  // Blue for Z-axis (k)
+
+function renderReferenceAxes() {
+  // Remove existing axes
+  scene.children
+    .filter(child => child.userData.type === 'reference-axis')
+    .forEach(child => scene.remove(child));
+  
+  if (!displayOptions.value.showReferenceAxes) {
+    return;  // Axes hidden
+  }
+  
+  const origin = new THREE.Vector3(0, 0, 0);
+  
+  // X-axis (i) - Red, points right (+X)
+  const xDir = new THREE.Vector3(1, 0, 0);
+  const xArrow = new THREE.ArrowHelper(xDir, origin, AXIS_LENGTH, AXIS_COLOR_X, 1, 0.5);
+  xArrow.userData.type = 'reference-axis';
+  xArrow.userData.axis = 'x';
+  scene.add(xArrow);
+  
+  // Y-axis (j) - Green, points up (+Y)
+  const yDir = new THREE.Vector3(0, 1, 0);
+  const yArrow = new THREE.ArrowHelper(yDir, origin, AXIS_LENGTH, AXIS_COLOR_Y, 1, 0.5);
+  yArrow.userData.type = 'reference-axis';
+  yArrow.userData.axis = 'y';
+  scene.add(yArrow);
+  
+  // Z-axis (k) - Blue, points toward viewer (+Z)
+  const zDir = new THREE.Vector3(0, 0, 1);
+  const zArrow = new THREE.ArrowHelper(zDir, origin, AXIS_LENGTH, AXIS_COLOR_Z, 1, 0.5);
+  zArrow.userData.type = 'reference-axis';
+  zArrow.userData.axis = 'z';
+  scene.add(zArrow);
+  
+  // Add CSS2D labels at arrow tips
+  createAxisLabel(xArrow, 'X (i)', xDir, AXIS_LENGTH);
+  createAxisLabel(yArrow, 'Y (j)', yDir, AXIS_LENGTH);
+  createAxisLabel(zArrow, 'Z (k)', zDir, AXIS_LENGTH);
+}
+
+function createAxisLabel(arrow: THREE.ArrowHelper, text: string, direction: THREE.Vector3, length: number) {
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'axis-label';
+  labelDiv.textContent = text;
+  labelDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+  labelDiv.style.padding = '2px 4px';
+  labelDiv.style.border = '1px solid #333';
+  labelDiv.style.borderRadius = '3px';
+  labelDiv.style.fontSize = '12px';
+  labelDiv.style.fontWeight = 'bold';
+  labelDiv.style.fontFamily = 'sans-serif';
+  
+  const label = new CSS2DObject(labelDiv);
+  
+  // Position at arrow tip + 1 unit offset
+  const labelPosition = direction.clone().multiplyScalar(length + 1);
+  label.position.copy(labelPosition);
+  
+  arrow.add(label);
+}
+```
+
+**Display Options Update**:
+```typescript
+// In ThreeViewDisplayOptions interface
+interface ThreeViewDisplayOptions {
+  showPlanes: boolean;
+  show2DElementsOnPlanes: boolean;
+  showLinkingVisuals: boolean;
+  showGrid: boolean;
+  showReferenceAxes: boolean;  // NEW - Phase 82
+}
+
+// In viewStore initial state
+threeViewOptions: ref<ThreeViewDisplayOptions>({
+  showPlanes: true,
+  show2DElementsOnPlanes: false,
+  showLinkingVisuals: false,
+  showGrid: true,
+  showReferenceAxes: true  // Default: visible for orientation
+})
+```
+
+**UI Toggle**:
+```vue
+<!-- In ThreeView.vue template -->
+<div class="three-controls">
+  <div class="control-group">
+    <!-- ... existing toggles ... -->
+    <label class="control-label" title="Show coordinate axes (X/Y/Z) at origin for spatial reference">
+      <input type="checkbox" v-model="displayOptions.showReferenceAxes" @change="handleDisplayChange" />
+      Show Reference Axes
+    </label>
+  </div>
+</div>
+```
+
+**Coordinate System Documentation**:
+```typescript
+/**
+ * Coordinate System Reference:
+ * 
+ * THREE.JS (Right-Handed):
+ * - +X: Right (red arrow)
+ * - +Y: Up (green arrow)
+ * - +Z: Toward viewer / out of screen (blue arrow)
+ * 
+ * DOMAIN MODEL (Left-Handed, Monge Projection):
+ * - +X: Right (same as Three.js)
+ * - +Y: Away from viewer / into screen (viewer at (0, -∞, 0) looking along +Y)
+ * - +Z: Up
+ * 
+ * CONVERSION (rendering domain → Three.js):
+ * - X_three = X_domain
+ * - Y_three = -Y_domain  // Y-axis inversion
+ * - Z_three = Z_domain
+ * 
+ * Reference: data-model.md §Coordinate System Handedness (line 550)
+ */
+```
+
+**Implementation Details**:
+
+**Lifecycle Integration**:
+- Call `renderReferenceAxes()` in `initThreeScene()` after scene setup
+- Call `renderReferenceAxes()` in `handleDisplayChange()` when toggle changes
+- No per-frame updates needed (static geometry)
+
+**Performance**:
+- Minimal overhead: 3 ArrowHelper objects + 3 CSS2DObject labels
+- No animation or updates after initial render
+- Total vertices: ~150 (50 per arrow cone/line)
+
+**Styling Consistency**:
+- Colors follow standard RGB → XYZ convention (universal standard)
+- Label styling matches Three.js's visual language (clean, technical)
+- Labels remain readable from all camera angles (CSS2D billboard behavior)
+
+**Use Cases**:
+1. **User Orientation**: Understand current view angle relative to world axes
+2. **Coordinate System Debugging**: Verify Y-axis inversion is applied correctly
+3. **Domain → Three.js Transformation Verification**: Check that domain left-handed coordinates convert to Three.js right-handed correctly
+4. **Pedagogical**: Reinforce understanding of coordinate system differences
+
+**Testing Requirements**:
+- Verify arrow directions match expected Three.js convention (red=right, green=up, blue=forward)
+- Verify labels remain visible and readable during camera rotation
+- Verify toggle control hides/shows axes correctly
+- Verify 2D elements on planes align with coordinate system (Y-axis test)
+
+---
+
 ### Grid Coordinate Labels (Phase 78)
 
 **Purpose**: Display plane-local (u,v) coordinate values at viewport borders to provide numerical spatial orientation for element placement.
@@ -13577,4 +13768,1230 @@ commandStack.push(cmd);
 - Integration test: Create element → undo → redo → verify restored
 - Unit test: ProcessTree.removeAction() for various tree structures
 - Regression test: All existing undo/redo tests still pass
+
+---
+
+### Phase 82: Create Projection Plane Tool
+
+**Status**: 📋 PLANNED (2026-01-17)
+
+**Purpose**: Enable users to create new projection planes by unfolding a 3D plane onto the paper using a trace line as the hinge. This tool allows construction of auxiliary projection planes for solving complex dihedral geometry problems.
+
+---
+
+### Phase 82.1: Fix Auxiliary Projection Plane Grid Coordinate System
+
+**Status**: 📋 PLANNED (2026-01-22)
+
+**Purpose**: Correct the mathematical computation of the coordinate system (U-axis, V-axis, origin) for auxiliary projection planes to ensure proper grid alignment and geometric accuracy.
+
+**Context**: The current implementation in `projectionPlaneUtils.ts` computes the auxiliary projection plane's intrinsic coordinate system incorrectly:
+- **V-axis**: Currently uses `V = planeNormal × U` which introduces ambiguity and instability
+- **Origin**: Currently uses an arbitrary point on T1 (first trace) instead of the geometrically correct intersection
+
+This causes grids to be misaligned and violates the geometric principles of dihedral projection.
+
+**Geometric Foundation**:
+
+An auxiliary projection plane is defined by two trace lines T1 and T2 on existing projection planes. The plane P is uniquely determined by these two lines in 3D space.
+
+The plane's intrinsic coordinate system <u, v> must satisfy:
+1. **U-axis**: Direction of the hinge line T1 (already correct in current implementation)
+2. **V-axis**: Perpendicular to T1 AND lying in plane P
+3. **Origin**: Intersection point of T1 and T2 in 3D space
+
+**Mathematical Specification**:
+
+The auxiliary projection plane requires **three transformation matrices** that relate the plane's intrinsic (u, v) coordinate system to:
+1. Paper coordinates (2D canvas layout)
+2. 3D world coordinates
+3. Inverse: 3D world → plane coordinates
+
+All transformations use **homogeneous coordinates**:
+- 2D points/vectors: `Vector3(x, y, 1)` for points, `Vector3(x, y, 0)` for directions
+- 3D points/vectors: `Vector4(x, y, z, 1)` for points, `Vector4(x, y, z, 0)` for directions
+- 2D transforms: `Matrix3` (3×3)
+- 2D→3D: `Matrix4x3` (4×3, custom)
+- 3D→2D: `Matrix3x4` (3×4, custom)
+
+---
+
+#### Algorithm: computeProjectionPlaneMatrices()
+
+```typescript
+/**
+ * Compute all transformation matrices for auxiliary projection plane
+ * 
+ * Given:
+ * - T1: Hinge trace line on plane P1 (becomes hinge of new plane)
+ * - T2: Other trace line on plane P2 (defines 3D plane Q with T1)
+ * - T2': User-constructed position line on plane P1 (orientation constraint)
+ * 
+ * Returns:
+ * - planeToPaper: Matrix3 mapping (u, v, 1) → (x_paper, y_paper, 1)
+ * - planeTo3D: Matrix4x3 mapping (u, v, 0) → (x, y, z, 1)
+ * - threeDToPlane: Matrix3x4 mapping (x, y, z, 1) → (u, v, 0)
+ */
+function computeProjectionPlaneMatrices(
+  t1TraceId: string,
+  t2TraceId: string,
+  t2PrimeId: string,
+  world: World
+): {
+  planeToPaper: THREE.Matrix3;
+  planeTo3D: Matrix4x3;
+  threeDToPlane: Matrix3x4;
+} {
+  // ===== PART 1: planeToPaper (Paper Layout) =====
+  // Origin: T1-T2' intersection on paper
+  // U-axis: Along T1 on paper
+  // V-axis: Perpendicular to T1 on paper, oriented via T2
+  
+  // 1.1: Get T1 and T2' as paper lines (both on same plane P1)
+  const t1Plane = world.getLine2D(t1TraceId).planeId;
+  const t1_paper = realizeLineOnPaper(t1TraceId, world);  // LineRealization2D
+  const t2Prime_paper = realizeLineOnPaper(t2PrimeId, world);
+  
+  // 1.2: Origin = intersection of T1 and T2' on paper
+  const origin_paper = intersectLines2D(t1_paper, t2Prime_paper);
+  // This becomes (u=0, v=0) in plane intrinsic coordinates
+  
+  // 1.3: U-axis = direction along T1 on paper (homogeneous direction)
+  const u_paper = new THREE.Vector3(
+    t1_paper.direction.x,
+    t1_paper.direction.y,
+    0  // Direction vector: w=0
+  ).normalize();
+  
+  // 1.4: V-axis = perpendicular to T1 on paper
+  // Perpendicular in 2D: (x, y) → (-y, x) for +90° or (y, -x) for -90°
+  const v_paper_candidate = new THREE.Vector3(-u_paper.y, u_paper.x, 0);
+  
+  // 1.5: Orientation check: which side of T1 does T2 fall on?
+  // Get any point on T2, realize it on P1's paper
+  const t2_3d = computeTraceLine3D(t2TraceId, world);
+  const t2_point_3d = t2_3d.point;  // Any point on T2
+  const p1_plane = world.getProjectionPlaneById(t1Plane);
+  const t2_point_paper = p1_plane.threeDToPlane.applyToVector(
+    new THREE.Vector4(t2_point_3d.x, t2_point_3d.y, t2_point_3d.z, 1)
+  );
+  // Convert to paper: (u, v, 1) → (x_paper, y_paper, 1)
+  const t2_point_paper_xy = p1_plane.planeToPaper.applyToVector(t2_point_paper);
+  
+  // Check which side: dot product with candidate v direction
+  const offset = new THREE.Vector3(
+    t2_point_paper_xy.x - origin_paper.x,
+    t2_point_paper_xy.y - origin_paper.y,
+    0
+  );
+  const side = offset.dot(v_paper_candidate);
+  
+  const v_paper = (side > 0) ? v_paper_candidate : v_paper_candidate.clone().negate();
+  
+  // 1.6: Build planeToPaper matrix (homogeneous 2D transform)
+  // Transformation: (u, v, 1) → (x_paper, y_paper, 1)
+  // x_paper = origin_paper.x + u * u_paper.x + v * v_paper.x
+  // y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y
+  const planeToPaper = new THREE.Matrix3();
+  planeToPaper.set(
+    u_paper.x, v_paper.x, origin_paper.x,  // Column 0, 1, 2 (row 0)
+    u_paper.y, v_paper.y, origin_paper.y,  // Row 1
+    0,         0,         1                 // Row 2 (homogeneous)
+  );
+  
+  
+  // ===== PART 2: planeTo3D and threeDToPlane (3D Geometry) =====
+  // Origin: T1-T2 intersection in 3D
+  // U-axis: Along T1 in 3D
+  // V-axis: Perpendicular to T1, in plane Q (double cross product)
+  
+  // 2.1: Get T1 and T2 as 3D lines
+  const t1Line3D = computeTraceLine3D(t1TraceId, world);
+  const t2Line3D = computeTraceLine3D(t2TraceId, world);
+  
+  // 2.2: U-axis = direction of T1 in 3D
+  const u_3d = t1Line3D.direction.clone().normalize();
+  
+  // 2.3: V-axis = double cross product (stable, in-plane, perpendicular to U)
+  const t1_dir = t1Line3D.direction.clone().normalize();
+  const t2_dir = t2Line3D.direction.clone().normalize();
+  const t1_cross_t2 = new THREE.Vector3().crossVectors(t1_dir, t2_dir);
+  // t1 × t2 = normal to plane containing both traces
+  const v_3d_candidate = new THREE.Vector3().crossVectors(t1_dir, t1_cross_t2).normalize();
+  // t1 × (t1 × t2) = perpendicular to t1, lying in plane Q
+  
+  // 2.4: Check orientation: v_3d should point toward T2' side
+  // We already know from paper which side is positive
+  // Project v_3d_candidate onto P1, check if it aligns with v_paper
+  const v_3d_on_p1 = p1_plane.threeDToPlane.applyToVector(
+    new THREE.Vector4(v_3d_candidate.x, v_3d_candidate.y, v_3d_candidate.z, 0)
+  );
+  const v_3d_on_paper = p1_plane.planeToPaper.applyToVector(v_3d_on_p1);
+  const alignment = new THREE.Vector3(v_3d_on_paper.x, v_3d_on_paper.y, 0).dot(v_paper);
+  
+  const v_3d = (alignment > 0) ? v_3d_candidate : v_3d_candidate.clone().negate();
+  
+  // 2.5: Origin = intersection of T1 and T2 in 3D
+  const origin_3d = computeLineLineIntersection3D(t1Line3D, t2Line3D);
+  
+  // 2.6: Build planeTo3D matrix (homogeneous 2D → 3D)
+  // Transformation: (u, v, 0) → (x, y, z, 1) for directions
+  //                 (u, v, 1) → (x, y, z, 1) for points (not used directly)
+  // Formula: point_3d = origin_3d + u * u_3d + v * v_3d
+  // Custom Matrix4x3 format:
+  const planeTo3D = new Matrix4x3();
+  planeTo3D.set(
+    u_3d.x, v_3d.x, origin_3d.x,  // Row 0: x = u*u_3d.x + v*v_3d.x + origin_3d.x
+    u_3d.y, v_3d.y, origin_3d.y,  // Row 1: y = ...
+    u_3d.z, v_3d.z, origin_3d.z,  // Row 2: z = ...
+    0,      0,      1             // Row 3: w = 1 (homogeneous)
+  );
+  
+  // 2.7: Build threeDToPlane matrix (homogeneous 3D → 2D)
+  // Inverse transformation: (x, y, z, 1) → (u, v, 0)
+  // Solve: (x, y, z) = origin_3d + u * u_3d + v * v_3d
+  // u = (x - origin_3d) · u_3d  (since u_3d is normalized and orthogonal to v_3d)
+  // v = (x - origin_3d) · v_3d
+  const threeDToPlane = new Matrix3x4();
+  threeDToPlane.set(
+    u_3d.x, u_3d.y, u_3d.z, -u_3d.dot(origin_3d),  // Row 0: u = ...
+    v_3d.x, v_3d.y, v_3d.z, -v_3d.dot(origin_3d),  // Row 1: v = ...
+    0,      0,      0,      0                       // Row 2: w = 0 (direction)
+  );
+  
+  return { planeToPaper, planeTo3D, threeDToPlane };
+}
+```
+
+**Helper Function: computeLineLineIntersection3D**:
+
+```typescript
+/**
+ * Compute intersection point of two 3D lines (or closest point if skew)
+ * 
+ * Lines in parametric form:
+ * - L1: P1 + s * d1
+ * - L2: P2 + t * d2
+ * 
+ * For true intersection: P1 + s * d1 = P2 + t * d2
+ * Solve for s and t using least squares approach
+ * 
+ * @param line1 - First line { point: Vector3, direction: Vector3 }
+ * @param line2 - Second line { point: Vector3, direction: Vector3 }
+ * @returns Intersection point (or closest point on L1 if lines are skew/parallel)
+ */
+function computeLineLineIntersection3D(
+  line1: { point: THREE.Vector3; direction: THREE.Vector3 },
+  line2: { point: THREE.Vector3; direction: THREE.Vector3 }
+): THREE.Vector3 {
+  const p1 = line1.point;
+  const d1 = line1.direction.clone().normalize();
+  const p2 = line2.point;
+  const d2 = line2.direction.clone().normalize();
+  
+  // Vector from p1 to p2
+  const w = new THREE.Vector3().subVectors(p1, p2);
+  
+  // Solve using dot products
+  const a = d1.dot(d1);  // Always 1 if normalized
+  const b = d1.dot(d2);
+  const c = d2.dot(d2);  // Always 1 if normalized
+  const d = d1.dot(w);
+  const e = d2.dot(w);
+  
+  const denom = a * c - b * b;  // = 1 - b² for normalized vectors
+  
+  if (Math.abs(denom) < 1e-10) {
+    // Lines are parallel or coincident
+    // Return point on first line closest to second line's origin
+    return p1.clone();
+  }
+  
+  // Parameter s for point on L1 closest to L2
+  const s = (b * e - c * d) / denom;
+  
+  // Intersection point on line1
+  return p1.clone().addScaledVector(d1, s);
+}
+```
+
+---
+
+#### Geometric Constraints Summary
+
+**planeToPaper (Paper Layout)**:
+1. ✅ Line v=0 coincides with T1 on paper
+2. ✅ Origin (u=0, v=0) is at T1-T2' intersection on paper
+3. ✅ v-axis perpendicular to T1 on paper (90° rotation)
+4. ✅ v-axis orientation determined by T2 side test
+
+**planeTo3D / threeDToPlane (3D Geometry)**:
+1. ✅ u-axis along T1 direction in 3D
+2. ✅ v-axis perpendicular to u-axis AND lying in plane Q (double cross product)
+3. ✅ Origin at T1-T2 intersection in 3D space
+4. ✅ v-axis orientation consistent with paper v-axis direction
+
+**Current Implementation Issues**:
+
+In `frontend/src/utils/projectionPlaneUtils.ts`:
+
+The current implementation likely has issues in multiple areas:
+
+1. **planeToPaper computation**:
+   - May not properly compute T1-T2' intersection as origin
+   - V-axis perpendicularity may be incorrect
+   - Orientation check may be missing or flawed
+
+2. **planeTo3D / threeDToPlane computation**:
+   - **V-axis**: Uses `V = planeNormal × U` instead of double cross product
+   - **Origin**: Uses arbitrary point on T1 instead of T1-T2 intersection
+   - Orientation flipping logic may be unstable
+
+**Correct Implementation** (as specified above):
+- planeToPaper: Origin at T1-T2' paper intersection, U along T1, V perpendicular with T2 side test
+- planeTo3D: Origin at T1-T2 3D intersection, U along T1, V via `t1 × (t1 × t2)`
+- threeDToPlane: Inverse using dot products with orthonormal basis
+
+**Implementation Plan**:
+
+1. **Add helper function** `computeLineLineIntersection3D()` to `projectionPlaneUtils.ts`
+   - Handles parallel, intersecting, and skew lines
+   - Returns closest point on first line (adequate for valid trace configurations)
+
+2. **Replace `computeProjectionPlaneMatrices()` implementation**:
+   - **Part 1 - planeToPaper**:
+     - Get T1, T2' as paper lines (both on P1)
+     - Compute origin as T1-T2' intersection on paper
+     - U-axis = T1 direction on paper (normalized)
+     - V-axis = perpendicular to U (±90°), oriented via T2 side test
+     - Build Matrix3 using homogeneous coordinates
+   - **Part 2 - planeTo3D and threeDToPlane**:
+     - Get T1, T2 as 3D lines
+     - U-axis = T1 direction in 3D (normalized)
+     - V-axis = double cross product `t1 × (t1 × t2)` (normalized)
+     - Orient V-axis to match paper V-axis direction
+     - Origin = T1-T2 intersection in 3D
+     - Build Matrix4x3 (planeTo3D) and Matrix3x4 (threeDToPlane)
+   - Remove all old orientation flipping heuristics
+   - Update comments to explain geometric reasoning
+
+3. **Add comprehensive unit tests**:
+   - Test `computeLineLineIntersection3D()`:
+     - Intersecting lines → correct intersection
+     - Parallel lines → return point on first line (no crash)
+     - Skew lines → closest point (acceptable for valid traces)
+     - Perpendicular lines → verify intersection
+   - Test `computeProjectionPlaneMatrices()`:
+     - **Orthogonality**: U · V ≈ 0 (both paper and 3D)
+     - **Normalization**: |U| = 1, |V| = 1
+     - **Paper constraints**:
+       - v=0 line coincides with T1 on paper
+       - Origin at T1-T2' intersection
+       - V perpendicular to U
+     - **3D constraints**:
+       - U, V lie in plane Q (satisfy plane equation)
+       - Origin on both T1 and T2 (distance < 1e-10)
+       - V perpendicular to U
+     - **Known configuration test**: T1 horizontal, T2 vertical → verify exact U, V, origin values
+
+4. **Integration test**:
+   - Use QuickProjectionSetupTool to create auxiliary plane with known traces
+   - Verify grid renders correctly in 3D view (visual inspection)
+   - Verify coordinate system aligns with 3D plane geometry
+   - Verify no visual artifacts or misalignment
+
+**Files Modified**:
+- `frontend/src/utils/projectionPlaneUtils.ts` - Core implementation
+- `frontend/tests/unit/utils/projectionPlaneUtils.spec.ts` - Unit tests (create if doesn't exist)
+
+**Success Criteria**:
+
+**planeToPaper**:
+- ✅ Line v=0 coincides with T1 on paper (within 0.01 units)
+- ✅ Origin at T1-T2' intersection (distance < 0.01)
+- ✅ U-axis along T1 direction (dot product > 0.99)
+- ✅ V-axis perpendicular to U (|dot product| < 0.01)
+- ✅ V-axis orientation: T2 point has positive v-coordinate
+
+**planeTo3D / threeDToPlane**:
+- ✅ U-axis perpendicular to V-axis in 3D (|dot product| < 1e-6)
+- ✅ Both U and V normalized (|length - 1| < 1e-6)
+- ✅ U and V lie in plane Q (satisfy plane equation within 1e-6)
+- ✅ Origin lies on T1 in 3D (distance < 1e-6)
+- ✅ Origin lies on T2 in 3D (distance < 1e-6)
+- ✅ Grid renders correctly aligned with 3D plane geometry (visual)
+- ✅ No orientation ambiguity or flipping artifacts
+- ✅ Matrices invertible (determinant ≠ 0)
+- ✅ Round-trip transforms preserve points: plane → 3D → plane ≈ identity
+
+**Dependencies**: None - pure mathematical fix
+
+**Related**: Phase 82 (Create Projection Plane Tool) - this fixes the coordinate system computation used by that tool
+
+**Context**: Currently, the application has only two fixed projection planes (P_H horizontal and P_V vertical). Many dihedral geometry problems require auxiliary projection planes positioned at specific orientations relative to the existing planes. This phase implements the tool for creating these auxiliary planes through a pedagogically-sound 3-step construction process.
+
+**Key Requirements (FR-056)**:
+1. 3-step sequential tool: (1) T1 hinge trace selection, (2) T2 other trace selection, (3) T2' position line construction
+2. T1 and T2 must be on different planes (validation at each step)
+3. System computes transformation matrices from the three inputs
+4. T2' serves dual purpose: orientation selector + educational requirement
+5. Warning (not error) if T2' position differs from computed position by >1 pixel
+
+**Pedagogical Goals** (from ui-spec.md):
+- **Educational Focus**: Users must construct T2' themselves to understand the unfolding geometry
+- **Guided Validation**: System checks T2' against computed position with tolerance (±1 pixel)
+- **Warning Feedback**: Position mismatch triggers warning (not blocking error) with visual indicator
+
+**Architecture**:
+
+**Tool Class: CreateProjectionPlaneTool**
+
+Extends `ArgumentCollectorTool` base class for multi-step sequential argument collection:
+
+```typescript
+/**
+ * Tool for creating new projection planes by unfolding a 3D plane onto paper
+ * 
+ * Three-step workflow:
+ * 1. Select T1 (hinge trace): Line on plane P1 that becomes the hinge line for new plane
+ * 2. Select T2 (other trace): Line on plane P2 (different from P1) that defines 3D plane Q
+ * 3. Construct T2' (position line): User-drawn line on P1 showing where T2 should appear
+ * 
+ * T2' dual purpose:
+ * - Orientation: Determines which way plane Q unfolds (toward/away from viewer)
+ * - Educational: Forces user to understand unfolding geometry
+ */
+export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
+  readonly name = 'create-projection-plane';
+  
+  constructor() {
+    super([
+      // Step 1: Select T1 (hinge trace on any plane)
+      {
+        name: 't1HingeTrace',
+        type: 'line',  // Can be any Line2D subtype (line, segment, guide)
+        description: 'Select hinge trace T1 (line on first plane)',
+        selectionMask: ['any-line'],
+        planeHint: 'any'  // Can be on any existing projection plane
+      },
+      
+      // Step 2: Select T2 (other trace on different plane)
+      {
+        name: 't2OtherTrace',
+        type: 'line',
+        description: 'Select other trace T2 (line on different plane)',
+        selectionMask: ['any-line'],
+        planeHint: 'different-from-t1',  // Must be different from T1's plane
+        validator: (args, context) => {
+          // Validate T2 is on different plane than T1
+          const t1Line = context.world.getLine2D(args.t1HingeTrace);
+          const t2Line = context.world.getLine2D(args.t2OtherTrace);
+          
+          if (!t1Line || !t2Line) {
+            return { valid: false, message: 'Line not found' };
+          }
+          
+          if (t1Line.planeId === t2Line.planeId) {
+            return {
+              valid: false,
+              message: 'T2 must be on a different plane than T1'
+            };
+          }
+          
+          return { valid: true };
+        }
+      },
+      
+      // Step 3: Construct T2' (position line on same plane as T1)
+      {
+        name: 't2PrimePositionLine',
+        type: 'line',
+        description: 'Draw T2\' (where T2 should appear on new plane)',
+        selectionMask: ['any-line'],
+        planeHint: 'same-as-t1',  // Must be on same plane as T1
+        validator: (args, context) => {
+          // Validate T2' is on same plane as T1
+          const t1Line = context.world.getLine2D(args.t1HingeTrace);
+          const t2PrimeLine = context.world.getLine2D(args.t2PrimePositionLine);
+          
+          if (!t1Line || !t2PrimeLine) {
+            return { valid: false, message: 'Line not found' };
+          }
+          
+          if (t1Line.planeId !== t2PrimeLine.planeId) {
+            return {
+              valid: false,
+              message: 'T2\' must be on the same plane as T1'
+            };
+          }
+          
+          // Compute expected T2' position from T1, T2, and unfolding geometry
+          const expectedT2Prime = computeExpectedT2Prime(
+            args.t1HingeTrace,
+            args.t2OtherTrace,
+            context.world
+          );
+          
+          // Check position match with tolerance
+          const actualT2Prime = t2PrimeLine.realize2D(context.world);
+          const positionDiff = computeLineDistance(expectedT2Prime, actualT2Prime);
+          
+          // Warning threshold: 1 pixel in canvas coordinates
+          const WARNING_THRESHOLD = 1.0;
+          
+          if (positionDiff > WARNING_THRESHOLD) {
+            return {
+              valid: true,  // NOT blocking - allow creation
+              warning: `T2' position differs from computed position by ${positionDiff.toFixed(1)} pixels. ` +
+                      `Expected position: [computed line visualization]. ` +
+                      `This may indicate misunderstanding of unfolding geometry.`
+            };
+          }
+          
+          return { valid: true };
+        }
+      }
+    ]);
+  }
+  
+  /**
+   * Execute projection plane creation after all arguments collected
+   */
+  protected async executeWithArguments(
+    args: CollectedArguments,
+    context: ToolContext
+  ): Promise<ToolResult> {
+    const { world, commandStack } = context;
+    
+    try {
+      // Build command with multiple operations
+      const cmd = new Command('Create projection plane', world);
+      
+      // Operation 1: Create Plane3D entity (3D geometric definition)
+      const plane3DResult = cmd.addAndExecute(
+        new AddPlane3DByTracesOp(
+          args.t1HingeTrace as string,
+          args.t2OtherTrace as string
+        )
+      );
+      const plane3DId = plane3DResult.outputs.plane3DId;
+      
+      // Operation 2: Create AuxiliaryProjectionPlane (stores dependencies, computes matrices via realization)
+      const projPlaneResult = cmd.addAndExecute(
+        new AddAuxiliaryProjectionPlaneOp(
+          plane3DId,
+          args.t1HingeTrace as string,
+          args.t2OtherTrace as string,
+          args.t2PrimePositionLine as string
+        )
+      );
+      const projPlaneId = projPlaneResult.outputs.projPlaneId;
+      
+      // Operation 3: Create HingeLine (3D entity connecting planes)
+      const hingeLineResult = cmd.addAndExecute(
+        new AddHingeLineOp(
+          args.t1HingeTrace as string,  // T1 becomes the hinge line
+          world.getLine2D(args.t1HingeTrace as string)!.planeId,  // P1
+          projPlaneId  // New plane
+        )
+      );
+      const hingeLineId = hingeLineResult.outputs.hingeLineId;
+      
+      // Operation 4: Register ProcessTree action
+      const action = createProjectionPlaneAction(
+        projPlaneId,
+        args.t1HingeTrace as string,
+        args.t2OtherTrace as string,
+        args.t2PrimePositionLine as string
+      );
+      cmd.addAndExecute(new AddProcessTreeActionOp(action));
+      
+      // Commit and push
+      cmd.commit();
+      commandStack.push(cmd);
+      
+      return this.success(
+        `Created projection plane ${projPlaneId} from traces T1=${args.t1HingeTrace}, T2=${args.t2OtherTrace}`
+      );
+      
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return this.failure(`Failed to create projection plane: ${message}`);
+    }
+  }
+}
+```
+
+**Domain Classes**:
+
+**Plane3DByTraces** (3D geometric plane definition):
+```typescript
+/**
+ * 3D plane defined by two trace lines on existing projection planes
+ * 
+ * Geometric principle: Two lines in 3D space (not parallel) define a unique plane
+ */
+export class Plane3DByTraces extends Plane3D {
+  readonly type = 'by-traces';
+  readonly traceHId: string;  // Trace on horizontal or first plane
+  readonly traceVId: string;  // Trace on vertical or second plane
+  
+  constructor(
+    id: string,
+    traceHId: string,
+    traceVId: string,
+    label?: string
+  ) {
+    super(id, label);
+    this.traceHId = traceHId;
+    this.traceVId = traceVId;
+  }
+  
+  /**
+   * Compute 3D plane equation from two trace lines
+   * Returns normal vector (a,b,c) and distance d for plane equation ax + by + cz = d
+   */
+  realize3D(world: World): Plane3DRealization {
+    // Get trace lines
+    const traceH = world.getLine2D(this.traceHId);
+    const traceV = world.getLine2D(this.traceVId);
+    
+    if (!traceH || !traceV) {
+      return new Plane3DRealization(
+        new Vector3(0, 1, 0),  // Fallback normal
+        0,  // Fallback distance
+        false  // Infeasible
+      );
+    }
+    
+    // Get planes containing traces
+    const planeH = world.getProjectionPlaneById(traceH.planeId);
+    const planeV = world.getProjectionPlaneById(traceV.planeId);
+    
+    if (!planeH || !planeV) {
+      return new Plane3DRealization(
+        new Vector3(0, 1, 0),
+        0,
+        false
+      );
+    }
+    
+    // Realize traces in 2D
+    const traceHRealization = traceH.realize2D(world);
+    const traceVRealization = traceV.realize2D(world);
+    
+    if (!traceHRealization?.feasible || !traceVRealization?.feasible) {
+      return new Plane3DRealization(
+        new Vector3(0, 1, 0),
+        0,
+        false
+      );
+    }
+    
+    // Convert 2D trace points to 3D using plane transformations
+    const traceH3DStart = planeH.transformTo3D(traceHRealization.point1);
+    const traceH3DEnd = planeH.transformTo3D(
+      traceHRealization.point1.clone().add(traceHRealization.getDirection())
+    );
+    
+    const traceV3DStart = planeV.transformTo3D(traceVRealization.point1);
+    const traceV3DEnd = planeV.transformTo3D(
+      traceVRealization.point1.clone().add(traceVRealization.getDirection())
+    );
+    
+    // Compute plane normal from cross product of trace directions
+    const dirH = traceH3DEnd.clone().sub(traceH3DStart).normalize();
+    const dirV = traceV3DEnd.clone().sub(traceV3DStart).normalize();
+    
+    const normal = dirH.clone().cross(dirV);
+    
+    // Check for parallel traces (degenerate case)
+    if (normal.lengthSq() < 1e-10) {
+      console.warn(`[Plane3DByTraces] Traces are parallel, cannot define unique plane`);
+      return new Plane3DRealization(
+        new Vector3(0, 1, 0),
+        0,
+        false
+      );
+    }
+    
+    normal.normalize();
+    
+    // Compute plane distance (d in ax + by + cz = d)
+    const distance = normal.dot(traceH3DStart);
+    
+    return new Plane3DRealization(normal, distance, true);
+  }
+  
+  getDependencies(): string[] {
+    return [this.traceHId, this.traceVId];
+  }
+  
+  clone(): Plane3DByTraces {
+    return new Plane3DByTraces(this.id, this.traceHId, this.traceVId, this.label);
+  }
+}
+```
+
+**Matrix Computation Functions**:
+
+```typescript
+/**
+ * Compute transformation matrices for new projection plane
+ * 
+ * @param t1HingeTraceId - Line ID for hinge trace T1 on plane P1
+ * @param t2OtherTraceId - Line ID for other trace T2 on plane P2
+ * @param t2PrimeLineId - Line ID for position line T2' on plane P1
+ * @param world - World instance for element lookup
+ * @returns Transformation matrices for new projection plane
+ */
+export function computeProjectionPlaneMatrices(
+  t1HingeTraceId: string,
+  t2OtherTraceId: string,
+  t2PrimeLineId: string,
+  world: World
+): ProjectionPlaneMatrices {
+  // Get lines
+  const t1Line = world.getLine2D(t1HingeTraceId)!;
+  const t2Line = world.getLine2D(t2OtherTraceId)!;
+  const t2PrimeLine = world.getLine2D(t2PrimeLineId)!;
+  
+  // Get containing planes
+  const planeP1 = world.getProjectionPlaneById(t1Line.planeId)!;
+  const planeP2 = world.getProjectionPlaneById(t2Line.planeId)!;
+  
+  // Realize lines in 2D
+  const t1Realization = t1Line.realize2D(world)!;
+  const t2Realization = t2Line.realize2D(world)!;
+  const t2PrimeRealization = t2PrimeLine.realize2D(world)!;
+  
+  // Step 1: Determine 3D plane Q from T1 and T2
+  const plane3D = new Plane3DByTraces('temp', t1HingeTraceId, t2OtherTraceId);
+  const planeRealization = plane3D.realize3D(world);
+  
+  if (!planeRealization.feasible) {
+    throw new Error('Cannot compute 3D plane from T1 and T2 (parallel traces?)');
+  }
+  
+  // Step 2: Compute coordinate system for new projection plane
+  
+  // Origin: Intersection of plane Q with X-axis (world coordinate system)
+  // Intersection of plane ax + by + cz = d with X-axis (y=0, z=0): x = d/a
+  const originX = planeRealization.distance / planeRealization.normal.x;
+  const origin3D = new Vector3(originX, 0, 0);
+  
+  // U-axis: Direction of T1 (hinge line) in 3D
+  const t1Start3D = planeP1.transformTo3D(t1Realization.point1);
+  const t1End3D = planeP1.transformTo3D(
+    t1Realization.point1.clone().add(t1Realization.getDirection())
+  );
+  const uAxis3D = t1End3D.clone().sub(t1Start3D).normalize();
+  
+  // V-axis: Direction perpendicular to U-axis, lying in plane Q, determined by T2' orientation
+  // T2' orientation determines which way plane Q unfolds (toward/away from viewer)
+  
+  // Compute direction from T1 to T2' (in P1 coordinates)
+  const t2PrimeDir = t2PrimeRealization.getDirection().normalize();
+  
+  // Project T2' direction onto plane Q's normal to get V-axis direction
+  // V-axis must be perpendicular to both U-axis and plane normal
+  const vAxis3D = uAxis3D.clone().cross(planeRealization.normal).normalize();
+  
+  // Determine sign of V-axis based on T2' orientation
+  // If T2' points "up" in P1, V-axis should point "up" in 3D
+  const t2PrimeUp = t2PrimeDir.y > 0;
+  if (!t2PrimeUp) {
+    vAxis3D.multiplyScalar(-1);
+  }
+  
+  // Step 3: Build transformation matrices
+  
+  // planeToPaper: Maps new plane's (u,v) to paper (x',y') coordinates
+  // New plane unfolds onto paper next to existing planes
+  // Position determined by layout algorithm (e.g., below P_V)
+  
+  const layoutPosition = computeAuxiliaryPlaneLayout(world);  // Returns { x, y } offset in paper
+  
+  const planeToPaper = new Matrix3(
+    1, 0, layoutPosition.x,  // u → x' with offset
+    0, 1, layoutPosition.y,  // v → y' with offset
+    0, 0, 1
+  );
+  
+  // planeTo3D: Maps new plane's (u,v) to 3D (x,y,z) coordinates
+  // (u,v) → origin3D + u*uAxis3D + v*vAxis3D
+  
+  const planeTo3D = new Matrix4x3(
+    uAxis3D.x, vAxis3D.x, origin3D.x,  // Row 1: X = u*uAxis.x + v*vAxis.x + origin.x
+    uAxis3D.y, vAxis3D.y, origin3D.y,  // Row 2: Y = u*uAxis.y + v*vAxis.y + origin.y
+    uAxis3D.z, vAxis3D.z, origin3D.z,  // Row 3: Z = u*uAxis.z + v*vAxis.z + origin.z
+    0, 0, 1  // Row 4: W = 1 (homogeneous coordinates)
+  );
+  
+  // threeDToPlane: Maps 3D (x,y,z) to new plane's (u,v) coordinates
+  // Inverse of planeTo3D transformation
+  
+  const threeDToPlane = computeInverseProjection(planeTo3D);
+  
+  return {
+    planeToPaper,
+    planeTo3D,
+    threeDToPlane
+  };
+}
+
+/**
+ * Compute expected T2' position from T1, T2, and unfolding geometry
+ * Used for validation warning in tool
+ */
+export function computeExpectedT2Prime(
+  t1HingeTraceId: string,
+  t2OtherTraceId: string,
+  world: World
+): Line2DRealization2D {
+  // This is the same computation as in computeProjectionPlaneMatrices,
+  // but returns only the expected T2' line realization for comparison
+  
+  // Algorithm:
+  // 1. Get T1, T2 in 3D
+  // 2. Unfold plane Q onto P1 around T1 as hinge
+  // 3. Where does T2 land after unfolding? That's expected T2'
+  
+  // [Implementation details similar to matrix computation above]
+  
+  // For now, return placeholder
+  return new Line2DRealization2D(
+    new Vector3(0, 0, 1),
+    new Vector3(1, 0, 0),
+    true
+  );
+}
+
+/**
+ * Compute layout position for auxiliary projection plane on paper
+ * Places new plane in empty space below existing planes
+ */
+function computeAuxiliaryPlaneLayout(world: World): { x: number; y: number } {
+  // Simple strategy: stack auxiliary planes vertically below P_V
+  const existingPlanes = world.getProjectionPlanes();
+  const numAuxiliaryPlanes = existingPlanes.length - 2;  // Exclude P_H, P_V
+  
+  const PLANE_HEIGHT = 300;  // Standard projection plane height
+  const VERTICAL_SPACING = 50;  // Gap between planes
+  
+  return {
+    x: 0,  // Align with P_H/P_V x-position
+    y: (PLANE_HEIGHT * 2) + (VERTICAL_SPACING * (numAuxiliaryPlanes + 1))
+  };
+}
+```
+
+**Projection Plane Class Hierarchy** (common base class with shared realization):
+
+```typescript
+/**
+ * ProjectionPlaneRealization3D - Result of realize3D() computation
+ * Shared by both BaseProjectionPlane (fixed) and AuxiliaryProjectionPlane (parametric)
+ */
+export class ProjectionPlaneRealization3D {
+  readonly planeId: string;
+  readonly planeTo3D: Matrix4x3;        // 2D plane → 3D space
+  readonly threeDToPlane: Matrix3x4;    // 3D space → 2D plane
+  
+  constructor(
+    planeId: string,
+    planeTo3D: Matrix4x3,
+    threeDToPlane: Matrix3x4
+  ) {
+    this.planeId = planeId;
+    this.planeTo3D = planeTo3D;
+    this.threeDToPlane = threeDToPlane;
+  }
+}
+
+/**
+ * ProjectionPlane - Abstract base class for all projection planes
+ * Declares realize3D() that both fixed and auxiliary planes must implement
+ * 
+ * ARCHITECTURAL PRINCIPLE:
+ * - ALL projection planes implement realize3D() → ProjectionPlaneRealization3D
+ * - BaseProjectionPlane (P_H, P_V): Returns pre-computed constant matrices
+ * - AuxiliaryProjectionPlane: Computes matrices from trace dependencies
+ * - Same realization type ensures uniform treatment in rendering and world queries
+ */
+export abstract class ProjectionPlane {
+  id: string;
+  name: string;
+  plane3DId?: string;
+  isActive: boolean;
+  isVisible: boolean;
+  
+  // Element storage (Phase 22.5)
+  private points: Map<string, Point2D> = new Map();
+  private lines: Map<string, Line2D> = new Map();
+  private circles: Map<string, Circle2D> = new Map();
+  
+  constructor(
+    name: string,
+    isActive: boolean = false,
+    isVisible: boolean = true,
+    plane3DId?: string
+  ) {
+    this.name = name;
+    this.isActive = isActive;
+    this.isVisible = isVisible;
+    this.plane3DId = plane3DId;
+  }
+  
+  /**
+   * CRITICAL: Both subclasses must implement realize3D() returning same type
+   * This enables uniform transformation matrix access across all plane types
+   */
+  abstract realize3D(): ProjectionPlaneRealization3D;
+  
+  // Element management methods...
+  // (addPoint, getPoint, addLine, getLine, etc.)
+}
+
+/**
+ * BaseProjectionPlane - Fixed planes (P_H, P_V) with pre-computed matrices
+ * 
+ * Bootstrap-only planes with constant transformations stored directly in object.
+ * realize3D() returns these constant matrices wrapped in realization object.
+ * 
+ * Used by: AddProjectionPlaneFixedOp (initialization only)
+ */
+export class BaseProjectionPlane extends ProjectionPlane {
+  private readonly planeToPaper2D: Matrix3;
+  private readonly paperToPlane2D: Matrix3;
+  private readonly planeTo3D: Matrix4x3;
+  private readonly threeDToPlane: Matrix3x4;
+  
+  constructor(
+    name: string,
+    planeToPaper2D: Matrix3,
+    paperToPlane2D: Matrix3,
+    planeTo3D: Matrix4x3,
+    threeDToPlane: Matrix3x4,
+    isActive: boolean = false,
+    isVisible: boolean = true,
+    plane3DId?: string
+  ) {
+    super(name, isActive, isVisible, plane3DId);
+    this.planeToPaper2D = planeToPaper2D;
+    this.paperToPlane2D = paperToPlane2D;
+    this.planeTo3D = planeTo3D;
+    this.threeDToPlane = threeDToPlane;
+  }
+  
+  /**
+   * Returns pre-computed constant matrices (no computation needed)
+   * Same signature as AuxiliaryProjectionPlane.realize3D()
+   */
+  realize3D(): ProjectionPlaneRealization3D {
+    if (!this.id) {
+      throw new Error('Cannot create realization for plane without ID');
+    }
+    return new ProjectionPlaneRealization3D(
+      this.id,
+      this.planeTo3D.clone(),
+      this.threeDToPlane.clone()
+    );
+  }
+}
+```
+
+**AuxiliaryProjectionPlane Domain Class** (parametric, with realization):
+
+```typescript
+/**
+ * AuxiliaryProjectionPlane - User-created planes with computed matrices
+ * 
+ * CRITICAL DISTINCTION:
+ * - BaseProjectionPlane (P_H, P_V): Bootstrap only, pre-computed matrices, no dependencies
+ * - AuxiliaryProjectionPlane: User-created, matrices computed via realize3D() from traces
+ * 
+ * Realization Pattern (like Point3DFromProjections, Plane3DFromTraces):
+ * - Constructor stores trace IDs (dependencies), NOT matrices
+ * - realize3D(world) computes matrices on demand from current trace positions
+ * - Matrices recalculate automatically when traces move (parametric behavior)
+ * - Returns ProjectionPlaneRealization3D (SAME TYPE as BaseProjectionPlane)
+ */
+export class AuxiliaryProjectionPlane extends ProjectionPlane {
+  readonly t1HingeTraceId: string;
+  readonly t2OtherTraceId: string;
+  readonly t2PrimeLineId: string;
+  
+  constructor(
+    id: string,
+    name: string,
+    plane3DId: string,
+    t1HingeTraceId: string,
+    t2OtherTraceId: string,
+    t2PrimeLineId: string
+  ) {
+    super(id, name, plane3DId);
+    this.t1HingeTraceId = t1HingeTraceId;
+    this.t2OtherTraceId = t2OtherTraceId;
+    this.t2PrimeLineId = t2PrimeLineId;
+  }
+  
+  /**
+   * Compute transformation matrices from trace dependencies
+   * Called by World.getProjectionPlane3DRealization()
+   */
+  realize3D(world: World): ProjectionPlaneRealization {
+    // Call matrix computation algorithm with current trace positions
+    const matrices = computeProjectionPlaneMatrices(
+      this.t1HingeTraceId,
+      this.t2OtherTraceId,
+      this.t2PrimeLineId,
+      world
+    );
+    
+    return new ProjectionPlaneRealization(
+      matrices.planeToPaper,
+      matrices.planeTo3D,
+      matrices.threeDToPlane,
+      matrices.feasible
+    );
+  }
+  
+  /**
+   * Return trace line dependencies for invalidation tracking
+   */
+  getDependencies(): string[] {
+    return [this.t1HingeTraceId, this.t2OtherTraceId, this.t2PrimeLineId];
+  }
+  
+  clone(): AuxiliaryProjectionPlane {
+    return new AuxiliaryProjectionPlane(
+      this.id,
+      this.name,
+      this.plane3DId,
+      this.t1HingeTraceId,
+      this.t2OtherTraceId,
+      this.t2PrimeLineId
+    );
+  }
+}
+```
+
+**Operations**:
+
+```typescript
+/**
+ * Operation: Create Plane3D entity (3D geometric definition)
+ */
+export class AddPlane3DByTracesOp implements IOperation {
+  readonly type = 'AddPlane3DByTraces';
+  parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+  
+  constructor(
+    private traceHId: string,
+    private traceVId: string
+  ) {
+    this.parameters = { traceHId, traceVId };
+  }
+  
+  apply(world: World): OperationResult {
+    // Generate ID if not already stored (for redo)
+    const plane3DId = this.outputs.plane3DId ?? world.generateId('plane3d');
+    
+    const plane3D = new Plane3DByTraces(plane3DId, this.traceHId, this.traceVId);
+    world.addPlane3D(plane3D);
+    
+    this.outputs = { plane3DId };
+    return { success: true, outputs: this.outputs };
+  }
+  
+  undo(world: World): void {
+    if (this.outputs.plane3DId) {
+      world.removePlane3D(this.outputs.plane3DId);
+    }
+  }
+}
+
+/**
+ * Operation: Create AuxiliaryProjectionPlane (parametric plane with trace dependencies)
+ * 
+ * IMPORTANT: This is DIFFERENT from AddProjectionPlaneFixedOp
+ * - AddProjectionPlaneFixedOp: Bootstrap only (P_H, P_V) with pre-computed matrices, no dependencies
+ * - AddAuxiliaryProjectionPlaneOp: User-created planes that recompute matrices from trace dependencies
+ */
+export class AddAuxiliaryProjectionPlaneOp implements IOperation {
+  readonly type = 'AddAuxiliaryProjectionPlane';
+  parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+  
+  constructor(
+    private plane3DId: string,
+    private t1HingeTraceId: string,
+    private t2OtherTraceId: string,
+    private t2PrimeLineId: string
+  ) {
+    this.parameters = { plane3DId, t1HingeTraceId, t2OtherTraceId, t2PrimeLineId };
+  }
+  
+  apply(world: World): OperationResult {
+    // Generate ID if not already stored (for redo)
+    const projPlaneId = this.outputs.projPlaneId ?? world.generateId('proj_plane');
+    
+    // Create AuxiliaryProjectionPlane with trace dependencies (NOT matrices)
+    const projPlane = new AuxiliaryProjectionPlane(
+      projPlaneId,
+      `P_A${world.getProjectionPlanes().length - 1}`,  // Auto-name: P_A1, P_A2, ...
+      this.plane3DId,
+      this.t1HingeTraceId,
+      this.t2OtherTraceId,
+      this.t2PrimeLineId
+    );
+    
+    world.addProjectionPlane(projPlane);
+    
+    this.outputs = { projPlaneId };
+    return { success: true, outputs: this.outputs };
+  }
+  
+  undo(world: World): void {
+    if (this.outputs.projPlaneId) {
+      world.removeProjectionPlane(this.outputs.projPlaneId);
+    }
+  }
+}
+
+/**
+ * Operation: Create HingeLine (3D entity connecting planes)
+ */
+export class AddHingeLineOp implements IOperation {
+  readonly type = 'AddHingeLine';
+  parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+  
+  constructor(
+    private hingeTraceId: string,
+    private plane1Id: string,
+    private plane2Id: string
+  ) {
+    this.parameters = { hingeTraceId, plane1Id, plane2Id };
+  }
+  
+  apply(world: World): OperationResult {
+    // Generate ID if not already stored (for redo)
+    const hingeLineId = this.outputs.hingeLineId ?? world.generateId('hinge_line');
+    
+    const hingeLine = new HingeLine(
+      hingeLineId,
+      `HL_${this.plane1Id}_${this.plane2Id}`,
+      this.plane1Id,
+      this.plane2Id
+    );
+    
+    world.addHingeLine(hingeLine);
+    
+    this.outputs = { hingeLineId };
+    return { success: true, outputs: this.outputs };
+  }
+  
+  undo(world: World): void {
+    if (this.outputs.hingeLineId) {
+      world.removeHingeLine(this.outputs.hingeLineId);
+    }
+  }
+}
+```
+
+**ProcessTree Action**:
+
+```typescript
+/**
+ * ProcessTree action for projection plane creation
+ */
+export function createProjectionPlaneAction(
+  projPlaneId: string,
+  t1HingeTraceId: string,
+  t2OtherTraceId: string,
+  t2PrimeLineId: string
+): Action {
+  return {
+    id: generateActionId(),
+    type: 'action',
+    actionType: 'CreateProjectionPlane',
+    timestamp: new Date(),
+    inputs: [t1HingeTraceId, t2OtherTraceId, t2PrimeLineId],  // Dependencies
+    outputs: [projPlaneId],
+    parameters: {
+      t1HingeTraceId,
+      t2OtherTraceId,
+      t2PrimeLineId
+    },
+    description: `Create projection plane from T1=${t1HingeTraceId}, T2=${t2OtherTraceId}`
+  };
+}
+```
+
+**UI Integration**:
+
+**Toolbar Button**:
+- Icon: Two planes with fold line between them
+- Title: "Create Projection Plane - Unfold 3D plane onto paper"
+- Position: Tools section, after existing plane/geometry tools
+
+**Visual Feedback During Tool Use**:
+- Step 1: Highlight valid T1 candidates (any line on any plane)
+- Step 2: Highlight valid T2 candidates (any line on different plane than T1)
+- Step 3: Show expected T2' position as dashed guide line
+  - User constructs T2' using standard line tools
+  - Tool overlays expected position for comparison
+  - Warning indicator if position differs by >1 pixel
+
+**Validation Messages**:
+- "T2 must be on a different plane than T1"
+- "T2' must be on the same plane as T1"
+- "Warning: T2' position differs from computed position by X pixels. Expected position shown in yellow."
+
+**Testing Requirements**:
+
+**Unit Tests**:
+1. `Plane3DByTraces.realize3D()`: Compute plane from two traces
+2. `computeProjectionPlaneMatrices()`: Matrix computation from T1, T2, T2'
+3. `computeExpectedT2Prime()`: Expected T2' position calculation
+4. Validation: Parallel traces → infeasible
+5. Validation: T1 and T2 on same plane → rejected
+6. Validation: T2' on different plane than T1 → rejected
+
+**Integration Tests**:
+1. Create projection plane: T1 selection → T2 selection → T2' construction → verify plane created
+2. Parametric update: Move T1 → verify plane transforms update
+3. Parametric update: Move T2 → verify plane transforms update
+4. Undo/redo: Create plane → undo → verify plane removed → redo → verify plane restored
+5. ProcessTree action: Verify action recorded with correct dependencies
+
+**E2E Tests**:
+1. Full workflow: Open app → create lines on P_H and P_V → activate tool → complete 3 steps → verify new plane appears
+2. Validation workflow: Attempt T2 on same plane as T1 → verify error message
+3. Warning workflow: Create T2' at incorrect position → verify warning (but creation succeeds)
+4. Visual verification: New plane renders on paper at correct position
+5. Visual verification: New plane renders in 3D view at correct orientation
+
+**Implementation Files**:
+- Tool: `frontend/src/tools/CreateProjectionPlaneTool.ts` (NEW)
+- Domain: `frontend/src/domain/world/Plane3D.ts` (add Plane3DByTraces class)
+- Operations: `frontend/src/commands/operations/world/` (3 new ops)
+- Utils: `frontend/src/utils/projectionPlaneUtils.ts` (matrix computation, NEW)
+- Action: `frontend/src/domain/processTree/actions/CreateProjectionPlaneAction.ts` (NEW)
+- Tests: Multiple files in `frontend/tests/{unit,integration,e2e}/`
+
+**Benefits**:
+1. **Enables advanced constructions**: Users can solve complex dihedral problems requiring auxiliary planes
+2. **Pedagogically sound**: 3-step process reinforces understanding of unfolding geometry
+3. **Parametric**: Created planes update automatically when trace lines move
+4. **Undo/redo support**: Full command pattern integration
+5. **Extensible**: Architecture supports future enhancements (multiple auxiliary planes, plane-on-plane constructions)
+
+**Related Documentation**:
+- UI Specification: [ui-spec.md](./ui-spec.md#create-projection-plane-tool) (lines 1205-1335)
+- Functional Requirement: [spec.md](./spec.md) FR-056 (lines 1577-1579)
+- Planning Document: [for-planing.md](./for-planing.md) (lines 21-23)
 

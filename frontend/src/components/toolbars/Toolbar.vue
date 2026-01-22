@@ -109,6 +109,11 @@ import { inject, computed, onMounted, onUnmounted } from 'vue';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { CommandStack } from '@/commands/CommandStack';
+import { Command } from '@/commands/Command';
+import { Vector3 } from 'three';
+import type { World } from '@/domain/world/World';
+import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import LoginStatusWidget from '@/components/LoginStatusWidget.vue';
 import PlaneSelector from '@/components/toolbars/PlaneSelector.vue';
 import ToolFamilyButton from '@/components/toolbars/ToolFamilyButton.vue';
@@ -150,6 +155,12 @@ if (!commandStack) {
   throw new Error('CommandStack not provided');
 }
 
+// Inject world for example setups
+const world = inject<World>('world')!;
+if (!world) {
+  throw new Error('World not provided');
+}
+
 // Computed properties for undo/redo availability
 const canUndo = computed(() => commandStack.canUndo());
 const canRedo = computed(() => commandStack.canRedo());
@@ -170,10 +181,18 @@ function selectTool(tool: 'select' | 'point' | 'line' | 'circle' | 'segment' | '
  * Handle global keyboard shortcuts
  * Phase 54.5: Esc activates Selection Tool
  * Phase 67: Letter shortcuts activate specific sub-tools and update last-used
+ * Alt+E: Add projection plane example setup (for testing)
  */
 function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     selectTool('select');
+    event.preventDefault();
+    return;
+  }
+  
+  // Alt+E: Add projection plane example setup
+  if (event.altKey && (event.key === 'e' || event.key === 'E')) {
+    addProjectionPlaneSetup();
     event.preventDefault();
     return;
   }
@@ -191,6 +210,65 @@ function handleKeyDown(event: KeyboardEvent) {
         return;
       }
     }
+  }
+}
+
+/**
+ * Add projection plane example setup (Alt+E)
+ * Creates T1, T2, and T2' lines for testing auxiliary projection plane creation
+ */
+function addProjectionPlaneSetup() {
+  try {
+    const planes = world.getAllProjectionPlanes();
+    const P_H = planes.find((p) => p.name === 'P_H');
+    const P_V = planes.find((p) => p.name === 'P_V');
+
+    if (!P_H || !P_V) {
+      console.error('Standard projection planes P_H and P_V not found');
+      return;
+    }
+
+    const cmd = new Command('Add projection plane example setup', world);
+
+    // T1 on P_H (horizontal trace)
+    const t1_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(150, 0, 1)));
+    const t1_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(450, 0, 1)));
+    const t1 = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+      P_H.id, 
+      t1_p1.outputs.pointId as string, 
+      t1_p2.outputs.pointId as string
+    ));
+    const t1Line = world.getLine2D(t1.outputs.lineId as string);
+    if (t1Line) t1Line.label = 'T1_H';
+
+    // T2 on P_V (diagonal trace)
+    const t2_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_V.id, new Vector3(200, 0, 1)));
+    const t2_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_V.id, new Vector3(400, 150, 1)));
+    const t2 = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+      P_V.id,
+      t2_p1.outputs.pointId as string,
+      t2_p2.outputs.pointId as string
+    ));
+    const t2Line = world.getLine2D(t2.outputs.lineId as string);
+    if (t2Line) t2Line.label = 'T2_V';
+
+    // T2' on P_H (position line)
+    const t2p_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(200, 80, 1)));
+    const t2p_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(400, 120, 1)));
+    const t2p = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+      P_H.id,
+      t2p_p1.outputs.pointId as string,
+      t2p_p2.outputs.pointId as string
+    ));
+    const t2pLine = world.getLine2D(t2p.outputs.lineId as string);
+    if (t2pLine) t2pLine.label = 'T2\'_H';
+
+    cmd.commit();
+    commandStack.push(cmd);
+    
+    console.log('Added projection plane example setup (T1_H, T2_V, T2\'_H)');
+  } catch (error) {
+    console.error('Failed to add projection plane setup:', error);
   }
 }
 

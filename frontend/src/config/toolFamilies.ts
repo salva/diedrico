@@ -25,11 +25,12 @@ import Create3DPointIcon from '@/components/icons/toolbar/Create3DPointIcon.vue'
 import Create3DLineIcon from '@/components/icons/toolbar/Create3DLineIcon.vue';
 import Create3DSegmentIcon from '@/components/icons/toolbar/Create3DSegmentIcon.vue';
 import Create3DPlaneIcon from '@/components/icons/toolbar/Create3DPlaneIcon.vue';
+import ExampleIcon from '@/components/icons/toolbar/FreePointIcon.vue';  // TODO: Create dedicated icon for examples
 
 /**
  * Tool families configuration
  * 
- * Seven tool families + Selection Tool (separate button):
+ * Eight tool families + Selection Tool (separate button):
  * 1. Point Family: free-point, intersection
  * 2. Line Family: line-by-two-points, parallel-line, perpendicular-line, tangent-*
  * 3. Segment Family: segment
@@ -37,6 +38,7 @@ import Create3DPlaneIcon from '@/components/icons/toolbar/Create3DPlaneIcon.vue'
  * 5. Guide Family: guide
  * 6. Transport Family: transport (placeholder - not yet implemented)
  * 7. 3D Elements Family: create3dpoint, create3dline, create3dsegment, create3dplane (Phase 78)
+ * 8. Examples Family: exampleconstructions (for testing and demonstration)
  */
 export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
@@ -204,6 +206,35 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         icon: Create3DPlaneIcon,
         tooltip: 'Create 3D plane from two trace lines on different planes',
         completionBehavior: 'stay-active'
+      },
+      {
+        id: 'createprojectionplane',
+        label: 'Projection Plane',
+        icon: Create3DPlaneIcon,  // TODO: Create dedicated icon for auxiliary projection planes
+        tooltip: 'Create auxiliary projection plane - Select T1 hinge, T2 other trace, T2\' position',
+        completionBehavior: 'stay-active'
+      }
+    ]
+  },
+  {
+    id: 'examples-family',
+    label: 'Examples',
+    icon: ExampleIcon,
+    defaultTool: 'quickprojectionsetup',
+    tools: [
+      {
+        id: 'quickprojectionsetup',
+        label: 'Quick Setup',
+        icon: ExampleIcon,
+        tooltip: 'Quick projection plane setup with predefined points',
+        completionBehavior: 'return-to-selection'
+      },
+      {
+        id: 'interactiveprojectionsetup',
+        label: 'Interactive Setup',
+        icon: ExampleIcon,
+        tooltip: 'Interactive projection plane setup - Select A1, A2 on P_H, then B1 on P_V',
+        completionBehavior: 'return-to-selection'
       }
     ]
   }

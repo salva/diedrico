@@ -47,6 +47,11 @@ import { AddLineLineIntersectionPoint2DOp } from '../operations/world/AddLineLin
 import { AddLineCircleIntersectionPoint2DOp } from '../operations/world/AddLineCircleIntersectionPoint2DOp';
 import { AddCircleCircleIntersectionPoint2DOp } from '../operations/world/AddCircleCircleIntersectionPoint2DOp';
 import { AddSiblingIntersectionPoint2DOp } from '../operations/world/AddSiblingIntersectionPoint2DOp';
+import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
+import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
+import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
+import { createSiblingIntersectionPointAction } from '@/domain/processTree/actions/CreateSiblingIntersectionPointAction';
 import type { World } from '@/domain/world/World';
 
 /**
@@ -164,7 +169,29 @@ export class IntersectionSequenceFactory {
     world: World
   ): IntersectionResult {
     const operation = new AddLineLineIntersectionPoint2DOp(planeId, line1Id, line2Id);
-    return this.executeWithSiblingSupport(cmd, operation, planeId, world);
+    const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
+    
+    // Record ProcessTree action for primary intersection
+    const action = createLineLineIntersectionPointAction(result.pointId, planeId, line1Id, line2Id);
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    // Record ProcessTree action for sibling if created
+    if (result.siblingPointId) {
+      const primaryPoint = world.getPoint2D(result.pointId);
+      if (primaryPoint) {
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
+        if (siblingPlaneId) {
+          const siblingAction = createSiblingIntersectionPointAction(
+            result.siblingPointId,
+            siblingPlaneId,
+            result.pointId
+          );
+          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
+        }
+      }
+    }
+    
+    return result;
   }
 
   /**
@@ -191,7 +218,29 @@ export class IntersectionSequenceFactory {
     world: World
   ): IntersectionResult {
     const operation = new AddLineCircleIntersectionPoint2DOp(planeId, lineId, circleId, index);
-    return this.executeWithSiblingSupport(cmd, operation, planeId, world);
+    const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
+    
+    // Record ProcessTree action for primary intersection
+    const action = createLineCircleIntersectionPointAction(result.pointId, planeId, lineId, circleId, index);
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    // Record ProcessTree action for sibling if created
+    if (result.siblingPointId) {
+      const primaryPoint = world.getPoint2D(result.pointId);
+      if (primaryPoint) {
+        const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
+        if (siblingPlaneId) {
+          const siblingAction = createSiblingIntersectionPointAction(
+            result.siblingPointId,
+            siblingPlaneId,
+            result.pointId
+          );
+          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
+        }
+      }
+    }
+    
+    return result;
   }
 
   /**
@@ -217,7 +266,15 @@ export class IntersectionSequenceFactory {
     world: World
   ): IntersectionResult {
     const operation = new AddCircleCircleIntersectionPoint2DOp(planeId, circle1Id, circle2Id, index);
-    return this.executeWithSiblingSupport(cmd, operation, planeId, world);
+    const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
+    
+    // Record ProcessTree action for primary intersection
+    const action = createCircleCircleIntersectionPointAction(result.pointId, planeId, circle1Id, circle2Id, index);
+    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    // Note: Circles never create siblings, so no sibling action needed
+    
+    return result;
   }
 
   /**

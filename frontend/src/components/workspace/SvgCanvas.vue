@@ -203,6 +203,9 @@ import { Create3DPointTool } from '@/tools/Create3DPointTool';
 import { Create3DLineTool } from '@/tools/Create3DLineTool';
 import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
 import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+import { InteractiveProjectionSetupTool } from '@/tools/ExampleConstructionsTool';
+import { QuickProjectionSetupTool } from '@/tools/QuickProjectionSetupTool';
 import { FreePoint2D } from '@/domain/world/Point';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
@@ -444,6 +447,10 @@ const tools: Record<string, ITool> = {
   'create3dline': new Create3DLineTool(),
   'create3dsegment': new Create3DSegmentTool(),
   'create3dplane': new Create3DPlaneTool(),
+  // Phase 82: Auxiliary Projection Plane Tool
+  'createprojectionplane': new CreateProjectionPlaneTool(),
+  'interactiveprojectionsetup': new InteractiveProjectionSetupTool(),
+  'quickprojectionsetup': new QuickProjectionSetupTool(),
 };
 
 // Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
@@ -648,6 +655,9 @@ function computeAdaptiveGridParams(zoom: number): {
 const gridLines = computed(() => {
   if (!viewStore.gridVisible.value) return [];
 
+  // Depend on worldVersion to trigger recomputation when active plane changes
+  const _ = worldVersion.value;
+  
   const activePlaneId = world.getActivePlaneId();
   const plane = world.getProjectionPlaneById(activePlaneId);
   if (!plane) return [];
@@ -780,6 +790,9 @@ const gridLabels = computed(() => {
     return { top: [], bottom: [], left: [], right: [] };
   }
 
+  // Depend on worldVersion to trigger recomputation when active plane changes
+  const _ = worldVersion.value;
+  
   const activePlaneId = world.getActivePlaneId();
   const plane = world.getProjectionPlaneById(activePlaneId);
   if (!plane) {

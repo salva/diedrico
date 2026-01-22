@@ -80,8 +80,8 @@
  * @see Phase 48: Remove World Facade Methods
  */
 
-import { Vector4 } from 'three';
-import { applyMatrix4x3 } from '@/utils/threeUtils';
+import { Vector4, Matrix3 } from 'three';
+import { applyMatrix4x3, Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { Point2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
 import { Line2D } from './Line';
 import { Segment2D, Segment2DByPoints } from './Segment';
@@ -108,14 +108,13 @@ import { buildWorldInitialization } from '@/commands/factories/InitializationSeq
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
   private hingeLines: Map<string, HingeLine>;
-  private planes: Map<string, Plane3D>;
-  projectionPlanes: Map<string, ProjectionPlane>;  // 2D projection planes (public for rendering)
+  private planes3D: Map<string, Plane3D>;        // All 3D planes (base P_H, P_V + user-created)
+  projectionPlanes: Map<string, ProjectionPlane>;  // All projection planes (base + auxiliary)
   
   // Phase 78: User-created 3D elements (domain layer - definitions)
   private points3D: Map<string, Point3D>;        // User-created 3D points from projections
   private lines3D: Map<string, Line3D>;          // User-created 3D lines from projections
   private segments3D: Map<string, Segment3D>;    // User-created 3D segments from projections
-  private planes3DUser: Map<string, Plane3D>;    // User-created 3D planes from traces
   
   // Construction history
   private processTree: ProcessTree;
@@ -152,14 +151,13 @@ export class World {
   constructor() {
     // Phase 22.5.3: Element storage removed - stored in ProjectionPlane
     this.hingeLines = new Map();
-    this.planes = new Map();
+    this.planes3D = new Map();
     this.projectionPlanes = new Map();
     
     // Phase 78: Initialize 3D element storage
     this.points3D = new Map();
     this.lines3D = new Map();
     this.segments3D = new Map();
-    this.planes3DUser = new Map();
     
     // Initialize realization caches
     this.pointRealizations3D = new Map();
@@ -248,7 +246,7 @@ export class World {
     }
     
     this.hingeLines.clear();
-    this.planes.clear();
+    this.planes3D.clear();
     this.projectionPlanes.clear();
     this.projectionPlaneRealizations2D.clear();
     this.projectionPlaneRealizations3D.clear();
@@ -338,35 +336,53 @@ export class World {
     
     // Phase 52: Plane3DFixed constructor signature changed to (id, point, normal, label)
     const plane = new Plane3DFixed(id, point, normal, label);
-    this.planes.set(id, plane);
+    this.planes3D.set(id, plane);
     
     return plane;
   }
 
   /**
-   * Element factory: Create projection plane
+   * Element factory: Create projection plane with explicit transformation matrices
    * 
    * Creates a projection plane associated with a 3D plane and adds it to World.
+   * Takes explicit transformation matrices instead of orientation string for generic plane creation.
    * If projPlaneId is not provided, generates a new ID.
    * 
    * @param plane3DId - ID of associated 3D plane
-   * @param orientation - 'horizontal' or 'vertical'
+   * @param planeToPaper2D - 3x3 homogeneous matrix: plane (u,v,1) → paper (x',y',1)
+   * @param planeTo3D - 4x3 matrix: plane (u,v,1) → domain 3D (x,y,z,w)
+   * @param threeDToPlane - 3x4 matrix: domain 3D (x,y,z,w) → plane (u,v,1)
    * @param projPlaneId - Optional ID (for redo support)
+   * @param name - Optional name/label (defaults to proj_plane_${id})
    * @returns Created ProjectionPlane instance
    */
   addProjectionPlane(
-    plane3DId: string, 
-    orientation: 'horizontal' | 'vertical', 
-    projPlaneId?: string
+    plane3DId: string,
+    planeToPaper2D: Matrix3,
+    planeTo3D: Matrix4x3,
+    threeDToPlane: Matrix3x4,
+    projPlaneId?: string,
+    name?: string
   ): ProjectionPlane {
     const id = projPlaneId || this.generateProjPlaneId();
     
-    const projPlane = orientation === 'horizontal'
-      ? BaseProjectionPlane.createPH()
-      : BaseProjectionPlane.createPV();
+    // Compute inverse of planeToPaper2D
+    const paperToPlane2D = planeToPaper2D.clone().invert();
+    
+    // Create BaseProjectionPlane with explicit matrices
+    const projPlane = new BaseProjectionPlane(
+      name || `proj_plane_${id}`,
+      planeToPaper2D,
+      paperToPlane2D,
+      planeTo3D,
+      threeDToPlane,
+      false,  // Not active by default
+      true,   // Visible
+      '#808080',  // Default gray
+      plane3DId
+    );
     
     projPlane.id = id;
-    projPlane.plane3DId = plane3DId;
     
     this.projectionPlanes.set(id, projPlane);
     
@@ -489,8 +505,8 @@ export class World {
       return undefined;
     }
 
-    // Call realize2D() on the plane (same pattern as points)
-    realization = plane.realize2D();
+    // Call realize2D with World context (uniform API for all plane types)
+    realization = plane.realize2D(this);
     
     // Cache the result
     this.projectionPlaneRealizations2D.set(planeId, realization);
@@ -515,8 +531,8 @@ export class World {
       return undefined;
     }
 
-    // Call realize3D() on the plane
-    realization = plane.realize3D();
+    // Call realize3D with World context (uniform API for all plane types)
+    realization = plane.realize3D(this);
     
     // Cache the result
     this.projectionPlaneRealizations3D.set(planeId, realization);
@@ -537,6 +553,14 @@ export class World {
       this.lineRealizations3D.delete(id);
       this.segmentRealizations3D.delete(id);
       this.planeRealizations3D.delete(id);
+      
+      // Clear projection plane 3D realizations if this is a Plane3D
+      // When a Plane3D is invalidated, any projection planes depending on it need recomputation
+      for (const [projPlaneId, projPlane] of this.projectionPlanes) {
+        if (projPlane.plane3DId === id) {
+          this.projectionPlaneRealizations3D.delete(projPlaneId);
+        }
+      }
       
       // Clear 2D realization caches in all planes
       for (const plane of this.projectionPlanes.values()) {
@@ -635,7 +659,7 @@ export class World {
     if (!plane.id) {
       throw new Error('addPlane: plane.id is readonly and must be set during construction. Use addPlane3DFixed() instead.');
     }
-    this.planes.set(plane.id, plane);
+    this.planes3D.set(plane.id, plane);
     return plane;
   }
 
@@ -643,7 +667,7 @@ export class World {
    * Get a plane by ID
    */
   getPlaneById(id: string): Plane3D | undefined {
-    return this.planes.get(id);
+    return this.planes3D.get(id);
   }
 
   /**
@@ -780,10 +804,10 @@ export class World {
   }
 
   /**
-   * Get all planes
+   * Get all 3D planes (base + user-created)
    */
   getAllPlanes(): Plane3D[] {
-    return Array.from(this.planes.values());
+    return Array.from(this.planes3D.values());
   }
 
   /**
@@ -1079,35 +1103,51 @@ export class World {
   }
 
   /**
-   * Add user-created 3D plane to World
+   * Add 3D plane to World (base or user-created)
    */
-  add3DPlaneUser(plane: Plane3D): void {
-    this.planes3DUser.set(plane.id!, plane);
+  add3DPlane(plane: Plane3D): void {
+    this.planes3D.set(plane.id!, plane);
     this.notifyChange();
   }
 
   /**
-   * Get user-created 3D plane by ID
+   * @deprecated Use add3DPlane instead
    */
-  get3DPlaneUser(id: string): Plane3D | undefined {
-    return this.planes3DUser.get(id);
+  add3DPlaneUser(plane: Plane3D): void {
+    this.add3DPlane(plane);
   }
 
   /**
-   * Remove user-created 3D plane from World
+   * Get 3D plane by ID (base or user-created)
    */
-  remove3DPlaneUser(id: string): void {
-    this.planes3DUser.delete(id);
+  get3DPlane(id: string): Plane3D | undefined {
+    return this.planes3D.get(id);
+  }
+
+  /**
+   * @deprecated Use get3DPlane instead
+   */
+  get3DPlaneUser(id: string): Plane3D | undefined {
+    return this.get3DPlane(id);
+  }
+
+  /**
+   * Remove 3D plane from World (base or user-created)
+   */
+  remove3DPlane(id: string): void {
+    this.planes3D.delete(id);
     this.planeRealizations3D.delete(id);
     this.notifyChange();
   }
 
   /**
-   * Get all user-created 3D planes
+   * @deprecated Use remove3DPlane instead
    */
-  getAll3DPlanesUser(): Plane3D[] {
-    return Array.from(this.planes3DUser.values());
+  remove3DPlaneUser(id: string): void {
+    this.remove3DPlane(id);
   }
+
+
 
   /**
    * Get 3D point realization (computed geometry)
@@ -1177,7 +1217,7 @@ export class World {
     }
 
     // Compute and cache
-    const plane = this.get3DPlaneUser(id);
+    const plane = this.get3DPlane(id);
     if (!plane) return undefined;
 
     const realization = plane.realize3D(this);

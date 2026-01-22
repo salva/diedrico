@@ -20,9 +20,7 @@ import type { Point2D } from '@/domain/world/Point';
 import type { Line2D } from '@/domain/world/Line';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { AddLine2DParallelToLineOp } from '@/commands/operations/world/AddLineOp';
-import { createParallelLineAction } from '@/domain/processTree/actions/CreateParallelLineAction';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
 
 /**
  * ParallelLineTool using ArgumentCollectorTool framework
@@ -71,21 +69,13 @@ export class ParallelLineTool extends ArgumentCollectorTool {
     const referenceLine = args.get('referenceLine')!.element as Line2D;
     const throughPoint = args.get('throughPoint')!.element as Point2D;
     
-    // Create parallel line using collected arguments
-    const result = cmd.addAndExecute(
-      new AddLine2DParallelToLineOp(planeId, referenceLine.id, throughPoint.id)
-    );
-    
-    const lineId = result.outputs.lineId;
-    
-    // Record ProcessTree action for dependency tracking
-    const action = createParallelLineAction(
-      lineId,
+    // Factory handles operation AND ProcessTree action
+    LineSequenceFactory.createParallelLine(
+      cmd,
       planeId,
       referenceLine.id,
       throughPoint.id
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
   }
 
   protected getCommandDescription(): string {

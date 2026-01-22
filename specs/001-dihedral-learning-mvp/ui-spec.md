@@ -1201,6 +1201,144 @@ State 3 (circle + point selected):
 - Highlighting must be < 100ms (smooth hover feedback)
 - Status message updates must be synchronous with argument addition
 
+#### Create Projection Plane Tool
+
+**Purpose**: Allow users to create new projection planes by "unfolding" a 3D plane onto the paper using a trace line as the hinge.
+
+**Pedagogical Goal**: This tool teaches users how to construct auxiliary projection planes in dihedral projection. Users must:
+1. Understand that a 3D plane Q is defined by two trace lines (T1 on P1, T2 on P2)
+2. Determine where trace T2 should appear when plane Q is unfolded using T1 as the hinge
+3. Manually construct the position of T2' (the image of T2 in the new projection plane)
+
+**Nomenclature**:
+- **Q**: The 3D plane to be projected (defined by two trace lines)
+- **T1**: Trace of Q on projection plane P1 (becomes the **hinge line**)
+- **T2**: Trace of Q on projection plane P2 (defines Q's geometry)
+- **T2'**: User-constructed line on P1 showing where T2 should appear in the new projection plane
+- **P1**: The existing projection plane that Q will be folded onto
+- **P2**: Another existing projection plane where T2 exists
+
+**User Workflow**:
+
+```
+[Projection Plane ▼]
+  └─ Create Projection Plane by Hinge
+```
+
+**Three-Step Sequential Tool**:
+
+1. **Step 1: Select T1 (Hinge Line)**
+   - Status: `"Projection Plane: Select hinge line (trace on folding plane)"`
+   - Selection mask: `['line']` (only 2D lines selectable)
+   - User clicks T1 (a line on projection plane P1)
+   - T1 is highlighted to indicate it's selected
+   
+2. **Step 2: Select T2 (Other Trace)**
+   - Status: `"Projection Plane: Select other trace (defines 3D plane)"`
+   - Selection mask: `['line']` (only 2D lines on different planes)
+   - Constraint: T2 must be on a DIFFERENT projection plane than T1
+   - User clicks T2 (a line on projection plane P2)
+   - Both T1 and T2 are highlighted
+   
+3. **Step 3: Select T2' (Position of T2 in New Plane)**
+   - Status: `"Projection Plane: Select position of trace T2 in new plane"`
+   - Selection mask: `['line']` (only 2D lines on same plane as T1)
+   - Constraint: T2' must be on the SAME projection plane as T1 (P1)
+   - User clicks T2' (a line on projection plane P1)
+   - All three lines are highlighted
+   - Tool executes immediately upon selection
+
+**What T2' Represents (Two Purposes)**:
+
+1. **Orientation Constraint**: 
+   - T2' specifies which way Q unfolds relative to the hinge T1
+   - Without T2', the system wouldn't know if Q should fold "up" or "down" (180° ambiguity)
+   - T2' breaks this degeneracy by defining the expected position
+
+2. **Educational Requirement (CRITICAL)**:
+   - **The user must geometrically determine where T2' should be**
+   - This is the core learning exercise in dihedral projection
+   - Users must apply their understanding of:
+     - How planes fold along hinge lines
+     - How traces relate to each other when a plane is unfolded
+     - Geometric construction techniques (perpendiculars, parallels, measurements)
+   - **The application does NOT compute T2' - the user constructs it manually**
+
+**Visual Feedback**:
+
+- **During Selection**:
+  - Step indicator: `"Step 1 of 3"`, `"Step 2 of 3"`, `"Step 3 of 3"`
+  - Selected lines highlighted with emphasis color
+  - Hover preview shows which line would be selected
+  
+- **After Completion**:
+  - New projection plane appears on the canvas
+  - Plane positioned so T1 is the shared hinge with P1
+  - Grid for the new plane rendered
+  - Plane added to active plane selector
+  - Success message: `"Projection plane created"`
+
+**Validation**:
+
+1. **T1 and T2 must define a 3D plane**:
+   - T1 and T2 must be traces of the same 3D plane Q
+   - System verifies via 3D plane reconstruction (T1 on P1, T2 on P2 → plane Q)
+   - If not coplanar: `"Error: Selected traces do not define a plane"`
+
+2. **T2' must be geometrically consistent**:
+   - System computes expected position of T2 in the new projection plane
+   - Compares with user-provided T2'
+   - If position differs beyond tolerance (e.g., > 1 pixel): `"Warning: T2' position may be incorrect"`
+   - Tool still executes (educational - user sees the consequence)
+   - **Note**: This is a WARNING, not an error (learning tool)
+
+3. **Plane selection constraints**:
+   - T1 and T2 must be on DIFFERENT projection planes
+   - T1 and T2' must be on the SAME projection plane
+   - If violated: `"Error: Invalid plane selection"`
+
+**System Computation**:
+
+From T1, T2, T2', the system computes:
+1. **3D plane Q**: Reconstructed from traces T1 (on P1) and T2 (on P2)
+2. **Transformation matrices**:
+   - `planeToPaper`: Maps plane Q's (u,v) coordinates to paper (x',y')
+   - `planeTo3D`: Maps plane Q's (u,v) to 3D world coordinates (x,y,z)
+   - `threeDToPlane`: Maps 3D coordinates to plane Q's (u,v)
+3. **Hinge line geometry**: T1 becomes the HingeLine connecting P1 and the new plane
+4. **Paper positioning**: New plane positioned on canvas adjacent to P1 along T1
+
+**Matrix Derivation**:
+- T1 defines the fold axis (hinge direction and position)
+- T2' defines the orientation (which side Q unfolds to)
+- System computes rotation/translation to position Q on paper
+- Matrices ensure T2 maps exactly to T2' in the new plane
+
+**Tool Completion**:
+- Creates new ProjectionPlane domain object
+- Creates HingeLine between P1 and new plane
+- Adds HalfHingeLine representations on both planes
+- Records construction in ProcessTree
+- New plane becomes available in active plane selector
+
+**Cancellation**:
+- ESC key at any step cancels and resets
+- Already-selected lines are de-selected
+
+**Error Messages**:
+
+- `"Error: Selected traces do not define a plane"` - T1 and T2 are not coplanar in 3D
+- `"Error: T1 and T2 must be on different planes"` - Both traces on same projection plane
+- `"Error: T2' must be on same plane as T1"` - T2' on wrong projection plane
+- `"Warning: T2' position may be incorrect (expected at [coordinates])"` - T2' doesn't match computed position
+- `"Error: Cannot create plane - hinge line is degenerate"` - T1 has zero length
+
+**Future Enhancements**:
+- Visual preview showing how the plane will unfold
+- Snap guides to help user position T2' correctly
+- Measurement tools to verify T2' position
+- Option to auto-compute T2' (with warning that this defeats learning purpose)
+
 #### Continuous Visual Feedback
 
 The system provides **constant feedback** during tool operation:
@@ -1775,6 +1913,87 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 - Button in 3D view controls or double-click canvas
 - Resets camera to default position (isometric or similar)
 - Auto-frames all visible elements
+
+### Reference Coordinate Axes (Phase 82)
+
+**Purpose**: Display labeled coordinate axes at scene origin (0, 0, 0) to provide clear spatial orientation for users.
+
+---
+
+### Auxiliary Projection Plane Grid Alignment (Phase 82.1)
+
+**Purpose**: Ensure auxiliary projection plane grids are geometrically correct with properly computed coordinate systems.
+
+**User-Visible Change**:
+- Grids on auxiliary projection planes now align correctly with the 3D plane geometry
+- Grid lines are perpendicular (U-axis along hinge, V-axis perpendicular in-plane)
+- Grid origin is at the natural intersection of the two defining trace lines
+
+**Technical Fix**:
+- Coordinate system computation uses stable double cross product for V-axis: `v = normalize(t1 × (t1 × t2))`
+- Origin positioned at geometric intersection of T1 and T2 in 3D space
+- No orientation ambiguity or visual artifacts
+
+**Before vs After**:
+- **Before**: Grid orientation could be incorrect, origin arbitrary, axes not properly perpendicular
+- **After**: Grid geometrically correct, axes orthogonal, origin at trace intersection
+
+**Visibility**: This fix only affects auxiliary projection planes created with the Create Projection Plane Tool. Default planes (P_H, P_V) are unchanged.
+
+---
+
+### Reference Coordinate Axes (Phase 82) - Original Content
+
+**Purpose**: Display labeled coordinate axes (i, j, k vectors) at the scene origin to provide clear spatial orientation and facilitate debugging of coordinate system transformations.
+
+**Visual Representation**:
+- **Three arrows** originating from (0, 0, 0) in Three.js world coordinates
+- **Arrow style**: Three.js ArrowHelper objects with visible head cones
+- **Arrow length**: 15 units (scaled appropriately for scene visibility)
+- **Standard colors** (X/Y/Z convention):
+  - **X-axis (i)**: Red (#FF0000) - points in +X direction
+  - **Y-axis (j)**: Green (#00FF00) - points in +Y direction (upward in Three.js right-handed system)
+  - **Z-axis (k)**: Blue (#0000FF) - points in +Z direction (toward viewer)
+
+**Text Labels**:
+- **Implementation**: CSS2DRenderer for HTML overlay labels
+- **Label content**: "X (i)", "Y (j)", "Z (k)"
+- **Label positioning**: At arrow tips (+16 units from origin to clear arrow heads)
+- **Label styling**:
+  - White background with subtle border
+  - Padding: 2-4px
+  - Font: 12px sans-serif, bold
+  - Always face camera (billboard behavior via CSS2DRenderer)
+- **Visibility**: Labels remain readable during camera rotation
+
+**Display Toggle**:
+- Checkbox in 3D View Controls panel: "☑ Show Reference Axes"
+- Default state: **Enabled** (visible by default for debugging and orientation)
+- Saved in viewStore.threeViewOptions.showReferenceAxes
+
+**Coordinate System Clarification**:
+- **Three.js coordinate system**: RIGHT-HANDED (standard WebGL)
+  - +X: Right
+  - +Y: Up
+  - +Z: Toward viewer (out of screen)
+- **Domain coordinate system**: LEFT-HANDED (Monge projection)
+  - +X: Right (same as Three.js)
+  - +Y: Away from viewer (into screen) - viewer at (0, -∞, 0)
+  - +Z: Up
+- **Conversion rule**: `threeY = -domainY` (Y-axis inversion only)
+
+**Use Cases**:
+- **User orientation**: Understand current view angle relative to world axes
+- **Debugging**: Verify coordinate transformations are correct
+- **Learning**: Reinforce understanding of right-handed Three.js vs left-handed domain coordinates
+- **Troubleshooting**: Diagnose misalignment between 2D and 3D representations
+
+**Implementation Details**:
+- Rendered in `renderReferenceAxes()` function in ThreeView.vue
+- Uses THREE.ArrowHelper for each axis (origin, direction, length, color)
+- Uses CSS2DRenderer instance (labelRenderer) for text labels
+- Labels positioned using CSS2DObject attached to each arrow
+- Updated only when toggle state changes (not every frame)
 
 ### Display Options
 

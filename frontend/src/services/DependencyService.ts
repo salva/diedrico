@@ -318,6 +318,9 @@ export class DependencyService {
    * @param visitor - Function to call for each node
    */
   private traverseTree(node: ProcessNode, visitor: (node: ProcessNode) => void): void {
+    // Skip null nodes (tombstones from removed actions)
+    if (!node) return;
+    
     visitor(node);
     
     if (node.type === 'subprocess') {
@@ -328,7 +331,10 @@ export class DependencyService {
     } else if (node.type === 'actionGroup') {
       const group = node as ActionGroup;
       for (const action of group.children) {
-        visitor(action);
+        // Skip null entries (tombstones)
+        if (action) {
+          visitor(action);
+        }
       }
     }
   }

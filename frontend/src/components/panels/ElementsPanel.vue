@@ -316,7 +316,7 @@ const threeDElements = computed(() => {
   const points = world.getAll3DPoints();
   const lines = world.getAll3DLines();
   const segments = world.getAll3DSegments();
-  const planes = world.getAll3DPlanesUser();
+  const planes = world.getAllPlanes();
   
   console.log('[ElementsPanel] 3D elements:', {
     points: points.length,

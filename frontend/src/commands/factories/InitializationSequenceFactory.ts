@@ -3,11 +3,12 @@ import type { Command } from '../Command';
 import {
   CreateInitializationSubprocessOp,
   AddPlane3DFixedOp,
-  AddProjectionPlaneOp,
+  AddProjectionPlaneFixedOp,
   AddOriginPoint2DOp,
   SetActivePlaneOp
 } from '../operations/world/InitializationOps';
-import { Vector3, Vector4 } from 'three';
+import { Vector3, Vector4, Matrix3 } from 'three';
+import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
 
 /**
@@ -57,13 +58,48 @@ export function buildWorldInitialization(_world: World, cmd: Command): void {
   cmd.addAndExecute(planeVOp);
   const planeVId = planeVOp.outputs.planeId as string;
   
-  // Step 4-5: Create projection planes
-  // Operations generate IDs internally via world.generateProjPlaneId()
-  const projPlaneHOp = new AddProjectionPlaneOp(planeHId, 'horizontal');
+  // Step 4-5: Create projection planes with explicit transformation matrices
+  // P_H: horizontal plane at z=0, v maps to domain Y
+  const planeToPaper_H = new Matrix3().set(
+    1, 0, 800,     // x' = u + 800
+    0, 1, 500,     // y' = v + 500 (Y towards viewer = downward, no flip)
+    0, 0, 1
+  );
+  const planeTo3D_H = new Matrix4x3().set(
+    1, 0, 0,  // x = u
+    0, 1, 0,  // y = v (domain Y)
+    0, 0, 0,  // z = 0 (horizontal plane)
+    0, 0, 1   // w = 1
+  );
+  const threeDToPlane_H = new Matrix3x4().set(
+    1, 0, 0, 0,  // u = x
+    0, 1, 0, 0,  // v = y
+    0, 0, 0, 1   // 1 = w
+  );
+  
+  const projPlaneHOp = new AddProjectionPlaneFixedOp(planeHId, planeToPaper_H, planeTo3D_H, threeDToPlane_H, undefined, 'P_H');
   cmd.addAndExecute(projPlaneHOp);
   const projPlaneHId = projPlaneHOp.outputs.projPlaneId as string;
   
-  const projPlaneVOp = new AddProjectionPlaneOp(planeVId, 'vertical');
+  // P_V: vertical plane at y=0, v maps to domain Z
+  const planeToPaper_V = new Matrix3().set(
+    1, 0, 800,      // x' = u + 800
+    0, -1, 500,     // y' = -v + 500 (Z upward = canvas upward, flip needed)
+    0, 0, 1
+  );
+  const planeTo3D_V = new Matrix4x3().set(
+    1, 0, 0,  // x = u
+    0, 0, 0,  // y = 0 (vertical plane)
+    0, 1, 0,  // z = v (domain Z)
+    0, 0, 1   // w = 1
+  );
+  const threeDToPlane_V = new Matrix3x4().set(
+    1, 0, 0, 0,  // u = x
+    0, 0, 1, 0,  // v = z
+    0, 0, 0, 1   // 1 = w
+  );
+  
+  const projPlaneVOp = new AddProjectionPlaneFixedOp(planeVId, planeToPaper_V, planeTo3D_V, threeDToPlane_V, undefined, 'P_V');
   cmd.addAndExecute(projPlaneVOp);
   const projPlaneVId = projPlaneVOp.outputs.projPlaneId as string;
   

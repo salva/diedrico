@@ -24,7 +24,8 @@ export type ActionType =
   | 'InitializeHalfHingeLine2D'
   | 'CreatePerpendicularLine'
   | 'CreateTangentLineToCircleThroughPoint'
-  | 'CreateTangentLineToCircleParallelToLine';
+  | 'CreateTangentLineToCircleParallelToLine'
+  | 'CreateProjectionPlane';
 
 export interface Action {
   id: string;                    // UUID

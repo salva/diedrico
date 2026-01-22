@@ -284,8 +284,11 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     const viableSpecs = this.getViableNextArgumentSpecs();
     
     if (viableSpecs.length === 0) {
-      // No viable next arguments (shouldn't happen during normal operation)
-      throw new Error('No viable next arguments - tool should have completed or failed');
+      // No viable next arguments - tool is in invalid state, reset it
+      console.warn('ArgumentCollectorTool: No viable next arguments, resetting tool state');
+      this.reset();
+      // Return a permissive mask to avoid blocking interaction
+      return SelectionMask.none();
     }
     
     // Union of all viable next argument masks

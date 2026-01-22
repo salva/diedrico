@@ -18,7 +18,7 @@ import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
-import { Add3DPlaneOp } from '@/commands/operations/world/Add3DPlaneOp';
+import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
 
 /**
  * Create3DPlaneTool using ArgumentCollectorTool framework
@@ -67,7 +67,7 @@ export class Create3DPlaneTool extends ArgumentCollectorTool {
   protected executeOperations(
     cmd: Command,
     args: Map<string, ArgumentValue>,
-    context: ToolContext
+    _context: ToolContext
   ): void {
     const trace1 = args.get('trace1')!.element!;
     const trace2 = args.get('trace2')!.element!;
@@ -77,12 +77,14 @@ export class Create3DPlaneTool extends ArgumentCollectorTool {
     const plane1Id = trace1.planeId;
     const plane2Id = trace2.planeId;
 
-    cmd.addAndExecute(new Add3DPlaneOp(
+    // Use factory to create 3D plane with ProcessTree action
+    PlaneSequenceFactory.create3DPlaneFromTraces(
+      cmd,
       trace1Id,
       trace2Id,
       plane1Id,
       plane2Id
-    ));
+    );
   }
 
   protected getCommandDescription(): string {
