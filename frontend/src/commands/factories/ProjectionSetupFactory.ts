@@ -17,6 +17,11 @@ import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { IntersectionSequenceFactory } from './IntersectionSequenceFactory';
 import { LineSequenceFactory } from './LineSequenceFactory';
 import { CircleSequenceFactory } from './CircleSequenceFactory';
+import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+import { AddAuxiliaryProjectionPlaneOp } from '@/commands/operations/world/AddAuxiliaryProjectionPlaneOp';
+import { AddHingeLineOp } from '@/commands/operations/world/InitializationOps';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { createProjectionPlaneAction } from '@/domain/processTree/actions/CreateProjectionPlaneAction';
 
 /**
  * Construct complete projection plane setup following the 14-step procedure
@@ -144,4 +149,42 @@ export function constructProjectionPlaneSetup(
   
   const l5Line = world.getLine2D(l5Id);
   if (l5Line) l5Line.label = 'T2\'';
+
+  // === Create the auxiliary projection plane ===
+  
+  // Step 15: Create 3D plane from T1 (L1) and T2 (L2)
+  const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
+    cmd,
+    l1Id,  // T1
+    l2Id,  // T2
+    P_H.id!,
+    P_V.id!,
+    'Plane Q'
+  );
+
+  // Step 16: Create auxiliary projection plane with trace dependencies
+  const projPlaneResult = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
+    plane3DId,
+    l1Id,   // T1 (hinge trace)
+    l2Id,   // T2 (other trace)
+    l5Id,   // T2' (position line)
+    'P_A1'  // Name for the auxiliary projection plane
+  ));
+  const projPlaneId = projPlaneResult.outputs.planeId as string;
+
+  // Step 17: Create hinge line between T1's plane (P_H) and new projection plane
+  cmd.addAndExecute(new AddHingeLineOp(
+    l1Id,   // T1
+    P_H.id!,
+    projPlaneId
+  ));
+
+  // Step 18: Record in ProcessTree
+  const action = createProjectionPlaneAction(
+    projPlaneId,
+    l1Id,   // T1
+    l2Id,   // T2
+    l5Id    // T2'
+  );
+  cmd.addAndExecute(new AddProcessTreeActionOp(action));
 }
