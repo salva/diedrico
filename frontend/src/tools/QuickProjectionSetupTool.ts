@@ -85,7 +85,8 @@ export class QuickProjectionSetupTool implements ITool {
     // Construct complete projection plane setup
     constructProjectionPlaneSetup(cmd, context, a1Id, a2Id, b1Id);
 
-    // Execute command and return to selection tool
+    // Commit and push command, then return to selection tool
+    cmd.commit();
     commandStack.push(cmd);
     toolStore.setTool('select');
   }
