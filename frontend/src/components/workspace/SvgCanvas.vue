@@ -683,11 +683,24 @@ const gridLines = computed(() => {
   const u_paper = new Vector3(1, 0, 0).applyMatrix3(planeRealization.planeToPaper2D);
   const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
 
+  // DEBUG: Log the transformed basis vectors and viewport state
+  console.log('[gridLines] origin_paper:', origin_paper);
+  console.log('[gridLines] u_paper:', u_paper);
+  console.log('[gridLines] v_paper:', v_paper);
+  console.log('[gridLines] viewport.panX:', viewport.value.panX, 'panY:', viewport.value.panY);
+  console.log('[gridLines] viewport.zoom:', viewport.value.zoom);
+  console.log('[gridLines] canvasWidth:', canvasWidth.value, 'canvasHeight:', canvasHeight.value);
+
   // Calculate viewport bounds in paper coordinates
   const viewportWidth = canvasWidth.value / zoom;
   const viewportHeight = canvasHeight.value / zoom;
   const offsetX = -viewport.value.panX;
   const offsetY = -viewport.value.panY;
+  
+  console.log('[gridLines] viewportWidth:', viewportWidth, 'viewportHeight:', viewportHeight);
+  console.log('[gridLines] offsetX:', offsetX, 'offsetY:', offsetY);
+  console.log('[gridLines] viewport top-left corner in paper:', offsetX, offsetY);
+  console.log('[gridLines] viewport center in paper:', offsetX + viewportWidth/2, offsetY + viewportHeight/2);
 
   // Viewport corners in paper coordinates
   const viewport_corners_paper = [

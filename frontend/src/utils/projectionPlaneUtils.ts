@@ -181,21 +181,24 @@ export function computeProjectionPlaneMatrices(
   // T1: passes through t1Point1, direction t1Dir
   // T2': passes through t2PrimePoint1, direction t2PrimeDir
   
+  // Line2DRealization2D represents infinite lines as:
+  // - point1: a point on the line (z=1)
+  // - point2: direction vector (z=0)
+  // So we should use point2 directly as the direction, not compute point2 - point1
+  
   const t1Point1 = t1Realization.point1;
-  const t1Dir_raw = new Vector3(
-    t1Realization.point2.x - t1Realization.point1.x,
-    t1Realization.point2.y - t1Realization.point1.y,
+  const t1Dir_2d = new Vector3(
+    t1Realization.point2.x,
+    t1Realization.point2.y,
     0
-  );
-  const t1Dir_2d = t1Dir_raw.clone().normalize();
+  ).normalize();
   
   const t2PrimePoint1 = t2PrimeRealization.point1;
-  const t2PrimeDir_raw = new Vector3(
-    t2PrimeRealization.point2.x - t2PrimeRealization.point1.x,
-    t2PrimeRealization.point2.y - t2PrimeRealization.point1.y,
+  const t2PrimeDir_2d = new Vector3(
+    t2PrimeRealization.point2.x,
+    t2PrimeRealization.point2.y,
     0
-  );
-  const t2PrimeDir_2d = t2PrimeDir_raw.clone().normalize();
+  ).normalize();
   
   // Compute intersection using parametric form
   // Line 1: P1 + s * d1
@@ -215,7 +218,11 @@ export function computeProjectionPlaneMatrices(
   }
   
   const s_2d = (d1_d2 * d2_w - d2_d2 * d1_w) / denom_2d;
-  const origin_paper = t1Point1.clone().addScaledVector(t1Dir_2d, s_2d);
+  const origin_plane = t1Point1.clone().addScaledVector(t1Dir_2d, s_2d);
+  
+  // Transform intersection from P1's plane coords to P1's paper coords
+  const planeP1Realization2D = planeP1.realize2D(world);
+  const origin_paper = origin_plane.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
   // 1.2: U-axis = direction of T1 on paper (homogeneous direction)
   const u_paper = new Vector3(t1Dir_2d.x, t1Dir_2d.y, 0);  // w=0 for direction
@@ -236,8 +243,7 @@ export function computeProjectionPlaneMatrices(
     planeP1Realization3D.threeDToPlane
   );
   
-  // Transform to paper coordinates (get planeToPaper2D from plane's 2D realization)
-  const planeP1Realization2D = planeP1.realize2D(world);
+  // Transform to paper coordinates
   const t2Point_on_P1_paper = new Vector3(t2Point_on_P1_plane.x, t2Point_on_P1_plane.y, 1)
     .applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
@@ -254,6 +260,15 @@ export function computeProjectionPlaneMatrices(
   const v_paper = (side > 0) ? v_paper_candidate : v_paper_candidate.clone().negate();
   
   // 1.5: Build planeToPaper matrix (homogeneous 2D transform)
+  // The origin_paper is T1-T2' intersection in P1's PAPER coordinates
+  // This becomes the displacement/translation for the auxiliary plane's coordinate system
+  // So auxiliary plane's origin (0,0,1) maps to where T1-T2'-T2 intersect in P1's paper view
+  
+  // DEBUG: Log the basis vectors before building the matrix
+  console.log('[computeProjectionPlaneMatrices] u_paper:', u_paper);
+  console.log('[computeProjectionPlaneMatrices] v_paper:', v_paper);
+  console.log('[computeProjectionPlaneMatrices] origin_paper (in P1 paper coords):', origin_paper);
+  
   // Transformation: (u, v, 1) → (x_paper, y_paper, 1)
   const planeToPaper = new Matrix3();
   planeToPaper.set(
