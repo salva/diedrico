@@ -55,6 +55,19 @@ A **hinge line** (HL) is the intersection line shared by two **projection planes
 - Hinge lines are the **physical fold lines** between projection planes.
 - For geometric reasoning, hinge lines behave like regular 2D lines.
 
+**Architecture (Phase 84 - Canonical Coordinates)**:
+- **HingeLine** (3D entity): NO geometry storage. The 3D line is computed on-demand from canonical coordinates **(0,0,1)** (origin) and **(1,0,0)** (u-axis direction) in plane1's coordinate system, transformed to 3D via `HingeLine.realize3D()`.
+- **HalfHingeLine2D** (2D entity): Represents how the 3D hinge line appears in each plane's local coordinates. NO geometry storage - computed via `realize2D()`:
+  - **Plane1**: Returns canonical coordinates (0,0,1) and (1,0,0) directly
+  - **Plane2**: Projects the 3D line back to plane2 coordinates
+- **Key Insight**: Hinge line is ALWAYS at v=0 along the u-axis in plane intrinsic coordinates. This makes canonical coordinates universal for ALL hinge lines (base planes, auxiliary planes, etc.).
+
+**Benefits of Canonical Coordinates**:
+- Zero geometry duplication (was: stored in both HalfHingeLine2D objects)
+- Automatic parametric consistency (no validation needed)
+- Extensible to auxiliary projection planes with arbitrary orientations
+- Centralized 3D computation for rendering consistency
+
 **Broken Hinge Lines (BHL)**: When two arbitrary 3D planes intersect (not projection planes), their intersection line is called a **broken hinge line**. For example, with three planes A, B, C:
 - `HL_AB` and `HL_AC` are regular hinge lines (folds between projection planes)
 - `BHL_BC` is the broken hinge line (intersection of planes B and C in 3D space)

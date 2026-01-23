@@ -18,6 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] **Phase 84: Geometry-Free Hinge Line Architecture** - Refactor HingeLine/HalfHingeLine2D to eliminate stored geometry duplication using canonical coordinates (0,0,1) and (1,0,0). Implement realize3D() with applyMatrix4x3() transformation, realize2D() with plane1 canonical/plane2 projection. Benefits: zero duplication, no parametric consistency validation, extensible to auxiliary planes. See specs/001-dihedral-learning-mvp/phase-84-geometry-free-hinge-lines.md for details.
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Add a shortcut for changing the active projection plane to the next one. Using Tab for instance.
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.

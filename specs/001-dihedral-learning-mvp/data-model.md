@@ -1588,12 +1588,23 @@ ProjectionPlane {
 
 ```typescript
 // 3D Entity - represents the actual 3D intersection line between projection planes
+// **Phase 84 Update**: NO geometry storage - computed on demand via realize3D()
 interface HingeLine {
   id: HingeLineId;                  // UUID
   name: string;                     // "HL_HV", "HL_HA1", etc.
-  plane1: PlaneId;                  // Reference to first projection plane
-  plane2: PlaneId;                  // Reference to second projection plane
-  // 3D geometry computed from plane intersection (not stored in MVP)
+  plane1: PlaneId;                  // Reference plane (canonical coords source)
+  plane2: PlaneId;                  // Second projection plane
+  
+  // NO geometry stored - computed via realize3D()
+  realize3D(world: World): Line3DRealization3D {
+    // Transform canonical (0,0,1) and (1,0,0) from plane1 to 3D
+    const origin = new Vector3(0, 0, 1);      // Canonical origin
+    const direction = new Vector3(1, 0, 0);   // Canonical u-axis
+    const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id);
+    const origin3D = applyMatrix4x3(origin, plane1Real.planeTo3D);
+    const direction3D = applyMatrix4x3(direction, plane1Real.planeTo3D);
+    return new Line3DRealization3D(origin3D, direction3D);
+  }
 }
 ```
 
@@ -1633,12 +1644,32 @@ World {
 
 ```typescript
 // 2D Entity - extends Line2D base class
+// **Phase 84 Update**: NO geometry storage - computed on demand from canonical coordinates
 class HalfHingeLine2D extends Line2D {
   type: 'half-hinge';               // Line2D type discriminator
   hingeLineId: HingeLineId;         // Reference to parent 3D HingeLine
   planeId: PlaneId;                 // Which projection plane this half belongs to
-  point: Vector3;                   // Point on line in plane's (u,v,1) coordinates
-  direction: Vector3;               // Direction vector in plane's (u,v,0) coordinates
+  
+  // NO point/direction properties - geometry computed via realize2D()
+  
+  realize2D(world: World): Line2DRealization2D {
+    const hingeLine = world.getHingeLineById(this.hingeLineId);
+    
+    // Plane1: Return canonical coordinates directly
+    if (this.planeId === hingeLine.plane1Id) {
+      return new Line2DRealization2D(
+        new Vector3(0, 0, 1),    // Canonical origin
+        new Vector3(1, 0, 0)     // Canonical u-axis direction
+      );
+    }
+    
+    // Plane2: Project 3D line back to plane2
+    const line3D = hingeLine.realize3D(world);
+    const plane2Real = world.getProjectionPlane3DRealization(this.planeId);
+    const origin2D = applyMatrix3x4(line3D.point, plane2Real.threeDToPlane);
+    const direction2D = applyMatrix3x4(line3D.direction, plane2Real.threeDToPlane);
+    return new Line2DRealization2D(origin2D, direction2D);
+  }
 }
 ```
 
@@ -1646,13 +1677,14 @@ class HalfHingeLine2D extends Line2D {
 
 ```typescript
 // World initialization - creates 1 HingeLine + 2 HalfHingeLine2D objects
+// **Phase 84 Update**: HalfHingeLine2D created without geometry arguments
 const hingeLineHV = new HingeLine('HL_HV', 'HL_HV', 'proj_plane_H', 'proj_plane_V');
 this.hingeLines.set('HL_HV', hingeLineHV);  // ✅ Stored in World
 
-const halfHingeHV_onPH = new HalfHingeLine2D('half_HL_HV_on_PH', 'HL_HV', 'proj_plane_H', ...);
+const halfHingeHV_onPH = new HalfHingeLine2D('half_HL_HV_on_PH', 'HL_HV', 'proj_plane_H');
 projPlaneH.addLine(halfHingeHV_onPH);  // ✅ Stored in ProjectionPlane
 
-const halfHingeHV_onPV = new HalfHingeLine2D('half_HL_HV_on_PV', 'HL_HV', 'proj_plane_V', ...);
+const halfHingeHV_onPV = new HalfHingeLine2D('half_HL_HV_on_PV', 'HL_HV', 'proj_plane_V');
 projPlaneV.addLine(halfHingeHV_onPV);  // ✅ Stored in ProjectionPlane
 ```
 
@@ -1671,9 +1703,19 @@ projPlaneV.addLine(halfHingeHV_onPV);  // ✅ Stored in ProjectionPlane
 
 ### CRITICAL: HalfHingeLine2D Parametric Consistency Requirement
 
+**Phase 84 Update**: With canonical coordinates architecture, parametric consistency is AUTOMATIC - no validation needed.
+
 **Purpose**: Enable parametric scalar correspondence for intersection points and guides between sibling HalfHingeLine2D objects representing ANY HingeLine
 
-**Geometric Requirement**: Both HalfHingeLine2D objects representing the same 3D HingeLine **MUST use identical (point Q, direction D) in their local (u,v) coordinates**.
+**Geometric Requirement**: Both HalfHingeLine2D objects representing the same 3D HingeLine **AUTOMATICALLY use identical (point Q, direction D) in their local (u,v) coordinates** because both derive from the same canonical coordinates **(0,0,1)** and **(1,0,0)**.
+
+**Architecture (Phase 84)**:
+- **Plane1**: realize2D() returns canonical (0,0,1) and (1,0,0) directly
+- **Plane2**: realize2D() transforms via 3D: plane1→3D→plane2
+  - Gets 3D line from plane1: `hingeLine.realize3D(world)`
+  - Projects to plane2: `applyMatrix3x4(line3D, plane2.threeDToPlane)`
+- **Result**: Both planes see the SAME 3D line projected to their coordinate systems
+- **NO VALIDATION NEEDED**: Consistency guaranteed by transformation math
 
 **Why This Matters**:
 
@@ -1701,45 +1743,45 @@ When an element (circle, line, guide, etc.) intersects with a HalfHingeLine2D on
 **Implementation Example** (HL_HV - but principle applies to ALL HingeLines):
 
 ```typescript
-// World constructor - both HalfHingeLine2D use IDENTICAL geometry
+// **Phase 84**: World constructor - NO geometry stored, consistency automatic
 const halfHingeHV_onPH = new HalfHingeLine2D(
   'half_HL_HV_on_PH',
   'HL_HV',
-  'proj_plane_H',
-  new Vector3(0, 0, 1),      // ✅ Same Q: origin (0, 0, 1)
-  new Vector3(1, 0, 0)       // ✅ Same D: horizontal (1, 0, 0)
+  'proj_plane_H'
+  // NO point/direction arguments - computed on demand
 );
 
 const halfHingeHV_onPV = new HalfHingeLine2D(
   'half_HL_HV_on_PV',
   'HL_HV',
-  'proj_plane_V',
-  new Vector3(0, 0, 1),      // ✅ Same Q: origin (0, 0, 1)
-  new Vector3(1, 0, 0)       // ✅ Same D: horizontal (1, 0, 0)
+  'proj_plane_V'
+  // NO point/direction arguments - computed on demand
 );
 
-// VALIDATION: Ensure parametric consistency (called in World constructor)
-HingeLine.validateParametricConsistency(halfHingeHV_onPH, halfHingeHV_onPV);
+// NO VALIDATION NEEDED: Consistency guaranteed by canonical coordinates
+// Both realize2D() methods return geometry derived from same 3D line
 ```
 
 **Generic Example** (works for auxiliary planes with arbitrary Q, D):
 
 ```typescript
-// Arbitrary HingeLine with Q=(2,3,1), D=(0,1,0)
+// **Phase 84**: Arbitrary HingeLine - NO stored geometry
+// Canonical coords (0,0,1), (1,0,0) transform to arbitrary 3D line
 const halfHinge_plane1 = new HalfHingeLine2D(
-  'hhl1', 'HL_CUSTOM', 'plane1',
-  new Vector3(2, 3, 1),      // Q = (2,3,1) - arbitrary
-  new Vector3(0, 1, 0)       // D = (0,1,0) - arbitrary
+  'hhl1', 'HL_CUSTOM', 'plane1'
+  // NO geometry - realizes to canonical (0,0,1), (1,0,0)
 );
 
 const halfHinge_plane2 = new HalfHingeLine2D(
-  'hhl2', 'HL_CUSTOM', 'plane2',
-  new Vector3(2, 3, 1),      // Q' = (2,3,1) - SAME
-  new Vector3(0, 1, 0)       // D' = (0,1,0) - SAME
+  'hhl2', 'HL_CUSTOM', 'plane2'
+  // NO geometry - realizes via 3D projection from plane1
 );
 
-// Validation ensures Q=Q', D=D'
-HingeLine.validateParametricConsistency(halfHinge_plane1, halfHinge_plane2);
+// Consistency automatic:
+// - plane1.realize2D() → canonical (0,0,1), (1,0,0)
+// - hingeLine.realize3D() → transforms canonical from plane1 to 3D
+// - plane2.realize2D() → projects 3D line back to plane2
+// Result: Both see SAME 3D line in their local coordinates
 ```
 
 **Result**: 
