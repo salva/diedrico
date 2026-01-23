@@ -1412,6 +1412,7 @@ function handleSaveProperties(changes: any) {
         color: changes.color,
         lineWidth: changes.lineWidth,
         lineStyle: changes.lineStyle,
+        opacity: changes.opacity,
         visible: changes.visible
       }
     );

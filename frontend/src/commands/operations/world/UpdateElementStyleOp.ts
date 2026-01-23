@@ -4,8 +4,7 @@
  * Updates style properties (color, lineWidth, lineStyle, visibility) of a geometric element.
  * Style changes are undoable by storing previous values.
  * 
- * Note: This is a placeholder implementation. Full style inheritance system (T194-T197)
- * will be implemented later with subprocess defaults and override flags.
+ * Phase 83: Now actually updates element.visualStyle property
  * 
  * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Element Properties Dialog
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
@@ -13,6 +12,8 @@
 
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import type { VisualStyle } from '@/domain/world/VisualStyle';
+import { createVisualStyle } from '@/domain/world/VisualStyle';
 
 /**
  * Style properties that can be updated
@@ -21,6 +22,7 @@ interface StyleProperties {
   color?: string;
   lineWidth?: number;
   lineStyle?: 'solid' | 'dashed' | 'dotted';
+  opacity?: number;
   visible?: boolean;
 }
 
@@ -35,7 +37,7 @@ export class UpdateElementStyleOp implements IOperation {
   readonly parameters: Record<string, any>;
   outputs: Record<string, any> = {};
   
-  private previousStyle: StyleProperties = {};
+  private previousStyle: VisualStyle | undefined = undefined;
 
   constructor(
     private elementId: string,
@@ -47,27 +49,52 @@ export class UpdateElementStyleOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // TODO: Implement style storage in World/elements
-      // For now, just log the change and store for undo
-      
-      // Get element to store previous style
+      // Get the plane containing the element
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      // Try to find element (could be point, line, segment, circle, guide, etc.)
-      // TODO: Implement actual style storage on elements
-      // For now, just store the change for undo
-      this.previousStyle = {}; // Would copy current style here
+      // Try to find element (could be point, line, circle, etc.)
+      let element = plane.getPoint(this.elementId);
+      if (!element) {
+        element = plane.getLine(this.elementId);
+      }
+      if (!element) {
+        element = plane.getCircle(this.elementId);
+      }
       
-      console.log('[UpdateElementStyleOp] Applying style to:', this.elementId, this.newStyle);
+      if (!element) {
+        throw new Error(`Element not found: ${this.elementId}`);
+      }
+
+      // Store previous style for undo (clone it)
+      this.previousStyle = element.visualStyle ? { ...element.visualStyle } : undefined;
       
-      // Apply new style (placeholder - actual implementation pending style system)
-      // element.color = this.newStyle.color ?? element.color;
-      // element.lineWidth = this.newStyle.lineWidth ?? element.lineWidth;
-      // element.lineStyle = this.newStyle.lineStyle ?? element.lineStyle;
-      // element.visible = this.newStyle.visible ?? element.visible;
+      // Create or update visualStyle
+      if (!element.visualStyle) {
+        // Element has no style yet, create one with defaults
+        element.visualStyle = createVisualStyle();
+      }
+      
+      // Apply new style properties (only update provided properties)
+      if (this.newStyle.color !== undefined) {
+        element.visualStyle.color = this.newStyle.color;
+      }
+      if (this.newStyle.lineWidth !== undefined) {
+        element.visualStyle.lineWidth = this.newStyle.lineWidth;
+      }
+      if (this.newStyle.lineStyle !== undefined) {
+        element.visualStyle.lineStyle = this.newStyle.lineStyle;
+      }
+      if (this.newStyle.opacity !== undefined) {
+        element.visualStyle.opacity = this.newStyle.opacity;
+      }
+      if (this.newStyle.visible !== undefined) {
+        element.visualStyle.visible = this.newStyle.visible;
+      }
+      
+      console.log('[UpdateElementStyleOp] Applied style to:', this.elementId, element.visualStyle);
       
       return {
         success: true,
@@ -82,20 +109,34 @@ export class UpdateElementStyleOp implements IOperation {
     }
   }
 
-  undo(_world: World): void {
-    // Restore previous style
-    console.log('[UpdateElementStyleOp] Undoing style for:', this.elementId, this.previousStyle);
-    
-    // TODO: Restore previous style on element
-    // const plane = world.getProjectionPlaneById(this.planeId);
-    // if (plane) {
-    //   const element = plane.getElement(this.elementId);
-    //   if (element) {
-    //     element.color = this.previousStyle.color;
-    //     element.lineWidth = this.previousStyle.lineWidth;
-    //     element.lineStyle = this.previousStyle.lineStyle;
-    //     element.visible = this.previousStyle.visible;
-    //   }
-    // }
+  undo(world: World): void {
+    try {
+      // Get the plane and element
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (!plane) {
+        console.error('[UpdateElementStyleOp] Cannot undo: Plane not found:', this.planeId);
+        return;
+      }
+
+      let element = plane.getPoint(this.elementId);
+      if (!element) {
+        element = plane.getLine(this.elementId);
+      }
+      if (!element) {
+        element = plane.getCircle(this.elementId);
+      }
+      
+      if (!element) {
+        console.error('[UpdateElementStyleOp] Cannot undo: Element not found:', this.elementId);
+        return;
+      }
+
+      // Restore previous style
+      element.visualStyle = this.previousStyle ? { ...this.previousStyle } : undefined;
+      
+      console.log('[UpdateElementStyleOp] Restored style for:', this.elementId, element.visualStyle);
+    } catch (error) {
+      console.error('[UpdateElementStyleOp] Undo failed:', error);
+    }
   }
 }
