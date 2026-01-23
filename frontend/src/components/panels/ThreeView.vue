@@ -411,6 +411,12 @@ function render3DElements() {
     console.log('[ThreeView] render3DElements called - found', points3D.length, '3D points');
     
     for (const point of points3D) {
+      // Skip invisible 3D points
+      if (point.visualStyle?.visible === false) {
+        console.log('[ThreeView] Skipping invisible 3D point:', point.id);
+        continue;
+      }
+      
       console.log('[ThreeView] Processing 3D point:', point.id, point.kind);
       
       const realization = world.get3DPointRealization(point.id!);
@@ -453,6 +459,9 @@ function render3DElements() {
     console.log('[ThreeView] Rendering', lines3D.length, '3D lines');
     
     for (const line of lines3D) {
+      // Skip invisible 3D lines
+      if (line.visualStyle?.visible === false) continue;
+      
       const realization = world.get3DLineRealization(line.id!);
       if (!realization || !realization.isFeasible) continue;
       
@@ -494,6 +503,9 @@ function render3DElements() {
     console.log('[ThreeView] Rendering', segments3D.length, '3D segments');
     
     for (const segment of segments3D) {
+      // Skip invisible 3D segments
+      if (segment.visualStyle?.visible === false) continue;
+      
       const realization = world.get3DSegmentRealization(segment.id!);
       if (!realization || !realization.isFeasible) continue;
       

@@ -84,11 +84,16 @@ export class Element2DRenderer3D {
 
     // Render points
     for (const point of plane.getAllPoints()) {
+      // Skip invisible points
+      if (point.visualStyle?.visible === false) continue;
       this.renderPoint(point, plane, world, isActivePlane);
     }
 
     // Render lines (includes segments, guides, etc.)
     for (const line of plane.getAllLines()) {
+      // Skip invisible lines
+      if (line.visualStyle?.visible === false) continue;
+      
       // Check if it's a segment (bounded line)
       const realization2D = line.realize2D(world);
       if (realization2D && realization2D.isBounded()) {
@@ -100,6 +105,8 @@ export class Element2DRenderer3D {
 
     // Render circles
     for (const circle of plane.getAllCircles()) {
+      // Skip invisible circles
+      if (circle.visualStyle?.visible === false) continue;
       this.renderCircle(circle, plane, world, isActivePlane);
     }
   }

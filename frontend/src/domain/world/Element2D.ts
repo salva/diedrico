@@ -46,8 +46,8 @@ export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | 
  * }
  * 
  * // Generic functions for 2D elements
- * function hideElement(element: Element2D): void {
- *   element.visible = false;
+ * function hideElement(element: Element2D, world: World): void {
+ *   // Use resolveVisibility or modify visualStyle
  * }
  * 
  * // Filter by plane
@@ -66,9 +66,6 @@ export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | 
 export abstract class Element2D extends Element {
   /** Which projection plane this element belongs to */
   readonly planeId: string;
-  
-  /** Whether element is visible in canvas (default: true) */
-  visible: boolean = true;
   
   /**
    * Construct a 2D element

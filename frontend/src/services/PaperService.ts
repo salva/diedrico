@@ -89,7 +89,7 @@ export class PaperService {
       // WALK: Iterate over all points in this plane
       for (const point of plane.getAllPoints()) {
         // Skip invisible points
-        if (!point.visible) continue;
+        if (point.visualStyle?.visible === false) continue;
         
         // REALIZE: Compute position (numeric data) from plane - computes and caches
         const realization = plane.realizePoint2D(point, context.world);
@@ -105,7 +105,7 @@ export class PaperService {
       // HalfHingeLine2D are Line2D entities with type 'half-hinge'
       for (const line of plane.getAllLines()) {
         // Skip invisible lines
-        if (!line.visible) continue;
+        if (line.visualStyle?.visible === false) continue;
         
         // REALIZE: Compute line equation (numeric data) from plane - computes and caches
         const realization = plane.realizeLine2D(line, context.world);
@@ -136,7 +136,7 @@ export class PaperService {
       // WALK: Iterate over all circles in this plane
       for (const circle of plane.getAllCircles()) {
         // Skip invisible circles
-        if (!circle.visible) continue;
+        if (circle.visualStyle?.visible === false) continue;
         
         // REALIZE: Compute circle geometry (numeric data) from plane - computes and caches
         const realization = plane.realizeCircle2D(circle, context.world);

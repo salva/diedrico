@@ -346,7 +346,7 @@ function formatElement(element: any): any {
     id: element.id,
     label: formatLabel(element),
     type: getElementType(element),
-    visible: element.visible !== false,
+    visible: element.visualStyle?.visible !== false,
     properties: getElementProperties(element)
   };
 }
@@ -427,10 +427,14 @@ function handleElementSelect(elementId: string) {
 
 function handleVisibilityToggle(elementId: string) {
   // Architecture: Access elements through World.getElement2D (uses hierarchical ID)
-  // and toggle visible property directly
+  // and toggle visible property in visualStyle
   const element = world.getElement2D(elementId);
   if (element) {
-    element.visible = !element.visible;
+    if (!element.visualStyle) {
+      element.visualStyle = { color: '#000000', lineWidth: 2, lineStyle: 'solid', opacity: 1.0, visible: false, inherited: true };
+    } else {
+      element.visualStyle.visible = !element.visualStyle.visible;
+    }
     // Notify world of change for reactivity
     world.markDirty();
   }

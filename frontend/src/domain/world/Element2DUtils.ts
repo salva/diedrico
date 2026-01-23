@@ -98,11 +98,15 @@ export function getElementsOnPlane(elements: Element2D[], planeId: string): Elem
  * ```typescript
  * const point = new FreePoint2D('p1', new Vector3(1, 2, 1), 'proj_plane_H');
  * hideElement(point);
- * console.log(point.visible); // false
+ * console.log(point.visualStyle?.visible); // false
  * ```
  */
 export function hideElement(element: Element2D): void {
-  element.visible = false;
+  if (!element.visualStyle) {
+    element.visualStyle = { color: '#000000', lineWidth: 2, lineStyle: 'solid', opacity: 1.0, visible: false, inherited: true };
+  } else {
+    element.visualStyle.visible = false;
+  }
 }
 
 /**
@@ -115,13 +119,17 @@ export function hideElement(element: Element2D): void {
  * @example
  * ```typescript
  * const line = new Line2DByTwoPoints('l1', 'p1', 'p2', 'proj_plane_V');
- * line.visible = false;
+ * line.visualStyle = { ...line.visualStyle, visible: false };
  * showElement(line);
- * console.log(line.visible); // true
+ * console.log(line.visualStyle?.visible); // true
  * ```
  */
 export function showElement(element: Element2D): void {
-  element.visible = true;
+  if (!element.visualStyle) {
+    element.visualStyle = { color: '#000000', lineWidth: 2, lineStyle: 'solid', opacity: 1.0, visible: true, inherited: true };
+  } else {
+    element.visualStyle.visible = true;
+  }
 }
 
 /**
@@ -157,13 +165,13 @@ export function getElementLabel(element: Element2D): string {
  * @example
  * ```typescript
  * const allElements: Element2D[] = [point1, line1, circle1];
- * line1.visible = false;
+ * line1.visualStyle = { ...line1.visualStyle, visible: false };
  * const visible = getVisibleElements(allElements);
  * // Returns [point1, circle1]
  * ```
  */
 export function getVisibleElements(elements: Element2D[]): Element2D[] {
-  return elements.filter(el => el.visible);
+  return elements.filter(el => el.visualStyle?.visible !== false);
 }
 
 /**

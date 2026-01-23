@@ -41,7 +41,7 @@ export const useWorldStore = defineStore('world', {
      */
     visibleElements2D: (state) => {
       return Array.from(state.elements2D.values()).filter(
-        el => el.visualStyle.visible
+        el => el.visualStyle?.visible !== false
       );
     },
 
@@ -50,7 +50,7 @@ export const useWorldStore = defineStore('world', {
      */
     visibleElements3D: (state) => {
       return Array.from(state.elements3D.values()).filter(
-        el => el.visualStyle.visible
+        el => el.visualStyle?.visible !== false
       );
     },
 
