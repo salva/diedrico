@@ -663,7 +663,7 @@ const gridLines = computed(() => {
   if (!plane) return [];
 
   // Get plane realization which contains transformation matrices
-  const planeRealization = plane.realize2D();
+  const planeRealization = plane.realize2D(world);
 
   const zoom = viewport.value.zoom;
   const { spacing, subdivision, majorSpacing } = computeAdaptiveGridParams(zoom);
@@ -677,50 +677,60 @@ const gridLines = computed(() => {
     major: boolean;
   }> = [];
 
-  // Step 1: Calculate viewport bounds in paper coordinates
+  // Phase 82.2: Transform intrinsic basis to paper space
+  // This approach works for both base planes (identity-like) and auxiliary planes (rotated)
+  const origin_paper = new Vector3(0, 0, 1).applyMatrix3(planeRealization.planeToPaper2D);
+  const u_paper = new Vector3(1, 0, 0).applyMatrix3(planeRealization.planeToPaper2D);
+  const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
+
+  // Calculate viewport bounds in paper coordinates
   const viewportWidth = canvasWidth.value / zoom;
   const viewportHeight = canvasHeight.value / zoom;
   const offsetX = -viewport.value.panX;
   const offsetY = -viewport.value.panY;
 
   // Viewport corners in paper coordinates
-  const topLeft_paper = new Vector3(offsetX, offsetY, 1);
-  const topRight_paper = new Vector3(offsetX + viewportWidth, offsetY, 1);
-  const bottomLeft_paper = new Vector3(offsetX, offsetY + viewportHeight, 1);
-  const bottomRight_paper = new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1);
+  const viewport_corners_paper = [
+    new Vector3(offsetX, offsetY, 1),
+    new Vector3(offsetX + viewportWidth, offsetY, 1),
+    new Vector3(offsetX, offsetY + viewportHeight, 1),
+    new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1)
+  ];
 
-  // Step 2: Transform viewport corners to plane (u,v) coordinates
-  const topLeft_plane = topLeft_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
-  const topRight_plane = topRight_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
-  const bottomLeft_plane = bottomLeft_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
-  const bottomRight_plane = bottomRight_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+  // Project viewport corners onto intrinsic axes to find (u,v) range
+  // For each corner: solve (corner - origin_paper) = a*u_paper + b*v_paper
+  const u_coords = viewport_corners_paper.map(corner => {
+    const offset = new Vector3().subVectors(corner, origin_paper);
+    return offset.dot(u_paper) / u_paper.lengthSq();
+  });
+  const v_coords = viewport_corners_paper.map(corner => {
+    const offset = new Vector3().subVectors(corner, origin_paper);
+    return offset.dot(v_paper) / v_paper.lengthSq();
+  });
 
-  // Step 3: Compute axis-aligned bounding box in plane (u,v) coordinates
-  const uValues = [topLeft_plane.x, topRight_plane.x, bottomLeft_plane.x, bottomRight_plane.x];
-  const vValues = [topLeft_plane.y, topRight_plane.y, bottomLeft_plane.y, bottomRight_plane.y];
+  const uMin = Math.min(...u_coords);
+  const uMax = Math.max(...u_coords);
+  const vMin = Math.min(...v_coords);
+  const vMax = Math.max(...v_coords);
 
-  const uMin = Math.min(...uValues);
-  const uMax = Math.max(...uValues);
-  const vMin = Math.min(...vValues);
-  const vMax = Math.max(...vValues);
-
-  // Step 4: Round to nearest grid spacing (add margin for partial grid lines at edges)
+  // Round to nearest grid spacing (add margin for partial grid lines at edges)
   const uStart = Math.floor(uMin / spacing) * spacing;
   const uEnd = Math.ceil(uMax / spacing) * spacing;
   const vStart = Math.floor(vMin / spacing) * spacing;
   const vEnd = Math.ceil(vMax / spacing) * spacing;
 
-  // Step 5: Generate vertical grid lines (constant u)
+  // Generate grid lines parallel to v-axis (constant u, extending along v)
   for (let u = uStart; u <= uEnd; u += spacing) {
     const isMajor = Math.abs(u % majorSpacing) < 0.01;
 
-    // Define line in plane (u,v): (u, vMin) to (u, vMax)
-    const p1_plane = new Vector3(u, vMin, 1);
-    const p2_plane = new Vector3(u, vMax, 1);
-
-    // Transform to paper coordinates
-    const p1_paper = p1_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
-    const p2_paper = p2_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    // Line in paper space: origin + u*u_paper + t*v_paper (t varies from vMin to vMax)
+    const base_paper = new Vector3()
+      .addVectors(origin_paper, new Vector3().copy(u_paper).multiplyScalar(u));
+    
+    const p1_paper = new Vector3()
+      .addVectors(base_paper, new Vector3().copy(v_paper).multiplyScalar(vMin));
+    const p2_paper = new Vector3()
+      .addVectors(base_paper, new Vector3().copy(v_paper).multiplyScalar(vMax));
 
     // Transform to screen coordinates
     const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
@@ -738,17 +748,18 @@ const gridLines = computed(() => {
     });
   }
 
-  // Step 6: Generate horizontal grid lines (constant v)
+  // Generate grid lines parallel to u-axis (constant v, extending along u)
   for (let v = vStart; v <= vEnd; v += spacing) {
     const isMajor = Math.abs(v % majorSpacing) < 0.01;
 
-    // Define line in plane (u,v): (uMin, v) to (uMax, v)
-    const p1_plane = new Vector3(uMin, v, 1);
-    const p2_plane = new Vector3(uMax, v, 1);
-
-    // Transform to paper coordinates
-    const p1_paper = p1_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
-    const p2_paper = p2_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    // Line in paper space: origin + t*u_paper + v*v_paper (t varies from uMin to uMax)
+    const base_paper = new Vector3()
+      .addVectors(origin_paper, new Vector3().copy(v_paper).multiplyScalar(v));
+    
+    const p1_paper = new Vector3()
+      .addVectors(base_paper, new Vector3().copy(u_paper).multiplyScalar(uMin));
+    const p2_paper = new Vector3()
+      .addVectors(base_paper, new Vector3().copy(u_paper).multiplyScalar(uMax));
 
     // Transform to screen coordinates
     const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
@@ -800,10 +811,15 @@ const gridLabels = computed(() => {
   }
 
   // Get plane realization which contains transformation matrices
-  const planeRealization = plane.realize2D();
+  const planeRealization = plane.realize2D(world);
 
   const zoom = viewport.value.zoom;
   const { majorSpacing } = computeAdaptiveGridParams(zoom);
+
+  // Phase 82.2: Transform intrinsic basis to paper space
+  const origin_paper = new Vector3(0, 0, 1).applyMatrix3(planeRealization.planeToPaper2D);
+  const u_paper = new Vector3(1, 0, 0).applyMatrix3(planeRealization.planeToPaper2D);
+  const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
 
   // Calculate viewport bounds in paper coordinates
   const viewportWidth = canvasWidth.value / zoom;
@@ -812,24 +828,27 @@ const gridLabels = computed(() => {
   const offsetY = -viewport.value.panY;
 
   // Viewport corners in paper coordinates
-  const topLeft_paper = new Vector3(offsetX, offsetY, 1);
-  const topRight_paper = new Vector3(offsetX + viewportWidth, offsetY, 1);
-  const bottomLeft_paper = new Vector3(offsetX, offsetY + viewportHeight, 1);
-  const bottomRight_paper = new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1);
+  const viewport_corners_paper = [
+    new Vector3(offsetX, offsetY, 1),
+    new Vector3(offsetX + viewportWidth, offsetY, 1),
+    new Vector3(offsetX, offsetY + viewportHeight, 1),
+    new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1)
+  ];
 
-  // Transform to plane (u,v) coordinates
-  const topLeft_plane = topLeft_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
-  const topRight_plane = topRight_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
-  const bottomLeft_plane = bottomLeft_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
-  const bottomRight_plane = bottomRight_paper.clone().applyMatrix3(planeRealization.paperToPlane2D);
+  // Project viewport corners onto intrinsic axes to find (u,v) range
+  const u_coords = viewport_corners_paper.map(corner => {
+    const offset = new Vector3().subVectors(corner, origin_paper);
+    return offset.dot(u_paper) / u_paper.lengthSq();
+  });
+  const v_coords = viewport_corners_paper.map(corner => {
+    const offset = new Vector3().subVectors(corner, origin_paper);
+    return offset.dot(v_paper) / v_paper.lengthSq();
+  });
 
-  // Compute bounding box in plane coordinates
-  const uValues = [topLeft_plane.x, topRight_plane.x, bottomLeft_plane.x, bottomRight_plane.x];
-  const vValues = [topLeft_plane.y, topRight_plane.y, bottomLeft_plane.y, bottomRight_plane.y];
-  const uMin = Math.min(...uValues);
-  const uMax = Math.max(...uValues);
-  const vMin = Math.min(...vValues);
-  const vMax = Math.max(...vValues);
+  const uMin = Math.min(...u_coords);
+  const uMax = Math.max(...u_coords);
+  const vMin = Math.min(...v_coords);
+  const vMax = Math.max(...v_coords);
 
   // Round to major grid lines
   const uStart = Math.floor(uMin / majorSpacing) * majorSpacing;
@@ -844,9 +863,10 @@ const gridLabels = computed(() => {
 
   // Generate U-coordinate labels for top/bottom edges
   for (let u = uStart; u <= uEnd; u += majorSpacing) {
-    // Top edge: take the topmost v value in viewport
-    const p_plane_top = new Vector3(u, vMin, 1);
-    const p_paper_top = p_plane_top.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    // Top edge: point at u coordinate with minimum v
+    const p_paper_top = new Vector3()
+      .addVectors(origin_paper, new Vector3().copy(u_paper).multiplyScalar(u))
+      .add(new Vector3().copy(v_paper).multiplyScalar(vMin));
     const screenX_top = (p_paper_top.x + viewport.value.panX) * zoom;
 
     if (screenX_top >= -10 && screenX_top <= canvasWidth.value + 10) {
@@ -858,9 +878,10 @@ const gridLabels = computed(() => {
       });
     }
 
-    // Bottom edge: take the bottommost v value in viewport
-    const p_plane_bottom = new Vector3(u, vMax, 1);
-    const p_paper_bottom = p_plane_bottom.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    // Bottom edge: point at u coordinate with maximum v
+    const p_paper_bottom = new Vector3()
+      .addVectors(origin_paper, new Vector3().copy(u_paper).multiplyScalar(u))
+      .add(new Vector3().copy(v_paper).multiplyScalar(vMax));
     const screenX_bottom = (p_paper_bottom.x + viewport.value.panX) * zoom;
 
     if (screenX_bottom >= -10 && screenX_bottom <= canvasWidth.value + 10) {
@@ -875,9 +896,10 @@ const gridLabels = computed(() => {
 
   // Generate V-coordinate labels for left/right edges
   for (let v = vStart; v <= vEnd; v += majorSpacing) {
-    // Left edge: take the leftmost u value in viewport
-    const p_plane_left = new Vector3(uMin, v, 1);
-    const p_paper_left = p_plane_left.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    // Left edge: point at v coordinate with minimum u
+    const p_paper_left = new Vector3()
+      .addVectors(origin_paper, new Vector3().copy(v_paper).multiplyScalar(v))
+      .add(new Vector3().copy(u_paper).multiplyScalar(uMin));
     const screenY_left = (p_paper_left.y + viewport.value.panY) * zoom;
 
     if (screenY_left >= -10 && screenY_left <= canvasHeight.value + 10) {
@@ -889,9 +911,10 @@ const gridLabels = computed(() => {
       });
     }
 
-    // Right edge: take the rightmost u value in viewport
-    const p_plane_right = new Vector3(uMax, v, 1);
-    const p_paper_right = p_plane_right.clone().applyMatrix3(planeRealization.planeToPaper2D);
+    // Right edge: point at v coordinate with maximum u
+    const p_paper_right = new Vector3()
+      .addVectors(origin_paper, new Vector3().copy(v_paper).multiplyScalar(v))
+      .add(new Vector3().copy(u_paper).multiplyScalar(uMax));
     const screenY_right = (p_paper_right.y + viewport.value.panY) * zoom;
 
     if (screenY_right >= -10 && screenY_right <= canvasHeight.value + 10) {

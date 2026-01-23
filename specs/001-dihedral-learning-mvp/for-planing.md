@@ -146,6 +146,15 @@ Note that completing these tasks may require asking the user for additional info
 
 ## ALREADY PLANNED
 
+* [x] **Phase 82.2: Fix Auxiliary Projection Plane 2D Grid Rendering** - ✅ COMPLETE (Jan 23, 2026)
+  - **User Requirement**: "now, on the 2d drawing, when i set the aux proj plane as the active one, the grid does not appear correctly aligned with T1. Instead if appears as being at 45 degrees exactly!"
+  - **Problem**: Grid appears rotated at 45 degrees when auxiliary plane is active, making it unusable
+  - **Root Cause**: Current implementation transforms axis-aligned (u,v) grid to paper, which fails for auxiliary planes with non-identity `planeToPaper2D` matrices
+  - **Solution**: Transform intrinsic basis vectors `(1,0,0)`, `(0,1,0)`, `(0,0,1)` to paper space, then build grid lines directly in paper coordinates
+  - **Implementation**: Both `gridLines` and `gridLabels` computed properties now transform intrinsic basis to paper space and build grid geometry directly in paper coordinates
+  - **Files Modified**: `frontend/src/components/workspace/SvgCanvas.vue`
+  - **Documentation**: [data-model.md Phase 82.2](./data-model.md#phase-822-fix-auxiliary-projection-plane-2d-grid-rendering)
+
 * [x] **Fix Auxiliary Projection Plane Grid Coordinate System (Phase 82.1)** - ✅ PLANNED (Jan 22, 2026)
   - **User Requirement**: "the grid for the auxiliary projection plane is not being correctly calculated. We need to determine for that plane the directions for its intrinsic vector base <u, v>"
   - **Problem**: Auxiliary projection plane grids render incorrectly due to improper coordinate system computation (V-axis uses cross with plane normal, origin is arbitrary point on T1)

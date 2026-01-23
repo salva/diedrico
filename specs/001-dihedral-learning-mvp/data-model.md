@@ -14995,3 +14995,223 @@ export function createProjectionPlaneAction(
 - Functional Requirement: [spec.md](./spec.md) FR-056 (lines 1577-1579)
 - Planning Document: [for-planing.md](./for-planing.md) (lines 21-23)
 
+---
+
+### Phase 82.2: Fix Auxiliary Projection Plane 2D Grid Rendering
+
+**Status**: 📋 PLANNED (2026-01-23)
+
+**Purpose**: Correct the 2D grid rendering for active auxiliary projection planes by using the plane's intrinsic coordinate system basis vectors transformed to paper space, rather than assuming axis-aligned grid lines.
+
+**Problem**: When an auxiliary projection plane is set as active in SvgCanvas, the grid appears rotated at 45 degrees (or other incorrect angles) instead of being aligned with the plane's intrinsic axes. This makes it impossible to work in the auxiliary plane's coordinate system.
+
+**Root Cause**: The current grid generation in `SvgCanvas.vue` assumes that grid lines can be generated axis-aligned in (u,v) coordinates and then transformed to paper. This works for base planes (P_H, P_V) where `planeToPaper2D` is identity-like. However, for auxiliary planes, the `planeToPaper2D` matrix represents the "unfolding" transformation, and the grid must be constructed differently.
+
+**Geometric Foundation**:
+
+The 2D grid for any projection plane (base or auxiliary) must be constructed from its intrinsic coordinate system basis:
+
+1. **Intrinsic basis vectors** (in the plane's own coordinates):
+   - u-axis direction: `(1, 0, 0)` in homogeneous coordinates (direction vector, w=0)
+   - v-axis direction: `(0, 1, 0)` in homogeneous coordinates (direction vector, w=0)
+   - Origin point: `(0, 0, 1)` in homogeneous coordinates (point, w=1)
+
+2. **Transform to paper space** using `planeToPaper2D`:
+   - `origin_paper = planeToPaper2D × Vector3(0, 0, 1)`
+   - `u_paper = planeToPaper2D × Vector3(1, 0, 0)`
+   - `v_paper = planeToPaper2D × Vector3(0, 1, 0)`
+
+3. **Build grid in paper space**:
+   - Grid lines parallel to u-axis: `origin_paper + k * spacing * v_paper + t * u_paper` (for various k, t)
+   - Grid lines parallel to v-axis: `origin_paper + k * spacing * u_paper + t * v_paper` (for various k, t)
+
+**Current Implementation Issues**:
+
+In `frontend/src/components/workspace/SvgCanvas.vue`, the `gridLines` computed property:
+
+```typescript
+// Current (INCORRECT for auxiliary planes):
+for (let u = uStart; u <= uEnd; u += spacing) {
+  const p1_plane = new Vector3(u, vMin, 1);
+  const p2_plane = new Vector3(u, vMax, 1);
+  const p1_paper = p1_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
+  const p2_paper = p2_plane.clone().applyMatrix3(planeRealization.planeToPaper2D);
+  // ... render line from p1_paper to p2_paper
+}
+```
+
+This assumes:
+- Grid lines at constant u are vertical in intrinsic (u,v) space
+- These vertical lines transform correctly to paper space
+- The viewport bounding box in (u,v) space is axis-aligned
+
+For auxiliary planes, these assumptions fail because:
+- The viewport in paper space is axis-aligned, but when transformed to (u,v) space via `paperToPlane2D`, it becomes a rotated rectangle
+- Grid lines at constant u are NOT the natural way to fill this rotated viewport
+- The correct approach is to work entirely in paper space using the transformed basis vectors
+
+**Correct Implementation**:
+
+```typescript
+// Grid generation for any projection plane (base or auxiliary)
+const planeRealization = plane.realize2D(world);
+
+// 1. Transform intrinsic basis to paper space
+const origin_paper = new Vector3(0, 0, 1)
+  .applyMatrix3(planeRealization.planeToPaper2D);
+const u_paper = new Vector3(1, 0, 0)
+  .applyMatrix3(planeRealization.planeToPaper2D);
+const v_paper = new Vector3(0, 1, 0)
+  .applyMatrix3(planeRealization.planeToPaper2D);
+
+// 2. Determine viewport bounds in paper space
+const viewportWidth = canvasWidth.value / zoom;
+const viewportHeight = canvasHeight.value / zoom;
+const offsetX = -viewport.value.panX;
+const offsetY = -viewport.value.panY;
+
+// Viewport corners in paper space
+const viewport_corners_paper = [
+  new Vector3(offsetX, offsetY, 1),
+  new Vector3(offsetX + viewportWidth, offsetY, 1),
+  new Vector3(offsetX, offsetY + viewportHeight, 1),
+  new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1)
+];
+
+// 3. Project viewport corners onto intrinsic axes to find (u,v) range
+// For each corner: solve (corner - origin_paper) = a*u_paper + b*v_paper
+// u-coordinate: dot product with u_paper (assuming orthonormal basis)
+// v-coordinate: dot product with v_paper
+const u_coords = viewport_corners_paper.map(corner => {
+  const offset = new Vector3().subVectors(corner, origin_paper);
+  return offset.dot(u_paper) / u_paper.lengthSq();
+});
+const v_coords = viewport_corners_paper.map(corner => {
+  const offset = new Vector3().subVectors(corner, origin_paper);
+  return offset.dot(v_paper) / v_paper.lengthSq();
+});
+
+const uMin = Math.min(...u_coords);
+const uMax = Math.max(...u_coords);
+const vMin = Math.min(...v_coords);
+const vMax = Math.max(...v_coords);
+
+// 4. Generate grid lines in paper space using transformed basis
+const uStart = Math.floor(uMin / spacing) * spacing;
+const uEnd = Math.ceil(uMax / spacing) * spacing;
+const vStart = Math.floor(vMin / spacing) * spacing;
+const vEnd = Math.ceil(vMax / spacing) * spacing;
+
+// Lines parallel to v-axis (constant u, extending along v)
+for (let u = uStart; u <= uEnd; u += spacing) {
+  const isMajor = Math.abs(u % majorSpacing) < 0.01;
+  
+  // Line in paper space: origin + u*u_paper + t*v_paper (t varies)
+  const base_paper = new Vector3()
+    .addVectors(origin_paper, new Vector3().copy(u_paper).multiplyScalar(u));
+  
+  const p1_paper = new Vector3()
+    .addVectors(base_paper, new Vector3().copy(v_paper).multiplyScalar(vMin));
+  const p2_paper = new Vector3()
+    .addVectors(base_paper, new Vector3().copy(v_paper).multiplyScalar(vMax));
+  
+  // Transform to screen coordinates
+  const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
+  const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
+  const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
+  const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+  
+  lines.push({ key: `u-${u}`, x1: screenX1, y1: screenY1, x2: screenX2, y2: screenY2, major: isMajor });
+}
+
+// Lines parallel to u-axis (constant v, extending along u)
+for (let v = vStart; v <= vEnd; v += spacing) {
+  const isMajor = Math.abs(v % majorSpacing) < 0.01;
+  
+  // Line in paper space: origin + t*u_paper + v*v_paper (t varies)
+  const base_paper = new Vector3()
+    .addVectors(origin_paper, new Vector3().copy(v_paper).multiplyScalar(v));
+  
+  const p1_paper = new Vector3()
+    .addVectors(base_paper, new Vector3().copy(u_paper).multiplyScalar(uMin));
+  const p2_paper = new Vector3()
+    .addVectors(base_paper, new Vector3().copy(u_paper).multiplyScalar(uMax));
+  
+  // Transform to screen coordinates
+  const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
+  const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
+  const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
+  const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+  
+  lines.push({ key: `v-${v}`, x1: screenX1, y1: screenY1, x2: screenX2, y2: screenY2, major: isMajor });
+}
+```
+
+**Key Differences from Current Implementation**:
+
+1. **No inverse transform**: Never convert from paper to (u,v) space
+2. **Work in paper space**: All grid construction happens in paper coordinates
+3. **Use transformed basis**: Grid lines are built from `origin_paper`, `u_paper`, `v_paper`
+4. **Correct for all planes**: Works identically for base planes (identity-like) and auxiliary planes (rotated/skewed)
+
+**Implementation Plan**:
+
+1. **Refactor `gridLines` computed property** in `SvgCanvas.vue`:
+   - Extract intrinsic basis and transform to paper space
+   - Compute viewport bounds as projections onto transformed axes
+   - Generate grid lines in paper space using basis vectors
+   - Remove all `paperToPlane2D` inverse transforms
+   - Update comments to explain paper-space grid construction
+
+2. **Refactor `gridLabels` computed property** in `SvgCanvas.vue`:
+   - Apply same paper-space construction approach
+   - Labels appear at edges for grid lines intersecting viewport boundaries
+   - Use same (u,v) range computation as grid lines
+
+3. **Add helper function** (optional, for code clarity):
+   ```typescript
+   /**
+    * Project point onto line through origin in direction of basis vector
+    * Returns scalar coordinate along that axis
+    */
+   function projectOntoAxis(point: Vector3, origin: Vector3, axis: Vector3): number {
+     const offset = new Vector3().subVectors(point, origin);
+     return offset.dot(axis) / axis.lengthSq();
+   }
+   ```
+
+4. **Add unit tests** in `frontend/tests/unit/components/SvgCanvas.spec.ts`:
+   - Test grid generation for base plane (identity transform) → verify axis-aligned
+   - Test grid generation for rotated auxiliary plane → verify rotated lines
+   - Test viewport bounds projection onto non-orthogonal axes
+   - Test grid spacing uniformity in intrinsic coordinates
+
+5. **Integration test**:
+   - Create auxiliary plane with QuickProjectionSetupTool
+   - Activate auxiliary plane
+   - Verify grid appears aligned with T1 (hinge trace)
+   - Verify grid spacing is uniform in auxiliary plane's coordinate system
+   - Verify no 45-degree rotation artifacts
+
+**Files Modified**:
+- `frontend/src/components/workspace/SvgCanvas.vue` - Grid rendering logic
+
+**Success Criteria**:
+
+For any active projection plane (base or auxiliary):
+- ✅ Grid lines aligned with plane's intrinsic axes (u and v directions)
+- ✅ Grid origin at plane's intrinsic origin (0, 0) in plane coordinates
+- ✅ Grid spacing uniform in plane's intrinsic coordinate system
+- ✅ No rotation artifacts (e.g., 45-degree misalignment)
+- ✅ Grid updates correctly when viewport pans/zooms
+- ✅ Grid labels show correct (u, v) coordinates
+
+Specifically for auxiliary planes:
+- ✅ Grid aligned with T1 (hinge trace) along one axis
+- ✅ Grid perpendicular to T1 along other axis
+- ✅ Grid origin at T1-T2 intersection (plane origin)
+- ✅ Visual consistency with 3D grid rendering
+
+**Dependencies**: Phase 82.1 (must have correct `planeToPaper2D` matrices)
+
+**Related**: Phase 82 (Create Projection Plane Tool), Phase 82.1 (Fix coordinate system)
