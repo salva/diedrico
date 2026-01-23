@@ -1504,6 +1504,11 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
       throw new Error('Cannot create realization for plane without ID');
     }
     
+    console.log('[AuxiliaryProjectionPlane.realize3D] Starting realization for', this.id);
+    console.log('[AuxiliaryProjectionPlane.realize3D] t1HingeTraceId:', this.t1HingeTraceId);
+    console.log('[AuxiliaryProjectionPlane.realize3D] t2OtherTraceId:', this.t2OtherTraceId);
+    console.log('[AuxiliaryProjectionPlane.realize3D] t2PrimeLineId:', this.t2PrimeLineId);
+    
     try {
       // Compute transformation matrices from trace dependencies
       const matrices = computeProjectionPlaneMatrices(
@@ -1512,6 +1517,8 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
         this.t2PrimeLineId,
         world
       );
+      
+      console.log('[AuxiliaryProjectionPlane.realize3D] Successfully computed matrices for', this.id);
       
       return new ProjectionPlaneRealization3D(
         this.id,

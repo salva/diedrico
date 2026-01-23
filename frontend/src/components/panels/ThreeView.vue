@@ -66,9 +66,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import type { World } from '../../domain/world/World';
+import type { ProjectionPlane } from '../../domain/world/ProjectionPlane';
+import { AuxiliaryProjectionPlane } from '../../domain/world/ProjectionPlane';
 import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
 import { useViewStore } from '../../stores/viewStore';
-import { domainDirectionToThreeJS, domainToThreeJS } from '../../utils/threeUtils';
+import { domainDirectionToThreeJS, domainToThreeJS, applyMatrix4x3 } from '../../utils/threeUtils';
 import { Vector4 } from 'three';
 
 // Component refs
@@ -197,9 +199,13 @@ function renderProjectionPlanes() {
   
   if (!displayOptions.value.showPlanes || !displayOptions.value.showGrid) return;
 
-  // Clear existing projection plane grids
+  // Clear existing projection plane grids and auxiliary axes
   scene.children
-    .filter(child => child.userData.type === 'projection-plane-grid')
+    .filter(child => 
+      child.userData.type === 'projection-plane-grid' || 
+      child.userData.type === 'auxiliary-plane-axis' ||
+      child.userData.type === 'auxiliary-plane-axis-label'
+    )
     .forEach(child => scene.remove(child));
 
   // Get all projection planes and render their grids
@@ -222,61 +228,84 @@ function renderProjectionPlanes() {
     const matrixDomain = planeRealization.planeTo3D;
     const e = matrixDomain.elements;
     
-    // Extract origin point in DOMAIN coordinates
+    // Matrix4x3 storage is ROW-MAJOR: [m11, m12, m13, m21, m22, m23, m31, m32, m33, m41, m42, m43]
+    // Maps (u,v,w) → (x,y,z,w_out) where:
+    //   x = m11*u + m12*v + m13*w
+    //   y = m21*u + m22*v + m23*w
+    //   z = m31*u + m32*v + m33*w
+    //   w = m41*u + m42*v + m43*w
+    
+    // Extract origin point in DOMAIN coordinates (u=0, v=0, w=1)
     const originW = e[11]; // m43 - homogeneous w
-    const Ox = e[2] / originW;  // m13 / w
-    const Oy = e[5] / originW;  // m23 / w
-    const Oz = e[8] / originW;  // m33 / w
+    const Ox = e[2] / originW;   // m13 / w
+    const Oy = e[5] / originW;   // m23 / w
+    const Oz = e[8] / originW;   // m33 / w
     
-    // Extract U-axis and V-axis directions in DOMAIN coordinates
-    const Ux = e[0], Uy = e[3], Uz = e[6];
-    const Vx = e[1], Vy = e[4], Vz = e[7];
+    console.log('[ThreeView] Plane', projPlane.id, 'origin in domain:', Ox, Oy, Oz);
     
-    // Compute normal as cross product
-    const uAxis = new THREE.Vector3(Ux, Uy, Uz);
-    const vAxis = new THREE.Vector3(Vx, Vy, Vz);
-    const normal = new THREE.Vector3().crossVectors(uAxis, vAxis).normalize();
-    const Nx = normal.x, Ny = normal.y, Nz = normal.z;
+    // Extract U-axis and V-axis directions in DOMAIN coordinates (w=0)
+    // U direction (u=1, v=0, w=0): (m11, m21, m31, m41)
+    // V direction (u=0, v=1, w=0): (m12, m22, m32, m42)
+    const Ux = e[0], Uy = e[3], Uz = e[6];  // m11, m21, m31
+    const Vx = e[1], Vy = e[4], Vz = e[7];  // m12, m22, m32
     
-    // Build THREE.Matrix4 transformation matrix
-    const mat4 = new THREE.Matrix4();
-    mat4.set(
-      Ux,  Uy,  Uz,  0,
-      Vx,  Vy,  Vz,  0,
-      Nx,  Ny,  Nz,  0,
-      Ox,  Oy,  Oz,  1
-    );
-    // Apply Y-negation for domain→Three.js conversion
-    const e4 = mat4.elements;
-    e4[1] = -e4[1];   e4[5] = -e4[5];   e4[9] = -e4[9];   e4[13] = -e4[13];
-
-    // Render only the grid (not the plane surface)
-    // Create a grid without center axis lines (GridHelper adds prominent center lines)
-    const gridSize = 150;  // Match the size of 3D plane surfaces
+    console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
+    console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
+    
+    // Build grid in 2D plane coordinates, then transform via matrix
+    const gridSize = 150;
     const divisions = 20;
     const step = gridSize / divisions;
     const halfSize = gridSize / 2;
     
     const vertices = [];
+    
+    // Create grid lines in 2D plane coordinates (u, v, 1)
+    // Then: 2D → Matrix4x3 → 3D domain → domainToThreeJS → Three.js
     for (let i = 0; i <= divisions; i++) {
-      const coord = -halfSize + i * step;
-      // Lines parallel to U-axis
-      vertices.push(-halfSize, coord, 0);
-      vertices.push(halfSize, coord, 0);
-      // Lines parallel to V-axis
-      vertices.push(coord, -halfSize, 0);
-      vertices.push(coord, halfSize, 0);
+      const t = -halfSize + i * step;
+      
+      // Lines parallel to U-axis (varying u, fixed v)
+      const start2D_U = new THREE.Vector3(-halfSize, t, 1);
+      const start3D_domain = applyMatrix4x3(start2D_U, matrixDomain);
+      const start3D_three = domainToThreeJS(start3D_domain);
+      
+      const end2D_U = new THREE.Vector3(halfSize, t, 1);
+      const end3D_domain = applyMatrix4x3(end2D_U, matrixDomain);
+      const end3D_three = domainToThreeJS(end3D_domain);
+      
+      vertices.push(start3D_three.x, start3D_three.y, start3D_three.z);
+      vertices.push(end3D_three.x, end3D_three.y, end3D_three.z);
+      
+      // Lines parallel to V-axis (fixed u, varying v)
+      const start2D_V = new THREE.Vector3(t, -halfSize, 1);
+      const start3D_V_domain = applyMatrix4x3(start2D_V, matrixDomain);
+      const start3D_V_three = domainToThreeJS(start3D_V_domain);
+      
+      const end2D_V = new THREE.Vector3(t, halfSize, 1);
+      const end3D_V_domain = applyMatrix4x3(end2D_V, matrixDomain);
+      const end3D_V_three = domainToThreeJS(end3D_V_domain);
+      
+      vertices.push(start3D_V_three.x, start3D_V_three.y, start3D_V_three.z);
+      vertices.push(end3D_V_three.x, end3D_V_three.y, end3D_V_three.z);
     }
     
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     const material = new THREE.LineBasicMaterial({ color: 0xcccccc, opacity: 0.5, transparent: true });
     const gridMesh = new THREE.LineSegments(geometry, material);
-    gridMesh.applyMatrix4(mat4);
     gridMesh.userData.type = 'projection-plane-grid';
     gridMesh.userData.planeId = projPlane.id;
     scene.add(gridMesh);
     console.log('[ThreeView] Added projection plane grid for', projPlane.id);
+    
+    // Render auxiliary plane coordinate axes (U, V) if applicable
+    console.log('[ThreeView] Checking auxiliary axes:', projPlane instanceof AuxiliaryProjectionPlane, displayOptions.value.showReferenceAxes);
+    if (projPlane instanceof AuxiliaryProjectionPlane && displayOptions.value.showReferenceAxes) {
+      console.log('[ThreeView] Calling renderAuxiliaryPlaneAxes');
+      // We don't need Nx, Ny, Nz anymore - they're unused in the function
+      renderAuxiliaryPlaneAxes(projPlane, Ox, Oy, Oz, Ux, Uy, Uz, Vx, Vy, Vz, 0, 0, 0);
+    }
   }
 }
 
@@ -640,6 +669,66 @@ function renderReferenceAxes() {
 }
 
 /**
+ * Render coordinate axes (U, V) for an auxiliary projection plane (Phase 82.1)
+ * 
+ * Displays the coordinate system of the auxiliary plane:
+ * - U: Velvet, along T1 trace direction
+ * - V: Velvet, perpendicular to U in plane
+ * 
+ * Axes are positioned at the plane's origin (T1∩T2 intersection point in 3D).
+ * 
+ * @param projPlane - The auxiliary projection plane
+ * @param Ox, Oy, Oz - Origin coordinates in DOMAIN space
+ * @param Ux, Uy, Uz - U-axis direction in DOMAIN space
+ * @param Vx, Vy, Vz - V-axis direction in DOMAIN space
+ * @param Nx, Ny, Nz - Normal direction in DOMAIN space (unused)
+ */
+function renderAuxiliaryPlaneAxes(
+  projPlane: ProjectionPlane,
+  Ox: number, Oy: number, Oz: number,
+  Ux: number, Uy: number, Uz: number,
+  Vx: number, Vy: number, Vz: number,
+  _Nx: number, _Ny: number, _Nz: number  // Unused but kept for signature compatibility
+) {
+  console.log('[ThreeView] renderAuxiliaryPlaneAxes called for plane', projPlane.id);
+  console.log('[ThreeView] Origin (domain):', Ox, Oy, Oz);
+  console.log('[ThreeView] U-axis (domain):', Ux, Uy, Uz);
+  console.log('[ThreeView] V-axis (domain):', Vx, Vy, Vz);
+  
+  // Convert origin from domain to Three.js coordinates
+  const originDomain = new Vector4(Ox, Oy, Oz, 1);  // Homogeneous point
+  const origin = domainToThreeJS(originDomain);
+  console.log('[ThreeView] Origin (Three.js):', origin.x, origin.y, origin.z);
+  
+  const axisLength = 10;  // Slightly shorter than world axes for distinction
+  const velvetColor = 0x8B008B;  // Dark magenta/velvet purple
+  
+  // U-axis: convert domain direction to Three.js
+  const uDirDomain = new THREE.Vector3(Ux, Uy, Uz).normalize();
+  const uDir = domainDirectionToThreeJS(uDirDomain);
+  console.log('[ThreeView] U direction (Three.js):', uDir.x, uDir.y, uDir.z);
+  const uArrow = new THREE.ArrowHelper(uDir, origin, axisLength, velvetColor, 0.8, 0.4);
+  uArrow.userData.type = 'auxiliary-plane-axis';
+  uArrow.userData.axis = 'u';
+  uArrow.userData.planeId = projPlane.id;
+  scene.add(uArrow);
+  console.log('[ThreeView] Added U-axis arrow to scene');
+  createAuxiliaryAxisLabel('U', origin, uDir, axisLength);
+  
+  // V-axis: convert domain direction to Three.js
+  const vDirDomain = new THREE.Vector3(Vx, Vy, Vz).normalize();
+  const vDir = domainDirectionToThreeJS(vDirDomain);
+  console.log('[ThreeView] V direction (Three.js):', vDir.x, vDir.y, vDir.z);
+  const vArrow = new THREE.ArrowHelper(vDir, origin, axisLength, velvetColor, 0.8, 0.4);
+  vArrow.userData.type = 'auxiliary-plane-axis';
+  vArrow.userData.axis = 'v';
+  vArrow.userData.planeId = projPlane.id;
+  scene.add(vArrow);
+  console.log('[ThreeView] Added V-axis arrow to scene');
+  createAuxiliaryAxisLabel('V', origin, vDir, axisLength);
+}
+
+/**
  * Create a CSS2D label for an axis arrow (Phase 82)
  * 
  * @param text - Label text (e.g., "X", "Y", "Z")
@@ -669,6 +758,39 @@ function createAxisLabel(text: string, direction: THREE.Vector3, length: number)
   label.position.copy(labelPosition);
   
   // Add label directly to scene (not to arrow) for proper positioning
+  scene.add(label);
+}
+
+/**
+ * Create a CSS2D label for an auxiliary plane axis arrow (Phase 82.1)
+ * 
+ * @param text - Label text (e.g., "U", "V", "N")
+ * @param origin - Origin position of the axis in Three.js space
+ * @param direction - Unit direction vector of the axis in Three.js space
+ * @param length - Length of the arrow in world units
+ */
+function createAuxiliaryAxisLabel(text: string, origin: THREE.Vector3, direction: THREE.Vector3, length: number) {
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'axis-label';
+  labelDiv.textContent = text;
+  labelDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+  labelDiv.style.padding = '3px 5px';
+  labelDiv.style.border = '1px solid #666';
+  labelDiv.style.borderRadius = '3px';
+  labelDiv.style.fontSize = '12px';
+  labelDiv.style.fontWeight = 'bold';
+  labelDiv.style.fontFamily = 'sans-serif';
+  labelDiv.style.color = '#666';
+  labelDiv.style.userSelect = 'none';
+  labelDiv.style.zIndex = '999';
+  
+  const label = new CSS2DObject(labelDiv);
+  label.userData.type = 'auxiliary-plane-axis-label';
+  
+  // Position at arrow tip + 0.8 unit offset from origin
+  const labelPosition = origin.clone().add(direction.clone().multiplyScalar(length + 0.8));
+  label.position.copy(labelPosition);
+  
   scene.add(label);
 }
 

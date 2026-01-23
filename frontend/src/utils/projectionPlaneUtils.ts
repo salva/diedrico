@@ -228,19 +228,18 @@ export function computeProjectionPlaneMatrices(
   // Transform a point on T2 to P1's paper coordinates and check which side
   
   // Get a point on T2 in 3D
-  const t2Point1_3D = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
+  const t2Point1_3D_forOrientation = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
   
   // Transform to P1's plane coordinates
   const t2Point_on_P1_plane = applyMatrix3x4(
-    new Vector4(t2Point1_3D.x, t2Point1_3D.y, t2Point1_3D.z, 1),
+    new Vector4(t2Point1_3D_forOrientation.x, t2Point1_3D_forOrientation.y, t2Point1_3D_forOrientation.z, 1),
     planeP1Realization3D.threeDToPlane
   );
   
   // Transform to paper coordinates (get planeToPaper2D from plane's 2D realization)
   const planeP1Realization2D = planeP1.realize2D(world);
-  const t2Point_on_P1_paper = planeP1Realization2D.planeToPaper2D.multiplyVector3(
-    new Vector3(t2Point_on_P1_plane.x, t2Point_on_P1_plane.y, 1)
-  );
+  const t2Point_on_P1_paper = new Vector3(t2Point_on_P1_plane.x, t2Point_on_P1_plane.y, 1)
+    .applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
   // Vector from origin to T2 point
   const offset_paper = new Vector3(
@@ -274,28 +273,31 @@ export function computeProjectionPlaneMatrices(
   const t1Point1_3D = applyMatrix4x3(t1Realization.point1, planeP1Realization3D.planeTo3D);
   const t1Point2_3D = applyMatrix4x3(t1Realization.point2, planeP1Realization3D.planeTo3D);
   
+  console.log('[computeProjectionPlaneMatrices] T1 2D:', t1Realization.point1, t1Realization.point2);
+  console.log('[computeProjectionPlaneMatrices] T1 3D: p1=', t1Point1_3D, 'p2=', t1Point2_3D);
+  
   // T2 points in 3D
-  const t2Point1_3D_second = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
+  const t2Point1_3D = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
   const t2Point2_3D = applyMatrix4x3(t2Realization.point2, planeP2Realization3D.planeTo3D);
   
+  console.log('[computeProjectionPlaneMatrices] T2 2D:', t2Realization.point1, t2Realization.point2);
+  console.log('[computeProjectionPlaneMatrices] T2 3D: p1=', t2Point1_3D, 'p2=', t2Point2_3D);
+  
   // 2.2: T1 and T2 as Line3D
+  // CRITICAL: point2 in realization has w=0 (direction vector in homogeneous coords)
+  // When transformed to 3D, it remains a direction - use it directly, don't subtract!
   const t1Line3D: Line3D = {
     point: new Vector3(t1Point1_3D.x, t1Point1_3D.y, t1Point1_3D.z),
-    direction: new Vector3(
-      t1Point2_3D.x - t1Point1_3D.x,
-      t1Point2_3D.y - t1Point1_3D.y,
-      t1Point2_3D.z - t1Point1_3D.z
-    ).normalize()
+    direction: new Vector3(t1Point2_3D.x, t1Point2_3D.y, t1Point2_3D.z).normalize()
   };
   
   const t2Line3D: Line3D = {
-    point: new Vector3(t2Point1_3D_second.x, t2Point1_3D_second.y, t2Point1_3D_second.z),
-    direction: new Vector3(
-      t2Point2_3D.x - t2Point1_3D_second.x,
-      t2Point2_3D.y - t2Point1_3D_second.y,
-      t2Point2_3D.z - t2Point1_3D_second.z
-    ).normalize()
+    point: new Vector3(t2Point1_3D.x, t2Point1_3D.y, t2Point1_3D.z),
+    direction: new Vector3(t2Point2_3D.x, t2Point2_3D.y, t2Point2_3D.z).normalize()
   };
+  
+  console.log('[computeProjectionPlaneMatrices] t1Line3D:', t1Line3D);
+  console.log('[computeProjectionPlaneMatrices] t2Line3D:', t2Line3D);
   
   // 2.3: U-axis = direction of T1 in 3D
   const u_3d = t1Line3D.direction.clone();
@@ -317,9 +319,8 @@ export function computeProjectionPlaneMatrices(
     planeP1Realization3D.threeDToPlane
   );
   
-  const v_3d_on_P1_paper = planeP1Realization2D.planeToPaper2D.multiplyVector3(
-    new Vector3(v_3d_on_P1_plane.x, v_3d_on_P1_plane.y, 0)
-  );
+  const v_3d_on_P1_paper = new Vector3(v_3d_on_P1_plane.x, v_3d_on_P1_plane.y, 0)
+    .applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
   const alignment = new Vector3(v_3d_on_P1_paper.x, v_3d_on_P1_paper.y, 0).dot(v_paper);
   
@@ -327,6 +328,15 @@ export function computeProjectionPlaneMatrices(
   
   // 2.6: Origin = intersection of T1 and T2 in 3D
   const origin_3d = computeLineLineIntersection3D(t1Line3D, t2Line3D);
+  
+  console.log('[computeProjectionPlaneMatrices] u_3d:', u_3d);
+  console.log('[computeProjectionPlaneMatrices] v_3d:', v_3d);
+  console.log('[computeProjectionPlaneMatrices] origin_3d:', origin_3d);
+  
+  // Verify: compute normal as u × v
+  const normal_aux = new Vector3().crossVectors(u_3d, v_3d);
+  console.log('[computeProjectionPlaneMatrices] Auxiliary plane normal (u×v):', normal_aux);
+  console.log('[computeProjectionPlaneMatrices] Normal should match Plane3DFromTraces normal: (0.408, 0.816, 0.408)');
   
   // 2.7: Build planeTo3D matrix (homogeneous 2D → 3D)
   // Transformation: (u, v, 0) → (x, y, z, 0) for directions

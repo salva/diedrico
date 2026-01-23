@@ -113,9 +113,13 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       
       // Add to World storage
       world.projectionPlanes.set(projPlaneId, plane);
+      console.log('[AddAuxiliaryProjectionPlaneOp] Added projection plane:', projPlaneId);
+      console.log('[AddAuxiliaryProjectionPlaneOp] World now has', world.projectionPlanes.size, 'projection planes');
+      console.log('[AddAuxiliaryProjectionPlaneOp] Projection plane IDs:', Array.from(world.projectionPlanes.keys()));
       
       // Mark World as dirty (triggers reactivity)
       world.markDirty();
+      console.log('[AddAuxiliaryProjectionPlaneOp] World.markDirty() called');
       
       // Store outputs for undo
       this.outputs = { projPlaneId };
