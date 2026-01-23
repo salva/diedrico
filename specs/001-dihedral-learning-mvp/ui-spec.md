@@ -2189,13 +2189,15 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 - **Line Width**: Numeric input or slider (0.5 - 5.0 pixels)
 - **Line Style**: Dropdown (Solid, Dashed, Dotted)
 - **Visibility**: Checkbox (show/hide this element)
-- **Hidden**: Checkbox (completely hide element from display in 2D and 3D views)
-  - Tooltip: "Hide this element from display while keeping it in the construction"
-  - When checked: Element does not render in canvas or 3D view, but remains in World Elements panel with eye-slash icon
-  - Hidden elements are not selectable/pickable in viewport (invisible to hit-testing)
-  - Hidden elements still participate in geometric computations and dependency tracking
-  - Hidden flag is independent of Visibility property (both must allow display for element to render)
-- **Reset**: Button to clear overrides and inherit from subprocess
+  - **Phase 83 Change**: Controls `element.visibility` property directly (not VisualStyle)
+  - Tooltip: "Control whether this element is displayed in views"
+  - When unchecked: Element does not render in canvas or 3D view, but remains in World Elements panel with eye-slash icon
+  - visibility=false elements are not selectable/pickable in viewport (invisible to hit-testing)
+  - visibility=false elements still participate in geometric computations and dependency tracking
+  - **Architecture**: Visibility is a domain property (Element2D.visibility), enabling future element hiding relationships
+  - Uses UpdateElementVisibilityOp (not style operations) for undo/redo
+- **Opacity**: Slider (0% - 100%)
+- **Reset**: Button to clear style overrides and inherit from subprocess (Note: Visibility reset not applicable - it's not inherited)
 
 **Style Inheritance**:
 - Properties **unset by default** (grayed out or shown as "Inherit")

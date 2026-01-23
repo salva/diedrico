@@ -9070,9 +9070,8 @@ interface VisualStyle {
   color?: Color;                    // Unset → inherit from subprocess/default
   lineWidth?: number;               // Unset → inherit
   lineStyle?: LineStyle;            // "solid" | "dashed" | "dotted" | unset
-  visibility?: boolean;             // Unset → inherit (default true)
   opacity?: number;                 // 0-1, unset → inherit
-  hidden?: boolean;                 // Unset → inherit (default false) - Phase 83
+  // NOTE: visibility moved to Element2D/Element3D base class (Phase 83) - not in VisualStyle
 }
 
 interface Color {
@@ -9095,7 +9094,7 @@ type LineStyle = "solid" | "dashed" | "dotted";
 - **Infeasible elements**: Red color, dashed line (system override, not user-settable)
 - **Derived projections**: 50% opacity, lighter color (distinguishes from generative)
 - **Hover highlight**: Temporary glow/outline (CSS, not persisted)
-- **Hidden elements**: No rendering in 2D/3D views, eye-slash icon in panel, not pickable (Phase 83)
+- **Hidden elements (visibility=false)**: No rendering in 2D/3D views, eye-slash icon in panel, not pickable - controlled via Element2D.visibility property, not VisualStyle (Phase 83)
 
 **Validation Rules**:
 - `color` components in valid ranges
@@ -15217,3 +15216,435 @@ Specifically for auxiliary planes:
 **Dependencies**: Phase 82.1 (must have correct `planeToPaper2D` matrices)
 
 **Related**: Phase 82 (Create Projection Plane Tool), Phase 82.1 (Fix coordinate system)
+---
+
+### Phase 83: Element Visibility Property
+
+**Status**: 📋 PLANNED (2026-01-23)
+
+**Purpose**: Move `visibility` from VisualStyle to Element2D/Element3D base classes to make it a direct domain property, enabling future element hiding relationships where one element can programmatically hide another.
+
+**User Requirement**: "I want the visibility property directly placed in the element object because I am planning to introduce some features where an element may hidden another one, so this is a world thing"
+
+---
+
+#### Architectural Rationale
+
+**Current Architecture** (Before Phase 83):
+- `visibility?: boolean` is in VisualStyle interface
+- Inheritable from subprocess like other visual properties (color, lineWidth)
+- Treated as a presentation style, resolved at render time
+
+**Problem**:
+- Element hiding relationships are DOMAIN concerns, not presentation styles
+- If element A can hide element B, that's a geometric dependency, not a visual preference
+- Inheritance from subprocess doesn't make sense for domain relationships
+- VisualStyle is for user preferences (colors, line thickness), not element state
+
+**Solution** (Phase 83):
+- Move `visibility: boolean` directly to Element2D and Element3D base classes
+- Default value: `true` (elements visible by default)
+- Direct property access: `element.visibility = false`
+- Remove from VisualStyle (no longer inheritable)
+- Create dedicated UpdateElementVisibilityOp operation
+
+**Benefits**:
+1. **Domain Clarity**: Visibility is element state, not visual style
+2. **Future Extensibility**: Enables element hiding relationships (element A hides element B)
+3. **Simpler Logic**: No inheritance resolution needed, direct property check
+4. **Clean Separation**: VisualStyle = user preferences, Element properties = domain state
+5. **Architectural Consistency**: State belongs on entities, not in style cascades
+
+---
+
+#### Data Model Changes
+
+**Element2D Base Class** (frontend/src/domain/world/Element2D.ts):
+
+```typescript
+/**
+ * Base class for all 2D geometric elements (points, lines, circles)
+ */
+abstract class Element2D extends Element {
+  readonly planeId: string;     // ID of containing projection plane
+  visibility: boolean;          // Phase 83: Controls display (default true)
+  
+  constructor(
+    id: string,
+    planeId: string,
+    label?: string,
+    visibility: boolean = true  // Default visible
+  ) {
+    super(id, label);
+    this.planeId = planeId;
+    this.visibility = visibility;
+  }
+  
+  // ... abstract methods: clone(), realize2D()
+}
+```
+
+**Element3D Base Class** (frontend/src/domain/world/Element3D.ts):
+
+```typescript
+/**
+ * Base class for all 3D geometric elements
+ */
+abstract class Element3D extends Element {
+  visibility: boolean;          // Phase 83: Controls display (default true)
+  
+  constructor(
+    id: string,
+    label?: string,
+    visibility: boolean = true  // Default visible
+  ) {
+    super(id, label);
+    this.visibility = visibility;
+  }
+  
+  // ... abstract methods: clone(), realize3D()
+}
+```
+
+**VisualStyle Interface** (frontend/src/domain/world/VisualStyle.ts):
+
+```typescript
+/**
+ * Visual styling properties for geometric elements
+ * Phase 83: visibility removed - now direct property on Element2D/Element3D
+ */
+interface VisualStyle {
+  color?: Color;                    // Unset → inherit from subprocess/default
+  lineWidth?: number;               // Unset → inherit
+  lineStyle?: LineStyle;            // "solid" | "dashed" | "dotted" | unset
+  opacity?: number;                 // 0-1, unset → inherit
+  // visibility removed in Phase 83 - now on Element2D/Element3D
+}
+```
+
+---
+
+#### Operation
+
+**UpdateElementVisibilityOp** (frontend/src/domain/operations/UpdateElementVisibilityOp.ts):
+
+```typescript
+/**
+ * Operation to update element visibility
+ * Phase 83: Dedicated operation for visibility changes (not style operation)
+ */
+export class UpdateElementVisibilityOp implements IOperation {
+  readonly type = 'UpdateElementVisibility';
+  
+  constructor(
+    private readonly elementId: string,
+    private readonly newVisibility: boolean,
+    private oldVisibility?: boolean  // Captured during apply()
+  ) {}
+  
+  apply(world: World): OperationResult {
+    const element = world.getElement(this.elementId);
+    if (!element) {
+      throw new Error(`Element ${this.elementId} not found`);
+    }
+    
+    // Capture old value for undo
+    this.oldVisibility = element.visibility;
+    
+    // Apply new visibility
+    element.visibility = this.newVisibility;
+    
+    // Mark world dirty for rendering updates
+    world.markDirty();
+    
+    return {
+      success: true,
+      outputs: { elementId: this.elementId }
+    };
+  }
+  
+  undo(world: World): void {
+    if (this.oldVisibility === undefined) {
+      throw new Error('Cannot undo UpdateElementVisibilityOp: oldVisibility not captured');
+    }
+    
+    const element = world.getElement(this.elementId);
+    if (!element) {
+      throw new Error(`Element ${this.elementId} not found`);
+    }
+    
+    element.visibility = this.oldVisibility;
+    world.markDirty();
+  }
+  
+  redo(world: World): void {
+    this.apply(world);
+  }
+}
+```
+
+---
+
+#### Rendering Changes
+
+**SvgCanvas.vue** (frontend/src/components/workspace/SvgCanvas.vue):
+
+```typescript
+// Before Phase 83: Check resolved visibility from VisualStyle
+const resolvedStyle = resolveVisualStyle(element, world);
+if (resolvedStyle.visibility === false) {
+  continue; // Skip rendering
+}
+
+// After Phase 83: Check direct visibility property
+if (element.visibility === false) {
+  continue; // Skip rendering
+}
+```
+
+**ThreeView.vue / Element2DRenderer3D** (frontend/src/components/panels/ThreeView.vue):
+
+```typescript
+// Before Phase 83: Check resolved visibility
+const resolvedStyle = resolveVisualStyle(element, world);
+if (resolvedStyle.visibility === false) {
+  continue; // Skip 3D rendering
+}
+
+// After Phase 83: Check direct visibility property
+if (element.visibility === false) {
+  continue; // Skip 3D rendering
+}
+```
+
+**Paper.hitTest()** (frontend/src/services/Paper.ts):
+
+```typescript
+// Before Phase 83: Check resolved visibility for hit-testing
+const resolvedStyle = resolveVisualStyle(element, world);
+if (resolvedStyle.visibility === false) {
+  continue; // Not pickable
+}
+
+// After Phase 83: Check direct visibility property
+if (element.visibility === false) {
+  continue; // Not pickable
+}
+```
+
+---
+
+#### UI Changes
+
+**Element Properties Dialog** (frontend/src/components/dialogs/ElementPropertiesDialog.vue):
+
+```vue
+<template>
+  <!-- Before Phase 83: Visibility checkbox controlled VisualStyle -->
+  <label>
+    <input 
+      type="checkbox" 
+      :checked="resolvedStyle.visibility !== false"
+      @change="updateVisibilityStyle"
+    />
+    Visibility
+  </label>
+  
+  <!-- After Phase 83: Visibility checkbox controls element.visibility -->
+  <label>
+    <input 
+      type="checkbox" 
+      :checked="element.visibility"
+      @change="updateVisibility"
+    />
+    Visibility
+  </label>
+</template>
+
+<script setup lang="ts">
+// Phase 83: Use UpdateElementVisibilityOp instead of style operations
+function updateVisibility(event: Event) {
+  const newVisibility = (event.target as HTMLInputElement).checked;
+  
+  const cmd = new Command(`Update visibility`, world);
+  cmd.addAndExecute(new UpdateElementVisibilityOp(element.id, newVisibility));
+  cmd.commit();
+  commandStack.push(cmd);
+}
+</script>
+```
+
+**World Elements Panel** (frontend/src/components/panels/WorldElementsPanel.vue):
+
+```vue
+<template>
+  <!-- Show eye-slash icon for visibility=false elements -->
+  <div class="element-item" v-for="element in elements">
+    <span v-if="!element.visibility" class="eye-slash-icon">🚫👁️</span>
+    <span>{{ element.label || element.id }}</span>
+  </div>
+</template>
+```
+
+---
+
+#### Future Extensibility: Element Hiding Relationships
+
+Phase 83 lays the foundation for advanced features where elements can programmatically hide other elements:
+
+**Example Use Cases**:
+1. **Auxiliary Construction Toggle**: "Hide all auxiliary construction elements" button
+2. **Progressive Reveal**: Teacher hides steps, reveals them one by one
+3. **Element Dependencies**: When element A is hidden, hide all elements derived from A
+4. **View Modes**: "Show only final result" hides intermediate construction
+
+**Architectural Pattern**:
+
+```typescript
+/**
+ * Future Phase: Element Hiding Relationships
+ * World tracks which elements are hidden by other elements
+ */
+class World {
+  private hiddenByRelationships: Map<string, Set<string>>;
+  // elementId → Set of elementIds hiding it
+  
+  /**
+   * Mark element as hidden by another element
+   * Future feature: element A hides element B
+   */
+  addHidingRelationship(hiderElementId: string, hiddenElementId: string): void {
+    const element = this.getElement(hiddenElementId);
+    if (!element) return;
+    
+    // Add to relationship tracking
+    if (!this.hiddenByRelationships.has(hiddenElementId)) {
+      this.hiddenByRelationships.set(hiddenElementId, new Set());
+    }
+    this.hiddenByRelationships.get(hiddenElementId)!.add(hiderElementId);
+    
+    // Update element visibility (domain property)
+    element.visibility = false;
+    this.markDirty();
+  }
+  
+  /**
+   * Compute effective visibility for rendering
+   * Combines element.visibility with relationships
+   */
+  isElementEffectivelyVisible(elementId: string): boolean {
+    const element = this.getElement(elementId);
+    if (!element) return false;
+    
+    // 1. Check direct visibility property (domain state)
+    if (!element.visibility) return false;
+    
+    // 2. Check hiding relationships (future)
+    const hiders = this.hiddenByRelationships.get(elementId);
+    if (hiders && hiders.size > 0) {
+      // Hidden by at least one other element
+      return false;
+    }
+    
+    // 3. Future: Check subprocess visibility toggles (view layer)
+    // 4. Future: Check view filters (derived elements, guides, etc.)
+    
+    return true;
+  }
+}
+```
+
+**Key Design Insight**:
+- **Domain property**: `element.visibility` is direct element state
+- **Relationships**: World tracks which elements hide other elements
+- **Computed presentation**: `isElementEffectivelyVisible()` combines multiple factors
+- **Clean separation**: Domain state vs computed view state
+
+---
+
+#### Migration Impact
+
+**Breaking Changes**:
+- ✅ Serialization format changes: `visibility` moves from VisualStyle to Element2D/Element3D
+- ✅ Style resolution code removes visibility handling
+- ✅ Rendering code uses direct property instead of resolved style
+
+**Migration Steps**:
+1. Add `visibility: boolean` to Element2D and Element3D constructors (default true)
+2. Update all element constructors to pass visibility parameter
+3. Remove `visibility?: boolean` from VisualStyle interface
+4. Update serialization to save/load element.visibility
+5. Create UpdateElementVisibilityOp operation
+6. Update rendering filters in SvgCanvas and ThreeView
+7. Update hit-testing in Paper.hitTest()
+8. Update Element Properties dialog to use new operation
+9. Update World Elements panel to show eye-slash icon
+
+**Backward Compatibility**:
+- Old project files with `visibility` in VisualStyle:
+  - Load visibility from style, apply to element during deserialization
+  - Set element.visibility = resolvedStyle.visibility ?? true
+  - Remove from VisualStyle after migration
+
+**Data Migration**:
+```typescript
+// During project load (deserialization)
+function migrateVisibilityToElement(element: Element2D, subprocess: Subprocess): void {
+  // Resolve visibility from old VisualStyle inheritance
+  const styleVisibility = element.visualStyle?.visibility 
+    ?? subprocess.defaultStyle?.visibility 
+    ?? true;
+  
+  // Apply to element property
+  element.visibility = styleVisibility;
+  
+  // Clean up old property
+  if (element.visualStyle) {
+    delete element.visualStyle.visibility;
+  }
+}
+```
+
+---
+
+#### Testing Strategy
+
+**Unit Tests**:
+1. UpdateElementVisibilityOp: apply, undo, redo
+2. Element2D constructor: default visibility = true
+3. Element3D constructor: default visibility = true
+4. Serialization: save/load element.visibility
+5. Migration: old VisualStyle.visibility → Element.visibility
+
+**Integration Tests**:
+1. Hide element via properties dialog → verify not rendered in 2D view
+2. Hide element → verify not rendered in 3D view
+3. Hide element → verify not pickable with Paper.hitTest()
+4. visibility=false element still visible in World Elements panel with icon
+5. Undo/redo visibility change → verify correct rendering updates
+
+**E2E Tests**:
+1. User hides element via checkbox → disappears from canvas
+2. User shows element via checkbox → reappears in canvas
+3. Hidden element still participates in calculations (line through hidden point)
+4. Load old project with VisualStyle.visibility → migrates correctly
+
+---
+
+#### Success Criteria
+
+- ✅ `visibility` is direct property on Element2D and Element3D (not in VisualStyle)
+- ✅ Default visibility is `true` (elements visible by default)
+- ✅ UpdateElementVisibilityOp enables undo/redo
+- ✅ Rendering filters check `element.visibility === false` (simple, direct)
+- ✅ Hit-testing excludes visibility=false elements (not pickable)
+- ✅ World Elements panel shows eye-slash icon for hidden elements
+- ✅ Element Properties dialog controls element.visibility property
+- ✅ visibility=false elements still participate in geometric calculations
+- ✅ Old projects migrate VisualStyle.visibility → Element.visibility
+- ✅ Architecture enables future element hiding relationships
+- ✅ Clean domain/presentation separation (visibility = domain state)
+
+**Dependencies**: None (purely architectural refactoring)
+
+**Related**: Phase 22 (Element Properties Dialog), Phase 19 (World Elements Panel)
