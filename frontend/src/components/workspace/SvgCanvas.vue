@@ -834,109 +834,214 @@ const gridLabels = computed(() => {
   const u_paper = new Vector3(1, 0, 0).applyMatrix3(planeRealization.planeToPaper2D);
   const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
 
-  // Calculate viewport bounds in paper coordinates
-  const viewportWidth = canvasWidth.value / zoom;
-  const viewportHeight = canvasHeight.value / zoom;
-  const offsetX = -viewport.value.panX;
-  const offsetY = -viewport.value.panY;
-
-  // Viewport corners in paper coordinates
-  const viewport_corners_paper = [
-    new Vector3(offsetX, offsetY, 1),
-    new Vector3(offsetX + viewportWidth, offsetY, 1),
-    new Vector3(offsetX, offsetY + viewportHeight, 1),
-    new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1)
-  ];
-
-  // Project viewport corners onto intrinsic axes to find (u,v) range
-  const u_coords = viewport_corners_paper.map(corner => {
-    const offset = new Vector3().subVectors(corner, origin_paper);
-    return offset.dot(u_paper) / u_paper.lengthSq();
-  });
-  const v_coords = viewport_corners_paper.map(corner => {
-    const offset = new Vector3().subVectors(corner, origin_paper);
-    return offset.dot(v_paper) / v_paper.lengthSq();
-  });
-
-  const uMin = Math.min(...u_coords);
-  const uMax = Math.max(...u_coords);
-  const vMin = Math.min(...v_coords);
-  const vMax = Math.max(...v_coords);
-
-  // Round to major grid lines
-  const uStart = Math.floor(uMin / majorSpacing) * majorSpacing;
-  const uEnd = Math.ceil(uMax / majorSpacing) * majorSpacing;
-  const vStart = Math.floor(vMin / majorSpacing) * majorSpacing;
-  const vEnd = Math.ceil(vMax / majorSpacing) * majorSpacing;
+  // Step 1: Determine which coordinate is more aligned with horizontal/vertical
+  // If |u_paper.x| / |u_paper.y| > 1, u is more horizontal
+  const uHorizontalRatio = Math.abs(u_paper.x) / (Math.abs(u_paper.y) + 1e-10);
+  const uIsHorizontal = uHorizontalRatio > 1;
+  
+  // Helper: Convert screen coordinates to paper coordinates
+  const screenToPaper = (screenX: number, screenY: number): Vector3 => {
+    return new Vector3(
+      screenX / zoom - viewport.value.panX,
+      screenY / zoom - viewport.value.panY,
+      1
+    );
+  };
+  
+  // Helper: Project paper point onto (u,v) basis
+  const paperToUV = (p_paper: Vector3): { u: number; v: number } => {
+    const offset = new Vector3().subVectors(p_paper, origin_paper);
+    return {
+      u: offset.dot(u_paper) / u_paper.lengthSq(),
+      v: offset.dot(v_paper) / v_paper.lengthSq()
+    };
+  };
+  
+  // Helper: Find where grid line with constant u intersects a horizontal line (y_paper = constant)
+  // Returns screen x position
+  const findULineIntersectionWithHorizontal = (u: number, y_paper: number): number | null => {
+    // Line: origin_paper + u*u_paper + v*v_paper
+    // Want: origin_paper.y + u*u_paper.y + v*v_paper.y = y_paper
+    // Solve for v: v = (y_paper - origin_paper.y - u*u_paper.y) / v_paper.y
+    if (Math.abs(v_paper.y) < 1e-10) return null; // Grid line parallel to horizontal
+    const v = (y_paper - origin_paper.y - u * u_paper.y) / v_paper.y;
+    const x_paper = origin_paper.x + u * u_paper.x + v * v_paper.x;
+    return (x_paper + viewport.value.panX) * zoom;
+  };
+  
+  // Helper: Find where grid line with constant v intersects a horizontal line (y_paper = constant)
+  // Returns screen x position
+  const findVLineIntersectionWithHorizontal = (v: number, y_paper: number): number | null => {
+    // Line: origin_paper + u*u_paper + v*v_paper
+    // Want: origin_paper.y + u*u_paper.y + v*v_paper.y = y_paper
+    // Solve for u: u = (y_paper - origin_paper.y - v*v_paper.y) / u_paper.y
+    if (Math.abs(u_paper.y) < 1e-10) return null; // Grid line parallel to horizontal
+    const u = (y_paper - origin_paper.y - v * v_paper.y) / u_paper.y;
+    const x_paper = origin_paper.x + u * u_paper.x + v * v_paper.x;
+    return (x_paper + viewport.value.panX) * zoom;
+  };
+  
+  // Helper: Find where grid line with constant u intersects a vertical line (x_paper = constant)
+  // Returns screen y position
+  const findULineIntersectionWithVertical = (u: number, x_paper: number): number | null => {
+    // Line: origin_paper + u*u_paper + v*v_paper
+    // Want: origin_paper.x + u*u_paper.x + v*v_paper.x = x_paper
+    // Solve for v: v = (x_paper - origin_paper.x - u*u_paper.x) / v_paper.x
+    if (Math.abs(v_paper.x) < 1e-10) return null; // Grid line parallel to vertical
+    const v = (x_paper - origin_paper.x - u * u_paper.x) / v_paper.x;
+    const y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y;
+    return (y_paper + viewport.value.panY) * zoom;
+  };
+  
+  // Helper: Find where grid line with constant v intersects a vertical line (x_paper = constant)
+  // Returns screen y position
+  const findVLineIntersectionWithVertical = (v: number, x_paper: number): number | null => {
+    // Line: origin_paper + u*u_paper + v*v_paper
+    // Want: origin_paper.x + u*u_paper.x + v*v_paper.x = x_paper
+    // Solve for u: u = (x_paper - origin_paper.x - v*v_paper.x) / u_paper.x
+    if (Math.abs(u_paper.x) < 1e-10) return null; // Grid line parallel to vertical
+    const u = (x_paper - origin_paper.x - v * v_paper.x) / u_paper.x;
+    const y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y;
+    return (y_paper + viewport.value.panY) * zoom;
+  };
 
   const topLabels: GridLabel[] = [];
   const bottomLabels: GridLabel[] = [];
   const leftLabels: GridLabel[] = [];
   const rightLabels: GridLabel[] = [];
 
-  // Generate U-coordinate labels for top/bottom edges
-  for (let u = uStart; u <= uEnd; u += majorSpacing) {
-    // Top edge: point at u coordinate with minimum v
-    const p_paper_top = new Vector3()
-      .addVectors(origin_paper, new Vector3().copy(u_paper).multiplyScalar(u))
-      .add(new Vector3().copy(v_paper).multiplyScalar(vMin));
-    const screenX_top = (p_paper_top.x + viewport.value.panX) * zoom;
-
-    if (screenX_top >= -10 && screenX_top <= canvasWidth.value + 10) {
-      topLabels.push({
-        key: `top-${u}`,
-        value: u,
-        position: screenX_top,
-        edge: 'top',
-      });
+  if (uIsHorizontal) {
+    // U varies along top/bottom edges, V varies along left/right edges
+    
+    // TOP EDGE (y_screen = 0 → y_paper = -panY)
+    const y_paper_top = 0 / zoom - viewport.value.panY;
+    const topLeft_uv = paperToUV(screenToPaper(0, 0));
+    const topRight_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
+    const uMin_top = Math.min(topLeft_uv.u, topRight_uv.u);
+    const uMax_top = Math.max(topLeft_uv.u, topRight_uv.u);
+    const uStart_top = Math.floor(uMin_top / majorSpacing) * majorSpacing;
+    const uEnd_top = Math.ceil(uMax_top / majorSpacing) * majorSpacing;
+    
+    for (let u = uStart_top; u <= uEnd_top; u += majorSpacing) {
+      const screenX = findULineIntersectionWithHorizontal(u, y_paper_top);
+      if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
+        topLabels.push({ key: `top-${u}`, value: u, position: screenX, edge: 'top' });
+      }
     }
-
-    // Bottom edge: point at u coordinate with maximum v
-    const p_paper_bottom = new Vector3()
-      .addVectors(origin_paper, new Vector3().copy(u_paper).multiplyScalar(u))
-      .add(new Vector3().copy(v_paper).multiplyScalar(vMax));
-    const screenX_bottom = (p_paper_bottom.x + viewport.value.panX) * zoom;
-
-    if (screenX_bottom >= -10 && screenX_bottom <= canvasWidth.value + 10) {
-      bottomLabels.push({
-        key: `bottom-${u}`,
-        value: u,
-        position: screenX_bottom,
-        edge: 'bottom',
-      });
+    
+    // BOTTOM EDGE (y_screen = canvasHeight → y_paper = canvasHeight/zoom - panY)
+    const y_paper_bottom = canvasHeight.value / zoom - viewport.value.panY;
+    const bottomLeft_uv = paperToUV(screenToPaper(0, canvasHeight.value));
+    const bottomRight_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
+    const uMin_bottom = Math.min(bottomLeft_uv.u, bottomRight_uv.u);
+    const uMax_bottom = Math.max(bottomLeft_uv.u, bottomRight_uv.u);
+    const uStart_bottom = Math.floor(uMin_bottom / majorSpacing) * majorSpacing;
+    const uEnd_bottom = Math.ceil(uMax_bottom / majorSpacing) * majorSpacing;
+    
+    for (let u = uStart_bottom; u <= uEnd_bottom; u += majorSpacing) {
+      const screenX = findULineIntersectionWithHorizontal(u, y_paper_bottom);
+      if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
+        bottomLabels.push({ key: `bottom-${u}`, value: u, position: screenX, edge: 'bottom' });
+      }
     }
-  }
-
-  // Generate V-coordinate labels for left/right edges
-  for (let v = vStart; v <= vEnd; v += majorSpacing) {
-    // Left edge: point at v coordinate with minimum u
-    const p_paper_left = new Vector3()
-      .addVectors(origin_paper, new Vector3().copy(v_paper).multiplyScalar(v))
-      .add(new Vector3().copy(u_paper).multiplyScalar(uMin));
-    const screenY_left = (p_paper_left.y + viewport.value.panY) * zoom;
-
-    if (screenY_left >= -10 && screenY_left <= canvasHeight.value + 10) {
-      leftLabels.push({
-        key: `left-${v}`,
-        value: v,
-        position: screenY_left,
-        edge: 'left',
-      });
+    
+    // LEFT EDGE (x_screen = 0 → x_paper = -panX)
+    const x_paper_left = 0 / zoom - viewport.value.panX;
+    const leftTop_uv = paperToUV(screenToPaper(0, 0));
+    const leftBottom_uv = paperToUV(screenToPaper(0, canvasHeight.value));
+    const vMin_left = Math.min(leftTop_uv.v, leftBottom_uv.v);
+    const vMax_left = Math.max(leftTop_uv.v, leftBottom_uv.v);
+    const vStart_left = Math.floor(vMin_left / majorSpacing) * majorSpacing;
+    const vEnd_left = Math.ceil(vMax_left / majorSpacing) * majorSpacing;
+    
+    for (let v = vStart_left; v <= vEnd_left; v += majorSpacing) {
+      const screenY = findVLineIntersectionWithVertical(v, x_paper_left);
+      if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
+        leftLabels.push({ key: `left-${v}`, value: v, position: screenY, edge: 'left' });
+      }
     }
-
-    // Right edge: point at v coordinate with maximum u
-    const p_paper_right = new Vector3()
-      .addVectors(origin_paper, new Vector3().copy(v_paper).multiplyScalar(v))
-      .add(new Vector3().copy(u_paper).multiplyScalar(uMax));
-    const screenY_right = (p_paper_right.y + viewport.value.panY) * zoom;
-
-    if (screenY_right >= -10 && screenY_right <= canvasHeight.value + 10) {
-      rightLabels.push({
-        key: `right-${v}`,
-        value: v,
-        position: screenY_right,
-        edge: 'right',
-      });
+    
+    // RIGHT EDGE (x_screen = canvasWidth → x_paper = canvasWidth/zoom - panX)
+    const x_paper_right = canvasWidth.value / zoom - viewport.value.panX;
+    const rightTop_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
+    const rightBottom_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
+    const vMin_right = Math.min(rightTop_uv.v, rightBottom_uv.v);
+    const vMax_right = Math.max(rightTop_uv.v, rightBottom_uv.v);
+    const vStart_right = Math.floor(vMin_right / majorSpacing) * majorSpacing;
+    const vEnd_right = Math.ceil(vMax_right / majorSpacing) * majorSpacing;
+    
+    for (let v = vStart_right; v <= vEnd_right; v += majorSpacing) {
+      const screenY = findVLineIntersectionWithVertical(v, x_paper_right);
+      if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
+        rightLabels.push({ key: `right-${v}`, value: v, position: screenY, edge: 'right' });
+      }
+    }
+    
+  } else {
+    // V varies along top/bottom edges, U varies along left/right edges
+    
+    // TOP EDGE
+    const y_paper_top = 0 / zoom - viewport.value.panY;
+    const topLeft_uv = paperToUV(screenToPaper(0, 0));
+    const topRight_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
+    const vMin_top = Math.min(topLeft_uv.v, topRight_uv.v);
+    const vMax_top = Math.max(topLeft_uv.v, topRight_uv.v);
+    const vStart_top = Math.floor(vMin_top / majorSpacing) * majorSpacing;
+    const vEnd_top = Math.ceil(vMax_top / majorSpacing) * majorSpacing;
+    
+    for (let v = vStart_top; v <= vEnd_top; v += majorSpacing) {
+      const screenX = findVLineIntersectionWithHorizontal(v, y_paper_top);
+      if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
+        topLabels.push({ key: `top-${v}`, value: v, position: screenX, edge: 'top' });
+      }
+    }
+    
+    // BOTTOM EDGE
+    const y_paper_bottom = canvasHeight.value / zoom - viewport.value.panY;
+    const bottomLeft_uv = paperToUV(screenToPaper(0, canvasHeight.value));
+    const bottomRight_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
+    const vMin_bottom = Math.min(bottomLeft_uv.v, bottomRight_uv.v);
+    const vMax_bottom = Math.max(bottomLeft_uv.v, bottomRight_uv.v);
+    const vStart_bottom = Math.floor(vMin_bottom / majorSpacing) * majorSpacing;
+    const vEnd_bottom = Math.ceil(vMax_bottom / majorSpacing) * majorSpacing;
+    
+    for (let v = vStart_bottom; v <= vEnd_bottom; v += majorSpacing) {
+      const screenX = findVLineIntersectionWithHorizontal(v, y_paper_bottom);
+      if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
+        bottomLabels.push({ key: `bottom-${v}`, value: v, position: screenX, edge: 'bottom' });
+      }
+    }
+    
+    // LEFT EDGE
+    const x_paper_left = 0 / zoom - viewport.value.panX;
+    const leftTop_uv = paperToUV(screenToPaper(0, 0));
+    const leftBottom_uv = paperToUV(screenToPaper(0, canvasHeight.value));
+    const uMin_left = Math.min(leftTop_uv.u, leftBottom_uv.u);
+    const uMax_left = Math.max(leftTop_uv.u, leftBottom_uv.u);
+    const uStart_left = Math.floor(uMin_left / majorSpacing) * majorSpacing;
+    const uEnd_left = Math.ceil(uMax_left / majorSpacing) * majorSpacing;
+    
+    for (let u = uStart_left; u <= uEnd_left; u += majorSpacing) {
+      const screenY = findULineIntersectionWithVertical(u, x_paper_left);
+      if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
+        leftLabels.push({ key: `left-${u}`, value: u, position: screenY, edge: 'left' });
+      }
+    }
+    
+    // RIGHT EDGE
+    const x_paper_right = canvasWidth.value / zoom - viewport.value.panX;
+    const rightTop_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
+    const rightBottom_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
+    const uMin_right = Math.min(rightTop_uv.u, rightBottom_uv.u);
+    const uMax_right = Math.max(rightTop_uv.u, rightBottom_uv.u);
+    const uStart_right = Math.floor(uMin_right / majorSpacing) * majorSpacing;
+    const uEnd_right = Math.ceil(uMax_right / majorSpacing) * majorSpacing;
+    
+    for (let u = uStart_right; u <= uEnd_right; u += majorSpacing) {
+      const screenY = findULineIntersectionWithVertical(u, x_paper_right);
+      if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
+        rightLabels.push({ key: `right-${u}`, value: u, position: screenY, edge: 'right' });
+      }
     }
   }
 
