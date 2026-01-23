@@ -20,7 +20,8 @@
 import { Vector3, Vector4 } from 'three';
 import { Element3D } from './Element3D';
 import { Plane3DRealization3D } from './Element3DRealization3D';
-import { applyMatrix4x3 } from '@/utils/threeUtils';import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
+import { applyMatrix4x3, crossVector4 } from '@/utils/threeUtils';
+import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
 export interface Plane3DCoordinateSystem {
   origin: Vector4;     // Origin point on the plane (x, y, z, 1)
   uAxis: Vector4;      // U-axis direction (normalized) (x, y, z, 0)
@@ -49,14 +50,57 @@ export abstract class Plane3D extends Element3D {
 
   /**
    * Compute 3D realization (plane equation)
-   * For most planes, returns the stored normal vector
+   * For most planes, returns the stored normal vector plus rendering geometry
    */
   realize3D(_world: any): Plane3DRealization3D {
     // Return plane equation: ax + by + cz + d = 0
     // d = -normal · point
     const d = -(this.normal.x * this.point.x + this.normal.y * this.point.y + this.normal.z * this.point.z);
     const equation = new Vector4(this.normal.x, this.normal.y, this.normal.z, d);
-    return new Plane3DRealization3D(equation);
+    
+    // Compute quaternion for mesh orientation (aligns (0,0,1) with plane normal)
+    const normalVec = this.normal.clone().normalize();
+    const defaultNormal = new Vector4(0, 0, 1, 0);
+    
+    // Compute rotation axis and angle using cross product and dot product
+    const axis = crossVector4(defaultNormal, normalVec);
+    const axisLength = Math.sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    const dotProduct = defaultNormal.x * normalVec.x + defaultNormal.y * normalVec.y + defaultNormal.z * normalVec.z;
+    
+    let quaternion: { x: number; y: number; z: number; w: number };
+    if (axisLength < 1e-10) {
+      // Normals are parallel or anti-parallel
+      if (dotProduct > 0) {
+        // Same direction - no rotation needed
+        quaternion = { x: 0, y: 0, z: 0, w: 1 };
+      } else {
+        // Opposite direction - 180° rotation around any perpendicular axis
+        const perpAxis = Math.abs(normalVec.x) < 0.9 ? new Vector4(1, 0, 0, 0) : new Vector4(0, 1, 0, 0);
+        const rotAxis = crossVector4(perpAxis, normalVec).normalize();
+        quaternion = { x: rotAxis.x, y: rotAxis.y, z: rotAxis.z, w: 0 };
+      }
+    } else {
+      // General case - compute quaternion from axis-angle
+      const angle = Math.atan2(axisLength, dotProduct);
+      const halfAngle = angle / 2;
+      const sinHalf = Math.sin(halfAngle);
+      const cosHalf = Math.cos(halfAngle);
+      const axisNorm = axis.clone();
+      axisNorm.x /= axisLength;
+      axisNorm.y /= axisLength;
+      axisNorm.z /= axisLength;
+      quaternion = {
+        x: axisNorm.x * sinHalf,
+        y: axisNorm.y * sinHalf,
+        z: axisNorm.z * sinHalf,
+        w: cosHalf
+      };
+    }
+    
+    // Origin point is already stored in this.point
+    const originPoint = this.point.clone();
+    
+    return new Plane3DRealization3D(equation, true, quaternion, originPoint);
   }
 
   /**
@@ -435,8 +479,56 @@ export class Plane3DFromTraces extends Plane3D {
       return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
     }
     
+    // Compute origin point on the plane: P = -d * N / |N|^2
+    const normalLengthSq = a * a + b * b + c * c;
+    const originPoint = new Vector4(
+      -d * a / normalLengthSq,
+      -d * b / normalLengthSq,
+      -d * c / normalLengthSq,
+      1
+    );
+    
+    // Compute quaternion for mesh orientation (aligns (0,0,1) with plane normal)
+    const normalVec = new Vector4(a, b, c, 0).normalize();
+    const defaultNormal = new Vector4(0, 0, 1, 0);
+    
+    // Compute rotation axis and angle using cross product and dot product
+    const axis = crossVector4(defaultNormal, normalVec);
+    const axisLength = Math.sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    const dotProduct = defaultNormal.x * normalVec.x + defaultNormal.y * normalVec.y + defaultNormal.z * normalVec.z;
+    
+    let quaternion: { x: number; y: number; z: number; w: number };
+    if (axisLength < 1e-10) {
+      // Normals are parallel or anti-parallel
+      if (dotProduct > 0) {
+        // Same direction - no rotation needed
+        quaternion = { x: 0, y: 0, z: 0, w: 1 };
+      } else {
+        // Opposite direction - 180° rotation around any perpendicular axis
+        const perpAxis = Math.abs(a) < 0.9 ? new Vector4(1, 0, 0, 0) : new Vector4(0, 1, 0, 0);
+        const rotAxis = crossVector4(perpAxis, normalVec).normalize();
+        quaternion = { x: rotAxis.x, y: rotAxis.y, z: rotAxis.z, w: 0 };
+      }
+    } else {
+      // General case - compute quaternion from axis-angle
+      const angle = Math.atan2(axisLength, dotProduct);
+      const halfAngle = angle / 2;
+      const sinHalf = Math.sin(halfAngle);
+      const cosHalf = Math.cos(halfAngle);
+      const axisNorm = axis.clone();
+      axisNorm.x /= axisLength;
+      axisNorm.y /= axisLength;
+      axisNorm.z /= axisLength;
+      quaternion = {
+        x: axisNorm.x * sinHalf,
+        y: axisNorm.y * sinHalf,
+        z: axisNorm.z * sinHalf,
+        w: cosHalf
+      };
+    }
+    
     const equation = new Vector4(a, b, c, d);
-    return new Plane3DRealization3D(equation);
+    return new Plane3DRealization3D(equation, true, quaternion, originPoint);
   }
 
   getEquation(): { point: Vector4; normal: Vector4 } {

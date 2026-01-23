@@ -78,6 +78,19 @@ export function cross(v1: Vector3, v2: Vector3): Vector3 {
 }
 
 /**
+ * Compute cross product of two Vector4 objects (treating as 3D vectors, ignoring w)
+ * Returns a new Vector4 with the cross product (w=0 for direction vector)
+ */
+export function crossVector4(v1: Vector4, v2: Vector4): Vector4 {
+  return new Vector4(
+    v1.y * v2.z - v1.z * v2.y,
+    v1.z * v2.x - v1.x * v2.z,
+    v1.x * v2.y - v1.y * v2.x,
+    0 // Cross product is a direction, not a point
+  );
+}
+
+/**
  * Get vector length
  * This operation is already non-destructive in Three.js
  */

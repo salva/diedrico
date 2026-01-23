@@ -178,14 +178,27 @@ export class Segment3DRealization3D extends Element3DRealization3D {
  *   - [a, b, c] is the normal vector (may or may not be normalized)
  *   - d is the distance term
  * 
+ * For rendering 3D plane rectangles:
+ * - quaternion: Quaternion for orienting plane mesh (aligns (0,0,1) with plane normal) IN DOMAIN COORDS
+ * - originPoint: Origin point on the plane in domain coordinates (Vector4 with w=1)
+ * 
  * Contains ONLY numeric data. Structural information (id, trace IDs) stays in Plane3D.
  */
 export class Plane3DRealization3D extends Element3DRealization3D {
   normal: Vector4;  // Plane equation [a, b, c, d]: ax + by + cz + d = 0
+  quaternion?: { x: number; y: number; z: number; w: number };  // Orientation quaternion (domain coords)
+  originPoint?: Vector4;  // Origin point on plane in domain coordinates [x, y, z, 1]
 
-  constructor(normal: Vector4, feasible: boolean = true) {
+  constructor(
+    normal: Vector4, 
+    feasible: boolean = true,
+    quaternion?: { x: number; y: number; z: number; w: number },
+    originPoint?: Vector4
+  ) {
     super(feasible);
     this.normal = normal;
+    this.quaternion = quaternion;
+    this.originPoint = originPoint;
   }
 
   /**
@@ -193,6 +206,76 @@ export class Plane3DRealization3D extends Element3DRealization3D {
    */
   getNormalVector(): Vector4 {
     return new Vector4(this.normal.x, this.normal.y, this.normal.z, 0);
+  }
+
+  /**
+   * Get quaternion for Three.js rendering (with Y-axis negated for coordinate system conversion)
+   */
+  getQuaternionForThreeJS(): { x: number; y: number; z: number; w: number } | undefined {
+    if (!this.quaternion) return undefined;
+    
+    // When converting from domain (left-handed, Y-up) to Three.js (right-handed, Y-up),
+    // the rotation axis Y component needs to be negated
+    return {
+      x: this.quaternion.x,
+      y: -this.quaternion.y,
+      z: this.quaternion.z,
+      w: this.quaternion.w
+    };
+  }
+
+  /**
+   * Compute the 4 corners of the rectangle representing this plane in 3D space.
+   * Uses the precomputed quaternion and originPoint to transform PlaneGeometry corners.
+   * 
+   * @param planeSize Half-size of the plane rectangle (default 75 for 150x150 square)
+   * @returns Array of 4 corners [bottom-left, bottom-right, top-right, top-left] in domain coordinates
+   */
+  getRectangleCorners(planeSize: number = 75): Vector4[] {
+    if (!this.quaternion || !this.originPoint) {
+      console.error('[Plane3DRealization3D] Cannot compute corners: missing quaternion or originPoint');
+      return [];
+    }
+
+    const quat = this.quaternion;
+    const origin = this.originPoint;
+
+    // PlaneGeometry corners in local space: (±planeSize, ±planeSize, 0)
+    const localCorners = [
+      { x: -planeSize, y: -planeSize, z: 0 },  // Bottom-left
+      { x: planeSize, y: -planeSize, z: 0 },   // Bottom-right
+      { x: planeSize, y: planeSize, z: 0 },    // Top-right
+      { x: -planeSize, y: planeSize, z: 0 }    // Top-left
+    ];
+
+    const worldCorners: Vector4[] = [];
+    for (const local of localCorners) {
+      // Apply quaternion rotation: v' = q * v * q^(-1)
+      // Using simplified formula for unit quaternions
+      const qx = quat.x, qy = quat.y, qz = quat.z, qw = quat.w;
+      const vx = local.x, vy = local.y, vz = local.z;
+
+      // Compute q * v
+      const ix = qw * vx + qy * vz - qz * vy;
+      const iy = qw * vy + qz * vx - qx * vz;
+      const iz = qw * vz + qx * vy - qy * vx;
+      const iw = -qx * vx - qy * vy - qz * vz;
+
+      // Compute (q * v) * q^(-1)
+      const rotX = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+      const rotY = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+      const rotZ = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+
+      // Apply translation
+      worldCorners.push(new Vector4(
+        rotX + origin.x,
+        rotY + origin.y,
+        rotZ + origin.z,
+        1
+      ));
+    }
+
+    return worldCorners;
   }
 
   /**

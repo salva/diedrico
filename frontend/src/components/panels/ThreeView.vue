@@ -73,6 +73,7 @@ import { useViewStore } from '../../stores/viewStore';
 import { domainDirectionToThreeJS, domainToThreeJS, applyMatrix4x3 } from '../../utils/threeUtils';
 import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '../../utils/rectangleGrid';
 import { Vector4 } from 'three';
+import type { Plane3DRealization3D } from '../../domain/world/Element3DRealization3D';
 
 /**
  * Generate a simple fallback grid (non-clipped) centered at origin
@@ -216,6 +217,18 @@ function initThreeScene() {
 }
 
 /**
+ * Compute the 4 corners of a rendered 3D plane rectangle in domain coordinates
+ * Uses the rectangle geometry from the plane realization
+ */
+/**
+ * Compute 3D rectangle corners using the precomputed transformation from planeRealization.
+ * Uses the getRectangleCorners() method from Plane3DRealization3D.
+ */
+function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, planeSize: number = 75): Vector4[] {
+  return planeRealization.getRectangleCorners(planeSize);
+}
+
+/**
  * Render projection plane grids in 3D space
  * 
  * Projection planes are 2D coordinate systems, NOT 3D surfaces.
@@ -283,76 +296,50 @@ function renderProjectionPlanes() {
     let gridSegments: Segment2D[];
     
     if (projPlane instanceof AuxiliaryProjectionPlane && projPlane.plane3DId) {
+      console.log('[ThreeView] Auxiliary plane detected, plane3DId:', projPlane.plane3DId);
       const plane3D = world.get3DPlane(projPlane.plane3DId);
+      console.log('[ThreeView] Found 3D plane:', plane3D?.id);
       const planeRealization = plane3D ? world.get3DPlaneRealization(plane3D.id!) : null;
+      console.log('[ThreeView] Plane realization feasible:', planeRealization?.feasible);
       
       if (planeRealization && planeRealization.feasible) {
-        // Get 3D plane's rectangle corners (150x150 square centered at plane origin)
-        const planeSize = 75;  // Half-size
+        console.log('[ThreeView] Generating clipped grid for auxiliary plane');
         
-        // Plane normal in domain coordinates
-        const normal = planeRealization.normal;
-        const normalVec = new THREE.Vector3(normal.x, normal.y, normal.z).normalize();
-        
-        // Origin point on plane in domain coordinates
-        const d = normal.w;
-        const normalLengthSq = normal.x * normal.x + normal.y * normal.y + normal.z * normal.z;
-        const originX = -d * normal.x / normalLengthSq;
-        const originY = -d * normal.y / normalLengthSq;
-        const originZ = -d * normal.z / normalLengthSq;
-        
-        // Find two orthogonal vectors in the plane
-        const up = Math.abs(normalVec.z) < 0.9 ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(1, 0, 0);
-        const planeU = new THREE.Vector3().crossVectors(up, normalVec).normalize();
-        const planeV = new THREE.Vector3().crossVectors(normalVec, planeU).normalize();
-        
-        // Four corners of the 3D plane rectangle in domain coordinates
-        const corners: [Vector4, Vector4, Vector4, Vector4] = [
-          new Vector4(
-            originX - planeSize * planeU.x - planeSize * planeV.x,
-            originY - planeSize * planeU.y - planeSize * planeV.y,
-            originZ - planeSize * planeU.z - planeSize * planeV.z,
-            1
-          ),
-          new Vector4(
-            originX + planeSize * planeU.x - planeSize * planeV.x,
-            originY + planeSize * planeU.y - planeSize * planeV.y,
-            originZ + planeSize * planeU.z - planeSize * planeV.z,
-            1
-          ),
-          new Vector4(
-            originX + planeSize * planeU.x + planeSize * planeV.x,
-            originY + planeSize * planeU.y + planeSize * planeV.y,
-            originZ + planeSize * planeU.z + planeSize * planeV.z,
-            1
-          ),
-          new Vector4(
-            originX - planeSize * planeU.x + planeSize * planeV.x,
-            originY - planeSize * planeU.y + planeSize * planeV.y,
-            originZ - planeSize * planeU.z + planeSize * planeV.z,
-            1
-          )
-        ];
+        // Get the ACTUAL 3D plane rectangle corners (same as what's rendered)
+        const planeSize = 75;  // Half-size (150/2)
+        const corners = compute3DPlaneRectangleCorners(planeRealization, planeSize) as [Vector4, Vector4, Vector4, Vector4];
         
         // Convert to projection plane (u,v) coordinates using the projection plane's inverse matrix
         const projPlaneRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+        console.log('[ThreeView] Got projection plane realization for grid conversion:', !!projPlaneRealization);
         if (!projPlaneRealization) {
+          console.log('[ThreeView] No projection plane realization, using fallback grid');
           gridSegments = generateFallbackGrid(75, 20);
         } else {
+          console.log('[ThreeView] Converting corners to (u,v) and generating clipped grid');
           const rect2D = convertPlaneRectangleTo2D(corners, projPlaneRealization.threeDToPlane);
+          console.log('[ThreeView] Rectangle in (u,v):', rect2D);
+          console.log('[ThreeView] Corner 0:', rect2D.corners[0]);
+          console.log('[ThreeView] Corner 1:', rect2D.corners[1]);
+          console.log('[ThreeView] Corner 2:', rect2D.corners[2]);
+          console.log('[ThreeView] Corner 3:', rect2D.corners[3]);
           
           // Generate clipped grid
           gridSegments = generateClippedGrid(rect2D, 20);
+          console.log('[ThreeView] Generated', gridSegments.length, 'grid segments');
         }
       } else {
+        console.log('[ThreeView] No plane realization or not feasible, using fallback grid');
         // Fallback: simple grid centered at origin
         gridSegments = generateFallbackGrid(75, 20);
       }
     } else {
+      console.log('[ThreeView] Base projection plane, using fallback grid');
       // Base planes: simple grid centered at origin
       gridSegments = generateFallbackGrid(75, 20);
     }
     
+    console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
     // Convert grid segments from (u,v) to Three.js coordinates
     const vertices = [];
     for (const segment of gridSegments) {
@@ -372,7 +359,7 @@ function renderProjectionPlanes() {
     
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    const material = new THREE.LineBasicMaterial({ color: 0xcccccc, opacity: 0.5, transparent: true });
+    const material = new THREE.LineBasicMaterial({ color: 0x888888, opacity: 0.7, transparent: true });
     const gridMesh = new THREE.LineSegments(geometry, material);
     gridMesh.userData.type = 'projection-plane-grid';
     gridMesh.userData.planeId = projPlane.id;
@@ -569,31 +556,31 @@ function render3DElements() {
       });
       const planeMesh = new THREE.Mesh(geometry, material);
 
-      // Extract plane equation: ax + by + cz + d = 0
+      // Use precomputed quaternion and originPoint from realization
+      if (!planeRealization.quaternion || !planeRealization.originPoint) {
+        console.error('[ThreeView] Plane realization missing quaternion or originPoint');
+        continue;
+      }
+      
+      const origin = planeRealization.originPoint;
       const normal = planeRealization.normal;
-      const normalVec = new THREE.Vector3(normal.x, normal.y, normal.z);
-      normalVec.normalize();
       
-      // Find a point on the plane: P = -d * N / |N|^2
-      const d = normal.w;
-      const normalLengthSq = normal.x * normal.x + normal.y * normal.y + normal.z * normal.z;
-      const originPoint = new THREE.Vector3(
-        -d * normal.x / normalLengthSq,
-        -d * normal.y / normalLengthSq,
-        -d * normal.z / normalLengthSq
-      );
+      // Apply domain→Three.js transformation to position
+      const originDomain = new Vector4(origin.x, origin.y, origin.z, origin.w);
+      const originThree = domainToThreeJS(originDomain);
       
-      // Apply domain→Three.js Y-negation
-      originPoint.y = -originPoint.y;
-      normalVec.y = -normalVec.y;
+      // Compute quaternion in Three.js space (not domain space)
+      // Transform the normal to Three.js coordinates
+      const normalDomain = new THREE.Vector3(normal.x, normal.y, normal.z);
+      const normalThree = domainDirectionToThreeJS(normalDomain).normalize();
       
-      // Orient plane mesh to match the normal
+      // Compute quaternion to align default (0,0,1) with Three.js-space normal
       const defaultNormal = new THREE.Vector3(0, 0, 1);
       const quaternion = new THREE.Quaternion();
-      quaternion.setFromUnitVectors(defaultNormal, normalVec);
+      quaternion.setFromUnitVectors(defaultNormal, normalThree);
       
       planeMesh.quaternion.copy(quaternion);
-      planeMesh.position.copy(originPoint);
+      planeMesh.position.copy(originThree);
       planeMesh.userData.type = '3d-element';
       planeMesh.userData.elementType = 'plane';
       planeMesh.userData.elementId = plane.id;
