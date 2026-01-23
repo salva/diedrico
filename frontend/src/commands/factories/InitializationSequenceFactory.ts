@@ -1,12 +1,12 @@
 import type { World } from '../../domain/world/World';
 import type { Command } from '../Command';
 import {
-  CreateInitializationSubprocessOp,
   AddPlane3DFixedOp,
   AddProjectionPlaneFixedOp,
   AddOriginPoint2DOp,
   SetActivePlaneOp
 } from '../operations/world/InitializationOps';
+import { PushSubprocessOp, PopSubprocessOp } from '../operations/processTree';
 import { Vector3, Vector4, Matrix3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
@@ -15,7 +15,7 @@ import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
  * Factory: Build operation sequence for world initialization
  * 
  * Creates all fundamental geometric structures by adding operations to the provided Command:
- * - ProcessTree subprocess for organization
+ * - ProcessTree subprocess for organization (Phase 85: using subprocess stack)
  * - Two 3D planes (P_H horizontal, P_V vertical)
  * - Two projection planes 
  * - Origin points on each projection plane
@@ -29,13 +29,14 @@ import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
  * CRITICAL: This factory does NOT generate element IDs. Operations generate their own IDs
  * via World/ProjectionPlane factory methods, supporting redo by storing IDs in outputs.
  * 
+ * Phase 85: Uses PushSubprocessOp/PopSubprocessOp for subprocess stack management
+ * 
  * @param _world World instance (not used - operations get World from Command)
  * @param cmd Open Command to which operations will be added
  */
 export function buildWorldInitialization(_world: World, cmd: Command): void {
-  // Step 1: Create initialization subprocess
-  // This organizes all initialization elements under a dedicated subprocess in the ProcessTree
-  cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+  // Phase 85: Push subprocess onto stack - all subsequent actions added here
+  cmd.addAndExecute(new PushSubprocessOp('World Initialization'));
   
   // Step 2-3: Create 3D planes
   // P_H: horizontal plane (z=0), normal=(0,0,1)
@@ -77,7 +78,7 @@ export function buildWorldInitialization(_world: World, cmd: Command): void {
     0, 0, 0, 1   // 1 = w
   );
   
-  const projPlaneHOp = new AddProjectionPlaneFixedOp(planeHId, planeToPaper_H, planeTo3D_H, threeDToPlane_H, undefined, 'P_H');
+  const projPlaneHOp = new AddProjectionPlaneFixedOp(planeHId, planeToPaper_H, planeTo3D_H, threeDToPlane_H, undefined, 'P_H', 'horizontal');
   cmd.addAndExecute(projPlaneHOp);
   const projPlaneHId = projPlaneHOp.outputs.projPlaneId as string;
   
@@ -99,7 +100,7 @@ export function buildWorldInitialization(_world: World, cmd: Command): void {
     0, 0, 0, 1   // 1 = w
   );
   
-  const projPlaneVOp = new AddProjectionPlaneFixedOp(planeVId, planeToPaper_V, planeTo3D_V, threeDToPlane_V, undefined, 'P_V');
+  const projPlaneVOp = new AddProjectionPlaneFixedOp(planeVId, planeToPaper_V, planeTo3D_V, threeDToPlane_V, undefined, 'P_V', 'vertical');
   cmd.addAndExecute(projPlaneVOp);
   const projPlaneVId = projPlaneVOp.outputs.projPlaneId as string;
   
@@ -110,12 +111,13 @@ export function buildWorldInitialization(_world: World, cmd: Command): void {
   cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1), 'O_V'));
   
   // Step 8-10: Create complete hinge line with both half hinge lines
-  // Uses sequence factory to orchestrate 3 operations atomically
-  const hingePoint = new Vector3(0, 0, 1); // Start at origin
-  const hingeDirection = new Vector3(1, 0, 0); // Along x-axis
-  buildHingeLineWithHalves(projPlaneHId, projPlaneVId, cmd, hingePoint, hingeDirection);
+  // Phase 84: No geometry arguments - computed from canonical coordinates
+  buildHingeLineWithHalves(projPlaneHId, projPlaneVId, cmd);
   
   // Step 11: Set active plane
   // Default to horizontal plane as the active drawing surface
   cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
+  
+  // Phase 85: Pop subprocess from stack - initialization complete
+  cmd.addAndExecute(new PopSubprocessOp());
 }

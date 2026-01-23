@@ -614,8 +614,11 @@ export class SiblingIntersectionPoint2D extends Point2D {
           if (siblingHHL) {
             // Validate parametric consistency: Q=Q', D=D'
             const EPSILON = 1e-10;
-            const pointDist = primaryHHL.point.distanceTo(siblingHHL.point);
-            const dirDist = primaryHHL.direction.distanceTo(siblingHHL.direction);
+            // Phase 84: Validate parametric consistency via realize2D()
+            const primaryRealization = primaryHHL.realize2D(world)!;
+            const siblingRealization = siblingHHL.realize2D(world)!;
+            const pointDist = primaryRealization.point1.distanceTo(siblingRealization.point1);
+            const dirDist = primaryRealization.point2.distanceTo(siblingRealization.point2);
             
             if (pointDist > EPSILON || dirDist > EPSILON) {
               throw new Error(

@@ -562,6 +562,10 @@ export class World {
         }
       }
       
+      // Phase 84: If this ID is a projection plane, clear its transformation cache
+      // (Projection planes are elements in dependency graph like any other)
+      this.projectionPlaneRealizations3D.delete(id);
+      
       // Clear 2D realization caches in all planes
       for (const plane of this.projectionPlanes.values()) {
         plane.clearPointRealization2D(id);
@@ -827,9 +831,10 @@ export class World {
   /**
    * Add an action to the process tree and update dependency tracking
    * Use this instead of getProcessTree().addAction() directly
+   * Phase 85: Removed parentSubprocessId parameter - uses subprocess stack
    */
-  addAction(action: any, groupName?: string, parentSubprocessId?: string): any {
-    const result = this.processTree.addAction(action, groupName, parentSubprocessId);
+  addAction(action: any, groupName?: string): any {
+    const result = this.processTree.addAction(action, groupName);
     // Rebuild dependency maps to include the new action
     this.dependencyService.rebuildDependencyMaps();
     return result;

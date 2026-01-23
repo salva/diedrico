@@ -68,11 +68,9 @@ export class AddPlane3DFixedOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { planeId: plane.id };
 
-      // ProcessTree integration (Phase 47): if the initialization subprocess exists, record init action
-      const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
-      if (initSubprocess) {
-        world.addAction(createInitializePlane3DAction(plane.id, this.label), undefined, initSubprocess.id);
-      }
+      // Phase 85: Action automatically recorded to current subprocess via stack
+      world.addAction(createInitializePlane3DAction(plane.id, this.label));
+      
       return {
         success: true,
         outputs: this.outputs
@@ -120,7 +118,8 @@ export class AddProjectionPlaneFixedOp implements IOperation {
     private readonly planeTo3D: Matrix4x3,
     private readonly threeDToPlane: Matrix3x4,
     private readonly projPlaneId?: string,
-    private readonly name?: string
+    private readonly name?: string,
+    private readonly orientation?: 'horizontal' | 'vertical'
   ) {
     this.parameters = { 
       plane3DId, 
@@ -128,7 +127,8 @@ export class AddProjectionPlaneFixedOp implements IOperation {
       planeTo3D: planeTo3D.toArray(),
       threeDToPlane: threeDToPlane.toArray(),
       projPlaneId,
-      name
+      name,
+      orientation
     };
   }
 
@@ -147,15 +147,15 @@ export class AddProjectionPlaneFixedOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { projPlaneId: projPlane.id };
 
-      // ProcessTree integration (Phase 47): if the initialization subprocess exists, record init action
-      const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
-      if (initSubprocess) {
-        world.addAction(
-          createInitializeProjectionPlaneAction(projPlane.id, this.plane3DId, 'base'),
-          undefined,
-          initSubprocess.id
-        );
-      }
+      // Phase 85: Action automatically recorded to current subprocess via stack
+      world.addAction(
+        createInitializeProjectionPlaneAction(
+          projPlane.id!, 
+          this.plane3DId, 
+          this.orientation || 'horizontal'
+        )
+      );
+      
       return {
         success: true,
         outputs: this.outputs
@@ -234,15 +234,10 @@ export class AddOriginPoint2DOp implements IOperation {
       
       // Phase 53: No longer storing origin IDs in World - use label-based access instead
       
-      // ProcessTree integration (Phase 47): if the initialization subprocess exists, record init action
-      const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
-      if (initSubprocess) {
-        world.addAction(
-          createInitializeOriginPoint2DAction(originPoint.id, this.projPlaneId, this.label),
-          undefined,
-          initSubprocess.id
-        );
-      }
+      // Phase 85: Action automatically recorded to current subprocess via stack
+      world.addAction(
+        createInitializeOriginPoint2DAction(originPoint.id, this.projPlaneId, this.label)
+      );
 
       return {
         success: true,
@@ -314,15 +309,11 @@ export class AddHingeLineOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { hingeLineId: hingeLine.id };
 
-      // ProcessTree integration (Phase 47): if the initialization subprocess exists, record init action
-      const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
-      if (initSubprocess) {
-        world.addAction(
-          createInitializeHingeLineAction(hingeLine.id, this.horizontalPlaneId, this.verticalPlaneId),
-          undefined,
-          initSubprocess.id
-        );
-      }
+      // Phase 85: Action automatically recorded to current subprocess via stack
+      world.addAction(
+        createInitializeHingeLineAction(hingeLine.id, this.horizontalPlaneId, this.verticalPlaneId)
+      );
+      
       return {
         success: true,
         outputs: this.outputs
@@ -395,15 +386,11 @@ export class AddHalfHingeLine2DOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { lineId: halfHingeLine.id, projPlaneId: this.projPlaneId };
 
-      // ProcessTree integration (Phase 47): if the initialization subprocess exists, record init action
-      const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
-      if (initSubprocess) {
-        world.addAction(
-          createInitializeHalfHingeLine2DAction(halfHingeLine.id, this.projPlaneId, this.hingeLineId),
-          undefined,
-          initSubprocess.id
-        );
-      }
+      // Phase 85: Action automatically recorded to current subprocess via stack
+      world.addAction(
+        createInitializeHalfHingeLine2DAction(halfHingeLine.id, this.projPlaneId, this.hingeLineId)
+      );
+      
       return {
         success: true,
         outputs: this.outputs

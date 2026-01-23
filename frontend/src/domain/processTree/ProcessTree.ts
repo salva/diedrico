@@ -40,6 +40,7 @@ export type ProcessNode = Subprocess | ActionGroup | ActionNode;
 export class ProcessTree {
   root: Subprocess;
   private _version: number = 0;
+  private subprocessStack: Subprocess[] = [];  // Phase 85: Subprocess stack
 
   constructor() {
     // Initialize with root subprocess
@@ -51,6 +52,8 @@ export class ProcessTree {
       visible: true,
       created: new Date()
     };
+    // Initialize stack with root
+    this.subprocessStack = [this.root];
   }
 
   /**
@@ -68,10 +71,59 @@ export class ProcessTree {
   }
 
   /**
+   * Get the current active subprocess (top of stack)
+   * Phase 85: Stack-based subprocess management
+   */
+  getCurrentSubprocess(): Subprocess {
+    return this.subprocessStack[this.subprocessStack.length - 1];
+  }
+
+  /**
+   * Push a new subprocess onto the stack
+   * All subsequent actions will be added to this subprocess
+   * Phase 85: Stack-based subprocess management
+   */
+  pushSubprocess(name: string): Subprocess {
+    const subprocess: Subprocess = {
+      id: this.generateId(),
+      type: 'subprocess',
+      name,
+      children: [],
+      visible: true,
+      created: new Date()
+    };
+
+    // Add to current subprocess's children
+    const parent = this.getCurrentSubprocess();
+    parent.children.push(subprocess);
+    
+    // Push onto stack
+    this.subprocessStack.push(subprocess);
+    this.notifyChange();
+
+    return subprocess;
+  }
+
+  /**
+   * Pop the current subprocess from the stack
+   * Returns to parent subprocess
+   * The subprocess remains in the tree as a child of its parent
+   * Phase 85: Stack-based subprocess management
+   */
+  popSubprocess(): void {
+    if (this.subprocessStack.length <= 1) {
+      throw new Error('Cannot pop root subprocess');
+    }
+    this.subprocessStack.pop();
+    this.notifyChange();
+  }
+
+  /**
    * Add an action to the process tree
    * Creates an ActionGroup if needed
+   * Phase 85: Always adds to current subprocess from stack (no parentSubprocessId parameter)
    */
-  addAction(action: Action, groupName?: string, parentSubprocessId?: string): ActionGroup {
+  addAction(action: Action, groupName?: string): ActionGroup {
     // Wrap action in ActionNode
     const actionNode: ActionNode = {
       ...action,
@@ -89,14 +141,9 @@ export class ProcessTree {
       created: new Date()
     };
 
-    // Add to requested subprocess (or root by default)
-    // Note: groupName is ignored - ActionGroups have no names per spec
-    if (parentSubprocessId) {
-      const parent = this.findSubprocessById(parentSubprocessId);
-      (parent || this.root).children.push(actionGroup);
-    } else {
-      this.root.children.push(actionGroup);
-    }
+    // Phase 85: Add to current subprocess from stack (no manual subprocess selection)
+    const currentSubprocess = this.getCurrentSubprocess();
+    currentSubprocess.children.push(actionGroup);
     this.notifyChange();
 
     return actionGroup;

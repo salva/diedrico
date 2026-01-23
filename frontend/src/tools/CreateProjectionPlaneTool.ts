@@ -26,10 +26,6 @@ import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
-import { AddAuxiliaryProjectionPlaneOp } from '@/commands/operations/world/AddAuxiliaryProjectionPlaneOp';
-import { AddHingeLineOp } from '@/commands/operations/world/InitializationOps';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
-import { createProjectionPlaneAction } from '@/domain/processTree/actions/CreateProjectionPlaneAction';
 import { computeExpectedT2Prime, computeLineDistance } from '@/utils/projectionPlaneUtils';
 import type { Element2D } from '@/domain/world/Element2D';
 
@@ -195,31 +191,17 @@ export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
       t2PlaneId
     );
     
-    // Step 2: Create auxiliary projection plane with trace dependencies
-    const projPlaneResult = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
+    // Steps 2-4: Create auxiliary projection plane with hinge line and ProcessTree tracking
+    // Using factory method that creates plane + hinge line + ProcessTree action in one call
+    PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+      cmd,
+      _context.world,  // world (needed to check if T1 is HalfHingeLine2D)
       plane3DId,
-      t1Id,
-      t2Id,
-      t2PrimeId
-    ));
-    
-    const projPlaneId = projPlaneResult.outputs.planeId;
-    
-    // Step 3: Create hinge line between T1's plane and new projection plane
-    cmd.addAndExecute(new AddHingeLineOp(
-      t1Id,
-      t1PlaneId,
-      projPlaneId
-    ));
-    
-    // Step 4: Record in ProcessTree
-    const action = createProjectionPlaneAction(
-      projPlaneId,
-      t1Id,
-      t2Id,
-      t2PrimeId
+      t1Id,       // T1 (hinge trace)
+      t2Id,       // T2 (other trace)
+      t2PrimeId,  // T2' (position line)
+      t1PlaneId   // Hinge trace plane (connects via hinge line)
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
   }
 
   protected getCommandDescription(): string {

@@ -16,10 +16,6 @@ import { Command } from '@/commands/Command';
 import { AddFreePoint2DOp } from '../world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '../world/AddLineOp';
 import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
-import { AddAuxiliaryProjectionPlaneOp } from '../world/AddAuxiliaryProjectionPlaneOp';
-import { AddHingeLineOp } from '../world/InitializationOps';
-import { AddProcessTreeActionOp } from '../processTree/AddProcessTreeActionOp';
-import { createProjectionPlaneAction } from '@/domain/processTree/actions/CreateProjectionPlaneAction';
 
 export type ExampleSetupType = 
   | 'projection-plane-setup'
@@ -205,34 +201,19 @@ export class AddExampleSetupOp implements IOperation {
     );
     this.createdElementIds.push(plane3DId);
 
-    // Step 2: Create auxiliary projection plane with trace dependencies
-    const projPlaneResult = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
+    // Steps 2-4: Create auxiliary projection plane with hinge line and ProcessTree tracking
+    // Using factory method that creates plane + hinge line + ProcessTree action in one call
+    const { projPlaneId } = PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+      cmd,
+      world,   // world (needed to check if T1 is HalfHingeLine2D)
       plane3DId,
-      t1_id,
-      t2_id,
-      t2p_id,
-      'P_A1'  // Name for the auxiliary projection plane
-    ));
-    const projPlaneId = projPlaneResult.outputs.planeId as string;
-    this.createdElementIds.push(projPlaneId);
-
-    // Step 3: Create hinge line between T1's plane (P_H) and new projection plane
-    const hingeResult = cmd.addAndExecute(new AddHingeLineOp(
-      t1_id,
-      P_H.id!,
-      projPlaneId
-    ));
-    const hingeId = hingeResult.outputs.hingeLineId as string;
-    this.createdElementIds.push(hingeId);
-
-    // Step 4: Record in ProcessTree
-    const action = createProjectionPlaneAction(
-      projPlaneId,
-      t1_id,
-      t2_id,
-      t2p_id
+      t1_id,   // T1 (hinge trace)
+      t2_id,   // T2 (other trace)
+      t2p_id,  // T2' (position line)
+      P_H.id!, // Hinge trace plane (connects via hinge line)
+      'P_A1'   // Name for the auxiliary projection plane
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    this.createdElementIds.push(projPlaneId);
   }
 
   /**

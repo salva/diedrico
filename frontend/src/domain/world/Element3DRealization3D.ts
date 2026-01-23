@@ -93,6 +93,18 @@ export class Line3DRealization3D extends Element3DRealization3D {
   }
 
   /**
+   * Create an infeasible line realization
+   * Used when parent dependencies are infeasible
+   */
+  static createInfeasible(): Line3DRealization3D {
+    return new Line3DRealization3D(
+      new Vector4(0, 0, 0, 1),
+      new Vector4(1, 0, 0, 0),
+      false
+    );
+  }
+
+  /**
    * Evaluate line at parameter t: p(t) = point + t * direction
    */
   getPointAt(t: number): Vector4 {

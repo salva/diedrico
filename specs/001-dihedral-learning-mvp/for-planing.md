@@ -18,7 +18,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] **Phase 84: Geometry-Free Hinge Line Architecture** - Refactor HingeLine/HalfHingeLine2D to eliminate stored geometry duplication using canonical coordinates (0,0,1) and (1,0,0). Implement realize3D() with applyMatrix4x3() transformation, realize2D() with plane1 canonical/plane2 projection. Benefits: zero duplication, no parametric consistency validation, extensible to auxiliary planes. See specs/001-dihedral-learning-mvp/phase-84-geometry-free-hinge-lines.md for details.
+* [ ] **Phase 85: ProcessTree Subprocess Stack Architecture** - Implement subprocess stack in ProcessTree to eliminate conditional subprocess checks in operations. Two operation types: (1) Stack manipulation operations (PushSubprocessOp/PopSubprocessOp) that manage subprocess stack, (2) Action recording operations (AddProcessTreeActionOp) that add actions to current subprocess at top of stack. Domain operations remain unchanged. Benefits: automatic action registration, no conditional checks, clear subprocess boundaries, complete dependency graph. See specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md for details.
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Add a shortcut for changing the active projection plane to the next one. Using Tab for instance.
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
@@ -146,6 +146,45 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **Phase 85: ProcessTree Subprocess Stack Architecture** - 📋 PLANNED (Jan 23, 2026)
+  - **User Requirement**: "there must be a stack of open ProcessSubtrees and when an action is added it must be added to the subtree at the top of the stack"
+  - **Problem**: Operations conditionally check for "World Initialization" subprocess, causing user-created elements (HingeLine/HalfHingeLine2D in auxiliary planes) to not be recorded in ProcessTree, breaking dependency graph
+  - **Solution**: Implement subprocess stack in ProcessTree. Two operation types: (1) Stack manipulation operations (PushSubprocessOp/PopSubprocessOp) that manage subprocess stack, (2) Action recording operations (AddProcessTreeActionOp) that add actions to current subprocess at stack top
+  - **Architecture**: 
+    - ProcessTree maintains `subprocessStack: Subprocess[]` field
+    - `getCurrentSubprocess()` returns stack top
+    - `pushSubprocess(name)` creates subprocess, adds to current parent, pushes to stack
+    - `popSubprocess()` pops stack (subprocess remains in tree, parent becomes active)
+    - `addAction()` always adds to current subprocess (no parentSubprocessId parameter)
+  - **Key Separation**: Domain operations don't interact with ProcessTree directly. Factories and initialization code wrap sequences with PushSubprocessOp/PopSubprocessOp
+  - **Benefits**: 
+    - Automatic action registration (no conditional checks)
+    - Clean separation (domain ops don't interact with ProcessTree)
+    - Complete dependency graph (fixes HingeLine/HalfHingeLine2D registration bug)
+    - Clear subprocess boundaries (Push/Pop explicit)
+    - Undo-friendly (Push/Pop are undoable operations)
+  - **Specifications**: 
+    - spec.md §Constructive Actions (usage pattern and examples)
+    - data-model.md §Domain Entity: ProcessTree (Phase 85 stack architecture)
+    - phase-85-subprocess-stack-architecture.md (complete implementation plan)
+  - **Tasks**: tasks.md Phase 85 (T1290-T1358: 69 tasks)
+    - Planning & documentation (6 tasks)
+    - Core ProcessTree implementation (6 tasks: add stack, push/pop methods)
+    - Create Push/Pop operations (4 tasks)
+    - Update World.addAction() (2 tasks)
+    - Remove conditional registration (8 tasks: clean up all operations)
+    - Update initialization (4 tasks)
+    - Update factories (5 tasks)
+    - Clean up AddProcessTreeActionOp (2 tasks)
+    - Unit tests (8 tasks)
+    - Integration tests (7 tasks)
+    - Dependency invalidation tests (4 tasks)
+    - Regression tests (5 tasks)
+    - Clean up & documentation (6 tasks)
+    - Final review & commit (2 tasks)
+  - **Dependencies**: Phase 84 follow-up (completes auxiliary plane dependency tracking)
+  - **Status**: Complete planning documentation, ready for implementation
 
 * [x] **Element Visibility Property (Phase 83)** - 📋 PLANNED (Jan 23, 2026)
   - **User Requirement**: Control element visibility through visual appearance structure with inheritance support

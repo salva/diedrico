@@ -40,9 +40,8 @@ export {
   type Point3D
 } from './Point3D';
 export {
-  Line3DFromProjections,
-  Line3DFromPlaneIntersection,
-  type Line3D
+  Line3D,
+  Line3DFromProjections
 } from './Line3D';
 export {
   Segment3DFromProjections,

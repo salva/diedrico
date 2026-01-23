@@ -282,7 +282,7 @@ export class ProjectService {
         return new AddOriginPoint2DOp(parameters.projPlaneId, parameters.localPosition);
       
       case 'AddHingeLine':
-        return new AddHingeLineOp(parameters.hingeLineId, parameters.projPlaneAId, parameters.projPlaneBId);
+        return new AddHingeLineOp(parameters.projPlaneAId, parameters.projPlaneBId, parameters.hingeLineId);
       
       case 'AddHalfHingeLine2D':
         return new AddHalfHingeLine2DOp(parameters.projPlaneId, parameters.hingeLineId, parameters.hingePoint, parameters.hingeDirection);

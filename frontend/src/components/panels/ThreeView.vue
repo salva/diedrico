@@ -625,6 +625,11 @@ function renderHingeLines() {
       // Phase 84: Use realize3D() to get 3D geometry
       const line3D = hingeLine.realize3D(world);
       
+      // Skip infeasible hinge lines (e.g., when parent plane is infeasible)
+      if (!line3D.isFeasible()) {
+        continue;
+      }
+      
       if (!line3D || !line3D.point || !line3D.direction) {
         console.warn('[ThreeView] Cannot render hinge line: realize3D failed', hingeLine.id);
         continue;

@@ -1308,6 +1308,111 @@ ProcessTree.root (Process)
 - 1 ActionGroup → N Action (children, ordered - at least 1)
 - ProcessNodes form a single unified tree
 
+**Phase 85 - Subprocess Stack Architecture**:
+
+ProcessTree maintains a **subprocess stack** that determines where actions are recorded. This eliminates the anti-pattern of operations checking "am I in initialization?" conditionally.
+
+**Stack Structure**:
+```typescript
+class ProcessTree {
+  root: Subprocess;
+  private subprocessStack: Subprocess[] = [root];  // Stack of active subprocesses
+  private _version: number = 0;
+
+  /**
+   * Get the current active subprocess (top of stack)
+   */
+  getCurrentSubprocess(): Subprocess {
+    return this.subprocessStack[this.subprocessStack.length - 1];
+  }
+
+  /**
+   * Push a new subprocess onto the stack
+   * All subsequent actions will be added to this subprocess
+   */
+  pushSubprocess(name: string): Subprocess {
+    const subprocess = this.createSubprocess(name);
+    const parent = this.getCurrentSubprocess();
+    parent.children.push(subprocess);
+    this.subprocessStack.push(subprocess);
+    return subprocess;
+  }
+
+  /**
+   * Pop the current subprocess from the stack
+   * Returns to parent subprocess
+   * The subprocess remains in the tree as a child of its parent
+   */
+  popSubprocess(): void {
+    if (this.subprocessStack.length <= 1) {
+      throw new Error('Cannot pop root subprocess');
+    }
+    this.subprocessStack.pop();
+  }
+
+  /**
+   * Add an action to the current active subprocess
+   * No parentSubprocessId parameter needed - uses stack top
+   */
+  addAction(action: Action, groupName?: string): ActionGroup {
+    const currentSubprocess = this.getCurrentSubprocess();
+    // Create action group and add to current subprocess
+    const actionGroup = this.createActionGroup(action, groupName);
+    currentSubprocess.children.push(actionGroup);
+    return actionGroup;
+  }
+}
+```
+
+**Two Operation Types**:
+
+1. **Stack Manipulation Operations** - Manage subprocess boundaries:
+   - `PushSubprocessOp(name: string)`: Creates subprocess, adds to tree, pushes to stack
+   - `PopSubprocessOp()`: Pops subprocess from stack (subprocess remains in tree)
+
+2. **Action Recording Operations** - Record actions to current subprocess:
+   - `AddProcessTreeActionOp(action: Action)`: Adds action to subprocess at top of stack
+   - No conditional checks, no manual subprocess selection
+   - Always uses `ProcessTree.getCurrentSubprocess()`
+
+**Usage Pattern**:
+```typescript
+// Bootstrap initialization
+cmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+cmd.addAndExecute(new AddProjectionPlaneFixedOp('P_H', ...));
+cmd.addAndExecute(new AddProcessTreeActionOp(createInitializeProjectionPlaneAction(...)));
+cmd.addAndExecute(new AddHingeLineOp(...));
+cmd.addAndExecute(new AddProcessTreeActionOp(createInitializeHingeLineAction(...)));
+cmd.addAndExecute(new PopSubprocessOp());
+
+// User action - create auxiliary plane
+cmd.addAndExecute(new PushSubprocessOp('Create Projection Plane'));
+const result = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(...));
+cmd.addAndExecute(new AddProcessTreeActionOp(createInitializeProjectionPlaneAction(...)));
+cmd.addAndExecute(new AddHingeLineOp(...));
+cmd.addAndExecute(new AddProcessTreeActionOp(createInitializeHingeLineAction(...)));
+cmd.addAndExecute(new PopSubprocessOp());
+```
+
+**Key Benefits**:
+- **Automatic registration**: All actions recorded, no conditional logic
+- **Clean separation**: Domain operations don't interact with ProcessTree directly
+- **Clear boundaries**: Push/Pop clearly define subprocess scope
+- **Complete dependency graph**: All elements properly registered for cache invalidation
+- **Undo-friendly**: Push/Pop are undoable operations
+
+**Anti-Pattern Eliminated**:
+```typescript
+// BEFORE (anti-pattern - conditional registration)
+const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
+if (initSubprocess) {
+  world.addAction(createAction(...), undefined, initSubprocess.id);
+}
+
+// AFTER (correct pattern - automatic registration)
+world.addAction(createAction(...));  // Always adds to current subprocess from stack
+```
+
 **Validation Rules**:
 - Tree must be valid (no cycles, each node has at most one parent)
 - Process is root node (single entry point)
@@ -1317,6 +1422,8 @@ ProcessTree.root (Process)
 - ActionGroups must contain at least one Action
 - Subprocesses can contain Subprocesses or ActionGroups (mixed) - NEVER direct Actions
 - ALL Actions must be inside an ActionGroup
+- **Phase 85**: Root subprocess always on stack bottom, cannot be popped
+- **Phase 85**: Stack depth must be ≥1 (root always present)
 
 ---
 

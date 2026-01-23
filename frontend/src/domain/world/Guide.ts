@@ -243,10 +243,10 @@ export class SiblingGuide2D extends Line2D {
     // Find intersection of primary guide with its HalfHingeLine
     const intersectionPoint = intersectLineLine(primaryGuideRealization, primaryHalfHingeLineRealization)!;
     
-    // Get primary HalfHingeLine's parametric representation: R = Q + d·D
-    // Access point and direction directly - they MUST exist on HalfHingeLine2D
-    const Q = primaryHHL.point;      // Reference point
-    const D = primaryHHL.direction;  // Direction vector
+    // Phase 84: Get primary HalfHingeLine's parametric representation from realize2D()
+    // R = Q + d·D where Q is point1 (origin), D is point2 (direction, z=0)
+    const Q = primaryHalfHingeLineRealization.point1;      // Reference point (origin)
+    const D = primaryHalfHingeLineRealization.point2;      // Direction vector (z=0)
     const R = intersectionPoint;     // Intersection point
 
     // Extract scalar d such that R = Q + d·D
@@ -263,11 +263,11 @@ export class SiblingGuide2D extends Line2D {
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // Get sibling HalfHingeLine's parametric representation: R' = Q' + d·D'
-    // We already have myHHL from the beginning of this method
-    // Access point and direction directly - they MUST exist on HalfHingeLine2D
-    const Q_prime = myHHL.point;      // Sibling reference point (should equal Q due to identical parameterization)
-    const D_prime = myHHL.direction;  // Sibling direction vector (should equal D due to identical parameterization)
+    // Phase 84: Get sibling HalfHingeLine's parametric representation from realize2D()
+    // R' = Q' + d·D' (identical to primary due to canonical coordinates)
+    const siblingHalfHingeLineRealization = myHHL.realize2D(world)!;
+    const Q_prime = siblingHalfHingeLineRealization.point1;      // Sibling reference point
+    const D_prime = siblingHalfHingeLineRealization.point2;      // Sibling direction vector
 
     // Compute twin position using SAME scalar d: R' = Q' + d·D'
     const twinPosition = new Vector3(
@@ -276,8 +276,7 @@ export class SiblingGuide2D extends Line2D {
       1  // Homogeneous coordinate for a point
     );
 
-    // Get sibling HalfHingeLine realization for perpendicular computation
-    const siblingHalfHingeLineRealization = myHHL.realize2D(world)!;
+    // Compute perpendicular direction using sibling HalfHingeLine realization;
 
     // Check if sibling HalfHingeLine is infeasible - propagate infeasibility
     if (!siblingHalfHingeLineRealization.feasible) {

@@ -9359,3 +9359,231 @@ Both functions are production-tested across World.ts, Element2DRenderer3D.ts, pr
   ```
 
 **Checkpoint**: ✅ HingeLine/HalfHingeLine2D use canonical coordinates with zero geometry duplication, ready for auxiliary planes
+---
+
+## Phase 85: ProcessTree Subprocess Stack Architecture
+
+**Status**: 📋 PLANNED (Jan 23, 2026) - Ready for implementation
+
+**Purpose**: Eliminate conditional subprocess checks in operations by implementing a subprocess stack in ProcessTree
+
+**Reference**: 
+- [specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md](./phase-85-subprocess-stack-architecture.md) - Complete architecture
+- [spec.md §Constructive Actions](./spec.md#constructive-actions-the-process) - ProcessTree stack usage
+- [data-model.md §ProcessTree](./data-model.md#domain-entity-processtree) - Phase 85 stack architecture
+
+**Architecture Overview**:
+
+The current ProcessTree action registration is backwards. Operations check "am I in initialization subprocess?" which is fragile:
+
+```typescript
+// CURRENT ANTI-PATTERN - operations check for subprocess
+const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
+if (initSubprocess) {
+  world.addAction(createAction(...), undefined, initSubprocess.id);
+}
+```
+
+**New Architecture**: Two operation types:
+
+1. **Stack Manipulation Operations** - Manage subprocess boundaries:
+   - `PushSubprocessOp(name: string)`: Creates subprocess, adds to tree, pushes to stack
+   - `PopSubprocessOp()`: Pops subprocess from stack (subprocess remains in tree)
+
+2. **Action Recording Operations** - Record actions to current subprocess:
+   - `AddProcessTreeActionOp(action: Action)`: Adds action to subprocess at top of stack
+   - No conditional checks, no manual subprocess selection
+   - Always uses `ProcessTree.getCurrentSubprocess()`
+
+**Usage Pattern**:
+```typescript
+// Bootstrap
+cmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+cmd.addAndExecute(new AddProjectionPlaneFixedOp(...));
+cmd.addAndExecute(new AddProcessTreeActionOp(createAction(...)));
+cmd.addAndExecute(new PopSubprocessOp());
+
+// User action
+cmd.addAndExecute(new PushSubprocessOp('Create Projection Plane'));
+cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(...));
+cmd.addAndExecute(new AddProcessTreeActionOp(createAction(...)));
+cmd.addAndExecute(new PopSubprocessOp());
+```
+
+**Key Benefits**:
+- Automatic action registration (no conditional checks)
+- Clean separation (domain ops don't interact with ProcessTree)
+- Complete dependency graph (all elements registered)
+- Clear subprocess boundaries (Push/Pop explicit)
+
+**Problem**: Current bug where HingeLine/HalfHingeLine2D created in user operations (auxiliary planes) don't get recorded in ProcessTree, breaking dependency graph and cache invalidation.
+
+### Planning & Documentation (T1290-T1295)
+
+- [ ] T1290 [P] Update spec.md §Constructive Actions with subprocess stack architecture and usage examples
+- [ ] T1291 [P] Update data-model.md §Domain Entity: ProcessTree with stack implementation details
+- [ ] T1292 [P] Create Phase 85 in tasks.md (this file) with comprehensive task breakdown
+- [ ] T1293 [P] Move Phase 85 from FOR PLANING to ALREADY PLANNED in for-planing.md
+- [ ] T1294 [P] Review phase-85-subprocess-stack-architecture.md for implementation details
+- [ ] T1295 Git commit: Planning documentation complete
+
+### Core ProcessTree Implementation (T1296-T1301)
+
+- [ ] T1296 Add `subprocessStack: Subprocess[]` field to ProcessTree class (frontend/src/domain/processTree/ProcessTree.ts)
+- [ ] T1297 Initialize stack with root subprocess in ProcessTree constructor
+- [ ] T1298 Implement `getCurrentSubprocess()` method - returns stack top
+- [ ] T1299 Implement `pushSubprocess(name: string)` - creates subprocess, adds to current parent, pushes to stack
+- [ ] T1300 Implement `popSubprocess()` - pops stack (error if stack depth ≤ 1)
+- [ ] T1301 Update `addAction()` - remove `parentSubprocessId` parameter, use `getCurrentSubprocess()` instead
+
+### Create Push/Pop Operations (T1302-T1305)
+
+- [ ] T1302 Create PushSubprocessOp in frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+  - Constructor: `constructor(name: string)`
+  - apply(): calls `world.getProcessTree().pushSubprocess(name)`, stores subprocess ID in outputs
+  - undo(): calls `world.getProcessTree().popSubprocess()`
+- [ ] T1303 Create PopSubprocessOp in frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+  - apply(): calls `world.getProcessTree().popSubprocess()`
+  - undo(): Re-pushes subprocess (requires storing popped subprocess info)
+- [ ] T1304 Add PushSubprocessOp to operation exports in frontend/src/commands/operations/index.ts
+- [ ] T1305 Add PopSubprocessOp to operation exports in frontend/src/commands/operations/index.ts
+
+### Update World.addAction() (T1306-T1307)
+
+- [ ] T1306 Remove `parentSubprocessId` parameter from World.addAction() method (frontend/src/domain/world/World.ts)
+- [ ] T1307 Update World.addAction() to call `this.processTree.addAction()` without parentSubprocessId
+
+### Remove Conditional Registration from Operations (T1308-T1315)
+
+Remove all patterns like:
+```typescript
+const initSubprocess = world.getProcessTree().findSubprocessByName('World Initialization');
+if (initSubprocess) {
+  world.addAction(..., undefined, initSubprocess.id);
+}
+```
+
+Replace with:
+```typescript
+world.addAction(...);  // Always adds to current subprocess
+```
+
+Files to update:
+
+- [ ] T1308 Update AddHingeLineOp in frontend/src/commands/operations/world/InitializationOps.ts - remove conditional registration
+- [ ] T1309 Update AddHalfHingeLine2DOp in frontend/src/commands/operations/world/InitializationOps.ts - remove conditional registration
+- [ ] T1310 Update AddProjectionPlaneFixedOp in frontend/src/commands/operations/world/InitializationOps.ts - remove conditional registration (if exists)
+- [ ] T1311 Search codebase for `findSubprocessByName('World Initialization')` pattern and remove all instances
+- [ ] T1312 Update AddProcessTreeActionOp in frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts - simplify to always use current subprocess
+- [ ] T1313 Grep search for `parentSubprocessId` parameter usage and update all call sites
+- [ ] T1314 Verify no operations still check for subprocess existence conditionally
+- [ ] T1315 Git commit: Removed conditional subprocess registration from all operations
+
+### Update World Initialization (T1316-T1319)
+
+- [ ] T1316 Find world initialization code (likely ProjectService.ts or bootstrap code)
+- [ ] T1317 Wrap initialization sequence with PushSubprocessOp('World Initialization') / PopSubprocessOp()
+- [ ] T1318 Verify all initialization operations (create planes, hinge lines, etc.) are between Push/Pop
+- [ ] T1319 Git commit: Updated world initialization to use subprocess stack
+
+### Update Factories (T1320-T1324)
+
+- [ ] T1320 Update PlaneSequenceFactory.createAuxiliaryProjectionPlane() - wrap with Push/Pop subprocess
+- [ ] T1321 Remove manual ProcessTree action recording from PlaneSequenceFactory (now done automatically by operations)
+- [ ] T1322 Verify factory still creates HingeLine and HalfHingeLine2D correctly
+- [ ] T1323 Update all factory callers to use new pattern (CreateProjectionPlaneTool, ProjectionSetupFactory, AddExampleSetupOp)
+- [ ] T1324 Git commit: Updated factories to use subprocess stack
+
+### Clean Up AddProcessTreeActionOp (T1325-T1326)
+
+- [ ] T1325 Simplify AddProcessTreeActionOp - remove parentSubprocessId parameter
+- [ ] T1326 Verify AddProcessTreeActionOp uses ProcessTree.getCurrentSubprocess() implicitly
+
+### Unit Tests (T1327-T1334)
+
+- [ ] T1327 [P] Unit test: ProcessTree.pushSubprocess() creates subprocess and pushes to stack
+- [ ] T1328 [P] Unit test: ProcessTree.popSubprocess() pops stack, throws error if stack depth ≤ 1
+- [ ] T1329 [P] Unit test: ProcessTree.getCurrentSubprocess() returns top of stack
+- [ ] T1330 [P] Unit test: ProcessTree.addAction() adds to current subprocess from stack
+- [ ] T1331 [P] Unit test: PushSubprocessOp.apply() and undo() work correctly
+- [ ] T1332 [P] Unit test: PopSubprocessOp.apply() and undo() work correctly
+- [ ] T1333 [P] Unit test: Nested subprocesses (push 3 times, pop 3 times)
+- [ ] T1334 Git commit: ProcessTree stack unit tests pass
+
+### Integration Tests (T1335-T1341)
+
+- [ ] T1335 Integration test: Bootstrap initialization uses Push/Pop correctly
+- [ ] T1336 Integration test: Create auxiliary plane - all actions recorded in subprocess
+- [ ] T1337 Integration test: Verify HingeLine action recorded in ProcessTree for user-created planes
+- [ ] T1338 Integration test: Verify both HalfHingeLine2D actions recorded in ProcessTree
+- [ ] T1339 Integration test: Dependency cascade works - move trace line → projection plane → HingeLine → HalfHingeLine2D invalidated
+- [ ] T1340 Integration test: ProcessTree shows correct hierarchy with nested subprocesses
+- [ ] T1341 Git commit: Integration tests pass
+
+### Dependency Invalidation Tests (T1342-T1345)
+
+- [ ] T1342 Test: Move trace line T1 → auxiliary projection plane invalidated
+- [ ] T1343 Test: Projection plane invalidation → HingeLine invalidated
+- [ ] T1344 Test: HingeLine invalidation → both HalfHingeLine2D objects invalidated
+- [ ] T1345 Test: Both HalfHingeLine2D objects update when trace lines move
+
+### Regression Tests (T1346-T1350)
+
+- [ ] T1346 Regression test: Run full test suite, verify no existing functionality broken
+- [ ] T1347 Regression test: World initialization still creates P_H, P_V, HL_HV correctly
+- [ ] T1348 Regression test: Existing tools still work (point, line, segment creation)
+- [ ] T1349 Regression test: ProcessTree panel displays correctly with nested subprocesses
+- [ ] T1350 Regression test: Undo/redo works with Push/Pop operations
+
+### Clean Up & Documentation (T1351-T1356)
+
+- [ ] T1351 Remove findSubprocessByName() method if no longer used
+- [ ] T1352 Update ProcessTree documentation comments with stack usage
+- [ ] T1353 Add architecture tests to verify services never manually select subprocesses
+- [ ] T1354 Code review: Verify no conditional subprocess checks remain
+- [ ] T1355 Code review: Verify all operations use automatic registration
+- [ ] T1356 Git commit: Clean up and documentation complete
+
+### Final Review & Commit (T1357-T1358)
+
+- [ ] T1357 Run full test suite (unit + integration + e2e)
+- [ ] T1358 Final commit
+  ```bash
+  git add -A
+  git commit -m "Phase 85: Implement ProcessTree subprocess stack architecture
+  
+  Eliminate conditional subprocess checks by implementing subprocess stack in ProcessTree.
+  Operations now automatically register actions to current subprocess at stack top.
+  
+  Two operation types:
+  1. Stack manipulation: PushSubprocessOp/PopSubprocessOp manage subprocess boundaries
+  2. Action recording: AddProcessTreeActionOp adds actions to current subprocess
+  
+  Changes:
+  - Add subprocessStack field to ProcessTree
+  - Implement getCurrentSubprocess(), pushSubprocess(), popSubprocess()
+  - Create PushSubprocessOp and PopSubprocessOp operations
+  - Remove parentSubprocessId parameter from ProcessTree.addAction()
+  - Remove all conditional subprocess checks from operations
+  - Update World.addAction() to use stack automatically
+  - Wrap initialization and factories with Push/Pop operations
+  - Remove manual ProcessTree action recording from PlaneSequenceFactory
+  
+  Benefits:
+  - Automatic action registration (no conditional checks)
+  - Clean separation (domain ops don't interact with ProcessTree)
+  - Complete dependency graph (fixes HingeLine/HalfHingeLine2D registration bug)
+  - Clear subprocess boundaries (Push/Pop explicit)
+  - Undo-friendly (Push/Pop are undoable operations)
+  
+  Fixes bug where HingeLine/HalfHingeLine2D created in auxiliary planes weren't
+  recorded in ProcessTree, breaking dependency graph and cache invalidation.
+  
+  All existing tests pass. ProcessTree panel displays correct hierarchy.
+  
+  Refs: Phase 84 follow-up (completes auxiliary plane dependency tracking)
+  "
+  git push
+  ```
+
+**Checkpoint**: ✅ ProcessTree uses subprocess stack, all operations automatically register actions, complete dependency graph

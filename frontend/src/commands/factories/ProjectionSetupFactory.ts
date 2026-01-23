@@ -18,10 +18,6 @@ import { IntersectionSequenceFactory } from './IntersectionSequenceFactory';
 import { LineSequenceFactory } from './LineSequenceFactory';
 import { CircleSequenceFactory } from './CircleSequenceFactory';
 import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
-import { AddAuxiliaryProjectionPlaneOp } from '@/commands/operations/world/AddAuxiliaryProjectionPlaneOp';
-import { AddHingeLineOp } from '@/commands/operations/world/InitializationOps';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
-import { createProjectionPlaneAction } from '@/domain/processTree/actions/CreateProjectionPlaneAction';
 
 /**
  * Construct complete projection plane setup following the 14-step procedure
@@ -162,29 +158,16 @@ export function constructProjectionPlaneSetup(
     'Plane Q'
   );
 
-  // Step 16: Create auxiliary projection plane with trace dependencies
-  const projPlaneResult = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
+  // Steps 16-18: Create auxiliary projection plane with hinge line and ProcessTree tracking
+  // Using factory method that creates plane + hinge line + ProcessTree action in one call
+  PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+    cmd,
+    world,  // world (needed to check if T1 is HalfHingeLine2D)
     plane3DId,
     l1Id,   // T1 (hinge trace)
     l2Id,   // T2 (other trace)
     l5Id,   // T2' (position line)
+    P_H.id!,  // Hinge trace plane (connects via hinge line)
     'P_A1'  // Name for the auxiliary projection plane
-  ));
-  const projPlaneId = projPlaneResult.outputs.planeId as string;
-
-  // Step 17: Create hinge line between T1's plane (P_H) and new projection plane
-  cmd.addAndExecute(new AddHingeLineOp(
-    l1Id,   // T1
-    P_H.id!,
-    projPlaneId
-  ));
-
-  // Step 18: Record in ProcessTree
-  const action = createProjectionPlaneAction(
-    projPlaneId,
-    l1Id,   // T1
-    l2Id,   // T2
-    l5Id    // T2'
   );
-  cmd.addAndExecute(new AddProcessTreeActionOp(action));
 }

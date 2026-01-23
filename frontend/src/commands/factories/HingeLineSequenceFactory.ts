@@ -18,7 +18,6 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factories
  */
 
-import { Vector3 } from 'three';
 import type { Command } from '../Command';
 import { AddHingeLineOp, AddHalfHingeLine2DOp } from '../operations/world/InitializationOps';
 
@@ -49,8 +48,8 @@ export function buildHingeLineWithHalves(
   
   // Step 2: Create half hinge line on horizontal plane
   // AddHalfHingeLine2DOp calls projPlane.addHalfHingeLine2D() which generates ID
-  cmd.addAndExecute(new AddHalfHingeLine2DOp(horizontalPlaneId, hingeLineId, point, direction));
+  cmd.addAndExecute(new AddHalfHingeLine2DOp(horizontalPlaneId, hingeLineId));
   
   // Step 3: Create half hinge line on vertical plane
-  cmd.addAndExecute(new AddHalfHingeLine2DOp(verticalPlaneId, hingeLineId, point, direction));
+  cmd.addAndExecute(new AddHalfHingeLine2DOp(verticalPlaneId, hingeLineId));
 }

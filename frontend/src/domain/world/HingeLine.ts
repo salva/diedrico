@@ -14,9 +14,10 @@
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
  */
 
-import { Vector3, Vector4 } from 'three';
+import { Vector3 } from 'three';
 import { Line2D, Line2DRealization2D } from './Line';
-import { Element3D } from './Element3D';
+import { Line3D } from './Line3D';
+import { Line3DRealization3D } from './Element3DRealization3D';
 import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 
 /**
@@ -54,6 +55,22 @@ export class HalfHingeLine2D extends Line2D {
       this.hingeLineId,
       this.planeId
     );
+  }
+
+  /**
+   * Get dependencies for this half hinge line
+   * 
+   * Dependencies:
+   * - Parent HingeLine (for 3D realization)
+   * - Projection plane transformation (implicitly via planeId)
+   * 
+   * When projection plane transforms change (e.g., auxiliary plane's trace lines move),
+   * this half hinge line's realization must be recomputed.
+   */
+  getDependencies(): string[] {
+    // Depend on the parent HingeLine
+    // The projection plane dependency is implicit via realize2D() accessing plane matrices
+    return [this.hingeLineId];
   }
 
   /**
@@ -118,13 +135,29 @@ export class HalfHingeLine2D extends Line2D {
    * @param world World instance for accessing HingeLine and plane realizations
    */
   realize2D(world: import('./World').World): Line2DRealization2D {
-    const hingeLine = world.getHingeLineById(this.hingeLineId);
-    if (!hingeLine) {
-      throw new Error(`[HalfHingeLine2D.realize2D] HingeLine ${this.hingeLineId} not found`);
-    }
+    const hingeLine = world.getHingeLineById(this.hingeLineId)!;
 
     // Plane1: Return canonical coordinates directly
     if (this.planeId === hingeLine.plane1Id) {
+      // Check feasibility of underlying Plane3D (if projection plane has one)
+      const projPlane1 = world.getProjectionPlaneById(hingeLine.plane1Id)!;
+      if (projPlane1.plane3DId) {
+        const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
+        if (!plane3DReal.isFeasible()) {
+          const errorInfo = {
+            halfHingeLineId: this.id,
+            halfHingeLineLabel: this.label,
+            hingeLineId: this.hingeLineId,
+            planeId: this.planeId,
+            plane3DId: projPlane1.plane3DId,
+            projPlane1: { ...projPlane1 },
+            plane3DReal: { ...plane3DReal }
+          };
+          console.error(`[HalfHingeLine2D.realize2D] CRITICAL: Plane3D ${projPlane1.plane3DId} is infeasible for half-hinge line ${this.id}`, errorInfo);
+          throw new Error(`HalfHingeLine2D.realize2D: Underlying Plane3D ${projPlane1.plane3DId} is infeasible for half-hinge line ${this.id}`);
+        }
+      }
+
       return new Line2DRealization2D(
         new Vector3(0, 0, 1),    // Canonical origin
         new Vector3(1, 0, 0)     // Canonical u-axis direction
@@ -133,9 +166,20 @@ export class HalfHingeLine2D extends Line2D {
 
     // Plane2: Project 3D line back to plane2
     const line3D = hingeLine.realize3D(world);
-    const plane2Real = world.getProjectionPlane3DRealization(this.planeId);
-    if (!plane2Real) {
-      throw new Error(`[HalfHingeLine2D.realize2D] Plane realization not found for ${this.planeId}`);
+    const plane2Real = world.getProjectionPlane3DRealization(this.planeId)!;
+
+    // Check feasibility of 3D line (depends on plane1)
+    if (!line3D.isFeasible()) {
+      const errorInfo = {
+        halfHingeLineId: this.id,
+        halfHingeLineLabel: this.label,
+        hingeLineId: this.hingeLineId,
+        hingeLine: { id: hingeLine.id, label: hingeLine.label, plane1Id: hingeLine.plane1Id, plane2Id: hingeLine.plane2Id },
+        planeId: this.planeId,
+        line3D: { ...line3D }
+      };
+      console.error(`[HalfHingeLine2D.realize2D] CRITICAL: 3D hinge line is infeasible for half-hinge line ${this.id}`, errorInfo);
+      throw new Error(`HalfHingeLine2D.realize2D: 3D hinge line is infeasible for half-hinge line ${this.id}`);
     }
 
     const origin2D = applyMatrix3x4(line3D.point, plane2Real.threeDToPlane);
@@ -157,9 +201,9 @@ export class HalfHingeLine2D extends Line2D {
  * 
  * **Phase 52**: Refactored to extend Element3D. Inherits id and label from Element.
  * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates (0,0,1), (1,0,0).
- * Implements getDependencies() to return [plane1Id, plane2Id].
+ * Extends Line3D base class to share realization pattern with other 3D lines.
  */
-export class HingeLine extends Element3D {
+export class HingeLine extends Line3D {
   readonly plane1Id: string;  // Reference plane (canonical coords source)
   readonly plane2Id: string;  // Second projection plane
 
@@ -186,24 +230,62 @@ export class HingeLine extends Element3D {
    * Transforms canonical coordinates (0,0,1) origin and (1,0,0) u-axis direction
    * from plane1 to 3D using applyMatrix4x3().
    * 
-   * Returns object with point and direction in 3D domain coordinates (Vector4).
+   * Returns Line3DRealization3D with point and direction in 3D domain coordinates (Vector4).
    */
-  realize3D(world: any): { point: Vector4; direction: Vector4 } {
-    const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id);
-    if (!plane1Real) {
-      throw new Error(`[HingeLine.realize3D] Plane realization not found for ${this.plane1Id}`);
+  realize3D(world: import('./World').World): Line3DRealization3D {
+    const projPlane1 = world.getProjectionPlaneById(this.plane1Id);
+    const projPlane2 = world.getProjectionPlaneById(this.plane2Id);
+
+    // Check that both planes exist (structural integrity)
+    if (!projPlane1 || !projPlane2) {
+      const errorInfo = {
+        hingeLineId: this.id,
+        hingeLineLabel: this.label,
+        plane1Id: this.plane1Id,
+        plane2Id: this.plane2Id,
+        projPlane1Exists: !!projPlane1,
+        projPlane2Exists: !!projPlane2,
+        allProjectionPlanes: world.getAllProjectionPlanes().map(p => ({ id: p.id })),
+        allHingeLines: world.getAllHingeLines().map(hl => ({ 
+          id: hl.id, 
+          label: hl.label, 
+          plane1Id: hl.plane1Id, 
+          plane2Id: hl.plane2Id 
+        }))
+      };
+      console.error(`[HingeLine.realize3D] CRITICAL: HingeLine references non-existent projection plane(s)`, errorInfo);
+      throw new Error(`HingeLine.realize3D: HingeLine ${this.id} references invalid plane(s) - plane1: ${projPlane1 ? 'exists' : 'MISSING'}, plane2: ${projPlane2 ? 'exists' : 'MISSING'}`);
     }
-    
+
+    // Check feasibility of underlying Plane3D (feasibility propagation)
+    // For main planes (P_H, P_V), there's no plane3DId - they're always feasible
+    // For auxiliary planes, check the underlying Plane3D feasibility
+    if (projPlane1.plane3DId) {
+      const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
+      if (!plane3DReal.isFeasible()) {
+        const errorInfo = {
+          hingeLineId: this.id,
+          hingeLineLabel: this.label,
+          plane1Id: this.plane1Id,
+          plane2Id: this.plane2Id,
+          plane3DId: projPlane1.plane3DId,
+          projPlane1: { ...projPlane1 },
+          plane3DReal: { ...plane3DReal }
+        };
+        console.error(`[HingeLine.realize3D] CRITICAL: Plane3D ${projPlane1.plane3DId} is infeasible for hinge line ${this.id}`, errorInfo);
+        throw new Error(`HingeLine.realize3D: Underlying Plane3D ${projPlane1.plane3DId} is infeasible for hinge line ${this.id}`);
+      }
+    }
+
+    const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id)!;
+ 
     const origin = new Vector3(0, 0, 1);      // Canonical origin
     const direction = new Vector3(1, 0, 0);   // Canonical u-axis direction
     
     const origin3D = applyMatrix4x3(origin, plane1Real.planeTo3D);
     const direction3D = applyMatrix4x3(direction, plane1Real.planeTo3D);
     
-    return {
-      point: origin3D,
-      direction: direction3D
-    };
+    return new Line3DRealization3D(origin3D, direction3D);
   }
 
   /**

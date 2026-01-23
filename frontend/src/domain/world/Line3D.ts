@@ -5,8 +5,8 @@
  * NO numeric coordinates - those are computed and stored in Line3DRealization3D.
  * 
  * Types:
+ * - HingeLine: System line representing fold between projection planes (Phase 84)
  * - Line3DFromProjections: User-created line from two 2D line projections (Phase 78)
- * - Line3DFromPlaneIntersection: System line from intersection of two planes (e.g., hinge lines)
  * 
  * Architecture:
  * - Element3D classes store WHAT the element is (definition/rules)
@@ -23,13 +23,28 @@ import type { VisualStyle } from './VisualStyle';
 import { createVisualStyle } from './VisualStyle';
 
 /**
+ * Line3D - Abstract base class for all 3D line types
+ * 
+ * All 3D lines must implement realize3D() to compute their geometric realization.
+ * Subclasses store only defining relationships (IDs), never numeric coordinates.
+ */
+export abstract class Line3D extends Element3D {
+  /**
+   * Compute 3D geometric realization of this line
+   * @param world World instance for accessing related elements
+   * @returns Line3DRealization3D with point and direction in 3D space
+   */
+  abstract realize3D(world: World): Line3DRealization3D;
+}
+
+/**
  * Line3DFromProjections - Line derived from two 2D line projections
  * User-created element (Phase 78)
  * 
  * Stores ONLY IDs of defining elements, no numeric data.
  * realize3D() reconstructs 3D line from 2D projection coordinates.
  */
-export class Line3DFromProjections extends Element3D {
+export class Line3DFromProjections extends Line3D {
   readonly kind = 'Line3DFromProjections';
   label: string;
   
@@ -394,80 +409,3 @@ export class Line3DFromProjections extends Element3D {
     return plane1Id !== plane2Id;
   }
 }
-
-/**
- * Line3DFromPlaneIntersection - Line as intersection of two planes
- * System element (e.g., hinge lines)
- * 
- * Stores ONLY IDs of defining planes.
- * realize3D() computes line from plane equations.
- */
-export class Line3DFromPlaneIntersection extends Element3D {
-  readonly kind = 'Line3DFromPlaneIntersection';
-  name: string;
-  
-  // Defining relations
-  plane1: string;  // First plane ID (e.g., P_H)
-  plane2: string;  // Second plane ID (e.g., P_V)
-  
-  // Computed projections (element IDs, not geometric data)
-  projectionH?: string;  // Projection on P_H
-  projectionV?: string;  // Projection on P_V
-
-  constructor(
-    id: string,
-    name: string,
-    plane1: string,
-    plane2: string,
-    projectionH?: string,
-    projectionV?: string,
-    visualStyle?: VisualStyle
-  ) {
-    super(id, undefined, visualStyle);  // Pass visualStyle to Element base constructor
-    this.name = name;
-    this.plane1 = plane1;
-    this.plane2 = plane2;
-    this.projectionH = projectionH;
-    this.projectionV = projectionV;
-  }
-
-  realize3D(_world: World): Line3DRealization3D {
-    try {
-      // Get plane equations and compute intersection
-      // TODO: Implement GeometryUtils3D.intersectPlanes
-      // For now, return a placeholder (x-axis)
-      const point = new Vector4(0, 0, 0, 1);
-      const direction = new Vector4(1, 0, 0, 0);
-
-      return new Line3DRealization3D(point, direction);
-    } catch (error) {
-      console.error('[Line3DFromPlaneIntersection] realize3D failed:', error);
-      return new Line3DRealization3D(
-        new Vector4(0, 0, 0, 1),
-        new Vector4(1, 0, 0, 0),
-        false
-      );
-    }
-  }
-
-  getDependencies(): string[] {
-    return [this.plane1, this.plane2];
-  }
-
-  clone(): Line3DFromPlaneIntersection {
-    return new Line3DFromPlaneIntersection(
-      this.id!,
-      this.name,
-      this.plane1,
-      this.plane2,
-      this.projectionH,
-      this.projectionV,
-      this.visualStyle ? { ...this.visualStyle } : undefined
-    );
-  }
-}
-
-/**
- * Type union for all Line3D types
- */
-export type Line3D = Line3DFromProjections | Line3DFromPlaneIntersection;
