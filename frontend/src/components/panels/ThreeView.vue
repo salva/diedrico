@@ -71,7 +71,34 @@ import { AuxiliaryProjectionPlane } from '../../domain/world/ProjectionPlane';
 import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
 import { useViewStore } from '../../stores/viewStore';
 import { domainDirectionToThreeJS, domainToThreeJS, applyMatrix4x3 } from '../../utils/threeUtils';
+import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '../../utils/rectangleGrid';
 import { Vector4 } from 'three';
+
+/**
+ * Generate a simple fallback grid (non-clipped) centered at origin
+ */
+function generateFallbackGrid(halfSize: number, divisions: number): Segment2D[] {
+  const segments: Segment2D[] = [];
+  const step = (halfSize * 2) / divisions;
+  
+  for (let i = 0; i <= divisions; i++) {
+    const t = -halfSize + i * step;
+    
+    // Lines parallel to U-axis
+    segments.push({
+      start: { u: -halfSize, v: t },
+      end: { u: halfSize, v: t }
+    });
+    
+    // Lines parallel to V-axis
+    segments.push({
+      start: { u: t, v: -halfSize },
+      end: { u: t, v: halfSize }
+    });
+  }
+  
+  return segments;
+}
 
 // Component refs
 const containerRef = ref<HTMLDivElement>();
@@ -252,42 +279,95 @@ function renderProjectionPlanes() {
     console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
     console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
     
-    // Build grid in 2D plane coordinates centered at origin
-    // Grid matches the standard 150x150 3D plane surface
-    const gridHalfSize = 75;  // Half of 150
-    const divisions = 20;
-    const step = (gridHalfSize * 2) / divisions;
+    // Get the 3D plane rectangle bounds and convert to (u,v) coordinates
+    let gridSegments: Segment2D[];
     
-    const vertices = [];
-    
-    // Create grid lines in 2D plane coordinates (u, v, 1)
-    // Then: 2D → Matrix4x3 → 3D domain → domainToThreeJS → Three.js
-    for (let i = 0; i <= divisions; i++) {
-      const t = -gridHalfSize + i * step;
+    if (projPlane instanceof AuxiliaryProjectionPlane && projPlane.plane3DId) {
+      const plane3D = world.get3DPlane(projPlane.plane3DId);
+      const planeRealization = plane3D ? world.get3DPlaneRealization(plane3D.id!) : null;
       
-      // Lines parallel to U-axis (varying u, fixed v)
-      const start2D_U = new THREE.Vector3(-gridHalfSize, t, 1);
-      const start3D_domain = applyMatrix4x3(start2D_U, matrixDomain);
+      if (planeRealization && planeRealization.feasible) {
+        // Get 3D plane's rectangle corners (150x150 square centered at plane origin)
+        const planeSize = 75;  // Half-size
+        
+        // Plane normal in domain coordinates
+        const normal = planeRealization.normal;
+        const normalVec = new THREE.Vector3(normal.x, normal.y, normal.z).normalize();
+        
+        // Origin point on plane in domain coordinates
+        const d = normal.w;
+        const normalLengthSq = normal.x * normal.x + normal.y * normal.y + normal.z * normal.z;
+        const originX = -d * normal.x / normalLengthSq;
+        const originY = -d * normal.y / normalLengthSq;
+        const originZ = -d * normal.z / normalLengthSq;
+        
+        // Find two orthogonal vectors in the plane
+        const up = Math.abs(normalVec.z) < 0.9 ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(1, 0, 0);
+        const planeU = new THREE.Vector3().crossVectors(up, normalVec).normalize();
+        const planeV = new THREE.Vector3().crossVectors(normalVec, planeU).normalize();
+        
+        // Four corners of the 3D plane rectangle in domain coordinates
+        const corners: [Vector4, Vector4, Vector4, Vector4] = [
+          new Vector4(
+            originX - planeSize * planeU.x - planeSize * planeV.x,
+            originY - planeSize * planeU.y - planeSize * planeV.y,
+            originZ - planeSize * planeU.z - planeSize * planeV.z,
+            1
+          ),
+          new Vector4(
+            originX + planeSize * planeU.x - planeSize * planeV.x,
+            originY + planeSize * planeU.y - planeSize * planeV.y,
+            originZ + planeSize * planeU.z - planeSize * planeV.z,
+            1
+          ),
+          new Vector4(
+            originX + planeSize * planeU.x + planeSize * planeV.x,
+            originY + planeSize * planeU.y + planeSize * planeV.y,
+            originZ + planeSize * planeU.z + planeSize * planeV.z,
+            1
+          ),
+          new Vector4(
+            originX - planeSize * planeU.x + planeSize * planeV.x,
+            originY - planeSize * planeU.y + planeSize * planeV.y,
+            originZ - planeSize * planeU.z + planeSize * planeV.z,
+            1
+          )
+        ];
+        
+        // Convert to projection plane (u,v) coordinates using the projection plane's inverse matrix
+        const projPlaneRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+        if (!projPlaneRealization) {
+          gridSegments = generateFallbackGrid(75, 20);
+        } else {
+          const rect2D = convertPlaneRectangleTo2D(corners, projPlaneRealization.threeDToPlane);
+          
+          // Generate clipped grid
+          gridSegments = generateClippedGrid(rect2D, 20);
+        }
+      } else {
+        // Fallback: simple grid centered at origin
+        gridSegments = generateFallbackGrid(75, 20);
+      }
+    } else {
+      // Base planes: simple grid centered at origin
+      gridSegments = generateFallbackGrid(75, 20);
+    }
+    
+    // Convert grid segments from (u,v) to Three.js coordinates
+    const vertices = [];
+    for (const segment of gridSegments) {
+      // Start point: (u, v, 1) → 3D domain → Three.js
+      const start2D = new THREE.Vector3(segment.start.u, segment.start.v, 1);
+      const start3D_domain = applyMatrix4x3(start2D, matrixDomain);
       const start3D_three = domainToThreeJS(start3D_domain);
       
-      const end2D_U = new THREE.Vector3(gridHalfSize, t, 1);
-      const end3D_domain = applyMatrix4x3(end2D_U, matrixDomain);
+      // End point: (u, v, 1) → 3D domain → Three.js
+      const end2D = new THREE.Vector3(segment.end.u, segment.end.v, 1);
+      const end3D_domain = applyMatrix4x3(end2D, matrixDomain);
       const end3D_three = domainToThreeJS(end3D_domain);
       
       vertices.push(start3D_three.x, start3D_three.y, start3D_three.z);
       vertices.push(end3D_three.x, end3D_three.y, end3D_three.z);
-      
-      // Lines parallel to V-axis (fixed u, varying v)
-      const start2D_V = new THREE.Vector3(t, -gridHalfSize, 1);
-      const start3D_V_domain = applyMatrix4x3(start2D_V, matrixDomain);
-      const start3D_V_three = domainToThreeJS(start3D_V_domain);
-      
-      const end2D_V = new THREE.Vector3(t, gridHalfSize, 1);
-      const end3D_V_domain = applyMatrix4x3(end2D_V, matrixDomain);
-      const end3D_V_three = domainToThreeJS(end3D_V_domain);
-      
-      vertices.push(start3D_V_three.x, start3D_V_three.y, start3D_V_three.z);
-      vertices.push(end3D_V_three.x, end3D_V_three.y, end3D_V_three.z);
     }
     
     const geometry = new THREE.BufferGeometry();
