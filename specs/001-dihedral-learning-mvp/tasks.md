@@ -9067,18 +9067,19 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 ---
 
-## Phase 83: Element Visibility in VisualStyle
+## Phase 83: Element Visibility Property
 
-**Purpose**: Control element visibility through VisualStyle with inheritance support  
-**Reference**: [spec.md FR-057](./spec.md) - Element Visibility in VisualStyle
+**Purpose**: Add visualStyle property to Element base class with visibility support and inheritance  
+**Reference**: [spec.md FR-057](./spec.md) - Element Visibility Property
 
 **Implementation Requirements**:
+- **Base Class Property**: Add `visualStyle?: VisualStyle` to Element base class (all elements inherit)
 - **Visibility Property**: `visibility?: boolean` in VisualStyle interface (unset inherits, default true)
 - **Inheritance Support**: Visibility inherits from subprocess defaults like other visual properties
-- **Rendering Filter**: Both 2D (SvgCanvas) and 3D (ThreeView) must check resolved `visibility === false` and skip rendering
+- **Rendering Filter**: Both 2D (SvgCanvas) and 3D (ThreeView) must check resolved `element.visualStyle?.visibility === false` and skip rendering
 - **Hit-Testing Filter**: Paper.hitTest() must exclude visibility=false elements from candidate set (not pickable)
 - **UI Indicator**: World Elements Panel shows eye-slash icon (🚫👁️) for visibility=false elements
-- **Properties Dialog**: Visibility checkbox controls VisualStyle.visibility property with inheritance
+- **Properties Dialog**: Visibility checkbox controls element.visualStyle.visibility property with inheritance
 - **Domain Layer**: Geometric calculations and dependency tracking IGNORE visibility flag (presentation concern only)
 - **Command Pattern**: Use existing UpdateElementStyleOp (visibility is a VisualStyle property)
 
@@ -9086,8 +9087,8 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 - [ ] T1236 [P] Update spec.md with FR-057 (Element Visibility Property functional requirement) - DONE
 - [ ] T1237 [P] Update ui-spec.md Element Properties Dialog section with Visibility property specification
-- [ ] T1238 [P] Update data-model.md to document visibility moved from VisualStyle to Element2D/Element3D - DONE
-- [ ] T1239 Implement `resolveVisibility(element: Element2D, world: World): boolean` helper in styleService.ts (resolves inheritance: element → subprocess → default true)
+- [ ] T1238 [P] Add visualStyle property to Element base class in Element.ts (Phase 83 architecture change)
+- [ ] T1239 Implement `resolveVisibility(element: Element, world: World): boolean` helper in styleService.ts (resolves inheritance: element.visualStyle?.visibility → subprocess → default true)
 - [ ] T1240 Update SvgCanvas.vue to filter invisible elements before rendering (check `resolveVisibility(element, world) === false` in all render passes)
 - [ ] T1241 Update ThreeView.vue and Element2DRenderer3D to filter invisible elements before 3D rendering
 - [ ] T1242 Update Paper.hitTest() in Paper.ts to exclude visibility=false elements from hit-testing (filter candidate set before distance calculations)

@@ -9062,10 +9062,20 @@ interface GraphNode {
 
 ### Domain Entity: VisualStyle
 
-**Purpose**: Non-geometric styling properties with inheritance
+**Purpose**: Non-geometric styling properties with inheritance (referenced by Element.visualStyle)
+
+**Architecture**: Every geometric element (Element base class) has a `visualStyle?: VisualStyle` property that controls visual presentation.
 
 **Fields**:
 ```typescript
+// Element base class (Element.ts)
+abstract class Element {
+  readonly id: string;
+  label?: string;
+  visualStyle?: VisualStyle;      // Visual properties (Phase 83)
+}
+
+// VisualStyle interface (VisualStyle.ts)
 interface VisualStyle {
   color?: Color;                    // Unset → inherit from subprocess/default
   lineWidth?: number;               // Unset → inherit
@@ -9085,10 +9095,10 @@ type LineStyle = "solid" | "dashed" | "dotted";
 ```
 
 **Inheritance Rules**:
-- Elements inherit from containing subprocess's style
+- Elements inherit from containing subprocess's style via `element.visualStyle` property
 - Subprocess inherits from parent subprocess or default
 - Explicit overrides break inheritance for that property only
-- "Reset to inherited" removes override, restores inheritance
+- "Reset to inherited" removes override (sets property to undefined), restores inheritance
 
 **Special Styles**:
 - **Infeasible elements**: Red color, dashed line (system override, not user-settable)

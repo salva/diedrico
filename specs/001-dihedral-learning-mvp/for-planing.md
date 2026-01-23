@@ -146,32 +146,34 @@ Note that completing these tasks may require asking the user for additional info
 
 ## ALREADY PLANNED
 
-* [x] **Element Visibility in VisualStyle (Phase 83)** - 📋 PLANNED (Jan 23, 2026)
+* [x] **Element Visibility Property (Phase 83)** - 📋 PLANNED (Jan 23, 2026)
   - **User Requirement**: Control element visibility through visual appearance structure with inheritance support
-  - **Solution**: Add `visibility?: boolean` property to VisualStyle interface (unset inherits from subprocess, default true)
-  - **Architecture**: Visibility is a visual style property (inheritable), not a direct element property
+  - **Solution**: Add `visualStyle?: VisualStyle` property to Element base class (contains visibility, color, lineWidth, lineStyle, opacity)
+  - **Architecture**: Visual properties live in Element base class (all elements have styling), visibility is one VisualStyle property among others
   - **Implementation**: 
-    - Add `visibility?: boolean` to VisualStyle interface
+    - Add `visualStyle?: VisualStyle` property to Element base class (Element.ts)
+    - VisualStyle contains `visibility?: boolean` (unset inherits from subprocess, default true)
     - Implement `resolveVisibility(element, world)` helper with inheritance resolution
     - Update rendering filters in SvgCanvas and ThreeView to check resolved visibility
     - Update hit-testing to exclude visibility=false elements (not pickable)
     - Update Element Properties dialog Visibility checkbox (uses existing UpdateElementStyleOp)
     - Show eye-slash icon for invisible elements in World Elements panel
   - **Benefits**: 
-    - Inheritance support: subprocess-level control over element visibility
+    - Unified styling architecture: all elements (2D and 3D) have consistent visual properties
+    - Inheritance support: subprocess-level control over element visibility and other visual properties
     - Consistent with other VisualStyle properties (color, lineWidth, opacity)
     - Flexible presentation (hide auxiliary constructions for final result)
     - Invisible elements still participate in geometric calculations
   - **Specifications**: 
-    - spec.md FR-057 (Functional requirement for visibility in VisualStyle)
+    - spec.md FR-057 (Functional requirement for Element.visualStyle property)
     - ui-spec.md Element Properties Dialog (Visibility checkbox specification - updated)
   - **Tasks**: tasks.md Phase 83 (T1236-T1255: 20 tasks)
     - Specification updates (3 tasks)
-    - Implementation (6 tasks: resolveVisibility helper, rendering filters, hit-testing, UI updates)
+    - Implementation (6 tasks: add Element.visualStyle property, resolveVisibility helper, rendering filters, hit-testing, UI updates)
     - Testing (10 tasks: unit, integration, E2E)
     - Final commit (1 task)
   - **Dependencies**: Requires Phase 22 (Element Properties Dialog), Phase 19 (World Elements Panel), Phase 20 (Paper.hitTest)
-  - **Status**: Planning documents updated to reflect visibility in VisualStyle, ready for implementation
+  - **Status**: Planning documents updated to reflect Element.visualStyle architecture, ready for implementation
 
 * [x] **Phase 82.2: Fix Auxiliary Projection Plane 2D Grid Rendering** - ✅ COMPLETE (Jan 23, 2026)
   - **User Requirement**: "now, on the 2d drawing, when i set the aux proj plane as the active one, the grid does not appear correctly aligned with T1. Instead if appears as being at 45 degrees exactly!"
