@@ -62,15 +62,18 @@ export class HalfHingeLine2D extends Line2D {
    * 
    * Dependencies:
    * - Parent HingeLine (for 3D realization)
-   * - Projection plane transformation (implicitly via planeId)
+   * - Projection plane (for transformation matrix in realize2D)
+   * 
+   * Phase 85 FIX: Must include planeId because realize2D() for plane2 calls:
+   *   world.getProjectionPlane3DRealization(this.planeId)
    * 
    * When projection plane transforms change (e.g., auxiliary plane's trace lines move),
    * this half hinge line's realization must be recomputed.
    */
   getDependencies(): string[] {
-    // Depend on the parent HingeLine
-    // The projection plane dependency is implicit via realize2D() accessing plane matrices
-    return [this.hingeLineId];
+    // Depend on both the parent HingeLine AND the projection plane
+    // The plane dependency is critical for plane2 half-hinge lines that project back
+    return [this.hingeLineId, this.planeId];
   }
 
   /**
