@@ -9065,3 +9065,78 @@ const circumferencePointId = pointResult.outputs.pointId;
 - Full undo/redo support maintaining system consistency
 - Extensible foundation for advanced plane-based constructions
 
+---
+
+## Phase 83: Element Hidden Flag
+
+**Purpose**: Allow users to hide individual elements from display while preserving them in the construction  
+**Reference**: [spec.md FR-057](./spec.md) - Element Hidden Flag, [data-model.md Phase 83](./data-model.md#phase-83-element-hidden-flag)
+
+**Implementation Requirements**:
+- **Hidden Property**: Add `hidden?: boolean` to VisualStyle interface (default false when unset)
+- **Inheritance**: Hidden property inherits from subprocess like other visual properties
+- **Rendering Filter**: Both 2D (SvgCanvas) and 3D (ThreeView) must check `resolveHidden(element) === true` and skip rendering
+- **Hit-Testing Filter**: Paper.hitTest() must exclude hidden elements from candidate set (not pickable)
+- **UI Indicator**: World Elements Panel shows eye-slash icon (🚫👁️) for hidden elements
+- **Properties Dialog**: Add "Hidden" checkbox below Visibility checkbox with tooltip
+- **Dual Condition**: Element renders only if BOTH `hidden === false` AND `visibility === true`
+- **Domain Layer**: Geometric calculations and dependency tracking IGNORE hidden flag (domain concern only)
+- **Command Pattern**: Use existing UpdateElementStyleOp (hidden is just another VisualStyle property)
+
+**⚠️ CRITICAL**: Hidden flag affects PRESENTATION layer only. Domain layer computations must use hidden elements normally.
+
+- [ ] T1236 [P] Update spec.md with FR-057 (Element Hidden Flag functional requirement)
+- [ ] T1237 [P] Update ui-spec.md Element Properties Dialog section with Hidden checkbox specification
+- [ ] T1238 [P] Update data-model.md VisualStyle interface to add `hidden?: boolean` property
+- [ ] T1239 [P] Document Phase 83 architecture in data-model.md (already complete if using multi_replace above)
+- [ ] T1240 Add `hidden?: boolean` property to VisualStyle interface in frontend/src/domain/world/VisualStyle.ts
+- [ ] T1241 Implement `resolveHidden(element: Element2D): boolean` helper function in frontend/src/services/styleService.ts (resolves inheritance: element → subprocess → default false)
+- [ ] T1242 Update SvgCanvas.vue to filter hidden elements before rendering (apply resolveHidden check in all render passes: points, lines, segments, circles)
+- [ ] T1243 Update ThreeView.vue and Element2DRenderer3D to filter hidden elements before 3D rendering (apply resolveHidden check before creating Three.js geometry)
+- [ ] T1244 Update Paper.hitTest() in frontend/src/services/Paper.ts to exclude hidden elements from hit-testing (filter candidate set before distance calculations)
+- [ ] T1245 Add "Hidden" checkbox to Element Properties dialog in frontend/src/components/dialogs/ElementPropertiesDialog.vue (below Visibility checkbox, with tooltip "Hide this element from display while keeping it in the construction")
+- [ ] T1246 Update World Elements panel in frontend/src/components/panels/WorldElementsPanel.vue to show eye-slash icon for hidden elements (🚫👁️ or Font Awesome icon)
+- [ ] T1247 [P] Unit test for resolveHidden() with inheritance scenarios in frontend/tests/unit/services/styleService.spec.ts
+- [ ] T1248 [P] Unit test for VisualStyle hidden property defaults and overrides in frontend/tests/unit/domain/visualStyle.spec.ts
+- [ ] T1249 Integration test: Hide element via properties dialog → verify not rendered in 2D view in frontend/tests/integration/elementHiding.spec.ts
+- [ ] T1250 Integration test: Hide element → verify not rendered in 3D view in frontend/tests/integration/elementHiding.spec.ts
+- [ ] T1251 Integration test: Hide element → verify not pickable with Paper.hitTest() in frontend/tests/integration/elementHiding.spec.ts
+- [ ] T1252 Integration test: Hidden element still visible in World Elements panel with icon in frontend/tests/integration/elementHiding.spec.ts
+- [ ] T1253 Integration test: Subprocess with hidden=true → verify children inherit hidden state in frontend/tests/integration/elementHiding.spec.ts
+- [ ] T1254 E2E test: User hides element via properties dialog, verify disappears from canvas in frontend/tests/e2e/elementHiding.spec.ts
+- [ ] T1255 E2E test: User unhides element via properties dialog, verify reappears in canvas in frontend/tests/e2e/elementHiding.spec.ts
+- [ ] T1256 Verify hidden elements still participate in geometric calculations (create line through hidden point, verify line updates when point moves)
+- [ ] T1257 Final commit
+  ```bash
+  git add -A
+  git commit -m "Phase 83: Element Hidden Flag
+  
+  Add support for hiding individual elements from display while preserving them
+  in the construction for geometric calculations and dependency tracking.
+  
+  - Add hidden property to VisualStyle interface (default false)
+  - Implement rendering filters in SvgCanvas and ThreeView
+  - Update hit-testing to exclude hidden elements
+  - Add Hidden checkbox to Element Properties dialog
+  - Show eye-slash icon for hidden elements in World Elements panel
+  - Hidden elements still participate in geometric calculations
+  - Full inheritance support for hidden property
+  
+  Refs: FR-057, data-model.md Phase 83
+  "
+  git push
+  ```
+
+**Checkpoint**: ✅ Users can hide elements from display via properties dialog while preserving dependencies
+
+**Phase 83 Dependencies**:
+- Depends on Phase 22 (Element Properties Dialog)
+- Depends on Phase 19 (World Elements Panel)
+- Depends on Phase 20 (Paper.hitTest implementation)
+
+**Phase 83 Benefits**:
+- Reduces visual clutter without deleting construction geometry
+- Preserves dependencies (hidden elements still in calculations)
+- Flexible presentation (hide auxiliary constructions for final result)
+- Educational value (students can show/hide intermediate steps)
+- No breaking changes (additive feature, backward compatible)

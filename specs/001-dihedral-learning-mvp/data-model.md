@@ -9072,6 +9072,7 @@ interface VisualStyle {
   lineStyle?: LineStyle;            // "solid" | "dashed" | "dotted" | unset
   visibility?: boolean;             // Unset → inherit (default true)
   opacity?: number;                 // 0-1, unset → inherit
+  hidden?: boolean;                 // Unset → inherit (default false) - Phase 83
 }
 
 interface Color {
@@ -9094,6 +9095,7 @@ type LineStyle = "solid" | "dashed" | "dotted";
 - **Infeasible elements**: Red color, dashed line (system override, not user-settable)
 - **Derived projections**: 50% opacity, lighter color (distinguishes from generative)
 - **Hover highlight**: Temporary glow/outline (CSS, not persisted)
+- **Hidden elements**: No rendering in 2D/3D views, eye-slash icon in panel, not pickable (Phase 83)
 
 **Validation Rules**:
 - `color` components in valid ranges

@@ -2189,6 +2189,12 @@ The 3D view is a **read-only auxiliary visualization** that helps users understa
 - **Line Width**: Numeric input or slider (0.5 - 5.0 pixels)
 - **Line Style**: Dropdown (Solid, Dashed, Dotted)
 - **Visibility**: Checkbox (show/hide this element)
+- **Hidden**: Checkbox (completely hide element from display in 2D and 3D views)
+  - Tooltip: "Hide this element from display while keeping it in the construction"
+  - When checked: Element does not render in canvas or 3D view, but remains in World Elements panel with eye-slash icon
+  - Hidden elements are not selectable/pickable in viewport (invisible to hit-testing)
+  - Hidden elements still participate in geometric computations and dependency tracking
+  - Hidden flag is independent of Visibility property (both must allow display for element to render)
 - **Reset**: Button to clear overrides and inherit from subprocess
 
 **Style Inheritance**:
