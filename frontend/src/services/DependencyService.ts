@@ -299,16 +299,35 @@ export class DependencyService {
    * @param invalidateCallback - Function to invalidate realization cache for each element
    */
   invalidateCascade(elementId: string, invalidateCallback: (id: string) => void): void {
+    console.log(`[DependencyService.invalidateCascade] Starting from: ${elementId}`);
+    
     // Invalidate the changed element
+    console.log(`[DependencyService.invalidateCascade]   [0] Invalidating: ${elementId} (source)`);
     invalidateCallback(elementId);
     
     // Get all transitive dependents
     const allDependents = this.getAllDependents(elementId);
+    console.log(`[DependencyService.invalidateCascade]   Found ${allDependents.length} dependent(s) to invalidate`);
     
-    // Invalidate each dependent
-    for (const dependentId of allDependents) {
-      invalidateCallback(dependentId);
+    // Invalidate each dependent with depth tracking
+    const visited = new Set<string>([elementId]);
+    const queue: { id: string; depth: number }[] = [{ id: elementId, depth: 0 }];
+    
+    while (queue.length > 0) {
+      const { id, depth } = queue.shift()!;
+      const directDependents = Array.from(this.dependentsMap.get(id) || []);
+      
+      for (const dependentId of directDependents) {
+        if (!visited.has(dependentId)) {
+          visited.add(dependentId);
+          console.log(`[DependencyService.invalidateCascade]   [${depth + 1}] Invalidating: ${dependentId} (depends on ${id})`);
+          invalidateCallback(dependentId);
+          queue.push({ id: dependentId, depth: depth + 1 });
+        }
+      }
     }
+    
+    console.log(`[DependencyService.invalidateCascade] Complete. Total invalidated: ${visited.size}`);
   }
 
   /**

@@ -97,7 +97,7 @@ export class PlaneSequenceFactory {
    * @param t2OtherTraceId - ID of other trace line (T2) on different projection plane
    * @param t2PrimeLineId - ID of position/orientation line (T2') on same plane as T1
    * @param hingeTracePlaneId - ID of projection plane containing T1 (connects via hinge)
-   * @param name - Optional name for the plane (e.g., 'P_A1')
+   * @parthe updateam name - Optional name for the plane (e.g., 'P_A1')
    * @returns Object containing the created projection plane ID
    */
   static createAuxiliaryProjectionPlane(

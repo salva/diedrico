@@ -545,26 +545,30 @@ export class World {
    * Call this when a point's definition changes (e.g., user moves a point)
    */
   invalidateRealization(pointId: string): void {
+    console.log(`[World.invalidateRealization] Starting invalidation for point: ${pointId}`);
     // Phase 22.5.3: Clear realizations from ProjectionPlane caches
     // Use dependency service to cascade invalidation to all dependents
     this.dependencyService.invalidateCascade(pointId, (id: string) => {
+      console.log(`[World.invalidateRealization]   Clearing caches for: ${id}`);
       // Clear all 3D realization caches (Phase 78: includes 3D elements)
-      this.pointRealizations3D.delete(id);
-      this.lineRealizations3D.delete(id);
-      this.segmentRealizations3D.delete(id);
-      this.planeRealizations3D.delete(id);
+      const deleted3D = this.pointRealizations3D.delete(id) || this.lineRealizations3D.delete(id) || 
+                        this.segmentRealizations3D.delete(id) || this.planeRealizations3D.delete(id);
+      if (deleted3D) console.log(`[World.invalidateRealization]     Cleared 3D realization cache for: ${id}`);
       
       // Clear projection plane 3D realizations if this is a Plane3D
       // When a Plane3D is invalidated, any projection planes depending on it need recomputation
       for (const [projPlaneId, projPlane] of this.projectionPlanes) {
         if (projPlane.plane3DId === id) {
           this.projectionPlaneRealizations3D.delete(projPlaneId);
+          console.log(`[World.invalidateRealization]     Cleared projection plane 3D realization: ${projPlaneId} (depends on Plane3D ${id})`);
         }
       }
       
       // Phase 84: If this ID is a projection plane, clear its transformation cache
       // (Projection planes are elements in dependency graph like any other)
-      this.projectionPlaneRealizations3D.delete(id);
+      if (this.projectionPlaneRealizations3D.delete(id)) {
+        console.log(`[World.invalidateRealization]     Cleared projection plane 3D realization: ${id}`);
+      }
       
       // Clear 2D realization caches in all planes
       for (const plane of this.projectionPlanes.values()) {
@@ -590,14 +594,15 @@ export class World {
    * Call this when the line's dependencies change
    */
   invalidateLineRealization(lineId: string): void {
+    console.log(`[World.invalidateLineRealization] Starting invalidation for line: ${lineId}`);
     // Phase 22.5.3: Clear realizations from ProjectionPlane caches
     // Use dependency service to cascade invalidation to all dependents
     this.dependencyService.invalidateCascade(lineId, (id: string) => {
+      console.log(`[World.invalidateLineRealization]   Clearing caches for: ${id}`);
       // Clear all 3D realization caches (Phase 78: includes 3D elements)
-      this.pointRealizations3D.delete(id);
-      this.lineRealizations3D.delete(id);
-      this.segmentRealizations3D.delete(id);
-      this.planeRealizations3D.delete(id);
+      const deleted3D = this.pointRealizations3D.delete(id) || this.lineRealizations3D.delete(id) || 
+                        this.segmentRealizations3D.delete(id) || this.planeRealizations3D.delete(id);
+      if (deleted3D) console.log(`[World.invalidateLineRealization]     Cleared 3D realization cache for: ${id}`);
       
       // Clear 2D realization caches in all planes
       for (const plane of this.projectionPlanes.values()) {
