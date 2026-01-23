@@ -9067,66 +9067,60 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 ---
 
-## Phase 83: Element Visibility Property
+## Phase 83: Element Visibility in VisualStyle
 
-**Purpose**: Move visibility from VisualStyle to Element2D/Element3D base classes to enable element hiding relationships  
-**Reference**: [spec.md FR-057](./spec.md) - Element Visibility Property, [data-model.md Phase 83](./data-model.md#phase-83-element-visibility-property)
+**Purpose**: Control element visibility through VisualStyle with inheritance support  
+**Reference**: [spec.md FR-057](./spec.md) - Element Visibility in VisualStyle
 
 **Implementation Requirements**:
-- **Visibility Property**: Add `visibility: boolean` directly to Element2D and Element3D base classes (default true)
-- **Remove from VisualStyle**: Remove `visibility` property from VisualStyle interface (no longer inheritable style property)
-- **Direct Domain Property**: Visibility is a domain concern (elements can hide other elements), not a presentation style
-- **Rendering Filter**: Both 2D (SvgCanvas) and 3D (ThreeView) must check `element.visibility === false` and skip rendering
+- **Visibility Property**: `visibility?: boolean` in VisualStyle interface (unset inherits, default true)
+- **Inheritance Support**: Visibility inherits from subprocess defaults like other visual properties
+- **Rendering Filter**: Both 2D (SvgCanvas) and 3D (ThreeView) must check resolved `visibility === false` and skip rendering
 - **Hit-Testing Filter**: Paper.hitTest() must exclude visibility=false elements from candidate set (not pickable)
 - **UI Indicator**: World Elements Panel shows eye-slash icon (🚫👁️) for visibility=false elements
-- **Properties Dialog**: Update "Visibility" checkbox to control element.visibility property with tooltip
+- **Properties Dialog**: Visibility checkbox controls VisualStyle.visibility property with inheritance
 - **Domain Layer**: Geometric calculations and dependency tracking IGNORE visibility flag (presentation concern only)
-- **Command Pattern**: Create UpdateElementVisibilityOp for changing visibility (separate from style operations)
-- **Future Extensibility**: Enables element hiding relationships where element A can programmatically hide element B
+- **Command Pattern**: Use existing UpdateElementStyleOp (visibility is a VisualStyle property)
 
-**⚠️ CRITICAL**: Visibility affects PRESENTATION layer only. Domain layer computations must use hidden elements normally.
+**⚠️ CRITICAL**: Visibility affects PRESENTATION layer only. Domain layer computations must use invisible elements normally.
 
 - [ ] T1236 [P] Update spec.md with FR-057 (Element Visibility Property functional requirement) - DONE
 - [ ] T1237 [P] Update ui-spec.md Element Properties Dialog section with Visibility property specification
 - [ ] T1238 [P] Update data-model.md to document visibility moved from VisualStyle to Element2D/Element3D - DONE
-- [ ] T1239 [P] Document Phase 83 architecture in data-model.md (complete architecture section)
-- [ ] T1240 Add `visibility: boolean = true` property to Element2D base class in frontend/src/domain/world/Element2D.ts
-- [ ] T1241 Add `visibility: boolean = true` property to Element3D base class in frontend/src/domain/world/Element3D.ts (future-proof for 3D elements)
-- [ ] T1242 Remove `visibility?: boolean` from VisualStyle interface in frontend/src/domain/world/VisualStyle.ts
-- [ ] T1243 Create UpdateElementVisibilityOp operation in frontend/src/domain/operations/UpdateElementVisibilityOp.ts (apply: set element.visibility, undo: restore previous value)
-- [ ] T1244 Update SvgCanvas.vue to filter visibility=false elements before rendering (check element.visibility in all render passes: points, lines, segments, circles)
-- [ ] T1245 Update ThreeView.vue and Element2DRenderer3D to filter visibility=false elements before 3D rendering (check element.visibility before creating Three.js geometry)
-- [ ] T1246 Update Paper.hitTest() in frontend/src/services/Paper.ts to exclude visibility=false elements from hit-testing (filter candidate set before distance calculations)
-- [ ] T1247 Update Element Properties dialog in frontend/src/components/dialogs/ElementPropertiesDialog.vue to control element.visibility property (use UpdateElementVisibilityOp instead of style operations)
-- [ ] T1248 Update World Elements panel in frontend/src/components/panels/WorldElementsPanel.vue to show eye-slash icon for visibility=false elements (🚫👁️ or Font Awesome icon)
-- [ ] T1249 [P] Unit test for UpdateElementVisibilityOp in frontend/tests/unit/operations/updateElementVisibilityOp.spec.ts
-- [ ] T1250 [P] Unit test for Element2D.visibility default value in frontend/tests/unit/domain/element2d.spec.ts
-- [ ] T1251 Integration test: Hide element via properties dialog → verify not rendered in 2D view in frontend/tests/integration/elementVisibility.spec.ts
-- [ ] T1252 Integration test: Hide element → verify not rendered in 3D view in frontend/tests/integration/elementVisibility.spec.ts
-- [ ] T1253 Integration test: Hide element → verify not pickable with Paper.hitTest() in frontend/tests/integration/elementVisibility.spec.ts
-- [ ] T1254 Integration test: visibility=false element still visible in World Elements panel with icon in frontend/tests/integration/elementVisibility.spec.ts
-- [ ] T1255 E2E test: User hides element via properties dialog, verify disappears from canvas in frontend/tests/e2e/elementVisibility.spec.ts
-- [ ] T1256 E2E test: User shows element via properties dialog, verify reappears in canvas in frontend/tests/e2e/elementVisibility.spec.ts
-- [ ] T1257 Verify visibility=false elements still participate in geometric calculations (create line through hidden point, verify line updates when point moves)
-- [ ] T1258 Final commit
+- [ ] T1239 Implement `resolveVisibility(element: Element2D, world: World): boolean` helper in styleService.ts (resolves inheritance: element → subprocess → default true)
+- [ ] T1240 Update SvgCanvas.vue to filter invisible elements before rendering (check `resolveVisibility(element, world) === false` in all render passes)
+- [ ] T1241 Update ThreeView.vue and Element2DRenderer3D to filter invisible elements before 3D rendering
+- [ ] T1242 Update Paper.hitTest() in Paper.ts to exclude visibility=false elements from hit-testing (filter candidate set before distance calculations)
+- [ ] T1243 Update Element Properties dialog to control VisualStyle.visibility property (use existing UpdateElementStyleOp)
+- [ ] T1244 Update World Elements panel to show eye-slash icon for invisible elements (check resolved visibility)
+- [ ] T1245 [P] Unit test for resolveVisibility() with inheritance scenarios in styleService.spec.ts
+- [ ] T1246 [P] Unit test for VisualStyle visibility property defaults and overrides
+- [ ] T1247 Integration test: Hide element via properties dialog → verify not rendered in 2D view
+- [ ] T1248 Integration test: Hide element → verify not rendered in 3D view
+- [ ] T1249 Integration test: Hide element → verify not pickable with Paper.hitTest()
+- [ ] T1250 Integration test: Invisible element still visible in World Elements panel with icon
+- [ ] T1251 Integration test: Subprocess with visibility=false → verify children inherit hidden state
+- [ ] T1252 E2E test: User hides element via properties dialog, verify disappears from canvas
+- [ ] T1253 E2E test: User shows element via properties dialog, verify reappears in canvas
+- [ ] T1254 Verify invisible elements still participate in geometric calculations (create line through invisible point, verify line updates when point moves)
+- [ ] T1255 Final commit
   ```bash
   git add -A
-  git commit -m "Phase 83: Element Visibility Property
+  git commit -m "Phase 83: Element Visibility in VisualStyle
   
-  Move visibility from VisualStyle to Element2D/Element3D base classes to enable
-  element hiding relationships where one element can hide another.
+  Add visibility property to VisualStyle with inheritance support to control
+  element display in both 2D and 3D views.
   
-  - Add visibility: boolean property to Element2D and Element3D base classes
-  - Remove visibility from VisualStyle interface (no longer inheritable style)
-  - Create UpdateElementVisibilityOp for changing visibility
+  - Add visibility?: boolean to VisualStyle interface (default true when unset)
+  - Implement resolveVisibility() helper with inheritance support
   - Implement rendering filters in SvgCanvas and ThreeView
   - Update hit-testing to exclude visibility=false elements
   - Update Visibility checkbox in Element Properties dialog
-  - Show eye-slash icon for visibility=false elements in World Elements panel
-  - visibility=false elements still participate in geometric calculations
-  - Future-proof: enables programmatic element hiding relationships
+  - Show eye-slash icon for invisible elements in World Elements panel
+  - Invisible elements still participate in geometric calculations
+  - Full inheritance support (element → subprocess → default)
   
-  Refs: FR-057, data-model.md Phase 83
+  Refs: FR-057
   "
   git push
   ```
@@ -9140,9 +9134,8 @@ const circumferencePointId = pointResult.outputs.pointId;
 
 **Phase 83 Benefits**:
 - Reduces visual clutter without deleting construction geometry
-- Preserves dependencies (visibility=false elements still in calculations)
+- Preserves dependencies (invisible elements still in calculations)
 - Flexible presentation (hide auxiliary constructions for final result)
 - Educational value (students can show/hide intermediate steps)
-- Domain-level property: enables future element hiding relationships
-- Clean architecture: visibility is domain concern, not presentation style
-- Future extensibility: element A can programmatically hide element B
+- Inheritance support: subprocess-level control over element visibility
+- Consistent with other VisualStyle properties (color, lineWidth, etc.)

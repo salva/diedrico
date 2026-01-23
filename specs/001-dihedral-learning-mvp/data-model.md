@@ -9070,8 +9070,8 @@ interface VisualStyle {
   color?: Color;                    // Unset → inherit from subprocess/default
   lineWidth?: number;               // Unset → inherit
   lineStyle?: LineStyle;            // "solid" | "dashed" | "dotted" | unset
+  visibility?: boolean;             // Unset → inherit (default true)
   opacity?: number;                 // 0-1, unset → inherit
-  // NOTE: visibility moved to Element2D/Element3D base class (Phase 83) - not in VisualStyle
 }
 
 interface Color {
@@ -9094,7 +9094,7 @@ type LineStyle = "solid" | "dashed" | "dotted";
 - **Infeasible elements**: Red color, dashed line (system override, not user-settable)
 - **Derived projections**: 50% opacity, lighter color (distinguishes from generative)
 - **Hover highlight**: Temporary glow/outline (CSS, not persisted)
-- **Hidden elements (visibility=false)**: No rendering in 2D/3D views, eye-slash icon in panel, not pickable - controlled via Element2D.visibility property, not VisualStyle (Phase 83)
+- **Invisible elements (visibility=false)**: No rendering in 2D/3D views, eye-slash icon in panel, not pickable (Phase 83)
 
 **Validation Rules**:
 - `color` components in valid ranges
@@ -15216,9 +15216,7 @@ Specifically for auxiliary planes:
 **Dependencies**: Phase 82.1 (must have correct `planeToPaper2D` matrices)
 
 **Related**: Phase 82 (Create Projection Plane Tool), Phase 82.1 (Fix coordinate system)
----
 
-### Phase 83: Element Visibility Property
 
 **Status**: 📋 PLANNED (2026-01-23)
 

@@ -146,36 +146,32 @@ Note that completing these tasks may require asking the user for additional info
 
 ## ALREADY PLANNED
 
-* [x] **Element Visibility Property (Phase 83)** - 📋 PLANNED (Jan 23, 2026) - REVISED ARCHITECTURE
-  - **User Requirement**: "I want the visibility property directly placed in the element object because I am planning to introduce some features where an element may hidden another one, so this is a world thing"
-  - **Solution**: Move `visibility: boolean` from VisualStyle to Element2D/Element3D base classes as direct domain property (default true)
-  - **Architecture**: Visibility is domain state (not inheritable style), enabling future element hiding relationships where element A can programmatically hide element B
+* [x] **Element Visibility in VisualStyle (Phase 83)** - 📋 PLANNED (Jan 23, 2026)
+  - **User Requirement**: Control element visibility through visual appearance structure with inheritance support
+  - **Solution**: Add `visibility?: boolean` property to VisualStyle interface (unset inherits from subprocess, default true)
+  - **Architecture**: Visibility is a visual style property (inheritable), not a direct element property
   - **Implementation**: 
-    - Add `visibility: boolean = true` to Element2D and Element3D constructors
-    - Remove `visibility?: boolean` from VisualStyle interface
-    - Create UpdateElementVisibilityOp (dedicated operation, not style operation)
-    - Update rendering filters in SvgCanvas and ThreeView to check `element.visibility === false`
+    - Add `visibility?: boolean` to VisualStyle interface
+    - Implement `resolveVisibility(element, world)` helper with inheritance resolution
+    - Update rendering filters in SvgCanvas and ThreeView to check resolved visibility
     - Update hit-testing to exclude visibility=false elements (not pickable)
-    - Update Element Properties dialog to control element.visibility property
-    - Show eye-slash icon for visibility=false elements in World Elements panel
+    - Update Element Properties dialog Visibility checkbox (uses existing UpdateElementStyleOp)
+    - Show eye-slash icon for invisible elements in World Elements panel
   - **Benefits**: 
-    - Clean domain/presentation separation (visibility = element state, not style preference)
-    - Enables future element hiding relationships (element dependencies)
-    - Simpler logic (direct property check, no inheritance resolution)
-    - visibility=false elements still participate in geometric calculations
+    - Inheritance support: subprocess-level control over element visibility
+    - Consistent with other VisualStyle properties (color, lineWidth, opacity)
+    - Flexible presentation (hide auxiliary constructions for final result)
+    - Invisible elements still participate in geometric calculations
   - **Specifications**: 
-    - spec.md FR-057 (Functional requirement for visibility property)
+    - spec.md FR-057 (Functional requirement for visibility in VisualStyle)
     - ui-spec.md Element Properties Dialog (Visibility checkbox specification - updated)
-    - data-model.md Phase 83 (Complete architecture with rationale - NEW)
-  - **Tasks**: tasks.md Phase 83 (T1236-T1258: 23 tasks - REVISED)
-    - Specification updates (4 tasks)
-    - Domain implementation (5 tasks: Element2D.visibility, Element3D.visibility, remove from VisualStyle, UpdateElementVisibilityOp, rendering filters)
-    - UI updates (2 tasks: properties dialog, elements panel icon)
-    - Testing (11 tasks: unit, integration, E2E)
+  - **Tasks**: tasks.md Phase 83 (T1236-T1255: 20 tasks)
+    - Specification updates (3 tasks)
+    - Implementation (6 tasks: resolveVisibility helper, rendering filters, hit-testing, UI updates)
+    - Testing (10 tasks: unit, integration, E2E)
     - Final commit (1 task)
   - **Dependencies**: Requires Phase 22 (Element Properties Dialog), Phase 19 (World Elements Panel), Phase 20 (Paper.hitTest)
-  - **Status**: Planning documents revised to reflect visibility as domain property, ready for implementation
-  - **Migration**: Old VisualStyle.visibility migrates to Element.visibility during project load
+  - **Status**: Planning documents updated to reflect visibility in VisualStyle, ready for implementation
 
 * [x] **Phase 82.2: Fix Auxiliary Projection Plane 2D Grid Rendering** - ✅ COMPLETE (Jan 23, 2026)
   - **User Requirement**: "now, on the 2d drawing, when i set the aux proj plane as the active one, the grid does not appear correctly aligned with T1. Instead if appears as being at 45 degrees exactly!"
