@@ -37,6 +37,15 @@ if (import.meta.env.DEV) {
     });
   };
   
+  (window as any).traceInvalidation = (elementId: string) => {
+    // Import dynamically to avoid circular dependencies
+    import('./composables/useWorld').then(({ useWorld }) => {
+      const { world } = useWorld();
+      const depService = world.value.getDependencyService();
+      return depService.traceInvalidation(elementId);
+    });
+  };
+  
   (window as any).getWorld = () => {
     return import('./composables/useWorld').then(({ useWorld }) => {
       const { world } = useWorld();
@@ -47,6 +56,7 @@ if (import.meta.env.DEV) {
   console.log('Debug helpers available:');
   console.log('  window.dumpDependencies() - dump full dependency graph');
   console.log('  window.dumpDependencies("proj_plane_") - filter by prefix');
+  console.log('  window.traceInvalidation("element_id") - trace invalidation propagation');
   console.log('  window.getWorld() - get World instance (returns Promise)');
 }
 

@@ -312,6 +312,58 @@ export class DependencyService {
   }
 
   /**
+   * Trace invalidation propagation from a changed element
+   * Shows the cascading invalidation path through the dependency graph
+   * 
+   * @param elementId - Element that changed
+   * @returns Array of invalidation layers showing the propagation order
+   */
+  traceInvalidation(elementId: string): { elementId: string; depth: number }[] {
+    console.log('=== INVALIDATION PROPAGATION TRACE ===');
+    console.log(`Starting from: ${elementId}`);
+    console.log('');
+    
+    const trace: { elementId: string; depth: number }[] = [];
+    const visited = new Set<string>();
+    const queue: { id: string; depth: number }[] = [{ id: elementId, depth: 0 }];
+    
+    while (queue.length > 0) {
+      const { id, depth } = queue.shift()!;
+      
+      if (visited.has(id)) continue;
+      visited.add(id);
+      
+      const indent = '  '.repeat(depth);
+      const dependents = Array.from(this.dependentsMap.get(id) || []);
+      
+      console.log(`${indent}[Depth ${depth}] ${id}`);
+      if (dependents.length > 0) {
+        console.log(`${indent}  → Invalidates ${dependents.length} dependent(s):`);
+        dependents.forEach(depId => {
+          console.log(`${indent}    • ${depId}`);
+        });
+      } else {
+        console.log(`${indent}  → (leaf element - no dependents)`);
+      }
+      
+      trace.push({ elementId: id, depth });
+      
+      // Add dependents to queue for next level
+      for (const depId of dependents) {
+        if (!visited.has(depId)) {
+          queue.push({ id: depId, depth: depth + 1 });
+        }
+      }
+    }
+    
+    console.log('');
+    console.log(`Total elements invalidated: ${trace.length}`);
+    console.log('=== END INVALIDATION TRACE ===');
+    
+    return trace;
+  }
+
+  /**
    * Dump the full dependency graph to console
    * Useful for debugging dependency tracking issues
    * 
