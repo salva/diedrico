@@ -252,25 +252,25 @@ function renderProjectionPlanes() {
     console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
     console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
     
-    // Build grid in 2D plane coordinates, then transform via matrix
-    const gridSize = 150;
+    // Build grid in 2D plane coordinates centered at origin
+    // Grid matches the standard 150x150 3D plane surface
+    const gridHalfSize = 75;  // Half of 150
     const divisions = 20;
-    const step = gridSize / divisions;
-    const halfSize = gridSize / 2;
+    const step = (gridHalfSize * 2) / divisions;
     
     const vertices = [];
     
     // Create grid lines in 2D plane coordinates (u, v, 1)
     // Then: 2D → Matrix4x3 → 3D domain → domainToThreeJS → Three.js
     for (let i = 0; i <= divisions; i++) {
-      const t = -halfSize + i * step;
+      const t = -gridHalfSize + i * step;
       
       // Lines parallel to U-axis (varying u, fixed v)
-      const start2D_U = new THREE.Vector3(-halfSize, t, 1);
+      const start2D_U = new THREE.Vector3(-gridHalfSize, t, 1);
       const start3D_domain = applyMatrix4x3(start2D_U, matrixDomain);
       const start3D_three = domainToThreeJS(start3D_domain);
       
-      const end2D_U = new THREE.Vector3(halfSize, t, 1);
+      const end2D_U = new THREE.Vector3(gridHalfSize, t, 1);
       const end3D_domain = applyMatrix4x3(end2D_U, matrixDomain);
       const end3D_three = domainToThreeJS(end3D_domain);
       
@@ -278,11 +278,11 @@ function renderProjectionPlanes() {
       vertices.push(end3D_three.x, end3D_three.y, end3D_three.z);
       
       // Lines parallel to V-axis (fixed u, varying v)
-      const start2D_V = new THREE.Vector3(t, -halfSize, 1);
+      const start2D_V = new THREE.Vector3(t, -gridHalfSize, 1);
       const start3D_V_domain = applyMatrix4x3(start2D_V, matrixDomain);
       const start3D_V_three = domainToThreeJS(start3D_V_domain);
       
-      const end2D_V = new THREE.Vector3(t, halfSize, 1);
+      const end2D_V = new THREE.Vector3(t, gridHalfSize, 1);
       const end3D_V_domain = applyMatrix4x3(end2D_V, matrixDomain);
       const end3D_V_three = domainToThreeJS(end3D_V_domain);
       
