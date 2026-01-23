@@ -312,6 +312,51 @@ export class DependencyService {
   }
 
   /**
+   * Dump the full dependency graph to console
+   * Useful for debugging dependency tracking issues
+   * 
+   * @param filterPrefix - Optional prefix to filter element IDs (e.g., "proj_plane_" to see only projection planes)
+   */
+  dumpDependencyGraph(filterPrefix?: string): void {
+    console.log('=== DEPENDENCY GRAPH ===');
+    console.log(`Total elements tracked: ${this.dependenciesMap.size}`);
+    console.log('');
+    
+    // Sort element IDs for consistent output
+    const allElementIds = Array.from(new Set([
+      ...this.dependenciesMap.keys(),
+      ...this.dependentsMap.keys()
+    ])).sort();
+    
+    const filtered = filterPrefix 
+      ? allElementIds.filter(id => id.startsWith(filterPrefix))
+      : allElementIds;
+    
+    for (const elementId of filtered) {
+      const dependencies = Array.from(this.dependenciesMap.get(elementId) || []).sort();
+      const dependents = Array.from(this.dependentsMap.get(elementId) || []).sort();
+      
+      console.log(`Element: ${elementId}`);
+      if (dependencies.length > 0) {
+        console.log(`  Depends on (${dependencies.length}):`);
+        dependencies.forEach(dep => console.log(`    <- ${dep}`));
+      } else {
+        console.log(`  Depends on: (none - base element)`);
+      }
+      
+      if (dependents.length > 0) {
+        console.log(`  Depended on by (${dependents.length}):`);
+        dependents.forEach(dep => console.log(`    -> ${dep}`));
+      } else {
+        console.log(`  Depended on by: (none - leaf element)`);
+      }
+      console.log('');
+    }
+    
+    console.log('=== END DEPENDENCY GRAPH ===');
+  }
+
+  /**
    * Traverse process tree depth-first, calling visitor for each node
    * 
    * @param node - Current node

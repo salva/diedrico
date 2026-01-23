@@ -24,3 +24,29 @@ const pinia = createPinia();
 app.use(pinia);
 
 app.mount('#app');
+
+// Debug helpers - expose to window for console access
+// Usage: window.dumpDependencies() or window.dumpDependencies('proj_plane_')
+if (import.meta.env.DEV) {
+  (window as any).dumpDependencies = (filterPrefix?: string) => {
+    // Import dynamically to avoid circular dependencies
+    import('./composables/useWorld').then(({ useWorld }) => {
+      const { world } = useWorld();
+      const depService = world.value.getDependencyService();
+      depService.dumpDependencyGraph(filterPrefix);
+    });
+  };
+  
+  (window as any).getWorld = () => {
+    return import('./composables/useWorld').then(({ useWorld }) => {
+      const { world } = useWorld();
+      return world.value;
+    });
+  };
+  
+  console.log('Debug helpers available:');
+  console.log('  window.dumpDependencies() - dump full dependency graph');
+  console.log('  window.dumpDependencies("proj_plane_") - filter by prefix');
+  console.log('  window.getWorld() - get World instance (returns Promise)');
+}
+
