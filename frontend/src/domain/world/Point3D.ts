@@ -20,6 +20,7 @@ import { Element3D } from './Element3D';
 import { Point3DRealization3D } from './Element3DRealization3D';
 import type { World } from './World';
 import type { VisualStyle } from './VisualStyle';
+import { createVisualStyle } from './VisualStyle';
 
 /**
  * Point3DByCoordinates - Point with explicit 3D coordinates
@@ -31,7 +32,6 @@ export class Point3DByCoordinates extends Element3D {
   coordinates: Vector4;  // Position [x, y, z, 1] - stored as Vector4
   projectionH?: string;  // ID of projection on P_H
   projectionV?: string;  // ID of projection on P_V
-  visualStyle: VisualStyle;
 
   constructor(
     id: string,
@@ -41,10 +41,9 @@ export class Point3DByCoordinates extends Element3D {
     projectionH?: string,
     projectionV?: string
   ) {
-    super(id);
+    super(id, undefined, visualStyle);  // Pass visualStyle to Element base constructor
     this.name = name;
     this.coordinates = coordinates;
-    this.visualStyle = visualStyle;
     this.projectionH = projectionH;
     this.projectionV = projectionV;
   }
@@ -63,7 +62,7 @@ export class Point3DByCoordinates extends Element3D {
       this.id!,
       this.name,
       this.coordinates.clone(),
-      { ...this.visualStyle },
+      this.visualStyle ? { ...this.visualStyle } : createVisualStyle(),
       this.projectionH,
       this.projectionV
     );
@@ -86,8 +85,6 @@ export class Point3DFromProjections extends Element3D {
   projection2: string;  // Point2D ID on second plane (must be different)
   plane1Id: string;     // Which plane projection1 is on
   plane2Id: string;     // Which plane projection2 is on (must be different)
-  
-  visualStyle: VisualStyle;
 
   constructor(
     id: string,
@@ -98,13 +95,12 @@ export class Point3DFromProjections extends Element3D {
     plane2Id: string,
     visualStyle: VisualStyle
   ) {
-    super(id);
+    super(id, label, visualStyle);  // Pass label and visualStyle to Element base constructor
     this.label = label;
     this.projection1 = projection1;
     this.projection2 = projection2;
     this.plane1Id = plane1Id;
     this.plane2Id = plane2Id;
-    this.visualStyle = visualStyle;
   }
 
   realize3D(world: World): Point3DRealization3D {
@@ -319,7 +315,7 @@ export class Point3DFromProjections extends Element3D {
       this.projection2,
       this.plane1Id,
       this.plane2Id,
-      { ...this.visualStyle }
+      this.visualStyle ? { ...this.visualStyle } : createVisualStyle()
     );
   }
 

@@ -20,6 +20,7 @@ import { Element3D } from './Element3D';
 import { Line3DRealization3D } from './Element3DRealization3D';
 import type { World } from './World';
 import type { VisualStyle } from './VisualStyle';
+import { createVisualStyle } from './VisualStyle';
 
 /**
  * Line3DFromProjections - Line derived from two 2D line projections
@@ -37,8 +38,6 @@ export class Line3DFromProjections extends Element3D {
   projection2: string;  // Line2D ID on second plane (must be different)
   plane1Id: string;     // Which plane projection1 is on
   plane2Id: string;     // Which plane projection2 is on (must be different)
-  
-  visualStyle: VisualStyle;
 
   constructor(
     id: string,
@@ -49,13 +48,12 @@ export class Line3DFromProjections extends Element3D {
     plane2Id: string,
     visualStyle: VisualStyle
   ) {
-    super(id);
+    super(id, label, visualStyle);  // Pass label and visualStyle to Element base constructor
     this.label = label;
     this.projection1 = projection1;
     this.projection2 = projection2;
     this.plane1Id = plane1Id;
     this.plane2Id = plane2Id;
-    this.visualStyle = visualStyle;
   }
 
   realize3D(world: World): Line3DRealization3D {
@@ -107,8 +105,8 @@ export class Line3DFromProjections extends Element3D {
       });
 
       // Get plane realizations for transformations
-      const plane1Real = plane1.realize3D();
-      const plane2Real = plane2.realize3D();
+      const plane1Real = plane1.realize3D(world);
+      const plane2Real = plane2.realize3D(world);
       
       if (!plane1Real || !plane2Real) {
         console.error('[Line3DFromProjections] Could not realize projection planes');
@@ -384,7 +382,7 @@ export class Line3DFromProjections extends Element3D {
       this.projection2,
       this.plane1Id,
       this.plane2Id,
-      { ...this.visualStyle }
+      this.visualStyle ? { ...this.visualStyle } : createVisualStyle()
     );
   }
 
@@ -415,8 +413,6 @@ export class Line3DFromPlaneIntersection extends Element3D {
   // Computed projections (element IDs, not geometric data)
   projectionH?: string;  // Projection on P_H
   projectionV?: string;  // Projection on P_V
-  
-  visualStyle?: VisualStyle;
 
   constructor(
     id: string,
@@ -427,13 +423,12 @@ export class Line3DFromPlaneIntersection extends Element3D {
     projectionV?: string,
     visualStyle?: VisualStyle
   ) {
-    super(id);
+    super(id, undefined, visualStyle);  // Pass visualStyle to Element base constructor
     this.name = name;
     this.plane1 = plane1;
     this.plane2 = plane2;
     this.projectionH = projectionH;
     this.projectionV = projectionV;
-    this.visualStyle = visualStyle;
   }
 
   realize3D(_world: World): Line3DRealization3D {

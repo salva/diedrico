@@ -19,6 +19,7 @@ import { Element3D } from './Element3D';
 import { Segment3DRealization3D } from './Element3DRealization3D';
 import type { World } from './World';
 import type { VisualStyle } from './VisualStyle';
+import { createVisualStyle } from './VisualStyle';
 
 /**
  * Segment3DFromProjections - Segment derived from two 2D segment projections
@@ -36,8 +37,6 @@ export class Segment3DFromProjections extends Element3D {
   projection2: string;  // Segment2D ID on second plane (must be different)
   plane1Id: string;     // Which plane projection1 is on
   plane2Id: string;     // Which plane projection2 is on (must be different)
-  
-  visualStyle: VisualStyle;
 
   constructor(
     id: string,
@@ -48,13 +47,12 @@ export class Segment3DFromProjections extends Element3D {
     plane2Id: string,
     visualStyle: VisualStyle
   ) {
-    super(id);
+    super(id, label, visualStyle);  // Pass label and visualStyle to Element base constructor
     this.label = label;
     this.projection1 = projection1;
     this.projection2 = projection2;
     this.plane1Id = plane1Id;
     this.plane2Id = plane2Id;
-    this.visualStyle = visualStyle;
   }
 
   realize3D(world: World): Segment3DRealization3D {
@@ -123,7 +121,7 @@ export class Segment3DFromProjections extends Element3D {
       this.projection2,
       this.plane1Id,
       this.plane2Id,
-      { ...this.visualStyle }
+      this.visualStyle ? { ...this.visualStyle } : createVisualStyle()
     );
   }
 

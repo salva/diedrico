@@ -9,26 +9,34 @@
  * **Phase 52**: Introduced to eliminate code duplication and enable uniform handling
  * of geometric elements across dimensions.
  * 
+ * **Phase 83**: Added visualStyle property for unified styling across all elements.
+ * 
  * **Design Principle: DRY (Don't Repeat Yourself)**
- * - id and label are common to ALL geometric elements
+ * - id, label, and visualStyle are common to ALL geometric elements
  * - Extracted to base class to avoid duplication
  * - Enables uniform handling across dimensions
  * 
  * **Benefits**:
- * - **DRY Principle**: id and label defined once, not repeated in Element2D and every 3D element class
+ * - **DRY Principle**: Common properties defined once in base class
  * - **Uniform Interface**: Can write functions accepting Element to work with any geometric object
  * - **Type Safety**: isElement() type guard works for all elements
  * - **Consistent Property Names**: Enforce `label` instead of `name` across all elements
- * - **Future-Proof**: Easy to add new common properties (createdBy, visualStyle, metadata) in one place
+ * - **Unified Styling**: All elements have consistent visual configuration through visualStyle
  * 
  * @see specs/001-dihedral-learning-mvp/data-model.md#element-base-class-hierarchy
  */
+
+import type { VisualStyle } from './VisualStyle';
+
 export abstract class Element {
   /** Unique identifier for this element */
   readonly id: string;
   
   /** Optional user-assigned label for UI display */
   label?: string;
+  
+  /** Visual styling properties (color, lineWidth, lineStyle, visibility, opacity) - Phase 83 */
+  visualStyle?: VisualStyle;
   
   /**
    * Construct a geometric element
@@ -37,10 +45,12 @@ export abstract class Element {
    *           - For 2D elements: hierarchical format '{planeId}/{localId}' (enforced by validateElementId in Element2D constructor)
    *           - For 3D elements: simple ID (e.g., 'plane_1', 'hinge_h_v')
    * @param label Optional user-friendly label for UI display
+   * @param visualStyle Optional visual styling (color, lineWidth, etc.) - inherits from subprocess if unset
    */
-  constructor(id: string, label?: string) {
+  constructor(id: string, label?: string, visualStyle?: VisualStyle) {
     this.id = id;
     this.label = label;
+    this.visualStyle = visualStyle;
   }
   
   /**
