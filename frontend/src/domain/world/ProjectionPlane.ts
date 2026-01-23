@@ -1269,10 +1269,12 @@ export abstract class ProjectionPlane {
    * @param id Optional ID for redo support
    * @returns The created HalfHingeLine2D
    */
+  /**
+   * Add half hinge line to this plane
+   * **Phase 84**: No geometry parameters - computed on demand from canonical coordinates
+   */
   addHalfHingeLine2D(
     hingeLineId: string,
-    point: Vector3,
-    direction: Vector3,
     world: import('./World').World,
     id?: string
   ): HalfHingeLine2D {
@@ -1290,30 +1292,14 @@ export abstract class ProjectionPlane {
       throw new Error(`Cannot add HalfHingeLine2D: HingeLine ${hingeLineId} not found`);
     }
 
+    // Phase 84: Create without geometry - computed on demand via realize2D()
     const halfHingeLine = new HalfHingeLine2D(
       id,
       hingeLineId,
-      this.id,
-      point,
-      direction
+      this.id
     );
 
-    // Phase 37: Enforce parametric consistency (Q=Q', D=D') across paired HalfHingeLine2D.
-    // If the sibling half-hinge line already exists on the other plane, validate before adding.
-    const otherPlaneId = hingeLine.getOtherPlane(this.id);
-    if (otherPlaneId) {
-      const otherPlane = world.getProjectionPlaneById(otherPlaneId);
-      const sibling = otherPlane
-        .getAllLines()
-        .find(
-          (line): line is HalfHingeLine2D =>
-            line instanceof HalfHingeLine2D && line.hingeLineId === hingeLineId
-        );
-
-      if (sibling) {
-        HingeLine.validateParametricConsistency(halfHingeLine, sibling);
-      }
-    }
+    // Phase 84: No parametric consistency validation needed - automatic with canonical coordinates
     
     this.addLine(halfHingeLine);
     return halfHingeLine;

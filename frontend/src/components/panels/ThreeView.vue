@@ -605,10 +605,10 @@ function render3DElements() {
 }
 
 /**
- * Render all hinge lines in 3D space (Phase 25.2 - T229)
+ * Render all hinge lines in 3D space (Phase 84)
  * 
- * Iterates through ALL hinge lines in the world (no special "main" hinge line treatment).
- * Computes intersection direction generically using cross product of plane normals.
+ * Uses HingeLine.realize3D() to compute 3D geometry from canonical coordinates.
+ * This eliminates inline geometry computation and provides a consistent, centralized approach.
  */
 function renderHingeLines() {
   if (!displayOptions.value.showPlanes) return;
@@ -618,51 +618,27 @@ function renderHingeLines() {
   existingLines.forEach(line => scene.remove(line));
 
   try {
-    // Iterate through ALL hinge lines (generic - works for any plane combinations)
+    // Iterate through ALL hinge lines
     const hingeLines = world.getAllHingeLines();
     
     for (const hingeLine of hingeLines) {
-      // Get both planes from hinge line (generic - works for any two planes)
-      const plane1 = world.getProjectionPlaneById(hingeLine.plane1Id);
-      const plane2 = world.getProjectionPlaneById(hingeLine.plane2Id);
+      // Phase 84: Use realize3D() to get 3D geometry
+      const line3D = hingeLine.realize3D(world);
       
-      if (!plane1 || !plane2) {
-        console.warn('[ThreeView] Cannot render hinge line: planes not found', hingeLine.id);
-        continue;
-      }
-    
-      // Get 3D realizations
-      const plane1Realization = world.getProjectionPlane3DRealization(plane1.id!);
-      const plane2Realization = world.getProjectionPlane3DRealization(plane2.id!);
-      
-      if (!plane1Realization || !plane2Realization) {
-        console.warn('[ThreeView] Cannot render hinge line: plane realizations not found', hingeLine.id);
+      if (!line3D || !line3D.point || !line3D.direction) {
+        console.warn('[ThreeView] Cannot render hinge line: realize3D failed', hingeLine.id);
         continue;
       }
       
-      // Extract plane normals from transformation matrices (generic algorithm)
-      // The third column (indices 8, 9, 10) of planeTo3D matrix is the plane's normal
-      const plane1Normal = new THREE.Vector3(
-        plane1Realization.planeTo3D.elements[8],
-        plane1Realization.planeTo3D.elements[9],
-        plane1Realization.planeTo3D.elements[10]
+      // Convert from domain coordinates (Vector4) to Three.js coordinates
+      const pointDomain = line3D.point;
+      const directionDomain = line3D.direction;
+      
+      // Convert to Three.js coordinates using domainToThreeJS
+      const origin = domainToThreeJS(pointDomain);
+      const direction = domainDirectionToThreeJS(
+        new THREE.Vector3(directionDomain.x, directionDomain.y, directionDomain.z)
       ).normalize();
-      
-      const plane2Normal = new THREE.Vector3(
-        plane2Realization.planeTo3D.elements[8],
-        plane2Realization.planeTo3D.elements[9],
-        plane2Realization.planeTo3D.elements[10]
-      ).normalize();
-      
-      // Intersection direction = cross product of normals (generic for any two planes)
-      const direction = new THREE.Vector3().crossVectors(plane1Normal, plane2Normal).normalize();
-      
-      // Get origin point - use plane1's origin (translation from matrix)
-      const origin = new THREE.Vector3(
-        plane1Realization.planeTo3D.elements[9],
-        plane1Realization.planeTo3D.elements[10],
-        plane1Realization.planeTo3D.elements[11]
-      );
       
       // Create line extending in both directions from origin
       const lineLength = 40; // Extend 20 units in each direction

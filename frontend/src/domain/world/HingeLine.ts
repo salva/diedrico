@@ -17,12 +17,16 @@
 import { Vector3, Vector4 } from 'three';
 import { Line2D, Line2DRealization2D } from './Line';
 import { Element3D } from './Element3D';
+import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 
 /**
  * HalfHingeLine2D - 2D representation of a hinge line on a specific projection plane
  * 
  * Each HingeLine has exactly 2 HalfHingeLine2D objects (one per plane).
  * This represents how the hinge line appears in the plane's (u,v) coordinate system.
+ * 
+ * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates.
+ * Hinge line is ALWAYS at v=0 along u-axis in plane intrinsic coordinates.
  * 
  * Design: HalfHingeLine2D extends Line2D so it can be used with all line operations.
  * It's a fixed line (cannot be deleted) that represents the fold between planes.
@@ -33,29 +37,22 @@ import { Element3D } from './Element3D';
  */
 export class HalfHingeLine2D extends Line2D {
   readonly hingeLineId: string;  // Parent HingeLine
-  readonly point: Vector3;       // Point on the line (homogeneous: u, v, 1)
-  readonly direction: Vector3;   // Direction vector (homogeneous: du, dv, 0)
+  // Phase 84: NO geometry storage - computed via realize2D()
 
   constructor(
     id: string,
     hingeLineId: string,
-    planeId: string,
-    point: Vector3,
-    direction: Vector3
+    planeId: string
   ) {
     super(id, planeId, `HL_${hingeLineId}`);
     this.hingeLineId = hingeLineId;
-    this.point = point;
-    this.direction = direction;
   }
 
   clone(): HalfHingeLine2D {
     return new HalfHingeLine2D(
       this.id,
       this.hingeLineId,
-      this.planeId,
-      this.point.clone(),
-      this.direction.clone()
+      this.planeId
     );
   }
 
@@ -110,16 +107,41 @@ export class HalfHingeLine2D extends Line2D {
   }
 
   /**
-   * Realize this half-hinge line (returns geometric data directly)
-   * HalfHingeLine2D stores its geometry directly, no computation needed
+   * Realize this half-hinge line using canonical coordinates (Phase 84)
    * 
    * Returns infinite line: point1 (finite) + point2 (direction with z=0)
    * 
-   * @param _world World instance (not used for hinge lines, which store geometry directly)
+   * **Phase 84 Architecture**:
+   * - Plane1: Returns canonical coordinates (0,0,1) and (1,0,0) directly
+   * - Plane2: Projects 3D line back to plane2 using applyMatrix3x4()
+   * 
+   * @param world World instance for accessing HingeLine and plane realizations
    */
-  realize2D(_world: import('./World').World): Line2DRealization2D {
-    // Infinite line: point1 is finite point (z=1), point2 is direction (z=0)
-    return new Line2DRealization2D(this.point, this.direction);
+  realize2D(world: import('./World').World): Line2DRealization2D {
+    const hingeLine = world.getHingeLineById(this.hingeLineId);
+    if (!hingeLine) {
+      throw new Error(`[HalfHingeLine2D.realize2D] HingeLine ${this.hingeLineId} not found`);
+    }
+
+    // Plane1: Return canonical coordinates directly
+    if (this.planeId === hingeLine.plane1Id) {
+      return new Line2DRealization2D(
+        new Vector3(0, 0, 1),    // Canonical origin
+        new Vector3(1, 0, 0)     // Canonical u-axis direction
+      );
+    }
+
+    // Plane2: Project 3D line back to plane2
+    const line3D = hingeLine.realize3D(world);
+    const plane2Real = world.getProjectionPlane3DRealization(this.planeId);
+    if (!plane2Real) {
+      throw new Error(`[HalfHingeLine2D.realize2D] Plane realization not found for ${this.planeId}`);
+    }
+
+    const origin2D = applyMatrix3x4(line3D.point, plane2Real.threeDToPlane);
+    const direction2D = applyMatrix3x4(line3D.direction, plane2Real.threeDToPlane);
+    
+    return new Line2DRealization2D(origin2D, direction2D);
   }
 }
 
@@ -134,22 +156,18 @@ export class HalfHingeLine2D extends Line2D {
  * objects are owned by their respective ProjectionPlane objects.
  * 
  * **Phase 52**: Refactored to extend Element3D. Inherits id and label from Element.
+ * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates (0,0,1), (1,0,0).
  * Implements getDependencies() to return [plane1Id, plane2Id].
  */
 export class HingeLine extends Element3D {
-  readonly plane1Id: string;  // First projection plane
+  readonly plane1Id: string;  // Reference plane (canonical coords source)
   readonly plane2Id: string;  // Second projection plane
-  readonly line3D?: {         // 3D representation (for future 3D rendering)
-    point: Vector4;           // Point on line in 3D space
-    direction: Vector4;       // Direction vector in 3D space
-  };
 
   constructor(
     id: string,
     label: string,
     plane1Id: string,
-    plane2Id: string,
-    line3D?: { point: Vector4; direction: Vector4 }
+    plane2Id: string
   ) {
     // Phase 52: Call Element3D constructor with id and label
     super(id, label);
@@ -160,27 +178,32 @@ export class HingeLine extends Element3D {
 
     this.plane1Id = plane1Id;
     this.plane2Id = plane2Id;
-    this.line3D = line3D;
   }
 
   /**
-   * Compute 3D realization (line in 3D space)
+   * Compute 3D realization using canonical coordinates (Phase 84)
+   * 
+   * Transforms canonical coordinates (0,0,1) origin and (1,0,0) u-axis direction
+   * from plane1 to 3D using applyMatrix4x3().
+   * 
+   * Returns object with point and direction in 3D domain coordinates (Vector4).
    */
-  realize3D(_world: any): any {
-    // Import here to avoid circular dependency
-    const { Line3DRealization3D } = require('./Element3DRealization3D');
-    const { Vector4 } = require('three');
-    
-    // Return stored 3D representation or default
-    if (this.line3D) {
-      return new Line3DRealization3D(this.line3D.point, this.line3D.direction);
+  realize3D(world: any): { point: Vector4; direction: Vector4 } {
+    const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id);
+    if (!plane1Real) {
+      throw new Error(`[HingeLine.realize3D] Plane realization not found for ${this.plane1Id}`);
     }
     
-    // Default: origin point, x-axis direction
-    return new Line3DRealization3D(
-      new Vector4(0, 0, 0, 1),
-      new Vector4(1, 0, 0, 0)
-    );
+    const origin = new Vector3(0, 0, 1);      // Canonical origin
+    const direction = new Vector3(1, 0, 0);   // Canonical u-axis direction
+    
+    const origin3D = applyMatrix4x3(origin, plane1Real.planeTo3D);
+    const direction3D = applyMatrix4x3(direction, plane1Real.planeTo3D);
+    
+    return {
+      point: origin3D,
+      direction: direction3D
+    };
   }
 
   /**
@@ -200,11 +223,7 @@ export class HingeLine extends Element3D {
       this.id,
       this.label || '',
       this.plane1Id,
-      this.plane2Id,
-      this.line3D ? {
-        point: this.line3D.point.clone(),
-        direction: this.line3D.direction.clone()
-      } : undefined
+      this.plane2Id
     );
   }
 
@@ -225,62 +244,10 @@ export class HingeLine extends Element3D {
   }
 
   /**
-   * Validate that both HalfHingeLine2D objects use identical parametric representation
+   * Phase 84: validateParametricConsistency() REMOVED
    * 
-   * CRITICAL REQUIREMENT: For SiblingIntersectionPoint2D coordinate cloning to work,
-   * both HalfHingeLine2D objects representing this HingeLine MUST use:
-   *   - Same reference point Q (in local (u,v) coordinates)
-   *   - Same direction vector D (in local (u,v) coordinates)
-   * 
-   * When Q=Q' and D=D', a point at R = Q + d·D on the primary plane
-   * maps to R' = Q' + d·D' = Q + d·D = R on the sibling plane (identical coordinates).
-   * 
-   * Breaking this constraint causes sibling points to compute incorrect positions silently.
-   * 
-   * @param halfHinge1 First HalfHingeLine2D object
-   * @param halfHinge2 Second HalfHingeLine2D object
-   * @throws Error if parametric consistency is violated
+   * No longer needed - parametric consistency is automatic with canonical coordinates.
+   * Both HalfHingeLine2D objects derive from the same 3D line via transformation,
+   * guaranteeing identical parametric representation.
    */
-  static validateParametricConsistency(
-    halfHinge1: HalfHingeLine2D,
-    halfHinge2: HalfHingeLine2D
-  ): void {
-    const EPSILON = 1e-10;
-
-    // Check hingeLineId matches
-    if (halfHinge1.hingeLineId !== halfHinge2.hingeLineId) {
-      throw new Error(
-        `HingeLine.validateParametricConsistency: HalfHingeLine2D objects have different hingeLineIds ` +
-        `(${halfHinge1.hingeLineId} vs ${halfHinge2.hingeLineId})`
-      );
-    }
-
-    // Check reference points are identical: Q = Q'
-    const pointDiff = halfHinge1.point.clone().sub(halfHinge2.point);
-    const pointDistance = pointDiff.length();
-    
-    if (pointDistance > EPSILON) {
-      throw new Error(
-        `HingeLine.validateParametricConsistency: Reference points differ for ${halfHinge1.hingeLineId}\n` +
-        `  Plane ${halfHinge1.planeId}: point = (${halfHinge1.point.x}, ${halfHinge1.point.y}, ${halfHinge1.point.z})\n` +
-        `  Plane ${halfHinge2.planeId}: point = (${halfHinge2.point.x}, ${halfHinge2.point.y}, ${halfHinge2.point.z})\n` +
-        `  Distance: ${pointDistance}\n` +
-        `CRITICAL: Both HalfHingeLine2D must use identical reference point Q for coordinate cloning to work.`
-      );
-    }
-
-    // Check direction vectors are identical: D = D'
-    const directionDiff = halfHinge1.direction.clone().sub(halfHinge2.direction);
-    const directionDistance = directionDiff.length();
-    
-    if (directionDistance > EPSILON) {
-      throw new Error(
-        `HingeLine.validateParametricConsistency: Direction vectors differ for ${halfHinge1.hingeLineId}\n` +
-        `  Plane ${halfHinge1.planeId}: direction = (${halfHinge1.direction.x}, ${halfHinge1.direction.y}, ${halfHinge1.direction.z})\n` +
-        `  Plane ${halfHinge2.planeId}: direction = (${halfHinge2.direction.x}, ${halfHinge2.direction.y}, ${halfHinge2.direction.z})\n` +
-        `  Distance: ${directionDistance}\n` +
-        `CRITICAL: Both HalfHingeLine2D must use identical direction vector D for coordinate cloning to work.`
-      );
-    }
-  }
 }

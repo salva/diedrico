@@ -357,7 +357,7 @@ export class AddHingeLineOp implements IOperation {
  * AddHalfHingeLine2DOp - Create a half hinge line on a projection plane
  * 
  * Creates the 2D line representation of the hinge line on a specific projection plane.
- * This is the horizontal line at v=0 on each plane.
+ * **Phase 84**: No geometry arguments - computed on demand from canonical coordinates.
  */
 export class AddHalfHingeLine2DOp implements IOperation {
   readonly type = 'AddHalfHingeLine2D';
@@ -366,15 +366,11 @@ export class AddHalfHingeLine2DOp implements IOperation {
   
   constructor(
     private readonly projPlaneId: string,
-    private readonly hingeLineId: string,
-    private readonly point: Vector3 = new Vector3(0, 0, 1),
-    private readonly direction: Vector3 = new Vector3(1, 0, 0)
+    private readonly hingeLineId: string
   ) {
     this.parameters = {
       projPlaneId,
-      hingeLineId,
-      point: { x: point.x, y: point.y, z: point.z },
-      direction: { x: direction.x, y: direction.y, z: direction.z }
+      hingeLineId
     };
   }
 
@@ -389,11 +385,9 @@ export class AddHalfHingeLine2DOp implements IOperation {
         };
       }
       
-      // Call element factory method - it handles ID generation
+      // Phase 84: Call element factory method without geometry - it handles ID generation
       const halfHingeLine = projPlane.addHalfHingeLine2D(
         this.hingeLineId,
-        this.point,
-        this.direction,
         world,
         this.outputs.lineId
       );
@@ -438,17 +432,7 @@ export class AddHalfHingeLine2DOp implements IOperation {
     return {
       type: this.type,
       projPlaneId: this.projPlaneId,
-      hingeLineId: this.hingeLineId,
-      point: {
-        x: this.point.x,
-        y: this.point.y,
-        z: this.point.z
-      },
-      direction: {
-        x: this.direction.x,
-        y: this.direction.y,
-        z: this.direction.z
-      }
+      hingeLineId: this.hingeLineId
     };
   }
 }

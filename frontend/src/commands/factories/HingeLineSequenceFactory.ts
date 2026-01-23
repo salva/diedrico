@@ -30,18 +30,16 @@ import { AddHingeLineOp, AddHalfHingeLine2DOp } from '../operations/world/Initia
  * - Half hinge line on horizontal projection plane
  * - Half hinge line on vertical projection plane
  * 
+ * **Phase 84**: No geometry parameters - computed on demand from canonical coordinates
+ * 
  * @param horizontalPlaneId ID of horizontal projection plane
  * @param verticalPlaneId ID of vertical projection plane
  * @param cmd Open Command to add operations to
- * @param point Point on hinge line in intrinsic coordinates (typically origin (0,0,1))
- * @param direction Direction vector of hinge line (typically (1,0,0) - x-axis)
  */
 export function buildHingeLineWithHalves(
   horizontalPlaneId: string,
   verticalPlaneId: string,
-  cmd: Command,
-  point: Vector3 = new Vector3(0, 0, 1),
-  direction: Vector3 = new Vector3(1, 0, 0)
+  cmd: Command
 ): void {
   // Step 1: Create 3D hinge line
   // AddHingeLineOp calls world.addHingeLine() which generates ID if not provided
