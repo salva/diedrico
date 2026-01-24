@@ -130,9 +130,9 @@ const renderTick = ref(0);
  * Initialize Three.js scene and infrastructure
  */
 function initThreeScene() {
-  console.log('[ThreeView] initThreeScene called');
-  console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
-  console.log('[ThreeView] World projection planes:', Array.from(world.projectionPlanes.keys()));
+  // console.log('[ThreeView] initThreeScene called');
+  // console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
+  // console.log('[ThreeView] World projection planes:', Array.from(world.projectionPlanes.keys()));
   
   if (!containerRef.value || !canvasRef.value) {
     console.warn('[ThreeView] containerRef or canvasRef is null!');
@@ -235,7 +235,7 @@ function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, 
  * We only render their grids to show their orientation in space.
  */
 function renderProjectionPlanes() {
-  console.log('[ThreeView] renderProjectionPlanes called, showPlanes=', displayOptions.value.showPlanes);
+  // console.log('[ThreeView] renderProjectionPlanes called, showPlanes=', displayOptions.value.showPlanes);
   
   if (!displayOptions.value.showPlanes || !displayOptions.value.showGrid) return;
 
@@ -251,13 +251,13 @@ function renderProjectionPlanes() {
   // Get all projection planes and render their grids
   const projectionPlanes = Array.from(world.projectionPlanes.values());
   
-  console.log('[ThreeView] Number of projection planes:', projectionPlanes.length);
-  
+  // console.log('[ThreeView] Number of projection planes:', projectionPlanes.length);
+
   for (const projPlane of projectionPlanes) {
-    console.log('[ThreeView] Processing projection plane:', projPlane.id);
+    // console.log('[ThreeView] Processing projection plane:', projPlane.id);
     
     const planeRealization = world.getProjectionPlane3DRealization(projPlane.id!);
-    console.log('[ThreeView] Plane realization for', projPlane.id, ':', planeRealization);
+    // console.log('[ThreeView] Plane realization for', projPlane.id, ':', planeRealization);
     
     if (!planeRealization) {
       console.warn('[ThreeView] No 3D realization for projection plane', projPlane.id);
@@ -281,7 +281,7 @@ function renderProjectionPlanes() {
     const Oy = e[5] / originW;   // m23 / w
     const Oz = e[8] / originW;   // m33 / w
     
-    console.log('[ThreeView] Plane', projPlane.id, 'origin in domain:', Ox, Oy, Oz);
+    // console.log('[ThreeView] Plane', projPlane.id, 'origin in domain:', Ox, Oy, Oz);
     
     // Extract U-axis and V-axis directions in DOMAIN coordinates (w=0)
     // U direction (u=1, v=0, w=0): (m11, m21, m31, m41)
@@ -289,21 +289,21 @@ function renderProjectionPlanes() {
     const Ux = e[0], Uy = e[3], Uz = e[6];  // m11, m21, m31
     const Vx = e[1], Vy = e[4], Vz = e[7];  // m12, m22, m32
     
-    console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
-    console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
+    // console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
+    // console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
     
     // Get the 3D plane rectangle bounds and convert to (u,v) coordinates
     let gridSegments: Segment2D[];
     
     if (projPlane instanceof AuxiliaryProjectionPlane && projPlane.plane3DId) {
-      console.log('[ThreeView] Auxiliary plane detected, plane3DId:', projPlane.plane3DId);
+      // console.log('[ThreeView] Auxiliary plane detected, plane3DId:', projPlane.plane3DId);
       const plane3D = world.get3DPlane(projPlane.plane3DId);
-      console.log('[ThreeView] Found 3D plane:', plane3D?.id);
+      // console.log('[ThreeView] Found 3D plane:', plane3D?.id);
       const planeRealization = plane3D ? world.get3DPlaneRealization(plane3D.id!) : null;
-      console.log('[ThreeView] Plane realization feasible:', planeRealization?.feasible);
+      // console.log('[ThreeView] Plane realization feasible:', planeRealization?.feasible);
       
       if (planeRealization && planeRealization.feasible) {
-        console.log('[ThreeView] Generating clipped grid for auxiliary plane');
+        // console.log('[ThreeView] Generating clipped grid for auxiliary plane');
         
         // Get the ACTUAL 3D plane rectangle corners (same as what's rendered)
         const planeSize = 75;  // Half-size (150/2)
@@ -311,35 +311,35 @@ function renderProjectionPlanes() {
         
         // Convert to projection plane (u,v) coordinates using the projection plane's inverse matrix
         const projPlaneRealization = world.getProjectionPlane3DRealization(projPlane.id!);
-        console.log('[ThreeView] Got projection plane realization for grid conversion:', !!projPlaneRealization);
+        // console.log('[ThreeView] Got projection plane realization for grid conversion:', !!projPlaneRealization);
         if (!projPlaneRealization) {
-          console.log('[ThreeView] No projection plane realization, using fallback grid');
+          // console.log('[ThreeView] No projection plane realization, using fallback grid');
           gridSegments = generateFallbackGrid(75, 20);
         } else {
-          console.log('[ThreeView] Converting corners to (u,v) and generating clipped grid');
+          // console.log('[ThreeView] Converting corners to (u,v) and generating clipped grid');
           const rect2D = convertPlaneRectangleTo2D(corners, projPlaneRealization.threeDToPlane);
-          console.log('[ThreeView] Rectangle in (u,v):', rect2D);
-          console.log('[ThreeView] Corner 0:', rect2D.corners[0]);
-          console.log('[ThreeView] Corner 1:', rect2D.corners[1]);
-          console.log('[ThreeView] Corner 2:', rect2D.corners[2]);
-          console.log('[ThreeView] Corner 3:', rect2D.corners[3]);
+          // console.log('[ThreeView] Rectangle in (u,v):', rect2D);
+          // console.log('[ThreeView] Corner 0:', rect2D.corners[0]);
+          // console.log('[ThreeView] Corner 1:', rect2D.corners[1]);
+          // console.log('[ThreeView] Corner 2:', rect2D.corners[2]);
+          // console.log('[ThreeView] Corner 3:', rect2D.corners[3]);
           
           // Generate clipped grid
           gridSegments = generateClippedGrid(rect2D, 20);
-          console.log('[ThreeView] Generated', gridSegments.length, 'grid segments');
+          // console.log('[ThreeView] Generated', gridSegments.length, 'grid segments');
         }
       } else {
-        console.log('[ThreeView] No plane realization or not feasible, using fallback grid');
+        // console.log('[ThreeView] No plane realization or not feasible, using fallback grid');
         // Fallback: simple grid centered at origin
         gridSegments = generateFallbackGrid(75, 20);
       }
     } else {
-      console.log('[ThreeView] Base projection plane, using fallback grid');
+      // console.log('[ThreeView] Base projection plane, using fallback grid');
       // Base planes: simple grid centered at origin
       gridSegments = generateFallbackGrid(75, 20);
     }
     
-    console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
+    // console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
     // Convert grid segments from (u,v) to Three.js coordinates
     const vertices = [];
     for (const segment of gridSegments) {
@@ -364,12 +364,12 @@ function renderProjectionPlanes() {
     gridMesh.userData.type = 'projection-plane-grid';
     gridMesh.userData.planeId = projPlane.id;
     scene.add(gridMesh);
-    console.log('[ThreeView] Added projection plane grid for', projPlane.id);
+    // console.log('[ThreeView] Added projection plane grid for', projPlane.id);
     
     // Render auxiliary plane coordinate axes (U, V) if applicable
-    console.log('[ThreeView] Checking auxiliary axes:', projPlane instanceof AuxiliaryProjectionPlane, displayOptions.value.showReferenceAxes);
+    // console.log('[ThreeView] Checking auxiliary axes:', projPlane instanceof AuxiliaryProjectionPlane, displayOptions.value.showReferenceAxes);
     if (projPlane instanceof AuxiliaryProjectionPlane && displayOptions.value.showReferenceAxes) {
-      console.log('[ThreeView] Calling renderAuxiliaryPlaneAxes');
+      // console.log('[ThreeView] Calling renderAuxiliaryPlaneAxes');
       // We don't need Nx, Ny, Nz anymore - they're unused in the function
       renderAuxiliaryPlaneAxes(projPlane, Ox, Oy, Oz, Ux, Uy, Uz, Vx, Vy, Vz, 0, 0, 0);
     }
@@ -408,22 +408,22 @@ function render3DElements() {
   try {
     // Render 3D Points
     const points3D = world.getAll3DPoints();
-    console.log('[ThreeView] render3DElements called - found', points3D.length, '3D points');
+    // console.log('[ThreeView] render3DElements called - found', points3D.length, '3D points');
     
     for (const point of points3D) {
       // Skip invisible 3D points
       if (point.visualStyle?.visible === false) {
-        console.log('[ThreeView] Skipping invisible 3D point:', point.id);
+        // console.log('[ThreeView] Skipping invisible 3D point:', point.id);
         continue;
       }
       
-      console.log('[ThreeView] Processing 3D point:', point.id, point.kind);
+      // console.log('[ThreeView] Processing 3D point:', point.id, point.kind);
       
       const realization = world.get3DPointRealization(point.id!);
-      console.log('[ThreeView] Got realization:', {
-        exists: !!realization,
-        feasible: realization?.isFeasible
-      });
+      // console.log('[ThreeView] Got realization:', {
+      //   exists: !!realization,
+      //   feasible: realization?.isFeasible
+      // });
       
       if (!realization || !realization.isFeasible) {
         console.warn('[ThreeView] Skipping point - not feasible');
@@ -431,12 +431,12 @@ function render3DElements() {
       }
       
       const [x, y, z] = realization.getCartesian();
-      console.log('[ThreeView] Point 3D coordinates (domain):', { x, y, z });
+      // console.log('[ThreeView] Point 3D coordinates (domain):', { x, y, z });
       
       // Convert from domain (left-handed) to Three.js (right-handed) coordinates
       const domainPos = new Vector4(x, y, z, 1);
       const threePos = domainToThreeJS(domainPos);
-      console.log('[ThreeView] Point 3D coordinates (three):', threePos);
+      // console.log('[ThreeView] Point 3D coordinates (three):', threePos);
       
       // Create sphere for 3D point (thicker than 2D points)
       const geometry = new THREE.SphereGeometry(0.15, 16, 16); // Radius 0.15 (vs 0.1 for 2D)
@@ -456,7 +456,7 @@ function render3DElements() {
 
     // Render 3D Lines
     const lines3D = world.getAll3DLines();
-    console.log('[ThreeView] Rendering', lines3D.length, '3D lines');
+    // console.log('[ThreeView] Rendering', lines3D.length, '3D lines');
     
     for (const line of lines3D) {
       // Skip invisible 3D lines
@@ -500,7 +500,7 @@ function render3DElements() {
 
     // Render 3D Segments
     const segments3D = world.getAll3DSegments();
-    console.log('[ThreeView] Rendering', segments3D.length, '3D segments');
+    // console.log('[ThreeView] Rendering', segments3D.length, '3D segments');
     
     for (const segment of segments3D) {
       // Skip invisible 3D segments
@@ -547,7 +547,7 @@ function render3DElements() {
 
     // Render 3D Planes (geometric surfaces)
     const planes3D = world.getAllPlanes();
-    console.log('[ThreeView] Rendering', planes3D.length, '3D planes');
+    // console.log('[ThreeView] Rendering', planes3D.length, '3D planes');
     
     for (const plane of planes3D) {
       const planeRealization = world.get3DPlaneRealization(plane.id!);
@@ -613,6 +613,8 @@ function render3DElements() {
 function renderHingeLines() {
   if (!displayOptions.value.showPlanes) return;
 
+  console.log('[ThreeView.renderHingeLines] Called');
+
   // Remove existing hinge lines
   const existingLines = scene.children.filter(child => child.userData.type === 'hinge-line');
   existingLines.forEach(line => scene.remove(line));
@@ -620,6 +622,11 @@ function renderHingeLines() {
   try {
     // Iterate through ALL hinge lines
     const hingeLines = world.getAllHingeLines();
+    console.log('[ThreeView.renderHingeLines] Found', hingeLines.length, 'hinge lines:', hingeLines.map(hl => ({
+      id: hl.id,
+      plane1: hl.plane1Id,
+      plane2: hl.plane2Id
+    })));
     
     for (const hingeLine of hingeLines) {
       // Phase 84: Use realize3D() to get 3D geometry
@@ -750,15 +757,15 @@ function renderAuxiliaryPlaneAxes(
   Vx: number, Vy: number, Vz: number,
   _Nx: number, _Ny: number, _Nz: number  // Unused but kept for signature compatibility
 ) {
-  console.log('[ThreeView] renderAuxiliaryPlaneAxes called for plane', projPlane.id);
-  console.log('[ThreeView] Origin (domain):', Ox, Oy, Oz);
-  console.log('[ThreeView] U-axis (domain):', Ux, Uy, Uz);
-  console.log('[ThreeView] V-axis (domain):', Vx, Vy, Vz);
+  // console.log('[ThreeView] renderAuxiliaryPlaneAxes called for plane', projPlane.id);
+  // console.log('[ThreeView] Origin (domain):', Ox, Oy, Oz);
+  // console.log('[ThreeView] U-axis (domain):', Ux, Uy, Uz);
+  // console.log('[ThreeView] V-axis (domain):', Vx, Vy, Vz);
   
   // Convert origin from domain to Three.js coordinates
   const originDomain = new Vector4(Ox, Oy, Oz, 1);  // Homogeneous point
   const origin = domainToThreeJS(originDomain);
-  console.log('[ThreeView] Origin (Three.js):', origin.x, origin.y, origin.z);
+  // console.log('[ThreeView] Origin (Three.js):', origin.x, origin.y, origin.z);
   
   const axisLength = 10;  // Slightly shorter than world axes for distinction
   const velvetColor = 0x8B008B;  // Dark magenta/velvet purple
@@ -766,25 +773,25 @@ function renderAuxiliaryPlaneAxes(
   // U-axis: convert domain direction to Three.js
   const uDirDomain = new THREE.Vector3(Ux, Uy, Uz).normalize();
   const uDir = domainDirectionToThreeJS(uDirDomain);
-  console.log('[ThreeView] U direction (Three.js):', uDir.x, uDir.y, uDir.z);
+  // console.log('[ThreeView] U direction (Three.js):', uDir.x, uDir.y, uDir.z);
   const uArrow = new THREE.ArrowHelper(uDir, origin, axisLength, velvetColor, 0.8, 0.4);
   uArrow.userData.type = 'auxiliary-plane-axis';
   uArrow.userData.axis = 'u';
   uArrow.userData.planeId = projPlane.id;
   scene.add(uArrow);
-  console.log('[ThreeView] Added U-axis arrow to scene');
+  // console.log('[ThreeView] Added U-axis arrow to scene');
   createAuxiliaryAxisLabel('U', origin, uDir, axisLength);
   
   // V-axis: convert domain direction to Three.js
   const vDirDomain = new THREE.Vector3(Vx, Vy, Vz).normalize();
   const vDir = domainDirectionToThreeJS(vDirDomain);
-  console.log('[ThreeView] V direction (Three.js):', vDir.x, vDir.y, vDir.z);
+  // console.log('[ThreeView] V direction (Three.js):', vDir.x, vDir.y, vDir.z);
   const vArrow = new THREE.ArrowHelper(vDir, origin, axisLength, velvetColor, 0.8, 0.4);
   vArrow.userData.type = 'auxiliary-plane-axis';
   vArrow.userData.axis = 'v';
   vArrow.userData.planeId = projPlane.id;
   scene.add(vArrow);
-  console.log('[ThreeView] Added V-axis arrow to scene');
+  // console.log('[ThreeView] Added V-axis arrow to scene');
   createAuxiliaryAxisLabel('V', origin, vDir, axisLength);
 }
 

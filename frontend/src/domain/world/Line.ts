@@ -70,6 +70,18 @@ export class Line2DRealization2D extends Element2DRealization2D {
   }
   
   /**
+   * Create an infeasible line realization
+   * Used when parent dependencies are infeasible
+   */
+  static createInfeasible(): Line2DRealization2D {
+    return new Line2DRealization2D(
+      new Vector3(0, 0, 1),
+      new Vector3(1, 0, 0),
+      false
+    );
+  }
+  
+  /**
    * Get direction vector (works for both lines and segments)
    * For infinite lines: point2 is already the direction (z=0)
    * For segments: direction = point2 - point1

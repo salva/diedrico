@@ -684,12 +684,12 @@ const gridLines = computed(() => {
   const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
 
   // DEBUG: Log the transformed basis vectors and viewport state
-  console.log('[gridLines] origin_paper:', origin_paper);
-  console.log('[gridLines] u_paper:', u_paper);
-  console.log('[gridLines] v_paper:', v_paper);
-  console.log('[gridLines] viewport.panX:', viewport.value.panX, 'panY:', viewport.value.panY);
-  console.log('[gridLines] viewport.zoom:', viewport.value.zoom);
-  console.log('[gridLines] canvasWidth:', canvasWidth.value, 'canvasHeight:', canvasHeight.value);
+  // console.log('[gridLines] origin_paper:', origin_paper);
+  // console.log('[gridLines] u_paper:', u_paper);
+  // console.log('[gridLines] v_paper:', v_paper);
+  // console.log('[gridLines] viewport.panX:', viewport.value.panX, 'panY:', viewport.value.panY);
+  // console.log('[gridLines] viewport.zoom:', viewport.value.zoom);
+  // console.log('[gridLines] canvasWidth:', canvasWidth.value, 'canvasHeight:', canvasHeight.value);
 
   // Calculate viewport bounds in paper coordinates
   const viewportWidth = canvasWidth.value / zoom;
@@ -697,10 +697,10 @@ const gridLines = computed(() => {
   const offsetX = -viewport.value.panX;
   const offsetY = -viewport.value.panY;
   
-  console.log('[gridLines] viewportWidth:', viewportWidth, 'viewportHeight:', viewportHeight);
-  console.log('[gridLines] offsetX:', offsetX, 'offsetY:', offsetY);
-  console.log('[gridLines] viewport top-left corner in paper:', offsetX, offsetY);
-  console.log('[gridLines] viewport center in paper:', offsetX + viewportWidth/2, offsetY + viewportHeight/2);
+  // console.log('[gridLines] viewportWidth:', viewportWidth, 'viewportHeight:', viewportHeight);
+  // console.log('[gridLines] offsetX:', offsetX, 'offsetY:', offsetY);
+  // console.log('[gridLines] viewport top-left corner in paper:', offsetX, offsetY);
+  // console.log('[gridLines] viewport center in paper:', offsetX + viewportWidth/2, offsetY + viewportHeight/2);
 
   // Viewport corners in paper coordinates
   const viewport_corners_paper = [
@@ -1157,7 +1157,7 @@ function handleCanvasClick(event: MouseEvent) {
   
   const canvasPoint = pt.matrixTransform(ctm.inverse());
   
-  console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+  // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
   
   // Step 2-3: Canvas → Paper → Plane using InputService
   const activePlaneId = activePlane.value;
@@ -1181,14 +1181,14 @@ function handleCanvasClick(event: MouseEvent) {
     return;
   }
   
-  console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+  // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
   
   // Debug: Check what Paper.hitTest() would return for this click
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
   const paperToPlane = planeTransforms.get(activePlane.value);
   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);  // FR-002: Hit test in plane space
-  console.log('[SvgCanvas] Paper.hitTest() result:', hit);
-  console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+  // console.log('[SvgCanvas] Paper.hitTest() result:', hit);
+  // console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
   
   // Phase 20: Handle selection mode when 'select' tool is active
   const activeToolName = toolStore.currentTool.value;
@@ -1205,16 +1205,16 @@ function handleCanvasClick(event: MouseEvent) {
       if (event.shiftKey) {
         // Shift+click: Add to selection (multi-select)
         selectionStore.addToSelection(hit.elementId);
-        console.log('[SvgCanvas] Added to selection:', hit.elementId);
+        // console.log('[SvgCanvas] Added to selection:', hit.elementId);
       } else {
         // Regular click: Single selection (replaces current selection)
         selectionStore.selectSingle(hit.elementId);
-        console.log('[SvgCanvas] Selected:', hit.elementId);
+        // console.log('[SvgCanvas] Selected:', hit.elementId);
       }
     } else {
       // Clicked empty space - clear selection
       selectionStore.clearSelection();
-      console.log('[SvgCanvas] Cleared selection');
+      // console.log('[SvgCanvas] Cleared selection');
     }
     return;
   }
@@ -1242,7 +1242,7 @@ function handleCanvasClick(event: MouseEvent) {
   // Trigger reactivity regardless of success/failure
   // Even on failure, rollback or partial state changes may need visual refresh
   renderTick.value++;
-  console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+  // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
   
   if (result.success) {
     console.log('[SvgCanvas] Tool operation succeeded:', result.message);

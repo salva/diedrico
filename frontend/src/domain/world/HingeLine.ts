@@ -95,14 +95,22 @@ export class HalfHingeLine2D extends Line2D {
     halfHingeLineId: string,
     currentPlaneId: string
   ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
-    console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
+    // Extract numeric ID for conditional logging
+    const numericId = parseInt(halfHingeLineId.match(/\d+/)?.[0] || '0');
+    const shouldLog = numericId > 10;
+    
+    if (shouldLog) {
+      console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
+    }
     
     // Get current plane and HalfHingeLine2D
     const currentPlane = world.getProjectionPlaneById(currentPlaneId)!;
     const halfHingeLine = currentPlane.getLine(halfHingeLineId);
     
     if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
-      console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
+      if (shouldLog) {
+        console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
+      }
       return undefined;
     }
 
@@ -111,14 +119,18 @@ export class HalfHingeLine2D extends Line2D {
     const siblingPlaneId = hingeLine.getOtherPlane(currentPlaneId)!;
     const siblingPlane = world.getProjectionPlaneById(siblingPlaneId)!;
 
-    console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
+    if (shouldLog) {
+      console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
+    }
 
     // Find HalfHingeLine2D with same hingeLineId in sibling plane
     const siblingHalfHingeLine = siblingPlane.getAllLines().find(
       (line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === halfHingeLine.hingeLineId
     )!;
 
-    console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
+    if (shouldLog) {
+      console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
+    }
 
     return {
       siblingPlaneId,
@@ -147,17 +159,8 @@ export class HalfHingeLine2D extends Line2D {
       if (projPlane1.plane3DId) {
         const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
         if (!plane3DReal.isFeasible()) {
-          const errorInfo = {
-            halfHingeLineId: this.id,
-            halfHingeLineLabel: this.label,
-            hingeLineId: this.hingeLineId,
-            planeId: this.planeId,
-            plane3DId: projPlane1.plane3DId,
-            projPlane1: { ...projPlane1 },
-            plane3DReal: { ...plane3DReal }
-          };
-          console.error(`[HalfHingeLine2D.realize2D] CRITICAL: Plane3D ${projPlane1.plane3DId} is infeasible for half-hinge line ${this.id}`, errorInfo);
-          throw new Error(`HalfHingeLine2D.realize2D: Underlying Plane3D ${projPlane1.plane3DId} is infeasible for half-hinge line ${this.id}`);
+          // Return infeasible realization instead of throwing
+          return Line2DRealization2D.createInfeasible();
         }
       }
 
@@ -173,16 +176,8 @@ export class HalfHingeLine2D extends Line2D {
 
     // Check feasibility of 3D line (depends on plane1)
     if (!line3D.isFeasible()) {
-      const errorInfo = {
-        halfHingeLineId: this.id,
-        halfHingeLineLabel: this.label,
-        hingeLineId: this.hingeLineId,
-        hingeLine: { id: hingeLine.id, label: hingeLine.label, plane1Id: hingeLine.plane1Id, plane2Id: hingeLine.plane2Id },
-        planeId: this.planeId,
-        line3D: { ...line3D }
-      };
-      console.error(`[HalfHingeLine2D.realize2D] CRITICAL: 3D hinge line is infeasible for half-hinge line ${this.id}`, errorInfo);
-      throw new Error(`HalfHingeLine2D.realize2D: 3D hinge line is infeasible for half-hinge line ${this.id}`);
+      // Return infeasible realization instead of throwing
+      return Line2DRealization2D.createInfeasible();
     }
 
     const origin2D = applyMatrix3x4(line3D.point, plane2Real.threeDToPlane);
@@ -266,22 +261,12 @@ export class HingeLine extends Line3D {
     if (projPlane1.plane3DId) {
       const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
       if (!plane3DReal.isFeasible()) {
-        const errorInfo = {
-          hingeLineId: this.id,
-          hingeLineLabel: this.label,
-          plane1Id: this.plane1Id,
-          plane2Id: this.plane2Id,
-          plane3DId: projPlane1.plane3DId,
-          projPlane1: { ...projPlane1 },
-          plane3DReal: { ...plane3DReal }
-        };
-        console.error(`[HingeLine.realize3D] CRITICAL: Plane3D ${projPlane1.plane3DId} is infeasible for hinge line ${this.id}`, errorInfo);
-        throw new Error(`HingeLine.realize3D: Underlying Plane3D ${projPlane1.plane3DId} is infeasible for hinge line ${this.id}`);
+        // Return infeasible realization instead of throwing
+        return Line3DRealization3D.createInfeasible();
       }
     }
 
     const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id)!;
- 
     const origin = new Vector3(0, 0, 1);      // Canonical origin
     const direction = new Vector3(1, 0, 0);   // Canonical u-axis direction
     

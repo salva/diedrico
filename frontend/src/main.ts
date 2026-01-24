@@ -30,26 +30,26 @@ app.mount('#app');
 if (import.meta.env.DEV) {
   (window as any).dumpDependencies = (filterPrefix?: string) => {
     // Import dynamically to avoid circular dependencies
-    import('./composables/useWorld').then(({ useWorld }) => {
-      const { world } = useWorld();
-      const depService = world.value.getDependencyService();
+    import('./stores/worldStore').then(({ useWorldStore }) => {
+      const worldStore = useWorldStore();
+      const depService = worldStore.world.getDependencyService();
       depService.dumpDependencyGraph(filterPrefix);
     });
   };
   
   (window as any).traceInvalidation = (elementId: string) => {
     // Import dynamically to avoid circular dependencies
-    import('./composables/useWorld').then(({ useWorld }) => {
-      const { world } = useWorld();
-      const depService = world.value.getDependencyService();
+    import('./stores/worldStore').then(({ useWorldStore }) => {
+      const worldStore = useWorldStore();
+      const depService = worldStore.world.getDependencyService();
       return depService.traceInvalidation(elementId);
     });
   };
   
   (window as any).getWorld = () => {
-    return import('./composables/useWorld').then(({ useWorld }) => {
-      const { world } = useWorld();
-      return world.value;
+    return import('./stores/worldStore').then(({ useWorldStore }) => {
+      const worldStore = useWorldStore();
+      return worldStore.world;
     });
   };
   

@@ -202,8 +202,8 @@ onMounted(() => {
   const allPlanes = world.getAllProjectionPlanes();
   const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
   const totalLines = allPlanes.reduce((sum, plane) => sum + plane.getAllLines().length, 0);
-  console.log('[ElementsPanel] Initial points:', totalPoints);
-  console.log('[ElementsPanel] Initial lines:', totalLines);
+  // console.log('[ElementsPanel] Initial points:', totalPoints);
+  // console.log('[ElementsPanel] Initial lines:', totalLines);
   
   intervalId = window.setInterval(() => {
     const currentVersion = world.getVersion();
