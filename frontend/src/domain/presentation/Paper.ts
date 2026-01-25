@@ -370,8 +370,8 @@ export class Paper {
     // Test points (only from active plane)
     if (activePlane) {
       for (const point of activePlane.getAllPoints()) {
-        // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
-        const matchesPoint = !selectionMask || selectionMask.matches('point');
+        // Filter by selection mask if provided (uses instanceof)
+        const matchesPoint = !selectionMask || selectionMask.matches(point);
         if (!matchesPoint) {
           continue;
         }
@@ -404,8 +404,8 @@ export class Paper {
         // Get actual element type
         const elementType = this.getElementType(line, world);
         
-        // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
-        const matchesLine = !selectionMask || selectionMask.matches(elementType);
+        // Filter by selection mask if provided (uses instanceof)
+        const matchesLine = !selectionMask || selectionMask.matches(line);
         if (!matchesLine) {
           continue; // Skip this element - doesn't match selection mask
         }
@@ -433,8 +433,8 @@ export class Paper {
     // Test circles (only from active plane)
     if (activePlane) {
       for (const circle of activePlane.getAllCircles()) {
-        // Filter by selection mask if provided (Phase 63: polymorphic dispatch)
-        if (selectionMask && !selectionMask.matches('circle')) {
+        // Filter by selection mask if provided (uses instanceof)
+        if (selectionMask && !selectionMask.matches(circle)) {
           continue;
         }
         

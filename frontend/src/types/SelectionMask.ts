@@ -32,30 +32,24 @@ export type SelectableElementType =
  * Map domain element to its SelectableElementType using class hierarchy
  * 
  * Phase 63: Uses instanceof checks to leverage TypeScript class hierarchy.
- * Order matters - checks most specific classes first, then falls back to base classes.
- * This automatically handles all subclasses (e.g., Line2DPerpendicular extends Line2D).
+ * All Line2D subclasses (including Guide2D, HalfHingeLine2D) return 'line'
+ * since derived classes should be selectable in any context requiring their base type.
  * 
  * @param element - Domain element (Point2D, Line2D, etc.)
  * @returns SelectableElementType for selection mask matching
  */
 export function getSelectableType(element: Element2D): SelectableElementType {
-  // Check most specific line types first (order matters!)
-  if (element instanceof Guide2D || element instanceof SiblingGuide2D) {
-    return 'guide';
-  }
-  if (element instanceof HalfHingeLine2D) {
-    return 'half-hinge-line';
-  }
+  // Check specific non-line types first
   if (element instanceof Segment2DByPoints) {
     return 'segment';
   }
   
-  // Base types (catch all remaining subclasses)
+  // Base types (all subclasses match their base type)
   if (element instanceof Point2D) {
     return 'point';
   }
   if (element instanceof Line2D) {
-    return 'line';  // Catches Line2DByTwoPoints, Line2DPerpendicular, Line2DParallel, etc.
+    return 'line';  // Matches ALL Line2D subclasses: regular, perpendicular, parallel, Guide2D, HalfHingeLine2D
   }
   if (element instanceof Circle2D) {
     return 'circle';
@@ -70,27 +64,27 @@ export function getSelectableType(element: Element2D): SelectableElementType {
  * Abstract base class for all selection masks
  * 
  * Selection masks determine which element types can be selected/hit-tested by tools.
- * Concrete implementations provide different matching strategies via polymorphic matches() method.
+ * Uses instanceof checks directly against element classes for proper type hierarchy support.
  * 
  * Usage:
  * ```typescript
  * const mask = SelectionMask.union(
  *   SelectionMask.point(),
- *   SelectionMask.anyLine()
+ *   SelectionMask.line()
  * );
  * 
- * if (mask.matches(elementType)) {
+ * if (mask.matches(element)) {
  *   // Element is selectable
  * }
  * ```
  */
 export abstract class SelectionMask {
   /**
-   * Check if given element type matches this mask's criteria
-   * @param elementType - Type returned by Paper.getElementType()
-   * @returns true if element type matches, false otherwise
+   * Check if given element matches this mask's criteria using instanceof
+   * @param element - Domain element (Point2D, Line2D, etc.)
+   * @returns true if element matches, false otherwise
    */
-  abstract matches(elementType: SelectableElementType): boolean;
+  abstract matches(element: Element2D): boolean;
 
   /**
    * Get human-readable description of mask (for debugging)
@@ -107,7 +101,9 @@ export abstract class SelectionMask {
   }
   
   /**
-   * Create mask matching only regular lines (excludes segments/guides/half-hinge-lines)
+   * Create mask matching all lines (including guides and half-hinge lines)
+   * Since getSelectableType() returns 'line' for all Line2D subclasses,
+   * this automatically includes Guide2D and HalfHingeLine2D
    */
   static line(): TypeMask {
     return new TypeMask('line');
@@ -121,10 +117,12 @@ export abstract class SelectionMask {
   }
   
   /**
-   * Create mask matching only guides
+   * Create mask matching guides
+   * Guides are lines, so this returns a line mask
+   * @deprecated Use SelectionMask.line() instead
    */
   static guide(): TypeMask {
-    return new TypeMask('guide');
+    return new TypeMask('line');
   }
   
   /**
@@ -135,10 +133,12 @@ export abstract class SelectionMask {
   }
   
   /**
-   * Create mask matching only half-hinge-lines
+   * Create mask matching half-hinge-lines
+   * Half-hinge lines are lines, so this returns a line mask
+   * @deprecated Use SelectionMask.line() instead
    */
   static halfHingeLine(): TypeMask {
-    return new TypeMask('half-hinge-line');
+    return new TypeMask('line');
   }
   
   /**
@@ -205,7 +205,7 @@ export abstract class SelectionMask {
  * - \"No selection allowed\": none()
  */
 export class NoneMask extends SelectionMask {
-  matches(_elementType: SelectableElementType): boolean {
+  matches(_element: Element2D): boolean {
     return false; // Never matches anything - ensures hitTest returns null
   }
 
@@ -215,18 +215,28 @@ export class NoneMask extends SelectionMask {
 }
 
 /**
- * Matches single exact element type
- * Replaces simple string literals: 'point', 'line', 'circle'
+ * Matches element type using instanceof check
  * 
- * Example: TypeMask('point') matches only 'point', not derived types
+ * Example: TypeMask('line') matches Line2D and all subclasses (Guide2D, HalfHingeLine2D, etc.)
  */
 export class TypeMask extends SelectionMask {
   constructor(private readonly type: SelectableElementType) {
     super();
   }
 
-  matches(elementType: SelectableElementType): boolean {
-    return elementType === this.type;
+  matches(element: Element2D): boolean {
+    switch (this.type) {
+      case 'point':
+        return element instanceof Point2D;
+      case 'line':
+        return element instanceof Line2D;
+      case 'segment':
+        return element instanceof Segment2DByPoints;
+      case 'circle':
+        return element instanceof Circle2D;
+      default:
+        return false;
+    }
   }
 
   toString(): string {
@@ -242,25 +252,28 @@ export class TypeMask extends SelectionMask {
 }
 
 /**
- * Matches type and all its subtypes in domain hierarchy
- * Replaces 'any-line' string from Phase 62
+ * Matches type and all its subtypes using instanceof checks
+ * Note: With proper instanceof usage, this is largely redundant with TypeMask
+ * since instanceof automatically handles inheritance
  * 
- * Example: HierarchyMask('line', ['segment', 'guide', 'half-hinge-line'])
- * matches 'line', 'segment', 'guide', 'half-hinge-line'
+ * Kept for backward compatibility and explicit subtype specification
  */
 export class HierarchyMask extends SelectionMask {
-  private readonly allTypes: Set<SelectableElementType>;
+  private readonly baseMask: TypeMask;
+  private readonly subtypeMasks: TypeMask[];
 
   constructor(
     private readonly baseType: SelectableElementType,
     private readonly subtypes: SelectableElementType[]
   ) {
     super();
-    this.allTypes = new Set([baseType, ...subtypes]);
+    this.baseMask = new TypeMask(baseType);
+    this.subtypeMasks = subtypes.map(t => new TypeMask(t));
   }
 
-  matches(elementType: SelectableElementType): boolean {
-    return this.allTypes.has(elementType);
+  matches(element: Element2D): boolean {
+    if (this.baseMask.matches(element)) return true;
+    return this.subtypeMasks.some(mask => mask.matches(element));
   }
 
   toString(): string {
@@ -298,9 +311,9 @@ export class UnionMask extends SelectionMask {
     }
   }
 
-  matches(elementType: SelectableElementType): boolean {
+  matches(element: Element2D): boolean {
     // Short-circuit: return true on first match
-    return this.masks.some(mask => mask.matches(elementType));
+    return this.masks.some(mask => mask.matches(element));
   }
 
   toString(): string {
@@ -334,9 +347,9 @@ export class IntersectionMask extends SelectionMask {
     }
   }
 
-  matches(elementType: SelectableElementType): boolean {
+  matches(element: Element2D): boolean {
     // Short-circuit: return false on first non-match
-    return this.masks.every(mask => mask.matches(elementType));
+    return this.masks.every(mask => mask.matches(element));
   }
 
   toString(): string {
