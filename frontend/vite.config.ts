@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/diedrico/', // GitHub Pages base path for https://salva.github.io/diedrico/
   plugins: [vue()],
   resolve: {
     alias: {
