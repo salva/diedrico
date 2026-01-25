@@ -189,19 +189,19 @@ export abstract class Plane3D extends Element3D {
    * Getters for boundaries (convenience accessors)
    */
   get minU(): number {
-    return this.boundaries?.minU ?? -400;
+    return this.boundaries?.minU ?? -2000;
   }
 
   get maxU(): number {
-    return this.boundaries?.maxU ?? 400;
+    return this.boundaries?.maxU ?? 2000;
   }
 
   get minV(): number {
-    return this.boundaries?.minV ?? -400;
+    return this.boundaries?.minV ?? -2000;
   }
 
   get maxV(): number {
-    return this.boundaries?.maxV ?? 400;
+    return this.boundaries?.maxV ?? 2000;
   }
 }
 

@@ -314,7 +314,7 @@ function renderProjectionPlanes() {
         // console.log('[ThreeView] Got projection plane realization for grid conversion:', !!projPlaneRealization);
         if (!projPlaneRealization) {
           // console.log('[ThreeView] No projection plane realization, using fallback grid');
-          gridSegments = generateFallbackGrid(75, 20);
+          gridSegments = generateFallbackGrid(375, 20);
         } else {
           // console.log('[ThreeView] Converting corners to (u,v) and generating clipped grid');
           const rect2D = convertPlaneRectangleTo2D(corners, projPlaneRealization.threeDToPlane);
@@ -336,7 +336,7 @@ function renderProjectionPlanes() {
     } else {
       // console.log('[ThreeView] Base projection plane, using fallback grid');
       // Base planes: simple grid centered at origin
-      gridSegments = generateFallbackGrid(75, 20);
+      gridSegments = generateFallbackGrid(375, 20);
     }
     
     // console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
