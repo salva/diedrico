@@ -15,15 +15,54 @@
 
 import { Matrix3, Vector3, Vector4 } from 'three';
 import type { World } from '@/domain/world/World';
-import { Matrix4x3, Matrix3x4, applyMatrix4x3, applyMatrix3x4 } from './threeUtils';
+import { Matrix4x3, Matrix3x4, applyMatrix4x3, applyMatrix3x4, crossVector3Homogeneous, dotVector3Homogeneous, dotVector2Homogeneous } from './threeUtils';
 import { Line2DRealization2D } from '@/domain/world/Line';
 
 /**
- * 3D line representation for geometric computations
+ * Compute intersection point of two 2D lines in homogeneous coordinates
+ * 
+ * Lines in parametric form:
+ * - L1: P1 + s * d1
+ * - L2: P2 + t * d2
+ * 
+ * @param point1 - Point on first line (Vector3 with z=1)
+ * @param dir1 - Direction of first line (Vector3 with z=0)
+ * @param point2 - Point on second line (Vector3 with z=1)
+ * @param dir2 - Direction of second line (Vector3 with z=0)
+ * @returns Intersection point (Vector3 with z=1), or null if lines are parallel
  */
-interface Line3D {
-  point: Vector3;      // Any point on the line
-  direction: Vector3;  // Direction vector (should be normalized)
+export function computeLineLineIntersection2D(
+  point1: Vector3,
+  dir1: Vector3,
+  point2: Vector3,
+  dir2: Vector3
+): Vector3 | null {
+  // Normalize directions for numerical stability
+  const d1 = dir1.clone().normalize();
+  const d2 = dir2.clone().normalize();
+  
+  // Compute intersection using parametric form
+  // Line 1: P1 + s * d1
+  // Line 2: P2 + t * d2
+  // Solve: P1 + s * d1 = P2 + t * d2
+  const w = new Vector3().subVectors(point1, point2);
+  const d1_d1 = d1.dot(d1);
+  const d1_d2 = d1.dot(d2);
+  const d2_d2 = d2.dot(d2);
+  const d1_w = d1.dot(w);
+  const d2_w = d2.dot(w);
+  
+  const denom = d1_d1 * d2_d2 - d1_d2 * d1_d2;
+  
+  // Check for parallel lines (linearly dependent directions)
+  if (Math.abs(denom) < 1e-10) {
+    return null; // Lines are parallel - no unique intersection
+  }
+  
+  const s = (d1_d2 * d2_w - d2_d2 * d1_w) / denom;
+  const intersection = point1.clone().addScaledVector(d1, s);
+  
+  return intersection;
 }
 
 /**
@@ -36,16 +75,24 @@ interface Line3D {
  * For projection plane traces, the lines MUST intersect (they are traces of the same 3D plane).
  * If lines don't intersect within tolerance, throws an error indicating invalid trace selection.
  * 
- * @param line1 - First line { point: Vector3, direction: Vector3 }
- * @param line2 - Second line { point: Vector3, direction: Vector3 }
+ * @param point1 - Point on first line (Vector4 with w=1)
+ * @param dir1 - Direction of first line (Vector4 with w=0)
+ * @param point2 - Point on second line (Vector4 with w=1)
+ * @param dir2 - Direction of second line (Vector4 with w=0)
  * @returns Intersection point
  * @throws Error if lines are parallel or skew (don't intersect within numerical tolerance)
  */
-export function computeLineLineIntersection3D(line1: Line3D, line2: Line3D): Vector3 {
-  const p1 = line1.point;
-  const d1 = line1.direction.clone().normalize();
-  const p2 = line2.point;
-  const d2 = line2.direction.clone().normalize();
+export function computeLineLineIntersection3D(
+  point1: Vector4,
+  dir1: Vector4,
+  point2: Vector4,
+  dir2: Vector4
+): Vector3 {
+  // Extract Vector3 components from homogeneous Vector4
+  const p1 = new Vector3(point1.x, point1.y, point1.z);
+  const d1 = new Vector3(dir1.x, dir1.y, dir1.z).normalize();
+  const p2 = new Vector3(point2.x, point2.y, point2.z);
+  const d2 = new Vector3(dir2.x, dir2.y, dir2.z).normalize();
   
   // Vector from p1 to p2
   const w = new Vector3().subVectors(p1, p2);
@@ -69,11 +116,11 @@ export function computeLineLineIntersection3D(line1: Line3D, line2: Line3D): Vec
   const t = (a * e - b * d) / denom;
   
   // Compute closest points
-  const point1 = p1.clone().addScaledVector(d1, s);
-  const point2 = p2.clone().addScaledVector(d2, t);
+  const closestPoint1 = p1.clone().addScaledVector(d1, s);
+  const closestPoint2 = p2.clone().addScaledVector(d2, t);
   
   // Verify lines actually intersect (not skew)
-  const distance = point1.distanceTo(point2);
+  const distance = closestPoint1.distanceTo(closestPoint2);
   if (distance > 1e-6) {
     throw new Error(
       `Traces are skew (don't intersect) - distance: ${distance.toFixed(6)}. ` +
@@ -83,9 +130,9 @@ export function computeLineLineIntersection3D(line1: Line3D, line2: Line3D): Vec
   
   // Return intersection point (average of closest points for numerical stability)
   return new Vector3(
-    (point1.x + point2.x) / 2,
-    (point1.y + point2.y) / 2,
-    (point1.z + point2.z) / 2
+    (closestPoint1.x + closestPoint2.x) / 2,
+    (closestPoint1.y + closestPoint2.y) / 2,
+    (closestPoint1.z + closestPoint2.z) / 2
   );
 }
 
@@ -129,46 +176,36 @@ export interface ProjectionPlaneMatrices {
  * @param t2OtherTraceId - Line ID for other trace T2 on plane P2 (different from P1)
  * @param t2PrimeLineId - Line ID for position line T2' on plane P1 (orientation selector)
  * @param world - World instance for element lookup and geometry computation
- * @returns Transformation matrices for new projection plane
- * @throws Error if traces are invalid (parallel, not feasible, etc.)
+ * @returns Transformation matrices for new projection plane, or null if traces are invalid
  */
 export function computeProjectionPlaneMatrices(
   t1HingeTraceId: string,
   t2OtherTraceId: string,
   t2PrimeLineId: string,
   world: World
-): ProjectionPlaneMatrices {
+): ProjectionPlaneMatrices | null {
   // Get lines and their containing planes
-  const t1Line = world.getLine2D(t1HingeTraceId);
-  const t2Line = world.getLine2D(t2OtherTraceId);
-  const t2PrimeLine = world.getLine2D(t2PrimeLineId);
-  
-  if (!t1Line || !t2Line || !t2PrimeLine) {
-    throw new Error('Cannot find trace lines');
-  }
-  
-  const planeP1 = world.getProjectionPlaneById(t1Line.planeId!);
-  const planeP2 = world.getProjectionPlaneById(t2Line.planeId!);
-  
-  if (!planeP1 || !planeP2) {
-    throw new Error('Cannot find projection planes for traces');
-  }
+  const t1Line = world.getLine2D(t1HingeTraceId)!;
+  const t2Line = world.getLine2D(t2OtherTraceId)!;
+  const t2PrimeLine = world.getLine2D(t2PrimeLineId)!;
+    
+  const planeP1 = world.getProjectionPlaneById(t1Line.planeId!)!;
+  const planeP2 = world.getProjectionPlaneById(t2Line.planeId!)!;
   
   // Realize lines in 2D
-  const t1Realization = t1Line.realize2D(world);
-  const t2Realization = t2Line.realize2D(world);
-  const t2PrimeRealization = t2PrimeLine.realize2D(world);
-  
-  if (!t1Realization?.feasible || !t2Realization?.feasible || !t2PrimeRealization?.feasible) {
-    throw new Error('Trace lines are not feasible');
-  }
+  const t1Realization = t1Line.realize2D(world)!;
+  const t2Realization = t2Line.realize2D(world)!;
+  const t2PrimeRealization = t2PrimeLine.realize2D(world)!;
   
   // Get 3D realizations of projection planes
-  const planeP1Realization3D = world.getProjectionPlane3DRealization(planeP1.id!);
-  const planeP2Realization3D = world.getProjectionPlane3DRealization(planeP2.id!);
+  const planeP1Realization3D = world.getProjectionPlane3DRealization(planeP1.id!)!;
+  const planeP2Realization3D = world.getProjectionPlane3DRealization(planeP2.id!)!;
   
-  if (!planeP1Realization3D || !planeP2Realization3D) {
-    throw new Error('Cannot get 3D realizations for projection planes');
+  const planeP1Realization2D = planeP1.realize2D(world);
+
+  if (!t1Realization.feasible || !t2Realization.feasible || !t2PrimeRealization.feasible ||
+        !planeP1Realization3D.feasible || !planeP2Realization3D.feasible || !planeP1Realization2D.feasible) {
+    return null; // Geometry not feasible
   }
   
   // ===== PART 1: planeToPaper (Paper Layout) =====
@@ -186,96 +223,37 @@ export function computeProjectionPlaneMatrices(
   // - point2: direction vector (z=0)
   // So we should use point2 directly as the direction, not compute point2 - point1
   
-  const t1Point1 = t1Realization.point1;
-  const t1Dir_2d = new Vector3(
-    t1Realization.point2.x,
-    t1Realization.point2.y,
-    0
-  ).normalize();
+  const t1PointInP1 = t1Realization.point1;
+  const t1DirInP1 = t1Realization.point2.clone().normalize();
   
-  const t2PrimePoint1 = t2PrimeRealization.point1;
-  const t2PrimeDir_2d = new Vector3(
-    t2PrimeRealization.point2.x,
-    t2PrimeRealization.point2.y,
-    0
-  ).normalize();
+  const t2PrimePointInP1 = t2PrimeRealization.point1;
+  const t2PrimeDirInP1 = t2PrimeRealization.point2.clone().normalize();
   
-  // Compute intersection using parametric form
-  // Line 1: P1 + s * d1
-  // Line 2: P2 + t * d2
-  // Solve: P1 + s * d1 = P2 + t * d2
-  const w_2d = new Vector3().subVectors(t1Point1, t2PrimePoint1);
-  const d1_d1 = t1Dir_2d.dot(t1Dir_2d);
-  const d1_d2 = t1Dir_2d.dot(t2PrimeDir_2d);
-  const d2_d2 = t2PrimeDir_2d.dot(t2PrimeDir_2d);
-  const d1_w = t1Dir_2d.dot(w_2d);
-  const d2_w = t2PrimeDir_2d.dot(w_2d);
+  // Compute T1-T2' intersection using helper function
+  const auxOriginInP1 = computeLineLineIntersection2D(
+    t1PointInP1,
+    t1DirInP1,
+    t2PrimePointInP1,
+    t2PrimeDirInP1
+  );
   
-  const denom_2d = d1_d1 * d2_d2 - d1_d2 * d1_d2;
-  
-  if (Math.abs(denom_2d) < 1e-10) {
-    throw new Error('T1 and T2\' are parallel - cannot determine origin');
+  if (!auxOriginInP1) {
+    // T1 and T2' are parallel - cannot determine origin
+    return null;
   }
   
-  const s_2d = (d1_d2 * d2_w - d2_d2 * d1_w) / denom_2d;
-  const origin_plane = t1Point1.clone().addScaledVector(t1Dir_2d, s_2d);
-  
   // Transform intersection from P1's plane coords to P1's paper coords
-  const planeP1Realization2D = planeP1.realize2D(world);
-  const origin_paper = origin_plane.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
+  const auxOriginInPaper = auxOriginInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
-  // 1.2: U-axis = direction of T1 on paper (homogeneous direction)
-  const u_paper = new Vector3(t1Dir_2d.x, t1Dir_2d.y, 0);  // w=0 for direction
+  // 1.2: U-axis = direction of T1 transformed to paper coordinates
+  const auxUDirInPaper = t1DirInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
-  // 1.3: V-axis = perpendicular to T1 on paper
-  // Perpendicular in 2D: (x, y) → (-y, x) for +90° or (y, -x) for -90°
-  const v_paper_candidate = new Vector3(-u_paper.y, u_paper.x, 0);
-  
-  // 1.4: Orientation check: which side of T1 does T2 fall on?
-  // Transform a point on T2 to P1's paper coordinates and check which side
-  
-  // Get a point on T2 in 3D
-  const t2Point1_3D_forOrientation = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
-  
-  // Transform to P1's plane coordinates
-  const t2Point_on_P1_plane = applyMatrix3x4(
-    new Vector4(t2Point1_3D_forOrientation.x, t2Point1_3D_forOrientation.y, t2Point1_3D_forOrientation.z, 1),
-    planeP1Realization3D.threeDToPlane
-  );
-  
-  // Transform to paper coordinates
-  const t2Point_on_P1_paper = new Vector3(t2Point_on_P1_plane.x, t2Point_on_P1_plane.y, 1)
-    .applyMatrix3(planeP1Realization2D.planeToPaper2D);
-  
-  // Vector from origin to T2 point
-  const offset_paper = new Vector3(
-    t2Point_on_P1_paper.x - origin_paper.x,
-    t2Point_on_P1_paper.y - origin_paper.y,
-    0
-  );
-  
-  // Dot product determines which side
-  const side = offset_paper.dot(v_paper_candidate);
-  
-  const v_paper = (side > 0) ? v_paper_candidate : v_paper_candidate.clone().negate();
+  // Note: V-axis will be computed in Part 2 after we have 3D directions for proper orientation
   
   // 1.5: Build planeToPaper matrix (homogeneous 2D transform)
   // The origin_paper is T1-T2' intersection in P1's PAPER coordinates
   // This becomes the displacement/translation for the auxiliary plane's coordinate system
-  // So auxiliary plane's origin (0,0,1) maps to where T1-T2'-T2 intersect in P1's paper view
-  
-  // DEBUG: Log the basis vectors before building the matrix
-  console.log('[computeProjectionPlaneMatrices] u_paper:', u_paper);
-  console.log('[computeProjectionPlaneMatrices] v_paper:', v_paper);
-  console.log('[computeProjectionPlaneMatrices] origin_paper (in P1 paper coords):', origin_paper);
-  
-  // Transformation: (u, v, 1) → (x_paper, y_paper, 1)
-  const planeToPaper = new Matrix3();
-  planeToPaper.set(
-    u_paper.x, v_paper.x, origin_paper.x,  // Column 0, 1, 2 (row 0)
-    u_paper.y, v_paper.y, origin_paper.y,  // Row 1
-    0,         0,         1                 // Row 2 (homogeneous)
-  );
+  // Note: planeToPaper matrix will be constructed in Part 2 after v_paper is computed
   
   
   // ===== PART 2: planeTo3D and threeDToPlane (3D Geometry) =====
@@ -283,98 +261,109 @@ export function computeProjectionPlaneMatrices(
   // U-axis: Along T1 in 3D
   // V-axis: Double cross product t1 × (t1 × t2) - perpendicular to U, in-plane
   
-  // 2.1: Get T1 and T2 as 3D lines
-  // T1 points in 3D
-  const t1Point1_3D = applyMatrix4x3(t1Realization.point1, planeP1Realization3D.planeTo3D);
-  const t1Point2_3D = applyMatrix4x3(t1Realization.point2, planeP1Realization3D.planeTo3D);
+  // 2.1: Get T1 and T2 direction vectors in 3D (homogeneous coordinates)
+  // Line2DRealization2D.point2 is already the direction vector (z=0)
+  // Work with homogeneous Vector4 throughout
+  const t1DirIn3D = applyMatrix4x3(t1Realization.point2, planeP1Realization3D.planeTo3D).normalize();
+  const t2DirIn3D = applyMatrix4x3(t2Realization.point2, planeP2Realization3D.planeTo3D).normalize();
   
-  console.log('[computeProjectionPlaneMatrices] T1 2D:', t1Realization.point1, t1Realization.point2);
-  console.log('[computeProjectionPlaneMatrices] T1 3D: p1=', t1Point1_3D, 'p2=', t1Point2_3D);
+  // 2.2: Compute auxVDirInPaper with corrected T2' direction
+  // Check if T2' direction needs to be flipped by comparing angles in 3D and 2D
+  // If dot products have different signs, flip t2' direction
+  const dot_t1_t2_In3D = dotVector3Homogeneous(t1DirIn3D, t2DirIn3D);
+  const dot_t1_t2Prime_InP1 = dotVector2Homogeneous(t1DirInP1, t2PrimeDirInP1);
   
-  // T2 points in 3D
-  const t2Point1_3D = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
-  const t2Point2_3D = applyMatrix4x3(t2Realization.point2, planeP2Realization3D.planeTo3D);
+  const needsFlip = (dot_t1_t2_In3D * dot_t1_t2Prime_InP1) < 0;
+  if (needsFlip) {
+    t2PrimeDirInP1.multiplyScalar(-1);
+  }
   
-  console.log('[computeProjectionPlaneMatrices] T2 2D:', t2Realization.point1, t2Realization.point2);
-  console.log('[computeProjectionPlaneMatrices] T2 3D: p1=', t2Point1_3D, 'p2=', t2Point2_3D);
+  console.log('[computeProjectionPlaneMatrices] dot_t1_t2_In3D:', dot_t1_t2_In3D);
+  console.log('[computeProjectionPlaneMatrices] dot_t1_t2Prime_InP1:', dot_t1_t2Prime_InP1);
+  console.log('[computeProjectionPlaneMatrices] needsFlip:', needsFlip);
   
-  // 2.2: T1 and T2 as Line3D
-  // CRITICAL: point2 in realization has w=0 (direction vector in homogeneous coords)
-  // When transformed to 3D, it remains a direction - use it directly, don't subtract!
-  const t1Line3D: Line3D = {
-    point: new Vector3(t1Point1_3D.x, t1Point1_3D.y, t1Point1_3D.z),
-    direction: new Vector3(t1Point2_3D.x, t1Point2_3D.y, t1Point2_3D.z).normalize()
-  };
+  // V-axis using double cross product with corrected T2' direction
+  // For 2D vectors, t1 × (t1 × t2') simplifies to:
+  // z = t1x*t2'y - t1y*t2'x (2D cross product scalar)
+  // v = (t1y*z, -t1x*z)
+  const z = t1DirInP1.x * t2PrimeDirInP1.y - t1DirInP1.y * t2PrimeDirInP1.x;
+  const auxVDirInP1 = new Vector3(t1DirInP1.y * z, -t1DirInP1.x * z, 0).normalize();
   
-  const t2Line3D: Line3D = {
-    point: new Vector3(t2Point1_3D.x, t2Point1_3D.y, t2Point1_3D.z),
-    direction: new Vector3(t2Point2_3D.x, t2Point2_3D.y, t2Point2_3D.z).normalize()
-  };
+  console.log('[computeProjectionPlaneMatrices] auxVDirInP1 (after correction):', auxVDirInP1);
   
-  console.log('[computeProjectionPlaneMatrices] t1Line3D:', t1Line3D);
-  console.log('[computeProjectionPlaneMatrices] t2Line3D:', t2Line3D);
+  // Transform V-axis from P1 plane coords to paper coords
+  const auxVDirInPaper = auxVDirInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
-  // 2.3: U-axis = direction of T1 in 3D
-  const u_3d = t1Line3D.direction.clone();
+  // 1.5: Build planeToPaper matrix (homogeneous 2D transform)
+  // Now that we have auxUDirInPaper and auxVDirInPaper, we can construct the matrix
+  console.log('[computeProjectionPlaneMatrices] auxUDirInPaper:', auxUDirInPaper);
+  console.log('[computeProjectionPlaneMatrices] auxVDirInPaper:', auxVDirInPaper);
+  console.log('[computeProjectionPlaneMatrices] auxOriginInPaper (in P1 paper coords):', auxOriginInPaper);
   
-  // 2.4: V-axis = double cross product (stable, in-plane, perpendicular to U)
-  const t1_dir = t1Line3D.direction.clone();
-  const t2_dir = t2Line3D.direction.clone();
-  
-  const t1_cross_t2 = new Vector3().crossVectors(t1_dir, t2_dir);
-  // t1 × t2 = normal to plane containing both traces
-  
-  const v_3d_candidate = new Vector3().crossVectors(t1_dir, t1_cross_t2).normalize();
-  // t1 × (t1 × t2) = perpendicular to t1, lying in plane Q
-  
-  // 2.5: Check orientation: v_3d should align with paper v direction
-  // Project v_3d_candidate onto P1, check if it aligns with v_paper
-  const v_3d_on_P1_plane = applyMatrix3x4(
-    new Vector4(v_3d_candidate.x, v_3d_candidate.y, v_3d_candidate.z, 0),  // Direction: w=0
-    planeP1Realization3D.threeDToPlane
+  const planeToPaper = new Matrix3();
+  planeToPaper.set(
+    auxUDirInPaper.x, auxVDirInPaper.x, auxOriginInPaper.x,  // Column 0, 1, 2 (row 0)
+    auxUDirInPaper.y, auxVDirInPaper.y, auxOriginInPaper.y,  // Row 1
+    0,                0,                1                      // Row 2 (homogeneous)
   );
   
-  const v_3d_on_P1_paper = new Vector3(v_3d_on_P1_plane.x, v_3d_on_P1_plane.y, 0)
-    .applyMatrix3(planeP1Realization2D.planeToPaper2D);
+  // 2.3: U-axis = direction of T1 in 3D (homogeneous)
+  const auxUDirIn3D = t1DirIn3D.clone();
   
-  const alignment = new Vector3(v_3d_on_P1_paper.x, v_3d_on_P1_paper.y, 0).dot(v_paper);
+  // 2.4: V-axis = double cross product (stable, in-plane, perpendicular to U)
+  // Using homogeneous vector operations
+  const t1CrossT2In3D = crossVector3Homogeneous(t1DirIn3D, t2DirIn3D);
+  // t1 × t2 = normal to plane containing both traces
   
-  const v_3d = (alignment > 0) ? v_3d_candidate : v_3d_candidate.clone().negate();
+  const auxVDirIn3D = crossVector3Homogeneous(t1DirIn3D, t1CrossT2In3D).normalize();
+  // t1 × (t1 × t2) = perpendicular to t1, lying in plane Q
+  // Orientation is already correct due to T2' direction correction (needsFlip)
   
   // 2.6: Origin = intersection of T1 and T2 in 3D
-  const origin_3d = computeLineLineIntersection3D(t1Line3D, t2Line3D);
+  const t1PointIn3D = applyMatrix4x3(t1Realization.point1, planeP1Realization3D.planeTo3D);
+  const t2PointIn3D = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
   
-  console.log('[computeProjectionPlaneMatrices] u_3d:', u_3d);
-  console.log('[computeProjectionPlaneMatrices] v_3d:', v_3d);
-  console.log('[computeProjectionPlaneMatrices] origin_3d:', origin_3d);
+  const auxOriginIn3D = computeLineLineIntersection3D(
+    t1PointIn3D,
+    t1DirIn3D,
+    t2PointIn3D,
+    t2DirIn3D
+  );
   
-  // Verify: compute normal as u × v
-  const normal_aux = new Vector3().crossVectors(u_3d, v_3d);
-  console.log('[computeProjectionPlaneMatrices] Auxiliary plane normal (u×v):', normal_aux);
+  console.log('[computeProjectionPlaneMatrices] auxUDirIn3D:', auxUDirIn3D);
+  console.log('[computeProjectionPlaneMatrices] auxVDirIn3D:', auxVDirIn3D);
+  console.log('[computeProjectionPlaneMatrices] auxOriginIn3D:', auxOriginIn3D);
+  
+  // Verify: compute normal as u × v (extract Vector3 for Three.js operation)
+  const auxNormalIn3D = new Vector3().crossVectors(
+    new Vector3(auxUDirIn3D.x, auxUDirIn3D.y, auxUDirIn3D.z),
+    new Vector3(auxVDirIn3D.x, auxVDirIn3D.y, auxVDirIn3D.z)
+  );
+  console.log('[computeProjectionPlaneMatrices] Auxiliary plane normal (u×v):', auxNormalIn3D);
   console.log('[computeProjectionPlaneMatrices] Normal should match Plane3DFromTraces normal: (0.408, 0.816, 0.408)');
   
   // 2.7: Build planeTo3D matrix (homogeneous 2D → 3D)
   // Transformation: (u, v, 0) → (x, y, z, 0) for directions
-  //                 (u, v, 1) → (x, y, z, 1) for points (via origin + u*u_3d + v*v_3d)
-  // Formula: point_3d = origin_3d + u * u_3d + v * v_3d
+  //                 (u, v, 1) → (x, y, z, 1) for points (via origin + u*auxUDirIn3D + v*auxVDirIn3D)
+  // Formula: point_3d = auxOriginIn3D + u * auxUDirIn3D + v * auxVDirIn3D
   const planeTo3D = new Matrix4x3();
   planeTo3D.set(
-    u_3d.x, v_3d.x, origin_3d.x,  // Row 0: x = u*u_3d.x + v*v_3d.x + origin_3d.x
-    u_3d.y, v_3d.y, origin_3d.y,  // Row 1: y = ...
-    u_3d.z, v_3d.z, origin_3d.z,  // Row 2: z = ...
-    0,      0,      1             // Row 3: w = 1 (homogeneous)
+    auxUDirIn3D.x, auxVDirIn3D.x, auxOriginIn3D.x,  // Row 0: x = u*auxUDirIn3D.x + v*auxVDirIn3D.x + auxOriginIn3D.x
+    auxUDirIn3D.y, auxVDirIn3D.y, auxOriginIn3D.y,  // Row 1: y = ...
+    auxUDirIn3D.z, auxVDirIn3D.z, auxOriginIn3D.z,  // Row 2: z = ...
+    0,             0,             1                  // Row 3: w = 1 (homogeneous)
   );
   
   // 2.8: Build threeDToPlane matrix (homogeneous 3D → 2D)
   // Inverse transformation: (x, y, z, 1) → (u, v, 0)
-  // Solve: (x, y, z) = origin_3d + u * u_3d + v * v_3d
-  // u = (point_3d - origin_3d) · u_3d  (since u_3d is normalized and orthogonal to v_3d)
-  // v = (point_3d - origin_3d) · v_3d
+  // Solve: (x, y, z) = auxOriginIn3D + u * auxUDirIn3D + v * auxVDirIn3D
+  // u = (point_3d - auxOriginIn3D) · auxUDirIn3D  (since auxUDirIn3D is normalized and orthogonal to auxVDirIn3D)
+  // v = (point_3d - auxOriginIn3D) · auxVDirIn3D
   const threeDToPlane = new Matrix3x4();
   threeDToPlane.set(
-    u_3d.x, u_3d.y, u_3d.z, -u_3d.dot(origin_3d),  // Row 0: u = ...
-    v_3d.x, v_3d.y, v_3d.z, -v_3d.dot(origin_3d),  // Row 1: v = ...
-    0,      0,      0,      0                       // Row 2: w = 0 (direction)
+    auxUDirIn3D.x, auxUDirIn3D.y, auxUDirIn3D.z, -dotVector3Homogeneous(auxUDirIn3D, new Vector4(auxOriginIn3D.x, auxOriginIn3D.y, auxOriginIn3D.z, 1)),  // Row 0: u = ...
+    auxVDirIn3D.x, auxVDirIn3D.y, auxVDirIn3D.z, -dotVector3Homogeneous(auxVDirIn3D, new Vector4(auxOriginIn3D.x, auxOriginIn3D.y, auxOriginIn3D.z, 1)),  // Row 1: v = ...
+    0,             0,             0,             0                       // Row 2: w = 0 (direction)
   );
   
   return {

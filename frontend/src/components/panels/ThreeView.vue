@@ -224,7 +224,7 @@ function initThreeScene() {
  * Compute 3D rectangle corners using the precomputed transformation from planeRealization.
  * Uses the getRectangleCorners() method from Plane3DRealization3D.
  */
-function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, planeSize: number = 75): Vector4[] {
+function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, planeSize: number = 375): Vector4[] {
   return planeRealization.getRectangleCorners(planeSize);
 }
 
@@ -306,7 +306,7 @@ function renderProjectionPlanes() {
         // console.log('[ThreeView] Generating clipped grid for auxiliary plane');
         
         // Get the ACTUAL 3D plane rectangle corners (same as what's rendered)
-        const planeSize = 75;  // Half-size (150/2)
+        const planeSize = 375;  // Half-size (750/2)
         const corners = compute3DPlaneRectangleCorners(planeRealization, planeSize) as [Vector4, Vector4, Vector4, Vector4];
         
         // Convert to projection plane (u,v) coordinates using the projection plane's inverse matrix
@@ -557,7 +557,7 @@ function render3DElements() {
       }
 
       // Create plane mesh (semi-transparent surface)
-      const planeSize = 150;
+      const planeSize = 750;
       const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
       
       const material = new THREE.MeshBasicMaterial({

@@ -240,10 +240,10 @@ export class Plane3DRealization3D extends Element3DRealization3D {
    * Compute the 4 corners of the rectangle representing this plane in 3D space.
    * Uses the precomputed quaternion and originPoint to transform PlaneGeometry corners.
    * 
-   * @param planeSize Half-size of the plane rectangle (default 75 for 150x150 square)
+   * @param planeSize Half-size of the plane rectangle (default 375 for 750x750 square)
    * @returns Array of 4 corners [bottom-left, bottom-right, top-right, top-left] in domain coordinates
    */
-  getRectangleCorners(planeSize: number = 75): Vector4[] {
+  getRectangleCorners(planeSize: number = 375): Vector4[] {
     if (!this.quaternion || !this.originPoint) {
       console.error('[Plane3DRealization3D] Cannot compute corners: missing quaternion or originPoint');
       return [];

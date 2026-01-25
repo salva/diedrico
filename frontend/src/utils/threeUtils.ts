@@ -81,13 +81,29 @@ export function cross(v1: Vector3, v2: Vector3): Vector3 {
  * Compute cross product of two Vector4 objects (treating as 3D vectors, ignoring w)
  * Returns a new Vector4 with the cross product (w=0 for direction vector)
  */
-export function crossVector4(v1: Vector4, v2: Vector4): Vector4 {
+export function crossVector3Homogeneous(v1: Vector4, v2: Vector4): Vector4 {
   return new Vector4(
     v1.y * v2.z - v1.z * v2.y,
     v1.z * v2.x - v1.x * v2.z,
     v1.x * v2.y - v1.y * v2.x,
     0 // Cross product is a direction, not a point
   );
+}
+
+/**
+ * Compute dot (scalar) product of two Vector4 objects (treating as 3D vectors, ignoring w)
+ * Returns the scalar dot product: v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+ */
+export function dotVector3Homogeneous(v1: Vector4, v2: Vector4): number {
+  return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+/**
+ * Compute dot (scalar) product of two Vector3 objects (treating as 2D vectors, ignoring z)
+ * Returns the scalar dot product: v1.x * v2.x + v1.y * v2.y
+ */
+export function dotVector2Homogeneous(v1: Vector3, v2: Vector3): number {
+  return v1.x * v2.x + v1.y * v2.y;
 }
 
 /**

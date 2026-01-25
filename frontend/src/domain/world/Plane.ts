@@ -20,7 +20,7 @@
 import { Vector3, Vector4 } from 'three';
 import { Element3D } from './Element3D';
 import { Plane3DRealization3D } from './Element3DRealization3D';
-import { applyMatrix4x3, crossVector4 } from '@/utils/threeUtils';
+import { applyMatrix4x3, crossVector3Homogeneous } from '@/utils/threeUtils';
 import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
 export interface Plane3DCoordinateSystem {
   origin: Vector4;     // Origin point on the plane (x, y, z, 1)
@@ -63,7 +63,7 @@ export abstract class Plane3D extends Element3D {
     const defaultNormal = new Vector4(0, 0, 1, 0);
     
     // Compute rotation axis and angle using cross product and dot product
-    const axis = crossVector4(defaultNormal, normalVec);
+    const axis = crossVector3Homogeneous(defaultNormal, normalVec);
     const axisLength = Math.sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
     const dotProduct = defaultNormal.x * normalVec.x + defaultNormal.y * normalVec.y + defaultNormal.z * normalVec.z;
     
@@ -76,7 +76,7 @@ export abstract class Plane3D extends Element3D {
       } else {
         // Opposite direction - 180° rotation around any perpendicular axis
         const perpAxis = Math.abs(normalVec.x) < 0.9 ? new Vector4(1, 0, 0, 0) : new Vector4(0, 1, 0, 0);
-        const rotAxis = crossVector4(perpAxis, normalVec).normalize();
+        const rotAxis = crossVector3Homogeneous(perpAxis, normalVec).normalize();
         quaternion = { x: rotAxis.x, y: rotAxis.y, z: rotAxis.z, w: 0 };
       }
     } else {
@@ -421,9 +421,17 @@ export class Plane3DFromTraces extends Plane3D {
     // CRITICAL VALIDATION: Check if traces intersect (they must for a valid plane)
     // Traces of the same 3D plane MUST intersect at a point
     try {
+      // Convert Vector3 to homogeneous Vector4 for computeLineLineIntersection3D
+      const p1_homogeneous = new Vector4(p1_3D.x, p1_3D.y, p1_3D.z, 1);  // Point (w=1)
+      const d1_homogeneous = new Vector4(d1.x, d1.y, d1.z, 0);  // Direction (w=0)
+      const p3_homogeneous = new Vector4(p3_3D.x, p3_3D.y, p3_3D.z, 1);  // Point (w=1)
+      const d2_homogeneous = new Vector4(d2.x, d2.y, d2.z, 0);  // Direction (w=0)
+      
       const intersection = computeLineLineIntersection3D(
-        { point: p1_3D, direction: d1 },
-        { point: p3_3D, direction: d2 }
+        p1_homogeneous,
+        d1_homogeneous,
+        p3_homogeneous,
+        d2_homogeneous
       );
       console.log('[Plane3DFromTraces] Traces intersect at:', intersection);
     } catch (error) {
@@ -493,7 +501,7 @@ export class Plane3DFromTraces extends Plane3D {
     const defaultNormal = new Vector4(0, 0, 1, 0);
     
     // Compute rotation axis and angle using cross product and dot product
-    const axis = crossVector4(defaultNormal, normalVec);
+    const axis = crossVector3Homogeneous(defaultNormal, normalVec);
     const axisLength = Math.sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
     const dotProduct = defaultNormal.x * normalVec.x + defaultNormal.y * normalVec.y + defaultNormal.z * normalVec.z;
     
@@ -506,7 +514,7 @@ export class Plane3DFromTraces extends Plane3D {
       } else {
         // Opposite direction - 180° rotation around any perpendicular axis
         const perpAxis = Math.abs(a) < 0.9 ? new Vector4(1, 0, 0, 0) : new Vector4(0, 1, 0, 0);
-        const rotAxis = crossVector4(perpAxis, normalVec).normalize();
+        const rotAxis = crossVector3Homogeneous(perpAxis, normalVec).normalize();
         quaternion = { x: rotAxis.x, y: rotAxis.y, z: rotAxis.z, w: 0 };
       }
     } else {

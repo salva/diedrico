@@ -19,7 +19,7 @@ import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Plane3DFromTraces } from '@/domain/world/Plane';
 import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
-import { Vector3 } from 'three';
+import { Vector3, Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
 
 export class Add3DPlaneOp implements IOperation {
@@ -131,9 +131,17 @@ export class Add3DPlaneOp implements IOperation {
       
       try {
         // This will throw an error if traces are parallel or skew (don't intersect)
+        // Convert Vector3 to homogeneous Vector4 for computeLineLineIntersection3D
+        const p1_homogeneous = new Vector4(p1_3D.x, p1_3D.y, p1_3D.z, 1);  // Point (w=1)
+        const d1_homogeneous = new Vector4(d1_3D.x, d1_3D.y, d1_3D.z, 0);  // Direction (w=0)
+        const p2_homogeneous = new Vector4(p2_3D.x, p2_3D.y, p2_3D.z, 1);  // Point (w=1)
+        const d2_homogeneous = new Vector4(d2_3D.x, d2_3D.y, d2_3D.z, 0);  // Direction (w=0)
+        
         computeLineLineIntersection3D(
-          { point: p1_3D, direction: d1_3D },
-          { point: p2_3D, direction: d2_3D }
+          p1_homogeneous,
+          d1_homogeneous,
+          p2_homogeneous,
+          d2_homogeneous
         );
       } catch (error) {
         throw new Error(

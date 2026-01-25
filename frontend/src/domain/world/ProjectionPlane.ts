@@ -38,6 +38,7 @@
 import { Matrix3, Vector3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { buildElementId } from './ElementId';
+import { Realization } from './Realization';
 import { computeProjectionPlaneMatrices } from '@/utils/projectionPlaneUtils';
 import type { Point2D, Point2DRealization2D } from './Point';
 import { 
@@ -68,7 +69,7 @@ export type ProjectionPlaneType = 'base' | 'auxiliary';
  * ProjectionPlaneRealization2D - Stores computed 2D transformation matrices for a ProjectionPlane
  * This is the cache of evaluated 2D plane transformations for paper/canvas rendering.
  */
-export class ProjectionPlaneRealization2D {
+export class ProjectionPlaneRealization2D extends Realization {
   planeId: string;
   
   // Plane-to-paper: 3x3 homogeneous matrix
@@ -84,8 +85,10 @@ export class ProjectionPlaneRealization2D {
   constructor(
     planeId: string,
     planeToPaper2D: Matrix3,
-    paperToPlane2D: Matrix3
+    paperToPlane2D: Matrix3,
+    feasible: boolean = true
   ) {
+    super(feasible);
     this.planeId = planeId;
     this.planeToPaper2D = planeToPaper2D;
     this.paperToPlane2D = paperToPlane2D;
@@ -98,7 +101,8 @@ export class ProjectionPlaneRealization2D {
     return new ProjectionPlaneRealization2D(
       this.planeId,
       this.planeToPaper2D.clone(),
-      this.paperToPlane2D.clone()
+      this.paperToPlane2D.clone(),
+      this.feasible
     );
   }
 }
@@ -108,7 +112,7 @@ export class ProjectionPlaneRealization2D {
  * This is the cache of evaluated 3D plane transformation for Three.js rendering.
  * Uses Matrix4x3 for dimension-changing transforms (2D homogeneous → 3D homogeneous).
  */
-export class ProjectionPlaneRealization3D {
+export class ProjectionPlaneRealization3D extends Realization {
   planeId: string;
   
   // Forward: Plane (u,v,1) → 3D (x,y,z,w)
@@ -124,8 +128,10 @@ export class ProjectionPlaneRealization3D {
   constructor(
     planeId: string,
     planeTo3D: Matrix4x3,
-    threeDToPlane: Matrix3x4
+    threeDToPlane: Matrix3x4,
+    feasible: boolean = true
   ) {
+    super(feasible);
     this.planeId = planeId;
     this.planeTo3D = planeTo3D;
     this.threeDToPlane = threeDToPlane;
@@ -138,7 +144,8 @@ export class ProjectionPlaneRealization3D {
     return new ProjectionPlaneRealization3D(
       this.planeId,
       this.planeTo3D.clone(),
-      this.threeDToPlane.clone()
+      this.threeDToPlane.clone(),
+      this.feasible
     );
   }
 }
@@ -1504,21 +1511,34 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
         world
       );
       
+      if (!matrices) {
+        // Trace lines are not feasible - return infeasible realization
+        console.log('[AuxiliaryProjectionPlane.realize3D] Cannot compute matrices - traces not feasible');
+        return new ProjectionPlaneRealization3D(
+          this.id,
+          new Matrix4x3(),
+          new Matrix3x4(),
+          false  // Mark as infeasible
+        );
+      }
+      
       console.log('[AuxiliaryProjectionPlane.realize3D] Successfully computed matrices for', this.id);
       
       return new ProjectionPlaneRealization3D(
         this.id,
         matrices.planeTo3D,
-        matrices.threeDToPlane
+        matrices.threeDToPlane,
+        true  // Feasible realization
       );
       
     } catch (error) {
       console.error('[AuxiliaryProjectionPlane] Failed to compute realization:', error);
-      // Return fallback identity matrices
+      // Return infeasible realization with fallback identity matrices
       return new ProjectionPlaneRealization3D(
         this.id,
         new Matrix4x3(),
-        new Matrix3x4()
+        new Matrix3x4(),
+        false  // Mark as infeasible
       );
     }
   }
@@ -1544,13 +1564,27 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
         world
       );
       
+      if (!matrices) {
+        // Trace lines are not feasible - return infeasible realization
+        console.log('[AuxiliaryProjectionPlane.realize2D] Cannot compute matrices - traces not feasible');
+        const identityMatrix = new Matrix3();
+        identityMatrix.identity();
+        return new ProjectionPlaneRealization2D(
+          this.id,
+          identityMatrix,
+          identityMatrix.clone(),
+          false  // Mark as infeasible
+        );
+      }
+      
       // Compute paperToPlane as inverse of planeToPaper
       const paperToPlane = matrices.planeToPaper.clone().invert();
       
       return new ProjectionPlaneRealization2D(
         this.id,
         matrices.planeToPaper,
-        paperToPlane
+        paperToPlane,
+        true  // Feasible realization
       );
       
     } catch (error) {
