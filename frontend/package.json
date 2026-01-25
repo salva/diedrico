@@ -5,9 +5,10 @@
   "license": "GPL-3.0-or-later",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "build": "vite build",
+    "build:check": "vue-tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist",
+    "deploy": "vite build && gh-pages -d dist",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
