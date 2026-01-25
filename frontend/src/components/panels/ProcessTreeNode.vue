@@ -126,7 +126,7 @@ const isRelated = computed(() => {
 
 const allChildren = computed(() => {
   if (!('children' in props.node)) return [];
-  return props.node.children;
+  return props.node.children.filter(child => child !== null);
 });
 
 const isInfeasible = computed(() => {
