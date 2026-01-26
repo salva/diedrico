@@ -84,7 +84,12 @@ export class Guide2D extends Line2DPerpendicularToLine {
   realize2D(world: import('./World').World): Line2DRealization2D | null {
     // Get reference line realization from world
     const plane = world.getProjectionPlaneById(this.planeId)!;
-    const refLine = plane.getLine(this.referenceLineId)!;
+    const refLine = plane.getLine(this.referenceLineId);
+    
+    if (!refLine) {
+      throw new Error(`[Guide2D] Invalid referenceLineId: ${this.referenceLineId} not found on plane ${this.planeId} for guide ${this.id}`);
+    }
+    
     const referenceLine = refLine.realize2D(world)!;
 
     // Check if reference line is infeasible - propagate infeasibility
@@ -94,7 +99,12 @@ export class Guide2D extends Line2DPerpendicularToLine {
     }
 
     // Get through-point realization from world
-    const throughPoint = plane.getPoint(this.throughPointId)!;
+    const throughPoint = plane.getPoint(this.throughPointId);
+    
+    if (!throughPoint) {
+      throw new Error(`[Guide2D] Invalid throughPointId: ${this.throughPointId} not found on plane ${this.planeId} for guide ${this.id}`);
+    }
+    
     const throughPointRealization = throughPoint.realize2D(world)!;
 
     // Check if through-point is infeasible - propagate infeasibility

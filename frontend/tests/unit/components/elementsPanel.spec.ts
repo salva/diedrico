@@ -103,7 +103,7 @@ describe('ElementsPanel', () => {
       const planeH = world.getProjectionPlaneByLabel('P_H');
       const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-      planeH.addLine2DByTwoPoints(p1.id, p2.id, world, undefined, 'L1');
+      planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world, undefined, 'L1');
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;
@@ -365,8 +365,12 @@ describe('ElementsPanel', () => {
       const planeH = world.getProjectionPlaneByLabel('P_H');
       const point = planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
       
-      // Toggle visibility using element property
-      point.visible = false;
+      // Toggle visibility using visualStyle property (correct pattern)
+      if (!point.visualStyle) {
+        point.visualStyle = { color: '#000000', lineWidth: 2, lineStyle: 'solid', opacity: 1.0, visible: false, inherited: true };
+      } else {
+        point.visualStyle.visible = false;
+      }
       
       const wrapper = mountPanel();
       const vm = wrapper.vm as any;

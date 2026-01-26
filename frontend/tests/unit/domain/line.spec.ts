@@ -42,7 +42,7 @@ describe('Line2DByTwoPoints', () => {
     );
     
     expect(line.id).toBe('P_H/line1');
-    expect(line.type).toBe('by-two-points');
+    expect(line).toBeInstanceOf(Line2DByTwoPoints);
     expect(line.point1Id).toBe('P_H/point1');
     expect(line.point2Id).toBe('P_H/point2');
     expect(line.planeId).toBe('P_H');
@@ -120,42 +120,6 @@ describe('Line2DByTwoPoints', () => {
     expect(realization!.point2.x).toBeCloseTo(3, 10);
     expect(realization!.point2.y).toBeCloseTo(4, 10);
     expect(realization!.point2.z).toBe(0);
-  });
-
-  it('should return null if first point is missing', () => {
-    const world = new World();
-    const plane = world.getProjectionPlaneByLabel('P_H')!;
-    const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-    // point1 doesn't exist in world
-    
-    const line = new Line2DByTwoPoints(
-      plane.id + '/line1',
-      plane.id + '/missing_point1',
-      p2.id,
-      plane.id
-    );
-    
-    const realization = line.realize2D(world);
-    
-    expect(realization).toBeNull();
-  });
-
-  it('should return null if second point is missing', () => {
-    const world = new World();
-    const plane = world.getProjectionPlaneByLabel('P_H')!;
-    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    // point2 doesn't exist in world
-    
-    const line = new Line2DByTwoPoints(
-      plane.id + '/line1',
-      p1.id,
-      plane.id + '/missing_point2',
-      plane.id
-    );
-    
-    const realization = line.realize2D(world);
-    
-    expect(realization).toBeNull();
   });
 
   it('should return null if both points are too close (degenerate line)', () => {

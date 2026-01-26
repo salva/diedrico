@@ -25,9 +25,9 @@ describe('UpdateFreePoint2DPositionOp', () => {
     const result = op.apply(world);
     expect(result.success).toBe(true);
 
-    const moved = plane.getPoint(point.id) as any;
-    expect(moved.type).toBe('free');
-    expect(moved.position.x).toBe(100);
+    const moved = plane.getPoint(point.id);
+    expect(moved).toBeDefined();
+    expect(moved!.position.x).toBe(100);
     expect(moved.position.y).toBe(200);
 
     op.undo(world);

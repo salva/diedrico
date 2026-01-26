@@ -9,7 +9,7 @@
  * 3. Parametric behavior: matrices recalculate when trace lines move
  * 
  * CRITICAL DISTINCTION:
- * - AddProjectionPlaneFixedOp: Bootstrap only (P_H, P_V) with pre-computed matrices, no dependencies
+ * - AddProjectionPlaneFixedOp: Initialization only (P_H, P_V) with pre-computed matrices, no dependencies
  * - AddAuxiliaryProjectionPlaneOp: User-created planes that recompute matrices from trace dependencies
  * 
  * The operation is reversible (undo removes the plane).

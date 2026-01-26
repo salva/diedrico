@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3, Vector4, Matrix3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { World } from '@/domain/world/World';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import {
   AddPlane3DFixedOp,
   AddProjectionPlaneFixedOp,
@@ -118,9 +119,9 @@ describe('Initialization Operations', () => {
       expect(result.success).toBe(true);
       expect(result.outputs.planeId).toBe('plane_test_H');
       
-      const plane = (world as any).planes.get('plane_test_H');
+      const plane = world.getProjectionPlaneById('plane_test_H');
       expect(plane).toBeDefined();
-      expect(plane.type).toBe('projection');
+      expect(plane!.label).toBe('P_H');
       expect(plane.label).toBe('P_H');
     });
 
@@ -132,9 +133,9 @@ describe('Initialization Operations', () => {
 
       expect(result.success).toBe(true);
       
-      const plane = (world as any).planes.get('plane_test_V');
+      const plane = world.getProjectionPlaneById('plane_test_V');
       expect(plane).toBeDefined();
-      expect(plane.label).toBe('P_V');
+      expect(plane!.label).toBe('P_V');
     });
 
     it('should undo plane creation', () => {
@@ -143,11 +144,11 @@ describe('Initialization Operations', () => {
       const op = new AddPlane3DFixedOp(point, normal, 'plane_undo_test');
       op.apply(world);
       
-      expect((world as any).planes.has('plane_undo_test')).toBe(true);
+      expect(world.getProjectionPlaneById('plane_undo_test')).toBeDefined();
       
       op.undo(world);
       
-      expect((world as any).planes.has('plane_undo_test')).toBe(false);
+      expect(world.getProjectionPlaneById('plane_undo_test')).toBeUndefined();
     });
 
     it('should have valid parameters and outputs', () => {
@@ -306,9 +307,9 @@ describe('Initialization Operations', () => {
       expect(result.success).toBe(true);
       expect(result.outputs.hingeLineId).toBe('hl_test');
       
-      const hingeLine = (world as any).hingeLines.get('hl_test');
+      const hingeLine = world.getHingeLineById('hl_test');
       expect(hingeLine).toBeDefined();
-      expect((world as any).mainHingeLineId).toBe('hl_test');
+      expect(hingeLine!.id).toBe('hl_test');
     });
 
     it('should undo hinge line creation', () => {
@@ -369,7 +370,7 @@ describe('Initialization Operations', () => {
       const lines = projPlane!.getAllLines();
       
       expect(lines.length).toBe(1);
-      expect(lines[0].type).toBe('half-hinge');
+      expect(lines[0]).toBeInstanceOf(HalfHingeLine2D);
     });
 
     it('should return error if plane not found', () => {

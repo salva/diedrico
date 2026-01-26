@@ -20,7 +20,6 @@ import {
   showElement,
   getElementLabel,
   getVisibleElements,
-  getElementsByType,
   countElementsByPlane,
   Element2D
 } from '../../../src/domain/world/index';
@@ -73,10 +72,10 @@ describe('Element2DUtils Integration Tests', () => {
       expect(planeH).toHaveLength(3);
       expect(planeV).toHaveLength(3);
 
-      // Verify each plane contains correct mix
-      expect(planeH.some((el: Element2D) => el.type === 'free')).toBe(true);
-      expect(planeH.some((el: Element2D) => el.type === 'by-two-points')).toBe(true);
-      expect(planeH.some((el: Element2D) => el.type === 'by-center-and-point')).toBe(true);
+      // Verify each plane contains correct mix (using instanceof)
+      expect(planeH.some((el: Element2D) => el instanceof FreePoint2D)).toBe(true);
+      expect(planeH.some((el: Element2D) => el instanceof Line2DByTwoPoints)).toBe(true);
+      expect(planeH.some((el: Element2D) => el instanceof Circle2DByCenterAndPoint)).toBe(true);
     });
 
     it('should return empty array for non-existent plane', () => {
@@ -102,14 +101,14 @@ describe('Element2DUtils Integration Tests', () => {
         new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
       ];
 
-      // All visible initially
-      elements.forEach(el => expect(el.visible).toBe(true));
+      // All visible initially (visualStyle not set, defaults to visible)
+      elements.forEach(el => expect(el.visualStyle?.visible !== false).toBe(true));
 
       // Hide all
       elements.forEach(hideElement);
 
       // All hidden now
-      elements.forEach(el => expect(el.visible).toBe(false));
+      elements.forEach(el => expect(el.visualStyle?.visible).toBe(false));
     });
 
     it('should show all element types uniformly', () => {
@@ -120,14 +119,14 @@ describe('Element2DUtils Integration Tests', () => {
       ];
 
       // Hide all first
-      elements.forEach(el => el.visible = false);
-      elements.forEach(el => expect(el.visible).toBe(false));
+      elements.forEach(hideElement);
+      elements.forEach(el => expect(el.visualStyle?.visible).toBe(false));
 
       // Show all
       elements.forEach(showElement);
 
       // All visible now
-      elements.forEach(el => expect(el.visible).toBe(true));
+      elements.forEach(el => expect(el.visualStyle?.visible).toBe(true));
     });
 
     it('should allow selective visibility changes', () => {
@@ -137,9 +136,9 @@ describe('Element2DUtils Integration Tests', () => {
 
       hideElement(line);
 
-      expect(point.visible).toBe(true);
-      expect(line.visible).toBe(false);
-      expect(circle.visible).toBe(true);
+      expect(point.visualStyle?.visible !== false).toBe(true);
+      expect(line.visualStyle?.visible).toBe(false);
+      expect(circle.visualStyle?.visible !== false).toBe(true);
     });
   });
 
@@ -173,7 +172,7 @@ describe('Element2DUtils Integration Tests', () => {
         new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
       ];
 
-      elements[1].visible = false; // Hide the line
+      hideElement(elements[1]); // Hide the line
 
       const visible = getVisibleElements(elements);
       expect(visible).toHaveLength(2);
@@ -187,7 +186,7 @@ describe('Element2DUtils Integration Tests', () => {
         new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
       ];
 
-      elements.forEach(el => el.visible = false);
+      elements.forEach(hideElement);
 
       const visible = getVisibleElements(elements);
       expect(visible).toHaveLength(0);
@@ -202,34 +201,6 @@ describe('Element2DUtils Integration Tests', () => {
 
       const visible = getVisibleElements(elements);
       expect(visible).toHaveLength(3);
-    });
-  });
-
-  describe('getElementsByType', () => {
-    it('should filter by type from mixed array', () => {
-      const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new FreePoint2D('proj_plane_H/p2', new Vector3(3, 4, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
-      ];
-
-      const freePoints = getElementsByType(elements, 'free');
-      const lines = getElementsByType(elements, 'by-two-points');
-      const circles = getElementsByType(elements, 'by-center-and-point');
-
-      expect(freePoints).toHaveLength(2);
-      expect(lines).toHaveLength(1);
-      expect(circles).toHaveLength(1);
-    });
-
-    it('should return empty array for non-existent type', () => {
-      const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-      ];
-
-      const result = getElementsByType(elements, 'nonexistent-type');
-      expect(result).toHaveLength(0);
     });
   });
 
@@ -277,16 +248,16 @@ describe('Element2DUtils Integration Tests', () => {
         new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/p5', 'proj_plane_H/p6', 'proj_plane_H'),
       ];
 
-      // Hide all lines
-      getElementsByType(elements, 'by-two-points').forEach(hideElement);
+      // Hide all lines (using instanceof filter)
+      elements.filter(el => el instanceof Line2DByTwoPoints).forEach(hideElement);
 
       // Get visible elements on plane H
       const visiblePlaneH = getVisibleElements(getElementsOnPlane(elements, 'proj_plane_H'));
 
       expect(visiblePlaneH).toHaveLength(2); // Point A and Circle c1
-      expect(visiblePlaneH.some((el: Element2D) => el.type === 'free')).toBe(true);
-      expect(visiblePlaneH.some((el: Element2D) => el.type === 'by-center-and-point')).toBe(true);
-      expect(visiblePlaneH.some((el: Element2D) => el.type === 'by-two-points')).toBe(false); // Lines hidden
+      expect(visiblePlaneH.some((el: Element2D) => el instanceof FreePoint2D)).toBe(true);
+      expect(visiblePlaneH.some((el: Element2D) => el instanceof Circle2DByCenterAndPoint)).toBe(true);
+      expect(visiblePlaneH.some((el: Element2D) => el instanceof Line2DByTwoPoints)).toBe(false); // Lines hidden
     });
 
     it('should handle operations on filtered subsets', () => {

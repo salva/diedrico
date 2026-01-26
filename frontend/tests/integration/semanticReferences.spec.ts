@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { World } from '../../src/domain/world/World';
 import { Command } from '../../src/commands/Command';
 import { buildWorldInitialization } from '../../src/commands/factories/InitializationSequenceFactory';
+import { getMainHingeLine } from '../helpers/worldHelpers';
 
 describe('Semantic Entity References (Phase 46)', () => {
   let world: World;
@@ -39,7 +40,7 @@ describe('Semantic Entity References (Phase 46)', () => {
     });
 
     it('should provide access to main hinge line', () => {
-      const mainHingeLine = world.getMainHingeLine();
+      const mainHingeLine = getMainHingeLine(world);
       
       expect(mainHingeLine).toBeDefined();
       expect(mainHingeLine.id).toBeTruthy();
@@ -102,7 +103,7 @@ describe('Semantic Entity References (Phase 46)', () => {
     });
 
     it('should use generated hinge line ID, not hardcoded one', () => {
-      const mainHingeLine = world.getMainHingeLine();
+      const mainHingeLine = getMainHingeLine(world);
       
       // Hinge line ID should NOT be the old hardcoded value
       expect(mainHingeLine.id).not.toBe('HL_HV');

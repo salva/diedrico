@@ -122,6 +122,19 @@ export abstract class Plane3D extends Element3D {
 export class Plane3DFixed extends Plane3D {
   point: Vector4;      // Point on the plane (x, y, z, 1)
   normal: Vector4;     // Normal vector (normalized) (x, y, z, 0)
+  
+  // Boundary properties for plane extent in u,v coordinates
+  minU: number = -400;
+  maxU: number = 400;
+  minV: number = -400;
+  maxV: number = 400;
+  
+  // Coordinate system for plane (u,v coordinates)
+  coordinateSystem?: {
+    origin: Vector4;
+    uAxis: Vector4;
+    vAxis: Vector4;
+  };
 
   constructor(
     id: string,
@@ -155,14 +168,70 @@ export class Plane3DFixed extends Plane3D {
     // Phase 52: Fixed planes have no dependencies
     return [];
   }
+  
+  /**
+   * Set boundary limits for plane extent in u,v coordinates
+   */
+  setBoundaries(minU: number, maxU: number, minV: number, maxV: number): void {
+    this.minU = minU;
+    this.maxU = maxU;
+    this.minV = minV;
+    this.maxV = maxV;
+  }
+  
+  /**
+   * Set coordinate system for plane (origin and u,v axes in 3D)
+   */
+  setCoordinateSystem(system: { origin: Vector4; uAxis: Vector4; vAxis: Vector4 }): void {
+    this.coordinateSystem = {
+      origin: system.origin.clone(),
+      uAxis: system.uAxis.clone(),
+      vAxis: system.vAxis.clone()
+    };
+  }
+  
+  /**
+   * Check if a point lies on this plane (within tolerance)
+   */
+  containsPoint(point: Vector4 | { x: number; y: number; z: number }, tolerance: number = 1e-6): boolean {
+    // Compute distance from point to plane: |n·(P - P₀)|
+    const px = point.x;
+    const py = point.y;
+    const pz = point.z;
+    
+    const distance = Math.abs(
+      this.normal.x * (px - this.point.x) +
+      this.normal.y * (py - this.point.y) +
+      this.normal.z * (pz - this.point.z)
+    );
+    
+    return distance <= tolerance;
+  }
 
   clone(): Plane3D {
-    return new Plane3DFixed(
+    const cloned = new Plane3DFixed(
       this.id,
       this.point.clone(),
       this.normal.clone(),
       this.label
     );
+    
+    // Copy boundaries
+    cloned.minU = this.minU;
+    cloned.maxU = this.maxU;
+    cloned.minV = this.minV;
+    cloned.maxV = this.maxV;
+    
+    // Copy coordinate system if set
+    if (this.coordinateSystem) {
+      cloned.coordinateSystem = {
+        origin: this.coordinateSystem.origin.clone(),
+        uAxis: this.coordinateSystem.uAxis.clone(),
+        vAxis: this.coordinateSystem.vAxis.clone()
+      };
+    }
+    
+    return cloned;
   }
 }
 
@@ -208,8 +277,17 @@ export class Plane3DFromTraces extends Plane3D {
     const t2Line = world.getLine2D(this.trace2);
     const t1InP1 = t1Line.realize2D(world);
     const t2InP2 = t2Line.realize2D(world);
-    const p1 = world.getProjectionPlane3DRealization(world.getProjectionPlaneById(t1Line.planeId).id);
-    const p2 = world.getProjectionPlane3DRealization(world.getProjectionPlaneById(t2Line.planeId).id);
+    
+    const plane1 = world.getProjectionPlaneById(t1Line.planeId);
+    const plane2 = world.getProjectionPlaneById(t2Line.planeId);
+    
+    if (!plane1 || !plane2) {
+      console.warn('[Plane3DFromTraces] Missing projection plane', { plane1, plane2 });
+      return null;
+    }
+    
+    const p1 = world.getProjectionPlane3DRealization(plane1.id);
+    const p2 = world.getProjectionPlane3DRealization(plane2.id);
     
     // Check feasibility of all realizations
     if (!t1InP1.feasible || !t2InP2.feasible || !p1.feasible || !p2.feasible) {

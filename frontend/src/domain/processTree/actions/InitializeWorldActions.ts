@@ -1,5 +1,5 @@
 /**
- * Initialization actions - ProcessTree records for World bootstrapping
+ * Initialization actions - ProcessTree records for World initialization
  *
  * These actions are produced by initialization operations (Phase 47).
  * They are grouped under the "World Initialization" subprocess.

@@ -67,6 +67,14 @@ export class Segment2DByPoints extends Line2D {
     const plane = world.getProjectionPlaneById(this.planeId);
     const p1 = plane.getPoint(this.point1Id);
     const p2 = plane.getPoint(this.point2Id);
+    
+    if (!p1) {
+      throw new Error(`[Segment2DByPoints] Point ${this.point1Id} not found in plane ${this.planeId} for segment ${this.id}`);
+    }
+    if (!p2) {
+      throw new Error(`[Segment2DByPoints] Point ${this.point2Id} not found in plane ${this.planeId} for segment ${this.id}`);
+    }
+    
     const p1Realization = p1.realize2D(world);
     const p2Realization = p2.realize2D(world);
 

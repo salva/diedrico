@@ -83,7 +83,7 @@ describe('CircleTool', () => {
 
       const secondResult = tool.handleClick(secondClickContext);
       expect(secondResult.success).toBe(true);
-      expect(secondResult.message).toContain('Created circle');
+      expect(secondResult.message).toContain('completed successfully');  // ArgumentCollectorTool completion message
 
       // Verify circle was created
       const plane = world.getProjectionPlaneById(horizontalPlaneId);
@@ -126,7 +126,7 @@ describe('CircleTool', () => {
 
       const firstResult = tool.handleClick(firstClickContext);
       expect(firstResult.success).toBe(true);
-      expect(firstResult.message).toContain('Selected center point');
+      expect(firstResult.message).toContain('Creating circle');  // ArgumentCollectorTool framework message
 
       // Second click - snap to circumference point
       const secondClickContext: ToolContext = {
@@ -141,7 +141,7 @@ describe('CircleTool', () => {
 
       const secondResult = tool.handleClick(secondClickContext);
       expect(secondResult.success).toBe(true);
-      expect(secondResult.message).toContain('Created circle');
+      expect(secondResult.message).toContain('completed successfully');  // ArgumentCollectorTool completion message
       expect(secondResult.message).toContain('snapped'); // Should indicate snap
 
       // Verify NO new points were created (both snapped to existing)
@@ -197,7 +197,7 @@ describe('CircleTool', () => {
 
       const secondResult = tool.handleClick(secondClickContext);
       expect(secondResult.success).toBe(true);
-      expect(secondResult.message).toContain('Created circle');
+      expect(secondResult.message).toContain('completed successfully');  // ArgumentCollectorTool completion message
       expect(secondResult.message).toContain('created'); // Should indicate new point created
 
       // Verify ONE new point was created (circumference)
@@ -315,7 +315,7 @@ describe('CircleTool', () => {
 
       const secondResult = tool.handleClick(secondClickContext);
       expect(secondResult.success).toBe(true);
-      expect(secondResult.message).toContain('Created circle');
+      expect(secondResult.message).toContain('completed successfully');  // ArgumentCollectorTool completion message
 
       // Verify circle was created
       const plane = world.getProjectionPlaneById(horizontalPlaneId);
@@ -338,7 +338,7 @@ describe('CircleTool', () => {
 
       const result = tool.handleClick(context);
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Plane');
+      expect(result.message).toContain('selectable');  // ArgumentCollectorTool error message
     });
 
     it('should reject invalid coordinates', () => {
@@ -354,7 +354,7 @@ describe('CircleTool', () => {
 
       const result = tool.handleClick(context);
       expect(result.success).toBe(false);
-      expect(result.message).toContain('coordinate');
+      expect(result.message).toContain('selectable');  // ArgumentCollectorTool error message
     });
   });
 
@@ -404,7 +404,7 @@ describe('CircleTool', () => {
       };
       const thirdResult = tool.handleClick(thirdClickContext);
       expect(thirdResult.success).toBe(true);
-      expect(thirdResult.message).toContain('Selected center point'); // Back to first state
+      expect(thirdResult.message).toContain('Creating circle'); // Back to first state (ArgumentCollectorTool message)
     });
   });
 

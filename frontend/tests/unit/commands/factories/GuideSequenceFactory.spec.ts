@@ -10,6 +10,7 @@ import { AddLine2DByTwoPointsOp } from '../../../../src/commands/operations/worl
 import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../../src/domain/world/World';
 import { Vector3 } from 'three';
+import { Guide2D, SiblingGuide2D } from '../../../../src/domain/world/Guide';
 
 describe('GuideSequenceFactory', () => {
   let world: World;
@@ -63,7 +64,7 @@ describe('GuideSequenceFactory', () => {
       // Verify guide exists in world
       const guide = world.getLine2D(result.guideId);
       expect(guide).toBeDefined();
-      expect(guide!.type).toBe('guide');
+      expect(guide).toBeInstanceOf(Guide2D);
     });
 
     it('should create two operations for HHL reference line', () => {
@@ -107,8 +108,8 @@ describe('GuideSequenceFactory', () => {
       
       expect(primaryGuide).toBeDefined();
       expect(siblingGuide).toBeDefined();
-      expect(primaryGuide!.type).toBe('guide');
-      expect(siblingGuide!.type).toBe('sibling-guide');
+      expect(primaryGuide).toBeInstanceOf(Guide2D);
+      expect(siblingGuide).toBeInstanceOf(SiblingGuide2D);
       
       // Verify bidirectional links
       expect((primaryGuide as any).siblingGuideId).toBe(result.siblingGuideId);

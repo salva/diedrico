@@ -17,9 +17,15 @@ import { Vector3 } from 'three';
 
 describe('PropertiesDialog', () => {
   let world: World;
+  let testPointId: string; // Helper for tests that need a valid element ID
   
   beforeEach(() => {
     world = new World();
+    
+    // Create a test point for tests that need a valid element ID
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const point = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+    testPointId = point.id;
   });
 
   describe('Dialog visibility', () => {
@@ -39,7 +45,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -52,7 +58,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -65,7 +71,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -78,7 +84,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -121,7 +127,7 @@ describe('PropertiesDialog', () => {
         }
       });
       
-      expect(wrapper.text()).toContain(planeId);
+      expect(wrapper.text()).toContain(planeH.id);
     });
   });
 
@@ -130,7 +136,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -152,7 +158,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -177,7 +183,7 @@ describe('PropertiesDialog', () => {
       const pos2 = new Vector3(10, 10, 1);
       const point1 = planeH.addFreePoint2D(pos1, world);
       const point2 = planeH.addFreePoint2D(pos2, world);
-      const line = planeH.addLine2DByTwoPoints(point1.id, point2.id, world);
+      const line = planeH.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
       const lineId = line.id;
       
       const wrapper = mount(PropertiesDialog, {
@@ -236,7 +242,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -329,7 +335,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -342,7 +348,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -361,7 +367,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });
@@ -389,7 +395,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: 'point2d_1',
+          elementId: testPointId,
           world
         }
       });

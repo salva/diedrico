@@ -17,6 +17,7 @@ import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
 import { Vector3 } from 'three';
+import { getMainHingeLine } from '../../../helpers/worldHelpers';
 
 describe('IntersectionSequenceFactory', () => {
   let world: World;
@@ -409,7 +410,7 @@ describe('IntersectionSequenceFactory', () => {
       
       // Get HalfHingeLine on horizontal plane
       const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
-      const mainHingeLine = world.getMainHingeLine();
+      const mainHingeLine = getMainHingeLine(world);
       const hhl = horizontalPlane.getAllLines().find(
         l => (l as any).hingeLineId === mainHingeLine.id
       );
@@ -463,7 +464,7 @@ describe('IntersectionSequenceFactory', () => {
       
       expect(primaryPoint).toBeDefined();
       expect(siblingPoint).toBeDefined();
-      expect(siblingPoint!.type).toBe('sibling-intersection');
+      expect(siblingPoint).toBeInstanceOf(SiblingIntersectionPoint2D);
 
       // Verify: Bidirectional links
       expect((primaryPoint as any).siblingPointId).toBe(result.siblingPointId);
@@ -518,7 +519,7 @@ describe('IntersectionSequenceFactory', () => {
       
       // Get HalfHingeLine on horizontal plane
       const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
-      const mainHingeLine = world.getMainHingeLine();
+      const mainHingeLine = getMainHingeLine(world);
       const hhl = horizontalPlane.getAllLines().find(
         l => (l as any).hingeLineId === mainHingeLine.id
       );
@@ -569,7 +570,7 @@ describe('IntersectionSequenceFactory', () => {
       
       expect(primaryPoint).toBeDefined();
       expect(siblingPoint).toBeDefined();
-      expect(siblingPoint!.type).toBe('sibling-intersection');
+      expect(siblingPoint).toBeInstanceOf(SiblingIntersectionPoint2D);
     });
   });
 });

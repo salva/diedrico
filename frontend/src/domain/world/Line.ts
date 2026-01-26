@@ -198,12 +198,14 @@ export class Line2DByTwoPoints extends Line2D {
     const point1 = plane.getPoint(this.point1Id);
     const point2 = plane.getPoint(this.point2Id);
     
+    // Missing points are internal errors - fail fast
     assert(point1, `[Line2DByTwoPoints] point1 ${this.point1Id} not found on plane ${this.planeId} for line ${this.id}`);
     assert(point2, `[Line2DByTwoPoints] point2 ${this.point2Id} not found on plane ${this.planeId} for line ${this.id}`);
     
     const p1Realization = point1.realize2D(world);
     const p2Realization = point2.realize2D(world);
     
+    // Null realizations are also internal errors
     assert(p1Realization, `[Line2DByTwoPoints] point1.realize2D() returned null for ${this.point1Id}`);
     assert(p2Realization, `[Line2DByTwoPoints] point2.realize2D() returned null for ${this.point2Id}`);
     

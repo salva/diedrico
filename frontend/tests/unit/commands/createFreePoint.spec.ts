@@ -127,7 +127,7 @@ describe('Create Free Point Command', () => {
       const point = plane.getPoint(pointId);
 
       expect(point).toBeDefined();
-      expect(point?.visible).toBe(true);
+      expect(point?.visualStyle.visible).toBe(true);
     });
   });
 });

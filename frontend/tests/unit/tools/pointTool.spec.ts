@@ -16,6 +16,8 @@ import { World } from '@/domain/world/World';
 import { CommandStack } from '@/commands/CommandStack';
 import type { ToolContext } from '@/tools/ITool';
 import { Vector3 } from 'three';
+import { Paper } from '@/domain/presentation/Paper';
+import { FreePoint2D } from '@/domain/world/Point';
 
 describe('PointTool', () => {
   let tool: PointTool;
@@ -23,11 +25,26 @@ describe('PointTool', () => {
   let commandStack: CommandStack;
   let horizontalPlaneId: string;
   let verticalPlaneId: string;
+  let paper: Paper;
+
+  // Helper to create complete ToolContext
+  const createToolContext = (planeId: string, planeCoords: Vector3, canvasCoords = { x: 100, y: 100 }): ToolContext => ({
+    planeId,
+    planeCoords,
+    canvasCoords,
+    commandStack,
+    world,
+    paper,
+    paperToPlaneTransform: undefined,
+    toolStore: {} as any, // Mock tool store
+  });
 
   beforeEach(() => {
     tool = new PointTool();
     world = new World();
     commandStack = new CommandStack();
+    paper = new Paper();
+    paper = new Paper();
     // Get actual plane IDs from initialized world
     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
     verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
@@ -94,7 +111,7 @@ describe('PointTool', () => {
       const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
       const createdPoint = userPoints[0];
       
-      expect(createdPoint.type).toBe('free');
+      expect(createdPoint).toBeInstanceOf(FreePoint2D);
       const position = (createdPoint as any).position;
       expect(position.x).toBe(150);
       expect(position.y).toBe(250);
@@ -286,12 +303,7 @@ describe('PointTool', () => {
       ];
 
       positions.forEach(pos => {
-        const context: ToolContext = {
-          planeId: horizontalPlaneId,
-          planeCoords: pos,
-          commandStack,
-          world
-        };
+        const context = createToolContext(horizontalPlaneId, pos);
         const result = tool.handleClick(context);
         expect(result.success).toBe(true);
       });

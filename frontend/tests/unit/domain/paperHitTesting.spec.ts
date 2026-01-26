@@ -40,10 +40,8 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
     // Identity transform (paper space = plane space for testing)
     paperToPlaneTransform = new Matrix3().identity();
     
-    if (plane) {
-      // Set plane transform to identity for testing
-      plane.setTransform(new Matrix3().identity());
-    }
+    // Note: ProjectionPlane transforms are computed from realizations,
+    // not set directly. The identity paperToPlaneTransform handles the test case.
   });
 
   describe('T973: Point preferred when nearby', () => {

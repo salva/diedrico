@@ -36,8 +36,7 @@ describe('Element2D base class', () => {
       expect(point.id).toBe(pointId);
       expect(point.planeId).toBe(planeId);
       expect(point.label).toBe('Point A');
-      expect(point.visible).toBe(true);
-      expect(point.type).toBe('free');
+      expect(point).toBeInstanceOf(FreePoint2D);
     });
 
     it('Line2DByTwoPoints has Element2D properties', () => {
@@ -51,8 +50,7 @@ describe('Element2D base class', () => {
       expect(line.id).toBe(lineId);
       expect(line.planeId).toBe(planeId);
       expect(line.label).toBe('Line AB');
-      expect(line.visible).toBe(true);
-      expect(line.type).toBe('by-two-points');
+      expect(line).toBeInstanceOf(Line2DByTwoPoints);
     });
 
     it('Circle2DByCenterAndPoint has Element2D properties', () => {
@@ -66,8 +64,7 @@ describe('Element2D base class', () => {
       expect(circle.id).toBe(circleId);
       expect(circle.planeId).toBe(planeId);
       expect(circle.label).toBe('Circle C');
-      expect(circle.visible).toBe(true);
-      expect(circle.type).toBe('by-center-and-point');
+      expect(circle).toBeInstanceOf(Circle2DByCenterAndPoint);
     });
   });
 
@@ -103,10 +100,10 @@ describe('Element2D base class', () => {
       const plane = getHorizontalPlane(world);
       const pointId = plane.generatePoint2DId(world);
       const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId);
-      expect(point.visible).toBe(true);
+      expect(point.visualStyle?.visible !== false).toBe(true);
       
-      point.visible = false;
-      expect(point.visible).toBe(false);
+      point.visualStyle = { ...point.visualStyle, visible: false } as any;
+      expect(point.visualStyle?.visible).toBe(false);
     });
 
     it('should allow hiding a line', () => {
@@ -115,10 +112,10 @@ describe('Element2D base class', () => {
       const p2Id = plane.generatePoint2DId(world);
       const lineId = plane.generateLine2DId(world);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeId);
-      expect(line.visible).toBe(true);
+      expect(line.visualStyle?.visible !== false).toBe(true);
       
-      line.visible = false;
-      expect(line.visible).toBe(false);
+      line.visualStyle = { ...line.visualStyle, visible: false } as any;
+      expect(line.visualStyle?.visible).toBe(false);
     });
 
     it('should allow hiding a circle', () => {
@@ -127,10 +124,10 @@ describe('Element2D base class', () => {
       const edgeId = plane.generatePoint2DId(world);
       const circleId = plane.generateCircle2DId(world);
       const circle = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, planeId);
-      expect(circle.visible).toBe(true);
+      expect(circle.visualStyle?.visible !== false).toBe(true);
       
-      circle.visible = false;
-      expect(circle.visible).toBe(false);
+      circle.visualStyle = { ...circle.visualStyle, visible: false } as any;
+      expect(circle.visualStyle?.visible).toBe(false);
     });
   });
 
@@ -145,8 +142,7 @@ describe('Element2D base class', () => {
       expect(cloned.id).toBe(original.id);
       expect(cloned.planeId).toBe(original.planeId);
       expect(cloned.label).toBe(original.label);
-      expect(cloned.visible).toBe(true);  // Note: visible is not copied by clone(), defaults to true
-      expect(cloned.type).toBe(original.type);
+      expect(cloned).toBeInstanceOf(FreePoint2D);
     });
 
     it('cloned line has same Element2D properties', () => {
@@ -161,8 +157,7 @@ describe('Element2D base class', () => {
       expect(cloned.id).toBe(original.id);
       expect(cloned.planeId).toBe(original.planeId);
       expect(cloned.label).toBe(original.label);
-      expect(cloned.visible).toBe(true);  // Note: visible is not copied by clone(), defaults to true
-      expect(cloned.type).toBe(original.type);
+      expect(cloned).toBeInstanceOf(Line2DByTwoPoints);
     });
 
     it('cloned circle has same Element2D properties', () => {
@@ -177,8 +172,7 @@ describe('Element2D base class', () => {
       expect(cloned.id).toBe(original.id);
       expect(cloned.planeId).toBe(original.planeId);
       expect(cloned.label).toBe(original.label);
-      expect(cloned.visible).toBe(true);  // Note: visible is not copied by clone(), defaults to true
-      expect(cloned.type).toBe(original.type);
+      expect(cloned).toBeInstanceOf(Circle2DByCenterAndPoint);
     });
   });
 
@@ -307,13 +301,13 @@ describe('Element2D base class', () => {
       ];
 
       // All visible initially
-      elements.forEach(el => expect(el.visible).toBe(true));
+      elements.forEach(el => expect(el.visualStyle?.visible !== false).toBe(true));
 
       // Hide all
-      elements.forEach(el => el.visible = false);
+      elements.forEach(el => el.visualStyle = { ...el.visualStyle, visible: false } as any);
 
       // All hidden now
-      elements.forEach(el => expect(el.visible).toBe(false));
+      elements.forEach(el => expect(el.visualStyle?.visible).toBe(false));
     });
 
     it('should filter visible elements', () => {
@@ -332,12 +326,12 @@ describe('Element2D base class', () => {
         new Circle2DByCenterAndPoint(circleId, centerId, edgeId, planeId),
       ];
 
-      elements[1].visible = false;  // Hide the line
+      elements[1].visualStyle = { ...elements[1].visualStyle, visible: false } as any;  // Hide the line
 
-      const visible = elements.filter(el => el.visible);
+      const visible = elements.filter(el => el.visualStyle?.visible !== false);
       expect(visible).toHaveLength(2);
-      expect(visible[0].type).toBe('free');
-      expect(visible[1].type).toBe('by-center-and-point');
+      expect(visible[0]).toBeInstanceOf(FreePoint2D);
+      expect(visible[1]).toBeInstanceOf(Circle2DByCenterAndPoint);
     });
   });
 });

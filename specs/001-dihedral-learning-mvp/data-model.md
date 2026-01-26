@@ -1753,7 +1753,7 @@ World {
 // 2D Entity - extends Line2D base class
 // **Phase 84 Update**: NO geometry storage - computed on demand from canonical coordinates
 class HalfHingeLine2D extends Line2D {
-  type: 'half-hinge';               // Line2D type discriminator
+  // Note: Use instanceof HalfHingeLine2D instead of checking type property
   hingeLineId: HingeLineId;         // Reference to parent 3D HingeLine
   planeId: PlaneId;                 // Which projection plane this half belongs to
   
@@ -2272,12 +2272,10 @@ export abstract class Realization {
  * - label (from Element): Optional user-friendly label
  * - planeId: Which projection plane this element belongs to
  * - visible: Whether element is visible in canvas UI
- * - type: Element type discriminator (e.g., 'free', 'by-two-points')
  */
 export abstract class Element2D extends Element {
   readonly planeId: string;         // Which projection plane this element belongs to
   visible: boolean = true;          // Whether element is visible in canvas
-  abstract readonly type: string;   // Element type discriminator (e.g., 'free', 'by-two-points')
   
   constructor(
     id: string,
@@ -2411,7 +2409,7 @@ abstract class Line2D extends Element2D {
 
 ✅ **Serialization** (ALWAYS NEEDED):
 ```typescript
-// Writing to JSON: need string type discriminator
+// Writing to JSON: use class name or kind property for serialization
 const json = JSON.stringify({
   type: element.type,  // String needed for JSON
   id: element.id,
@@ -2423,7 +2421,8 @@ const json = JSON.stringify({
 ```typescript
 // TypeScript narrows type based on discriminator
 function handlePoint(point: Point2D) {
-  switch (point.type) {
+  // Use instanceof checks instead:
+  if (point instanceof FreePoint2D) {
     case 'free':
       // TypeScript knows point is FreePoint2D here
       break;
@@ -2438,7 +2437,8 @@ function handlePoint(point: Point2D) {
 ```typescript
 // Rendering layer needs to distinguish point/line/circle primitives
 function renderPrimitive(primitive: RenderPrimitive) {
-  switch (primitive.type) {
+  // Use instanceof checks instead:
+  if (primitive instanceof PointPrimitive) {
     case 'point': return renderPoint(primitive);
     case 'line': return renderLine(primitive);
     case 'circle': return renderCircle(primitive);
@@ -2496,15 +2496,15 @@ class Point2DLineLineIntersection extends Point2D {
 
 **Changes Made**:
 1. Added `isBounded()` geometric method to Line2D (returns false) and Segment2DByPoints (returns true)
-2. Replaced `.type === 'segment'` with `line.isBounded()` in Point.ts (3 instances)
-3. Replaced `.type === 'guide'` with `instanceof Guide2D` in Guide.ts type guards (2 instances)
-4. Replaced `.type === 'segment' | 'guide' | 'half-hinge'` with `instanceof` chains in:
+2. Replaced `.type === 'segment'` with `line.isBounded()` or `instanceof` checks (3 instances)
+3. Use `instanceof Guide2D` for type guards (2 instances)
+4. Use `instanceof` chains for type checking:
    - DeletionSequenceFactory.ts (3 instances)
    - World.ts (10 instances - sibling helpers, HHL detection, filters)
 
 **String Discriminators Preserved** (legitimate uses):
 - Serialization (all domain classes keep `readonly type: string`)
-- TypeScript discriminated unions (switch statements on .type)
+- Use instanceof chains instead of discriminated unions
 - Primitive rendering dispatch (Paper.ts, SVGRenderer.ts)
 - IntersectionData type field (legitimate discriminated union for API structure)
 - Element2DUtils.getElementsByType() (filtering by exact type string)
@@ -2524,7 +2524,7 @@ class Point2DLineLineIntersection extends Point2D {
  * Base Point2D class - represents the rule/definition of a point
  */
 export abstract class Point2D extends Element2D {
-  abstract readonly type: Point2DType;  // Narrows Element2D.type to Point2DType
+  // Note: Use instanceof checks instead of type discriminators
   
   constructor(
     id: string,
@@ -2546,7 +2546,7 @@ export abstract class Point2D extends Element2D {
  * Base Line2D class - represents the rule/definition of a line
  */
 export abstract class Line2D extends Element2D {
-  abstract readonly type: Line2DType;  // Narrows Element2D.type to Line2DType
+  // Note: Use instanceof checks instead of type discriminators
   
   constructor(
     id: string,
@@ -2568,7 +2568,7 @@ export abstract class Line2D extends Element2D {
  * Base Circle2D class - represents the rule/definition of a circle
  */
 export abstract class Circle2D extends Element2D {
-  abstract readonly type: Circle2DType;  // Narrows Element2D.type to Circle2DType
+  // Note: Use instanceof checks instead of type discriminators
   
   constructor(
     id: string,
@@ -2621,7 +2621,7 @@ export abstract class Circle2D extends Element2D {
 - Point2D, Line2D, Circle2D maintain their current interfaces
 - No changes to concrete classes (FreePoint2D, Line2DByTwoPoints, etc.)
 - Only adds `extends Element2D` to three base classes
-- Type discriminators (Point2DType, Line2DType, Circle2DType) unchanged
+- Type discriminators removed - use instanceof checks for type identification
 
 **Files to Modify**:
 1. Create `frontend/src/domain/world/Element2D.ts` with base class
@@ -3010,7 +3010,7 @@ SiblingGuide2D is fully implemented using the **parametric scalar correspondence
 - **Parametric scalar transfer**: Primary guide intersects HHL at R = Q + d·D → sibling uses SAME scalar d: R' = Q' + d·D'
 
 **Implementation Details**:
-- **Domain**: `SiblingGuide2D` class extends `Line2D` (not `Line2DPerpendicularToLine`) to have own type discriminator `'sibling-guide'`
+- **Domain**: `SiblingGuide2D` class extends `Line2D` (not `Line2DPerpendicularToLine`)
 - **Fields**: Only `referenceLineId`, `primaryGuideId`, `planeId` - NO `throughPointId`!
 - **Realization Algorithm** (`realize2D()`):
   1. Get primary guide's realization
@@ -3225,7 +3225,7 @@ type Element2D = Point2D | Segment2D | Line2D | Circle2D | Arc2D | Guide2D | BHL
 
 // Free point - defined by user-specified position
 interface FreePoint2D {
-  kind: 'FreePoint2D';              // Discriminator (TypeScript: type: 'free')
+  kind: 'FreePoint2D';              // Discriminator for JSON serialization
   id: string;                       // REQUIRED - unique identifier
   label?: string;                   // Optional display label ("a", "b", "p1", etc.)
   planeId: string;                  // REQUIRED - belongs to exactly one plane
@@ -3241,7 +3241,7 @@ interface FreePoint2D {
 
 // Point at intersection of two elements
 interface IntersectionPoint2D {
-  kind: 'IntersectionPoint2D';      // Discriminator (TypeScript: type: 'intersection')
+  kind: 'IntersectionPoint2D';      // Discriminator for JSON serialization
   id: string;                       // REQUIRED - unique identifier
   label?: string;                   // Optional display label
   planeId: string;                  // REQUIRED - belongs to exactly one plane
@@ -3266,7 +3266,7 @@ interface IntersectionPoint2D {
 // Used when intersecting with HalfHingeLine2D: the primary intersection happens on one plane,
 // and this type represents the projection of that 3D point onto the sibling plane.
 interface SiblingIntersectionPoint2D {
-  kind: 'SiblingIntersectionPoint2D';  // Discriminator (TypeScript: type: 'sibling-intersection')
+  kind: 'SiblingIntersectionPoint2D';  // Discriminator for JSON serialization
   id: string;                           // REQUIRED - unique identifier
   label?: string;                       // Optional display label (usually same as primary)
   planeId: string;                      // REQUIRED - the sibling plane (different from primary's plane)
@@ -3381,7 +3381,7 @@ type Line2D =
 
 ```typescript
 class Line2DParallel extends Line2D {
-  readonly type: 'parallel' = 'parallel';
+  // Note: Class name used for type identification, not type property
   readonly referenceLineId: string;
   readonly throughPointId: string;
   
@@ -3731,7 +3731,7 @@ export class ParallelLineTool extends BaseTool {
 
 ```typescript
 class Line2DPerpendicularToLine extends Line2D {
-  readonly type: 'perpendicular-to-line' = 'perpendicular-to-line';
+  // Note: Class name used for type identification, not type property
   readonly referenceLineId: string;
   readonly throughPointId: string;
   
@@ -4211,7 +4211,7 @@ export class PerpendicularLineTool extends BaseTool {
 
 ```typescript
 class Line2DTangentToCircleThroughPoint extends Line2D {
-  readonly type: 'tangent-to-circle-through-point' = 'tangent-to-circle-through-point';
+  // Note: Class name used for type identification, not type property
   readonly circleId: string;
   readonly throughPointId: string;
   readonly tangentIndex: 0 | 1;  // Disambiguates which of two tangent lines
@@ -4476,7 +4476,7 @@ export function createTangentLineToCircleThroughPointAction(
 
 ```typescript
 export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
-  readonly type = 'AddLine2DTangentToCircleThroughPoint';
+  // Note: Class name used for type identification, not type property
   parameters: Record<string, any>;
   outputs: Record<string, any> = {};
   
@@ -8088,7 +8088,8 @@ class Paper {
     );
   }
   private distanceToPrimitive(paperPos: Vector2, primitive: Primitive): number {
-    switch (primitive.type) {
+    // Use instanceof checks instead:
+  if (primitive instanceof PointPrimitive) {
       case 'point':
         return this.distanceToPoint(paperPos, primitive as PointPrimitive);
       case 'line':
@@ -8561,7 +8562,8 @@ class Paper {
     const entityId = primitive.sourceEntityId;
     
     // Primitive type provides initial hint
-    switch (primitive.type) {
+    // Use instanceof checks instead:
+  if (primitive instanceof PointPrimitive) {
       case 'point':
         return 'point';
         

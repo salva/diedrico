@@ -170,6 +170,12 @@ import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
 import type { World } from '@/domain/world/World';
 import { useSelectionStore } from '@/stores/selectionStore';
 import ElementTypeGroup from './ElementTypeGroup.vue';
+import { Point2D } from '@/domain/world/Point';
+import { Line2D } from '@/domain/world/Line';
+import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Circle2D } from '@/domain/world/Circle';
+import { Guide2D } from '@/domain/world/Guide';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 
 // Emits
 const emit = defineEmits<{
@@ -242,10 +248,10 @@ const horizontalElements = computed(() => {
   
   const points = plane.getAllPoints();
   const allLines = plane.getAllLines();
-  const lines = allLines.filter(l => !l.id.includes('half_HL') && l.type !== 'segment' && l.type !== 'perpendicular-to-line');
-  const segments = allLines.filter(l => l.type === 'segment');
+  const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
+  const segments = allLines.filter(l => l instanceof Segment2DByPoints);
   const circles = plane.getAllCircles();
-  const guides = allLines.filter(l => l.type === 'perpendicular-to-line');
+  const guides = allLines.filter(l => l instanceof Guide2D);
   
   console.log('[ElementsPanel] P_H elements:', {
     points: points.length,
@@ -283,10 +289,10 @@ const verticalElements = computed(() => {
   
   const points = plane.getAllPoints();
   const allLines = plane.getAllLines();
-  const lines = allLines.filter(l => !l.id.includes('half_HL') && l.type !== 'segment' && l.type !== 'perpendicular-to-line');
-  const segments = allLines.filter(l => l.type === 'segment');
+  const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
+  const segments = allLines.filter(l => l instanceof Segment2DByPoints);
   const circles = plane.getAllCircles();
-  const guides = allLines.filter(l => l.type === 'perpendicular-to-line');
+  const guides = allLines.filter(l => l instanceof Guide2D);
   
   console.log('[ElementsPanel] P_V elements:', {
     points: points.length,
@@ -342,10 +348,24 @@ const hasAnyElements = computed(() => {
 
 // Helper functions
 function formatElement(element: any): any {
+  // Determine type using instanceof checks
+  let type = 'unknown';
+  if (element instanceof Guide2D) {
+    type = 'guide';
+  } else if (element instanceof Segment2DByPoints) {
+    type = 'segment';
+  } else if (element instanceof Line2D) {
+    type = 'line';
+  } else if (element instanceof Circle2D) {
+    type = 'circle';
+  } else if (element instanceof Point2D) {
+    type = 'point';
+  }
+  
   return {
     id: element.id,
     label: formatLabel(element),
-    type: getElementType(element),
+    type: type,
     visible: element.visualStyle?.visible !== false,
     properties: getElementProperties(element)
   };
@@ -356,36 +376,6 @@ function formatLabel(element: any): string {
   // Hierarchical IDs (e.g., "proj_plane_H/point2d_1") are self-documenting
   // and show which plane the element belongs to
   return element.label || element.id;
-}
-
-function getElementType(element: any): string {
-  // Determine element type from its class type property or other identifying features
-  // Check type property first (Line2D, Guide2D have this)
-  if (element.type) {
-    // Line types: 'by-two-points', 'parallel', 'perpendicular', 'half-hinge'
-    if (element.type === 'by-two-points' || element.type === 'parallel' || 
-        element.type === 'perpendicular' || element.type === 'half-hinge') {
-      return 'line';
-    }
-    // Guide types: 'guide'
-    if (element.type === 'guide') {
-      return 'guide';
-    }
-    // Segment types: 'by-points'
-    if (element.type === 'by-points') {
-      return 'segment';
-    }
-    // Circle types: 'by-center-and-radius', 'by-three-points'
-    if (element.type === 'by-center-and-radius' || element.type === 'by-three-points') {
-      return 'circle';
-    }
-  }
-  
-  // Fallback to property-based detection for other elements
-  if ('position' in element || 'rule' in element) return 'point';
-  if ('radius' in element) return 'circle';
-  
-  return 'unknown';
 }
 
 function getElementProperties(element: any): string {

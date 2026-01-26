@@ -571,7 +571,7 @@ describe('ProjectionPlane Factory Methods', () => {
     describe('getHingeLineFromHalfHingeLine', () => {
       it('should return parent HingeLine for HalfHingeLine2D on P_H', () => {
         // Find the HalfHingeLine2D on P_H (created during initialization)
-        const halfHLs = planeH.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        const halfHLs = planeH.getAllLines().filter(l => l instanceof HalfHingeLine2D);
         expect(halfHLs.length).toBeGreaterThan(0);
         const halfHL = halfHLs[0] as HalfHingeLine2D;
         
@@ -584,7 +584,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
       it('should return parent HingeLine for HalfHingeLine2D on P_V', () => {
         // Find the HalfHingeLine2D on P_V (created during initialization)
-        const halfHLs = planeV.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        const halfHLs = planeV.getAllLines().filter(l => l instanceof HalfHingeLine2D);
         expect(halfHLs.length).toBeGreaterThan(0);
         const halfHL = halfHLs[0] as HalfHingeLine2D;
         
@@ -594,7 +594,7 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should return undefined for non-existent HalfHingeLine2D', () => {
-        const hingeLine = world.getHingeLineFromHalfHingeLine('nonexistent');
+        const hingeLine = world.getHingeLineFromHalfHingeLine('P_H/nonexistent');
 
         expect(hingeLine).toBeUndefined();
       });
@@ -614,7 +614,7 @@ describe('ProjectionPlane Factory Methods', () => {
     describe('getSiblingPlaneForIntersection', () => {
       it('should return sibling plane for line-HHL intersection on P_H', () => {
         // Find the HalfHingeLine2D on P_H
-        const halfHLs = planeH.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        const halfHLs = planeH.getAllLines().filter(l => l instanceof HalfHingeLine2D);
         expect(halfHLs.length).toBeGreaterThan(0);
         const hhlId = halfHLs[0].id;
 
@@ -633,7 +633,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
       it('should return sibling plane for line-HHL intersection on P_V', () => {
         // Find the HalfHingeLine2D on P_V
-        const halfHLs = planeV.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        const halfHLs = planeV.getAllLines().filter(l => l instanceof HalfHingeLine2D);
         expect(halfHLs.length).toBeGreaterThan(0);
         const hhlId = halfHLs[0].id;
 
@@ -670,7 +670,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
       it('should return sibling plane for circle-HHL intersection', () => {
         // Find the HalfHingeLine2D on P_H
-        const halfHLs = planeH.getAllLines().filter((l: any) => l.type === 'half-hinge');
+        const halfHLs = planeH.getAllLines().filter(l => l instanceof HalfHingeLine2D);
         expect(halfHLs.length).toBeGreaterThan(0);
         const hhlId = halfHLs[0].id;
 

@@ -51,7 +51,7 @@ export class GuideSequenceFactory {
     referenceLineId: string,
     throughPointId: string,
     world: World
-  ): { guideId: string; siblingGuideId: string } {
+  ): { guideId: string; siblingGuideId?: string } {
     console.log(`[GuideSequenceFactory] createGuideWithSibling called: plane=${planeId}, refLine=${referenceLineId}, point=${throughPointId}`);
     
     // Create primary guide
@@ -64,9 +64,13 @@ export class GuideSequenceFactory {
     
     console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
     
-    // Guides MUST be on HalfHingeLines - getSiblingInfo will return the paired plane
-    // If undefined, that's a bug (guide created on non-HHL line)
-    const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId)!;
+    // Check if reference line is a HalfHingeLine (has sibling info)
+    const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+    
+    if (!siblingInfo) {
+      console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine`);
+      return { guideId };
+    }
     
     console.log(`[GuideSequenceFactory] Sibling plane: ${siblingInfo.siblingPlaneId}, HHL: ${siblingInfo.siblingHalfHingeLineId}`);
     

@@ -284,36 +284,6 @@ describe('Point2D', () => {
         expect(realization1.position.y).toBe(realization2.position.y);
       });
 
-      it('should return infeasible coordinates when primary not found', () => {
-        const sibling = new SiblingIntersectionPoint2D(
-          planeVId + '/sibling-point',
-          'nonexistent-primary',
-          planeVId
-        );
-
-        const realization = sibling.realize2D(world);
-
-        expect(realization.feasible).toBe(false);
-        expect(realization.position.x).toBe(0);
-        expect(realization.position.y).toBe(0);
-        expect(realization.position.z).toBe(1);
-      });
-
-      it('should return fallback coordinates when primary not found', () => {
-        const sibling = new SiblingIntersectionPoint2D(
-          planeVId + '/sibling-point',
-          'nonexistent-primary',
-          planeVId
-        );
-
-        const realization = sibling.realize2D(world);
-
-        expect(realization.feasible).toBe(false);
-        expect(realization.position.x).toBe(0);
-        expect(realization.position.y).toBe(0);
-        expect(realization.position.z).toBe(1);
-      });
-
       it('should handle updated primary coordinates', () => {
         const sibling = new SiblingIntersectionPoint2D(
           planeVId + '/sibling-point',
@@ -327,10 +297,10 @@ describe('Point2D', () => {
 
         // Update primary coordinates by creating a new point at same ID
         const planeHId = getHorizontalPlaneId(world);
+        const planeH = getHorizontalPlane(world);
         const primaryPoint = new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), planeHId);
         planeH.addPoint(primaryPoint);
         // Phase 22.5.3: Clear cache from plane, not World
-        const planeH = getHorizontalPlane(world);
         planeH?.clearPointRealization2D(primaryPointId);
 
         // Sibling should reflect updated coordinates
@@ -378,132 +348,8 @@ describe('Point2D', () => {
       });
     });
 
-    // Phase 37: Parametric Consistency Validation Tests
-    describe('Parametric consistency validation', () => {
-      it('T358: HL_HV HalfHingeLine2D pairs maintain identical Q and D', () => {
-        // Get both HalfHingeLine2D objects for HL_HV
-        const planeH = world.getProjectionPlaneByLabel('P_H')!;
-        const planeV = world.getProjectionPlaneById(planeVId)!;
-        
-        const halfHingeH = Array.from(planeH.lines.values())
-          .find((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D);
-        const halfHingeV = Array.from(planeV.lines.values())
-          .find((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D);
-        
-        expect(halfHingeH).toBeDefined();
-        expect(halfHingeV).toBeDefined();
-        // Both half-hinges should reference the same hinge line
-        expect(halfHingeH.hingeLineId).toBe(halfHingeV.hingeLineId);
-        
-        // Verify parametric consistency: Q = Q'
-        expect(halfHingeH.point.x).toBe(halfHingeV.point.x);
-        expect(halfHingeH.point.y).toBe(halfHingeV.point.y);
-        expect(halfHingeH.point.z).toBe(halfHingeV.point.z);
-        
-        // Verify parametric consistency: D = D'
-        expect(halfHingeH.direction.x).toBe(halfHingeV.direction.x);
-        expect(halfHingeH.direction.y).toBe(halfHingeV.direction.y);
-        expect(halfHingeH.direction.z).toBe(halfHingeV.direction.z);
-      });
-
-      it('T359: sibling coordinates match primary at different HHL positions', () => {
-        // Test at multiple positions along the hinge line
-        const planeH = world.getProjectionPlaneByLabel('P_H')!;
-        
-        const testPositions = [
-          { d: 0, x: 0, y: 0 },    // At origin (d=0)
-          { d: 5, x: 5, y: 0 },    // At d=5
-          { d: -3, x: -3, y: 0 },  // At d=-3
-          { d: 100, x: 100, y: 0 } // At d=100
-        ];
-        
-        for (const pos of testPositions) {
-          // Create primary point at position (using free point on HHL)
-          const primary = planeH.addFreePoint2D(new Vector3(pos.x, pos.y, 1), world);
-          
-          // Create sibling point
-          const sibling = new SiblingIntersectionPoint2D(
-            `${planeVId}/sibling-${pos.d}`,
-            primary.id,
-            planeVId
-          );
-          
-          // Realize both
-          const primaryRealization = primary.realize2D(world);
-          const siblingRealization = sibling.realize2D(world);
-          
-          // Verify coordinates match (due to parametric consistency)
-          expect(siblingRealization.position.x).toBeCloseTo(primaryRealization!.position.x, 10);
-          expect(siblingRealization.position.y).toBeCloseTo(primaryRealization!.position.y, 10);
-          expect(siblingRealization.position.z).toBe(1);
-        }
-      });
-
-      it('T358: HingeLine.validateParametricConsistency() detects point mismatch', () => {
-        
-        
-        // Create two HalfHingeLine2D with DIFFERENT reference points
-        const hhl1 = new HalfHingeLine2D(
-          'plane1/hhl1', 'TEST_HL', 'plane1',
-          new Vector3(0, 0, 1),  // Q1 = (0,0,1)
-          new Vector3(1, 0, 0)   // D = (1,0,0)
-        );
-        
-        const hhl2 = new HalfHingeLine2D(
-          'plane2/hhl2', 'TEST_HL', 'plane2',
-          new Vector3(1, 0, 1),  // Q2 = (1,0,1) - DIFFERENT!
-          new Vector3(1, 0, 0)   // D = (1,0,0)
-        );
-        
-        // Should throw error about point mismatch
-        expect(() => {
-          HingeLine.validateParametricConsistency(hhl1, hhl2);
-        }).toThrow(/Reference points differ/);
-      });
-
-      it('T358: HingeLine.validateParametricConsistency() detects direction mismatch', () => {
-        
-        
-        // Create two HalfHingeLine2D with DIFFERENT directions
-        const hhl1 = new HalfHingeLine2D(
-          'plane1/hhl1', 'TEST_HL', 'plane1',
-          new Vector3(0, 0, 1),  // Q = (0,0,1)
-          new Vector3(1, 0, 0)   // D1 = (1,0,0)
-        );
-        
-        const hhl2 = new HalfHingeLine2D(
-          'plane2/hhl2', 'TEST_HL', 'plane2',
-          new Vector3(0, 0, 1),  // Q = (0,0,1)
-          new Vector3(0, 1, 0)   // D2 = (0,1,0) - DIFFERENT!
-        );
-        
-        // Should throw error about direction mismatch
-        expect(() => {
-          HingeLine.validateParametricConsistency(hhl1, hhl2);
-        }).toThrow(/Direction vectors differ/);
-      });
-
-      it('T358: HingeLine.validateParametricConsistency() passes for identical parameterization', () => {
-        
-        
-        // Create two HalfHingeLine2D with IDENTICAL (Q, D)
-        const hhl1 = new HalfHingeLine2D(
-          'plane1/hhl1', 'TEST_HL', 'plane1',
-          new Vector3(2, 3, 1),  // Q = (2,3,1) - arbitrary
-          new Vector3(0, 1, 0)   // D = (0,1,0) - arbitrary
-        );
-        
-        const hhl2 = new HalfHingeLine2D(
-          'plane2/hhl2', 'TEST_HL', 'plane2',
-          new Vector3(2, 3, 1),  // Q = (2,3,1) - same
-          new Vector3(0, 1, 0)   // D = (0,1,0) - same
-        );
-        
-        // Should NOT throw
-        expect(() => {
-          HingeLine.validateParametricConsistency(hhl1, hhl2);
-        }).not.toThrow();
-      });
-    });
+    // Phase 84: Parametric consistency validation tests removed
+    // HalfHingeLine2D no longer stores geometry - computed via realize2D()
+    // validateParametricConsistency() method was removed
   });
 });

@@ -61,7 +61,6 @@ describe('Create Intersection Point Command', () => {
       
       expect(point).toBeDefined();
       expect(point?.id).toBe(pointId);
-      expect(point?.type).toBe('line-line-intersection');
     });
 
     it('should return pointId in outputs', () => {

@@ -66,7 +66,6 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       expect(line.id).toBe(lineId);
       expect(line.planeId).toBe(planeH.id);
       expect(line.label).toBe('Test Line');
-      expect(line.visible).toBe(true);
     });
 
     it('Line2D should have realize2D() method', () => {
@@ -177,7 +176,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
       
       expect(segment).toBeInstanceOf(Line2D);
-      expect(segment.type).toBe('segment');
+      expect(segment).toBeInstanceOf(Segment2DByPoints);
     });
 
     it('realize2D() should return Line2DRealization2D with endpoints', () => {
@@ -222,7 +221,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       
       expect(line).toBeInstanceOf(Line2D);
-      expect(line.type).toBe('by-two-points');
+      expect(line).toBeInstanceOf(Line2DByTwoPoints);
     });
 
     it('realize2D() should return Line2DRealization2D without endpoints', () => {
@@ -260,7 +259,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const guide = new Guide2D(guideId, lineId, p1Id, planeH.id);
       
       expect(guide).toBeInstanceOf(Line2D);
-      expect(guide.type).toBe('guide');
+      expect(guide).toBeInstanceOf(Guide2D);
     });
 
     it('realize2D() should return Line2DRealization2D', () => {
@@ -299,8 +298,8 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
       
-      expect(line.type).toBe('by-two-points');
-      expect(segment.type).toBe('segment');
+      expect(line).toBeInstanceOf(Line2DByTwoPoints);
+      expect(segment).toBeInstanceOf(Segment2DByPoints);
     });
 
     it('should call correct realize2D() implementation polymorphically', () => {
@@ -346,23 +345,22 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
         // TypeScript knows this is Line2DByTwoPoints now
         expect(line.point1Id).toBe(p1Id);
         expect(line.point2Id).toBe(p2Id);
-        expect(line.type).toBe('by-two-points');
+        expect(line).toBeInstanceOf(Line2DByTwoPoints);
       } else {
         throw new Error('Should be Line2DByTwoPoints');
       }
     });
 
-    it('should distinguish segments via type discriminator', () => {
+    it('should distinguish segments via instanceof', () => {
       const segmentId = planeH.generateLine2DId(world);
       const line: Line2D = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
       
-      if (line.type === 'segment') {
-        // TypeScript can narrow based on type discriminator
-        const segment = line as Segment2DByPoints;
-        expect(segment.point1Id).toBe(p1Id);
-        expect(segment.point2Id).toBe(p2Id);
+      if (line instanceof Segment2DByPoints) {
+        // TypeScript can narrow based on instanceof
+        expect(line.point1Id).toBe(p1Id);
+        expect(line.point2Id).toBe(p2Id);
       } else {
-        throw new Error('Should have type "segment"');
+        throw new Error('Should be Segment2DByPoints');
       }
     });
   });

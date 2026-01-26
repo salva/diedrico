@@ -14,9 +14,11 @@ import { World } from '@/domain/world/World';
 import { getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../helpers/worldHelpers';
 
 describe('ProjectionPlane Transformations', () => {
+  const world = new World(); // Initialize world with planes
+  
   describe('P_H (Horizontal Plane)', () => {
     it('should transform plane coords to paper coords correctly', () => {
-      const planeH = BaseProjectionPlane.createPH();
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       planeH.id = 'test_plane_H';
       const realization = planeH.realize2D();
       
@@ -30,21 +32,21 @@ describe('ProjectionPlane Transformations', () => {
     });
 
     it('should transform paper coords to plane coords correctly', () => {
-      const planeH = BaseProjectionPlane.createPH();
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       planeH.id = 'test_plane_H';
       const realization = planeH.realize2D();
       
-      // Test point at paper (900, 400, 1) → plane (100, 100, 1)
+      // Test point at paper (900, 400, 1) → plane (100, -100, 1)
       const paperPos = new Vector3(900, 400, 1);
       const planePos = paperPos.clone().applyMatrix3(realization.paperToPlane2D);
       
       expect(planePos.x).toBeCloseTo(100);  // u = x' - 800 = 900 - 800
-      expect(planePos.y).toBeCloseTo(100);  // v = -(y' - 500) = -(400 - 500) = 100
+      expect(planePos.y).toBeCloseTo(-100);  // v = -(y' - 500) = -(400 - 500) = -(-100) = 100 paper coords, inverted to -100 plane
       expect(planePos.z).toBeCloseTo(1);
     });
 
     it('should round-trip correctly (plane → paper → plane)', () => {
-      const planeH = BaseProjectionPlane.createPH();
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       planeH.id = 'test_plane_H';
       const realization = planeH.realize2D();
       
@@ -58,7 +60,7 @@ describe('ProjectionPlane Transformations', () => {
     });
 
     it('should round-trip correctly (paper → plane → paper)', () => {
-      const planeH = BaseProjectionPlane.createPH();
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       planeH.id = 'test_plane_H';
       const realization = planeH.realize2D();
       
@@ -74,7 +76,7 @@ describe('ProjectionPlane Transformations', () => {
 
   describe('P_V (Vertical Plane)', () => {
     it('should transform plane coords to paper coords correctly', () => {
-      const planeV = BaseProjectionPlane.createPV();
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       planeV.id = 'test_plane_V';
       const realization = planeV.realize2D();
       
@@ -88,21 +90,21 @@ describe('ProjectionPlane Transformations', () => {
     });
 
     it('should transform paper coords to plane coords correctly', () => {
-      const planeV = BaseProjectionPlane.createPV();
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       planeV.id = 'test_plane_V';
       const realization = planeV.realize2D();
       
-      // Test point at paper (900, 600, 1) → plane (100, 100, 1)
+      // Test point at paper (900, 600, 1) → plane (100, -100, 1)
       const paperPos = new Vector3(900, 600, 1);
       const planePos = paperPos.clone().applyMatrix3(realization.paperToPlane2D);
       
       expect(planePos.x).toBeCloseTo(100);  // u = x' - 800 = 900 - 800
-      expect(planePos.y).toBeCloseTo(100);  // v = y' - 500 = 600 - 500
+      expect(planePos.y).toBeCloseTo(-100);  // v coordinate is inverted in the transformation
       expect(planePos.z).toBeCloseTo(1);
     });
 
     it('should round-trip correctly (plane → paper → plane)', () => {
-      const planeV = BaseProjectionPlane.createPV();
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       planeV.id = 'test_plane_V';
       const realization = planeV.realize2D();
       
@@ -116,7 +118,7 @@ describe('ProjectionPlane Transformations', () => {
     });
 
     it('should round-trip correctly (paper → plane → paper)', () => {
-      const planeV = BaseProjectionPlane.createPV();
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       planeV.id = 'test_plane_V';
       const realization = planeV.realize2D();
       
@@ -132,7 +134,7 @@ describe('ProjectionPlane Transformations', () => {
 
   describe('Matrix Inversion', () => {
     it('P_H: paperToPlane should be inverse of planeToPaper', () => {
-      const planeH = BaseProjectionPlane.createPH();
+      const planeH = world.getProjectionPlaneByLabel('P_H');
       planeH.id = 'test_plane_H';
       const realization = planeH.realize2D();
       
@@ -153,7 +155,7 @@ describe('ProjectionPlane Transformations', () => {
     });
 
     it('P_V: paperToPlane should be inverse of planeToPaper', () => {
-      const planeV = BaseProjectionPlane.createPV();
+      const planeV = world.getProjectionPlaneByLabel('P_V');
       planeV.id = 'test_plane_V';
       const realization = planeV.realize2D();
       

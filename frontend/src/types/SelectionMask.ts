@@ -232,6 +232,10 @@ export class TypeMask extends SelectionMask {
         return element instanceof Line2D;
       case 'segment':
         return element instanceof Segment2DByPoints;
+      case 'guide':
+        return element instanceof Guide2D || element instanceof SiblingGuide2D;
+      case 'half-hinge-line':
+        return element instanceof HalfHingeLine2D;
       case 'circle':
         return element instanceof Circle2D;
       default:
