@@ -129,8 +129,9 @@ export function clipSegmentToRectangle(segment: Segment2D, rect: Rectangle2D): S
     const edgeV = corner2.v - corner1.v;
     
     // Inward normal (perpendicular to edge, pointing inside)
-    const normalU = edgeV;   // Rotate 90° CCW
-    const normalV = -edgeU;
+    // For counter-clockwise winding, rotate edge 90° CW
+    const normalU = -edgeV;   // Rotate 90° CW
+    const normalV = edgeU;
     
     // Distance of segment start from edge
     const dist1 = normalU * (segment.start.u - corner1.u) + normalV * (segment.start.v - corner1.v);
@@ -163,15 +164,15 @@ export function clipSegmentToRectangle(segment: Segment2D, rect: Rectangle2D): S
     }
     
     if (denominator < 0) {
-      // Entering half-space
-      const newTMin = Math.max(tMin, t);
-      if (debugFirstSegment) console.log(`    -> Entering: tMin ${tMin.toFixed(4)} -> ${newTMin.toFixed(4)}`);
-      tMin = newTMin;
-    } else {
-      // Leaving half-space
+      // Leaving half-space (moving away from inside)
       const newTMax = Math.min(tMax, t);
       if (debugFirstSegment) console.log(`    -> Leaving: tMax ${tMax.toFixed(4)} -> ${newTMax.toFixed(4)}`);
       tMax = newTMax;
+    } else {
+      // Entering half-space (moving toward inside)
+      const newTMin = Math.max(tMin, t);
+      if (debugFirstSegment) console.log(`    -> Entering: tMin ${tMin.toFixed(4)} -> ${newTMin.toFixed(4)}`);
+      tMin = newTMin;
     }
     
     if (tMin > tMax) {
