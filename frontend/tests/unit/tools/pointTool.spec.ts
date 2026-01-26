@@ -58,12 +58,10 @@ describe('PointTool', () => {
 
   describe('Click Handling', () => {
     it('should create free point on valid click', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -81,12 +79,10 @@ describe('PointTool', () => {
     });
 
     it('should add command to command stack', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -95,12 +91,7 @@ describe('PointTool', () => {
 
     it('should create point with correct coordinates', () => {
       const planeCoords = new Vector3(150, 250, 1);
-      const context: ToolContext = {
-        planeId: verticalPlaneId,
-        planeCoords,
-        commandStack,
-        world
-      };
+      const context = createToolContext(verticalPlaneId, planeCoords);
 
       tool.handleClick(context);
 
@@ -119,12 +110,10 @@ describe('PointTool', () => {
     });
 
     it('should create point on correct plane', () => {
-      const context: ToolContext = {
-        planeId: verticalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        verticalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -139,12 +128,10 @@ describe('PointTool', () => {
 
   describe('Coordinate Validation', () => {
     it('should accept valid Vector3 homogeneous coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -152,12 +139,10 @@ describe('PointTool', () => {
     });
 
     it('should reject NaN coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(NaN, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(NaN, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -166,12 +151,10 @@ describe('PointTool', () => {
     });
 
     it('should reject Infinity coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(Infinity, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(Infinity, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -182,12 +165,10 @@ describe('PointTool', () => {
 
   describe('Plane Validation', () => {
     it('should accept valid plane_H', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -195,12 +176,10 @@ describe('PointTool', () => {
     });
 
     it('should accept valid plane_V', () => {
-      const context: ToolContext = {
-        planeId: verticalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        verticalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -208,12 +187,10 @@ describe('PointTool', () => {
     });
 
     it('should reject invalid plane ID', () => {
-      const context: ToolContext = {
-        planeId: 'invalid_plane',
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        'invalid_plane',
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -223,12 +200,10 @@ describe('PointTool', () => {
     });
 
     it('should not create point for invalid plane', () => {
-      const context: ToolContext = {
-        planeId: 'invalid_plane',
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        'invalid_plane',
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -244,12 +219,10 @@ describe('PointTool', () => {
 
   describe('Error Handling', () => {
     it('should return failure for invalid coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(NaN, NaN, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(NaN, NaN, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -263,12 +236,10 @@ describe('PointTool', () => {
         throw new Error('Mock execution error');
       });
 
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -319,12 +290,10 @@ describe('PointTool', () => {
 
     it('should maintain command stack for multiple operations', () => {
       for (let i = 0; i < 3; i++) {
-        const context: ToolContext = {
-          planeId: horizontalPlaneId,
-          planeCoords: new Vector3(100 * i, 100 * i, 1),
-          commandStack,
-          world
-        };
+        const context = createToolContext(
+          horizontalPlaneId,
+          new Vector3(100 * i, 100 * i, 1)
+        );
         tool.handleClick(context);
       }
 
@@ -339,12 +308,10 @@ describe('PointTool', () => {
 
   describe('Success/Failure Messages', () => {
     it('should return descriptive success message', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -354,12 +321,10 @@ describe('PointTool', () => {
     });
 
     it('should return descriptive failure message for invalid coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(NaN, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(NaN, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -368,12 +333,10 @@ describe('PointTool', () => {
     });
 
     it('should return descriptive failure message for invalid plane', () => {
-      const context: ToolContext = {
-        planeId: 'nonexistent_plane',
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        'nonexistent_plane',
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -385,12 +348,10 @@ describe('PointTool', () => {
 
   describe('Integration with Command Pattern', () => {
     it('should allow undo after point creation', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -415,12 +376,10 @@ describe('PointTool', () => {
     });
 
     it('should allow redo after undo', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
       commandStack.undo();
