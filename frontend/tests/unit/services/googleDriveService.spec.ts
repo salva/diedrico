@@ -38,6 +38,7 @@ const mockGoogle = {
   accounts: {
     oauth2: {
       initTokenClient: vi.fn(),
+      revoke: vi.fn(),
     },
   },
 };
@@ -69,6 +70,9 @@ describe('GoogleDriveService', () => {
     
     // Setup initTokenClient to return mock token client
     mockGoogle.accounts.oauth2.initTokenClient.mockReturnValue(mockTokenClient);
+    
+    // Setup revoke to resolve
+    mockGoogle.accounts.oauth2.revoke.mockResolvedValue(undefined);
     
     // Reset token client
     mockTokenClient.callback = null;
@@ -148,6 +152,9 @@ describe('GoogleDriveService', () => {
 
   describe('signIn', () => {
     it('should initialize and sign in user', async () => {
+      // Initialize first to avoid race condition
+      await service.initialize();
+      
       // Start sign-in (will set up callback)
       const signInPromise = service.signIn();
       
@@ -164,6 +171,9 @@ describe('GoogleDriveService', () => {
     });
 
     it('should throw user-friendly error when popup is closed', async () => {
+      // Initialize first to avoid race condition
+      await service.initialize();
+      
       const signInPromise = service.signIn();
       
       // Simulate popup closed error
@@ -175,6 +185,9 @@ describe('GoogleDriveService', () => {
     });
 
     it('should throw user-friendly error when access is denied', async () => {
+      // Initialize first to avoid race condition
+      await service.initialize();
+      
       const signInPromise = service.signIn();
       
       // Simulate access denied error
@@ -259,6 +272,7 @@ describe('GoogleDriveService', () => {
 
     it('should throw error when not signed in', async () => {
       // Sign out to clear auth state
+      await service.signOut();
       mockGapi.client.getToken.mockReturnValue(null);
       
       await expect(service.listFiles()).rejects.toThrow('User not signed in');
@@ -364,6 +378,7 @@ describe('GoogleDriveService', () => {
 
     it('should throw error when not signed in', async () => {
       // Sign out to clear auth state
+      await service.signOut();
       mockGapi.client.getToken.mockReturnValue(null);
 
       await expect(service.createFile('test', {})).rejects.toThrow('User not signed in');
@@ -400,6 +415,7 @@ describe('GoogleDriveService', () => {
 
     it('should throw error when not signed in', async () => {
       // Sign out to clear auth state
+      await service.signOut();
       mockGapi.client.getToken.mockReturnValue(null);
 
       await expect(service.loadFile('file-123')).rejects.toThrow('User not signed in');
@@ -435,6 +451,7 @@ describe('GoogleDriveService', () => {
 
     it('should throw error when not signed in', async () => {
       // Sign out to clear auth state
+      await service.signOut();
       mockGapi.client.getToken.mockReturnValue(null);
 
       await expect(service.updateFile('file-123', {})).rejects.toThrow('User not signed in');
@@ -459,6 +476,7 @@ describe('GoogleDriveService', () => {
 
     it('should throw error when not signed in', async () => {
       // Sign out to clear auth state
+      await service.signOut();
       mockGapi.client.getToken.mockReturnValue(null);
 
       await expect(service.deleteFile('file-123')).rejects.toThrow('User not signed in');
@@ -491,7 +509,7 @@ describe('GoogleDriveService', () => {
         'https://www.googleapis.com/oauth2/v2/userinfo',
         {
           headers: {
-            Authorization: 'Bearer test-access-token',
+            Authorization: 'Bearer test-token',
           },
         }
       );
@@ -524,6 +542,7 @@ describe('GoogleDriveService', () => {
 
     it('should throw error when not signed in', async () => {
       // Sign out to clear auth state
+      await service.signOut();
       mockGapi.client.getToken.mockReturnValue(null);
 
       await expect(service.fetchUserProfile()).rejects.toThrow('User not signed in');
