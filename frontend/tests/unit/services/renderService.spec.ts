@@ -43,7 +43,7 @@ describe('RenderService', () => {
       expect(attrs.cy).toBe(450);  // 400 + 50
       expect(attrs.r).toBe(5);
       expect(attrs.fill).toBe('#4A90E2');  // Free point color
-      expect(attrs['data-element-id']).toBe('point_1');
+      expect(attrs['data-element-id']).toBe(point.id);  // Phase 63: Use actual hierarchical ID
       expect(attrs['data-element-type']).toBe('point');
     });
 
@@ -92,7 +92,10 @@ describe('RenderService', () => {
       
       const attrs = renderPoint(point, realization);
       
-      expect(attrs['data-element-id']).toBe('test-point-3');
+      // Phase 63: Point should have hierarchical ID
+      expect(attrs['data-element-id']).toBe(point.id);
+      expect(point.id).toBeTruthy();
+      expect(point.id).toContain('proj_plane');
     });
   });
 
@@ -230,7 +233,7 @@ describe('RenderService', () => {
       expect(hoverAttrs.cx).toBe(baseAttrs.cx);
       expect(hoverAttrs.cy).toBe(baseAttrs.cy);
       expect(hoverAttrs.r).toBe(baseAttrs.r);
-      expect(hoverAttrs['data-element-id']).toBe('point_1');
+      expect(hoverAttrs['data-element-id']).toBe(point.id);  // Phase 63: Use actual hierarchical ID
     });
   });
 
