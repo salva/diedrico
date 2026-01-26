@@ -60,10 +60,34 @@ export class PointTool extends ArgumentCollectorTool {
   ): void {
     const positionArg = args.get('position')!;
     const planeCoords = positionArg.planeCoords;
-    const { planeId } = context;
+    const { planeId, world } = context;
+
+    // Validate coordinates
+    if (!this.validateCoordinates(planeCoords)) {
+      throw new Error('Invalid coordinates: NaN or Infinity not allowed');
+    }
+
+    // Validate plane exists
+    const plane = world.getProjectionPlaneById(planeId);
+    if (!plane) {
+      throw new Error(`Plane not found: ${planeId}`);
+    }
 
     // Use factory to create free point with ProcessTree action
     PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords);
+  }
+
+  /**
+   * Validate that coordinates are finite numbers
+   */
+  private validateCoordinates(coords: any): boolean {
+    if (!coords) return false;
+    const { x, y, z } = coords;
+    return (
+      typeof x === 'number' && isFinite(x) &&
+      typeof y === 'number' && isFinite(y) &&
+      typeof z === 'number' && isFinite(z)
+    );
   }
 
   protected getCommandDescription(): string {

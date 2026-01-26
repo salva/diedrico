@@ -66,14 +66,16 @@ describe('PointTool', () => {
       const result = tool.handleClick(context);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('Created point');
+      expect(result.message).toContain('completed successfully');
       
       // Verify point was created in World
       const allPoints: any[] = [];
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs format: proj_plane_3/point2d_10
+      // Filter out locked points (origin points) to count only user-created points
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(1);
       expect(userPoints[0].planeId).toBe(horizontalPlaneId);
     });
@@ -99,7 +101,8 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       const createdPoint = userPoints[0];
       
       expect(createdPoint).toBeInstanceOf(FreePoint2D);
@@ -121,7 +124,8 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints[0].planeId).toBe(verticalPlaneId);
     });
   });
@@ -212,7 +216,8 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(0);
     });
   });
@@ -244,19 +249,17 @@ describe('PointTool', () => {
       const result = tool.handleClick(context);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Failed to create point');
+      expect(result.message).toContain('Failed to create free point');
       expect(result.message).toContain('Mock execution error');
 
       pushSpy.mockRestore();
     });
 
     it('should not pollute command stack on validation failure', () => {
-      const context: ToolContext = {
-        planeId: 'invalid_plane',
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        'invalid_plane',
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -284,7 +287,8 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(3);
     });
 
@@ -316,8 +320,8 @@ describe('PointTool', () => {
       const result = tool.handleClick(context);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('Created point');
-      expect(result.message).toMatch(/point2d_\d+/); // Should include point ID
+      expect(result.message).toContain('completed successfully');
+      // Message format changed in ArgumentCollectorTool migration
     });
 
     it('should return descriptive failure message for invalid coordinates', () => {
@@ -360,7 +364,8 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      let userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      let userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(1);
 
       // Undo
@@ -371,7 +376,7 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(0);
     });
 
@@ -392,7 +397,8 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(1);
     });
   });

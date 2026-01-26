@@ -33,13 +33,12 @@ describe('World Initialization Integration', () => {
       expect(originH).toBeDefined();
       expect(originV).toBeDefined();
 
-      // Verify 3D planes exist
-      const planes = Array.from((world as any).planes.values());
-      expect(planes.length).toBeGreaterThanOrEqual(2);
+      // Verify projection planes exist
+      expect(projPlaneH).toBeDefined();
+      expect(projPlaneV).toBeDefined();
 
-      // Verify hinge line exists
-      const hingeLine = (world as any).hingeLines.get(world.mainHingeLineId);
-      expect(hingeLine).toBeDefined();
+      // Verify hinge line exists via semantic accessor
+      expect(mainHingeLine).toBeDefined();
     });
 
     it('should create origin points at (0,0)', () => {
@@ -136,11 +135,11 @@ describe('World Initialization Integration', () => {
       const world = new World();
       world.clear();
 
-      const projPlaneH = world.getProjectionPlaneById(world.horizontalPlaneId!);
-      const projPlaneV = world.getProjectionPlaneById(world.verticalPlaneId!);
+      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
-      const originH = projPlaneH?.getAllPoints()[0];
-      const originV = projPlaneV?.getAllPoints()[0];
+      const originH = projPlaneH?.getPoint2DByLabel('O_H');
+      const originV = projPlaneV?.getPoint2DByLabel('O_V');
 
       // Origin points exist after clear
       expect(originH).toBeDefined();
@@ -180,8 +179,8 @@ describe('World Initialization Integration', () => {
       const projPlaneH = world.getProjectionPlaneByLabel('P_H');
       const projPlaneV = world.getProjectionPlaneByLabel('P_V');
       
-      const halfHingeH = projPlaneH.getAllLines().find((l: any) => l.type === 'half-hinge');
-      const halfHingeV = projPlaneV.getAllLines().find((l: any) => l.type === 'half-hinge');
+      const halfHingeH = projPlaneH.getAllLines().find((l: any) => l instanceof HalfHingeLine2D);
+      const halfHingeV = projPlaneV.getAllLines().find((l: any) => l instanceof HalfHingeLine2D);
 
       // Both should have same point and direction (parametric consistency)
       expect(halfHingeH).toBeDefined();

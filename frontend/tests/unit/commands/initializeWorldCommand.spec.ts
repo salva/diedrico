@@ -177,11 +177,12 @@ describe('InitializeWorldCommand', () => {
       // Verify operation types in sequence
       const opTypes = operations.map((op: any) => op.type);
       
-      expect(opTypes[0]).toBe('CreateInitializationSubprocess');
+      // Phase 85: Initialization uses subprocess stack (PushSubprocessOp/PopSubprocessOp)
+      expect(opTypes[0]).toBe('PushSubprocess');
       expect(opTypes[1]).toBe('AddPlane3DFixed'); // Horizontal
       expect(opTypes[2]).toBe('AddPlane3DFixed'); // Vertical
-      expect(opTypes[3]).toBe('AddProjectionPlane'); // Horizontal
-      expect(opTypes[4]).toBe('AddProjectionPlane'); // Vertical
+      expect(opTypes[3]).toBe('AddProjectionPlaneFixed'); // Horizontal projection plane
+      expect(opTypes[4]).toBe('AddProjectionPlaneFixed'); // Vertical projection plane
       expect(opTypes[5]).toBe('AddOriginPoint2D'); // Horizontal origin
       expect(opTypes[6]).toBe('AddOriginPoint2D'); // Vertical origin
       expect(opTypes[7]).toBe('AddHingeLine'); // Main hinge line

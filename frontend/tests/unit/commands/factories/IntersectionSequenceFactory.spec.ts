@@ -16,6 +16,7 @@ import { World } from '@/domain/world/World';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
+import { SiblingIntersectionPoint2D } from '@/domain/world/Point';
 import { Vector3 } from 'three';
 import { getMainHingeLine } from '../../../helpers/worldHelpers';
 

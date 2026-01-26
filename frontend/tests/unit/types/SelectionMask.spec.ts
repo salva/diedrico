@@ -13,35 +13,52 @@ import {
   isUnionMask, 
   isIntersectionMask 
 } from '@/types/SelectionMask';
+import { FreePoint2D } from '@/domain/world/Point';
+import { Line2DByTwoPoints } from '@/domain/world/Line';
+import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Guide2D } from '@/domain/world/Guide';
+import { Circle2DByCenterAndPoint } from '@/domain/world/Circle';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { Vector3 } from 'three';
 
 describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
+  
+  // Create test element instances with proper hierarchical IDs
+  const planeId = 'proj_plane_1';
+  const point = new FreePoint2D(`${planeId}/point2d_1`, new Vector3(0, 0, 1), planeId);
+  const line = new Line2DByTwoPoints(`${planeId}/line2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
+  const segment = new Segment2DByPoints(`${planeId}/segment2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
+  const guide = new Guide2D(`${planeId}/guide2d_1`, `${planeId}/point2d_1`, new Vector3(1, 0, 0), planeId);
+  const circle = new Circle2DByCenterAndPoint(`${planeId}/circle2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
+  const halfHingeLine = new HalfHingeLine2D(`${planeId}/hhl2d_1`, 'hinge_1', planeId);
   
   describe('TypeMask - Exact Type Matching', () => {
     it('T1069.1: point() should match only point type', () => {
       const mask = SelectionMask.point();
       
-      expect(mask.matches('point')).toBe(true);
-      expect(mask.matches('line')).toBe(false);
-      expect(mask.matches('segment')).toBe(false);
-      expect(mask.matches('guide')).toBe(false);
-      expect(mask.matches('circle')).toBe(false);
-      expect(mask.matches('half-hinge-line')).toBe(false);
+      expect(mask.matches(point)).toBe(true);
+      expect(mask.matches(line)).toBe(false);
+      expect(mask.matches(segment)).toBe(false);
+      expect(mask.matches(guide)).toBe(false);
+      expect(mask.matches(circle)).toBe(false);
+      expect(mask.matches(halfHingeLine)).toBe(false);
     });
 
     it('T1069.2: line() should match only line type', () => {
       const mask = SelectionMask.line();
       
-      expect(mask.matches('line')).toBe(true);
-      expect(mask.matches('segment')).toBe(false);
-      expect(mask.matches('point')).toBe(false);
+      expect(mask.matches(line)).toBe(true);
+      // Segment is a Line2D subclass, so it matches
+      expect(mask.matches(segment)).toBe(true);
+      expect(mask.matches(point)).toBe(false);
     });
 
     it('T1069.3: circle() should match only circle type', () => {
       const mask = SelectionMask.circle();
       
-      expect(mask.matches('circle')).toBe(true);
-      expect(mask.matches('point')).toBe(false);
-      expect(mask.matches('line')).toBe(false);
+      expect(mask.matches(circle)).toBe(true);
+      expect(mask.matches(point)).toBe(false);
+      expect(mask.matches(line)).toBe(false);
     });
 
     it('T1069.4: Type guards should identify TypeMask', () => {
@@ -65,14 +82,14 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
       const mask = SelectionMask.anyLine();
       
       // Should match all line types
-      expect(mask.matches('line')).toBe(true);
-      expect(mask.matches('segment')).toBe(true);
-      expect(mask.matches('guide')).toBe(true);
-      expect(mask.matches('half-hinge-line')).toBe(true);
+      expect(mask.matches(line)).toBe(true);
+      expect(mask.matches(segment)).toBe(true);
+      expect(mask.matches(guide)).toBe(true);
+      expect(mask.matches(halfHingeLine)).toBe(true);
       
       // Should NOT match non-line types
-      expect(mask.matches('point')).toBe(false);
-      expect(mask.matches('circle')).toBe(false);
+      expect(mask.matches(point)).toBe(false);
+      expect(mask.matches(circle)).toBe(false);
     });
 
     it('T1070.2: Type guards should identify HierarchyMask', () => {
@@ -99,10 +116,10 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
         SelectionMask.circle()
       );
       
-      expect(mask.matches('point')).toBe(true);
-      expect(mask.matches('circle')).toBe(true);
-      expect(mask.matches('line')).toBe(false);
-      expect(mask.matches('segment')).toBe(false);
+      expect(mask.matches(point)).toBe(true);
+      expect(mask.matches(circle)).toBe(true);
+      expect(mask.matches(line)).toBe(false);
+      expect(mask.matches(segment)).toBe(false);
     });
 
     it('T1070.5: union() with anyLine should match points and all line types', () => {
@@ -112,16 +129,16 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
       );
       
       // Points
-      expect(mask.matches('point')).toBe(true);
+      expect(mask.matches(point)).toBe(true);
       
       // All line types
-      expect(mask.matches('line')).toBe(true);
-      expect(mask.matches('segment')).toBe(true);
-      expect(mask.matches('guide')).toBe(true);
-      expect(mask.matches('half-hinge-line')).toBe(true);
+      expect(mask.matches(line)).toBe(true);
+      expect(mask.matches(segment)).toBe(true);
+      expect(mask.matches(guide)).toBe(true);
+      expect(mask.matches(halfHingeLine)).toBe(true);
       
       // Not circles
-      expect(mask.matches('circle')).toBe(false);
+      expect(mask.matches(circle)).toBe(false);
     });
 
     it('T1070.6: empty union() should throw error (requires at least one mask)', () => {
@@ -133,7 +150,7 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
       
       // Should be optimized to TypeMask
       expect(isTypeMask(mask)).toBe(true);
-      expect(mask.matches('point')).toBe(true);
+      expect(mask.matches(point)).toBe(true);
     });
 
     it('T1070.8: Type guards should identify UnionMask', () => {
@@ -169,13 +186,13 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
       );
       
       // Segment matches both anyLine AND segment
-      expect(mask.matches('segment')).toBe(true);
+      expect(mask.matches(segment)).toBe(true);
       
       // Line matches anyLine but NOT segment specifically
-      expect(mask.matches('line')).toBe(false);
+      expect(mask.matches(line)).toBe(false);
       
       // Point matches neither
-      expect(mask.matches('point')).toBe(false);
+      expect(mask.matches(point)).toBe(false);
     });
 
     it('T1070.11: empty intersection() should throw error (requires at least one mask)', () => {
@@ -187,7 +204,7 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
       
       // Should be optimized to TypeMask
       expect(isTypeMask(mask)).toBe(true);
-      expect(mask.matches('point')).toBe(true);
+      expect(mask.matches(point)).toBe(true);
     });
 
     it('T1070.13: Type guards should identify IntersectionMask', () => {
@@ -212,12 +229,12 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
       );
       
       // Same behavior as Phase 62 'any-line'
-      expect(mask.matches('point')).toBe(true);
-      expect(mask.matches('line')).toBe(true);
-      expect(mask.matches('segment')).toBe(true);
-      expect(mask.matches('guide')).toBe(true);
-      expect(mask.matches('half-hinge-line')).toBe(true);
-      expect(mask.matches('circle')).toBe(false);
+      expect(mask.matches(point)).toBe(true);
+      expect(mask.matches(line)).toBe(true);
+      expect(mask.matches(segment)).toBe(true);
+      expect(mask.matches(guide)).toBe(true);
+      expect(mask.matches(halfHingeLine)).toBe(true);
+      expect(mask.matches(circle)).toBe(false);
     });
   });
 
