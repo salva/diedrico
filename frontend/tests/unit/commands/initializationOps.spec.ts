@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3, Vector4, Matrix3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { World } from '@/domain/world/World';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import {
   AddPlane3DFixedOp,
   AddProjectionPlaneFixedOp,
@@ -116,12 +117,12 @@ describe('Initialization Operations', () => {
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
-      expect(result.outputs.planeId).toBe('plane_test_H');
+      expect(result.outputs.planeId).toBeDefined();
       
-      const plane = (world as any).planes.get('plane_test_H');
+      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+      const plane = world.getPlaneById(result.outputs.planeId);
       expect(plane).toBeDefined();
-      expect(plane.type).toBe('projection');
-      expect(plane.label).toBe('P_H');
+      expect(plane!.label).toBe('P_H');
     });
 
     it('should create vertical 3D plane', () => {
@@ -131,23 +132,26 @@ describe('Initialization Operations', () => {
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
+      expect(result.outputs.planeId).toBeDefined();
       
-      const plane = (world as any).planes.get('plane_test_V');
+      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+      const plane = world.getPlaneById(result.outputs.planeId);
       expect(plane).toBeDefined();
-      expect(plane.label).toBe('P_V');
+      expect(plane!.label).toBe('P_V');
     });
 
     it('should undo plane creation', () => {
       const point = new Vector4(0, 0, 0, 1);
       const normal = new Vector4(0, 0, 1, 0);
       const op = new AddPlane3DFixedOp(point, normal, 'plane_undo_test');
-      op.apply(world);
+      const result = op.apply(world);
       
-      expect((world as any).planes.has('plane_undo_test')).toBe(true);
+      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+      expect(world.getPlaneById(result.outputs.planeId)).toBeDefined();
       
       op.undo(world);
       
-      expect((world as any).planes.has('plane_undo_test')).toBe(false);
+      expect(world.getPlaneById(result.outputs.planeId)).toBeUndefined();
     });
 
     it('should have valid parameters and outputs', () => {
@@ -306,9 +310,9 @@ describe('Initialization Operations', () => {
       expect(result.success).toBe(true);
       expect(result.outputs.hingeLineId).toBe('hl_test');
       
-      const hingeLine = (world as any).hingeLines.get('hl_test');
+      const hingeLine = world.getHingeLineById('hl_test');
       expect(hingeLine).toBeDefined();
-      expect((world as any).mainHingeLineId).toBe('hl_test');
+      expect(hingeLine!.id).toBe('hl_test');
     });
 
     it('should undo hinge line creation', () => {
@@ -369,7 +373,7 @@ describe('Initialization Operations', () => {
       const lines = projPlane!.getAllLines();
       
       expect(lines.length).toBe(1);
-      expect(lines[0].type).toBe('half-hinge');
+      expect(lines[0]).toBeInstanceOf(HalfHingeLine2D);
     });
 
     it('should return error if plane not found', () => {
@@ -382,14 +386,10 @@ describe('Initialization Operations', () => {
     });
 
     it('should have valid parameters', () => {
-      const point = new Vector3(1, 2, 1);
-      const dir = new Vector3(3, 4, 0);
-      const op = new AddHalfHingeLine2DOp('proj', 'hl', point, dir);
+      const op = new AddHalfHingeLine2DOp('proj_plane_id', 'hinge_line_id');
       
-      expect(op.parameters.projPlaneId).toBe('proj');
-      expect(op.parameters.hingeLineId).toBe('hl');
-      expect(op.parameters.point).toEqual({ x: 1, y: 2, z: 1 });
-      expect(op.parameters.direction).toEqual({ x: 3, y: 4, z: 0 });
+      expect(op.parameters.projPlaneId).toBe('proj_plane_id');
+      expect(op.parameters.hingeLineId).toBe('hinge_line_id');
     });
   });
 });

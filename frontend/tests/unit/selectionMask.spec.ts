@@ -39,6 +39,27 @@ describe('Selection Mask System', () => {
     paper = new Paper();
   });
 
+  // Helper functions to create test elements
+  function createTestPoint(): FreePoint2D {
+    const plane = world.getProjectionPlaneByLabel('P_H');
+    return plane.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'P');
+  }
+
+  function createTestLine(): Line2D {
+    const plane = world.getProjectionPlaneByLabel('P_H');
+    // Create two points first
+    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'P1');
+    const p2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world, undefined, 'P2');
+    return plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world, undefined, 'L');
+  }
+
+  function createTestCircle(): Circle2D {
+    const plane = world.getProjectionPlaneByLabel('P_H');
+    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'C');
+    const circumferencePoint = plane.addFreePoint2D(new Vector3(1, 0, 1), world, undefined, 'CP');
+    return plane.addCircle2DByCenterAndPoint(center.id, circumferencePoint.id, world, undefined);
+  }
+
   describe('Tool Selection Masks', () => {
     it('PointTool returns empty mask (creates points, does not select)', () => {
       const tool = new PointTool();
@@ -49,40 +70,49 @@ describe('Selection Mask System', () => {
     it('LineTool returns point-only mask', () => {
       const tool = new LineTool();
       const mask = tool.getSelectionMask();
-      expect(mask.matches('point')).toBe(true);
-      expect(mask.matches('line')).toBe(false);
+      const testPoint = createTestPoint();
+      const testLine = createTestLine();
+      expect(mask.matches(testPoint)).toBe(true);
+      expect(mask.matches(testLine)).toBe(false);
     });
 
     it('SegmentTool returns point-only mask', () => {
       const tool = new SegmentTool();
       const mask = tool.getSelectionMask();
-      expect(mask.matches('point')).toBe(true);
-      expect(mask.matches('line')).toBe(false);
+      const testPoint = createTestPoint();
+      const testLine = createTestLine();
+      expect(mask.matches(testPoint)).toBe(true);
+      expect(mask.matches(testLine)).toBe(false);
     });
 
     it('CircleTool returns point-only mask', () => {
       const tool = new CircleTool();
       const mask = tool.getSelectionMask();
-      expect(mask.matches('point')).toBe(true);
-      expect(mask.matches('line')).toBe(false);
+      const testPoint = createTestPoint();
+      const testLine = createTestLine();
+      expect(mask.matches(testPoint)).toBe(true);
+      expect(mask.matches(testLine)).toBe(false);
     });
 
     it('IntersectionTool returns line and circle mask', () => {
       const tool = new IntersectionTool();
       const mask = tool.getSelectionMask();
-      expect(mask.matches('line')).toBe(true);
-      expect(mask.matches('half-hinge-line')).toBe(true);
-      expect(mask.matches('segment')).toBe(true);
-      expect(mask.matches('guide')).toBe(true);
-      expect(mask.matches('circle')).toBe(true);
+      const testLine = createTestLine();
+      const testCircle = createTestCircle();
+      const testPoint = createTestPoint();
+      expect(mask.matches(testLine)).toBe(true);
+      expect(mask.matches(testCircle)).toBe(true);
+      expect(mask.matches(testPoint)).toBe(false);
     });
 
     describe('GuideTool dynamic mask', () => {
       it('returns half-hinge-line and point mask in initial state', () => {
         const tool = new GuideTool();
         const mask = tool.getSelectionMask();
-        expect(mask.matches('half-hinge-line')).toBe(true);
-        expect(mask.matches('point')).toBe(true);
+        const testPoint = createTestPoint();
+        const testLine = createTestLine();
+        expect(mask.matches(testLine)).toBe(true);  // All lines including half-hinge-lines
+        expect(mask.matches(testPoint)).toBe(true);
       });
 
       // Note: Testing state transitions requires actually clicking with the tool

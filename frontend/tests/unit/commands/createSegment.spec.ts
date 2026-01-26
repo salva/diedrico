@@ -41,7 +41,6 @@ describe('Create Segment Command', () => {
       
       expect(segment).toBeDefined();
       expect(segment?.id).toBe(segmentId);
-      expect(segment?.type).toBe('segment');
     });
 
     it('should return segmentId in outputs', () => {

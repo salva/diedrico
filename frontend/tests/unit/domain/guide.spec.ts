@@ -59,7 +59,7 @@ describe('Guide2D', () => {
       const guide = new Guide2D(guideId, referenceLineId, throughPointId, planeId);
       
       expect(guide.id).toBe(guideId);
-      expect(guide.type).toBe('guide');
+      expect(guide).toBeInstanceOf(Guide2D);
       expect(guide.referenceLineId).toBe(referenceLineId);
       expect(guide.throughPointId).toBe(throughPointId);
       expect(guide.planeId).toBe(planeId);
@@ -216,7 +216,7 @@ describe('Guide2D', () => {
       );
       
       expect(siblingGuide.id).toBe(guideId);
-      expect(siblingGuide.type).toBe('sibling-guide');
+      expect(siblingGuide).toBeInstanceOf(SiblingGuide2D);
       expect(siblingGuide.referenceLineId).toBe(referenceLineId);
       expect(siblingGuide.planeId).toBe(planeId);
       expect(siblingGuide.primaryGuideId).toBe(primaryGuideId);

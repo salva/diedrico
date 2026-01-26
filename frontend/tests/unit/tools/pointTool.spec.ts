@@ -16,6 +16,8 @@ import { World } from '@/domain/world/World';
 import { CommandStack } from '@/commands/CommandStack';
 import type { ToolContext } from '@/tools/ITool';
 import { Vector3 } from 'three';
+import { Paper } from '@/domain/presentation/Paper';
+import { FreePoint2D } from '@/domain/world/Point';
 
 describe('PointTool', () => {
   let tool: PointTool;
@@ -23,11 +25,26 @@ describe('PointTool', () => {
   let commandStack: CommandStack;
   let horizontalPlaneId: string;
   let verticalPlaneId: string;
+  let paper: Paper;
+
+  // Helper to create complete ToolContext
+  const createToolContext = (planeId: string, planeCoords: Vector3, canvasCoords = { x: 100, y: 100 }): ToolContext => ({
+    planeId,
+    planeCoords,
+    canvasCoords,
+    commandStack,
+    world,
+    paper,
+    paperToPlaneTransform: undefined,
+    toolStore: {} as any, // Mock tool store
+  });
 
   beforeEach(() => {
     tool = new PointTool();
     world = new World();
     commandStack = new CommandStack();
+    paper = new Paper();
+    paper = new Paper();
     // Get actual plane IDs from initialized world
     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
     verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
@@ -41,35 +58,33 @@ describe('PointTool', () => {
 
   describe('Click Handling', () => {
     it('should create free point on valid click', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('Created point');
+      expect(result.message).toContain('completed successfully');
       
       // Verify point was created in World
       const allPoints: any[] = [];
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs format: proj_plane_3/point2d_10
+      // Filter out locked points (origin points) to count only user-created points
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(1);
       expect(userPoints[0].planeId).toBe(horizontalPlaneId);
     });
 
     it('should add command to command stack', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -78,12 +93,7 @@ describe('PointTool', () => {
 
     it('should create point with correct coordinates', () => {
       const planeCoords = new Vector3(150, 250, 1);
-      const context: ToolContext = {
-        planeId: verticalPlaneId,
-        planeCoords,
-        commandStack,
-        world
-      };
+      const context = createToolContext(verticalPlaneId, planeCoords);
 
       tool.handleClick(context);
 
@@ -91,10 +101,11 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       const createdPoint = userPoints[0];
       
-      expect(createdPoint.type).toBe('free');
+      expect(createdPoint).toBeInstanceOf(FreePoint2D);
       const position = (createdPoint as any).position;
       expect(position.x).toBe(150);
       expect(position.y).toBe(250);
@@ -102,12 +113,10 @@ describe('PointTool', () => {
     });
 
     it('should create point on correct plane', () => {
-      const context: ToolContext = {
-        planeId: verticalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        verticalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -115,19 +124,18 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints[0].planeId).toBe(verticalPlaneId);
     });
   });
 
   describe('Coordinate Validation', () => {
     it('should accept valid Vector3 homogeneous coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -135,12 +143,10 @@ describe('PointTool', () => {
     });
 
     it('should reject NaN coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(NaN, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(NaN, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -149,12 +155,10 @@ describe('PointTool', () => {
     });
 
     it('should reject Infinity coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(Infinity, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(Infinity, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -165,12 +169,10 @@ describe('PointTool', () => {
 
   describe('Plane Validation', () => {
     it('should accept valid plane_H', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -178,12 +180,10 @@ describe('PointTool', () => {
     });
 
     it('should accept valid plane_V', () => {
-      const context: ToolContext = {
-        planeId: verticalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        verticalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -191,12 +191,10 @@ describe('PointTool', () => {
     });
 
     it('should reject invalid plane ID', () => {
-      const context: ToolContext = {
-        planeId: 'invalid_plane',
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        'invalid_plane',
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -206,12 +204,10 @@ describe('PointTool', () => {
     });
 
     it('should not create point for invalid plane', () => {
-      const context: ToolContext = {
-        planeId: 'invalid_plane',
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        'invalid_plane',
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -220,19 +216,18 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(0);
     });
   });
 
   describe('Error Handling', () => {
     it('should return failure for invalid coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(NaN, NaN, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(NaN, NaN, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -246,29 +241,25 @@ describe('PointTool', () => {
         throw new Error('Mock execution error');
       });
 
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Failed to create point');
+      expect(result.message).toContain('Failed to create free point');
       expect(result.message).toContain('Mock execution error');
 
       pushSpy.mockRestore();
     });
 
     it('should not pollute command stack on validation failure', () => {
-      const context: ToolContext = {
-        planeId: 'invalid_plane',
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        'invalid_plane',
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -286,12 +277,7 @@ describe('PointTool', () => {
       ];
 
       positions.forEach(pos => {
-        const context: ToolContext = {
-          planeId: horizontalPlaneId,
-          planeCoords: pos,
-          commandStack,
-          world
-        };
+        const context = createToolContext(horizontalPlaneId, pos);
         const result = tool.handleClick(context);
         expect(result.success).toBe(true);
       });
@@ -301,18 +287,17 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(3);
     });
 
     it('should maintain command stack for multiple operations', () => {
       for (let i = 0; i < 3; i++) {
-        const context: ToolContext = {
-          planeId: horizontalPlaneId,
-          planeCoords: new Vector3(100 * i, 100 * i, 1),
-          commandStack,
-          world
-        };
+        const context = createToolContext(
+          horizontalPlaneId,
+          new Vector3(100 * i, 100 * i, 1)
+        );
         tool.handleClick(context);
       }
 
@@ -327,27 +312,23 @@ describe('PointTool', () => {
 
   describe('Success/Failure Messages', () => {
     it('should return descriptive success message', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('Created point');
-      expect(result.message).toMatch(/point2d_\d+/); // Should include point ID
+      expect(result.message).toContain('completed successfully');
+      // Message format changed in ArgumentCollectorTool migration
     });
 
     it('should return descriptive failure message for invalid coordinates', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(NaN, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(NaN, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -356,12 +337,10 @@ describe('PointTool', () => {
     });
 
     it('should return descriptive failure message for invalid plane', () => {
-      const context: ToolContext = {
-        planeId: 'nonexistent_plane',
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        'nonexistent_plane',
+        new Vector3(100, 200, 1)
+      );
 
       const result = tool.handleClick(context);
 
@@ -373,12 +352,10 @@ describe('PointTool', () => {
 
   describe('Integration with Command Pattern', () => {
     it('should allow undo after point creation', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
 
@@ -387,7 +364,8 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      let userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      let userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(1);
 
       // Undo
@@ -398,17 +376,15 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(0);
     });
 
     it('should allow redo after undo', () => {
-      const context: ToolContext = {
-        planeId: horizontalPlaneId,
-        planeCoords: new Vector3(100, 200, 1),
-        commandStack,
-        world
-      };
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(100, 200, 1)
+      );
 
       tool.handleClick(context);
       commandStack.undo();
@@ -421,7 +397,8 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      const userPoints = allPoints.filter(p => p.id?.startsWith('point2d_'));
+      // Phase 63: Hierarchical IDs
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
       expect(userPoints.length).toBe(1);
     });
   });

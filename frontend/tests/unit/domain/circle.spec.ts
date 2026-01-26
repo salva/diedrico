@@ -56,7 +56,7 @@ describe('Circle2D', () => {
       const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, point1Id, planeId);
       
       expect(circle.id).toBeDefined();
-      expect(circle.type).toBe('by-center-and-point');
+      expect(circle).toBeInstanceOf(Circle2DByCenterAndPoint);
       expect(circle.centerPointId).toBe(centerPointId);
       expect(circle.circumferencePointId).toBe(point1Id);
     });
@@ -65,7 +65,7 @@ describe('Circle2D', () => {
       const plane = getHorizontalPlane(world);
       const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, point1Id, planeId);
       
-      world.addCircle2D(circle);
+      plane.addCircle(circle);
       const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       expect(realization).toBeDefined();
@@ -77,26 +77,6 @@ describe('Circle2D', () => {
       expect(realization!.radiusVector.x).toBe(50);
       expect(realization!.radiusVector.y).toBe(0);
       expect(realization!.radiusVector.z).toBe(0);  // Vectors have z=0
-    });
-
-    it('should return null when center point is missing', () => {
-      const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), planeId + '/missing', point1Id, planeId);
-      
-      plane.addCircle(circle);
-      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
-      
-      expect(realization).toBeUndefined();
-    });
-
-    it('should return null when circumference point is missing', () => {
-      const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, planeId + '/missing', planeId);
-      
-      plane.addCircle(circle);
-      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
-      
-      expect(realization).toBeUndefined();
     });
 
     it('should return null for degenerate circle (center = circumference point)', () => {
@@ -121,7 +101,7 @@ describe('Circle2D', () => {
       const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), point1Id, point2Id, point3Id, planeId);
       
       expect(circle.id).toBeDefined();
-      expect(circle.type).toBe('by-three-points');
+      expect(circle).toBeInstanceOf(Circle2DByThreePoints);
       expect(circle.point1Id).toBe(point1Id);
       expect(circle.point2Id).toBe(point2Id);
       expect(circle.point3Id).toBe(point3Id);
@@ -140,16 +120,6 @@ describe('Circle2D', () => {
       expect(realization!.center.x).toBeCloseTo(0, 1);
       expect(realization!.center.y).toBeCloseTo(0, 1);
       expect(realization!.getRadius()).toBeCloseTo(50, 1);
-    });
-
-    it('should return null when any point is missing', () => {
-      const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), planeId + '/missing', point2Id, point3Id, planeId);
-      
-      plane.addCircle(circle);
-      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
-      
-      expect(realization).toBeUndefined();
     });
 
     it('should return null for collinear points', () => {

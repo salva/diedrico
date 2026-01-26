@@ -59,15 +59,19 @@ export function planeToCanvas(
   // Strip 'proj_' prefix if present and check for horizontal or vertical indicator
   const normalizedId = planeId.replace('proj_', '').replace('P_', 'plane_');
   
-  if (normalizedId === 'plane_H' || normalizedId.includes('_H')) {
+  // Check for horizontal plane:
+  // - Explicit labels: plane_H, includes '_H'
+  // - First projection plane: plane_3 (P_H is created third, after plane_1 and plane_2 which are 3D planes)
+  if (normalizedId === 'plane_H' || normalizedId.includes('_H') || normalizedId === 'plane_3') {
     // P_H: horizontal plane, straightforward mapping
     // u → x, v → y (no flip, Y is already aligned)
     return [
       canvasOriginX + u,
       canvasOriginY + v
     ];
-  } else if (normalizedId === 'plane_V' || normalizedId.includes('_V')) {
+  } else if (normalizedId === 'plane_V' || normalizedId.includes('_V') || normalizedId === 'plane_4') {
     // P_V: vertical plane, u → x, v → z (which maps to -y_canvas because Z is up)
+    // Second projection plane: plane_4 (P_V is created fourth)
     return [
       canvasOriginX + u,
       canvasOriginY - v  // Flip because Z is up, canvas Y is down

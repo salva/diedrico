@@ -658,21 +658,6 @@ export class World {
   // ========================================
 
   /**
-   * Add a plane to the world
-   * 
-   * @deprecated Phase 52: This method is problematic because Plane3D.id is now readonly (inherited from Element).
-   * Planes should be created using addPlane3DFixed() or other factory methods that properly set id during construction.
-   * This method will fail if plane doesn't already have an id set.
-   */
-  addPlane(plane: Plane3D): Plane3D {
-    if (!plane.id) {
-      throw new Error('addPlane: plane.id is readonly and must be set during construction. Use addPlane3DFixed() instead.');
-    }
-    this.planes3D.set(plane.id, plane);
-    return plane;
-  }
-
-  /**
    * Get a plane by ID
    */
   getPlaneById(id: string): Plane3D | undefined {
@@ -1121,24 +1106,10 @@ export class World {
   }
 
   /**
-   * @deprecated Use add3DPlane instead
-   */
-  add3DPlaneUser(plane: Plane3D): void {
-    this.add3DPlane(plane);
-  }
-
-  /**
    * Get 3D plane by ID (base or user-created)
    */
   get3DPlane(id: string): Plane3D | undefined {
     return this.planes3D.get(id);
-  }
-
-  /**
-   * @deprecated Use get3DPlane instead
-   */
-  get3DPlaneUser(id: string): Plane3D | undefined {
-    return this.get3DPlane(id);
   }
 
   /**
@@ -1148,13 +1119,6 @@ export class World {
     this.planes3D.delete(id);
     this.planeRealizations3D.delete(id);
     this.notifyChange();
-  }
-
-  /**
-   * @deprecated Use remove3DPlane instead
-   */
-  remove3DPlaneUser(id: string): void {
-    this.remove3DPlane(id);
   }
 
 

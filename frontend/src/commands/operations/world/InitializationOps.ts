@@ -86,7 +86,8 @@ export class AddPlane3DFixedOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.planeId) {
-      (world as any).planes.delete(this.outputs.planeId);
+      // Phase 78: Access planes3D map, not 'planes'
+      (world as any).planes3D.delete(this.outputs.planeId);
     }
   }
 

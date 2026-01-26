@@ -35,12 +35,7 @@ import { Element2D } from './Element2D';
 /**
  * Type guard to check if an object is an Element2D
  * 
- * Verifies that the object has all required Element2D properties:
- * - id: string
- * - planeId: string
- * - label: string | undefined
- * - visible: boolean
- * - type: string
+ * Verifies that the object is an instance of Element2D class.
  * 
  * @param obj - Object to check
  * @returns True if object is Element2D, false otherwise
@@ -55,15 +50,7 @@ import { Element2D } from './Element2D';
  * ```
  */
 export function isElement2D(obj: any): obj is Element2D {
-  return (
-    obj !== null &&
-    typeof obj === 'object' &&
-    typeof obj.id === 'string' &&
-    typeof obj.planeId === 'string' &&
-    (obj.label === undefined || typeof obj.label === 'string') &&
-    typeof obj.visible === 'boolean' &&
-    typeof obj.type === 'string'
-  );
+  return obj instanceof Element2D;
 }
 
 /**
@@ -172,27 +159,6 @@ export function getElementLabel(element: Element2D): string {
  */
 export function getVisibleElements(elements: Element2D[]): Element2D[] {
   return elements.filter(el => el.visualStyle?.visible !== false);
-}
-
-/**
- * Filter elements by type
- * 
- * Returns all elements matching the specified type string.
- * Type strings include: 'free', 'line-line-intersection', 'by-two-points', 'by-center-and-point', etc.
- * 
- * @param elements - Array of Element2D objects
- * @param type - Type string to filter by
- * @returns Array of elements with matching type
- * 
- * @example
- * ```typescript
- * const allElements: Element2D[] = [freePoint, intersectionPoint, line, circle];
- * const freePoints = getElementsByType(allElements, 'free');
- * const lines = getElementsByType(allElements, 'by-two-points');
- * ```
- */
-export function getElementsByType(elements: Element2D[], type: string): Element2D[] {
-  return elements.filter(el => el.type === type);
 }
 
 /**

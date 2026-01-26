@@ -40,7 +40,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult, ITool } from './ITool';
-import { SelectionMask, getSelectableType, NoneMask } from '@/types/SelectionMask';
+import { SelectionMask, NoneMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import type { 
   ToolArgumentSpec, 
@@ -402,9 +402,8 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
         let matches = false;
         
         if (element) {
-          // Element provided - check if it matches SelectionMask
-          // Use getSelectableType() to map concrete types (e.g., 'free') to abstract types (e.g., 'point')
-          matches = spec.mask.matches(getSelectableType(element));
+          // Element provided - check if it matches SelectionMask using instanceof
+          matches = spec.mask.matches(element);
         } else {
           // No element (null) - check if spec accepts SelectionMask.none()
           matches = spec.mask instanceof NoneMask;
@@ -464,9 +463,8 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
         
         let matches = false;
         if (element) {
-          // Element provided - check if it matches SelectionMask
-          // Use getSelectableType() to map concrete types (e.g., 'free') to abstract types (e.g., 'point')
-          matches = spec.mask.matches(getSelectableType(element));
+          // Element provided - check if it matches SelectionMask using instanceof
+          matches = spec.mask.matches(element);
         } else {
           // No element (null) - check if spec accepts SelectionMask.none()
           matches = spec.mask instanceof NoneMask;

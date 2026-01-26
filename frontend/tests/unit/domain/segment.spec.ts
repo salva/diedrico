@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Segment2DByPoints, Segment2D } from '@/domain/world/Segment';
 import { Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D, Point2DRealization2D } from '@/domain/world/Point';
 import { World } from '@/domain/world/World';
@@ -38,7 +38,7 @@ describe('Segment2D', () => {
       const segment = new Segment2DByPoints(planeH.id + '/seg1', point1Id, point2Id, planeH.id);
       
       expect(segment.id).toBe(planeH.id + '/seg1');
-      expect(segment instanceof Segment2D).toBe(true);  // Phase 22.5: unified line type
+      expect(segment instanceof Segment2DByPoints).toBe(true);  // Phase 22.5: extends Line2D
       expect(segment.point1Id).toBe(point1Id);
       expect(segment.point2Id).toBe(point2Id);
       expect(segment.planeId).toBe(planeH.id);
@@ -64,27 +64,6 @@ describe('Segment2D', () => {
       expect(realization!.point1.y).toBe(0);
       expect(realization!.point2.x).toBe(100);
       expect(realization!.point2.y).toBe(50);
-    });
-
-    it('should return null when first point is missing', () => {
-      const segment = new Segment2DByPoints(planeH.id + '/seg1', 'missing', point2Id, planeH.id);
-      const realization = segment.realize2D(world);
-      
-      expect(realization).toBeNull();
-    });
-
-    it('should return null when second point is missing', () => {
-      const segment = new Segment2DByPoints(planeH.id + '/seg1', point1Id, 'missing', planeH.id);
-      const realization = segment.realize2D(world);
-      
-      expect(realization).toBeNull();
-    });
-
-    it('should return null when both points are missing', () => {
-      const segment = new Segment2DByPoints(planeH.id + '/seg1', 'missing1', 'missing2', planeH.id);
-      const realization = segment.realize2D(world);
-      
-      expect(realization).toBeNull();
     });
 
     it('should detect degenerate segment (coincident points)', () => {

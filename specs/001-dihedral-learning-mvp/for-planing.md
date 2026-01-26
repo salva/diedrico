@@ -10,8 +10,9 @@ In general, any idea needs to...
 4. Be broken down into smaller implementable tasks in tasks.md.
 5. Include corresponding testing tasks.
 6. Be marked here as done and move it to the already planned section.
-7. Implement the new tasks. All of them. Fix regressions.
-8. Commit with git.
+7. Implement the new tasks. All of them.
+8. Run all the tests. Fix regressions (some tests may need to be changed, fully rewritten or just removed).
+9. Commit with git.
 
 Note that completing these tasks may require asking the user for additional information and clarification. When in doubt, just ask!!!
 
@@ -19,6 +20,9 @@ Note that completing these tasks may require asking the user for additional info
 ## FOR PLANING
 
 * [ ] **Phase 85: ProcessTree Subprocess Stack Architecture** - Implement subprocess stack in ProcessTree to eliminate conditional subprocess checks in operations. Two operation types: (1) Stack manipulation operations (PushSubprocessOp/PopSubprocessOp) that manage subprocess stack, (2) Action recording operations (AddProcessTreeActionOp) that add actions to current subprocess at top of stack. Domain operations remain unchanged. Benefits: automatic action registration, no conditional checks, clear subprocess boundaries, complete dependency graph. See specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md for details.
+* [ ] Allow closing the last process tree element in the stack, so that the following entries are pushed into the parent (or in a sibling if one is created).
+* [ ] Add a hide-children checkbox into process tree headers to enable/disable visibility of elements from the process tree view, so that the visibility of all elements with are created from inside the tree (except those signaled as output, see below) could be enabled/disabled in one go.
+* [ ] Allow to mark entries in the proccess tree as output elements which would not be hidden when hide children in picked in the parent.
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Add a shortcut for changing the active projection plane to the next one. Using Tab for instance.
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.

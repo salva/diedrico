@@ -7,12 +7,12 @@
  * 1. Validating that traces are on different planes
  * 2. Referencing existing Line2D elements as traces
  * 3. Reconstructing 3D plane equation from traces
- * 4. Adding to World.planes3DUser storage
+ * 4. Adding to World.planes3D storage
  * 
  * The operation is reversible (undo removes the plane).
  * 
  * @see Plane3DFromTraces in Plane.ts
- * @see World.add3DPlaneUser() for storage
+ * @see World.add3DPlane() for storage
  */
 
 import type { IOperation, OperationResult } from '../IOperation';
@@ -163,7 +163,7 @@ export class Add3DPlaneOp implements IOperation {
       );
       
       // Add to World storage
-      world.add3DPlaneUser(plane);
+      world.add3DPlane(plane);
       
       // Store outputs for undo
       this.outputs = { planeId };
@@ -183,7 +183,7 @@ export class Add3DPlaneOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.planeId) {
-      world.remove3DPlaneUser(this.outputs.planeId);
+      world.remove3DPlane(this.outputs.planeId);
     }
   }
 }

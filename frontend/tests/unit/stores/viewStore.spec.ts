@@ -30,7 +30,13 @@ describe('viewStore', () => {
         zoom: 1.0,
         panX: 0,
         panY: 0,
-        gridVisible: true
+        gridVisible: true,
+        threeViewOptions: {
+          showPlanes: true,
+          showGrid: true,
+          showLinkingVisuals: false,
+          show2DElementsOnPlanes: false
+        }
       });
     });
   });
@@ -202,7 +208,13 @@ describe('viewStore', () => {
         zoom: 2.0,
         panX: 100,
         panY: 100,
-        gridVisible: true
+        gridVisible: true,
+        threeViewOptions: {
+          showPlanes: true,
+          showGrid: true,
+          showLinkingVisuals: false,
+          show2DElementsOnPlanes: false
+        }
       });
     });
   });

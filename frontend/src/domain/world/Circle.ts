@@ -128,6 +128,15 @@ export class Circle2DByCenterAndPoint extends Circle2D {
     const plane = world.getProjectionPlaneById(this.planeId);
     const centerPoint = plane.getPoint(this.centerPointId);
     const circumferencePoint = plane.getPoint(this.circumferencePointId);
+    
+    // Missing points are internal errors (fail fast)
+    if (!centerPoint) {
+      throw new Error(`[Circle2DByCenterAndPoint] Center point ${this.centerPointId} not found on plane ${this.planeId} for circle ${this.id}`);
+    }
+    if (!circumferencePoint) {
+      throw new Error(`[Circle2DByCenterAndPoint] Circumference point ${this.circumferencePointId} not found on plane ${this.planeId} for circle ${this.id}`);
+    }
+    
     const centerRealization = centerPoint.realize2D(world);
     const circumferenceRealization = circumferencePoint.realize2D(world);
 
@@ -214,6 +223,18 @@ export class Circle2DByThreePoints extends Circle2D {
     const point1 = plane.getPoint(this.point1Id);
     const point2 = plane.getPoint(this.point2Id);
     const point3 = plane.getPoint(this.point3Id);
+    
+    // Missing points are internal errors (fail fast)
+    if (!point1) {
+      throw new Error(`[Circle2DByThreePoints] Point1 ${this.point1Id} not found on plane ${this.planeId} for circle ${this.id}`);
+    }
+    if (!point2) {
+      throw new Error(`[Circle2DByThreePoints] Point2 ${this.point2Id} not found on plane ${this.planeId} for circle ${this.id}`);
+    }
+    if (!point3) {
+      throw new Error(`[Circle2DByThreePoints] Point3 ${this.point3Id} not found on plane ${this.planeId} for circle ${this.id}`);
+    }
+    
     const p1Realization = point1.realize2D(world);
     const p2Realization = point2.realize2D(world);
     const p3Realization = point3.realize2D(world);

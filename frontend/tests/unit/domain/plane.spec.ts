@@ -35,7 +35,7 @@ describe('Plane3DFixed', () => {
       expect(plane.normal.x).toBe(0);
       expect(plane.normal.y).toBe(0);
       expect(plane.normal.z).toBe(1);
-      expect(plane.type).toBe('projection');
+      // expect(plane.type).toBe('projection'); // Type property removed
     });
 
     it('should normalize the normal vector', () => {
@@ -71,7 +71,7 @@ describe('Plane3DFixed', () => {
       );
 
       expect(plane.label).toBe('Test Plane3D');
-      expect(plane.type).toBe('projection');
+      // expect(plane.type).toBe('projection'); // Type property removed
     });
   });
 
@@ -84,7 +84,7 @@ describe('Plane3DFixed', () => {
       expect(planeH.point).toEqual(new Vector4(0, 0, 0, 1));
       expect(planeH.normal).toEqual(new Vector4(0, 0, 1, 0));
       expect(planeH.label).toBe('P_H');
-      expect(planeH.type).toBe('projection');
+      // expect(planeH.type).toBe('projection'); // Type property removed
     });
 
     it('should set default boundaries for P_H', () => {
@@ -113,7 +113,7 @@ describe('Plane3DFixed', () => {
       expect(planeV.point).toEqual(new Vector4(0, 0, 0, 1));
       expect(planeV.normal).toEqual(new Vector4(0, 1, 0, 0));
       expect(planeV.label).toBe('P_V');
-      expect(planeV.type).toBe('projection');
+      // expect(planeV.type).toBe('projection'); // Type property removed
     });
 
     it('should set default boundaries for P_V', () => {
@@ -477,7 +477,7 @@ describe('Plane3DFixed', () => {
           getLine2D: (id: string) => {
             if (id === 'trace1_id') {
               return {
-                plane: 'P_H',
+                planeId: 'P_H',
                 realize2D: () => ({
                   point1: new Vector3(0, 0, 1),    // Origin in 2D (homogeneous)
                   point2: new Vector3(1, 0, 1),    // Along X in 2D
@@ -486,7 +486,7 @@ describe('Plane3DFixed', () => {
               };
             } else if (id === 'trace2_id') {
               return {
-                plane: 'P_V',
+                planeId: 'P_V',
                 realize2D: () => ({
                   point1: new Vector3(0, 0, 1),    // Origin in 2D (homogeneous)
                   point2: new Vector3(0, 1, 1),    // Along Y (which maps to Z) in 2D
@@ -512,7 +512,7 @@ describe('Plane3DFixed', () => {
                 0, 0, 0,  // row 3: z = 0
                 0, 0, 1   // row 4: w = 1
               );
-              return { planeTo3D: matrix };
+              return { planeTo3D: matrix, feasible: true };
             } else if (id === 'P_V') {
               // P_V maps (u,v,1) in 2D to (u, 0, v, 1) in 3D (vertical plane at y=0)
               const matrix = new Matrix4x3();
@@ -522,7 +522,7 @@ describe('Plane3DFixed', () => {
                 0, 1, 0,  // row 3: z = v
                 0, 0, 1   // row 4: w = 1
               );
-              return { planeTo3D: matrix };
+              return { planeTo3D: matrix, feasible: true };
             }
             return null;
           }

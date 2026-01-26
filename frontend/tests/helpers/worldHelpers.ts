@@ -80,15 +80,29 @@ export function getVerticalOriginId(world: World): string {
 }
 
 /**
- * Get main hinge line from world
+ * Get hinge line connecting P_H and P_V
+ * Note: This is a test helper - there's no conceptual 'main' hinge line
  */
 export function getMainHingeLine(world: World): HingeLine {
-  return world.getMainHingeLine();
+  const planeH = getHorizontalPlane(world);
+  const planeV = getVerticalPlane(world);
+  
+  const hingeLines = world.getAllHingeLines();
+  const hingeLine = hingeLines.find(
+    hl => (hl.plane1Id === planeH.id && hl.plane2Id === planeV.id) ||
+          (hl.plane1Id === planeV.id && hl.plane2Id === planeH.id)
+  );
+  
+  if (!hingeLine) {
+    throw new Error('No hinge line found connecting P_H and P_V');
+  }
+  
+  return hingeLine;
 }
 
 /**
- * Get main hinge line ID
+ * Get ID of hinge line connecting P_H and P_V
  */
 export function getMainHingeLineId(world: World): string {
-  return world.getMainHingeLine().id!;
+  return getMainHingeLine(world).id!;
 }

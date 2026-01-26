@@ -219,11 +219,14 @@ export abstract class ProjectionPlane {
   /**
    * Add a point to this plane
    */
-  addPoint(point: Point2D): void {
+  addPoint(point: Point2D, world?: import('./World').World): void {
     if (!point.id) {
       throw new Error('Cannot add point without ID');
     }
     this.points.set(point.id, point);
+    if (world) {
+      world.markDirty();
+    }
   }
 
   /**
@@ -543,7 +546,8 @@ export abstract class ProjectionPlane {
   addFreePoint2D(
     position: Vector3,
     world: import('./World').World,
-    id?: string
+    id?: string,
+    label?: string
   ): FreePoint2D {
     if (!this.id) {
       throw new Error('Cannot add point to plane without ID');
@@ -554,9 +558,9 @@ export abstract class ProjectionPlane {
       id = this.generatePoint2DId(world);
     }
 
-    const point = new FreePoint2D(id, position, this.id);
+    const point = new FreePoint2D(id, position, this.id, label);
     
-    this.addPoint(point);
+    this.addPoint(point, world);
     return point;
   }
 
@@ -600,7 +604,7 @@ export abstract class ProjectionPlane {
 
     const point = new Point2DLineLineIntersection(id, line1Id, line2Id, this.id);
     
-    this.addPoint(point);
+    this.addPoint(point, world);
     return point;
   }
 
@@ -649,7 +653,7 @@ export abstract class ProjectionPlane {
 
     const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, this.id);
     
-    this.addPoint(point);
+    this.addPoint(point, world);
     return point;
   }
 
@@ -698,7 +702,7 @@ export abstract class ProjectionPlane {
 
     const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, this.id);
     
-    this.addPoint(point);
+    this.addPoint(point, world);
     return point;
   }
 
@@ -1087,9 +1091,13 @@ export abstract class ProjectionPlane {
 
     // Validate reference line exists (could be on any plane for perpendicular construction)
     const refLineElement = world.getLine2D(referenceLineId);
+    if (!refLineElement) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+    
     const referenceLine = refLineElement.realize2D(world);
     if (!referenceLine) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line cannot be realized.`);
     }
 
     // Generate unique ID if not provided
@@ -1129,9 +1137,13 @@ export abstract class ProjectionPlane {
 
     // Validate reference line exists in world
     const refLineElement = world.getLine2D(referenceLineId);
+    if (!refLineElement) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+    
     const referenceLine = refLineElement.realize2D(world);
     if (!referenceLine) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line cannot be realized.`);
     }
 
     // Validate primary guide exists
@@ -1224,7 +1236,7 @@ export abstract class ProjectionPlane {
     // Link bidirectionally
     (primaryPoint as any).siblingPointId = siblingPoint.id;
     
-    this.addPoint(siblingPoint);
+    this.addPoint(siblingPoint, world);
     return siblingPoint;
   }
 
@@ -1258,7 +1270,7 @@ export abstract class ProjectionPlane {
     const originPoint = new FreePoint2D(id, position, this.id, label);
     originPoint.locked = true;  // Lock origin point
     
-    this.addPoint(originPoint);
+    this.addPoint(originPoint, world);
     return originPoint;
   }
 
@@ -1424,7 +1436,7 @@ export class BaseProjectionPlane extends ProjectionPlane {
  * AuxiliaryProjectionPlane - User-created projection planes with dynamic transformations
  * 
  * CRITICAL DISTINCTION:
- * - BaseProjectionPlane (P_H, P_V): Bootstrap only, pre-computed matrices, no dependencies
+ * - BaseProjectionPlane (P_H, P_V): Initialization only, pre-computed matrices, no dependencies
  * - AuxiliaryProjectionPlane: User-created, matrices computed via realize3D() from traces
  * 
  * Realization Pattern (like Point3DFromProjections, Plane3DFromTraces):

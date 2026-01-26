@@ -11,6 +11,7 @@ import { World } from '@/domain/world/World';
 import { Point3DFromProjections } from '@/domain/world/Point3D';
 import { FreePoint2D } from '@/domain/world/Point';
 import { Vector3 } from 'three';
+import { createVisualStyle } from '../../../src/domain/world/VisualStyle';
 
 describe('Point3DFromProjections - Coordinate Reconstruction', () => {
   let world: World;
@@ -32,8 +33,8 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
    */
   it('should reconstruct 3D point from H and V projections - user test case', () => {
     // Get projection planes
-    const planeH = world.getProjectionPlaneById('P_H');
-    const planeV = world.getProjectionPlaneById('P_V');
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const planeV = world.getProjectionPlaneByLabel('P_V');
     
     expect(planeH).toBeDefined();
     expect(planeV).toBeDefined();
@@ -41,39 +42,37 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
     // Create point on P_V at (u=1, v=1) → corresponds to 3D (x=1, y=0, z=1)
-    const pointV = new FreePoint2D(
-      'point-v',
-      'V',
+    const pointV = planeV.addFreePoint2D(
       new Vector3(1, 1, 1),  // (u, v, w) homogeneous
-      { color: '#FF6B35' }
+      world,
+      undefined,
+      'V'
     );
-    planeV.addPoint(pointV);
 
     // Create point on P_H at (u=1, v=3) → corresponds to 3D (x=1, y=3, z=0)
-    const pointH = new FreePoint2D(
-      'point-h',
-      'H',
+    const pointH = planeH.addFreePoint2D(
       new Vector3(1, 3, 1),  // (u, v, w) homogeneous
-      { color: '#FF6B35' }
+      world,
+      undefined,
+      'H'
     );
-    planeH.addPoint(pointH);
 
     // Create 3D point from projections
     const point3D = new Point3DFromProjections(
-      'point-3d',
+      'world/point3d_1',
       'P',
-      'point-v',
-      'point-h',
-      'P_V',
-      'P_H',
-      { color: '#FF6B35' }
+      pointV.id,
+      pointH.id,
+      planeV.id!,
+      planeH.id!,
+      createVisualStyle()
     );
 
     // Realize the 3D point
     const realization = point3D.realize3D(world);
 
     // Check feasibility
-    expect(realization.isFeasible).toBe(true);
+    expect(realization.isFeasible()).toBe(true);
 
     // Get Cartesian coordinates
     const [x, y, z] = realization.getCartesian();
@@ -93,41 +92,39 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
    * Expected 3D: (x=2, y=5, z=3)
    */
   it('should reconstruct 3D point with x-coordinate matching', () => {
-    const planeH = world.getProjectionPlaneById('P_H');
-    const planeV = world.getProjectionPlaneById('P_V');
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const planeV = world.getProjectionPlaneByLabel('P_V');
     
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
     // P_V: (u=2, v=3) → 3D projection (x=2, y=0, z=3)
-    const pointV = new FreePoint2D(
-      'pv1',
-      'V1',
+    const pointV = planeV.addFreePoint2D(
       new Vector3(2, 3, 1),
-      { color: '#FF6B35' }
+      world,
+      undefined,
+      'V1'
     );
-    planeV.addPoint(pointV);
 
     // P_H: (u=2, v=5) → 3D projection (x=2, y=5, z=0)
-    const pointH = new FreePoint2D(
-      'ph1',
-      'H1',
+    const pointH = planeH.addFreePoint2D(
       new Vector3(2, 5, 1),
-      { color: '#FF6B35' }
+      world,
+      undefined,
+      'H1'
     );
-    planeH.addPoint(pointH);
 
     const point3D = new Point3DFromProjections(
-      'p3d1',
+      'world/point3d_2',
       'P1',
-      'pv1',
-      'ph1',
-      'P_V',
-      'P_H',
-      { color: '#FF6B35' }
+      pointV.id,
+      pointH.id,
+      planeV.id!,
+      planeH.id!,
+      createVisualStyle()
     );
 
     const realization = point3D.realize3D(world);
-    expect(realization.isFeasible).toBe(true);
+    expect(realization.isFeasible()).toBe(true);
 
     const [x, y, z] = realization.getCartesian();
     
@@ -143,29 +140,26 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
    * Expected 3D: (0, 0, 0)
    */
   it('should reconstruct point at origin', () => {
-    const planeH = world.getProjectionPlaneById('P_H');
-    const planeV = world.getProjectionPlaneById('P_V');
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const planeV = world.getProjectionPlaneByLabel('P_V');
     
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
-    const pointV = new FreePoint2D('pv0', 'V0', new Vector3(0, 0, 1), { color: '#FF6B35' });
-    planeV.addPoint(pointV);
-
-    const pointH = new FreePoint2D('ph0', 'H0', new Vector3(0, 0, 1), { color: '#FF6B35' });
-    planeH.addPoint(pointH);
+    const pointV = planeV.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'V0');
+    const pointH = planeH.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'H0');
 
     const point3D = new Point3DFromProjections(
-      'p3d0',
+      'world/point3d_3',
       'P0',
-      'pv0',
-      'ph0',
-      'P_V',
-      'P_H',
-      { color: '#FF6B35' }
+      pointV.id,
+      pointH.id,
+      planeV.id!,
+      planeH.id!,
+      createVisualStyle()
     );
 
     const realization = point3D.realize3D(world);
-    expect(realization.isFeasible).toBe(true);
+    expect(realization.isFeasible()).toBe(true);
 
     const [x, y, z] = realization.getCartesian();
     expect(x).toBeCloseTo(0, 5);
@@ -179,29 +173,26 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
    * Expected 3D: (-2, -5, -3)
    */
   it('should handle negative coordinates', () => {
-    const planeH = world.getProjectionPlaneById('P_H');
-    const planeV = world.getProjectionPlaneById('P_V');
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const planeV = world.getProjectionPlaneByLabel('P_V');
     
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
-    const pointV = new FreePoint2D('pv-neg', 'Vneg', new Vector3(-2, -3, 1), { color: '#FF6B35' });
-    planeV.addPoint(pointV);
-
-    const pointH = new FreePoint2D('ph-neg', 'Hneg', new Vector3(-2, -5, 1), { color: '#FF6B35' });
-    planeH.addPoint(pointH);
+    const pointV = planeV.addFreePoint2D(new Vector3(-2, -3, 1), world, undefined, 'Vneg');
+    const pointH = planeH.addFreePoint2D(new Vector3(-2, -5, 1), world, undefined, 'Hneg');
 
     const point3D = new Point3DFromProjections(
-      'p3d-neg',
+      'world/point3d_4',
       'Pneg',
-      'pv-neg',
-      'ph-neg',
-      'P_V',
-      'P_H',
-      { color: '#FF6B35' }
+      pointV.id,
+      pointH.id,
+      planeV.id!,
+      planeH.id!,
+      createVisualStyle()
     );
 
     const realization = point3D.realize3D(world);
-    expect(realization.isFeasible).toBe(true);
+    expect(realization.isFeasible()).toBe(true);
 
     const [x, y, z] = realization.getCartesian();
     expect(x).toBeCloseTo(-2, 5);
@@ -216,33 +207,30 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
    * The new implementation should detect this and mark as infeasible.
    */
   it('should detect inconsistent projections (x-coordinate mismatch)', () => {
-    const planeH = world.getProjectionPlaneById('P_H');
-    const planeV = world.getProjectionPlaneById('P_V');
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const planeV = world.getProjectionPlaneByLabel('P_V');
     
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
     // Different x-coordinates: P_V has x=1, P_H has x=3
     // For P_H and P_V, equation 4 will fail: v₂ should equal z from equation system
-    const pointV = new FreePoint2D('pv-mis', 'Vmis', new Vector3(1, 2, 1), { color: '#FF6B35' });
-    planeV.addPoint(pointV);
-
-    const pointH = new FreePoint2D('ph-mis', 'Hmis', new Vector3(3, 4, 1), { color: '#FF6B35' });
-    planeH.addPoint(pointH);
+    const pointV = planeV.addFreePoint2D(new Vector3(1, 2, 1), world, undefined, 'Vmis');
+    const pointH = planeH.addFreePoint2D(new Vector3(3, 4, 1), world, undefined, 'Hmis');
 
     const point3D = new Point3DFromProjections(
-      'p3d-mis',
+      'world/point3d_5',
       'Pmis',
-      'pv-mis',
-      'ph-mis',
-      'P_V',
-      'P_H',
-      { color: '#FF6B35' }
+      pointV.id,
+      pointH.id,
+      planeV.id!,
+      planeH.id!,
+      createVisualStyle()
     );
 
     const realization = point3D.realize3D(world);
     
     // Should be marked as infeasible due to inconsistent projections
-    expect(realization.isFeasible).toBe(false);
+    expect(realization.isFeasible()).toBe(false);
   });
 
   /**
@@ -251,37 +239,34 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
    * should give same result
    */
   it('should be independent of projection order', () => {
-    const planeH = world.getProjectionPlaneById('P_H');
-    const planeV = world.getProjectionPlaneById('P_V');
+    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const planeV = world.getProjectionPlaneByLabel('P_V');
     
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
-    const pointV = new FreePoint2D('pv-ord', 'Vord', new Vector3(5, 7, 1), { color: '#FF6B35' });
-    planeV.addPoint(pointV);
-
-    const pointH = new FreePoint2D('ph-ord', 'Hord', new Vector3(5, 9, 1), { color: '#FF6B35' });
-    planeH.addPoint(pointH);
+    const pointV = planeV.addFreePoint2D(new Vector3(5, 7, 1), world, undefined, 'Vord');
+    const pointH = planeH.addFreePoint2D(new Vector3(5, 9, 1), world, undefined, 'Hord');
 
     // Order 1: V first, H second
     const point3D_VH = new Point3DFromProjections(
-      'p3d-vh',
+      'world/point3d_6',
       'Pvh',
-      'pv-ord',
-      'ph-ord',
-      'P_V',
-      'P_H',
-      { color: '#FF6B35' }
+      pointV.id,
+      pointH.id,
+      planeV.id!,
+      planeH.id!,
+      createVisualStyle()
     );
 
     // Order 2: H first, V second
     const point3D_HV = new Point3DFromProjections(
-      'p3d-hv',
+      'world/point3d_7',
       'Phv',
-      'ph-ord',
-      'pv-ord',
-      'P_H',
-      'P_V',
-      { color: '#FF6B35' }
+      pointH.id,
+      pointV.id,
+      planeH.id!,
+      planeV.id!,
+      createVisualStyle()
     );
 
     const real_VH = point3D_VH.realize3D(world);
