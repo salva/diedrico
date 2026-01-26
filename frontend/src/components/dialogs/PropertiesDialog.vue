@@ -272,7 +272,7 @@ const coordinates = computed(() => {
     const realization = plane?.getCircle(props.elementId)?.realize2D(props.world);
     if (realization) {
       const center = realization.center;
-      return `Center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}), Radius: ${realization.radius.toFixed(2)}`;
+      return `Center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}), Radius: ${realization.getRadius().toFixed(2)}`;
     }
   }
   

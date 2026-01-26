@@ -14,159 +14,136 @@ describe('computeLineLineIntersection3D', () => {
   describe('Intersecting lines', () => {
     it('should compute correct intersection for perpendicular lines', () => {
       // Line 1: along X-axis, through origin
-      const line1 = {
-        point: new Vector3(0, 0, 0),
-        direction: new Vector3(1, 0, 0)
-      };
+      const line1Point = new Vector4(0, 0, 0, 1);
+      const line1Dir = new Vector4(1, 0, 0, 0);
       
       // Line 2: along Y-axis, through origin
-      const line2 = {
-        point: new Vector3(0, 0, 0),
-        direction: new Vector3(0, 1, 0)
-      };
+      const line2Point = new Vector4(0, 0, 0, 1);
+      const line2Dir = new Vector4(0, 1, 0, 0);
       
-      const intersection = computeLineLineIntersection3D(line1, line2);
+      const intersection = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
       
-      // Should intersect at origin
-      expect(intersection.x).toBeCloseTo(0, 10);
-      expect(intersection.y).toBeCloseTo(0, 10);
-      expect(intersection.z).toBeCloseTo(0, 10);
+      // Should be feasible and intersect at origin
+      expect(intersection.feasible).toBe(true);
+      expect(intersection.position.x).toBeCloseTo(0, 10);
+      expect(intersection.position.y).toBeCloseTo(0, 10);
+      expect(intersection.position.z).toBeCloseTo(0, 10);
     });
     
     it('should compute correct intersection for lines meeting at non-origin point', () => {
       // Line 1: X-axis, shifted up by 5
-      const line1 = {
-        point: new Vector3(0, 5, 0),
-        direction: new Vector3(1, 0, 0)
-      };
+      const line1Point = new Vector4(0, 5, 0, 1);
+      const line1Dir = new Vector4(1, 0, 0, 0);
       
       // Line 2: passes through (3, 5, 0) with direction (0, 0, 1)
-      const line2 = {
-        point: new Vector3(3, 5, 0),
-        direction: new Vector3(0, 0, 1)
-      };
+      const line2Point = new Vector4(3, 5, 0, 1);
+      const line2Dir = new Vector4(0, 0, 1, 0);
       
-      const intersection = computeLineLineIntersection3D(line1, line2);
+      const intersection = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
       
-      // Should intersect at (3, 5, 0)
-      expect(intersection.x).toBeCloseTo(3, 10);
-      expect(intersection.y).toBeCloseTo(5, 10);
-      expect(intersection.z).toBeCloseTo(0, 10);
+      // Should be feasible and intersect at (3, 5, 0)
+      expect(intersection.feasible).toBe(true);
+      expect(intersection.position.x).toBeCloseTo(3, 10);
+      expect(intersection.position.y).toBeCloseTo(5, 10);
+      expect(intersection.position.z).toBeCloseTo(0, 10);
     });
     
     it('should compute correct intersection for lines at arbitrary angles', () => {
       // Line 1: through (0, 0, 0), direction (1, 1, 0)
-      const line1 = {
-        point: new Vector3(0, 0, 0),
-        direction: new Vector3(1, 1, 0).normalize()
-      };
+      const dir1 = new Vector3(1, 1, 0).normalize();
+      const line1Point = new Vector4(0, 0, 0, 1);
+      const line1Dir = new Vector4(dir1.x, dir1.y, dir1.z, 0);
       
       // Line 2: through (2, 0, 0), direction (0, 1, 0)
-      const line2 = {
-        point: new Vector3(2, 0, 0),
-        direction: new Vector3(0, 1, 0)
-      };
+      const line2Point = new Vector4(2, 0, 0, 1);
+      const line2Dir = new Vector4(0, 1, 0, 0);
       
-      const intersection = computeLineLineIntersection3D(line1, line2);
+      const intersection = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
       
       // Line 1: (x, y) = t(1, 1) => y = x
       // Line 2: (x, y) = (2, s) => x = 2
       // Intersection: x = 2, y = 2, z = 0
-      expect(intersection.x).toBeCloseTo(2, 10);
-      expect(intersection.y).toBeCloseTo(2, 10);
-      expect(intersection.z).toBeCloseTo(0, 10);
+      expect(intersection.feasible).toBe(true);
+      expect(intersection.position.x).toBeCloseTo(2, 10);
+      expect(intersection.position.y).toBeCloseTo(2, 10);
+      expect(intersection.position.z).toBeCloseTo(0, 10);
     });
   });
   
   describe('Parallel lines', () => {
-    it('should throw error for parallel lines (invalid traces)', () => {
+    it('should return infeasible for parallel lines (invalid traces)', () => {
       // Line 1: along X-axis, at y=0
-      const line1 = {
-        point: new Vector3(0, 0, 0),
-        direction: new Vector3(1, 0, 0)
-      };
+      const line1Point = new Vector4(0, 0, 0, 1);
+      const line1Dir = new Vector4(1, 0, 0, 0);
       
       // Line 2: along X-axis, at y=5 (parallel but offset)
-      const line2 = {
-        point: new Vector3(0, 5, 0),
-        direction: new Vector3(1, 0, 0)
-      };
+      const line2Point = new Vector4(0, 5, 0, 1);
+      const line2Dir = new Vector4(1, 0, 0, 0);
       
-      // Should throw error - parallel lines don't define a valid plane
-      expect(() => computeLineLineIntersection3D(line1, line2)).toThrow('parallel');
+      // Should return infeasible - parallel lines don't define a valid plane
+      const result = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+      expect(result.feasible).toBe(false);
     });
     
-    it('should not throw for coincident lines (same line, tolerance)', () => {
+    it('should return infeasible for coincident lines (same line)', () => {
       // Both lines along X-axis through origin (coincident within tolerance)
-      const line1 = {
-        point: new Vector3(0, 0, 0),
-        direction: new Vector3(1, 0, 0)
-      };
+      const line1Point = new Vector4(0, 0, 0, 1);
+      const line1Dir = new Vector4(1, 0, 0, 0);
       
-      const line2 = {
-        point: new Vector3(5, 0, 0),  // Different point, same line
-        direction: new Vector3(1, 0, 0)
-      };
+      const line2Point = new Vector4(5, 0, 0, 1);  // Different point, same line
+      const line2Dir = new Vector4(1, 0, 0, 0);
       
-      // Coincident lines are technically parallel, should throw
-      expect(() => computeLineLineIntersection3D(line1, line2)).toThrow('parallel');
+      // Coincident lines are technically parallel, should return infeasible
+      const result = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+      expect(result.feasible).toBe(false);
     });
   });
   
   describe('Skew lines', () => {
-    it('should throw error for skew lines (invalid traces)', () => {
+    it('should return infeasible for skew lines (invalid traces)', () => {
       // Line 1: along X-axis at z=0
-      const line1 = {
-        point: new Vector3(0, 0, 0),
-        direction: new Vector3(1, 0, 0)
-      };
+      const line1Point = new Vector4(0, 0, 0, 1);
+      const line1Dir = new Vector4(1, 0, 0, 0);
       
       // Line 2: along Y-axis at z=5 (skew - don't intersect in 3D)
-      const line2 = {
-        point: new Vector3(0, 0, 5),
-        direction: new Vector3(0, 1, 0)
-      };
+      const line2Point = new Vector4(0, 0, 5, 1);
+      const line2Dir = new Vector4(0, 1, 0, 0);
       
-      // Should throw error - skew lines don't define a valid plane
-      expect(() => computeLineLineIntersection3D(line1, line2)).toThrow('skew');
+      // Should return infeasible - skew lines don't define a valid plane
+      const result = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+      expect(result.feasible).toBe(false);
     });
     
-    it('should throw error for skew lines with offset', () => {
+    it('should return infeasible for skew lines with offset', () => {
       // Line 1: along X-axis at y=0, z=0
-      const line1 = {
-        point: new Vector3(5, 0, 0),
-        direction: new Vector3(1, 0, 0)
-      };
+      const line1Point = new Vector4(5, 0, 0, 1);
+      const line1Dir = new Vector4(1, 0, 0, 0);
       
       // Line 2: along Z-axis at x=10, y=3 (skew)
-      const line2 = {
-        point: new Vector3(10, 3, 0),
-        direction: new Vector3(0, 0, 1)
-      };
+      const line2Point = new Vector4(10, 3, 0, 1);
+      const line2Dir = new Vector4(0, 0, 1, 0);
       
-      // Should throw error - skew lines don't define a valid plane
-      expect(() => computeLineLineIntersection3D(line1, line2)).toThrow('skew');
+      // Should return infeasible - skew lines don't define a valid plane
+      const result = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+      expect(result.feasible).toBe(false);
     });
   });
   
   describe('Edge cases', () => {
     it('should handle lines with unnormalized directions', () => {
-      const line1 = {
-        point: new Vector3(0, 0, 0),
-        direction: new Vector3(2, 0, 0)  // Unnormalized (length 2)
-      };
+      const line1Point = new Vector4(0, 0, 0, 1);
+      const line1Dir = new Vector4(2, 0, 0, 0);  // Unnormalized (length 2)
       
-      const line2 = {
-        point: new Vector3(0, 0, 0),
-        direction: new Vector3(0, 3, 0)  // Unnormalized (length 3)
-      };
+      const line2Point = new Vector4(0, 0, 0, 1);
+      const line2Dir = new Vector4(0, 3, 0, 0);  // Unnormalized (length 3)
       
-      const intersection = computeLineLineIntersection3D(line1, line2);
+      const intersection = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
       
-      // Should still find intersection at origin
-      expect(intersection.x).toBeCloseTo(0, 10);
-      expect(intersection.y).toBeCloseTo(0, 10);
-      expect(intersection.z).toBeCloseTo(0, 10);
+      // Should be feasible and still find intersection at origin
+      expect(intersection.feasible).toBe(true);
+      expect(intersection.position.x).toBeCloseTo(0, 10);
+      expect(intersection.position.y).toBeCloseTo(0, 10);
+      expect(intersection.position.z).toBeCloseTo(0, 10);
     });
   });
 });

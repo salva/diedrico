@@ -17,6 +17,7 @@ import { Matrix3, Vector3, Vector4 } from 'three';
 import type { World } from '@/domain/world/World';
 import { Matrix4x3, Matrix3x4, applyMatrix4x3, applyMatrix3x4, crossVector3Homogeneous, dotVector3Homogeneous, dotVector2Homogeneous } from './threeUtils';
 import { Line2DRealization2D } from '@/domain/world/Line';
+import { Point3DRealization3D } from '@/domain/world/Element3DRealization3D';
 
 /**
  * Compute intersection point of two 2D lines in homogeneous coordinates
@@ -87,7 +88,7 @@ export function computeLineLineIntersection3D(
   dir1: Vector4,
   point2: Vector4,
   dir2: Vector4
-): Vector3 {
+): Point3DRealization3D {
   // Extract Vector3 components from homogeneous Vector4
   const p1 = new Vector3(point1.x, point1.y, point1.z);
   const d1 = new Vector3(dir1.x, dir1.y, dir1.z).normalize();
@@ -108,7 +109,7 @@ export function computeLineLineIntersection3D(
   
   // Check for parallel lines
   if (Math.abs(denom) < 1e-10) {
-    throw new Error('Traces are parallel - they do not define a valid 3D plane');
+    return Point3DRealization3D.infeasible();
   }
   
   // Compute parameters for closest points on both lines
@@ -122,18 +123,18 @@ export function computeLineLineIntersection3D(
   // Verify lines actually intersect (not skew)
   const distance = closestPoint1.distanceTo(closestPoint2);
   if (distance > 1e-6) {
-    throw new Error(
-      `Traces are skew (don't intersect) - distance: ${distance.toFixed(6)}. ` +
-      `They do not define a valid 3D plane.`
-    );
+    return Point3DRealization3D.infeasible();
   }
   
   // Return intersection point (average of closest points for numerical stability)
-  return new Vector3(
+  const intersectionPoint = new Vector4(
     (closestPoint1.x + closestPoint2.x) / 2,
     (closestPoint1.y + closestPoint2.y) / 2,
-    (closestPoint1.z + closestPoint2.z) / 2
+    (closestPoint1.z + closestPoint2.z) / 2,
+    1  // w=1 for homogeneous point
   );
+  
+  return new Point3DRealization3D(intersectionPoint, true);
 }
 
 /**
@@ -323,12 +324,19 @@ export function computeProjectionPlaneMatrices(
   const t1PointIn3D = applyMatrix4x3(t1Realization.point1, planeP1Realization3D.planeTo3D);
   const t2PointIn3D = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
   
-  const auxOriginIn3D = computeLineLineIntersection3D(
+  const auxOriginRealization = computeLineLineIntersection3D(
     t1PointIn3D,
     t1DirIn3D,
     t2PointIn3D,
     t2DirIn3D
   );
+  
+  // Check feasibility - traces must intersect
+  if (!auxOriginRealization.feasible) {
+    throw new Error('Traces do not intersect - cannot compute projection plane matrices');
+  }
+  
+  const auxOriginIn3D = auxOriginRealization.position;
   
   console.log('[computeProjectionPlaneMatrices] auxUDirIn3D:', auxUDirIn3D);
   console.log('[computeProjectionPlaneMatrices] auxVDirIn3D:', auxVDirIn3D);

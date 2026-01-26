@@ -6666,22 +6666,28 @@ export class Segment3DRealization3D extends Element3DRealization3D {
 }
 
 /**
- * Plane3DRealization3D - Stores computed 3D plane equation
+ * Plane3DRealization3D - Stores computed 3D plane equation and rendering geometry
  * Result of realize3D() geometric calculation
  * 
- * Representation: implicit form ax + by + cz + d = 0
+ * Representation: implicit form ax + by + cz + d = 0 plus rendering data
  * - normal: Vector4 [a, b, c, d] - plane equation coefficients
  *   - [a, b, c] is the normal vector (may or may not be normalized)
  *   - d is the distance term
+ * - quaternion: Vector4 [x, y, z, w] - rotation for Three.js mesh (optional)
+ * - originPoint: Vector4 [x, y, z, 1] - point on plane for mesh positioning (optional)
  * 
  * Contains ONLY numeric data. Structural information (id, trace IDs) stays in Plane3D.
  */
 export class Plane3DRealization3D extends Element3DRealization3D {
   normal: Vector4;                  // Plane equation [a, b, c, d]: ax + by + cz + d = 0
+  quaternion?: Vector4;             // Rotation quaternion for mesh [x, y, z, w]
+  originPoint?: Vector4;            // Point on plane [x, y, z, 1]
   
-  constructor(normal: Vector4, feasible: boolean = true) {
+  constructor(normal: Vector4, feasible: boolean = true, quaternion?: Vector4, originPoint?: Vector4) {
     super(feasible);
     this.normal = normal;
+    this.quaternion = quaternion;
+    this.originPoint = originPoint;
   }
   
   /**
@@ -7553,44 +7559,133 @@ type Segment3D = Segment3DFromProjections;
 
 /**
  * Abstract base class for all 3D plane types
+ * 
+ * Architecture: Template Method Pattern
+ * - realize3D() is implemented in base class (computes rendering geometry from equation)
+ * - getPlaneEquation() is abstract (each concrete class provides its own equation)
+ * 
+ * This eliminates ~150 lines of duplicated quaternion computation across subclasses.
  */
 abstract class Plane3D extends Element3D {
-  abstract realize3D(world: World): Plane3DRealization3D;
+  /**
+   * Get plane equation [a, b, c, d] where ax + by + cz + d = 0
+   * Each concrete class computes this based on its representation
+   */
+  abstract getPlaneEquation(world: World): Vector4 | null;
+  
+  /**
+   * Compute 3D realization (plane equation + rendering geometry)
+   * Template method that calls getPlaneEquation() from concrete class
+   */
+  realize3D(world: World): Plane3DRealization3D {
+    const equation = this.getPlaneEquation(world);
+    
+    if (!equation) {
+      return Plane3DRealization3D.infeasible();
+    }
+    
+    // Extract plane equation coefficients [a, b, c, d]
+    const [a, b, c, d] = [equation.x, equation.y, equation.z, equation.w];
+    
+    // Compute normal vector and origin point
+    const normal = new Vector4(a, b, c, 0);
+    const originPoint = new Vector4(-d * a, -d * b, -d * c, 1);
+    
+    // Compute quaternion for mesh orientation (aligns (0,0,1) with plane normal)
+    const defaultNormal = new Vector4(0, 0, 1, 0);
+    const axis = crossVector3Homogeneous(defaultNormal, normal);
+    const axisLength = Math.sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    const dotProduct = defaultNormal.dot(normal);
+    
+    let quaternion: Vector4;
+    if (axisLength < 1e-10) {
+      // Normals are parallel or anti-parallel
+      if (dotProduct > 0) {
+        quaternion = new Vector4(0, 0, 0, 1);  // No rotation
+      } else {
+        // 180° rotation around perpendicular axis
+        const perpAxis = Math.abs(a) < 0.9 ? new Vector4(1, 0, 0, 0) : new Vector4(0, 1, 0, 0);
+        const rotAxis = crossVector3Homogeneous(perpAxis, normal).normalize();
+        quaternion = new Vector4(rotAxis.x, rotAxis.y, rotAxis.z, 0);
+      }
+    } else {
+      // Compute quaternion from axis-angle
+      const halfAngle = 0.5 * Math.atan2(axisLength, dotProduct);
+      const sinHalf = Math.sin(halfAngle);
+      const cosHalf = Math.cos(halfAngle);
+      axis.normalize();
+      quaternion = new Vector4(
+        axis.x * sinHalf,
+        axis.y * sinHalf,
+        axis.z * sinHalf,
+        cosHalf
+      );
+    }
+    
+    return new Plane3DRealization3D(equation, true, quaternion, originPoint);
+  }
 }
 
 /**
  * Plane3DFromTraces - Plane from two trace lines (user-constructed - Phase 78)
+ * 
+ * Stores ONLY IDs of defining elements (trace lines and their planes).
+ * Plane equation reconstructed on demand from trace coordinates.
+ * 
+ * Feasibility Pattern: Returns null if traces are infeasible, parallel, or skew.
  */
 class Plane3DFromTraces extends Plane3D {
-  kind: 'Plane3DFromTraces';
   label: string;                    // Equal to ID: "plane3d_3" (Phase 78)
   
-  // Defining relations (ONLY IDs)
-  trace1: Line2DId;                 // First trace (on first plane)
-  trace2: Line2DId;                 // Second trace (on second plane, must be different)
+  // Defining relations (ONLY IDs, no numeric data)
+  trace1: Line2DId;                 // First trace (Line2D on first plane)
+  trace2: Line2DId;                 // Second trace (Line2D on second plane, must be different)
   plane1Id: Plane3DId;              // Which plane trace1 is on
-  plane2Id: Plane3DId;              // Which plane trace2 is on
+  plane2Id: Plane3DId;              // Which plane trace2 is on (must be different from plane1)
   
-  realize3D(world: World): Plane3DRealization3D {
-    // Reconstruct plane equation from two trace lines
-    const plane1 = world.getPlane3D(this.plane1Id);
-    const plane2 = world.getPlane3D(this.plane2Id);
-    const trace1Line = plane1.getLine(this.trace1);
-    const trace2Line = plane2.getLine(this.trace2);
+  /**
+   * Compute plane equation from two trace lines
+   * Returns null if traces are infeasible, parallel, or skew (don't intersect)
+   */
+  getPlaneEquation(world: World): Vector4 | null {
+    // Get trace realizations and check feasibility
+    const t1Line = world.getLine2D(this.trace1);
+    const t2Line = world.getLine2D(this.trace2);
+    const t1InP1 = t1Line.realize2D(world);
+    const t2InP2 = t2Line.realize2D(world);
+    const p1 = world.getProjectionPlane3DRealization(t1Line.planeId);
+    const p2 = world.getProjectionPlane3DRealization(t2Line.planeId);
     
-    const trace1Real = trace1Line.realize2D(world);
-    const trace2Real = trace2Line.realize2D(world);
-    
-    if (!trace1Real.isFeasible() || !trace2Real.isFeasible()) {
-      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+    if (!t1InP1.feasible || !t2InP2.feasible || !p1.feasible || !p2.feasible) {
+      return null;  // Infeasible realizations
     }
     
-    // Reconstruct plane equation from traces
-    const normal = GeometryUtils3D.reconstructPlaneFromTraces(
-      trace1Real, trace2Real, plane1, plane2
+    // Transform traces from 2D to 3D using projection plane matrices
+    const t1PointIn3D = applyMatrix4x3(t1InP1.point1, p1.planeTo3D);
+    const t1DirIn3D = applyMatrix4x3(t1InP1.point2, p1.planeTo3D);
+    const t2PointIn3D = applyMatrix4x3(t2InP2.point1, p2.planeTo3D);
+    const t2DirIn3D = applyMatrix4x3(t2InP2.point2, p2.planeTo3D);
+    
+    // Check if traces intersect (required for valid plane)
+    const intersection = computeLineLineIntersection3D(
+      t1PointIn3D, t1DirIn3D,
+      t2PointIn3D, t2DirIn3D
     );
     
-    return new Plane3DRealization3D(normal);
+    if (!intersection.feasible) {
+      return null;  // Traces don't intersect (parallel or skew)
+    }
+    
+    // Compute normal = t1Dir × t2Dir (cross product, then normalize)
+    const normal = crossVector3Homogeneous(t1DirIn3D, t2DirIn3D).normalize();
+    const a = normal.x;
+    const b = normal.y;
+    const c = normal.z;
+    
+    // Compute d from plane equation: ax + by + cz + d = 0
+    const d = -(a * t1PointIn3D.x + b * t1PointIn3D.y + c * t1PointIn3D.z);
+    
+    return new Vector4(a, b, c, d);
   }
   
   getDependencies(): ElementId[] {
@@ -7599,54 +7694,64 @@ class Plane3DFromTraces extends Plane3D {
 }
 
 /**
- * Plane3DFixed - Fixed plane with hard-coded equation (P_H, P_V only - Phase 28)
- * System element
+ * Plane3DFixed - Fixed plane defined by point and normal
+ * System element (P_H, P_V) and potentially user-created planes
+ * 
+ * Stores point and normal explicitly. Equation computed on demand.
+ * No dependencies - fully self-contained geometric definition.
  */
 class Plane3DFixed extends Plane3D {
-  kind: 'Plane3DFixed';
-  name: string;                     // "P_H" or "P_V"
-  orientation: 'horizontal' | 'vertical';  // Determines equation
+  point: Vector4;                   // Point on plane [x, y, z, 1]
+  normal: Vector4;                  // Normal vector [nx, ny, nz, 0] (normalized)
   
-  realize3D(world: World): Plane3DRealization3D {
-    // Return fixed plane equation
-    if (this.orientation === 'horizontal') {
-      // P_H: z = 0 → normal = [0, 0, 1, 0]
-      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0));
-    } else {
-      // P_V: y = 0 → normal = [0, 1, 0, 0]
-      return new Plane3DRealization3D(new Vector4(0, 1, 0, 0));
-    }
+  /**
+   * Compute plane equation from stored point and normal
+   * Equation: normal · (P - point) = 0 → ax + by + cz + d = 0
+   * where d = -normal · point
+   */
+  getPlaneEquation(_world: World): Vector4 {
+    const d = -(this.normal.x * this.point.x + 
+                this.normal.y * this.point.y + 
+                this.normal.z * this.point.z);
+    return new Vector4(this.normal.x, this.normal.y, this.normal.z, d);
   }
   
   getDependencies(): ElementId[] {
-    return [];  // No dependencies - equation is fixed
+    return [];  // No dependencies - equation is self-contained
   }
 }
 
 /**
  * Plane3DByPointAndNormal - Plane defined by point and normal vector (legacy)
  * May be used for auxiliary construction planes in future
+ * 
+ * Unlike Plane3DFixed (which stores the point), this references a Point3D element.
+ * This creates a dependency - plane equation changes if the point moves.
  */
 class Plane3DByPointAndNormal extends Plane3D {
-  kind: 'Plane3DByPointAndNormal';
-  name: string;                     // User-defined name
-  origin: Point3DId;                // Point on plane
+  label: string;                    // User-defined label
+  origin: Point3DId;                // Point on plane (references Point3D element)
   normal: Vector4;                  // Normal vector [nx, ny, nz, 0] - direction
   
-  realize3D(world: World): Plane3DRealization3D {
+  /**
+   * Compute plane equation from referenced point and stored normal
+   * Returns null if point is infeasible
+   */
+  getPlaneEquation(world: World): Vector4 | null {
     const originPoint = world.getPoint3D(this.origin);
     const originReal = originPoint.realize3D(world);
     
     if (!originReal.isFeasible()) {
-      return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
+      return null;  // Point is infeasible
     }
     
     // Compute plane equation: normal · (p - origin) = 0
     // → ax + by + cz + d = 0 where d = -normal · origin
-    const d = -this.normal.dot(originReal.position);
-    const equation = new Vector4(this.normal.x, this.normal.y, this.normal.z, d);
+    const d = -(this.normal.x * originReal.position.x +
+                this.normal.y * originReal.position.y +
+                this.normal.z * originReal.position.z);
     
-    return new Plane3DRealization3D(equation);
+    return new Vector4(this.normal.x, this.normal.y, this.normal.z, d);
   }
   
   getDependencies(): ElementId[] {
@@ -7656,6 +7761,16 @@ class Plane3DByPointAndNormal extends Plane3D {
 
 type Plane3D = Plane3DFixed | Plane3DFromTraces | Plane3DByPointAndNormal;
 ```
+
+**Architecture Notes**:
+
+1. **Template Method Pattern**: Base class `Plane3D.realize3D()` computes rendering geometry (quaternion, origin point) from plane equation. Each concrete class implements `getPlaneEquation()` to provide the equation in its own way. This eliminates code duplication.
+
+2. **No Type Discriminators**: Classes use `instanceof` checks, not string `kind` fields.
+
+3. **No Boundaries in Domain Model**: Planes are mathematically infinite. Rendering boundaries (±2000 units) are defined in view layer configuration (`frontend/src/config/rendering3D.ts`), not in domain objects.
+
+4. **Feasibility Pattern**: `getPlaneEquation()` returns `null` (not an exception) when plane cannot be computed (e.g., traces don't intersect). Base class `realize3D()` converts this to `Plane3DRealization3D.infeasible()`.
 
 **Special System Elements**:
 
@@ -7695,8 +7810,8 @@ The following elements are always present from workspace initialization (`create
 - **Line3DFromProjections**: `projection1` and `projection2` must exist, must be on DIFFERENT projection planes (Phase 78), must be compatible projections of same 3D line
 - **Line3DFromPlaneIntersection**: `plane1` and `plane2` must exist and intersect (not parallel)
 - **Segment3DFromProjections**: `projection1` and `projection2` must exist, must be on DIFFERENT projection planes (Phase 78), endpoints must correspond correctly
-- **Plane3DFixed**: Orientation must be 'horizontal' or 'vertical', used only for initialization
-- **Plane3DFromTraces**: `trace1` and `trace2` must exist, must be on DIFFERENT projection planes (Phase 78), must intersect at hinge line (typically)
+- **Plane3DFixed**: `point` must be valid coordinates [x,y,z,1], `normal` must be non-zero and normalized vector [nx,ny,nz,0]
+- **Plane3DFromTraces**: `trace1` and `trace2` must exist, must be on DIFFERENT projection planes (Phase 78), must intersect in 3D space (not parallel or skew)
 - **Plane3DByPointAndNormal**: `origin` must exist, `normal` must be non-zero vector
 
 **Compatibility Check**:

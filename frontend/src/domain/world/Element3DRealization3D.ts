@@ -51,6 +51,13 @@ export class Point3DRealization3D extends Element3DRealization3D {
   }
 
   /**
+   * Factory method for creating an infeasible point realization
+   */
+  static infeasible(): Point3DRealization3D {
+    return new Point3DRealization3D(new Vector4(0, 0, 0, 1), false);
+  }
+
+  /**
    * Get position as Vector4 (homogeneous coordinates)
    */
   getPosition(): Vector4 {
@@ -198,19 +205,26 @@ export class Segment3DRealization3D extends Element3DRealization3D {
  */
 export class Plane3DRealization3D extends Element3DRealization3D {
   normal: Vector4;  // Plane equation [a, b, c, d]: ax + by + cz + d = 0
-  quaternion?: { x: number; y: number; z: number; w: number };  // Orientation quaternion (domain coords)
+  quaternion?: Vector4;  // Orientation quaternion (domain coords) [x, y, z, w]
   originPoint?: Vector4;  // Origin point on plane in domain coordinates [x, y, z, 1]
 
   constructor(
     normal: Vector4, 
     feasible: boolean = true,
-    quaternion?: { x: number; y: number; z: number; w: number },
+    quaternion?: Vector4,
     originPoint?: Vector4
   ) {
     super(feasible);
     this.normal = normal;
     this.quaternion = quaternion;
     this.originPoint = originPoint;
+  }
+
+  /**
+   * Factory method for creating an infeasible plane realization
+   */
+  static infeasible(): Plane3DRealization3D {
+    return new Plane3DRealization3D(new Vector4(0, 0, 1, 0), false);
   }
 
   /**
@@ -223,17 +237,17 @@ export class Plane3DRealization3D extends Element3DRealization3D {
   /**
    * Get quaternion for Three.js rendering (with Y-axis negated for coordinate system conversion)
    */
-  getQuaternionForThreeJS(): { x: number; y: number; z: number; w: number } | undefined {
+  getQuaternionForThreeJS(): Vector4 | undefined {
     if (!this.quaternion) return undefined;
     
     // When converting from domain (left-handed, Y-up) to Three.js (right-handed, Y-up),
     // the rotation axis Y component needs to be negated
-    return {
-      x: this.quaternion.x,
-      y: -this.quaternion.y,
-      z: this.quaternion.z,
-      w: this.quaternion.w
-    };
+    return new Vector4(
+      this.quaternion.x,
+      -this.quaternion.y,
+      this.quaternion.z,
+      this.quaternion.w
+    );
   }
 
   /**

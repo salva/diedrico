@@ -74,6 +74,7 @@ import { domainDirectionToThreeJS, domainToThreeJS, applyMatrix4x3 } from '../..
 import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '../../utils/rectangleGrid';
 import { Vector4 } from 'three';
 import type { Plane3DRealization3D } from '../../domain/world/Element3DRealization3D';
+import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '../../config/rendering3D';
 
 /**
  * Generate a simple fallback grid (non-clipped) centered at origin
@@ -145,7 +146,7 @@ function initThreeScene() {
 
   // Create camera
   const aspect = containerRef.value.clientWidth / containerRef.value.clientHeight;
-  camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 10000);
   
   // Position camera at domain direction (1,1,1) looking at origin (0,0,0)
   // Domain direction (1,1,1) represents top-right-back in domain coordinates
@@ -217,14 +218,10 @@ function initThreeScene() {
 }
 
 /**
- * Compute the 4 corners of a rendered 3D plane rectangle in domain coordinates
- * Uses the rectangle geometry from the plane realization
- */
-/**
  * Compute 3D rectangle corners using the precomputed transformation from planeRealization.
  * Uses the getRectangleCorners() method from Plane3DRealization3D.
  */
-function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, planeSize: number = 375): Vector4[] {
+function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, planeSize: number): Vector4[] {
   return planeRealization.getRectangleCorners(planeSize);
 }
 
@@ -292,51 +289,46 @@ function renderProjectionPlanes() {
     // console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
     // console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
     
-    // Get the 3D plane rectangle bounds and convert to (u,v) coordinates
+    // Generate clipped grid for all projection planes
+    // The grid is clipped to the square boundaries of the associated 3D plane
     let gridSegments: Segment2D[];
     
-    if (projPlane instanceof AuxiliaryProjectionPlane && projPlane.plane3DId) {
-      // console.log('[ThreeView] Auxiliary plane detected, plane3DId:', projPlane.plane3DId);
-      const plane3D = world.get3DPlane(projPlane.plane3DId);
-      // console.log('[ThreeView] Found 3D plane:', plane3D?.id);
-      const planeRealization = plane3D ? world.get3DPlaneRealization(plane3D.id!) : null;
-      // console.log('[ThreeView] Plane realization feasible:', planeRealization?.feasible);
+    const plane3DId = projPlane instanceof AuxiliaryProjectionPlane ? projPlane.plane3DId : projPlane.id;
+    if (!plane3DId) {
+      // Fallback for base planes without explicit plane3DId
+      gridSegments = generateFallbackGrid(
+        PLANE_RENDERING_CONFIG.MESH_SIZE / 2,
+        PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS
+      );
+    } else {
+      const plane3D = world.get3DPlane(plane3DId);
+      const plane3DRealization = plane3D ? world.get3DPlaneRealization(plane3D.id!) : null;
       
-      if (planeRealization && planeRealization.feasible) {
-        // console.log('[ThreeView] Generating clipped grid for auxiliary plane');
+      if (plane3DRealization && plane3DRealization.feasible) {
+        // Get the 3D plane rectangle corners (matches the rendered square)
+        const planeSize = PLANE_RENDERING_CONFIG.MESH_SIZE / 2;
+        const corners = compute3DPlaneRectangleCorners(plane3DRealization, planeSize) as [Vector4, Vector4, Vector4, Vector4];
         
-        // Get the ACTUAL 3D plane rectangle corners (same as what's rendered)
-        const planeSize = 375;  // Half-size (750/2)
-        const corners = compute3DPlaneRectangleCorners(planeRealization, planeSize) as [Vector4, Vector4, Vector4, Vector4];
-        
-        // Convert to projection plane (u,v) coordinates using the projection plane's inverse matrix
+        // Convert to projection plane (u,v) coordinates
         const projPlaneRealization = world.getProjectionPlane3DRealization(projPlane.id!);
-        // console.log('[ThreeView] Got projection plane realization for grid conversion:', !!projPlaneRealization);
-        if (!projPlaneRealization) {
-          // console.log('[ThreeView] No projection plane realization, using fallback grid');
-          gridSegments = generateFallbackGrid(375, 20);
-        } else {
-          // console.log('[ThreeView] Converting corners to (u,v) and generating clipped grid');
+        if (projPlaneRealization) {
+          // Generate grid clipped to the rectangle in (u,v) space
           const rect2D = convertPlaneRectangleTo2D(corners, projPlaneRealization.threeDToPlane);
-          // console.log('[ThreeView] Rectangle in (u,v):', rect2D);
-          // console.log('[ThreeView] Corner 0:', rect2D.corners[0]);
-          // console.log('[ThreeView] Corner 1:', rect2D.corners[1]);
-          // console.log('[ThreeView] Corner 2:', rect2D.corners[2]);
-          // console.log('[ThreeView] Corner 3:', rect2D.corners[3]);
-          
-          // Generate clipped grid
           gridSegments = generateClippedGrid(rect2D, 20);
-          // console.log('[ThreeView] Generated', gridSegments.length, 'grid segments');
+        } else {
+          // Fallback if projection plane realization not available
+          gridSegments = generateFallbackGrid(
+            PLANE_RENDERING_CONFIG.MESH_SIZE / 2,
+            PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS
+          );
         }
       } else {
-        // console.log('[ThreeView] No plane realization or not feasible, using fallback grid');
-        // Fallback: simple grid centered at origin
-        gridSegments = generateFallbackGrid(75, 20);
+        // Fallback if plane realization not available or infeasible
+        gridSegments = generateFallbackGrid(
+          PLANE_RENDERING_CONFIG.MESH_SIZE / 2,
+          PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS
+        );
       }
-    } else {
-      // console.log('[ThreeView] Base projection plane, using fallback grid');
-      // Base planes: simple grid centered at origin
-      gridSegments = generateFallbackGrid(375, 20);
     }
     
     // console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
@@ -557,7 +549,7 @@ function render3DElements() {
       }
 
       // Create plane mesh (semi-transparent surface)
-      const planeSize = 750;
+      const planeSize = getPlaneMeshSize(plane.id);
       const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
       
       const material = new THREE.MeshBasicMaterial({
