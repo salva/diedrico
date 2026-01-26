@@ -119,7 +119,8 @@ describe('Initialization Operations', () => {
       expect(result.success).toBe(true);
       expect(result.outputs.planeId).toBeDefined();
       
-      const plane = world.getProjectionPlaneById(result.outputs.planeId);
+      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+      const plane = world.getPlaneById(result.outputs.planeId);
       expect(plane).toBeDefined();
       expect(plane!.label).toBe('P_H');
     });
@@ -133,7 +134,8 @@ describe('Initialization Operations', () => {
       expect(result.success).toBe(true);
       expect(result.outputs.planeId).toBeDefined();
       
-      const plane = world.getProjectionPlaneById(result.outputs.planeId);
+      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+      const plane = world.getPlaneById(result.outputs.planeId);
       expect(plane).toBeDefined();
       expect(plane!.label).toBe('P_V');
     });
@@ -144,11 +146,12 @@ describe('Initialization Operations', () => {
       const op = new AddPlane3DFixedOp(point, normal, 'plane_undo_test');
       const result = op.apply(world);
       
-      expect(world.getProjectionPlaneById(result.outputs.planeId)).toBeDefined();
+      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+      expect(world.getPlaneById(result.outputs.planeId)).toBeDefined();
       
       op.undo(world);
       
-      expect(world.getProjectionPlaneById(result.outputs.planeId)).toBeUndefined();
+      expect(world.getPlaneById(result.outputs.planeId)).toBeUndefined();
     });
 
     it('should have valid parameters and outputs', () => {
