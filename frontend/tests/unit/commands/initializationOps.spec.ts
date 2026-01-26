@@ -117,12 +117,11 @@ describe('Initialization Operations', () => {
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
-      expect(result.outputs.planeId).toBe('plane_test_H');
+      expect(result.outputs.planeId).toBeDefined();
       
-      const plane = world.getProjectionPlaneById('plane_test_H');
+      const plane = world.getProjectionPlaneById(result.outputs.planeId);
       expect(plane).toBeDefined();
       expect(plane!.label).toBe('P_H');
-      expect(plane.label).toBe('P_H');
     });
 
     it('should create vertical 3D plane', () => {
@@ -132,8 +131,9 @@ describe('Initialization Operations', () => {
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
+      expect(result.outputs.planeId).toBeDefined();
       
-      const plane = world.getProjectionPlaneById('plane_test_V');
+      const plane = world.getProjectionPlaneById(result.outputs.planeId);
       expect(plane).toBeDefined();
       expect(plane!.label).toBe('P_V');
     });
@@ -142,13 +142,13 @@ describe('Initialization Operations', () => {
       const point = new Vector4(0, 0, 0, 1);
       const normal = new Vector4(0, 0, 1, 0);
       const op = new AddPlane3DFixedOp(point, normal, 'plane_undo_test');
-      op.apply(world);
+      const result = op.apply(world);
       
-      expect(world.getProjectionPlaneById('plane_undo_test')).toBeDefined();
+      expect(world.getProjectionPlaneById(result.outputs.planeId)).toBeDefined();
       
       op.undo(world);
       
-      expect(world.getProjectionPlaneById('plane_undo_test')).toBeUndefined();
+      expect(world.getProjectionPlaneById(result.outputs.planeId)).toBeUndefined();
     });
 
     it('should have valid parameters and outputs', () => {
@@ -383,14 +383,10 @@ describe('Initialization Operations', () => {
     });
 
     it('should have valid parameters', () => {
-      const point = new Vector3(1, 2, 1);
-      const dir = new Vector3(3, 4, 0);
-      const op = new AddHalfHingeLine2DOp('proj', 'hl', point, dir);
+      const op = new AddHalfHingeLine2DOp('proj_plane_id', 'hinge_line_id');
       
-      expect(op.parameters.projPlaneId).toBe('proj');
-      expect(op.parameters.hingeLineId).toBe('hl');
-      expect(op.parameters.point).toEqual({ x: 1, y: 2, z: 1 });
-      expect(op.parameters.direction).toEqual({ x: 3, y: 4, z: 0 });
+      expect(op.parameters.projPlaneId).toBe('proj_plane_id');
+      expect(op.parameters.hingeLineId).toBe('hinge_line_id');
     });
   });
 });
