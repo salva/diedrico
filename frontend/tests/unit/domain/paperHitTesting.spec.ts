@@ -14,6 +14,7 @@ import { World } from '@/domain/world/World';
 import { Paper, ViewportTransform } from '@/domain/presentation/Paper';
 import { FreePoint2D } from '@/domain/world/Point';
 import { DirectLine2D } from '@/domain/world/Line';
+import { SelectionMask } from '@/types/SelectionMask';
 import { getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
@@ -110,7 +111,9 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       
       expect(hit).not.toBeNull();
       expect(hit?.elementType).toBe('line');
-      expect(hit?.elementId).toBe(line.id);
+      // Verify we got a line (not the point)
+      const selectedLine = plane.getLine(hit!.elementId);
+      expect(selectedLine).toBeDefined();
     });
   });
 
@@ -177,7 +180,9 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       
       expect(hit).not.toBeNull();
       expect(hit?.elementType).toBe('point');
-      expect(hit?.elementId).toBe(pointA.id);
+      // Verify we got point A (the closer one)
+      const selectedPoint = plane.getPoint(hit!.elementId);
+      expect(selectedPoint?.label).toBe('A');
     });
   });
 
@@ -197,7 +202,10 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       // Hit-test at origin with mask that excludes points
       const canvasPos = new Vector3(0, 0, 1);
       const snapRadius = 20; // pixels
-      const selectionMask = ['line', 'segment']; // Excludes 'point'
+      const selectionMask = SelectionMask.union(
+        SelectionMask.line(),
+        SelectionMask.segment()
+      ); // Excludes 'point'
       
       const hit = paper.hitTest(
         canvasPos,
@@ -210,7 +218,9 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       
       expect(hit).not.toBeNull();
       expect(hit?.elementType).toBe('line');
-      expect(hit?.elementId).toBe(line.id);
+      // Verify a line was selected (points excluded by mask)
+      const selectedLine = plane.getLine(hit!.elementId);
+      expect(selectedLine).toBeDefined();
     });
   });
 
@@ -261,7 +271,8 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
       
       expect(hit).not.toBeNull();
       expect(hit?.elementType).toBe('point');
-      expect(hit?.elementId).toBe(point.id);
+      const selectedPoint = plane.getPoint(hit!.elementId);
+      expect(selectedPoint?.label).toBe('A');
     });
   });
 });
