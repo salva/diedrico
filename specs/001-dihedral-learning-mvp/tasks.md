@@ -9361,6 +9361,609 @@ Both functions are production-tested across World.ts, Element2DRenderer3D.ts, pr
 **Checkpoint**: ✅ HingeLine/HalfHingeLine2D use canonical coordinates with zero geometry duplication, ready for auxiliary planes
 ---
 
+## Phase 86: ProcessTree Stack Management UI
+
+**Purpose**: Provide UI controls for manually managing the subprocess stack (push/pop operations)
+
+**Dependencies**: Phase 85 (subprocess stack architecture must be implemented first)
+
+**Overview**: Replace large "Create Subprocess" button with pair of symmetric buttons ("<" and ">") for explicit stack navigation. Add visual feedback for current stack depth and active subprocess.
+
+### T1359: [P] Update spec.md with FR-058 (ProcessTree Stack Management UI)
+
+**Task**: Add FR-058 functional requirement to spec.md
+
+**Requirement**: FR-058 - System MUST provide UI controls for manually managing subprocess stack with push/pop buttons
+
+**Actions**:
+1. Add FR-058 after FR-057 in Functional Requirements section
+2. Specify symmetric button pair ("Push Level" / "Pop Level")
+3. Specify behavior: push creates subprocess, pop closes current subprocess
+4. Specify validation: cannot pop root subprocess
+5. Specify visual feedback: stack depth/breadcrumb display
+6. Specify undo/redo support for stack operations
+
+**Acceptance**: FR-058 exists in spec.md with complete behavioral specification
+
+---
+
+### T1360: [P] Update ui-spec.md with Phase 86 UI Design
+
+**Task**: Add detailed UI specification for subprocess stack controls to ui-spec.md
+
+**Actions**:
+1. Add "Subprocess Stack Management UI (Phase 86)" section to Process Tree Panel
+2. Specify visual layout with ASCII diagram showing buttons in panel header
+3. Specify button styling (size, placement, colors, icons)
+4. Specify Pop button ("<") - closes current subprocess
+5. Specify Push button (">") - creates new subprocess
+6. Specify depth indicator (optional breadcrumb or depth counter)
+7. Specify active subprocess visual feedback (highlight, icon)
+8. Specify keyboard shortcuts (Ctrl+Shift+[ / Ctrl+Shift+])
+9. Specify edge cases (cannot pop root, empty subprocess, auto-naming)
+10. Specify accessibility (ARIA labels, keyboard navigation)
+
+**Acceptance**: ui-spec.md contains complete visual and behavioral specification for stack management UI
+
+---
+
+### T1361: [P] Update data-model.md with Phase 86 Implementation
+
+**Task**: Add implementation details for stack management operations to data-model.md
+
+**Actions**:
+1. Add "Phase 86 - Manual Subprocess Stack Management UI" section to ProcessTree documentation
+2. Specify PushSubprocessOp operation class (apply, undo, redo)
+3. Specify PopSubprocessOp operation class (apply, undo, redo)
+4. Add getStackDepth() method to ProcessTree
+5. Add getStackPath() method to ProcessTree (for breadcrumb)
+6. Add isSubprocessActive() method to ProcessTree
+7. Specify ProcessTreePanelState interface for UI component state
+8. Specify computePanelState() function for reactive state
+9. Document user interaction flow (push, pop, subsequent actions)
+10. Document visual feedback requirements
+11. Add validation rules for Phase 86
+
+**Acceptance**: data-model.md contains complete implementation specification for Phase 86
+
+---
+
+### T1362: Implement PushSubprocessOp Operation
+
+**Task**: Create PushSubprocessOp operation class
+
+**File**: `frontend/src/commands/operations/processTree/PushSubprocessOp.ts`
+
+**Implementation**:
+```typescript
+export class PushSubprocessOp implements IOperation {
+  readonly type = 'PushSubprocess';
+  private subprocessId: string;
+  
+  constructor(private name: string) {
+    this.subprocessId = generateId('subprocess_');
+  }
+  
+  apply(world: World): OperationResult {
+    const processTree = world.getProcessTree();
+    const subprocess = processTree.pushSubprocess(this.name);
+    subprocess.id = this.subprocessId;
+    return { success: true, outputs: { subprocessId: this.subprocessId } };
+  }
+  
+  undo(world: World): void {
+    const processTree = world.getProcessTree();
+    processTree.popSubprocess();
+    const parent = processTree.getCurrentSubprocess();
+    const index = parent.children.findIndex(c => c.id === this.subprocessId);
+    if (index !== -1) parent.children.splice(index, 1);
+  }
+  
+  redo(world: World): void { this.apply(world); }
+}
+```
+
+**Acceptance**: PushSubprocessOp operation implemented with apply/undo/redo
+
+---
+
+### T1363: Implement PopSubprocessOp Operation
+
+**Task**: Create PopSubprocessOp operation class
+
+**File**: `frontend/src/commands/operations/processTree/PopSubprocessOp.ts`
+
+**Implementation**:
+```typescript
+export class PopSubprocessOp implements IOperation {
+  readonly type = 'PopSubprocess';
+  private poppedSubprocessId: string;
+  
+  apply(world: World): OperationResult {
+    const processTree = world.getProcessTree();
+    if (processTree.getStackDepth() <= 1) {
+      throw new Error('Cannot pop root subprocess');
+    }
+    const current = processTree.getCurrentSubprocess();
+    this.poppedSubprocessId = current.id;
+    processTree.popSubprocess();
+    return { success: true, outputs: {} };
+  }
+  
+  undo(world: World): void {
+    const processTree = world.getProcessTree();
+    const current = processTree.getCurrentSubprocess();
+    const subprocess = current.children.find(
+      c => c.type === 'subprocess' && c.id === this.poppedSubprocessId
+    ) as Subprocess;
+    if (!subprocess) throw new Error(`Cannot undo pop: subprocess ${this.poppedSubprocessId} not found`);
+    processTree.subprocessStack.push(subprocess);
+  }
+  
+  redo(world: World): void { this.apply(world); }
+}
+```
+
+**Acceptance**: PopSubprocessOp operation implemented with apply/undo/redo
+
+---
+
+### T1364: Add Stack Management Methods to ProcessTree
+
+**Task**: Extend ProcessTree class with stack query methods
+
+**File**: `frontend/src/domain/processTree/ProcessTree.ts`
+
+**Implementation**:
+```typescript
+class ProcessTree {
+  // ... existing code ...
+  
+  getStackDepth(): number {
+    return this.subprocessStack.length;
+  }
+  
+  getStackPath(): string[] {
+    return this.subprocessStack.map(sp => sp.name);
+  }
+  
+  isSubprocessActive(subprocessId: string): boolean {
+    const current = this.getCurrentSubprocess();
+    return current.id === subprocessId;
+  }
+}
+```
+
+**Acceptance**: ProcessTree has getStackDepth(), getStackPath(), isSubprocessActive() methods
+
+---
+
+### T1365: Implement ProcessTreePanel Stack Controls
+
+**Task**: Add push/pop buttons to ProcessTreePanel.vue header
+
+**File**: `frontend/src/components/panels/ProcessTreePanel.vue`
+
+**Implementation**:
+1. Add panel header with button pair:
+   ```vue
+   <div class="panel-header">
+     <span>Process Tree</span>
+     <div class="stack-controls">
+       <button @click="popSubprocess" :disabled="!canPop" title="Close subprocess (move up)">
+         <span class="icon">&lt;</span>
+       </button>
+       <button @click="pushSubprocess" title="Create subprocess (move in)">
+         <span class="icon">&gt;</span>
+       </button>
+       <span class="depth-indicator">{{ stackPath.join(' > ') }}</span>
+     </div>
+   </div>
+   ```
+2. Compute stack state from ProcessTree:
+   ```typescript
+   const stackDepth = computed(() => world.getProcessTree().getStackDepth());
+   const stackPath = computed(() => world.getProcessTree().getStackPath());
+   const canPop = computed(() => stackDepth.value > 1);
+   const activeSubprocessId = computed(() => 
+     world.getProcessTree().getCurrentSubprocess().id
+   );
+   ```
+3. Implement button handlers:
+   ```typescript
+   function pushSubprocess() {
+     const name = prompt('Subprocess name:') || `Subprocess ${Date.now()}`;
+     const cmd = new Command('Push Subprocess', world);
+     cmd.addAndExecute(new PushSubprocessOp(name));
+     cmd.commit();
+     commandStack.push(cmd);
+   }
+   
+   function popSubprocess() {
+     if (!canPop.value) return;
+     const cmd = new Command('Pop Subprocess', world);
+     cmd.addAndExecute(new PopSubprocessOp());
+     cmd.commit();
+     commandStack.push(cmd);
+   }
+   ```
+4. Add CSS styling for buttons and depth indicator
+
+**Acceptance**: ProcessTreePanel has functional push/pop buttons in header
+
+---
+
+### T1366: Add Active Subprocess Visual Feedback
+
+**Task**: Highlight active subprocess in ProcessTreePanel
+
+**File**: `frontend/src/components/panels/ProcessTreePanel.vue`
+
+**Implementation**:
+1. Add computed property for active subprocess ID
+2. Add CSS class to tree node when it's active:
+   ```vue
+   <div :class="{ 'subprocess-node': true, 'active': isActive(node.id) }">
+   ```
+3. Style active subprocess:
+   ```css
+   .subprocess-node.active {
+     background-color: #E3F2FD;
+     border-left: 3px solid #2196F3;
+     font-weight: 500;
+   }
+   ```
+4. Optional: Add "►" indicator icon next to active subprocess name
+
+**Acceptance**: Active subprocess is visually distinguished in the tree
+
+---
+
+### T1367: Add Keyboard Shortcuts for Stack Operations
+
+**Task**: Implement Ctrl+Shift+[ and Ctrl+Shift+] shortcuts
+
+**File**: `frontend/src/components/panels/ProcessTreePanel.vue`
+
+**Implementation**:
+```typescript
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown);
+});
+
+function handleKeydown(event: KeyboardEvent) {
+  if (event.ctrlKey && event.shiftKey) {
+    if (event.key === ']' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      pushSubprocess();
+    } else if (event.key === '[' || event.key === 'ArrowLeft') {
+      event.preventDefault();
+      if (canPop.value) popSubprocess();
+    }
+  }
+}
+```
+
+**Acceptance**: Keyboard shortcuts work: Ctrl+Shift+] pushes, Ctrl+Shift+[ pops
+
+---
+
+### T1368: Write Unit Tests for Stack Management Operations
+
+**Task**: Test PushSubprocessOp and PopSubprocessOp
+
+**File**: `frontend/tests/unit/commands/operations/processTree/stackManagement.spec.ts`
+
+**Tests**:
+1. **PushSubprocessOp**:
+   - Creates subprocess as child of current active subprocess
+   - Pushes subprocess onto stack
+   - Returns subprocess ID in outputs
+   - Undo removes subprocess from tree and pops stack
+   - Redo recreates subprocess
+
+2. **PopSubprocessOp**:
+   - Pops subprocess from stack (makes parent active)
+   - Throws error if trying to pop root (stack depth = 1)
+   - Subprocess remains in tree after pop
+   - Undo pushes subprocess back onto stack
+   - Redo pops subprocess again
+
+3. **ProcessTree Stack Methods**:
+   - getStackDepth() returns correct depth
+   - getStackPath() returns breadcrumb array
+   - isSubprocessActive() identifies active subprocess
+
+**Acceptance**: All unit tests pass
+
+---
+
+### T1369: Write Integration Test - Push/Pop Workflow
+
+**Task**: Test complete user workflow for stack management
+
+**File**: `frontend/tests/integration/processTreeStackManagement.spec.ts`
+
+**Scenario**:
+```typescript
+it('should manage subprocess stack with push/pop operations', () => {
+  const world = createTestWorld();
+  const commandStack = new CommandStack();
+  
+  // Initial state: root subprocess only
+  expect(world.getProcessTree().getStackDepth()).toBe(1);
+  
+  // Push subprocess
+  const pushCmd = new Command('Push', world);
+  pushCmd.addAndExecute(new PushSubprocessOp('Level 1'));
+  pushCmd.commit();
+  commandStack.push(pushCmd);
+  expect(world.getProcessTree().getStackDepth()).toBe(2);
+  expect(world.getProcessTree().getStackPath()).toEqual(['Root', 'Level 1']);
+  
+  // Add action to subprocess
+  const actionCmd = new Command('Add Action', world);
+  actionCmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
+  actionCmd.commit();
+  commandStack.push(actionCmd);
+  
+  // Verify action is in Level 1 subprocess
+  const level1 = world.getProcessTree().getCurrentSubprocess();
+  expect(level1.name).toBe('Level 1');
+  expect(level1.children.length).toBe(1);
+  
+  // Pop subprocess
+  const popCmd = new Command('Pop', world);
+  popCmd.addAndExecute(new PopSubprocessOp());
+  popCmd.commit();
+  commandStack.push(popCmd);
+  expect(world.getProcessTree().getStackDepth()).toBe(1);
+  expect(world.getProcessTree().getCurrentSubprocess().name).toBe('Root');
+  
+  // Verify Level 1 subprocess still exists in tree
+  const root = world.getProcessTree().root;
+  const level1InTree = root.children.find(c => c.type === 'subprocess' && c.name === 'Level 1');
+  expect(level1InTree).toBeDefined();
+  
+  // Undo pop - Level 1 becomes active again
+  commandStack.undo();
+  expect(world.getProcessTree().getStackDepth()).toBe(2);
+  expect(world.getProcessTree().getCurrentSubprocess().name).toBe('Level 1');
+  
+  // Undo push - Level 1 removed from tree
+  commandStack.undo();
+  expect(world.getProcessTree().getStackDepth()).toBe(1);
+  const level1AfterUndo = root.children.find(c => c.type === 'subprocess' && c.name === 'Level 1');
+  expect(level1AfterUndo).toBeUndefined();
+});
+```
+
+**Acceptance**: Integration test passes, verifies complete workflow
+
+---
+
+### T1370: Write E2E Test - UI Stack Controls
+
+**Task**: Test ProcessTreePanel push/pop buttons with Playwright
+
+**File**: `frontend/tests/e2e/processTreeStackControls.spec.ts`
+
+**Scenario**:
+```typescript
+test('Process Tree stack controls', async ({ page }) => {
+  await page.goto('/');
+  
+  // Verify initial state: pop button disabled
+  const popButton = page.locator('.stack-controls button:first-child');
+  const pushButton = page.locator('.stack-controls button:last-child');
+  await expect(popButton).toBeDisabled();
+  await expect(pushButton).toBeEnabled();
+  
+  // Click push button
+  await pushButton.click();
+  
+  // Enter subprocess name in dialog
+  await page.locator('input[type="text"]').fill('Test Subprocess');
+  await page.locator('button:has-text("OK")').click();
+  
+  // Verify depth indicator updated
+  await expect(page.locator('.depth-indicator')).toContainText('Test Subprocess');
+  
+  // Verify pop button now enabled
+  await expect(popButton).toBeEnabled();
+  
+  // Create a point (action goes to Test Subprocess)
+  await page.locator('[data-tool="point"]').click();
+  await page.locator('.canvas').click({ position: { x: 100, y: 100 } });
+  
+  // Click pop button
+  await popButton.click();
+  
+  // Verify depth indicator shows root
+  await expect(page.locator('.depth-indicator')).toContainText('Root');
+  await expect(page.locator('.depth-indicator')).not.toContainText('Test Subprocess');
+  
+  // Verify pop button disabled again
+  await expect(popButton).toBeDisabled();
+  
+  // Verify Test Subprocess still visible in tree (not deleted)
+  await expect(page.locator('.subprocess-node:has-text("Test Subprocess")')).toBeVisible();
+});
+```
+
+**Acceptance**: E2E test passes, UI controls work correctly
+
+---
+
+### T1371: Update Process Tree Rendering Logic
+
+**Task**: Ensure active subprocess is highlighted during rendering
+
+**File**: `frontend/src/components/panels/ProcessTreePanel.vue` or `ProcessTreeNode.vue`
+
+**Implementation**:
+1. Pass activeSubprocessId as prop to tree node components
+2. Apply 'active' CSS class when node ID matches
+3. Ensure reactivity: when stack changes, UI updates immediately
+4. Test with nested subprocesses (3+ levels deep)
+
+**Acceptance**: Active subprocess always correctly highlighted
+
+---
+
+### T1372: Remove Old "Create Subprocess" Button (if exists)
+
+**Task**: Clean up any existing large "Create Subprocess" button
+
+**Files**: 
+- `frontend/src/components/panels/ProcessTreePanel.vue`
+- Any toolbar or action buttons related to subprocess creation
+
+**Actions**:
+1. Search for existing subprocess creation UI
+2. Remove large/prominent "+ Create Subprocess" button
+3. Remove related event handlers
+4. Remove related CSS
+5. Update any documentation or comments
+
+**Acceptance**: Old UI removed, only new symmetric buttons remain
+
+---
+
+### T1373: Add Accessibility Features
+
+**Task**: Ensure stack controls are accessible
+
+**File**: `frontend/src/components/panels/ProcessTreePanel.vue`
+
+**Implementation**:
+1. Add ARIA labels to buttons:
+   ```html
+   <button aria-label="Close current subprocess and move up one level" ...>
+   <button aria-label="Create new subprocess and move in one level" ...>
+   ```
+2. Add role="toolbar" to button container
+3. Ensure keyboard focus indicators are visible
+4. Test with screen reader (VoiceOver/NVDA)
+5. Add aria-live region for stack depth changes:
+   ```html
+   <div aria-live="polite" class="sr-only">
+     Current subprocess: {{ currentSubprocessName }}, Depth: {{ stackDepth }}
+   </div>
+   ```
+
+**Acceptance**: Stack controls are fully accessible (WCAG 2.1 AA)
+
+---
+
+### T1374: Test Undo/Redo for Stack Operations
+
+**Task**: Verify undo/redo works correctly for push/pop
+
+**File**: `frontend/tests/integration/processTreeStackManagement.spec.ts`
+
+**Scenarios**:
+1. **Undo Push**: Subprocess removed from tree, stack popped
+2. **Redo Push**: Subprocess recreated with same ID, stack pushed
+3. **Undo Pop**: Subprocess pushed back onto stack (still in tree)
+4. **Redo Pop**: Subprocess popped from stack again
+5. **Complex sequence**: Push, add action, pop, undo all, redo all
+6. **Cascade undo**: Undo push removes subprocess AND all its child actions
+
+**Acceptance**: All undo/redo scenarios work correctly
+
+---
+
+### T1375: Write User Documentation
+
+**Task**: Document stack management feature for users
+
+**File**: `docs/USER_GUIDE.md` or in-app help
+
+**Content**:
+1. **What are Subprocesses?**: Hierarchical organization of construction steps
+2. **Push Button (">")**: Creates new subprocess, moves "into" it
+3. **Pop Button ("<")**: Closes current subprocess, moves "back to" parent
+4. **Stack Depth Indicator**: Shows current level in hierarchy
+5. **Active Subprocess**: Highlighted subprocess is where new actions go
+6. **Keyboard Shortcuts**: Ctrl+Shift+] and Ctrl+Shift+[
+7. **Use Cases**: Organizing complex constructions, grouping related steps
+8. **Best Practices**: Name subprocesses meaningfully, don't nest too deeply
+
+**Acceptance**: User documentation exists and is clear
+
+---
+
+### T1376: Final Testing and Polish
+
+**Task**: Comprehensive testing and UI refinement
+
+**Actions**:
+1. Test with deeply nested subprocesses (5+ levels)
+2. Test rapid push/pop operations
+3. Test edge cases (empty subprocesses, immediate pop after push)
+4. Verify smooth CSS transitions
+5. Check button sizing and spacing on different screen sizes
+6. Verify tooltip text is clear
+7. Test with different themes (light/dark)
+8. Performance test: 100+ subprocesses in tree
+
+**Acceptance**: All tests pass, UI is polished and responsive
+
+---
+
+### T1377: Commit Phase 86 - ProcessTree Stack Management UI
+
+**Task**: Final commit with all Phase 86 changes
+
+**Commit Message**:
+```
+Phase 86: ProcessTree Stack Management UI
+
+- Add FR-058 to spec.md (subprocess stack management UI)
+- Add Phase 86 UI specification to ui-spec.md
+- Add Phase 86 implementation details to data-model.md
+- Implement PushSubprocessOp and PopSubprocessOp operations
+- Add getStackDepth(), getStackPath(), isSubprocessActive() to ProcessTree
+- Add push/pop button controls to ProcessTreePanel header
+- Add active subprocess visual feedback (highlight)
+- Add keyboard shortcuts (Ctrl+Shift+[ / Ctrl+Shift+])
+- Add stack depth/breadcrumb indicator
+- Remove old "Create Subprocess" button
+- Add accessibility features (ARIA labels, keyboard nav)
+- Add comprehensive tests (unit, integration, E2E)
+- Add user documentation
+
+Benefits:
+- Explicit control over subprocess hierarchy
+- Symmetric mental model (in/out navigation)
+- Clear visual feedback for active subprocess
+- Full undo/redo support
+- Improved UX with compact button controls
+
+Files modified:
+- specs/spec.md (FR-058)
+- specs/ui-spec.md (Phase 86 UI)
+- specs/data-model.md (Phase 86 implementation)
+- specs/tasks.md (T1359-T1377)
+- frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+- frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+- frontend/src/domain/processTree/ProcessTree.ts
+- frontend/src/components/panels/ProcessTreePanel.vue
+- frontend/tests/unit/commands/operations/processTree/stackManagement.spec.ts
+- frontend/tests/integration/processTreeStackManagement.spec.ts
+- frontend/tests/e2e/processTreeStackControls.spec.ts
+- docs/USER_GUIDE.md
+```
+
+**Acceptance**: Phase 86 complete and committed
+
+---
+
 ## Phase 85: ProcessTree Subprocess Stack Architecture
 
 **Status**: 📋 PLANNED (Jan 23, 2026) - Ready for implementation

@@ -2,13 +2,38 @@
   <aside class="actions-panel">
     <header class="panel-header">
       <h2 class="panel-title">Construction History</h2>
-      <button 
-        class="add-subprocess-btn"
-        @click="showAddSubprocessDialog = true"
-        title="Add new subprocess"
-      >
-        + Subprocess
-      </button>
+      <div class="header-controls">
+        <!-- Stack management buttons -->
+        <div class="stack-controls">
+          <button 
+            class="stack-btn stack-pop-btn"
+            :disabled="!canPop"
+            @click="popSubprocess"
+            :title="canPop ? 'Close current subprocess (Ctrl+Shift+[)' : 'Cannot close root'"
+            aria-label="Pop subprocess from stack"
+          >
+            &lt;
+          </button>
+          <div class="stack-info" :title="stackPathTooltip">
+            {{ stackDepth }}
+          </div>
+          <button 
+            class="stack-btn stack-push-btn"
+            @click="pushSubprocess"
+            title="Create and enter new subprocess (Ctrl+Shift+])"
+            aria-label="Push subprocess to stack"
+          >
+            &gt;
+          </button>
+        </div>
+        <button 
+          class="add-subprocess-btn"
+          @click="showAddSubprocessDialog = true"
+          title="Add new subprocess"
+        >
+          + Subprocess
+        </button>
+      </div>
     </header>
 
     <!-- Process Tree -->
@@ -16,6 +41,7 @@
       <ProcessTreeNode
         :node="processTree.root"
         :selected-node-id="selectedNodeId"
+        :active-subprocess-id="activeSubprocessId"
         :related-action-ids="relatedActionIds"
         @select-node="handleNodeSelect"
         @toggle-visibility="handleToggleVisibility"
@@ -44,6 +70,10 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
 import type { World } from '@/domain/world/World';
+import type { CommandStack } from '@/commands/CommandStack';
+import { Command } from '@/commands/Command';
+import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
 
@@ -55,6 +85,7 @@ const emit = defineEmits<{
 
 // Injected dependencies
 const world = inject<World>('world')!;
+const commandStack = inject<CommandStack>('commandStack')!;
 const processTree = world.getProcessTree();
 
 // Selection store
@@ -65,6 +96,13 @@ const selectedNodeId = ref<string | null>(null);
 const showAddSubprocessDialog = ref(false);
 const newSubprocessName = ref('');
 const relatedActionIds = ref<Set<string>>(new Set());
+
+// Stack management computed properties
+const stackDepth = computed(() => processTree.getStackDepth());
+const canPop = computed(() => stackDepth.value > 1);
+const stackPath = computed(() => processTree.getStackPath());
+const stackPathTooltip = computed(() => stackPath.value.join(' / '));
+const activeSubprocessId = computed(() => processTree.getCurrentSubprocess().id);
 
 // Watch ProcessTree version for reactivity
 const treeVersion = computed(() => processTree.getVersion());
@@ -95,6 +133,9 @@ onMounted(() => {
       });
     }
   }, 100);
+  
+  // Register keyboard shortcuts
+  window.addEventListener('keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
@@ -102,6 +143,9 @@ onUnmounted(() => {
     clearInterval(intervalId);
     intervalId = null;
   }
+  
+  // Unregister keyboard shortcuts
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 // Watch selection changes and find related actions
@@ -151,6 +195,37 @@ function addSubprocess() {
   }
 }
 
+// Stack management handlers
+function pushSubprocess() {
+  const subprocessName = `Subprocess ${Date.now()}`;
+  const cmd = new Command('Push subprocess', world);
+  cmd.addAndExecute(new PushSubprocessOp(subprocessName));
+  cmd.commit();
+  commandStack.push(cmd);
+}
+
+function popSubprocess() {
+  if (canPop.value) {
+    const cmd = new Command('Pop subprocess', world);
+    cmd.addAndExecute(new PopSubprocessOp());
+    cmd.commit();
+    commandStack.push(cmd);
+  }
+}
+
+// Keyboard shortcuts for stack management
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.ctrlKey && event.shiftKey) {
+    if (event.key === '[') {
+      event.preventDefault();
+      popSubprocess();
+    } else if (event.key === ']') {
+      event.preventDefault();
+      pushSubprocess();
+    }
+  }
+}
+
 // Handle node selection
 function handleNodeSelect(nodeId: string) {
   selectedNodeId.value = nodeId === selectedNodeId.value ? null : nodeId;
@@ -188,6 +263,66 @@ function handleToggleVisibility(nodeId: string) {
   font-size: 1.125rem;
   font-weight: 600;
   color: #212529;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stack-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 0.125rem;
+}
+
+.stack-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: #fff;
+  color: #4f46e5;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stack-btn:hover:not(:disabled) {
+  background: #4f46e5;
+  color: white;
+  border-color: #4f46e5;
+}
+
+.stack-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.stack-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #6c757d;
+}
+
+.stack-info {
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+  min-width: 1.5rem;
+  text-align: center;
+  cursor: help;
 }
 
 .add-subprocess-btn {

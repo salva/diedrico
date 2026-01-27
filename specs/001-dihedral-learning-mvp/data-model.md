@@ -1413,6 +1413,183 @@ if (initSubprocess) {
 world.addAction(createAction(...));  // Always adds to current subprocess from stack
 ```
 
+**Phase 86 - Manual Subprocess Stack Management UI**:
+
+Provides user-facing controls for manually pushing and popping subprocesses, enabling explicit hierarchical organization of construction history.
+
+**Operations**:
+
+```typescript
+/**
+ * PushSubprocessOp - Create and activate a new subprocess
+ * Adds subprocess to tree as child of current active subprocess
+ * Pushes new subprocess onto stack
+ */
+class PushSubprocessOp implements IOperation {
+  readonly type = 'PushSubprocess';
+  private subprocessId: string;  // Generated subprocess ID
+  
+  constructor(private name: string) {
+    this.subprocessId = generateId('subprocess_');
+  }
+  
+  apply(world: World): OperationResult {
+    const processTree = world.getProcessTree();
+    const subprocess = processTree.pushSubprocess(this.name);
+    subprocess.id = this.subprocessId;  // Use pre-generated ID for undo consistency
+    return { success: true, outputs: { subprocessId: this.subprocessId } };
+  }
+  
+  undo(world: World): void {
+    const processTree = world.getProcessTree();
+    processTree.popSubprocess();  // Pop from stack
+    
+    // Remove subprocess from parent's children
+    const parent = processTree.getCurrentSubprocess();
+    const index = parent.children.findIndex(child => child.id === this.subprocessId);
+    if (index !== -1) {
+      parent.children.splice(index, 1);
+    }
+  }
+  
+  redo(world: World): void {
+    this.apply(world);
+  }
+}
+
+/**
+ * PopSubprocessOp - Close current subprocess and return to parent
+ * Does NOT remove subprocess from tree (it remains as historical record)
+ * Pops subprocess from stack, making parent active
+ */
+class PopSubprocessOp implements IOperation {
+  readonly type = 'PopSubprocess';
+  private poppedSubprocessId: string;  // Track which subprocess was popped for redo
+  
+  apply(world: World): OperationResult {
+    const processTree = world.getProcessTree();
+    
+    if (processTree.getStackDepth() <= 1) {
+      throw new Error('Cannot pop root subprocess');
+    }
+    
+    const current = processTree.getCurrentSubprocess();
+    this.poppedSubprocessId = current.id;
+    
+    processTree.popSubprocess();
+    return { success: true, outputs: {} };
+  }
+  
+  undo(world: World): void {
+    const processTree = world.getProcessTree();
+    // Find the subprocess we popped and push it back
+    const current = processTree.getCurrentSubprocess();
+    const subprocess = current.children.find(
+      child => child.type === 'subprocess' && child.id === this.poppedSubprocessId
+    ) as Subprocess;
+    
+    if (!subprocess) {
+      throw new Error(`Cannot undo pop: subprocess ${this.poppedSubprocessId} not found`);
+    }
+    
+    processTree.subprocessStack.push(subprocess);
+  }
+  
+  redo(world: World): void {
+    this.apply(world);
+  }
+}
+```
+
+**ProcessTree Extensions**:
+
+```typescript
+class ProcessTree {
+  // ... existing fields ...
+  
+  /**
+   * Get current stack depth (1 = root only, 2 = root + 1 subprocess, etc.)
+   */
+  getStackDepth(): number {
+    return this.subprocessStack.length;
+  }
+  
+  /**
+   * Get the full stack path (for breadcrumb display)
+   * Returns array of subprocess names from root to current
+   */
+  getStackPath(): string[] {
+    return this.subprocessStack.map(sp => sp.name);
+  }
+  
+  /**
+   * Check if a subprocess is currently active (top of stack)
+   */
+  isSubprocessActive(subprocessId: string): boolean {
+    const current = this.getCurrentSubprocess();
+    return current.id === subprocessId;
+  }
+}
+```
+
+**UI Component State**:
+
+```typescript
+interface ProcessTreePanelState {
+  currentStackDepth: number;      // 1-based depth (1 = root)
+  totalSubprocessCount: number;   // Total subprocesses in tree
+  stackPath: string[];            // Breadcrumb trail ["Root", "Construction", "Guide Setup"]
+  canPop: boolean;                // false if depth <= 1
+  activeSubprocessId: string;     // ID of current active subprocess
+}
+
+// Computed from ProcessTree
+function computePanelState(world: World): ProcessTreePanelState {
+  const processTree = world.getProcessTree();
+  return {
+    currentStackDepth: processTree.getStackDepth(),
+    totalSubprocessCount: countAllSubprocesses(processTree.root),
+    stackPath: processTree.getStackPath(),
+    canPop: processTree.getStackDepth() > 1,
+    activeSubprocessId: processTree.getCurrentSubprocess().id
+  };
+}
+```
+
+**User Interaction Flow**:
+
+1. **Push Subprocess**:
+   - User clicks ">" button or presses Ctrl+Shift+]
+   - Optional: Show name input dialog (or use auto-generated name)
+   - Create Command with PushSubprocessOp(name)
+   - Execute and commit command
+   - UI updates: tree re-renders, new subprocess highlighted
+
+2. **Pop Subprocess**:
+   - User clicks "<" button or presses Ctrl+Shift+[
+   - Validate stack depth > 1 (button should be disabled if not)
+   - Create Command with PopSubprocessOp()
+   - Execute and commit command
+   - UI updates: tree re-renders, parent subprocess highlighted
+
+3. **Subsequent Actions**:
+   - After push: actions go to new subprocess
+   - After pop: actions go to parent subprocess
+   - User can immediately push again to create sibling subprocess
+
+**Visual Feedback**:
+- Active subprocess has background highlight in tree
+- Stack depth shown in header ("Depth: 2" or breadcrumb)
+- Pop button disabled when at root
+- Smooth transitions when stack changes
+
+**Benefits**:
+- Explicit control over construction organization
+- Clear visual hierarchy in Process Tree
+- Symmetric mental model (in/out navigation)
+- Undo/redo support for stack operations
+- Eliminates confusion from large single "Create" button
+
 **Validation Rules**:
 - Tree must be valid (no cycles, each node has at most one parent)
 - Process is root node (single entry point)
@@ -1424,6 +1601,8 @@ world.addAction(createAction(...));  // Always adds to current subprocess from s
 - ALL Actions must be inside an ActionGroup
 - **Phase 85**: Root subprocess always on stack bottom, cannot be popped
 - **Phase 85**: Stack depth must be ≥1 (root always present)
+- **Phase 86**: Pop button disabled when stack depth ≤ 1
+- **Phase 86**: Push always creates subprocess as child of current active subprocess
 
 ---
 

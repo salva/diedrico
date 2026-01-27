@@ -17,7 +17,6 @@ export class PopSubprocessOp implements IOperation {
   outputs: Record<string, any> = {};
   
   private poppedSubprocessId: string | undefined;
-  private poppedSubprocessName: string | undefined;
 
   apply(world: World): OperationResult {
     // Store info about subprocess being popped for undo
@@ -30,33 +29,11 @@ export class PopSubprocessOp implements IOperation {
   }
 
   undo(world: World): void {
-    // Undo by re-pushing the subprocess onto the stack
-    // Note: The subprocess still exists in the tree, we just need to push it back onto the stack
-    // This is tricky - we need to manually push the existing subprocess back onto the stack
-    // For now, we'll need to access the subprocess by ID and manually push it
-    
     if (!this.poppedSubprocessId) {
       throw new Error('Cannot undo PopSubprocessOp: no subprocess ID stored');
     }
     
-    // Find the subprocess in the tree and push it back onto the stack
-    const processTree = world.getProcessTree();
-    const currentSubprocess = processTree.getCurrentSubprocess();
-    
-    // Find the popped subprocess in current subprocess's children
-    const poppedSubprocess = currentSubprocess.children.find(
-      child => child.type === 'subprocess' && child.id === this.poppedSubprocessId
-    );
-    
-    if (!poppedSubprocess || poppedSubprocess.type !== 'subprocess') {
-      throw new Error(`Cannot undo PopSubprocessOp: subprocess ${this.poppedSubprocessId} not found in parent's children`);
-    }
-    
-    // Manually push the subprocess back onto the stack
-    // We need to access the private stack - we'll use a workaround by calling pushSubprocess with same name
-    // then replacing the newly created subprocess with the original one
-    // Actually, this is complex - let's add a helper method to ProcessTree
-    // For now, throw an error indicating this needs ProcessTree support
-    throw new Error('PopSubprocessOp undo requires ProcessTree.restoreSubprocessToStack() method - not yet implemented');
+    // Restore the subprocess to the stack
+    world.getProcessTree().restoreSubprocessToStack(this.poppedSubprocessId);
   }
 }

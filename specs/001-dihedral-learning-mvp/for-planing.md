@@ -20,7 +20,6 @@ Note that completing these tasks may require asking the user for additional info
 ## FOR PLANING
 
 * [ ] **Phase 85: ProcessTree Subprocess Stack Architecture** - Implement subprocess stack in ProcessTree to eliminate conditional subprocess checks in operations. Two operation types: (1) Stack manipulation operations (PushSubprocessOp/PopSubprocessOp) that manage subprocess stack, (2) Action recording operations (AddProcessTreeActionOp) that add actions to current subprocess at top of stack. Domain operations remain unchanged. Benefits: automatic action registration, no conditional checks, clear subprocess boundaries, complete dependency graph. See specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md for details.
-* [ ] Allow closing the last process tree element in the stack, so that the following entries are pushed into the parent (or in a sibling if one is created).
 * [ ] Add a hide-children checkbox into process tree headers to enable/disable visibility of elements from the process tree view, so that the visibility of all elements with are created from inside the tree (except those signaled as output, see below) could be enabled/disabled in one go.
 * [ ] Allow to mark entries in the proccess tree as output elements which would not be hidden when hide children in picked in the parent.
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
@@ -150,6 +149,43 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **Phase 86: ProcessTree Stack Management UI** - 📋 PLANNED (Jan 27, 2026)
+  - **User Requirement**: "Allow closing the last process tree element in the stack, so that the following entries are pushed into the parent (or in a sibling if one is created). Also, the button we have for creating a new entry in the process tree is too big. Probably we want a pair of symmetric buttons (">" and "<" or something similar indicating we move one level in or out respectively)."
+  - **Problem**: Current UI (if exists) uses single large "Create Subprocess" button, lacks explicit control for closing (popping) subprocesses, no clear visual feedback for stack navigation
+  - **Solution**: Add pair of symmetric buttons in ProcessTreePanel header for explicit stack management - "Push Level" (">" or "In") creates new subprocess, "Pop Level" ("<" or "Out") closes current subprocess and returns to parent
+  - **Architecture**:
+    - Two undoable operations: `PushSubprocessOp(name)` creates subprocess and pushes to stack, `PopSubprocessOp()` pops subprocess from stack (subprocess remains in tree as historical record)
+    - ProcessTree extensions: `getStackDepth()` returns current nesting level, `getStackPath()` returns breadcrumb array, `isSubprocessActive(id)` checks if subprocess is top of stack
+    - UI state: Computed from ProcessTree showing current depth, breadcrumb trail, active subprocess ID, whether pop is allowed
+    - Visual feedback: Active subprocess highlighted in tree (background color, border accent), stack depth/breadcrumb shown in panel header, pop button disabled when at root
+  - **Key Benefits**:
+    - Explicit user control over subprocess hierarchy (no automatic nesting)
+    - Symmetric mental model: "move in" (push) / "move out" (pop) navigation
+    - Clear visual feedback for current location in hierarchy
+    - Compact button controls replace large single button
+    - Full undo/redo support for stack operations
+    - Closed subprocesses remain in tree as permanent construction history
+  - **Specifications**:
+    - spec.md FR-058 (Functional requirement for stack management UI)
+    - ui-spec.md §Process Tree Panel - Subprocess Stack Management UI (Phase 86) (visual layout, button styling, keyboard shortcuts)
+    - data-model.md §Phase 86 - Manual Subprocess Stack Management UI (operation classes, ProcessTree extensions, UI component state)
+  - **Tasks**: tasks.md Phase 86 (T1359-T1377: 19 tasks)
+    - Planning & documentation (3 tasks: spec.md, ui-spec.md, data-model.md)
+    - Operations implementation (2 tasks: PushSubprocessOp, PopSubprocessOp)
+    - ProcessTree extensions (1 task: stack query methods)
+    - UI implementation (4 tasks: button controls, visual feedback, keyboard shortcuts, accessibility)
+    - Old UI cleanup (1 task: remove large "Create Subprocess" button if exists)
+    - Testing (4 tasks: unit, integration, E2E, undo/redo)
+    - Documentation & polish (3 tasks: user guide, final testing, commit)
+  - **Dependencies**: Phase 85 (subprocess stack architecture must be implemented first)
+  - **UI Changes**: 
+    - Add: Compact button pair ("<" ">") in ProcessTreePanel header
+    - Add: Stack depth/breadcrumb indicator in header
+    - Add: Active subprocess highlight in tree (background color, border)
+    - Add: Keyboard shortcuts Ctrl+Shift+[ (pop) and Ctrl+Shift+] (push)
+    - Remove: Large "Create Subprocess" button (if exists)
+  - **Status**: Complete planning documentation, ready for implementation after Phase 85
 
 * [x] **Phase 85: ProcessTree Subprocess Stack Architecture** - 📋 PLANNED (Jan 23, 2026)
   - **User Requirement**: "there must be a stack of open ProcessSubtrees and when an action is added it must be added to the subtree at the top of the stack"

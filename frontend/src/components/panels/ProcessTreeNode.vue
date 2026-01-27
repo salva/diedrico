@@ -4,7 +4,7 @@
     <div
       v-if="node.type === 'subprocess'"
       class="subprocess-node"
-      :class="{ 'node-selected': isSelected }"
+      :class="{ 'node-selected': isSelected, 'subprocess-active': isActiveSubprocess }"
     >
       <div class="subprocess-header" @click="toggleCollapse">
         <span class="collapse-icon">{{ isCollapsed ? '▶' : '▼' }}</span>
@@ -17,6 +17,7 @@
           {{ node.visible ? '👁' : '👁‍🗨' }}
         </button>
         <span class="subprocess-name">{{ node.name }}</span>
+        <span v-if="isActiveSubprocess" class="active-indicator" title="Current subprocess">●</span>
       </div>
 
       <!-- Child nodes (when expanded) -->
@@ -26,6 +27,7 @@
           :key="child.id"
           :node="child"
           :selected-node-id="selectedNodeId"
+          :active-subprocess-id="activeSubprocessId"
           :related-action-ids="relatedActionIds"
           @select-node="emit('selectNode', $event)"
           @toggle-visibility="emit('toggleVisibility', $event)"
@@ -52,6 +54,7 @@
           :key="child.id"
           :node="child"
           :selected-node-id="selectedNodeId"
+          :active-subprocess-id="activeSubprocessId"
           :related-action-ids="relatedActionIds"
           @select-node="emit('selectNode', $event)"
           @toggle-visibility="emit('toggleVisibility', $event)"
@@ -101,6 +104,7 @@ import type { ProcessNode } from '@/domain/processTree/ProcessTree';
 const props = defineProps<{
   node: ProcessNode;
   selectedNodeId: string | null;
+  activeSubprocessId?: string;
   relatedActionIds?: Set<string>;
 }>();
 
@@ -117,6 +121,11 @@ const isCollapsed = ref(false);
 
 // Computed
 const isSelected = computed(() => props.selectedNodeId === props.node.id);
+
+const isActiveSubprocess = computed(() => {
+  if (props.node.type !== 'subprocess') return false;
+  return props.activeSubprocessId === props.node.id;
+});
 
 const isRelated = computed(() => {
   if (props.node.type !== 'action') return false;
@@ -222,6 +231,28 @@ function formatParameterValue(value: any): string {
 
 .subprocess-node.node-selected .subprocess-header {
   background: #e0e7ff;
+}
+
+.subprocess-node.subprocess-active .subprocess-header {
+  background: #E3F2FD;
+  border-left: 3px solid #4f46e5;
+  padding-left: 3px;
+}
+
+.active-indicator {
+  color: #4f46e5;
+  font-size: 10px;
+  margin-left: auto;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .collapse-icon {

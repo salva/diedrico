@@ -554,6 +554,121 @@ Zoom 4.0 (zoomed in):
 
 **Rendering Principle**: This panel reflects the current state of `world.processTree`. The tree structure is rendered dynamically by traversing the ProcessTree data structure. There is no hard-coded layout for specific subprocesses or actions.
 
+**Subprocess Stack Management UI (Phase 86)**:
+
+The Process Tree Panel header provides explicit controls for managing the subprocess stack:
+
+**Visual Layout**:
+```
+┌────────────────────────────────────────────────────────┐
+│  Process Tree                    [<] [>]  [depth 2/5]  │
+├────────────────────────────────────────────────────────┤
+│  ▼ 👁 Root Process                                     │
+│    ▼ 👁 Construction Phase 1    ◄── current level    │
+│      ┌─────────────────────────────┐                   │
+│      │ ○ Create segment s1         │                   │
+│      └─────────────────────────────┘                   │
+└────────────────────────────────────────────────────────┘
+```
+
+**Controls**:
+
+1. **Pop Level Button** ("<" or "Out" or "↑"):
+   - **Action**: Pops the current subprocess from the stack (closes it)
+   - **Effect**: Parent subprocess becomes the new active target for subsequent actions
+   - **Visual**: Left button in the pair, arrow pointing left/up/out
+   - **State**: Disabled when root subprocess is active (cannot pop root)
+   - **Tooltip**: "Close current subprocess (move up one level)"
+   - **Keyboard**: Ctrl+Shift+[ or Ctrl+Left
+
+2. **Push Level Button** (">" or "In" or "↓"):
+   - **Action**: Creates a new subprocess as a child of current active subprocess, pushes to stack
+   - **Effect**: New subprocess becomes active target for subsequent actions
+   - **Visual**: Right button in the pair, arrow pointing right/down/in
+   - **State**: Always enabled
+   - **Tooltip**: "Create new subprocess (move in one level)"
+   - **Keyboard**: Ctrl+Shift+] or Ctrl+Right
+   - **Behavior**: Opens a quick name input dialog or uses auto-generated name "Subprocess N"
+
+3. **Depth Indicator** (optional, informational):
+   - **Display**: Shows current depth in hierarchy (e.g., "2/5" = depth 2, total 5 subprocesses)
+   - **Format**: Small text label or breadcrumb trail
+   - **Example**: "Root > Construction > Guide Setup" (breadcrumb)
+   - **Alternative**: Simple depth number "Depth: 2"
+
+**Button Styling**:
+- **Size**: Compact (24-32px square buttons)
+- **Placement**: Panel header, right side or center
+- **Visual**: Use arrow symbols (< >) or text labels (Out/In)
+- **Color**: 
+  - Enabled: Normal theme color (#2196F3 or similar)
+  - Disabled: Gray (#CCCCCC)
+  - Hover: Slightly darker/highlighted
+- **Spacing**: 4-8px gap between buttons, visually paired
+
+**Active Subprocess Visual Feedback**:
+- **Highlight**: Current active subprocess has subtle background color (#E3F2FD or similar)
+- **Icon**: Optional "►" or dot indicator next to active subprocess name
+- **Font**: Active subprocess name may be bold or slightly larger
+- **Border**: Optional left border accent line (2-3px, theme color)
+
+**Behavior**:
+
+1. **Push (Create Subprocess)**:
+   ```typescript
+   // User clicks ">" button
+   const cmd = new Command('Push Subprocess', world);
+   cmd.addAndExecute(new PushSubprocessOp('User Subprocess'));
+   cmd.commit();
+   commandStack.push(cmd);
+   // UI updates: tree expands, new subprocess highlighted
+   ```
+
+2. **Pop (Close Subprocess)**:
+   ```typescript
+   // User clicks "<" button
+   if (world.getProcessTree().getStackDepth() <= 1) {
+     // Disable button, cannot pop root
+     return;
+   }
+   const cmd = new Command('Pop Subprocess', world);
+   cmd.addAndExecute(new PopSubprocessOp());
+   cmd.commit();
+   commandStack.push(cmd);
+   // UI updates: parent subprocess highlighted
+   ```
+
+3. **Undo Push**:
+   - Undoing PushSubprocessOp removes the subprocess from the tree and pops the stack
+   - Any actions added to that subprocess are also removed (cascade)
+
+4. **Undo Pop**:
+   - Undoing PopSubprocessOp pushes the subprocess back onto the stack
+   - Subprocess remains in tree (it was never removed, just deactivated)
+
+**Edge Cases**:
+- **Cannot pop root**: Pop button disabled when stack depth = 1
+- **Auto-naming**: If user doesn't provide a name, use "Subprocess N" where N is sequential
+- **Empty subprocess**: User can pop immediately after push (creates empty subprocess node)
+- **Multiple actions**: After pop, subsequent user actions go to parent subprocess
+- **Sibling creation**: After pop, user can immediately push to create sibling subprocess
+
+**Keyboard Shortcuts**:
+- `Ctrl+Shift+]` or `Ctrl+Right`: Push subprocess (same as ">" button)
+- `Ctrl+Shift+[` or `Ctrl+Left`: Pop subprocess (same as "<" button)
+- `Ctrl+Shift+N`: Push subprocess with name input dialog
+
+**Accessibility**:
+- Buttons have proper ARIA labels
+- Keyboard navigation works
+- Screen readers announce "Push subprocess" / "Pop subprocess"
+- Visual focus indicators on buttons
+
+**Migration from Old UI**:
+- **REMOVE**: Large "+ Create Subprocess" button (if it exists)
+- **REPLACE WITH**: Compact paired buttons (< >) in panel header
+- **BENEFIT**: Clearer mental model (in/out navigation vs single creation action)
+
 ### Unified Hover Highlighting
 
 When hovering over items in EITHER panel (World Elements or Process Tree), the system provides **unified visual feedback** across the entire UI:

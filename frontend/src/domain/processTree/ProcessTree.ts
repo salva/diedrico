@@ -347,6 +347,48 @@ export class ProcessTree {
   }
 
   /**
+   * Get the current depth of the subprocess stack
+   */
+  getStackDepth(): number {
+    return this.subprocessStack.length;
+  }
+
+  /**
+   * Get the full path from root to current subprocess as names
+   */
+  getStackPath(): string[] {
+    return this.subprocessStack.map(sp => sp.name);
+  }
+
+  /**
+   * Check if a specific subprocess is the currently active one
+   */
+  isSubprocessActive(subprocessId: string): boolean {
+    return this.getCurrentSubprocess().id === subprocessId;
+  }
+
+  /**
+   * Restore a subprocess to the stack (used by PopSubprocessOp.undo())
+   * The subprocess must exist in the current subprocess's children
+   */
+  restoreSubprocessToStack(subprocessId: string): void {
+    const currentSubprocess = this.getCurrentSubprocess();
+    
+    // Find the subprocess in current subprocess's children
+    const subprocess = currentSubprocess.children.find(
+      child => child.type === 'subprocess' && child.id === subprocessId
+    );
+    
+    if (!subprocess || subprocess.type !== 'subprocess') {
+      throw new Error(`Subprocess ${subprocessId} not found in parent's children`);
+    }
+    
+    // Push to stack
+    this.subprocessStack.push(subprocess);
+    this.notifyChange();
+  }
+
+  /**
    * Generate unique ID
    */
   private generateId(): string {
