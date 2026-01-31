@@ -19,9 +19,36 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] **Phase 85: ProcessTree Subprocess Stack Architecture** - Implement subprocess stack in ProcessTree to eliminate conditional subprocess checks in operations. Two operation types: (1) Stack manipulation operations (PushSubprocessOp/PopSubprocessOp) that manage subprocess stack, (2) Action recording operations (AddProcessTreeActionOp) that add actions to current subprocess at top of stack. Domain operations remain unchanged. Benefits: automatic action registration, no conditional checks, clear subprocess boundaries, complete dependency graph. See specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md for details.
-* [ ] Add a hide-children checkbox into process tree headers to enable/disable visibility of elements from the process tree view, so that the visibility of all elements with are created from inside the tree (except those signaled as output, see below) could be enabled/disabled in one go.
-* [ ] Allow to mark entries in the proccess tree as output elements which would not be hidden when hide children in picked in the parent.
+* [x] **Phase 87: Process Tree Encapsulation (Black Box) UI** - 📋 PLANNED (Jan 31, 2026)
+  - **User Requirement**: "I want a column in the right of the subtree view, where every entry, subprocesses and actions can have its output flag enabled/disabled. Subprocess header rows, must have an additional column to the left of that for the show-intermediate flag. I don't want a specific 'visibility' flag for enabling/disabling the full subtree."
+  - **Concept**: **Black Box Model**
+    - **Scope**: Subprocesses can be "Encapsulated" (hide intermediates).
+    - **Exposure**: Specific items (Actions/Subprocesses) can be marked as "Outputs" (visible even when parent is encapsulated).
+    - **Removal**: The "Master Visibility" toggle for subprocesses is removed. Visibility is now solely determined by the black-box logic (unless the element itself is hidden via properties).
+  - **UI Design**:
+    - **Right Column (All Rows)**: "Output" Toggle (Star Icon ★/☆).
+      - Applies to: Actions and Subprocesses.
+      - Behavior: If set, item remains visible when parent is encapsulated.
+    - **Inner Column (Subprocess Headers)**: "Encapsulate" Toggle (Box/Eye-Slash Icon).
+      - Applies to: Subprocesses only.
+      - Behavior: If set, hides all children *except* those marked as Output.
+      - Visual Feedback: Encapsulated subprocesses might have a distinct style. Hidden items (non-outputs in encapsulated parent) fade out in tree.
+  - **Data Model**:
+    - `Subprocess`:
+      - Remove `visible: boolean`.
+      - Add `hideIntermediates: boolean` (default false).
+      - Add `isOutput: boolean` (default false).
+    - `ActionGroup` / `ActionNode`:
+      - Add `isOutput: boolean` (default true for geometry creating actions? No, default false to force explicit output selection? User said "enabled/disabled", implies explicit. Let's assume default false for "Black Box" purity, or true for convenience. Let's stick to default false for explicit public interface).
+  - **Logic**:
+    - Visibility Calculation: Recursive check up the tree.
+    - If any ancestor has `hideIntermediates == true`, then the current item (or the branch leading to it) MUST have `isOutput == true`.
+  - **Specifications**:
+    - spec.md FR-059 (Subprocess Encapsulation).
+    - ui-spec.md §Process Tree Columns.
+    - data-model.md §Phase 87 Encapsulation Logic.
+  - **Tasks**: tasks.md Phase 87.
+  - **Status**: Planning complete, ready for implementation.
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Add a shortcut for changing the active projection plane to the next one. Using Tab for instance.
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
@@ -187,7 +214,7 @@ Note that completing these tasks may require asking the user for additional info
     - Remove: Large "Create Subprocess" button (if exists)
   - **Status**: Complete planning documentation, ready for implementation after Phase 85
 
-* [x] **Phase 85: ProcessTree Subprocess Stack Architecture** - 📋 PLANNED (Jan 23, 2026)
+* [x] **Phase 85: ProcessTree Subprocess Stack Architecture** - ✅ COMPLETE (Jan 31, 2026)
   - **User Requirement**: "there must be a stack of open ProcessSubtrees and when an action is added it must be added to the subtree at the top of the stack"
   - **Problem**: Operations conditionally check for "World Initialization" subprocess, causing user-created elements (HingeLine/HalfHingeLine2D in auxiliary planes) to not be recorded in ProcessTree, breaking dependency graph
   - **Solution**: Implement subprocess stack in ProcessTree. Two operation types: (1) Stack manipulation operations (PushSubprocessOp/PopSubprocessOp) that manage subprocess stack, (2) Action recording operations (AddProcessTreeActionOp) that add actions to current subprocess at stack top
@@ -224,7 +251,7 @@ Note that completing these tasks may require asking the user for additional info
     - Clean up & documentation (6 tasks)
     - Final review & commit (2 tasks)
   - **Dependencies**: Phase 84 follow-up (completes auxiliary plane dependency tracking)
-  - **Status**: Complete planning documentation, ready for implementation
+  - **Status**: Complete, stack architecture implemented.
 
 * [x] **Element Visibility Property (Phase 83)** - 📋 PLANNED (Jan 23, 2026)
   - **User Requirement**: Control element visibility through visual appearance structure with inheritance support

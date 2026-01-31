@@ -10190,3 +10190,30 @@ Files to update:
   ```
 
 **Checkpoint**: ✅ ProcessTree uses subprocess stack, all operations automatically register actions, complete dependency graph
+---
+
+## Phase 87: Process Tree Encapsulation UI (Black Box)
+
+**Purpose**: Implement "Black Box" encapsulation model allowing users to hide intermediate construction steps while keeping key outputs visible.  
+**Reference**: [spec.md](./spec.md) FR-059, [ui-spec.md](./ui-spec.md) Process Tree Columns
+
+**Implementation Requirements**:
+- **Data Model**: Remove `visible` from Subprocess. Add `hideIntermediates` and `isOutput`.
+- **Visibility Logic**: Implement recursive check in `ElementVisibility` or `ProcessTree` helper to determine if an element is visible based on ancestor encapsulation.
+- **UI Architecture**: Add columns to Process Tree (Encapsulate toggle for Subprocesses, Output toggle for all).
+- **Visual Feedback**: Tree items that are implicitly hidden (intermediates in a black box) should fade out.
+- **Persistency**: Ensure flags are saved/loaded.
+
+- [ ] T1378 Modify Subprocess interface: remove visible, add hideIntermediates, isOutput
+- [ ] T1379 Modify ActionGroup/ActionNode interface: add isOutput (default false)
+- [ ] T1380 Update ProcessTree.ts methods (constructor, getters) to support new fields
+- [ ] T1381 Implement `resolveElementVisibility(actionId, processTree)` logic
+- [ ] T1382 Update Element rendering checks to use new visibility logic instead of simple `visible` cascade
+- [ ] T1383 UI: Update ProcessTreePanel columns layout (add right-side slot)
+- [ ] T1384 UI: Implement "Output" toggle component (Star icon)
+- [ ] T1385 UI: Implement "Encapsulate" toggle component (Box/Eye-Slash icon) on Subprocess headers
+- [ ] T1386 UI: Implement fade-out styling for recursive hidden items in the tree
+- [ ] T1387 Migration: Update any existing tests or factories that relied on `subprocess.visible`
+- [ ] T1388 Unit Test: Recursive visibility logic (nested black boxes)
+- [ ] T1389 Integration Test: Verify canvas elements disappear when parent encapsulated
+- [ ] T1390 Integration Test: Verify output elements remain visible when parent encapsulated

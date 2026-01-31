@@ -9152,11 +9152,17 @@ interface Subprocess extends ProcessNodeBase {
   name: string;                     // User-defined name
   children: (Subprocess | ActionGroup)[];  // ONLY Subprocess or ActionGroup, NEVER direct Actions
   
-  // Visual properties
+  // Encapsulation Logic (Phase 87)
   defaultStyle?: VisualStyle;       // Default style inherited by contained elements
-  visible: boolean;                 // Controls element visibility in drawing (cascades to children)
+  hideIntermediates: boolean;       // If true, hides children unless they are marked as isOutput
+  isOutput: boolean;                // If true, this subprocess punches through parent's hideIntermediates
 }
-```
+
+// ActionGroup also needs output flag
+interface ActionGroup extends ProcessNodeBase {
+  // ... existing fields ...
+  isOutput: boolean;                // If true, actions in this group are considered outputs
+}
 
 **Tree Position**:
 - Can be root (Process) or nested within other Subprocesses
@@ -9164,17 +9170,23 @@ interface Subprocess extends ProcessNodeBase {
 - All actions must be wrapped in ActionGroups
 - Forms organizational hierarchy
 
-**Two Types of Visibility**:
+**Visibility Resolution Logic (Phase 87)**:
+Visibility is no longer a simple cascade. It is a recursive rule based on "Encapsulation".
 
-1. **Element Visibility** (in the drawing workspace):
-   - Controlled by subprocess.visible
-   - Determines whether geometric elements are rendered in the 2D/3D view
-   - Cascades to all child nodes in tree
+1.  **Concept**:
+    -   **Glass Box** (`hideIntermediates = false`): Shows everything.
+    -   **Black Box** (`hideIntermediates = true`): Shows only specialized properties (Outputs).
 
-2. **UI Visibility** (in the construction panel):
-   - Controlled by ViewState (panelCollapseState)
-   - Determines whether subprocess content is shown/hidden in the action list
-   - Independent from element visibility
+2.  **Algorithm**:
+    An element created by an *Action* is visible if:
+    *   `element.visualStyle.visibility !== false` (Element level override)
+    *   **AND** for every ancestor Subprocess `P`:
+        *   IF `P.hideIntermediates == true`:
+            *   The child (Action or Subprocess) in `P` that leads to this element MUST have `isOutput == true`.
+
+3.  **UI Implications**:
+    -   The `visible` boolean on Subprocess is **REMOVED**.
+    -   Visibility is implicit based on the Black Box state of ancestors.
 
 **Visibility Cascade for Elements**:
 ```typescript
