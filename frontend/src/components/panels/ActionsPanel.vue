@@ -14,9 +14,6 @@
           >
             &lt;
           </button>
-          <div class="stack-info" :title="stackPathTooltip">
-            {{ stackDepth }}
-          </div>
           <button 
             class="stack-btn stack-push-btn"
             @click="pushSubprocess"
@@ -26,18 +23,11 @@
             &gt;
           </button>
         </div>
-        <button 
-          class="add-subprocess-btn"
-          @click="showAddSubprocessDialog = true"
-          title="Add new subprocess"
-        >
-          + Subprocess
-        </button>
       </div>
     </header>
 
     <!-- Process Tree -->
-    <div class="process-tree" :key="treeVersion + forceUpdate">
+    <div class="process-tree" :key="treeVersion" ref="treeContainer">
       <ProcessTreeNode
         :node="processTree.root"
         :selected-node-id="selectedNodeId"
@@ -47,33 +37,21 @@
         @toggle-visibility="handleToggleVisibility"
         @highlight-elements="(...args) => emit('highlightElements', ...args)"
         @clear-highlight="emit('clearHighlight')"
+        @rename-node="handleRenameNode"
       />
     </div>
-
-    <!-- Add Subprocess Dialog -->
-    <dialog v-if="showAddSubprocessDialog" class="add-subprocess-dialog" open>
-      <h3>New Subprocess</h3>
-      <input
-        v-model="newSubprocessName"
-        type="text"
-        placeholder="Subprocess name"
-        @keyup.enter="addSubprocess"
-      />
-      <div class="dialog-actions">
-        <button @click="addSubprocess">Create</button>
-        <button @click="showAddSubprocessDialog = false">Cancel</button>
-      </div>
-    </dialog>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
 import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+import { ToggleSubprocessVisibilityOp } from '@/commands/operations/processTree/ToggleSubprocessVisibilityOp';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
 
@@ -92,60 +70,68 @@ const processTree = world.getProcessTree();
 const selectionStore = useSelectionStore();
 
 // Local state
+const treeContainer = ref<HTMLElement | null>(null);
 const selectedNodeId = ref<string | null>(null);
-const showAddSubprocessDialog = ref(false);
-const newSubprocessName = ref('');
 const relatedActionIds = ref<Set<string>>(new Set());
+const stackVersion = ref(0); // Track stack changes
 
 // Stack management computed properties
-const stackDepth = computed(() => processTree.getStackDepth());
-const canPop = computed(() => stackDepth.value > 1);
-const stackPath = computed(() => processTree.getStackPath());
-const stackPathTooltip = computed(() => stackPath.value.join(' / '));
-const activeSubprocessId = computed(() => processTree.getCurrentSubprocess().id);
+const canPop = computed(() => {
+  stackVersion.value; // Depend on stack changes
+  return processTree.getStackDepth() > 1;
+});
+const activeSubprocessId = computed(() => {
+  stackVersion.value; // Depend on stack changes
+  return processTree.getCurrentSubprocess().id;
+});
 
-// Watch ProcessTree version for reactivity
-const treeVersion = computed(() => processTree.getVersion());
+// Watch ProcessTree version for reactivity, triggered by stackVersion changes
+const treeVersion = computed(() => {
+  // Depend on stackVersion to trigger updates when push/pop occurs
+  stackVersion.value;
+  return processTree.getVersion();
+});
 
-// Force re-render when tree changes by polling version
-let intervalId: number | null = null;
-const forceUpdate = ref(0);
-let lastVersion = processTree.getVersion();
-let isUpdating = false;
+// Keyboard shortcuts for stack management
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.ctrlKey && event.shiftKey) {
+    if (event.key === '[') {
+      event.preventDefault();
+      popSubprocess();
+    } else if (event.key === ']') {
+      event.preventDefault();
+      pushSubprocess();
+    }
+  }
+}
+
+// Subscription cleanup
+let unsubscribeTree: (() => void) | null = null;
+
+function scrollToBottom() {
+  if (treeContainer.value) {
+    treeContainer.value.scrollTop = treeContainer.value.scrollHeight;
+  }
+}
 
 onMounted(() => {
-  intervalId = window.setInterval(() => {
-    // Skip update if already in progress to avoid race conditions
-    if (isUpdating) {
-      return;
-    }
-    
-    // Check if tree version actually changed
-    const currentVersion = processTree.getVersion();
-    if (currentVersion !== lastVersion) {
-      lastVersion = currentVersion;
-      isUpdating = true;
-      
-      // Use nextTick to ensure DOM is stable before triggering re-render
-      Promise.resolve().then(() => {
-        forceUpdate.value++;
-        isUpdating = false;
-      });
-    }
-  }, 100);
-  
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
+  
+  // Subscribe to ProcessTree changes
+  unsubscribeTree = processTree.subscribe(() => {
+    stackVersion.value++;
+    nextTick(() => {
+      scrollToBottom();
+    });
+  });
 });
 
 onUnmounted(() => {
-  if (intervalId !== null) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
-  
-  // Unregister keyboard shortcuts
   window.removeEventListener('keydown', handleKeyDown);
+  if (unsubscribeTree) {
+    unsubscribeTree();
+  }
 });
 
 // Watch selection changes and find related actions
@@ -186,15 +172,6 @@ function findRelatedActions(selectedIds: string[]): void {
   relatedActionIds.value = related;
 }
 
-// Handle subprocess creation
-function addSubprocess() {
-  if (newSubprocessName.value.trim()) {
-    processTree.addSubprocess(newSubprocessName.value.trim());
-    newSubprocessName.value = '';
-    showAddSubprocessDialog.value = false;
-  }
-}
-
 // Stack management handlers
 function pushSubprocess() {
   const subprocessName = `Subprocess ${Date.now()}`;
@@ -202,6 +179,7 @@ function pushSubprocess() {
   cmd.addAndExecute(new PushSubprocessOp(subprocessName));
   cmd.commit();
   commandStack.push(cmd);
+  stackVersion.value++; // Trigger UI update
 }
 
 function popSubprocess() {
@@ -210,19 +188,7 @@ function popSubprocess() {
     cmd.addAndExecute(new PopSubprocessOp());
     cmd.commit();
     commandStack.push(cmd);
-  }
-}
-
-// Keyboard shortcuts for stack management
-function handleKeyDown(event: KeyboardEvent) {
-  if (event.ctrlKey && event.shiftKey) {
-    if (event.key === '[') {
-      event.preventDefault();
-      popSubprocess();
-    } else if (event.key === ']') {
-      event.preventDefault();
-      pushSubprocess();
-    }
+    stackVersion.value++; // Trigger UI update
   }
 }
 
@@ -233,7 +199,20 @@ function handleNodeSelect(nodeId: string) {
 
 // Handle visibility toggle
 function handleToggleVisibility(nodeId: string) {
-  processTree.toggleSubprocessVisibility(nodeId);
+  const cmd = new Command('Toggle subprocess visibility', world);
+  cmd.addAndExecute(new ToggleSubprocessVisibilityOp(nodeId));
+  cmd.commit();
+  commandStack.push(cmd);
+  stackVersion.value++; // Force UI update
+}
+
+// Handle subprocess rename
+function handleRenameNode(nodeId: string, newName: string) {
+  const cmd = new Command('Rename subprocess', world);
+  cmd.addAndExecute(new RenameSubprocessOp(nodeId, newName));
+  cmd.commit();
+  commandStack.push(cmd);
+  stackVersion.value++; // Force UI update
 }
 </script>
 
@@ -315,95 +294,9 @@ function handleToggleVisibility(nodeId: string) {
   color: #6c757d;
 }
 
-.stack-info {
-  padding: 0 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #495057;
-  min-width: 1.5rem;
-  text-align: center;
-  cursor: help;
-}
-
-.add-subprocess-btn {
-  padding: 0.5rem 1rem;
-  background: #4f46e5;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.add-subprocess-btn:hover {
-  background: #4338ca;
-}
-
 .process-tree {
   flex: 1;
   overflow-y: auto;
   padding: 0.5rem;
-}
-
-.add-subprocess-dialog {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  min-width: 300px;
-}
-
-.add-subprocess-dialog h3 {
-  margin: 0 0 16px 0;
-  font-size: 1.125rem;
-}
-
-.add-subprocess-dialog input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  margin-bottom: 16px;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.dialog-actions button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.dialog-actions button:first-child {
-  background: #4f46e5;
-  color: white;
-}
-
-.dialog-actions button:first-child:hover {
-  background: #4338ca;
-}
-
-.dialog-actions button:last-child {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.dialog-actions button:last-child:hover {
-  background: #d1d5db;
 }
 </style>

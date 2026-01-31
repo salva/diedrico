@@ -6,8 +6,8 @@
       class="subprocess-node"
       :class="{ 'node-selected': isSelected, 'subprocess-active': isActiveSubprocess }"
     >
-      <div class="subprocess-header" @click="toggleCollapse">
-        <span class="collapse-icon">{{ isCollapsed ? '▶' : '▼' }}</span>
+      <div class="subprocess-header">
+        <span class="collapse-icon" @click.stop="toggleCollapse">{{ isCollapsed ? '▶' : '▼' }}</span>
         <button
           class="visibility-icon"
           :class="{ 'invisible': !node.visible }"
@@ -16,7 +16,24 @@
         >
           {{ node.visible ? '👁' : '👁‍🗨' }}
         </button>
-        <span class="subprocess-name">{{ node.name }}</span>
+        <span 
+          v-if="!isEditing"
+          class="subprocess-name" 
+          @dblclick.stop="startEditing"
+        >
+          {{ node.name }}
+        </span>
+        <input
+          v-else
+          ref="nameInput"
+          v-model="editName"
+          class="subprocess-name-input"
+          @blur="submitName"
+          @keydown.enter="submitName"
+          @keydown.esc="cancelEditing"
+          @keydown.stop
+          @click.stop
+        />
         <span v-if="isActiveSubprocess" class="active-indicator" title="Current subprocess">●</span>
       </div>
 
@@ -33,7 +50,14 @@
           @toggle-visibility="emit('toggleVisibility', $event)"
           @highlight-elements="(...args) => emit('highlightElements', ...args)"
           @clear-highlight="emit('clearHighlight')"
+          @rename-node="(...args) => emit('renameNode', ...args)"
         />
+        
+        <!-- Insertion Point Cursor -->
+        <div v-if="isActiveSubprocess" class="insertion-point" title="Next action will be added here">
+          <span class="insertion-arrow">➤</span>
+          <span class="insertion-line"></span>
+        </div>
       </div>
     </div>
 
@@ -60,6 +84,7 @@
           @toggle-visibility="emit('toggleVisibility', $event)"
           @highlight-elements="(...args) => emit('highlightElements', ...args)"
           @clear-highlight="emit('clearHighlight')"
+          @rename-node="(...args) => emit('renameNode', ...args)"
         />
       </div>
     </div>
@@ -97,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import type { ProcessNode } from '@/domain/processTree/ProcessTree';
 
 // Props
@@ -114,10 +139,14 @@ const emit = defineEmits<{
   toggleVisibility: [nodeId: string];
   highlightElements: [elementIds: string[], temporary: boolean];
   clearHighlight: [];
+  renameNode: [nodeId: string, newName: string];
 }>();
 
 // Local state
 const isCollapsed = ref(false);
+const isEditing = ref(false);
+const editName = ref('');
+const nameInput = ref<HTMLInputElement | null>(null);
 
 // Computed
 const isSelected = computed(() => props.selectedNodeId === props.node.id);
@@ -174,6 +203,30 @@ function handleActionHover(isHovering: boolean) {
   } else if (!isHovering && !isSelected.value) {
     emit('clearHighlight');
   }
+}
+
+async function startEditing() {
+  if (props.node.type !== 'subprocess') return;
+  editName.value = props.node.name;
+  isEditing.value = true;
+  await nextTick();
+  nameInput.value?.focus();
+}
+
+function submitName() {
+  if (!isEditing.value) return;
+  
+  const trimmedName = editName.value.trim();
+  if (trimmedName && trimmedName !== props.node.name) {
+    emit('renameNode', props.node.id, trimmedName);
+  }
+  
+  isEditing.value = false;
+}
+
+function cancelEditing() {
+  isEditing.value = false;
+  editName.value = props.node.name;
 }
 
 function formatActionType(type: string): string {
@@ -246,6 +299,26 @@ function formatParameterValue(value: any): string {
   animation: pulse 2s infinite;
 }
 
+.insertion-point {
+  display: flex;
+  align-items: center;
+  padding: 4px 0 4px 6px;
+  margin-top: 2px;
+}
+
+.insertion-arrow {
+  color: #4f46e5;
+  font-size: 10px;
+  margin-right: 6px;
+  animation: pulse-arrow 1.5s infinite; 
+}
+
+.insertion-line {
+  flex: 1;
+  height: 1px;
+  border-bottom: 1px dashed rgba(79, 70, 229, 0.3);
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -253,6 +326,11 @@ function formatParameterValue(value: any): string {
   50% {
     opacity: 0.5;
   }
+}
+
+@keyframes pulse-arrow {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(3px); opacity: 0.6; }
 }
 
 .collapse-icon {
@@ -280,6 +358,18 @@ function formatParameterValue(value: any): string {
   font-weight: 600;
   color: #333;
   flex: 1;
+}
+
+.subprocess-name-input {
+  flex: 1;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  padding: 1px 4px;
+  border: 1px solid #4f46e5;
+  border-radius: 2px;
+  outline: none;
+  margin: -2px 0;
 }
 
 .subprocess-children {

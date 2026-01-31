@@ -37,10 +37,13 @@ export interface ActionNode extends ProcessNodeBase, Action {
 
 export type ProcessNode = Subprocess | ActionGroup | ActionNode;
 
+type ChangeListener = (version: number) => void;
+
 export class ProcessTree {
   root: Subprocess;
   private _version: number = 0;
   private subprocessStack: Subprocess[] = [];  // Phase 85: Subprocess stack
+  private listeners: ChangeListener[] = [];
 
   constructor() {
     // Initialize with root subprocess
@@ -63,11 +66,19 @@ export class ProcessTree {
     return this._version;
   }
 
+  subscribe(listener: ChangeListener): () => void {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+
   /**
    * Increment version to notify of changes
    */
   private notifyChange(): void {
     this._version++;
+    this.listeners.forEach(l => l(this._version));
   }
 
   /**
@@ -149,17 +160,7 @@ export class ProcessTree {
     return actionGroup;
   }
 
-  findSubprocessByName(name: string): Subprocess | undefined {
-    let found: Subprocess | undefined;
-    this.traverseSubprocesses(this.root, (subprocess) => {
-      if (subprocess.name === name) {
-        found = subprocess;
-      }
-    });
-    return found;
-  }
-
-  private findSubprocessById(subprocessId: string): Subprocess | undefined {
+  findSubprocessById(subprocessId: string): Subprocess | undefined {
     let found: Subprocess | undefined;
     this.traverseSubprocesses(this.root, (subprocess) => {
       if (subprocess.id === subprocessId) {
@@ -187,6 +188,19 @@ export class ProcessTree {
     this.notifyChange();
 
     return subprocess;
+  }
+
+  /**
+   * Rename a subprocess
+   */
+  renameSubprocess(subprocessId: string, newName: string): void {
+    const subprocess = this.findSubprocessById(subprocessId);
+    if (subprocess) {
+      subprocess.name = newName;
+      this.notifyChange();
+    } else {
+      throw new Error(`Subprocess not found: ${subprocessId}`);
+    }
   }
 
   /**
