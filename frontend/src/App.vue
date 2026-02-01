@@ -121,6 +121,7 @@ import { useAuthStore } from './stores/authStore';
 import { World } from './domain/world/World';
 import { GoogleDriveService } from './services/GoogleDriveService';
 import { ProjectService } from './services/ProjectService';
+import { SetActivePlaneOp } from './commands/operations/world/InitializationOps';
 
 // Google Drive configuration (from environment variables)
 const GOOGLE_CONFIG = {
@@ -780,6 +781,31 @@ function handleSelectAll() {
  * Delete/Backspace: Delete selected objects
  * P/L/S/C/G: Tool shortcuts (Point/Line/Segment/Circle/Guide)
  */
+function cycleActivePlane(direction: number) {
+  const planes = world.getAllProjectionPlanes();
+  if (planes.length < 2) return;
+
+  const currentId = world.getActivePlaneId();
+  if (!currentId) return;
+
+  const currentIndex = planes.findIndex(p => p.id === currentId);
+  if (currentIndex === -1) return;
+
+  // Calculate new index with wrap-around
+  let newIndex = (currentIndex + direction) % planes.length;
+  // Handle negative modulo correctly for JavaScript
+  if (newIndex < 0) newIndex += planes.length;
+
+  const newPlane = planes[newIndex];
+  
+  // Use SetActivePlaneOp via CommandStack explicitly
+  // This ensures operations follow standard pattern even if currently non-undoable
+  const op = new SetActivePlaneOp(newPlane.id);
+  const cmd = new Command(`Activate Plane ${newPlane.name || newPlane.id}`, world);
+  cmd.addAndExecute(op);
+  commandStack.execute(cmd);
+}
+
 function handleKeyDown(event: KeyboardEvent) {
   // Check for Ctrl (Windows/Linux) or Cmd (Mac)
   const isModifier = event.ctrlKey || event.metaKey;
@@ -801,6 +827,20 @@ function handleKeyDown(event: KeyboardEvent) {
     }
     event.preventDefault();
     handleDeleteSelected();
+    return;
+  }
+
+  // Active Plane: Tab / Shift+Tab (FR-062)
+  if (event.key === 'Tab') {
+    const target = event.target as HTMLElement;
+    // Only if not in an input field (allow default focus traversal)
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      return; 
+    }
+    
+    event.preventDefault();
+    // Shift+Tab = Previous (-1), Tab = Next (1)
+    cycleActivePlane(event.shiftKey ? -1 : 1);
     return;
   }
   

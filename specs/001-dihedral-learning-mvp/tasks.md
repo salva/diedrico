@@ -10234,13 +10234,13 @@ Files to update:
 **Status**: 📋 PLANNED (Jan 31, 2026)
 
 - [x] T1400 **Specification**: Update ui-spec.md with new shortcuts (Tab / Shift+Tab)
-- [ ] T1401 **Implementation**: Add global keyboard listener for Tab / Shift+Tab
+- [x] T1401 **Implementation**: Add global keyboard listener for Tab / Shift+Tab
   - Handle `Tab` (preventDefault to stop focus traversal if needed, or handle effectively)
   - Handle `Shift+Tab`
-- [ ] T1402 **Implementation**: Implement `cycleActivePlane(direction: 1|-1)` logic
+- [x] T1402 **Implementation**: Implement `cycleActivePlane(direction: 1|-1)` logic
   - Retrieve all planes from World (`world.getAllProjectionPlanes()`)
   - Find current active plane index
   - Calculate next/prev index (cyclic)
   - Execute existing `SetActivePlaneOp`
-- [ ] T1403 **E2E Test**: Verify Tab switches to next plane
-- [ ] T1404 **E2E Test**: Verify Shift+Tab switches to previous plane
+- [x] T1403 **E2E Test**: Verify Tab switches to next plane
+- [x] T1404 **E2E Test**: Verify Shift+Tab switches to previous plane
