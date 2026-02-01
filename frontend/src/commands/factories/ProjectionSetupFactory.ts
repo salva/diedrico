@@ -11,7 +11,7 @@
  * Reference: specs/001-dihedral-learning-mvp/example-setups.md
  */
 
-import { Command } from '@/commands/Command';
+import type { Command } from '@/commands/Command';
 import type { ToolContext } from '@/tools/ITool';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { IntersectionSequenceFactory } from './IntersectionSequenceFactory';
@@ -35,7 +35,8 @@ export function constructProjectionPlaneSetup(
   context: ToolContext,
   a1Id: string,
   a2Id: string,
-  b1Id: string
+  b1Id: string,
+  groupId: string
 ): void {
   const { world } = context;
   
@@ -67,7 +68,7 @@ export function constructProjectionPlaneSetup(
   const halfHingeLineHId = halfHingeLineH.id;
 
   // Step 2: L1 = line through A1 and A2 (this will be T1)
-  const l1Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_H.id!, a1Id, a2Id);
+  const l1Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_H.id!, a1Id, a2Id, groupId);
   const l1Id = l1Result.lineId;
   
   const l1Line = world.getLine2D(l1Id);
@@ -75,13 +76,13 @@ export function constructProjectionPlaneSetup(
 
   // Step 3: A3 = intersection of L1 and HL_HV (auto-creates sibling B2 on P_V)
   const a3Result = IntersectionSequenceFactory.createLineLineIntersection(
-    cmd, P_H.id!, l1Id, halfHingeLineHId, world
+    cmd, P_H.id!, l1Id, halfHingeLineHId, world, groupId
   );
   const a3Id = a3Result.pointId;
   const b2Id = a3Result.siblingPointId!;
 
   // Step 5: L2 = line through B1 and B2 (this will be T2)
-  const l2Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_V.id!, b1Id, b2Id);
+  const l2Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_V.id!, b1Id, b2Id, groupId);
   const l2Id = l2Result.lineId;
   
   const l2Line = world.getLine2D(l2Id);
@@ -90,12 +91,12 @@ export function constructProjectionPlaneSetup(
   // --- Phase 2: Compute T2' by geometric unfolding ---
 
   // Step 6: L3 = line perpendicular to L1 (the hinge trace), passing through A1
-  const l3Result = LineSequenceFactory.createPerpendicularLine(cmd, P_H.id!, l1Id, a1Id);
+  const l3Result = LineSequenceFactory.createPerpendicularLine(cmd, P_H.id!, l1Id, a1Id, groupId);
   const l3Id = l3Result.lineId;
 
   // Step 7: C1 = intersection of L3 and HL_HV (auto-creates sibling on P_V)
   const c1Result = IntersectionSequenceFactory.createLineLineIntersection(
-    cmd, P_H.id!, l3Id, halfHingeLineHId, world
+    cmd, P_H.id!, l3Id, halfHingeLineHId, world, groupId
   );
   const c1SiblingId = c1Result.siblingPointId!;
 
@@ -110,37 +111,37 @@ export function constructProjectionPlaneSetup(
     throw new Error('Half hinge line on P_V not found');
   }
   const halfHingeLineVId = halfHingeLineV.id;
-  const l4Result = LineSequenceFactory.createPerpendicularLine(cmd, P_V.id!, halfHingeLineVId, c1SiblingId);
+  const l4Result = LineSequenceFactory.createPerpendicularLine(cmd, P_V.id!, halfHingeLineVId, c1SiblingId, groupId);
   const l4Id = l4Result.lineId;
 
   // Step 9: C2 = intersection of L4 and L2
   const c2Result = IntersectionSequenceFactory.createLineLineIntersection(
-    cmd, P_V.id!, l4Id, l2Id, world
+    cmd, P_V.id!, l4Id, l2Id, world, groupId
   );
   const c2Id = c2Result.pointId;
 
   // Step 10: D1 = circle in P_V with center at B2 and radius to C2
-  const d1Result = CircleSequenceFactory.createCircleByCenterAndPoint(cmd, P_V.id!, b2Id, c2Id);
+  const d1Result = CircleSequenceFactory.createCircleByCenterAndPoint(cmd, P_V.id!, b2Id, c2Id, groupId);
   const d1Id = d1Result.circleId;
 
   // Step 11: C3 = intersection of D1 and HL_HV (auto-creates sibling on P_H)
   const c3Result = IntersectionSequenceFactory.createLineCircleIntersection(
-    cmd, P_V.id!, halfHingeLineVId, d1Id, 0, world
+    cmd, P_V.id!, halfHingeLineVId, d1Id, 0, world, groupId
   );
   const c3SiblingId = c3Result.siblingPointId!;
   
   // Step 12: D2 = circle in P_H with center at A3 and radius to C3's sibling
-  const d2Result = CircleSequenceFactory.createCircleByCenterAndPoint(cmd, P_H.id!, a3Id, c3SiblingId);
+  const d2Result = CircleSequenceFactory.createCircleByCenterAndPoint(cmd, P_H.id!, a3Id, c3SiblingId, groupId);
   const d2Id = d2Result.circleId;
 
   // Step 13: C4 = intersection of D2 and L3
   const c4Result = IntersectionSequenceFactory.createLineCircleIntersection(
-    cmd, P_H.id!, l3Id, d2Id, 0, world
+    cmd, P_H.id!, l3Id, d2Id, 0, world, groupId
   );
   const c4Id = c4Result.pointId;
 
   // Step 14: L5 = line through A3 and C4 (this will be T2')
-  const l5Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_H.id!, a3Id, c4Id);
+  const l5Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_H.id!, a3Id, c4Id, groupId);
   const l5Id = l5Result.lineId;
   
   const l5Line = world.getLine2D(l5Id);
@@ -155,7 +156,8 @@ export function constructProjectionPlaneSetup(
     l2Id,  // T2
     P_H.id!,
     P_V.id!,
-    'Plane Q'
+    'Plane Q',
+    groupId
   );
 
   // Steps 16-18: Create auxiliary projection plane with hinge line and ProcessTree tracking
@@ -168,6 +170,7 @@ export function constructProjectionPlaneSetup(
     l2Id,   // T2 (other trace)
     l5Id,   // T2' (position line)
     P_H.id!,  // Hinge trace plane (connects via hinge line)
-    'P_A1'  // Name for the auxiliary projection plane
+    'P_A1',  // Name for the auxiliary projection plane
+    groupId
   );
 }

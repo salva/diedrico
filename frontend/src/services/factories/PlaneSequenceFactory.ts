@@ -15,15 +15,18 @@
  * while ensuring ProcessTree actions are created consistently.
  */
 
-import { Command } from '@/commands/Command';
+import type { Command } from '@/commands/Command';
 import { Add3DPlaneOp } from '@/commands/operations/world/Add3DPlaneOp';
 import { AddAuxiliaryProjectionPlaneOp } from '@/commands/operations/world/AddAuxiliaryProjectionPlaneOp';
 import { AddHingeLineOp, AddHalfHingeLine2DOp } from '@/commands/operations/world/InitializationOps';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
-import { PushSubprocessOp, PopSubprocessOp } from '@/commands/operations/processTree';
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { createAdd3DPlaneAction } from '@/domain/processTree/actions/Element3DActions';
 import { createProjectionPlaneAction } from '@/domain/processTree/actions/CreateProjectionPlaneAction';
+import {
+  createInitializeHingeLineAction,
+  createInitializeHalfHingeLine2DAction
+} from '@/domain/processTree/actions/InitializeWorldActions';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 
 export class PlaneSequenceFactory {
@@ -40,6 +43,7 @@ export class PlaneSequenceFactory {
    * @param plane1Id - ID of projection plane containing trace1
    * @param plane2Id - ID of projection plane containing trace2
    * @param label - Optional label for the plane
+   * @param groupId - The ID of the action group to attach operations to
    * @returns Object containing the created plane ID
    */
   static create3DPlaneFromTraces(
@@ -48,7 +52,8 @@ export class PlaneSequenceFactory {
     trace2Id: string,
     plane1Id: string,
     plane2Id: string,
-    label?: string
+    label?: string,
+    groupId?: string
   ): { planeId: string } {
     // Execute operation to create 3D plane
     const result = cmd.addAndExecute(new Add3DPlaneOp(
@@ -69,7 +74,10 @@ export class PlaneSequenceFactory {
       plane1Id,
       plane2Id
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    if (groupId) {
+      cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+    }
     
     return { planeId };
   }
@@ -84,9 +92,6 @@ export class PlaneSequenceFactory {
    * 4. Hides T1 trace line (unless it's already a HalfHingeLine2D)
    * 5. ProcessTree action for dependency tracking
    * 
-   * Phase 85: Wraps operation sequence with PushSubprocessOp/PopSubprocessOp.
-   * Operations automatically record actions to current subprocess.
-   * 
    * This is the canonical way to create auxiliary projection planes ("folded planes")
    * that are connected to existing projection planes via a hinge line.
    * 
@@ -97,7 +102,8 @@ export class PlaneSequenceFactory {
    * @param t2OtherTraceId - ID of other trace line (T2) on different projection plane
    * @param t2PrimeLineId - ID of position/orientation line (T2') on same plane as T1
    * @param hingeTracePlaneId - ID of projection plane containing T1 (connects via hinge)
-   * @parthe updateam name - Optional name for the plane (e.g., 'P_A1')
+   * @param name - Optional name for the plane (e.g., 'P_A1')
+   * @param groupId - The ID of the action group to attach operations to
    * @returns Object containing the created projection plane ID
    */
   static createAuxiliaryProjectionPlane(
@@ -108,10 +114,9 @@ export class PlaneSequenceFactory {
     t2OtherTraceId: string,
     t2PrimeLineId: string,
     hingeTracePlaneId: string,
-    name?: string
+    name: string | undefined,
+    groupId: string
   ): { projPlaneId: string } {
-    // Phase 85: Push subprocess - all operations grouped under this subprocess
-    cmd.addAndExecute(new PushSubprocessOp('Create Auxiliary Projection Plane'));
     
     // Execute operation to create auxiliary projection plane
     const result = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
@@ -131,7 +136,8 @@ export class PlaneSequenceFactory {
       t2OtherTraceId,
       t2PrimeLineId
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(projPlaneAction));
+
+    cmd.addAndExecute(new AddProcessTreeActionOp(projPlaneAction, groupId));
     
     // Create hinge line connecting the new auxiliary plane to the hinge trace's plane
     // IMPORTANT: plane1 = new auxiliary plane (canonical coords source), plane2 = existing plane
@@ -141,12 +147,25 @@ export class PlaneSequenceFactory {
     ));
     const hingeLineId = hingeLineResult.outputs.hingeLineId as string;
     
-    // Phase 85: Operations now automatically record actions to current subprocess
-    // No manual ProcessTree action recording needed
+    cmd.addAndExecute(new AddProcessTreeActionOp(
+      createInitializeHingeLineAction(hingeLineId, projPlaneId, hingeTracePlaneId),
+      groupId
+    ));
     
     // Create HalfHingeLine2D on both planes (order matches HingeLine plane order)
-    cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneId, hingeLineId));
-    cmd.addAndExecute(new AddHalfHingeLine2DOp(hingeTracePlaneId, hingeLineId));
+    const hhl1Op = new AddHalfHingeLine2DOp(projPlaneId, hingeLineId);
+    cmd.addAndExecute(hhl1Op);
+    cmd.addAndExecute(new AddProcessTreeActionOp(
+      createInitializeHalfHingeLine2DAction(hhl1Op.outputs.lineId, projPlaneId, hingeLineId),
+      groupId
+    ));
+
+    const hhl2Op = new AddHalfHingeLine2DOp(hingeTracePlaneId, hingeLineId);
+    cmd.addAndExecute(hhl2Op);
+    cmd.addAndExecute(new AddProcessTreeActionOp(
+      createInitializeHalfHingeLine2DAction(hhl2Op.outputs.lineId, hingeTracePlaneId, hingeLineId),
+      groupId
+    ));
     
     // Hide T1 trace line (now that it's become a hinge line), unless it's already a HalfHingeLine2D
     const hingePlane = world.getProjectionPlaneById(hingeTracePlaneId);
@@ -161,9 +180,6 @@ export class PlaneSequenceFactory {
         ));
       }
     }
-    
-    // Phase 85: Pop subprocess - operation sequence complete
-    cmd.addAndExecute(new PopSubprocessOp());
     
     return { projPlaneId };
   }

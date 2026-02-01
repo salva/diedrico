@@ -134,39 +134,15 @@ export class ProcessTree {
   }
 
   /**
-   * Add an action to the process tree
-   * Creates an ActionGroup if needed
-   * Phase 85: Always adds to current subprocess from stack (no parentSubprocessId parameter)
+   * DEPRECATED: Use addActionGroup() + addActionToGroup() instead.
+   * This method implicitly creates an ActionGroup, which breaks Undo logic.
+   * Throws Error to enforce new pattern.
    */
   addAction(action: Action, groupName?: string): ActionGroup {
-    // Wrap action in ActionNode
-    const actionNode: ActionNode = {
-      ...action,
-      type: 'action',
-      // Phase 87: Default actions to Output=True
-      // This ensures that inside an encapsulated subprocess (Group=False),
-      // the action punches through by default unless explicitly hidden.
-      isOutput: action.isOutput !== undefined ? action.isOutput : true,
-      created: new Date()
-    };
-
-    // Create action group for this action
-    // Note: groupName is ignored - ActionGroups have no names per spec
-    const actionGroup: ActionGroup = {
-      id: this.generateId(),
-      type: 'actionGroup',
-      children: [actionNode],
-      isAuxiliary: false,
-      isOutput: true,
-      created: new Date()
-    };
-
-    // Phase 85: Add to current subprocess from stack (no manual subprocess selection)
-    const currentSubprocess = this.getCurrentSubprocess();
-    currentSubprocess.children.push(actionGroup);
-    this.notifyChange();
-
-    return actionGroup;
+    throw new Error(
+      "ProcessTree.addAction() is deprecated. Use addActionGroup() then addActionToGroup(). " +
+      "This ensures Undo correctly removes the group."
+    );
   }
 
   findSubprocessById(subprocessId: string): Subprocess | undefined {
@@ -198,6 +174,49 @@ export class ProcessTree {
     this.notifyChange();
 
     return subprocess;
+  }
+
+  /**
+   * Add a complete ActionGroup to the tree (Phase 81 Refactor)
+   * Adds to the current subprocess on top of the stack.
+   */
+  addActionGroup(group: ActionGroup): void {
+     const currentSubprocess = this.getCurrentSubprocess();
+     currentSubprocess.children.push(group);
+     this.notifyChange();
+  }
+
+  /**
+   * Add an action to an existing group
+   * @param action The action to add
+   * @param groupId The ID of the target ActionGroup
+   * @returns The index where the action was added
+   */
+  addActionToGroup(action: Action, groupId: string): number {
+    let groupFound: ActionGroup | undefined;
+    
+    // Find group
+    this.traverseGroups(this.root, (group) => {
+      if (group.id === groupId) {
+        groupFound = group;
+      }
+    });
+
+    if (!groupFound) {
+      throw new Error(`ActionGroup ${groupId} not found`);
+    }
+
+    // Wrap action in ActionNode
+    const actionNode: ActionNode = {
+      ...action,
+      type: 'action',
+      isOutput: action.isOutput !== undefined ? action.isOutput : true,
+      created: new Date()
+    };
+    
+    const index = groupFound.children.push(actionNode) - 1;
+    this.notifyChange();
+    return index;
   }
 
   /**
@@ -382,6 +401,42 @@ export class ProcessTree {
     });
     
     return result;
+  }
+
+  /**
+   * Remove an ActionGroup from the tree by ID
+   * Removes from parent subprocess children list (does NOT create tombstone)
+   */
+  removeActionGroup(groupId: string): boolean {
+    const parentSubprocess = this.findParentSubprocessOfGroup(this.root, groupId);
+    if (parentSubprocess) {
+      const index = parentSubprocess.children.findIndex(child => child.id === groupId);
+      if (index !== -1) {
+        parentSubprocess.children.splice(index, 1);
+        this.notifyChange();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private findParentSubprocessOfGroup(node: Subprocess, groupId: string): Subprocess | null {
+    // Check direct children
+    for (const child of node.children) {
+      if (child.type === 'actionGroup' && child.id === groupId) {
+        return node;
+      }
+    }
+    
+    // Recurse into subprocesses
+    for (const child of node.children) {
+      if (child.type === 'subprocess') {
+        const found = this.findParentSubprocessOfGroup(child, groupId);
+        if (found) return found;
+      }
+    }
+    
+    return null;
   }
 
   /**

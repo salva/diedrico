@@ -200,7 +200,9 @@ const emit = defineEmits<{
 }>();
 
 // Local state
-const isCollapsed = ref(false);
+const isCollapsed = ref(
+  props.node.type === 'subprocess' && props.node.name === 'World Initialization'
+);
 const isEditing = ref(false);
 const editName = ref('');
 const nameInput = ref<HTMLInputElement | null>(null);

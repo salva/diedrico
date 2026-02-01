@@ -19,7 +19,7 @@
  * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
  */
 
-import { Command } from '@/commands/Command';
+import type { Command } from '@/commands/Command';
 import type { World } from '@/domain/world/World';
 import { 
   RemovePoint2DOp, 

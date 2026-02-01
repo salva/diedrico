@@ -16,6 +16,8 @@ import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 /**
  * Interactive tool for creating projection plane setup from user-selected points
@@ -81,7 +83,11 @@ export class InteractiveProjectionSetupTool extends ArgumentCollectorTool {
     const a2 = args.get('pointA2')!.element!;
     const b1 = args.get('pointB1')!.element!;
 
-    constructProjectionPlaneSetup(cmd, context, a1.id, a2.id, b1.id);
+    const groupId = `group_${Date.now()}_interactive_setup`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+
+    constructProjectionPlaneSetup(cmd, context, a1.id, a2.id, b1.id, groupId);
   }
 
   protected getCommandDescription(): string {

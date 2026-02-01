@@ -13,7 +13,7 @@
  * - Reusable across different UIs or automation contexts
  */
 
-import { Command } from '../Command';
+import type { Command } from '../Command';
 import { AddCircle2DByCenterAndPointOp } from '../operations/world/AddCircleOp';
 import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
 import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
@@ -43,7 +43,8 @@ export class CircleSequenceFactory {
     cmd: Command,
     planeId: string,
     centerPointId: string,
-    circumferencePointId: string
+    circumferencePointId: string,
+    groupId: string
   ): CircleResult {
     const operation = new AddCircle2DByCenterAndPointOp(planeId, centerPointId, circumferencePointId);
     const result = cmd.addAndExecute(operation);
@@ -56,7 +57,8 @@ export class CircleSequenceFactory {
     
     // Record ProcessTree action for dependency tracking
     const action = createCircleAction(circleId, planeId, centerPointId, circumferencePointId);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     return { circleId };
   }

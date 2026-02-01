@@ -22,6 +22,8 @@ import { Command } from '@/commands/Command';
 import { AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
 import { createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
 
 /**
  * TangentLineToCircleParallelToLineTool using ArgumentCollectorTool framework
@@ -104,7 +106,11 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
       referenceLineId,
       tangentIndex
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    const groupId = `group_${Date.now()}_tangent_par`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
   }
 
   protected getCommandDescription(): string {

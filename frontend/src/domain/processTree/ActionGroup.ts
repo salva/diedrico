@@ -8,7 +8,7 @@ import type { ConstructiveAction } from './Action';
 export interface ActionGroup {
   id: string;
   type: 'actionGroup';
-  children: ConstructiveAction[];  // One or more actions
+  children: (ConstructiveAction | null)[];  // One or more actions (or null tombstones)
   isOutput: boolean;               // Phase 87: Output flag
   isAuxiliary?: boolean;           // Helper steps
   created: Date;

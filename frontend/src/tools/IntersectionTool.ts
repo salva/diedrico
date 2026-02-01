@@ -24,6 +24,8 @@ import type { Element2D } from '@/domain/world/Element2D';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { 
   areLinesParallel, 
   intersectLineCircle, 
@@ -93,6 +95,11 @@ export class IntersectionTool extends ArgumentCollectorTool {
     const planeCoords = elem2Value.planeCoords; // Use second click position for index calculation
     const { planeId, world } = context;
 
+    // Create user action group for this tool operation
+    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+
     // Determine intersection type and create appropriate intersection
     // Factory handles operation AND ProcessTree actions (including siblings)
     if (element1 instanceof Line2D && element2 instanceof Line2D) {
@@ -112,7 +119,7 @@ export class IntersectionTool extends ArgumentCollectorTool {
       
       // Factory handles operation AND ProcessTree actions
       IntersectionSequenceFactory.createLineLineIntersection(
-        cmd, planeId, element1.id, element2.id, world
+        cmd, planeId, element1.id, element2.id, world, groupId
       );
       
     } else if (element1 instanceof Line2D && element2 instanceof Circle2D) {
@@ -127,7 +134,7 @@ export class IntersectionTool extends ArgumentCollectorTool {
       
       // Factory handles operation AND ProcessTree actions
       IntersectionSequenceFactory.createLineCircleIntersection(
-        cmd, planeId, element1.id, element2.id, index, world
+        cmd, planeId, element1.id, element2.id, index, world, groupId
       );
       
     } else if (element1 instanceof Circle2D && element2 instanceof Line2D) {
@@ -142,7 +149,7 @@ export class IntersectionTool extends ArgumentCollectorTool {
       
       // Factory handles operation AND ProcessTree actions
       IntersectionSequenceFactory.createLineCircleIntersection(
-        cmd, planeId, element2.id, element1.id, index, world
+        cmd, planeId, element2.id, element1.id, index, world, groupId
       );
       
     } else if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
@@ -157,7 +164,7 @@ export class IntersectionTool extends ArgumentCollectorTool {
       
       // Factory handles operation AND ProcessTree actions
       IntersectionSequenceFactory.createCircleCircleIntersection(
-        cmd, planeId, element1.id, element2.id, index, world
+        cmd, planeId, element1.id, element2.id, index, world, groupId
       );
       
     } else {

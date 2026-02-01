@@ -21,6 +21,8 @@ import { Command } from '@/commands/Command';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
 
 /**
  * Create3DLineTool using ArgumentCollectorTool framework
@@ -95,7 +97,11 @@ export class Create3DLineTool extends ArgumentCollectorTool {
       plane1Id,
       plane2Id
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    const groupId = `group_${Date.now()}_line3d`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
   }
 
   protected getCommandDescription(): string {

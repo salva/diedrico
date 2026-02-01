@@ -195,7 +195,9 @@ function countNodes(node: ProcessTreeNodeType): number {
   let count = 1;
   if (node.children) {
     for (const child of node.children) {
-      count += countNodes(child);
+      if (child) {
+        count += countNodes(child);
+      }
     }
   }
   return count;

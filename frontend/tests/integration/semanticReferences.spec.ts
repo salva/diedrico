@@ -7,8 +7,6 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { World } from '../../src/domain/world/World';
-import { Command } from '../../src/commands/Command';
-import { buildWorldInitialization } from '../../src/commands/factories/InitializationSequenceFactory';
 import { getMainHingeLine } from '../helpers/worldHelpers';
 
 describe('Semantic Entity References (Phase 46)', () => {
@@ -16,10 +14,6 @@ describe('Semantic Entity References (Phase 46)', () => {
 
   beforeEach(() => {
     world = new World();
-    // Use factory to create initialization operations
-    const cmd = new Command('Initialize World', world);
-    buildWorldInitialization(world, cmd);
-    cmd.commit();
   });
 
   describe('Semantic Accessors', () => {

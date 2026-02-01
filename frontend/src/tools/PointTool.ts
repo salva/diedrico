@@ -17,6 +17,8 @@ import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollect
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 /**
  * PointTool using ArgumentCollectorTool framework
@@ -73,8 +75,13 @@ export class PointTool extends ArgumentCollectorTool {
       throw new Error(`Plane not found: ${planeId}`);
     }
 
+    // Create user action group for this tool operation
+    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+
     // Use factory to create free point with ProcessTree action
-    PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords);
+    PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
   }
 
   /**

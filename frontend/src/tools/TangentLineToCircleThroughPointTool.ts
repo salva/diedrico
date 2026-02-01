@@ -22,6 +22,8 @@ import { Command } from '@/commands/Command';
 import { AddLine2DTangentToCircleThroughPointOp } from '@/commands/operations/world/AddLineOp';
 import { createTangentLineToCircleThroughPointAction } from '@/domain/processTree/actions/CreateTangentLineAction';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
 
 /**
  * TangentLineToCircleThroughPointTool using ArgumentCollectorTool framework
@@ -104,7 +106,11 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
       throughPointId,
       tangentIndex
     );
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    const groupId = `group_${Date.now()}_tangent_pt`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
   }
 
   protected getCommandDescription(): string {

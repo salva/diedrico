@@ -20,6 +20,8 @@ import { Command } from '@/commands/Command';
 import { Vector3 } from 'three';
 import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
 import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 /**
  * Tool that automatically creates projection plane setup with predefined points
@@ -64,26 +66,31 @@ export class QuickProjectionSetupTool implements ITool {
 
     const cmd = new Command('Quick projection setup', world);
 
+    // Create operation group for this tool execution
+    const groupId = `group_${Date.now()}_quick_setup`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+
     // Create A1 on P_H
     const a1Pos = new Vector3(-20, 20, 1);
-    const { pointId: a1Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a1Pos);
+    const { pointId: a1Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a1Pos, groupId);
     const a1Point = world.getPoint2D(a1Id);
     if (a1Point) a1Point.label = 'A1';
 
     // Create A2 on P_H  
     const a2Pos = new Vector3(0, 10, 1);
-    const { pointId: a2Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a2Pos);
+    const { pointId: a2Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a2Pos, groupId);
     const a2Point = world.getPoint2D(a2Id);
     if (a2Point) a2Point.label = 'A2';
 
     // Create B1 on P_V
     const b1Pos = new Vector3(0, 20, 1);
-    const { pointId: b1Id } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, b1Pos);
+    const { pointId: b1Id } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, b1Pos, groupId);
     const b1Point = world.getPoint2D(b1Id);
     if (b1Point) b1Point.label = 'B1';
 
     // Construct complete projection plane setup
-    constructProjectionPlaneSetup(cmd, context, a1Id, a2Id, b1Id);
+    constructProjectionPlaneSetup(cmd, context, a1Id, a2Id, b1Id, groupId);
 
     // Commit and push command, then return to selection tool
     cmd.commit();

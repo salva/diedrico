@@ -26,6 +26,8 @@ import { Command } from '@/commands/Command';
 import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
 import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
 
 /**
  * SegmentTool using ArgumentCollectorTool framework
@@ -90,6 +92,10 @@ export class SegmentTool extends ArgumentCollectorTool {
     
     // Record ProcessTree action
     const action = createSegmentAction(segmentId, planeId, point1.id, point2.id);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+
+    const groupId = `group_${Date.now()}_segment`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
   }
 }

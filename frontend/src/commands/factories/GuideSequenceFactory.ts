@@ -1,4 +1,4 @@
-import { Command } from '../Command';
+import type { Command } from '../Command';
 import { World } from '../../domain/world/World';
 import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '../operations/world/AddGuideOp';
 import { HalfHingeLine2D } from '../../domain/world/HingeLine';

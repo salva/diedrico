@@ -21,13 +21,6 @@ import { Vector3, Vector4, Matrix3 } from 'three';
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
-import {
-  createInitializePlane3DAction,
-  createInitializeProjectionPlaneAction,
-  createInitializeOriginPoint2DAction,
-  createInitializeHingeLineAction,
-  createInitializeHalfHingeLine2DAction
-} from '@/domain/processTree/actions/InitializeWorldActions';
 
 /**
  * AddPlane3DFixedOp - Create a fixed 3D plane
@@ -68,9 +61,6 @@ export class AddPlane3DFixedOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { planeId: plane.id };
 
-      // Phase 85: Action automatically recorded to current subprocess via stack
-      world.addAction(createInitializePlane3DAction(plane.id, this.label));
-      
       return {
         success: true,
         outputs: this.outputs
@@ -147,15 +137,6 @@ export class AddProjectionPlaneFixedOp implements IOperation {
       
       // Store ID in outputs for redo support
       this.outputs = { projPlaneId: projPlane.id };
-
-      // Phase 85: Action automatically recorded to current subprocess via stack
-      world.addAction(
-        createInitializeProjectionPlaneAction(
-          projPlane.id!, 
-          this.plane3DId, 
-          this.orientation || 'horizontal'
-        )
-      );
       
       return {
         success: true,
@@ -234,11 +215,6 @@ export class AddOriginPoint2DOp implements IOperation {
       this.outputs = { pointId: originPoint.id, projPlaneId: this.projPlaneId };
       
       // Phase 53: No longer storing origin IDs in World - use label-based access instead
-      
-      // Phase 85: Action automatically recorded to current subprocess via stack
-      world.addAction(
-        createInitializeOriginPoint2DAction(originPoint.id, this.projPlaneId, this.label)
-      );
 
       return {
         success: true,
@@ -309,11 +285,6 @@ export class AddHingeLineOp implements IOperation {
       
       // Store ID in outputs for redo support
       this.outputs = { hingeLineId: hingeLine.id };
-
-      // Phase 85: Action automatically recorded to current subprocess via stack
-      world.addAction(
-        createInitializeHingeLineAction(hingeLine.id, this.horizontalPlaneId, this.verticalPlaneId)
-      );
       
       return {
         success: true,
@@ -387,11 +358,6 @@ export class AddHalfHingeLine2DOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { lineId: halfHingeLine.id, projPlaneId: this.projPlaneId };
 
-      // Phase 85: Action automatically recorded to current subprocess via stack
-      world.addAction(
-        createInitializeHalfHingeLine2DAction(halfHingeLine.id, this.projPlaneId, this.hingeLineId)
-      );
-      
       return {
         success: true,
         outputs: this.outputs

@@ -21,6 +21,8 @@ import type { Line2D } from '@/domain/world/Line';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 /**
  * PerpendicularLineTool using ArgumentCollectorTool framework
@@ -69,12 +71,18 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
     const referenceLine = args.get('referenceLine')!.element as Line2D;
     const throughPoint = args.get('throughPoint')!.element as Point2D;
     
+    // Create user action group for this tool operation
+    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+
     // Factory handles operation AND ProcessTree action
     LineSequenceFactory.createPerpendicularLine(
       cmd,
       planeId,
       referenceLine.id,
-      throughPoint.id
+      throughPoint.id,
+      groupId
     );
   }
 

@@ -20,6 +20,11 @@
 
 import type { Command } from '../Command';
 import { AddHingeLineOp, AddHalfHingeLine2DOp } from '../operations/world/InitializationOps';
+import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+import {
+  createInitializeHingeLineAction,
+  createInitializeHalfHingeLine2DAction
+} from '@/domain/processTree/actions/InitializeWorldActions';
 
 /**
  * Build complete hinge line with both half hinge lines
@@ -38,7 +43,8 @@ import { AddHingeLineOp, AddHalfHingeLine2DOp } from '../operations/world/Initia
 export function buildHingeLineWithHalves(
   horizontalPlaneId: string,
   verticalPlaneId: string,
-  cmd: Command
+  cmd: Command,
+  groupId: string
 ): void {
   // Step 1: Create 3D hinge line
   // AddHingeLineOp calls world.addHingeLine() which generates ID if not provided
@@ -46,10 +52,25 @@ export function buildHingeLineWithHalves(
   cmd.addAndExecute(hingeLineOp);
   const hingeLineId = hingeLineOp.outputs.hingeLineId as string;
   
+  cmd.addAndExecute(new AddProcessTreeActionOp(
+    createInitializeHingeLineAction(hingeLineId, horizontalPlaneId, verticalPlaneId),
+    groupId
+  ));
+
   // Step 2: Create half hinge line on horizontal plane
   // AddHalfHingeLine2DOp calls projPlane.addHalfHingeLine2D() which generates ID
-  cmd.addAndExecute(new AddHalfHingeLine2DOp(horizontalPlaneId, hingeLineId));
+  const hhl1Op = new AddHalfHingeLine2DOp(horizontalPlaneId, hingeLineId);
+  cmd.addAndExecute(hhl1Op);
+  cmd.addAndExecute(new AddProcessTreeActionOp(
+    createInitializeHalfHingeLine2DAction(hhl1Op.outputs.lineId, horizontalPlaneId, hingeLineId),
+    groupId
+  ));
   
   // Step 3: Create half hinge line on vertical plane
-  cmd.addAndExecute(new AddHalfHingeLine2DOp(verticalPlaneId, hingeLineId));
+  const hhl2Op = new AddHalfHingeLine2DOp(verticalPlaneId, hingeLineId);
+  cmd.addAndExecute(hhl2Op);
+  cmd.addAndExecute(new AddProcessTreeActionOp(
+    createInitializeHalfHingeLine2DAction(hhl2Op.outputs.lineId, verticalPlaneId, hingeLineId),
+    groupId
+  ));
 }

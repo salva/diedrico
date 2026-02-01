@@ -42,7 +42,7 @@
  * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
  */
 
-import { Command } from '../Command';
+import type { Command } from '../Command';
 import { AddLineLineIntersectionPoint2DOp } from '../operations/world/AddLineLineIntersectionPoint2DOp';
 import { AddLineCircleIntersectionPoint2DOp } from '../operations/world/AddLineCircleIntersectionPoint2DOp';
 import { AddCircleCircleIntersectionPoint2DOp } from '../operations/world/AddCircleCircleIntersectionPoint2DOp';
@@ -85,69 +85,6 @@ export interface IntersectionData {
  */
 export class IntersectionSequenceFactory {
   /**
-   * DEPRECATED: Legacy method for backward compatibility.
-   * 
-   * @deprecated Use typed methods instead:
-   * ```typescript
-   * // Instead of:
-   * factory.createIntersection(cmd, planeId, {type: 'line-line', ...}, world)
-   * 
-   * // Use instanceof to select method:
-   * if (element1 instanceof Line2D && element2 instanceof Line2D) {
-   *   factory.createLineLineIntersection(cmd, planeId, line1.id, line2.id, world);
-   * }
-   * ```
-   * 
-   * This wrapper exists only for test compatibility. New code should use typed methods.
-   */
-  static createIntersection(
-    cmd: Command,
-    planeId: string,
-    intersectionData: IntersectionData,
-    world: World
-  ): IntersectionResult {
-    // Dispatch to typed methods based on string discriminator
-    if (intersectionData.type === 'line-line') {
-      return this.createLineLineIntersection(
-        cmd,
-        planeId,
-        intersectionData.element1Id,
-        intersectionData.element2Id,
-        world
-      );
-    } else if (intersectionData.type === 'line-circle') {
-      // Validate line-circle specific parameters
-      if (!intersectionData.lineId || !intersectionData.circleId || intersectionData.index === undefined) {
-        throw new Error('Line-circle intersection requires lineId, circleId, and index');
-      }
-      
-      return this.createLineCircleIntersection(
-        cmd,
-        planeId,
-        intersectionData.lineId,
-        intersectionData.circleId,
-        intersectionData.index,
-        world
-      );
-    } else if (intersectionData.type === 'circle-circle') {
-      // Validate circle-circle specific parameters
-      if (intersectionData.index === undefined) {
-        throw new Error('Circle-circle intersection requires index');
-      }
-      
-      return this.createCircleCircleIntersection(
-        cmd,
-        planeId,
-        intersectionData.element1Id,
-        intersectionData.element2Id,
-        intersectionData.index,
-        world
-      );
-    } else {
-      throw new Error(`Unknown intersection type: ${(intersectionData as IntersectionData).type}`);
-    }
-  }
-  /**
    * Create a line-line intersection point.
    * 
    * If either line is a HalfHingeLine2D, automatically creates a sibling
@@ -166,14 +103,15 @@ export class IntersectionSequenceFactory {
     planeId: string,
     line1Id: string,
     line2Id: string,
-    world: World
+    world: World,
+    groupId: string
   ): IntersectionResult {
     const operation = new AddLineLineIntersectionPoint2DOp(planeId, line1Id, line2Id);
     const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
     
     // Record ProcessTree action for primary intersection
     const action = createLineLineIntersectionPointAction(result.pointId, planeId, line1Id, line2Id);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     // Record ProcessTree action for sibling if created
     if (result.siblingPointId) {
@@ -186,7 +124,7 @@ export class IntersectionSequenceFactory {
             siblingPlaneId,
             result.pointId
           );
-          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
+          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
         }
       }
     }
@@ -215,14 +153,15 @@ export class IntersectionSequenceFactory {
     lineId: string,
     circleId: string,
     index: number,
-    world: World
+    world: World,
+    groupId: string
   ): IntersectionResult {
     const operation = new AddLineCircleIntersectionPoint2DOp(planeId, lineId, circleId, index);
     const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
     
     // Record ProcessTree action for primary intersection
     const action = createLineCircleIntersectionPointAction(result.pointId, planeId, lineId, circleId, index);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     // Record ProcessTree action for sibling if created
     if (result.siblingPointId) {
@@ -235,7 +174,7 @@ export class IntersectionSequenceFactory {
             siblingPlaneId,
             result.pointId
           );
-          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction));
+          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
         }
       }
     }
@@ -263,14 +202,16 @@ export class IntersectionSequenceFactory {
     circle1Id: string,
     circle2Id: string,
     index: number,
-    world: World
+    world: World,
+    groupId: string
   ): IntersectionResult {
     const operation = new AddCircleCircleIntersectionPoint2DOp(planeId, circle1Id, circle2Id, index);
     const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
     
     // Record ProcessTree action for primary intersection
     const action = createCircleCircleIntersectionPointAction(result.pointId, planeId, circle1Id, circle2Id, index);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     // Note: Circles never create siblings, so no sibling action needed
     

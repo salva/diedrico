@@ -28,6 +28,8 @@ import { Command } from '@/commands/Command';
 import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
 import { computeExpectedT2Prime, computeLineDistance } from '@/utils/projectionPlaneUtils';
 import type { Element2D } from '@/domain/world/Element2D';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 /**
  * Tool for creating auxiliary projection planes using ArgumentCollectorTool framework
@@ -182,13 +184,19 @@ export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
     const t1PlaneId = t1.planeId;
     const t2PlaneId = t2.planeId;
 
+    const groupId = `group_${Date.now()}_create_proj_plane`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+
     // Step 1: Create 3D plane from T1 and T2 using factory (handles ProcessTree action)
     const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
       cmd,
       t1Id,
       t2Id,
       t1PlaneId,
-      t2PlaneId
+      t2PlaneId,
+      undefined,
+      groupId
     );
     
     // Steps 2-4: Create auxiliary projection plane with hinge line and ProcessTree tracking
@@ -200,7 +208,9 @@ export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
       t1Id,       // T1 (hinge trace)
       t2Id,       // T2 (other trace)
       t2PrimeId,  // T2' (position line)
-      t1PlaneId   // Hinge trace plane (connects via hinge line)
+      t1PlaneId,   // Hinge trace plane (connects via hinge line)
+      undefined,
+      groupId
     );
   }
 

@@ -104,6 +104,9 @@ import { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plan
 import { getContainerIdFromElementId } from './ElementId';
 import { Command } from '@/commands/Command';
 import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { PushSubprocessOp, PopSubprocessOp } from '@/commands/operations/processTree';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -177,7 +180,17 @@ export class World {
     // Factory pattern: Operations are added directly to Command by factory
     // This avoids Command subclasses while maintaining initialization logic
     const initCmd = new Command('Initialize World', this);
-    buildWorldInitialization(this, initCmd);
+    
+    // Phase 85: Use subprocess for initialization organization
+    initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+    
+    const groupId = `group_init_${Date.now()}`;
+    const group = createActionGroup(groupId);
+    initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    
+    buildWorldInitialization(this, initCmd, groupId);
+    
+    initCmd.addAndExecute(new PopSubprocessOp());
     initCmd.commit();
     // Note: Not pushed to CommandStack - initialization is non-undoable
     
@@ -257,7 +270,17 @@ export class World {
     
     // Phase 47: Reinitialize fixed elements using factory + Command
     const initCmd = new Command('Initialize World', this);
-    buildWorldInitialization(this, initCmd);
+
+    // Phase 85: Use subprocess for initialization organization
+    initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+    
+    const groupId = `group_init_${Date.now()}`;
+    const group = createActionGroup(groupId);
+    initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    
+    buildWorldInitialization(this, initCmd, groupId);
+    
+    initCmd.addAndExecute(new PopSubprocessOp());
     initCmd.commit();
     // Note: Not pushed to CommandStack - initialization is non-undoable
     

@@ -13,30 +13,31 @@ import type { World } from '@/domain/world/World';
 import type { Action } from '@/domain/processTree/Action';
 
 export class AddProcessTreeActionOp implements IOperation {
-  readonly type = 'AddProcessTreeAction';
+  readonly type = 'AddProcessTreeActionOp';
   parameters: Record<string, any>;
   outputs: Record<string, any> = {};
 
-  constructor(action: Action) {
+  constructor(action: Action, private groupId: string) {
     // Store action in parameters for serializability
     this.parameters = {
-      action: action
+      action: action,
+      groupId: groupId
     };
   }
 
   apply(world: World): OperationResult {
     // Add action to ProcessTree
     const action = this.parameters.action as Action;
-    const actionGroup = world.getProcessTree().addAction(action);
     
-    // Store the location for undo
-    // The action is the first (and only) child in the newly created ActionGroup
+    // Add to existing group (Strict Mode: groupId is required)
+    const index = world.getProcessTree().addActionToGroup(action, this.groupId);
+    
     this.outputs = {
       actionId: action.id,
-      groupId: actionGroup.id,
-      index: 0
+      groupId: this.groupId,
+      index: index
     };
-
+    
     // Rebuild dependency maps to include new action
     world.getDependencyService().rebuildDependencyMaps();
 
@@ -50,9 +51,13 @@ export class AddProcessTreeActionOp implements IOperation {
     if (!this.outputs.actionId) {
       throw new Error('Cannot undo: operation was not applied');
     }
-
-    // Remove action from ProcessTree
+    
+    // Explicit removal of action
     world.getProcessTree().removeAction(this.outputs.actionId);
+
+    // Legacy fallback removed: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.
+    // If this op added an action to a group, undoing it naturally removes the action.
+    // The group itself is handled by its own Op.
 
     // Rebuild dependency maps to remove stale references
     world.getDependencyService().rebuildDependencyMaps();

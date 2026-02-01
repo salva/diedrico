@@ -32,7 +32,7 @@
  * ```
  */
 
-import { Command } from '../Command';
+import type { Command } from '../Command';
 import { 
   AddLine2DByTwoPointsOp,
   AddLine2DParallelToLineOp,
@@ -70,7 +70,8 @@ export class LineSequenceFactory {
     cmd: Command,
     planeId: string,
     point1Id: string,
-    point2Id: string
+    point2Id: string,
+    groupId: string
   ): LineResult {
     const operation = new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id);
     const result = cmd.addAndExecute(operation);
@@ -83,7 +84,8 @@ export class LineSequenceFactory {
     
     // Record ProcessTree action for dependency tracking
     const action = createLineAction(lineId, planeId, point1Id, point2Id);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     return { lineId };
   }
@@ -102,7 +104,8 @@ export class LineSequenceFactory {
     cmd: Command,
     planeId: string,
     referenceLineId: string,
-    throughPointId: string
+    throughPointId: string,
+    groupId: string
   ): LineResult {
     const operation = new AddLine2DParallelToLineOp(planeId, referenceLineId, throughPointId);
     const result = cmd.addAndExecute(operation);
@@ -115,7 +118,8 @@ export class LineSequenceFactory {
     
     // Record ProcessTree action for dependency tracking
     const action = createParallelLineAction(lineId, planeId, referenceLineId, throughPointId);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     return { lineId };
   }
@@ -134,7 +138,8 @@ export class LineSequenceFactory {
     cmd: Command,
     planeId: string,
     referenceLineId: string,
-    throughPointId: string
+    throughPointId: string,
+    groupId: string
   ): LineResult {
     const operation = new AddLine2DPerpendicularToLineOp(planeId, referenceLineId, throughPointId);
     const result = cmd.addAndExecute(operation);
@@ -147,7 +152,8 @@ export class LineSequenceFactory {
     
     // Record ProcessTree action for dependency tracking
     const action = createPerpendicularLineAction(lineId, planeId, referenceLineId, throughPointId);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     return { lineId };
   }

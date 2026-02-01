@@ -13,7 +13,7 @@
  */
 
 import type { Vector3 } from 'three';
-import { Command } from '@/commands/Command';
+import type { Command } from '@/commands/Command';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
@@ -29,12 +29,14 @@ export class PointSequenceFactory {
    * @param cmd - Command to add operations to
    * @param planeId - ID of projection plane containing the point
    * @param position - Position in plane intrinsic coordinates (u, v, 1)
+   * @param groupId - ID of the ActionGroup to add the action to
    * @returns Object containing the created point ID
    */
   static createFreePoint(
     cmd: Command,
     planeId: string,
-    position: Vector3
+    position: Vector3,
+    groupId: string
   ): { pointId: string } {
     // Execute operation to create free point
     const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
@@ -42,7 +44,8 @@ export class PointSequenceFactory {
     
     // Create ProcessTree action for dependency tracking
     const action = createPointAction(pointId, planeId, position);
-    cmd.addAndExecute(new AddProcessTreeActionOp(action));
+    
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     return { pointId };
   }
