@@ -121,8 +121,6 @@ import { useAuthStore } from './stores/authStore';
 import { World } from './domain/world/World';
 import { GoogleDriveService } from './services/GoogleDriveService';
 import { ProjectService } from './services/ProjectService';
-import { SetActivePlaneOp } from './commands/operations/world/InitializationOps';
-
 // Google Drive configuration (from environment variables)
 const GOOGLE_CONFIG = {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
@@ -798,12 +796,11 @@ function cycleActivePlane(direction: number) {
 
   const newPlane = planes[newIndex];
   
-  // Use SetActivePlaneOp via CommandStack explicitly
-  // This ensures operations follow standard pattern even if currently non-undoable
-  const op = new SetActivePlaneOp(newPlane.id);
-  const cmd = new Command(`Activate Plane ${newPlane.name || newPlane.id}`, world);
-  cmd.addAndExecute(op);
-  commandStack.execute(cmd);
+  if (newPlane.id) {
+    // Direct change to World state (not an undoable operation)
+    // Active plane is a UI convenience state, not persistent model state
+    world.setActivePlaneId(newPlane.id);
+  }
 }
 
 function handleKeyDown(event: KeyboardEvent) {
