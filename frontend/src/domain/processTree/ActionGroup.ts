@@ -9,6 +9,8 @@ export interface ActionGroup {
   id: string;
   type: 'actionGroup';
   children: ConstructiveAction[];  // One or more actions
+  isOutput: boolean;               // Phase 87: Output flag
+  isAuxiliary?: boolean;           // Helper steps
   created: Date;
 }
 
@@ -23,6 +25,7 @@ export function createActionGroup(
     id,
     type: 'actionGroup',
     children,
+    isOutput: true, // Default to true
     created: new Date()
   };
 }

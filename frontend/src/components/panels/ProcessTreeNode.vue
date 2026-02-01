@@ -4,18 +4,15 @@
     <div
       v-if="node.type === 'subprocess'"
       class="subprocess-node"
-      :class="{ 'node-selected': isSelected, 'subprocess-active': isActiveSubprocess }"
+      :class="{ 
+        'node-selected': isSelected, 
+        'subprocess-active': isActiveSubprocess,
+        'faded': isFaded
+      }"
     >
       <div class="subprocess-header">
         <span class="collapse-icon" @click.stop="toggleCollapse">{{ isCollapsed ? '▶' : '▼' }}</span>
-        <button
-          class="visibility-icon"
-          :class="{ 'invisible': !node.visible }"
-          @click.stop="emit('toggleVisibility', node.id)"
-          title="Toggle drawing visibility"
-        >
-          {{ node.visible ? '👁' : '👁‍🗨' }}
-        </button>
+        
         <span 
           v-if="!isEditing"
           class="subprocess-name" 
@@ -34,20 +31,48 @@
           @keydown.stop
           @click.stop
         />
+        
         <span v-if="isActiveSubprocess" class="active-indicator" title="Current subprocess">●</span>
+
+        <!-- Right Side Controls Matrix -->
+        <div class="node-controls">
+          <!-- Show Intermediates Toggle (Triangle Down) -->
+          <!-- Was Encapsulate Toggle + Internal Button. Consolidated here. -->
+          <button
+            class="icon-btn internal-btn"
+            :class="{ 'active': node.showIntermediates }"
+            @click.stop="emit('toggleEncapsulate', node.id)"
+            title="Show Intermediates"
+          >
+            {{ node.showIntermediates ? '▼' : '▽' }}
+          </button>
+          
+          <!-- Output Selection (Triangle Up) -->
+          <button
+            class="icon-btn output-btn"
+            :class="{ 'active': node.isOutput }"
+            @click.stop="emit('toggleOutput', node.id)"
+            title="Mark as Output"
+          >
+            {{ node.isOutput ? '▲' : '△' }}
+          </button>
+        </div>
       </div>
 
       <!-- Child nodes (when expanded) -->
-      <div v-if="!isCollapsed" class="subprocess-children">
+      <div v-show="!isCollapsed" class="subprocess-children">
         <ProcessTreeNode
           v-for="child in allChildren"
           :key="child.id"
           :node="child"
+          :data-version="dataVersion"
           :selected-node-id="selectedNodeId"
           :active-subprocess-id="activeSubprocessId"
           :related-action-ids="relatedActionIds"
+          :is-parent-encapsulated="isEffectivelyEncapsulated"
           @select-node="emit('selectNode', $event)"
-          @toggle-visibility="emit('toggleVisibility', $event)"
+          @toggle-encapsulate="emit('toggleEncapsulate', $event)"
+          @toggle-output="emit('toggleOutput', $event)"
           @highlight-elements="(...args) => emit('highlightElements', ...args)"
           @clear-highlight="emit('clearHighlight')"
           @rename-node="(...args) => emit('renameNode', ...args)"
@@ -65,10 +90,16 @@
     <div
       v-else-if="node.type === 'actionGroup'"
       class="actiongroup-node"
-      :class="{ 'auxiliary': node.isAuxiliary }"
+      :class="{ 
+        'auxiliary': node.isAuxiliary,
+        'faded': isFaded
+      }"
     >
       <div class="actiongroup-header">
         <span v-if="node.isAuxiliary" class="auxiliary-icon" title="Auxiliary actions">⚙</span>
+
+        <!-- Right Side Controls Matrix - REMOVED for ActionGroup to avoid button duplication -->
+        <!-- User sees group+action as one unit, so we only show controls on the action itself -->
       </div>
 
       <!-- Child actions (always shown) -->
@@ -77,11 +108,14 @@
           v-for="child in allChildren"
           :key="child.id"
           :node="child"
+          :data-version="dataVersion"
           :selected-node-id="selectedNodeId"
           :active-subprocess-id="activeSubprocessId"
           :related-action-ids="relatedActionIds"
+          :is-parent-encapsulated="isEffectivelyEncapsulated"
           @select-node="emit('selectNode', $event)"
-          @toggle-visibility="emit('toggleVisibility', $event)"
+          @toggle-encapsulate="emit('toggleEncapsulate', $event)"
+          @toggle-output="emit('toggleOutput', $event)"
           @highlight-elements="(...args) => emit('highlightElements', ...args)"
           @clear-highlight="emit('clearHighlight')"
           @rename-node="(...args) => emit('renameNode', ...args)"
@@ -96,7 +130,8 @@
       :class="{ 
         'node-selected': isSelected,
         'action-infeasible': isInfeasible,
-        'action-related': isRelated
+        'action-related': isRelated,
+        'faded': isFaded
       }"
       @click="handleActionClick"
       @mouseenter="handleActionHover(true)"
@@ -106,6 +141,22 @@
         <span class="action-status">{{ statusIcon }}</span>
         <span class="action-description">{{ node.description }}</span>
         <span v-if="isRelated && !isSelected" class="related-indicator" title="Related to selected elements">🔗</span>
+
+        <!-- Right Side Controls Matrix -->
+        <div class="node-controls">
+          <!-- Spacer for Show Intermediates (Down) column -->
+          <div class="icon-spacer"></div>
+
+          <!-- Output Selection (Triangles) -->
+          <button
+            class="icon-btn output-btn"
+            :class="{ 'active': node.isOutput }"
+            @click.stop="emit('toggleOutput', node.id)"
+            title="Toggle Output"
+          >
+            {{ node.isOutput ? '▲' : '△' }}
+          </button>
+        </div>
       </div>
 
       <!-- Action Details (when selected) -->
@@ -126,17 +177,23 @@ import { ref, computed, nextTick } from 'vue';
 import type { ProcessNode } from '@/domain/processTree/ProcessTree';
 
 // Props
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   node: ProcessNode;
   selectedNodeId: string | null;
   activeSubprocessId?: string;
   relatedActionIds?: Set<string>;
-}>();
+  isParentEncapsulated?: boolean;
+  dataVersion?: number;
+}>(), {
+  isParentEncapsulated: false,
+  dataVersion: 0
+});
 
 // Emits
 const emit = defineEmits<{
   selectNode: [nodeId: string];
-  toggleVisibility: [nodeId: string];
+  toggleEncapsulate: [nodeId: string];
+  toggleOutput: [nodeId: string];
   highlightElements: [elementIds: string[], temporary: boolean];
   clearHighlight: [];
   renameNode: [nodeId: string, newName: string];
@@ -162,7 +219,64 @@ const isRelated = computed(() => {
   return props.relatedActionIds.has(props.node.id);
 });
 
+// Determine if this node is legally hidden by encryption logic (faded in UI)
+const isFaded = computed(() => {
+  // Use dataVersion to force update when node properties change
+  props.dataVersion;
+  
+  // If we are NOT in an encapsulated scope, everything is clearly visible
+  if (!props.isParentEncapsulated) return false;
+
+  // If this node ITSELF is an output, it is fully visible (punches through encapsulation)
+  if (props.node.isOutput) return false;
+
+  // IMPORTANT: If this is a container (Group/Subprocess) that contains visible descendants,
+  // we must NOT fade it, otherwise the visible descendants inside will also look faded
+  // due to CSS opacity inheritance.
+  if (hasVisibleDescendant(props.node)) return false;
+
+  // Otherwise, we are an internal detail (hidden/faded).
+  return true;
+});
+
+// Helper to check for visible descendants recursively (structural check)
+function hasVisibleDescendant(node: ProcessNode): boolean {
+  if (node.type === 'action') {
+    return false; // Leaf node cannot have descendants
+  }
+  
+  if (node.type === 'actionGroup') {
+    // ActionGroup has ActionNode | null children
+    return node.children.some(child => child !== null && child.isOutput);
+  }
+  
+  if (node.type === 'subprocess') {
+    // Subprocess has Subprocess | ActionGroup children
+    return node.children.some(child => child.isOutput || hasVisibleDescendant(child));
+  }
+  
+  return false;
+}
+
+// Determine if the children of this node should be considered encapsulated
+const isEffectivelyEncapsulated = computed(() => {
+  // Use dataVersion to force update when node properties change
+  props.dataVersion;
+  // If we are already deep in an encapsulated scope, children are too.
+  if (props.isParentEncapsulated) return true;
+  
+  // If we are a subprocess starting a new encapsulation scope
+  if (props.node.type === 'subprocess' && !props.node.showIntermediates) {
+    return true;
+  }
+  
+  return false;
+});
+
+
 const allChildren = computed(() => {
+  // Use dataVersion/node to ensure reactivity when structure changes
+  props.dataVersion; 
   if (!('children' in props.node)) return [];
   return props.node.children.filter(child => child !== null);
 });
@@ -297,7 +411,48 @@ function formatParameterValue(value: any): string {
   font-size: 10px;
   margin-left: auto;
   animation: pulse 2s infinite;
+  margin-right: 8px; /* Spacing before icons */
 }
+
+/* Right Side Controls Matrix Layout */
+.node-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+  /* Ensure controls stay on the right even if name is short */
+  /* For subprocess header, 'subprocess-name' has flex:1 so margin-left: auto isn't needed here if placed after it */
+}
+
+/* Spacer for alignment in rows without encapsulation button */
+.icon-spacer {
+  width: 20px;
+  height: 20px;
+}
+
+/* Action node layout adjustment */
+.action-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.action-description {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1; /* Push controls to right */
+}
+
+/* Specific overrides for action node to ensure right alignment */
+.action-node .node-controls,
+.actiongroup-header .node-controls {
+  margin-left: auto;
+}
+
+/* For subprocess header, since name has flex:1, node-controls naturally goes to right */
+
 
 .insertion-point {
   display: flex;
@@ -340,18 +495,46 @@ function formatParameterValue(value: any): string {
   display: inline-block;
 }
 
-.visibility-icon {
+.icon-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 16px;
   padding: 0;
-  line-height: 1;
-  transition: opacity 0.2s;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #444; /* Constant color for all states, reliance on fill for status */
+  opacity: 1;
+  transition: opacity 0.2s, background-color 0.2s;
+  border-radius: 3px;
 }
 
-.visibility-icon.invisible {
-  opacity: 0.4;
+.icon-btn:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+.icon-btn.active {
+  /* No color change, relying on icon geometry (filled vs empty) */
+}
+/* Replaced specific color rules with unified one */
+
+/* Removed redundant .icon-btn.active block */
+
+/* Special placement for action output toggle */
+.action-output-toggle {
+  margin-right: 4px;
+}
+
+.faded {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+}
+
+.faded:hover {
+  opacity: 0.8;
 }
 
 .subprocess-name {

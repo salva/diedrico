@@ -34,6 +34,7 @@ export interface Action {
   timestamp: Date;               // When action was performed
   inputs: string[];              // Element IDs this action depends on
   outputs: string[];             // Element IDs this action produces
+  isOutput: boolean;             // Phase 87: Output flag (Show in black box stack)
   parameters: Record<string, any>; // Tool-specific parameters
   description: string;           // Human-readable description
 }

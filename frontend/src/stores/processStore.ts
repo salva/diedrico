@@ -44,25 +44,23 @@ export const useProcessStore = defineStore('process', {
     },
 
     /**
-     * Get all visible subprocesses (recursive)
+     * Get all subprocesses (recursive)
      */
     visibleSubprocesses: (state) => {
       const result: Subprocess[] = [];
       const traverse = (subprocess: Subprocess) => {
-        if (subprocess.visible) {
-          result.push(subprocess);
-          subprocess.children.forEach(child => {
-            if ('visible' in child) {
-              traverse(child as Subprocess);
-            }
-          });
-        }
+        result.push(subprocess);
+        subprocess.children.forEach(child => {
+          if (child.type === 'subprocess') {
+            traverse(child as Subprocess);
+          }
+        });
       };
-      state.root.children.forEach(child => {
-        if ('visible' in child) {
-          traverse(child as Subprocess);
-        }
-      });
+      
+      if (state.root) {
+        // Cast Process to Subprocess for traversal
+        traverse(state.root as unknown as Subprocess);
+      }
       return result;
     },
 

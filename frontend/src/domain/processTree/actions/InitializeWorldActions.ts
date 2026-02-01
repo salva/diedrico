@@ -21,7 +21,7 @@ export function createInitializePlane3DAction(planeId: string, label?: string): 
     inputs: [],
     outputs: [planeId],
     parameters: { planeId, label },
-    description: label ? `Init plane ${label}` : `Init plane ${planeId}`
+    description: label ? `Plane ${label}` : `Plane ${planeId}`
   };
 }
 
@@ -44,7 +44,7 @@ export function createInitializeProjectionPlaneAction(
     inputs: [plane3DId],
     outputs: [projPlaneId],
     parameters: { projPlaneId, plane3DId, orientation },
-    description: `Init projection plane (${orientation})`
+    description: `Projection plane (${orientation})`
   };
 }
 
@@ -67,7 +67,7 @@ export function createInitializeOriginPoint2DAction(
     inputs: [projPlaneId],
     outputs: [pointId],
     parameters: { pointId, projPlaneId, label },
-    description: label ? `Init origin ${label}` : 'Init origin point'
+    description: label ? `Origin ${label}` : 'Origin point'
   };
 }
 
@@ -90,7 +90,7 @@ export function createInitializeHingeLineAction(
     inputs: [plane1Id, plane2Id],
     outputs: [hingeLineId],
     parameters: { hingeLineId, plane1Id, plane2Id },
-    description: 'Init hinge line'
+    description: 'Hinge line'
   };
 }
 
@@ -113,7 +113,7 @@ export function createInitializeHalfHingeLine2DAction(
     inputs: [projPlaneId, hingeLineId],
     outputs: [lineId],
     parameters: { lineId, projPlaneId, hingeLineId },
-    description: 'Init half hinge line'
+    description: 'Half hinge line'
   };
 }
 

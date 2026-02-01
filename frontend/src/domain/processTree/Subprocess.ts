@@ -10,7 +10,8 @@ export interface Subprocess {
   type: 'subprocess';
   name: string;
   children: (Subprocess | ActionGroup)[];  // Can contain subprocesses or action groups
-  visible: boolean;                         // Controls element visibility in drawing
+  showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
+  isOutput: boolean;                       // Phase 87: Output flag
   defaultStyle?: VisualStyle;               // Default style inherited by contained elements
   created: Date;
 }
@@ -28,7 +29,8 @@ export function createSubprocess(
     type: 'subprocess',
     name,
     children: [],
-    visible: true,
+    showIntermediates: true,
+    isOutput: true,
     created: new Date(),
     ...options
   };

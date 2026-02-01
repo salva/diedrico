@@ -17,7 +17,8 @@ export function createProcess(): Process {
     type: 'process',
     name: 'Root Process',
     children: [],
-    visible: true,
+    showIntermediates: true,
+    isOutput: true,
     created: new Date()
   };
 }

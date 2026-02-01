@@ -21,13 +21,15 @@ export interface Subprocess extends ProcessNodeBase {
   type: 'subprocess';
   name: string;
   children: (Subprocess | ActionGroup)[];  // Mixed children, no direct actions
-  visible: boolean;                        // Visibility toggle
+  showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
+  isOutput: boolean;                       // Phase 87: Output flag (punches through encapsulation)
 }
 
 export interface ActionGroup extends ProcessNodeBase {
   type: 'actionGroup';
   children: (ActionNode | null)[];         // Actions or tombstones (null = deleted)
   isAuxiliary: boolean;                    // Auxiliary actions (lighter styling)
+  isOutput: boolean;                       // Phase 87: Output flag
 }
 
 // ActionNode wraps Action to fit the tree structure
@@ -52,7 +54,8 @@ export class ProcessTree {
       type: 'subprocess',
       name: 'Root Process',
       children: [],
-      visible: true,
+      showIntermediates: true,
+      isOutput: true, // Root is implicitly an output
       created: new Date()
     };
     // Initialize stack with root
@@ -100,7 +103,8 @@ export class ProcessTree {
       type: 'subprocess',
       name,
       children: [],
-      visible: true,
+      showIntermediates: true,
+      isOutput: true,
       created: new Date()
     };
 
@@ -139,6 +143,10 @@ export class ProcessTree {
     const actionNode: ActionNode = {
       ...action,
       type: 'action',
+      // Phase 87: Default actions to Output=True
+      // This ensures that inside an encapsulated subprocess (Group=False),
+      // the action punches through by default unless explicitly hidden.
+      isOutput: action.isOutput !== undefined ? action.isOutput : true,
       created: new Date()
     };
 
@@ -149,6 +157,7 @@ export class ProcessTree {
       type: 'actionGroup',
       children: [actionNode],
       isAuxiliary: false,
+      isOutput: true,
       created: new Date()
     };
 
@@ -179,7 +188,8 @@ export class ProcessTree {
       type: 'subprocess',
       name,
       children: [],
-      visible: true,
+      showIntermediates: true,
+      isOutput: true,
       created: new Date()
     };
 
@@ -204,15 +214,70 @@ export class ProcessTree {
   }
 
   /**
-   * Toggle visibility of a subprocess
+   * Toggle encapsulation of a subprocess (hide intermediate steps)
    */
-  toggleSubprocessVisibility(subprocessId: string): void {
+  toggleSubprocessEncapsulation(subprocessId: string): void {
     this.traverseSubprocesses(this.root, (subprocess) => {
       if (subprocess.id === subprocessId) {
-        subprocess.visible = !subprocess.visible;
+        subprocess.showIntermediates = !subprocess.showIntermediates;
         this.notifyChange();
       }
     });
+  }
+
+  /**
+   * Toggle output flag of a node (Subprocess or Action/ActionGroup)
+   * If it's an action ID, we toggle the parent ActionGroup and the ActionNode
+   */
+  toggleOutput(nodeId: string): void {
+    // Check if it's a subprocess
+    let handled = false;
+    this.traverseSubprocesses(this.root, (subprocess) => {
+      if (subprocess.id === nodeId) {
+        subprocess.isOutput = !subprocess.isOutput;
+        handled = true;
+      }
+    });
+
+    if (handled) {
+      this.notifyChange();
+      return;
+    }
+
+    // Check if it's an action or action group
+    // We need a traversal that visits groups and actions
+    this.traverseAllNodes(this.root, (node) => {
+      if (node.type === 'actionGroup' && node.id === nodeId) {
+        const group = node as ActionGroup;
+        group.isOutput = !group.isOutput;
+        handled = true;
+      } else if (node.type === 'action' && node.id === nodeId) {
+        const action = node as ActionNode;
+        action.isOutput = !action.isOutput;
+        // Also toggle the parent group? 
+        // For now, let's assume we operate on individual IDs.
+        // But UI usually displays Groups or merged items.
+        // If the UI displays ActionGroups, we should toggle the group.
+        // If we toggle an action, what about the group?
+        // Let's stick to toggling the specific node found.
+        handled = true;
+      }
+    });
+    
+    if (handled) {
+      this.notifyChange();
+    }
+  }
+
+  private traverseAllNodes(node: ProcessNode, callback: (node: ProcessNode) => void): void {
+    callback(node);
+    if (node.type === 'subprocess') {
+      node.children.forEach(child => this.traverseAllNodes(child, callback));
+    } else if (node.type === 'actionGroup') {
+      node.children.forEach(child => {
+        if (child) this.traverseAllNodes(child, callback);
+      });
+    }
   }
 
   /**
@@ -400,6 +465,37 @@ export class ProcessTree {
     // Push to stack
     this.subprocessStack.push(subprocess);
     this.notifyChange();
+  }
+
+  /**
+   * Get the path of nodes from root to the ActionGroup containing a specific action
+   * @returns Array of ProcessNodes (Subprocesses leading to ActionGroup, and ActionGroup itself) - DOES NOT include the ActionNode itself
+   */
+  getPathToAction(actionId: string): ProcessNode[] | null {
+    return this.findPathToGroup(this.root, actionId, []);
+  }
+
+  private findPathToGroup(node: ProcessNode, targetActionId: string, currentPath: ProcessNode[]): ProcessNode[] | null {
+    // If it's an action group, check if it contains the action
+    if (node.type === 'actionGroup') {
+      const hasAction = node.children.some(child => child !== null && child.id === targetActionId);
+      if (hasAction) {
+        return [...currentPath, node];
+      }
+      return null;
+    }
+
+    // If it's a subprocess, check children
+    if (node.type === 'subprocess') {
+      const pathWithMe = [...currentPath, node];
+      for (const child of node.children) {
+        const result = this.findPathToGroup(child, targetActionId, pathWithMe);
+        if (result) return result;
+      }
+    }
+
+    // Action nodes are not traversed directly here as we look for groups or subprocesses
+    return null;
   }
 
   /**

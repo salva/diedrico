@@ -66,6 +66,8 @@ export interface PrimitiveContext {
   activePlaneId?: string;              // Active plane for visual emphasis (FR-002)
 }
 
+import { resolveVisibility } from '../domain/world/styleService';
+
 /**
  * Service for converting domain entities to Paper primitives
  */
@@ -88,8 +90,8 @@ export class PaperService {
 
       // WALK: Iterate over all points in this plane
       for (const point of plane.getAllPoints()) {
-        // Skip invisible points
-        if (point.visualStyle?.visible === false) continue;
+        // Skip invisible points (Phase 87: Encapsulation support via styleService)
+        if (!resolveVisibility(point, context.world)) continue;
         
         // REALIZE: Compute position (numeric data) from plane - computes and caches
         const realization = plane.realizePoint2D(point, context.world);
@@ -104,8 +106,8 @@ export class PaperService {
       // WALK: Iterate over all lines in this plane (including HalfHingeLine2D)
       // HalfHingeLine2D are Line2D entities with type 'half-hinge'
       for (const line of plane.getAllLines()) {
-        // Skip invisible lines
-        if (line.visualStyle?.visible === false) continue;
+        // Skip invisible lines (Phase 87: Encapsulation support via styleService)
+        if (!resolveVisibility(line, context.world)) continue;
         
         // REALIZE: Compute line equation (numeric data) from plane - computes and caches
         const realization = plane.realizeLine2D(line, context.world);
@@ -129,14 +131,14 @@ export class PaperService {
             primitives.push(primitive);
           }
         } else {
-          console.warn('[PaperService] Skipping line - missing realization');
+          // console.warn('[PaperService] Skipping line - missing realization');
         }
       }
 
       // WALK: Iterate over all circles in this plane
       for (const circle of plane.getAllCircles()) {
-        // Skip invisible circles
-        if (circle.visualStyle?.visible === false) continue;
+        // Skip invisible circles (Phase 87: Encapsulation support via styleService)
+        if (!resolveVisibility(circle, context.world)) continue;
         
         // REALIZE: Compute circle geometry (numeric data) from plane - computes and caches
         const realization = plane.realizeCircle2D(circle, context.world);

@@ -26,6 +26,7 @@ import type { Line2D } from '../domain/world/Line';
 import type { Circle2D } from '../domain/world/Circle';
 import type { ThreeViewDisplayOptions } from '../types/ThreeViewDisplayOptions';
 import { applyMatrix4x3, domainToThreeJS } from '../utils/threeUtils';
+import { resolveVisibility } from '../domain/world/styleService';
 
 /**
  * Material style properties for Three.js rendering
@@ -84,15 +85,15 @@ export class Element2DRenderer3D {
 
     // Render points
     for (const point of plane.getAllPoints()) {
-      // Skip invisible points
-      if (point.visualStyle?.visible === false) continue;
+      // Skip invisible points (Phase 87: Encapsulation support via styleService)
+      if (!resolveVisibility(point, world)) continue;
       this.renderPoint(point, plane, world, isActivePlane);
     }
 
     // Render lines (includes segments, guides, etc.)
     for (const line of plane.getAllLines()) {
-      // Skip invisible lines
-      if (line.visualStyle?.visible === false) continue;
+      // Skip invisible lines (Phase 87: Encapsulation support via styleService)
+      if (!resolveVisibility(line, world)) continue;
       
       // Check if it's a segment (bounded line)
       const realization2D = line.realize2D(world);
@@ -105,8 +106,8 @@ export class Element2DRenderer3D {
 
     // Render circles
     for (const circle of plane.getAllCircles()) {
-      // Skip invisible circles
-      if (circle.visualStyle?.visible === false) continue;
+      // Skip invisible circles (Phase 87: Encapsulation support via styleService)
+      if (!resolveVisibility(circle, world)) continue;
       this.renderCircle(circle, plane, world, isActivePlane);
     }
   }

@@ -1,24 +1,23 @@
 /**
- * ToggleSubprocessVisibilityOp - Toggle visibility of a subprocess
+ * ToggleOutputOp - Toggle "isOutput" status of a node
  */
 
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
-export class ToggleSubprocessVisibilityOp implements IOperation {
-  readonly type = 'ToggleSubprocessVisibility';
+export class ToggleOutputOp implements IOperation {
+  readonly type = 'ToggleOutput';
   parameters: Record<string, any>;
   outputs: Record<string, any> = {};
 
-  constructor(private readonly subprocessId: string) {
-    this.parameters = { subprocessId };
+  constructor(private readonly nodeId: string) {
+    this.parameters = { nodeId };
   }
 
   apply(world: World): OperationResult {
     const processTree = world.getProcessTree();
     try {
-      // Just toggle
-      processTree.toggleSubprocessVisibility(this.subprocessId);
+      processTree.toggleOutput(this.nodeId);
       return { success: true };
     } catch (e: any) {
       return { success: false, error: e.message };
@@ -26,13 +25,12 @@ export class ToggleSubprocessVisibilityOp implements IOperation {
   }
 
   undo(world: World): void {
-    // Inverse of toggle is toggle
     const processTree = world.getProcessTree();
-    processTree.toggleSubprocessVisibility(this.subprocessId);
+    processTree.toggleOutput(this.nodeId);
   }
 
   redo(world: World): void {
     const processTree = world.getProcessTree();
-    processTree.toggleSubprocessVisibility(this.subprocessId);
+    processTree.toggleOutput(this.nodeId);
   }
 }

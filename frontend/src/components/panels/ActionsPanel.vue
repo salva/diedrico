@@ -27,14 +27,16 @@
     </header>
 
     <!-- Process Tree -->
-    <div class="process-tree" :key="treeVersion" ref="treeContainer">
+    <div class="process-tree" ref="treeContainer">
       <ProcessTreeNode
         :node="processTree.root"
+        :data-version="treeVersion"
         :selected-node-id="selectedNodeId"
         :active-subprocess-id="activeSubprocessId"
         :related-action-ids="relatedActionIds"
         @select-node="handleNodeSelect"
-        @toggle-visibility="handleToggleVisibility"
+        @toggle-encapsulate="handleToggleEncapsulate"
+        @toggle-output="handleToggleOutput"
         @highlight-elements="(...args) => emit('highlightElements', ...args)"
         @clear-highlight="emit('clearHighlight')"
         @rename-node="handleRenameNode"
@@ -46,12 +48,14 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import type { World } from '@/domain/world/World';
+import type { ProcessTreeNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTreeNode';
 import type { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
 import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
 import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
-import { ToggleSubprocessVisibilityOp } from '@/commands/operations/processTree/ToggleSubprocessVisibilityOp';
+import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
 
@@ -74,6 +78,7 @@ const treeContainer = ref<HTMLElement | null>(null);
 const selectedNodeId = ref<string | null>(null);
 const relatedActionIds = ref<Set<string>>(new Set());
 const stackVersion = ref(0); // Track stack changes
+const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
 
 // Stack management computed properties
 const canPop = computed(() => {
@@ -118,12 +123,23 @@ onMounted(() => {
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
   
+  // Initialize node count
+  lastNodeCount.value = countNodes(processTree.root);
+
   // Subscribe to ProcessTree changes
   unsubscribeTree = processTree.subscribe(() => {
+    // Check if structure grew
+    const currentCount = countNodes(processTree.root);
+    const shouldScroll = currentCount > lastNodeCount.value;
+    lastNodeCount.value = currentCount;
+
     stackVersion.value++;
-    nextTick(() => {
-      scrollToBottom();
-    });
+
+    if (shouldScroll) {
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }
   });
 });
 
@@ -172,6 +188,19 @@ function findRelatedActions(selectedIds: string[]): void {
   relatedActionIds.value = related;
 }
 
+/**
+ * Recursively count total nodes in the tree
+ */
+function countNodes(node: ProcessTreeNodeType): number {
+  let count = 1;
+  if (node.children) {
+    for (const child of node.children) {
+      count += countNodes(child);
+    }
+  }
+  return count;
+}
+
 // Stack management handlers
 function pushSubprocess() {
   const subprocessName = `Subprocess ${Date.now()}`;
@@ -197,10 +226,19 @@ function handleNodeSelect(nodeId: string) {
   selectedNodeId.value = nodeId === selectedNodeId.value ? null : nodeId;
 }
 
-// Handle visibility toggle
-function handleToggleVisibility(nodeId: string) {
-  const cmd = new Command('Toggle subprocess visibility', world);
-  cmd.addAndExecute(new ToggleSubprocessVisibilityOp(nodeId));
+// Handle encapsulation toggle
+function handleToggleEncapsulate(nodeId: string) {
+  const cmd = new Command('Toggle subprocess encapsulation', world);
+  cmd.addAndExecute(new ToggleEncapsulationOp(nodeId));
+  cmd.commit();
+  commandStack.push(cmd);
+  stackVersion.value++; // Force UI update
+}
+
+// Handle output toggle
+function handleToggleOutput(nodeId: string) {
+  const cmd = new Command('Toggle output status', world);
+  cmd.addAndExecute(new ToggleOutputOp(nodeId));
   cmd.commit();
   commandStack.push(cmd);
   stackVersion.value++; // Force UI update
