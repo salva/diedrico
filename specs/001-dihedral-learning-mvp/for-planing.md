@@ -21,7 +21,6 @@ Note that completing these tasks may require asking the user for additional info
 
 * [ ] When an action group is empty it should become invisible and do not appear in the process tree representation in any way
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
-* [ ] Add a shortcut for changing the active projection plane to the next one. Using Tab for instance.
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
@@ -147,6 +146,11 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **Active Plane Keyboard Shortcuts (Phase 89)** - 📋 PLANNED (Jan 31, 2026)
+  - **Feature**: Tab/Shift+Tab to cycle active projection plane
+  - **Specs**: ui-spec.md (Shortcuts), spec.md (FR-062)
+  - **Tasks**: T1400-T1404 in tasks.md
 
 * [x] **Process Tree View State & Scrolling (Phase 88)** - 📋 PLANNED (Jan 31, 2026)
   - **User Requirement**: "Process Tree keeps the open/close state and the position unchanged when the user clicks on the visibility buttoms. The only automaic change must be scrolling to the bottom when a new entry is added so that it becomes visible."

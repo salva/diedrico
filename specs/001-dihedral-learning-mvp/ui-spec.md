@@ -1789,6 +1789,8 @@ The main viewport is the primary work surface where all geometric constructions 
 **Always-Available Shortcuts**:
 - **Pan**: `Shift + Left Drag` (hold Shift, drag mouse)
 - **Zoom**: `Mouse Wheel` (scroll up = zoom in, scroll down = zoom out)
+- **Next Active Plane**: `Tab` (Cycles active projection plane forward)
+- **Previous Active Plane**: `Shift + Tab` (Cycles active projection plane backward)
 
 **Toolbar Buttons** (for users who prefer explicit controls):
 - **Pan Tool**: Click to activate, then drag without Shift key

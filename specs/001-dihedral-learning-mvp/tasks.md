@@ -10228,3 +10228,19 @@ Files to update:
 - [ ] T1383 **Regression Test**: Manual test - Toggle visibility icons in complex tree, verify scroll position does not jump
 - [ ] T1384 **Regression Test**: Manual test - Add new element, verify scroll to bottom
 - [ ] T1385 **Unit Test**: Test `ProcessTreePanel` scroll logic (mocking scrollHeight/scrollTop)
+
+## Phase 89: Active Plane Keyboard Shortcuts
+**Feature Branch**: `phase-89-active-plane-shortcuts`
+**Status**: 📋 PLANNED (Jan 31, 2026)
+
+- [x] T1400 **Specification**: Update ui-spec.md with new shortcuts (Tab / Shift+Tab)
+- [ ] T1401 **Implementation**: Add global keyboard listener for Tab / Shift+Tab
+  - Handle `Tab` (preventDefault to stop focus traversal if needed, or handle effectively)
+  - Handle `Shift+Tab`
+- [ ] T1402 **Implementation**: Implement `cycleActivePlane(direction: 1|-1)` logic
+  - Retrieve all planes from World (`world.getAllProjectionPlanes()`)
+  - Find current active plane index
+  - Calculate next/prev index (cyclic)
+  - Execute existing `SetActivePlaneOp`
+- [ ] T1403 **E2E Test**: Verify Tab switches to next plane
+- [ ] T1404 **E2E Test**: Verify Shift+Tab switches to previous plane
