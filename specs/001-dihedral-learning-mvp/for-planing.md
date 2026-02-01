@@ -19,36 +19,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [x] **Phase 87: Process Tree Encapsulation (Black Box) UI** - 📋 PLANNED (Jan 31, 2026)
-  - **User Requirement**: "I want a column in the right of the subtree view, where every entry, subprocesses and actions can have its output flag enabled/disabled. Subprocess header rows, must have an additional column to the left of that for the show-intermediate flag. I don't want a specific 'visibility' flag for enabling/disabling the full subtree."
-  - **Concept**: **Black Box Model**
-    - **Scope**: Subprocesses can be "Encapsulated" (hide intermediates).
-    - **Exposure**: Specific items (Actions/Subprocesses) can be marked as "Outputs" (visible even when parent is encapsulated).
-    - **Removal**: The "Master Visibility" toggle for subprocesses is removed. Visibility is now solely determined by the black-box logic (unless the element itself is hidden via properties).
-  - **UI Design**:
-    - **Right Column (All Rows)**: "Output" Toggle (Star Icon ★/☆).
-      - Applies to: Actions and Subprocesses.
-      - Behavior: If set, item remains visible when parent is encapsulated.
-    - **Inner Column (Subprocess Headers)**: "Encapsulate" Toggle (Box/Eye-Slash Icon).
-      - Applies to: Subprocesses only.
-      - Behavior: If set, hides all children *except* those marked as Output.
-      - Visual Feedback: Encapsulated subprocesses might have a distinct style. Hidden items (non-outputs in encapsulated parent) fade out in tree.
-  - **Data Model**:
-    - `Subprocess`:
-      - Remove `visible: boolean`.
-      - Add `hideIntermediates: boolean` (default false).
-      - Add `isOutput: boolean` (default false).
-    - `ActionGroup` / `ActionNode`:
-      - Add `isOutput: boolean` (default true for geometry creating actions? No, default false to force explicit output selection? User said "enabled/disabled", implies explicit. Let's assume default false for "Black Box" purity, or true for convenience. Let's stick to default false for explicit public interface).
-  - **Logic**:
-    - Visibility Calculation: Recursive check up the tree.
-    - If any ancestor has `hideIntermediates == true`, then the current item (or the branch leading to it) MUST have `isOutput == true`.
-  - **Specifications**:
-    - spec.md FR-059 (Subprocess Encapsulation).
-    - ui-spec.md §Process Tree Columns.
-    - data-model.md §Phase 87 Encapsulation Logic.
-  - **Tasks**: tasks.md Phase 87.
-  - **Status**: Planning complete, ready for implementation.
+* [ ] When an action group is empty it should become invisible and do not appear in the process tree representation in any way
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Add a shortcut for changing the active projection plane to the next one. Using Tab for instance.
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
@@ -176,6 +147,51 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **Process Tree View State & Scrolling (Phase 88)** - 📋 PLANNED (Jan 31, 2026)
+  - **User Requirement**: "Process Tree keeps the open/close state and the position unchanged when the user clicks on the visibility buttoms. The only automaic change must be scrolling to the bottom when a new entry is added so that it becomes visible."
+  - **Concept**: **View State Preservation**
+    - **Stability**: Interaction with row controls (Output/ShowIntermediates) must be in-place updates.
+    - **No Reset**: Re-renders triggered by property changes must not reset component state (expansion, scroll).
+  - **Auto-Scroll**:
+    - Triggered ONLY by structural additions (new actions/subprocesses).
+    - Ensures new content is visible.
+  - **Specifications**:
+    - spec.md FR-060, FR-061.
+    - ui-spec.md §Process Tree View State & Scrolling.
+    - data-model.md §Process Tree View Logic.
+  - **Tasks**: tasks.md Phase 88.
+
+* [x] **Phase 87: Process Tree Encapsulation (Black Box) UI** - 📋 PLANNED (Jan 31, 2026)
+  - **User Requirement**: "I want a column in the right of the subtree view, where every entry, subprocesses and actions can have its output flag enabled/disabled. Subprocess header rows, must have an additional column to the left of that for the show-intermediate flag. I don't want a specific 'visibility' flag for enabling/disabling the full subtree."
+  - **Concept**: **Black Box Model**
+    - **Scope**: Subprocesses can be "Encapsulated" (hide intermediates).
+    - **Exposure**: Specific items (Actions/Subprocesses) can be marked as "Outputs" (visible even when parent is encapsulated).
+    - **Removal**: The "Master Visibility" toggle for subprocesses is removed. Visibility is now solely determined by the black-box logic (unless the element itself is hidden via properties).
+  - **UI Design**:
+    - **Right Column (All Rows)**: "Output" Toggle (Star Icon ★/☆).
+      - Applies to: Actions and Subprocesses.
+      - Behavior: If set, item remains visible when parent is encapsulated.
+    - **Inner Column (Subprocess Headers)**: "Encapsulate" Toggle (Box/Eye-Slash Icon).
+      - Applies to: Subprocesses only.
+      - Behavior: If set, hides all children *except* those marked as Output.
+      - Visual Feedback: Encapsulated subprocesses might have a distinct style. Hidden items (non-outputs in encapsulated parent) fade out in tree.
+  - **Data Model**:
+    - `Subprocess`:
+      - Remove `visible: boolean`.
+      - Add `hideIntermediates: boolean` (default false).
+      - Add `isOutput: boolean` (default false).
+    - `ActionGroup` / `ActionNode`:
+      - Add `isOutput: boolean` (default true for geometry creating actions? No, default false to force explicit output selection? User said "enabled/disabled", implies explicit. Let's assume default false for "Black Box" purity, or true for convenience. Let's stick to default false for explicit public interface).
+  - **Logic**:
+    - Visibility Calculation: Recursive check up the tree.
+    - If any ancestor has `hideIntermediates == true`, then the current item (or the branch leading to it) MUST have `isOutput == true`.
+  - **Specifications**:
+    - spec.md FR-059 (Subprocess Encapsulation).
+    - ui-spec.md §Process Tree Columns.
+    - data-model.md §Phase 87 Encapsulation Logic.
+  - **Tasks**: tasks.md Phase 87.
+  - **Status**: Planning complete, ready for implementation.
 
 * [x] **Phase 86: ProcessTree Stack Management UI** - 📋 PLANNED (Jan 27, 2026)
   - **User Requirement**: "Allow closing the last process tree element in the stack, so that the following entries are pushed into the parent (or in a sibling if one is created). Also, the button we have for creating a new entry in the process tree is too big. Probably we want a pair of symmetric buttons (">" and "<" or something similar indicating we move one level in or out respectively)."

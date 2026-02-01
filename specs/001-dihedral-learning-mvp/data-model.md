@@ -16113,3 +16113,36 @@ function migrateVisibilityToElement(element: Element2D, subprocess: Subprocess):
 **Dependencies**: None (purely architectural refactoring)
 
 **Related**: Phase 22 (Element Properties Dialog), Phase 19 (World Elements Panel)
+## Process Tree View Logic (Phase 88)
+
+While the Process Tree data (, , ) tracks the *history*, the presentation layer () must manage transient view state:
+
+- **Expansion State**: Which subprocess nodes are currently expanded/collapsed.
+    - Default: New top-level subprocesses might default to expanded.
+- **Scroll Position**: Vertical scroll offset of the tree container.
+- **Auto-Scroll Logic**:
+    - The UI component watches the  or similar reactive source.
+    - On change detection (length increase), it triggers a DOM scroll to .
+    - Updates to existing items (property changes) MUST NOT trigger this scroll.
+
+**Separation of Concerns**:
+- **Data Model**: Stores , .
+- **View Component**: Stores  (unless we decide to persist it in ).
+- **Mutation Pattern**: Toggling data model properties (via Operations) updates the render, but the Component must ensure its own local state (scroll/expansion) is not reset by the re-render cycle (using proper Vue  attributes and state management).
+
+## Process Tree View Logic (Phase 88)
+
+While the Process Tree data (`ProcessTree`, `Subprocess`, `Action`) tracks the *history*, the presentation layer (`ProcessTreePanel`) must manage transient view state:
+
+- **Expansion State**: Which subprocess nodes are currently expanded/collapsed.
+    - Default: New top-level subprocesses might default to expanded.
+- **Scroll Position**: Vertical scroll offset of the tree container.
+- **Auto-Scroll Logic**:
+    - The UI component watches the `processTree.actions` or similar reactive source.
+    - On change detection (length increase), it triggers a DOM scroll to `scrollHeight`.
+    - Updates to existing items (property changes) MUST NOT trigger this scroll.
+
+**Separation of Concerns**:
+- **Data Model**: Stores `hideIntermediates`, `isOutput`.
+- **View Component**: Stores `isCollapsed` (unless we decide to persist it in `ViewState`).
+- **Mutation Pattern**: Toggling data model properties (via Operations) updates the render, but the Component must ensure its own local state (scroll/expansion) is not reset by the re-render cycle (using proper Vue `key` attributes and state management).

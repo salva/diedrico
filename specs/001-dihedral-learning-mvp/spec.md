@@ -1608,3 +1608,8 @@ These use cases cover primitive user actions and micro-interactions. They are in
 - **SC-002**: For a typical exercise with up to 200 2D elements, 2D navigation (pan/zoom) and hover highlighting provide visible feedback within 200 ms.
 - **SC-003**: Infeasible constructions are understandable: in a usability self-test, at least 90% of infeasible cases can be identified via panel/visual indicators without modal error dialogs.
 - **SC-004**: Project persistence is reliable: after making changes, reopening the project restores the same number of planes/elements/actions and the same visibility states in 100% of trials on a reference test set.
+
+### Process Tree Interaction
+
+- **FR-060**: The Process Tree Panel MUST preserve its view state (scroll position, expanded/collapsed nodes) when users interact with item controls (visibility toggles, output flags, etc.). The view MUST NOT jump or reset during these interactions.
+- **FR-061**: When a new action or subprocess is added to the Process Tree (e.g., via tool execution), the panel MUST automatically scroll to the bottom to ensure the new entry is visible.

@@ -10204,16 +10204,27 @@ Files to update:
 - **Visual Feedback**: Tree items that are implicitly hidden (intermediates in a black box) should fade out.
 - **Persistency**: Ensure flags are saved/loaded.
 
-- [ ] T1378 Modify Subprocess interface: remove visible, add hideIntermediates, isOutput
-- [ ] T1379 Modify ActionGroup/ActionNode interface: add isOutput (default false)
-- [ ] T1380 Update ProcessTree.ts methods (constructor, getters) to support new fields
-- [ ] T1381 Implement `resolveElementVisibility(actionId, processTree)` logic
-- [ ] T1382 Update Element rendering checks to use new visibility logic instead of simple `visible` cascade
-- [ ] T1383 UI: Update ProcessTreePanel columns layout (add right-side slot)
-- [ ] T1384 UI: Implement "Output" toggle component (Star icon)
-- [ ] T1385 UI: Implement "Encapsulate" toggle component (Box/Eye-Slash icon) on Subprocess headers
-- [ ] T1386 UI: Implement fade-out styling for recursive hidden items in the tree
-- [ ] T1387 Migration: Update any existing tests or factories that relied on `subprocess.visible`
+- [x] T1378 Modify Subprocess interface: remove visible, add hideIntermediates, isOutput
+- [x] T1379 Modify ActionGroup/ActionNode interface: add isOutput (default false)
+- [x] T1380 Update ProcessTree.ts methods (constructor, getters) to support new fields
+- [x] T1381 Implement `resolveElementVisibility(actionId, processTree)` logic
+- [x] T1382 Update Element rendering checks to use new visibility logic instead of simple `visible` cascade
+- [x] T1383 UI: Update ProcessTreePanel columns layout (add right-side slot)
+- [x] T1384 UI: Implement "Output" toggle component (Star icon)
+- [x] T1385 UI: Implement "Encapsulate" toggle component (Box/Eye-Slash icon) on Subprocess headers
+- [x] T1386 UI: Implement fade-out styling for recursive hidden items in the tree
+- [x] T1387 Migration: Update any existing tests or factories that relied on `subprocess.visible`
 - [ ] T1388 Unit Test: Recursive visibility logic (nested black boxes)
 - [ ] T1389 Integration Test: Verify canvas elements disappear when parent encapsulated
 - [ ] T1390 Integration Test: Verify output elements remain visible when parent encapsulated
+
+## Phase 88: Process Tree View State & Scrolling
+**Feature Branch**: `phase-88-process-tree-view-state`
+**Status**: 📋 PLANNED (Jan 31, 2026)
+
+- [ ] T1380 **Specification**: Update spec.md (FR-060, FR-061) and ui-spec.md for view state preservation
+- [ ] T1381 **Component Logic**: Verify `ProcessTreeNode` expansion state is strictly local or properly persisted (avoid reset on prop update)
+- [ ] T1382 **Auto-Scroll Implementation**: Implement `scrollToBottom()` logic in `ProcessTreePanel.vue` triggered ONLY by array length changes (new items)
+- [ ] T1383 **Regression Test**: Manual test - Toggle visibility icons in complex tree, verify scroll position does not jump
+- [ ] T1384 **Regression Test**: Manual test - Add new element, verify scroll to bottom
+- [ ] T1385 **Unit Test**: Test `ProcessTreePanel` scroll logic (mocking scrollHeight/scrollTop)

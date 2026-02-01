@@ -2716,3 +2716,13 @@ The following UI state is saved per project to Google Drive and restored on proj
 
 **Version**: 1.0.0  
 **Last Updated**: 2025-12-28
+
+### Process Tree View State & Scrolling Behavior (Phase 88)
+
+- **State Preservation**: 
+    - Interactions with row controls (Output toggle, Show Intermediates toggle) MUST NOT trigger a panel re-layout that resets scroll position or node expansion state.
+    - The tree structure should remain stable.
+- **Auto-Scrolling**:
+    - **Trigger**: Creation of a new Action or Subprocess.
+    - **Behavior**: The panel continuously scrolls or jumps to the bottom to reveal the newly added row.
+    - **Constraint**: This is the *only* automatic scroll event. Toggling visibility or other properties must essentially happen "in place".
