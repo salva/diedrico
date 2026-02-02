@@ -18,7 +18,8 @@ describe('GuideSequenceFactory', () => {
   let verticalPlaneId: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     // Get plane IDs dynamically from initialized world
     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
     verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;

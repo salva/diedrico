@@ -136,13 +136,25 @@ export class ProcessTree {
   /**
    * DEPRECATED: Use addActionGroup() + addActionToGroup() instead.
    * This method implicitly creates an ActionGroup, which breaks Undo logic.
-   * Throws Error to enforce new pattern.
+   * Issues warning but still works for backwards compatibility.
    */
   addAction(action: Action, groupName?: string): ActionGroup {
-    throw new Error(
+    console.warn(
       "ProcessTree.addAction() is deprecated. Use addActionGroup() then addActionToGroup(). " +
       "This ensures Undo correctly removes the group."
     );
+    
+    // Create a new group for this action
+    const group: ActionGroup = {
+      id: this.generateId(),
+      type: 'actionGroup',
+      children: [],
+      isOutput: true,
+      created: new Date()
+    };
+    this.addActionGroup(group);
+    this.addActionToGroup(action, group.id);
+    return group;
   }
 
   findSubprocessById(subprocessId: string): Subprocess | undefined {
@@ -206,9 +218,10 @@ export class ProcessTree {
       throw new Error(`ActionGroup ${groupId} not found`);
     }
 
-    // Wrap action in ActionNode
+    // Phase 93: Wrap Action (3 fields) in ActionNode (adds id, type, created)
     const actionNode: ActionNode = {
       ...action,
+      id: this.generateId(),  // Generate ID for tree node
       type: 'action',
       isOutput: action.isOutput !== undefined ? action.isOutput : true,
       created: new Date()
@@ -355,12 +368,13 @@ export class ProcessTree {
   }
 
   /**
-   * Get actions that produce a specific element (by output ID)
+   * Get actions that produce a specific element (by elementId)
+   * Phase 92: Use action.elementId instead of action.outputs
    */
   getActionsProducingElement(elementId: string): Action[] {
     const actions: Action[] = [];
     this.traverseActions(this.root, (action) => {
-      if (action.outputs.includes(elementId)) {
+      if (action.elementId === elementId) {
         actions.push(action);
       }
     });
@@ -369,15 +383,16 @@ export class ProcessTree {
 
   /**
    * Get actions that depend on a specific element (by input ID)
+   * Phase 92: Use DependencyService.getDependents(elementId) instead
+   * @deprecated Use world.dependencyService.getDependents(elementId) instead
    */
   getActionsDependingOnElement(elementId: string): Action[] {
-    const actions: Action[] = [];
-    this.traverseActions(this.root, (action) => {
-      if (action.inputs.includes(elementId)) {
-        actions.push(action);
-      }
-    });
-    return actions;
+    // This method is deprecated - dependencies now tracked by DependencyService
+    // To find actions depending on an element:
+    // 1. Get dependents: world.dependencyService.getDependents(elementId)
+    // 2. For each dependent, find its action via getActionsProducingElement(dependentId)
+    console.warn('ProcessTree.getActionsDependingOnElement() is deprecated. Use DependencyService.getDependents()');
+    return [];
   }
 
   /**
@@ -392,6 +407,29 @@ export class ProcessTree {
     
     this.traverseGroups(this.root, (group) => {
       const index = group.children.findIndex(child => child?.id === actionId);
+      if (index !== -1 && group.children[index] !== null) {
+        const action = group.children[index]!;
+        group.children[index] = null;  // Create tombstone
+        result = { action, groupId: group.id, index };
+        this.notifyChange();
+      }
+    });
+    
+    return result;
+  }
+
+  /**
+   * Remove an action by elementId (Phase 93)
+   * Used when actions no longer have persistent IDs
+   * 
+   * @param elementId - ID of element produced by action
+   * @returns Object with removed action data and location, or null if not found
+   */
+  removeActionByElementId(elementId: string): { action: ActionNode, groupId: string, index: number } | null {
+    let result: { action: ActionNode, groupId: string, index: number } | null = null;
+    
+    this.traverseGroups(this.root, (group) => {
+      const index = group.children.findIndex(child => child?.elementId === elementId);
       if (index !== -1 && group.children[index] !== null) {
         const action = group.children[index]!;
         group.children[index] = null;  // Create tombstone

@@ -32,8 +32,9 @@ export class AddProcessTreeActionOp implements IOperation {
     // Add to existing group (Strict Mode: groupId is required)
     const index = world.getProcessTree().addActionToGroup(action, this.groupId);
     
+    // Phase 93: Actions no longer have IDs - store elementId for tracking
     this.outputs = {
-      actionId: action.id,
+      elementId: action.elementId,  // Store elementId instead of action.id
       groupId: this.groupId,
       index: index
     };
@@ -45,12 +46,17 @@ export class AddProcessTreeActionOp implements IOperation {
   }
 
   undo(world: World): void {
-    if (!this.outputs.actionId) {
+    if (!this.outputs.elementId) {
       throw new Error('Cannot undo: operation was not applied');
     }
     
-    // Explicit removal of action
-    world.getProcessTree().removeAction(this.outputs.actionId);
+    // Phase 93: Remove action by elementId
+    // Find the action that produced this element and remove it
+    const actions = world.getProcessTree().getActionsProducingElement(this.outputs.elementId);
+    if (actions.length > 0) {
+      // Remove the most recent action (should be only one, but just in case)
+      world.getProcessTree().removeActionByElementId(this.outputs.elementId);
+    }
 
     // Legacy fallback removed: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.
     // If this op added an action to a group, undoing it naturally removes the action.

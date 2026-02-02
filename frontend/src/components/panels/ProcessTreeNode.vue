@@ -302,7 +302,9 @@ function handleActionClick() {
   
   emit('selectNode', props.node.id);
   
-  const elementIds = [...props.node.inputs, ...props.node.outputs];
+  // Phase 93: Actions only have elementId (single output element)
+  // For inputs, we'd need to query DependencyService (future enhancement)
+  const elementIds = [props.node.elementId];
   if (elementIds.length > 0) {
     emit('highlightElements', elementIds, false);
   }
@@ -312,7 +314,8 @@ function handleActionHover(isHovering: boolean) {
   if (props.node.type !== 'action') return;
   
   if (isHovering && !isSelected.value) {
-    const elementIds = [...props.node.inputs, ...props.node.outputs];
+    // Phase 93: Actions only have elementId (single output element)
+    const elementIds = [props.node.elementId];
     if (elementIds.length > 0) {
       emit('highlightElements', elementIds, true);
     }

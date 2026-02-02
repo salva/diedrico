@@ -99,13 +99,7 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
     const lineId = result.outputs.lineId;
     
     // Record ProcessTree action
-    const action = createTangentLineToCircleParallelToLineAction(
-      lineId,
-      planeId,
-      circleId,
-      referenceLineId,
-      tangentIndex
-    );
+    const action = createTangentLineToCircleParallelToLineAction(lineId);
     
     const groupId = `group_${Date.now()}_tangent_par`;
     const group = createActionGroup(groupId);

@@ -126,8 +126,10 @@ export class Circle2DByCenterAndPoint extends Circle2D {
    * The edge point (circumferencePointId) defines:
    * - Radius magnitude: distance from center
    * - Angle 0: direction from center to edge point
+   * 
+   * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: import('./World').World): Circle2DRealization2D | null {
+  realize2D(world: import('./World').World): Circle2DRealization2D {
     // Get both point realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
     const centerPoint = plane.getPoint(this.centerPointId);
@@ -143,10 +145,6 @@ export class Circle2DByCenterAndPoint extends Circle2D {
     
     const centerRealization = centerPoint.realize2D(world);
     const circumferenceRealization = circumferencePoint.realize2D(world);
-
-    if (!centerRealization || !circumferenceRealization) {
-      return null;  // Cannot compute circle without both points
-    }
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!centerRealization.feasible || !circumferenceRealization.feasible) {
@@ -224,8 +222,10 @@ export class Circle2DByThreePoints extends Circle2D {
    * 1. Find perpendicular bisectors of two sides
    * 2. Find intersection = center
    * 3. Radius vector = point1 - center (defines both radius and angle 0)
+   * 
+   * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: import('./World').World): Circle2DRealization2D | null {
+  realize2D(world: import('./World').World): Circle2DRealization2D {
     // Get all three point realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
     const point1 = plane.getPoint(this.point1Id);
@@ -246,10 +246,6 @@ export class Circle2DByThreePoints extends Circle2D {
     const p1Realization = point1.realize2D(world);
     const p2Realization = point2.realize2D(world);
     const p3Realization = point3.realize2D(world);
-
-    if (!p1Realization || !p2Realization || !p3Realization) {
-      return null;  // Cannot compute circle without all three points
-    }
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible || !p3Realization.feasible) {

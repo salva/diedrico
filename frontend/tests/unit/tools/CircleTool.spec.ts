@@ -13,9 +13,10 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CircleTool } from '@/tools/CircleTool';
-import { World } from '@/domain/world/World';
-import { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import type { ToolContext } from '@/tools/ITool';
@@ -31,8 +32,9 @@ describe('CircleTool', () => {
 
   beforeEach(() => {
     tool = new CircleTool();
-    world = new World();
-    commandStack = new CommandStack();
+    const { world: w, commandStack: cs } = createTestWorld();
+    world = w;
+    commandStack = cs;
     paper = new Paper();
     
     // Get actual plane ID from initialized world

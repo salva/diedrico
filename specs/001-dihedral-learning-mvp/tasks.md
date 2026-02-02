@@ -10260,3 +10260,489 @@ Files to update:
 - [ ] T1505 **Element Interface**: Add `getDependencies(): string[]` to `Element` (abstract) and implement in ALL 2D/3D subclasses.
 - [ ] T1506 **World Integration**: Update `World.addElement` and `World.removeElement` (and specialized methods like `addPoint`, etc. if they exist) to update `DependencyService`.
 - [ ] T1507 **Remove ProcessTree Dependency**: Remove the code in `World.ts` that rebuilds valid dependency maps from ProcessTree.
+---
+
+## Phase 92: Rationalize ConstructiveAction Data Model
+
+**Purpose**: Remove redundant data from ConstructiveAction interface - dependencies now in DependencyService (Phase 91), construction parameters already in element properties
+
+**Reference**: [data-model.md Phase 92](./data-model.md#phase-92---constructiveaction-data-model-rationalization)
+
+**Implementation Requirements**:
+- Remove `inputs`, `outputs`, `parameters` fields from ConstructiveAction interface
+- Add `elementId` field to track primary output element
+- Update all 24 action factory functions to minimal signature (only elementId needed)
+- Update code reading from actions to query elements and DependencyService instead
+- Ensure ProcessTree display/serialization works with new format
+
+**Affected Action Factories** (24 total):
+- CreatePointAction (FreePoint, IntersectionPoint, Midpoint, etc.)
+- CreateLineAction (Segment, Line, ParallelLine, PerpendicularLine, etc.)
+- CreateCircleAction (CenterRadius, CenterPoint, ThreePoints)
+- Element3DActions (Add3DPoint, Add3DLine, Add3DPlane)
+- Guide/Transport actions
+
+### Subtask Group: Update Action Interface and Types
+
+- [ ] T1600 **Update Action Interface**: Modify `frontend/src/domain/processTree/Action.ts`
+  - Remove fields: `inputs: ElementId[]`, `outputs: ElementId[]`, `parameters: Record<string, any>`
+  - Add field: `elementId: string` (primary output element for lookup)
+  - Add field: `description: string` (human-readable action narrative)
+  - Keep fields: `id`, `type`, `actionType`, `timestamp`, `visualStyle`, `isOutput`
+
+### Subtask Group: Update Action Factory Functions
+
+- [ ] T1601 [P] **Update CreatePointAction**: Refactor `frontend/src/domain/processTree/actions/CreatePointAction.ts`
+  - Change signature: `createFreePointAction(pointId: string)` (remove planeId, position params)
+  - Remove inputs/outputs/parameters from action object
+  - Add elementId and description fields
+
+- [ ] T1602 [P] **Update CreateLineAction**: Refactor `frontend/src/domain/processTree/actions/CreateLineAction.ts`
+  - Change signature: `createLineAction(lineId: string)` (remove planeId, point1Id, point2Id params)
+  - Remove inputs/outputs/parameters from action object
+  - Add elementId and description fields
+
+- [ ] T1603 [P] **Update CreateCircleAction**: Refactor `frontend/src/domain/processTree/actions/CreateCircleAction.ts`
+  - Change signature: `createCircleAction(circleId: string)` (remove planeId, centerId, radiusPointId params)
+  - Remove inputs/outputs/parameters from action object
+  - Add elementId and description fields
+
+- [ ] T1604 [P] **Update Element3DActions**: Refactor `frontend/src/domain/processTree/actions/Element3DActions.ts`
+  - Update all 3D action factories (Add3DPoint, Add3DLine, Add3DPlane) to minimal signature
+  - Remove inputs/outputs/parameters from action objects
+  - Add elementId and description fields
+
+- [ ] T1605 [P] **Update Guide/Transport Actions**: Refactor guide and transport action factories
+  - `createGuideAction`, `createTransportPointAction`, etc. - minimal signatures
+  - Remove inputs/outputs/parameters from action objects
+  - Add elementId and description fields
+
+- [ ] T1606 **Audit All Action Factories**: Search for remaining action factory functions
+  - Use grep to find all `function create.*Action` patterns
+  - Ensure all 24 factories updated to new signature
+  - Document any missed factories
+
+### Subtask Group: Update Operation Calls to Action Factories
+
+- [ ] T1607 **Update Point Operations**: Modify all operations creating points
+  - `AddFreePoint2DOp`, `AddIntersectionPoint2DOp`, `AddMidpoint2DOp`, etc.
+  - Change action factory calls: pass only elementId (e.g., `createFreePointAction(pointId)`)
+  - Remove planeId, position, intersection params from factory calls
+
+- [ ] T1608 **Update Line Operations**: Modify all operations creating lines
+  - `AddSegment2DOp`, `AddLine2DOp`, `AddParallelLine2DOp`, etc.
+  - Change action factory calls: pass only elementId (e.g., `createLineAction(lineId)`)
+  - Remove planeId, point1Id, point2Id params from factory calls
+
+- [ ] T1609 **Update Circle Operations**: Modify all operations creating circles
+  - `AddCircle2DCenterRadiusOp`, `AddCircle2DCenterPointOp`, etc.
+  - Change action factory calls: pass only elementId (e.g., `createCircleAction(circleId)`)
+  - Remove planeId, centerId, radiusPointId params from factory calls
+
+- [ ] T1610 **Update 3D Element Operations**: Modify all operations creating 3D elements
+  - `Add3DPointOp`, `Add3DLineOp`, `Add3DPlaneOp`, etc.
+  - Change action factory calls: pass only elementId
+  - Remove all construction parameter passing
+
+### Subtask Group: Update Code Reading from Actions
+
+- [ ] T1611 **Audit Action Data Access**: Search codebase for reads of `action.inputs`, `action.outputs`, `action.parameters`
+  - Use grep: `action\.(inputs|outputs|parameters)`
+  - Identify all locations reading these fields
+  - Document replacement patterns needed
+
+- [ ] T1612 **Update ProcessTree Display**: Modify `frontend/src/components/ProcessTreePanel.vue` (or similar)
+  - Replace `action.outputs[0]` with `action.elementId`
+  - Replace `action.inputs` with `world.dependencyService.getDependencies(action.elementId)`
+  - Replace `action.parameters.X` with `element.X` (query element properties)
+
+- [ ] T1613 **Update ProcessTree Serialization**: Modify `frontend/src/services/ProjectService.ts`
+  - Update ProcessTree save format (remove inputs/outputs/parameters)
+  - Add migration logic for loading old format (read old fields, verify, discard)
+  - Ensure new saves use rationalized format only
+
+- [ ] T1614 **Update History/Undo Display**: Search for any UI showing action details
+  - Replace references to action.inputs/outputs/parameters
+  - Query elements and DependencyService for display data
+
+### Subtask Group: Testing
+
+- [ ] T1615 **Unit Test Action Interface**: Test `frontend/tests/unit/domain/processTree/Action.spec.ts`
+  - Verify action factories produce correct minimal structure
+  - Verify elementId field present
+  - Verify inputs/outputs/parameters absent
+
+- [ ] T1616 **Unit Test Data Access Patterns**: Test action data retrieval
+  - Create action with factory, verify elementId
+  - Query element properties, verify accessible
+  - Query DependencyService.getDependencies(), verify correct inputs
+  - Verify no data loss compared to old format
+
+- [ ] T1617 **Integration Test ProcessTree Operations**: Test `frontend/tests/integration/processTree/operations.spec.ts`
+  - Create points/lines/circles via operations
+  - Verify actions registered in ProcessTree
+  - Verify actions have elementId field
+  - Verify element data accessible via World queries
+
+- [ ] T1618 **Integration Test ProcessTree Serialization**: Test `frontend/tests/integration/services/ProjectService.spec.ts`
+  - Save project with new action format
+  - Load project, verify actions deserialized correctly
+  - Test old format migration (load old project, verify data integrity)
+
+- [ ] T1619 **E2E Test ProcessTree Display**: Test `frontend/tests/e2e/processTree.spec.ts`
+  - Create construction with multiple operations
+  - Open ProcessTree panel
+  - Verify actions display correctly (element IDs, descriptions)
+  - Verify clicking action selects element
+  - Verify action details show correct dependencies
+
+- [ ] T1620 **Regression Test All Existing Tests**: Run full test suite
+  - Fix any tests reading action.inputs/outputs/parameters
+  - Update test assertions to new action structure
+  - Verify no functionality broken
+
+### Subtask Group: Documentation and Cleanup
+
+- [ ] T1621 **Update Code Comments**: Review action-related code
+  - Remove obsolete comments about inputs/outputs/parameters
+  - Add comments explaining data access patterns (query elements/DependencyService)
+  - Document elementId field usage
+
+- [ ] T1622 **Update Type Definitions**: Ensure TypeScript errors caught
+  - Remove inputs/outputs/parameters from ConstructiveAction type
+  - Fix all type errors in affected files
+  - Verify strict mode compliance
+
+- [ ] T1623 **Performance Audit**: Measure ProcessTree operations performance
+  - Profile action creation time (should be faster - less data copying)
+  - Profile ProcessTree serialization (should be smaller JSON)
+  - Profile action data access (element queries should be cached)
+
+---
+
+## Test Infrastructure Fixes (Jan 2026)
+
+### Background
+
+After Phase 92 completion, test suite showed 509 failures across 47 test files. Root cause: Since Phase 47, `World()` constructor creates empty world. Tests expect `new World()` to have P_H/P_V projection planes pre-initialized.
+
+### Solution Approach
+
+Create `createTestWorld()` helper function that returns fully initialized World with CommandStack. See [data-model.md](data-model.md#test-infrastructure-pattern) for detailed rationale.
+
+### Subtask Group: Test Helper Implementation
+
+- [ ] T1625 **Create createTestWorld() Helper**: Implement test helper function
+  - File: `frontend/tests/helpers/worldHelper.ts`
+  - Function: `createTestWorld(): { world: World; commandStack: CommandStack }`
+  - Implementation: Create World, create CommandStack, call world.initialize(commandStack), return both
+  - Add JSDoc documentation with usage example
+
+- [ ] T1626 **Add Test Helper Export**: Update test helper barrel export
+  - File: `frontend/tests/helpers/index.ts` (if exists, else skip)
+  - Export createTestWorld function
+  - Document in test README (if exists)
+
+### Subtask Group: Fix Integration Tests (5 files)
+
+- [ ] T1627 **Fix AllFactories.spec.ts**: Update to use createTestWorld()
+  - Replace `new World()` with `const { world, commandStack } = createTestWorld()`
+  - Update all test cases to use destructured world/commandStack
+  - Verify factory tests pass
+
+- [ ] T1628 **Fix projectService.cascadeDeletion.spec.ts**: Update to use createTestWorld()
+  - Replace all World instantiations
+  - Update deletion tests to verify initialization preserved
+
+- [ ] T1629 **Fix projectService.determinism.spec.ts**: Update to use createTestWorld()
+  - Replace World instantiations in determinism tests
+  - Ensure serialization tests include initialization
+
+- [ ] T1630 **Fix semanticReferences.spec.ts**: Update to use createTestWorld()
+  - Tests explicitly verify semantic accessors (P_H, P_V, etc.)
+  - Replace `new World()` with createTestWorld()
+  - Should immediately fix most failures
+
+- [ ] T1631 **Fix worldInitialization.spec.ts**: **Special Case** - Keep explicit initialization
+  - These tests verify initialization behavior itself
+  - Keep `new World()` constructor calls
+  - Add explicit `world.initialize(commandStack)` calls
+  - Tests should verify initialization creates correct elements
+  - Document why not using helper (testing initialization itself)
+
+### Subtask Group: Fix Command Tests (12 files)
+
+- [ ] T1632 **Fix createCircle.spec.ts**: Update to use createTestWorld()
+- [ ] T1633 **Fix createFreePoint.spec.ts**: Update to use createTestWorld()
+- [ ] T1634 **Fix createGuide.spec.ts**: Update to use createTestWorld()
+- [ ] T1635 **Fix createIntersectionPoint.spec.ts**: Update to use createTestWorld()
+- [ ] T1636 **Fix createLine.spec.ts**: Update to use createTestWorld()
+- [ ] T1637 **Fix createSegment.spec.ts**: Update to use createTestWorld()
+- [ ] T1638 **Fix GuideSequenceFactory.spec.ts**: Update to use createTestWorld()
+- [ ] T1639 **Fix IntersectionSequenceFactory.spec.ts**: Update to use createTestWorld()
+- [ ] T1640 **Fix initializationOps.spec.ts**: **Special Case** - Tests initialization operations
+  - Keep `new World()` for testing initialization ops
+  - Add explicit operation execution
+  - Document special case
+- [ ] T1641 **Fix initializeWorldCommand.spec.ts**: **Special Case** - Tests initialization command
+  - Keep `new World()`, test command explicitly
+  - Document special case
+- [ ] T1642 **Fix removeElementOps.spec.ts**: Update to use createTestWorld()
+- [ ] T1643 **Fix updateFreePoint2DPositionOp.spec.ts**: Update to use createTestWorld()
+
+### Subtask Group: Fix Component Tests (3 files)
+
+- [ ] T1644 **Fix actionsPanel.spec.ts**: Update to use createTestWorld()
+  - Component tests need initialized world for rendering
+  - May need to mount component with world prop
+
+- [ ] T1645 **Fix elementsPanel.spec.ts**: Update to use createTestWorld()
+  - Element panel needs elements to display
+  - Verify panel renders P_H, P_V planes
+
+- [ ] T1646 **Fix propertiesDialog.spec.ts**: Update to use createTestWorld()
+  - Properties dialog needs elements to show properties
+  - Verify dialog works with initialized elements
+
+### Subtask Group: Fix Domain Tests (15 files)
+
+- [ ] T1647 **Fix Line3DReconstruction.test.ts**: Update to use createTestWorld()
+- [ ] T1648 **Fix Plane3DFromTraces.test.ts**: Update to use createTestWorld()
+- [ ] T1649 **Fix Point3DReconstruction.test.ts**: Update to use createTestWorld()
+- [ ] T1650 **Fix circle.spec.ts**: Update to use createTestWorld()
+- [ ] T1651 **Fix element2d.spec.ts**: Update to use createTestWorld()
+- [ ] T1652 **Fix guide.spec.ts**: Update to use createTestWorld()
+- [ ] T1653 **Fix line.spec.ts**: Update to use createTestWorld()
+- [ ] T1654 **Fix lineHierarchy.spec.ts**: Update to use createTestWorld()
+- [ ] T1655 **Fix paperHitTesting.spec.ts**: Update to use createTestWorld()
+- [ ] T1656 **Fix point.spec.ts**: Update to use createTestWorld()
+- [ ] T1657 **Fix projectionPlaneRealization.spec.ts**: Update to use createTestWorld()
+- [ ] T1658 **Fix segment.spec.ts**: Update to use createTestWorld()
+- [ ] T1659 **Fix tangentLine.spec.ts**: Update to use createTestWorld()
+- [ ] T1660 **Fix world.spec.ts**: Update to use createTestWorld()
+  - Some tests may verify World behavior - keep `new World()` where appropriate
+  - Document any special cases
+
+- [ ] T1661 **Fix processTree.spec.ts**: Update to use createTestWorld()
+- [ ] T1662 **Fix projectionPlane.spec.ts**: Update to use createTestWorld()
+
+### Subtask Group: Fix Service Tests (5 files)
+
+- [ ] T1663 **Fix ProjectService.selfContainment.spec.ts**: Update to use createTestWorld()
+- [ ] T1664 **Fix dependencyService.spec.ts** (unit/services/): Update to use createTestWorld()
+- [ ] T1665 **Fix googleDriveService.spec.ts**: Update to use createTestWorld()
+  - May need initialized world for serialization tests
+- [ ] T1666 **Fix paperService.spec.ts**: Update to use createTestWorld()
+- [ ] T1667 **Fix renderService.spec.ts**: Update to use createTestWorld()
+
+### Subtask Group: Fix Tool Tests (2 files)
+
+- [ ] T1668 **Fix CircleTool.spec.ts**: Update to use createTestWorld()
+- [ ] T1669 **Fix pointTool.spec.ts**: Update to use createTestWorld()
+
+### Subtask Group: Fix Coordinate Transform Tests (3 files)
+
+- [ ] T1670 **Fix coordinateTransform.spec.ts** (unit/): Update to use createTestWorld()
+- [ ] T1671 **Fix utils/coordinateTransform.spec.ts**: Update to use createTestWorld()
+
+### Subtask Group: Fix Remaining Tests (2 files)
+
+- [ ] T1672 **Fix dependencyService.spec.ts** (unit/): Update to use createTestWorld()
+  - Note: May be duplicate of T1664
+- [ ] T1673 **Fix selectionMask.spec.ts**: Update to use createTestWorld()
+
+### Subtask Group: Verification and Commit
+
+- [ ] T1674 **Run Full Test Suite**: Verify all fixes work
+  - Run `npm test` in frontend
+  - Expected: 0 failures related to "Projection plane not found"
+  - Expected: ~1234 tests passing (651 + 509 fixed + any new failures addressed)
+  - Document any remaining failures with root cause
+
+- [ ] T1675 **Commit Test Fixes**: Create commit with test infrastructure changes
+  - Add createTestWorld() helper
+  - Update 47 test files
+  - Commit message: "test: Fix unit tests with proper world initialization helper"
+  - Body: Describe problem (Phase 47 explicit init), solution (helper), impact (47 files, 509 tests fixed)
+
+---
+
+## Phase 93: Action Interface Minimization (T1676-T1700)
+
+**Goal**: Eliminate redundant fields from Action interface, implement generic action factory, flatten serialization to reduce bloat by 40%
+
+**Status**: 📋 PLANNED (Feb 2, 2026)
+
+### 93.1 - Planning and Documentation (T1676-T1678)
+
+- [ ] T1676 **Update spec.md**: Add Phase 93 technical note to §Constructive Actions
+  - Explain minimal Action interface (4 fields only)
+  - Reference data-model.md for architecture details
+
+- [ ] T1677 **Document data-model.md Phase 93**: Complete architecture specification (~500 lines)
+  - Problem: Redundant fields (id, type, timestamp), 30+ factories, nested serialization
+  - Solution: Minimal interface (4 fields), generic factory, flat serialization
+  - Migration strategy (7 sub-phases)
+  - Data access patterns before/after
+  - Benefits: 50% smaller interface, 40% smaller JSON, code deduplication
+
+- [ ] T1678 **Create tasks.md Phase 93**: Break down into 25 tasks
+  - Planning (3 tasks)
+  - Interface refactoring (3 tasks)
+  - Serialization flattening (3 tasks)
+  - Migration (3 tasks)
+  - Factory consolidation (5 tasks)
+  - Testing (7 tasks)
+  - Final cleanup (1 task)
+
+### 93.2 - Action Interface Refactoring (T1679-T1681)
+
+- [ ] T1679 **Remove redundant fields from Action interface**:
+  - File: `frontend/src/domain/processTree/Action.ts`
+  - Remove fields: `id`, `type`, `timestamp`
+  - Keep fields: `actionType`, `elementId`, `description`, `isOutput`
+  - Update JSDoc comments to explain removed fields moved to ActionNode
+  - Verify ActionNode still has `id`, `type`, `created` fields
+
+- [ ] T1680 **Implement generic createAction() factory**:
+  - File: `frontend/src/domain/processTree/actions/ActionFactory.ts` (NEW)
+  - Create generic factory: `createAction(actionType, elementId, description?)`
+  - Returns minimal 4-field Action object
+  - Default description: `"Created ${elementId}"`
+  - Default isOutput: `false`
+  - Export ActionType enum for TypeScript type safety
+
+- [ ] T1681 **Update ProcessTree.addActionToGroup to wrap Action in ActionNode**:
+  - File: `frontend/src/domain/processTree/ProcessTree.ts`
+  - Add id, type, created fields when wrapping Action
+  - Verify ActionNode has all 7 fields (4 from Action + 3 from ProcessNodeBase)
+  - Update JSDoc to explain ActionNode wrapping
+
+### 93.3 - Action Factory Consolidation (T1682-T1686)
+
+- [ ] T1682 **Refactor point action factories to call generic factory**:
+  - Files: `frontend/src/domain/processTree/actions/CreatePointAction.ts`, `CreateIntersectionPointAction.ts`, `CreatePointOnElementAction.ts`
+  - Change from direct construction to `return createAction('CreateFreePoint', pointId, ...)`
+  - Preserve existing function signatures
+  - Import generic `createAction` from ActionFactory
+
+- [ ] T1683 **Refactor line/segment action factories**:
+  - Files: `CreateLineAction.ts`, `CreateSegmentAction.ts`
+  - Delegate to generic `createAction()`
+  - Keep convenience wrappers for backward compatibility
+
+- [ ] T1684 **Refactor circle/guide action factories**:
+  - Files: `CreateCircleAction.ts`, `CreateGuideAction.ts`, `CreatePerpendicularLineAction.ts`
+  - Delegate to generic `createAction()`
+
+- [ ] T1685 **Refactor 3D element action factories**:
+  - Files: `Create3DPointAction.ts`, `Create3DLineAction.ts`, etc.
+  - Delegate to generic `createAction()`
+
+- [ ] T1686 **Refactor initialization action factories**:
+  - Files: `InitializeProjectionPlaneAction.ts`, `InitializeHingeLineAction.ts`, etc.
+  - Delegate to generic `createAction()`
+  - Update all 30+ factory files to use generic factory internally
+
+### 93.4 - Flatten AddProcessTreeActionOp Serialization (T1687-T1689)
+
+- [ ] T1687 **Flatten AddProcessTreeActionOp constructor**:
+  - File: `frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts`
+  - Change from `parameters: { action: action, groupId: groupId }`
+  - To: `parameters: { actionType, elementId, description, isOutput, groupId }`
+  - Spread action fields directly into parameters (no wrapper)
+
+- [ ] T1688 **Update AddProcessTreeActionOp.apply() to reconstruct Action from flat fields**:
+  - Reconstruct: `const action: Action = { actionType: params.actionType, ... }`
+  - Pass reconstructed Action to ProcessTree.addActionToGroup()
+  - Update outputs to use elementId (no separate action.id)
+
+- [ ] T1689 **Implement AddProcessTreeActionOp.serialize() for flat structure**:
+  - Return `{ opType: 'AddProcessTreeActionOp', ...this.parameters }`
+  - Spread parameters directly (already flat)
+  - Verify no nested `action` wrapper object
+
+### 93.5 - ProjectService Serialization Updates (T1690-T1692)
+
+- [ ] T1690 **Update ProjectService.serializeCommands for flat action format**:
+  - File: `frontend/src/services/ProjectService.ts`
+  - Verify operations serialize with flat structure
+  - Test with AddProcessTreeActionOp serialization
+
+- [ ] T1691 **Update ProjectService.deserializeCommands to handle flat format**:
+  - Detect format: Check for `actionType` field directly (flat) vs `action` wrapper (old)
+  - Parse flat format: Extract actionType, elementId, description, isOutput directly
+  - Construct AddProcessTreeActionOp from flat parameters
+
+- [ ] T1692 **Add migration for old nested action format**:
+  - If `serializedOp.action` exists (old format), extract fields
+  - Flatten: `{ actionType: op.action.actionType, elementId: op.action.elementId, ... }`
+  - Discard removed fields: `id`, `type`, `timestamp`
+  - Construct operation from flattened parameters
+  - Test with old project files
+
+### 93.6 - Testing (T1693-T1699)
+
+- [ ] T1693 **Unit tests: Generic createAction() factory**:
+  - Test with all ActionType values (CreateFreePoint, CreateLine, CreateCircle, etc.)
+  - Test default description generation
+  - Test custom description
+  - Test isOutput defaults to false
+  - Verify 4-field output structure
+
+- [ ] T1694 **Unit tests: Action factory wrappers**:
+  - Test createPointAction() delegates to createAction()
+  - Test createLineAction() produces correct actionType
+  - Test all 30+ wrapper functions
+  - Verify backward compatibility (same signatures)
+
+- [ ] T1695 **Unit tests: AddProcessTreeActionOp flat serialization**:
+  - Test constructor flattens action fields
+  - Test serialize() returns flat structure (no `action` wrapper)
+  - Test apply() reconstructs Action from flat parameters
+  - Test undo() removes by elementId
+
+- [ ] T1696 **Integration tests: ProjectService serialization**:
+  - Test serializeCommands produces flat action structure
+  - Inspect JSON: Verify no nested `action` wrapper
+  - Measure JSON size reduction (should be ~40% smaller)
+
+- [ ] T1697 **Integration tests: ProjectService deserialization**:
+  - Test deserializeCommands handles new flat format
+  - Create project with actions, save, reload
+  - Verify actions reconstructed correctly with 4 fields
+
+- [ ] T1698 **Migration tests: Old project file compatibility**:
+  - Create test fixture with old nested action format
+  - Load old project through deserializeCommands
+  - Verify migration: Action has 4 fields, id/type/timestamp removed
+  - Verify resave produces new flat format
+
+- [ ] T1699 **Regression tests: ProcessTree display and interaction**:
+  - Verify ActionPanel displays actions correctly
+  - Verify hover highlighting finds actions by elementId
+  - Verify expand/collapse works
+  - Verify undo/redo preserves action history
+  - Run full test suite to catch regressions
+
+### 93.7 - Final Cleanup and Commit (T1700)
+
+- [ ] T1700 **Final commit: Phase 93 - Action Interface Minimization**:
+  - Run full test suite (all tests pass)
+  - Verify serialization: Create project, save, inspect JSON (flat structure)
+  - Verify migration: Load old project file, verify correct parsing
+  - Update CHANGELOG.md with Phase 93 summary
+  - Commit message: "refactor(actions): Minimize Action interface and flatten serialization (Phase 93)"
+  - Body:
+    - Remove redundant fields: id, type, timestamp (4 fields remain)
+    - Generic createAction() factory replaces 30+ specialized factories
+    - Flatten AddProcessTreeActionOp serialization (40% smaller JSON)
+    - Add migration for old nested action format
+    - Backward compatible: All wrapper functions preserved
+    - Breaking: Action interface no longer has id/type/timestamp (use ActionNode)
+
+**Checkpoint**: ✅ Action interface minimal (4 fields), serialization flat (40% smaller), generic factory implemented
+
+---
+
+**Checkpoint**: ✅ ConstructiveAction stores only construction narrative, structural data derived from elements and DependencyService

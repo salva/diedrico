@@ -19,7 +19,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PointTool } from '@/tools/PointTool';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../helpers/worldHelpers';
 import { CommandStack } from '@/commands/CommandStack';
 import type { ToolContext } from '@/tools/ITool';
 import { Vector3 } from 'three';
@@ -31,8 +32,9 @@ describe.skip('Integration: Point Creation Full Stack', () => {
 
   beforeEach(() => {
     tool = new PointTool();
-    world = new World();
-    commandStack = new CommandStack();
+    const testWorld = createTestWorld();
+    world = testWorld.world;
+    commandStack = testWorld.commandStack;
   });
 
   describe('Full Stack Flow', () => {

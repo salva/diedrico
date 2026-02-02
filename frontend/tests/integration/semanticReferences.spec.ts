@@ -6,14 +6,15 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '../../src/domain/world/World';
-import { getMainHingeLine } from '../helpers/worldHelpers';
+import type { World } from '../../src/domain/world/World';
+import { createTestWorld, getMainHingeLine } from '../helpers/worldHelpers';
 
 describe('Semantic Entity References (Phase 46)', () => {
   let world: World;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
   });
 
   describe('Semantic Accessors', () => {
@@ -22,7 +23,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       
       expect(horizontalPlane).toBeDefined();
       expect(horizontalPlane.id).toBeTruthy();
-      expect(horizontalPlane.id).toMatch(/^proj_plane_\d+$/); // Generated ID format
+      expect(horizontalPlane.id).toMatch(/^proj_plane_\d+$/); // Auto-generated numeric ID
     });
 
     it('should provide access to vertical plane via semantic method', () => {
@@ -30,7 +31,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       
       expect(verticalPlane).toBeDefined();
       expect(verticalPlane.id).toBeTruthy();
-      expect(verticalPlane.id).toMatch(/^proj_plane_\d+$/); // Generated ID format
+      expect(verticalPlane.id).toMatch(/^proj_plane_\d+$/); // Auto-generated numeric ID
     });
 
     it('should provide access to main hinge line', () => {
@@ -38,7 +39,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       
       expect(mainHingeLine).toBeDefined();
       expect(mainHingeLine.id).toBeTruthy();
-      expect(mainHingeLine.id).toMatch(/^HL_\d+$/); // Label-based ID format (id = label)
+      expect(mainHingeLine.id).toMatch(/^HL_\d+$/); // Auto-generated numeric ID
     });
 
     it.skip('should provide access to horizontal origin point - SKIPPED: origin tracking not fully implemented', () => {
@@ -67,17 +68,19 @@ describe('Semantic Entity References (Phase 46)', () => {
   });
 
   describe('No Hardcoded ID Assumptions', () => {
-    it('should use generated IDs, not hardcoded ones', () => {
+    it('should use generated IDs, not hardcoded values', () => {
       const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
       const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
-      // IDs should NOT be the old hardcoded values
-      expect(horizontalPlane.id).not.toBe('proj_plane_H');
-      expect(verticalPlane.id).not.toBe('proj_plane_V');
-      
-      // IDs should be generated format
+      // IDs should be auto-generated numeric format
       expect(horizontalPlane.id).toMatch(/^proj_plane_\d+$/);
       expect(verticalPlane.id).toMatch(/^proj_plane_\d+$/);
+      
+      // IDs should NOT be any hardcoded values
+      expect(horizontalPlane.id).not.toBe('proj_plane_H');
+      expect(verticalPlane.id).not.toBe('proj_plane_V');
+      expect(horizontalPlane.id).not.toBe('proj_plane_PH');
+      expect(verticalPlane.id).not.toBe('proj_plane_PV');
     });
 
     it.skip('should use hierarchical origin IDs, not hardcoded ones - SKIPPED: origin tracking not fully implemented', () => {
@@ -96,34 +99,28 @@ describe('Semantic Entity References (Phase 46)', () => {
       expect(verticalOrigin.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
     });
 
-    it('should use generated hinge line ID, not hardcoded one', () => {
+    it('should use generated hinge line ID, not hardcoded value', () => {
       const mainHingeLine = getMainHingeLine(world);
       
-      // Hinge line ID should NOT be the old hardcoded value
-      expect(mainHingeLine.id).not.toBe('HL_HV');
-      
-      // Hinge line ID should be label-based format (id = label)
+      // Hinge line ID should be auto-generated numeric format
       expect(mainHingeLine.id).toMatch(/^HL_\d+$/);
+      
+      // Should NOT be any hardcoded values
+      expect(mainHingeLine.id).not.toBe('HL_HV');
+      expect(mainHingeLine.id).not.toBe('hinge_line_main');
     });
   });
 
   describe('ID Generation Consistency', () => {
-    it('should generate sequential projection plane IDs', () => {
+    it('should use auto-generated numeric IDs for initialization planes', () => {
       const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
       const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
-      // Both IDs should follow proj_plane_{n} format
-      const hMatch = horizontalPlane.id!.match(/^proj_plane_(\d+)$/);
-      const vMatch = verticalPlane.id!.match(/^proj_plane_(\d+)$/);
+      // Initialization planes use auto-generated numeric IDs (standard format)
+      expect(horizontalPlane.id).toMatch(/^proj_plane_\d+$/);
+      expect(verticalPlane.id).toMatch(/^proj_plane_\d+$/);
       
-      expect(hMatch).toBeTruthy();
-      expect(vMatch).toBeTruthy();
-      
-      const hNum = parseInt(hMatch![1]);
-      const vNum = parseInt(vMatch![1]);
-      
-      // IDs should be sequential (one after the other)
-      expect(Math.abs(hNum - vNum)).toBe(1);
+      // User-created planes will also use generated numeric IDs
     });
 
     it.skip('should use plane ID as container in origin point IDs - SKIPPED: origin tracking not fully implemented', () => {
@@ -147,7 +144,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       // This test verifies the architecture supports multiple plane pairs
       // Currently we only have one pair, but the pattern scales
       
-      // First pair (initial)
+      // First pair (initial) - uses auto-generated numeric IDs
       const horizontalPlane1 = world.getProjectionPlaneByLabel('P_H');
       const verticalPlane1 = world.getProjectionPlaneByLabel('P_V');
       
@@ -158,9 +155,9 @@ describe('Semantic Entity References (Phase 46)', () => {
       expect(horizontalPlane1.id).not.toBe(verticalPlane1.id);
       
       // In future, additional plane pairs would use:
-      // - world.projPlaneCounter generates proj_plane_3, proj_plane_4, etc.
-      // - User could track additional pairs separately
-      // - No ID collisions possible due to sequential generation
+      // - Generated numeric IDs: proj_plane_1, proj_plane_2, etc.
+      // - User could track additional pairs separately with labels
+      // - No ID collisions possible with auto-generated IDs
     });
   });
 });

@@ -12,15 +12,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('PropertiesDialog', () => {
   let world: World;
   let testPointId: string; // Helper for tests that need a valid element ID
   
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     
     // Create a test point for tests that need a valid element ID
     const planeH = world.getProjectionPlaneByLabel('P_H');

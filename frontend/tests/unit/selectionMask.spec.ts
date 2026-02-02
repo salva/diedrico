@@ -11,7 +11,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3, Matrix3 } from 'three';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../helpers/worldHelpers';
 import { Paper } from '@/domain/presentation/Paper';
 import { FreePoint2D } from '@/domain/world/Point';
 import { Line2D } from '@/domain/world/Line';
@@ -35,7 +36,8 @@ describe('Selection Mask System', () => {
   let paper: Paper;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     paper = new Paper();
   });
 

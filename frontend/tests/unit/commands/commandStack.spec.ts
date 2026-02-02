@@ -32,8 +32,10 @@ describe('CommandStack (R018)', () => {
   let world: World;
 
   beforeEach(() => {
-    commandStack = new CommandStack();
+    // Create fresh World and CommandStack without initialization
+    // This ensures empty command stacks for testing command stack behavior
     world = new World();
+    commandStack = new CommandStack(world);
   });
 
   describe('Initialization', () => {

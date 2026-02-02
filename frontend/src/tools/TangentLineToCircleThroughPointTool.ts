@@ -99,13 +99,7 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
     const lineId = result.outputs.lineId;
     
     // Record ProcessTree action
-    const action = createTangentLineToCircleThroughPointAction(
-      lineId,
-      planeId,
-      circleId,
-      throughPointId,
-      tangentIndex
-    );
+    const action = createTangentLineToCircleThroughPointAction(lineId);
     
     const groupId = `group_${Date.now()}_tangent_pt`;
     const group = createActionGroup(groupId);

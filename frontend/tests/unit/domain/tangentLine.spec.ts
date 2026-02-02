@@ -11,14 +11,16 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
   let world: World;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
   });
 
   /**
@@ -215,7 +217,8 @@ describe('Line2DTangentToCircleParallelToLine - Geometric Correctness', () => {
   let world: World;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
   });
 
   function distanceFromPointToLine(

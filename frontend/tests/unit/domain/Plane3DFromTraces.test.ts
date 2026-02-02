@@ -7,18 +7,20 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '../../../src/domain/world/World';
+import type { World } from '../../../src/domain/world/World';
 import { Plane3DFromTraces } from '../../../src/domain/world/Plane';
 import { FreePoint2D, Point2DLineLineIntersection } from '../../../src/domain/world/Point';
 import { Line2DByTwoPoints } from '../../../src/domain/world/Line';
 import { HalfHingeLine2D } from '../../../src/domain/world/HingeLine';
 import { Vector3 } from 'three';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
   let world: World;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
   });
 
   /**

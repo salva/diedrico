@@ -67,13 +67,7 @@ export class PlaneSequenceFactory {
     const planeId = result.outputs.planeId;
     
     // Create ProcessTree action for dependency tracking
-    const action = createAdd3DPlaneAction(
-      planeId,
-      trace1Id,
-      trace2Id,
-      plane1Id,
-      plane2Id
-    );
+    const action = createAdd3DPlaneAction(planeId);
     
     if (groupId) {
       cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
@@ -148,7 +142,7 @@ export class PlaneSequenceFactory {
     const hingeLineId = hingeLineResult.outputs.hingeLineId as string;
     
     cmd.addAndExecute(new AddProcessTreeActionOp(
-      createInitializeHingeLineAction(hingeLineId, projPlaneId, hingeTracePlaneId),
+      createInitializeHingeLineAction(hingeLineId),
       groupId
     ));
     
@@ -156,14 +150,14 @@ export class PlaneSequenceFactory {
     const hhl1Op = new AddHalfHingeLine2DOp(projPlaneId, hingeLineId);
     cmd.addAndExecute(hhl1Op);
     cmd.addAndExecute(new AddProcessTreeActionOp(
-      createInitializeHalfHingeLine2DAction(hhl1Op.outputs.lineId, projPlaneId, hingeLineId),
+      createInitializeHalfHingeLine2DAction(hhl1Op.outputs.lineId),
       groupId
     ));
 
     const hhl2Op = new AddHalfHingeLine2DOp(hingeTracePlaneId, hingeLineId);
     cmd.addAndExecute(hhl2Op);
     cmd.addAndExecute(new AddProcessTreeActionOp(
-      createInitializeHalfHingeLine2DAction(hhl2Op.outputs.lineId, hingeTracePlaneId, hingeLineId),
+      createInitializeHalfHingeLine2DAction(hhl2Op.outputs.lineId),
       groupId
     ));
     

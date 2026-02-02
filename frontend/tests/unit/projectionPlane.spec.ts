@@ -10,11 +10,11 @@ import { BaseProjectionPlane } from '@/domain/world/ProjectionPlane';
 import { FreePoint2D, Point2DRealization2D } from '@/domain/world/Point';
 import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { Circle2DByCenterAndPoint, Circle2DRealization2D } from '@/domain/world/Circle';
-import { World } from '@/domain/world/World';
-import { getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../helpers/worldHelpers';
+import type { World } from '@/domain/world/World';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../helpers/worldHelpers';
 
 describe('ProjectionPlane Transformations', () => {
-  const world = new World(); // Initialize world with planes
+  const { world } = createTestWorld(); // Initialize world with planes
   
   describe('P_H (Horizontal Plane)', () => {
     it('should transform plane coords to paper coords correctly', () => {
@@ -183,7 +183,8 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
   let planeV: BaseProjectionPlane;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     planeH = getHorizontalPlane(world);
     planeV = getVerticalPlane(world);
   });

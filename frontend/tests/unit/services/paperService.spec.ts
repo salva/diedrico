@@ -7,7 +7,8 @@ import { Vector3 } from 'three';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Matrix3 } from 'three';
 import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
-import { World } from '../../../src/domain/world/World';
+import type { World } from '../../../src/domain/world/World';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import { type Point2D, FreePoint2D, Point2DLineLineIntersection } from '../../../src/domain/world/Point';
 import { BaseProjectionPlane } from '../../../src/domain/world/ProjectionPlane';
 import { RenderLayer, Paper, type PointPrimitive } from '../../../src/domain/presentation/Paper';
@@ -19,7 +20,8 @@ describe('PaperService', () => {
 
   beforeEach(() => {
     paperService = new PaperService();
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     planeTransforms = new Map();
 
     // World initializes base projection planes P_H and P_V automatically

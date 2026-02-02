@@ -12,9 +12,10 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { World } from '../../../../src/domain/world/World';
+import type { World } from '../../../../src/domain/world/World';
 import { Command } from '../../../../src/commands/Command';
-import { CommandStack } from '../../../../src/commands/CommandStack';
+import type { CommandStack } from '../../../../src/commands/CommandStack';
+import { createTestWorld } from '../../../helpers/worldHelpers';
 import { DeletionSequenceFactory } from '../../../../src/commands/factories/DeletionSequenceFactory';
 import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '../../../../src/commands/operations/world/AddLineOp';
@@ -30,8 +31,9 @@ describe('DeletionSequenceFactory', () => {
   let planeId: string; // Will be set dynamically in beforeEach
 
   beforeEach(() => {
-    world = new World();
-    commandStack = new CommandStack();
+    const { world: w, commandStack: cs } = createTestWorld();
+    world = w;
+    commandStack = cs;
     // Get actual plane ID from initialized world
     planeId = world.getProjectionPlaneByLabel('P_H').id!;
   });

@@ -10,12 +10,12 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3, Matrix3 } from 'three';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import { Paper, ViewportTransform } from '@/domain/presentation/Paper';
 import { FreePoint2D } from '@/domain/world/Point';
 import { DirectLine2D } from '@/domain/world/Line';
 import { SelectionMask } from '@/types/SelectionMask';
-import { getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { getHorizontalPlaneId, createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
   let world: World;
@@ -24,7 +24,8 @@ describe('Paper Hit-Testing - Distance Adjustment (Phase 55)', () => {
   let paperToPlaneTransform: Matrix3;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     paper = new Paper();
     
     // Set viewport transform (no zoom/pan for simplicity)

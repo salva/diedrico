@@ -10,10 +10,11 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { World } from '../../../src/domain/world/World';
+import type { World } from '../../../src/domain/world/World';
 import { Segment2DByPoints } from '../../../src/domain/world/Segment';
 import { Line2DByTwoPoints } from '../../../src/domain/world/Line';
 import { Circle2DByCenterAndPoint } from '../../../src/domain/world/Circle';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
   let world: World;
@@ -22,7 +23,8 @@ describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
   let p2Id: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     planeH = world.getProjectionPlaneByLabel('P_H')!;
     
     // Create test points (let IDs auto-generate)

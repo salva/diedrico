@@ -10,8 +10,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import type { IOperation } from '@/commands/operations/IOperation';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 // Mock operation helper
 const createMockOperation = (name: string = 'mock'): IOperation => ({
@@ -27,8 +28,9 @@ describe('CommandStack Observer Pattern', () => {
   let world: World;
 
   beforeEach(() => {
-    commandStack = new CommandStack();
-    world = new World();
+    const { world: w, commandStack: cs } = createTestWorld();
+    commandStack = cs;
+    world = w;
   });
 
   it('should notify subscribers when command is pushed', () => {

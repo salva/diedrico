@@ -55,8 +55,8 @@ export class CircleSequenceFactory {
     
     const circleId = result.outputs.circleId as string;
     
-    // Record ProcessTree action for dependency tracking
-    const action = createCircleAction(circleId, planeId, centerPointId, circumferencePointId);
+    // Record ProcessTree action for dependency tracking (Phase 92: minimal signature)
+    const action = createCircleAction(circleId);
     
     cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     

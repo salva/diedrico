@@ -82,8 +82,8 @@ export class LineSequenceFactory {
     
     const lineId = result.outputs.lineId as string;
     
-    // Record ProcessTree action for dependency tracking
-    const action = createLineAction(lineId, planeId, point1Id, point2Id);
+    // Record ProcessTree action for dependency tracking (Phase 92: minimal signature)
+    const action = createLineAction(lineId);
     
     cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
@@ -117,7 +117,7 @@ export class LineSequenceFactory {
     const lineId = result.outputs.lineId as string;
     
     // Record ProcessTree action for dependency tracking
-    const action = createParallelLineAction(lineId, planeId, referenceLineId, throughPointId);
+    const action = createParallelLineAction(lineId);
     
     cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
@@ -151,7 +151,7 @@ export class LineSequenceFactory {
     const lineId = result.outputs.lineId as string;
     
     // Record ProcessTree action for dependency tracking
-    const action = createPerpendicularLineAction(lineId, planeId, referenceLineId, throughPointId);
+    const action = createPerpendicularLineAction(lineId);
     
     cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     

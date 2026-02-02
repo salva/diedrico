@@ -17,8 +17,9 @@ import {
   planeTo3D,
   screenTo3D
 } from '@/utils/coordinateTransform';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import { BaseProjectionPlane } from '@/domain/world/ProjectionPlane';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Coordinate Transformation Pipeline', () => {
   describe('screenToSVG', () => {
@@ -133,7 +134,8 @@ describe('Coordinate Transformation Pipeline', () => {
     let verticalPlaneId: string;
     
     beforeEach(() => {
-      world = new World();
+      const { world: w } = createTestWorld();
+      world = w;
       horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
       verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
     });
@@ -185,7 +187,8 @@ describe('Coordinate Transformation Pipeline', () => {
     let verticalPlaneId: string;
     
     beforeEach(() => {
-      world = new World();
+      const { world: w } = createTestWorld();
+      world = w;
       horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
       verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
     });
@@ -238,7 +241,8 @@ describe('Coordinate Transformation Pipeline', () => {
     let verticalPlaneId: string;
     
     beforeEach(() => {
-      world = new World();
+      const { world: w } = createTestWorld();
+      world = w;
       horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
       verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
       

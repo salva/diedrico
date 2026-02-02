@@ -1,44 +1,43 @@
 /**
  * Action - Base interface for construction actions in the process tree
  * 
- * Actions record geometric construction operations with their inputs/outputs.
- * They track dependencies and enable parametric behavior.
+ * Phase 93: Minimal Action interface - only 3 fields
+ * - elementId: The created element (type derivable from element itself)
+ * - description: Human-readable narrative (static for now, dynamic later)
+ * - isOutput: Black box visibility flag (defaults to true)
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ConstructiveAction
+ * Removed fields (all redundant):
+ * - id: Actions tied to elements, use elementId
+ * - type: Always 'action', unnecessary discriminator
+ * - actionType: Derivable from element.type
+ * - timestamp: Can be derived from element.created if needed
+ * 
+ * Dependencies: Query world.dependencyService.getDependencies(elementId)
+ * Element properties: Direct access (element.planeId, line.point1Id, etc.)
+ * 
+ * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
  */
 
-export type ActionType =
-  | 'CreateFreePoint'
-  | 'CreatePointOnElement'
-  | 'CreateIntersectionPoint'
-  | 'CreateLine'
-  | 'CreateSegment'
-  | 'CreateCircle'
-  | 'CreateGuide'
-  | 'TransportPoint'
-  | 'TransportDistance'
-  | 'InitializePlane3D'
-  | 'InitializeProjectionPlane'
-  | 'InitializeOriginPoint2D'
-  | 'InitializeHingeLine'
-  | 'InitializeHalfHingeLine2D'
-  | 'CreatePerpendicularLine'
-  | 'CreateTangentLineToCircleThroughPoint'
-  | 'CreateTangentLineToCircleParallelToLine'
-  | 'CreateProjectionPlane';
-
 export interface Action {
-  id: string;                    // UUID
-  type: 'action';                // Node type in process tree
-  actionType: ActionType;        // Specific action type
-  timestamp: Date;               // When action was performed
-  inputs: string[];              // Element IDs this action depends on
-  outputs: string[];             // Element IDs this action produces
+  elementId: string;             // Element created by this action
+  description: string;           // Human-readable action narrative
   isOutput: boolean;             // Phase 87: Output flag (Show in black box stack)
-  parameters: Record<string, any>; // Tool-specific parameters
-  description: string;           // Human-readable description
 }
 
-export interface ActionParameters {
-  [key: string]: any;
+/**
+ * Generic action factory - replaces 30+ specialized functions
+ * 
+ * @param elementId - The created element ID
+ * @param description - Optional description (defaults to "Created {elementId}")
+ * @returns Action with isOutput=true by default
+ */
+export function createAction(
+  elementId: string,
+  description?: string
+): Action {
+  return {
+    elementId,
+    description: description ?? `Created ${elementId}`,
+    isOutput: true  // Default to true (user correction from Phase 93 planning)
+  };
 }

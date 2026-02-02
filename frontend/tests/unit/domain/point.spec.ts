@@ -16,10 +16,10 @@ import {
   Point2DCircleCircleIntersection,
   SiblingIntersectionPoint2D 
 } from '@/domain/world/Point';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import { Plane3D } from '@/domain/world/Plane';
 import { HingeLine, HalfHingeLine2D } from '@/domain/world/HingeLine';
-import { getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Point2D', () => {
   describe('constructor', () => {
@@ -182,7 +182,8 @@ describe('Point2D', () => {
     let planeVId: string;
 
     beforeEach(() => {
-      world = new World();
+      const { world: w } = createTestWorld();
+      world = w;
       const planeH = getHorizontalPlane(world);
       planeVId = getVerticalPlaneId(world);
       

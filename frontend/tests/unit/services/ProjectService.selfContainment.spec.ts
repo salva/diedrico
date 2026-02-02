@@ -14,11 +14,12 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
-import { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import { ProjectService } from '@/services/ProjectService';
 import { Vector3 } from 'three';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import { 
   AddFreePoint2DOp 
 } from '@/commands/operations/world/AddFreePointOp';
@@ -47,8 +48,9 @@ describe('ProjectService Self-Containment Tests', () => {
   let planeId: string; // Plane ID determined from World initialization
 
   beforeEach(() => {
-    world = new World();
-    commandStack = new CommandStack();
+    const { world: w, commandStack: cs } = createTestWorld();
+    world = w;
+    commandStack = cs;
     // Get the actual plane ID after World initialization
     const planeH = world.getProjectionPlaneByLabel('P_H');
     if (!planeH || !planeH.id) {
@@ -71,8 +73,7 @@ describe('ProjectService Self-Containment Tests', () => {
     const serialized = ProjectService.serializeCommands(commandStack, 'Test Project');
 
     // Deserialize on FRESH World (no prior state except plane initialization)
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     
     // This should succeed - operation parameters contain everything needed
     expect(() => {
@@ -102,8 +103,7 @@ describe('ProjectService Self-Containment Tests', () => {
     const serialized = ProjectService.serializeCommands(commandStack, 'Test Project');
 
     // Deserialize on FRESH World - this should succeed without errors
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     
     expect(() => {
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
@@ -122,8 +122,7 @@ describe('ProjectService Self-Containment Tests', () => {
     commandStack.push(cmd);
 
     const serialized = ProjectService.serializeCommands(commandStack, 'Test Project');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     
     expect(() => {
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
@@ -142,8 +141,7 @@ describe('ProjectService Self-Containment Tests', () => {
     commandStack.push(cmd);
 
     const serialized = ProjectService.serializeCommands(commandStack, 'Test Project');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     
     expect(() => {
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
@@ -171,8 +169,7 @@ describe('ProjectService Self-Containment Tests', () => {
     commandStack.push(cmd);
 
     const serialized = ProjectService.serializeCommands(commandStack, 'Test Project');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     
     expect(() => {
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
@@ -194,8 +191,7 @@ describe('ProjectService Self-Containment Tests', () => {
     commandStack.push(cmd);
 
     const serialized = ProjectService.serializeCommands(commandStack, 'Test Project');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     
     expect(() => {
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
@@ -218,8 +214,7 @@ describe('ProjectService Self-Containment Tests', () => {
     commandStack.push(cmd2);
 
     const serialized = ProjectService.serializeCommands(commandStack, 'Test Project');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     
     expect(() => {
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
@@ -262,8 +257,7 @@ describe('ProjectService Self-Containment Tests', () => {
 
     // Serialize and replay on fresh World - this should succeed
     const serialized = ProjectService.serializeCommands(commandStack, 'Test Project');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     
     expect(() => {
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);

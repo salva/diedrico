@@ -11,9 +11,10 @@ import { Vector3 } from 'three';
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { SiblingIntersectionPoint2D } from '@/domain/world/Point';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('ProjectionPlane Factory Methods', () => {
   let world: World;
@@ -21,7 +22,8 @@ describe('ProjectionPlane Factory Methods', () => {
   let planeV: any;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     planeH = world.getProjectionPlaneByLabel('P_H')!;
     planeV = world.getProjectionPlaneByLabel('P_V')!;
   });

@@ -7,17 +7,19 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
+import type { World } from '../../../src/domain/world/World';
 import { Point3DFromProjections } from '@/domain/world/Point3D';
 import { FreePoint2D } from '@/domain/world/Point';
 import { Vector3 } from 'three';
 import { createVisualStyle } from '../../../src/domain/world/VisualStyle';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Point3DFromProjections - Coordinate Reconstruction', () => {
   let world: World;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
   });
 
   /**

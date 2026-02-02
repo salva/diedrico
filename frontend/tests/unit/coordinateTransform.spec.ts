@@ -7,13 +7,13 @@
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
 import { BaseProjectionPlane } from '@/domain/world/ProjectionPlane';
-import { World } from '@/domain/world/World';
+import { createTestWorld } from '../helpers/worldHelpers';
 import { InputService } from '@/services/InputService';
 import type { ViewportTransform } from '@/services/InputService';
 
 describe('Coordinate Transformation Round-Trips', () => {
   const inputService = new InputService();
-  const world = new World(); // Initialize world with planes
+  const { world } = createTestWorld(); // Initialize world with planes
   
   describe('P_H (Horizontal Plane)', () => {
     it('should preserve screen coordinates through full round-trip', () => {

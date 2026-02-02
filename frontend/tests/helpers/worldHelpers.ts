@@ -7,17 +7,43 @@
  * 
  * Usage:
  * ```typescript
- * const world = new World();
+ * const { world, commandStack } = createTestWorld();
  * const planeH = getHorizontalPlane(world);
  * const planeV = getVerticalPlane(world);
  * const originH = getHorizontalOrigin(world);
  * ```
  */
 
-import type { World } from '../../src/domain/world/World';
+import { World } from '../../src/domain/world/World';
+import { CommandStack } from '../../src/commands/CommandStack';
 import type { ProjectionPlane } from '../../src/domain/world/ProjectionPlane';
 import type { FreePoint2D } from '../../src/domain/world/Point';
 import type { HingeLine } from '../../src/domain/world/HingeLine';
+
+/**
+ * Create a fully initialized World for testing.
+ * 
+ * Returns a World with:
+ * - P_H (horizontal) and P_V (vertical) projection planes
+ * - Origin points O_H and O_V at (0,0) on each plane
+ * - Hinge line connecting the two planes
+ * - CommandStack for executing commands
+ * 
+ * Usage:
+ * ```typescript
+ * const { world, commandStack } = createTestWorld();
+ * const plane = world.getProjectionPlaneByLabel('P_H');  // Succeeds
+ * const origin = plane.getPoint2DByLabel('O_H');          // Succeeds
+ * ```
+ * 
+ * @returns Object with initialized world and command stack
+ */
+export function createTestWorld(): { world: World; commandStack: CommandStack } {
+  const world = new World();
+  const commandStack = new CommandStack(world);
+  world.initialize(commandStack);
+  return { world, commandStack };
+}
 
 /**
  * Get horizontal projection plane from world

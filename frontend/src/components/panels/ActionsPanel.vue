@@ -175,12 +175,18 @@ function findRelatedActions(selectedIds: string[]): void {
   // Get all actions from process tree
   const allActions = processTree.getAllActions();
 
-  // Check each action's inputs and outputs
+  // Check each action's elementId and dependencies (Phase 92)
   for (const action of allActions) {
-    const hasRelatedInput = action.inputs.some(inputId => selectedIdSet.has(inputId));
-    const hasRelatedOutput = action.outputs.some(outputId => selectedIdSet.has(outputId));
+    // Check if action produces any selected element
+    const producesSelected = selectedIdSet.has(action.elementId);
+    
+    // Check if action depends on any selected element
+    // Dependencies are now in DependencyService, accessible via element
+    const dependsOnSelected = world && world.dependencyService 
+      ? world.dependencyService.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId))
+      : false;
 
-    if (hasRelatedInput || hasRelatedOutput) {
+    if (producesSelected || dependsOnSelected) {
       related.add(action.id);
     }
   }

@@ -17,7 +17,8 @@ import { Vector3 } from 'three';
 import { Guide2D, SiblingGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
 import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D } from '@/domain/world/Point';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import { getHorizontalPlane, getHorizontalPlaneId, getVerticalPlane, getVerticalPlaneId, getMainHingeLine } from '../../helpers/worldHelpers';
 
 describe('Guide2D', () => {
@@ -28,7 +29,8 @@ describe('Guide2D', () => {
   let point2Id: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     const plane = getHorizontalPlane(world);
     const planeId = getHorizontalPlaneId(world);
     

@@ -1,41 +1,15 @@
 /**
  * CreateSegmentAction - Records creation of a segment between two points
  * 
- * Tracks segment creation with its defining points as inputs.
+ * Phase 93: Convenience wrapper for generic createAction().
+ * Dependencies accessible via world.dependencyService.getDependencies(segmentId).
+ * Element properties (planeId, point1Id, point2Id) accessible via segment object.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ConstructiveAction
+ * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
  */
 
-import type { Action, ActionParameters } from '../Action';
+import { createAction, type Action } from '../Action';
 
-export interface CreateSegmentActionParameters extends ActionParameters {
-  planeId: string;
-  point1Id: string;
-  point2Id: string;
-}
-
-export function createSegmentAction(
-  segmentId: string,
-  planeId: string,
-  point1Id: string,
-  point2Id: string
-): Action {
-  return {
-    id: generateActionId(),
-    type: 'action',
-    actionType: 'CreateSegment',
-    timestamp: new Date(),
-    inputs: [point1Id, point2Id],  // Segment depends on two points
-    outputs: [segmentId],
-    parameters: {
-      planeId,
-      point1Id,
-      point2Id
-    },
-    description: `Segment on ${planeId}`
-  };
-}
-
-function generateActionId(): string {
-  return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+export function createSegmentAction(segmentId: string): Action {
+  return createAction(segmentId, `Created segment ${segmentId}`);
 }

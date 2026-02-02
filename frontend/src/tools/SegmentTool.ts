@@ -91,7 +91,7 @@ export class SegmentTool extends ArgumentCollectorTool {
     const segmentId = result.outputs.segmentId;
     
     // Record ProcessTree action
-    const action = createSegmentAction(segmentId, planeId, point1.id, point2.id);
+    const action = createSegmentAction(segmentId);
 
     const groupId = `group_${Date.now()}_segment`;
     const group = createActionGroup(groupId);

@@ -1,44 +1,17 @@
 /**
- * CreateIntersectionPointAction - Records creation of intersection point between two lines
+ * CreateIntersectionPointAction - Records creation of an intersection point
  * 
- * Tracks intersection point creation with two lines as inputs.
+ * Phase 93: Convenience wrapper for generic createAction().
+ * Dependencies tracked by DependencyService,
+ * construction parameters accessible via element properties.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ConstructiveAction
+ * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
  */
 
-import type { Action, ActionParameters } from '../Action';
-
-export interface CreateIntersectionPointActionParameters extends ActionParameters {
-  planeId: string;
-  line1Id: string;
-  line2Id: string;
-  intersectionIndex: number;
-}
+import { createAction, type Action } from '../Action';
 
 export function createIntersectionPointAction(
-  pointId: string,
-  planeId: string,
-  line1Id: string,
-  line2Id: string,
-  intersectionIndex: number
+  pointId: string
 ): Action {
-  return {
-    id: generateActionId(),
-    type: 'action',
-    actionType: 'CreateIntersectionPoint',
-    timestamp: new Date(),
-    inputs: [line1Id, line2Id],  // Point depends on two lines
-    outputs: [pointId],
-    parameters: {
-      planeId,
-      line1Id,
-      line2Id,
-      intersectionIndex
-    },
-    description: `Intersection point on ${planeId}`
-  };
-}
-
-function generateActionId(): string {
-  return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return createAction(pointId, `Created intersection point ${pointId}`);
 }

@@ -21,14 +21,16 @@ import {
 } from '@/services/RenderService';
 import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization2D } from '@/domain/world/Point';
 import { Plane3D, Plane3DFixed } from "@/domain/world/Plane";
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('RenderService', () => {
   let world: World;
   let projPlaneH: any;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     projPlaneH = world.getProjectionPlaneByLabel('P_H');
   });
 

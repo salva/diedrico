@@ -16,8 +16,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command, CommandStatus } from '@/commands/Command';
 import type { IOperation, OperationResult } from '@/commands/operations/IOperation';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 // Mock operation for testing
 class MockOperation implements IOperation {
@@ -95,7 +96,8 @@ describe('Generic Command Class (R017)', () => {
   let command: Command;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     command = new Command('Test Command', world);
   });
 

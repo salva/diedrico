@@ -16,19 +16,21 @@ import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import ElementsPanel from '../../../src/components/panels/ElementsPanel.vue';
-import { World } from '../../../src/domain/world/World';
+import type { World } from '../../../src/domain/world/World';
 import { FreePoint2D } from '../../../src/domain/world/Point';
 import { Line2DByTwoPoints } from '../../../src/domain/world/Line';
 import { Segment2DByPoints } from '../../../src/domain/world/Segment';
 import { Circle2DByCenterAndPoint } from '../../../src/domain/world/Circle';
 import { Guide2D } from '../../../src/domain/world/Guide';
 import { Vector3 } from 'three';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('ElementsPanel', () => {
   let world: World;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
   });
 
   afterEach(() => {

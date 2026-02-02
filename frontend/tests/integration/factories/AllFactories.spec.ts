@@ -11,9 +11,10 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
-import { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
 import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
 import { IntersectionSequenceFactory, type IntersectionData } from '@/commands/factories/IntersectionSequenceFactory';
@@ -30,8 +31,9 @@ describe('Factory Integration Tests', () => {
   let planeId: string;
 
   beforeEach(() => {
-    world = new World();
-    commandStack = new CommandStack();
+    const { world: w, commandStack: cs } = createTestWorld();
+    world = w;
+    commandStack = cs;
     planeId = getHorizontalPlaneId(world);
   });
 

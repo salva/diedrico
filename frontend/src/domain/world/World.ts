@@ -770,11 +770,15 @@ export class World {
    * 
    * @param id Hierarchical ID in format "{planeId}/{localId}"
    * @returns Point2D or undefined if not found or not a point
+   * @throws Error if plane not found (indicates corrupted element ID)
    */
   getPoint2D(id: string): Point2D | undefined {
     const containerId = getContainerIdFromElementId(id);
     const plane = this.getProjectionPlaneById(containerId);
-    return plane?.getPoint(id);
+    if (!plane) {
+      throw new Error(`[INTERNAL ERROR] Plane ${containerId} not found when looking up point ${id}. This indicates corrupted element ID or missing plane registration.`);
+    }
+    return plane.getPoint(id);
   }
 
   /**
@@ -783,11 +787,15 @@ export class World {
    * 
    * @param id Hierarchical ID in format "{planeId}/{localId}"
    * @returns Line2D or undefined if not found or not a line
+   * @throws Error if plane not found (indicates corrupted element ID)
    */
   getLine2D(id: string): Line2D | undefined {
     const containerId = getContainerIdFromElementId(id);
     const plane = this.getProjectionPlaneById(containerId);
-    return plane?.getLine(id);
+    if (!plane) {
+      throw new Error(`[INTERNAL ERROR] Plane ${containerId} not found when looking up line ${id}. This indicates corrupted element ID or missing plane registration.`);
+    }
+    return plane.getLine(id);
   }
 
   /**
@@ -796,11 +804,15 @@ export class World {
    * 
    * @param id Hierarchical ID in format "{planeId}/{localId}"
    * @returns Circle2D or undefined if not found or not a circle
+   * @throws Error if plane not found (indicates corrupted element ID)
    */
   getCircle2D(id: string): Circle2D | undefined {
     const containerId = getContainerIdFromElementId(id);
     const plane = this.getProjectionPlaneById(containerId);
-    return plane?.getCircle(id);
+    if (!plane) {
+      throw new Error(`[INTERNAL ERROR] Plane ${containerId} not found when looking up circle ${id}. This indicates corrupted element ID or missing plane registration.`);
+    }
+    return plane.getCircle(id);
   }
 
   /**
@@ -810,11 +822,15 @@ export class World {
    * 
    * @param id Hierarchical ID in format "{planeId}/{localId}"
    * @returns Segment2D or undefined if not found or not a segment
+   * @throws Error if plane not found (indicates corrupted element ID)
    */
   getSegment2D(id: string): Segment2D | undefined {
     const containerId = getContainerIdFromElementId(id);
     const plane = this.getProjectionPlaneById(containerId);
-    const line = plane?.getLine(id);
+    if (!plane) {
+      throw new Error(`[INTERNAL ERROR] Plane ${containerId} not found when looking up segment ${id}. This indicates corrupted element ID or missing plane registration.`);
+    }
+    const line = plane.getLine(id);
     // Segments extend Line2D
     if (line && line instanceof Segment2DByPoints) {
       return line as Segment2D;
@@ -829,11 +845,15 @@ export class World {
    * 
    * @param id Hierarchical ID in format "{planeId}/{localId}"
    * @returns Guide2D or undefined if not found or not a guide
+   * @throws Error if plane not found (indicates corrupted element ID)
    */
   getGuide2D(id: string): Guide2D | undefined {
     const containerId = getContainerIdFromElementId(id);
     const plane = this.getProjectionPlaneById(containerId);
-    const line = plane?.getLine(id);
+    if (!plane) {
+      throw new Error(`[INTERNAL ERROR] Plane ${containerId} not found when looking up guide ${id}. This indicates corrupted element ID or missing plane registration.`);
+    }
+    const line = plane.getLine(id);
     // Guides extend Line2D
     if (line && line instanceof Guide2D) {
       return line as Guide2D;

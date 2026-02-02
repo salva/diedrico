@@ -4,16 +4,17 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
-import { World } from '../../../src/domain/world/World';
+import type { World } from '../../../src/domain/world/World';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { Vector3 } from 'three';
-import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Create Free Point Command', () => {
   let world: World;
   let planeId: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     planeId = getHorizontalPlaneId(world);
   });
 

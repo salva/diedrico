@@ -12,7 +12,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { IntersectionSequenceFactory, type IntersectionData } from '@/commands/factories/IntersectionSequenceFactory';
 import { Command } from '@/commands/Command';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
@@ -25,7 +26,8 @@ describe('IntersectionSequenceFactory', () => {
   let planeId: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     // Get horizontal plane ID (no longer hardcoded as 'proj_plane_H')
     planeId = world.getProjectionPlaneByLabel('P_H')!.id;
   });

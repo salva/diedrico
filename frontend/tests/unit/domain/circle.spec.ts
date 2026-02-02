@@ -17,8 +17,8 @@ import {
   Circle2DRealization2D
 } from '@/domain/world/Circle';
 import { FreePoint2D } from '@/domain/world/Point';
-import { World } from '@/domain/world/World';
-import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import type { World } from '@/domain/world/World';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Circle2D', () => {
   let world: World;
@@ -29,7 +29,8 @@ describe('Circle2D', () => {
   let point3Id: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     const plane = getHorizontalPlane(world);
     planeId = getHorizontalPlaneId(world);
     

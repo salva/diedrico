@@ -1,44 +1,17 @@
 /**
  * CreateLineCircleIntersectionPointAction - Records creation of line-circle intersection point
  * 
- * Tracks specialized line-circle intersection point creation with index.
+ * Phase 93: Convenience wrapper for generic createAction().
+ * Dependencies tracked by DependencyService,
+ * construction parameters accessible via element properties.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ConstructiveAction
+ * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
  */
 
-import type { Action, ActionParameters } from '../Action';
-
-export interface CreateLineCircleIntersectionPointActionParameters extends ActionParameters {
-  planeId: string;
-  lineId: string;
-  circleId: string;
-  index: number;
-}
+import { createAction, type Action } from '../Action';
 
 export function createLineCircleIntersectionPointAction(
-  pointId: string,
-  planeId: string,
-  lineId: string,
-  circleId: string,
-  index: number
+  pointId: string
 ): Action {
-  return {
-    id: generateActionId(),
-    type: 'action',
-    actionType: 'CreateLineCircleIntersectionPoint',
-    timestamp: new Date(),
-    inputs: [lineId, circleId],  // Point depends on line and circle
-    outputs: [pointId],
-    parameters: {
-      planeId,
-      lineId,
-      circleId,
-      index
-    },
-    description: `Line-Circle intersection point [${index}] on ${planeId}`
-  };
-}
-
-function generateActionId(): string {
-  return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return createAction(pointId, `Created line-circle intersection point ${pointId}`);
 }

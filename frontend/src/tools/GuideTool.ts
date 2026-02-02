@@ -117,12 +117,7 @@ export class GuideTool extends ArgumentCollectorTool {
     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
     
     // Record ProcessTree action for primary guide
-    const primaryAction = createGuideAction(
-      guideId, 
-      planeId, 
-      referenceLineId, 
-      throughPointId
-    );
+    const primaryAction = createGuideAction(guideId);
     cmd.addAndExecute(new AddProcessTreeActionOp(primaryAction, group.id));
     
     // Record ProcessTree action for sibling guide
@@ -133,12 +128,7 @@ export class GuideTool extends ArgumentCollectorTool {
       throw new Error(`Failed to get sibling info for half-hinge-line ${referenceLineId}`);
     }
     
-    const siblingAction = createSiblingGuideAction(
-      siblingGuideId, 
-      siblingInfo.siblingPlaneId, 
-      guideId, 
-      siblingInfo.siblingHalfHingeLineId
-    );
+    const siblingAction = createSiblingGuideAction(siblingGuideId);
     cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, group.id));
   }
 }

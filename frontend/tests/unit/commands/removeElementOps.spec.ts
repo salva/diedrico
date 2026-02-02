@@ -14,8 +14,9 @@ import { Vector3 } from 'three';
 import { RemovePoint2DOp, RemoveLine2DOp } from '@/commands/operations/world/RemoveElementOps';
 import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
 import { Command } from '@/commands/Command';
-import { World } from '@/domain/world/World';
-import { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { CommandStack } from '@/commands/CommandStack';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import type { Action } from '@/domain/processTree/Action';
 import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
@@ -24,8 +25,9 @@ describe('RemoveElement Operations (T286, T290)', () => {
   let commandStack: CommandStack;
 
   beforeEach(() => {
-    world = new World();
-    commandStack = new CommandStack();
+    const { world: w, commandStack: cs } = createTestWorld();
+    world = w;
+    commandStack = cs;
   });
 
   /**

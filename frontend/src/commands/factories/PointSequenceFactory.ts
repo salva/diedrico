@@ -42,8 +42,8 @@ export class PointSequenceFactory {
     const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
     const pointId = result.outputs.pointId;
     
-    // Create ProcessTree action for dependency tracking
-    const action = createPointAction(pointId, planeId, position);
+    // Create ProcessTree action for dependency tracking (Phase 92: minimal signature)
+    const action = createPointAction(pointId);
     
     cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     

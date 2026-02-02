@@ -12,7 +12,8 @@ describe('UpdateFreePoint2DPositionOp', () => {
   let world: World;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
   });
 
   it('updates a free point position and supports undo', () => {

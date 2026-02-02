@@ -65,8 +65,10 @@ export class Segment2DByPoints extends Line2D {
    * Segments use two finite points:
    *   point1: start endpoint (z=1)
    *   point2: end endpoint (z=1)
+   * 
+   * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: import('./World').World): Line2DRealization2D | null {
+  realize2D(world: import('./World').World): Line2DRealization2D {
     // Get both endpoint realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
     const p1 = plane.getPoint(this.point1Id);
@@ -81,10 +83,6 @@ export class Segment2DByPoints extends Line2D {
     
     const p1Realization = p1.realize2D(world);
     const p2Realization = p2.realize2D(world);
-
-    if (!p1Realization || !p2Realization) {
-      return null;  // Cannot compute segment without both endpoints
-    }
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible) {

@@ -11,7 +11,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../helpers/worldHelpers';
 import { CommandStack } from '@/commands/CommandStack';
 import { ProjectService } from '@/services/ProjectService';
 import { Command } from '@/commands/Command';
@@ -32,8 +33,7 @@ import type { Circle2D } from '@/domain/world/Circle';
 describe('ProjectService Determinism Tests', () => {
   it('should produce identical World state when deserializing same project 5 times', () => {
     // Step 1: Create a complex project with various operations
-    const world = new World();
-    const commandStack = new CommandStack();
+    const { world, commandStack } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
     
     // Create multiple elements
@@ -94,8 +94,7 @@ describe('ProjectService Determinism Tests', () => {
     const worldStates: any[] = [];
     
     for (let i = 0; i < 5; i++) {
-      const freshWorld = new World();
-      const freshStack = new CommandStack();
+      const { world: freshWorld, commandStack: freshStack } = createTestWorld();
       
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
       
@@ -136,8 +135,7 @@ describe('ProjectService Determinism Tests', () => {
   
   it('should generate same element IDs across multiple deserializations', () => {
     // Create a simple project
-    const world = new World();
-    const commandStack = new CommandStack();
+    const { world, commandStack } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
     
     const cmd = new Command('Create elements', world);
@@ -153,8 +151,7 @@ describe('ProjectService Determinism Tests', () => {
     const idSets: string[][] = [];
     
     for (let i = 0; i < 3; i++) {
-      const freshWorld = new World();
-      const freshStack = new CommandStack();
+      const { world: freshWorld, commandStack: freshStack } = createTestWorld();
       
       ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
       

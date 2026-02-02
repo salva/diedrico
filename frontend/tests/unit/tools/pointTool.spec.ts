@@ -12,12 +12,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PointTool } from '@/tools/PointTool';
-import { World } from '@/domain/world/World';
-import { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { CommandStack } from '@/commands/CommandStack';
 import type { ToolContext } from '@/tools/ITool';
 import { Vector3 } from 'three';
 import { Paper } from '@/domain/presentation/Paper';
 import { FreePoint2D } from '@/domain/world/Point';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('PointTool', () => {
   let tool: PointTool;
@@ -41,9 +42,9 @@ describe('PointTool', () => {
 
   beforeEach(() => {
     tool = new PointTool();
-    world = new World();
-    commandStack = new CommandStack();
-    paper = new Paper();
+    const { world: w, commandStack: cs } = createTestWorld();
+    world = w;
+    commandStack = cs;
     paper = new Paper();
     // Get actual plane IDs from initialized world
     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;

@@ -15,14 +15,16 @@ import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { Vector3 } from 'three';
 import ActionsPanel from '../../../src/components/panels/ActionsPanel.vue';
-import { World } from '../../../src/domain/world/World';
+import type { World } from '../../../src/domain/world/World';
 import type { Action } from '../../../src/domain/processTree/Action';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('ActionsPanel', () => {
   let world: World;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
   });
 
   /**

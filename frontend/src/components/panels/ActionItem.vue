@@ -10,23 +10,23 @@
       <span class="action-type">{{ formatActionType(action.actionType) }}</span>
       <span class="timestamp">{{ formatTime(action.timestamp) }}</span>
     </div>
-    <div v-if="action.outputs.length > 0" class="action-outputs">
-      <span class="label">Output:</span>
-      <span class="outputs">{{ action.outputs.join(', ') }}</span>
+    <!-- Phase 92: Display elementId instead of outputs array -->
+    <div v-if="action.elementId" class="action-outputs">
+      <span class="label">Element:</span>
+      <span class="outputs">{{ action.elementId }}</span>
     </div>
-    <div v-if="action.inputs.length > 0" class="action-inputs">
-      <span class="label">Inputs:</span>
-      <span class="inputs">{{ action.inputs.join(', ') }}</span>
+    <div class="action-description">
+      <span class="description">{{ action.description }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ConstructiveAction } from '../../domain/processTree/Action';
+import type { Action } from '../../domain/processTree/Action';
 import { ActionType } from '../../domain/processTree/Action';
 
 interface Props {
-  action: ConstructiveAction;
+  action: Action;
 }
 
 const props = defineProps<Props>();

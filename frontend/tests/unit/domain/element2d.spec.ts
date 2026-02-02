@@ -10,7 +10,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import { Element2D } from '@/domain/world/Element2D';
 import { FreePoint2D } from '@/domain/world/Point';
 import { Line2DByTwoPoints } from '@/domain/world/Line';
@@ -22,7 +23,8 @@ describe('Element2D base class', () => {
   let planeId: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     planeId = getHorizontalPlaneId(world);
   });
 

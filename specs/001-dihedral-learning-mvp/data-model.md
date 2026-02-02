@@ -9336,6 +9336,140 @@ enum ActionType {
 - Must be child of ActionGroup
 - Execution order determined by tree traversal
 
+**Phase 92 - ConstructiveAction Data Model Rationalization**:
+
+**Problem**: The current ConstructiveAction data model contains redundant information that duplicates data already available from other sources:
+
+1. **`inputs: ElementId[]`** - Duplicates data now tracked by DependencyService (Phase 91)
+   - DependencyService maintains complete dependency graph via `getDependencies(elementId)`
+   - Dependencies are already registered when elements are created
+   - Storing in both places creates maintenance burden and synchronization risk
+
+2. **`outputs: ElementId[]`** - Redundant with element IDs already passed to action factories
+   - Factory functions receive element IDs as parameters (e.g., `createLineAction(lineId, ...)`)
+   - The element ID is already known at action creation time
+   - Storing in outputs array provides no additional information
+
+3. **`parameters: Record<string, any>`** - Duplicates element properties
+   - Example: Line action stores `parameters: { planeId, point1Id, point2Id }`
+   - Same data available from element: `line.planeId`, `line.point1Id`, `line.point2Id`
+   - All construction parameters are stored as element properties
+   - Duplication creates risk of inconsistency
+
+**Architectural Principle**: ConstructiveActions should record ONLY the construction narrative ("what happened, when"), not structural data that can be derived from elements and the dependency graph.
+
+**Rationalized Data Model**:
+
+```typescript
+interface ConstructiveAction extends ProcessNodeBase {
+  type: "action";
+  actionType: ActionType;           // "CreatePoint", "CreateSegment", etc.
+  timestamp: Date;                  // When action was performed
+  elementId: string;                // Primary output element (for lookup)
+  description: string;              // Human-readable action description
+  
+  // Style
+  visualStyle?: VisualStyle;        // Style applied to outputs (inherited by elements)
+  
+  // isOutput flag (Phase 87) if needed for marking final construction outputs
+  isOutput?: boolean;
+}
+```
+
+**Removed Fields**:
+- ❌ `inputs: ElementId[]` - Use `world.dependencyService.getDependencies(elementId)` instead
+- ❌ `outputs: ElementId[]` - Use `action.elementId` instead (single primary output)
+- ❌ `parameters: Record<string, any>` - Query element properties directly (e.g., `line.point1Id`, `circle.planeId`)
+
+**Data Access Patterns After Rationalization**:
+
+```typescript
+// BEFORE (redundant storage)
+const action = {
+  actionType: 'CreateLine',
+  inputs: [point1Id, point2Id],
+  outputs: [lineId],
+  parameters: { planeId, point1Id, point2Id }
+};
+
+// AFTER (derive from elements and services)
+const action = {
+  actionType: 'CreateLine',
+  elementId: lineId,
+  description: `Created line through points ${point1Id} and ${point2Id}`
+};
+
+// Access dependency information
+const line = world.getElement2D(action.elementId);
+const planeId = line.planeId;                              // From element property
+const [point1Id, point2Id] = world.dependencyService.getDependencies(action.elementId);  // From DependencyService
+
+// Or use element's own getDependencies() method
+const dependencies = line.getDependencies();
+```
+
+**Factory Function Updates**:
+
+```typescript
+// BEFORE (redundant parameters)
+export function createLineAction(
+  lineId: string,
+  planeId: string,
+  point1Id: string,
+  point2Id: string
+): ConstructiveAction {
+  return {
+    id: generateId('action_'),
+    type: 'action',
+    actionType: 'CreateSegment',
+    timestamp: new Date(),
+    inputs: [point1Id, point2Id],       // REDUNDANT
+    outputs: [lineId],                   // REDUNDANT
+    parameters: {                        // REDUNDANT
+      planeId,
+      point1Id,
+      point2Id
+    },
+    description: `Created segment from ${point1Id} to ${point2Id}`
+  };
+}
+
+// AFTER (minimal action)
+export function createLineAction(
+  lineId: string
+): ConstructiveAction {
+  return {
+    id: generateId('action_'),
+    type: 'action',
+    actionType: 'CreateSegment',
+    timestamp: new Date(),
+    elementId: lineId,
+    description: `Created segment ${lineId}`
+  };
+}
+```
+
+**Benefits**:
+- **Single source of truth**: Dependencies in DependencyService, properties in elements
+- **No synchronization risk**: Cannot have inconsistency between action and element data
+- **Simpler action factories**: Only need element ID, not all construction parameters
+- **Smaller serialized data**: ProcessTree JSON significantly smaller
+- **Clearer separation of concerns**: Actions record history, elements store structure
+- **Easier maintenance**: Changes to element properties don't require action updates
+
+**Migration Strategy**:
+1. Update ConstructiveAction interface in `frontend/src/domain/processTree/Action.ts`
+2. Update all 24 action factory functions to use minimal signature
+3. Update any code reading from `action.inputs`, `action.outputs`, `action.parameters`
+4. Audit ProcessTree display code to ensure it queries elements/DependencyService
+5. Update ProcessTree serialization/deserialization (smaller JSON structure)
+6. Add tests verifying data access patterns work correctly
+
+**Backwards Compatibility**:
+- Existing serialized ProcessTrees with old format can be migrated on load
+- Migration function: Read old fields, verify against current element state, discard
+- New saves use rationalized format only
+
 ---
 
 ### Domain Entity: ActionGroup
@@ -9364,6 +9498,440 @@ ActionGroups can be created in two ways:
    - Properties typically locked from editing
 
 **Important**: Once created, all elements become first-class objects in the World. The grouping is purely informative to help users understand construction history.
+
+---
+
+**Phase 93 - Action Interface Minimization**
+
+**User Requirement**: "Refactor Action handling. The current class has many useless fields (id - the target object id could be used instead, type, timestamp, etc.) which are not really used or needed. Also, check whether we have different Action implementations when a generic Action would be more than enough. On serialization, the Action data could be flattened into the parent object (AddProcessTreeActionOp) eliminating bloat."
+
+**Problem**: Phase 92 removed `inputs`, `outputs`, and `parameters`, but the Action interface still contains redundant fields that add serialization bloat and maintenance complexity:
+
+1. **`id: string`** field - UUID generated per action
+   - Action already has unique identifier via `elementId` (primary output element)
+   - ProcessTree lookup can use `elementId` directly
+   - UUID generation adds overhead and storage cost
+   - **Analysis**: Action ID is never used for lookup; `elementId` serves this purpose
+
+2. **`type: 'action'`** field - ProcessTree type discriminator
+   - Used for runtime type checking in ProcessTree traversal
+   - However, ProcessTree wraps Action in ActionNode which has `type: 'action'`
+   - The discriminator belongs at ActionNode level (ProcessTree layer), not Action interface
+   - **Analysis**: Type discrimination is ProcessTree concern, not Action concern
+
+3. **`timestamp: Date`** field - Creation time
+   - Stored but never used for logic, sorting, or display
+   - ProcessTree already maintains creation order through ActionNode.created
+   - If needed, can use ActionNode.created or element creation time
+   - **Analysis**: Dead code - timestamp is never read after creation
+
+4. **30+ separate factory functions** - createPointAction(), createLineAction(), createCircleAction(), etc.
+   - All factories follow identical pattern: construct Action with type, elementId, description
+   - Only difference is actionType string and description template
+   - Generic factory would eliminate code duplication
+   - **Analysis**: Can consolidate to single generic factory with convenience wrappers
+
+5. **Serialization bloat** - Actions wrapped in operation parameters
+   - Current format: AddProcessTreeActionOp serializes action as nested object
+   - JSON structure has unnecessary nesting: `{ opType: '...', action: { ...7 fields... }, groupId }`
+   - Can flatten action fields directly into operation JSON
+   - **Analysis**: 40% smaller serialization with flat structure
+
+**Solution**: Minimal Action interface + generic factory + flattened serialization
+
+**Rationalized Action Interface (4 fields)**:
+
+```typescript
+/**
+ * Action - Minimal construction narrative
+ * 
+ * Phase 93: Stores ONLY what's needed for construction history display.
+ * Removed: id (use elementId), type (moved to ActionNode), timestamp (use ActionNode.created)
+ * 
+ * Structural data derived from:
+ * - Dependencies: world.dependencyService.getDependencies(elementId)
+ * - Element properties: world.getElement2D(elementId).planeId, etc.
+ */
+export interface Action {
+  actionType: ActionType;           // Specific action type (CreateFreePoint, CreateLine, etc.)
+  elementId: string;                // Primary output element (for lookup)
+  description: string;              // Human-readable action narrative
+  isOutput: boolean;                // Phase 87: Output flag (Show in black box)
+}
+```
+
+**ActionNode in ProcessTree** (wraps Action with tree metadata):
+
+```typescript
+/**
+ * ActionNode - ProcessTree wrapper for Action
+ * 
+ * Adds ProcessTree-specific fields (id, type, created) to minimal Action.
+ * The 'type' discriminator lives here, not in Action interface.
+ */
+export interface ActionNode extends ProcessNodeBase, Action {
+  type: 'action';    // ProcessTree type discriminator (NOT in Action interface)
+  // Inherits from ProcessNodeBase:
+  //   id: string       (generated by ProcessTree.addActionToGroup)
+  //   created: Date    (generated by ProcessTree.addActionToGroup)
+}
+
+export interface ProcessNodeBase {
+  id: string;         // UUID for ProcessTree lookup
+  type: ProcessNodeType;
+  created: Date;      // When added to ProcessTree
+}
+```
+
+**Generic Action Factory** (replaces 30+ specialized factories):
+
+```typescript
+/**
+ * Generic action factory - creates minimal Action
+ * 
+ * Usage:
+ *   createAction('CreateFreePoint', pointId)
+ *   createAction('CreateLine', lineId, 'Created line through A and B')
+ */
+export function createAction(
+  actionType: ActionType,
+  elementId: string,
+  description?: string
+): Action {
+  return {
+    actionType,
+    elementId,
+    description: description ?? `Created ${elementId}`,  // Default description
+    isOutput: true  // Default to true (most actions are outputs)
+  };
+}
+```
+
+**Convenience Wrapper Functions** (backward compatibility):
+
+```typescript
+/**
+ * Specialized factory functions for convenience
+ * All delegate to generic createAction() function
+ */
+
+// frontend/src/domain/processTree/actions/CreatePointAction.ts
+export function createPointAction(pointId: string): Action {
+  return createAction('CreateFreePoint', pointId, `Created point ${pointId}`);
+}
+
+// frontend/src/domain/processTree/actions/CreateLineAction.ts
+export function createLineAction(lineId: string): Action {
+  return createAction('CreateLine', lineId, `Created line ${lineId}`);
+}
+
+// frontend/src/domain/processTree/actions/CreateCircleAction.ts
+export function createCircleAction(circleId: string): Action {
+  return createAction('CreateCircle', circleId, `Created circle ${circleId}`);
+}
+
+// ... 27 more wrapper functions (all call generic createAction)
+```
+
+**Flattened Serialization** (40% smaller JSON):
+
+```typescript
+/**
+ * AddProcessTreeActionOp - Flatten action fields into operation
+ * 
+ * BEFORE (Phase 92): Nested action object (7 fields + wrapper)
+ * {
+ *   opType: 'AddProcessTreeActionOp',
+ *   action: {  // Nested object (bloat!)
+ *     id: 'action_1234_abc',             // UUID (redundant)
+ *     type: 'action',                    // Type discriminator (redundant)
+ *     actionType: 'CreateFreePoint',
+ *     timestamp: '2026-02-02T12:34:56Z', // Timestamp (unused)
+ *     elementId: 'point2d_5',
+ *     description: 'Created point point2d_5',
+ *     isOutput: false
+ *   },
+ *   groupId: 'group_init_1234'
+ * }
+ * 
+ * AFTER (Phase 93): Flat structure (4 action fields + groupId)
+ * {
+ *   opType: 'AddProcessTreeActionOp',
+ *   actionType: 'CreateFreePoint',      // Flattened!
+ *   elementId: 'point2d_5',
+ *   description: 'Created point point2d_5',
+ *   isOutput: true,
+ *   groupId: 'group_init_1234'
+ * }
+ */
+export class AddProcessTreeActionOp implements IOperation {
+  readonly type = 'AddProcessTreeActionOp';
+  parameters: Record<string, any>;
+  outputs: Record<string, any> = {};
+
+  constructor(action: Action, private groupId: string) {
+    // Flatten action fields directly into parameters (no wrapper)
+    this.parameters = {
+      actionType: action.actionType,
+      elementId: action.elementId,
+      description: action.description,
+      isOutput: action.isOutput,
+      groupId: groupId
+    };
+  }
+
+  apply(world: World): OperationResult {
+    // Reconstruct minimal Action from flat parameters
+    const action: Action = {
+      actionType: this.parameters.actionType,
+      elementId: this.parameters.elementId,
+      description: this.parameters.description,
+      isOutput: this.parameters.isOutput
+    };
+    
+    // ProcessTree.addActionToGroup wraps Action in ActionNode
+    // (adds id, type: 'action', created fields)
+    const index = world.getProcessTree().addActionToGroup(action, this.groupId);
+    
+    this.outputs = {
+      actionId: action.elementId,  // Use elementId for lookup (no separate action.id)
+      groupId: this.groupId,
+      index: index
+    };
+    
+    return { success: true, outputs: this.outputs };
+  }
+
+  undo(world: World): void {
+    if (!this.outputs.actionId) {
+      throw new Error('Cannot undo: operation was not applied');
+    }
+    
+    // Remove action using elementId (no separate action.id needed)
+    world.getProcessTree().removeAction(this.outputs.actionId);
+  }
+
+  serialize(): SerializedOperation {
+    // Already flat - just return parameters
+    return {
+      opType: this.type,
+      ...this.parameters  // Spread flat fields
+    };
+  }
+}
+```
+
+**ProcessTree.addActionToGroup** (wraps Action in ActionNode):
+
+```typescript
+/**
+ * Add action to existing group
+ * 
+ * Wraps minimal Action in ActionNode with ProcessTree metadata (id, type, created)
+ */
+addActionToGroup(action: Action, groupId: string): number {
+  let groupFound: ActionGroup | undefined;
+  
+  // Find group
+  this.traverseGroups(this.root, (group) => {
+    if (group.id === groupId) {
+      groupFound = group;
+    }
+  });
+
+  if (!groupFound) {
+    throw new Error(`ActionGroup ${groupId} not found`);
+  }
+
+  // Wrap Action in ActionNode with ProcessTree metadata
+  const actionNode: ActionNode = {
+    id: this.generateId(),       // UUID generated by ProcessTree
+    type: 'action',              // ProcessTree type discriminator
+    created: new Date(),         // Creation timestamp
+    ...action                     // Spread minimal Action fields
+  };
+  
+  const index = groupFound.children.push(actionNode) - 1;
+  this.notifyChange();
+  return index;
+}
+```
+
+**Key Benefits**:
+
+1. **50% smaller Action interface**: 7 fields → 4 fields
+   - Removed: `id`, `type`, `timestamp` (redundant metadata)
+   - Kept: `actionType`, `elementId`, `description`, `isOutput` (essential data)
+
+2. **40% smaller serialization**: Flat structure eliminates wrapper nesting
+   - JSON size: ~180 bytes → ~110 bytes per action
+   - For 100 actions: 18KB → 11KB (7KB saved per project)
+
+3. **Generic factory**: Single `createAction()` replaces 30+ specialized factories
+   - Code deduplication: ~600 lines → ~50 lines (92% reduction)
+   - Convenience wrappers preserved for backward compatibility
+
+4. **Clearer separation of concerns**:
+   - Action interface: Construction narrative only (4 fields)
+   - ActionNode: ProcessTree metadata (id, type, created)
+   - ProcessTree owns tree structure, Action owns construction story
+
+5. **No redundant UUIDs**: Action lookup via `elementId` (no separate `action.id`)
+   - Simpler lookup: `findActionByElementId(elementId)` instead of `findActionById(actionId)`
+   - Eliminates UUID generation overhead
+
+6. **Dead code removal**: `timestamp` field never used after creation
+   - If needed, use `ActionNode.created` from ProcessTree wrapper
+
+**Migration Strategy**:
+
+1. **Phase 93.1**: Remove `id`, `type`, `timestamp` from Action interface
+   - Update Action interface definition
+   - Ensure ActionNode adds these fields when wrapping
+   - Update all direct Action construction sites
+
+2. **Phase 93.2**: Implement generic `createAction()` factory
+   - Create `frontend/src/domain/processTree/actions/ActionFactory.ts`
+   - Export generic `createAction(actionType, elementId, description?)` function
+
+3. **Phase 93.3**: Refactor specialized factories to call generic factory
+   - Update all 30+ `create*Action()` functions to delegate to `createAction()`
+   - Preserve existing function signatures for backward compatibility
+
+4. **Phase 93.4**: Flatten AddProcessTreeActionOp serialization
+   - Store action fields directly in `parameters` (no `action` wrapper)
+   - Update `serialize()` to return flat structure
+   - Update constructor to flatten on construction
+
+5. **Phase 93.5**: Update ProjectService deserialization
+   - Detect flat vs nested format (check for `action` wrapper vs `actionType` field)
+   - Parse flat structure directly into Action
+   - Handle both formats for migration period
+
+6. **Phase 93.6**: Add migration for old project files
+   - Detect old format (has `action` wrapper object)
+   - Extract fields from wrapper
+   - Discard removed fields (`id`, `type`, `timestamp`)
+   - Reconstruct minimal Action with 4 fields
+
+7. **Phase 93.7**: Update all tests
+   - Replace action construction with minimal 4-field structure
+   - Update action assertions to check ActionNode fields (id, type, created)
+   - Verify serialization produces flat structure
+
+**Data Access Pattern Examples**:
+
+```typescript
+// BEFORE (Phase 92): Action had redundant id, type, timestamp
+const action = createPointAction('point2d_5', 'proj_plane_1', new Vector3(10, 20, 1));
+// action = {
+//   id: 'action_1234_abc',           // UUID (redundant with elementId)
+//   type: 'action',                  // Type (redundant - ActionNode has this)
+//   actionType: 'CreateFreePoint',
+//   timestamp: Date(...),            // Timestamp (never used)
+//   elementId: 'point2d_5',
+//   description: 'Created point...',
+//   isOutput: false
+// }
+
+// AFTER (Phase 93): Minimal Action (4 fields)
+const action = createPointAction('point2d_5');
+// action = {
+//   actionType: 'CreateFreePoint',
+//   elementId: 'point2d_5',
+//   description: 'Created point point2d_5',
+//   isOutput: false
+// }
+
+// ProcessTree wraps in ActionNode when added
+const actionNode = {
+  id: 'action_1234_abc',        // Generated by ProcessTree
+  type: 'action',               // Added by ProcessTree
+  created: Date(...),           // Added by ProcessTree
+  actionType: 'CreateFreePoint', // From Action
+  elementId: 'point2d_5',       // From Action
+  description: 'Created point...', // From Action
+  isOutput: false               // From Action
+};
+
+// Lookup action by elementId (no separate action.id needed)
+const foundAction = processTree.findActionByElementId('point2d_5');
+```
+
+**Backward Compatibility**:
+
+- **Code compatibility**: Existing `create*Action()` functions preserved as wrappers
+  - No breaking changes for tool code
+  - Internal implementation delegates to generic `createAction()`
+
+- **Serialization compatibility**: ProjectService migration handles both formats
+  - Old format (nested): Detect `action` wrapper, extract fields
+  - New format (flat): Parse fields directly
+  - Migration runs transparently on project load
+
+- **API compatibility**: ProcessTree lookup by elementId
+  - Replace: `processTree.findActionById(actionId)`
+  - With: `processTree.findActionByElementId(elementId)`
+  - Or use: `processTree.getActionsProducingElement(elementId)`
+
+**Testing Strategy**:
+
+1. **Unit tests**: Action factory functions
+   - Test generic `createAction()` with all ActionType values
+   - Test convenience wrappers delegate correctly
+   - Verify 4-field output structure
+
+2. **Unit tests**: AddProcessTreeActionOp
+   - Test flat serialization format
+   - Test apply() wraps Action in ActionNode correctly
+   - Test undo() removes action by elementId
+
+3. **Integration tests**: ProjectService serialization
+   - Test serialize produces flat structure
+   - Test deserialize handles flat structure
+   - Test migration converts old nested format
+
+4. **Migration tests**: Old project file compatibility
+   - Load project with old nested action format
+   - Verify actions parsed correctly (4 fields)
+   - Verify removed fields ignored (id, type, timestamp)
+   - Verify save produces new flat format
+
+5. **Regression tests**: ProcessTree display
+   - Verify ActionPanel displays actions correctly
+   - Verify hover highlighting works with elementId lookup
+   - Verify expand/collapse state preserved
+
+**Performance Impact**:
+
+- **Serialization**: 40% smaller JSON (faster save/load, less storage)
+- **Memory**: 43% less memory per action (7 fields → 4 fields)
+- **Factory overhead**: Eliminated (generic factory vs 30+ functions)
+- **Lookup performance**: Same (elementId lookup equivalent to id lookup)
+
+**Breaking Changes**:
+
+1. **Action interface**: No `id`, `type`, `timestamp` fields
+   - Code directly accessing these fields will break
+   - Migration: Use `ActionNode.id`, `ActionNode.type`, `ActionNode.created` instead
+
+2. **Serialization format**: Flat structure vs nested
+   - Old project files require migration on load
+   - New saves use flat format only
+
+3. **ProcessTree API**: Lookup by elementId vs actionId
+   - Replace `findActionById()` with `findActionByElementId()`
+   - Or use `getActionsProducingElement()` for semantics
+
+**Migration Timeline**:
+
+- **Phase 93.1-93.3**: Action interface + generic factory (2 days)
+- **Phase 93.4**: Flatten serialization (1 day)
+- **Phase 93.5-93.6**: ProjectService migration (2 days)
+- **Phase 93.7**: Testing and regression (2 days)
+- **Total**: 7 days (1.5 weeks)
+
+---
 
 **ActionGroup Pattern**:
 - ALL actions must be inside an ActionGroup (even if it's the only action)
@@ -13046,94 +13614,172 @@ it('should create line between two points', () => {
 
 ---
 
-### Phase 76: Fail-Fast Error Handling - Eliminate Optional Chaining Anti-Patterns
+### Phase 76: Fail-Fast Error Handling - Eliminate Defensive Coding Anti-Patterns
 
-**Status**: ✅ IMPLEMENTED (2026-01-17)
+**Status**: 🚧 IN PROGRESS (2026-02-02) - Comprehensive reconsidered implementation
 
-**Problem Statement**: Codebase has 200+ uses of optional chaining operator (`?.`) that hide bugs by silently handling unexpected null/undefined values. When internal invariants are violated (element not found, plane missing), code returns undefined and execution continues with corrupted state instead of failing fast.
+**Problem Statement**: Codebase has ~13 uses of optional chaining in domain layer that hide internal corruption + ~15 realization methods returning `null` for missing dependencies. When invariants are violated (element not found, plane missing), code silently continues with corrupted state instead of failing fast.
 
 **User Requirement**: "In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. In general don't try to handle unexpected internal states but just report an error instead. I don't want code which hides bugs and returns bad results. Internal errors must not be hidden. Instead they must cause the app to die so we can see them and fix them."
 
-**Architectural Principle: Pragmatic Fail-Fast**
+**Key Insight**: Codebase ALREADY uses `feasible: boolean` flag in realization classes for geometric failures. Problem is `realize2D()` returns `null` for MISSING dependencies (corruption) instead of using feasible flag.
 
-**Invariants**: Internal state must always be valid. If element IDs exist, elements must exist. If plane IDs exist, planes must exist.
+**Architectural Principle: Pragmatic Fail-Fast with Explicit Errors**
 
-**Solution**: Remove defensive optional chaining (`?.`) and let JavaScript's natural TypeError handle violations:
+**Invariants**: Internal state must always be valid. If element IDs exist, elements must exist. If plane IDs exist, planes must exist. Dependencies in dependency graph must always be resolvable.
 
-```typescript
-// BEFORE (hides bugs):
-const plane = world.getProjectionPlaneById(this.planeId);
-const point1 = plane?.getPoint(this.point1Id);  // Returns undefined if plane is null
-const p1Realization = point1?.realize2D(world);  // Returns undefined if point1 is undefined
-// Continues with undefined, produces garbage results
-
-// AFTER (fail-fast):
-const plane = world.getProjectionPlaneById(this.planeId);
-const point1 = plane.getPoint(this.point1Id);  // Natural TypeError if plane is null
-const p1Realization = point1.realize2D(world);  // Natural TypeError if point1 is undefined
-// Crashes immediately with stack trace showing exactly what was null and where
-```
-
-**Instrumentation Philosophy**: Do NOT add explicit guards preemptively. Only instrument with explicit checks if natural errors prove confusing in practice. Most TypeErrors are perfectly clear:
+**Solution**: Two-part fix:
+1. **World.ts getters**: Add explicit null checks with descriptive `[INTERNAL ERROR]` messages
+2. **Realization methods**: Throw on missing dependencies, use existing `feasible: false` for geometric failures:
 
 ```typescript
-// TypeError: Cannot read properties of undefined (reading 'getPoint')
-// Stack trace shows exact line and what was null - no custom error needed!
+// CATEGORY 1: World.ts getters - Add explicit plane checks
 
-// ONLY add guards if error would be confusing:
-// - When error message would be cryptic to users
-// - When debugging context is needed for complex failure modes
-// - After errors are found to happen (not before!)
+// BEFORE (hides corruption):
+getPoint2D(id: string): Point2D | undefined {
+  const containerId = getContainerIdFromElementId(id);
+  const plane = this.getProjectionPlaneById(containerId);
+  return plane?.getPoint(id);  // Silently returns undefined if plane is null
+}
+
+// AFTER (fail-fast with explicit error):
+getPoint2D(id: string): Point2D | undefined {
+  const containerId = getContainerIdFromElementId(id);
+  const plane = this.getProjectionPlaneById(containerId);
+  if (!plane) {
+    throw new Error(`[INTERNAL ERROR] Plane ${containerId} not found when looking up point ${id}. This indicates corrupted element ID or missing plane registration.`);
+  }
+  return plane.getPoint(id);  // Legitimate undefined if point doesn't exist in plane
+}
+
+// CATEGORY 2: Realization methods - Throw on missing dependencies, use feasible flag for geometry
+
+// Current Architecture (CORRECT for geometric failures!):
+// - Realization base class has 'feasible: boolean' property
+// - Element2DRealization2D extends Realization with feasible flag
+// - Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D all inherit feasible
+
+// BEFORE (returns null for missing dependencies - WRONG!):
+realize2D(world: World): Line2DRealization2D | null {
+  const p1 = world.getPoint2D(this.point1Id);
+  const p2 = world.getPoint2D(this.point2Id);
+  if (!p1 || !p2) return null;  // WRONG: Hides corruption
+  
+  const p1Realization = p1.realize2D(world);
+  const p2Realization = p2.realize2D(world);
+  
+  // Geometric failure (CORRECT pattern - keep this):
+  if (!p1Realization.feasible || !p2Realization.feasible) {
+    return new Line2DRealization2D(pos1, pos2, false);  // feasible=false
+  }
+  
+  // Degenerate geometry (CORRECT pattern - keep this):
+  if (pos1.distanceToSquared(pos2) < 1e-10) {
+    return new Line2DRealization2D(pos1, pos2, false);  // feasible=false
+  }
+  
+  return new Line2DRealization2D(pos1, pos2, true);
+}
+
+// AFTER (throw for corruption, use feasible flag for geometry):
+realize2D(world: World): Line2DRealization2D {  // Return type: not nullable!
+  const p1 = world.getPoint2D(this.point1Id);
+  if (!p1) {
+    throw new Error(`[INTERNAL ERROR] Segment ${this.id} point1 ${this.point1Id} not found. Dependency graph corrupted.`);
+  }
+  const p2 = world.getPoint2D(this.point2Id);
+  if (!p2) {
+    throw new Error(`[INTERNAL ERROR] Segment ${this.id} point2 ${this.point2Id} not found. Dependency graph corrupted.`);
+  }
+  
+  const p1Realization = p1.realize2D(world);
+  const p2Realization = p2.realize2D(world);
+  
+  // Propagate infeasibility (KEEP - correct pattern):
+  if (!p1Realization.feasible || !p2Realization.feasible) {
+    return new Line2DRealization2D(pos1, pos2, false);
+  }
+  
+  // Degenerate geometry (KEEP - correct pattern):
+  if (pos1.distanceToSquared(pos2) < 1e-10) {
+    return new Line2DRealization2D(pos1, pos2, false);
+  }
+  
+  return new Line2DRealization2D(pos1, pos2, true);
+}
+// Corruption → throw Error with [INTERNAL ERROR] prefix
+// Geometric failure → return realization with feasible=false
+// Calling code checks: realization.feasible (not realization === null)
 ```
 
-**Categories of Uses**:
+**Distinction Between Corruption and Geometric Failure**:
+
+- **Corruption** (throw Error): Dependencies that MUST exist are missing
+  - Missing plane when element ID references it
+  - Missing point when segment references it
+  - Missing line when intersection references it
+  - **Detection**: `if (!dependency) throw new Error("[INTERNAL ERROR] ...")`
+
+- **Geometric Failure** (feasible: false): Valid dependencies produce invalid geometry
+  - Parallel lines have no intersection point
+  - Coincident points cannot define a line
+  - Degenerate segment (endpoints coincident)
+  - Parent elements are themselves infeasible (propagate)
+  - **Detection**: Return `new XxxRealization2D(..., false)`
+
+**Categories of Optional Chaining**:
+
+**ILLEGITIMATE (remove `?.`, add explicit checks):**
+- Domain invariants: `plane?.getPoint()` → explicit plane check + `plane.getPoint()`
+- Parent elements in realizations: `if (!p1 || !p2) return null` → throw Error
+- Dependency lookups: `plane?.getLine()` → explicit check + error
 
 **LEGITIMATE (keep `?.`):**
 - Optional configuration: `options?.visibleOnly` - external API can omit options
-- Optional UI state: `tooltipText?.length` - DOM elements may not exist yet
-- External data: `match?.groups` - regex may not match, legitimate null case
-- Test assertions: `hit?.elementType` - testing that hit can be null
-
-**ILLEGITIMATE (remove `?.`, use `.`):**
-- Domain invariants: `plane?.getPoint()` → `plane.getPoint()` - plane MUST exist
-- Parent elements: `point1?.realize2D()` → `point1.realize2D()` - point MUST exist
-- Cached realizations: `primaryPoint?.realize2D()` → `primaryPoint.realize2D()`
-- Dependency graph: `plane?.getAllLines()` → `plane.getAllLines()`
-
-**Implementation Pattern**: Mechanical removal - just change `?.` to `.` throughout domain layer:
-
-```typescript
-// Point.ts - Line-Line Intersection
-realize2D(world: World): Point2DRealization2D {
-  const plane = world.getProjectionPlaneById(this.planeId);
-  const l1 = plane.getLine(this.line1Id);        // Changed from plane?.getLine
-  const l2 = plane.getLine(this.line2Id);        // Changed from plane?.getLine
-  const line1 = l1.realize2D(world);              // Changed from l1?.realize2D
-  const line2 = l2.realize2D(world);              // Changed from l2?.realize2D
-  // Natural TypeError if any parent is null - shows exact problem location
-}
+- Optional UI state: `element.visualStyle?.visible` - property may not be set
+- DOM references: `element.value?.focus()` - ref may not be mounted
+- External data: `error.result?.error?.message` - external API structure
+- Test code: Testing optional behavior is legitimate
 ```
 
 **Impact Analysis**:
-- **Domain layer** (~150 instances removed): Point.ts (14), Line.ts (25), ProjectionPlane.ts (35), Circle.ts (~20), World.ts (6), Guide.ts (1)
-- **Test layer** (~50 instances): Most kept (testing optional behavior is legitimate)
-- **Benefits**:
-  - **Faster debugging**: Crash at corruption point with stack trace, not later with garbage data
-  - **Natural errors**: JavaScript's TypeError shows exactly what was null and where
-  - **Minimal code**: No defensive guards, no boilerplate - just simple, direct code
-  - **Pragmatic**: Only instrument if errors prove confusing (not preemptively)
+- **World.ts getters** (~10 methods): getPoint2D, getLine2D, getCircle2D, getSegment2D, getGuide2D
+  - Add explicit plane null checks with [INTERNAL ERROR] messages
+  - ~50 lines changed
+- **Geometric realization methods** (~15 methods across Point.ts, Line.ts, Circle.ts, Segment.ts):
+  - Change return type from `| null` to non-nullable
+  - Throw on missing dependencies
+  - Keep `feasible: false` for geometric failures
+  - Update calling code to check `.feasible` instead of `=== null`
+  - ~150 lines changed
+- **ProcessTree null handling** (~3 methods): ProcessTree.ts traversal methods
+  - Add assertions for non-null children
+  - ~9 lines changed
+- **Tests**: Update to expect errors for corruption, check feasible flag for geometric failures
+- **Total impact**: ~35 methods, ~210 lines changed in domain layer
+- **Vue components** (~50 instances): NO CHANGES - legitimate optional chaining preserved
+- **Backend** (1 instance): Review ProjectRepository.ts null return
+
+**Benefits**:
+- **Immediate bug detection**: Corrupted state crashes at source with descriptive error
+- **Explicit error messages**: `[INTERNAL ERROR]` prefix clearly indicates internal corruption
+- **Stack traces**: Errors show exactly where corruption occurred (method, ID, dependency)
+- **No silent failures**: Users see error dialog instead of mysteriously broken geometry
+- **Faster debugging**: See corruption point immediately, not after calculations produce NaN
+- **Existing feasible architecture**: Leverages existing Realization.feasible property correctly
 
 **Files Modified**:
-- [Point.ts](../../frontend/src/domain/world/Point.ts): Removed 14 illegitimate `?.` uses
-- [Line.ts](../../frontend/src/domain/world/Line.ts): Removed 25 illegitimate `?.` uses
-- [Circle.ts](../../frontend/src/domain/world/Circle.ts): Removed ~20 illegitimate `?.` uses
-- [ProjectionPlane.ts](../../frontend/src/domain/world/ProjectionPlane.ts): Removed 35 illegitimate `?.` uses
-- [World.ts](../../frontend/src/domain/world/World.ts), [Guide.ts](../../frontend/src/domain/world/Guide.ts), [Segment.ts](../../frontend/src/domain/world/Segment.ts): Removed remaining instances
-- Tests updated to expect natural TypeError behavior where appropriate
+- [World.ts](../../frontend/src/domain/world/World.ts): Add explicit null checks in 10 getter methods
+- [Point.ts](../../frontend/src/domain/world/Point.ts): Update realize2D() to throw on missing dependencies
+- [Line.ts](../../frontend/src/domain/world/Line.ts): Update realize2D() to throw on missing dependencies
+- [Circle.ts](../../frontend/src/domain/world/Circle.ts): Update realize2D() to throw on missing dependencies
+- [Segment.ts](../../frontend/src/domain/world/Segment.ts): Update realize2D() to throw on missing dependencies
+- [ProcessTree.ts](../../frontend/src/domain/world/ProcessTree.ts): Add null child assertions
+- Tests updated to expect explicit errors for corruption, check feasible flag for geometric failures
 
-**Testing**: Integration tests verify corrupted state throws TypeError. Tests expecting silent failures updated to expect crashes.
+**Testing**: Integration tests verify corrupted state throws descriptive Error. Tests expecting silent failures updated to expect explicit error messages. Tests for geometric failures updated to check `realization.feasible === false`.
 
-**Related Phases**: Phase 75 (Type Property Elimination - instanceof pattern), Phase 63 (Class-Based Selection Masks)
+**Related Phases**: Phase 91 (DependencyService - proper dependency tracking), Phase 92 (Action rationalization), Phase 93 (Action interface minimization)
 ---
 
 ### Phase 77: 3D Visualization of 2D Elements on Planes
@@ -16219,4 +16865,135 @@ Based on further review, the `DependencyService` should not rely on `ProcessTree
 *   Source of truth is the Element definition in the World, not the historical Action.
 *   Decoupled from Undo/Redo history.
 *   Works for temporary elements if needed.
+
+---
+
+## Test Infrastructure Pattern
+
+### Problem Statement (Test Fixes - Jan 2026)
+
+**Current State**: Unit tests create `World` instances expecting them to be pre-initialized:
+```typescript
+const world = new World();
+const plane = world.getProjectionPlaneByLabel('P_H')!;  // FAILS - plane is undefined
+```
+
+Since Phase 47, `World()` constructor creates an empty world. Initialization with P_H/P_V projection planes must be done explicitly via `world.initialize(commandStack)`.
+
+**Impact**: 47 test files (509 tests) fail with "Projection plane not found with label: P_H"
+
+### Solution: Test Helper Function
+
+**Approach**: Create `createTestWorld()` helper that returns fully initialized World with CommandStack.
+
+**Rationale**:
+1. **Explicit**: Makes initialization visible in test code
+2. **No production changes**: Keeps World() constructor clean, doesn't add test-specific behavior
+3. **Flexible**: Test helper can evolve independently (add fixtures, preset elements, etc.)
+4. **Best practice**: Follows testing convention of explicit setup
+
+**Implementation**:
+```typescript
+// tests/helpers/worldHelper.ts
+import { World } from '@/domain/world/World';
+import { CommandStack } from '@/commands/CommandStack';
+
+/**
+ * Create a fully initialized World for testing.
+ * Returns World with P_H, P_V projection planes, origin points, and hinge line.
+ * 
+ * Usage:
+ * ```typescript
+ * const { world, commandStack } = createTestWorld();
+ * const plane = world.getProjectionPlaneByLabel('P_H');  // Succeeds
+ * ```
+ */
+export function createTestWorld(): { world: World; commandStack: CommandStack } {
+  const world = new World();
+  const commandStack = new CommandStack(world);
+  world.initialize(commandStack);
+  return { world, commandStack };
+}
+```
+
+**Migration Pattern**:
+```typescript
+// Before:
+const world = new World();
+const plane = world.getProjectionPlaneByLabel('P_H')!;
+
+// After:
+const { world, commandStack } = createTestWorld();
+const plane = world.getProjectionPlaneByLabel('P_H')!;
+```
+
+**Special Cases**:
+- Tests verifying initialization behavior: Keep `new World()`, call `initialize()` explicitly
+- Tests needing empty world: Keep `new World()`, document why not using helper
+- Tests needing custom setup: Use helper then add custom elements
+
+### Affected Test Files (47 files)
+
+**Integration Tests (5)**:
+- AllFactories.spec.ts
+- projectService.cascadeDeletion.spec.ts
+- projectService.determinism.spec.ts
+- semanticReferences.spec.ts
+- worldInitialization.spec.ts
+
+**Unit Tests - Commands (10)**:
+- createCircle.spec.ts
+- createFreePoint.spec.ts
+- createGuide.spec.ts
+- createIntersectionPoint.spec.ts
+- createLine.spec.ts
+- createSegment.spec.ts
+- GuideSequenceFactory.spec.ts
+- IntersectionSequenceFactory.spec.ts
+- initializationOps.spec.ts
+- initializeWorldCommand.spec.ts
+- removeElementOps.spec.ts
+- updateFreePoint2DPositionOp.spec.ts
+
+**Unit Tests - Components (3)**:
+- actionsPanel.spec.ts
+- elementsPanel.spec.ts
+- propertiesDialog.spec.ts
+
+**Unit Tests - Domain (15)**:
+- Line3DReconstruction.test.ts
+- Plane3DFromTraces.test.ts
+- Point3DReconstruction.test.ts
+- circle.spec.ts
+- element2d.spec.ts
+- guide.spec.ts
+- line.spec.ts
+- lineHierarchy.spec.ts
+- paperHitTesting.spec.ts
+- point.spec.ts
+- projectionPlaneRealization.spec.ts
+- segment.spec.ts
+- tangentLine.spec.ts
+- world.spec.ts
+- processTree.spec.ts
+- projectionPlane.spec.ts
+
+**Unit Tests - Services (5)**:
+- ProjectService.selfContainment.spec.ts
+- dependencyService.spec.ts (duplicate, actually same as unit/dependencyService.spec.ts)
+- googleDriveService.spec.ts
+- paperService.spec.ts
+- renderService.spec.ts
+
+**Unit Tests - Tools & Others (9)**:
+- CircleTool.spec.ts
+- pointTool.spec.ts
+- coordinateTransform.spec.ts (multiple locations)
+- dependencyService.spec.ts
+- selectionMask.spec.ts
+- utils/coordinateTransform.spec.ts
+
+### Implementation Tasks
+
+See [tasks.md](tasks.md) for detailed task breakdown (T1625-T1675).
 

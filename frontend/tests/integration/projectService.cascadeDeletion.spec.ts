@@ -14,7 +14,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../helpers/worldHelpers';
 import { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import { ProjectService } from '@/services/ProjectService';
@@ -29,8 +30,9 @@ describe('ProjectService Deletion Edge Case Tests', () => {
   let planeId: string;
 
   beforeEach(() => {
-    world = new World();
-    commandStack = new CommandStack();
+    const testWorld = createTestWorld();
+    world = testWorld.world;
+    commandStack = testWorld.commandStack;
     planeId = getHorizontalPlaneId(world);
   });
 
@@ -63,8 +65,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
     const serialized = ProjectService.serializeCommands(commandStack, 'Deletion Test');
 
     // Deserialize into fresh World
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
 
     // Verify deletion is preserved
@@ -108,8 +109,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
 
     // Serialize
     const serialized = ProjectService.serializeCommands(commandStack, 'Multiple Deletions');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
 
     // Verify final state
@@ -146,8 +146,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
 
     // Serialize
     const serialized = ProjectService.serializeCommands(commandStack, 'Undo/Redo Test');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
 
     const freshPlane = freshWorld.getProjectionPlaneById(planeId)!;
@@ -195,8 +194,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
 
     // Serialize
     const serialized = ProjectService.serializeCommands(commandStack, 'Create-Delete-Create Test');
-    const freshWorld = new World();
-    const freshStack = new CommandStack();
+    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
 
     const freshPlane = freshWorld.getProjectionPlaneById(planeId)!;

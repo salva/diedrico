@@ -6,19 +6,21 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { Command } from '@/commands/Command';
 import { Vector3, Vector4 } from 'three';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Line3D Reconstruction from Projections', () => {
   let world: World;
   let command: Command;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     command = new Command('test-command', world);
   });
 

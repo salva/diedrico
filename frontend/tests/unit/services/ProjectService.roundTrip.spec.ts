@@ -14,10 +14,11 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { World } from '@/domain/world/World';
-import { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { CommandStack } from '@/commands/CommandStack';
 import { ProjectService } from '@/services/ProjectService';
 import { Command } from '@/commands/Command';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 // Import operation classes
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -37,8 +38,9 @@ describe('Round-Trip Serialization Tests', () => {
   let commandStack: CommandStack;
 
   beforeEach(() => {
-    world = new World();
-    commandStack = new CommandStack();
+    const { world: w, commandStack: cs } = createTestWorld();
+    world = w;
+    commandStack = cs;
   });
 
   it('AddFreePoint2DOp survives round-trip', () => {

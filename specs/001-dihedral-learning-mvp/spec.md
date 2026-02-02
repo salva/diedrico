@@ -471,6 +471,8 @@ Every operation performed through a tool creates a **constructive action** that:
 
 Actions may be grouped into **subprocesses** (collapsible groups) to reflect reasoning steps and improve readability.
 
+**Technical Note (Phase 93)**: Action interface is intentionally minimal - stores only construction narrative (`actionType`, `elementId`, `description`, `isOutput`). Structural data (dependencies, element properties) is derived dynamically from World and DependencyService. This ensures single source of truth and reduces serialization bloat. See data-model.md §Phase 93.
+
 ### UI Components (User-Facing)
 
 The UI is organized into four main areas:

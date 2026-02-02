@@ -13,7 +13,8 @@ import { Vector3 } from 'three';
 import { Segment2DByPoints, Segment2D } from '@/domain/world/Segment';
 import { Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D, Point2DRealization2D } from '@/domain/world/Point';
-import { World } from '@/domain/world/World';
+import type { World } from '@/domain/world/World';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Segment2D', () => {
   let world: World;
@@ -22,7 +23,8 @@ describe('Segment2D', () => {
   let point2Id: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     planeH = world.getProjectionPlaneByLabel('P_H')!;
     
     // Create two test points using factory method (let IDs auto-generate)

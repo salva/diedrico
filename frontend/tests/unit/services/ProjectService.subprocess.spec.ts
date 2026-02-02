@@ -5,10 +5,11 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '@/domain/world/World';
-import { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { CommandStack } from '@/commands/CommandStack';
 import { ProjectService } from '@/services/ProjectService';
 import { Command } from '@/commands/Command';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
 import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
 import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
@@ -21,8 +22,9 @@ describe('ProjectService Subprocess Operations Serialization', () => {
   let commandStack: CommandStack;
 
   beforeEach(() => {
-    world = new World();
-    commandStack = new CommandStack();
+    const { world: w, commandStack: cs } = createTestWorld();
+    world = w;
+    commandStack = cs;
   });
 
   it('PushSubprocessOp survives round-trip', () => {

@@ -12,12 +12,12 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { World } from '../../../src/domain/world/World';
+import type { World } from '../../../src/domain/world/World';
 import { Line2D, Line2DByTwoPoints, Line2DRealization2D } from '../../../src/domain/world/Line';
 import { Segment2DByPoints } from '../../../src/domain/world/Segment';
 import { Guide2D } from '../../../src/domain/world/Guide';
 import { HalfHingeLine2D } from '../../../src/domain/world/HingeLine';
-import { getHorizontalPlane } from '../../helpers/worldHelpers';
+import { getHorizontalPlane, createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Line2D Hierarchy (Phase 22.5)', () => {
   let world: World;
@@ -26,7 +26,8 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
   let p2Id: string;
 
   beforeEach(() => {
-    world = new World();
+    const { world: w } = createTestWorld();
+    world = w;
     // Get horizontal projection plane
     planeH = getHorizontalPlane(world);
     

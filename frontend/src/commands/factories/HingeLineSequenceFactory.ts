@@ -48,12 +48,12 @@ export function buildHingeLineWithHalves(
 ): void {
   // Step 1: Create 3D hinge line
   // AddHingeLineOp calls world.addHingeLine() which generates ID if not provided
-  const hingeLineOp = new AddHingeLineOp(horizontalPlaneId, verticalPlaneId, 'hinge_line_main');
+  const hingeLineOp = new AddHingeLineOp(horizontalPlaneId, verticalPlaneId);
   cmd.addAndExecute(hingeLineOp);
   const hingeLineId = hingeLineOp.outputs.hingeLineId as string;
   
   cmd.addAndExecute(new AddProcessTreeActionOp(
-    createInitializeHingeLineAction(hingeLineId, horizontalPlaneId, verticalPlaneId),
+    createInitializeHingeLineAction(hingeLineId),
     groupId
   ));
 
@@ -62,7 +62,7 @@ export function buildHingeLineWithHalves(
   const hhl1Op = new AddHalfHingeLine2DOp(horizontalPlaneId, hingeLineId, 'half_hinge_H');
   cmd.addAndExecute(hhl1Op);
   cmd.addAndExecute(new AddProcessTreeActionOp(
-    createInitializeHalfHingeLine2DAction(hhl1Op.outputs.lineId, horizontalPlaneId, hingeLineId),
+    createInitializeHalfHingeLine2DAction(hhl1Op.outputs.lineId),
     groupId
   ));
   
@@ -70,7 +70,7 @@ export function buildHingeLineWithHalves(
   const hhl2Op = new AddHalfHingeLine2DOp(verticalPlaneId, hingeLineId, 'half_hinge_V');
   cmd.addAndExecute(hhl2Op);
   cmd.addAndExecute(new AddProcessTreeActionOp(
-    createInitializeHalfHingeLine2DAction(hhl2Op.outputs.lineId, verticalPlaneId, hingeLineId),
+    createInitializeHalfHingeLine2DAction(hhl2Op.outputs.lineId),
     groupId
   ));
 }

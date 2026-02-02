@@ -110,13 +110,7 @@ export class Create3DPointTool extends ArgumentCollectorTool {
     const point3dId = result.outputs.pointId;
     
     // Register ProcessTree action for dependency tracking
-    const action = createAdd3DPointAction(
-      point3dId,
-      projection1Id,
-      projection2Id,
-      plane1Id,
-      plane2Id
-    );
+    const action = createAdd3DPointAction(point3dId);
     
     const groupId = `group_${Date.now()}_point3d`;
     const group = createActionGroup(groupId);

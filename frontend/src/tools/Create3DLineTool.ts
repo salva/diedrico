@@ -90,13 +90,7 @@ export class Create3DLineTool extends ArgumentCollectorTool {
     
     const line3dId = result.outputs.lineId;
     
-    const action = createAdd3DLineAction(
-      line3dId,
-      projection1Id,
-      projection2Id,
-      plane1Id,
-      plane2Id
-    );
+    const action = createAdd3DLineAction(line3dId);
     
     const groupId = `group_${Date.now()}_line3d`;
     const group = createActionGroup(groupId);

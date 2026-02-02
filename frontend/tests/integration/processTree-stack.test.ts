@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { World } from '../../src/domain/world/World';
+import type { World } from '../../src/domain/world/World';
+import { createTestWorld } from '../helpers/worldHelpers';
 import { CommandStack } from '../../src/commands/CommandStack';
 import { Command } from '../../src/commands/Command';
 import { PushSubprocessOp } from '../../src/commands/operations/processTree/PushSubprocessOp';
@@ -12,9 +13,10 @@ describe('ProcessTree Stack Management', () => {
   let commandStack: CommandStack;
 
   beforeEach(() => {
-    world = new World();
+    const testWorld = createTestWorld();
+    world = testWorld.world;
+    commandStack = testWorld.commandStack;
     processTree = world.getProcessTree();
-    commandStack = new CommandStack();
   });
   
   function executePush(name: string) {
