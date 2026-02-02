@@ -39,7 +39,7 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
 * [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
-* [ ] Activate or fix undo & redo buttoms.
+* [x] Activate or fix undo & redo buttoms.
 * [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
 * [ ] Ensure Google Drive logout works correctly.
 * [ ] Why are reverse dependencies estored in the process tree? that seems wrong!

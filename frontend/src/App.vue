@@ -8,6 +8,7 @@
       :is-signed-in="isSignedIn"
       @sign-in="handleSignIn"
       @open="handleOpenProject"
+      @create-project="handleNewProject"
     />
 
     <!-- Header: Top toolbar area -->
@@ -101,7 +102,7 @@
  * @see specs/001-dihedral-learning-mvp/ui-spec.md#startup-flow-and-google-drive-authentication
  */
 
-import { provide, ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { provide, ref, onMounted, onUnmounted, watch } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
@@ -120,7 +121,7 @@ import { useSettingsStore } from './stores/settingsStore';
 import { useAuthStore } from './stores/authStore';
 import { World } from './domain/world/World';
 import { GoogleDriveService } from './services/GoogleDriveService';
-import { ProjectService } from './services/ProjectService';
+import { ProjectService, type ProjectData } from './services/ProjectService';
 // Google Drive configuration (from environment variables)
 const GOOGLE_CONFIG = {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
@@ -149,6 +150,9 @@ provide('world', world);
 const commandStack = new CommandStack();
 provide('commandStack', commandStack);
 
+// Phase 95: Explicitly initialize the world through the command stack to ensure the initialization is recorded
+world.initialize(commandStack);
+
 // Google Drive service (only if credentials are available)
 const driveService = hasGoogleCredentials ? new GoogleDriveService(GOOGLE_CONFIG) : null;
 
@@ -174,27 +178,47 @@ useSettingsStore();
 // T403: Authentication state
 const authStore = useAuthStore();
 
-// Active plane state - will be set after world initialization
-// Active plane state - read from World (set by initialization factory)
-const activePlaneId = computed(() => world.getActivePlaneId());
-const activePlaneName = computed(() => {
-  const planeId = world.getActivePlaneId();
-  if (!planeId) return '';
-  
-  // Determine plane name based on semantic role
-  // Check all planes to find matching label
-  for (const plane of world.getAllProjectionPlanes()) {
-    if (plane.id === planeId) {
-      if (plane.name === 'P_H') {
-        return 'P_H (Horizontal)';
-      } else if (plane.name === 'P_V') {
-        return 'P_V (Vertical)';
-      }
-      break;
-    }
+// Active plane state - reactive refs updated by world subscription
+const activePlaneId = ref<string | undefined>(world.getActivePlaneId());
+const activePlaneName = ref('');
+
+/**
+ * Update active plane info from World state
+ */
+const updateActivePlaneInfo = () => {
+  const newPlaneId = world.getActivePlaneId();
+  if (newPlaneId !== activePlaneId.value) {
+    activePlaneId.value = newPlaneId;
   }
   
-  return planeId;
+  if (!activePlaneId.value) {
+    activePlaneName.value = '';
+    return;
+  }
+  
+  const plane = world.getProjectionPlaneById(activePlaneId.value);
+  if (!plane) {
+    activePlaneName.value = activePlaneId.value;
+    return;
+  }
+  
+  if (plane.name === 'P_H') {
+    activePlaneName.value = 'P_H (Horizontal)';
+  } else if (plane.name === 'P_V') {
+    activePlaneName.value = 'P_V (Vertical)';
+  } else {
+    activePlaneName.value = plane.name || activePlaneId.value;
+  }
+};
+
+onMounted(() => {
+  world.subscribeToChanges(updateActivePlaneInfo);
+  // Also subscribe to selection changes if needed, but world changes cover it
+  updateActivePlaneInfo();
+});
+
+onUnmounted(() => {
+  world.unsubscribeFromChanges(updateActivePlaneInfo);
 });
 
 // 3D coordinates state
@@ -282,6 +306,8 @@ async function initializeApp() {
     if (isSignedIn.value && lastFileId && lastFileName) {
       try {
         console.log('[App] Restoring last opened file:', lastFileName);
+        // If restoring fails (e.g. 404), handleOpenProject throws
+        // We catch it below to clear invalid state
         await handleOpenProject(lastFileId);
         // Successfully restored - don't show startup dialog
         return;
@@ -290,6 +316,10 @@ async function initializeApp() {
         // Clear invalid last file references
         localStorage.removeItem('diedrico_last_file_id');
         localStorage.removeItem('diedrico_last_file_name');
+        
+        // Reset state
+        currentProjectName.value = null;
+        currentFileId.value = null;
       }
     }
     
@@ -347,7 +377,12 @@ async function handleCreateProject(projectName: string) {
     return;
   }
   try {
-    // Serialize command history
+    // Phase 95: Reset World and CommandStack for a fresh start with recordable initialization
+    world.clear();
+    commandStack.clear();
+    world.initialize(commandStack);
+
+    // Serialize command history (now contains initialization ops)
     const projectData = ProjectService.serializeCommands(commandStack, projectName);
     
     // Create file in Google Drive
@@ -384,15 +419,28 @@ async function handleOpenProject(fileId: string) {
   }
   try {
     // Load file from Google Drive
-    const projectData = await driveService.loadFile(fileId);
+    const rawData = await driveService.loadFile(fileId);
+    const projectData = rawData as ProjectData;
     
-    // Create a new World instance instead of clearing the old one
-    world = new World();
-    provide('world', world);  // Update the provided world
+    // Clear existing world instead of creating a new one to preserve injected references
+    // This fixes the issue where SvgCanvas operates on a stale World instance
+    world.clear();
     
     // Validate and deserialize commands
     ProjectService.validateProjectData(projectData);
     ProjectService.deserializeCommands(projectData, world, commandStack);
+    
+    // Phase 95: Legacy file support
+    // If loaded world has no planes (old file format without explicit initialization), 
+    // force initialization now.
+    if (world.getAllProjectionPlanes().length === 0) {
+      console.warn('[App] Legacy file detected (no planes). Initializing default world.');
+      world.initialize(commandStack);
+    }
+    
+    // Notify consumers that world has been reset (using version increment)
+    // Commands deserialization will also trigger updates, but this ensures a clean start
+    world.markDirty();
     
     // World and command stack are now rebuilt from command history
     
@@ -412,6 +460,7 @@ async function handleOpenProject(fileId: string) {
     console.error('Failed to open project:', error);
     startupDialogRef.value?.setError(`Failed to open project: ${error}`);
     startupDialogRef.value?.setLoading(false);
+    throw error; // Re-throw to allow caller to handle failure
   }
 }
 
@@ -468,8 +517,14 @@ async function performAutoSave() {
   }
   
   try {
+    // Debug: Check command stack size
+    console.log(`[App] Performing auto-save. Commands in stack: ${commandStack.getUndoCount()}`);
+
     // Serialize command history
     const projectData = ProjectService.serializeCommands(commandStack, currentProjectName.value);
+    
+    // Debug: Check serialized command count
+    console.log(`[App] Serialized commands count: ${projectData.commands.length}`);
     
     // Update file in Google Drive
     await driveService.updateFile(currentFileId.value, projectData);
@@ -500,6 +555,39 @@ async function performAutoSave() {
     } else if (error.message?.includes('quota') || error.message?.includes('403')) {
       // Quota exceeded
       alert('Google Drive storage quota exceeded. Please free up space or upgrade your account.');
+    } else if (error.message?.includes('File not found') || error.message?.includes('deleted')) {
+      // File was deleted remotely (T404 fix)
+      console.warn('File deleted from Drive, attempting to create new file as replacement');
+      
+      try {
+        if (!currentProjectName.value) throw new Error('No project name');
+        
+        const projectData = ProjectService.serializeCommands(commandStack, currentProjectName.value);
+        const newFileId = await driveService.createFile(currentProjectName.value, projectData);
+        
+        // Update state with new ID
+        currentFileId.value = newFileId;
+        localStorage.setItem('diedrico_last_file_id', newFileId);
+        
+        console.log(`[App] Successfully recreated deleted file: ${newFileId}`);
+        saveStatus.value = 'saved';
+        
+        setTimeout(() => {
+          if (saveStatus.value === 'saved') {
+            saveStatus.value = 'idle';
+          }
+        }, 2000);
+        
+        // Notify user about the restoration
+        // Using alert is disruptive but ensures they know the ID changed
+        // For a smoother experience we might just use a toast, but data safety is priority
+        console.info('Remote file was restored automatically');
+        
+      } catch (createError) {
+        console.error('Failed to recreate deleted file:', createError);
+        saveStatus.value = 'idle';
+        alert('Remote file was deleted and could not be re-saved. Please try to export your work or refresh if connection is lost.');
+      }
     } else if (error.message?.includes('network') || error.message?.includes('Failed to fetch')) {
       // Network error - retry later
       console.warn('Network error during auto-save, will retry on next change');
@@ -521,8 +609,10 @@ function handleCoordinateUpdate(coords: { x: number; y: number; z: number } | nu
  * Handle active plane changes
  */
 function handleActivePlaneUpdate(planeInfo: { id: string; name: string }) {
-  activePlaneId.value = planeInfo.id;
-  activePlaneName.value = planeInfo.name;
+  // Update World state - this will trigger subscription to update UI
+  if (world.getActivePlaneId() !== planeInfo.id) {
+    world.setActivePlaneId(planeInfo.id);
+  }
 }
 
 /**
@@ -562,6 +652,9 @@ async function handleRenameProject(newName: string) {
     localStorage.setItem('diedrico_last_file_name', newName);
     
     console.log(`[App] Project renamed to: ${newName}`);
+
+    // Trigger auto-save to ensure the new name is saved in the file content
+    scheduleAutoSave();
   } catch (error) {
     console.error('Failed to rename project:', error);
     // TODO: Show error feedback to user
@@ -725,7 +818,9 @@ function handleDeleteSelected() {
 function handleSelectAll() {
   const selectedIds: string[] = [];
   
-  // Get active plane and iterate through its elements
+  if (!activePlaneId.value) return;
+
+  // Get active plane from World
   const activePlane = world.getProjectionPlaneById(activePlaneId.value);
   if (activePlane) {
     // Select all points in the active plane
@@ -733,30 +828,14 @@ function handleSelectAll() {
       selectedIds.push(point.id);
     }
     
-    // Select all lines in the active plane
+    // Select all lineal elements (Lines, Segments, Guides)
     for (const line of activePlane.getAllLines()) {
       selectedIds.push(line.id);
     }
-  }
-  
-  // Select all segments in the active plane
-  for (const segment of world.getAllSegments2D()) {
-    if (segment.planeId === activePlaneId.value) {
-      selectedIds.push(segment.id);
-    }
-  }
-  
-  // Select all circles in the active plane
-  for (const circle of world.getAllCircles2D()) {
-    if (circle.planeId === activePlaneId.value) {
+
+    // Select all circles
+    for (const circle of activePlane.getAllCircles()) {
       selectedIds.push(circle.id);
-    }
-  }
-  
-  // Select all guides in the active plane
-  for (const guide of world.getAllGuides2D()) {
-    if (guide.planeId === activePlaneId.value) {
-      selectedIds.push(guide.id);
     }
   }
   
@@ -827,6 +906,13 @@ function handleKeyDown(event: KeyboardEvent) {
     return;
   }
 
+  // F2: Rename project (T307) - Moved from Ctrl+R to avoid conflict with Browser Reload
+  if (event.key === 'F2') {
+    event.preventDefault();
+    projectNameDisplayRef.value?.startEditing();
+    return;
+  }
+
   // Active Plane: Tab / Shift+Tab (FR-062)
   if (event.key === 'Tab') {
     const target = event.target as HTMLElement;
@@ -887,13 +973,6 @@ function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'o') {
     event.preventDefault();
     handleOpenProjectDialog();
-    return;
-  }
-  
-  // Ctrl+R: Rename project (T307)
-  if (event.key === 'r') {
-    event.preventDefault();
-    projectNameDisplayRef.value?.startEditing();
     return;
   }
   

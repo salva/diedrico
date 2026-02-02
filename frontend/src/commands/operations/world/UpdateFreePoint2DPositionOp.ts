@@ -105,4 +105,14 @@ export class UpdateFreePoint2DPositionOp implements IOperation {
     world.invalidateRealization(this.pointId);
     world.markDirty();
   }
+
+  serialize() {
+    const pos = toVector3(this.newPosition);
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      pointId: this.pointId,
+      newPosition: [pos.x, pos.y, pos.z]
+    };
+  }
 }

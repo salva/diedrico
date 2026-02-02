@@ -52,4 +52,13 @@ export class AddFreePoint2DOp implements IOperation {
       }
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      position: [this.position.x, this.position.y, this.position.z],
+      pointId: this.outputs.pointId
+    };
+  }
 }

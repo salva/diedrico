@@ -88,7 +88,7 @@ import { Segment2D, Segment2DByPoints } from './Segment';
 import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
-import { Plane3D, Plane3DFixed, Plane3DFromTraces } from './Plane';
+import { Plane3D, Plane3DFixed } from './Plane';
 import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D, BaseProjectionPlane } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
@@ -107,6 +107,7 @@ import { buildWorldInitialization } from '@/commands/factories/InitializationSeq
 import { createActionGroup } from '@/domain/processTree/ActionGroup';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { PushSubprocessOp, PopSubprocessOp } from '@/commands/operations/processTree';
+import type { CommandStack } from '@/commands/CommandStack';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -176,9 +177,19 @@ export class World {
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService(this.processTree);
     
-    // Phase 47: Initialize fixed elements using factory + Command
-    // Factory pattern: Operations are added directly to Command by factory
-    // This avoids Command subclasses while maintaining initialization logic
+    // Phase 47: Static initialization removed. 
+    // Initialization is now an explicit action triggered by App.vue via initialize()
+    // This allows the initialization command to be part of the recorded history.
+  }
+
+  /**
+   * Initialize the world with default elements (P_H, P_V, etc.)
+   * Adds the initialization command to the provided CommandStack.
+   */
+  initialize(commandStack: CommandStack): void {
+    // Only initialize if empty (or forcefully if needed, but safer to check)
+    if (this.projectionPlanes.size > 0) return;
+
     const initCmd = new Command('Initialize World', this);
     
     // Phase 85: Use subprocess for initialization organization
@@ -191,8 +202,12 @@ export class World {
     buildWorldInitialization(this, initCmd, groupId);
     
     initCmd.addAndExecute(new PopSubprocessOp());
+    
+    // Commit the command
     initCmd.commit();
-    // Note: Not pushed to CommandStack - initialization is non-undoable
+    
+    // Push via stack so it is recorded
+    commandStack.push(initCmd);
     
     this.notifyChange();
   }
@@ -268,21 +283,8 @@ export class World {
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService(this.processTree);
     
-    // Phase 47: Reinitialize fixed elements using factory + Command
-    const initCmd = new Command('Initialize World', this);
-
-    // Phase 85: Use subprocess for initialization organization
-    initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
-    
-    const groupId = `group_init_${Date.now()}`;
-    const group = createActionGroup(groupId);
-    initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
-    
-    buildWorldInitialization(this, initCmd, groupId);
-    
-    initCmd.addAndExecute(new PopSubprocessOp());
-    initCmd.commit();
-    // Note: Not pushed to CommandStack - initialization is non-undoable
+    // Phase 95: Do NOT re-initialize automatically.
+    // Initialization is now explicit or handled by replaying commands.
     
     // Notify UI of change
     this.notifyChange();

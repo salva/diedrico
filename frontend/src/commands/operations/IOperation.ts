@@ -30,8 +30,13 @@
  *    - Arrays: [item1, item2]
  *    - No functions, closures, or circular references
  *    - No class instances (convert to plain objects)
+ * 
+ * 3. **FLAT SERIALIZATION (Phase 96)**:
+ *    - All operations must implement `serialize()` returning a flat object
+ *    - Key `opType` identifies the operation class
+ *    - All parameters and critical outputs (IDs) must be at root level
  *    
- * 3. **SELF-CONTAINED**: Parameters contain ALL needed data
+ * 4. **SELF-CONTAINED**: Parameters contain ALL needed data
  *    - Don't rely on World state to provide missing information
  *    - Don't assume specific IDs exist (may fail on fresh World)
  *    - Don't depend on CommandStack history
@@ -115,6 +120,15 @@ export interface OperationResult {
 }
 
 /**
+ * Serialized form of an operation (Phase 96)
+ * Flat structure with opType and mixed parameters/outputs
+ */
+export interface SerializedOperation {
+  opType: string;
+  [key: string]: any;
+}
+
+/**
  * Base interface for all operations
  */
 export interface IOperation {
@@ -133,6 +147,12 @@ export interface IOperation {
    */
   undo(world: World): void;
   
+  /**
+   * Convert to flat persistent storage format (Phase 96)
+   * If not implemented, ProjectService will fallback to legacy format (temporarily)
+   */
+  serialize?(): SerializedOperation;
+
   /**
    * Outputs produced by this operation
    * Set after apply() is called

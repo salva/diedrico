@@ -56,6 +56,16 @@ export class AddLine2DByTwoPointsOp implements IOperation {
       }
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      point1Id: this.point1Id,
+      point2Id: this.point2Id,
+      lineId: this.outputs.lineId
+    };
+  }
 }
 
 /**
@@ -112,6 +122,16 @@ export class AddLine2DParallelToLineOp implements IOperation {
       }
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      referenceLineId: this.referenceLineId,
+      throughPointId: this.throughPointId,
+      lineId: this.outputs.lineId
+    };
+  }
 }
 
 /**
@@ -167,6 +187,17 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
         plane.removeLine(this.outputs.lineId);
       }
     }
+  }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      circleId: this.circleId,
+      referenceLineId: this.referenceLineId,
+      tangentIndex: this.tangentIndex,
+      lineId: this.outputs.lineId
+    };
   }
 }
 /**
@@ -225,6 +256,16 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
         plane.removeLine(this.outputs.lineId);
       }
     }
+  }
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      circleId: this.circleId,
+      throughPointId: this.throughPointId,
+      tangentIndex: this.tangentIndex,
+      lineId: this.outputs.lineId
+    };
   }
 }
 

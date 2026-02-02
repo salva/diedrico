@@ -1,0 +1,216 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic "Double-click to rename (or press Ctrl+R)" [ref=e6] [cursor=pointer]: Untitled Project
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - button "New Project" [ref=e9] [cursor=pointer]:
+          - img [ref=e10]
+        - button "Open Project" [ref=e13] [cursor=pointer]:
+          - img [ref=e14]
+      - generic [ref=e17]:
+        - button "Undo" [disabled] [ref=e18]:
+          - img [ref=e19]
+        - button "Redo" [disabled] [ref=e22]:
+          - img [ref=e23]
+      - generic "Active plane selector" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]:
+          - combobox "Active Plane" [ref=e29]:
+            - option "P_H" [selected]
+            - option "P_V"
+          - img
+        - generic [ref=e30]: Plane
+      - generic [ref=e32]:
+        - button "Toggle Grid" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+        - button "Fit to View" [ref=e35] [cursor=pointer]:
+          - img [ref=e36]
+      - button "Selection Tool" [ref=e43] [cursor=pointer]:
+        - img [ref=e44]
+      - generic [ref=e46]:
+        - button "Free Point" [active] [ref=e47] [cursor=pointer]:
+          - img [ref=e48]
+        - button "Show all Point tools" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: ▼
+      - generic [ref=e52]:
+        - button "Line Through Points" [ref=e53] [cursor=pointer]:
+          - img [ref=e54]
+        - button "Show all Line tools" [ref=e58] [cursor=pointer]:
+          - generic [ref=e59]: ▼
+      - generic [ref=e60]:
+        - button "Segment" [ref=e61] [cursor=pointer]:
+          - img [ref=e62]
+        - button "Show all Segment tools" [ref=e65] [cursor=pointer]:
+          - generic [ref=e66]: ▼
+      - generic [ref=e67]:
+        - button "Circle" [ref=e68] [cursor=pointer]:
+          - img [ref=e69]
+        - button "Show all Circle tools" [ref=e73] [cursor=pointer]:
+          - generic [ref=e74]: ▼
+      - generic [ref=e75]:
+        - button "Guide" [ref=e76] [cursor=pointer]:
+          - img [ref=e77]
+        - button "Show all Guide tools" [ref=e80] [cursor=pointer]:
+          - generic [ref=e81]: ▼
+      - generic [ref=e82]:
+        - button "Transport" [ref=e83] [cursor=pointer]:
+          - img [ref=e84]
+        - button "Show all Transport tools" [ref=e87] [cursor=pointer]:
+          - generic [ref=e88]: ▼
+      - generic [ref=e89]:
+        - button "3D Point" [ref=e90] [cursor=pointer]:
+          - img [ref=e91]
+        - button "Show all 3D Elements tools" [ref=e94] [cursor=pointer]:
+          - generic [ref=e95]: ▼
+      - generic [ref=e96]:
+        - button "Quick Setup" [ref=e97] [cursor=pointer]:
+          - img [ref=e98]
+        - button "Show all Examples tools" [ref=e100] [cursor=pointer]:
+          - generic [ref=e101]: ▼
+      - button "Sign in" [ref=e103] [cursor=pointer]:
+        - img [ref=e104]
+        - generic [ref=e109]: Sign in
+  - main [ref=e110]:
+    - complementary [ref=e111]:
+      - generic [ref=e112]:
+        - complementary [ref=e114]:
+          - heading "Elements" [level=2] [ref=e116]
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - generic [ref=e119] [cursor=pointer]:
+                - generic [ref=e120]: ▼
+                - generic [ref=e121]: 2D Elements
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - generic [ref=e124] [cursor=pointer]:
+                    - generic [ref=e125]: ▼
+                    - generic [ref=e127]:
+                      - text: P
+                      - subscript [ref=e128]: H
+                      - text: (Horizontal)
+                  - generic [ref=e130]:
+                    - generic [ref=e131] [cursor=pointer]:
+                      - generic [ref=e132]: ▼
+                      - generic [ref=e133]: Points (1)
+                    - generic [ref=e135] [cursor=pointer]:
+                      - button "👁" [ref=e136]
+                      - generic [ref=e137]: O_H
+                      - generic [ref=e138]: (0.00, 0.00)
+                - generic [ref=e139]:
+                  - generic [ref=e140] [cursor=pointer]:
+                    - generic [ref=e141]: ▼
+                    - generic [ref=e143]:
+                      - text: P
+                      - subscript [ref=e144]: V
+                      - text: (Vertical)
+                  - generic [ref=e146]:
+                    - generic [ref=e147] [cursor=pointer]:
+                      - generic [ref=e148]: ▼
+                      - generic [ref=e149]: Points (1)
+                    - generic [ref=e151] [cursor=pointer]:
+                      - button "👁" [ref=e152]
+                      - generic [ref=e153]: O_V
+                      - generic [ref=e154]: (0.00, 0.00)
+            - generic [ref=e155]:
+              - generic [ref=e156] [cursor=pointer]:
+                - generic [ref=e157]: ▼
+                - generic [ref=e158]: 3D Elements
+              - generic [ref=e160]:
+                - generic [ref=e161] [cursor=pointer]:
+                  - generic [ref=e162]: ▼
+                  - generic [ref=e163]: Planes (2)
+                - generic [ref=e164]:
+                  - generic [ref=e165] [cursor=pointer]:
+                    - button "👁" [ref=e166]
+                    - generic [ref=e167]: P_H
+                  - generic [ref=e168] [cursor=pointer]:
+                    - button "👁" [ref=e169]
+                    - generic [ref=e170]: P_V
+        - complementary [ref=e173]:
+          - generic [ref=e174]:
+            - heading "Construction History" [level=2] [ref=e175]
+            - generic [ref=e177]:
+              - button "Pop subprocess from stack" [disabled] [ref=e178]: <
+              - button "Push subprocess to stack" [ref=e179] [cursor=pointer]: ">"
+          - generic [ref=e182]:
+            - generic [ref=e183] [cursor=pointer]:
+              - generic [ref=e184]: ▼
+              - generic [ref=e185]: Root Process
+              - generic "Current subprocess" [ref=e186]: ●
+              - generic [ref=e187]:
+                - button "▼" [ref=e188]
+                - button "▲" [ref=e189]
+            - generic [ref=e190]:
+              - generic [ref=e193] [cursor=pointer]:
+                - generic [ref=e194]: ▶
+                - generic [ref=e195]: World Initialization
+                - generic [ref=e196]:
+                  - button "▼" [ref=e197]
+                  - button "▲" [ref=e198]
+              - generic "Next action will be added here" [ref=e199]:
+                - generic [ref=e200]: ➤
+    - generic [ref=e202]:
+      - img [ref=e204]:
+        - generic [ref=e208]:
+          - generic: "-800"
+          - generic: "-700"
+          - generic: "-600"
+          - generic: "-500"
+          - generic: "-400"
+          - generic: "-300"
+          - generic: "-200"
+          - generic: "-100"
+          - generic: "0"
+          - generic: "100"
+          - generic: "-800"
+          - generic: "-700"
+          - generic: "-600"
+          - generic: "-500"
+          - generic: "-400"
+          - generic: "-300"
+          - generic: "-200"
+          - generic: "-100"
+          - generic: "0"
+          - generic: "100"
+          - generic: "-500"
+          - generic: "-400"
+          - generic: "-300"
+          - generic: "-200"
+          - generic: "-100"
+          - generic: "0"
+          - generic: "100"
+          - generic: "-500"
+          - generic: "-400"
+          - generic: "-300"
+          - generic: "-200"
+          - generic: "-100"
+          - generic: "0"
+          - generic: "100"
+      - generic [ref=e213]:
+        - generic "Show or hide projection plane surfaces in 3D view" [ref=e214] [cursor=pointer]:
+          - checkbox "Show Planes" [checked] [ref=e215]
+          - text: Show Planes
+        - generic "Display 2D geometric elements (points, lines, circles) positioned on their planes in 3D space" [ref=e216] [cursor=pointer]:
+          - checkbox "Show 2D Elements on Planes" [ref=e217]
+          - text: Show 2D Elements on Planes
+        - generic "Show coordinate grid on each projection plane for spatial reference" [ref=e218] [cursor=pointer]:
+          - checkbox "Show Grid" [checked] [ref=e219]
+          - text: Show Grid
+        - generic "Show coordinate axes (X/Y/Z) at origin for spatial reference and debugging" [ref=e220] [cursor=pointer]:
+          - checkbox "Show Reference Axes" [ref=e221]
+          - text: Show Reference Axes
+  - contentinfo [ref=e222]:
+    - generic [ref=e223]:
+      - generic [ref=e224]:
+        - generic [ref=e225]:
+          - generic [ref=e226]: "Plane:"
+          - generic [ref=e227]: P_H (Horizontal)
+        - generic [ref=e228]:
+          - generic [ref=e229]: "Tool:"
+          - generic [ref=e230]: Point
+      - generic [ref=e232]:
+        - generic [ref=e233]: "3D:"
+        - generic [ref=e234]: "---"
+```

@@ -60,6 +60,8 @@ export class AddPlane3DFixedOp implements IOperation {
       
       // Store ID in outputs for redo support
       this.outputs = { planeId: plane.id };
+      // Phase 95: Back-fill generated ID into parameters for persistence
+      this.parameters.planeId = plane.id;
 
       return {
         success: true,
@@ -83,10 +85,10 @@ export class AddPlane3DFixedOp implements IOperation {
 
   serialize() {
     return {
-      type: this.type,
-      point: this.parameters.point,
-      normal: this.parameters.normal,
-      planeId: this.outputs.planeId,
+      opType: this.type,
+      point: [this.point.x, this.point.y, this.point.z, this.point.w],
+      normal: [this.normal.x, this.normal.y, this.normal.z, this.normal.w],
+      planeId: this.outputs.planeId || this.parameters.planeId,
       label: this.label
     };
   }
@@ -137,6 +139,8 @@ export class AddProjectionPlaneFixedOp implements IOperation {
       
       // Store ID in outputs for redo support
       this.outputs = { projPlaneId: projPlane.id };
+      // Phase 95: Back-fill generated ID into parameters for persistence
+      this.parameters.projPlaneId = projPlane.id;
       
       return {
         success: true,
@@ -159,12 +163,12 @@ export class AddProjectionPlaneFixedOp implements IOperation {
 
   serialize() {
     return {
-      type: this.type,
+      opType: this.type,
       plane3DId: this.plane3DId,
       planeToPaper2D: this.planeToPaper2D.toArray(),
       planeTo3D: this.planeTo3D.toArray(),
       threeDToPlane: this.threeDToPlane.toArray(),
-      projPlaneId: this.outputs.projPlaneId
+      projPlaneId: this.outputs.projPlaneId || this.parameters.projPlaneId
     };
   }
 }
@@ -213,6 +217,8 @@ export class AddOriginPoint2DOp implements IOperation {
       
       // Store ID in outputs for redo support
       this.outputs = { pointId: originPoint.id, projPlaneId: this.projPlaneId };
+      // Phase 95: Back-fill generated ID into parameters for persistence
+      this.parameters.pointId = originPoint.id;
       
       // Phase 53: No longer storing origin IDs in World - use label-based access instead
 
@@ -245,13 +251,12 @@ export class AddOriginPoint2DOp implements IOperation {
 
   serialize() {
     return {
-      type: this.type,
+      opType: this.type,
       projPlaneId: this.projPlaneId,
-      position: {
-        x: this.position.x,
-        y: this.position.y,
-        z: this.position.z
-      }
+      position: [this.position.x, this.position.y, this.position.z],
+      // Ensure pointId is included from outputs if available
+      pointId: this.outputs.pointId || this.parameters.pointId,
+      label: this.label
     };
   }
 }
@@ -285,6 +290,8 @@ export class AddHingeLineOp implements IOperation {
       
       // Store ID in outputs for redo support
       this.outputs = { hingeLineId: hingeLine.id };
+      // Phase 95: Back-fill generated ID into parameters for persistence
+      this.parameters.hingeLineId = hingeLine.id;
       
       return {
         success: true,
@@ -308,10 +315,10 @@ export class AddHingeLineOp implements IOperation {
 
   serialize() {
     return {
-      type: this.type,
+      opType: this.type,
       horizontalPlaneId: this.horizontalPlaneId,
       verticalPlaneId: this.verticalPlaneId,
-      hingeLineId: this.outputs.hingeLineId
+      hingeLineId: this.outputs.hingeLineId || this.parameters.hingeLineId
     };
   }
 }
@@ -357,6 +364,8 @@ export class AddHalfHingeLine2DOp implements IOperation {
       
       // Store ID in outputs for redo support
       this.outputs = { lineId: halfHingeLine.id, projPlaneId: this.projPlaneId };
+      // Phase 95: Back-fill generated ID into parameters for persistence
+      this.parameters.lineId = halfHingeLine.id;
 
       return {
         success: true,
@@ -384,9 +393,10 @@ export class AddHalfHingeLine2DOp implements IOperation {
 
   serialize() {
     return {
-      type: this.type,
+      opType: this.type,
       projPlaneId: this.projPlaneId,
-      hingeLineId: this.hingeLineId
+      hingeLineId: this.hingeLineId,
+      lineId: this.outputs.lineId || this.parameters.lineId
     };
   }
 }
@@ -416,6 +426,9 @@ export class CreateInitializationSubprocessOp implements IOperation {
       
       // Store subprocess ID for future reference
       this.outputs = { subprocessId: subprocess.id };
+      // Phase 95: Back-fill generated ID into parameters for persistence
+      // Note: Subprocess creation usually doesn't take an ID in constructor so we can't easily rebuild it with specific ID
+      // unless we update constructor. But Initialization sequences don't typically rely on subprocess ID.
       
       return {
         success: true,
@@ -438,8 +451,9 @@ export class CreateInitializationSubprocessOp implements IOperation {
 
   serialize() {
     return {
-      type: this.type,
-      subprocessName: this.subprocessName
+      opType: this.type,
+      subprocessName: this.subprocessName,
+      subprocessId: this.outputs.subprocessId || this.parameters.subprocessId
     };
   }
 }

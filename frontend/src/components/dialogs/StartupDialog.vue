@@ -15,6 +15,12 @@
 
       <!-- Project selection (after sign in) -->
       <div v-else class="project-selection">
+        <div style="margin-bottom: 20px;">
+          <button class="create-button" style="width: 100%" @click="handleCreateNewProject">
+            + Create New Project
+          </button>
+        </div>
+
         <!-- Open Existing Project Section -->
         <section class="project-section">
           <h2>Open Existing Project</h2>
@@ -25,7 +31,7 @@
           
           <div v-else-if="files.length === 0" class="no-files">
             <p>No projects found in your Google Drive.</p>
-            <p class="hint">Use the "New" button (Ctrl+N) in the toolbar to create your first project!</p>
+            <button class="create-button" @click="handleCreateNewProject">Create First Project</button>
           </div>
           
           <div v-else class="file-list">
@@ -71,6 +77,7 @@ interface Emits {
   (e: 'sign-in'): void;
   (e: 'open', fileId: string): void;
   (e: 'close'): void;
+  (e: 'create-project'): void;
 }
 
 const props = defineProps<Props>();
@@ -135,6 +142,11 @@ async function handleOpenProject() {
     error.value = `Failed to open project: ${err}`;
     loading.value = false;
   }
+}
+
+function handleCreateNewProject() {
+  loading.value = true;
+  emit('create-project');
 }
 
 function handleOverlayClick() {

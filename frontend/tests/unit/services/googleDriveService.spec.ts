@@ -439,6 +439,7 @@ describe('GoogleDriveService', () => {
         expect.objectContaining({
           path: '/upload/drive/v3/files/file-123',
           method: 'PATCH',
+          body: expect.stringContaining('"name":"Updated Project.diedrico"')
         })
       );
     });

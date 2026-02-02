@@ -93,6 +93,14 @@ export class RemovePoint2DOp implements IOperation {
     }
     plane.addPoint(this.removedPoint);
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      pointId: this.pointId
+    };
+  }
 }
 
 /**
@@ -171,6 +179,14 @@ export class RemoveLine2DOp implements IOperation {
     }
     plane.addLine(this.removedLine);
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      lineId: this.lineId
+    };
+  }
 }
 
 /**
@@ -248,6 +264,14 @@ export class RemoveSegment2DOp implements IOperation {
     }
     plane.addLine(this.removedSegment);
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      segmentId: this.segmentId
+    };
+  }
 }
 
 /**
@@ -323,6 +347,14 @@ export class RemoveCircle2DOp implements IOperation {
       throw new Error(`Plane ${this.planeId} not found`);
     }
     plane.addCircle(this.removedCircle);
+  }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      circleId: this.circleId
+    };
   }
 }
 
@@ -466,5 +498,13 @@ export class RemoveGuide2DOp implements IOperation {
         siblingPlane.guides.set(this.removedSibling.id, this.removedSibling);
       }
     }
+  }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      guideId: this.guideId
+    };
   }
 }

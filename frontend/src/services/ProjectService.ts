@@ -17,7 +17,7 @@
 import { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
-import { Vector4, Matrix3 } from 'three';
+import { Vector4, Matrix3, Vector3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 
 // Import all operation classes for deserialization
@@ -34,6 +34,14 @@ import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, R
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
 import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
 import {
   CreateInitializationSubprocessOp,
@@ -67,15 +75,15 @@ interface SerializedCommand {
 }
 
 /**
- * Serialized operation structure
+ * Serialized operation structure - Flattened (v4.0.0)
  */
 interface SerializedOperation {
-  type: string;
-  parameters: Record<string, any>;
+  opType: string;
+  [key: string]: any;
 }
 
 export class ProjectService {
-  private static readonly SCHEMA_VERSION = '3.1.0';  // Complete operation coverage (all types serializable)
+  private static readonly SCHEMA_VERSION = '4.0.0';  // Flattened journal format
 
   /**
    * Serialize CommandStack to JSON
@@ -91,10 +99,16 @@ export class ProjectService {
       id: cmd.id,
       timestamp: cmd.timestamp.toISOString(),
       description: cmd.description,
-      operations: (cmd as any).operations.map((op: IOperation) => ({
-        type: op.type,
-        parameters: op.parameters
-      }))
+      operations: (cmd as any).operations.map((op: IOperation) => {
+        if (op.serialize) {
+          return op.serialize();
+        }
+        // Fallback for operations without custom serialize method (should be rare)
+        return {
+          opType: op.type,
+          ...op.parameters
+        };
+      })
     }));
     
     return {
@@ -165,12 +179,20 @@ export class ProjectService {
    * Maps operation type to concrete operation class and instantiates with parameters
    */
   private static reconstructOperation(serializedOp: SerializedOperation): IOperation {
-    const { type, parameters } = serializedOp;
+    const { opType: type, ...parameters } = serializedOp;
     
     // Instantiate the correct operation class based on type
     switch (type) {
       case 'AddFreePoint2D':
-        return new AddFreePoint2DOp(parameters.planeId, parameters.position);
+        const posInput = parameters.position;
+        const pos = Array.isArray(posInput) 
+          ? new Vector3(posInput[0], posInput[1], posInput[2])
+          : new Vector3(posInput.x, posInput.y, posInput.z);
+        
+        return new AddFreePoint2DOp(
+          parameters.planeId, 
+          pos
+        );
       
       case 'AddLine2DByTwoPoints':
         return new AddLine2DByTwoPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
@@ -218,7 +240,16 @@ export class ProjectService {
         return new UpdateElementStyleOp(parameters.elementId, parameters.planeId, parameters.newStyle);
 
       case 'UpdateFreePoint2DPosition':
-        return new UpdateFreePoint2DPositionOp(parameters.planeId, parameters.pointId, parameters.newPosition);
+        const newPosInput = parameters.newPosition;
+        const newPos = Array.isArray(newPosInput)
+          ? new Vector3(newPosInput[0], newPosInput[1], newPosInput[2])
+          : new Vector3(newPosInput.x, newPosInput.y, newPosInput.z);
+          
+        return new UpdateFreePoint2DPositionOp(
+          parameters.planeId, 
+          parameters.pointId, 
+          newPos
+        );
       
       case 'RemoveActionFromProcessTree':
         return new RemoveActionFromProcessTreeOp(parameters.actionId);
@@ -235,7 +266,7 @@ export class ProjectService {
       
       // Initialization operations (Phase 47)
       case 'CreateInitializationSubprocess':
-        return new CreateInitializationSubprocessOp(parameters.name);
+        return new CreateInitializationSubprocessOp(parameters.subprocessName || parameters.name);
       
       case 'AddPlane3D': // Legacy - for backward compatibility with old orientation-based format
         // Old format: { orientation: 'horizontal' | 'vertical' }
@@ -249,19 +280,19 @@ export class ProjectService {
         return new AddPlane3DFixedOp(legacyPoint, legacyNormal, parameters.planeId, legacyLabel);
       
       case 'AddPlane3DFixed':
-        // New format: { point: {x,y,z,w}, normal: {x,y,z,w}, planeId, label }
-        const point = new Vector4(
-          parameters.point.x, 
-          parameters.point.y, 
-          parameters.point.z,
-          parameters.point.w
-        );
-        const normal = new Vector4(
-          parameters.normal.x, 
-          parameters.normal.y, 
-          parameters.normal.z,
-          parameters.normal.w
-        );
+        // New format: { point: [x,y,z,w], normal: [x,y,z,w], planeId, label }
+        // Supports both array (new) and object (legacy) formats
+        const pIn = parameters.point;
+        const nIn = parameters.normal;
+        
+        const point = Array.isArray(pIn) 
+          ? new Vector4(pIn[0], pIn[1], pIn[2], pIn[3])
+          : new Vector4(pIn.x, pIn.y, pIn.z, pIn.w);
+          
+        const normal = Array.isArray(nIn)
+          ? new Vector4(nIn[0], nIn[1], nIn[2], nIn[3])
+          : new Vector4(nIn.x, nIn.y, nIn.z, nIn.w);
+          
         return new AddPlane3DFixedOp(point, normal, parameters.planeId, parameters.label);
       
       case 'AddProjectionPlaneFixed':
@@ -274,18 +305,61 @@ export class ProjectService {
           planeToPaper2D,
           planeTo3D,
           threeDToPlane,
-          parameters.projPlaneId
+          parameters.projPlaneId,
+          parameters.name,
+          parameters.orientation
         );
       
       case 'AddOriginPoint2D':
-        return new AddOriginPoint2DOp(parameters.projPlaneId, parameters.localPosition);
+        const originPosRaw = parameters.position || parameters.localPosition;
+        const originPos = Array.isArray(originPosRaw)
+          ? new Vector3(originPosRaw[0], originPosRaw[1], originPosRaw[2])
+          : new Vector3(originPosRaw.x, originPosRaw.y, originPosRaw.z);
+          
+        return new AddOriginPoint2DOp(
+          parameters.projPlaneId, 
+          originPos,
+          parameters.label,
+          parameters.pointId
+        );
       
       case 'AddHingeLine':
-        return new AddHingeLineOp(parameters.projPlaneAId, parameters.projPlaneBId, parameters.hingeLineId);
+        // Fix: Use correct parameter names from AddHingeLineOp
+        const hPlaneId = parameters.horizontalPlaneId || parameters.projPlaneAId; // Fallback for safety
+        const vPlaneId = parameters.verticalPlaneId || parameters.projPlaneBId;
+        return new AddHingeLineOp(hPlaneId, vPlaneId, parameters.hingeLineId);
       
       case 'AddHalfHingeLine2D':
-        return new AddHalfHingeLine2DOp(parameters.projPlaneId, parameters.hingeLineId, parameters.hingePoint, parameters.hingeDirection);
+        return new AddHalfHingeLine2DOp(
+          parameters.projPlaneId, 
+          parameters.hingeLineId,
+          parameters.lineId
+        );
       
+      case 'AddProcessTreeActionOp':
+        return new AddProcessTreeActionOp(parameters.action, parameters.groupId);
+
+      case 'AddProcessTreeActionGroup':
+        // Reconstruct ActionGroup from ID (other properties like description are optional/default)
+        // Note: Ideally all group properties should be serialized, but for now we just need the ID container
+        const group = createActionGroup(parameters.groupId);
+        return new AddProcessTreeActionGroupOp(group);
+
+      case 'PushSubprocess':
+        return new PushSubprocessOp(parameters.subprocessName);
+        
+      case 'PopSubprocess':
+        return new PopSubprocessOp();
+
+      case 'RenameSubprocess':
+        return new RenameSubprocessOp(parameters.subprocessId, parameters.newName);
+
+      case 'ToggleEncapsulation':
+        return new ToggleEncapsulationOp(parameters.subprocessId);
+
+      case 'ToggleOutput':
+        return new ToggleOutputOp(parameters.nodeId);
+
       default:
         throw new Error(`Unknown operation type: ${type}`);
     }

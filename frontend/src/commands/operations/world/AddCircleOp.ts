@@ -57,4 +57,14 @@ export class AddCircle2DByCenterAndPointOp implements IOperation {
       }
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      centerPointId: this.centerPointId,
+      circumferencePointId: this.circumferencePointId,
+      circleId: this.outputs.circleId
+    };
+  }
 }

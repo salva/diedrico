@@ -42,7 +42,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
   const planeHOp = new AddPlane3DFixedOp(
     new Vector4(0, 0, 0, 1),  // Point: origin (homogeneous)
     new Vector4(0, 0, 1, 0),  // Normal: +Z (homogeneous)
-    undefined,                // Let operation generate ID
+    'plane_PH',                // Fixed ID for determinism
     'P_H'                     // Label
   );
   cmd.addAndExecute(planeHOp);
@@ -57,7 +57,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
   const planeVOp = new AddPlane3DFixedOp(
     new Vector4(0, 0, 0, 1),  // Point: origin (homogeneous)
     new Vector4(0, 1, 0, 0),  // Normal: +Y (homogeneous)
-    undefined,                // Let operation generate ID
+    'plane_PV',                // Fixed ID for determinism
     'P_V'                     // Label
   );
   cmd.addAndExecute(planeVOp);
@@ -87,7 +87,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
     0, 0, 0, 1   // 1 = w
   );
   
-  const projPlaneHOp = new AddProjectionPlaneFixedOp(planeHId, planeToPaper_H, planeTo3D_H, threeDToPlane_H, undefined, 'P_H', 'horizontal');
+  const projPlaneHOp = new AddProjectionPlaneFixedOp(planeHId, planeToPaper_H, planeTo3D_H, threeDToPlane_H, 'proj_plane_PH', 'P_H', 'horizontal');
   cmd.addAndExecute(projPlaneHOp);
   const projPlaneHId = projPlaneHOp.outputs.projPlaneId as string;
   
@@ -114,7 +114,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
     0, 0, 0, 1   // 1 = w
   );
   
-  const projPlaneVOp = new AddProjectionPlaneFixedOp(planeVId, planeToPaper_V, planeTo3D_V, threeDToPlane_V, undefined, 'P_V', 'vertical');
+  const projPlaneVOp = new AddProjectionPlaneFixedOp(planeVId, planeToPaper_V, planeTo3D_V, threeDToPlane_V, 'proj_plane_PV', 'P_V', 'vertical');
   cmd.addAndExecute(projPlaneVOp);
   const projPlaneVId = projPlaneVOp.outputs.projPlaneId as string;
   
@@ -126,7 +126,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
   // Step 6-7: Create origin points
   // Every projection plane needs an origin (0,0) point for coordinate system
   // Phase 53: Add labels for semantic access
-  const originHOp = new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1), 'O_H');
+  const originHOp = new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1), 'O_H', 'point_OH');
   cmd.addAndExecute(originHOp);
   // Phase 85: Action automatically recorded removed from Op, adding explicitly
   cmd.addAndExecute(new AddProcessTreeActionOp(
@@ -134,7 +134,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
     groupId
   ));
 
-  const originVOp = new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1), 'O_V');
+  const originVOp = new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1), 'O_V', 'point_OV');
   cmd.addAndExecute(originVOp);
   cmd.addAndExecute(new AddProcessTreeActionOp(
     createInitializeOriginPoint2DAction(originVOp.outputs.pointId, projPlaneVId, 'O_V'),

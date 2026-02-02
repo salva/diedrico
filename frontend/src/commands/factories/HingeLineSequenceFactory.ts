@@ -48,7 +48,7 @@ export function buildHingeLineWithHalves(
 ): void {
   // Step 1: Create 3D hinge line
   // AddHingeLineOp calls world.addHingeLine() which generates ID if not provided
-  const hingeLineOp = new AddHingeLineOp(horizontalPlaneId, verticalPlaneId);
+  const hingeLineOp = new AddHingeLineOp(horizontalPlaneId, verticalPlaneId, 'hinge_line_main');
   cmd.addAndExecute(hingeLineOp);
   const hingeLineId = hingeLineOp.outputs.hingeLineId as string;
   
@@ -59,7 +59,7 @@ export function buildHingeLineWithHalves(
 
   // Step 2: Create half hinge line on horizontal plane
   // AddHalfHingeLine2DOp calls projPlane.addHalfHingeLine2D() which generates ID
-  const hhl1Op = new AddHalfHingeLine2DOp(horizontalPlaneId, hingeLineId);
+  const hhl1Op = new AddHalfHingeLine2DOp(horizontalPlaneId, hingeLineId, 'half_hinge_H');
   cmd.addAndExecute(hhl1Op);
   cmd.addAndExecute(new AddProcessTreeActionOp(
     createInitializeHalfHingeLine2DAction(hhl1Op.outputs.lineId, horizontalPlaneId, hingeLineId),
@@ -67,7 +67,7 @@ export function buildHingeLineWithHalves(
   ));
   
   // Step 3: Create half hinge line on vertical plane
-  const hhl2Op = new AddHalfHingeLine2DOp(verticalPlaneId, hingeLineId);
+  const hhl2Op = new AddHalfHingeLine2DOp(verticalPlaneId, hingeLineId, 'half_hinge_V');
   cmd.addAndExecute(hhl2Op);
   cmd.addAndExecute(new AddProcessTreeActionOp(
     createInitializeHalfHingeLine2DAction(hhl2Op.outputs.lineId, verticalPlaneId, hingeLineId),

@@ -143,4 +143,16 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       world.markDirty();
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      plane3DId: this.plane3DId,
+      t1HingeTraceId: this.t1HingeTraceId,
+      t2OtherTraceId: this.t2OtherTraceId,
+      t2PrimeLineId: this.t2PrimeLineId,
+      name: this.name,
+      projPlaneId: this.outputs.projPlaneId
+    };
+  }
 }

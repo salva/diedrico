@@ -465,9 +465,20 @@ export class GoogleDriveService {
       const delimiter = '\r\n--' + boundary + '\r\n';
       const closeDelimiter = '\r\n--' + boundary + '--';
 
+      // Create metadata part
+      const rawName = (data as any).name;
+      const fullFileName = rawName && !rawName.endsWith(GoogleDriveService.FILE_EXTENSION) 
+        ? `${rawName}${GoogleDriveService.FILE_EXTENSION}` 
+        : rawName;
+
+      const metadata = {
+        name: fullFileName
+      };
+
       const multipartRequestBody =
         delimiter +
         'Content-Type: application/json\r\n\r\n' +
+        JSON.stringify(metadata) + '\r\n' +
         delimiter +
         'Content-Type: application/json\r\n\r\n' +
         fileContent +
