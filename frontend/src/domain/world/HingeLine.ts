@@ -259,7 +259,12 @@ export class HingeLine extends Line3D {
     // For main planes (P_H, P_V), there's no plane3DId - they're always feasible
     // For auxiliary planes, check the underlying Plane3D feasibility
     if (projPlane1.plane3DId) {
-      const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
+      const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId);
+      if (!plane3DReal) {
+        // Plane3D not realized yet - return infeasible
+        console.warn(`[HingeLine] Plane3D ${projPlane1.plane3DId} not realized yet for hinge line ${this.id}`);
+        return Line3DRealization3D.createInfeasible();
+      }
       if (!plane3DReal.isFeasible()) {
         // Return infeasible realization instead of throwing
         return Line3DRealization3D.createInfeasible();

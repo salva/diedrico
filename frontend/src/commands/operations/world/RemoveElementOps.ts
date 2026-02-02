@@ -58,7 +58,7 @@ export class RemovePoint2DOp implements IOperation {
       }
 
       // Remove the point from the plane
-      const removed = plane.removePoint(this.pointId);
+      const removed = plane.removePoint(this.pointId, world);
       if (!removed) {
         return {
           success: false,
@@ -91,7 +91,7 @@ export class RemovePoint2DOp implements IOperation {
     if (!plane) {
       throw new Error(`Plane ${this.planeId} not found`);
     }
-    plane.addPoint(this.removedPoint);
+    plane.addPoint(this.removedPoint, world);
   }
 
   serialize() {
@@ -144,7 +144,7 @@ export class RemoveLine2DOp implements IOperation {
       }
 
       // Remove the line from the plane
-      const removed = plane.removeLine(this.lineId);
+      const removed = plane.removeLine(this.lineId, world);
       if (!removed) {
         return {
           success: false,
@@ -177,7 +177,7 @@ export class RemoveLine2DOp implements IOperation {
     if (!plane) {
       throw new Error(`Plane ${this.planeId} not found`);
     }
-    plane.addLine(this.removedLine);
+    plane.addLine(this.removedLine, world);
   }
 
   serialize() {
@@ -229,7 +229,7 @@ export class RemoveSegment2DOp implements IOperation {
       }
 
       // Remove the segment from the plane (segments are stored as lines)
-      const removed = plane.removeLine(this.segmentId);
+      const removed = plane.removeLine(this.segmentId, world);
       if (!removed) {
         return {
           success: false,
@@ -262,7 +262,7 @@ export class RemoveSegment2DOp implements IOperation {
     if (!plane) {
       throw new Error(`Plane ${this.planeId} not found`);
     }
-    plane.addLine(this.removedSegment);
+    plane.addLine(this.removedSegment, world);
   }
 
   serialize() {
@@ -313,7 +313,7 @@ export class RemoveCircle2DOp implements IOperation {
       }
 
       // Remove the circle from the plane
-      const removed = plane.removeCircle(this.circleId);
+      const removed = plane.removeCircle(this.circleId, world);
       if (!removed) {
         return {
           success: false,
@@ -346,7 +346,7 @@ export class RemoveCircle2DOp implements IOperation {
     if (!plane) {
       throw new Error(`Plane ${this.planeId} not found`);
     }
-    plane.addCircle(this.removedCircle);
+    plane.addCircle(this.removedCircle, world);
   }
 
   serialize() {
@@ -396,7 +396,7 @@ export class RemoveGuide2DOp implements IOperation {
         };
       }
 
-      const guide = plane.getGuide(this.guideId);
+      const guide = plane.getLine(this.guideId);
       if (!guide) {
         return {
           success: false,
@@ -433,7 +433,7 @@ export class RemoveGuide2DOp implements IOperation {
             this.removedSibling = siblingGuide as import('@/domain/world/Guide').SiblingGuide2D;
             
             // Remove sibling guide
-            const siblingRemoved = siblingPlane.removeGuide(siblingGuideId);
+            const siblingRemoved = siblingPlane.removeLine(siblingGuideId, world);
             if (!siblingRemoved) {
               console.warn(`[RemoveGuide2DOp] Failed to remove sibling guide ${siblingGuideId}`);
             } else {
@@ -444,13 +444,13 @@ export class RemoveGuide2DOp implements IOperation {
       }
 
       // Remove the primary guide from the plane
-      const removed = plane.removeGuide(this.guideId);
+      const removed = plane.removeLine(this.guideId, world);
       if (!removed) {
         // If primary removal failed but sibling was removed, restore sibling
         if (this.removedSibling && this.siblingPlaneId) {
           const siblingPlane = world.getProjectionPlaneById(this.siblingPlaneId);
           if (siblingPlane) {
-            siblingPlane.guides.set(this.removedSibling.id, this.removedSibling);
+            siblingPlane.addLine(this.removedSibling, world); // Guides are lines
           }
         }
         return {
@@ -487,15 +487,15 @@ export class RemoveGuide2DOp implements IOperation {
     if (!plane) {
       throw new Error(`Plane ${this.planeId} not found`);
     }
-    if (!plane.guides.has(this.removedGuide.id)) {
-      plane.guides.set(this.removedGuide.id, this.removedGuide);
+    if (!plane.getLine(this.removedGuide.id)) {
+      plane.addLine(this.removedGuide, world);
     }
 
     // Restore the sibling guide if it was deleted
     if (this.removedSibling && this.siblingPlaneId) {
       const siblingPlane = world.projectionPlanes.get(this.siblingPlaneId);
-      if (siblingPlane && !siblingPlane.guides.has(this.removedSibling.id)) {
-        siblingPlane.guides.set(this.removedSibling.id, this.removedSibling);
+      if (siblingPlane && !siblingPlane.getLine(this.removedSibling.id)) {
+        siblingPlane.addLine(this.removedSibling, world);
       }
     }
   }

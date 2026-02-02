@@ -17,7 +17,7 @@
  * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree
  */
 
-import type { ProcessTree, ActionNode, ProcessNode, Subprocess, ActionGroup } from '../domain/processTree/ProcessTree';
+
 
 /**
  * Dependency graph edge representing input-output relationship
@@ -40,52 +40,105 @@ export interface ElementDependencies {
  * Service for managing element dependencies
  */
 export class DependencyService {
-  private processTree: ProcessTree;
-  
   // Cached dependency maps for fast lookup
   private dependentsMap: Map<string, Set<string>> = new Map();  // elementId -> set of elements that depend on it
   private dependenciesMap: Map<string, Set<string>> = new Map(); // elementId -> set of elements it depends on
   
-  constructor(processTree: ProcessTree) {
-    this.processTree = processTree;
-    this.rebuildDependencyMaps();
+  constructor() {
+    // Phase 91: ProcessTree argument removed. 
+    // DependencyService is now a stateful container, managed by World via Element interaction.
   }
 
   /**
-   * Rebuild dependency maps from process tree
-   * Call this after process tree modifications
+   * Register a node in the dependency graph.
+   * Call this when an element is added to the World.
+   * 
+   * @param outputId - The ID of the element being created (the dependent)
+   * @param inputIds - The IDs of the elements it depends on (dependencies)
    */
-  rebuildDependencyMaps(): void {
-    this.dependentsMap.clear();
-    this.dependenciesMap.clear();
-    
-    // Traverse process tree and extract dependencies from all actions
-    this.traverseTree(this.processTree.root, (node: ProcessNode) => {
-      if (node.type === 'action') {
-        const action = node as ActionNode;
-        
-        // For each output element, record its dependencies (inputs)
-        for (const outputId of action.outputs) {
-          if (!this.dependenciesMap.has(outputId)) {
-            this.dependenciesMap.set(outputId, new Set());
-          }
-          for (const inputId of action.inputs) {
-            this.dependenciesMap.get(outputId)!.add(inputId);
-          }
-        }
-        
-        // For each input element, record what depends on it (outputs)
-        for (const inputId of action.inputs) {
-          if (!this.dependentsMap.has(inputId)) {
-            this.dependentsMap.set(inputId, new Set());
-          }
-          for (const outputId of action.outputs) {
-            this.dependentsMap.get(inputId)!.add(outputId);
+  registerNode(outputId: string, inputIds: string[]): void {
+    // 1. Record dependencies (what outputId depends on)
+    if (!this.dependenciesMap.has(outputId)) {
+      this.dependenciesMap.set(outputId, new Set());
+    }
+    const deps = this.dependenciesMap.get(outputId)!;
+    // Clear existing to ensure clean state if re-registering
+    deps.clear();
+    for (const inputId of inputIds) {
+      deps.add(inputId);
+    }
+
+    // 2. Record dependents (update inputs to know about outputId)
+    for (const inputId of inputIds) {
+      if (!this.dependentsMap.has(inputId)) {
+        this.dependentsMap.set(inputId, new Set());
+      }
+      this.dependentsMap.get(inputId)!.add(outputId);
+    }
+  }
+
+  /**
+   * Unregister a node from the dependency graph.
+   * Call this when an element is removed from the World.
+   * 
+   * @param elementId - The ID of the element being removed
+   */
+  unregisterNode(elementId: string): void {
+    // 1. Remove this element from other elements' "dependents" lists
+    // (i.e., stop telling my parents that I depend on them)
+    const dependencies = this.dependenciesMap.get(elementId);
+    if (dependencies) {
+      for (const parentId of dependencies) {
+        const parentsDependents = this.dependentsMap.get(parentId);
+        if (parentsDependents) {
+          parentsDependents.delete(elementId);
+          if (parentsDependents.size === 0) {
+            this.dependentsMap.delete(parentId);
           }
         }
       }
-    });
+      this.dependenciesMap.delete(elementId);
+    }
+
+    // 2. Remove this element from other elements' "dependencies" lists
+    // (i.e., stop telling my children that they depend on me)
+    // Note: Usually, children should be removed before parents to assume integrity,
+    // but we clean up references just in case.
+    const dependents = this.dependentsMap.get(elementId);
+    if (dependents) {
+      for (const childId of dependents) {
+        const childDependencies = this.dependenciesMap.get(childId);
+        if (childDependencies) {
+          childDependencies.delete(elementId);
+        }
+      }
+      this.dependentsMap.delete(elementId);
+    }
   }
+
+  /**
+   * Clears the entire graph. Used when unloading an assignment/project.
+   */
+  clear(): void {
+    this.dependentsMap.clear();
+    this.dependenciesMap.clear();
+  }
+
+  /**
+   * @deprecated Phase 91: Do not use. Dependencies are now managed incrementally.
+   */
+  rebuildDependencyMaps(): void {
+    console.warn('DependencyService.rebuildDependencyMaps is deprecated and no-op. Dependencies are managed incrementally.');
+  }
+
+  /**
+   * @deprecated Phase 91: Internal helper removed.
+   */
+  // private traverseTree(node: any, callback: any): void {
+  //   // No-op
+  // }
+
+
 
   /**
    * Get all elements that depend on the given element
@@ -256,27 +309,30 @@ export class DependencyService {
    * 
    * @param actionId - Action ID to query
    * @returns Array of dependency edges created by this action
+   * @deprecated Phase 91: Actions no longer drive dependencies. Cannot query by action ID.
    */
   getActionDependencies(actionId: string): DependencyEdge[] {
-    const edges: DependencyEdge[] = [];
+    // const edges: DependencyEdge[] = [];
     
-    this.traverseTree(this.processTree.root, (node: ProcessNode) => {
-      if (node.type === 'action' && node.id === actionId) {
-        const action = node as ActionNode;
-        for (const inputId of action.inputs) {
-          for (const outputId of action.outputs) {
-            edges.push({
-              fromElementId: inputId,
-              toElementId: outputId,
-              actionId: action.id
-            });
-          }
-        }
-      }
-    });
+    // this.traverseTree(this.processTree.root, (node: ProcessNode) => {
+    //   if (node.type === 'action' && node.id === actionId) {
+    //     const action = node as ActionNode;
+    //     for (const inputId of action.inputs) {
+    //       for (const outputId of action.outputs) {
+    //         edges.push({
+    //           fromElementId: inputId,
+    //           toElementId: outputId,
+    //           actionId: action.id
+    //         });
+    //       }
+    //     }
+    //   }
+    // });
     
-    return edges;
+    // return edges;
+    return [];
   }
+
 
   /**
    * Get full dependency information for an element
@@ -430,31 +486,13 @@ export class DependencyService {
     console.log('=== END DEPENDENCY GRAPH ===');
   }
 
+
+
   /**
    * Traverse process tree depth-first, calling visitor for each node
-   * 
-   * @param node - Current node
-   * @param visitor - Function to call for each node
+   * @deprecated Phase 91: Removed.
    */
-  private traverseTree(node: ProcessNode, visitor: (node: ProcessNode) => void): void {
-    // Skip null nodes (tombstones from removed actions)
-    if (!node) return;
-    
-    visitor(node);
-    
-    if (node.type === 'subprocess') {
-      const subprocess = node as Subprocess;
-      for (const child of subprocess.children) {
-        this.traverseTree(child, visitor);
-      }
-    } else if (node.type === 'actionGroup') {
-      const group = node as ActionGroup;
-      for (const action of group.children) {
-        // Skip null entries (tombstones)
-        if (action) {
-          visitor(action);
-        }
-      }
-    }
-  }
+  // private traverseTree(node: ProcessNode, visitor: (node: ProcessNode) => void): void {
+  // }
 }
+

@@ -193,9 +193,8 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
     return {
       opType: this.type,
       planeId: this.planeId,
-      circleId: this.circleId,
       referenceLineId: this.referenceLineId,
-      tangentIndex: this.tangentIndex,
+      throughPointId: this.throughPointId,
       lineId: this.outputs.lineId
     };
   }
@@ -261,9 +260,8 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     return {
       opType: this.type,
       planeId: this.planeId,
-      circleId: this.circleId,
+      referenceLineId: this.referenceLineId,
       throughPointId: this.throughPointId,
-      tangentIndex: this.tangentIndex,
       lineId: this.outputs.lineId
     };
   }

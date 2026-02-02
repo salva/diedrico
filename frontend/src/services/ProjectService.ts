@@ -22,7 +22,13 @@ import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 
 // Import all operation classes for deserialization
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
-import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+import { 
+  AddLine2DByTwoPointsOp, 
+  AddLine2DPerpendicularToLineOp,
+  AddLine2DParallelToLineOp,
+  AddLine2DTangentToCircleThroughPointOp,
+  AddLine2DTangentToCircleParallelToLineOp
+} from '@/commands/operations/world/AddLineOp';
 import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
 import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '@/commands/operations/world/AddGuideOp';
@@ -51,6 +57,11 @@ import {
   AddHingeLineOp,
   AddHalfHingeLine2DOp
 } from '@/commands/operations/world/InitializationOps';
+import { Add3DPlaneOp } from '@/commands/operations/world/Add3DPlaneOp';
+import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+import { AddAuxiliaryProjectionPlaneOp } from '@/commands/operations/world/AddAuxiliaryProjectionPlaneOp';
 
 /**
  * Project data structure based on command stream
@@ -172,6 +183,23 @@ export class ProjectService {
       // Add to command stack
       (commandStack as any).undoStack.push(command);  // Access private undoStack
     }
+
+    // Phase 95: Ensure active plane is set after loading
+    // Because operations don't typically store UI state like 'active plane', and initialization is skipped
+    if (!world.getActivePlaneId()) {
+      const planes = world.getAllProjectionPlanes();
+      // Prefer P_H (Horizontal) if available
+      const ph = planes.find(p => p.id === 'proj_plane_PH');
+      if (ph) {
+        world.setActivePlaneId(ph.id);
+        console.log('[ProjectService] Restored active plane to P_H');
+      } else if (planes.length > 0) {
+        world.setActivePlaneId(planes[0].id);
+        console.log(`[ProjectService] Restored active plane to first available: ${planes[0].id}`);
+      } else {
+        console.warn('[ProjectService] No projection planes found after loading project!');
+      }
+    }
   }
   
   /**
@@ -196,6 +224,34 @@ export class ProjectService {
       
       case 'AddLine2DByTwoPoints':
         return new AddLine2DByTwoPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
+
+      case 'AddLine2DPerpendicularToLine':
+        // Migration: old serialization had wrong parameters (circleId, tangentIndex instead of throughPointId)
+        // If throughPointId is missing, skip this operation (corrupted data from bug before fix)
+        if (!parameters.throughPointId) {
+          console.warn('[ProjectService] Skipping corrupted AddLine2DPerpendicularToLine operation (missing throughPointId). This was caused by a serialization bug that has been fixed.');
+          return null as any; // Will be filtered out by deserializeCommands
+        }
+        return new AddLine2DPerpendicularToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+      
+      case 'AddLine2DParallelToLine':
+        return new AddLine2DParallelToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+      
+      case 'AddLine2DTangentToCircleThroughPoint':
+        return new AddLine2DTangentToCircleThroughPointOp(
+          parameters.planeId, 
+          parameters.circleId, 
+          parameters.throughPointId, 
+          parameters.index
+        );
+      
+      case 'AddLine2DTangentToCircleParallelToLine':
+        return new AddLine2DTangentToCircleParallelToLineOp(
+          parameters.planeId, 
+          parameters.circleId, 
+          parameters.referenceLineId, 
+          parameters.index
+        );
       
       case 'AddSegment2DByPoints':
         return new AddSegment2DByPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
@@ -334,6 +390,51 @@ export class ProjectService {
           parameters.projPlaneId, 
           parameters.hingeLineId,
           parameters.lineId
+        );
+      
+      case 'Add3DPlane':
+        return new Add3DPlaneOp(
+          parameters.trace1Id,
+          parameters.trace2Id,
+          parameters.plane1Id,
+          parameters.plane2Id,
+          parameters.label
+        );
+      
+      case 'Add3DPoint':
+        return new Add3DPointOp(
+          parameters.projection1Id,
+          parameters.projection2Id,
+          parameters.plane1Id,
+          parameters.plane2Id,
+          parameters.label
+        );
+      
+      case 'Add3DLine':
+        return new Add3DLineOp(
+          parameters.projection1Id,
+          parameters.projection2Id,
+          parameters.plane1Id,
+          parameters.plane2Id,
+          parameters.label
+        );
+      
+      case 'Add3DSegment':
+        return new Add3DSegmentOp(
+          parameters.projection1Id,
+          parameters.projection2Id,
+          parameters.plane1Id,
+          parameters.plane2Id,
+          parameters.label
+        );
+      
+      case 'AddAuxiliaryProjectionPlane':
+        return new AddAuxiliaryProjectionPlaneOp(
+          parameters.plane3DId,
+          parameters.t1HingeTraceId,
+          parameters.t2OtherTraceId,
+          parameters.t2PrimeLineId,
+          parameters.name
         );
       
       case 'AddProcessTreeActionOp':

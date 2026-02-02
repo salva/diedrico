@@ -175,7 +175,7 @@ export class World {
     
     this.nextId = 1;
     this.processTree = new ProcessTree();
-    this.dependencyService = new DependencyService(this.processTree);
+    this.dependencyService = new DependencyService();
     
     // Phase 47: Static initialization removed. 
     // Initialization is now an explicit action triggered by App.vue via initialize()
@@ -281,7 +281,7 @@ export class World {
     this.nextId = 1;
     this._version = 0;
     this.processTree = new ProcessTree();
-    this.dependencyService = new DependencyService(this.processTree);
+    this.dependencyService = new DependencyService();
     
     // Phase 95: Do NOT re-initialize automatically.
     // Initialization is now explicit or handled by replaying commands.
@@ -378,6 +378,9 @@ export class World {
     // Phase 52: Plane3DFixed constructor signature changed to (id, point, normal, label)
     const plane = new Plane3DFixed(id, point, normal, label);
     this.planes3D.set(id, plane);
+
+    // Register with dependency service (no dependencies for fixed plane)
+    this.dependencyService.registerNode(id, []);
     
     return plane;
   }
@@ -426,6 +429,9 @@ export class World {
     projPlane.id = id;
     
     this.projectionPlanes.set(id, projPlane);
+
+    // Register with dependency service
+    this.dependencyService.registerNode(id, projPlane.getDependencies());
     
     return projPlane;
   }
@@ -457,6 +463,9 @@ export class World {
     );
     
     this.hingeLines.set(id, hingeLine);
+
+    // Register with dependency service
+    this.dependencyService.registerNode(id, hingeLine.getDependencies());
     
     return hingeLine;
   }
@@ -616,9 +625,6 @@ export class World {
       }
     });
     
-    // Rebuild dependency maps to reflect any changes
-    this.dependencyService.rebuildDependencyMaps();
-    
     // Notify UI to re-render
     this.markDirty();
   }
@@ -652,10 +658,7 @@ export class World {
         plane.clearCircleRealization2D(id);
       }
     });
-    
-    // Rebuild dependency maps to reflect any changes
-    this.dependencyService.rebuildDependencyMaps();
-    
+
     // Notify UI to re-render
     this.markDirty();
   }
@@ -866,8 +869,6 @@ export class World {
    */
   addAction(action: any, groupName?: string): any {
     const result = this.processTree.addAction(action, groupName);
-    // Rebuild dependency maps to include the new action
-    this.dependencyService.rebuildDependencyMaps();
     return result;
   }
 
@@ -1050,6 +1051,7 @@ export class World {
    */
   add3DPoint(point: Point3D): void {
     this.points3D.set(point.id!, point);
+    this.dependencyService.registerNode(point.id!, point.getDependencies());
     this.notifyChange();
   }
 
@@ -1066,6 +1068,7 @@ export class World {
   remove3DPoint(id: string): void {
     this.points3D.delete(id);
     this.pointRealizations3D.delete(id);
+    this.dependencyService.unregisterNode(id);
     this.notifyChange();
   }
 
@@ -1081,6 +1084,7 @@ export class World {
    */
   add3DLine(line: Line3D): void {
     this.lines3D.set(line.id!, line);
+    this.dependencyService.registerNode(line.id!, line.getDependencies());
     this.notifyChange();
   }
 
@@ -1097,6 +1101,7 @@ export class World {
   remove3DLine(id: string): void {
     this.lines3D.delete(id);
     this.lineRealizations3D.delete(id);
+    this.dependencyService.unregisterNode(id);
     this.notifyChange();
   }
 
@@ -1112,6 +1117,7 @@ export class World {
    */
   add3DSegment(segment: Segment3D): void {
     this.segments3D.set(segment.id!, segment);
+    this.dependencyService.registerNode(segment.id!, segment.getDependencies());
     this.notifyChange();
   }
 
@@ -1128,6 +1134,7 @@ export class World {
   remove3DSegment(id: string): void {
     this.segments3D.delete(id);
     this.segmentRealizations3D.delete(id);
+    this.dependencyService.unregisterNode(id);
     this.notifyChange();
   }
 
@@ -1143,6 +1150,7 @@ export class World {
    */
   add3DPlane(plane: Plane3D): void {
     this.planes3D.set(plane.id!, plane);
+    this.dependencyService.registerNode(plane.id!, plane.getDependencies());
     this.notifyChange();
   }
 
@@ -1159,6 +1167,7 @@ export class World {
   remove3DPlane(id: string): void {
     this.planes3D.delete(id);
     this.planeRealizations3D.delete(id);
+    this.dependencyService.unregisterNode(id);
     this.notifyChange();
   }
 

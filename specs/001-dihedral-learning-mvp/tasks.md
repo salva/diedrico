@@ -10246,3 +10246,17 @@ Files to update:
 - [x] T1404 **E2E Test**: Verify Shift+Tab switches to previous plane
 - [x] T1405 **Maintenance**: Implement self-healing active plane logic in World (reset if deleted)
 - [x] T1406 **Unit Test**: Verify active plane self-healing behavior
+
+## Phase 91: Decouple Dependency Graph from ProcessTree
+**Feature Branch**: `phase-91-dependency-decoupling`
+**Status**: 📋 PLANNED
+
+- [ ] T1500 **Refactor DependencyService**: Update `frontend/src/services/DependencyService.ts` to be a persistent state container. Add `registerNode(outputId, inputs)`, `unregisterNode(outputId)`.
+- [ ] T1501 **Refactor Operations**: Update `frontend/src/domain/processTree/AddProcessTreeActionOp.ts` and `RemoveActionFromProcessTreeOp.ts` to call DependencyService register/unregister methods.
+- [ ] T1502 **Refactor ProjectService**: Update `frontend/src/services/ProjectService.ts` (loadProject) to perform initial population of the dependency graph using `rebuildDependencyMaps` (or loop).
+- [ ] T1503 **Cleanup World**: Remove manual `rebuildDependencyMaps` calls from `frontend/src/domain/world/World.ts` and other locations.
+- [ ] T1504 **Unit Test**: Test `DependencyService` incremental updates working correctly without full rebuild.
+
+- [ ] T1505 **Element Interface**: Add `getDependencies(): string[]` to `Element` (abstract) and implement in ALL 2D/3D subclasses.
+- [ ] T1506 **World Integration**: Update `World.addElement` and `World.removeElement` (and specialized methods like `addPoint`, etc. if they exist) to update `DependencyService`.
+- [ ] T1507 **Remove ProcessTree Dependency**: Remove the code in `World.ts` that rebuilds valid dependency maps from ProcessTree.

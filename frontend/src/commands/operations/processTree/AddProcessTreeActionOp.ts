@@ -38,9 +38,6 @@ export class AddProcessTreeActionOp implements IOperation {
       index: index
     };
     
-    // Rebuild dependency maps to include new action
-    world.getDependencyService().rebuildDependencyMaps();
-
     return {
       success: true,
       outputs: this.outputs
@@ -59,7 +56,5 @@ export class AddProcessTreeActionOp implements IOperation {
     // If this op added an action to a group, undoing it naturally removes the action.
     // The group itself is handled by its own Op.
 
-    // Rebuild dependency maps to remove stale references
-    world.getDependencyService().rebuildDependencyMaps();
   }
 }

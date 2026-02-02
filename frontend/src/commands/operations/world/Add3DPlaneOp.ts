@@ -186,4 +186,16 @@ export class Add3DPlaneOp implements IOperation {
       world.remove3DPlane(this.outputs.planeId);
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      trace1Id: this.trace1Id,
+      trace2Id: this.trace2Id,
+      plane1Id: this.plane1Id,
+      plane2Id: this.plane2Id,
+      label: this.label,
+      planeId: this.outputs.planeId
+    };
+  }
 }

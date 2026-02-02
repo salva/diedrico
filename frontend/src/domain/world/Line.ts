@@ -184,6 +184,10 @@ export class Line2DByTwoPoints extends Line2D {
       this.label
     );
   }
+
+  getDependencies(): string[] {
+    return [this.point1Id, this.point2Id];
+  }
   
   /**
    * Calculate 2D realization - compute line in parametric form from two points
@@ -270,6 +274,10 @@ export class Line2DParallel extends Line2D {
       this.planeId,
       this.label
     );
+  }
+
+  getDependencies(): string[] {
+    return [this.referenceLineId, this.throughPointId];
   }
   
   realize2D(world: import('./World').World): Line2DRealization2D | null {
@@ -358,6 +366,10 @@ export class Line2DPerpendicularToLine extends Line2D {
       this.label,
       this.type
     );
+  }
+
+  getDependencies(): string[] {
+    return [this.referenceLineId, this.throughPointId];
   }
   
   /**
@@ -475,6 +487,10 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
       this.planeId,
       this.label
     );
+  }
+
+  getDependencies(): string[] {
+    return [this.circleId, this.throughPointId];
   }
   
   /**
@@ -649,6 +665,10 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
       this.planeId,
       this.label
     );
+  }
+
+  getDependencies(): string[] {
+    return [this.circleId, this.referenceLineId];
   }
   
   /**

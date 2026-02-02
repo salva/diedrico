@@ -428,6 +428,19 @@ export class GoogleDriveService {
     }
 
     try {
+      // Check metadata first to verify file exists and is not trashed
+      // T409: Fix "Ghost files" loading from trash
+      const metaResponse = await gapi.client.drive.files.get({
+        fileId: fileId,
+        fields: 'trashed, explicitlyTrashed'
+      });
+
+      if (metaResponse.result.trashed) {
+        const error: any = new Error('File not found. It may have been deleted (in trash).');
+        error.status = 404; // Mimic 404 behavior for App.vue handling
+        throw error;
+      }
+
       const response = await gapi.client.drive.files.get({
         fileId: fileId,
         alt: 'media',
@@ -438,7 +451,7 @@ export class GoogleDriveService {
     } catch (error: any) {
       if (error.status === 401) {
         throw new Error('Authentication expired. Please sign in again.');
-      } else if (error.status === 404) {
+      } else if (error.status === 404 || error.result?.error?.code === 404) {
         throw new Error('File not found. It may have been deleted.');
       } else if (!navigator.onLine) {
         throw new Error('No internet connection. Please check your network.');
@@ -458,6 +471,22 @@ export class GoogleDriveService {
     }
 
     try {
+      // First, check if file exists and is not trashed
+      console.log('[GoogleDrive] Checking file status before update:', fileId);
+      const fileCheckRequest = gapi.client.request({
+        path: `/drive/v3/files/${fileId}`,
+        method: 'GET',
+        params: { fields: 'id,name,trashed' }
+      });
+      
+      const fileCheckResponse = await fileCheckRequest;
+      console.log('[GoogleDrive] File status:', fileCheckResponse.result);
+      
+      if (fileCheckResponse.result.trashed) {
+        console.warn('[GoogleDrive] File is in trash, throwing error');
+        throw new Error('File not found. It has been deleted (moved to trash).');
+      }
+
       const fileContent = JSON.stringify(data, null, 2);
 
       // Create multipart request body
@@ -494,7 +523,9 @@ export class GoogleDriveService {
         body: multipartRequestBody,
       });
 
-      await request;
+      const response = await request;
+      console.log('[GoogleDrive] File updated successfully:', fileId);
+
     } catch (error: any) {
       if (error.status === 401) {
         throw new Error('Authentication expired. Please sign in again.');

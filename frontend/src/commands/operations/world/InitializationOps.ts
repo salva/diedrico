@@ -80,6 +80,7 @@ export class AddPlane3DFixedOp implements IOperation {
     if (this.outputs.planeId) {
       // Phase 78: Access planes3D map, not 'planes'
       (world as any).planes3D.delete(this.outputs.planeId);
+      world.getDependencyService().unregisterNode(this.outputs.planeId);
     }
   }
 
@@ -158,6 +159,7 @@ export class AddProjectionPlaneFixedOp implements IOperation {
   undo(world: World): void {
     if (this.outputs.projPlaneId) {
       (world as any).projectionPlanes.delete(this.outputs.projPlaneId);
+      world.getDependencyService().unregisterNode(this.outputs.projPlaneId);
     }
   }
 
@@ -168,7 +170,8 @@ export class AddProjectionPlaneFixedOp implements IOperation {
       planeToPaper2D: this.planeToPaper2D.toArray(),
       planeTo3D: this.planeTo3D.toArray(),
       threeDToPlane: this.threeDToPlane.toArray(),
-      projPlaneId: this.outputs.projPlaneId || this.parameters.projPlaneId
+      projPlaneId: this.outputs.projPlaneId || this.parameters.projPlaneId,
+      name: this.name
     };
   }
 }

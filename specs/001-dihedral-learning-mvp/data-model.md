@@ -16174,3 +16174,49 @@ While the Process Tree data (`ProcessTree`, `Subprocess`, `Action`) tracks the *
 - **Data Model**: Stores `hideIntermediates`, `isOutput`.
 - **View Component**: Stores `isCollapsed` (unless we decide to persist it in `ViewState`).
 - **Mutation Pattern**: Toggling data model properties (via Operations) updates the render, but the Component must ensure its own local state (scroll/expansion) is not reset by the re-render cycle (using proper Vue `key` attributes and state management).
+
+## Decoupling Dependency Graph from ProcessTree (Phase 91)
+
+### Problem Statement
+
+**Current State**: `DependencyService` acts as a view derived from `ProcessTree`. To update dependencies, the system calls `rebuildDependencyMaps()`, which iterates over the entire `ProcessTree`.
+1.  **Inefficient**: O(N) traversal on every action capable of changing dependencies (or requires manual triggering).
+2.  **Coupled**: `DependencyService` knows too much about `ProcessTree` structure (Actions).
+3.  **Fragile**: Developers often forget to call `rebuildDependencyMaps()` after modifying the tree, leading to stale dependencies (bugs).
+
+**Proposed Solution**: `DependencyService` becomes a persistent state container for the Dependency Graph. It is updated incrementally by operations that modify the tree.
+
+### Architecture Changes
+
+1.  **DependencyService**:
+    *   Removes `rebuildDependencyMaps()` (except for utility/initial load).
+    *   Adds `registerNode(outputId: string, inputIds: string[])`.
+    *   Adds `unregisterNode(outputId: string)`.
+    *   Maintains `dependentsMap` and `dependenciesMap` persistently.
+    *   Decoupled from `ProcessTree` class (no references to `Action` class).
+
+2.  **Operations**:
+    *   `AddProcessTreeActionOp` (and other tree modifiers): Responsible for calling `registerNode`/`unregisterNode` on strict execution.
+    
+3.  **Initialization**:
+    *   When loading a project, the `ProcessTree` is traversed ONCE to populate the `DependencyService`, but subsequent updates are incremental.
+
+### Updated Approach (Refined Phase 91)
+
+Based on further review, the `DependencyService` should not rely on `ProcessTree` but rather on the elements themselves.
+
+1.  **Element Interface**: explicit `getDependencies(): string[]` method on `Element` base class (abstract) or implemented in subclasses.
+2.  **Registration**:
+    *   **World.addElement()**: Calls `element.getDependencies()`, then `dependencyService.registerNode(element.id, deps)`.
+    *   **World.removeElement()**: Calls `dependencyService.unregisterNode(element.id)`.
+    *   **World.replaceElement()**: Updates dependencies.
+3.  **DependencyService**:
+    *   Pure directed graph container.
+    *   Methods: `registerNode`, `unregisterNode`, `getDependents`, `getDependencies`, `sortTopologically`.
+    *   **Persistence**: The state matches the `World` state exactly.
+
+**Benefits**:
+*   Source of truth is the Element definition in the World, not the historical Action.
+*   Decoupled from Undo/Redo history.
+*   Works for temporary elements if needed.
+

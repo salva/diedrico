@@ -47,6 +47,10 @@ export class Segment2DByPoints extends Line2D {
       this.label
     );
   }
+
+  getDependencies(): string[] {
+    return [this.point1Id, this.point2Id];
+  }
   
   /**
    * Override isBounded() - segments are bounded by definition

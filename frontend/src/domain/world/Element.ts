@@ -58,6 +58,14 @@ export abstract class Element {
    * Must be implemented by concrete subclasses
    */
   abstract clone(): Element;
+
+  /**
+   * Get the IDs of elements this element depends on.
+   * This is used by DependencyService to build the dependency graph.
+   * 
+   * @returns Array of dependency IDs
+   */
+  abstract getDependencies(): string[];
 }
 
 /**

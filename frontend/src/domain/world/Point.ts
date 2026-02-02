@@ -145,6 +145,10 @@ export class FreePoint2D extends Point2D {
   realize2D(_world: World): Point2DRealization2D {
     return new Point2DRealization2D(this.position, true);
   }
+
+  getDependencies(): string[] {
+    return [];
+  }
 }
 
 /**
@@ -216,6 +220,10 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
       cloned.siblingPointId = this.siblingPointId;
     }
     return cloned;
+  }
+
+  getDependencies(): string[] {
+    return [this.line1Id, this.line2Id];
   }
 
   /**
@@ -355,6 +363,10 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
     return cloned;
   }
 
+  getDependencies(): string[] {
+    return [this.lineId, this.circleId];
+  }
+
   /**
    * Calculate 2D realization - compute intersection of line and circle
    * 
@@ -479,6 +491,10 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
     return cloned;
   }
 
+  getDependencies(): string[] {
+    return [this.circle1Id, this.circle2Id];
+  }
+
   /**
    * Calculate 2D realization - compute intersection of two circles
    * 
@@ -553,6 +569,10 @@ export class SiblingIntersectionPoint2D extends Point2D {
       this.planeId,
       this.label
     );
+  }
+
+  getDependencies(): string[] {
+    return [this.primaryIntersectionId];
   }
 
   /**

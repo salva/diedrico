@@ -19,6 +19,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [x] Move the dependency graph into its own service (instead of uisng the ProcessTree for it). An incomplete service may already exists. 
 * [ ] When an action group is empty it should become invisible and do not appear in the process tree representation in any way
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.

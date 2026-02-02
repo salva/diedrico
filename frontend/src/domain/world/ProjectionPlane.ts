@@ -167,6 +167,12 @@ export abstract class ProjectionPlane {
   color: string;  // Hex color (#RRGGBB)
   plane3DId?: string;  // Reference to Plane3D element (geometric definition)
 
+  /**
+   * Get dependency IDs for this plane
+   * Used by DependencyService to build the dependency graph
+   */
+  abstract getDependencies(): string[];
+
   // Phase 22.5: Element storage (2D elements that belong to this plane)
   private points: Map<string, Point2D>;
   private lines: Map<string, Line2D>;
@@ -225,6 +231,7 @@ export abstract class ProjectionPlane {
     }
     this.points.set(point.id, point);
     if (world) {
+      world.getDependencyService().registerNode(point.id, point.getDependencies());
       world.markDirty();
     }
   }
@@ -266,9 +273,14 @@ export abstract class ProjectionPlane {
   /**
    * Remove a point from this plane
    */
-  removePoint(id: string): boolean {
+  removePoint(id: string, world?: import('./World').World): boolean {
     this.pointRealizations.delete(id);  // Clear cached realization
-    return this.points.delete(id);
+    const removed = this.points.delete(id);
+    if (removed && world) {
+      world.getDependencyService().unregisterNode(id);
+      world.markDirty();
+    }
+    return removed;
   }
 
   /**
@@ -298,11 +310,15 @@ export abstract class ProjectionPlane {
   /**
    * Add a line to this plane
    */
-  addLine(line: Line2D): void {
+  addLine(line: Line2D, world?: import('./World').World): void {
     if (!line.id) {
       throw new Error('Cannot add line without ID');
     }
     this.lines.set(line.id, line);
+    if (world) {
+      world.getDependencyService().registerNode(line.id, line.getDependencies());
+      world.markDirty();
+    }
   }
 
   /**
@@ -322,9 +338,14 @@ export abstract class ProjectionPlane {
   /**
    * Remove a line from this plane
    */
-  removeLine(id: string): boolean {
+  removeLine(id: string, world?: import('./World').World): boolean {
     this.lineRealizations.delete(id);  // Clear cached realization
-    return this.lines.delete(id);
+    const removed = this.lines.delete(id);
+    if (removed && world) {
+      world.getDependencyService().unregisterNode(id);
+      world.markDirty();
+    }
+    return removed;
   }
 
   /**
@@ -355,11 +376,15 @@ export abstract class ProjectionPlane {
   /**
    * Add a circle to this plane
    */
-  addCircle(circle: Circle2D): void {
+  addCircle(circle: Circle2D, world?: import('./World').World): void {
     if (!circle.id) {
       throw new Error('Cannot add circle without ID');
     }
     this.circles.set(circle.id, circle);
+    if (world) {
+      world.getDependencyService().registerNode(circle.id, circle.getDependencies());
+      world.markDirty();
+    }
   }
 
   /**
@@ -379,9 +404,14 @@ export abstract class ProjectionPlane {
   /**
    * Remove a circle from this plane
    */
-  removeCircle(id: string): boolean {
+  removeCircle(id: string, world?: import('./World').World): boolean {
     this.circleRealizations.delete(id);  // Clear cached realization
-    return this.circles.delete(id);
+    const removed = this.circles.delete(id);
+    if (removed && world) {
+      world.getDependencyService().unregisterNode(id);
+      world.markDirty();
+    }
+    return removed;
   }
 
   /**
@@ -762,7 +792,7 @@ export abstract class ProjectionPlane {
 
     const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id);
     
-    this.addLine(line);
+    this.addLine(line, world);
     return line;
   }
 
@@ -806,7 +836,7 @@ export abstract class ProjectionPlane {
 
     const line = new Line2DParallel(id, referenceLineId, throughPointId, this.id);
     
-    this.addLine(line);
+    this.addLine(line, world);
     return line;
   }
 
@@ -850,7 +880,7 @@ export abstract class ProjectionPlane {
 
     const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, this.id);
     
-    this.addLine(line);
+    this.addLine(line, world);
     return line;
   }
 
@@ -907,7 +937,7 @@ export abstract class ProjectionPlane {
       this.id
     );
     
-    this.addLine(line);
+    this.addLine(line, world);
     return line;
   }
 
@@ -965,7 +995,7 @@ export abstract class ProjectionPlane {
       this.id
     );
     
-    this.addLine(line);
+    this.addLine(line, world);
     return line;
   }
 
@@ -1012,7 +1042,7 @@ export abstract class ProjectionPlane {
 
     const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id);
     
-    this.addLine(segment);  // Segments are stored as lines
+    this.addLine(segment, world);  // Segments are stored as lines
     return segment;
   }
 
@@ -1059,7 +1089,7 @@ export abstract class ProjectionPlane {
 
     const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, this.id);
     
-    this.addCircle(circle);
+    this.addCircle(circle, world);
     return circle;
   }
 
@@ -1107,7 +1137,7 @@ export abstract class ProjectionPlane {
 
     const guide = new Guide2D(id, referenceLineId, throughPointId, this.id);
     
-    this.addLine(guide);  // Guides are stored as lines
+    this.addLine(guide, world);  // Guides are stored as lines
     return guide;
   }
 
@@ -1168,7 +1198,7 @@ export abstract class ProjectionPlane {
       label
     );
     
-    this.addLine(siblingGuide);  // Sibling guides are stored as lines
+    this.addLine(siblingGuide, world);  // Sibling guides are stored as lines
     return siblingGuide;
   }
 
@@ -1355,6 +1385,8 @@ export abstract class ProjectionPlane {
  * Their transformation matrices are predetermined constants stored in the object.
  */
 export class BaseProjectionPlane extends ProjectionPlane {
+  readonly type: ProjectionPlaneType = 'base';
+
   // Predetermined transformation matrices (part of the plane definition)
   private readonly planeToPaper2D: Matrix3;
   private readonly paperToPlane2D: Matrix3;
@@ -1395,6 +1427,10 @@ export class BaseProjectionPlane extends ProjectionPlane {
       cloned.id = this.id;
     }
     return cloned;
+  }
+  
+  getDependencies(): string[] {
+    return []; // Base planes have no dependencies on other elements
   }
   
   /**
@@ -1451,6 +1487,8 @@ export class BaseProjectionPlane extends ProjectionPlane {
  * 3. Build transformation matrices via computeProjectionPlaneMatrices()
  */
 export class AuxiliaryProjectionPlane extends ProjectionPlane {
+  readonly type: ProjectionPlaneType = 'auxiliary';
+
   // Dependencies for computing transformation (the RULE)
   readonly t1HingeTraceId: string;      // Trace line used as hinge (T1)
   readonly t2OtherTraceId: string;      // Other trace line on different plane (T2)

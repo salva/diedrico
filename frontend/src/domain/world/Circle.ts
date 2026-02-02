@@ -116,6 +116,10 @@ export class Circle2DByCenterAndPoint extends Circle2D {
     );
   }
 
+  getDependencies(): string[] {
+    return [this.centerPointId, this.circumferencePointId];
+  }
+
   /**
    * Calculate 2D realization - compute radius vector from center to circumference point
    * 
@@ -194,6 +198,10 @@ export class Circle2DByThreePoints extends Circle2D {
     this.point1Id = point1Id;
     this.point2Id = point2Id;
     this.point3Id = point3Id;
+  }
+
+  getDependencies(): string[] {
+    return [this.point1Id, this.point2Id, this.point3Id];
   }
 
   clone(): Circle2DByThreePoints {

@@ -150,8 +150,10 @@ provide('world', world);
 const commandStack = new CommandStack();
 provide('commandStack', commandStack);
 
-// Phase 95: Explicitly initialize the world through the command stack to ensure the initialization is recorded
-world.initialize(commandStack);
+// Phase 95: World initialization is now explicit (on file load or new project)
+// Do NOT initialize world here automatically.
+// See handleNewProject and handleOpenProject.
+// world.initialize(commandStack);
 
 // Google Drive service (only if credentials are available)
 const driveService = hasGoogleCredentials ? new GoogleDriveService(GOOGLE_CONFIG) : null;
@@ -320,6 +322,10 @@ async function initializeApp() {
         // Reset state
         currentProjectName.value = null;
         currentFileId.value = null;
+
+        // Condition 3: The app fails to load a file and so automatically creates a new one
+        console.log('[App] Load failed. Initializing new world automatically.');
+        world.initialize(commandStack);
       }
     }
     
@@ -538,9 +544,28 @@ async function performAutoSave() {
       }
     }, 2000);
   } catch (error: any) {
-    console.error('Auto-save failed:', error);
     saveStatus.value = 'idle';
     
+    // Handle 404 (File not found / Deleted) - Recreate the file
+    if (error.message?.includes('File not found') || error.message?.includes('deleted')) {
+      console.warn('[App] File deleted on server. Re-creating...');
+      try {
+        const projectData = ProjectService.serializeCommands(commandStack, currentProjectName.value);
+        const newFileId = await driveService.createFile(currentProjectName.value, projectData);
+        currentFileId.value = newFileId;
+        
+        // Update local storage reference
+        localStorage.setItem('diedrico_last_file_id', newFileId);
+        
+        saveStatus.value = 'saved';
+        console.log('[App] File successfully re-created with ID:', newFileId);
+        return; // Success recovery
+      } catch (createError) {
+        console.error('[App] Failed to re-create file:', createError);
+        // Fall through to standard error handling
+      }
+    }
+
     // Handle specific error types
     if (error.message?.includes('authentication') || error.message?.includes('401')) {
       // Authentication expired - show startup dialog again
