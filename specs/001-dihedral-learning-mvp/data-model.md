@@ -1136,6 +1136,34 @@ commandStack.execute(new SetZoomCommand(2.0, viewState));
 commandStack.execute(new UpdateSettingCommand('grid.visible', false, settings));
 ```
 
+### CommandStack Reactivity (Phase 91)
+
+To support reactive UI components (like Undo/Redo buttons), CommandStack implements the Observer pattern:
+
+```typescript
+type Unsubscribe = () => void;
+type ChangeListener = () => void;
+
+class CommandStack {
+  private listeners: ChangeListener[] = [];
+
+  subscribe(callback: ChangeListener): Unsubscribe {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== callback);
+    };
+  }
+
+  private notify(): void {
+    this.listeners.forEach(cb => cb());
+  }
+
+  // Notifies on push(), undo(), redo(), clear()
+}
+```
+
+This allows UI components (Toolbar) to re-evaluate `canUndo`/`canRedo` state when the stack changes, without `CommandStack` itself being a framework-coupled reactive object.
+
 **Relationships**:
 - 1 Project → 1 World
 - 1 Project → 1 ProcessTree

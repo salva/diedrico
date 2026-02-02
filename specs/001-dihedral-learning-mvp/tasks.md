@@ -10241,6 +10241,8 @@ Files to update:
   - Retrieve all planes from World (`world.getAllProjectionPlanes()`)
   - Find current active plane index
   - Calculate next/prev index (cyclic)
-  - Execute existing `SetActivePlaneOp`
+  - Update directly via `world.setActivePlaneId` (UI state, not Operation)
 - [x] T1403 **E2E Test**: Verify Tab switches to next plane
 - [x] T1404 **E2E Test**: Verify Shift+Tab switches to previous plane
+- [x] T1405 **Maintenance**: Implement self-healing active plane logic in World (reset if deleted)
+- [x] T1406 **Unit Test**: Verify active plane self-healing behavior

@@ -327,9 +327,25 @@ export class World {
 
   /**
    * Get the currently active projection plane ID
+   * 
+   * Includes self-healing logic: if currently active plane was deleted,
+   * it selects the first available plane and updates the state.
+   * 
    * @returns Active plane ID or undefined if not set
    */
   getActivePlaneId(): string | undefined {
+    // Self-healing: if active plane no longer exists, reset to first available
+    if (this.activePlaneId && !this.projectionPlanes.has(this.activePlaneId)) {
+      const firstPlane = this.projectionPlanes.values().next().value;
+      if (firstPlane) {
+        this.activePlaneId = firstPlane.id;
+        // Do not call notifyChange() here to avoid infinite loops during render/get
+        // or unexpected side effects during read operations.
+        // The change will be reflected in specific lookups.
+      } else {
+        this.activePlaneId = undefined;
+      }
+    }
     return this.activePlaneId;
   }
 

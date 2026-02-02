@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed, onMounted, onUnmounted } from 'vue';
+import { inject, computed, onMounted, onUnmounted, ref } from 'vue';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { CommandStack } from '@/commands/CommandStack';
@@ -161,9 +161,20 @@ if (!world) {
   throw new Error('World not provided');
 }
 
+// Reactive trigger for CommandStack updates (Phase 91)
+const stackUpdate = ref(0);
+let unsubscribeStack: (() => void) | undefined;
+
 // Computed properties for undo/redo availability
-const canUndo = computed(() => commandStack.canUndo());
-const canRedo = computed(() => commandStack.canRedo());
+const canUndo = computed(() => {
+  stackUpdate.value; // Create dependency
+  return commandStack.canUndo();
+});
+
+const canRedo = computed(() => {
+  stackUpdate.value; // Create dependency
+  return commandStack.canRedo();
+});
 
 // Grid visibility
 const gridVisible = computed(() => viewStore.gridVisible.value);
@@ -274,10 +285,19 @@ function addProjectionPlaneSetup() {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  
+  // Subscribe to command stack changes
+  unsubscribeStack = commandStack.subscribe(() => {
+    stackUpdate.value++;
+  });
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  
+  if (unsubscribeStack) {
+    unsubscribeStack();
+  }
 });
 
 /**

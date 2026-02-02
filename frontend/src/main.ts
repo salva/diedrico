@@ -28,6 +28,8 @@ app.mount('#app');
 // Debug helpers - expose to window for console access
 // Usage: window.dumpDependencies() or window.dumpDependencies('proj_plane_')
 if (import.meta.env.DEV) {
+  (window as any).THREE = await import('three');
+
   (window as any).dumpDependencies = (filterPrefix?: string) => {
     // Import dynamically to avoid circular dependencies
     import('./stores/worldStore').then(({ useWorldStore }) => {

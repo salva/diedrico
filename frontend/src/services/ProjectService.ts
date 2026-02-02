@@ -41,8 +41,7 @@ import {
   AddProjectionPlaneFixedOp,
   AddOriginPoint2DOp,
   AddHingeLineOp,
-  AddHalfHingeLine2DOp,
-  SetActivePlaneOp
+  AddHalfHingeLine2DOp
 } from '@/commands/operations/world/InitializationOps';
 
 /**
@@ -286,9 +285,6 @@ export class ProjectService {
       
       case 'AddHalfHingeLine2D':
         return new AddHalfHingeLine2DOp(parameters.projPlaneId, parameters.hingeLineId, parameters.hingePoint, parameters.hingeDirection);
-      
-      case 'SetActivePlane':
-        return new SetActivePlaneOp(parameters.projPlaneId);
       
       default:
         throw new Error(`Unknown operation type: ${type}`);

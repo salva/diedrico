@@ -3,8 +3,7 @@ import type { Command } from '../Command';
 import {
   AddPlane3DFixedOp,
   AddProjectionPlaneFixedOp,
-  AddOriginPoint2DOp,
-  SetActivePlaneOp
+  AddOriginPoint2DOp
 } from '../operations/world/InitializationOps';
 import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
 import {
@@ -33,11 +32,11 @@ import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
  * CRITICAL: This factory does NOT generate element IDs. Operations generate their own IDs
  * via World/ProjectionPlane factory methods, supporting redo by storing IDs in outputs.
  * 
- * @param _world World instance (not used - operations get World from Command)
+ * @param world World instance (used for active plane state)
  * @param cmd Open Command to which operations will be added
  * @param groupId The ID of the action group to attach operations to
  */
-export function buildWorldInitialization(_world: World, cmd: Command, groupId: string): void {
+export function buildWorldInitialization(world: World, cmd: Command, groupId: string): void {
   // Step 2-3: Create 3D planes
   // P_H: horizontal plane (z=0), normal=(0,0,1)
   const planeHOp = new AddPlane3DFixedOp(
@@ -148,5 +147,6 @@ export function buildWorldInitialization(_world: World, cmd: Command, groupId: s
   
   // Step 11: Set active plane
   // Default to horizontal plane as the active drawing surface
-  cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
+  // Phase 89: Direct state mutation (Active Plane is UI state, not Operation)
+  world.setActivePlaneId(projPlaneHId);
 }

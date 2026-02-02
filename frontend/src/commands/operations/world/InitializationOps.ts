@@ -391,50 +391,6 @@ export class AddHalfHingeLine2DOp implements IOperation {
   }
 }
 
-/**
- * SetActivePlaneOp - Set the active projection plane
- * 
- * Sets which projection plane is currently active for user interactions.
- * This is typically the horizontal plane initially.
- */
-export class SetActivePlaneOp implements IOperation {
-  readonly type = 'SetActivePlane';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
-  
-  constructor(private readonly planeId: string) {
-    this.parameters = { planeId };
-  }
-
-  apply(world: World): OperationResult {
-    try {
-      (world as any).setActivePlaneId(this.planeId);
-      
-      return {
-        success: true,
-        outputs: { activePlaneId: this.planeId }
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: `Failed to set active plane: ${(error as Error).message}`,
-        outputs: {}
-      };
-    }
-  }
-
-  undo(_world: World): void {
-    // Active plane state is UI concern, no need to undo
-    // (initialization is non-undoable anyway)
-  }
-
-  serialize() {
-    return {
-      type: this.type,
-      planeId: this.planeId
-    };
-  }
-}
 
 /**
  * CreateInitializationSubprocessOp - Create "World Initialization" subprocess in ProcessTree

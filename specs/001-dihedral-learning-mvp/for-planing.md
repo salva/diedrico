@@ -147,6 +147,11 @@ Note that completing these tasks may require asking the user for additional info
 
 ## ALREADY PLANNED
 
+* [x] **Dynamic World Elements Panel (Phase 90)** - 📋 PLANNED (Feb 2, 2026)
+  - **Feature**: Elements Panel lists all projection planes dynamically
+  - **Specs**: ui-spec.md (Dynamic Plane Listing)
+  - **Tasks**: T1410-T1414 in tasks.md
+
 * [x] **Active Plane Keyboard Shortcuts (Phase 89)** - 📋 PLANNED (Jan 31, 2026)
   - **Feature**: Tab/Shift+Tab to cycle active projection plane
   - **Specs**: ui-spec.md (Shortcuts), spec.md (FR-062)

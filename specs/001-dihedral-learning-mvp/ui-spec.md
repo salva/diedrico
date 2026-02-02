@@ -198,7 +198,11 @@ The left side of the interface contains a vertical stack of two panels. These pa
 **Organization Rules**:
 - **Two Main Sections**: 2D Elements, 3D Elements
 - **2D Elements Grouping**:
-  - **First level**: Grouped by projection plane (P_H, P_V, additional planes, etc.)
+  - **Dynamic Plane Listing**: The panel MUST dynamically list ALL projection planes present in the World, not just P_H and P_V.
+  - **Ordering**: 
+    1. Fixed planes: P_H, then P_V.
+    2. Auxiliary planes: Sorted by creation order (or alphabetically).
+  - **First level**: Grouped by projection plane.
   - **Second level**: Within each plane, grouped by element type (points, lines, segments, circles, arcs, guides, hinge lines)
   - **Hinge Lines**: Appear under BOTH planes they connect (with indicator showing shared status)
   - **BHLs (Broken Hinge Lines)**: Also appear as projections under the planes they intersect

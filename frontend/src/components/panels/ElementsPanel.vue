@@ -15,101 +15,61 @@
         
         <div v-if="!is2DSectionCollapsed" class="section-content">
           <!-- Empty state message -->
-          <div v-if="!horizontalElements.hasElements && !verticalElements.hasElements" class="empty-state">
+          <div v-if="!projectionPlanesList.some(p => p.hasElements)" class="empty-state">
             <p>No elements yet. Use the tools to create points, lines, and other geometric objects.</p>
           </div>
           
-          <!-- Horizontal Plane -->
-          <div v-if="horizontalElements.hasElements" class="plane-group">
-            <div class="plane-header" @click="toggleHPlane">
-              <span class="collapse-icon">{{ isHPlaneCollapsed ? '▶' : '▼' }}</span>
-              <span class="plane-name">P<sub>H</sub> (Horizontal)</span>
+          <!-- Dynamic Projection Planes Loop -->
+          <template v-for="planeGroup in projectionPlanesList" :key="planeGroup.id">
+            <div v-if="planeGroup.hasElements" class="plane-group">
+              <div class="plane-header" @click="togglePlane(planeGroup.id)">
+                <span class="collapse-icon">{{ planeGroup.isCollapsed ? '▶' : '▼' }}</span>
+                <span class="plane-name">
+                  <span v-if="planeGroup.name === 'P_H'">P<sub>H</sub> (Horizontal)</span>
+                  <span v-else-if="planeGroup.name === 'P_V'">P<sub>V</sub> (Vertical)</span>
+                  <span v-else>{{ planeGroup.name }} ({{ planeGroup.label }})</span>
+                </span>
+              </div>
+              
+              <div v-if="!planeGroup.isCollapsed" class="plane-content">
+                <ElementTypeGroup
+                  v-if="planeGroup.elements.points.length > 0"
+                  title="Points"
+                  :elements="planeGroup.elements.points"
+                  @select="handleElementSelect"
+                  @toggle-visibility="handleVisibilityToggle"
+                />
+                <ElementTypeGroup
+                  v-if="planeGroup.elements.lines.length > 0"
+                  title="Lines"
+                  :elements="planeGroup.elements.lines"
+                  @select="handleElementSelect"
+                  @toggle-visibility="handleVisibilityToggle"
+                />
+                <ElementTypeGroup
+                  v-if="planeGroup.elements.segments.length > 0"
+                  title="Segments"
+                  :elements="planeGroup.elements.segments"
+                  @select="handleElementSelect"
+                  @toggle-visibility="handleVisibilityToggle"
+                />
+                <ElementTypeGroup
+                  v-if="planeGroup.elements.circles.length > 0"
+                  title="Circles"
+                  :elements="planeGroup.elements.circles"
+                  @select="handleElementSelect"
+                  @toggle-visibility="handleVisibilityToggle"
+                />
+                <ElementTypeGroup
+                  v-if="planeGroup.elements.guides.length > 0"
+                  title="Guides"
+                  :elements="planeGroup.elements.guides"
+                  @select="handleElementSelect"
+                  @toggle-visibility="handleVisibilityToggle"
+                />
+              </div>
             </div>
-            
-            <div v-if="!isHPlaneCollapsed" class="plane-content">
-              <ElementTypeGroup
-                v-if="horizontalElements.points.length > 0"
-                title="Points"
-                :elements="horizontalElements.points"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-              <ElementTypeGroup
-                v-if="horizontalElements.lines.length > 0"
-                title="Lines"
-                :elements="horizontalElements.lines"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-              <ElementTypeGroup
-                v-if="horizontalElements.segments.length > 0"
-                title="Segments"
-                :elements="horizontalElements.segments"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-              <ElementTypeGroup
-                v-if="horizontalElements.circles.length > 0"
-                title="Circles"
-                :elements="horizontalElements.circles"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-              <ElementTypeGroup
-                v-if="horizontalElements.guides.length > 0"
-                title="Guides"
-                :elements="horizontalElements.guides"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-            </div>
-          </div>
-
-          <!-- Vertical Plane -->
-          <div v-if="verticalElements.hasElements" class="plane-group">
-            <div class="plane-header" @click="toggleVPlane">
-              <span class="collapse-icon">{{ isVPlaneCollapsed ? '▶' : '▼' }}</span>
-              <span class="plane-name">P<sub>V</sub> (Vertical)</span>
-            </div>
-            
-            <div v-if="!isVPlaneCollapsed" class="plane-content">
-              <ElementTypeGroup
-                v-if="verticalElements.points.length > 0"
-                title="Points"
-                :elements="verticalElements.points"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-              <ElementTypeGroup
-                v-if="verticalElements.lines.length > 0"
-                title="Lines"
-                :elements="verticalElements.lines"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-              <ElementTypeGroup
-                v-if="verticalElements.segments.length > 0"
-                title="Segments"
-                :elements="verticalElements.segments"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-              <ElementTypeGroup
-                v-if="verticalElements.circles.length > 0"
-                title="Circles"
-                :elements="verticalElements.circles"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-              <ElementTypeGroup
-                v-if="verticalElements.guides.length > 0"
-                title="Guides"
-                :elements="verticalElements.guides"
-                @select="handleElementSelect"
-                @toggle-visibility="handleVisibilityToggle"
-              />
-            </div>
-          </div>
+          </template>
         </div>
       </div>
 
@@ -192,8 +152,7 @@ const selectionStore = useSelectionStore();
 // Local state
 const is2DSectionCollapsed = ref(false);
 const is3DSectionCollapsed = ref(false);
-const isHPlaneCollapsed = ref(false);
-const isVPlaneCollapsed = ref(false);
+const planeCollapsedStates = ref(new Map<string, boolean>());
 
 // Track World version for reactivity
 const worldVersion = computed(() => world.getVersion());
@@ -228,88 +187,58 @@ onUnmounted(() => {
 });
 
 // Get elements from World
-const horizontalElements = computed(() => {
+const projectionPlanesList = computed(() => {
   const version = worldVersion.value; // Create dependency
   const update = forceUpdate.value; // Create dependency
   
-  console.log('[ElementsPanel] Computing P_H elements, version:', version, 'forceUpdate:', update);
+  // Phase 90: Dynamic projection planes list
+  console.log('[ElementsPanel] Computing projection planes list, version:', version, 'forceUpdate:', update);
   
-  const plane = world.getProjectionPlaneByLabel('P_H');
-  if (!plane) {
-    return {
-      points: [],
-      lines: [],
-      segments: [],
-      circles: [],
-      guides: [],
-      hasElements: false
-    };
-  }
+  const allPlanes = world.getAllProjectionPlanes();
   
-  const points = plane.getAllPoints();
-  const allLines = plane.getAllLines();
-  const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
-  const segments = allLines.filter(l => l instanceof Segment2DByPoints);
-  const circles = plane.getAllCircles();
-  const guides = allLines.filter(l => l instanceof Guide2D);
-  
-  console.log('[ElementsPanel] P_H elements:', {
-    points: points.length,
-    lines: lines.length,
-    segments: segments.length,
-    circles: circles.length,
-    guides: guides.length
+  // Sort planes: P_H, P_V first, then others
+  const sortedPlanes = [...allPlanes].sort((a, b) => {
+    // P_H always first
+    if (a.name === 'P_H') return -1;
+    if (b.name === 'P_H') return 1;
+    // P_V second
+    if (a.name === 'P_V') return -1;
+    if (b.name === 'P_V') return 1;
+    // Others by name/creation order
+    return a.name.localeCompare(b.name);
   });
   
-  return {
-    points: points.map(formatElement),
-    lines: lines.map(formatElement),
-    segments: segments.map(formatElement),
-    circles: circles.map(formatElement),
-    guides: guides.map(formatElement),
-    hasElements: points.length + lines.length + segments.length + circles.length + guides.length > 0
-  };
-});
+  return sortedPlanes.map(plane => {
+    const points = plane.getAllPoints();
+    const allLines = plane.getAllLines();
+    const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
+    const segments = allLines.filter(l => l instanceof Segment2DByPoints);
+    const circles = plane.getAllCircles();
+    const guides = allLines.filter(l => l instanceof Guide2D);
+    
+    // Check collapse state (default expanded for P_H/P_V, maybe collapsed for others? Let's default all expanded or based on map)
+    // Initialize if not present
+    if (!planeCollapsedStates.value.has(plane.id!)) {
+        // Default to OPEN (false)
+        planeCollapsedStates.value.set(plane.id!, false);
+    }
+    const isCollapsed = planeCollapsedStates.value.get(plane.id!) || false;
 
-const verticalElements = computed(() => {
-  worldVersion.value; // Create dependency
-  forceUpdate.value; // Create dependency
-  
-  const plane = world.getProjectionPlaneByLabel('P_V');
-  if (!plane) {
     return {
-      points: [],
-      lines: [],
-      segments: [],
-      circles: [],
-      guides: [],
-      hasElements: false
+      id: plane.id!,
+      name: plane.name,
+      label: plane.name === 'P_H' ? 'Horizontal' : (plane.name === 'P_V' ? 'Vertical' : 'Auxiliary'),
+      isCollapsed,
+      elements: {
+        points: points.map(formatElement),
+        lines: lines.map(formatElement),
+        segments: segments.map(formatElement),
+        circles: circles.map(formatElement),
+        guides: guides.map(formatElement)
+      },
+      hasElements: points.length + lines.length + segments.length + circles.length + guides.length > 0
     };
-  }
-  
-  const points = plane.getAllPoints();
-  const allLines = plane.getAllLines();
-  const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
-  const segments = allLines.filter(l => l instanceof Segment2DByPoints);
-  const circles = plane.getAllCircles();
-  const guides = allLines.filter(l => l instanceof Guide2D);
-  
-  console.log('[ElementsPanel] P_V elements:', {
-    points: points.length,
-    lines: lines.length,
-    segments: segments.length,
-    circles: circles.length,
-    guides: guides.length
   });
-  
-  return {
-    points: points.map(formatElement),
-    lines: lines.map(formatElement),
-    segments: segments.map(formatElement),
-    circles: circles.map(formatElement),
-    guides: guides.map(formatElement),
-    hasElements: points.length + lines.length + segments.length + circles.length + guides.length > 0
-  };
 });
 
 const threeDElements = computed(() => {
@@ -341,8 +270,7 @@ const threeDElements = computed(() => {
 });
 
 const hasAnyElements = computed(() => {
-  return horizontalElements.value.hasElements ||
-         verticalElements.value.hasElements ||
+  return projectionPlanesList.value.some(p => p.hasElements) ||
          threeDElements.value.hasElements;
 });
 
@@ -399,12 +327,15 @@ function toggle3DSection() {
   is3DSectionCollapsed.value = !is3DSectionCollapsed.value;
 }
 
-function toggleHPlane() {
-  isHPlaneCollapsed.value = !isHPlaneCollapsed.value;
-}
-
-function toggleVPlane() {
-  isVPlaneCollapsed.value = !isVPlaneCollapsed.value;
+function togglePlane(planeId: string) {
+  const currentState = planeCollapsedStates.value.get(planeId) || false;
+  planeCollapsedStates.value.set(planeId, !currentState);
+  // Trigger update manually since Map isn't deeply reactive in this specific usage context without reassignment or deep watch
+  // Actually, forceUpdate should trigger the computed property which reads the Map.
+  // But changing the Map value doesn't automatically trigger the computed property recheck unless the Map itself is reactive.
+  // Since we used Ref<Map>, modifying key/value doesn't trigger unless we reassign the map or use Reactive<Map>.
+  // Simpler trick: Just increment forceUpdate
+  forceUpdate.value++;
 }
 
 function handleElementSelect(elementId: string) {

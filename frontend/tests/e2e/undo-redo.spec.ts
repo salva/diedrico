@@ -16,7 +16,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Undo/Redo', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('http://localhost:5173');
     await page.waitForSelector('svg.diedrico-canvas');
   });
 

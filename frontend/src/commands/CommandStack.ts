@@ -15,9 +15,29 @@
 
 import { Command } from './Command';
 
+type Unsubscribe = () => void;
+type ChangeListener = () => void;
+
 export class CommandStack {
   private undoStack: Command[] = [];
   private redoStack: Command[] = [];
+  private listeners: ChangeListener[] = [];
+
+  /**
+   * Subscribe to changes in the stack
+   * @param callback Function to call when stack changes (push, undo, redo)
+   * @returns Unsubscribe function
+   */
+  subscribe(callback: ChangeListener): Unsubscribe {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== callback);
+    };
+  }
+
+  private notify(): void {
+    this.listeners.forEach(cb => cb());
+  }
 
   /**
    * Push a pre-built and committed command to the undo stack
@@ -45,6 +65,8 @@ export class CommandStack {
     
     // Clear redo stack (new action invalidates redo history)
     this.redoStack = [];
+    
+    this.notify();
   }
 
   /**
@@ -59,6 +81,8 @@ export class CommandStack {
     const command = this.undoStack.pop()!;
     command.undo();
     this.redoStack.push(command);
+    
+    this.notify();
   }
 
   /**
@@ -73,6 +97,8 @@ export class CommandStack {
     const command = this.redoStack.pop()!;
     command.redo();
     this.undoStack.push(command);
+    
+    this.notify();
   }
 
   /**
