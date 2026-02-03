@@ -161,10 +161,10 @@
 
       <!-- Action Details (when selected) -->
       <div v-if="isSelected" class="action-details">
-        <div v-if="node.inputs.length > 0" class="action-io">
+        <div v-if="node.inputs && node.inputs.length > 0" class="action-io">
           <strong>In:</strong> {{ node.inputs.join(', ') }}
         </div>
-        <div v-if="node.outputs.length > 0" class="action-io">
+        <div v-if="node.outputs && node.outputs.length > 0" class="action-io">
           <strong>Out:</strong> {{ node.outputs.join(', ') }}
         </div>
       </div>
