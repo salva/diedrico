@@ -362,8 +362,8 @@ Note that completing these tasks may require asking the user for additional info
       }
     }
     
-    // BaseProjectionPlane - Stores only forward matrices, computes backward in realize
-    class BaseProjectionPlane {
+    // FixedProjectionPlane - Stores only forward matrices, computes backward in realize
+    class FixedProjectionPlane {
       private planeToPaper2D: Matrix3;   // Stored (forward)
       private planeTo3D: Matrix4x3;      // Stored (forward)
       
@@ -789,7 +789,7 @@ Note that completing these tasks may require asking the user for additional info
     - Operations: `AddPlane3DByTracesOp`, `AddAuxiliaryProjectionPlaneOp` (stores trace IDs, NOT matrices), `AddHingeLineOp` (all undoable)
     - **Realization Pattern**: Both BaseProjectionPlane and AuxiliaryProjectionPlane implement realize3D() returning ProjectionPlaneRealization3D (same type)
     - **Parametric Behavior**: AuxiliaryProjectionPlane matrices recalculate automatically when trace lines move (follows Point3DFromProjections pattern)
-    - **Fixed vs Auxiliary**: BaseProjectionPlane returns constant matrices, AuxiliaryProjectionPlane computes from traces using `computeProjectionPlaneMatrices(t1, t2, t2')`
+    - **Fixed vs Auxiliary**: FixedProjectionPlane returns constant matrices, AuxiliaryProjectionPlane computes from traces using `computeProjectionPlaneMatrices(t1, t2, t2')`
     - Validation: T1/T2 on different planes, T2'/T1 on same plane, geometric compatibility
     - T2' dual purpose: (a) orientation selector (which way to unfold), (b) educational requirement (forces understanding)
     - Warning system: Position tolerance ±1 pixel (pedagogical warning, not blocking error)
@@ -1353,7 +1353,7 @@ Note that completing these tasks may require asking the user for additional info
   - **Implementation Complete**:
     - ✅ **Point.ts**: Added HalfHingeLine2D import, replaced 7 .type checks with instanceof, removed type from FreePoint2D + 4 intersection classes
     - ✅ **RenderService.ts**: Added FreePoint2D import, replaced free point check with instanceof
-    - ✅ **ProjectionPlane.ts**: Updated HalfHingeLine filtering with instanceof, removed type from BaseProjectionPlane + AuxiliaryProjectionPlane
+    - ✅ **ProjectionPlane.ts**: Updated HalfHingeLine filtering with instanceof, removed type from FixedProjectionPlane + AuxiliaryProjectionPlane
     - ✅ **RemoveElementOps.ts**: Changed Segment2D to value import, replaced segment check with instanceof
     - ✅ **Line.ts**: Removed type from Line2DByTwoPoints + Line2DParallel, removed abstract type from Line2D base
     - ✅ **Circle.ts**: Removed type from Circle2DByCenterAndPoint + Circle2DByThreePoints, removed abstract type from Circle2D base

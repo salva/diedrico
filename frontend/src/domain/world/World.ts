@@ -89,7 +89,7 @@ import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D, Plane3DFixed } from './Plane';
-import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D, BaseProjectionPlane } from './ProjectionPlane';
+import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D, FixedProjectionPlane } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from '@/services/DependencyService';
 import { Element2D } from './Element2D';
@@ -414,8 +414,8 @@ export class World {
     // Phase 94: Derived matrices computed in realization constructors
     // No need to compute paperToPlane2D or threeDToPlane here
     
-    // Create BaseProjectionPlane with only forward matrices
-    const projPlane = new BaseProjectionPlane(
+    // Create FixedProjectionPlane with only forward matrices
+    const projPlane = new FixedProjectionPlane(
       name || `proj_plane_${id}`,
       planeToPaper2D,
       planeTo3D,

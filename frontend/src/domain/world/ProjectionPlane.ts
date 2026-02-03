@@ -2,7 +2,7 @@
  * ProjectionPlane - Abstract base class for all projection planes
  * 
  * ARCHITECTURAL PRINCIPLE - Shared Realization Pattern:
- * Both BaseProjectionPlane (fixed P_H, P_V) and AuxiliaryProjectionPlane (user-created)
+ * Both FixedProjectionPlane (fixed P_H, P_V) and AuxiliaryProjectionPlane (user-created)
  * extend this class and implement realize3D() returning ProjectionPlaneRealization3D.
  * 
  * This ensures uniform treatment:
@@ -11,7 +11,7 @@
  * - No special-casing based on plane type
  * 
  * Two subclasses with different computation strategies:
- * - BaseProjectionPlane: realize3D() returns pre-computed constant matrices
+ * - FixedProjectionPlane: realize3D() returns pre-computed constant matrices
  * - AuxiliaryProjectionPlane: realize3D() computes matrices from trace dependencies
  * 
  * This class represents the DEFINITION/RULE of a projection plane.
@@ -1367,7 +1367,7 @@ export abstract class ProjectionPlane {
 
   /**
    * Calculate the 2D realization (transformation matrices) for this projection plane
-   * For base planes: returns predetermined transforms
+   * For fixed planes: returns predetermined transforms
    * For auxiliary planes: computes from trace/hinge geometry
    * 
    * @param world - World instance for element lookup (auxiliary planes need this)
@@ -1381,17 +1381,51 @@ export abstract class ProjectionPlane {
    * @param world - World instance for element lookup (auxiliary planes need this)
    */
   abstract realize3D(world: any): ProjectionPlaneRealization3D;
+
+  /**
+   * Protected helper: Compute backward 2D matrix (paperToPlane) from forward matrix (planeToPaper)
+   * Shared between FixedProjectionPlane and AuxiliaryProjectionPlane realize2D() methods.
+   * Extracted to base class to eliminate code duplication.
+   * 
+   * @param planeToPaper - Forward transformation matrix
+   * @returns Object with paperToPlane matrix and feasibility flag
+   */
+  protected computeBackward2DMatrix(planeToPaper: Matrix3): { paperToPlane: Matrix3; feasible: boolean } {
+    let feasible = true;
+    let paperToPlane: Matrix3;
+    
+    try {
+      const det = planeToPaper.determinant();
+      
+      if (Math.abs(det) < 1e-10) {
+        // Matrix is singular (degenerate plane) - mark infeasible
+        feasible = false;
+        paperToPlane = new Matrix3(); // Identity as fallback
+      } else {
+        paperToPlane = planeToPaper.clone().invert();
+      }
+    } catch (error) {
+      // Inversion failed - mark infeasible
+      feasible = false;
+      paperToPlane = new Matrix3(); // Identity as fallback
+    }
+    
+    return { paperToPlane, feasible };
+  }
 }
 
 /**
- * BaseProjectionPlane - For P_H and P_V with predetermined transformations
+ * FixedProjectionPlane - For P_H and P_V with predetermined transformations
  * 
  * Phase 94: Stores only forward matrices. Backward matrices computed in realize methods.
  * The rule is: "this is P_H" or "this is P_V"
  * These planes have fixed positions in paper coordinate system.
  * Their transformation matrices are predetermined constants stored in the object.
+ * 
+ * Note: Not to be confused with the abstract base class ProjectionPlane.
+ * "Fixed" means these planes have immutable, pre-determined transformations.
  */
-export class BaseProjectionPlane extends ProjectionPlane {
+export class FixedProjectionPlane extends ProjectionPlane {
   readonly type: ProjectionPlaneType = 'base';
 
   // Predetermined forward transformation matrices (part of the plane definition)
@@ -1412,8 +1446,8 @@ export class BaseProjectionPlane extends ProjectionPlane {
     this.planeTo3D = planeTo3D;
   }
 
-  clone(): BaseProjectionPlane {
-    const cloned = new BaseProjectionPlane(
+  clone(): FixedProjectionPlane {
+    const cloned = new FixedProjectionPlane(
       this.name,
       this.planeToPaper2D.clone(),
       this.planeTo3D.clone(),
@@ -1429,55 +1463,38 @@ export class BaseProjectionPlane extends ProjectionPlane {
   }
   
   getDependencies(): string[] {
-    return []; // Base planes have no dependencies on other elements
+    return []; // Fixed planes have no dependencies on other elements
   }
   
   /**
-   * Calculate the 2D transformation realization for this base plane
-   * Computes paperToPlane2D (inverse) with determinant check.
+   * Calculate the 2D transformation realization for this fixed plane
+   * Computes paperToPlane2D (inverse) using shared base class helper.
    * 
-   * @param world - World instance (not used for base planes, but required for API uniformity)
+   * @param _world - World instance (not used for fixed planes, but required for API uniformity)
    */
-  realize2D(world: any): ProjectionPlaneRealization2D {
+  realize2D(_world: any): ProjectionPlaneRealization2D {
     if (!this.id) {
       throw new Error('Cannot create realization for plane without ID');
     }
     
-    // Compute inverse with determinant check for singular matrices
-    let feasible = true;
-    let paperToPlane2D: Matrix3;
-    
-    try {
-      const det = this.planeToPaper2D.determinant();
-      
-      if (Math.abs(det) < 1e-10) {
-        // Matrix is singular (degenerate plane) - mark infeasible
-        feasible = false;
-        paperToPlane2D = new Matrix3(); // Identity as fallback
-      } else {
-        paperToPlane2D = this.planeToPaper2D.clone().invert();
-      }
-    } catch (error) {
-      // Inversion failed - mark infeasible
-      feasible = false;
-      paperToPlane2D = new Matrix3(); // Identity as fallback
-    }
+    // Use shared helper to compute backward matrix with determinant check
+    const { paperToPlane, feasible } = this.computeBackward2DMatrix(this.planeToPaper2D);
     
     return new ProjectionPlaneRealization2D(
       this.id,
       this.planeToPaper2D.clone(),
-      paperToPlane2D,
+      paperToPlane,
       feasible
     );
   }
 
   /**
-   * Calculate the 3D transformation realization for this base plane
+   * Calculate the 3D transformation realization for this fixed plane
    * Computes threeDToPlane (projection) from planeTo3D basis vectors.
    * 
-   * @param world - World instance (not used for base planes, but required for API uniformity)
+   * @param _world - World instance (not used for fixed planes, but required for API uniformity)
    */
-  realize3D(world: any): ProjectionPlaneRealization3D {
+  realize3D(_world: any): ProjectionPlaneRealization3D {
     if (!this.id) {
       throw new Error('Cannot create realization for plane without ID');
     }
@@ -1682,25 +1699,8 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
         );
       }
       
-      // Compute paperToPlane (inverse) with determinant check
-      let feasible = true;
-      let paperToPlane: Matrix3;
-      
-      try {
-        const det = matrices.planeToPaper.determinant();
-        
-        if (Math.abs(det) < 1e-10) {
-          // Matrix is singular (degenerate plane) - mark infeasible
-          feasible = false;
-          paperToPlane = new Matrix3(); // Identity as fallback
-        } else {
-          paperToPlane = matrices.planeToPaper.clone().invert();
-        }
-      } catch (error) {
-        // Inversion failed - mark infeasible
-        feasible = false;
-        paperToPlane = new Matrix3(); // Identity as fallback
-      }
+      // Use shared helper to compute backward matrix with determinant check
+      const { paperToPlane, feasible } = this.computeBackward2DMatrix(matrices.planeToPaper);
       
       return new ProjectionPlaneRealization2D(
         this.id,

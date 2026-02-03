@@ -10579,7 +10579,7 @@ Create `createTestWorld()` helper function that returns fully initialized World 
 
 **Implementation Requirements**:
 - **Realization classes**: Accept both forward and backward matrices (no computation in constructors)
-- **BaseProjectionPlane**: Store only forward matrices, compute backward in realize() methods
+- **FixedProjectionPlane**: Store only forward matrices, compute backward in realize() methods
 - **AuxiliaryProjectionPlane**: Compute all matrices in realize() methods from dependencies
 - **Singular matrix handling**: Check determinant, mark realization as infeasible if |det| < 1e-10
 - **Storage optimization**: 21 numbers (forward only) vs 42 numbers (forward + backward) = 50% reduction
@@ -10594,16 +10594,16 @@ Create `createTestWorld()` helper function that returns fully initialized World 
   - ✅ Constructor signature: `(planeId, planeTo3D, threeDToPlane, feasible)`
   - ✅ Both matrices stored as public fields (no computation, no getters)
 
-- [X] T1728 [P] BaseProjectionPlane constructor: Store only forward matrices
+- [X] T1728 [P] FixedProjectionPlane constructor: Store only forward matrices
   - ✅ Constructor signature: `(name, planeToPaper2D, planeTo3D, ...)`
   - ✅ Removed paperToPlane2D and threeDToPlane parameters
 
-- [X] T1729 BaseProjectionPlane.realize2D(): Compute paperToPlane2D with determinant check
+- [X] T1729 FixedProjectionPlane.realize2D(): Compute paperToPlane2D with determinant check
   - ✅ Computes paperToPlane2D = planeToPaper2D.invert()
   - ✅ Checks |det| < 1e-10, marks infeasible if singular
   - ✅ Returns new ProjectionPlaneRealization2D(forward, backward, feasible)
 
-- [X] T1730 BaseProjectionPlane.realize3D(): Compute threeDToPlane from basis vectors
+- [X] T1730 FixedProjectionPlane.realize3D(): Compute threeDToPlane from basis vectors
   - ✅ Extracts U-axis, V-axis, origin from planeTo3D.elements
   - ✅ Builds projection matrix using dot products
   - ✅ Returns new ProjectionPlaneRealization3D(forward, backward, true)
@@ -10648,9 +10648,9 @@ Create `createTestWorld()` helper function that returns fully initialized World 
 **Testing Tasks** (⚠️ DEFERRED):
 
 - [ ] T1739 [P] Unit test: ProjectionPlaneRealization2D simple data holder (no computation)
-- [ ] T1740 [P] Unit test: BaseProjectionPlane.realize2D() computes correct paperToPlane2D
+- [ ] T1740 [P] Unit test: FixedProjectionPlane.realize2D() computes correct paperToPlane2D
 - [ ] T1741 [P] Unit test: Singular matrix (|det| < 1e-10) marked as infeasible
-- [ ] T1742 [P] Unit test: BaseProjectionPlane.realize3D() computes correct threeDToPlane
+- [ ] T1742 [P] Unit test: FixedProjectionPlane.realize3D() computes correct threeDToPlane
 - [ ] T1743 [P] Unit test: AuxiliaryProjectionPlane.realize2D() computes both matrices
 - [ ] T1744 Serialization test: Verify JSON has NEITHER derived matrix (when optimization enabled)
 - [ ] T1745 Deserialization test: Load forward-only JSON, verify geometry correct
