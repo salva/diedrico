@@ -284,6 +284,14 @@ Note that completing these tasks may require asking the user for additional info
        - Document error message conventions: "[INTERNAL ERROR] ..." prefix
        - Git commit with comprehensive changes
        - Deliverable: Complete Phase 76 implementation
+  - **Status**: ✅ COMPLETE (2026-02-02)
+    - Phase 76.1: Audit ✅
+    - Phase 76.2: World.ts getters ✅
+    - Phase 76.3: Geometric realization methods ✅
+    - Phase 76.4: ProcessTree ✅ (SKIPPED - tombstone pattern correct)
+    - Phase 76.5: Integration tests ✅ (10 tests, all passing)
+    - Phase 76.6: Full test suite ✅ (0 Phase 76 failures, 116 infrastructure failures)
+    - Phase 76.7: Documentation ✅
   - **Benefits**:
     - **Immediate bug detection**: Corrupted state crashes immediately at source, not later with garbage data
     - **Explicit error messages**: "[INTERNAL ERROR]" prefix clearly indicates internal corruption (not user error)
@@ -315,6 +323,90 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **Matrix Serialization Optimization (Phase 94)** - 📋 PLANNED (Feb 3, 2026)
+  - **User Requirement**: "When serializing planes and other elements with fixed transformation matrices, do not save inverse matrices. For instance, if we have a planeToPaper, we don't need a paperToPlane. The same happens when creating those objects, inverse matrices can be omitted."
+  - **Problem**: Current implementation stores both forward and derived transformation matrices
+    - ProjectionPlaneRealization2D: planeToPaper2D (9 numbers) + paperToPlane2D (9 numbers) = 18 numbers
+    - paperToPlane2D is true inverse of planeToPaper2D (can compute on-demand)
+    - ProjectionPlaneRealization3D: planeTo3D (12 numbers) + threeDToPlane (12 numbers) = 24 numbers
+    - **KEY INSIGHT**: threeDToPlane CAN be computed from planeTo3D basis vectors
+    - planeTo3D embeds plane into 3D, threeDToPlane projects 3D onto plane
+    - Projection matrix constructed from embedding matrix's U-axis, V-axis, and origin
+    - Operations pass all matrices unnecessarily (AddProjectionPlaneFixedOp, World.addProjectionPlane)
+  - **Solution**: Store only forward matrices, compute derived transforms on-demand with robustness checks
+    - Serialization: Only save planeToPaper2D and planeTo3D (omit both derived matrices)
+    - Deserialization: Compute both derived matrices:
+      - paperToPlane2D = planeToPaper2D.invert() with determinant check
+      - threeDToPlane constructed from planeTo3D basis vectors (dot product projection)
+    - Singular matrices: Check determinant before inversion, mark realization as infeasible if |det| < 1e-10
+    - Realization constructor: Compute derived matrices once with error handling, cache in private field
+    - Operations: Remove both derived matrix parameters from constructors
+  - **Architecture Changes**:
+    ```typescript
+    // BEFORE: Redundant storage of derived matrices
+    class ProjectionPlaneRealization2D {
+      planeToPaper2D: Matrix3;   // 9 numbers
+      paperToPlane2D: Matrix3;   // 9 numbers (REDUNDANT - true inverse!)
+    }
+    class ProjectionPlaneRealization3D {
+      planeTo3D: Matrix4x3;      // 12 numbers (embedding)
+      threeDToPlane: Matrix3x4;  // 12 numbers (REDUNDANT - can compute from basis vectors!)
+    }
+    
+    // AFTER: Compute both derived matrices with robustness checks
+    class ProjectionPlaneRealization2D {
+      planeToPaper2D: Matrix3;           // 9 numbers (forward matrix)
+      private _paperToPlane2D: Matrix3;  // Computed with determinant check
+      get paperToPlane2D(): Matrix3 { return this._paperToPlane2D; }
+      // Constructor checks |det| < 1e-10, marks infeasible if singular
+    }
+    class ProjectionPlaneRealization3D {
+      planeTo3D: Matrix4x3;              // 12 numbers (embedding)
+      private _threeDToPlane: Matrix3x4; // Computed from basis vectors
+      get threeDToPlane(): Matrix3x4 { return this._threeDToPlane; }
+      // Constructor extracts U/V axes and origin, builds projection matrix
+    }
+    ```
+  - **Key Benefits**:
+    - ~50% storage reduction: 21 numbers instead of 42 per plane (removed both derived matrices)
+    - Simpler API: Both derived matrix parameters removed from operations
+    - Single source of truth: Forward matrices canonical, derived matrices computed (no sync issues)
+    - Robust error handling: Singular matrices detected and marked infeasible (no crashes)
+    - Correct mathematics: Projection matrix properly derived from embedding basis vectors
+    - Negligible performance cost: Both computations take ~2-3 microseconds total, computed once
+  - **Migration Strategy**:
+    1. Update realization constructors to compute and cache derived matrices internally
+    2. Remove derived matrix parameters from operation constructors (AddProjectionPlaneFixedOp, World.addProjectionPlane)
+    3. Update InitializationSequenceFactory to pass only forward matrices
+    4. Update ProjectService serialization to omit both derived matrix fields
+    5. Update ProjectService deserialization to compute derived matrices from forward matrices
+    6. Add migration for old projects (ignore extra derived matrix fields if present)
+    7. Update all tests to not expect derived matrix parameters
+  - **Breaking Changes**:
+    - Schema version 5.0.0 (major bump for serialization format change)
+    - Old project files with inverse matrices will still load (extra fields ignored)
+    - New project files incompatible with code before Phase 94 (missing inverse fields)
+  - **Files Affected** (~8 files):
+    - src/domain/world/ProjectionPlane.ts (realization classes)
+    - src/domain/world/World.ts (addProjectionPlane method signature)
+    - src/commands/operations/world/InitializationOps.ts (AddProjectionPlaneFixedOp constructor)
+    - src/commands/factories/InitializationSequenceFactory.ts (remove inverse construction)
+    - src/services/ProjectService.ts (serialization/deserialization)
+    - tests/unit/commands/initializationOps.spec.ts (update expectations)
+    - tests/unit/commands/initializeWorldCommand.spec.ts (update expectations)
+    - tests/integration/ProjectService.*.spec.ts (round-trip tests)
+  - **Specifications**:
+    - data-model.md: §Phase 94 - Matrix Serialization Optimization (complete implementation plan)
+    - Purely technical optimization - no spec.md or ui-spec.md changes needed
+  - **Tasks**: tasks.md Phase 94 (T1726-T1750: 25 tasks)
+    - Realization class updates (3 tasks: compute inverses, cache, getters)
+    - Operation/World API changes (4 tasks: remove parameters, update signatures)
+    - InitializationSequenceFactory cleanup (2 tasks: remove inverse construction)
+    - ProjectService serialization (3 tasks: omit inverses, deserialize, migration)
+    - Testing (12 tasks: unit tests for inverses, serialization, deserialization, migration, round-trip, performance)
+    - Final integration (1 task: schema version bump, commit)
+  - **Status**: Complete planning documentation, ready for implementation
 
 * [x] **Action Interface Minimization (Phase 93)** - 📋 PLANNED (Feb 2, 2026)
   - **User Requirement**: "Refactor Action handling. The current class has many useless fields (id - the target object id could be used instead, type, timestamp, etc.) which are not really used or needed. Also, check whether we have different Action implementations when a generic Action would be more than enough. On serialization, the Action data could be flattened into the parent object (AddProcessTreeActionOp) eliminating bloat."

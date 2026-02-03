@@ -10567,6 +10567,51 @@ Create `createTestWorld()` helper function that returns fully initialized World 
 
 ---
 
+## Phase 94: Matrix Serialization Optimization
+
+**Purpose**: Eliminate redundant inverse matrix serialization to reduce storage by 50%  
+**Reference**: [for-planing.md](./for-planing.md) - Matrix serialization optimization, [data-model.md](./data-model.md#phase-94-matrix-serialization-optimization)
+
+**Implementation Requirements**:
+- **2D optimization**: Only serialize planeToPaper2D (compute paperToPlane2D on-demand)
+- **3D matrices**: Keep BOTH planeTo3D and threeDToPlane (they're NOT inverses)
+- **Singular matrix handling**: Check determinant, mark realization as infeasible if matrix not invertible
+- **Remove paperToPlane2D parameter**: From operations and World.addProjectionPlane()
+- **Backward compatibility**: Old project files with paperToPlane2D field should still load (ignore extra data)
+- **Performance**: Matrix inversion is fast (~1-2 μs), compute once and cache
+
+**Critical**: This is a serialization format change requiring schema version bump to 5.0.0
+
+- [ ] T1726 [P] Update ProjectionPlaneRealization2D constructor: compute paperToPlane2D with determinant check, mark infeasible if singular
+- [ ] T1727 [P] Update ProjectionPlaneRealization3D constructor: compute threeDToPlane from planeTo3D basis vectors
+- [ ] T1728 [P] Change both derived matrices to getters: paperToPlane2D and threeDToPlane return cached computed values
+- [ ] T1729 Remove both derived matrix computations from InitializationSequenceFactory (only compute forward matrices)
+- [ ] T1730 Update AddProjectionPlaneFixedOp.serialize() to omit both derived matrices (save only planeToPaper2D and planeTo3D)
+- [ ] T1731 Update World.addProjectionPlane() to remove both derived matrix parameters (compute internally with determinant check)
+- [ ] T1732 Add determinant check in World.addProjectionPlane(): if |det| < 1e-10, use identity matrix and mark infeasible
+- [ ] T1733 Update ProjectService.deserializeOperation() for AddProjectionPlaneFixed: Load only forward matrices (planeToPaper2D, planeTo3D)
+- [ ] T1734 Update ProjectService.serializeCommand(): Verify AddProjectionPlaneFixed omits both derived matrices (saves only 2 forward matrices)
+- [ ] T1735 Add migration in ProjectService.deserializeOperation(): If old format has derived matrix fields, ignore them
+- [ ] T1736 [P] Unit test: ProjectionPlaneRealization2D computes correct paperToPlane2D inverse
+- [ ] T1737 [P] Unit test: Singular matrix (det≈0) marked as infeasible with identity fallback
+- [ ] T1738 [P] Unit test: ProjectionPlaneRealization3D computes correct threeDToPlane from planeTo3D basis vectors
+- [ ] T1739 [P] Unit test: Verify both derived matrices cached (not recomputed on repeated access)
+- [ ] T1740 Update initializationOps.spec.ts: Remove both derived matrix expectations in serialization tests
+- [ ] T1741 Update initializeWorldCommand.spec.ts: Verify planes created with only forward matrices (derived matrices computed)
+- [ ] T1742 Serialization test: Save project, verify JSON has NEITHER derived matrix (only planeToPaper2D and planeTo3D)
+- [ ] T1743 Deserialization test: Load project JSON without derived matrices, verify geometry correct
+- [ ] T1744 Migration test: Load old project JSON with derived matrix fields, verify still works (extra fields ignored)
+- [ ] T1745 Singular matrix test: Create plane with zero-determinant matrix, verify feasible=false
+- [ ] T1746 Round-trip test: Save/load project, verify coordinate transforms unchanged (ProjectService.roundTrip.spec.ts)
+- [ ] T1747 Performance test: Measure combined computation time (should be <5 microseconds per plane)
+- [ ] T1748 Run full test suite, fix any tests expecting derived matrix parameters
+- [ ] T1749 Update schema version to 5.0.0 in ProjectService (major version for serialization format change)
+- [ ] T1750 Git commit: "Phase 94: Matrix Serialization Optimization - 50% storage reduction"
+
+**Checkpoint**: Serialized projects ~50% smaller for matrix data (21 numbers saved), singular matrices handled gracefully, all tests passing, old projects migrate correctly
+
+---
+
 ## Phase 93: Action Interface Minimization (T1676-T1700)
 
 **Goal**: Eliminate redundant fields from Action interface, implement generic action factory, flatten serialization to reduce bloat by 40%
