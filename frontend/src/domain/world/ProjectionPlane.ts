@@ -1412,6 +1412,49 @@ export abstract class ProjectionPlane {
     
     return { paperToPlane, feasible };
   }
+
+  /**
+   * Protected helper: Compute backward 3D matrix (threeDToPlane) from forward matrix (planeTo3D)
+   * Extracts basis vectors from embedding matrix and constructs projection matrix.
+   * Used by FixedProjectionPlane.realize3D().
+   * 
+   * @param planeTo3D - Forward embedding matrix (plane → 3D)
+   * @returns Backward projection matrix (3D → plane)
+   */
+  protected computeBackward3DMatrix(planeTo3D: Matrix4x3): Matrix3x4 {
+    // planeTo3D columns: [U-axis, V-axis, origin, w-component]
+    // Extract normalized basis vectors and origin
+    const uAxis = new Vector3(
+      planeTo3D.elements[0],   // M[0][0]
+      planeTo3D.elements[4],   // M[1][0]
+      planeTo3D.elements[8]    // M[2][0]
+    ).normalize();
+    
+    const vAxis = new Vector3(
+      planeTo3D.elements[1],   // M[0][1]
+      planeTo3D.elements[5],   // M[1][1]
+      planeTo3D.elements[9]    // M[2][1]
+    ).normalize();
+    
+    const origin = new Vector3(
+      planeTo3D.elements[2],   // M[0][2]
+      planeTo3D.elements[6],   // M[1][2]
+      planeTo3D.elements[10]   // M[2][2]
+    );
+    
+    // Build projection matrix: (point - origin) · basis vectors
+    // Row 1: U projection = point · uAxis - origin · uAxis
+    // Row 2: V projection = point · vAxis - origin · vAxis
+    // Row 3: Homogeneous coordinate [0, 0, 0, 1]
+    const threeDToPlane = new Matrix3x4();
+    threeDToPlane.set(
+      uAxis.x, uAxis.y, uAxis.z, -origin.dot(uAxis),
+      vAxis.x, vAxis.y, vAxis.z, -origin.dot(vAxis),
+      0, 0, 0, 1
+    );
+    
+    return threeDToPlane;
+  }
 }
 
 /**
@@ -1490,7 +1533,7 @@ export class FixedProjectionPlane extends ProjectionPlane {
 
   /**
    * Calculate the 3D transformation realization for this fixed plane
-   * Computes threeDToPlane (projection) from planeTo3D basis vectors.
+   * Computes threeDToPlane (projection) from planeTo3D basis vectors using shared helper.
    * 
    * @param _world - World instance (not used for fixed planes, but required for API uniformity)
    */
@@ -1499,43 +1542,14 @@ export class FixedProjectionPlane extends ProjectionPlane {
       throw new Error('Cannot create realization for plane without ID');
     }
     
-    // Compute projection matrix from embedding matrix basis vectors
-    // planeTo3D columns: [U-axis, V-axis, origin, w-component]
-    // Extract normalized basis vectors and origin
-    const uAxis = new Vector3(
-      this.planeTo3D.elements[0],   // M[0][0]
-      this.planeTo3D.elements[4],   // M[1][0]
-      this.planeTo3D.elements[8]    // M[2][0]
-    ).normalize();
-    
-    const vAxis = new Vector3(
-      this.planeTo3D.elements[1],   // M[0][1]
-      this.planeTo3D.elements[5],   // M[1][1]
-      this.planeTo3D.elements[9]    // M[2][1]
-    ).normalize();
-    
-    const origin = new Vector3(
-      this.planeTo3D.elements[2],   // M[0][2]
-      this.planeTo3D.elements[6],   // M[1][2]
-      this.planeTo3D.elements[10]   // M[2][2]
-    );
-    
-    // Build projection matrix: (point - origin) · basis vectors
-    // Row 1: U projection = point · uAxis - origin · uAxis
-    // Row 2: V projection = point · vAxis - origin · vAxis
-    // Row 3: Homogeneous coordinate [0, 0, 0, 1]
-    const threeDToPlane = new Matrix3x4();
-    threeDToPlane.set(
-      uAxis.x, uAxis.y, uAxis.z, -origin.dot(uAxis),
-      vAxis.x, vAxis.y, vAxis.z, -origin.dot(vAxis),
-      0, 0, 0, 1
-    );
+    // Use shared helper to compute backward matrix from basis vectors
+    const threeDToPlane = this.computeBackward3DMatrix(this.planeTo3D);
     
     return new ProjectionPlaneRealization3D(
       this.id,
       this.planeTo3D.clone(),
       threeDToPlane,
-      true  // Base planes are always feasible
+      true  // Fixed planes are always feasible
     );
   }
 }
