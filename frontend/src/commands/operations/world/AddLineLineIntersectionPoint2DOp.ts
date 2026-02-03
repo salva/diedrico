@@ -65,4 +65,14 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation {
     // Note: If sibling points exist, they should be removed by domain logic
     // via dependency tracking, not explicitly here
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      line1Id: this.line1Id,
+      line2Id: this.line2Id,
+      pointId: this.outputs.pointId
+    };
+  }
 }

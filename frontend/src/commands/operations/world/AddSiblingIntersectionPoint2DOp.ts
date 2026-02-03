@@ -74,4 +74,13 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation {
       }
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      primaryIntersectionId: this.primaryIntersectionId,
+      pointId: this.outputs.pointId
+    };
+  }
 }

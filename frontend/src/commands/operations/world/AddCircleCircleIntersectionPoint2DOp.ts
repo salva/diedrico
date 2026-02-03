@@ -67,4 +67,15 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation {
     // Note: If sibling points exist, they should be removed by domain logic
     // via dependency tracking, not explicitly here
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      circle1Id: this.circle1Id,
+      circle2Id: this.circle2Id,
+      index: this.index,
+      pointId: this.outputs.pointId
+    };
+  }
 }
