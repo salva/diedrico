@@ -353,17 +353,16 @@ export class ProjectService {
       
       case 'AddProjectionPlaneFixed':
         // Deserialize transformation matrices
+        // Phase 94: Only forward matrices needed, derived matrices computed in realization
         const planeToPaper2D = new Matrix3().fromArray(parameters.planeToPaper2D);
         const planeTo3D = new Matrix4x3().fromArray(parameters.planeTo3D);
-        const threeDToPlane = new Matrix3x4().fromArray(parameters.threeDToPlane);
+        // Ignore threeDToPlane from old files (computed from planeTo3D now)
         return new AddProjectionPlaneFixedOp(
           parameters.plane3DId,
           planeToPaper2D,
           planeTo3D,
-          threeDToPlane,
           parameters.projPlaneId,
-          parameters.name,
-          parameters.orientation
+          parameters.name
         );
       
       case 'AddOriginPoint2D':
