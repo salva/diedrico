@@ -144,12 +144,18 @@ export class ProjectService {
     // Clear command stack only (world should be fresh)
     commandStack.clear();
     
+    console.log(`[ProjectService] Deserializing ${data.commands.length} commands`);
+    
     // Replay each command
     for (const serializedCmd of data.commands) {
+      console.log(`[ProjectService] Command: ${serializedCmd.description}`, serializedCmd.operations.map(op => op.opType));
+      
       // Reconstruct operations from serialized data
-      const operations: IOperation[] = serializedCmd.operations.map(serializedOp => 
-        this.reconstructOperation(serializedOp)
-      );
+      const operations: IOperation[] = serializedCmd.operations.map(serializedOp => {
+        const op = this.reconstructOperation(serializedOp);
+        console.log(`[ProjectService]   - Reconstructed ${serializedOp.opType}:`, serializedOp);
+        return op;
+      });
       
       // Create a command-like object that can be replayed
       const command = {
@@ -174,10 +180,13 @@ export class ProjectService {
       
       // Replay operations to rebuild world state
       for (const op of operations) {
+        console.log(`[ProjectService]   - Applying operation ${op.type}`);
         const result = op.apply(world);
         if (!result.success) {
+          console.error(`[ProjectService]   - Operation ${op.type} failed:`, result.error);
           throw new Error(`Failed to replay operation ${op.type}: ${result.error}`);
         }
+        console.log(`[ProjectService]   - Operation ${op.type} succeeded, outputs:`, result.outputs);
       }
       
       // Add to command stack
