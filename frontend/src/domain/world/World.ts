@@ -934,25 +934,20 @@ export class World {
    * Get parent HingeLine from a HalfHingeLine2D
    * 
    * @param halfHingeLineId ID of the HalfHingeLine2D
-   * @returns Parent HingeLine or undefined if not found
+   * @returns Parent HingeLine or undefined if the element is not a HalfHingeLine2D
+   * @throws Error if the ID is invalid (Phase 76: fail-fast for corrupted state)
    */
   getHingeLineFromHalfHingeLine(halfHingeLineId: string): HingeLine | undefined {
     // Get the HalfHingeLine2D by searching all planes
-    // Phase 76: getLine2D now throws for invalid IDs, but this method's interface
-    // expects to return undefined for not-found cases
-    try {
-      const halfHingeLine = this.getLine2D(halfHingeLineId);
-      if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
-        return undefined;
-      }
-      
-      // Cast to HalfHingeLine2D to access hingeLineId
-      const halfHL = halfHingeLine as HalfHingeLine2D;
-      return this.getHingeLineById(halfHL.hingeLineId);
-    } catch (error) {
-      // Invalid ID or plane not found - return undefined as per interface contract
+    // Phase 76: getLine2D throws for invalid IDs (fail-fast)
+    const halfHingeLine = this.getLine2D(halfHingeLineId);
+    if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
       return undefined;
     }
+    
+    // Cast to HalfHingeLine2D to access hingeLineId
+    const halfHL = halfHingeLine as HalfHingeLine2D;
+    return this.getHingeLineById(halfHL.hingeLineId);
   }
 
   /**

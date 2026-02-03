@@ -595,10 +595,11 @@ describe('ProjectionPlane Factory Methods', () => {
         expect(hingeLine).toBeDefined();
       });
 
-      it('should return undefined for non-existent HalfHingeLine2D', () => {
-        const hingeLine = world.getHingeLineFromHalfHingeLine('P_H/nonexistent');
-
-        expect(hingeLine).toBeUndefined();
+      it('should throw error for non-existent HalfHingeLine2D (Phase 76: fail-fast)', () => {
+        // Phase 76: Invalid IDs should throw errors, not return undefined
+        expect(() => {
+          world.getHingeLineFromHalfHingeLine('P_H/nonexistent');
+        }).toThrow('[INTERNAL ERROR]');
       });
 
       it('should return undefined for non-HalfHingeLine element', () => {

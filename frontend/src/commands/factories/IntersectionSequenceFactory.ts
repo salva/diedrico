@@ -48,12 +48,10 @@ import { AddLineCircleIntersectionPoint2DOp } from '../operations/world/AddLineC
 import { AddCircleCircleIntersectionPoint2DOp } from '../operations/world/AddCircleCircleIntersectionPoint2DOp';
 import { AddSiblingIntersectionPoint2DOp } from '../operations/world/AddSiblingIntersectionPoint2DOp';
 import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
-import { AddProcessTreeActionGroupOp } from '../operations/processTree/AddProcessTreeActionGroupOp';
 import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
 import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
 import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
 import { createSiblingIntersectionPointAction } from '@/domain/processTree/actions/CreateSiblingIntersectionPointAction';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
 import type { World } from '@/domain/world/World';
 
 /**
@@ -62,24 +60,6 @@ import type { World } from '@/domain/world/World';
 export interface IntersectionResult {
   pointId: string;
   siblingPointId?: string;
-}
-
-/**
- * DEPRECATED: Use typed factory methods instead.
- * Legacy interface for backward compatibility with tests.
- * 
- * @deprecated Use instanceof to determine types and call typed methods directly:
- * - createLineLineIntersection() for Line2D × Line2D
- * - createLineCircleIntersection() for Line2D × Circle2D
- * - createCircleCircleIntersection() for Circle2D × Circle2D
- */
-export interface IntersectionData {
-  type: 'line-line' | 'line-circle' | 'circle-circle';
-  element1Id: string;
-  element2Id: string;
-  lineId?: string;     // For line-circle intersections (which element is the line)
-  circleId?: string;   // For line-circle intersections (which element is the circle)
-  index?: number;      // For line-circle and circle-circle (0 or 1 for two possible points)
 }
 
 /**
@@ -267,100 +247,5 @@ export class IntersectionSequenceFactory {
     }
 
     return { pointId, siblingPointId };
-  }
-
-  /**
-   * DEPRECATED: Backward compatibility wrapper for tests.
-   * Use typed methods directly instead: createLineLineIntersection(), createLineCircleIntersection(), createCircleCircleIntersection()
-   * 
-   * @deprecated Phase 74: Use instanceof checks and call typed methods directly
-   */
-  static createIntersection(
-    cmd: Command,
-    planeId: string,
-    intersectionData: IntersectionData,
-    world: World
-  ): IntersectionResult {
-    // Validate parameters first, before creating ActionGroup
-    switch (intersectionData.type) {
-      case 'line-circle': {
-        // For line-circle, we require explicit lineId, circleId, and index
-        // (not just element1Id/element2Id as fallbacks)
-        if (!intersectionData.lineId || !intersectionData.circleId || 
-            intersectionData.index === undefined || intersectionData.index === null) {
-          throw new Error('Line-circle intersection requires lineId, circleId, and index');
-        }
-        break;
-      }
-      
-      case 'circle-circle': {
-        const index = intersectionData.index;
-        
-        if (index === undefined || index === null) {
-          throw new Error('Circle-circle intersection requires index');
-        }
-        break;
-      }
-    }
-    
-    // Create ActionGroup for this operation (same pattern as tools)
-    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const group = createActionGroup(groupId);
-    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
-
-    switch (intersectionData.type) {
-      case 'line-line':
-        return this.createLineLineIntersection(
-          cmd,
-          planeId,
-          intersectionData.element1Id,
-          intersectionData.element2Id,
-          world,
-          groupId
-        );
-
-      case 'line-circle': {
-        const lineId = intersectionData.lineId || intersectionData.element1Id;
-        const circleId = intersectionData.circleId || intersectionData.element2Id;
-        const index = intersectionData.index;
-        
-        // Validate required parameters
-        if (!lineId || !circleId || index === undefined || index === null) {
-          throw new Error('Line-circle intersection requires lineId, circleId, and index');
-        }
-        
-        return this.createLineCircleIntersection(
-          cmd,
-          planeId,
-          lineId,
-          circleId,
-          index,
-          world,
-          groupId
-        );
-      }
-
-      case 'circle-circle': {
-        const index = intersectionData.index;
-        
-        // Validate required parameter
-        if (index === undefined || index === null) {
-          throw new Error('Circle-circle intersection requires index');
-        }
-        
-        return this.createCircleCircleIntersection(
-          cmd,
-          planeId,
-          intersectionData.element1Id,
-          intersectionData.element2Id,
-          index,
-          world,
-          groupId
-        );
-      }
-
-      default:
-        throw new Error(`Unknown intersection type: ${(intersectionData as any).type}`);
-    }
   }
 }
