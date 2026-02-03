@@ -141,8 +141,12 @@ export abstract class Line2D extends Element2D {
   /**
    * Calculate the 2D realization (line equation) for this line
    * Returns line equation in the projection plane's intrinsic coordinates
+   * 
+   * Phase 76: Returns Line2DRealization2D (non-nullable)
+   * - Missing dependencies: throw Error with [INTERNAL ERROR]
+   * - Geometric failures: return realization with feasible=false
    */
-  abstract realize2D(world: import('./World').World): Line2DRealization2D | null;
+  abstract realize2D(world: import('./World').World): Line2DRealization2D;
   
   /**
    * Check if this line is bounded (finite segment) or unbounded (infinite line)
@@ -192,11 +196,15 @@ export class Line2DByTwoPoints extends Line2D {
   /**
    * Calculate 2D realization - compute line in parametric form from two points
    * 
+   * Phase 76: Returns Line2DRealization2D (non-nullable)
+   * - Missing dependencies: throw Error with [INTERNAL ERROR]
+   * - Geometric failures: return realization with feasible=false
+   * 
    * Returns infinite line representation using homogeneous coordinates:
    *   point1: finite point on line (z=1)
    *   point2: direction vector (z=0)
    */
-  realize2D(world: import('./World').World): Line2DRealization2D | null {
+  realize2D(world: import('./World').World): Line2DRealization2D {
     // Get both points from world
     const plane = world.getProjectionPlaneById(this.planeId);
     const point1 = plane.getPoint(this.point1Id);
@@ -280,7 +288,12 @@ export class Line2DParallel extends Line2D {
     return [this.referenceLineId, this.throughPointId];
   }
   
-  realize2D(world: import('./World').World): Line2DRealization2D | null {
+  /**
+   * Phase 76: Returns Line2DRealization2D (non-nullable)
+   * - Missing dependencies: asserts handle with explicit errors
+   * - Geometric failures: return realization with feasible=false
+   */
+  realize2D(world: import('./World').World): Line2DRealization2D {
     // Get reference line realization from world
     const plane = world.getProjectionPlaneById(this.planeId);
     const refLine = plane.getLine(this.referenceLineId);
@@ -375,6 +388,10 @@ export class Line2DPerpendicularToLine extends Line2D {
   /**
    * Calculate 2D realization - compute line perpendicular to reference line
    * 
+   * Phase 76: Returns Line2DRealization2D (non-nullable)
+   * - Missing dependencies: asserts handle with explicit errors
+   * - Geometric failures: return realization with feasible=false
+   * 
    * Algorithm:
    * 1. Get reference line's realization (point + direction)
    * 2. Compute perpendicular direction using 90-degree rotation
@@ -386,7 +403,7 @@ export class Line2DPerpendicularToLine extends Line2D {
    * - This is a counter-clockwise 90-degree rotation
    * - Works correctly with homogeneous coords (z=0 for direction vectors)
    */
-  realize2D(world: import('./World').World): Line2DRealization2D | null {
+  realize2D(world: import('./World').World): Line2DRealization2D {
     // Get reference line realization from world
     const plane = world.getProjectionPlaneById(this.planeId);
     assert(plane, `[Line2DPerpendicular] plane ${this.planeId} not found for line ${this.id}`);
@@ -515,8 +532,12 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
    * Given circle center A, external point B, tangent point C:
    * - Index 0: Positive angle BAC (counterclockwise from AB to AC)
    * - Index 1: Negative angle BAC (clockwise from AB to AC)
+   * 
+   * Phase 76: Returns Line2DRealization2D (non-nullable)
+   * - Missing dependencies: asserts handle with explicit errors
+   * - Geometric failures: return realization with feasible=false (point inside/on circle)
    */
-  realize2D(world: import('./World').World): Line2DRealization2D | null {
+  realize2D(world: import('./World').World): Line2DRealization2D {
     // Step 1: Get containing plane
     const plane = world.getProjectionPlaneById(this.planeId);
     
@@ -688,8 +709,12 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
    * - Index 0: Tangent is between reference line and circle center
    * - Index 1: Circle center is between reference line and tangent
    * Order from reference: ref line → index 0 → center → index 1
+   * 
+   * Phase 76: Returns Line2DRealization2D (non-nullable)
+   * - Missing dependencies: asserts handle with explicit errors
+   * - Geometric failures: return realization with feasible=false (line intersects circle)
    */
-  realize2D(world: import('./World').World): Line2DRealization2D | null {
+  realize2D(world: import('./World').World): Line2DRealization2D {
     // Step 1: Get containing plane
     const plane = world.getProjectionPlaneById(this.planeId);
     
