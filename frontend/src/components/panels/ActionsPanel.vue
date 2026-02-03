@@ -154,7 +154,7 @@ onMounted(() => {
   });
   
   // Subscribe to World changes to detect when clear() creates new ProcessTree
-  world.subscribe(() => {
+  world.subscribeToChanges(() => {
     console.log('[ActionsPanel] World changed, re-fetching ProcessTree');
     
     // Unsubscribe from old tree
