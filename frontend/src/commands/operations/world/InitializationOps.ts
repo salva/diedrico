@@ -20,7 +20,7 @@
 import { Vector3, Vector4, Matrix3 } from 'three';
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
-import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
+import { Matrix4x3 } from '@/utils/threeUtils';
 
 /**
  * AddPlane3DFixedOp - Create a fixed 3D plane
@@ -110,30 +110,27 @@ export class AddProjectionPlaneFixedOp implements IOperation {
     private readonly plane3DId: string,
     private readonly planeToPaper2D: Matrix3,
     private readonly planeTo3D: Matrix4x3,
-    private readonly threeDToPlane: Matrix3x4,
     private readonly projPlaneId?: string,
-    private readonly name?: string,
-    private readonly orientation?: 'horizontal' | 'vertical'
+    private readonly name?: string
   ) {
+    // Phase 94: threeDToPlane computed from planeTo3D in realization constructor
     this.parameters = { 
       plane3DId, 
       planeToPaper2D: planeToPaper2D.toArray(), 
       planeTo3D: planeTo3D.toArray(),
-      threeDToPlane: threeDToPlane.toArray(),
       projPlaneId,
-      name,
-      orientation
+      name
     };
   }
 
   apply(world: World): OperationResult {
     try {
       // Call element factory method - it handles ID generation and semantic references
+      // Phase 94: Pass only forward matrices, derived matrices computed in realization
       const projPlane = world.addProjectionPlane(
         this.plane3DId,
         this.planeToPaper2D,
         this.planeTo3D,
-        this.threeDToPlane,
         this.projPlaneId || this.outputs.projPlaneId,
         this.name
       );
@@ -164,12 +161,13 @@ export class AddProjectionPlaneFixedOp implements IOperation {
   }
 
   serialize() {
+    // Phase 94: Omit both derived matrices (paperToPlane2D, threeDToPlane)
+    // Storage: 21 numbers (9 + 12) instead of 42 numbers (9 + 9 + 12 + 12)
     return {
       opType: this.type,
       plane3DId: this.plane3DId,
       planeToPaper2D: this.planeToPaper2D.toArray(),
       planeTo3D: this.planeTo3D.toArray(),
-      threeDToPlane: this.threeDToPlane.toArray(),
       projPlaneId: this.outputs.projPlaneId || this.parameters.projPlaneId,
       name: this.name
     };

@@ -50,6 +50,7 @@ export interface SVGElementAttributes {
  * 
  * @param point - Point domain object (for metadata: id, type, label, planeId)
  * @param realization - Point2DRealization2D with computed position (numeric data)
+ * @param world - World instance to look up plane name
  * @param canvasOriginX - Canvas origin X coordinate (default 400)
  * @param canvasOriginY - Canvas origin Y coordinate (default 400)
  * @returns SVG circle attributes
@@ -57,15 +58,27 @@ export interface SVGElementAttributes {
 export function renderPoint(
   point: Point2D,
   realization: Point2DRealization2D,
+  world: import('../domain/world/World').World,
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): SVGElementAttributes {
   // Transform plane intrinsic coordinates to canvas coordinates
   // Numeric data (position) from REALIZATION, structural data (planeId) from POINT
+  // Get plane's transformation matrix (not label!) to perform coordinate transform
+  const plane = world.getProjectionPlaneById(point.planeId);
+  if (!plane) {
+    throw new Error(`Plane not found: ${point.planeId}`);
+  }
+  
+  const planeRealization = plane.realize2D(world);
+  if (!planeRealization.feasible) {
+    throw new Error(`Plane realization not feasible: ${point.planeId}`);
+  }
+  
   const [cx, cy] = planeToCanvas(
     realization.position.x,
     realization.position.y,
-    point.planeId,
+    planeRealization.planeToPaper2D,
     canvasOriginX,
     canvasOriginY
   );
@@ -95,16 +108,17 @@ export function renderPoint(
  * Render a plane as an SVG rectangle element
  * Uses generic plane-to-rectangle rendering algorithm
  * 
- * Planes are rendered as rectangles defined by their boundaries.
- * Works for ANY plane (P_H, P_V, or auxiliary planes) - no special cases.
+ * NOTE: This function is only used in tests. Production rendering uses SVGRenderer.
  * 
- * @param plane - Plane3D instance to render
+ * @param plane - Plane3D domain object (for metadata: id, boundaries)
+ * @param planeName - Plane name/label (e.g., 'P_H', 'P_V') - ONLY FOR TESTS
  * @param canvasOriginX - Canvas origin X coordinate (default 400)
  * @param canvasOriginY - Canvas origin Y coordinate (default 400)
  * @returns SVG rect attributes
  */
 export function renderPlane(
   plane: Plane3D,
+  planeName: string,
   canvasOriginX: number = 400,
   canvasOriginY: number = 400
 ): SVGElementAttributes {
@@ -112,8 +126,8 @@ export function renderPlane(
   const { minU, maxU, minV, maxV } = plane;
 
   // Transform boundary corners to canvas coordinates
-  const [x1, y1] = planeToCanvas(minU, minV, plane.id || 'plane_H', canvasOriginX, canvasOriginY);
-  const [x2, y2] = planeToCanvas(maxU, maxV, plane.id || 'plane_H', canvasOriginX, canvasOriginY);
+  const [x1, y1] = planeToCanvas(minU, minV, planeName, canvasOriginX, canvasOriginY);
+  const [x2, y2] = planeToCanvas(maxU, maxV, planeName, canvasOriginX, canvasOriginY);
 
   // Calculate rectangle position and dimensions
   const x = Math.min(x1, x2);
@@ -146,6 +160,8 @@ export function renderPlane(
  * Render a line as an SVG line element
  * Uses generic line rendering algorithm
  * 
+ * NOTE: This function is only used in tests. Production rendering uses SVGRenderer.
+ * 
  * Lines are rendered from start point to end point.
  * Works for ANY line (including hinge lines, guides, user-created lines) - no special cases.
  * 
@@ -154,15 +170,20 @@ export function renderPlane(
  * 
  * @param startPoint - Start point realization or plain coordinates { u, v, planeId }
  * @param endPoint - End point realization or plain coordinates { u, v, planeId }
+ * @param startPoint - Start point realization or { u, v, planeId, planeName }
+ * @param endPoint - End point realization or { u, v, planeId, planeName }
  * @param lineId - Line identifier
  * @param style - Optional line styling (color, width, dash pattern)
  * @param canvasOriginX - Canvas origin X coordinate (default 400)
  * @param canvasOriginY - Canvas origin Y coordinate (default 400)
  * @returns SVG line attributes
+ * 
+ * WARNING: planeName in point objects is ONLY for test compatibility.
+ * Production code should use plane transformation matrices.
  */
 export function renderLine(
-  startPoint: Point2DRealization2D | { u: number; v: number; planeId: string },
-  endPoint: Point2DRealization2D | { u: number; v: number; planeId: string },
+  startPoint: Point2DRealization2D | { u: number; v: number; planeId: string; planeName?: string },
+  endPoint: Point2DRealization2D | { u: number; v: number; planeId: string; planeName?: string },
   lineId: string,
   style?: {
     color?: string;
@@ -173,7 +194,7 @@ export function renderLine(
   canvasOriginY: number = 400
 ): SVGElementAttributes {
   // Transform start and end points to canvas coordinates
-  // Handle both Point2DRealization2D objects and plain { u, v, planeId } objects
+  // Handle both Point2DRealization2D objects and plain { u, v, planeId, planeName } objects
   const startPos = 'position' in startPoint
     ? startPoint.position
     : new Vector3(startPoint.u, startPoint.v, 1);
@@ -181,24 +202,24 @@ export function renderLine(
     ? endPoint.position
     : new Vector3(endPoint.u, endPoint.v, 1);
   
-  const startPlaneId = 'planeId' in startPoint
-    ? startPoint.planeId
-    : 'plane_H';
-  const endPlaneId = 'planeId' in endPoint
-    ? endPoint.planeId
-    : 'plane_H';
+  const startPlaneName = 'planeName' in startPoint && startPoint.planeName
+    ? startPoint.planeName
+    : 'P_H'; // Default to P_H
+  const endPlaneName = 'planeName' in endPoint && endPoint.planeName
+    ? endPoint.planeName
+    : 'P_H'; // Default to P_H
   
   const [x1, y1] = planeToCanvas(
     startPos.x,
     startPos.y,
-    startPlaneId,
+    startPlaneName,
     canvasOriginX,
     canvasOriginY
   );
   const [x2, y2] = planeToCanvas(
     endPos.x,
     endPos.y,
-    endPlaneId,
+    endPlaneName,
     canvasOriginX,
     canvasOriginY
   );

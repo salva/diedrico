@@ -69,7 +69,8 @@ export type ProjectionPlaneType = 'base' | 'auxiliary';
  * ProjectionPlaneRealization2D - Stores computed 2D transformation matrices for a ProjectionPlane
  * This is the cache of evaluated 2D plane transformations for paper/canvas rendering.
  * 
- * Phase 94: Only planeToPaper2D is stored, paperToPlane2D computed on-demand with robustness checks.
+ * Phase 94: Simple data holder - stores both forward and backward matrices as public fields.
+ * Computation happens in realize2D() methods of ProjectionPlane subclasses.
  */
 export class ProjectionPlaneRealization2D extends Realization {
   planeId: string;
@@ -79,61 +80,33 @@ export class ProjectionPlaneRealization2D extends Realization {
   // Usage: [x, y, 1] = M × [u, v, 1]
   planeToPaper2D: Matrix3;
   
-  // Paper-to-plane: Computed inverse of planeToPaper2D (cached)
+  // Paper-to-plane: Inverse of planeToPaper2D
   // Transforms paper (x,y) coordinates → plane (u,v) coordinates
   // Used for mouse input conversion
-  private _paperToPlane2D: Matrix3;
+  paperToPlane2D: Matrix3;
 
   constructor(
     planeId: string,
     planeToPaper2D: Matrix3,
+    paperToPlane2D: Matrix3,
     feasible: boolean = true
   ) {
-    // Compute inverse with determinant check for singular matrices
-    let actualFeasible = feasible;
-    let paperToPlane2D: Matrix3;
-    
-    try {
-      const det = planeToPaper2D.determinant();
-      
-      if (Math.abs(det) < 1e-10) {
-        // Matrix is singular (degenerate plane) - mark infeasible
-        actualFeasible = false;
-        paperToPlane2D = new Matrix3(); // Identity as fallback
-      } else {
-        paperToPlane2D = planeToPaper2D.clone().invert();
-      }
-    } catch (error) {
-      // Inversion failed - mark infeasible
-      actualFeasible = false;
-      paperToPlane2D = new Matrix3(); // Identity as fallback
-    }
-    
-    super(actualFeasible);
+    super(feasible);
     this.planeId = planeId;
     this.planeToPaper2D = planeToPaper2D;
-    this._paperToPlane2D = paperToPlane2D;
-  }
-  
-  /**
-   * Get computed inverse matrix (cached)
-   */
-  get paperToPlane2D(): Matrix3 {
-    return this._paperToPlane2D;
+    this.paperToPlane2D = paperToPlane2D;
   }
 
   /**
    * Clone this realization
    */
   clone(): ProjectionPlaneRealization2D {
-    const cloned = new ProjectionPlaneRealization2D(
+    return new ProjectionPlaneRealization2D(
       this.planeId,
       this.planeToPaper2D.clone(),
+      this.paperToPlane2D.clone(),
       this.feasible
     );
-    // Preserve computed inverse to avoid recomputation
-    cloned._paperToPlane2D = this._paperToPlane2D.clone();
-    return cloned;
   }
 }
 
@@ -142,7 +115,8 @@ export class ProjectionPlaneRealization2D extends Realization {
  * This is the cache of evaluated 3D plane transformation for Three.js rendering.
  * Uses Matrix4x3 for dimension-changing transforms (2D homogeneous → 3D homogeneous).
  * 
- * Phase 94: Only planeTo3D is stored, threeDToPlane computed from basis vectors.
+ * Phase 94: Simple data holder - stores both forward and backward matrices as public fields.
+ * Computation happens in realize3D() methods of ProjectionPlane subclasses.
  */
 export class ProjectionPlaneRealization3D extends Realization {
   planeId: string;
@@ -152,72 +126,33 @@ export class ProjectionPlaneRealization3D extends Realization {
   // Usage: [x, y, z, w] = M × [u, v, 1]
   planeTo3D: Matrix4x3;
   
-  // Inverse: 3D (x,y,z,w) → Plane (u,v,1) - COMPUTED from planeTo3D
+  // Inverse: 3D (x,y,z,w) → Plane (u,v,1)
   // 3x4 matrix transforms Vector4 to Vector3 (homogeneous coordinates)
   // Usage: [u, v, 1] = M × [x, y, z, w]
-  private _threeDToPlane: Matrix3x4;
+  threeDToPlane: Matrix3x4;
 
   constructor(
     planeId: string,
     planeTo3D: Matrix4x3,
+    threeDToPlane: Matrix3x4,
     feasible: boolean = true
   ) {
     super(feasible);
     this.planeId = planeId;
     this.planeTo3D = planeTo3D;
-    
-    // Compute projection matrix from embedding matrix basis vectors
-    // planeTo3D columns: [U-axis, V-axis, origin, w-component]
-    // Extract normalized basis vectors and origin
-    const uAxis = new Vector3(
-      planeTo3D.elements[0],   // M[0][0]
-      planeTo3D.elements[4],   // M[1][0]
-      planeTo3D.elements[8]    // M[2][0]
-    ).normalize();
-    
-    const vAxis = new Vector3(
-      planeTo3D.elements[1],   // M[0][1]
-      planeTo3D.elements[5],   // M[1][1]
-      planeTo3D.elements[9]    // M[2][1]
-    ).normalize();
-    
-    const origin = new Vector3(
-      planeTo3D.elements[2],   // M[0][2]
-      planeTo3D.elements[6],   // M[1][2]
-      planeTo3D.elements[10]   // M[2][2]
-    );
-    
-    // Build projection matrix: (point - origin) · basis vectors
-    // Row 1: U projection = point · uAxis - origin · uAxis
-    // Row 2: V projection = point · vAxis - origin · vAxis
-    // Row 3: Homogeneous coordinate [0, 0, 0, 1]
-    this._threeDToPlane = new Matrix3x4();
-    this._threeDToPlane.set(
-      uAxis.x, uAxis.y, uAxis.z, -origin.dot(uAxis),
-      vAxis.x, vAxis.y, vAxis.z, -origin.dot(vAxis),
-      0, 0, 0, 1
-    );
-  }
-  
-  /**
-   * Get computed projection matrix (cached)
-   */
-  get threeDToPlane(): Matrix3x4 {
-    return this._threeDToPlane;
+    this.threeDToPlane = threeDToPlane;
   }
 
   /**
    * Clone this realization
    */
   clone(): ProjectionPlaneRealization3D {
-    const cloned = new ProjectionPlaneRealization3D(
+    return new ProjectionPlaneRealization3D(
       this.planeId,
       this.planeTo3D.clone(),
+      this.threeDToPlane.clone(),
       this.feasible
     );
-    // Preserve computed projection to avoid recomputation
-    cloned._threeDToPlane = this._threeDToPlane.clone();
-    return cloned;
   }
 }
 
@@ -1451,6 +1386,7 @@ export abstract class ProjectionPlane {
 /**
  * BaseProjectionPlane - For P_H and P_V with predetermined transformations
  * 
+ * Phase 94: Stores only forward matrices. Backward matrices computed in realize methods.
  * The rule is: "this is P_H" or "this is P_V"
  * These planes have fixed positions in paper coordinate system.
  * Their transformation matrices are predetermined constants stored in the object.
@@ -1458,18 +1394,14 @@ export abstract class ProjectionPlane {
 export class BaseProjectionPlane extends ProjectionPlane {
   readonly type: ProjectionPlaneType = 'base';
 
-  // Predetermined transformation matrices (part of the plane definition)
+  // Predetermined forward transformation matrices (part of the plane definition)
   private readonly planeToPaper2D: Matrix3;
-  private readonly paperToPlane2D: Matrix3;
   private readonly planeTo3D: Matrix4x3;
-  private readonly threeDToPlane: Matrix3x4;
 
   constructor(
     name: string,
     planeToPaper2D: Matrix3,
-    paperToPlane2D: Matrix3,
     planeTo3D: Matrix4x3,
-    threeDToPlane: Matrix3x4,
     isActive: boolean = false,
     isVisible: boolean = true,
     color: string = '#000000',
@@ -1477,18 +1409,14 @@ export class BaseProjectionPlane extends ProjectionPlane {
   ) {
     super(name, isActive, isVisible, color, plane3DId);
     this.planeToPaper2D = planeToPaper2D;
-    this.paperToPlane2D = paperToPlane2D;
     this.planeTo3D = planeTo3D;
-    this.threeDToPlane = threeDToPlane;
   }
 
   clone(): BaseProjectionPlane {
     const cloned = new BaseProjectionPlane(
       this.name,
       this.planeToPaper2D.clone(),
-      this.paperToPlane2D.clone(),
       this.planeTo3D.clone(),
-      this.threeDToPlane.clone(),
       this.isActive,
       this.isVisible,
       this.color,
@@ -1506,7 +1434,7 @@ export class BaseProjectionPlane extends ProjectionPlane {
   
   /**
    * Calculate the 2D transformation realization for this base plane
-   * Returns the predetermined transformation matrices as a realization object.
+   * Computes paperToPlane2D (inverse) with determinant check.
    * 
    * @param world - World instance (not used for base planes, but required for API uniformity)
    */
@@ -1514,15 +1442,38 @@ export class BaseProjectionPlane extends ProjectionPlane {
     if (!this.id) {
       throw new Error('Cannot create realization for plane without ID');
     }
+    
+    // Compute inverse with determinant check for singular matrices
+    let feasible = true;
+    let paperToPlane2D: Matrix3;
+    
+    try {
+      const det = this.planeToPaper2D.determinant();
+      
+      if (Math.abs(det) < 1e-10) {
+        // Matrix is singular (degenerate plane) - mark infeasible
+        feasible = false;
+        paperToPlane2D = new Matrix3(); // Identity as fallback
+      } else {
+        paperToPlane2D = this.planeToPaper2D.clone().invert();
+      }
+    } catch (error) {
+      // Inversion failed - mark infeasible
+      feasible = false;
+      paperToPlane2D = new Matrix3(); // Identity as fallback
+    }
+    
     return new ProjectionPlaneRealization2D(
       this.id,
-      this.planeToPaper2D.clone()
+      this.planeToPaper2D.clone(),
+      paperToPlane2D,
+      feasible
     );
   }
 
   /**
    * Calculate the 3D transformation realization for this base plane
-   * Returns the predetermined transformation matrices (forward and inverse) as a realization object.
+   * Computes threeDToPlane (projection) from planeTo3D basis vectors.
    * 
    * @param world - World instance (not used for base planes, but required for API uniformity)
    */
@@ -1530,9 +1481,44 @@ export class BaseProjectionPlane extends ProjectionPlane {
     if (!this.id) {
       throw new Error('Cannot create realization for plane without ID');
     }
+    
+    // Compute projection matrix from embedding matrix basis vectors
+    // planeTo3D columns: [U-axis, V-axis, origin, w-component]
+    // Extract normalized basis vectors and origin
+    const uAxis = new Vector3(
+      this.planeTo3D.elements[0],   // M[0][0]
+      this.planeTo3D.elements[4],   // M[1][0]
+      this.planeTo3D.elements[8]    // M[2][0]
+    ).normalize();
+    
+    const vAxis = new Vector3(
+      this.planeTo3D.elements[1],   // M[0][1]
+      this.planeTo3D.elements[5],   // M[1][1]
+      this.planeTo3D.elements[9]    // M[2][1]
+    ).normalize();
+    
+    const origin = new Vector3(
+      this.planeTo3D.elements[2],   // M[0][2]
+      this.planeTo3D.elements[6],   // M[1][2]
+      this.planeTo3D.elements[10]   // M[2][2]
+    );
+    
+    // Build projection matrix: (point - origin) · basis vectors
+    // Row 1: U projection = point · uAxis - origin · uAxis
+    // Row 2: V projection = point · vAxis - origin · vAxis
+    // Row 3: Homogeneous coordinate [0, 0, 0, 1]
+    const threeDToPlane = new Matrix3x4();
+    threeDToPlane.set(
+      uAxis.x, uAxis.y, uAxis.z, -origin.dot(uAxis),
+      vAxis.x, vAxis.y, vAxis.z, -origin.dot(vAxis),
+      0, 0, 0, 1
+    );
+    
     return new ProjectionPlaneRealization3D(
       this.id,
-      this.planeTo3D.clone()
+      this.planeTo3D.clone(),
+      threeDToPlane,
+      true  // Base planes are always feasible
     );
   }
 }
@@ -1636,6 +1622,7 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
         return new ProjectionPlaneRealization3D(
           this.id,
           new Matrix4x3(),
+          new Matrix3x4(),
           false
         );
       }
@@ -1645,6 +1632,7 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
       return new ProjectionPlaneRealization3D(
         this.id,
         matrices.planeTo3D,
+        matrices.threeDToPlane,
         true
       );
       
@@ -1654,6 +1642,7 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
       return new ProjectionPlaneRealization3D(
         this.id,
         new Matrix4x3(),
+        new Matrix3x4(),
         false
       );
     }
@@ -1688,14 +1677,36 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
         return new ProjectionPlaneRealization2D(
           this.id,
           identityMatrix,
+          identityMatrix.clone(),
           false
         );
+      }
+      
+      // Compute paperToPlane (inverse) with determinant check
+      let feasible = true;
+      let paperToPlane: Matrix3;
+      
+      try {
+        const det = matrices.planeToPaper.determinant();
+        
+        if (Math.abs(det) < 1e-10) {
+          // Matrix is singular (degenerate plane) - mark infeasible
+          feasible = false;
+          paperToPlane = new Matrix3(); // Identity as fallback
+        } else {
+          paperToPlane = matrices.planeToPaper.clone().invert();
+        }
+      } catch (error) {
+        // Inversion failed - mark infeasible
+        feasible = false;
+        paperToPlane = new Matrix3(); // Identity as fallback
       }
       
       return new ProjectionPlaneRealization2D(
         this.id,
         matrices.planeToPaper,
-        true
+        paperToPlane,
+        feasible
       );
       
     } catch (error) {
@@ -1706,6 +1717,7 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
       return new ProjectionPlaneRealization2D(
         this.id,
         identityMatrix,
+        identityMatrix.clone(),
         false
       );
     }

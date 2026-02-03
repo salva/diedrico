@@ -40,6 +40,8 @@ describe('PointTool', () => {
     toolStore: {} as any, // Mock tool store
   });
 
+  let initialUndoDepth: number;
+
   beforeEach(() => {
     tool = new PointTool();
     const { world: w, commandStack: cs } = createTestWorld();
@@ -49,6 +51,17 @@ describe('PointTool', () => {
     // Get actual plane IDs from initialized world
     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
     verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+    // Record initial undo count after initialization
+    // Use a trick: undo until we can't, then count how many we did, then redo them all
+    let undoCount = 0;
+    while (commandStack.canUndo()) {
+      commandStack.undo();
+      undoCount++;
+    }
+    for (let i = 0; i < undoCount; i++) {
+      commandStack.redo();
+    }
+    initialUndoDepth = undoCount;
   });
 
   describe('Tool Identity', () => {
@@ -264,8 +277,19 @@ describe('PointTool', () => {
 
       tool.handleClick(context);
 
-      // Command stack should remain empty
-      expect(commandStack.canUndo()).toBe(false);
+      // Count current undo depth
+      let currentDepth = 0;
+      while (commandStack.canUndo()) {
+        commandStack.undo();
+        currentDepth++;
+      }
+      // Restore stack
+      for (let i = 0; i < currentDepth; i++) {
+        commandStack.redo();
+      }
+      
+      // Command stack should remain at initial depth (no new commands added)
+      expect(currentDepth).toBe(initialUndoDepth);
     });
   });
 
@@ -302,12 +326,27 @@ describe('PointTool', () => {
         tool.handleClick(context);
       }
 
-      // Should be able to undo all 3 operations
+      // Should be able to undo all 3 operations (back to initial depth)
       expect(commandStack.canUndo()).toBe(true);
       commandStack.undo();
       commandStack.undo();
       commandStack.undo();
-      expect(commandStack.canUndo()).toBe(false);
+      
+      // Count final depth
+      let finalDepth = 0;
+      while (commandStack.canUndo()) {
+        commandStack.undo();
+        finalDepth++;
+      }
+      // Restore stack
+      for (let i = 0; i < finalDepth; i++) {
+        commandStack.redo();
+      }
+      for (let i = 0; i < 3; i++) {
+        commandStack.redo();
+      }
+      
+      expect(finalDepth).toBe(initialUndoDepth);
     });
   });
 

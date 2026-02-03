@@ -17,10 +17,13 @@ import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/A
 
 describe('InitializeWorldCommand', () => {
   let world: World;
+  let commandStack: CommandStack;
 
   beforeEach(() => {
-    // World constructor already runs initialization
+    // Phase 47: Explicit initialization needed
     world = new World();
+    commandStack = new CommandStack();
+    world.initialize(commandStack);
   });
 
   describe('Command Creation', () => {
@@ -130,21 +133,20 @@ describe('InitializeWorldCommand', () => {
         (child: any) => child?.type === 'actionGroup'
       );
 
-      // Phase 47 expectation: 9 actions (2 planes, 2 proj planes, 2 origins, 1 HL, 2 half HLs)
-      expect(actionGroups.length).toBe(9);
+      // Current architecture: All initialization actions in ONE group
+      expect(actionGroups.length).toBe(1);
 
-      const actionTypes = actionGroups.map((g: any) => g.children?.[0]?.actionType);
-      expect(actionTypes).toEqual([
-        'InitializePlane3D',
-        'InitializePlane3D',
-        'InitializeProjectionPlane',
-        'InitializeProjectionPlane',
-        'InitializeOriginPoint2D',
-        'InitializeOriginPoint2D',
-        'InitializeHingeLine',
-        'InitializeHalfHingeLine2D',
-        'InitializeHalfHingeLine2D'
-      ]);
+      const actions = actionGroups[0]?.children || [];
+      
+      // Verify all 9 initialization actions are present in the group
+      // Phase 93: Actions no longer have actionType - just verify count
+      expect(actions.length).toBe(9);
+      
+      // Verify actions have elementIds (plane IDs, projection plane IDs, etc.)
+      actions.forEach((action: any) => {
+        expect(action.elementId).toBeTruthy();
+        expect(action.description).toBeTruthy();
+      });
     });
   });
 

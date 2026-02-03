@@ -344,28 +344,61 @@ Note that completing these tasks may require asking the user for additional info
     - Operations: Remove both derived matrix parameters from constructors
   - **Architecture Changes**:
     ```typescript
-    // BEFORE: Redundant storage of derived matrices
+    // Phase 94 Architecture: Realizations are simple data holders, computation in realize methods
+    
+    // Realization classes - Simple data holders with both forward and backward matrices
     class ProjectionPlaneRealization2D {
-      planeToPaper2D: Matrix3;   // 9 numbers
-      paperToPlane2D: Matrix3;   // 9 numbers (REDUNDANT - true inverse!)
+      planeToPaper2D: Matrix3;    // 9 numbers (forward matrix)
+      paperToPlane2D: Matrix3;    // 9 numbers (backward matrix - computed in realize)
+      constructor(planeId, planeToPaper2D, paperToPlane2D, feasible) {
+        // Just stores both matrices, no computation
+      }
     }
     class ProjectionPlaneRealization3D {
-      planeTo3D: Matrix4x3;      // 12 numbers (embedding)
-      threeDToPlane: Matrix3x4;  // 12 numbers (REDUNDANT - can compute from basis vectors!)
+      planeTo3D: Matrix4x3;       // 12 numbers (forward matrix)
+      threeDToPlane: Matrix3x4;   // 12 numbers (backward matrix - computed in realize)
+      constructor(planeId, planeTo3D, threeDToPlane, feasible) {
+        // Just stores both matrices, no computation
+      }
     }
     
-    // AFTER: Compute both derived matrices with robustness checks
-    class ProjectionPlaneRealization2D {
-      planeToPaper2D: Matrix3;           // 9 numbers (forward matrix)
-      private _paperToPlane2D: Matrix3;  // Computed with determinant check
-      get paperToPlane2D(): Matrix3 { return this._paperToPlane2D; }
-      // Constructor checks |det| < 1e-10, marks infeasible if singular
+    // BaseProjectionPlane - Stores only forward matrices, computes backward in realize
+    class BaseProjectionPlane {
+      private planeToPaper2D: Matrix3;   // Stored (forward)
+      private planeTo3D: Matrix4x3;      // Stored (forward)
+      
+      constructor(name, planeToPaper2D, planeTo3D, ...) {
+        // Only stores forward matrices
+      }
+      
+      realize2D(world): ProjectionPlaneRealization2D {
+        // Compute paperToPlane2D = planeToPaper2D.invert()
+        // Check determinant < 1e-10, mark infeasible if singular
+        return new ProjectionPlaneRealization2D(id, planeToPaper2D, paperToPlane2D, feasible);
+      }
+      
+      realize3D(world): ProjectionPlaneRealization3D {
+        // Compute threeDToPlane from planeTo3D basis vectors
+        // Extract U-axis, V-axis, origin; build projection matrix
+        return new ProjectionPlaneRealization3D(id, planeTo3D, threeDToPlane, true);
+      }
     }
-    class ProjectionPlaneRealization3D {
-      planeTo3D: Matrix4x3;              // 12 numbers (embedding)
-      private _threeDToPlane: Matrix3x4; // Computed from basis vectors
-      get threeDToPlane(): Matrix3x4 { return this._threeDToPlane; }
-      // Constructor extracts U/V axes and origin, builds projection matrix
+    
+    // AuxiliaryProjectionPlane - Computes ALL matrices in realize methods
+    class AuxiliaryProjectionPlane {
+      t1HingeTraceId, t2OtherTraceId, t2PrimeLineId; // Dependencies only
+      
+      realize2D(world): ProjectionPlaneRealization2D {
+        const matrices = computeProjectionPlaneMatrices(...);
+        // Compute paperToPlane = matrices.planeToPaper.invert() with determinant check
+        return new ProjectionPlaneRealization2D(id, matrices.planeToPaper, paperToPlane, feasible);
+      }
+      
+      realize3D(world): ProjectionPlaneRealization3D {
+        const matrices = computeProjectionPlaneMatrices(...);
+        // Use both planeTo3D and threeDToPlane from utility function
+        return new ProjectionPlaneRealization3D(id, matrices.planeTo3D, matrices.threeDToPlane, true);
+      }
     }
     ```
   - **Key Benefits**:

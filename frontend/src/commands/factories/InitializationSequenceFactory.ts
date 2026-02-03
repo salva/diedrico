@@ -12,7 +12,7 @@ import {
   createInitializeOriginPoint2DAction
 } from '@/domain/processTree/actions/InitializeWorldActions';
 import { Vector3, Vector4, Matrix3 } from 'three';
-import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
+import { Matrix4x3 } from '@/utils/threeUtils';
 import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
 
 /**
@@ -81,13 +81,9 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
     0, 0, 0,  // z = 0 (horizontal plane)
     0, 0, 1   // w = 1
   );
-  const threeDToPlane_H = new Matrix3x4().set(
-    1, 0, 0, 0,  // u = x
-    0, 1, 0, 0,  // v = y
-    0, 0, 0, 1   // 1 = w
-  );
+  // Phase 94: threeDToPlane_H computed from planeTo3D_H in realization constructor
   
-  const projPlaneHOp = new AddProjectionPlaneFixedOp(planeHId, planeToPaper_H, planeTo3D_H, threeDToPlane_H, undefined, 'P_H', 'horizontal');
+  const projPlaneHOp = new AddProjectionPlaneFixedOp(planeHId, planeToPaper_H, planeTo3D_H, undefined, 'P_H');
   cmd.addAndExecute(projPlaneHOp);
   const projPlaneHId = projPlaneHOp.outputs.projPlaneId as string;
   
@@ -108,13 +104,9 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
     0, 1, 0,  // z = v (domain Z)
     0, 0, 1   // w = 1
   );
-  const threeDToPlane_V = new Matrix3x4().set(
-    1, 0, 0, 0,  // u = x
-    0, 0, 1, 0,  // v = z
-    0, 0, 0, 1   // 1 = w
-  );
+  // Phase 94: threeDToPlane_V computed from planeTo3D_V in realization constructor
   
-  const projPlaneVOp = new AddProjectionPlaneFixedOp(planeVId, planeToPaper_V, planeTo3D_V, threeDToPlane_V, undefined, 'P_V', 'vertical');
+  const projPlaneVOp = new AddProjectionPlaneFixedOp(planeVId, planeToPaper_V, planeTo3D_V, undefined, 'P_V');
   cmd.addAndExecute(projPlaneVOp);
   const projPlaneVId = projPlaneVOp.outputs.projPlaneId as string;
   

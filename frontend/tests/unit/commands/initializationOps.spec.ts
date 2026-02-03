@@ -103,8 +103,9 @@ describe('Initialization Operations', () => {
       const serialized = op.serialize();
       
       expect(serialized).toEqual({
-        type: 'CreateInitializationSubprocess',
-        subprocessName: 'Test'
+        opType: 'CreateInitializationSubprocess',
+        subprocessName: 'Test',
+        subprocessId: undefined
       });
     });
   });
@@ -171,9 +172,9 @@ describe('Initialization Operations', () => {
       op.apply(world); // Need to apply to populate outputs
       const serialized = op.serialize();
       
-      expect(serialized.type).toBe('AddPlane3DFixed');
-      expect(serialized.point).toEqual({ x: 0, y: 0, z: 0, w: 1 });
-      expect(serialized.normal).toEqual({ x: 0, y: 1, z: 0, w: 0 });
+      expect(serialized.opType).toBe('AddPlane3DFixed');
+      expect(serialized.point).toEqual([0, 0, 0, 1]);
+      expect(serialized.normal).toEqual([0, 1, 0, 0]);
       expect(serialized.planeId).toBe('plane_ser');
       expect(serialized.label).toBe('P_V');
     });
@@ -333,7 +334,7 @@ describe('Initialization Operations', () => {
       const serialized = op.serialize();
       
       expect(serialized).toEqual({
-        type: 'AddHingeLine',
+        opType: 'AddHingeLine',
         horizontalPlaneId: 'proj_1',
         verticalPlaneId: 'proj_2',
         hingeLineId: 'hl_ser'

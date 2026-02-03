@@ -392,10 +392,12 @@ export class World {
    * Takes explicit transformation matrices instead of orientation string for generic plane creation.
    * If projPlaneId is not provided, generates a new ID.
    * 
+   * Phase 94: Only forward matrices required as parameters.
+   * Derived matrices (paperToPlane2D, threeDToPlane) computed in realization constructors.
+   * 
    * @param plane3DId - ID of associated 3D plane
    * @param planeToPaper2D - 3x3 homogeneous matrix: plane (u,v,1) → paper (x',y',1)
    * @param planeTo3D - 4x3 matrix: plane (u,v,1) → domain 3D (x,y,z,w)
-   * @param threeDToPlane - 3x4 matrix: domain 3D (x,y,z,w) → plane (u,v,1)
    * @param projPlaneId - Optional ID (for redo support)
    * @param name - Optional name/label (defaults to proj_plane_${id})
    * @returns Created ProjectionPlane instance
@@ -404,22 +406,19 @@ export class World {
     plane3DId: string,
     planeToPaper2D: Matrix3,
     planeTo3D: Matrix4x3,
-    threeDToPlane: Matrix3x4,
     projPlaneId?: string,
     name?: string
   ): ProjectionPlane {
     const id = projPlaneId || this.generateProjPlaneId();
     
-    // Compute inverse of planeToPaper2D
-    const paperToPlane2D = planeToPaper2D.clone().invert();
+    // Phase 94: Derived matrices computed in realization constructors
+    // No need to compute paperToPlane2D or threeDToPlane here
     
-    // Create BaseProjectionPlane with explicit matrices
+    // Create BaseProjectionPlane with only forward matrices
     const projPlane = new BaseProjectionPlane(
       name || `proj_plane_${id}`,
       planeToPaper2D,
-      paperToPlane2D,
       planeTo3D,
-      threeDToPlane,
       false,  // Not active by default
       true,   // Visible
       '#808080',  // Default gray

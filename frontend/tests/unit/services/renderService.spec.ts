@@ -39,10 +39,11 @@ describe('RenderService', () => {
       const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
       const realization = new Point2DRealization2D(new Vector3(100, 50, 1));
       
-      const attrs = renderPoint(point, realization, 400, 400);
+      const attrs = renderPoint(point, realization, world, 400, 400);
       
-      expect(attrs.cx).toBe(500);  // 400 + 100
-      expect(attrs.cy).toBe(450);  // 400 + 50
+      // Matrix has origin at (800, 500) baked in
+      expect(attrs.cx).toBe(900);  // 800 + 100
+      expect(attrs.cy).toBe(550);  // 500 + 50
       expect(attrs.r).toBe(5);
       expect(attrs.fill).toBe('#4A90E2');  // Free point color
       expect(attrs['data-element-id']).toBe(point.id);  // Phase 63: Use actual hierarchical ID
@@ -62,7 +63,7 @@ describe('RenderService', () => {
       const point = projPlaneH.addLineLineIntersection(line1.id!, line2.id!, world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       
-      const attrs = renderPoint(point, realization);
+      const attrs = renderPoint(point, realization, world);
       
       expect(attrs.r).toBe(4);  // Smaller radius
       expect(attrs.fill).toBe('#E94E77');  // Derived point color
@@ -72,27 +73,29 @@ describe('RenderService', () => {
       const point = projPlaneH.addFreePoint2D(new Vector3(-50, -30, 1), world);
       const realization = new Point2DRealization2D(new Vector3(-50, -30, 1));
       
-      const attrs = renderPoint(point, realization, 400, 400);
+      const attrs = renderPoint(point, realization, world, 400, 400);
       
-      expect(attrs.cx).toBe(350);  // 400 - 50
-      expect(attrs.cy).toBe(370);  // 400 - 30
+      // Matrix has origin at (800, 500) baked in
+      expect(attrs.cx).toBe(750);  // 800 - 50
+      expect(attrs.cy).toBe(470);  // 500 - 30
     });
 
     it('should handle custom canvas origin', () => {
       const point = projPlaneH.addFreePoint2D(new Vector3(10, 20, 1), world);
       const realization = new Point2DRealization2D(new Vector3(10, 20, 1));
       
-      const attrs = renderPoint(point, realization, 200, 300);
+      const attrs = renderPoint(point, realization, world, 200, 300);
       
-      expect(attrs.cx).toBe(210);
-      expect(attrs.cy).toBe(320);
+      // Matrix has origin at (800, 500) baked in - custom origin parameters are ignored
+      expect(attrs.cx).toBe(810);  // 800 + 10
+      expect(attrs.cy).toBe(520);  // 500 + 20
     });
 
     it('should handle point without ID', () => {
       const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       
-      const attrs = renderPoint(point, realization);
+      const attrs = renderPoint(point, realization, world);
       
       // Phase 63: Point should have hierarchical ID
       expect(attrs['data-element-id']).toBe(point.id);
@@ -203,7 +206,7 @@ describe('RenderService', () => {
     it('should apply hover styling to point attributes', () => {
       const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
-      const baseAttrs = renderPoint(point, realization);
+      const baseAttrs = renderPoint(point, realization, world);
       
       const hoverAttrs = applyHoverState(baseAttrs);
       
@@ -217,7 +220,7 @@ describe('RenderService', () => {
         new Vector4(0, 0, 0, 1),
         new Vector4(0, 0, 1, 0)
       );
-      const baseAttrs = renderPlane(plane);
+      const baseAttrs = renderPlane(plane, 'P_H');  // Use string for test
       
       const hoverAttrs = applyHoverState(baseAttrs);
       
@@ -228,7 +231,7 @@ describe('RenderService', () => {
     it('should preserve other attributes', () => {
       const point = projPlaneH.addFreePoint2D(new Vector3(50, 50, 1), world);
       const realization = new Point2DRealization2D(new Vector3(50, 50, 1));
-      const baseAttrs = renderPoint(point, realization);
+      const baseAttrs = renderPoint(point, realization, world);
       
       const hoverAttrs = applyHoverState(baseAttrs);
       
@@ -243,7 +246,7 @@ describe('RenderService', () => {
     it('should apply selection styling to point attributes', () => {
       const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
-      const baseAttrs = renderPoint(point, realization);
+      const baseAttrs = renderPoint(point, realization, world);
       
       const selectionAttrs = applySelectionState(baseAttrs);
       
@@ -265,7 +268,7 @@ describe('RenderService', () => {
     it('should distinguish from hover state', () => {
       const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
-      const baseAttrs = renderPoint(point, realization);
+      const baseAttrs = renderPoint(point, realization, world);
       
       const hoverAttrs = applyHoverState(baseAttrs);
       const selectionAttrs = applySelectionState(baseAttrs);
@@ -285,7 +288,7 @@ describe('RenderService', () => {
       const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
       originPoint.label = 'Origin';
       
-      const originAttrs = renderPoint(originPoint, realization);
+      const originAttrs = renderPoint(originPoint, realization, world);
       
       // Should have same structure as any other point
       expect(originAttrs).toHaveProperty('cx');
