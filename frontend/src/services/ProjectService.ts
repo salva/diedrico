@@ -101,7 +101,7 @@ export class ProjectService {
    * Serialize CommandStack to JSON
    * Captures the command history that can be replayed to reconstruct the World
    */
-  static serializeCommands(commandStack: CommandStack, projectName: string): ProjectData {
+  static serializeCommands(commandStack: CommandStack, world: World, projectName: string): ProjectData {
     const now = new Date().toISOString();
     
     // Get commands from undo stack (committed commands that build the current state)
@@ -129,7 +129,7 @@ export class ProjectService {
       schemaVersion: this.SCHEMA_VERSION,
       created: now,
       modified: now,
-      nextElementId: (commandStack as any).world.getNextId(),  // Save ID counter
+      nextElementId: world.getNextId(),  // Save ID counter
       commands: serializedCommands
     };
   }
