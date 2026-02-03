@@ -81,8 +81,9 @@ const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
 const worldVersion = ref(0); // Track world changes (for processTree re-fetching)
 
 // Get current ProcessTree (reactive to world changes)
+// We use a computed to get fresh ProcessTree after world.clear()
 const processTree = computed(() => {
-  worldVersion.value; // Depend on world version
+  worldVersion.value; // Depend on world version to re-fetch after clear()
   return world.getProcessTree();
 });
 
@@ -133,34 +134,35 @@ onMounted(() => {
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
   
-  // Initialize node count
-  lastNodeCount.value = countNodes(processTree.value.root);
-  console.log('[ActionsPanel] Initial node count:', lastNodeCount.value);
-
-  // Subscribe to world changes to re-subscribe to new ProcessTree instances
+  // Subscribe to world changes to detect when clear() creates new ProcessTree
   world.subscribe(() => {
-    console.log('[ActionsPanel] World changed, updating worldVersion to trigger processTree re-fetch');
+    console.log('[ActionsPanel] World changed, incrementing worldVersion');
     worldVersion.value++;
   });
 });
 
-// Watch for processTree changes (when world.clear() creates new ProcessTree)
+// Watch worldVersion to re-subscribe when ProcessTree changes (after world.clear())
 watch(
-  processTree,
-  (newTree, oldTree) => {
-    console.log('[ActionsPanel] ProcessTree instance changed, re-subscribing');
+  worldVersion,
+  () => {
+    console.log('[ActionsPanel] worldVersion changed, re-subscribing to ProcessTree');
     
     // Unsubscribe from old tree
     if (unsubscribeTree) {
       unsubscribeTree();
     }
     
+    // Get fresh ProcessTree reference
+    const tree = processTree.value;
+    
+    // Initialize node count
+    lastNodeCount.value = countNodes(tree.root);
+    
     // Subscribe to new tree
-    lastNodeCount.value = countNodes(newTree.root);
-    unsubscribeTree = newTree.subscribe(() => {
-      console.log('[ActionsPanel] ProcessTree changed! New root children:', newTree.root.children.length);
+    unsubscribeTree = tree.subscribe(() => {
+      console.log('[ActionsPanel] ProcessTree changed! New root children:', tree.root.children.length);
       // Check if structure grew
-      const currentCount = countNodes(newTree.root);
+      const currentCount = countNodes(tree.root);
       const shouldScroll = currentCount > lastNodeCount.value;
       lastNodeCount.value = currentCount;
 
