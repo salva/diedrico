@@ -226,13 +226,22 @@ export class ProjectService {
           ? new Vector3(posInput[0], posInput[1], posInput[2])
           : new Vector3(posInput.x, posInput.y, posInput.z);
         
-        return new AddFreePoint2DOp(
+        const freePointOp = new AddFreePoint2DOp(
           parameters.planeId, 
           pos
         );
+        // Restore the original point ID from serialization
+        if (parameters.pointId) {
+          freePointOp.outputs = { pointId: parameters.pointId };
+        }
+        return freePointOp;
       
       case 'AddLine2DByTwoPoints':
-        return new AddLine2DByTwoPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
+        const line2PointsOp = new AddLine2DByTwoPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
+        if (parameters.lineId) {
+          line2PointsOp.outputs = { lineId: parameters.lineId };
+        }
+        return line2PointsOp;
 
       case 'AddLine2DPerpendicularToLine':
         // Migration: old serialization had wrong parameters (circleId, tangentIndex instead of throughPointId)
@@ -241,50 +250,98 @@ export class ProjectService {
           console.warn('[ProjectService] Skipping corrupted AddLine2DPerpendicularToLine operation (missing throughPointId). This was caused by a serialization bug that has been fixed.');
           return null as any; // Will be filtered out by deserializeCommands
         }
-        return new AddLine2DPerpendicularToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+        const perpLineOp = new AddLine2DPerpendicularToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+        if (parameters.lineId) {
+          perpLineOp.outputs = { lineId: parameters.lineId };
+        }
+        return perpLineOp;
       
       case 'AddLine2DParallelToLine':
-        return new AddLine2DParallelToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+        const parallelLineOp = new AddLine2DParallelToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+        if (parameters.lineId) {
+          parallelLineOp.outputs = { lineId: parameters.lineId };
+        }
+        return parallelLineOp;
       
       case 'AddLine2DTangentToCircleThroughPoint':
-        return new AddLine2DTangentToCircleThroughPointOp(
+        const tangentThroughPointOp = new AddLine2DTangentToCircleThroughPointOp(
           parameters.planeId, 
           parameters.circleId, 
           parameters.throughPointId, 
           parameters.index
         );
+        if (parameters.lineId) {
+          tangentThroughPointOp.outputs = { lineId: parameters.lineId };
+        }
+        return tangentThroughPointOp;
       
       case 'AddLine2DTangentToCircleParallelToLine':
-        return new AddLine2DTangentToCircleParallelToLineOp(
+        const tangentParallelOp = new AddLine2DTangentToCircleParallelToLineOp(
           parameters.planeId, 
           parameters.circleId, 
           parameters.referenceLineId, 
           parameters.index
         );
+        if (parameters.lineId) {
+          tangentParallelOp.outputs = { lineId: parameters.lineId };
+        }
+        return tangentParallelOp;
       
       case 'AddSegment2DByPoints':
-        return new AddSegment2DByPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
+        const segmentOp = new AddSegment2DByPointsOp(parameters.planeId, parameters.point1Id, parameters.point2Id);
+        if (parameters.segmentId) {
+          segmentOp.outputs = { segmentId: parameters.segmentId };
+        }
+        return segmentOp;
       
       case 'AddCircle2DByCenterAndPoint':
-        return new AddCircle2DByCenterAndPointOp(parameters.planeId, parameters.centerPointId, parameters.circumferencePointId);
+        const circleOp = new AddCircle2DByCenterAndPointOp(parameters.planeId, parameters.centerPointId, parameters.circumferencePointId);
+        if (parameters.circleId) {
+          circleOp.outputs = { circleId: parameters.circleId };
+        }
+        return circleOp;
       
       case 'AddLineLineIntersectionPoint2D':
-        return new AddLineLineIntersectionPoint2DOp(parameters.planeId, parameters.line1Id, parameters.line2Id);
+        const lineLineIntOp = new AddLineLineIntersectionPoint2DOp(parameters.planeId, parameters.line1Id, parameters.line2Id);
+        if (parameters.pointId) {
+          lineLineIntOp.outputs = { pointId: parameters.pointId };
+        }
+        return lineLineIntOp;
       
       case 'AddLineCircleIntersectionPoint2D':
-        return new AddLineCircleIntersectionPoint2DOp(parameters.planeId, parameters.lineId, parameters.circleId, parameters.index);
+        const lineCircleIntOp = new AddLineCircleIntersectionPoint2DOp(parameters.planeId, parameters.lineId, parameters.circleId, parameters.index);
+        if (parameters.pointId) {
+          lineCircleIntOp.outputs = { pointId: parameters.pointId };
+        }
+        return lineCircleIntOp;
       
       case 'AddCircleCircleIntersectionPoint2D':
-        return new AddCircleCircleIntersectionPoint2DOp(parameters.planeId, parameters.circle1Id, parameters.circle2Id, parameters.index);
+        const circleCircleIntOp = new AddCircleCircleIntersectionPoint2DOp(parameters.planeId, parameters.circle1Id, parameters.circle2Id, parameters.index);
+        if (parameters.pointId) {
+          circleCircleIntOp.outputs = { pointId: parameters.pointId };
+        }
+        return circleCircleIntOp;
       
       case 'AddGuide2DPerpendicularToLine':
-        return new AddGuide2DPerpendicularToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+        const guideOp = new AddGuide2DPerpendicularToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
+        if (parameters.guideId) {
+          guideOp.outputs = { guideId: parameters.guideId };
+        }
+        return guideOp;
       
       case 'AddSiblingGuide2D':
-        return new AddSiblingGuide2DOp(parameters.planeId, parameters.primaryGuideId, parameters.referenceLineId);
+        const siblingGuideOp = new AddSiblingGuide2DOp(parameters.planeId, parameters.primaryGuideId, parameters.referenceLineId);
+        if (parameters.guideId) {
+          siblingGuideOp.outputs = { guideId: parameters.guideId };
+        }
+        return siblingGuideOp;
       
       case 'AddSiblingIntersectionPoint2D':
-        return new AddSiblingIntersectionPoint2DOp(parameters.planeId, parameters.primaryIntersectionId);
+        const siblingIntOp = new AddSiblingIntersectionPoint2DOp(parameters.planeId, parameters.primaryIntersectionId);
+        if (parameters.pointId) {
+          siblingIntOp.outputs = { pointId: parameters.pointId };
+        }
+        return siblingIntOp;
       
       case 'RemovePoint2D':
         return new RemovePoint2DOp(parameters.planeId, parameters.pointId);
@@ -401,49 +458,69 @@ export class ProjectService {
         );
       
       case 'Add3DPlane':
-        return new Add3DPlaneOp(
+        const plane3DOp = new Add3DPlaneOp(
           parameters.trace1Id,
           parameters.trace2Id,
           parameters.plane1Id,
           parameters.plane2Id,
           parameters.label
         );
+        if (parameters.planeId) {
+          plane3DOp.outputs = { planeId: parameters.planeId };
+        }
+        return plane3DOp;
       
       case 'Add3DPoint':
-        return new Add3DPointOp(
+        const point3DOp = new Add3DPointOp(
           parameters.projection1Id,
           parameters.projection2Id,
           parameters.plane1Id,
           parameters.plane2Id,
           parameters.label
         );
+        if (parameters.pointId) {
+          point3DOp.outputs = { pointId: parameters.pointId };
+        }
+        return point3DOp;
       
       case 'Add3DLine':
-        return new Add3DLineOp(
+        const line3DOp = new Add3DLineOp(
           parameters.projection1Id,
           parameters.projection2Id,
           parameters.plane1Id,
           parameters.plane2Id,
           parameters.label
         );
+        if (parameters.lineId) {
+          line3DOp.outputs = { lineId: parameters.lineId };
+        }
+        return line3DOp;
       
       case 'Add3DSegment':
-        return new Add3DSegmentOp(
+        const segment3DOp = new Add3DSegmentOp(
           parameters.projection1Id,
           parameters.projection2Id,
           parameters.plane1Id,
           parameters.plane2Id,
           parameters.label
         );
+        if (parameters.segmentId) {
+          segment3DOp.outputs = { segmentId: parameters.segmentId };
+        }
+        return segment3DOp;
       
       case 'AddAuxiliaryProjectionPlane':
-        return new AddAuxiliaryProjectionPlaneOp(
+        const auxPlaneOp = new AddAuxiliaryProjectionPlaneOp(
           parameters.plane3DId,
           parameters.t1HingeTraceId,
           parameters.t2OtherTraceId,
           parameters.t2PrimeLineId,
           parameters.name
         );
+        if (parameters.projPlaneId) {
+          auxPlaneOp.outputs = { projPlaneId: parameters.projPlaneId };
+        }
+        return auxPlaneOp;
       
       case 'AddProcessTreeActionOp':
         return new AddProcessTreeActionOp(parameters.action, parameters.groupId);
