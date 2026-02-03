@@ -78,14 +78,9 @@ const selectedNodeId = ref<string | null>(null);
 const relatedActionIds = ref<Set<string>>(new Set());
 const stackVersion = ref(0); // Track stack changes
 const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
-const worldVersion = ref(0); // Track world changes (for processTree re-fetching)
 
-// Get current ProcessTree (reactive to world changes)
-// We use a computed to get fresh ProcessTree after world.clear()
-const processTree = computed(() => {
-  worldVersion.value; // Depend on world version to re-fetch after clear()
-  return world.getProcessTree();
-});
+// Get current ProcessTree - use reactive ref that we update when World changes
+const processTree = ref(world.getProcessTree());
 
 // Stack management computed properties
 const canPop = computed(() => {
@@ -101,7 +96,6 @@ const activeSubprocessId = computed(() => {
 const treeVersion = computed(() => {
   // Depend on stackVersion to trigger updates when push/pop occurs
   stackVersion.value;
-  worldVersion.value; // Also depend on world version
   return processTree.value.getVersion();
 });
 
@@ -134,50 +128,60 @@ onMounted(() => {
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
   
-  // Subscribe to world changes to detect when clear() creates new ProcessTree
-  world.subscribe(() => {
-    console.log('[ActionsPanel] World changed, incrementing worldVersion');
-    worldVersion.value++;
-  });
-});
+  // Initialize node count
+  lastNodeCount.value = countNodes(processTree.value.root);
+  console.log('[ActionsPanel] Initial node count:', lastNodeCount.value);
 
-// Watch worldVersion to re-subscribe when ProcessTree changes (after world.clear())
-watch(
-  worldVersion,
-  () => {
-    console.log('[ActionsPanel] worldVersion changed, re-subscribing to ProcessTree');
+  // Subscribe to ProcessTree changes
+  unsubscribeTree = processTree.value.subscribe(() => {
+    console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
+    // Check if structure grew
+    const currentCount = countNodes(processTree.value.root);
+    const shouldScroll = currentCount > lastNodeCount.value;
+    lastNodeCount.value = currentCount;
+
+    stackVersion.value++;
+    console.log('[ActionsPanel] stackVersion incremented to:', stackVersion.value);
+
+    if (shouldScroll) {
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }
+  });
+  
+  // Subscribe to World changes to detect when clear() creates new ProcessTree
+  world.subscribe(() => {
+    console.log('[ActionsPanel] World changed, re-fetching ProcessTree');
     
     // Unsubscribe from old tree
     if (unsubscribeTree) {
       unsubscribeTree();
     }
     
-    // Get fresh ProcessTree reference
-    const tree = processTree.value;
-    
-    // Initialize node count
-    lastNodeCount.value = countNodes(tree.root);
+    // Update ref to point to new ProcessTree instance
+    processTree.value = world.getProcessTree();
+    lastNodeCount.value = countNodes(processTree.value.root);
     
     // Subscribe to new tree
-    unsubscribeTree = tree.subscribe(() => {
-      console.log('[ActionsPanel] ProcessTree changed! New root children:', tree.root.children.length);
-      // Check if structure grew
-      const currentCount = countNodes(tree.root);
+    unsubscribeTree = processTree.value.subscribe(() => {
+      console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
+      const currentCount = countNodes(processTree.value.root);
       const shouldScroll = currentCount > lastNodeCount.value;
       lastNodeCount.value = currentCount;
-
       stackVersion.value++;
-      console.log('[ActionsPanel] stackVersion incremented to:', stackVersion.value);
-
+      
       if (shouldScroll) {
         nextTick(() => {
           scrollToBottom();
         });
       }
     });
-  },
-  { immediate: true }  // Subscribe immediately on mount
-);
+    
+    // Force UI update
+    stackVersion.value++;
+  });
+});
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
