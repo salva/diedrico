@@ -29,7 +29,7 @@
     <!-- Process Tree -->
     <div class="process-tree" ref="treeContainer">
       <ProcessTreeNode
-        :node="processTree.root"
+        :node="processTree.value.root"
         :data-version="treeVersion"
         :selected-node-id="selectedNodeId"
         :active-subprocess-id="activeSubprocessId"
@@ -68,7 +68,6 @@ const emit = defineEmits<{
 // Injected dependencies
 const world = inject<World>('world')!;
 const commandStack = inject<CommandStack>('commandStack')!;
-const processTree = world.getProcessTree();
 
 // Selection store
 const selectionStore = useSelectionStore();
@@ -79,22 +78,30 @@ const selectedNodeId = ref<string | null>(null);
 const relatedActionIds = ref<Set<string>>(new Set());
 const stackVersion = ref(0); // Track stack changes
 const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
+const worldVersion = ref(0); // Track world changes (for processTree re-fetching)
+
+// Get current ProcessTree (reactive to world changes)
+const processTree = computed(() => {
+  worldVersion.value; // Depend on world version
+  return world.getProcessTree();
+});
 
 // Stack management computed properties
 const canPop = computed(() => {
   stackVersion.value; // Depend on stack changes
-  return processTree.getStackDepth() > 1;
+  return processTree.value.getStackDepth() > 1;
 });
 const activeSubprocessId = computed(() => {
   stackVersion.value; // Depend on stack changes
-  return processTree.getCurrentSubprocess().id;
+  return processTree.value.getCurrentSubprocess().id;
 });
 
 // Watch ProcessTree version for reactivity, triggered by stackVersion changes
 const treeVersion = computed(() => {
   // Depend on stackVersion to trigger updates when push/pop occurs
   stackVersion.value;
-  return processTree.getVersion();
+  worldVersion.value; // Also depend on world version
+  return processTree.value.getVersion();
 });
 
 // Keyboard shortcuts for stack management
@@ -120,28 +127,55 @@ function scrollToBottom() {
 }
 
 onMounted(() => {
+  console.log('[ActionsPanel] Mounted, processTree.value.root:', processTree.value.root);
+  console.log('[ActionsPanel] Root children count:', processTree.value.root.children.length);
+  
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
   
   // Initialize node count
-  lastNodeCount.value = countNodes(processTree.root);
+  lastNodeCount.value = countNodes(processTree.value.root);
+  console.log('[ActionsPanel] Initial node count:', lastNodeCount.value);
 
-  // Subscribe to ProcessTree changes
-  unsubscribeTree = processTree.subscribe(() => {
-    // Check if structure grew
-    const currentCount = countNodes(processTree.root);
-    const shouldScroll = currentCount > lastNodeCount.value;
-    lastNodeCount.value = currentCount;
-
-    stackVersion.value++;
-
-    if (shouldScroll) {
-      nextTick(() => {
-        scrollToBottom();
-      });
-    }
+  // Subscribe to world changes to re-subscribe to new ProcessTree instances
+  world.subscribe(() => {
+    console.log('[ActionsPanel] World changed, updating worldVersion to trigger processTree re-fetch');
+    worldVersion.value++;
   });
 });
+
+// Watch for processTree changes (when world.clear() creates new ProcessTree)
+watch(
+  processTree,
+  (newTree, oldTree) => {
+    console.log('[ActionsPanel] ProcessTree instance changed, re-subscribing');
+    
+    // Unsubscribe from old tree
+    if (unsubscribeTree) {
+      unsubscribeTree();
+    }
+    
+    // Subscribe to new tree
+    lastNodeCount.value = countNodes(newTree.root);
+    unsubscribeTree = newTree.subscribe(() => {
+      console.log('[ActionsPanel] ProcessTree changed! New root children:', newTree.root.children.length);
+      // Check if structure grew
+      const currentCount = countNodes(newTree.root);
+      const shouldScroll = currentCount > lastNodeCount.value;
+      lastNodeCount.value = currentCount;
+
+      stackVersion.value++;
+      console.log('[ActionsPanel] stackVersion incremented to:', stackVersion.value);
+
+      if (shouldScroll) {
+        nextTick(() => {
+          scrollToBottom();
+        });
+      }
+    });
+  },
+  { immediate: true }  // Subscribe immediately on mount
+);
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
@@ -173,7 +207,7 @@ function findRelatedActions(selectedIds: string[]): void {
   const selectedIdSet = new Set(selectedIds);
 
   // Get all actions from process tree
-  const allActions = processTree.getAllActions();
+  const allActions = processTree.value.getAllActions();
 
   // Check each action's elementId and dependencies (Phase 92)
   for (const action of allActions) {
