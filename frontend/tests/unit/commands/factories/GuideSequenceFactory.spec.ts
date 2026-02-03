@@ -11,6 +11,7 @@ import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddF
 import { World } from '../../../../src/domain/world/World';
 import { Vector3 } from 'three';
 import { Guide2D, SiblingGuide2D } from '../../../../src/domain/world/Guide';
+import { createTestWorld } from '../../../helpers/worldHelpers';
 
 describe('GuideSequenceFactory', () => {
   let world: World;
