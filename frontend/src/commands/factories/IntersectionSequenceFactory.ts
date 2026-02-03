@@ -281,6 +281,28 @@ export class IntersectionSequenceFactory {
     intersectionData: IntersectionData,
     world: World
   ): IntersectionResult {
+    // Validate parameters first, before creating ActionGroup
+    switch (intersectionData.type) {
+      case 'line-circle': {
+        // For line-circle, we require explicit lineId, circleId, and index
+        // (not just element1Id/element2Id as fallbacks)
+        if (!intersectionData.lineId || !intersectionData.circleId || 
+            intersectionData.index === undefined || intersectionData.index === null) {
+          throw new Error('Line-circle intersection requires lineId, circleId, and index');
+        }
+        break;
+      }
+      
+      case 'circle-circle': {
+        const index = intersectionData.index;
+        
+        if (index === undefined || index === null) {
+          throw new Error('Circle-circle intersection requires index');
+        }
+        break;
+      }
+    }
+    
     // Create ActionGroup for this operation (same pattern as tools)
     const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const group = createActionGroup(groupId);
@@ -300,7 +322,13 @@ export class IntersectionSequenceFactory {
       case 'line-circle': {
         const lineId = intersectionData.lineId || intersectionData.element1Id;
         const circleId = intersectionData.circleId || intersectionData.element2Id;
-        const index = intersectionData.index ?? 0;
+        const index = intersectionData.index;
+        
+        // Validate required parameters
+        if (!lineId || !circleId || index === undefined || index === null) {
+          throw new Error('Line-circle intersection requires lineId, circleId, and index');
+        }
+        
         return this.createLineCircleIntersection(
           cmd,
           planeId,
@@ -313,7 +341,13 @@ export class IntersectionSequenceFactory {
       }
 
       case 'circle-circle': {
-        const index = intersectionData.index ?? 0;
+        const index = intersectionData.index;
+        
+        // Validate required parameter
+        if (index === undefined || index === null) {
+          throw new Error('Circle-circle intersection requires index');
+        }
+        
         return this.createCircleCircleIntersection(
           cmd,
           planeId,
