@@ -324,8 +324,25 @@ Note that completing these tasks may require asking the user for additional info
 
 ## ALREADY PLANNED
 
-* [x] **Matrix Serialization Optimization (Phase 94)** - 📋 PLANNED (Feb 3, 2026)
+* [x] **Matrix Serialization Optimization (Phase 94)** - ✅ COMPLETE (Feb 3, 2026)
+  - **Status**: Implementation complete. Serialization format fix discovered and implemented during Phase 94 execution.
   - **User Requirement**: "When serializing planes and other elements with fixed transformation matrices, do not save inverse matrices. For instance, if we have a planeToPaper, we don't need a paperToPlane. The same happens when creating those objects, inverse matrices can be omitted."
+  - **Implementation Summary**:
+    - Extract shared matrix computation helpers to ProjectionPlane base class (commit b13ff51, 3a31c04)
+    - Rename BaseProjectionPlane → FixedProjectionPlane for clarity (commit b13ff51)
+    - Update AddProjectionPlaneFixedOp constructor: 7 params → 5 params (removed threeDToPlane, orientation)
+    - Fix deserialization: Ignore old threeDToPlane field, compute backward matrices on-demand (commit a63126b)
+    - **Critical bug discovered and fixed**: Operations were serializing element IDs but deserialization was ignoring them (commit 73ae813)
+      - Operations like AddFreePoint2DOp serialized `pointId: "point2d_8"` but created `point2d_5` on replay
+      - Later operations referencing `point2d_8` failed with "Point does not exist on this plane"
+      - Fixed by restoring `operation.outputs = { elementId: serializedId }` before apply() for ALL element-creating operations
+    - Result: Files now load correctly, element references preserved across serialization/deserialization
+  - **Commits**:
+    - b13ff51: Extract computeBackward2DMatrix() helper, rename BaseProjectionPlane → FixedProjectionPlane
+    - 3a31c04: Extract computeBackward3DMatrix() helper to ProjectionPlane base
+    - a63126b: Fix deserialization for AddProjectionPlaneFixed (5 params, ignore old threeDToPlane)
+    - faec794: Debug logging for deserialization (helped diagnose ID mismatch bug)
+    - 73ae813: **Critical fix**: Restore element IDs during deserialization for all operations
   - **Problem**: Current implementation stores both forward and derived transformation matrices
     - ProjectionPlaneRealization2D: planeToPaper2D (9 numbers) + paperToPlane2D (9 numbers) = 18 numbers
     - paperToPlane2D is true inverse of planeToPaper2D (can compute on-demand)
