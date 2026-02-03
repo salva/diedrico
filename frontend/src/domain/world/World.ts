@@ -300,6 +300,8 @@ export class World {
     return this.nextId++;
   }
 
+
+
   /**
    * Phase 46: Generate unique projection plane ID
    * Uses shared nextId counter to ensure global uniqueness

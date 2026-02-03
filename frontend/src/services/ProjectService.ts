@@ -72,6 +72,7 @@ export interface ProjectData {
   schemaVersion: string;
   created: string;
   modified: string;
+  nextElementId: number;  // World.nextId counter for element ID generation
   commands: SerializedCommand[];
 }
 
@@ -128,6 +129,7 @@ export class ProjectService {
       schemaVersion: this.SCHEMA_VERSION,
       created: now,
       modified: now,
+      nextElementId: (commandStack as any).world.getNextId(),  // Save ID counter
       commands: serializedCommands
     };
   }
@@ -143,6 +145,12 @@ export class ProjectService {
     
     // Clear command stack only (world should be fresh)
     commandStack.clear();
+    
+    // Restore World.nextId counter from saved value
+    if (data.nextElementId !== undefined) {
+      (world as any).nextId = data.nextElementId;
+      console.log(`[ProjectService] Restored World.nextId to ${data.nextElementId}`);
+    }
     
     console.log(`[ProjectService] Deserializing ${data.commands.length} commands`);
     
