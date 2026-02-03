@@ -29,7 +29,8 @@
     <!-- Process Tree -->
     <div class="process-tree" ref="treeContainer">
       <ProcessTreeNode
-        :node="processTree.value.root"
+        v-if="processTree"
+        :node="processTree.root"
         :data-version="treeVersion"
         :selected-node-id="selectedNodeId"
         :active-subprocess-id="activeSubprocessId"
@@ -80,7 +81,9 @@ const stackVersion = ref(0); // Track stack changes
 const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
 
 // Get current ProcessTree - use reactive ref that we update when World changes
-const processTree = ref(world.getProcessTree());
+const initialTree = world.getProcessTree();
+console.log('[ActionsPanel] Initial processTree:', initialTree);
+const processTree = ref(initialTree);
 
 // Stack management computed properties
 const canPop = computed(() => {
