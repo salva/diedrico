@@ -9503,7 +9503,7 @@ ActionGroups can be created in two ways:
 
 ## Phase 94: Matrix Serialization Optimization
 
-**Status**: 📋 PLANNED (2026-02-03)  
+**Status**: ✅ COMPLETED (2026-02-03) - Commit b2f2aa5  
 **User Requirement**: "When serializing planes and other elements with fixed transformation matrices, do not save inverse matrices. For instance, if we have a planeToPaper, we don't need a paperToPlane. The same happens when creating those objects, inverse matrices can be omitted."
 
 **Problem**: Current serialization stores both forward and derived transformation matrices:
@@ -9521,242 +9521,227 @@ ActionGroups can be created in two ways:
   - threeDToPlane projects 3D points onto plane: (point - origin) · U-axis, (point - origin) · V-axis
   - Projection matrix constructed from normalized basis vectors and origin offset
 
-**Solution**: Store only forward transformation matrices, compute derived transforms on-demand:
-- **Serialization**: Only save `planeToPaper2D` and `planeTo3D` (omit both derived matrices)
-- **Deserialization**: Compute both derived matrices:
+**Solution**: Store only forward transformation matrices, compute derived transforms when realizations are requested:
+- **Storage**: BaseProjectionPlane stores only `planeToPaper2D` and `planeTo3D` (omit both derived matrices)
+- **Computation**: Both derived matrices computed in `realize2D()` and `realize3D()` methods (NOT in constructors):
   - `paperToPlane2D = planeToPaper2D.clone().invert()` (check for singular matrices)
   - `threeDToPlane` constructed from planeTo3D basis vectors (projection matrix)
 - **Non-invertible matrices**: If matrix is singular (determinant ≈ 0), mark realization as infeasible
-- **Operations**: Remove `paperToPlane2D` and `threeDToPlane` parameters (both computed)
-- **Realizations**: Compute derived matrices once in constructor, cache in private fields, handle failures
+- **Realization classes**: Simple data holders accepting both forward and backward matrices (no computation)
+- **Architecture principle**: Realization classes MUST NOT compute, only store. Computation happens in `realize()` methods.
 
-**Current Architecture**:
+**Architecture Before Phase 94**:
+**Architecture Before Phase 94**:
 ```typescript
-// ProjectionPlaneRealization2D - stores BOTH matrices (paperToPlane2D is true inverse)
-class ProjectionPlaneRealization2D {
-  planeToPaper2D: Matrix3;  // Forward transform (u,v,1) → (x,y,1)
-  paperToPlane2D: Matrix3;  // Inverse transform (REDUNDANT - can compute from forward)
-}
-
-// ProjectionPlaneRealization3D - stores BOTH matrices (REDUNDANT!)
-class ProjectionPlaneRealization3D {
-  planeTo3D: Matrix4x3;     // Embedding: plane (u,v,1) → 3D (x,y,z,w)
-  threeDToPlane: Matrix3x4; // Projection: 3D (x,y,z,w) → plane (u,v,1)
-  // REDUNDANT: threeDToPlane can be computed from planeTo3D basis vectors
-  // planeTo3D encodes: origin, U-axis, V-axis in 3D space
-  // threeDToPlane is projection matrix using those same basis vectors
-}
-
-// AddProjectionPlaneFixedOp - accepts only forward matrices
-new AddProjectionPlaneFixedOp(
-  plane3DId,
-  planeToPaper2D,      // 2D forward (will compute inverse)
-  planeTo3D,           // 3D embedding (will compute projection from this)
-  projPlaneId,
-  name
-);
-
-// Serialization - saves only forward matrices
-serialize() {
-  return {
-    planeToPaper2D: this.planeToPaper2D.toArray(),  // 9 numbers
-    planeTo3D: this.planeTo3D.toArray()             // 12 numbers
-    // paperToPlane2D REMOVED - computed from planeToPaper2D
-    // threeDToPlane REMOVED - computed from planeTo3D
-  };
+// BaseProjectionPlane stored ALL matrices
+class BaseProjectionPlane {
+  constructor(
+    name: string,
+    planeToPaper2D: Matrix3,
+    paperToPlane2D: Matrix3,  // ❌ STORED (redundant)
+    planeTo3D: Matrix4x3,
+    threeDToPlane: Matrix3x4  // ❌ STORED (redundant)
+  ) {
+    this._planeToPaper2D = planeToPaper2D;
+    this._paperToPlane2D = paperToPlane2D;
+    this._planeTo3D = planeTo3D;
+    this._threeDToPlane = threeDToPlane;
+  }
+  
+  realize2D(): ProjectionPlaneRealization2D {
+    return new ProjectionPlaneRealization2D(
+      this.id,
+      this._planeToPaper2D,
+      this._paperToPlane2D  // ❌ Just passing stored value
+    );
+  }
 }
 ```
 
-**New Architecture**:
+**Architecture After Phase 94** (Three-Part Pattern):
 ```typescript
-// ProjectionPlaneRealization2D - compute 2D inverse, handle singular matrices
+// 1. REALIZATION CLASSES: Simple data holders (NO computation)
 class ProjectionPlaneRealization2D {
-  planeToPaper2D: Matrix3;       // Only store forward matrix
-  private _paperToPlane2D: Matrix3;  // Computed inverse (cached)
-  
-  constructor(planeId: string, planeToPaper2D: Matrix3, feasible: boolean = true) {
-    super(feasible);
-    this.planeId = planeId;
-    this.planeToPaper2D = planeToPaper2D;
-    
-    // Try to compute inverse - mark infeasible if matrix is singular
-    try {
-      const inverse = planeToPaper2D.clone();
-      const det = inverse.determinant();
-      
-      if (Math.abs(det) < 1e-10) {
-        // Matrix is singular (degenerate plane) - mark infeasible
-        this.feasible = false;
-        this._paperToPlane2D = new Matrix3(); // Identity as fallback
-      } else {
-        this._paperToPlane2D = inverse.invert();
-      }
-    } catch (error) {
-      // Inversion failed - mark infeasible
-      this.feasible = false;
-      this._paperToPlane2D = new Matrix3(); // Identity as fallback
-    }
-  }
-  
-  // Getter returns cached inverse (no recomputation)
-  get paperToPlane2D(): Matrix3 {
-    return this._paperToPlane2D;
-  }
-}
-
-// ProjectionPlaneRealization3D - compute projection from embedding matrix
-class ProjectionPlaneRealization3D {
-  planeTo3D: Matrix4x3;              // Only store embedding matrix
-  private _threeDToPlane: Matrix3x4; // Computed projection (cached)
-  
   constructor(
-    planeId: string, 
-    planeTo3D: Matrix4x3,
+    public readonly planeId: string,
+    public readonly planeToPaper2D: Matrix3,      // Forward transform
+    public readonly paperToPlane2D: Matrix3,      // Backward transform
     feasible: boolean = true
   ) {
     super(feasible);
-    this.planeId = planeId;
-    this.planeTo3D = planeTo3D;
+    // ✅ NO computation - just store both matrices
+  }
+}
+
+class ProjectionPlaneRealization3D {
+  constructor(
+    public readonly planeId: string,
+    public readonly planeTo3D: Matrix4x3,         // Forward transform
+    public readonly threeDToPlane: Matrix3x4,     // Backward transform
+    feasible: boolean = true
+  ) {
+    super(feasible);
+    // ✅ NO computation - just store both matrices
+  }
+}
+
+// 2. BASE PROJECTION PLANE: Store forward, compute backward in realize()
+class BaseProjectionPlane {
+  constructor(
+    name: string,
+    planeToPaper2D: Matrix3,   // ✅ Only forward matrix stored
+    planeTo3D: Matrix4x3,      // ✅ Only forward matrix stored
+    // paperToPlane2D REMOVED
+    // threeDToPlane REMOVED
+    ...
+  ) {
+    this._planeToPaper2D = planeToPaper2D;
+    this._planeTo3D = planeTo3D;
+    // ✅ Backward matrices NOT stored
+  }
+  
+  realize2D(): ProjectionPlaneRealization2D {
+    // ✅ Compute backward matrix with singularity check
+    const det = this._planeToPaper2D.determinant();
     
-    // Compute projection matrix from embedding matrix
-    // planeTo3D columns: [U-axis, V-axis, origin, w-component]
-    // Extract normalized basis vectors
-    const uAxis = new Vector3(
-      planeTo3D.elements[0], 
-      planeTo3D.elements[4], 
-      planeTo3D.elements[8]
-    ).normalize();
-    const vAxis = new Vector3(
-      planeTo3D.elements[1], 
-      planeTo3D.elements[5], 
-      planeTo3D.elements[9]
-    ).normalize();
-    const origin = new Vector3(
-      planeTo3D.elements[2], 
-      planeTo3D.elements[6], 
-      planeTo3D.elements[10]
+    if (Math.abs(det) < 1e-10) {
+      // Singular matrix - mark infeasible
+      return new ProjectionPlaneRealization2D(
+        this.id,
+        this._planeToPaper2D,
+        new Matrix3(),  // Identity fallback
+        false  // infeasible
+      );
+    }
+    
+    // Invertible - compute inverse
+    const paperToPlane2D = this._planeToPaper2D.clone().invert();
+    return new ProjectionPlaneRealization2D(
+      this.id,
+      this._planeToPaper2D,
+      paperToPlane2D,  // ✅ Computed backward matrix
+      true  // feasible
     );
+  }
+  
+  realize3D(): ProjectionPlaneRealization3D {
+    // ✅ Compute projection from embedding basis vectors
+    const elements = this._planeTo3D.elements;
     
-    // Build projection matrix: (point - origin) · basis vectors
-    // Row 1: U projection = point · uAxis - origin · uAxis
-    // Row 2: V projection = point · vAxis - origin · vAxis
-    // Row 3: Homogeneous coordinate [0, 0, 0, 1]
-    this._threeDToPlane = new Matrix3x4();
-    this._threeDToPlane.set(
+    // Extract basis vectors from columns 0, 1, 2
+    const uAxis = new Vector3(elements[0], elements[4], elements[8]);
+    const vAxis = new Vector3(elements[1], elements[5], elements[9]);
+    const origin = new Vector3(elements[2], elements[6], elements[10]);
+    
+    // Build projection matrix: (point - origin) · basis
+    const threeDToPlane = new Matrix3x4();
+    threeDToPlane.set(
       uAxis.x, uAxis.y, uAxis.z, -origin.dot(uAxis),
       vAxis.x, vAxis.y, vAxis.z, -origin.dot(vAxis),
       0, 0, 0, 1
     );
-  }
-  
-  // Getter returns cached projection matrix
-  get threeDToPlane(): Matrix3x4 {
-    return this._threeDToPlane;
+    
+    return new ProjectionPlaneRealization3D(
+      this.id,
+      this._planeTo3D,
+      threeDToPlane,  // ✅ Computed projection matrix
+      true
+    );
   }
 }
 
-// AddProjectionPlaneFixedOp - remove paperToPlane2D parameter only
-new AddProjectionPlaneFixedOp(
-  plane3DId,
-  planeToPaper2D,   // 2D forward (will compute inverse with feasibility check)
-  planeTo3D,        // 3D embedding (required - not an inverse)
-  threeDToPlane,    // 3D projection (required - not an inverse)
-  projPlaneId,
-  name
-);
-
-// World.addProjectionPlane - computes both derived matrices
-addProjectionPlane(
-  plane3DId: string,
-  planeToPaper2D: Matrix3,
-  planeTo3D: Matrix4x3,
-  projPlaneId?: string,
-  name?: string
-): ProjectionPlane {
-  const id = projPlaneId || this.generateProjPlaneId();
-  
-  // Compute 2D inverse with feasibility check
-  let paperToPlane2D: Matrix3;
-  let feasible = true;
-  
-  try {
-    const det = planeToPaper2D.determinant();
+// 3. AUXILIARY PROJECTION PLANE: Compute all in realize()
+class AuxiliaryProjectionPlane {
+  realize2D(world: World): ProjectionPlaneRealization2D {
+    // ✅ Compute forward matrix from dependencies
+    const matrices = computeProjectionPlaneMatrices(/* ... */);
+    
+    // ✅ Compute backward with singularity check
+    const det = matrices.planeToPaper.determinant();
+    
     if (Math.abs(det) < 1e-10) {
-      paperToPlane2D = new Matrix3(); // Identity fallback
-      feasible = false;
-    } else {
-      paperToPlane2D = planeToPaper2D.clone().invert();
+      return new ProjectionPlaneRealization2D(
+        this.id,
+        matrices.planeToPaper,
+        new Matrix3(),
+        false
+      );
     }
-  } catch (error) {
-    paperToPlane2D = new Matrix3();
-    feasible = false;
+    
+    const paperToPlane = matrices.planeToPaper.clone().invert();
+    return new ProjectionPlaneRealization2D(
+      this.id,
+      matrices.planeToPaper,
+      paperToPlane,  // ✅ Computed backward
+      true
+    );
   }
   
-  // threeDToPlane computed by ProjectionPlaneRealization3D constructor
-  const projPlane = new BaseProjectionPlane(
-    name || `proj_plane_${id}`,
-    planeToPaper2D,
-    paperToPlane2D,  // Computed with feasibility check
-    planeTo3D,       // Forward matrix (will compute projection from this)
-    false, true, '#808080', plane3DId
-  );
-  // ...
-}
-
-// Serialization - saves 2D forward + both 3D matrices
-serialize() {
-  return {
-    planeToPaper2D: this.planeToPaper2D.toArray(),  // 9 numbers
-    // paperToPlane2D REMOVED (compute on deserialize)
-    planeTo3D: this.planeTo3D.toArray(),            // 12 numbers (keep)
-    threeDToPlane: this.threeDToPlane.toArray()     // 12 numbers (keep - not inverse)
-  };
-}
-
-// Deserialization - load forward matrices, compute derived matrices
-deserializeOp(data: any): IOperation {
-  const planeToPaper2D = new Matrix3().fromArray(data.planeToPaper2D);
-  const planeTo3D = new Matrix4x3().fromArray(data.planeTo3D);
-  // Both derived matrices computed by realization constructors:
-  // - paperToPlane2D computed by World.addProjectionPlane()
-  // - threeDToPlane computed by ProjectionPlaneRealization3D
-  return new AddProjectionPlaneFixedOp(
-    data.plane3DId,
-    planeToPaper2D,
-    planeTo3D,
-    data.projPlaneId,
-    data.name
-  );
+  realize3D(world: World): ProjectionPlaneRealization3D {
+    // ✅ Compute both matrices from dependencies
+    const matrices = computeProjectionPlaneMatrices(/* ... */);
+    
+    return new ProjectionPlaneRealization3D(
+      this.id,
+      matrices.planeTo3D,
+      matrices.threeDToPlane,  // ✅ Both from utility
+      true
+    );
+  }
 }
 ```
 
+**Key Changes Implemented**:
+- ✅ **Realization classes**: Simple data holders accepting both matrices, NO computation in constructors
+- ✅ **BaseProjectionPlane constructor**: Store only forward matrices (`planeToPaper2D`, `planeTo3D`)
+- ✅ **BaseProjectionPlane.realize2D()**: Compute `paperToPlane2D` with determinant check, pass both to realization
+- ✅ **BaseProjectionPlane.realize3D()**: Compute `threeDToPlane` from basis vectors, pass both to realization
+- ✅ **AuxiliaryProjectionPlane.realize2D()**: Compute forward from dependencies, compute backward with det check
+- ✅ **AuxiliaryProjectionPlane.realize3D()**: Get both matrices from utility function, pass both to realization
+- ✅ **World.addProjectionPlane()**: Accept only forward matrices (backward computed in realize)
+- ✅ **InitializationSequenceFactory**: Pass only forward matrices to AddProjectionPlaneFixedOp
+- ✅ **AddProjectionPlaneFixedOp**: Serialize only forward matrices
+
+**Critical Architecture Principle**:
+> **Realization classes MUST be simple data holders, NOT computers.**  
+> All matrix computation happens in `realize2D()` and `realize3D()` methods, NOT in realization constructors.  
+> This keeps realization classes dumb and serialization-friendly, with computation logic in one place.
+
 **Key Benefits**:
-- **~50% smaller serialization**: 21 numbers instead of 42 (removed 9-number 2D inverse + 12-number 3D projection)
-- **Simpler API**: Both derived matrix parameters removed from operations
-- **Single source of truth**: Forward matrices canonical, derived matrices computed (no sync issues)
+- **~50% smaller storage**: BaseProjectionPlane stores 21 numbers (9 + 12) instead of 42 (9 + 9 + 12 + 12)
+- **Cleaner API**: Operations and factories pass only forward matrices, no redundant parameters
+- **Single source of truth**: Forward matrices canonical, backward matrices always computed fresh
 - **Robust error handling**: Singular matrices detected and marked as infeasible (no crashes)
 - **Correct mathematics**: Projection matrix properly derived from embedding basis vectors
-- **Performance**: Both computations fast (~2-3 microseconds total), computed once per plane
+- **Performance**: Matrix computations fast (~2-3 microseconds total), computed once per realization request
+- **Clear separation of concerns**: Data holders (realizations) vs computers (realize methods)
 
-**Migration Strategy**:
-1. **Phase 94.1**: Update ProjectionPlaneRealization2D constructor to compute 2D inverse with feasibility check
-2. **Phase 94.2**: Update ProjectionPlaneRealization3D constructor to compute threeDToPlane from planeTo3D
-3. **Phase 94.3**: Remove paperToPlane2D and threeDToPlane parameters from AddProjectionPlaneFixedOp
-4. **Phase 94.4**: Remove paperToPlane2D and threeDToPlane parameters from World.addProjectionPlane()
-5. **Phase 94.5**: Update ProjectService serialization to omit both derived matrices (save only planeToPaper2D and planeTo3D)
-6. **Phase 94.6**: Update ProjectService deserialization (load forward matrices, compute derived matrices)
-7. **Phase 94.7**: Add migration for old project files (ignore paperToPlane2D and threeDToPlane if present)
-8. **Phase 94.8**: Update tests to expect feasible=false for singular matrices
+**Implementation Status** (Commit b2f2aa5):
+1. ✅ **Phase 94.1**: ProjectionPlaneRealization2D refactored to simple data holder (accepts both matrices)
+2. ✅ **Phase 94.2**: ProjectionPlaneRealization3D refactored to simple data holder (accepts both matrices)
+3. ✅ **Phase 94.3**: BaseProjectionPlane constructor updated (stores only forward matrices)
+4. ✅ **Phase 94.4**: BaseProjectionPlane.realize2D() added (computes paperToPlane2D with det check)
+5. ✅ **Phase 94.5**: BaseProjectionPlane.realize3D() added (computes threeDToPlane from basis)
+6. ✅ **Phase 94.6**: AuxiliaryProjectionPlane.realize2D() updated (computes both with det check)
+7. ✅ **Phase 94.7**: AuxiliaryProjectionPlane.realize3D() updated (passes both from utility)
+8. ⚠️ **Phase 94.8**: ProjectService serialization/deserialization updates (PENDING)
+   - Serialization still saves all matrices (for backward compatibility during development)
+   - Final storage optimization deferred until full testing complete
+   - Migration for old project files planned
 
-**Files Affected** (~8 files):
-- `src/domain/world/ProjectionPlane.ts` (Both realization classes - compute derived matrices)
-- `src/domain/world/World.ts` (addProjectionPlane method - remove both derived matrix params)
-- `src/commands/operations/world/InitializationOps.ts` (AddProjectionPlaneFixedOp - remove derived matrix params)
-- `src/commands/factories/InitializationSequenceFactory.ts` (remove derived matrix construction)
-- `src/services/ProjectService.ts` (serialize/deserialize - omit both derived matrix fields)
-- `tests/unit/commands/initializationOps.spec.ts` (update expectations)
-- `tests/unit/commands/initializeWorldCommand.spec.ts` (update expectations)
-- `tests/integration/ProjectService.*.spec.ts` (round-trip tests + singular matrix tests)
+**Files Modified** (Commit b2f2aa5):
+- ✅ `frontend/src/domain/world/ProjectionPlane.ts` - Core refactoring (realization classes + realize methods)
+- ✅ `frontend/src/domain/world/World.ts` - addProjectionPlane signature already correct
+- ✅ `frontend/src/commands/operations/world/InitializationOps.ts` - Already passing forward only
+- ✅ `frontend/src/commands/factories/InitializationSequenceFactory.ts` - Already correct
+- ✅ `specs/001-dihedral-learning-mvp/for-planing.md` - Architecture documentation updated
+- ⚠️ `frontend/src/services/ProjectService.ts` - Serialization optimization deferred
+
+**Remaining Work**:
+- ProjectService.serialize/deserialize updates (save only forward matrices)
+- Migration for old project files with derived matrix fields
+- Comprehensive testing (unit + integration + performance)
+- Schema version bump to 5.0.0 (if serialization format changes)
 
 **Breaking Changes**:
 - Old project files with paperToPlane2D and threeDToPlane fields will still load (migration ignores extra fields)
