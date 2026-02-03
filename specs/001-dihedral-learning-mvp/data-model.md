@@ -9522,7 +9522,7 @@ ActionGroups can be created in two ways:
   - Projection matrix constructed from normalized basis vectors and origin offset
 
 **Solution**: Store only forward transformation matrices, compute derived transforms when realizations are requested:
-- **Storage**: BaseProjectionPlane stores only `planeToPaper2D` and `planeTo3D` (omit both derived matrices)
+- **Storage**: FixedProjectionPlane stores only `planeToPaper2D` and `planeTo3D` (omit both derived matrices)
 - **Computation**: Both derived matrices computed in `realize2D()` and `realize3D()` methods (NOT in constructors):
   - `paperToPlane2D = planeToPaper2D.clone().invert()` (check for singular matrices)
   - `threeDToPlane` constructed from planeTo3D basis vectors (projection matrix)
@@ -9533,8 +9533,8 @@ ActionGroups can be created in two ways:
 **Architecture Before Phase 94**:
 **Architecture Before Phase 94**:
 ```typescript
-// BaseProjectionPlane stored ALL matrices
-class BaseProjectionPlane {
+// FixedProjectionPlane stored ALL matrices
+class FixedProjectionPlane {
   constructor(
     name: string,
     planeToPaper2D: Matrix3,
@@ -9585,8 +9585,8 @@ class ProjectionPlaneRealization3D {
   }
 }
 
-// 2. BASE PROJECTION PLANE: Store forward, compute backward in realize()
-class BaseProjectionPlane {
+// 2. FIXED PROJECTION PLANE: Store forward, compute backward in realize()
+class FixedProjectionPlane {
   constructor(
     name: string,
     planeToPaper2D: Matrix3,   // ✅ Only forward matrix stored
@@ -9693,9 +9693,9 @@ class AuxiliaryProjectionPlane {
 
 **Key Changes Implemented**:
 - ✅ **Realization classes**: Simple data holders accepting both matrices, NO computation in constructors
-- ✅ **BaseProjectionPlane constructor**: Store only forward matrices (`planeToPaper2D`, `planeTo3D`)
-- ✅ **BaseProjectionPlane.realize2D()**: Compute `paperToPlane2D` with determinant check, pass both to realization
-- ✅ **BaseProjectionPlane.realize3D()**: Compute `threeDToPlane` from basis vectors, pass both to realization
+- ✅ **FixedProjectionPlane constructor**: Store only forward matrices (`planeToPaper2D`, `planeTo3D`)
+- ✅ **FixedProjectionPlane.realize2D()**: Compute `paperToPlane2D` with determinant check, pass both to realization
+- ✅ **FixedProjectionPlane.realize3D()**: Compute `threeDToPlane` from basis vectors, pass both to realization
 - ✅ **AuxiliaryProjectionPlane.realize2D()**: Compute forward from dependencies, compute backward with det check
 - ✅ **AuxiliaryProjectionPlane.realize3D()**: Get both matrices from utility function, pass both to realization
 - ✅ **World.addProjectionPlane()**: Accept only forward matrices (backward computed in realize)
@@ -9708,20 +9708,21 @@ class AuxiliaryProjectionPlane {
 > This keeps realization classes dumb and serialization-friendly, with computation logic in one place.
 
 **Key Benefits**:
-- **~50% smaller storage**: BaseProjectionPlane stores 21 numbers (9 + 12) instead of 42 (9 + 9 + 12 + 12)
+- **~50% smaller storage**: FixedProjectionPlane stores 21 numbers (9 + 12) instead of 42 (9 + 9 + 12 + 12)
 - **Cleaner API**: Operations and factories pass only forward matrices, no redundant parameters
 - **Single source of truth**: Forward matrices canonical, backward matrices always computed fresh
 - **Robust error handling**: Singular matrices detected and marked as infeasible (no crashes)
 - **Correct mathematics**: Projection matrix properly derived from embedding basis vectors
 - **Performance**: Matrix computations fast (~2-3 microseconds total), computed once per realization request
 - **Clear separation of concerns**: Data holders (realizations) vs computers (realize methods)
+- **No code duplication**: Backward matrix computation extracted to shared `ProjectionPlane.computeBackward2DMatrix()` helper
 
-**Implementation Status** (Commit b2f2aa5):
+**Implementation Status** (Commits b2f2aa5, b13ff51):
 1. ✅ **Phase 94.1**: ProjectionPlaneRealization2D refactored to simple data holder (accepts both matrices)
 2. ✅ **Phase 94.2**: ProjectionPlaneRealization3D refactored to simple data holder (accepts both matrices)
-3. ✅ **Phase 94.3**: BaseProjectionPlane constructor updated (stores only forward matrices)
-4. ✅ **Phase 94.4**: BaseProjectionPlane.realize2D() added (computes paperToPlane2D with det check)
-5. ✅ **Phase 94.5**: BaseProjectionPlane.realize3D() added (computes threeDToPlane from basis)
+3. ✅ **Phase 94.3**: FixedProjectionPlane constructor updated (stores only forward matrices)
+4. ✅ **Phase 94.4**: FixedProjectionPlane.realize2D() added (computes paperToPlane2D with det check)
+5. ✅ **Phase 94.5**: FixedProjectionPlane.realize3D() added (computes threeDToPlane from basis)
 6. ✅ **Phase 94.6**: AuxiliaryProjectionPlane.realize2D() updated (computes both with det check)
 7. ✅ **Phase 94.7**: AuxiliaryProjectionPlane.realize3D() updated (passes both from utility)
 8. ⚠️ **Phase 94.8**: ProjectService serialization/deserialization updates (PENDING)
@@ -16056,7 +16057,7 @@ function computeAuxiliaryPlaneLayout(world: World): { x: number; y: number } {
 ```typescript
 /**
  * ProjectionPlaneRealization3D - Result of realize3D() computation
- * Shared by both BaseProjectionPlane (fixed) and AuxiliaryProjectionPlane (parametric)
+ * Shared by both FixedProjectionPlane (fixed) and AuxiliaryProjectionPlane (parametric)
  */
 export class ProjectionPlaneRealization3D {
   readonly planeId: string;
@@ -16080,7 +16081,7 @@ export class ProjectionPlaneRealization3D {
  * 
  * ARCHITECTURAL PRINCIPLE:
  * - ALL projection planes implement realize3D() → ProjectionPlaneRealization3D
- * - BaseProjectionPlane (P_H, P_V): Returns pre-computed constant matrices
+ * - FixedProjectionPlane (P_H, P_V): Returns pre-computed constant matrices
  * - AuxiliaryProjectionPlane: Computes matrices from trace dependencies
  * - Same realization type ensures uniform treatment in rendering and world queries
  */
@@ -16173,14 +16174,14 @@ export class BaseProjectionPlane extends ProjectionPlane {
  * AuxiliaryProjectionPlane - User-created planes with computed matrices
  * 
  * CRITICAL DISTINCTION:
- * - BaseProjectionPlane (P_H, P_V): Bootstrap only, pre-computed matrices, no dependencies
+ * - FixedProjectionPlane (P_H, P_V): Bootstrap only, pre-computed matrices, no dependencies
  * - AuxiliaryProjectionPlane: User-created, matrices computed via realize3D() from traces
  * 
  * Realization Pattern (like Point3DFromProjections, Plane3DFromTraces):
  * - Constructor stores trace IDs (dependencies), NOT matrices
  * - realize3D(world) computes matrices on demand from current trace positions
  * - Matrices recalculate automatically when traces move (parametric behavior)
- * - Returns ProjectionPlaneRealization3D (SAME TYPE as BaseProjectionPlane)
+ * - Returns ProjectionPlaneRealization3D (SAME TYPE as FixedProjectionPlane)
  */
 export class AuxiliaryProjectionPlane extends ProjectionPlane {
   readonly t1HingeTraceId: string;
