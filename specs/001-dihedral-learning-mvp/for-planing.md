@@ -259,11 +259,16 @@ Note that completing these tasks may require asking the user for additional info
        - Update: All calling code to check `realization.feasible` instead of `realization === null`
        - Update unit tests: Expect errors for corruption, check `feasible: false` for geometric failures
        - Deliverable: Point.ts, Line.ts, Circle.ts, Segment.ts with fail-fast + feasible flag pattern
-    4. **Phase 76.4 - ProcessTree Null Handling** (T1716-T1718: 3 tasks)
-       - Add assertions that children are not null before accessing properties
-       - Pattern: `assert(child !== null, "Tombstone encountered - should be filtered")`
-       - Fix traversal methods to skip tombstones properly
-       - Deliverable: ProcessTree.ts with explicit null checks
+    4. **Phase 76.4 - ProcessTree Null Handling** (SKIP - Already Correct)
+       - **Decision**: ProcessTree null handling is ARCHITECTURALLY CORRECT, not defensive
+       - **Reason**: `ActionGroup.children: (ActionNode | null)[]` uses TOMBSTONE PATTERN by design
+       - **Evidence**: 
+         - `child !== null` checks are LEGITIMATE (tombstones are intentional architecture)
+         - `child?.elementId` and `child?.id` are CORRECT (checking tombstones before access)
+         - traverseActions() explicitly skips tombstones: `if (action !== null) callback(action)`
+       - **Phase 76 Principle**: Optional chaining is CORRECT when value can legitimately be null/undefined
+       - **No changes needed**: ProcessTree already implements fail-fast for corruption (throws errors for invalid indices/groups)
+       - Original plan was to add assertions, but code inspection shows proper null handling throughout
     5. **Phase 76.5 - Integration Tests** (T1719-T1722: 4 tasks)
        - Test: Missing plane → descriptive error (not silent undefined)
        - Test: Missing element dependency → descriptive error (not null propagation)

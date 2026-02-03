@@ -48,10 +48,12 @@ import { AddLineCircleIntersectionPoint2DOp } from '../operations/world/AddLineC
 import { AddCircleCircleIntersectionPoint2DOp } from '../operations/world/AddCircleCircleIntersectionPoint2DOp';
 import { AddSiblingIntersectionPoint2DOp } from '../operations/world/AddSiblingIntersectionPoint2DOp';
 import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '../operations/processTree/AddProcessTreeActionGroupOp';
 import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
 import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
 import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
 import { createSiblingIntersectionPointAction } from '@/domain/processTree/actions/CreateSiblingIntersectionPointAction';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
 import type { World } from '@/domain/world/World';
 
 /**
@@ -265,5 +267,66 @@ export class IntersectionSequenceFactory {
     }
 
     return { pointId, siblingPointId };
+  }
+
+  /**
+   * DEPRECATED: Backward compatibility wrapper for tests.
+   * Use typed methods directly instead: createLineLineIntersection(), createLineCircleIntersection(), createCircleCircleIntersection()
+   * 
+   * @deprecated Phase 74: Use instanceof checks and call typed methods directly
+   */
+  static createIntersection(
+    cmd: Command,
+    planeId: string,
+    intersectionData: IntersectionData,
+    world: World
+  ): IntersectionResult {
+    // Create ActionGroup for this operation (same pattern as tools)
+    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+
+    switch (intersectionData.type) {
+      case 'line-line':
+        return this.createLineLineIntersection(
+          cmd,
+          planeId,
+          intersectionData.element1Id,
+          intersectionData.element2Id,
+          world,
+          groupId
+        );
+
+      case 'line-circle': {
+        const lineId = intersectionData.lineId || intersectionData.element1Id;
+        const circleId = intersectionData.circleId || intersectionData.element2Id;
+        const index = intersectionData.index ?? 0;
+        return this.createLineCircleIntersection(
+          cmd,
+          planeId,
+          lineId,
+          circleId,
+          index,
+          world,
+          groupId
+        );
+      }
+
+      case 'circle-circle': {
+        const index = intersectionData.index ?? 0;
+        return this.createCircleCircleIntersection(
+          cmd,
+          planeId,
+          intersectionData.element1Id,
+          intersectionData.element2Id,
+          index,
+          world,
+          groupId
+        );
+      }
+
+      default:
+        throw new Error(`Unknown intersection type: ${(intersectionData as any).type}`);
+    }
   }
 }
