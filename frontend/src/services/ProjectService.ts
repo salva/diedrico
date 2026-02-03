@@ -459,11 +459,15 @@ export class ProjectService {
         return new AddHingeLineOp(hPlaneId, vPlaneId, parameters.hingeLineId);
       
       case 'AddHalfHingeLine2D':
-        return new AddHalfHingeLine2DOp(
+        const halfHingeLineOp = new AddHalfHingeLine2DOp(
           parameters.projPlaneId, 
-          parameters.hingeLineId,
-          parameters.lineId
+          parameters.hingeLineId
         );
+        // Restore the original line ID from serialization
+        if (parameters.lineId) {
+          halfHingeLineOp.outputs = { lineId: parameters.lineId, projPlaneId: parameters.projPlaneId };
+        }
+        return halfHingeLineOp;
       
       case 'Add3DPlane':
         const plane3DOp = new Add3DPlaneOp(
