@@ -938,14 +938,21 @@ export class World {
    */
   getHingeLineFromHalfHingeLine(halfHingeLineId: string): HingeLine | undefined {
     // Get the HalfHingeLine2D by searching all planes
-    const halfHingeLine = this.getLine2D(halfHingeLineId);
-    if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
+    // Phase 76: getLine2D now throws for invalid IDs, but this method's interface
+    // expects to return undefined for not-found cases
+    try {
+      const halfHingeLine = this.getLine2D(halfHingeLineId);
+      if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
+        return undefined;
+      }
+      
+      // Cast to HalfHingeLine2D to access hingeLineId
+      const halfHL = halfHingeLine as HalfHingeLine2D;
+      return this.getHingeLineById(halfHL.hingeLineId);
+    } catch (error) {
+      // Invalid ID or plane not found - return undefined as per interface contract
       return undefined;
     }
-    
-    // Cast to HalfHingeLine2D to access hingeLineId
-    const halfHL = halfHingeLine as HalfHingeLine2D;
-    return this.getHingeLineById(halfHL.hingeLineId);
   }
 
   /**
