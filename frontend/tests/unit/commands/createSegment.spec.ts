@@ -34,7 +34,7 @@ describe('Create Segment Command', () => {
       
       const segmentId = segmentResult.outputs.segmentId!;
       expect(segmentId).toBeDefined();
-      expect(segmentId).toMatch(/segment2d_/);
+      expect(segmentId).toMatch(/segment2d\d+/);
       
       const plane = getHorizontalPlane(world);
       const segment = plane.getLine(segmentId);

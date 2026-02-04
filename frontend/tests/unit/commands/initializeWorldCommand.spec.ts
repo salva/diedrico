@@ -96,9 +96,9 @@ describe('InitializeWorldCommand', () => {
       const vertPlane = world.getProjectionPlaneByLabel('P_V');
       const hingeLine = getMainHingeLine(world);
 
-      // Verify IDs follow generated pattern
-      expect(horizPlane.id).toMatch(/^proj_plane_\d+$/);
-      expect(vertPlane.id).toMatch(/^proj_plane_\d+$/);
+      // Verify IDs follow generated pattern (Phase 95: camelCase)
+      expect(horizPlane.id).toMatch(/^projPlane\d+$/);
+      expect(vertPlane.id).toMatch(/^projPlane\d+$/);
       // Hinge line ID is also generated
       expect(hingeLine.id).toBeTruthy();
       expect(hingeLine.id.length).toBeGreaterThan(0);

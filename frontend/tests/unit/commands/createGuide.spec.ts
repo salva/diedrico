@@ -48,7 +48,7 @@ describe('Create Guide Command', () => {
       
       const guideId = guideResult.outputs.guideId!;
       expect(guideId).toBeDefined();
-      expect(guideId).toMatch(/guide2d_/);
+      expect(guideId).toMatch(/guide2d\d+/);
       
       const plane = getHorizontalPlane(world);
       const guide = plane.getLine(guideId);

@@ -29,8 +29,8 @@ import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
  * This factory receives an open Command and adds operations directly to it.
  * It does NOT create a Command subclass, maintaining architecture compliance.
  * 
- * CRITICAL: This factory does NOT generate element IDs. Operations generate their own IDs
- * via World/ProjectionPlane factory methods, supporting redo by storing IDs in outputs.
+ * CRITICAL: This factory does NOT generate element IDs. Operations call World/ProjectionPlane
+ * factory methods which auto-generate IDs. Operations store generated IDs in outputs for redo support.
  * 
  * @param world World instance (used for active plane state)
  * @param cmd Open Command to which operations will be added
@@ -42,7 +42,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
   const planeHOp = new AddPlane3DFixedOp(
     new Vector4(0, 0, 0, 1),  // Point: origin (homogeneous)
     new Vector4(0, 0, 1, 0),  // Normal: +Z (homogeneous)
-    'planePH',                 // Fixed ID for determinism
+    undefined,                // Let World generate ID
     'P_H'                     // Label
   );
   cmd.addAndExecute(planeHOp);
@@ -57,7 +57,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
   const planeVOp = new AddPlane3DFixedOp(
     new Vector4(0, 0, 0, 1),  // Point: origin (homogeneous)
     new Vector4(0, 1, 0, 0),  // Normal: +Y (homogeneous)
-    'planePV',                 // Fixed ID for determinism
+    undefined,                // Let World generate ID
     'P_V'                     // Label
   );
   cmd.addAndExecute(planeVOp);

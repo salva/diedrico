@@ -55,14 +55,14 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
 
     // 2. Create two points A and B in P_H
     const pointA = new FreePoint2D(
-      'proj_plane_3/point_A',
+      'projPlane3/point_A',
       new Vector3(10, 5, 1),
       'projPlane3'
     );
     planeH.addPoint(pointA);
 
     const pointB = new FreePoint2D(
-      'proj_plane_3/point_B',
+      'projPlane3/point_B',
       new Vector3(20, -5, 1),
       'projPlane3'
     );
@@ -70,24 +70,24 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
 
     // 3. Create line L passing through A and B
     const lineL = new Line2DByTwoPoints(
-      'proj_plane_3/line_L',
-      'proj_plane_3/point_A',
-      'proj_plane_3/point_B',
+      'projPlane3/line_L',
+      'projPlane3/point_A',
+      'projPlane3/point_B',
       'projPlane3'
     );
     planeH.addLine(lineL);
 
     // 4. Create C as intersection of L with HL_HV
     const pointC = new Point2DLineLineIntersection(
-      'proj_plane_3/point_C',
-      'proj_plane_3/line_L',
+      'projPlane3/point_C',
+      'projPlane3/line_L',
       hingeLineH.id,
       'projPlane3'
     );
     planeH.addPoint(pointC);
 
     // 5. Create sibling point C' on P_V (manual creation since we're in test)
-    const pointCPrime = planeV.addSiblingIntersectionPoint(pointC.id, world, 'proj_plane_4/point_C_prime');
+    const pointCPrime = planeV.addSiblingIntersectionPoint(pointC.id, world, 'projPlane4/point_C_prime');
     
     // Verify sibling relationship
     expect(pointC.siblingPointId).toBe(pointCPrime.id);
@@ -107,7 +107,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
 
     // 5. Create point D in P_V
     const pointD = new FreePoint2D(
-      'proj_plane_4/point_D',
+      'projPlane4/point_D',
       new Vector3(15, 10, 1),
       'projPlane4'
     );
@@ -115,8 +115,8 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
 
     // 6. Create line M between D and C'
     const lineM = new Line2DByTwoPoints(
-      'proj_plane_4/line_M',
-      'proj_plane_4/point_D',
+      'projPlane4/line_M',
+      'projPlane4/point_D',
       pointC.siblingPointId!,
       'projPlane4'
     );
@@ -126,8 +126,8 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     const planeP = new Plane3DFromTraces(
       'planeP',
       'Plane P',
-      'proj_plane_3/line_L',  // trace on P_H
-      'proj_plane_4/line_M',  // trace on P_V
+      'projPlane3/line_L',  // trace on P_H
+      'projPlane4/line_M',  // trace on P_V
       'projPlane3',
       'projPlane4'
     );
@@ -166,14 +166,14 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     // The hinge line HL_HV is at v=0 in both P_H and P_V
     // So points with (u, 0) coordinates should map to the same 3D point
     const pointV = new FreePoint2D(
-      'proj_plane_4/point_common',
+      'projPlane4/point_common',
       new Vector3(5, 0, 1),  // On hinge line: v=0
       'projPlane4'
     );
     planeV.addPoint(pointV);
 
     const pointH = new FreePoint2D(
-      'proj_plane_3/point_common',
+      'projPlane3/point_common',
       new Vector3(5, 0, 1),  // On hinge line: v=0
       'projPlane3'
     );
@@ -181,7 +181,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
 
     // Create second point on P_V
     const pointV2 = new FreePoint2D(
-      'proj_plane_4/point2',
+      'projPlane4/point2',
       new Vector3(15, 20, 1),
       'projPlane4'
     );
@@ -189,7 +189,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
 
     // Create second point on P_H
     const pointH2 = new FreePoint2D(
-      'proj_plane_3/point2',
+      'projPlane3/point2',
       new Vector3(15, -5, 1),
       'projPlane3'
     );
@@ -197,17 +197,17 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
 
     // Create lines
     const lineV = new Line2DByTwoPoints(
-      'proj_plane_4/line',
-      'proj_plane_4/point_common',
-      'proj_plane_4/point2',
+      'projPlane4/line',
+      'projPlane4/point_common',
+      'projPlane4/point2',
       'projPlane4'
     );
     planeV.addLine(lineV);
 
     const lineH = new Line2DByTwoPoints(
-      'proj_plane_3/line',
-      'proj_plane_3/point_common',
-      'proj_plane_3/point2',
+      'projPlane3/line',
+      'projPlane3/point_common',
+      'projPlane3/point2',
       'projPlane3'
     );
     planeH.addLine(lineH);
@@ -216,8 +216,8 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     const plane3D = new Plane3DFromTraces(
       'plane3d_simple',
       'Simple Plane',
-      'proj_plane_4/line',
-      'proj_plane_3/line',
+      'projPlane4/line',
+      'projPlane3/line',
       'projPlane4',
       'projPlane3'
     );

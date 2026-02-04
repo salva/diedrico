@@ -37,7 +37,7 @@ describe('Create Line Command', () => {
       
       const lineId = lineResult.outputs.lineId!;
       expect(lineId).toBeDefined();
-      expect(lineId).toMatch(/line2d_/);
+      expect(lineId).toMatch(/line2d\d+/);
       
       const plane = getHorizontalPlane(world);
       const line = plane.getLine(lineId);

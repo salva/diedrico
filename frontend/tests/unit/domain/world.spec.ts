@@ -44,7 +44,7 @@ describe('ProjectionPlane Factory Methods', () => {
         const position = new Vector3(10, 20, 1);
         const point = planeH.addFreePoint2D(position, world);
 
-        expect(point.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
+        expect(point.id).toMatch(/^projPlane\d+\/point2d\d+$/);
         expect(point.position).toEqual(position);
         expect(point.planeId).toBe(planeH.id);
         
@@ -61,7 +61,7 @@ describe('ProjectionPlane Factory Methods', () => {
         const position = new Vector3(10, 20, 1);
         const point = planeH.addFreePoint2D(position, world);
 
-        expect(point.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);  // Verify hierarchical format
+        expect(point.id).toMatch(/^projPlane\d+\/point2d\d+$/);  // Verify hierarchical format
         
         // Verify in world
         let foundPoint;
@@ -96,7 +96,7 @@ describe('ProjectionPlane Factory Methods', () => {
           world
         );
 
-        expect(intersection.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
+        expect(intersection.id).toMatch(/^projPlane\d+\/point2d\d+$/);
         expect(intersection.planeId).toBe(planeH.id);
         expect(planeH.getPoint(intersection.id)).toBe(intersection);
       });
@@ -346,7 +346,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
 
-        expect(line.id).toMatch(/^proj_plane_\d+\/line2d_\d+$/);
+        expect(line.id).toMatch(/^projPlane\d+\/line2d\d+$/);
         expect(line.planeId).toBe(planeH.id);
         expect(planeH.getLine(line.id)).toBe(line);
       });
@@ -383,7 +383,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
 
-        expect(segment.id).toMatch(/^proj_plane_\d+\/segment2d_\d+$/);
+        expect(segment.id).toMatch(/^projPlane\d+\/segment2d\d+$/);
         expect(segment.planeId).toBe(planeH.id);
         expect(planeH.getLine(segment.id)).toBe(segment);
       });
@@ -414,7 +414,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
         const circle = planeH.addCircle2DByCenterAndPoint(center.id, circumPoint.id, world);
 
-        expect(circle.id).toMatch(/^proj_plane_\d+\/circle2d_\d+$/);
+        expect(circle.id).toMatch(/^projPlane\d+\/circle2d\d+$/);
         expect(planeH.getCircle(circle.id)).toBe(circle);
       });
 
@@ -446,7 +446,7 @@ describe('ProjectionPlane Factory Methods', () => {
         const referenceLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
         const guide = planeH.addGuide2D(referenceLine.id, throughPoint.id, world);
 
-        expect(guide.id).toMatch(/^proj_plane_\d+\/guide2d_\d+$/);
+        expect(guide.id).toMatch(/^projPlane\d+\/guide2d\d+$/);
         expect(planeH.getLine(guide.id)).toBe(guide);
       });
 

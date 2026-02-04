@@ -144,7 +144,7 @@ describe('ElementId Utilities', () => {
       
       // Build
       const id = buildElementId(containerId, localId);
-      expect(id).toBe('proj_plane_H/point2d_42');
+      expect(id).toBe('projPlaneH/point2d_42');
       
       // Parse
       const [parsedContainer, parsedLocal] = parseElementId(id);

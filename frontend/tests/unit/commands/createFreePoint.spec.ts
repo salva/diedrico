@@ -45,7 +45,7 @@ describe('Create Free Point Command', () => {
       
       const pointId = result.outputs.pointId!;
       expect(pointId).toBeDefined();
-      expect(pointId).toMatch(/point2d_/);
+      expect(pointId).toMatch(/point2d\d+/);  // Phase 95: camelCase format
       
       const plane = getHorizontalPlane(world);
       const point = plane.getPoint(pointId);

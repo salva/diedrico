@@ -194,8 +194,8 @@ describe('Initialization Operations', () => {
         'plane_3d_test',
         matrices.planeToPaper,
         matrices.planeTo3D,
-        matrices.threeDToPlane,
-        'proj_plane_test'
+        'proj_plane_test',  // Phase 94: threeDToPlane removed, this is projPlaneId
+        'P_H'  // Optional name
       );
       const result = op.apply(world);
 
@@ -213,8 +213,7 @@ describe('Initialization Operations', () => {
         'plane_3d_test',
         matrices.planeToPaper,
         matrices.planeTo3D,
-        matrices.threeDToPlane,
-        'proj_undo'
+        'proj_undo'  // Phase 94: threeDToPlane removed, this is projPlaneId
       );
       op.apply(world);
       
@@ -231,8 +230,7 @@ describe('Initialization Operations', () => {
         'plane_3d',
         matrices.planeToPaper,
         matrices.planeTo3D,
-        matrices.threeDToPlane,
-        'proj_test'
+        'proj_test'  // Phase 94: threeDToPlane removed, this is projPlaneId
       );
       
       expect(op.parameters.plane3DId).toBe('plane_3d');
@@ -249,7 +247,7 @@ describe('Initialization Operations', () => {
       const normal = new Vector4(0, 0, 1, 0);
       new AddPlane3DFixedOp(point, normal, 'plane_3d', 'P_H').apply(world);
       const matrices = createPHMatrices();
-      new AddProjectionPlaneFixedOp('plane_3d', matrices.planeToPaper, matrices.planeTo3D, matrices.threeDToPlane, 'proj_plane').apply(world);
+      new AddProjectionPlaneFixedOp('plane_3d', matrices.planeToPaper, matrices.planeTo3D, 'proj_plane').apply(world);  // Phase 94: threeDToPlane removed
     });
 
     it('should create locked origin point', () => {
@@ -300,8 +298,8 @@ describe('Initialization Operations', () => {
       
       const matricesH = createPHMatrices();
       const matricesV = createPVMatrices();
-      new AddProjectionPlaneFixedOp('plane_H', matricesH.planeToPaper, matricesH.planeTo3D, matricesH.threeDToPlane, 'proj_H').apply(world);
-      new AddProjectionPlaneFixedOp('plane_V', matricesV.planeToPaper, matricesV.planeTo3D, matricesV.threeDToPlane, 'proj_V').apply(world);
+      new AddProjectionPlaneFixedOp('plane_H', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_H').apply(world);  // Phase 94: threeDToPlane removed
+      new AddProjectionPlaneFixedOp('plane_V', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_V').apply(world);  // Phase 94: threeDToPlane removed
     });
 
     it('should create hinge line', () => {
@@ -350,11 +348,11 @@ describe('Initialization Operations', () => {
       // Create two distinct planes so hinge line construction is valid
       new AddPlane3DFixedOp(point, normal, 'plane_3d_h', 'P_H').apply(world);
       const matricesH = createPHMatrices();
-      new AddProjectionPlaneFixedOp('plane_3d_h', matricesH.planeToPaper, matricesH.planeTo3D, matricesH.threeDToPlane, 'proj_plane_h').apply(world);
+      new AddProjectionPlaneFixedOp('plane_3d_h', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_plane_h').apply(world);  // Phase 94: threeDToPlane removed
 
       new AddPlane3DFixedOp(point, normal, 'plane_3d_v', 'P_V').apply(world);
       const matricesV = createPVMatrices();
-      new AddProjectionPlaneFixedOp('plane_3d_v', matricesV.planeToPaper, matricesV.planeTo3D, matricesV.threeDToPlane, 'proj_plane_v').apply(world);
+      new AddProjectionPlaneFixedOp('plane_3d_v', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_plane_v').apply(world);  // Phase 94: threeDToPlane removed
 
       // Parent hinge line must exist before creating half-hinge lines
       new AddHingeLineOp('proj_plane_h', 'proj_plane_v', 'hl_test').apply(world);

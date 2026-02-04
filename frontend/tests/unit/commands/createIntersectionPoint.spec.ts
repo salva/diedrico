@@ -54,7 +54,7 @@ describe('Create Intersection Point Command', () => {
       
       const pointId = intersectionResult.outputs.pointId!;
       expect(pointId).toBeDefined();
-      expect(pointId).toMatch(/point2d_/);
+      expect(pointId).toMatch(/point2d\d+/);
       
       const plane = getHorizontalPlane(world);
       const point = plane.getPoint(pointId);

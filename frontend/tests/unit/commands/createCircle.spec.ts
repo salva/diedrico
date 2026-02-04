@@ -46,7 +46,7 @@ describe('Create Circle Command', () => {
       
       const circleId = circleResult.outputs.circleId!;
       expect(circleId).toBeDefined();
-      expect(circleId).toMatch(/circle2d_/);
+      expect(circleId).toMatch(/circle2d\d+/);
       
       const plane = getHorizontalPlane(world);
       const circle = plane.getCircle(circleId);
