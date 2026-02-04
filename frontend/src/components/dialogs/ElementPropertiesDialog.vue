@@ -149,7 +149,7 @@ const localStyle = ref<VisualStyle>({
 // Label validation and preview
 const isLabelValid = computed(() => {
   if (!localName.value) return true; // Empty is valid
-  return validateLabelSyntax(localName.value);
+  return validateLabelSyntax(localName.value).valid;
 });
 
 const labelPreview = computed(() => {
