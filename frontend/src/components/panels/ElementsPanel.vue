@@ -25,9 +25,7 @@
               <div class="plane-header" @click="togglePlane(planeGroup.id)">
                 <span class="collapse-icon">{{ planeGroup.isCollapsed ? '▶' : '▼' }}</span>
                 <span class="plane-name">
-                  <span v-if="planeGroup.name === 'P_H'" v-html="formatElementLabel('P_H') + ' (Horizontal)'"></span>
-                  <span v-else-if="planeGroup.name === 'P_V'" v-html="formatElementLabel('P_V') + ' (Vertical)'"></span>
-                  <span v-else v-html="formatElementLabel(planeGroup.name) + ' (' + planeGroup.label + ')'"></span>
+                  <span v-html="formatElementLabel(planeGroup.name)"></span>
                 </span>
               </div>
               

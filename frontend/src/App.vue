@@ -204,13 +204,7 @@ const updateActivePlaneInfo = () => {
     return;
   }
   
-  if (plane.name === 'P_H') {
-    activePlaneName.value = 'P_H (Horizontal)';
-  } else if (plane.name === 'P_V') {
-    activePlaneName.value = 'P_V (Vertical)';
-  } else {
-    activePlaneName.value = plane.name || activePlaneId.value;
-  }
+  activePlaneName.value = plane.name || activePlaneId.value
 };
 
 onMounted(() => {
