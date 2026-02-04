@@ -21,9 +21,13 @@ export function formatElementLabel(label: string | undefined): string {
   if (!label || label.trim() === '') return '';
   
   try {
-    // Wrap label in \mathrm{} to prevent italicization
-    // This makes "ABC" render as ABC instead of ABC (italics)
-    const wrappedLabel = `\\mathrm{${label}}`;
+    // KaTeX math mode ignores spaces, so escape them as "\ "
+    // Replace spaces with LaTeX escaped spaces before wrapping
+    const escapedLabel = label.replace(/ /g, '\\ ');
+    
+    // Wrap in \mathrm{} to prevent italicization while allowing math commands
+    // This preserves LaTeX notation (_,^,\alpha, etc.) while keeping text upright
+    const wrappedLabel = `\\mathrm{${escapedLabel}}`;
     
     return katex.renderToString(wrappedLabel, {
       displayMode: false,      // Inline mode (not centered display)
