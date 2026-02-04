@@ -42,7 +42,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
   const planeHOp = new AddPlane3DFixedOp(
     new Vector4(0, 0, 0, 1),  // Point: origin (homogeneous)
     new Vector4(0, 0, 1, 0),  // Normal: +Z (homogeneous)
-    'plane_PH',                // Fixed ID for determinism
+    'planePH',                 // Fixed ID for determinism
     'P_H'                     // Label
   );
   cmd.addAndExecute(planeHOp);
@@ -57,7 +57,7 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
   const planeVOp = new AddPlane3DFixedOp(
     new Vector4(0, 0, 0, 1),  // Point: origin (homogeneous)
     new Vector4(0, 1, 0, 0),  // Normal: +Y (homogeneous)
-    'plane_PV',                // Fixed ID for determinism
+    'planePV',                 // Fixed ID for determinism
     'P_V'                     // Label
   );
   cmd.addAndExecute(planeVOp);

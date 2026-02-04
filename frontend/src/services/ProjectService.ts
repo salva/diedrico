@@ -95,7 +95,163 @@ interface SerializedOperation {
 }
 
 export class ProjectService {
-  private static readonly SCHEMA_VERSION = '4.0.0';  // Flattened journal format
+  private static readonly SCHEMA_VERSION = '6.0.0';  // Phase 95: camelCase IDs (Breaking change from 4.0.0)
+
+  /**
+   * Phase 95: Migrate element IDs from snake_case to camelCase format
+   * 
+   * Converts old format IDs to new format:
+   * - point2d_5 → point2d5
+   * - proj_plane_H → projPlaneH  
+   * - hinge_line_1 → hingeLine1
+   * - plane_PH → planePH
+   * - node_123_abc → node123abc
+   * 
+   * This migration is applied automatically when loading projects with schema version < 6.0.0
+   * 
+   * @param oldId - Old format ID with underscores
+   * @returns New format ID in camelCase
+   */
+  private static migrateIdToCamelCase(oldId: string): string {
+    // Phase 95 migration patterns
+    const migrations: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
+      // Projection planes: proj_plane_H → projPlaneH, proj_plane_V → projPlaneV
+      [/^proj_plane_([A-Z])$/, (m) => `projPlane${m[1]}`],
+      
+      // 3D planes: plane_PH → planePH, plane_PV → planePV, plane3d_N → plane3dN
+      [/^plane_P([HV])$/, (m) => `planeP${m[1]}`],
+      [/^plane3d_(\d+)$/, (m) => `plane3d${m[1]}`],
+      [/^plane_(\d+)$/, (m) => `plane${m[1]}`],
+      
+      // Hinge lines: hinge_line_N → hingeLineN, HL_N → hingeLineN
+      [/^hinge_line_(\d+)$/, (m) => `hingeLine${m[1]}`],
+      [/^HL_(\d+)$/, (m) => `hingeLine${m[1]}`],
+      
+      // 2D elements: point2d_N → point2dN, line2d_N → line2dN, etc.
+      [/^point2d_(\d+)$/, (m) => `point2d${m[1]}`],
+      [/^line2d_(\d+)$/, (m) => `line2d${m[1]}`],
+      [/^segment2d_(\d+)$/, (m) => `segment2d${m[1]}`],
+      [/^circle2d_(\d+)$/, (m) => `circle2d${m[1]}`],
+      [/^guide2d_(\d+)$/, (m) => `guide2d${m[1]}`],
+      
+      // 3D elements: point3d_N → point3dN, line3d_N → line3dN, etc.
+      [/^point3d_(\d+)$/, (m) => `point3d${m[1]}`],
+      [/^line3d_(\d+)$/, (m) => `line3d${m[1]}`],
+      [/^segment3d_(\d+)$/, (m) => `segment3d${m[1]}`],
+      
+      // ProcessTree nodes: node_timestamp_random → nodetimestamprandom
+      [/^node_(\d+)_([a-z0-9]+)$/, (m) => `node${m[1]}${m[2]}`],
+      
+      // Generic fallback: remove all underscores if no specific pattern matched
+      // This handles edge cases like group_init_1234 → groupinit1234
+      [/.*/, (m) => m[0].replace(/_/g, '')]
+    ];
+    
+    // Apply first matching migration pattern
+    for (const [pattern, transform] of migrations) {
+      const match = oldId.match(pattern);
+      if (match) {
+        return transform(match);
+      }
+    }
+    
+    // Should never reach here due to fallback pattern
+    return oldId;
+  }
+
+  /**
+   * Phase 95: Migrate a full hierarchical ID (containerId/localId)
+   * 
+   * @param oldId - Old format hierarchical ID
+   * @returns New format hierarchical ID with both parts migrated
+   */
+  private static migrateHierarchicalId(oldId: string): string {
+    const parts = oldId.split('/');
+    if (parts.length === 2) {
+      // Hierarchical ID format: containerId/localId
+      return `${this.migrateIdToCamelCase(parts[0])}/${this.migrateIdToCamelCase(parts[1])}`;
+    }
+    // Simple ID format (e.g., plane IDs, projection plane IDs)
+    return this.migrateIdToCamelCase(oldId);
+  }
+
+  /**
+   * Phase 95: Migrate all IDs in operation parameters
+   * 
+   * Recursively traverses operation parameters and migrates all string values
+   * that look like IDs (contain underscores in recognized patterns)
+   * 
+   * @param params - Operation parameters object
+   * @returns New parameters object with migrated IDs
+   */
+  private static migrateOperationParams(params: Record<string, any>): Record<string, any> {
+    const migrated: Record<string, any> = {};
+    
+    for (const [key, value] of Object.entries(params)) {
+      if (typeof value === 'string') {
+        // Migrate string values that look like IDs
+        // Check if string contains underscore and matches ID patterns
+        if (value.includes('_') && (
+          value.match(/^(proj_plane_|plane_|plane3d_|hinge_line_|HL_|point2d_|line2d_|segment2d_|circle2d_|guide2d_|point3d_|line3d_|segment3d_|node_|group_)/) ||
+          value.match(/\/(point2d_|line2d_|segment2d_|circle2d_|guide2d_)/) // Hierarchical IDs
+        )) {
+          migrated[key] = this.migrateHierarchicalId(value);
+        } else {
+          migrated[key] = value;
+        }
+      } else if (Array.isArray(value)) {
+        // Recursively migrate arrays
+        migrated[key] = value.map(item => 
+          typeof item === 'object' && item !== null 
+            ? this.migrateOperationParams(item)
+            : item
+        );
+      } else if (typeof value === 'object' && value !== null) {
+        // Recursively migrate nested objects
+        migrated[key] = this.migrateOperationParams(value);
+      } else {
+        // Copy other values as-is
+        migrated[key] = value;
+      }
+    }
+    
+    return migrated;
+  }
+
+  /**
+   * Phase 95: Migrate project data from old schema to current schema
+   * 
+   * Applies necessary migrations based on source schema version.
+   * Currently supports migrating from 4.0.0 to 6.0.0.
+   * 
+   * @param data - Project data to migrate
+   */
+  private static migrateProjectData(data: ProjectData): void {
+    const sourceVersion = data.schemaVersion;
+    
+    // Migration from 4.0.0 or 5.0.0 to 6.0.0: Convert IDs to camelCase
+    if (sourceVersion === '4.0.0' || sourceVersion === '5.0.0') {
+      console.log(`[ProjectService] Migrating project from schema ${sourceVersion} to ${this.SCHEMA_VERSION}`);
+      console.log('[ProjectService] Converting element IDs from snake_case to camelCase');
+      
+      // Migrate all command operations
+      for (const command of data.commands) {
+        for (const operation of command.operations) {
+          // Migrate all operation parameters
+          Object.assign(operation, this.migrateOperationParams(operation));
+        }
+      }
+      
+      // Update schema version
+      data.schemaVersion = this.SCHEMA_VERSION;
+      console.log('[ProjectService] Migration complete');
+    } else if (sourceVersion !== this.SCHEMA_VERSION) {
+      throw new Error(
+        `Cannot migrate project from schema version ${sourceVersion} to ${this.SCHEMA_VERSION}. ` +
+        `This version is too old or too new. Please use an appropriate version of the application.`
+      );
+    }
+  }
 
   /**
    * Serialize CommandStack to JSON
@@ -140,6 +296,9 @@ export class ProjectService {
    * Note: Assumes world is a fresh instance - caller should create new World before calling this
    */
   static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+    // Phase 95: Apply migrations before validation
+    this.migrateProjectData(data);
+    
     // Validate project data
     this.validateProjectData(data);
     

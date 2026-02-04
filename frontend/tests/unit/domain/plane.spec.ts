@@ -227,7 +227,7 @@ describe('Plane3DFixed', () => {
   describe('clone', () => {
     it('should create deep copy of plane', () => {
       const plane = new Plane3DFixed(
-        'plane_1',
+        'plane1',
         new Vector4(1, 2, 3, 1),
         new Vector4(0, 1, 0, 0),
         'Test'
@@ -241,7 +241,7 @@ describe('Plane3DFixed', () => {
 
       const cloned = plane.clone();
 
-      expect(cloned.id).toBe('plane_1');
+      expect(cloned.id).toBe('plane1');
       expect(cloned.point).toEqual(plane.point);
       expect(cloned.normal).toEqual(plane.normal);
       expect(cloned.label).toBe('Test');
@@ -251,7 +251,7 @@ describe('Plane3DFixed', () => {
 
     it('should create independent copy', () => {
       const plane = new Plane3DFixed(
-        'plane_2',
+        'plane2',
         new Vector4(0, 0, 0, 1),
         new Vector4(0, 0, 1, 0)
       );

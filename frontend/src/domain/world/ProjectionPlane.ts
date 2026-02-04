@@ -523,42 +523,42 @@ export abstract class ProjectionPlane {
   // These methods create and add 2D elements to this plane
 
   /**
-   * Generate unique Point2D ID using World's counter
+   * Phase 95: Generate unique Point2D ID (camelCase format)
    */
   generatePoint2DId(world: import('./World').World): string {
-    const localId = `point2d_${world.getNextId()}`;
+    const localId = `point2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
 
   /**
-   * Generate unique Line2D ID using World's counter
+   * Phase 95: Generate unique Line2D ID (camelCase format)
    */
   generateLine2DId(world: import('./World').World): string {
-    const localId = `line2d_${world.getNextId()}`;
+    const localId = `line2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
 
   /**
-   * Generate unique Segment2D ID using World's counter
+   * Phase 95: Generate unique Segment2D ID (camelCase format)
    */
   generateSegment2DId(world: import('./World').World): string {
-    const localId = `segment2d_${world.getNextId()}`;
+    const localId = `segment2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
 
   /**
-   * Generate unique Circle2D ID using World's counter
+   * Phase 95: Generate unique Circle2D ID (camelCase format)
    */
   generateCircle2DId(world: import('./World').World): string {
-    const localId = `circle2d_${world.getNextId()}`;
+    const localId = `circle2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
 
   /**
-   * Generate unique Guide2D ID using World's counter
+   * Phase 95: Generate unique Guide2D ID (camelCase format)
    */
   generateGuide2DId(world: import('./World').World): string {
-    const localId = `guide2d_${world.getNextId()}`;
+    const localId = `guide2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
 

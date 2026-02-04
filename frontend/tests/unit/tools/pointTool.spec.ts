@@ -87,9 +87,9 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      // Phase 63: Hierarchical IDs format: proj_plane_3/point2d_10
+      // Phase 63: Hierarchical IDs format: proj_plane_3/point2d10
       // Filter out locked points (origin points) to count only user-created points
-      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
       expect(userPoints.length).toBe(1);
       expect(userPoints[0].planeId).toBe(horizontalPlaneId);
     });
@@ -116,7 +116,7 @@ describe('PointTool', () => {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
-      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
       const createdPoint = userPoints[0];
       
       expect(createdPoint).toBeInstanceOf(FreePoint2D);
@@ -139,7 +139,7 @@ describe('PointTool', () => {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
-      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
       expect(userPoints[0].planeId).toBe(verticalPlaneId);
     });
   });
@@ -231,7 +231,7 @@ describe('PointTool', () => {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
-      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
       expect(userPoints.length).toBe(0);
     });
   });
@@ -313,7 +313,7 @@ describe('PointTool', () => {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
-      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
       expect(userPoints.length).toBe(3);
     });
 
@@ -405,7 +405,7 @@ describe('PointTool', () => {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
-      let userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
+      let userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
       expect(userPoints.length).toBe(1);
 
       // Undo
@@ -416,7 +416,7 @@ describe('PointTool', () => {
       for (const plane of world.projectionPlanes.values()) {
         allPoints.push(...plane.getAllPoints());
       }
-      userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
+      userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
       expect(userPoints.length).toBe(0);
     });
 
@@ -438,7 +438,7 @@ describe('PointTool', () => {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
-      const userPoints = allPoints.filter(p => p.id?.includes('/point2d_') && !p.locked);
+      const userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
       expect(userPoints.length).toBe(1);
     });
   });

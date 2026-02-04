@@ -13,10 +13,10 @@
  * Usage Examples:
  * ```typescript
  * // Filter elements by plane
- * const planeHElements = getElementsOnPlane(allElements, 'proj_plane_H');
+ * const planeHElements = getElementsOnPlane(allElements, 'projPlaneH');
  * 
  * // Hide all elements on a plane
- * getElementsOnPlane(allElements, 'proj_plane_V').forEach(hideElement);
+ * getElementsOnPlane(allElements, 'projPlaneV').forEach(hideElement);
  * 
  * // Check if object is Element2D
  * if (isElement2D(obj)) {
@@ -60,13 +60,13 @@ export function isElement2D(obj: any): obj is Element2D {
  * Works with mixed arrays of points, lines, and circles.
  * 
  * @param elements - Array of Element2D objects (points, lines, circles)
- * @param planeId - Plane ID to filter by (e.g., 'proj_plane_H', 'proj_plane_V')
+ * @param planeId - Plane ID to filter by (e.g., 'projPlaneH', 'projPlaneV')
  * @returns Array of elements on the specified plane
  * 
  * @example
  * ```typescript
  * const allElements: Element2D[] = [point1, line1, circle1, point2];
- * const planeH = getElementsOnPlane(allElements, 'proj_plane_H');
+ * const planeH = getElementsOnPlane(allElements, 'projPlaneH');
  * console.log(`Found ${planeH.length} elements on horizontal plane`);
  * ```
  */
@@ -83,7 +83,7 @@ export function getElementsOnPlane(elements: Element2D[], planeId: string): Elem
  * 
  * @example
  * ```typescript
- * const point = new FreePoint2D('p1', new Vector3(1, 2, 1), 'proj_plane_H');
+ * const point = new FreePoint2D('p1', new Vector3(1, 2, 1), 'projPlaneH');
  * hideElement(point);
  * console.log(point.visualStyle?.visible); // false
  * ```
@@ -105,7 +105,7 @@ export function hideElement(element: Element2D): void {
  * 
  * @example
  * ```typescript
- * const line = new Line2DByTwoPoints('l1', 'p1', 'p2', 'proj_plane_V');
+ * const line = new Line2DByTwoPoints('l1', 'p1', 'p2', 'projPlaneV');
  * line.visualStyle = { ...line.visualStyle, visible: false };
  * showElement(line);
  * console.log(line.visualStyle?.visible); // true
@@ -130,10 +130,10 @@ export function showElement(element: Element2D): void {
  * 
  * @example
  * ```typescript
- * const labeled = new FreePoint2D('p1', pos, 'proj_plane_H', 'Point A');
+ * const labeled = new FreePoint2D('p1', pos, 'projPlaneH', 'Point A');
  * console.log(getElementLabel(labeled)); // "Point A"
  * 
- * const unlabeled = new FreePoint2D('p2', pos, 'proj_plane_H');
+ * const unlabeled = new FreePoint2D('p2', pos, 'projPlaneH');
  * console.log(getElementLabel(unlabeled)); // "p2"
  * ```
  */
@@ -173,8 +173,8 @@ export function getVisibleElements(elements: Element2D[]): Element2D[] {
  * @example
  * ```typescript
  * const counts = countElementsByPlane(allElements);
- * console.log(`Plane H: ${counts.get('proj_plane_H')} elements`);
- * console.log(`Plane V: ${counts.get('proj_plane_V')} elements`);
+ * console.log(`Plane H: ${counts.get('projPlaneH')} elements`);
+ * console.log(`Plane V: ${counts.get('projPlaneV')} elements`);
  * ```
  */
 export function countElementsByPlane(elements: Element2D[]): Map<string, number> {

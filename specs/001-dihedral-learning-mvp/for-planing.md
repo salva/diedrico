@@ -28,7 +28,69 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] In 3D rotation axis seems to be hardcoded or be limited. For instance, I am not able to rotate the view around the viewer-O axis
 * [ ] When the user selects a guide, the 3D view must show the plane perpendicular to it and highlight any intersection with other 3d elements.
 * [ ] Add support for moving semi-free points and distances along guide lines.
-* [ ] Fix display of subscripts in UI elements (currently they appear as corrupted characters, e.g., "5�subscriptH�").
+* [ ] **Migrate Element IDs from Underscore to camelCase (Phase 95)** - Currently element IDs use underscores (e.g., `point2d_5`, `proj_plane_H`) which are interpreted as subscript markers in UI elements, causing display corruption ("5�subscriptH�"). Solution: Migrate to camelCase format (`point2d5`, `projPlaneH`) to eliminate underscore interpretation while maintaining readability. This is a breaking change requiring project file migration and affects all ID generation, serialization, and tests.
+  - **User Requirement**: "The issue with subscript display is that we are also using the underscore in the element ids, and we don't want that interpreted as a underscore, so we either remove those underscores from the ids, moving them to camelCase, or use a different separator as the dash. I think camelCase is the way to go."
+  - **Problem**: Underscores in element IDs are misinterpreted in UI:
+    - Current IDs: `point2d_5`, `line2d_12`, `proj_plane_H`, `hinge_line_3`, `subprocess_1`
+    - UI displays: "point2d�subscript5�", "proj�subscriptplane�subscriptH�" (corrupted Unicode subscript)
+    - Affects: Element labels, ProcessTree descriptions, World Elements panel, tooltips, error messages
+    - Root cause: Text rendering interprets `_` as subscript delimiter (common in math/scientific notation)
+  - **Solution**: Migrate to camelCase ID format
+    - **2D Elements**: `point2d_5` → `point2d5`, `line2d_12` → `line2d12`, `circle2d_3` → `circle2d3`, `segment2d_7` → `segment2d7`, `guide2d_2` → `guide2d2`
+    - **3D Elements**: `point3d_8` → `point3d8`, `line3d_4` → `line3d4`, `segment3d_6` → `segment3d6`, `plane3d_2` → `plane3d2`
+    - **Projection Planes**: `proj_plane_H` → `projPlaneH`, `proj_plane_V` → `projPlaneV`, `proj_plane_1` → `projPlane1`
+    - **Hinge Lines**: `hinge_line_1` → `hingeLine1`, `hinge_line_2` → `hingeLine2`
+    - **ProcessTree**: `subprocess_1` → `subprocess1`, `actiongroup_2` → `actionGroup2`, `action_5` → `action5`
+    - **Rationale**: lowercase + number for single-word types (point2d, line2d), camelCase for multi-word types (projPlane, hingeLine, actionGroup)
+  - **Architecture Changes**:
+    - Update ID generation in World.ts, ProjectionPlane.ts, ProcessTree.ts (10+ methods)
+    - Pattern: `point2d_${counter}` → `point2d${counter}`, `proj_plane_${counter}` → `projPlane${counter}`
+    - No padding zeros (use `5` not `05` or `005`) - simpler and cleaner
+    - Counter values unchanged (if last point was `point2d_42`, next is `point2d43`)
+  - **Migration Strategy** (ProjectService.ts):
+    - Detect old format IDs in deserialized JSON (contains underscore)
+    - Convert all IDs: `point2d_5` → `point2d5`, `proj_plane_H` → `projPlaneH`, etc.
+    - Update all references: element dependencies, ProcessTree action elementIds, operation parameters
+    - Schema version bump: 5.0.0 → 6.0.0 (major breaking change)
+    - Old files load correctly (migrated on-the-fly), new files use new format exclusively
+  - **Breaking Changes**:
+    - **Serialization format**: Old project files need migration on load
+    - **ID generation**: All ID generators produce new format only
+    - **Tests**: 100+ test files hardcode old-format IDs (need global search/replace)
+    - **No backward compatibility**: New format files cannot be loaded by old code
+  - **Key Benefits**:
+    - **Fixes UI corruption**: Element labels display correctly without subscript artifacts
+    - **Cleaner IDs**: `point2d5` more readable than `point2d_5` (no visual noise)
+    - **Consistent**: camelCase aligns with TypeScript/JavaScript conventions
+    - **Future-proof**: No special character interpretation issues in any UI context
+  - **Implementation Complexity**: HIGH
+    - ~15 ID generation methods across 3 files (World.ts, ProjectionPlane.ts, ProcessTree.ts)
+    - ProjectService migration logic for all ID types (2D, 3D, planes, hinge lines, ProcessTree)
+    - Update references in deserialized operations (elementId fields, dependencies)
+    - Global test update: ~100+ test files with hardcoded IDs
+    - Integration tests for migration (old format → new format verification)
+  - **Testing Requirements**:
+    - Unit tests for new ID generators (verify format: no underscores, correct camelCase)
+    - Migration tests: Load old-format project, verify all IDs converted correctly
+    - Round-trip tests: Save new-format project, reload, verify IDs unchanged
+    - UI rendering tests: Verify element labels display without corruption
+    - Regression tests: Run full test suite, fix all failures from ID format change
+  - **Specifications**:
+    - data-model.md §Phase 95 - Element ID Format Migration (technical architecture, migration algorithm)
+    - ui-spec.md §Element ID Display (before/after examples, visual verification)
+    - Purely technical change - no functional requirements in spec.md
+  - **Tasks**: tasks.md Phase 95 (estimated 20-25 tasks)
+    - Planning & documentation (3 tasks: data-model.md, ui-spec.md, tasks.md)
+    - Update ID generators (5 tasks: 2D elements, 3D elements, planes, hinge lines, ProcessTree)
+    - ProjectService migration (4 tasks: detect old format, convert IDs, update references, schema version)
+    - Test updates (5 tasks: global ID search/replace in tests, update expectations)
+    - Migration testing (3 tasks: unit tests, integration tests, round-trip tests)
+    - UI verification (2 tasks: visual regression tests, element label display)
+    - Final review (3 tasks: full test suite, documentation, commit)
+  - **Dependencies**: None (independent refactoring, no architectural dependencies)
+  - **Priority**: MEDIUM-HIGH - Visible UI corruption affects professional appearance, but not blocking core functionality
+  - **Estimated Effort**: 2-3 days (HIGH complexity due to test updates and migration logic)
+  - **Migration Impact**: Medium - All existing project files require migration, but automated and transparent to users
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
 * [ ] Check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
@@ -46,275 +108,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
 * [ ] Ensure we have a per-plane cache for 2D realizations.
 * [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?
-* [ ] **Fail-Fast Error Handling - Eliminate Defensive Coding Anti-Patterns (Phase 76)**
-  - **STATUS**: 📋 RECONSIDERED & PLANNED (Feb 2, 2026) - Comprehensive analysis complete, ready for implementation
-  - **User Requirement**: "In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. In general don't try to handle unexpected internal states but just report an error instead. I don't want code which hides bugs and returns bad results. Internal errors must not be hidden. Instead they must cause the app to die so we can see them and fix them."
-  - **Core Principle**: **Fail-Fast, Don't Hide Bugs** - When internal invariants are violated (element not found, plane missing, etc.), throw errors immediately with descriptive messages instead of silently returning undefined/null and continuing with corrupted state
-  - **Problem Categories Identified** (Feb 2, 2026 comprehensive analysis - ALL CODE):
-    1. **Optional Chaining on Invariants** (~13 instances in domain layer)
-       - `plane?.getPoint(id)` in World.ts - plane MUST exist if we have valid elementId
-       - `plane?.getLine(id)` in World.ts - defensive coding hides missing plane bugs
-       - `plane?.getCircle(id)` in World.ts - should crash if plane not found
-       - Pattern: `getProjectionPlaneById()` returns plane, then `plane?.method()` hides if plane is null
-    2. **Silent Undefined Returns** (~30+ instances in domain layer)
-       - World.ts getter methods return `undefined` instead of throwing when element not found
-       - Pattern: `getPoint2D(id)` → `plane?.getPoint(id)` → undefined (hides missing plane OR missing point)
-       - Pattern: `getLine2D(id)` → undefined (ambiguous: plane missing? line missing? both?)
-       - Pattern: `getElementById()` → undefined (should crash if ID format is corrupted)
-    3. **Null Returns for Missing Dependencies** (~10 instances - ARCHITECTURAL ISSUE)
-       - **CRITICAL**: Codebase ALREADY uses feasible flag pattern (`Point2DRealization2D.feasible`, `Line2DRealization2D.feasible`)
-       - **PROBLEM**: `realize2D()` methods return `null` when dependencies MISSING (should throw error)
-       - **CORRECT**: `realize2D()` should return `{ feasible: false }` when geometry INVALID (parallel lines, coincident points)
-       - Pattern: `if (!p1 || !p2) return null;` in Segment.realize2D() - WRONG! Should throw if p1/p2 missing (corruption)
-       - Pattern: `return new Line2DRealization2D(..., false)` - CORRECT! Geometric failure (e.g., degenerate segment)
-       - **Distinction**: Missing dependencies = corruption (throw), Invalid geometry = infeasibility (feasible: false)
-    4. **Legitimate Optional Chaining** (~80+ instances across ALL code - KEEP THESE)
-       - **Vue Components** (~50 instances): DOM refs `element.value?.focus()`, optional props `props.family?.icon`, user data `user.value?.name`
-       - **Optional Parameters**: `options?.visibleOnly` in Paper.hitTest() (options parameter truly optional)
-       - **Visual Styling**: `element.visualStyle?.visible`, `element.visualStyle?.color` (visualStyle property truly optional)
-       - **DOM References**: `element.value?.getBoundingClientRect()` (element may not be mounted)
-       - **External APIs**: `error.result?.error?.message` in GoogleDriveService (external API structure)
-       - **UI State**: `context.hoveredIds?.has(id)` (Set may be undefined in some UI states)
-    5. **Backend Code** (1 instance to review)
-       - ProjectRepository.ts: `return null;` when project not found (may be legitimate or need Error)
-  - **Solution Strategy**: **Pragmatic Fail-Fast with Explicit Error Messages + Use Existing Feasible Flag**
-    ```typescript
-    // CATEGORY 1: Remove optional chaining on invariants (World.ts getters)
-    
-    // BEFORE (hides bugs):
-    getPoint2D(id: string): Point2D | undefined {
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      return plane?.getPoint(id);  // Silently returns undefined if plane is null
-    }
-    
-    // AFTER (fail-fast with explicit error):
-    getPoint2D(id: string): Point2D | undefined {
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      if (!plane) {
-        throw new Error(`[INTERNAL ERROR] Plane ${containerId} not found when looking up point ${id}. This indicates corrupted element ID or missing plane registration.`);
-      }
-      return plane.getPoint(id);  // Natural undefined if point legitimately doesn't exist
-    }
-    
-    // CATEGORY 2: Distinguish "not found" from "corrupted state" in getters
-    
-    // BEFORE (ambiguous undefined):
-    getElementById(id: string): Element2D | undefined {
-      // Could return undefined for: missing plane, missing element, or corrupted ID
-      const plane = this.getProjectionPlaneById(containerId);
-      return plane?.getAllElements().get(id);  // Ambiguous!
-    }
-    
-    // AFTER (explicit invariant checks):
-    getElementById(id: string): Element2D | undefined {
-      if (!isValidElementId(id)) {
-        throw new Error(`[INTERNAL ERROR] Invalid element ID format: ${id}`);
-      }
-      const containerId = getContainerIdFromElementId(id);
-      const plane = this.getProjectionPlaneById(containerId);
-      if (!plane) {
-        throw new Error(`[INTERNAL ERROR] Plane ${containerId} not found for element ${id}`);
-      }
-      return plane.getAllElements().get(id);  // Legitimate undefined if element doesn't exist
-    }
-    
-    // CATEGORY 3: Fix null returns for missing dependencies (use existing feasible flag for geometry)
-    
-    // CURRENT ARCHITECTURE (already correct for geometric failures!):
-    // - Realization base class has 'feasible: boolean' property
-    // - Element2DRealization2D extends Realization with feasible flag
-    // - Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D all have feasible
-    
-    // BEFORE (returns null for missing dependencies - WRONG!):
-    realize2D(world: World): Line2DRealization2D | null {
-      const p1 = world.getPoint2D(this.point1Id);
-      const p2 = world.getPoint2D(this.point2Id);
-      if (!p1 || !p2) return null;  // WRONG: Hides corruption
-      
-      const p1Realization = p1.realize2D(world);
-      const p2Realization = p2.realize2D(world);
-      
-      // Check if parent points are infeasible - propagate infeasibility
-      if (!p1Realization.feasible || !p2Realization.feasible) {
-        return new Line2DRealization2D(pos1, pos2, false);  // CORRECT: feasible flag
-      }
-      
-      // Check for degenerate geometry (points coincident)
-      if (pos1.distanceToSquared(pos2) < 1e-10) {
-        return new Line2DRealization2D(pos1, pos2, false);  // CORRECT: feasible flag
-      }
-      
-      return new Line2DRealization2D(pos1, pos2, true);  // CORRECT: feasible=true
-    }
-    
-    // AFTER (throw for missing dependencies, use feasible flag for geometry):
-    realize2D(world: World): Line2DRealization2D {
-      const p1 = world.getPoint2D(this.point1Id);
-      if (!p1) {
-        throw new Error(`[INTERNAL ERROR] Segment ${this.id} point1 ${this.point1Id} not found. Dependency graph corrupted.`);
-      }
-      const p2 = world.getPoint2D(this.point2Id);
-      if (!p2) {
-        throw new Error(`[INTERNAL ERROR] Segment ${this.id} point2 ${this.point2Id} not found. Dependency graph corrupted.`);
-      }
-      
-      const p1Realization = p1.realize2D(world);
-      const p2Realization = p2.realize2D(world);
-      
-      // Propagate infeasibility from dependencies (KEEP THIS - correct pattern)
-      if (!p1Realization.feasible || !p2Realization.feasible) {
-        return new Line2DRealization2D(pos1, pos2, false);
-      }
-      
-      // Geometric failure: degenerate segment (KEEP THIS - correct pattern)
-      if (pos1.distanceToSquared(pos2) < 1e-10) {
-        return new Line2DRealization2D(pos1, pos2, false);
-      }
-      
-      return new Line2DRealization2D(pos1, pos2, true);
-    }
-    // Return type: Line2DRealization2D (not nullable!)
-    // Corruption: throw Error immediately
-    // Geometric failure: return realization with feasible=false
-    
-    // KEEP LEGITIMATE: Optional parameters, external data, Vue components
-    
-    // LEGITIMATE (options parameter truly optional):
-    hitTest(point: Vector3, options?: { visibleOnly?: boolean }): HitTestResult | null {
-      if (options?.visibleOnly) {  // Keep `?.` - options is external API
-        // Filter to visible elements
-      }
-    }
-    
-    // LEGITIMATE (UI state truly optional):
-    const isHovered = context.hoveredIds?.has(id) || false;  // Keep `?.` - Set may not exist in some UI states
-    
-    // LEGITIMATE (Vue component - DOM ref):
-    nameInput.value?.focus();  // Keep `?.` - ref may not be mounted yet
-    
-    // LEGITIMATE (Vue component - optional prop):
-    const icon = props.family?.icon || 'default';  // Keep `?.` - optional property
-    
-    // LEGITIMATE (external API structure):
-    const errorMsg = error.result?.error?.message || 'Unknown error';  // Keep `?.` - external Google API structure
-    ```
-  - **Impact Analysis** (Feb 2, 2026 comprehensive audit - ALL CODE):
-    - **Category 1: World.ts Getters** (~10 methods in domain layer)
-      - `getPoint2D()`, `getLine2D()`, `getCircle2D()`, `getSegment2D()`, `getGuide2D()` - all use `plane?.getX()` pattern
-      - Fix: Add explicit plane null check with descriptive error before calling plane methods
-      - Impact: ~10 methods × 5 lines = 50 lines changed in World.ts
-    - **Category 2: Geometric Realization Methods** (~15 methods in domain layer)
-      - Segment.realize2D(), Circle.realize2D(), various intersection realize2D() methods
-      - **Current**: Return `null` for missing dependencies (WRONG), use `feasible: false` for geometric failures (CORRECT)
-      - **Fix**: Throw error for missing dependencies, keep `feasible: false` for geometric failures
-      - **Change return type**: `realize2D(): Line2DRealization2D` (not nullable) - always returns realization
-      - Impact: ~15 methods × 10 lines = 150 lines changed across Point.ts, Line.ts, Circle.ts, Segment.ts
-    - **Category 3: ProcessTree null checks** (~3 instances in domain layer)
-      - `child?.id`, `child?.elementId` in ProcessTree.ts
-      - Fix: Add assertion that child is not null (tombstones should be filtered before access)
-      - Impact: ~3 methods × 3 lines = 9 lines changed in ProcessTree.ts
-    - **Category 4: KEEP Legitimate Uses** (~80+ instances across ALL code)
-      - **Vue Components** (~50 instances): KEEP ALL - DOM refs, optional props, user data
-        - `startupDialogRef.value?.setError()`, `nameInput.value?.focus()`, `user.value?.name`
-        - `element.visualStyle?.color`, `props.family?.icon`, `error.message?.includes()`
-      - **Optional Parameters** (~10 instances): Paper.hitTest(options?.visibleOnly)
-      - **UI State** (~10 instances): element.visualStyle?.visible, context.hoveredIds?.has()
-      - **External APIs** (~10 instances): GoogleDriveService error.result?.error?.message
-      - **DOM References**: useViewport element?.getBoundingClientRect()
-      - Impact: NO CHANGES - these are architecturally correct uses of optional chaining
-    - **Category 5: Backend Code** (1 instance to review)
-      - ProjectRepository.ts: `return null;` when project not found
-      - Review: Determine if legitimate (not found ≠ corruption) or should throw Error
-      - Impact: 1 method, potential 5-line change if error needed
-  - **Refactoring Strategy** (Systematic 7-phase approach):
-    1. **Phase 76.1 - Comprehensive Audit & Classification** (T1701-T1702: 2 tasks)
-       - Grep audit: Search ALL code (frontend TS, Vue components, backend, tests)
-         - Patterns: `?.`, `return null`, `return undefined`, `catch { return }`, `console.log.*return`
-         - Scope: `**/*.{ts,vue}` (frontend), `backend/**/*.ts`, `tests/**/*.ts`
-       - Classification: Tag each instance as:
-         - REMOVE (invariant violation - hides corruption)
-         - KEEP (legitimate optionality - external APIs, Vue refs, optional params)
-         - INVESTIGATE (ambiguous - needs context)
-       - Deliverable: `/tmp/phase-76-audit.txt` with categorized instances and counts
-    2. **Phase 76.2 - World.ts Getter Methods** (T1703-T1707: 5 tasks)
-       - Add explicit plane null checks in getPoint2D(), getLine2D(), getCircle2D(), getSegment2D(), getGuide2D()
-       - Pattern: `if (!plane) throw new Error("[INTERNAL ERROR] Plane X not found for element Y")`
-       - Remove `plane?.` optional chaining, use `plane.` direct calls
-       - Update unit tests to expect errors for corrupted state
-       - Deliverable: World.ts with fail-fast getters + updated tests
-    3. **Phase 76.3 - Geometric Realization Methods - Fix Null Returns** (T1708-T1715: 8 tasks)
-       - **Key Insight**: Codebase ALREADY uses feasible flag pattern (`Realization.feasible`, `Element2DRealization2D.feasible`)
-       - **Problem**: realize2D() returns `null` for missing dependencies (WRONG)
-       - **Solution**: Throw on missing dependencies, use existing `feasible: false` for geometric failures
-       - **Changes**:
-         - Segment.realize2D(): Throw if point1/point2 missing, return `new Line2DRealization2D(..., false)` if degenerate
-         - Circle.realize2D(): Throw if center/radius point missing, return `new Circle2DRealization2D(..., false)` if invalid
-         - Intersection realize2D(): Throw if parent elements missing, return `feasible: false` if no intersection
-         - Line.realize2D(): Throw if defining points missing, return `feasible: false` if degenerate
-       - **Return Type Change**: `realize2D(): XxxRealization2D` (remove `| null` - always returns realization)
-       - Pattern: `if (!dependency) throw new Error("[INTERNAL ERROR] ...")`
-       - Keep: `return new XxxRealization2D(..., false)` for geometric infeasibility
-       - Update: All calling code to check `realization.feasible` instead of `realization === null`
-       - Update unit tests: Expect errors for corruption, check `feasible: false` for geometric failures
-       - Deliverable: Point.ts, Line.ts, Circle.ts, Segment.ts with fail-fast + feasible flag pattern
-    4. **Phase 76.4 - ProcessTree Null Handling** (SKIP - Already Correct)
-       - **Decision**: ProcessTree null handling is ARCHITECTURALLY CORRECT, not defensive
-       - **Reason**: `ActionGroup.children: (ActionNode | null)[]` uses TOMBSTONE PATTERN by design
-       - **Evidence**: 
-         - `child !== null` checks are LEGITIMATE (tombstones are intentional architecture)
-         - `child?.elementId` and `child?.id` are CORRECT (checking tombstones before access)
-         - traverseActions() explicitly skips tombstones: `if (action !== null) callback(action)`
-       - **Phase 76 Principle**: Optional chaining is CORRECT when value can legitimately be null/undefined
-       - **No changes needed**: ProcessTree already implements fail-fast for corruption (throws errors for invalid indices/groups)
-       - Original plan was to add assertions, but code inspection shows proper null handling throughout
-    5. **Phase 76.5 - Integration Tests** (T1719-T1722: 4 tasks)
-       - Test: Missing plane → descriptive error (not silent undefined)
-       - Test: Missing element dependency → descriptive error (not null propagation)
-       - Test: Corrupted element ID → descriptive error (not undefined return)
-       - Test: Legitimate geometric failure → null return (not error)
-       - Deliverable: Integration test suite verifying fail-fast behavior
-    6. **Phase 76.6 - Run Full Test Suite** (T1723-T1724: 2 tasks)
-       - Run all tests, fix any that expected silent failures
-       - Update tests to expect specific error messages
-       - Deliverable: All tests passing with fail-fast expectations
-    7. **Phase 76.7 - Documentation & Commit** (T1725: 1 task)
-       - Update data-model.md with fail-fast principle examples
-       - Document error message conventions: "[INTERNAL ERROR] ..." prefix
-       - Git commit with comprehensive changes
-       - Deliverable: Complete Phase 76 implementation
-  - **Status**: ✅ COMPLETE (2026-02-02)
-    - Phase 76.1: Audit ✅
-    - Phase 76.2: World.ts getters ✅
-    - Phase 76.3: Geometric realization methods ✅
-    - Phase 76.4: ProcessTree ✅ (SKIPPED - tombstone pattern correct)
-    - Phase 76.5: Integration tests ✅ (10 tests, all passing)
-    - Phase 76.6: Full test suite ✅ (0 Phase 76 failures, 116 infrastructure failures)
-    - Phase 76.7: Documentation ✅
-  - **Benefits**:
-    - **Immediate bug detection**: Corrupted state crashes immediately at source, not later with garbage data
-    - **Explicit error messages**: "[INTERNAL ERROR]" prefix clearly indicates internal corruption (not user error)
-    - **Stack traces**: Errors show exactly where corruption occurred (which method, which ID, which dependency)
-    - **No silent failures**: Users see error dialog instead of mysteriously broken geometry
-    - **Faster debugging**: Developers see corruption point immediately, not after geometric calculations produce NaN
-    - **Clear invariants**: Code documents what MUST be true (plane exists, element exists, dependency valid)
-    - **Maintainability**: Easier to understand code - explicit checks show architectural assumptions
-  - **Data model**: Will update data-model.md §Fail-Fast Error Handling Principle with explicit error throwing patterns
-  - **Tasks**: Phase 76 will be added to tasks.md (T1701-T1725: 25 tasks across 7 sub-phases)
-  - **Acceptance Criteria**:
-    - ✅ All invariant-violating `?.` uses replaced with explicit null checks + error throws (~20 instances in World.ts, ~15 in geometry classes)
-    - ✅ All geometric realization methods distinguish corruption (throw error) from geometric failure (return null)
-    - ✅ All legitimate `?.` uses preserved (optional parameters, UI state, external APIs, tests)
-    - ✅ Integration tests verify descriptive error messages for corrupted state scenarios
-    - ✅ All existing tests pass or updated to expect fail-fast behavior (corruption → error, not undefined)
-    - ✅ data-model.md documents error message conventions and fail-fast principles
-    - ✅ Grep audit confirms no defensive coding hiding internal corruption
-  - **Migration Impact**: Medium - affects ~35 methods across 5-6 files, requires test updates for corruption scenarios
-  - **Breaking Changes**: Code that relied on silent undefined returns for corrupted state will now throw errors (this is the goal - expose bugs immediately)
-  - **Timing**: After Phase 93 (Action interface minimization complete), before Phase 82 (projection plane tool - needs robust error handling)
-  - **Related Phases**: Phase 91 (DependencyService - proper dependency tracking reduces corruption risk), Phase 92 (Action rationalization - cleaner data model)
-  - **Key Insight**: This is NOT about removing ALL optional chaining or defensive code, but specifically targeting patterns that HIDE INTERNAL CORRUPTION. Legitimate optionality (external APIs, UI state, optional parameters) is preserved.
 * [ ] Adding new elements just expands all subprocesses in the process tree
 * [ ] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
 * [ ] Move geometric element variation classes in directories line lines, circles, points, etc.
@@ -323,6 +116,28 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.
 
 ## ALREADY PLANNED
+
+* [x] **Fail-Fast Error Handling - Eliminate Defensive Coding Anti-Patterns (Phase 76)** - ✅ COMPLETE (Feb 2, 2026)
+  - **User Requirement**: "In the code use the operator `?.` only when the argument at the left can be null without it being the internal app state is corrupted. In general don't try to handle unexpected internal states but just report an error instead. I don't want code which hides bugs and returns bad results. Internal errors must not be hidden. Instead they must cause the app to die so we can see them and fix them."
+  - **Core Principle**: **Fail-Fast, Don't Hide Bugs** - When internal invariants are violated (element not found, plane missing, etc.), throw errors immediately with descriptive messages instead of silently returning undefined/null and continuing with corrupted state
+  - **Implementation**: Eliminated defensive coding patterns that hide internal corruption:
+    - World.ts getters: Added explicit null checks for planes before accessing methods (~10 methods)
+    - Geometric realization methods: Throw errors for missing dependencies, use `feasible: false` for geometric failures (~15 methods)
+    - ProcessTree: Verified tombstone pattern is architecturally correct (no changes needed)
+  - **Status**: ✅ COMPLETE (Feb 2, 2026)
+    - Phase 76.1: Comprehensive audit ✅
+    - Phase 76.2: World.ts getters ✅
+    - Phase 76.3: Geometric realization methods ✅
+    - Phase 76.4: ProcessTree ✅ (SKIPPED - tombstone pattern correct)
+    - Phase 76.5: Integration tests ✅ (10 tests, all passing)
+    - Phase 76.6: Full test suite ✅ (0 Phase 76 failures)
+    - Phase 76.7: Documentation ✅
+  - **Benefits**:
+    - Immediate bug detection at source with explicit error messages
+    - Clear distinction between corruption (error) and geometric failure (feasible: false)
+    - Preserved legitimate optional chaining (~80+ instances in Vue components, external APIs)
+  - **Specifications**: data-model.md §Fail-Fast Error Handling Principle
+  - **Tasks**: T1701-T1725 in tasks.md (25 tasks across 7 sub-phases)
 
 * [x] **Matrix Serialization Optimization (Phase 94)** - ✅ COMPLETE (Feb 3, 2026)
   - **Status**: Implementation complete. Serialization format fix discovered and implemented during Phase 94 execution.

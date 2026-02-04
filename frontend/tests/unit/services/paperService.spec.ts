@@ -484,7 +484,7 @@ describe('PaperService', () => {
       const context: PrimitiveContext = {
         world,
         planeTransforms,
-        activePlaneId: 'proj_plane_V' // Point is on P_H, but P_V is active
+        activePlaneId: 'projPlaneV' // Point is on P_H, but P_V is active
       };
 
       const primitives = paperService.generatePrimitives(context);
@@ -497,7 +497,7 @@ describe('PaperService', () => {
     it('should apply 100% opacity to guides regardless of active plane', () => {
       // Note: This test assumes Guide2D entities exist in the domain model
       // For now, we'll test the style resolver directly if guides aren't implemented yet
-      const projPlaneH = world.projectionPlanes.get('proj_plane_H');
+      const projPlaneH = world.projectionPlanes.get('projPlaneH');
       
       // Create a guide (if Guide2D is implemented)
       // For now, this is a placeholder that would need actual guide creation
@@ -505,7 +505,7 @@ describe('PaperService', () => {
       const context: PrimitiveContext = {
         world,
         planeTransforms,
-        activePlaneId: 'proj_plane_V' // Different plane is active
+        activePlaneId: 'projPlaneV' // Different plane is active
       };
 
       // Guides should always have 100% opacity
@@ -517,7 +517,7 @@ describe('PaperService', () => {
       const context: PrimitiveContext = {
         world,
         planeTransforms,
-        activePlaneId: 'proj_plane_H'
+        activePlaneId: 'projPlaneH'
       };
 
       const primitives = paperService.generatePrimitives(context);

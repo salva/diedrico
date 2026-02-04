@@ -167,7 +167,7 @@ describe('ProjectionPlane Factory Methods', () => {
         );
 
         expect(result.primary).toBeDefined();
-        expect(result.primary.planeId).toBe('proj_plane_H');
+        expect(result.primary.planeId).toBe('projPlaneH');
         expect(result.sibling).toBeUndefined();
       });
 
@@ -188,10 +188,10 @@ describe('ProjectionPlane Factory Methods', () => {
         );
 
         expect(result.primary).toBeDefined();
-        expect(result.primary.planeId).toBe('proj_plane_H');
+        expect(result.primary.planeId).toBe('projPlaneH');
         expect(result.sibling).toBeDefined();
         expect(result.sibling).toBeInstanceOf(SiblingIntersectionPoint2D);
-        expect(result.sibling!.planeId).toBe('proj_plane_V');
+        expect(result.sibling!.planeId).toBe('projPlaneV');
         expect(result.sibling!.primaryIntersectionId).toBe(result.primary.id);
       });
 
@@ -212,9 +212,9 @@ describe('ProjectionPlane Factory Methods', () => {
         );
 
         expect(result.primary).toBeDefined();
-        expect(result.primary.planeId).toBe('proj_plane_V');
+        expect(result.primary.planeId).toBe('projPlaneV');
         expect(result.sibling).toBeDefined();
-        expect(result.sibling!.planeId).toBe('proj_plane_H');
+        expect(result.sibling!.planeId).toBe('projPlaneH');
         expect(result.sibling!.primaryIntersectionId).toBe(result.primary.id);
       });
 
@@ -299,7 +299,7 @@ describe('ProjectionPlane Factory Methods', () => {
           world
         );
 
-        expect(result.sibling!.planeId).toBe('proj_plane_V');
+        expect(result.sibling!.planeId).toBe('projPlaneV');
       });
 
       it('should determine correct sibling plane for proj_plane_V', () => {
@@ -316,7 +316,7 @@ describe('ProjectionPlane Factory Methods', () => {
           world
         );
 
-        expect(result.sibling!.planeId).toBe('proj_plane_H');
+        expect(result.sibling!.planeId).toBe('projPlaneH');
       });
 
       it('should add sibling to world storage', () => {

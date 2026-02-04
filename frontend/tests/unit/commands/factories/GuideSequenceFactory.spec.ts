@@ -60,7 +60,7 @@ describe('GuideSequenceFactory', () => {
       
       // Should return guideId but no siblingGuideId
       expect(result.guideId).toBeDefined();
-      expect(result.guideId).toContain('/guide2d_'); // Hierarchical ID format
+      expect(result.guideId).toContain('/guide2d'); // Hierarchical ID format
       expect(result.siblingGuideId).toBeUndefined();
       
       // Verify guide exists in world
@@ -100,8 +100,8 @@ describe('GuideSequenceFactory', () => {
       // Should return both guideId and siblingGuideId
       expect(result.guideId).toBeDefined();
       expect(result.siblingGuideId).toBeDefined();
-      expect(result.guideId).toContain('/guide2d_'); // Hierarchical ID format
-      expect(result.siblingGuideId).toContain('/guide2d_'); // Hierarchical ID format
+      expect(result.guideId).toContain('/guide2d'); // Hierarchical ID format
+      expect(result.siblingGuideId).toContain('/guide2d'); // Hierarchical ID format
       expect(result.guideId).not.toBe(result.siblingGuideId);
       
       // Verify both guides exist in world

@@ -236,7 +236,7 @@ describe('World Initialization Integration', () => {
     });
 
     // Note: Removed "unique IDs across multiple Worlds" test.
-    // Phase 47 uses fixed IDs for fundamental structure (plane_H, plane_V, proj_plane_1, etc).
+    // Phase 47 uses fixed IDs for fundamental structure (planeH, planeV, projPlane1, etc).
     // This is by design - fundamental elements have predictable IDs.
   });
 

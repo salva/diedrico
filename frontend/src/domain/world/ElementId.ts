@@ -4,9 +4,9 @@
  * Phase 45: Element IDs now use hierarchical format: {containerId}/{localId}
  * 
  * Examples:
- *   - "proj_plane_H/point2d_1" - Point on horizontal plane
- *   - "proj_plane_V/line2d_5" - Line on vertical plane
- *   - "proj_plane_H/segment2d_12" - Segment on horizontal plane
+ *   - "projPlaneH/point2d1" - Point on horizontal plane
+ *   - "projPlaneV/line2d5" - Line on vertical plane
+ *   - "projPlaneH/segment2d12" - Segment on horizontal plane
  * 
  * Benefits:
  *   - Self-documenting: ID reveals container (projection plane)
@@ -25,7 +25,7 @@
  * @throws Error if ID format is invalid
  * 
  * @example
- * parseElementId("proj_plane_H/point2d_1") // ["proj_plane_H", "point2d_1"]
+ * parseElementId("projPlaneH/point2d1") // ["projPlaneH", "point2d1"]
  */
 export function parseElementId(id: string): [string, string] {
   const parts = id.split('/');
@@ -55,7 +55,7 @@ export function parseElementId(id: string): [string, string] {
  * @throws Error if ID format is invalid
  * 
  * @example
- * getContainerIdFromElementId("proj_plane_H/point2d_1") // "proj_plane_H"
+ * getContainerIdFromElementId("projPlaneH/point2d1") // "projPlaneH"
  */
 export function getContainerIdFromElementId(id: string): string {
   const [containerId] = parseElementId(id);
@@ -70,7 +70,7 @@ export function getContainerIdFromElementId(id: string): string {
  * @throws Error if ID format is invalid
  * 
  * @example
- * getLocalIdFromElementId("proj_plane_H/point2d_1") // "point2d_1"
+ * getLocalIdFromElementId("projPlaneH/point2d1") // "point2d1"
  */
 export function getLocalIdFromElementId(id: string): string {
   const [, localId] = parseElementId(id);
@@ -86,7 +86,7 @@ export function getLocalIdFromElementId(id: string): string {
  * @throws Error if either ID is empty
  * 
  * @example
- * buildElementId("proj_plane_H", "point2d_1") // "proj_plane_H/point2d_1"
+ * buildElementId("projPlaneH", "point2d1") // "projPlaneH/point2d1"
  */
 export function buildElementId(containerId: string, localId: string): string {
   if (!containerId || !localId) {
@@ -107,8 +107,8 @@ export function buildElementId(containerId: string, localId: string): string {
  * @throws Error if ID format is invalid or doesn't match expected plane
  * 
  * @example
- * validateElementId("proj_plane_H/point2d_1", "proj_plane_H") // OK
- * validateElementId("proj_plane_V/point2d_1", "proj_plane_H") // Throws error
+ * validateElementId("projPlaneH/point2d1", "projPlaneH") // OK
+ * validateElementId("projPlaneV/point2d1", "projPlaneH") // Throws error
  */
 export function validateElementId(id: string, expectedPlaneId: string): void {
   const containerId = getContainerIdFromElementId(id);

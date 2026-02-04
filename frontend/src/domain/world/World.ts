@@ -303,30 +303,30 @@ export class World {
 
 
   /**
-   * Phase 46: Generate unique projection plane ID
+   * Phase 95: Generate unique projection plane ID (camelCase format)
    * Uses shared nextId counter to ensure global uniqueness
-   * @returns Unique projection plane ID (e.g., 'proj_plane_1', 'proj_plane_2')
+   * @returns Unique projection plane ID (e.g., 'projPlane1', 'projPlane2')
    */
   generateProjPlaneId(): string {
-    return `proj_plane_${this.nextId++}`;
+    return `projPlane${this.nextId++}`;
   }
 
   /**
-   * Phase 46: Generate unique 3D plane ID
+   * Phase 95: Generate unique 3D plane ID (camelCase format)
    * Uses shared nextId counter to ensure global uniqueness
-   * @returns Unique plane ID (e.g., 'plane_1', 'plane_2')
+   * @returns Unique plane ID (e.g., 'plane1', 'plane2')
    */
   generatePlaneId(): string {
-    return `plane_${this.nextId++}`;
+    return `plane${this.nextId++}`;
   }
 
   /**
-   * Phase 46: Generate unique hinge line ID
+   * Phase 95: Generate unique hinge line ID (camelCase format)
    * Uses shared nextId counter to ensure global uniqueness
-   * @returns Unique hinge line ID (e.g., 'HL_1', 'HL_2')
+   * @returns Unique hinge line ID (e.g., 'hingeLine1', 'hingeLine2')
    */
   generateHingeLineId(): string {
-    return `HL_${this.nextId++}`;
+    return `hingeLine${this.nextId++}`;
   }
 
   /**
@@ -748,8 +748,8 @@ export class World {
    * @returns Element2D (Point2D, Line2D, or Circle2D) or undefined if not found
    * 
    * @example
-   * world.getElement2D("proj_plane_H/point2d_1") // FreePoint2D
-   * world.getElement2D("proj_plane_V/line2d_5")   // Line2DByTwoPoints
+   * world.getElement2D("projPlaneH/point2d1") // FreePoint2D
+   * world.getElement2D("projPlaneV/line2d5")   // Line2DByTwoPoints
    */
   getElement2D(id: string): Element2D | undefined {
     const containerId = getContainerIdFromElementId(id);
@@ -1038,35 +1038,35 @@ export class World {
   // ========================================
 
   /**
-   * Generate unique ID for 3D point
-   * Format: "point3d_N" where N is auto-incremented
+   * Phase 95: Generate unique ID for 3D point (camelCase format)
+   * Format: "point3dN" where N is auto-incremented
    */
   generate3DPointId(): string {
-    return `point3d_${++this.point3DCounter}`;
+    return `point3d${++this.point3DCounter}`;
   }
 
   /**
-   * Generate unique ID for 3D line
-   * Format: "line3d_N" where N is auto-incremented
+   * Phase 95: Generate unique ID for 3D line (camelCase format)
+   * Format: "line3dN" where N is auto-incremented
    */
   generate3DLineId(): string {
-    return `line3d_${++this.line3DCounter}`;
+    return `line3d${++this.line3DCounter}`;
   }
 
   /**
-   * Generate unique ID for 3D segment
-   * Format: "segment3d_N" where N is auto-incremented
+   * Phase 95: Generate unique ID for 3D segment (camelCase format)
+   * Format: "segment3dN" where N is auto-incremented
    */
   generate3DSegmentId(): string {
-    return `segment3d_${++this.segment3DCounter}`;
+    return `segment3d${++this.segment3DCounter}`;
   }
 
   /**
-   * Generate unique ID for user-created 3D plane
-   * Format: "plane3d_N" where N is auto-incremented
+   * Phase 95: Generate unique ID for user-created 3D plane (camelCase format)
+   * Format: "plane3dN" where N is auto-incremented
    */
   generate3DPlaneId(): string {
-    return `plane3d_${++this.plane3DUserCounter}`;
+    return `plane3d${++this.plane3DUserCounter}`;
   }
 
   /**

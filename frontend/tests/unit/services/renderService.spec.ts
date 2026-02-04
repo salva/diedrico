@@ -100,7 +100,7 @@ describe('RenderService', () => {
       // Phase 63: Point should have hierarchical ID
       expect(attrs['data-element-id']).toBe(point.id);
       expect(point.id).toBeTruthy();
-      expect(point.id).toContain('proj_plane');
+      expect(point.id).toContain('projPlane');
     });
   });
 
@@ -129,8 +129,8 @@ describe('RenderService', () => {
 
   describe('renderLine', () => {
     it('should render line as SVG line attributes', () => {
-      const start = { u: 0, v: 0, planeId: 'proj_plane_H' };
-      const end = { u: 100, v: 50, planeId: 'proj_plane_H' };
+      const start = { u: 0, v: 0, planeId: 'projPlaneH' };
+      const end = { u: 100, v: 50, planeId: 'projPlaneH' };
       
       const attrs = renderLine(start, end, 'line_1', undefined, 400, 400);
       
@@ -145,8 +145,8 @@ describe('RenderService', () => {
     });
 
     it('should apply custom line styling', () => {
-      const start = { u: 0, v: 0, planeId: 'proj_plane_H' };
-      const end = { u: 100, v: 100, planeId: 'proj_plane_H' };
+      const start = { u: 0, v: 0, planeId: 'projPlaneH' };
+      const end = { u: 100, v: 100, planeId: 'projPlaneH' };
       const style = {
         color: '#FF0000',
         width: 3,
@@ -161,8 +161,8 @@ describe('RenderService', () => {
     });
 
     it('should handle negative coordinates', () => {
-      const start = { u: -50, v: -30, planeId: 'proj_plane_H' };
-      const end = { u: 50, v: 30, planeId: 'proj_plane_H' };
+      const start = { u: -50, v: -30, planeId: 'projPlaneH' };
+      const end = { u: 50, v: 30, planeId: 'projPlaneH' };
       
       const attrs = renderLine(start, end, 'line_3', undefined, 400, 400);
       
@@ -173,8 +173,8 @@ describe('RenderService', () => {
     });
 
     it('should render hinge line with dashed style', () => {
-      const start = { u: -300, v: 0, planeId: 'proj_plane_H' };
-      const end = { u: 300, v: 0, planeId: 'proj_plane_H' };
+      const start = { u: -300, v: 0, planeId: 'projPlaneH' };
+      const end = { u: 300, v: 0, planeId: 'projPlaneH' };
       const style = { 
         color: '#666666', 
         width: 2, 
@@ -304,12 +304,12 @@ describe('RenderService', () => {
     });
 
     it('should render hinge line using same logic as user lines', () => {
-      const hlStart = { u: -300, v: 0, planeId: 'proj_plane_H' };
-      const hlEnd = { u: 300, v: 0, planeId: 'proj_plane_H' };
+      const hlStart = { u: -300, v: 0, planeId: 'projPlaneH' };
+      const hlEnd = { u: 300, v: 0, planeId: 'projPlaneH' };
       const hlStyle = { color: '#666666', width: 2, dashArray: '8,4' };
       
-      const userStart = { u: 10, v: 20, planeId: 'proj_plane_H' };
-      const userEnd = { u: 50, v: 60, planeId: 'proj_plane_H' };
+      const userStart = { u: 10, v: 20, planeId: 'projPlaneH' };
+      const userEnd = { u: 50, v: 60, planeId: 'projPlaneH' };
       const userStyle = { color: '#FF0000', width: 2, dashArray: 'none' };
       
       const hlAttrs = renderLine(hlStart, hlEnd, 'HL_HV', hlStyle);

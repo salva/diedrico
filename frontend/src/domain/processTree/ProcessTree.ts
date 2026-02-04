@@ -592,9 +592,10 @@ export class ProcessTree {
   }
 
   /**
-   * Generate unique ID
+  /**
+   * Phase 95: Generate unique ID (camelCase format)
    */
   private generateId(): string {
-    return `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `node${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
   }
 }

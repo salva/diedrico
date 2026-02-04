@@ -23,7 +23,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       
       expect(horizontalPlane).toBeDefined();
       expect(horizontalPlane.id).toBeTruthy();
-      expect(horizontalPlane.id).toMatch(/^proj_plane_\d+$/); // Auto-generated numeric ID
+      expect(horizontalPlane.id).toMatch(/^projPlane\d+$/); // Auto-generated numeric ID
     });
 
     it('should provide access to vertical plane via semantic method', () => {
@@ -31,7 +31,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       
       expect(verticalPlane).toBeDefined();
       expect(verticalPlane.id).toBeTruthy();
-      expect(verticalPlane.id).toMatch(/^proj_plane_\d+$/); // Auto-generated numeric ID
+      expect(verticalPlane.id).toMatch(/^projPlane\d+$/); // Auto-generated numeric ID
     });
 
     it('should provide access to main hinge line', () => {
@@ -39,7 +39,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       
       expect(mainHingeLine).toBeDefined();
       expect(mainHingeLine.id).toBeTruthy();
-      expect(mainHingeLine.id).toMatch(/^HL_\d+$/); // Auto-generated numeric ID
+      expect(mainHingeLine.id).toMatch(/^hingeLine\d+$/); // Auto-generated numeric ID
     });
 
     it.skip('should provide access to horizontal origin point - SKIPPED: origin tracking not fully implemented', () => {
@@ -77,10 +77,10 @@ describe('Semantic Entity References (Phase 46)', () => {
       expect(verticalPlane.id).toMatch(/^proj_plane_\d+$/);
       
       // IDs should NOT be any hardcoded values
-      expect(horizontalPlane.id).not.toBe('proj_plane_H');
-      expect(verticalPlane.id).not.toBe('proj_plane_V');
-      expect(horizontalPlane.id).not.toBe('proj_plane_PH');
-      expect(verticalPlane.id).not.toBe('proj_plane_PV');
+      expect(horizontalPlane.id).not.toBe('projPlaneH');
+      expect(verticalPlane.id).not.toBe('projPlaneV');
+      expect(horizontalPlane.id).not.toBe('planePH');
+      expect(verticalPlane.id).not.toBe('planePV');
     });
 
     it.skip('should use hierarchical origin IDs, not hardcoded ones - SKIPPED: origin tracking not fully implemented', () => {
@@ -89,9 +89,9 @@ describe('Semantic Entity References (Phase 46)', () => {
       const verticalOrigin = world.getVerticalOrigin();
       
       // Origin IDs should NOT be the old hardcoded values
-      expect(horizontalOrigin.id).not.toBe('proj_plane_H/O_H');
+      expect(horizontalOrigin.id).not.toBe('projPlaneH/O_H');
       expect(horizontalOrigin.id).not.toBe('O_H');
-      expect(verticalOrigin.id).not.toBe('proj_plane_V/O_V');
+      expect(verticalOrigin.id).not.toBe('projPlaneV/O_V');
       expect(verticalOrigin.id).not.toBe('O_V');
       
       // Origin IDs should be hierarchical format
@@ -106,7 +106,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       expect(mainHingeLine.id).toMatch(/^HL_\d+$/);
       
       // Should NOT be any hardcoded values
-      expect(mainHingeLine.id).not.toBe('HL_HV');
+      expect(mainHingeLine.id).not.toBe('hingeLineHV');
       expect(mainHingeLine.id).not.toBe('hinge_line_main');
     });
   });
@@ -155,7 +155,7 @@ describe('Semantic Entity References (Phase 46)', () => {
       expect(horizontalPlane1.id).not.toBe(verticalPlane1.id);
       
       // In future, additional plane pairs would use:
-      // - Generated numeric IDs: proj_plane_1, proj_plane_2, etc.
+      // - Generated numeric IDs: projPlane1, projPlane2, etc.
       // - User could track additional pairs separately with labels
       // - No ID collisions possible with auto-generated IDs
     });

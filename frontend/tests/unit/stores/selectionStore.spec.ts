@@ -437,10 +437,10 @@ describe('selectionStore', () => {
       const store = useSelectionStore();
       
       // Simulate canvas click handler calling selectSingle
-      store.selectSingle('point2d_1');
+      store.selectSingle('point2d1');
       
       // Panel should see the selection
-      expect(store.isSelected('point2d_1')).toBe(true);
+      expect(store.isSelected('point2d1')).toBe(true);
       expect(store.hasSelection).toBe(true);
     });
 
@@ -448,10 +448,10 @@ describe('selectionStore', () => {
       const store = useSelectionStore();
       
       // Simulate panel click handler calling selectSingle
-      store.selectSingle('line2d_5');
+      store.selectSingle('line2d5');
       
       // Canvas should see the selection (via computed properties)
-      expect(store.selectedIdsArray).toContain('line2d_5');
+      expect(store.selectedIdsArray).toContain('line2d5');
     });
 
     it('should support multi-select from canvas (Shift+click)', () => {

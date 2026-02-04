@@ -38,8 +38,8 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
    * point C on the hinge line (C and C' map to the same 3D point).
    */
   it('should create feasible 3D plane from user scenario', () => {
-    const planeH = world.getProjectionPlaneById('proj_plane_3'); // P_H
-    const planeV = world.getProjectionPlaneById('proj_plane_4'); // P_V
+    const planeH = world.getProjectionPlaneById('projPlane3'); // P_H
+    const planeV = world.getProjectionPlaneById('projPlane4'); // P_V
     
     expect(planeH).toBeDefined();
     expect(planeV).toBeDefined();
@@ -48,7 +48,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
 
     // Find the hinge line on P_H
     const hingeLineH = planeH.getAllLines().find(line => 
-      line instanceof HalfHingeLine2D && line.hingeLineId === 'HL_7'
+      line instanceof HalfHingeLine2D && line.hingeLineId === 'hingeLine7'
     );
     expect(hingeLineH).toBeDefined();
     if (!hingeLineH) throw new Error('Hinge line not found on P_H');
@@ -57,14 +57,14 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     const pointA = new FreePoint2D(
       'proj_plane_3/point_A',
       new Vector3(10, 5, 1),
-      'proj_plane_3'
+      'projPlane3'
     );
     planeH.addPoint(pointA);
 
     const pointB = new FreePoint2D(
       'proj_plane_3/point_B',
       new Vector3(20, -5, 1),
-      'proj_plane_3'
+      'projPlane3'
     );
     planeH.addPoint(pointB);
 
@@ -73,7 +73,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
       'proj_plane_3/line_L',
       'proj_plane_3/point_A',
       'proj_plane_3/point_B',
-      'proj_plane_3'
+      'projPlane3'
     );
     planeH.addLine(lineL);
 
@@ -82,7 +82,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
       'proj_plane_3/point_C',
       'proj_plane_3/line_L',
       hingeLineH.id,
-      'proj_plane_3'
+      'projPlane3'
     );
     planeH.addPoint(pointC);
 
@@ -109,7 +109,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     const pointD = new FreePoint2D(
       'proj_plane_4/point_D',
       new Vector3(15, 10, 1),
-      'proj_plane_4'
+      'projPlane4'
     );
     planeV.addPoint(pointD);
 
@@ -118,18 +118,18 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
       'proj_plane_4/line_M',
       'proj_plane_4/point_D',
       pointC.siblingPointId!,
-      'proj_plane_4'
+      'projPlane4'
     );
     planeV.addLine(lineM);
 
     // 7. Define plane P with traces L and M
     const planeP = new Plane3DFromTraces(
-      'plane_P',
+      'planeP',
       'Plane P',
       'proj_plane_3/line_L',  // trace on P_H
       'proj_plane_4/line_M',  // trace on P_V
-      'proj_plane_3',
-      'proj_plane_4'
+      'projPlane3',
+      'projPlane4'
     );
 
     // Realize the 3D plane
@@ -157,8 +157,8 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
    * same 3D point and thus define a valid plane.
    */
   it('should handle points with identical 2D coordinates', () => {
-    const planeV = world.getProjectionPlaneById('proj_plane_4'); // P_V
-    const planeH = world.getProjectionPlaneById('proj_plane_3'); // P_H
+    const planeV = world.getProjectionPlaneById('projPlane4'); // P_V
+    const planeH = world.getProjectionPlaneById('projPlane3'); // P_H
     
     if (!planeV || !planeH) throw new Error('Base planes not found');
 
@@ -168,14 +168,14 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     const pointV = new FreePoint2D(
       'proj_plane_4/point_common',
       new Vector3(5, 0, 1),  // On hinge line: v=0
-      'proj_plane_4'
+      'projPlane4'
     );
     planeV.addPoint(pointV);
 
     const pointH = new FreePoint2D(
       'proj_plane_3/point_common',
       new Vector3(5, 0, 1),  // On hinge line: v=0
-      'proj_plane_3'
+      'projPlane3'
     );
     planeH.addPoint(pointH);
 
@@ -183,7 +183,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     const pointV2 = new FreePoint2D(
       'proj_plane_4/point2',
       new Vector3(15, 20, 1),
-      'proj_plane_4'
+      'projPlane4'
     );
     planeV.addPoint(pointV2);
 
@@ -191,7 +191,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     const pointH2 = new FreePoint2D(
       'proj_plane_3/point2',
       new Vector3(15, -5, 1),
-      'proj_plane_3'
+      'projPlane3'
     );
     planeH.addPoint(pointH2);
 
@@ -200,7 +200,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
       'proj_plane_4/line',
       'proj_plane_4/point_common',
       'proj_plane_4/point2',
-      'proj_plane_4'
+      'projPlane4'
     );
     planeV.addLine(lineV);
 
@@ -208,7 +208,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
       'proj_plane_3/line',
       'proj_plane_3/point_common',
       'proj_plane_3/point2',
-      'proj_plane_3'
+      'projPlane3'
     );
     planeH.addLine(lineH);
 
@@ -218,8 +218,8 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
       'Simple Plane',
       'proj_plane_4/line',
       'proj_plane_3/line',
-      'proj_plane_4',
-      'proj_plane_3'
+      'projPlane4',
+      'projPlane3'
     );
 
     // Realize the 3D plane

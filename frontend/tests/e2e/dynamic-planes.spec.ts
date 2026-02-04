@@ -26,7 +26,7 @@ test.describe('Dynamic Projection Planes', () => {
       const worldStore = worldStoreModule.useWorldStore ? worldStoreModule.useWorldStore() : undefined;
 
       // Get P_H matrices to clone (P_H usually exists)
-      const ph = world.getProjectionPlaneById('proj_plane_H');
+      const ph = world.getProjectionPlaneById('projPlaneH');
       if (!ph) throw new Error('P_H not found');
       
       const m1 = ph.getPlaneToPaperMatrix();

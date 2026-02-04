@@ -24,7 +24,7 @@ import { Vector3 } from 'three';
 describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
   
   // Create test element instances with proper hierarchical IDs
-  const planeId = 'proj_plane_1';
+  const planeId = 'projPlane1';
   const point = new FreePoint2D(`${planeId}/point2d_1`, new Vector3(0, 0, 1), planeId);
   const line = new Line2DByTwoPoints(`${planeId}/line2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
   const segment = new Segment2DByPoints(`${planeId}/segment2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);

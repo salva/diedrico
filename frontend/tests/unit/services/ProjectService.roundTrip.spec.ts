@@ -44,163 +44,163 @@ describe('Round-Trip Serialization Tests', () => {
   });
 
   it('AddFreePoint2DOp survives round-trip', () => {
-    const op = new AddFreePoint2DOp('proj_plane_H', new Vector3(5, 10, 1));
+    const op = new AddFreePoint2DOp('projPlaneH', new Vector3(5, 10, 1));
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddFreePoint2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.position).toEqual({ x: 5, y: 10, z: 1 });
   });
 
   it('AddLine2DByTwoPoints survives round-trip', () => {
-    const op = new AddLine2DByTwoPointsOp('proj_plane_H', 'point1', 'point2');
+    const op = new AddLine2DByTwoPointsOp('projPlaneH', 'point1', 'point2');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddLine2DByTwoPoints');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.point1Id).toBe('point1');
     expect(result.parameters.point2Id).toBe('point2');
   });
 
   it('AddSegment2DByPoints survives round-trip', () => {
-    const op = new AddSegment2DByPointsOp('proj_plane_H', 'point1', 'point2');
+    const op = new AddSegment2DByPointsOp('projPlaneH', 'point1', 'point2');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddSegment2DByPoints');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.point1Id).toBe('point1');
     expect(result.parameters.point2Id).toBe('point2');
   });
 
   it('AddCircle2DByCenterAndPoint survives round-trip', () => {
-    const op = new AddCircle2DByCenterAndPointOp('proj_plane_H', 'center', 'radiusPoint');
+    const op = new AddCircle2DByCenterAndPointOp('projPlaneH', 'center', 'radiusPoint');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddCircle2DByCenterAndPoint');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.centerPointId).toBe('center');
     expect(result.parameters.circumferencePointId).toBe('radiusPoint');
   });
 
   it('AddGuide2DPerpendicularToLine survives round-trip', () => {
-    const op = new AddGuide2DPerpendicularToLineOp('proj_plane_H', 'lineId', 'pointId');
+    const op = new AddGuide2DPerpendicularToLineOp('projPlaneH', 'lineId', 'pointId');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddGuide2DPerpendicularToLine');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.referenceLineId).toBe('lineId');
     expect(result.parameters.throughPointId).toBe('pointId');
   });
 
   it('AddSiblingGuide2D survives round-trip', () => {
-    const op = new AddSiblingGuide2DOp('proj_plane_V', 'primaryGuide', 'refLine');
+    const op = new AddSiblingGuide2DOp('projPlaneV', 'primaryGuide', 'refLine');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddSiblingGuide2D');
-    expect(result.parameters.planeId).toBe('proj_plane_V');
+    expect(result.parameters.planeId).toBe('projPlaneV');
     expect(result.parameters.primaryGuideId).toBe('primaryGuide');
     expect(result.parameters.referenceLineId).toBe('refLine');
   });
 
   it('AddLineLineIntersectionPoint2D survives round-trip', () => {
-    const op = new AddLineLineIntersectionPoint2DOp('proj_plane_H', 'line1', 'line2');
+    const op = new AddLineLineIntersectionPoint2DOp('projPlaneH', 'line1', 'line2');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddLineLineIntersectionPoint2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.line1Id).toBe('line1');
     expect(result.parameters.line2Id).toBe('line2');
   });
 
   it('AddLineCircleIntersectionPoint2D survives round-trip', () => {
-    const op = new AddLineCircleIntersectionPoint2DOp('proj_plane_H', 'line', 'circle', 0);
+    const op = new AddLineCircleIntersectionPoint2DOp('projPlaneH', 'line', 'circle', 0);
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddLineCircleIntersectionPoint2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.lineId).toBe('line');
     expect(result.parameters.circleId).toBe('circle');
     expect(result.parameters.index).toBe(0);
   });
 
   it('AddCircleCircleIntersectionPoint2D survives round-trip', () => {
-    const op = new AddCircleCircleIntersectionPoint2DOp('proj_plane_H', 'circle1', 'circle2', 1);
+    const op = new AddCircleCircleIntersectionPoint2DOp('projPlaneH', 'circle1', 'circle2', 1);
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddCircleCircleIntersectionPoint2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.circle1Id).toBe('circle1');
     expect(result.parameters.circle2Id).toBe('circle2');
     expect(result.parameters.index).toBe(1);
   });
 
   it('RemovePoint2D survives round-trip', () => {
-    const op = new RemovePoint2DOp('proj_plane_H', 'point1');
+    const op = new RemovePoint2DOp('projPlaneH', 'point1');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('RemovePoint2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.pointId).toBe('point1');
   });
 
   it('RemoveLine2D survives round-trip', () => {
-    const op = new RemoveLine2DOp('proj_plane_H', 'line1');
+    const op = new RemoveLine2DOp('projPlaneH', 'line1');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('RemoveLine2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.lineId).toBe('line1');
   });
 
   it('RemoveSegment2D survives round-trip', () => {
-    const op = new RemoveSegment2DOp('proj_plane_H', 'segment1');
+    const op = new RemoveSegment2DOp('projPlaneH', 'segment1');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('RemoveSegment2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.segmentId).toBe('segment1');
   });
 
   it('RemoveCircle2D survives round-trip', () => {
-    const op = new RemoveCircle2DOp('proj_plane_H', 'circle1');
+    const op = new RemoveCircle2DOp('projPlaneH', 'circle1');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('RemoveCircle2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.circleId).toBe('circle1');
   });
 
   it('RemoveGuide2D survives round-trip', () => {
-    const op = new RemoveGuide2DOp('proj_plane_H', 'guide1');
+    const op = new RemoveGuide2DOp('projPlaneH', 'guide1');
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('RemoveGuide2D');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.guideId).toBe('guide1');
   });
 
   it('UpdateElementStyle survives round-trip', () => {
-    const op = new UpdateElementStyleOp('point1', 'proj_plane_H', { color: '#FF0000', strokeWidth: 2 });
+    const op = new UpdateElementStyleOp('point1', 'projPlaneH', { color: '#FF0000', strokeWidth: 2 });
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('UpdateElementStyle');
     expect(result.parameters.elementId).toBe('point1');
-    expect(result.parameters.planeId).toBe('proj_plane_H');
+    expect(result.parameters.planeId).toBe('projPlaneH');
     expect(result.parameters.newStyle).toEqual({ color: '#FF0000', strokeWidth: 2 });
   });
 

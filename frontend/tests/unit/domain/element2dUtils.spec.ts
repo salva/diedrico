@@ -30,17 +30,17 @@ import { Circle2DByCenterAndPoint } from '../../../src/domain/world/Circle';
 describe('Element2DUtils Integration Tests', () => {
   describe('isElement2D type guard', () => {
     it('should return true for Point2D instances', () => {
-      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H');
+      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH');
       expect(isElement2D(point)).toBe(true);
     });
 
     it('should return true for Line2D instances', () => {
-      const line = new Line2DByTwoPoints('proj_plane_V/l1', 'proj_plane_V/p1', 'proj_plane_V/p2', 'proj_plane_V');
+      const line = new Line2DByTwoPoints('proj_plane_V/l1', 'proj_plane_V/p1', 'proj_plane_V/p2', 'projPlaneV');
       expect(isElement2D(line)).toBe(true);
     });
 
     it('should return true for Circle2D instances', () => {
-      const circle = new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H');
+      const circle = new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH');
       expect(isElement2D(circle)).toBe(true);
     });
 
@@ -58,16 +58,16 @@ describe('Element2DUtils Integration Tests', () => {
   describe('getElementsOnPlane with mixed element types', () => {
     it('should filter mixed array by plane ID', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new FreePoint2D('proj_plane_V/p2', new Vector3(3, 4, 1), 'proj_plane_V'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p3', 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_V/l2', 'proj_plane_V/p2', 'proj_plane_V/p4', 'proj_plane_V'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/p5', 'proj_plane_H/p6', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_V/c2', 'proj_plane_V/p7', 'proj_plane_V/p8', 'proj_plane_V'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new FreePoint2D('proj_plane_V/p2', new Vector3(3, 4, 1), 'projPlaneV'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p3', 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_V/l2', 'proj_plane_V/p2', 'proj_plane_V/p4', 'projPlaneV'),
+        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/p5', 'proj_plane_H/p6', 'projPlaneH'),
+        new Circle2DByCenterAndPoint('proj_plane_V/c2', 'proj_plane_V/p7', 'proj_plane_V/p8', 'projPlaneV'),
       ];
 
-      const planeH = getElementsOnPlane(elements, 'proj_plane_H');
-      const planeV = getElementsOnPlane(elements, 'proj_plane_V');
+      const planeH = getElementsOnPlane(elements, 'projPlaneH');
+      const planeV = getElementsOnPlane(elements, 'projPlaneV');
 
       expect(planeH).toHaveLength(3);
       expect(planeV).toHaveLength(3);
@@ -80,7 +80,7 @@ describe('Element2DUtils Integration Tests', () => {
 
     it('should return empty array for non-existent plane', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
       ];
 
       const result = getElementsOnPlane(elements, 'nonexistent_plane');
@@ -88,7 +88,7 @@ describe('Element2DUtils Integration Tests', () => {
     });
 
     it('should handle empty input array', () => {
-      const result = getElementsOnPlane([], 'proj_plane_H');
+      const result = getElementsOnPlane([], 'projPlaneH');
       expect(result).toHaveLength(0);
     });
   });
@@ -96,9 +96,9 @@ describe('Element2DUtils Integration Tests', () => {
   describe('hideElement and showElement with mixed types', () => {
     it('should hide all element types uniformly', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH'),
+        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH'),
       ];
 
       // All visible initially (visualStyle not set, defaults to visible)
@@ -113,9 +113,9 @@ describe('Element2DUtils Integration Tests', () => {
 
     it('should show all element types uniformly', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH'),
+        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH'),
       ];
 
       // Hide all first
@@ -130,9 +130,9 @@ describe('Element2DUtils Integration Tests', () => {
     });
 
     it('should allow selective visibility changes', () => {
-      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H');
-      const line = new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H');
-      const circle = new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H');
+      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH');
+      const line = new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH');
+      const circle = new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH');
 
       hideElement(line);
 
@@ -144,19 +144,19 @@ describe('Element2DUtils Integration Tests', () => {
 
   describe('getElementLabel', () => {
     it('should return label when set', () => {
-      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H', 'Point A');
+      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH', 'Point A');
       expect(getElementLabel(point)).toBe('Point A');
     });
 
     it('should return id when label not set', () => {
-      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H');
+      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH');
       expect(getElementLabel(point)).toBe('proj_plane_H/p1');
     });
 
     it('should work with all element types', () => {
-      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H', 'A');
-      const line = new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H', 'Line AB');
-      const circle = new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H');
+      const point = new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH', 'A');
+      const line = new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH', 'Line AB');
+      const circle = new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH');
 
       expect(getElementLabel(point)).toBe('A');
       expect(getElementLabel(line)).toBe('Line AB');
@@ -167,9 +167,9 @@ describe('Element2DUtils Integration Tests', () => {
   describe('getVisibleElements', () => {
     it('should filter visible elements from mixed array', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH'),
+        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH'),
       ];
 
       hideElement(elements[1]); // Hide the line
@@ -182,8 +182,8 @@ describe('Element2DUtils Integration Tests', () => {
 
     it('should return empty array when all hidden', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH'),
       ];
 
       elements.forEach(hideElement);
@@ -194,9 +194,9 @@ describe('Element2DUtils Integration Tests', () => {
 
     it('should return all elements when all visible', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH'),
+        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH'),
       ];
 
       const visible = getVisibleElements(elements);
@@ -207,17 +207,17 @@ describe('Element2DUtils Integration Tests', () => {
   describe('countElementsByPlane', () => {
     it('should count mixed element types per plane', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new FreePoint2D('proj_plane_H/p2', new Vector3(3, 4, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_V/l1', 'proj_plane_V/p1', 'proj_plane_V/p2', 'proj_plane_V'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_V/c2', 'proj_plane_V/center2', 'proj_plane_V/edge2', 'proj_plane_V'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new FreePoint2D('proj_plane_H/p2', new Vector3(3, 4, 1), 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_V/l1', 'proj_plane_V/p1', 'proj_plane_V/p2', 'projPlaneV'),
+        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH'),
+        new Circle2DByCenterAndPoint('proj_plane_V/c2', 'proj_plane_V/center2', 'proj_plane_V/edge2', 'projPlaneV'),
       ];
 
       const counts = countElementsByPlane(elements);
 
-      expect(counts.get('proj_plane_H')).toBe(3); // 2 points + 1 circle
-      expect(counts.get('proj_plane_V')).toBe(2); // 1 line + 1 circle
+      expect(counts.get('projPlaneH')).toBe(3); // 2 points + 1 circle
+      expect(counts.get('projPlaneV')).toBe(2); // 1 line + 1 circle
     });
 
     it('should handle empty array', () => {
@@ -227,32 +227,32 @@ describe('Element2DUtils Integration Tests', () => {
 
     it('should handle single plane', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH'),
       ];
 
       const counts = countElementsByPlane(elements);
 
       expect(counts.size).toBe(1);
-      expect(counts.get('proj_plane_H')).toBe(2);
+      expect(counts.get('projPlaneH')).toBe(2);
     });
   });
 
   describe('Complex integration scenarios', () => {
     it('should support chaining utility functions', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H', 'A'),
-        new FreePoint2D('proj_plane_V/p2', new Vector3(3, 4, 1), 'proj_plane_V', 'B'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p3', 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_V/l2', 'proj_plane_V/p2', 'proj_plane_V/p4', 'proj_plane_V'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/p5', 'proj_plane_H/p6', 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH', 'A'),
+        new FreePoint2D('proj_plane_V/p2', new Vector3(3, 4, 1), 'projPlaneV', 'B'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p3', 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_V/l2', 'proj_plane_V/p2', 'proj_plane_V/p4', 'projPlaneV'),
+        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/p5', 'proj_plane_H/p6', 'projPlaneH'),
       ];
 
       // Hide all lines (using instanceof filter)
       elements.filter(el => el instanceof Line2DByTwoPoints).forEach(hideElement);
 
       // Get visible elements on plane H
-      const visiblePlaneH = getVisibleElements(getElementsOnPlane(elements, 'proj_plane_H'));
+      const visiblePlaneH = getVisibleElements(getElementsOnPlane(elements, 'projPlaneH'));
 
       expect(visiblePlaneH).toHaveLength(2); // Point A and Circle c1
       expect(visiblePlaneH.some((el: Element2D) => el instanceof FreePoint2D)).toBe(true);
@@ -262,30 +262,30 @@ describe('Element2DUtils Integration Tests', () => {
 
     it('should handle operations on filtered subsets', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new FreePoint2D('proj_plane_V/p2', new Vector3(3, 4, 1), 'proj_plane_V'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p3', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_V/c1', 'proj_plane_V/center', 'proj_plane_V/edge', 'proj_plane_V'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new FreePoint2D('proj_plane_V/p2', new Vector3(3, 4, 1), 'projPlaneV'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p3', 'projPlaneH'),
+        new Circle2DByCenterAndPoint('proj_plane_V/c1', 'proj_plane_V/center', 'proj_plane_V/edge', 'projPlaneV'),
       ];
 
       // Hide all elements on plane V
-      getElementsOnPlane(elements, 'proj_plane_V').forEach(hideElement);
+      getElementsOnPlane(elements, 'projPlaneV').forEach(hideElement);
 
       // Count visible per plane
       const visibleCounts = countElementsByPlane(getVisibleElements(elements));
 
-      expect(visibleCounts.get('proj_plane_H')).toBe(2); // p1 and l1 visible
-      expect(visibleCounts.get('proj_plane_V')).toBeUndefined(); // All hidden
+      expect(visibleCounts.get('projPlaneH')).toBe(2); // p1 and l1 visible
+      expect(visibleCounts.get('projPlaneV')).toBeUndefined(); // All hidden
     });
 
     it('should work with instanceof checks after filtering', () => {
       const elements: Element2D[] = [
-        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'proj_plane_H'),
-        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'proj_plane_H'),
-        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'proj_plane_H'),
+        new FreePoint2D('proj_plane_H/p1', new Vector3(1, 2, 1), 'projPlaneH'),
+        new Line2DByTwoPoints('proj_plane_H/l1', 'proj_plane_H/p1', 'proj_plane_H/p2', 'projPlaneH'),
+        new Circle2DByCenterAndPoint('proj_plane_H/c1', 'proj_plane_H/center', 'proj_plane_H/edge', 'projPlaneH'),
       ];
 
-      const planeH = getElementsOnPlane(elements, 'proj_plane_H');
+      const planeH = getElementsOnPlane(elements, 'projPlaneH');
 
       // All filtered elements should pass isElement2D
       planeH.forEach((el: Element2D) => expect(isElement2D(el)).toBe(true));
