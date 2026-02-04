@@ -21,7 +21,15 @@
               type="text"
               class="form-input"
               placeholder="Element name..."
+              :class="{ 'input-error': !isLabelValid }"
             />
+          </div>
+          <div v-if="localName" class="info-row">
+            <span class="info-label">Preview:</span>
+            <span class="label-preview" v-html="labelPreview"></span>
+          </div>
+          <div v-if="!isLabelValid && localName" class="validation-error">
+            Invalid LaTeX syntax in label
           </div>
         </div>
 
@@ -103,7 +111,7 @@
           <button type="button" class="btn btn-secondary" @click="handleCancel">
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary">
+          <button type="submit" class="btn btn-primary" :disabled="!isLabelValid">
             Apply Changes
           </button>
         </div>
@@ -113,9 +121,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import type { Element2D } from '../../types/ElementTypes';
 import type { VisualStyle } from '../../domain/world/VisualStyle';
+import { formatElementLabel, validateLabelSyntax } from '@/utils/formatUtils';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -135,6 +144,17 @@ const localStyle = ref<VisualStyle>({
   opacity: 1.0,
   visible: true,
   inherited: false
+});
+
+// Label validation and preview
+const isLabelValid = computed(() => {
+  if (!localName.value) return true; // Empty is valid
+  return validateLabelSyntax(localName.value);
+});
+
+const labelPreview = computed(() => {
+  if (!localName.value) return '';
+  return formatElementLabel(localName.value);
 });
 
 // Watch for element changes and update local state
@@ -352,5 +372,25 @@ function handleSubmit() {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.input-error {
+  border-color: #ff4444 !important;
+  background-color: #fff5f5;
+}
+
+.validation-error {
+  color: #ff4444;
+  font-size: 12px;
+  margin-top: 4px;
+  padding-left: 120px;
+}
+
+.label-preview {
+  font-size: 14px;
+  padding: 4px 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  display: inline-block;
 }
 </style>

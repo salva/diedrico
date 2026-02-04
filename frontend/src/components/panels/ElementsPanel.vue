@@ -25,9 +25,9 @@
               <div class="plane-header" @click="togglePlane(planeGroup.id)">
                 <span class="collapse-icon">{{ planeGroup.isCollapsed ? '▶' : '▼' }}</span>
                 <span class="plane-name">
-                  <span v-if="planeGroup.name === 'P_H'">P<sub>H</sub> (Horizontal)</span>
-                  <span v-else-if="planeGroup.name === 'P_V'">P<sub>V</sub> (Vertical)</span>
-                  <span v-else>{{ planeGroup.name }} ({{ planeGroup.label }})</span>
+                  <span v-if="planeGroup.name === 'P_H'" v-html="formatElementLabel('P_H') + ' (Horizontal)'"></span>
+                  <span v-else-if="planeGroup.name === 'P_V'" v-html="formatElementLabel('P_V') + ' (Vertical)'"></span>
+                  <span v-else v-html="formatElementLabel(planeGroup.name) + ' (' + planeGroup.label + ')'"></span>
                 </span>
               </div>
               
@@ -136,6 +136,7 @@ import { Segment2DByPoints } from '@/domain/world/Segment';
 import { Circle2D } from '@/domain/world/Circle';
 import { Guide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { formatElementLabel } from '@/utils/formatUtils';
 
 // Emits
 const emit = defineEmits<{

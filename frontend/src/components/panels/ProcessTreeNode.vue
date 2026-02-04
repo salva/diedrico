@@ -139,7 +139,7 @@
     >
       <div class="action-main">
         <span class="action-status">{{ statusIcon }}</span>
-        <span class="action-description">{{ node.description }}</span>
+        <span class="action-description" v-html="formatElementLabel(node.description)"></span>
         <span v-if="isRelated && !isSelected" class="related-indicator" title="Related to selected elements">🔗</span>
 
         <!-- Right Side Controls Matrix -->
@@ -175,6 +175,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
 import type { ProcessNode } from '@/domain/processTree/ProcessTree';
+import { formatElementLabel } from '@/utils/formatUtils';
 
 // Props
 const props = withDefaults(defineProps<{

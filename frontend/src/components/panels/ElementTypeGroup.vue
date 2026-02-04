@@ -22,7 +22,7 @@
         >
           {{ element.visible ? '👁' : '👁‍🗨' }}
         </button>
-        <span class="element-label">{{ element.label }}</span>
+        <span class="element-label" v-html="formatElementLabel(element.label)"></span>
         <span v-if="element.properties" class="element-properties">{{ element.properties }}</span>
       </div>
     </div>
@@ -30,8 +30,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useSelectionStore } from '@/stores/selectionStore';
+import { formatElementLabel } from '@/utils/formatUtils';
 
 interface Element {
   id: string;
