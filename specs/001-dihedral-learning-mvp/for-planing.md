@@ -19,6 +19,40 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
+* [ ] **Fix Remaining Test Failures Post-Phase 95 (136 failing tests across 23 files)**
+  - **Root Cause**: Tests use old snake_case ID format in test data setup, but code now uses camelCase (Phase 95)
+  - **Validation Error Pattern**: `"proj_plane_H/p1" claims to belong to plane "proj_plane_H", but is being added to plane "projPlaneH"`
+  - **Solution**: Update test data to use camelCase IDs consistently - **FIX THE TESTS, NOT THE CODE**
+  - **Categories**:
+    1. **Element2DUtils tests (19 failures)**: Tests create elements with `new FreePoint2D('proj_plane_H/p1', ...)` but plane ID is `projPlaneH`
+       - Fix: Use `projPlaneH/p1` instead of `proj_plane_H/p1` in all element constructors
+       - Pattern: Replace all `'proj_plane_H/` → `'projPlaneH/`, `'proj_plane_V/` → `'projPlaneV/`
+    2. **ElementsPanel component tests (21 failures)**: Component API changed, tests access undefined properties
+       - Fix: Update tests to match current component structure (check actual component implementation)
+       - Pattern: `vm.horizontalElements` and `vm.verticalElements` are undefined
+    3. **ProjectService.roundTrip tests (18 failures)**: Test operation parameters use old ID format
+       - Fix: Update all operation test parameters to use camelCase plane IDs
+       - Pattern: `new AddFreePoint2DOp('proj_plane_H', ...)` → `new AddFreePoint2DOp('projPlaneH', ...)`
+    4. **DependencyService tests (35 failures across 2 files)**: Pre-existing failures, unrelated to Phase 95
+       - These tests use simple IDs like 'P001', 'line1' (no hierarchical format)
+       - Likely architectural issue with DependencyService implementation
+       - **DEFER**: Not Phase 95 related, separate investigation needed
+    5. **Command tests (14 failures across 9 files)**: Similar to roundTrip - operation parameters with old IDs
+       - Fix: Update operation parameters in test setup
+    6. **World.spec.ts (7 failures)**: Test assertions expecting old ID format
+       - Fix: Update expectations and test data
+    7. **ProcessTree tests (2 failures)**: Likely ID format in action elementIds
+       - Fix: Update test expectations
+    8. **GoogleDrive tests (2 failures)**: Mocking issue, unrelated to Phase 95
+       - Error: `Cannot read properties of undefined (reading 'trashed')`
+       - **DEFER**: Not Phase 95 related
+  - **Approach**:
+    1. Create bulk sed script for simple pattern replacements (element constructor IDs)
+    2. Manually fix complex tests (component API changes, operation parameters)
+    3. Skip DependencyService and GoogleDrive (pre-existing, unrelated)
+  - **Estimated Effort**: 2-3 hours (mostly mechanical find/replace, some manual fixes)
+  - **Priority**: HIGH - Must fix tests after API evolution, no backward compatibility workarounds
+  - **Principle**: "Fix the tests when the API has evolved, always" - update tests to match new camelCase format
 * [ ] **Dynamic Action Descriptions** - Action descriptions should be computed dynamically from element properties (e.g., element name, type) so that if the element changes (renamed, properties updated), the description in the Process Tree automatically reflects those changes. Currently descriptions are static strings stored in the Action. Future implementation could use computed description via `world.getElementById(elementId)` to generate "Created point A" where "A" is the current element name, not a frozen snapshot.
 * [ ] When an action group is empty it should become invisible and do not appear in the process tree representation in any way
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
