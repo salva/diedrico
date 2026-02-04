@@ -1356,7 +1356,9 @@ export abstract class ProjectionPlane {
 
     // Phase 84: No parametric consistency validation needed - automatic with canonical coordinates
     
-    this.addLine(halfHingeLine);
+    // CRITICAL: Pass world to ensure dependency registration
+    // HalfHingeLine2D depends on [hingeLineId, planeId] and must be tracked
+    this.addLine(halfHingeLine, world);
     return halfHingeLine;
   }
 
