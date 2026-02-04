@@ -1422,24 +1422,33 @@ export abstract class ProjectionPlane {
    * @returns Backward projection matrix (3D → plane)
    */
   protected computeBackward3DMatrix(planeTo3D: Matrix4x3): Matrix3x4 {
-    // planeTo3D columns: [U-axis, V-axis, origin, w-component]
+    // planeTo3D is stored ROW-MAJOR: [m11, m12, m13, m21, m22, m23, m31, m32, m33, m41, m42, m43]
+    // Matrix layout (4 rows × 3 columns):
+    //   [ m11  m12  m13 ]   Row 1: e[0], e[1], e[2]
+    //   [ m21  m22  m23 ]   Row 2: e[3], e[4], e[5]
+    //   [ m31  m32  m33 ]   Row 3: e[6], e[7], e[8]
+    //   [ m41  m42  m43 ]   Row 4: e[9], e[10], e[11]
+    //
+    // Columns represent: [U-axis in 3D, V-axis in 3D, origin in 3D]
+    // For ROW-MAJOR storage, column k elements are at indices: k, k+3, k+6, k+9
+    //
     // Extract normalized basis vectors and origin
     const uAxis = new Vector3(
-      planeTo3D.elements[0],   // M[0][0]
-      planeTo3D.elements[4],   // M[1][0]
-      planeTo3D.elements[8]    // M[2][0]
+      planeTo3D.elements[0],   // m11 (column 1, row 1)
+      planeTo3D.elements[3],   // m21 (column 1, row 2)
+      planeTo3D.elements[6]    // m31 (column 1, row 3)
     ).normalize();
     
     const vAxis = new Vector3(
-      planeTo3D.elements[1],   // M[0][1]
-      planeTo3D.elements[5],   // M[1][1]
-      planeTo3D.elements[9]    // M[2][1]
+      planeTo3D.elements[1],   // m12 (column 2, row 1)
+      planeTo3D.elements[4],   // m22 (column 2, row 2)
+      planeTo3D.elements[7]    // m32 (column 2, row 3)
     ).normalize();
     
     const origin = new Vector3(
-      planeTo3D.elements[2],   // M[0][2]
-      planeTo3D.elements[6],   // M[1][2]
-      planeTo3D.elements[10]   // M[2][2]
+      planeTo3D.elements[2],   // m13 (column 3, row 1)
+      planeTo3D.elements[5],   // m23 (column 3, row 2)
+      planeTo3D.elements[8]    // m33 (column 3, row 3)
     );
     
     // Build projection matrix: (point - origin) · basis vectors

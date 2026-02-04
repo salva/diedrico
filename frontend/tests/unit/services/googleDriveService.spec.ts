@@ -394,14 +394,30 @@ describe('GoogleDriveService', () => {
     it('should load and parse .diedrico file', async () => {
       const mockData = { id: 'proj-1', name: 'Test Project' };
       
-      mockGapi.client.drive.files.get.mockResolvedValue({
+      // Mock metadata check (first call to files.get)
+      mockGapi.client.drive.files.get.mockResolvedValueOnce({
+        result: {
+          trashed: false,
+          explicitlyTrashed: false,
+        },
+      });
+      
+      // Mock file content retrieval (second call to files.get)
+      mockGapi.client.drive.files.get.mockResolvedValueOnce({
         body: JSON.stringify(mockData),
       });
 
       const data = await service.loadFile('file-123');
 
       expect(data).toEqual(mockData);
-      expect(mockGapi.client.drive.files.get).toHaveBeenCalledWith({
+      expect(mockGapi.client.drive.files.get).toHaveBeenCalledTimes(2);
+      // First call: metadata check
+      expect(mockGapi.client.drive.files.get).toHaveBeenNthCalledWith(1, {
+        fileId: 'file-123',
+        fields: 'trashed, explicitlyTrashed',
+      });
+      // Second call: content retrieval
+      expect(mockGapi.client.drive.files.get).toHaveBeenNthCalledWith(2, {
         fileId: 'file-123',
         alt: 'media',
       });
@@ -431,11 +447,30 @@ describe('GoogleDriveService', () => {
     it('should update .diedrico file with new data', async () => {
       const mockData = { id: 'proj-1', name: 'Updated Project' };
       
-      mockGapi.client.request.mockResolvedValue({});
+      // Mock file status check (first request call)
+      mockGapi.client.request.mockResolvedValueOnce({
+        result: {
+          id: 'file-123',
+          name: 'Old Name.diedrico',
+          trashed: false,
+        },
+      });
+      
+      // Mock file update (second request call)
+      mockGapi.client.request.mockResolvedValueOnce({});
 
       await service.updateFile('file-123', mockData);
 
-      expect(mockGapi.client.request).toHaveBeenCalledWith(
+      expect(mockGapi.client.request).toHaveBeenCalledTimes(2);
+      // First call: status check
+      expect(mockGapi.client.request).toHaveBeenNthCalledWith(1,
+        expect.objectContaining({
+          path: '/drive/v3/files/file-123',
+          method: 'GET',
+        })
+      );
+      // Second call: file update
+      expect(mockGapi.client.request).toHaveBeenNthCalledWith(2,
         expect.objectContaining({
           path: '/upload/drive/v3/files/file-123',
           method: 'PATCH',
