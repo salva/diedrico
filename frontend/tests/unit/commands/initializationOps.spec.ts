@@ -237,7 +237,7 @@ describe('Initialization Operations', () => {
       expect(op.parameters.projPlaneId).toBe('proj_test');
       expect(op.parameters.planeToPaper2D).toBeDefined();
       expect(op.parameters.planeTo3D).toBeDefined();
-      expect(op.parameters.threeDToPlane).toBeDefined();
+      // Phase 94: threeDToPlane parameter removed, computed from planeTo3D
     });
   });
 

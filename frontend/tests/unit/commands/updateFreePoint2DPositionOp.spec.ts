@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
 import { World } from '@/domain/world/World';
 import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
-import { getHorizontalPlane, getHorizontalPlaneId, getHorizontalOriginId } from '../../helpers/worldHelpers';
+import { getHorizontalPlane, getHorizontalPlaneId, getHorizontalOriginId, createTestWorld } from '../../helpers/worldHelpers';
 
 describe('UpdateFreePoint2DPositionOp', () => {
   let world: World;

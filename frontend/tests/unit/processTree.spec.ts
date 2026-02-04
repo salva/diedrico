@@ -100,9 +100,10 @@ describe('ProcessTree', () => {
 
       const actions = tree.getAllActions();
       expect(actions.length).toBe(3);
-      expect(actions[0].id).toBe(action1.id);
-      expect(actions[1].id).toBe(action2.id);
-      expect(actions[2].id).toBe(action3.id);
+      // Phase 93: Actions don't have id property, ActionNodes do. Verify by elementId instead.
+      expect(actions[0].elementId).toBe(action1.elementId);
+      expect(actions[1].elementId).toBe(action2.elementId);
+      expect(actions[2].elementId).toBe(action3.elementId);
     });
 
     it('should traverse nested subprocesses in depth-first order', () => {
@@ -127,8 +128,9 @@ describe('ProcessTree', () => {
       const actions = tree.getAllActions();
       // Depth-first traversal visits children in order: first action group (action1), then subprocess (action2)
       expect(actions).toHaveLength(2);
-      expect(actions[0].id).toBe(action2.id); // Subprocess comes first in children
-      expect(actions[1].id).toBe(action1.id); // Root action group comes after
+      // Phase 93: Compare by elementId, not id (Actions don't have id)
+      expect(actions[0].elementId).toBe(action2.elementId); // Subprocess comes first in children
+      expect(actions[1].elementId).toBe(action1.elementId); // Root action group comes after
     });
   });
 

@@ -32,19 +32,17 @@ describe('RemoveElement Operations (T286, T290)', () => {
 
   /**
    * Helper: Add an action to the process tree for testing
+   * Phase 93: Actions simplified - only have elementId, description, isOutput
    */
-  function addTestAction(actionId: string, inputs: string[], outputs: string[]): void {
+  function addTestAction(elementId: string): string {
     const action: Action = {
-      id: actionId,
-      type: 'action',
-      actionType: 'CreateFreePoint',
-      timestamp: new Date(),
-      inputs,
-      outputs,
-      parameters: {},
-      description: `Test action ${actionId}`
+      elementId,
+      description: `Test action for ${elementId}`,
+      isOutput: true
     };
-    world.getProcessTree().addAction(action);
+    const actionGroup = world.getProcessTree().addAction(action);
+    // Return the ActionNode ID (not Action ID, which doesn't exist)
+    return actionGroup.children[0].id;
   }
 
   describe('RemovePoint2DOp', () => {
@@ -126,10 +124,10 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
       const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
       
-      // Add actions to process tree
-      addTestAction('action1', [], [p1.id]);
-      addTestAction('action2', [], [p2.id]);
-      addTestAction('action3', [p1.id, p2.id], [line.id]);
+      // Add actions to process tree - Phase 93: addTestAction returns ActionNode ID
+      const actionNode1 = addTestAction(p1.id);
+      const actionNode2 = addTestAction(p2.id);
+      const actionNode3 = addTestAction(line.id);
       
       world.getDependencyService().rebuildDependencyMaps();
       
@@ -138,11 +136,11 @@ describe('RemoveElement Operations (T286, T290)', () => {
       
       // Remove dependent line first
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
-      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp('action3'));
+      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
       
       // Then remove point
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
-      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp('action1'));
+      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
       
       deleteCmd.commit();
       commandStack.push(deleteCmd);
@@ -160,15 +158,16 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
       const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
       
-      addTestAction('action1', [], [p1.id]);
-      addTestAction('action2', [], [p2.id]);
-      addTestAction('action3', [p1.id, p2.id], [line.id]);
+      // Phase 93: addTestAction returns ActionNode ID
+      const actionNode1 = addTestAction(p1.id);
+      const actionNode2 = addTestAction(p2.id);
+      const actionNode3 = addTestAction(line.id);
       
       const deleteCmd = new Command('Delete with cascade', world);
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
-      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp('action3'));
+      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
-      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp('action1'));
+      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
       deleteCmd.commit();
       commandStack.push(deleteCmd);
       
@@ -189,15 +188,16 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
       const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
       
-      addTestAction('action1', [], [p1.id]);
-      addTestAction('action2', [], [p2.id]);
-      addTestAction('action3', [p1.id, p2.id], [line.id]);
+      // Phase 93: addTestAction returns ActionNode ID
+      const actionNode1 = addTestAction(p1.id);
+      const actionNode2 = addTestAction(p2.id);
+      const actionNode3 = addTestAction(line.id);
       
       const deleteCmd = new Command('Delete', world);
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
-      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp('action3'));
+      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
-      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp('action1'));
+      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
       deleteCmd.commit();
       commandStack.push(deleteCmd);
       
@@ -219,14 +219,15 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
       const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
       
-      addTestAction('action1', [], [p1.id]);
-      addTestAction('action2', [], [p2.id]);
+      // Phase 93: addTestAction returns ActionNode ID
+      const actionNode1 = addTestAction(p1.id);
+      const actionNode2 = addTestAction(p2.id);
       
-      const deleteCmd = new Command('Delete multiple points', world);
+      const deleteCmd = new Command('Delete two points', world);
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
-      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp('action1'));
+      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p2.id));
-      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp('action2'));
+      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode2));
       deleteCmd.commit();
       commandStack.push(deleteCmd);
       

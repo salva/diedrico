@@ -142,9 +142,9 @@ describe('ElementId Utilities', () => {
       const containerId = 'projPlaneH';
       const localId = 'point2d42';
       
-      // Build
+      // Build (Phase 95: camelCase format, no underscore)
       const id = buildElementId(containerId, localId);
-      expect(id).toBe('projPlaneH/point2d_42');
+      expect(id).toBe('projPlaneH/point2d42');
       
       // Parse
       const [parsedContainer, parsedLocal] = parseElementId(id);
