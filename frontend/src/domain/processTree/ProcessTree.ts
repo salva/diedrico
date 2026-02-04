@@ -49,8 +49,9 @@ export class ProcessTree {
 
   constructor() {
     // Initialize with root subprocess
+    // Phase 95: Use fixed ID for root so toggle operations work across sessions
     this.root = {
-      id: this.generateId(),
+      id: 'root',
       type: 'subprocess',
       name: 'Root Process',
       children: [],
@@ -96,10 +97,11 @@ export class ProcessTree {
    * Push a new subprocess onto the stack
    * All subsequent actions will be added to this subprocess
    * Phase 85: Stack-based subprocess management
+   * @param id - Optional ID to use (for deserialization), otherwise generates new ID
    */
-  pushSubprocess(name: string): Subprocess {
+  pushSubprocess(name: string, id?: string): Subprocess {
     const subprocess: Subprocess = {
-      id: this.generateId(),
+      id: id || this.generateId(),
       type: 'subprocess',
       name,
       children: [],
@@ -251,7 +253,9 @@ export class ProcessTree {
   toggleSubprocessEncapsulation(subprocessId: string): void {
     this.traverseSubprocesses(this.root, (subprocess) => {
       if (subprocess.id === subprocessId) {
+        const oldValue = subprocess.showIntermediates;
         subprocess.showIntermediates = !subprocess.showIntermediates;
+        console.log(`[ProcessTree.toggleSubprocessEncapsulation] subprocessId: ${subprocessId}, ${oldValue} → ${subprocess.showIntermediates}`);
         this.notifyChange();
       }
     });
@@ -266,7 +270,9 @@ export class ProcessTree {
     let handled = false;
     this.traverseSubprocesses(this.root, (subprocess) => {
       if (subprocess.id === nodeId) {
+        const oldValue = subprocess.isOutput;
         subprocess.isOutput = !subprocess.isOutput;
+        console.log(`[ProcessTree.toggleOutput] subprocess ${nodeId}, ${oldValue} → ${subprocess.isOutput}`);
         handled = true;
       }
     });
@@ -281,11 +287,15 @@ export class ProcessTree {
     this.traverseAllNodes(this.root, (node) => {
       if (node.type === 'actionGroup' && node.id === nodeId) {
         const group = node as ActionGroup;
+        const oldValue = group.isOutput;
         group.isOutput = !group.isOutput;
+        console.log(`[ProcessTree.toggleOutput] actionGroup ${nodeId}, ${oldValue} → ${group.isOutput}`);
         handled = true;
       } else if (node.type === 'action' && node.id === nodeId) {
         const action = node as ActionNode;
+        const oldValue = action.isOutput;
         action.isOutput = !action.isOutput;
+        console.log(`[ProcessTree.toggleOutput] action ${nodeId}, ${oldValue} → ${action.isOutput}`);
         // Also toggle the parent group? 
         // For now, let's assume we operate on individual IDs.
         // But UI usually displays Groups or merged items.
@@ -298,6 +308,8 @@ export class ProcessTree {
     
     if (handled) {
       this.notifyChange();
+    } else {
+      console.error(`[ProcessTree.toggleOutput] Node ${nodeId} not found`);
     }
   }
 

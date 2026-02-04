@@ -16,12 +16,19 @@ export class PushSubprocessOp implements IOperation {
   parameters: Record<string, any>;
   outputs: Record<string, any> = {};
 
-  constructor(private readonly subprocessName: string) {
+  constructor(private readonly subprocessName: string, private subprocessId?: string) {
     this.parameters = { subprocessName };
+    // If subprocessId provided (during deserialization), store it in outputs
+    if (subprocessId) {
+      this.outputs = { subprocessId };
+    }
   }
 
   apply(world: World): OperationResult {
-    const subprocess = world.getProcessTree().pushSubprocess(this.subprocessName);
+    // On replay (deserialization), reuse the stored subprocessId from outputs
+    // This ensures toggle operations can find the correct subprocess
+    const existingId = this.outputs.subprocessId;
+    const subprocess = world.getProcessTree().pushSubprocess(this.subprocessName, existingId);
     this.outputs = { subprocessId: subprocess.id };
     return { success: true, outputs: this.outputs };
   }

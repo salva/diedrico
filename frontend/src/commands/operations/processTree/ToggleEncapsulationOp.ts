@@ -17,6 +17,7 @@ export class ToggleEncapsulationOp implements IOperation {
   apply(world: World): OperationResult {
     const processTree = world.getProcessTree();
     try {
+      console.log(`[ToggleEncapsulationOp.apply] subprocessId: ${this.subprocessId}`);
       processTree.toggleSubprocessEncapsulation(this.subprocessId);
       return { success: true };
     } catch (e: any) {
@@ -31,6 +32,7 @@ export class ToggleEncapsulationOp implements IOperation {
 
   redo(world: World): void {
     const processTree = world.getProcessTree();
+    console.log(`[ToggleEncapsulationOp.redo] subprocessId: ${this.subprocessId}`);
     processTree.toggleSubprocessEncapsulation(this.subprocessId);
   }
 }

@@ -271,10 +271,12 @@ export class ProjectService {
         if (op.serialize) {
           return op.serialize();
         }
-        // Fallback for operations without custom serialize method (should be rare)
+        // Fallback for operations without custom serialize method
+        // Phase 95: Include outputs for ProcessTree node ID preservation
         return {
           opType: op.type,
-          ...op.parameters
+          ...op.parameters,
+          outputs: op.outputs
         };
       })
     }));
@@ -348,6 +350,13 @@ export class ProjectService {
       // Replay operations to rebuild world state
       for (const op of operations) {
         console.log(`[ProjectService]   - Applying operation ${op.type}`);
+        
+        // Extra logging for toggle operations to track state
+        if (op.type === 'ToggleOutput' || op.type === 'ToggleEncapsulation') {
+          const params = (op as any).parameters;
+          console.log(`[ProjectService]     Operation params:`, params);
+        }
+        
         const result = op.apply(world);
         if (!result.success) {
           console.error(`[ProjectService]   - Operation ${op.type} failed:`, result.error);
@@ -703,7 +712,8 @@ export class ProjectService {
         return new AddProcessTreeActionGroupOp(group);
 
       case 'PushSubprocess':
-        return new PushSubprocessOp(parameters.subprocessName);
+        // Phase 95: Preserve subprocess ID during deserialization
+        return new PushSubprocessOp(parameters.subprocessName, serializedOp.outputs?.subprocessId);
         
       case 'PopSubprocess':
         return new PopSubprocessOp();

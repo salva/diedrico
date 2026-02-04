@@ -18,7 +18,12 @@ export class AddProcessTreeActionGroupOp implements IOperation {
   // Ideally operations should be serializable.
   // Passing the full group object in constructor means we rely on the caller to create it.
   constructor(private group: ActionGroup) {
-    this.parameters = { groupId: group.id };
+    // CRITICAL: Store visibility flags for proper serialization
+    this.parameters = { 
+      groupId: group.id,
+      isOutput: group.isOutput,
+      isAuxiliary: group.isAuxiliary
+    };
   }
 
   apply(world: World): OperationResult {
