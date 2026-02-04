@@ -10848,4 +10848,64 @@ Create `createTestWorld()` helper function that returns fully initialized World 
 
 ---
 
+## Phase 96: Element Label Mathematical Notation (T1751-T1775)
+
+**Purpose**: Support LaTeX-style mathematical notation in element labels using KaTeX
+**Reference**: [spec.md FR-063](./spec.md#functional-requirements), [ui-spec.md Phase 96](./ui-spec.md#phase-96-element-label-mathematical-notation-ui-specification), [data-model.md Phase 96](./data-model.md#phase-96-element-label-mathematical-notation)
+**Dependencies**: None (purely additive feature)
+
+**Implementation Notes**:
+- Use KaTeX library for inline LaTeX rendering
+- Support subscripts (`A_1`), superscripts (`A^2`), Greek letters (`\alpha`)
+- Labels rendered in 2D canvas, 3D view, panels, dialogs
+- Live preview in Properties Dialog
+- No schema version bump (backward compatible)
+
+### Planning & Documentation (3 tasks)
+
+- [ ] T1751 [P] Update spec.md with FR-063 (mathematical notation in labels)
+- [ ] T1752 [P] Update ui-spec.md §Phase 96 with rendering behavior and UI components
+- [ ] T1753 [P] Update data-model.md §Phase 96 with KaTeX integration architecture
+
+### Package Installation (1 task)
+
+- [ ] T1754 Install KaTeX: `npm install katex @types/katex` in frontend/, import CSS in main.ts
+
+### Utility Functions (4 tasks)
+
+- [ ] T1755 [P] Create formatUtils.ts in frontend/src/utils/ with formatElementLabel() function
+- [ ] T1756 [P] Implement formatElementLabel() using katex.renderToString() (inline mode, error handling)
+- [ ] T1757 [P] Implement validateLabelSyntax() for input validation
+- [ ] T1758 [P] Unit tests for formatElementLabel: subscripts, superscripts, Greek, combined, empty, invalid
+
+### Component Integration (6 tasks)
+
+- [ ] T1759 Update SvgCanvas.vue: Render element labels with formatElementLabel(), use v-html for formatted output
+- [ ] T1760 Update WorldElementsPanel.vue: Display formatted labels in element list
+- [ ] T1761 Update ThreeView.vue: Render formatted labels as text sprites (or plain text fallback)
+- [ ] T1762 Update ProcessTreePanel.vue: Format element names in action descriptions
+- [ ] T1763 Update Properties Dialog: Add label input field with live KaTeX preview
+- [ ] T1764 Update Properties Dialog: Add validation, disable Save on invalid LaTeX
+
+### Testing (10 tasks)
+
+- [ ] T1765 [P] Unit test: formatElementLabel with subscripts (A_1, P_{12})
+- [ ] T1766 [P] Unit test: formatElementLabel with superscripts (A^2, P^{\prime})
+- [ ] T1767 [P] Unit test: formatElementLabel with Greek letters (\alpha, \beta, \theta)
+- [ ] T1768 [P] Unit test: formatElementLabel with combined notation (A_{H}^{\prime})
+- [ ] T1769 [P] Unit test: formatElementLabel with empty input (returns empty string)
+- [ ] T1770 [P] Unit test: formatElementLabel with invalid LaTeX (returns plain text or error HTML)
+- [ ] T1771 [P] Unit test: validateLabelSyntax with valid and invalid inputs
+- [ ] T1772 Integration test: Properties Dialog label editing workflow (enter LaTeX → preview updates → save)
+- [ ] T1773 Integration test: SvgCanvas displays formatted labels for points, lines, circles
+- [ ] T1774 E2E test: Create element → open properties → set LaTeX label → verify rendered in all views
+
+### Final Integration (1 task)
+
+- [ ] T1775 Commit Phase 96: Element label mathematical notation complete
+
+**Checkpoint**: ✅ Element labels support LaTeX notation (subscripts, superscripts, Greek letters), rendered via KaTeX in all UI components
+
+---
+
 **Checkpoint**: ✅ ConstructiveAction stores only construction narrative, structural data derived from elements and DependencyService

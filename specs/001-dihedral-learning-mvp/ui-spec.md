@@ -19,6 +19,172 @@ This document specifies the user interface architecture, layout, and interaction
 
 ---
 
+## Phase 96: Element Label Mathematical Notation (UI Specification)
+
+### Overview
+
+Element labels (user-visible names) support LaTeX-style mathematical notation for subscripts, superscripts, and Greek letters. Labels are rendered using KaTeX for inline math formatting.
+
+### Notation Support
+
+**Supported LaTeX Constructs**:
+- **Subscripts**: `A_1` → A₁, `P_{12}` → P₁₂
+- **Superscripts**: `A^2` → A², `P^{\prime}` → P′, `H^{\prime\prime}` → H′′
+- **Greek Letters**: `\alpha` → α, `\beta` → β, `\theta` → θ, `\pi` → π, etc.
+- **Combined**: `A_{H}^{\prime}` → A′ₕ
+- **Special**: `A^*` → A*, `A_{0}` → A₀
+
+**Limitations**:
+- Only inline math mode (no display mode equations)
+- No multi-line formatting
+- No matrices or complex structures
+- Focus on geometric notation (subscripts, superscripts, Greek letters)
+
+### Rendering Behavior
+
+**Where Labels Appear**:
+1. **2D Canvas** (SvgCanvas.vue): Element labels rendered next to geometric objects
+2. **3D View** (ThreeView.vue): Element labels rendered as text sprites
+3. **World Elements Panel**: Element list shows formatted labels
+4. **ProcessTree Panel**: Action descriptions show formatted element names
+5. **Properties Dialog**: Label input field shows raw LaTeX, preview shows rendered output
+
+**Rendering Pipeline**:
+```typescript
+// Input: element.label = "A_{H}^{\\prime}"
+// Step 1: Format utility wraps in KaTeX inline delimiters
+const formatted = formatElementLabel(element.label); // Returns KaTeX HTML
+// Step 2: Component renders HTML with v-html or textContent
+```
+
+**Visual Style**:
+- Font: Same as regular element labels (inherit from component)
+- Size: Same as regular labels, KaTeX auto-scales to match
+- Color: Inherits from element style or component theme
+- Positioning: Standard label positioning rules apply
+
+### Label Input and Editing
+
+**Properties Dialog - Label Field**:
+```
+┌────────────────────────────────────┐
+│ Element Properties                 │
+├────────────────────────────────────┤
+│ Label: [A_{H}^{\prime}        ]  │ ← Raw LaTeX input
+│                                    │
+│ Preview: A′ₕ                       │ ← Live KaTeX preview
+├────────────────────────────────────┤
+│ [Save]  [Cancel]                   │
+└────────────────────────────────────┘
+```
+
+**User Workflow**:
+1. User clicks element in World Elements Panel → Properties dialog opens
+2. User edits Label field using LaTeX notation (e.g., `P_{H}`, `\alpha`)
+3. Preview updates in real-time showing rendered output
+4. User clicks Save → UpdateElementLabelOp executed → label updated
+
+**Input Validation**:
+- KaTeX parse errors shown in preview area: "Invalid LaTeX: {...}"
+- Invalid syntax prevents save (Save button disabled)
+- Empty label allowed (element shows ID instead)
+
+### Label Formatting Examples
+
+**Common Geometric Patterns**:
+- Points: `A`, `A_1`, `A_{H}`, `A^{\prime}`, `P_{12}^{\prime\prime}`
+- Lines: `r`, `r_1`, `t_{H}`, `t^{\prime}`
+- Planes: `P_{H}`, `P_{V}`, `P_{\alpha}`, `\Pi`
+- Angles: `\alpha`, `\beta`, `\theta`, `\phi`
+- Distances: `d`, `d_1`, `h`, `h_{max}`
+
+**Special Cases**:
+- Primes: `A^{\prime}` (A′), `A^{\prime\prime}` (A′′)
+- Compound subscripts: `P_{H1}`, `P_{V2}`
+- Greek with subscripts: `\alpha_1`, `\theta_{max}`
+
+### Implementation Requirements
+
+**Package**: KaTeX (`npm install katex`)
+**Import**: `import katex from 'katex'; import 'katex/dist/katex.min.css';`
+
+**Utility Function** (frontend/src/utils/formatUtils.ts):
+```typescript
+import katex from 'katex';
+
+export function formatElementLabel(label: string): string {
+  if (!label || label.trim() === '') return '';
+  
+  try {
+    // Render inline math (no delimiters in input, just raw LaTeX)
+    return katex.renderToString(label, {
+      displayMode: false,      // Inline mode
+      throwOnError: false,     // Return error message instead of throwing
+      output: 'html',          // HTML output (not MathML)
+      strict: false,           // Allow some non-standard LaTeX
+      trust: false             // Security: disable \href, \includegraphics
+    });
+  } catch (error) {
+    // Fallback: show plain text if KaTeX fails
+    console.warn('KaTeX rendering failed:', error);
+    return label;
+  }
+}
+```
+
+**Component Usage** (SvgCanvas.vue, WorldElementsPanel.vue, etc.):
+```vue
+<template>
+  <!-- SVG text element with formatted label -->
+  <text :x="labelX" :y="labelY" v-html="formattedLabel"></text>
+</template>
+
+<script setup>
+import { computed } from 'vue';
+import { formatElementLabel } from '@/utils/formatUtils';
+
+const props = defineProps<{ element: Element }>;
+
+const formattedLabel = computed(() => 
+  formatElementLabel(props.element.label || props.element.id)
+);
+</script>
+```
+
+### Edge Cases and Error Handling
+
+**Invalid LaTeX**:
+- KaTeX parse error → Show error message in preview
+- Example: `A_{unclosed` → Preview: "KaTeX parse error: Expected '}'"
+- Fallback: Display raw text if rendering fails in production
+
+**Empty Label**:
+- If `element.label` is empty/undefined → Display `element.id` instead
+- Formatting NOT applied to IDs (already camelCase like `point2d5`)
+
+**Long Labels**:
+- No automatic truncation (user responsible for reasonable length)
+- Canvas label positioning may overlap if too long (same as plain text)
+
+**Performance**:
+- KaTeX rendering is fast (~1ms per label)
+- Labels cached by Vue's computed properties
+- No performance concerns for typical diagrams (< 100 labels)
+
+### Migration and Backward Compatibility
+
+**Existing Projects**:
+- Old labels without LaTeX remain plain text (no change)
+- User can edit any label to add math notation
+- No automatic migration needed
+
+**ID vs Label**:
+- Element IDs remain camelCase (e.g., `point2d5`, `projPlaneH`)
+- Labels are optional user-friendly names (e.g., `A_1`, `P_{H}`)
+- If no label set, UI displays ID (no formatting)
+
+---
+
 ## Overall Layout Architecture
 
 The application interface is organized into five primary regions:

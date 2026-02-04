@@ -5,6 +5,438 @@
 
 ---
 
+## Phase 96: Element Label Mathematical Notation
+
+### Overview
+
+Element labels (user-visible names) support LaTeX-style mathematical notation rendered via KaTeX. This enables users to create professional geometric diagrams with proper mathematical typography.
+
+### Functional Requirements
+
+**FR-063**: The system MUST support mathematical notation in element labels (user-visible names), rendering LaTeX-style formatting for subscripts (`A_1`, `P_{12}`), superscripts (`A^2`, `P^{\prime}`), and Greek letters (`\alpha`, `\beta`, `\theta`) using KaTeX for inline math rendering.
+
+### Architecture
+
+#### Data Model
+
+No changes to Element interface - label field already exists:
+```typescript
+export interface Element {
+  id: string;                    // Internal ID (camelCase, e.g., "point2d5")
+  label?: string;                // Optional user label (may contain LaTeX)
+  type: ElementType;
+  planeId?: string;              // For 2D elements
+  visualStyle?: VisualStyle;
+  // ... other fields
+}
+```
+
+#### Label Format
+
+**Input Format**: Raw LaTeX notation (no delimiters)
+- User enters: `A_{H}^{\prime}`
+- Stored in `element.label`: `"A_{H}^{\\prime}"` (escaped backslashes for JSON)
+- NOT stored with `$...$` delimiters
+
+**Rendering**: KaTeX inline mode
+- `formatElementLabel(label)` wraps in KaTeX renderer
+- Returns HTML string with styled `<span>` elements
+- Components render with `v-html` directive
+
+#### Formatting Utility
+
+**Location**: `frontend/src/utils/formatUtils.ts`
+
+```typescript
+import katex from 'katex';
+
+/**
+ * Format element label with KaTeX mathematical notation.
+ * 
+ * Supports:
+ * - Subscripts: A_1, P_{12}
+ * - Superscripts: A^2, P^{\prime}
+ * - Greek letters: \alpha, \beta, \theta
+ * - Combined: A_{H}^{\prime}
+ * 
+ * @param label Raw LaTeX string (no delimiters)
+ * @returns HTML string with formatted math
+ * @example
+ * formatElementLabel("A_{H}^{\\prime}") // Returns HTML for A′ₕ
+ * formatElementLabel("\\alpha")         // Returns HTML for α
+ * formatElementLabel("P_1")             // Returns HTML for P₁
+ */
+export function formatElementLabel(label: string | undefined): string {
+  // Empty label → empty string (caller should use element ID)
+  if (!label || label.trim() === '') return '';
+  
+  try {
+    return katex.renderToString(label, {
+      displayMode: false,      // Inline mode (not centered display)
+      throwOnError: false,     // Return error string instead of throwing
+      output: 'html',          // HTML output (SVG text compatible)
+      strict: false,           // Allow some non-standard LaTeX
+      trust: false,            // Security: disable \href, \url, etc.
+      errorColor: '#cc0000'    // Red text for parse errors
+    });
+  } catch (error) {
+    // Fallback: show plain text if KaTeX fails
+    console.warn(`KaTeX rendering failed for label "${label}":`, error);
+    return label;  // Return unformatted label
+  }
+}
+
+/**
+ * Validate LaTeX label syntax.
+ * 
+ * @param label Raw LaTeX string
+ * @returns { valid: boolean, error?: string }
+ */
+export function validateLabelSyntax(label: string): { valid: boolean; error?: string } {
+  if (!label || label.trim() === '') {
+    return { valid: true };  // Empty is valid
+  }
+  
+  try {
+    // Test render - will throw on parse error
+    katex.renderToString(label, { throwOnError: true });
+    return { valid: true };
+  } catch (error: any) {
+    return {
+      valid: false,
+      error: error.message || 'Invalid LaTeX syntax'
+    };
+  }
+}
+```
+
+#### Component Integration
+
+**SvgCanvas.vue** (2D element labels):
+```vue
+<template>
+  <svg>
+    <!-- Element geometry -->
+    <circle :cx="point.x" :cy="point.y" r="3" />
+    
+    <!-- Formatted label -->
+    <text 
+      :x="point.x + 8" 
+      :y="point.y - 8"
+      class="element-label"
+      v-html="formattedLabel(point)"
+    />
+  </svg>
+</template>
+
+<script setup>
+import { formatElementLabel } from '@/utils/formatUtils';
+
+function formattedLabel(element: Element): string {
+  return formatElementLabel(element.label) || element.id;
+}
+</script>
+
+<style>
+.element-label {
+  /* KaTeX injects its own styles, just set base font */
+  font-family: 'KaTeX_Main', 'Times New Roman', serif;
+  font-size: 12px;
+  fill: currentColor;
+}
+</style>
+```
+
+**WorldElementsPanel.vue** (element list):
+```vue
+<template>
+  <div class="elements-panel">
+    <div v-for="element in elements" :key="element.id" class="element-row">
+      <span class="element-icon">●</span>
+      <span 
+        class="element-label"
+        v-html="formattedLabel(element)"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { formatElementLabel } from '@/utils/formatUtils';
+
+function formattedLabel(element: Element): string {
+  return formatElementLabel(element.label) || element.id;
+}
+</script>
+```
+
+**Properties Dialog** (label editing with preview):
+```vue
+<template>
+  <div class="properties-dialog">
+    <label>Label:</label>
+    <input 
+      v-model="labelInput" 
+      type="text"
+      placeholder="e.g., A_{H}^{\prime}"
+      @input="updatePreview"
+    />
+    
+    <div class="label-preview">
+      <span>Preview: </span>
+      <span 
+        v-if="previewValid"
+        v-html="labelPreview"
+        class="preview-content"
+      />
+      <span v-else class="preview-error">{{ previewError }}</span>
+    </div>
+    
+    <button @click="saveLabel" :disabled="!previewValid">Save</button>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue';
+import { formatElementLabel, validateLabelSyntax } from '@/utils/formatUtils';
+
+const labelInput = ref(props.element.label || '');
+
+const validation = computed(() => validateLabelSyntax(labelInput.value));
+const previewValid = computed(() => validation.value.valid);
+const previewError = computed(() => validation.value.error);
+
+const labelPreview = computed(() => {
+  if (!previewValid.value) return '';
+  return formatElementLabel(labelInput.value) || '(empty)';
+});
+
+function saveLabel() {
+  if (previewValid.value) {
+    // Execute UpdateElementLabelOp
+    commandService.execute(new UpdateElementLabelOp(props.element.id, labelInput.value));
+  }
+}
+</script>
+```
+
+#### Operations
+
+**UpdateElementLabelOp** (already exists, no changes needed):
+```typescript
+export class UpdateElementLabelOp extends Operation {
+  constructor(
+    private elementId: string,
+    private newLabel: string,
+    private oldLabel?: string
+  ) {
+    super();
+  }
+  
+  apply(world: World): void {
+    const element = world.getElementById(this.elementId);
+    if (!element) throw new Error(`Element ${this.elementId} not found`);
+    
+    this.oldLabel = element.label;  // Store for undo
+    element.label = this.newLabel;   // Set new label (may contain LaTeX)
+    
+    world.markDirty();
+  }
+  
+  undo(world: World): void {
+    const element = world.getElementById(this.elementId);
+    if (!element) throw new Error(`Element ${this.elementId} not found`);
+    
+    element.label = this.oldLabel;   // Restore old label
+    world.markDirty();
+  }
+}
+```
+
+### KaTeX Integration
+
+#### Package Installation
+
+```bash
+cd frontend
+npm install katex
+npm install --save-dev @types/katex
+```
+
+#### CSS Import
+
+Add to `frontend/src/main.ts`:
+```typescript
+import 'katex/dist/katex.min.css';
+```
+
+Or in `frontend/src/assets/styles/main.css`:
+```css
+@import 'katex/dist/katex.min.css';
+```
+
+#### Bundle Size Impact
+
+- KaTeX JS: ~100KB minified + gzipped
+- KaTeX CSS: ~20KB minified + gzipped
+- Fonts: ~200KB (loaded on-demand by KaTeX CSS)
+- Total: ~320KB additional bundle size
+
+### Supported LaTeX Constructs
+
+#### Subscripts
+- `A_1` → A₁
+- `P_{12}` → P₁₂
+- `A_{H}` → Aₕ
+- `\alpha_1` → α₁
+
+#### Superscripts
+- `A^2` → A²
+- `P^{\prime}` → P′
+- `H^{\prime\prime}` → H′′
+- `x^*` → x*
+
+#### Greek Letters
+- `\alpha`, `\beta`, `\gamma`, `\delta`
+- `\theta`, `\phi`, `\psi`, `\omega`
+- `\pi`, `\sigma`, `\tau`
+- Capital: `\Gamma`, `\Delta`, `\Theta`, `\Pi`, `\Sigma`, `\Omega`
+
+#### Combined
+- `A_{H}^{\prime}` → A′ₕ
+- `P_{V1}^{\prime\prime}` → P′′_{V1}
+- `\theta_{max}` → θₘₐₓ
+
+#### Special Symbols
+- `\infty` → ∞
+- `\cdot` → ·
+- `\times` → ×
+- `\parallel` → ∥
+- `\perp` → ⊥
+
+### Error Handling
+
+#### Parse Errors
+
+KaTeX parse errors displayed in preview:
+```
+Input:  A_{unclosed
+Preview: KaTeX parse error: Expected '}', got 'EOF'
+```
+
+Save button disabled until syntax valid.
+
+#### Rendering Failures
+
+If KaTeX throws during rendering (rare):
+- Console warning logged
+- Fallback to plain text
+- No UI crash
+
+#### Empty Labels
+
+If `element.label` is empty or undefined:
+- `formatElementLabel()` returns empty string
+- UI displays `element.id` instead
+- No formatting applied to IDs
+
+### Testing Strategy
+
+#### Unit Tests
+
+**formatUtils.spec.ts**:
+- Test subscripts: `A_1`, `P_{12}`
+- Test superscripts: `A^2`, `P^{\prime}`
+- Test Greek letters: `\alpha`, `\beta`
+- Test combined: `A_{H}^{\prime}`
+- Test empty input: returns empty string
+- Test invalid syntax: returns plain text or error HTML
+- Test escaping: backslashes properly escaped
+
+**validateLabelSyntax.spec.ts**:
+- Test valid LaTeX: returns `{ valid: true }`
+- Test invalid LaTeX: returns `{ valid: false, error: "..." }`
+- Test empty: returns `{ valid: true }`
+
+#### Integration Tests
+
+**Properties Dialog**:
+- Enter valid LaTeX → preview updates → save → label updated
+- Enter invalid LaTeX → error shown → save disabled
+- Edit existing label → preview shows current formatting
+
+**World Elements Panel**:
+- Elements with LaTeX labels display formatted
+- Elements without labels display IDs
+- Hover/click behavior unchanged
+
+**SvgCanvas**:
+- Point labels rendered with KaTeX formatting
+- Line labels rendered with KaTeX formatting
+- Labels positioned correctly (same as plain text)
+
+#### E2E Tests
+
+**Label Creation Workflow**:
+1. Create point
+2. Open properties dialog
+3. Enter LaTeX label `A_1`
+4. Verify preview shows formatted output
+5. Save
+6. Verify canvas shows formatted label
+7. Verify World Elements Panel shows formatted label
+
+### Performance Considerations
+
+#### Rendering Cost
+
+- KaTeX rendering: ~1ms per label
+- Typical diagram: 10-50 labels
+- Total rendering time: 10-50ms (negligible)
+
+#### Caching
+
+- Vue `computed()` properties cache formatted output
+- Re-renders only when label changes
+- No performance degradation
+
+#### Bundle Size
+
+- KaTeX adds ~320KB to bundle
+- Acceptable for educational application
+- Loaded once at startup (not lazy-loaded)
+
+### Migration
+
+#### Existing Projects
+
+- No data migration needed (label field already exists)
+- Old labels without LaTeX remain plain text
+- User can edit any label to add math notation
+
+#### Schema Version
+
+- No schema version bump (no breaking changes)
+- Feature purely additive
+- Backward compatible
+
+### Future Enhancements
+
+#### Phase 96.1: LaTeX Toolbar (Future)
+
+- Add LaTeX snippet buttons in Properties Dialog
+- Quick insert: subscript, superscript, prime, Greek letters
+- Dropdown with common symbols
+
+#### Phase 96.2: Label Templates (Future)
+
+- Predefined label patterns for element types
+- Points: A, B, C, ... → A₁, B₁, C₁, ...
+- Lines: r, s, t, ... → r₁, s₁, t₁, ...
+- User-configurable templates
+
+---
+
 ## Hierarchical Element IDs (Phase 45)
 
 ### Problem Statement
