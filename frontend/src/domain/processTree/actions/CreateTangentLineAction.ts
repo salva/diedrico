@@ -17,7 +17,7 @@ import { createAction, type Action } from '../Action';
 export function createTangentLineToCircleThroughPointAction(
   lineId: string
 ): Action {
-  return createAction(lineId, `Created tangent line to circle through point ${lineId}`);
+  return createAction(lineId, `Tangent to circle through point ${lineId}`);
 }
 
 // ===== Phase 61: Tangent Parallel to Line =====
@@ -25,5 +25,5 @@ export function createTangentLineToCircleThroughPointAction(
 export function createTangentLineToCircleParallelToLineAction(
   lineId: string
 ): Action {
-  return createAction(lineId, `Created tangent line to circle parallel to line ${lineId}`);
+  return createAction(lineId, `Tangent to circle parallel to line ${lineId}`);
 }

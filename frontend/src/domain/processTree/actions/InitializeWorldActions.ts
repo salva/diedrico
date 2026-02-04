@@ -11,29 +11,29 @@
 import { createAction, type Action } from '../Action';
 
 export function createInitializePlane3DAction(planeId: string): Action {
-  return createAction(planeId, `Initialized plane ${planeId}`);
+  return createAction(planeId, `Plane ${planeId}`);
 }
 
 export function createInitializeProjectionPlaneAction(
   projPlaneId: string
 ): Action {
-  return createAction(projPlaneId, `Initialized projection plane ${projPlaneId}`);
+  return createAction(projPlaneId, `Projection plane ${projPlaneId}`);
 }
 
 export function createInitializeOriginPoint2DAction(
   pointId: string
 ): Action {
-  return createAction(pointId, `Initialized origin point ${pointId}`);
+  return createAction(pointId, `Origin ${pointId}`);
 }
 
 export function createInitializeHingeLineAction(
   hingeLineId: string
 ): Action {
-  return createAction(hingeLineId, `Initialized hinge line ${hingeLineId}`);
+  return createAction(hingeLineId, `Hinge line ${hingeLineId}`);
 }
 
 export function createInitializeHalfHingeLine2DAction(
   lineId: string
 ): Action {
-  return createAction(lineId, `Initialized half hinge line ${lineId}`);
+  return createAction(lineId, `Half hinge line ${lineId}`);
 }

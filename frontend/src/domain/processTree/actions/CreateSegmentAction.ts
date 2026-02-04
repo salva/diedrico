@@ -11,5 +11,5 @@
 import { createAction, type Action } from '../Action';
 
 export function createSegmentAction(segmentId: string): Action {
-  return createAction(segmentId, `Created segment ${segmentId}`);
+  return createAction(segmentId, `Segment ${segmentId}`);
 }

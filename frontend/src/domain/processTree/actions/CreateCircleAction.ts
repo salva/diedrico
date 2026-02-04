@@ -12,5 +12,5 @@
 import { createAction, type Action } from '../Action';
 
 export function createCircleAction(circleId: string): Action {
-  return createAction(circleId, `Created circle ${circleId}`);
+  return createAction(circleId, `Circle ${circleId}`);
 }

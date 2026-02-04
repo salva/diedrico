@@ -11,5 +11,5 @@
 import { createAction, type Action } from '../Action';
 
 export function createLineAction(lineId: string): Action {
-  return createAction(lineId, `Created line ${lineId}`);
+  return createAction(lineId, `Line ${lineId}`);
 }

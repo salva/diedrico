@@ -13,5 +13,5 @@ import { createAction, type Action } from '../Action';
 export function createParallelLineAction(
   lineId: string
 ): Action {
-  return createAction(lineId, `Created parallel line ${lineId}`);
+  return createAction(lineId, `Parallel line ${lineId}`);
 }

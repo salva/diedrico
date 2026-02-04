@@ -18,7 +18,7 @@ import { createAction, type Action } from '../Action';
 export function createAdd3DPointAction(
   pointId: string
 ): Action {
-  return createAction(pointId, `Added 3D point ${pointId}`);
+  return createAction(pointId, `3D point ${pointId}`);
 }
 
 /**
@@ -30,7 +30,7 @@ export function createAdd3DPointAction(
 export function createAdd3DLineAction(
   lineId: string
 ): Action {
-  return createAction(lineId, `Added 3D line ${lineId}`);
+  return createAction(lineId, `3D line ${lineId}`);
 }
 
 /**
@@ -42,5 +42,5 @@ export function createAdd3DLineAction(
 export function createAdd3DPlaneAction(
   planeId: string
 ): Action {
-  return createAction(planeId, `Added 3D plane ${planeId}`);
+  return createAction(planeId, `3D plane ${planeId}`);
 }

@@ -13,5 +13,5 @@ import { createAction, type Action } from '../Action';
 export function createLineLineIntersectionPointAction(
   pointId: string
 ): Action {
-  return createAction(pointId, `Created line-line intersection point ${pointId}`);
+  return createAction(pointId, `Line-line intersection ${pointId}`);
 }

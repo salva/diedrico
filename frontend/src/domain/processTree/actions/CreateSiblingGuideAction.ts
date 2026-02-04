@@ -16,5 +16,5 @@ import { createAction, type Action } from '../Action';
 export function createSiblingGuideAction(
   siblingGuideId: string
 ): Action {
-  return createAction(siblingGuideId, `Created sibling guide ${siblingGuideId}`);
+  return createAction(siblingGuideId, `Sibling guide ${siblingGuideId}`);
 }

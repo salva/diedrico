@@ -16,5 +16,5 @@ import { createAction, type Action } from '../Action';
 export function createSiblingIntersectionPointAction(
   siblingPointId: string
 ): Action {
-  return createAction(siblingPointId, `Created sibling intersection point ${siblingPointId}`);
+  return createAction(siblingPointId, `Sibling intersection ${siblingPointId}`);
 }

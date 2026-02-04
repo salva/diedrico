@@ -71,7 +71,7 @@ describe('formatElementLabel', () => {
 
   it('should format plain text without LaTeX', () => {
     const result = formatElementLabel('ABC');
-    expect(result).toContain('mathnormal'); // KaTeX wraps even plain text
+    expect(result).toContain('mathrm'); // KaTeX wraps with \mathrm{} to prevent italics
     expect(result).toContain('A');
     expect(result).toContain('BC');
   });

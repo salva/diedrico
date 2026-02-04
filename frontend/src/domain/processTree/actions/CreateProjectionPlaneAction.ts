@@ -20,5 +20,5 @@ import { createAction, type Action } from '../Action';
 export function createProjectionPlaneAction(
   projPlaneId: string
 ): Action {
-  return createAction(projPlaneId, `Created projection plane ${projPlaneId}`);
+  return createAction(projPlaneId, `Projection plane ${projPlaneId}`);
 }

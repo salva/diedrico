@@ -21,7 +21,11 @@ export function formatElementLabel(label: string | undefined): string {
   if (!label || label.trim() === '') return '';
   
   try {
-    return katex.renderToString(label, {
+    // Wrap label in \mathrm{} to prevent italicization
+    // This makes "ABC" render as ABC instead of ABC (italics)
+    const wrappedLabel = `\\mathrm{${label}}`;
+    
+    return katex.renderToString(wrappedLabel, {
       displayMode: false,      // Inline mode (not centered display)
       throwOnError: false,     // Return error string instead of throwing
       output: 'html',          // HTML output (SVG text compatible)

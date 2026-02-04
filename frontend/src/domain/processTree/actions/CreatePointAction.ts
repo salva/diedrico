@@ -10,5 +10,5 @@
 import { createAction, type Action } from '../Action';
 
 export function createPointAction(pointId: string): Action {
-  return createAction(pointId, `Created point ${pointId}`);
+  return createAction(pointId, `Point ${pointId}`);
 }

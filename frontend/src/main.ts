@@ -18,6 +18,7 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import './assets/styles/main.css';
 import 'katex/dist/katex.min.css';
+import './assets/styles/katex-overrides.css';
 
 const app = createApp(App);
 const pinia = createPinia();

@@ -13,5 +13,5 @@ import { createAction, type Action } from '../Action';
 export function createPerpendicularLineAction(
   lineId: string
 ): Action {
-  return createAction(lineId, `Created perpendicular line ${lineId}`);
+  return createAction(lineId, `Perpendicular line ${lineId}`);
 }
