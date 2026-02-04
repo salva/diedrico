@@ -224,14 +224,14 @@ describe('World Initialization Integration', () => {
       const projPlaneH = world.getProjectionPlaneByLabel('P_H');
 
       // Verify hinge line label follows expected pattern (label = id for hinge lines)
-      expect(hingeLine.label).toMatch(/^HL_\d+$/);
+      expect(hingeLine.label).toMatch(/^hingeLine\d+$/);
       expect(hingeLine.id).toBe(hingeLine.label); // ID and label are the same
 
       // Verify point IDs follow hierarchical pattern
       const originH = projPlaneH.getPoint2DByLabel('O_H');
       
       if (originH) {
-        expect(originH.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
+        expect(originH.id).toMatch(/^projPlane\d+\/point2d\d+$/);
       }
     });
 

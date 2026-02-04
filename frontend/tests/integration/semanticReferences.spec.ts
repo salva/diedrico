@@ -73,8 +73,8 @@ describe('Semantic Entity References (Phase 46)', () => {
       const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
       // IDs should be auto-generated numeric format
-      expect(horizontalPlane.id).toMatch(/^proj_plane_\d+$/);
-      expect(verticalPlane.id).toMatch(/^proj_plane_\d+$/);
+      expect(horizontalPlane.id).toMatch(/^projPlane\d+$/);
+      expect(verticalPlane.id).toMatch(/^projPlane\d+$/);
       
       // IDs should NOT be any hardcoded values
       expect(horizontalPlane.id).not.toBe('projPlaneH');
@@ -95,15 +95,15 @@ describe('Semantic Entity References (Phase 46)', () => {
       expect(verticalOrigin.id).not.toBe('O_V');
       
       // Origin IDs should be hierarchical format
-      expect(horizontalOrigin.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
-      expect(verticalOrigin.id).toMatch(/^proj_plane_\d+\/point2d_\d+$/);
+      expect(horizontalOrigin.id).toMatch(/^projPlane\d+\/point2d\d+$/);
+      expect(verticalOrigin.id).toMatch(/^projPlane\d+\/point2d\d+$/);
     });
 
     it('should use generated hinge line ID, not hardcoded value', () => {
       const mainHingeLine = getMainHingeLine(world);
       
       // Hinge line ID should be auto-generated numeric format
-      expect(mainHingeLine.id).toMatch(/^HL_\d+$/);
+      expect(mainHingeLine.id).toMatch(/^hingeLine\d+$/);
       
       // Should NOT be any hardcoded values
       expect(mainHingeLine.id).not.toBe('hingeLineHV');
@@ -117,8 +117,8 @@ describe('Semantic Entity References (Phase 46)', () => {
       const verticalPlane = world.getProjectionPlaneByLabel('P_V');
       
       // Initialization planes use auto-generated numeric IDs (standard format)
-      expect(horizontalPlane.id).toMatch(/^proj_plane_\d+$/);
-      expect(verticalPlane.id).toMatch(/^proj_plane_\d+$/);
+      expect(horizontalPlane.id).toMatch(/^projPlane\d+$/);
+      expect(verticalPlane.id).toMatch(/^projPlane\d+$/);
       
       // User-created planes will also use generated numeric IDs
     });
@@ -148,8 +148,8 @@ describe('Semantic Entity References (Phase 46)', () => {
       const horizontalPlane1 = world.getProjectionPlaneByLabel('P_H');
       const verticalPlane1 = world.getProjectionPlaneByLabel('P_V');
       
-      expect(horizontalPlane1.id).toMatch(/^proj_plane_\d+$/);
-      expect(verticalPlane1.id).toMatch(/^proj_plane_\d+$/);
+      expect(horizontalPlane1.id).toMatch(/^projPlane\d+$/);
+      expect(verticalPlane1.id).toMatch(/^projPlane\d+$/);
       
       // Different planes should have different IDs
       expect(horizontalPlane1.id).not.toBe(verticalPlane1.id);

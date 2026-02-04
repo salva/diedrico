@@ -154,12 +154,158 @@ generatePoint2DId(world: World): string {
 }
 ```
 
-**After Migration**:
+**After Migration (Phase 45 - Hierarchical IDs)**:
 ```typescript
 // ProjectionPlane.ts
 generatePoint2DId(world: World): string {
   return `${this.id}/point2d_${world.getNextId()}`;
 }
+```
+
+**After Phase 95 (camelCase IDs)**:
+```typescript
+// ProjectionPlane.ts
+generatePoint2DId(world: World): string {
+  return `${this.id}/point2d${world.getNextId()}`;  // No underscore before counter
+}
+```
+
+---
+
+## ID Format Migration to camelCase (Phase 95)
+
+### Problem Statement
+
+**Issue**: Underscores in element IDs (e.g., `point2d_5`, `proj_plane_H`, `hinge_line_3`) are interpreted by text rendering systems as subscript delimiters, causing display corruption in UI components:
+- **Corrupted Display**: "point2d₅", "projPlane₍H₎" (Unicode subscript artifacts)
+- **Affected Components**: Element labels, ProcessTree descriptions, World Elements panel, tooltips, error messages
+- **Root Cause**: Underscore character (`_`) commonly used as subscript marker in mathematical/scientific notation rendering
+
+**Solution**: Migrate all element IDs from snake_case to camelCase format, eliminating underscore character while maintaining readability and hierarchical structure.
+
+### ID Format Specification (Schema 6.0.0)
+
+**Format Rules**:
+1. **Single-word types**: lowercase + number (no separator)
+   - Pattern: `{type}{counter}`
+   - Examples: `point2d5`, `line2d12`, `circle2d3`, `plane3d7`
+   
+2. **Multi-word types**: camelCase + number (no separator)
+   - Pattern: `{camelCaseType}{counter}`
+   - Examples: `projPlane1`, `hingeLine2`, `actionGroup5`
+   
+3. **Named elements**: camelCase without counter
+   - Pattern: `{camelCaseName}`
+   - Examples: `projPlaneH`, `projPlaneV`, `planePH`, `planePV` (initialization planes)
+
+4. **Hierarchical IDs**: containerId/localId (both camelCase)
+   - Pattern: `{containerId}/{localId}`
+   - Examples: `projPlaneH/point2d1`, `projPlane2/line2d5`
+
+**Migration Mapping**:
+
+| Old Format (snake_case) | New Format (camelCase) | Type |
+|------------------------|------------------------|------|
+| `point2d_5` | `point2d5` | 2D point |
+| `line2d_12` | `line2d12` | 2D line |
+| `segment2d_7` | `segment2d7` | 2D segment |
+| `circle2d_3` | `circle2d3` | 2D circle |
+| `guide2d_9` | `guide2d9` | 2D guide |
+| `point3d_8` | `point3d8` | 3D point |
+| `line3d_4` | `line3d4` | 3D line |
+| `segment3d_6` | `segment3d6` | 3D segment |
+| `plane3d_2` | `plane3d2` | 3D plane |
+| `proj_plane_H` | `projPlaneH` | Projection plane (horizontal) |
+| `proj_plane_V` | `projPlaneV` | Projection plane (vertical) |
+| `proj_plane_1` | `projPlane1` | Projection plane (auxiliary) |
+| `hinge_line_1` | `hingeLine1` | Hinge line |
+| `HL_3` | `hingeLine3` | Hinge line (old alias) |
+| `plane_PH` | `planePH` | 3D horizontal plane |
+| `plane_PV` | `planePV` | 3D vertical plane |
+| `subprocess_1` | `subprocess1` | ProcessTree subprocess |
+| `actiongroup_2` | `actionGroup2` | ProcessTree action group |
+| `action_5` | `action5` | ProcessTree action |
+| `node_123_abc` | `node123abc` | ProcessTree node |
+
+**Hierarchical ID Examples**:
+```typescript
+// Old format (Phase 45)
+"proj_plane_H/point2d_1"
+"proj_plane_V/line2d_5"
+"proj_plane_2/circle2d_3"
+
+// New format (Phase 95)
+"projPlaneH/point2d1"
+"projPlaneV/line2d5"
+"projPlane2/circle2d3"
+```
+
+### Migration Architecture
+
+**Schema Version**: 4.0.0/5.0.0 → 6.0.0 (Breaking change)
+
+**Migration Trigger**: Automatic on project file deserialization (before command replay)
+
+**Migration Location**: `ProjectService.deserializeCommands()` calls `migrateProjectData()` before validation
+
+**Migration Strategy**:
+```typescript
+/**
+ * Phase 95: Migrate project data from old schema (4.0.0, 5.0.0) to schema 6.0.0
+ * Converts all element IDs from snake_case to camelCase format
+ */
+private static migrateProjectData(data: ProjectData): void {
+  if (data.schemaVersion === '4.0.0' || data.schemaVersion === '5.0.0') {
+    console.log(`[ProjectService] Migrating from ${data.schemaVersion} to 6.0.0`);
+    console.log('[ProjectService] Converting element IDs to camelCase');
+    
+    // Migrate all operations in all commands
+    for (const command of data.commands) {
+      for (const operation of command.operations) {
+        // Recursively migrate all ID parameters
+        Object.assign(operation, this.migrateOperationParams(operation));
+      }
+    }
+    
+    data.schemaVersion = '6.0.0';
+    console.log('[ProjectService] Migration complete');
+  }
+}
+```
+
+**Migration Functions**:
+
+1. **Single ID Migration** (`migrateIdToCamelCase`):
+   - Applies 15 regex patterns for all ID types
+   - Pattern examples:
+     - `/^proj_plane_([A-Z])$/` → `projPlane$1` (named projection planes)
+     - `/^point2d_(\d+)$/` → `point2d$1` (2D points)
+     - `/^hinge_line_(\d+)$/` → `hingeLine$1` (hinge lines)
+     - `/^HL_(\d+)$/` → `hingeLine$1` (old hinge line alias)
+     - `/^node_(\d+)_([a-z0-9]+)$/` → `node$1$2` (ProcessTree nodes)
+   - Fallback: Remove all underscores if no pattern matches
+
+2. **Hierarchical ID Migration** (`migrateHierarchicalId`):
+   - Splits on `/` separator
+   - Migrates both containerId and localId components
+   - Example: `proj_plane_H/point2d_5` → `projPlaneH/point2d5`
+
+3. **Operation Parameter Migration** (`migrateOperationParams`):
+   - Recursively traverses operation parameters
+   - Identifies strings matching ID patterns (contains underscore + recognized prefix)
+   - Migrates: `elementId`, `planeId`, `pointId`, `lineId`, `circleId`, etc.
+   - Preserves: Non-ID strings, numbers, booleans, nested objects/arrays
+
+**Migration Validation**:
+- Old project files (4.0.0, 5.0.0) load successfully with auto-migration
+- New projects (6.0.0) use camelCase exclusively from creation
+- Migration is idempotent (can be applied multiple times safely)
+- No data loss (all IDs and references preserved, only format changed)
+
+**Breaking Changes**:
+- **Forward Incompatibility**: Schema 6.0.0 files cannot be loaded by older application versions
+- **Backward Compatibility**: Schema 4.0.0/5.0.0 files load correctly with auto-migration
+- **Test Updates**: 114 test files required pattern updates (13 with actual changes)
 ```
 
 ### Optional ID Parameters in Factory Methods

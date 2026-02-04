@@ -306,6 +306,82 @@ The left side of the interface contains a vertical stack of two panels. These pa
 
 ---
 
+## Element ID Display Format (Phase 95)
+
+**Purpose**: Display element identifiers in UI components (labels, tooltips, ProcessTree, World Elements panel) using camelCase format to prevent subscript interpretation and ensure clean, readable presentation.
+
+**Problem Solved**: Prior to Phase 95, element IDs used underscores (e.g., `point2d_5`, `proj_plane_H`, `hinge_line_3`) which were misinterpreted by text rendering systems as subscript delimiters, causing display corruption: "point2d₅", "projPlane₍H₎" (Unicode subscript artifacts).
+
+**ID Format Specification** (Schema 6.0.0):
+
+Single-word types use lowercase + number:
+- Points: `point2d5`, `point2d12`, `point3d8`
+- Lines: `line2d3`, `line2d45`, `line3d2`
+- Segments: `segment2d7`, `segment2d10`, `segment3d4`
+- Circles: `circle2d6`, `circle2d23`
+- Guides: `guide2d9`, `guide2d14`
+- Planes (3D): `plane3d2`, `plane3d7`
+
+Multi-word types use camelCase:
+- Projection planes: `projPlaneH`, `projPlaneV`, `projPlane1`, `projPlane2`
+- Hinge lines: `hingeLine1`, `hingeLine2`, `hingeLine5`
+- ProcessTree: `subprocess1`, `actionGroup2`, `action5`
+
+Hierarchical IDs combine containerId/localId (both camelCase):
+- `projPlaneH/point2d1` (point on horizontal projection plane)
+- `projPlaneV/line2d5` (line on vertical projection plane)
+- `projPlane2/circle2d3` (circle on auxiliary plane)
+
+**UI Display Examples**:
+
+World Elements Panel:
+```
+📍 Points (3)
+  ├─ Point A                 [projPlaneH/point2d1]
+  ├─ Point B                 [projPlaneH/point2d2]
+  └─ Intersection Point      [projPlaneV/point2d7]
+
+📏 Lines (2)
+  ├─ Baseline                [projPlaneH/line2d1]
+  └─ hingeLine5              [hingeLine5]
+```
+
+ProcessTree:
+```
+🏗️ Initialization (subprocess1)
+  └─ Create projection planes (actionGroup1)
+      ├─ Create P_H (action1) → planePH
+      ├─ Create P_V (action2) → planePV
+      └─ Create hinge line (action3) → hingeLine5
+
+✏️ User Actions (subprocess2)
+  └─ Drawing (actionGroup5)
+      ├─ Create point A (action12) → projPlaneH/point2d1
+      └─ Create line AB (action13) → projPlaneH/line2d1
+```
+
+Tooltips (on hover):
+- "Point A (projPlaneH/point2d1)" - shows label with ID in parentheses
+- "hingeLine5" - hinge lines show ID as label (no separate label)
+- "projPlaneH" - projection planes show ID as label
+
+Error messages:
+```
+[INTERNAL ERROR] Point projPlaneH/point2d5 not found. Dependency graph corrupted.
+[INTERNAL ERROR] Plane projPlane2 not found when looking up element projPlane2/line2d3.
+```
+
+**Benefits**:
+- Clean, professional appearance without Unicode corruption
+- More readable than underscore format (less visual noise)
+- Aligns with TypeScript/JavaScript naming conventions
+- No special character interpretation issues in any UI context
+- Self-documenting hierarchical structure remains clear
+
+**Migration**: Old project files (schema 4.0.0, 5.0.0) with underscore IDs are automatically migrated to camelCase format on load (schema version bumped to 6.0.0). New projects use camelCase exclusively.
+
+---
+
 ## Plane-Based Grid Rendering (Phase 79)
 
 **Purpose**: Render grid using active projection plane's intrinsic coordinate system (u, v) with adaptive spacing and subdivisions to ensure grid remains visually useful across all zoom levels.
