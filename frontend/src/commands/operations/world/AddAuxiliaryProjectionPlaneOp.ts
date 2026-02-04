@@ -117,6 +117,11 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       console.log('[AddAuxiliaryProjectionPlaneOp] World now has', world.projectionPlanes.size, 'projection planes');
       console.log('[AddAuxiliaryProjectionPlaneOp] Projection plane IDs:', Array.from(world.projectionPlanes.keys()));
       
+      // Register with dependency service (CRITICAL for parametric updates)
+      // When trace lines move, the dependency service will find this plane and invalidate it
+      world.getDependencyService().registerNode(projPlaneId, plane.getDependencies());
+      console.log('[AddAuxiliaryProjectionPlaneOp] Registered dependencies:', plane.getDependencies());
+      
       // Mark World as dirty (triggers reactivity)
       world.markDirty();
       console.log('[AddAuxiliaryProjectionPlaneOp] World.markDirty() called');
@@ -139,6 +144,9 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.projPlaneId) {
+      // Unregister from dependency service
+      world.getDependencyService().unregisterNode(this.outputs.projPlaneId);
+      
       world.projectionPlanes.delete(this.outputs.projPlaneId);
       world.markDirty();
     }
