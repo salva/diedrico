@@ -54,9 +54,38 @@ Note that completing these tasks may require asking the user for additional info
  
 ## ALREADY PLANNED
 
-* [x] **Element Label Mathematical Notation (Phase 96)** - 📋 PLANNED (Feb 4, 2026)
-  - **Status**: Planning complete. Ready for implementation.
+* [x] **Element Label Mathematical Notation (Phase 96)** - ✅ COMPLETE (Feb 4, 2026)
+  - **Status**: Implementation complete. 21/25 tasks done, core functionality working.
   - **User Requirement**: "Display suffixes correctly in labels: when a name contains an underscore, that mean that which follows is a subindex. Actually, we must consider which kind of mini-language we want to support for that."
+  - **Solution**: KaTeX library for LaTeX-style mathematical notation in element labels
+  - **What Works**:
+    - Subscripts: `A_1` → A₁, `P_{12}` → P₁₂
+    - Superscripts: `A^2` → A², `P^{\prime}` → P′
+    - Greek letters: `\alpha` → α, `\beta` → β, `\theta` → θ
+    - Combined: `A_{H}^{\prime}` → A′ₕ
+    - Sans-serif font (matches UI, not math font)
+    - No italicization (uses \mathrm{} wrapper)
+  - **Components Updated**:
+    - ElementTypeGroup: Formatted element labels
+    - ElementsPanel: Formatted plane names (P_H, P_V)
+    - ProcessTreeNode: Formatted element names in action descriptions
+    - ElementPropertiesDialog: Live preview + validation
+  - **Testing**: 28/28 tests passing (21 unit + 7 integration)
+  - **Not Implemented** (infrastructure missing):
+    - SvgCanvas element labels (no label rendering in SVG)
+    - ThreeView element labels (only axis labels exist)
+    - Canvas/E2E tests (dependent on above)
+  - **Additional Changes**:
+    - Action descriptions simplified: "Point A1" instead of "Created point A1"
+    - 17 action factory files updated
+  - **Commits**: 
+    - 55f76db2: Planning documentation
+    - 9a91288a: Utilities and tests
+    - 1b505b71: Component integration
+    - f344a3eb: Integration tests
+    - 15fa6196: Tasks update
+    - 9531ed7b: Phase 96 summary
+    - c7a0d227: Font fixes and action descriptionsxes correctly in labels: when a name contains an underscore, that mean that which follows is a subindex. Actually, we must consider which kind of mini-language we want to support for that."
   - **Solution**: Use KaTeX library for LaTeX-style mathematical notation in element labels
   - **Notation Support**:
     - Subscripts: `A_1` → A₁, `P_{12}` → P₁₂
