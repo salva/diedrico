@@ -247,7 +247,9 @@ function roundTripOperation(op: any, world: World, commandStack: CommandStack): 
   
   // 3. Deserialize using private method via type assertion
   // We only test parameter reconstruction, not full execution
-  const serializedOp = projectData.commands[0].operations[0];
+  // Note: World initialization pushes commands to stack, so get the last command (our test command)
+  const lastCommandIdx = projectData.commands.length - 1;
+  const serializedOp = projectData.commands[lastCommandIdx].operations[0];
   const reconstructed = (ProjectService as any).reconstructOperation(serializedOp);
   
   return reconstructed;
