@@ -10908,4 +10908,129 @@ Create `createTestWorld()` helper function that returns fully initialized World 
 
 ---
 
+## Phase 97: Default Element Labels (25 tasks) [T1776-T1800]
+
+### Specification Documentation (3 tasks)
+
+- [x] T1776 spec.md: Add FR-064 functional requirement for default element labels
+- [x] T1777 ui-spec.md: Add Phase 97 UI specification (label display, editing, migration)
+- [x] T1778 data-model.md: Add Phase 97 architecture (World label counters, generateDefaultLabel, serialization)
+
+### World Class Label Counter Architecture (3 tasks)
+
+- [ ] T1779 [P] World.ts: NO new counter fields needed (labels use existing nextId via ID extraction)
+- [ ] T1780 [P] World.ts: Implement generateDefaultLabel(elementId, elementType): Extract number from ID, get prefix from type, format with braces for n>9
+- [ ] T1781 [P] World.ts: NO label counter serialization needed (labels regenerated from IDs on load)
+
+### Element Constructor Updates (2 tasks)
+
+- [ ] T1782 [P] Update all 2D element constructors: Add optional `label?: string` parameter (Point2D, Line2D, Segment2D, Circle2D, Guide2D)
+- [ ] T1783 [P] Update all 3D element constructors: Add optional `label?: string` parameter (Point3D, Line3D, Segment3D, Plane3D)
+
+### Element Creation Integration - 2D Elements (5 tasks)
+
+- [ ] T1784 ProjectionPlane.createPoint(): Call world.generateDefaultLabel('Point2D'), pass to constructor
+- [ ] T1785 ProjectionPlane.createLine(): Call world.generateDefaultLabel('Line2D'), pass to constructor
+- [ ] T1786 ProjectionPlane.createSegment(): Call world.generateDefaultLabel('Segment2D'), pass to constructor
+- [ ] T1787 ProjectionPlane.createCircle(): Call world.generateDefaultLabel('Circle2D'), pass to constructor
+- [ ] T1788 ProjectionPlane.createGuide(): Call world.generateDefaultLabel('Guide2D'), pass to constructor
+
+### Element Creation Integration - 3D Elements (3 tasks)
+
+- [ ] T1789 World.createPoint3D(): Call generateDefaultLabel('Point3D'), pass to constructor
+- [ ] T1790 World.createLine3D(): Call generateDefaultLabel('Line3D'), pass to constructor
+- [ ] T1791 World.createSegment3D(): Call generateDefaultLabel('Segment3D'), pass to constructor
+
+### Serialization and Migration (3 tasks)
+
+- [ ] T1792 [P] ProjectService.serialize(): NO changes needed (element labels already in element.label field)
+- [ ] T1793 [P] ProjectService.deserialize(): NO changes needed (element labels already in element.label field)
+- [ ] T1794 Migration: Auto-assign labels to existing unlabeled elements on first load
+
+### UI Verification (3 tasks)
+
+- [ ] T1795 Verify WorldElementsPanel: Displays default labels (A₁, L₂, S₃) instead of IDs
+- [ ] T1796 Verify ProcessTree: Shows default labels in action descriptions ("Point A₁")
+- [ ] T1797 Verify ElementProperties: Shows generated label (editable by user)
+
+### Testing (5 tasks)
+
+- [ ] T1798 [P] Unit test: World.generateDefaultLabel() increments counters correctly for all types
+- [ ] T1799 [P] Unit test: Label uniqueness per type (A_1, L_1 coexist; A_2 ≠ A_1)
+- [ ] T1800 [P] Unit test: generateDefaultLabel correctly extracts number from various ID formats
+- [ ] T1801 Integration test: Create 5 points → verify labels A_1 to A_5
+- [ ] T1802 Integration test: Serialization round-trip preserves label counters
+
+### Final Integration (1 task)
+
+- [ ] T1803 Commit Phase 97: Default element labels implementation complete
+
+**Checkpoint**: ✅ All newly created elements have human-readable default labels (A_n, L_n, etc.), preserved across save/load
+
+---
+
+## Phase 98: Dynamic Action Descriptions (25 tasks) [T1801-T1825]
+
+### Specification Documentation (3 tasks)
+
+- [ ] T1801 spec.md: Add FR-065 functional requirement for dynamic action descriptions
+- [ ] T1802 ui-spec.md: Add Phase 98 UI specification (description format, dynamic behavior, rendering)
+- [ ] T1803 data-model.md: Add Phase 98 architecture (Action interface changes, ConstructionParams, getDescription method)
+
+### Action Interface Refactoring (4 tasks)
+
+- [ ] T1804 [P] Action.ts: Remove `description: string` field from Action interface
+- [ ] T1805 [P] Action.ts: Add `operationType: string` field (e.g., "AddFreePoint2D", "AddLineLineIntersection")
+- [ ] T1806 [P] Action.ts: Add `constructionParams: ConstructionParams` field (structured metadata)
+- [ ] T1807 Action.ts: Define ConstructionParams discriminated union type (15+ variants for all operation types)
+
+### Description Generation Implementation (3 tasks)
+
+- [ ] T1808 Action.ts: Implement `getDescription(world: World): string` method
+- [ ] T1809 Action.ts: Implement `getElementTypeName(element: Element): string` helper (maps internal types to user-friendly names)
+- [ ] T1810 Action.ts: Implement `getConstructionMethodDescription(world: World): string` helper with templates for 15+ operation types
+
+### Action Factory Updates (8 tasks)
+
+Update all action factory functions to include operationType and constructionParams instead of static description:
+
+- [ ] T1811 actionFactories.ts: Update createFreePointAction() - params: { type: 'free' }
+- [ ] T1812 actionFactories.ts: Update createLineLineIntersectionAction() - params: { type: 'lineLineIntersection', line1Id, line2Id, intersectionIndex }
+- [ ] T1813 actionFactories.ts: Update createLineCircleIntersectionAction() - params: { type: 'lineCircleIntersection', lineId, circleId, intersectionIndex }
+- [ ] T1814 actionFactories.ts: Update createCircleCircleIntersectionAction() - params: { type: 'circleCircleIntersection', circle1Id, circle2Id, intersectionIndex }
+- [ ] T1815 actionFactories.ts: Update createLineThroughPointsAction() - params: { type: 'lineThroughPoints', point1Id, point2Id }
+- [ ] T1816 actionFactories.ts: Update createLineParallelAction(), createLinePerpendicularAction(), createLineTangentAction()
+- [ ] T1817 actionFactories.ts: Update createSegmentAction(), createCircleAction(), createGuideAction()
+- [ ] T1818 actionFactories.ts: Update create3DPointAction(), create3DLineAction(), create3DSegmentAction(), create3DPlaneAction()
+
+### ProcessTreeNode Component Updates (2 tasks)
+
+- [ ] T1819 ProcessTreeNode.vue: Replace `{{ node.description }}` with `{{ node.getDescription(world) }}`
+- [ ] T1820 ProcessTreeNode.vue: Wrap description in formatElementLabel() for KaTeX rendering
+
+### Serialization Updates (2 tasks)
+
+- [ ] T1821 ProjectService.serialize(): Update to save operationType and constructionParams instead of description
+- [ ] T1822 ProjectService.deserialize(): Update to load operationType and constructionParams, compute description on-the-fly
+
+### Migration Implementation (1 task)
+
+- [ ] T1823 ProjectService: Add migration function migrateActionV7toV8() to convert old { description } to new { operationType, constructionParams } with best-effort inference
+
+### Testing (5 tasks)
+
+- [ ] T1824 [P] Unit test: Action.getDescription() for all 15+ construction param types
+- [ ] T1825 [P] Unit test: Description updates when element labels change
+- [ ] T1826 [P] Unit test: Description shows "[Deleted]" when element is missing
+- [ ] T1827 Integration test: Create element, rename it, verify Process Tree description updates
+- [ ] T1828 E2E test: Build construction sequence, verify descriptions show current labels
+
+### Final Integration (1 task)
+
+- [ ] T1829 Commit Phase 98: Dynamic action descriptions implementation complete
+
+**Checkpoint**: ✅ Process Tree action descriptions dynamically computed from current element state, automatically update when elements renamed
+
+---
+
 **Checkpoint**: ✅ ConstructiveAction stores only construction narrative, structural data derived from elements and DependencyService

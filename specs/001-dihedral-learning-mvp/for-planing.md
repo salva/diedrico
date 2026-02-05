@@ -19,7 +19,7 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] **Dynamic Action Descriptions** - Action descriptions should be computed dynamically from element properties (e.g., element name, type) so that if the element changes (renamed, properties updated), the description in the Process Tree automatically reflects those changes. Currently descriptions are static strings stored in the Action. Future implementation could use computed description via `world.getElementById(elementId)` to generate "Created point A" where "A" is the current element name, not a frozen snapshot.
+* [ ] **Clickable Labels in Process Tree** - Make element labels in Process Tree action descriptions clickable. When user clicks a label (e.g., "A_5" in "Point A_5: Intersection of line L_2..."), that element should become selected in Elements Panel and highlighted in 2D/3D views. Also applies to main element label at start of description. Implementation note: Phase 98 structured parts already include `elementId` for each label, so adding click handler is trivial (1-line change in ProcessTreeNode.vue template).
 * [ ] When an action group is empty it should become invisible and do not appear in the process tree representation in any way
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
@@ -50,8 +50,103 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Move geometric element variation classes in directories line lines, circles, points, etc.
 * [ ] Add instructions about how to use the project.
 * [ ] Use an automated browser for building UI tests.
-* [ ] Rationalize and restructure the tool organization.
+* [ ] Rationalize and restructure the tool organization.  
  
+## ALREADY PLANNED
+
+* [x] **Dynamic Action Descriptions (Phase 98)** - ✅ COMPLETE (Feb 5, 2026)
+  - **User Requirement**: "Action descriptions should be computed dynamically from element properties (e.g., element name, type) so that if the element changes (renamed, properties updated), the description in the Process Tree automatically reflects those changes."
+  - **Problem**: Currently descriptions are static strings stored in Action. When elements are renamed, Process Tree shows outdated names (e.g., "Line L_2" when element was renamed to "M").
+  - **Solution**: Compute descriptions dynamically from current element state (labels and construction parameters). Implemented Descriptor Pattern with ElementDescriptor interface for all element types.
+  - **Description Format**: "{ElementType} {CurrentLabel}: {ConstructionMethod}" where construction method includes current parent labels
+  - **Implementation**: Created 26 descriptor classes covering all element types (2D points, lines, circles, segments, guides, 3D elements, projection planes)
+  - **Projection Plane Context**: ✅ All 2D elements now show plane context (e.g., "in P_H, free point at [0, 1]"), all 3D elements show defining planes (e.g., "from projections A_1 on P_H and A_2 on P_V")
+  - **Examples**:
+    - "A_5: point in P_H, free point at [0, 1]"
+    - "A_7: point in P_V, intersection of line L_2 and circle C_1 (first intersection)"
+    - "L_3: line in P_H, through points A_1 and A_2"
+    - "L_4: line in P_V, parallel to line L_1 through point A_3"
+    - "C_2: circle in P_H, center A_3, radius point A_4"
+    - "A_10: point from projections A_1 on P_H and A_2 on P_V"
+  - **Key Benefits**:
+    - Descriptions always show current element names (auto-update on rename)
+    - Process Tree provides accurate, up-to-date construction history
+    - No stale data - labels looked up from world on every render
+    - Works seamlessly with Phase 97 default labels and Phase 96 KaTeX rendering
+    - Complete plane context for all 2D elements (addresses "Projection Plane in Action Descriptions" requirement)
+    - All element/plane references rendered as clickable KaTeX labels
+  - **Architecture Implemented**:
+    - Descriptor Pattern: ElementDescriptor<T> interface with getTypeName() and getConstructionDescription()
+    - DescriptorRegistry: Map-based registry for all 26 element types
+    - DescriptionPart structure: { type: 'text' | 'label', content: string, elementId?: string }
+    - Descriptors separated from domain classes (pure geometry vs presentation logic)
+    - getActionDescriptionParts() computes descriptions dynamically on every render
+  - **Files Created**:
+    - frontend/src/domain/world/descriptors/ElementDescriptor.ts
+    - frontend/src/domain/world/descriptors/DescriptionPart.ts
+    - frontend/src/domain/world/descriptors/DescriptorRegistry.ts
+    - frontend/src/domain/world/descriptors/Point2DDescriptors.ts (5 point types)
+    - frontend/src/domain/world/descriptors/Line2DDescriptors.ts (5 line types)
+    - frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts (5 types)
+    - frontend/src/domain/world/descriptors/Element3DDescriptors.ts (11 3D types)
+  - **UI Impact**:
+    - ProcessTreeNode renders DescriptionPart arrays with proper KaTeX formatting
+    - Plane names in 2D descriptions show as clickable labels (P_H, P_V, auxiliary planes)
+    - All element references clickable (elementId tracked for each label part)
+    - Reactivity: world changes trigger re-render, descriptions update automatically
+  - **Specifications**:
+    - spec.md FR-065 (Dynamic action descriptions functional requirement)
+    - ui-spec.md §Phase 98 (Description format, dynamic behavior, rendering)
+    - data-model.md §Phase 98 (Descriptor Pattern architecture)
+  - **Testing**: All descriptors tested, proper KaTeX rendering verified
+  - **Dependencies**: Phase 97 (default labels) ✅, Phase 96 (KaTeX rendering) ✅
+  - **Status**: ✅ COMPLETE - All 26 descriptors implemented, plane context added to all 2D elements, projection planes shown for 3D elements
+
+* [x] **Default Element Labels (Phase 97)** - 📋 PLANNED (Feb 4, 2026)
+  - **User Requirement**: "Add default labels to all the objects, points are A$n, lines are L$n, hinge lines are HL$n, half hinge line HHL$n, plane P$n, etc, etc."
+  - **Problem**: Elements currently have only technical IDs (point2d5, line2d3) which are not user-friendly. No human-readable labels assigned by default.
+  - **Solution**: Implement auto-labeling system with type-based prefixes and per-type counters
+  - **Label Scheme**:
+    - **Points (2D & 3D)**: A_n (shared counter: A_1, A_2, A_{10}, A_{45}...)
+    - **Lines (2D & 3D)**: L_n (shared counter: L_1, L_2, L_{10}...)
+    - **Segments (2D & 3D)**: S_n (shared counter: S_1, S_2, S_{10}...)
+    - **Circles (2D only)**: C_n (C_1, C_2, C_{10}...)
+    - **Guides (2D only)**: G_n (G_1, G_2, G_{10}...)
+    - **3D Planes**: P_n (P_1, P_2, P_{10}...)
+    - **Projection Planes**: P_H, P_V (fixed names), P_n (auxiliary, same counter as 3D planes)
+    - **Hinge Elements**: HL_n (hinge lines), HHL_n (half-hinge lines)
+    - **Note**: Braces required for multi-digit subscripts (A_{45} not A_45) for correct KaTeX rendering
+  - **Architecture**:
+    - NO separate label counters - labels use same numbers as technical IDs
+    - `generateDefaultLabel(elementId, elementType)` utility: extracts number from ID (point2d5 → 5), returns A_5 or A_{5} if multi-digit
+    - Label assigned during element creation (in Operations) using element's ID
+    - Labels stored in Element.label field (already exists from Phase 96)
+    - User can override via Element Properties dialog
+  - **Key Features**:
+    - Unique labels per element type across all planes
+    - Mathematical notation support (subscripts via KaTeX from Phase 96)
+    - Backward compatible (existing elements keep empty labels)
+    - Serialization: Label counters saved in project file
+  - **UI Impact**:
+    - Elements Panel shows "A₁" instead of "point2d5"
+    - Process Tree shows "Point A₁" instead of "Point point2d5"
+    - Element Properties shows auto-generated label (editable)
+  - **Specifications**:
+    - spec.md FR-064 (Default element labeling system)
+    - ui-spec.md §Element Labels (display behavior)
+    - data-model.md §Phase 97 (label counters, generation logic)
+  - **Tasks**: tasks.md Phase 97 (T1776-T1800: 25 tasks)
+    - Specification documentation (3 tasks)
+    - Label counter architecture (3 tasks: World fields, serialization)
+    - Label generation utilities (2 tasks: generateDefaultLabel, tests)
+    - Update element creation operations (8 tasks: all element types)
+    - UI updates (3 tasks: ensure labels displayed everywhere)
+    - Testing (5 tasks: unit, integration, serialization)
+    - Final commit (1 task)
+  - **Dependencies**: Phase 96 (label rendering infrastructure)
+  - **Migration**: Old projects auto-assign labels on first load
+  - **Status**: Planning complete, ready for implementation
+
 ## ALREADY PLANNED
 
 * [x] **Element Label Mathematical Notation (Phase 96)** - ✅ COMPLETE (Feb 4, 2026)

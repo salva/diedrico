@@ -20,6 +20,10 @@ import './assets/styles/main.css';
 import 'katex/dist/katex.min.css';
 import './assets/styles/katex-overrides.css';
 
+// Register all element descriptors for dynamic action descriptions
+import { registerAllDescriptors } from './domain/world/descriptors/registerDescriptors';
+registerAllDescriptors();
+
 const app = createApp(App);
 const pinia = createPinia();
 

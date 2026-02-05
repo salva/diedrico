@@ -330,6 +330,92 @@ export class World {
   }
 
   /**
+   * Phase 97: Generate default label from element ID and type
+   * 
+   * Extracts the numeric counter from the technical ID and applies type-based
+   * prefix to create a human-readable label.
+   * 
+   * Label scheme:
+   * - Points (2D & 3D): A_n (e.g., point2d5 → A_5, point3d12 → A_{12})
+   * - Lines (2D & 3D): L_n
+   * - Segments (2D & 3D): S_n
+   * - Circles: C_n
+   * - Guides: G_n
+   * - 3D Planes: P_n
+   * - Projection Planes: P_n (same counter)
+   * - Hinge Lines: HL_n
+   * - Half-Hinge Lines: HHL_n
+   * 
+   * Multi-digit subscripts use brace notation for correct KaTeX rendering:
+   * - Single digit: A_5 → A₅
+   * - Multi-digit: A_{12} → A₁₂ (braces required!)
+   * 
+   * ID Formats Supported:
+   * - Simple: "point2d5", "line3d12" (local IDs)
+   * - Scoped: "projPlane3/point2d5" (container/local format)
+   * 
+   * @param elementId Technical element ID (e.g., "point2d5", "projPlane3/line2d12")
+   * @param elementType Element type string (e.g., "Point2D", "Line3D")
+   * @returns Human-readable label (e.g., "A_5", "L_{12}")
+   * @throws Error if ID format is invalid or element type is unknown
+   */
+  generateDefaultLabel(elementId: string, elementType: string): string {
+    // Handle scoped IDs (e.g., "projPlane3/point2d5")
+    // Extract the local ID part after the last "/"
+    const parts = elementId.split('/');
+    const localId = parts[parts.length - 1];
+    
+    // Extract number from local ID (e.g., "point2d5" → 5, "line3d12" → 12)
+    // Handle invalid IDs like "guide2dNaN" from deserialization bugs
+    const match = localId.match(/\d+$/);
+    if (!match) {
+      // Return empty label for graceful degradation - pre-existing serialization bug
+      return '';
+    }
+    const num = parseInt(match[0], 10);
+    
+    // Get prefix based on element type
+    let prefix: string;
+    switch (elementType) {
+      case 'Point2D':
+      case 'Point3D':
+        prefix = 'A_';
+        break;
+      case 'Line2D':
+      case 'Line3D':
+        prefix = 'L_';
+        break;
+      case 'Segment2D':
+      case 'Segment3D':
+        prefix = 'S_';
+        break;
+      case 'Circle2D':
+        prefix = 'C_';
+        break;
+      case 'Guide2D':
+        prefix = 'G_';
+        break;
+      case 'Plane3D':
+      case 'ProjectionPlane':
+        prefix = 'P_';
+        break;
+      case 'HingeLine':
+        prefix = 'HL_';
+        break;
+      case 'HalfHingeLine':
+        prefix = 'HHL_';
+        break;
+      default:
+        throw new Error(`Unknown element type: ${elementType}`);
+    }
+    
+    // Format with braces for multi-digit subscripts (KaTeX requirement)
+    // Single digit: A_5 → A₅
+    // Multi-digit: A_{12} → A₁₂ (without braces would render as A₁2)
+    return num <= 9 ? `${prefix}${num}` : `${prefix}{${num}}`;
+  }
+
+  /**
    * Get the currently active projection plane ID
    * 
    * Includes self-healing logic: if currently active plane was deleted,
@@ -412,13 +498,15 @@ export class World {
     name?: string
   ): ProjectionPlane {
     const id = projPlaneId || this.generateProjPlaneId();
+    const label = name || this.generateDefaultLabel(id, 'ProjectionPlane');
     
     // Phase 94: Derived matrices computed in realization constructors
     // No need to compute paperToPlane2D or threeDToPlane here
     
     // Create FixedProjectionPlane with only forward matrices
     const projPlane = new FixedProjectionPlane(
-      name || `proj_plane_${id}`,
+      id,
+      label,
       planeToPaper2D,
       planeTo3D,
       false,  // Not active by default
@@ -426,8 +514,6 @@ export class World {
       '#808080',  // Default gray
       plane3DId
     );
-    
-    projPlane.id = id;
     
     this.projectionPlanes.set(id, projPlane);
 
@@ -455,10 +541,11 @@ export class World {
     hingeLineId?: string
   ): HingeLine {
     const id = hingeLineId || this.generateHingeLineId();
+    const label = this.generateDefaultLabel(id, 'HingeLine');
     
     const hingeLine = new HingeLine(
       id,
-      id, // label same as ID
+      label,
       horizontalPlaneId,
       verticalPlaneId
     );
@@ -1192,6 +1279,20 @@ export class World {
     this.planeRealizations3D.delete(id);
     this.dependencyService.unregisterNode(id);
     this.notifyChange();
+  }
+
+  /**
+   * Get any 3D element by ID (polymorphic accessor)
+   * Tries all 3D element types: points, lines, segments, planes, hinge lines
+   * Returns undefined if element not found
+   */
+  getElement3DById(id: string): Point3D | Line3D | Segment3D | Plane3D | HingeLine | undefined {
+    // Try each 3D element type
+    return this.get3DPoint(id) 
+      || this.get3DLine(id) 
+      || this.get3DSegment(id) 
+      || this.get3DPlane(id)
+      || this.getHingeLineById(id);
   }
 
 

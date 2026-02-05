@@ -89,16 +89,14 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       // Use stored ID if available (for redo), otherwise generate new one
       const projPlaneId = this.outputs.projPlaneId || world.generateProjPlaneId();
       
-      // Auto-generate name if not provided
-      const numAuxiliaryPlanes = Array.from(world.getAllProjectionPlanes()).filter(p => 
-        p.id !== 'proj_plane_1' && p.id !== 'proj_plane_2'
-      ).length;
-      const planeName = this.name || `P_A${numAuxiliaryPlanes + 1}`;
+      // Auto-generate name if not provided - use generateDefaultLabel for proper subscript formatting
+      const planeName = this.name || world.generateDefaultLabel(projPlaneId, 'ProjectionPlane');
       
       // Create AuxiliaryProjectionPlane
       // NOTE: Stores trace IDs (dependencies), NOT matrices
       // Matrices will be computed on-demand via realizeWithWorld()
       const plane = new AuxiliaryProjectionPlane(
+        projPlaneId,
         planeName,
         this.t1HingeTraceId,
         this.t2OtherTraceId,
@@ -108,8 +106,6 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
         '#808080',  // Default gray
         this.plane3DId
       );
-      
-      plane.id = projPlaneId;
       
       // Add to World storage
       world.projectionPlanes.set(projPlaneId, plane);

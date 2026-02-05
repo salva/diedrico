@@ -65,6 +65,7 @@
           v-for="child in allChildren"
           :key="child.id"
           :node="child"
+          :world="world"
           :data-version="dataVersion"
           :selected-node-id="selectedNodeId"
           :active-subprocess-id="activeSubprocessId"
@@ -108,6 +109,7 @@
           v-for="child in allChildren"
           :key="child.id"
           :node="child"
+          :world="world"
           :data-version="dataVersion"
           :selected-node-id="selectedNodeId"
           :active-subprocess-id="activeSubprocessId"
@@ -125,7 +127,7 @@
 
     <!-- Action Node (leaf) -->
     <div
-      v-else-if="node.type === 'action'"
+      v-else-if="node.type === 'action' && descriptionParts.length > 0"
       class="action-node"
       :class="{ 
         'node-selected': isSelected,
@@ -134,12 +136,21 @@
         'faded': isFaded
       }"
       @click="handleActionClick"
+      @dblclick="toggleDescriptionExpand"
       @mouseenter="handleActionHover(true)"
       @mouseleave="handleActionHover(false)"
     >
       <div class="action-main">
-        <span class="action-status">{{ statusIcon }}</span>
-        <span class="action-description" v-html="formatElementLabel(node.description)"></span>
+        <span 
+          class="action-description"
+          :class="{ 'description-expanded': isDescriptionExpanded }"
+          :title="isDescriptionExpanded ? '' : 'Double-click to expand'"
+        >
+          <template v-for="(part, index) in descriptionParts" :key="index">
+            <span v-if="part.type === 'text'">{{ part.content }}</span>
+            <span v-else v-html="formatElementLabel(part.content)"></span>
+          </template>
+        </span>
         <span v-if="isRelated && !isSelected" class="related-indicator" title="Related to selected elements">🔗</span>
 
         <!-- Right Side Controls Matrix -->
@@ -175,11 +186,14 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
 import type { ProcessNode } from '@/domain/processTree/ProcessTree';
+import type { World } from '@/domain/world/World';
 import { formatElementLabel } from '@/utils/formatUtils';
+import { getActionDescriptionParts } from '@/domain/processTree/Action';
 
 // Props
 const props = withDefaults(defineProps<{
   node: ProcessNode;
+  world: World;
   selectedNodeId: string | null;
   activeSubprocessId?: string;
   relatedActionIds?: Set<string>;
@@ -221,6 +235,22 @@ const isRelated = computed(() => {
   if (!props.relatedActionIds) return false;
   return props.relatedActionIds.has(props.node.id);
 });
+
+// Description parts for action nodes
+const descriptionParts = computed(() => {
+  if (props.node.type !== 'action') return [];
+  const parts = getActionDescriptionParts(props.node, props.world);
+  // Hide deleted elements by returning empty array
+  if (parts.length === 0) return [];
+  return parts;
+});
+
+// Expandable description state
+const isDescriptionExpanded = ref(false);
+
+const toggleDescriptionExpand = () => {
+  isDescriptionExpanded.value = !isDescriptionExpanded.value;
+};
 
 // Determine if this node is legally hidden by encryption logic (faded in UI)
 const isFaded = computed(() => {
@@ -282,15 +312,6 @@ const allChildren = computed(() => {
   props.dataVersion; 
   if (!('children' in props.node)) return [];
   return props.node.children.filter(child => child !== null);
-});
-
-const isInfeasible = computed(() => {
-  // TODO: Check if action produces infeasible elements
-  return false;
-});
-
-const statusIcon = computed(() => {
-  return isInfeasible.value ? '⚠️' : '✓';
 });
 
 // Methods
@@ -449,6 +470,14 @@ function formatParameterValue(value: any): string {
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1; /* Push controls to right */
+  cursor: pointer;
+}
+
+.action-description.description-expanded {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-wrap: break-word;
 }
 
 /* Specific overrides for action node to ensure right alignment */
@@ -645,11 +674,6 @@ function formatParameterValue(value: any): string {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.action-status {
-  font-size: 10px;
-  flex-shrink: 0;
 }
 
 .action-description {

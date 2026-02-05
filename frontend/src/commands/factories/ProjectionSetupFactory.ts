@@ -156,7 +156,7 @@ export function constructProjectionPlaneSetup(
     l2Id,  // T2
     P_H.id!,
     P_V.id!,
-    'Plane Q',
+    'Q',
     groupId
   );
 

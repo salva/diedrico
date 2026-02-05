@@ -92,6 +92,9 @@ export class Add3DPointOp implements IOperation {
       // Use stored ID if available (for redo), otherwise generate new one
       const pointId = this.outputs.pointId || world.generate3DPointId();
       
+      // Phase 97: Generate default label if not provided
+      const label = this.label || world.generateDefaultLabel(pointId, 'Point3D');
+      
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {
         color: '#FF6B35',    // Orange for 3D elements
@@ -102,7 +105,7 @@ export class Add3DPointOp implements IOperation {
       // Create Point3DFromProjections
       const point = new Point3DFromProjections(
         pointId,
-        this.label || `Point ${pointId}`,
+        label,
         this.projection1Id,
         this.projection2Id,
         this.plane1Id,

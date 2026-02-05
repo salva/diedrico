@@ -85,6 +85,9 @@ export class Add3DSegmentOp implements IOperation {
       // Use stored ID if available (for redo), otherwise generate new one
       const segmentId = this.outputs.segmentId || world.generate3DSegmentId();
       
+      // Phase 97: Generate default label if not provided
+      const label = this.label || world.generateDefaultLabel(segmentId, 'Segment3D');
+      
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {
         color: '#FF6B35',    // Orange for 3D elements
@@ -95,7 +98,7 @@ export class Add3DSegmentOp implements IOperation {
       // Create Segment3DFromProjections
       const segment = new Segment3DFromProjections(
         segmentId,
-        this.label || `Segment ${segmentId}`,
+        label,
         this.projection1Id,
         this.projection2Id,
         this.plane1Id,

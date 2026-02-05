@@ -85,6 +85,9 @@ export class Add3DLineOp implements IOperation {
       // Use stored ID if available (for redo), otherwise generate new one
       const lineId = this.outputs.lineId || world.generate3DLineId();
       
+      // Phase 97: Generate default label if not provided
+      const label = this.label || world.generateDefaultLabel(lineId, 'Line3D');
+      
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {
         color: '#FF6B35',    // Orange for 3D elements
@@ -95,7 +98,7 @@ export class Add3DLineOp implements IOperation {
       // Create Line3DFromProjections
       const line = new Line3DFromProjections(
         lineId,
-        this.label || `Line ${lineId}`,
+        label,
         this.projection1Id,
         this.projection2Id,
         this.plane1Id,

@@ -5,6 +5,1106 @@
 
 ---
 
+---
+
+## Phase 98: Dynamic Action Descriptions
+
+### Overview
+
+Process Tree action descriptions are computed dynamically from current element state (labels and construction parameters) rather than stored as static strings. This ensures descriptions always reflect current element names even after renaming.
+
+### Functional Requirements
+
+**FR-065**: Process Tree action descriptions MUST be computed dynamically from current element state (labels, construction parameters) rather than stored as static strings. When elements are renamed or dependencies change, action descriptions MUST automatically update to reflect current state. Description format MUST follow pattern: "{ElementType} {CurrentLabel}: {ConstructionMethod}" where construction method includes current parent labels (e.g., "Point A_5: Intersection of line L_2 and circle C_1"). This ensures Process Tree always displays accurate, up-to-date construction history even after elements are renamed.
+
+### Architecture
+
+#### Action Interface Changes
+
+**Current Action Interface** (Phase 97):
+```typescript
+export interface Action {
+  elementId: string;        // Element created by this action
+  description: string;      // STATIC description stored as string
+  isOutput: boolean;        // Phase 87: Output flag
+}
+```
+
+**New Action Interface** (Phase 98):
+```typescript
+export interface Action {
+  elementId: string;              // Element created by this action
+  operationType: string;          // Operation type (e.g., "AddFreePoint2D", "AddLineLineIntersection")
+  constructionParams: ConstructionParams;  // Structured construction metadata
+  isOutput: boolean;              // Phase 87: Output flag
+}
+
+// Construction parameters vary by operation type
+export type ConstructionParams = 
+  | { type: 'free' }
+  | { type: 'lineLineIntersection'; line1Id: string; line2Id: string; intersectionIndex: number }
+  | { type: 'lineCircleIntersection'; lineId: string; circleId: string; intersectionIndex: number }
+  | { type: 'circleCircleIntersection'; circle1Id: string; circle2Id: string; intersectionIndex: number }
+  | { type: 'lineThroughPoints'; point1Id: string; point2Id: string }
+  | { type: 'lineParallel'; lineId: string; pointId: string }
+  | { type: 'linePerpendicular'; lineId: string; pointId: string }
+  | { type: 'lineTangent'; circleId: string; pointId: string }
+  | { type: 'segment'; point1Id: string; point2Id: string }
+  | { type: 'circle'; centerId: string; radiusPointId: string }
+  | { type: 'guide'; segmentId: string }
+  | { type: 'point3dFromProjections'; projection1Id: string; projection2Id: string; plane1Id: string; plane2Id: string }
+  | { type: 'line3dFromProjections'; projection1Id: string; projection2Id: string; plane1Id: string; plane2Id: string }
+  | { type: 'segment3dFromProjections'; projection1Id: string; projection2Id: string; plane1Id: string; plane2Id: string }
+  | { type: 'plane3dFromTraces'; trace1Id: string; trace2Id: string; plane1Id: string; plane2Id: string }
+  | { type: 'auxiliaryPlane'; hingeId: string; traceId: string; positionLineId: string };
+```
+
+#### Description Generator
+
+**Descriptor/Presenter Architecture** (Separation of Concerns - like CSS selectors):
+
+```typescript
+// === DOMAIN LAYER: Elements stay pure (geometry only) ===
+
+export abstract class Element {
+  id: string;
+  label?: string;
+  planeId?: string;
+  // Pure geometry - no presentation logic!
+}
+
+// Example: Pure geometric classes
+export class FreePoint2D extends Element {
+  position: Vector3;
+  // Just geometry - no description methods!
+}
+
+export class LineLineIntersectionPoint2D extends Element {
+  line1Id: string;
+  line2Id: string;
+  intersectionIndex: number;
+  position: Vector3;  // Computed from parent lines
+}
+
+export class Line2DBetweenPoints extends Element {
+  point1Id: string;
+  point2Id: string;
+}
+
+// === PRESENTATION LAYER: Descriptors (parallel class hierarchy) ===
+
+export interface DescriptionPart {
+  type: 'text' | 'label';
+  content: string;
+  elementId?: string;  // For label parts - enables hover highlighting
+}
+
+/**
+ * Descriptor interface - like CSS rules for elements
+ * Each descriptor knows how to present one element type
+ */
+export interface ElementDescriptor<T extends Element = Element> {
+  /**
+   * Get user-friendly element type name
+   */
+  getTypeName(element: T): string;
+  
+  /**
+   * Generate construction description parts
+   * 
+   * @param element The element to describe
+   * @param world World instance for parent label lookup
+   * @returns Array of text and label parts describing construction
+   */
+  getConstructionDescription(element: T, world: World): DescriptionPart[];
+}
+
+// Example descriptors (parallel to element classes)
+
+export class FreePoint2DDescriptor implements ElementDescriptor<FreePoint2D> {
+  getTypeName(element: FreePoint2D): string {
+    return 'Point';
+  }
+  
+  getConstructionDescription(element: FreePoint2D, world: World): DescriptionPart[] {
+    return [{ type: 'text', content: 'Free point' }];
+  }
+}
+
+export class LineLineIntersectionPoint2DDescriptor implements ElementDescriptor<LineLineIntersectionPoint2D> {
+  getTypeName(element: LineLineIntersectionPoint2D): string {
+    return 'Point';
+  }
+  
+  getConstructionDescription(element: LineLineIntersectionPoint2D, world: World): DescriptionPart[] {
+    const line1 = world.getElementById(element.line1Id);
+    const line2 = world.getElementById(element.line2Id);
+    
+    return [
+      { type: 'text', content: 'Intersection of line ' },
+      { type: 'label', content: line1?.label || element.line1Id, elementId: element.line1Id },
+      { type: 'text', content: ' and line ' },
+      { type: 'label', content: line2?.label || element.line2Id, elementId: element.line2Id }
+    ];
+  }
+}
+
+export class Line2DBetweenPointsDescriptor implements ElementDescriptor<Line2DBetweenPoints> {
+  getTypeName(element: Line2DBetweenPoints): string {
+    return 'Line';
+  }
+  
+  getConstructionDescription(element: Line2DBetweenPoints, world: World): DescriptionPart[] {
+    const point1 = world.getElementById(element.point1Id);
+    const point2 = world.getElementById(element.point2Id);
+    
+    return [
+      { type: 'text', content: 'Through points ' },
+      { type: 'label', content: point1?.label || element.point1Id, elementId: element.point1Id },
+      { type: 'text', content: ' and ' },
+      { type: 'label', content: point2?.label || element.point2Id, elementId: element.point2Id }
+    ];
+  }
+}
+
+// === REGISTRY: Maps element types to descriptors (like CSS selector matching) ===
+
+/**
+ * Descriptor Registry - like CSS stylesheet
+ * Maps element constructors to their presentation logic
+ */
+export class DescriptorRegistry {
+  private static descriptors = new Map<Function, ElementDescriptor>();
+  
+  /**
+   * Register a descriptor for an element type (like CSS rule definition)
+   * 
+   * @param elementClass Element constructor function
+   * @param descriptor Descriptor instance for this element type
+   */
+  static register<T extends Element>(
+    elementClass: new (...args: any[]) => T,
+    descriptor: ElementDescriptor<T>
+  ): void {
+    this.descriptors.set(elementClass, descriptor);
+  }
+  
+  /**
+   * Get descriptor for an element (like CSS selector matching)
+   * 
+   * @param element Element instance to describe
+   * @returns Descriptor for this element type
+   * @throws Error if no descriptor registered
+   */
+  static get(element: Element): ElementDescriptor {
+    const descriptor = this.descriptors.get(element.constructor);
+    if (!descriptor) {
+      throw new Error(`No descriptor registered for ${element.constructor.name}`);
+    }
+    return descriptor;
+  }
+}
+
+// Registration (done once at app startup - like loading CSS)
+DescriptorRegistry.register(FreePoint2D, new FreePoint2DDescriptor());
+DescriptorRegistry.register(LineLineIntersectionPoint2D, new LineLineIntersectionPoint2DDescriptor());
+DescriptorRegistry.register(Line2DBetweenPoints, new Line2DBetweenPointsDescriptor());
+// ... register all element types
+
+// === ACTION: Uses registry to get descriptions ===
+
+export class Action {
+  elementId: string;
+  isOutput: boolean;  // Phase 87
+  
+  /**
+   * Generate complete description using descriptor registry
+   * Format: "{ElementType} {CurrentLabel}: {ConstructionMethod}"
+   */
+  getDescriptionParts(world: World): DescriptionPart[] {
+    const element = world.getElementById(this.elementId);
+    
+    if (!element) {
+      return [{ type: 'text', content: `[Deleted] ${this.elementId}` }];
+    }
+    
+    // Get descriptor from registry (like CSS selector matching)
+    const descriptor = DescriptorRegistry.get(element);
+    
+    const typeName = descriptor.getTypeName(element);
+    const label = element.label || this.elementId;
+    const constructionParts = descriptor.getConstructionDescription(element, world);
+    
+    // Combine: "{ElementType} " + label + ": " + construction parts
+    return [
+      { type: 'text', content: `${typeName} ` },
+      { type: 'label', content: label, elementId: this.elementId },
+      { type: 'text', content: ': ' },
+      ...constructionParts
+    ];
+  }
+}
+```
+
+**Key Architectural Benefits**:
+1. ✅ **Separation of Concerns**: Domain (Element) vs Presentation (Descriptor) - like HTML vs CSS
+2. ✅ **Pure Domain Model**: Element classes contain ONLY geometry and construction params
+3. ✅ **Parallel Class Hierarchy**: One descriptor per element type, registered separately
+4. ✅ **Testability**: Test descriptors independently from domain logic
+5. ✅ **Extensibility**: New element type = create element class + descriptor + register
+6. ✅ **No Pollution**: Display logic never touches domain classes
+7. ✅ **Registry Pattern**: Like CSS selectors - match element type to presentation rule
+
+**File Organization**:
+```
+frontend/src/domain/world/
+  elements/          # Pure geometry
+    FreePoint2D.ts
+    LineLineIntersectionPoint2D.ts
+    Line2DBetweenPoints.ts
+    ...
+  
+  descriptors/       # Presentation logic (parallel structure)
+    FreePoint2DDescriptor.ts
+    LineLineIntersectionPoint2DDescriptor.ts
+    Line2DBetweenPointsDescriptor.ts
+    DescriptorRegistry.ts
+    registerDescriptors.ts  # One-time registration
+```
+
+**Comparison to CSS**:
+- **CSS**: `div.header { color: blue; }` - Select element type, apply styling
+- **Our Pattern**: `DescriptorRegistry.register(FreePoint2D, descriptor)` - Map element type to presentation
+- **Benefit**: Change descriptions without touching domain classes (like changing CSS without touching HTML)
+  
+  private getElementTypeName(element: Element): string {
+    // Map internal type to user-friendly name
+    const typeMap: Record<string, string> = {
+      'Point2D': 'Point',
+      'Point3D': 'Point',
+      'Line2D': 'Line',
+      'Line3D': 'Line',
+      'Segment2D': 'Segment',
+      'Segment3D': 'Segment',
+      'Circle2D': 'Circle',
+      'Guide2D': 'Guide',
+      'Plane3D': 'Plane',
+      'ProjectionPlane': 'Plane',
+      'HingeLine': 'Hinge Line',
+      'HalfHingeLine': 'Half-Hinge Line'
+    };
+    
+    return typeMap[element.type] || element.type;
+  }
+}
+```
+
+The Action class is now simplified - it just combines element metadata with delegated construction description.
+
+#### Element Classes - Pure Domain (Geometry Only) + Descriptor Classes (Presentation)
+
+Each element type has a corresponding descriptor class (like CSS rules for HTML elements):
+
+```typescript
+// === 2D Points - DOMAIN + DESCRIPTOR ===
+
+export class FreePoint2D extends Element {
+  position: Vector3;
+  // Pure geometry - no presentation logic!
+}
+export class FreePoint2DDescriptor implements ElementDescriptor<FreePoint2D> {
+  getTypeName() { return 'Point'; }
+  getConstructionDescription(element: FreePoint2D, world: World) {
+    return [{ type: 'text', content: 'Free point' }];
+  }
+}
+
+export class LineLineIntersectionPoint2D extends Element {
+  line1Id: string;
+  line2Id: string;
+  intersectionIndex: number;
+  position: Vector3;  // Computed from parent lines
+  // Pure geometry - no presentation logic!
+}
+export class LineLineIntersectionPoint2DDescriptor implements ElementDescriptor<LineLineIntersectionPoint2D> {
+  getTypeName() { return 'Point'; }
+  getConstructionDescription(element: LineLineIntersectionPoint2D, world: World) {
+    const line1 = world.getElementById(element.line1Id);
+    const line2 = world.getElementById(element.line2Id);
+    return [
+      { type: 'text', content: 'Intersection of line ' },
+      { type: 'label', content: line1?.label || element.line1Id, elementId: element.line1Id },
+      { type: 'text', content: ' and line ' },
+      { type: 'label', content: line2?.label || element.line2Id, elementId: element.line2Id }
+    ];
+  }
+}
+
+export class LineCircleIntersectionPoint2D extends Element {
+  lineId: string;
+  circleId: string;
+  intersectionIndex: number;
+  position: Vector3;
+  // Pure geometry - no presentation logic!
+      { type: 'label', content: line?.label || this.lineId, elementId: this.lineId },
+      { type: 'text', content: ' and circle ' },
+      { type: 'label', content: circle?.label || this.circleId, elementId: this.circleId },
+      { type: 'text', content: ` (index ${this.intersectionIndex})` }
+    ];
+  }
+}
+
+export class CircleCircleIntersectionPoint2D extends Element {
+  circle1Id: string;
+  circle2Id: string;
+  intersectionIndex: number;
+  position: Vector3;
+  
+  getTypeName(): string { return 'Point'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const c1 = world.getElementById(this.circle1Id);
+    const c2 = world.getElementById(this.circle2Id);
+    return [
+      { type: 'text', content: 'Intersection of circle ' },
+      { type: 'label', content: c1?.label || this.circle1Id, elementId: this.circle1Id },
+      { type: 'text', content: ' and circle ' },
+      { type: 'label', content: c2?.label || this.circle2Id, elementId: this.circle2Id },
+      { type: 'text', content: ` (index ${this.intersectionIndex})` }
+    ];
+  }
+}
+
+// === 2D Lines ===
+
+export class Line2DBetweenPoints extends Element {
+  point1Id: string;
+  point2Id: string;
+  
+  getTypeName(): string { return 'Line'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const p1 = world.getElementById(this.point1Id);
+    const p2 = world.getElementById(this.point2Id);
+    return [
+      { type: 'text', content: 'Through points ' },
+      { type: 'label', content: p1?.label || this.point1Id, elementId: this.point1Id },
+      { type: 'text', content: ' and ' },
+      { type: 'label', content: p2?.label || this.point2Id, elementId: this.point2Id }
+    ];
+  }
+}
+
+export class Line2DParallel extends Element {
+  lineId: string;
+  pointId: string;
+  
+  getTypeName(): string { return 'Line'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const line = world.getElementById(this.lineId);
+    const point = world.getElementById(this.pointId);
+    return [
+      { type: 'text', content: 'Parallel to line ' },
+      { type: 'label', content: line?.label || this.lineId, elementId: this.lineId },
+      { type: 'text', content: ' through point ' },
+      { type: 'label', content: point?.label || this.pointId, elementId: this.pointId }
+    ];
+  }
+}
+
+export class Line2DPerpendicular extends Element {
+  lineId: string;
+  pointId: string;
+  
+  getTypeName(): string { return 'Line'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const line = world.getElementById(this.lineId);
+    const point = world.getElementById(this.pointId);
+    return [
+      { type: 'text', content: 'Perpendicular to line ' },
+      { type: 'label', content: line?.label || this.lineId, elementId: this.lineId },
+      { type: 'text', content: ' through point ' },
+      { type: 'label', content: point?.label || this.pointId, elementId: this.pointId }
+    ];
+  }
+}
+
+export class Line2DTangent extends Element {
+  circleId: string;
+  pointId: string;
+  
+  getTypeName(): string { return 'Line'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const circle = world.getElementById(this.circleId);
+    const point = world.getElementById(this.pointId);
+    return [
+      { type: 'text', content: 'Tangent to circle ' },
+      { type: 'label', content: circle?.label || this.circleId, elementId: this.circleId },
+      { type: 'text', content: ' through point ' },
+      { type: 'label', content: point?.label || this.pointId, elementId: this.pointId }
+    ];
+  }
+}
+
+// === 2D Circles ===
+
+export class Circle2D extends Element {
+  centerId: string;
+  radiusPointId: string;
+  
+  getTypeName(): string { return 'Circle'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const center = world.getElementById(this.centerId);
+    const radiusPoint = world.getElementById(this.radiusPointId);
+    return [
+      { type: 'text', content: 'Center ' },
+      { type: 'label', content: center?.label || this.centerId, elementId: this.centerId },
+      { type: 'text', content: ', radius point ' },
+      { type: 'label', content: radiusPoint?.label || this.radiusPointId, elementId: this.radiusPointId }
+    ];
+  }
+}
+
+// === 2D Segments ===
+
+export class Segment2D extends Element {
+  point1Id: string;
+  point2Id: string;
+  
+  getTypeName(): string { return 'Segment'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const p1 = world.getElementById(this.point1Id);
+    const p2 = world.getElementById(this.point2Id);
+    return [
+      { type: 'text', content: 'Between points ' },
+      { type: 'label', content: p1?.label || this.point1Id, elementId: this.point1Id },
+      { type: 'text', content: ' and ' },
+      { type: 'label', content: p2?.label || this.point2Id, elementId: this.point2Id }
+    ];
+  }
+}
+
+// === 2D Guide Lines ===
+
+export class GuideLine2D extends Element {
+  segmentId: string;
+  
+  getTypeName(): string { return 'Guide'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const segment = world.getElementById(this.segmentId);
+    return [
+      { type: 'text', content: 'From segment ' },
+      { type: 'label', content: segment?.label || this.segmentId, elementId: this.segmentId }
+    ];
+  }
+}
+
+// === 3D Points ===
+
+export class FreePoint3D extends Element {
+  position: Vector3;
+  
+  getTypeName(): string { return 'Point'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    return [{ type: 'text', content: 'Free point' }];
+  }
+}
+
+export class Point3DFromProjections extends Element {
+  projection1Id: string;
+  projection2Id: string;
+  plane1Id: string;
+  plane2Id: string;
+  position: Vector3;  // Computed from projections
+  
+  getTypeName(): string { return 'Point'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const proj1 = world.getElementById(this.projection1Id);
+    const proj2 = world.getElementById(this.projection2Id);
+    const plane1 = world.getProjectionPlane(this.plane1Id);
+    const plane2 = world.getProjectionPlane(this.plane2Id);
+    
+    return [
+      { type: 'text', content: 'From projections on ' },
+      { type: 'label', content: plane1?.label || this.plane1Id, elementId: this.plane1Id },
+      { type: 'text', content: ' (' },
+      { type: 'label', content: proj1?.label || this.projection1Id, elementId: this.projection1Id },
+      { type: 'text', content: ') and ' },
+      { type: 'label', content: plane2?.label || this.plane2Id, elementId: this.plane2Id },
+      { type: 'text', content: ' (' },
+      { type: 'label', content: proj2?.label || this.projection2Id, elementId: this.projection2Id },
+      { type: 'text', content: ')' }
+    ];
+  }
+}
+
+// === Projection Planes ===
+
+export class ProjectionPlane extends Element {
+  name: string;  // "H" or "V"
+  
+  getTypeName(): string { return 'Projection Plane'; }
+  getConstructionDescription(world: World): DescriptionPart[] {
+    const fullName = this.name === 'H' ? 'Horizontal' : 'Vertical';
+    return [{ type: 'text', content: `${fullName} projection plane` }];
+  }
+}
+```
+
+**Architecture Summary**:
+- ✅ **Polymorphism**: Each element knows how to describe itself
+- ✅ **No switch statements**: Dispatch handled by method overriding
+- ✅ **Encapsulation**: Construction params are element fields
+- ✅ **Extensibility**: New element type = implement 2 methods
+- ✅ **Simplified Action**: Just combines metadata with delegation
+
+**What Changed**:
+- **Before**: Action had giant switch statement with all construction types
+- **After**: Element subclasses implement their own description logic
+- **Element fields**: Now store construction params (line1Id, point1Id, etc.)
+- **Action simplicity**: Just calls `element.getConstructionDescription(world)`
+}
+```
+
+**Key Benefits of Structured Parts**:
+- **Selective KaTeX**: Only label parts get mathematical rendering, not plain text
+- **No space hack**: Plain text uses normal spaces, labels are separate
+- **Hover highlighting**: Each label part has elementId for interactive features
+- **Clean separation**: Presentation logic (KaTeX) separated from content logic
+- **Performance**: KaTeX called only for labels, not entire strings
+
+#### Action Factory Updates
+
+Update all action factory functions to include `operationType` and `constructionParams`:
+
+**Example: Free Point Action**
+```typescript
+export function createFreePointAction(pointId: string): Action {
+  return {
+    elementId: pointId,
+    operationType: 'AddFreePoint2D',
+    constructionParams: { type: 'free' },
+    isOutput: true
+  };
+}
+```
+
+**Example: Line-Line Intersection Action**
+```typescript
+export function createLineLineIntersectionAction(
+  pointId: string,
+  line1Id: string,
+  line2Id: string,
+  intersectionIndex: number
+): Action {
+  return {
+    elementId: pointId,
+    operationType: 'AddLineLineIntersection',
+    constructionParams: {
+      type: 'lineLineIntersection',
+      line1Id,
+      line2Id,
+      intersectionIndex
+    },
+    isOutput: true
+  };
+}
+```
+
+**Example: Line Through Points Action**
+```typescript
+export function createLineThroughPointsAction(
+  lineId: string,
+  point1Id: string,
+  point2Id: string
+): Action {
+  return {
+    elementId: lineId,
+    operationType: 'AddLine2DBetweenTwoPoints',
+    constructionParams: {
+      type: 'lineThroughPoints',
+      point1Id,
+      point2Id
+    },
+    isOutput: true
+  };
+}
+```
+
+#### ProcessTreeNode Component Updates
+
+**Template Changes** (Selective KaTeX Rendering):
+```vue
+<template>
+  <div class="process-tree-node">
+    <!-- For ActionNode -->
+    <div v-if="node.type === 'action'" class="action-node">
+      <!-- Render structured description parts -->
+      <span 
+        v-for="(part, index) in node.getDescriptionParts(world)" 
+        :key="index"
+        :class="{ 'label-part': part.type === 'label' }"
+        @mouseenter="part.elementId && handleHover(part.elementId)"
+        @mouseleave="handleHoverEnd"
+      >
+        <!-- Plain text: no KaTeX -->
+        <span v-if="part.type === 'text'">{{ part.content }}</span>
+        
+        <!-- Label: apply KaTeX rendering -->
+        <span 
+          v-else-if="part.type === 'label'" 
+          v-html="formatElementLabel(part.content)"
+          class="element-label"
+        ></span>
+      </span>
+    </div>
+    
+    <!-- For Subprocess -->
+    <div v-else-if="node.type === 'subprocess'" class="subprocess-node">
+      <span>{{ node.name }}</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { inject } from 'vue';
+import { formatElementLabel } from '@/utils/formatUtils';
+import type { World } from '@/domain/world/World';
+import type { ProcessNode } from '@/domain/world/ProcessTree';
+
+const props = defineProps<{
+  node: ProcessNode;
+}>();
+
+// Inject world from parent component
+const world = inject<World>('world');
+
+// Description parts computed on-the-fly when component renders
+// Vue reactivity tracks world changes via renderTick pattern
+// When element labels change, world.markDirty() triggers re-render
+// Component re-renders, calls getDescriptionParts(world) with updated labels
+// No explicit watch needed - reactive dependency chain handles updates
+
+function handleHover(elementId: string) {
+  // Optional: highlight element in viewport when hovering label
+  // world.highlightElement(elementId);
+}
+
+function handleHoverEnd() {
+  // world.clearHighlight();
+}
+</script>
+
+<style scoped>
+.element-label {
+  /* Labels rendered with KaTeX - no special spacing needed */
+  cursor: pointer; /* Indicate interactivity */
+}
+
+.element-label:hover {
+  background-color: rgba(0, 120, 215, 0.1); /* Subtle highlight */
+}
+</style>
+```
+
+**Key Improvements**:
+1. **No space hack needed**: Plain text uses normal spaces naturally
+2. **Selective KaTeX**: Only `<span v-if="part.type === 'label'">` gets `formatElementLabel()`
+3. **Interactive labels**: Each label has hover support for element highlighting
+4. **Clean HTML**: Text parts render as plain text, label parts render with KaTeX HTML
+5. **Performance**: KaTeX invoked only for labels (typically 2-4 per description vs entire string)
+
+**Reactivity Flow**:
+```
+User renames element
+  → UpdateElementStyleOp changes element.label
+  → world.markDirty() called
+  → SvgCanvas renderTick increments
+  → ProcessTreePanel re-renders (watches renderTick)
+  → ProcessTreeNode calls node.getDescriptionParts(world)
+  → Looks up current element.label
+  → Returns new parts array with updated label
+  → Vue re-renders with new content
+  → formatElementLabel() renders updated KaTeX
+```
+
+#### Serialization Changes
+
+**Project File Format** (version 8.0.0):
+```json
+{
+  "version": "8.0.0",
+  "world": {
+    "processTree": {
+      "root": {
+        "type": "subprocess",
+        "id": "root",
+        "name": "Root Process",
+        "children": [
+          {
+            "type": "action",
+            "elementId": "point2d5",
+            "operationType": "AddFreePoint2D",
+            "constructionParams": { "type": "free" },
+            "isOutput": true
+          },
+          {
+            "type": "action",
+            "elementId": "point2d6",
+            "operationType": "AddLineLineIntersection",
+            "constructionParams": {
+              "type": "lineLineIntersection",
+              "line1Id": "line2d2",
+              "line2Id": "line2d3",
+              "intersectionIndex": 0
+            },
+            "isOutput": true
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+**Key Changes**:
+- Removed `description` field (static string)
+- Added `operationType` field (operation class name)
+- Added `constructionParams` field (structured metadata)
+- Description computed on-load from `operationType` and `constructionParams`
+
+**Migration Strategy**:
+```typescript
+export function migrateActionV7toV8(actionV7: any): Action {
+  // Old format: { elementId, description, isOutput }
+  // New format: { elementId, operationType, constructionParams, isOutput }
+  
+  if ('constructionParams' in actionV7) {
+    // Already version 8
+    return actionV7 as Action;
+  }
+  
+  // Infer operation type and params from description string (best-effort)
+  const operationType = inferOperationTypeFromDescription(actionV7.description);
+  const constructionParams = inferConstructionParamsFromDescription(
+    actionV7.description,
+    actionV7.elementId
+  );
+  
+  return {
+    elementId: actionV7.elementId,
+    operationType,
+    constructionParams,
+    isOutput: actionV7.isOutput
+  };
+}
+
+function inferOperationTypeFromDescription(description: string): string {
+  // Heuristic matching on description text
+  if (description.includes('Free point')) return 'AddFreePoint2D';
+  if (description.includes('Intersection of line') && description.includes('and line')) 
+    return 'AddLineLineIntersection';
+  if (description.includes('Intersection of line') && description.includes('and circle')) 
+    return 'AddLineCircleIntersection';
+  if (description.includes('Intersection of circle') && description.includes('and circle')) 
+    return 'AddCircleCircleIntersection';
+  if (description.includes('Through points')) return 'AddLine2DBetweenTwoPoints';
+  // ... more patterns
+  return 'Unknown';
+}
+
+function inferConstructionParamsFromDescription(
+  description: string,
+  elementId: string
+): ConstructionParams {
+  // Best-effort extraction from description string
+  // Example: "Intersection of line L_2 and circle C_1 (index 0)"
+  // Extract: line1Id, circleId, intersectionIndex
+  
+  // This is lossy - old descriptions don't have element IDs, only labels
+  // Mark as invalid construction params for manual review
+  return { type: 'unknown' };
+}
+```
+
+**Migration Impact**:
+- Old projects load with best-effort inference
+- Some construction params may be incomplete (fallback to "Unknown construction method")
+- Users can see descriptions are present, but may need to verify/edit
+- No data loss for element labels (those are preserved)
+
+### Implementation Tasks
+
+See tasks.md Phase 98 for detailed task breakdown.
+
+### Testing Strategy
+
+**Unit Tests**:
+- Action.getDescription() with various construction params
+- Description templates for all operation types
+- Label lookup edge cases (missing elements, deleted parents)
+- Description formatting with KaTeX integration
+
+**Integration Tests**:
+- Create element, verify description in Process Tree
+- Rename element, verify description updates
+- Delete parent element, verify description shows "[Invalid]"
+- Undo/redo maintains correct descriptions
+
+**E2E Tests**:
+- Build construction sequence, verify Process Tree descriptions
+- Rename multiple elements, verify all dependent descriptions update
+- Save/load project, verify descriptions recompute correctly
+
+---
+
+## Phase 97: Default Element Labels
+
+### Overview
+
+Newly created elements are automatically assigned human-readable default labels based on their type (A_n for points, L_n for lines, etc.). Label counters are managed per-type and persisted across save/load.
+
+### Functional Requirements
+
+**FR-064**: The system MUST automatically assign human-readable default labels to all newly created elements using a type-based naming scheme: 2D points as `A_n`, lines as `L_n`, segments as `S_n`, circles as `C_n`, guides as `G_n`; 3D elements with `3` suffix (`A3_n`, `L3_n`, `S3_n`, `P3_n`); projection planes as `P_n`; hinge lines as `HL_n`; half-hinge lines as `HHL_n`. Labels MUST be unique per type across the entire project, use per-type counters starting at 1, and be preserved across save/load. Users MAY override default labels via Element Properties dialog.
+
+### Architecture
+
+#### World Class Label Counters
+
+Add per-type label counter fields to World class:
+
+```typescript
+export class World {
+  // Existing fields
+  readonly id: string;
+  private nextId: number;  // Technical ID counter (ALSO used for label numbers!)
+  
+  constructor() {
+    this.id = generateUniqueId();
+    this.nextId = 1;  // Technical ID counter (also determines label numbers)
+    
+    // ... other initialization
+  }
+  
+  // NEW: Label generation methods (Phase 97)
+  public generateDefaultLabel(elementId: string, elementType: string): string {
+    // Extract number from ID (e.g., "point2d5" → 5, "line2d12" → 12)
+    const match = elementId.match(/\d+$/);
+    if (!match) {
+      throw new Error(`Cannot extract number from element ID: ${elementId}`);
+    }
+    const num = parseInt(match[0], 10);
+    
+    // Get prefix based on element type
+    let prefix: string;
+    switch (elementType) {
+      case 'Point2D':
+      case 'Point3D':
+        prefix = 'A_';
+        break;
+      case 'Line2D':
+      case 'Line3D':
+        prefix = 'L_';
+        break;
+      case 'Segment2D':
+      case 'Segment3D':
+        prefix = 'S_';
+        break;
+      case 'Circle2D':
+        prefix = 'C_';
+        break;
+      case 'Guide2D':
+        prefix = 'G_';
+        break;
+      case 'Plane3D':
+      case 'ProjectionPlane':
+        prefix = 'P_';
+        break;
+      case 'HingeLine':
+        prefix = 'HL_';
+        break;
+      case 'HalfHingeLine':
+        prefix = 'HHL_';
+        break;
+      default:
+        throw new Error(`Unknown element type: ${elementType}`);
+    }
+    
+    // Format with braces for multi-digit subscripts
+    return num <= 9 ? `${prefix}${num}` : `${prefix}{${num}}`;
+  }
+  
+  // No label counter getters/setters needed - labels derived from IDs
+  
+  // ... existing methods (getNextId, etc.)
+}
+```
+
+#### Element Creation Integration
+
+Update all element creation operations to use `generateDefaultLabel()`:
+
+**Example: Point2D Creation in ProjectionPlane**
+```typescript
+export class ProjectionPlane {
+  // ...
+  
+  public createPoint(x: number, y: number): Point2D {
+    const id = this.world.getNextId('point2d');  // e.g., "point2d5"
+    const label = this.world.generateDefaultLabel(id, 'Point2D');  // "A_5" from "point2d5"
+    
+    const point = new Point2D(id, x, y, label);  // Pass label to constructor
+    this.points.set(id, point);
+    return point;
+  }
+  
+  public createLine(a: number, b: number, c: number): Line2D {
+    const id = this.world.getNextId('line2d');  // e.g., "line2d3"
+    const label = this.world.generateDefaultLabel(id, 'Line2D');  // "L_3" from "line2d3"
+    
+    const line = new Line2D(id, a, b, c, label);
+    this.lines.set(id, line);
+    return line;
+  }
+  
+  // ... similar for segments, circles, guides
+}
+```
+
+**Element Constructors**: All 2D/3D element constructors updated to accept optional `label` parameter:
+```typescript
+class Point2D {
+  constructor(
+    public readonly id: string,
+    public x: number,
+    public y: number,
+    public label?: string  // NEW: Optional label with default value
+  ) {}
+}
+```
+
+#### Serialization Schema
+
+**Project File Format** (version 7.0.0):
+```json
+{
+  "version": "7.0.0",
+  "world": {
+    "id": "world-uuid",
+    "nextId": 42,  // Only counter needed (labels derived from IDs)
+    
+    "projectionPlanes": [
+      {
+        "id": "projPlaneH",
+        "name": "P_H",
+        "elements": {
+          "points": [
+            { "id": "point2d5", "label": "A_5", "x": 100, "y": 200 },
+            { "id": "point2d7", "label": "A_7", "x": 150, "y": 250 }
+          ],
+          "lines": [
+            { "id": "line2d3", "label": "L_3", "a": 1, "b": -1, "c": 0 }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+**Key Points**:
+- `labelCounters` object added to world serialization
+- Each element includes `label` field in serialization
+- Technical ID (`id`) and label separate concerns
+
+#### Migration Logic
+
+**Phase 97 Migration** (for projects created before Phase 97):
+
+```typescript
+export function migrateToPhase97(world: World): void {
+  // Iterate all elements and assign labels based on their IDs
+  for (const plane of world.getProjectionPlanes()) {
+    for (const point of plane.getPoints()) {
+      if (!point.label || point.label.trim() === '') {
+        point.label = world.generateDefaultLabel(point.id, 'Point2D');
+      }
+    }
+    for (const line of plane.getLines()) {
+      if (!line.label || line.label.trim() === '') {
+        line.label = world.generateDefaultLabel(line.id, 'Line2D');
+      }
+    }
+    // ... similar for segments, circles, guides
+  }
+  
+  // For 3D elements
+  for (const point3d of world.getPoint3Ds()) {
+    if (!point3d.label || point3d.label.trim() === '') {
+      point3d.label = world.generateDefaultLabel(point3d.id, 'Point3D');
+    }
+  }
+  // ... similar for lines3d, segments3d, planes3d
+  
+  // No counter updates needed - labels derived from existing IDs
+}
+```
+
+**Migration Trigger**: Run automatically on first load of pre-Phase-97 project (detected by missing `labelCounters` in serialization).
+
+### Label Rendering
+
+**Integration with Phase 96**: Default labels use KaTeX rendering for subscripts:
+- `A_5` → Rendered as "A₅" (subscript 5, single digit)
+- `A_{12}` → Rendered as "A₁₂" (subscript 12, braces required for multi-digit)
+- `L_{45}` → Rendered as "L₄₅" (subscript 45, braces required)
+- `HL_3` → Rendered as "HL₃" (subscript 3, single digit)
+- Note: Braces prevent KaTeX from treating `A_12` as "A₁2" (subscript 1, then normal 2)
+
+**Rendering Pipeline**:
+```typescript
+// formatUtils.ts (from Phase 96)
+export function formatElementLabel(label: string | undefined): string {
+  if (!label || label.trim() === '') return '';
+  
+  try {
+    // Escape spaces as "\ " before wrapping
+    const escapedLabel = label.replace(/ /g, '\\ ');
+    // Wrap in \mathrm{} to prevent italicization
+    const wrappedLabel = `\\mathrm{${escapedLabel}}`;
+    
+    return katex.renderToString(wrappedLabel, {
+      displayMode: false,
+      throwOnError: false,
+      output: 'html',
+      strict: false,
+      trust: false,
+      errorColor: '#cc0000'
+    });
+  } catch (error) {
+    console.warn(`KaTeX rendering failed for label "${label}":`, error);
+    return label;
+  }
+}
+```
+
+### Implementation Notes
+
+**Special Cases**:
+- **P_H and P_V**: Hardcoded names (not generated from counter)
+- **Custom Planes**: Use counter (P_1, P_2, P_3)
+- **Deleted Elements**: Counter NOT reset (no label reuse)
+
+**Performance**:
+- Label generation: O(1) per element (counter increment)
+- No significant overhead compared to ID-only system
+
+**Testing**:
+- Unit tests: Label counter increment, uniqueness per type
+- Integration tests: Serialization round-trip, migration logic
+- E2E tests: Label display in UI components
+
+---
+
 ## Phase 96: Element Label Mathematical Notation
 
 ### Overview

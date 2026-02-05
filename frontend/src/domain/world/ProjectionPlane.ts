@@ -39,6 +39,7 @@ import { Matrix3, Vector3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { buildElementId } from './ElementId';
 import { Realization } from './Realization';
+import { Element } from './Element';
 import { computeProjectionPlaneMatrices } from '@/utils/projectionPlaneUtils';
 import type { Point2D, Point2DRealization2D } from './Point';
 import { 
@@ -163,9 +164,12 @@ export class ProjectionPlaneRealization3D extends Realization {
  * - Element storage: points, lines, circles Maps
  * - Realization caches: pointRealizations, lineRealizations, circleRealizations
  * - Dual storage period: Both World and ProjectionPlane store elements during migration
+ * 
+ * Phase 98: ProjectionPlane extends Element
+ * - Projection planes are geometric elements with id and label
+ * - Enables uniform handling via descriptor pattern
  */
-export abstract class ProjectionPlane {
-  id?: string;
+export abstract class ProjectionPlane extends Element {
   abstract readonly type: ProjectionPlaneType;
   name: string;
   isActive: boolean;
@@ -190,12 +194,14 @@ export abstract class ProjectionPlane {
   private circleRealizations: Map<string, Circle2DRealization2D>;
 
   constructor(
+    id: string,
     name: string,
     isActive: boolean = false,
     isVisible: boolean = true,
     color: string = '#000000',
     plane3DId?: string
   ) {
+    super(id, name);  // Call Element constructor with id and label
     this.name = name;
     this.isActive = isActive;
     this.isVisible = isVisible;
@@ -594,6 +600,11 @@ export abstract class ProjectionPlane {
       id = this.generatePoint2DId(world);
     }
 
+    // Phase 97: Generate default label if not provided
+    if (!label) {
+      label = world.generateDefaultLabel(id, 'Point2D');
+    }
+
     const point = new FreePoint2D(id, position, this.id, label);
     
     this.addPoint(point, world);
@@ -638,7 +649,10 @@ export abstract class ProjectionPlane {
       id = this.generatePoint2DId(world);
     }
 
-    const point = new Point2DLineLineIntersection(id, line1Id, line2Id, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Point2D');
+
+    const point = new Point2DLineLineIntersection(id, line1Id, line2Id, this.id, label);
     
     this.addPoint(point, world);
     return point;
@@ -687,7 +701,10 @@ export abstract class ProjectionPlane {
       id = this.generatePoint2DId(world);
     }
 
-    const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Point2D');
+
+    const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, this.id, label);
     
     this.addPoint(point, world);
     return point;
@@ -736,7 +753,10 @@ export abstract class ProjectionPlane {
       id = this.generatePoint2DId(world);
     }
 
-    const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Point2D');
+
+    const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, this.id, label);
     
     this.addPoint(point, world);
     return point;
@@ -796,7 +816,10 @@ export abstract class ProjectionPlane {
       id = this.generateLine2DId(world);
     }
 
-    const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Line2D');
+
+    const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id, label);
     
     this.addLine(line, world);
     return line;
@@ -840,7 +863,10 @@ export abstract class ProjectionPlane {
       id = this.generateLine2DId(world);
     }
 
-    const line = new Line2DParallel(id, referenceLineId, throughPointId, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Line2D');
+
+    const line = new Line2DParallel(id, referenceLineId, throughPointId, this.id, label);
     
     this.addLine(line, world);
     return line;
@@ -884,7 +910,10 @@ export abstract class ProjectionPlane {
       id = this.generateLine2DId(world);
     }
 
-    const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Line2D');
+
+    const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, this.id, label);
     
     this.addLine(line, world);
     return line;
@@ -935,12 +964,16 @@ export abstract class ProjectionPlane {
       id = this.generateLine2DId(world);
     }
 
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Line2D');
+
     const line = new Line2DTangentToCircleThroughPoint(
       id,
       circleId,
       throughPointId,
       tangentIndex,
-      this.id
+      this.id,
+      label
     );
     
     this.addLine(line, world);
@@ -993,12 +1026,16 @@ export abstract class ProjectionPlane {
       id = this.generateLine2DId(world);
     }
 
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Line2D');
+
     const line = new Line2DTangentToCircleParallelToLine(
       id,
       circleId,
       referenceLineId,
       tangentIndex,
-      this.id
+      this.id,
+      label
     );
     
     this.addLine(line, world);
@@ -1046,7 +1083,10 @@ export abstract class ProjectionPlane {
       id = this.generateSegment2DId(world);
     }
 
-    const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Segment2D');
+
+    const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id, label);
     
     this.addLine(segment, world);  // Segments are stored as lines
     return segment;
@@ -1093,7 +1133,10 @@ export abstract class ProjectionPlane {
       id = this.generateCircle2DId(world);
     }
 
-    const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Circle2D');
+
+    const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, this.id, label);
     
     this.addCircle(circle, world);
     return circle;
@@ -1141,7 +1184,10 @@ export abstract class ProjectionPlane {
       id = this.generateGuide2DId(world);
     }
 
-    const guide = new Guide2D(id, referenceLineId, throughPointId, this.id);
+    // Phase 97: Generate default label if not provided
+    const label = world.generateDefaultLabel(id, 'Guide2D');
+
+    const guide = new Guide2D(id, referenceLineId, throughPointId, this.id, label);
     
     this.addLine(guide, world);  // Guides are stored as lines
     return guide;
@@ -1487,6 +1533,7 @@ export class FixedProjectionPlane extends ProjectionPlane {
   private readonly planeTo3D: Matrix4x3;
 
   constructor(
+    id: string,
     name: string,
     planeToPaper2D: Matrix3,
     planeTo3D: Matrix4x3,
@@ -1495,13 +1542,14 @@ export class FixedProjectionPlane extends ProjectionPlane {
     color: string = '#000000',
     plane3DId?: string
   ) {
-    super(name, isActive, isVisible, color, plane3DId);
+    super(id, name, isActive, isVisible, color, plane3DId);
     this.planeToPaper2D = planeToPaper2D;
     this.planeTo3D = planeTo3D;
   }
 
   clone(): FixedProjectionPlane {
-    const cloned = new FixedProjectionPlane(
+    return new FixedProjectionPlane(
+      this.id,
       this.name,
       this.planeToPaper2D.clone(),
       this.planeTo3D.clone(),
@@ -1510,10 +1558,6 @@ export class FixedProjectionPlane extends ProjectionPlane {
       this.color,
       this.plane3DId
     );
-    if (this.id) {
-      cloned.id = this.id;
-    }
-    return cloned;
   }
   
   getDependencies(): string[] {
@@ -1592,6 +1636,7 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
   readonly t2PrimeLineId: string;       // Position/orientation line on same plane as T1 (T2')
 
   constructor(
+    id: string,
     name: string,
     t1HingeTraceId: string,
     t2OtherTraceId: string,
@@ -1601,14 +1646,15 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
     color: string = '#000000',
     plane3DId?: string
   ) {
-    super(name, isActive, isVisible, color, plane3DId);
+    super(id, name, isActive, isVisible, color, plane3DId);
     this.t1HingeTraceId = t1HingeTraceId;
     this.t2OtherTraceId = t2OtherTraceId;
     this.t2PrimeLineId = t2PrimeLineId;
   }
 
   clone(): AuxiliaryProjectionPlane {
-    const cloned = new AuxiliaryProjectionPlane(
+    return new AuxiliaryProjectionPlane(
+      this.id,
       this.name,
       this.t1HingeTraceId,
       this.t2OtherTraceId,
@@ -1618,10 +1664,6 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
       this.color,
       this.plane3DId
     );
-    if (this.id) {
-      cloned.id = this.id;
-    }
-    return cloned;
   }
 
   /**

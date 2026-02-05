@@ -31,6 +31,7 @@
       <ProcessTreeNode
         v-if="processTree"
         :node="processTree.root"
+        :world="world"
         :data-version="treeVersion"
         :selected-node-id="selectedNodeId"
         :active-subprocess-id="activeSubprocessId"

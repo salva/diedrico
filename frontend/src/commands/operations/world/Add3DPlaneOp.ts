@@ -152,10 +152,13 @@ export class Add3DPlaneOp implements IOperation {
       // Use stored ID if available (for redo), otherwise generate new one
       const planeId = this.outputs.planeId || world.generate3DPlaneId();
       
+      // Phase 97: Generate default label if not provided
+      const label = this.label || world.generateDefaultLabel(planeId, 'Plane3D');
+      
       // Create Plane3DFromTraces
       const plane = new Plane3DFromTraces(
         planeId,
-        this.label || `Plane ${planeId}`,
+        label,
         this.trace1Id,
         this.trace2Id,
         this.plane1Id,

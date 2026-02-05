@@ -19,6 +19,282 @@ This document specifies the user interface architecture, layout, and interaction
 
 ---
 
+## Phase 97: Default Element Labels (UI Specification)
+
+### Overview
+
+All newly created elements are automatically assigned human-readable default labels based on their type. Points are labeled `A_n`, lines as `L_n`, segments as `S_n`, circles as `C_n`, guides as `G_n`; 3D elements receive a `3` suffix (`A3_n`, `L3_n`, `S3_n`, `P3_n`); projection planes as `P_n`; hinge lines as `HL_n`; half-hinge lines as `HHL_n`. Labels are unique per type across the project and use per-type counters starting at 1.
+
+### Label Scheme
+
+**Points (2D and 3D share counter)**:
+- Point2D, Point3D: `A_1`, `A_2`, `A_3`, ..., `A_9`, `A_{10}`, `A_{11}`, ..., `A_{45}`, ...
+- Rendered as: A₁, A₂, A₃, ..., A₉, A₁₀, A₁₁, ..., A₄₅, ...
+- Note: Braces required for n>9 (KaTeX subscript grouping)
+
+**Lines (2D and 3D share counter)**:
+- Line2D, Line3D: `L_1`, `L_2`, ..., `L_{10}`, ...
+
+**Segments (2D and 3D share counter)**:
+- Segment2D, Segment3D: `S_1`, `S_2`, ..., `S_{10}`, ...
+
+**Circles (2D only)**:
+- Circle2D: `C_1`, `C_2`, ..., `C_{10}`, ...
+
+**Guides (2D only)**:
+- Guide2D: `G_1`, `G_2`, ..., `G_{10}`, ...
+
+**Planes (3D and Projection Planes share counter)**:
+- Plane3D: `P_1`, `P_2`, ..., `P_{10}`, ...
+- Projection Planes: `P_H`, `P_V` (fixed custom names), `P_1`, `P_2`, ... (auxiliary)
+
+**Hinge Elements**:
+- Hinge Lines: `HL_1`, `HL_2`, ..., `HL_{10}`, ...
+- Half-Hinge Lines: `HHL_1`, `HHL_2`, ..., `HHL_{10}`, ...
+
+### Label Display Behavior
+
+**Where Default Labels Appear**:
+1. **World Elements Panel**: Shows element list with default labels (e.g., "A₁", "L₂", "S₃")
+2. **2D Canvas** (SvgCanvas.vue): Element labels rendered next to geometric objects with subscripts
+3. **3D View** (ThreeView.vue): Element labels rendered as text sprites
+4. **ProcessTree Panel**: Action descriptions use default labels (e.g., "Point A₁" instead of "Point point2d5")
+5. **Properties Dialog**: Shows current label (default or user-customized)
+
+**Label Rendering**:
+- Labels use KaTeX rendering from Phase 96 (subscripts rendered as Unicode: A₁, L₂)
+- Font: Sans-serif (matches application font via katex-overrides.css)
+- Style: Upright text (not italicized, via `\mathrm{}` wrapper)
+- Spacing: Preserved with LaTeX escaped spaces (`\ `)
+
+**Visual Examples**:
+```
+Element Type         Technical ID       Default Label    Rendered Display
+─────────────────────────────────────────────────────────────────────────
+Point2D             point2d5           A_5              A₅
+Point2D             point2d15          A_{15}           A₁₅
+Line2D              line2d3            L_3              L₃
+Circle2D            circle2d1          C_1              C₁
+Point3D             point3d2           A_2              A₂ (shares counter with Point2D)
+Line3D              line3d1            L_1              L₁ (shares counter with Line2D)
+Plane3D             plane3d1           P_1              P₁
+ProjectionPlane     projPlane3         P_3              P₃ (shares counter with Plane3D)
+HingeLine           hingeLine1         HL_1             HL₁
+```
+
+### Label Assignment Workflow
+
+**On Element Creation**:
+1. User creates element (e.g., Create Point tool on canvas)
+2. System generates technical ID using World.nextId: `point2d5`
+3. System generates default label from ID: `point2d5` → `A_5` (extract number 5, add prefix A_)
+4. Element stored with both ID and label
+5. UI displays label (A₅) instead of ID in all views
+
+**Label Number Source**:
+- Label numbers extracted from technical ID (not separate counter)
+- Same World.nextId counter used for both ID and label number
+- Guaranteed unique (IDs are unique, label numbers match ID numbers)
+- No separate counter persistence needed (World.nextId already persisted)
+
+**Example Creation Sequence**:
+```
+Action                  Technical ID       Label (from ID)
+────────────────────────────────────────────────────────────
+Create Point2D          point2d1           A_1 (from point2d1)
+Create Point2D          point2d2           A_2 (from point2d2)
+Create Line2D           line2d3            L_3 (from line2d3)
+Create Point3D          point3d4           A_4 (from point3d4, shared sequence!)
+Create Line2D           line2d5            L_5 (from line2d5)
+... (more elements)
+Create Point2D          point2d11          A_{11} (braces for n>9)
+Create Circle2D         circle2d45         C_{45} (from circle2d45)
+```
+
+### Label Editing and Customization
+
+**User Override**:
+- Users can override default labels via Element Properties dialog
+- Custom labels preserved (not reset to default)
+- Label counter unaffected by customization (next element uses next number)
+
+**Properties Dialog Workflow**:
+```
+┌────────────────────────────────────┐
+│ Element Properties                 │
+├────────────────────────────────────┤
+│ Label: [A_5                   ]   │ ← Shows default or custom label
+│                                    │
+│ Preview: A₅                        │ ← Live KaTeX preview
+├────────────────────────────────────┤
+│ [Save]  [Cancel]                   │
+└────────────────────────────────────┘
+```
+
+1. User opens Properties dialog for element with default label "A_5"
+2. User changes label to "P_{H}"
+3. Preview updates to show Pₕ
+4. User clicks Save → label changed, future points still use A_6, A_7, etc.
+
+### Migration Behavior
+
+**Existing Projects**:
+- Projects created before Phase 97 have elements with empty labels
+- On first load, system auto-assigns default labels to all existing elements
+- Label counters initialized to highest existing count + 1 per type
+
+**Migration Logic**:
+```typescript
+// Example: Project has 5 points (point2d1 to point2d5)
+// On load:
+1. Detect unlabeled points
+2. Assign labels: A_1, A_2, A_3, A_4, A_5
+3. Set pointLabelCounter = 6 (next point will be A_6)
+```
+
+### Edge Cases
+
+**Label Conflicts**:
+- Default labels are unique per type (A_1 for points, L_1 for lines)
+- User can create custom labels that conflict (e.g., rename L_1 to "A_1")
+- System does NOT enforce uniqueness for custom labels
+- Technical IDs remain unique (conflict-free)
+
+**Empty Label Handling**:
+- If user deletes label in Properties dialog → element shows technical ID instead
+- Default label NOT re-applied (user's choice to remove label)
+
+**Deleted Elements**:
+- Deleting element does NOT reset counter or reuse label
+- Example: Create A_1, A_2, A_3 → Delete A_2 → Next point is A_4 (not A_2)
+
+### References
+
+- **Phase 96**: KaTeX label rendering (subscripts, superscripts, Greek letters)
+- **FR-064**: Functional requirement for default element labels
+- **data-model.md**: Label counter architecture in World class
+
+---
+
+---
+
+## Phase 98: Dynamic Action Descriptions (UI Specification)
+
+### Overview
+
+Process Tree action descriptions are computed dynamically from current element state (labels and construction parameters) rather than stored as static strings. When elements are renamed or dependencies change, descriptions automatically update to reflect the current state.
+
+### Description Format
+
+**General Pattern**: `{ElementType} {CurrentLabel}: {ConstructionMethod}`
+
+**Examples**:
+
+**Free Elements**:
+- "Point A_5: Free point"
+- "Point A_6: Free point"
+
+**Constructed from Parents**:
+- "Point A_7: Intersection of line L_2 and circle C_1 (index 0)"
+- "Point A_8: Intersection of circle C_1 and circle C_2 (index 1)"
+- "Line L_3: Through points A_1 and A_2"
+- "Line L_4: Parallel to line L_1 through point A_3"
+- "Line L_5: Perpendicular to line L_1 through point A_4"
+- "Line L_6: Tangent to circle C_1 through point A_5"
+- "Segment S_1: Between points A_1 and A_2"
+- "Circle C_2: Center A_3, radius point A_4"
+- "Guide G_1: From segment S_1"
+
+**3D Elements**:
+- "Point A_10: From projections on P_H (A_5) and P_V (A_8)"
+- "Line L_7: From projections on P_H (L_2) and P_V (L_3)"
+- "Segment S_3: From projections on P_H (S_1) and P_V (S_2)"
+- "Plane P_1: From traces on P_H (L_4) and P_V (L_5)"
+
+**Auxiliary Planes**:
+- "Plane P_2: Auxiliary plane from hinge T_1, trace T_2, position line T'_2"
+
+### Dynamic Behavior
+
+**Label Changes Propagate**:
+1. User renames point2d5 from "A_5" to "P" via Element Properties
+2. ALL action descriptions referencing that point update immediately:
+   - Before: "Line L_2: Through points A_5 and A_6"
+   - After: "Line L_2: Through points P and A_6"
+
+**Element Type Lookup**:
+- Description generator calls `world.getElementById(elementId)` to get current element
+- Extracts `element.label` for display name
+- Element type determines description template
+
+**Parent Labels Lookup**:
+- Construction parameters store parent element IDs (e.g., `{ point1Id: "point2d5", point2Id: "point2d6" }`)
+- Generator looks up each parent: `world.getElementById(parentId).label`
+- Substitutes current labels into template
+
+**Missing Elements Handled**:
+- If element is deleted, description shows: "{ElementType} {ID}: [Deleted]"
+- If parent is missing, description shows: "{ElementType} {Label}: [Invalid - missing parent {parentId}]"
+- Red text styling indicates error state
+
+### UI Rendering
+
+**Where Descriptions Appear**:
+- Process Tree Panel: Action rows display description as primary text
+- Element Properties Dialog: May show "Created by" field with description
+- Dependency tooltips: Hover shows full description
+
+**Rendering Architecture** (Selective KaTeX):
+- Descriptions returned as structured parts: `DescriptionPart[]`
+- Each part tagged as `type: 'text' | 'label'`
+- Vue template renders parts separately:
+  - Text parts: Plain `<span>{{ part.content }}</span>` (normal spacing)
+  - Label parts: `<span v-html="formatElementLabel(part.content)"></span>` (KaTeX rendering)
+- **No space handling hack needed**: Text and labels separated, each rendered appropriately
+
+**Example Rendering**:
+```
+Description parts:
+[
+  { type: 'text', content: 'Point ' },
+  { type: 'label', content: 'A_{12}', elementId: 'point2d12' },
+  { type: 'text', content: ': Intersection of line ' },
+  { type: 'label', content: 'L_2', elementId: 'line2d2' },
+  { type: 'text', content: ' and circle ' },
+  { type: 'label', content: 'C_1', elementId: 'circle2d1' }
+]
+
+Rendered as:
+"Point A₁₂: Intersection of line L₂ and circle C₁"
+   ↑   ↑                          ↑           ↑
+  text KaTeX                    KaTeX       KaTeX
+```
+
+**Interactive Features**:
+- Each label part includes `elementId` for hover highlighting
+- Hovering label in Process Tree can highlight element in viewport
+- Click label to select/focus element (optional future enhancement)
+
+**Performance**:
+- Descriptions computed on-demand when Process Tree renders
+- Not pre-computed or cached (always reflects current state)
+- KaTeX invoked only for label parts (2-4 per description typically)
+- Minimal overhead: Map lookups + string formatting
+
+### Interaction Changes
+
+**No Impact on Undo/Redo**:
+- Actions store only construction metadata (operation type, parent IDs)
+- Description is derived, not stored
+- Undo/redo continues to work at operation level (no description changes needed)
+
+**Process Tree Remains Read-Only**:
+- Users cannot edit action descriptions directly
+- Changes only via Element Properties (rename elements)
+- Process Tree automatically reflects those changes
+
+---
+
 ## Phase 96: Element Label Mathematical Notation (UI Specification)
 
 ### Overview
