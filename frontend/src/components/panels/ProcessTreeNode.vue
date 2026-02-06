@@ -148,7 +148,13 @@
         >
           <template v-for="(part, index) in descriptionParts" :key="index">
             <span v-if="part.type === 'text'">{{ part.content }}</span>
-            <span v-else v-html="formatElementLabel(part.content)"></span>
+            <span 
+              v-else 
+              class="label-clickable"
+              :data-element-id="part.elementId"
+              @click.stop="handleLabelClick(part.elementId, $event)"
+              v-html="formatElementLabel(part.content)"
+            ></span>
           </template>
         </span>
         <span v-if="isRelated && !isSelected" class="related-indicator" title="Related to selected elements">🔗</span>
@@ -189,6 +195,7 @@ import type { ProcessNode } from '@/domain/processTree/ProcessTree';
 import type { World } from '@/domain/world/World';
 import { formatElementLabel } from '@/utils/formatUtils';
 import { getActionDescriptionParts } from '@/domain/processTree/Action';
+import { useSelectionStore } from '@/stores/selectionStore';
 
 // Props
 const props = withDefaults(defineProps<{
@@ -330,9 +337,26 @@ const allChildren = computed(() => {
   return props.node.children.filter(child => child !== null);
 });
 
+// Selection store
+const selectionStore = useSelectionStore();
+
 // Methods
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value;
+}
+
+function handleLabelClick(elementId: string | undefined, event: MouseEvent) {
+  if (!elementId) return;
+  
+  event.stopPropagation(); // Prevent action node selection
+  
+  if (event.shiftKey) {
+    // Multi-select: add to selection
+    selectionStore.addToSelection(elementId);
+  } else {
+    // Single select: replace selection
+    selectionStore.selectSingle(elementId);
+  }
 }
 
 function handleActionClick() {
@@ -699,6 +723,23 @@ function formatParameterValue(value: any): string {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Phase 99: Clickable Labels */
+.label-clickable {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.label-clickable:hover {
+  text-decoration: underline dotted;
+  background: rgba(100, 150, 255, 0.1);
+}
+
+.label-clickable:active {
+  transform: scale(0.98);
 }
 
 .action-details {
