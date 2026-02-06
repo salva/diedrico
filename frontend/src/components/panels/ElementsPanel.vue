@@ -134,6 +134,7 @@ import { Segment2DByPoints } from '@/domain/world/Segment';
 import { Circle2D } from '@/domain/world/Circle';
 import { Guide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { Element2D } from '@/domain/world/Element';
 import { formatElementLabel } from '@/utils/formatUtils';
 
 // Emits
@@ -346,17 +347,11 @@ function handleElementSelect(elementId: string) {
 }
 
 function handleVisibilityToggle(elementId: string) {
-  // Architecture: Handle both 2D and 3D elements
-  // 2D elements have format "containerId/localId", 3D elements don't have "/"
-  
-  let element: any;
-  if (elementId.includes('/')) {
-    // 2D element - use getElement2D
-    element = world.getElement2D(elementId);
-  } else {
-    // 3D element, projection plane, or hinge line - use getElement3DById or getProjectionPlaneById
-    element = world.getElement3DById(elementId) || world.getProjectionPlaneById(elementId);
-  }
+  // Architecture: Get element polymorphically and check type with instanceof
+  // Try 2D elements first, then 3D elements, then projection planes
+  const element = world.getElement2D(elementId) 
+    || world.getElement3DById(elementId) 
+    || world.getProjectionPlaneById(elementId);
   
   if (element) {
     if (!element.visualStyle) {

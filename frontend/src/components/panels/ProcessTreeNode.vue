@@ -196,6 +196,7 @@ import type { World } from '@/domain/world/World';
 import { formatElementLabel } from '@/utils/formatUtils';
 import { getActionDescriptionParts } from '@/domain/processTree/Action';
 import { useSelectionStore } from '@/stores/selectionStore';
+import { Element2D } from '@/domain/world/Element';
 
 // Props
 const props = withDefaults(defineProps<{
@@ -247,16 +248,21 @@ const isInfeasible = computed(() => {
   if (props.node.type !== 'action') return false;
   if (!props.node.elementId) return false;
   
-  // Only check feasibility for 2D elements (format: "containerId/localId")
-  // Skip 3D planes, projection planes, hinge lines, etc.
-  if (!props.node.elementId.includes('/')) return false;
+  // Get element polymorphically - try 2D first, then 3D, then projection planes
+  const element = props.world.getElement2D(props.node.elementId)
+    || props.world.getElement3DById(props.node.elementId)
+    || props.world.getProjectionPlaneById(props.node.elementId);
   
-  // Check if the element is infeasible by realizing it and checking feasibility
-  const element = props.world.getElement2D(props.node.elementId);
   if (!element) return false;
   
-  const realization = element.realize2D(props.world);
-  return realization ? !realization.isFeasible() : false;
+  // Only 2D elements have feasibility checking via realize2D
+  if (element instanceof Element2D) {
+    const realization = element.realize2D(props.world);
+    return realization ? !realization.isFeasible() : false;
+  }
+  
+  // 3D elements and projection planes don't have infeasibility yet
+  return false;
 });
 
 // Description parts for action nodes
