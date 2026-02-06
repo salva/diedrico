@@ -196,7 +196,7 @@ import type { World } from '@/domain/world/World';
 import { formatElementLabel } from '@/utils/formatUtils';
 import { getActionDescriptionParts } from '@/domain/processTree/Action';
 import { useSelectionStore } from '@/stores/selectionStore';
-import { Element2D } from '@/domain/world/Element';
+import { Element2D } from '@/domain/world/Element2D';
 
 // Props
 const props = withDefaults(defineProps<{
@@ -248,10 +248,16 @@ const isInfeasible = computed(() => {
   if (props.node.type !== 'action') return false;
   if (!props.node.elementId) return false;
   
-  // Get element polymorphically - try 2D first, then 3D, then projection planes
-  const element = props.world.getElement2D(props.node.elementId)
-    || props.world.getElement3DById(props.node.elementId)
-    || props.world.getProjectionPlaneById(props.node.elementId);
+  // Get element polymorphically - try different element types
+  let element;
+  try {
+    // Try 2D element first (will throw if ID format is wrong)
+    element = props.world.getElement2D(props.node.elementId);
+  } catch {
+    // Not a 2D element, try 3D or projection plane
+    element = props.world.getElement3DById(props.node.elementId)
+      || props.world.getProjectionPlaneById(props.node.elementId);
+  }
   
   if (!element) return false;
   
@@ -737,11 +743,14 @@ function formatParameterValue(value: any): string {
   transition: all 0.15s ease;
   border-radius: 2px;
   padding: 0 2px;
+  color: #2563eb;  /* Blue color to indicate clickability */
+  text-decoration: underline dotted #93c5fd;  /* Subtle dotted underline */
 }
 
 .label-clickable:hover {
-  text-decoration: underline dotted;
-  background: rgba(100, 150, 255, 0.1);
+  text-decoration: underline solid #2563eb;  /* Solid underline on hover */
+  background: rgba(100, 150, 255, 0.15);
+  color: #1e40af;  /* Darker blue on hover */
 }
 
 .label-clickable:active {
