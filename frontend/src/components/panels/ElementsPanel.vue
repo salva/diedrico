@@ -346,9 +346,18 @@ function handleElementSelect(elementId: string) {
 }
 
 function handleVisibilityToggle(elementId: string) {
-  // Architecture: Access elements through World.getElement2D (uses hierarchical ID)
-  // and toggle visible property in visualStyle
-  const element = world.getElement2D(elementId);
+  // Architecture: Handle both 2D and 3D elements
+  // 2D elements have format "containerId/localId", 3D elements don't have "/"
+  
+  let element: any;
+  if (elementId.includes('/')) {
+    // 2D element - use getElement2D
+    element = world.getElement2D(elementId);
+  } else {
+    // 3D element, projection plane, or hinge line - use getElement3DById or getProjectionPlaneById
+    element = world.getElement3DById(elementId) || world.getProjectionPlaneById(elementId);
+  }
+  
   if (element) {
     if (!element.visualStyle) {
       element.visualStyle = { color: '#000000', lineWidth: 2, lineStyle: 'solid', opacity: 1.0, visible: false, inherited: true };
