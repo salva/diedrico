@@ -3121,6 +3121,33 @@ async function fetchUserProfile(accessToken: string): Promise<GoogleUserProfile>
 
 **Purpose**: Unified tree structure representing the construction process - how the world was built
 
+#### Phase 100: Empty Action Group Filtering
+
+**Problem**: When all actions in an ActionGroup are deleted (children become null tombstones), the empty ActionGroup still renders in the UI, creating visual clutter.
+
+**Solution**: Filter empty action groups in the UI rendering layer. Action groups with no non-null children are completely hidden.
+
+**Implementation**:
+
+```typescript
+// In ProcessTreeNode.vue
+const allChildren = computed(() => {
+  props.dataVersion; 
+  if (!('children' in props.node)) return [];
+  return props.node.children.filter(child => child !== null);
+});
+
+// Template condition (ActionGroup)
+v-else-if="node.type === 'actionGroup' && allChildren.length > 0"
+```
+
+**Key Points**:
+- Domain model unchanged (tombstone pattern preserved)
+- Filtering happens in UI layer (ProcessTreeNode.vue)
+- No special logic needed - allChildren already filters nulls
+- Action groups become invisible as soon as last child is deleted
+- No performance impact (simple length check on already-computed array)
+
 **Fields**:
 ```typescript
 interface ProcessTree {

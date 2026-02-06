@@ -10989,6 +10989,26 @@ Create `createTestWorld()` helper function that returns fully initialized World 
 - [ ] T1798 [P] Unit test: World.generateDefaultLabel() increments counters correctly for all types
 - [ ] T1799 [P] Unit test: Label uniqueness per type (A_1, L_1 coexist; A_2 ≠ A_1)
 - [ ] T1800 [P] Unit test: generateDefaultLabel correctly extracts number from various ID formats
+
+## Phase 100: Empty Action Group Filtering (10 tasks) [T1801-T1810]
+
+### Planning & Documentation (3 tasks)
+- [x] T1801 [P] Add FR-067 in spec.md for empty action group filtering
+- [x] T1802 [P] Add Phase 100 section in ui-spec.md describing UI behavior
+- [x] T1803 [P] Add Phase 100 section in data-model.md with implementation details
+
+### Implementation (2 tasks)
+- [ ] T1804 [I] Update ProcessTreeNode.vue template: Add `&& allChildren.length > 0` to actionGroup v-else-if condition
+- [ ] T1805 [I] Verify allChildren computed already filters null children (should be working)
+
+### Testing (4 tasks)
+- [ ] T1806 [T] Manual test: Delete all actions from a group, verify group disappears
+- [ ] T1807 [T] Manual test: Create action in empty group, verify group reappears
+- [ ] T1808 [T] Verify no visual gap or placeholder when action group is empty
+- [ ] T1809 [T] Verify subprocess children lists still work correctly (no regression)
+
+### Final (1 task)
+- [ ] T1810 [C] Commit Phase 100: Empty action group filtering
 - [ ] T1801 Integration test: Create 5 points → verify labels A_1 to A_5
 - [ ] T1802 Integration test: Serialization round-trip preserves label counters
 

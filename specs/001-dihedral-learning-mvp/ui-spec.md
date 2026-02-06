@@ -1078,6 +1078,21 @@ Zoom 4.0 (zoomed in):
 
 **Purpose**: Shows the hierarchical construction history—the sequence of actions that built the current world state.
 
+#### Empty Action Group Filtering (Phase 100)
+
+**Behavior**: Action groups with no visible children are completely hidden from the Process Tree view.
+
+**Empty Detection**: An action group is considered empty when `allChildren.length === 0` (all children are null tombstones from deleted actions).
+
+**Rendering**: Empty action groups do not render at all - no header, no spacing, no visual gap in the tree structure.
+
+**Benefits**:
+- Clean visual hierarchy (no empty containers cluttering the view)
+- Automatic cleanup as actions are deleted
+- Users see only meaningful construction history
+
+**Implementation**: Template v-if condition checks `allChildren.length > 0` before rendering action group node.
+
 **Scope**: This panel contains **constructive actions only**. Pure presentation/UI state changes are excluded (they do not create geometry and must not appear in the ProcessTree), for example:
 - Active plane selection
 - 2D viewport navigation (pan/zoom/fit)

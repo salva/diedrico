@@ -19,7 +19,6 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] When an action group is empty it should become invisible and do not appear in the process tree representation in any way
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
@@ -52,6 +51,28 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.  
  
 ## ALREADY PLANNED
+
+* [x] **Empty Action Group Filtering (Phase 100)** - ✅ COMPLETE (Feb 6, 2026)
+  - **User Requirement**: "When an action group is empty it should become invisible and do not appear in the process tree representation in any way"
+  - **Problem**: Empty action groups (all children deleted/null tombstones) still rendered in Process Tree, creating visual clutter
+  - **Solution**: Filter empty action groups at UI rendering layer. Added `&& allChildren.length > 0` condition to actionGroup template v-else-if
+  - **Implementation**:
+    - Updated ProcessTreeNode.vue template condition from `v-else-if="node.type === 'actionGroup'"` to `v-else-if="node.type === 'actionGroup' && allChildren.length > 0"`
+    - allChildren computed property already filters null children (tombstones)
+    - No domain model changes needed (tombstone pattern preserved)
+  - **Key Benefits**:
+    - Clean Process Tree UI with no empty container clutter
+    - Automatic cleanup as actions are deleted
+    - Zero performance impact (simple length check on already-computed array)
+    - Action groups reappear when new actions added
+  - **Files Modified**:
+    - frontend/src/components/panels/ProcessTreeNode.vue (single template condition change)
+  - **Specifications**:
+    - spec.md FR-067 (functional requirement)
+    - ui-spec.md §Empty Action Group Filtering (UI behavior)
+    - data-model.md §Phase 100 (implementation details)
+  - **Tasks**: tasks.md Phase 100 (T1801-T1810: 10 tasks)
+  - **Status**: ✅ COMPLETE - Single-line change, fully documented, ready for testing
 
 * [x] **Clickable Labels in Process Tree (Phase 99)** - ✅ COMPLETE (Feb 6, 2026)
   - **User Requirement**: "Make element labels in Process Tree action descriptions clickable. When user clicks a label (e.g., 'A_5' in 'Point A_5: Intersection of line L_2...'), that element should become selected in Elements Panel and highlighted in 2D/3D views."

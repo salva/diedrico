@@ -89,7 +89,7 @@
 
     <!-- ActionGroup Node -->
     <div
-      v-else-if="node.type === 'actionGroup'"
+      v-else-if="node.type === 'actionGroup' && allChildren.length > 0"
       class="actiongroup-node"
       :class="{ 
         'auxiliary': node.isAuxiliary,
