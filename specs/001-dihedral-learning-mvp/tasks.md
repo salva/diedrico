@@ -49,6 +49,37 @@
 
 ---
 
+## Phase 99: Clickable Labels in Process Tree
+
+**Purpose**: Make element labels in Process Tree action descriptions clickable for quick navigation  
+**Reference**: [spec.md FR-066](./spec.md#functional-requirements) - Clickable labels requirement, [ui-spec.md §Phase 99](./ui-spec.md#phase-99-clickable-labels-in-process-tree-ui-specification) - Visual design and interaction patterns, [data-model.md §Phase 99](./data-model.md#phase-99-clickable-labels-in-process-tree) - Implementation architecture
+
+**Implementation Requirements**:
+- **Infrastructure Ready**: Phase 98 DescriptionPart structure already includes `elementId` for all label parts - no domain changes needed
+- **Template-Only Change**: Add click handler to label spans in ProcessTreeNode.vue (lines ~150-152)
+- **Selection Integration**: Use existing selectionStore.selectSingle() and addToSelection() methods
+- **Event Handling**: Click handler must stopPropagation() to prevent action node selection
+- **Multi-Select Support**: Shift+click adds to selection, normal click replaces selection
+- **Visual Feedback**: CSS hover effects (pointer cursor, subtle underline, background highlight)
+
+**⚠️ CRITICAL**: Review [data-model.md §Phase 99 Implementation Complexity](./data-model.md#implementation-complexity) - this is a low-risk, high-value feature with estimated 2-4 hour implementation (mostly testing).
+
+- [ ] T1000 [P] Add FR-066 to spec.md functional requirements section (clickable labels in Process Tree)
+- [ ] T1001 [P] Add Phase 99 UI specification to ui-spec.md (visual design, interaction behavior, examples)
+- [ ] T1002 [P] Add Phase 99 implementation details to data-model.md (component changes, selection flow, edge cases)
+- [ ] T1003 Update ProcessTreeNode.vue template: add click handler to label spans with @click.stop="handleLabelClick(part.elementId, $event)"
+- [ ] T1004 Add handleLabelClick method to ProcessTreeNode.vue script: implements single-select (normal click) and multi-select (Shift+click)
+- [ ] T1005 Add CSS styling to ProcessTreeNode.vue: .label-clickable with hover effects (pointer cursor, underline, background highlight)
+- [ ] T1006 [P] Integration test in frontend/tests/integration/panels/ProcessTreeNode.spec.ts: verify label click selects element, Shift+click adds to selection
+- [ ] T1007 [P] Integration test: verify click event doesn't propagate to action node (stopPropagation works)
+- [ ] T1008 [P] E2E test in frontend/tests/e2e/processTree.spec.ts: create elements, click labels in action descriptions, verify selection in Elements Panel and canvas highlighting
+- [ ] T1009 Update for-planing.md: move "Clickable Labels in Process Tree" to ALREADY PLANNED section with Phase 99 status
+- [ ] T1010 Final commit: "Phase 99: Clickable Labels in Process Tree - Enable element selection via label clicks in action descriptions"
+
+**Checkpoint**: ✅ Element labels in Process Tree clickable, selection works with single/multi-select, visual feedback on hover
+
+---
+
 ## Phase 2: Minimal UI Skeleton
 
 **Purpose**: Basic Vue.js application structure  

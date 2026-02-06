@@ -61,6 +61,123 @@ All newly created elements are automatically assigned human-readable default lab
 4. **ProcessTree Panel**: Action descriptions use default labels (e.g., "Point A₁" instead of "Point point2d5")
 5. **Properties Dialog**: Shows current label (default or user-customized)
 
+---
+
+## Phase 99: Clickable Labels in Process Tree (UI Specification)
+
+### Overview
+
+Element labels in Process Tree action descriptions are interactive - users can click on any element label (e.g., "A_5", "L_2", "P_H") to select that element. This provides quick navigation from construction history to geometric elements, enabling users to understand dependencies and locate elements referenced in action descriptions.
+
+### Visual Design
+
+**Label Appearance**:
+- **Default State**: Element labels rendered with KaTeX formatting (subscripts, superscripts) matching Elements Panel style
+- **Hover State**: 
+  - Cursor changes to pointer (cursor: pointer)
+  - Label shows subtle underline (text-decoration: underline dotted)
+  - Tooltip displays element type and full name (e.g., "Point A_5 on P_H")
+  - Background highlight: rgba(100, 150, 255, 0.1)
+- **Active/Pressed State**: Slight scale effect (transform: scale(0.98))
+- **Disabled State**: (when element deleted) Labels fade to gray, cursor: not-allowed, no click handler
+
+**Text vs Label Distinction**:
+- **Text parts** ("Point", "in", ", intersection of", etc.): Plain text, not clickable, no hover effects
+- **Label parts** ("A_5", "L_2", "P_H", etc.): Interactive, clickable, with hover effects
+- Clear visual distinction on hover (only labels react)
+
+### Interaction Behavior
+
+**Click Actions**:
+1. **Normal Click** (no modifiers):
+   - Selects clicked element (replaces current selection)
+   - Element becomes selected in Elements Panel
+   - Element highlighted in 2D canvas (active plane)
+   - Element highlighted in 3D view (if visible)
+   - Process Tree shows element's related actions
+
+2. **Shift+Click**:
+   - Adds element to selection (multi-select)
+   - Existing selection preserved
+   - All selected elements highlighted
+
+3. **Ctrl+Click** (future enhancement, not Phase 99):
+   - Toggle element in selection
+   - If already selected, deselects
+   - If not selected, adds to selection
+
+**Selection Feedback**:
+- **Elements Panel**: Clicked element scrolls into view and shows selected state
+- **2D Canvas**: Element highlighted with selection color (blue stroke/glow)
+- **3D View**: Element highlighted with selection material (if 3D element or has 3D realization)
+- **Process Tree**: Action that created element shows selected state, related actions highlighted
+
+### Examples
+
+**Example 1: Simple Point Action**
+```
+A_5: point in P_H, free point at [0, 1]
+    ^       ^^
+    |       ||
+  Click   Click
+```
+- Clicking "A_5" → selects point A_5
+- Clicking "P_H" → selects projection plane P_H
+- Clicking text "point in" or "free point at [0, 1]" → no action (plain text)
+
+**Example 2: Intersection Point Action**
+```
+A_7: point in P_V, intersection of line L_2 and circle C_1 (first intersection)
+    ^       ^^                          ^^            ^^
+  Click   Click                       Click         Click
+```
+- Clicking "A_7" → selects point A_7
+- Clicking "P_V" → selects projection plane P_V
+- Clicking "L_2" → selects line L_2
+- Clicking "C_1" → selects circle C_1
+
+**Example 3: 3D Point from Projections**
+```
+A_{10}: point from projections A_1 on P_H and A_2 on P_V
+        ^                      ^^    ^^       ^^    ^^
+      Click                  Click  Click  Click  Click
+```
+- Clicking "A_{10}" → selects 3D point A_{10}
+- Clicking "A_1" → selects 2D point A_1 (projection on P_H)
+- Clicking "P_H" → selects projection plane P_H
+- Clicking "A_2" → selects 2D point A_2 (projection on P_V)
+- Clicking "P_V" → selects projection plane P_V
+
+### Technical Notes
+
+**DescriptionPart Structure** (from Phase 98):
+```typescript
+export interface DescriptionPart {
+  type: 'text' | 'label';
+  content: string;              // Display text (e.g., "A_5", "P_H")
+  elementId?: string;           // Element ID for label parts (enables click)
+}
+```
+
+**Implementation Approach**:
+- Label parts already have `elementId` field (Phase 98 infrastructure)
+- Add click handler to label spans in ProcessTreeNode.vue template
+- Handler calls selectionStore.selectSingle(elementId) or addToSelection(elementId)
+- No changes to descriptor logic needed (already provides elementIds)
+
+### Accessibility
+
+- **Keyboard Navigation**: Tab key cycles through clickable labels in focused action
+- **Screen Readers**: Labels announced as "clickable link" with element type and name
+- **Focus Indicator**: Visible focus ring around focused label (outline: 2px solid blue)
+- **ARIA Attributes**: role="button", aria-label="Select element {label}"
+
+### Performance Considerations
+
+- **Event Delegation**: Click handler attached at ProcessTreeNode level, not per label (better for long descriptions with many labels)
+- **Tooltip Generation**: Lazy - only computed on hover, not pre-rendered
+- **Selection Updates**: Batched - selectionStore updates trigger single re-render, not per-element
+
 **Label Rendering**:
 - Labels use KaTeX rendering from Phase 96 (subscripts rendered as Unicode: A₁, L₂)
 - Font: Sans-serif (matches application font via katex-overrides.css)

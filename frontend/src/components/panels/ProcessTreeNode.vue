@@ -236,6 +236,22 @@ const isRelated = computed(() => {
   return props.relatedActionIds.has(props.node.id);
 });
 
+const isInfeasible = computed(() => {
+  if (props.node.type !== 'action') return false;
+  if (!props.node.elementId) return false;
+  
+  // Only check feasibility for 2D elements (format: "containerId/localId")
+  // Skip 3D planes, projection planes, hinge lines, etc.
+  if (!props.node.elementId.includes('/')) return false;
+  
+  // Check if the element is infeasible by realizing it and checking feasibility
+  const element = props.world.getElement2D(props.node.elementId);
+  if (!element) return false;
+  
+  const realization = element.realize2D(props.world);
+  return realization ? !realization.isFeasible() : false;
+});
+
 // Description parts for action nodes
 const descriptionParts = computed(() => {
   if (props.node.type !== 'action') return [];

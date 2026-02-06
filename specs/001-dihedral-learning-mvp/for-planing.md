@@ -19,7 +19,6 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] **Clickable Labels in Process Tree** - Make element labels in Process Tree action descriptions clickable. When user clicks a label (e.g., "A_5" in "Point A_5: Intersection of line L_2..."), that element should become selected in Elements Panel and highlighted in 2D/3D views. Also applies to main element label at start of description. Implementation note: Phase 98 structured parts already include `elementId` for each label, so adding click handler is trivial (1-line change in ProcessTreeNode.vue template).
 * [ ] When an action group is empty it should become invisible and do not appear in the process tree representation in any way
 * [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
@@ -53,6 +52,36 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.  
  
 ## ALREADY PLANNED
+
+* [x] **Clickable Labels in Process Tree (Phase 99)** - 📋 PLANNED (Feb 5, 2026)
+  - **User Requirement**: "Make element labels in Process Tree action descriptions clickable. When user clicks a label (e.g., 'A_5' in 'Point A_5: Intersection of line L_2...'), that element should become selected in Elements Panel and highlighted in 2D/3D views."
+  - **Problem**: Users cannot directly navigate from Process Tree action descriptions to geometric elements. To select an element referenced in an action, users must manually find it in Elements Panel or canvas, which is cumbersome for complex constructions with many elements.
+  - **Solution**: Make all element labels in action descriptions clickable. Clicking a label selects that element using existing selectionStore, triggering highlighting in Elements Panel, 2D canvas, and 3D view.
+  - **Key Benefits**:
+    - Quick navigation from construction history to geometric elements
+    - Better understanding of dependencies (click parent labels to see inputs)
+    - Improved workflow: no manual search in Elements Panel
+    - Seamless integration with existing selection system
+    - Multi-select support via Shift+click
+  - **Architecture**:
+    - **Zero Domain Changes**: Phase 98 DescriptionPart structure already includes `elementId` for all labels
+    - **Template-Only Enhancement**: Add click handler to label spans in ProcessTreeNode.vue
+    - **Selection Integration**: Calls existing selectionStore.selectSingle() / addToSelection()
+    - **Visual Feedback**: CSS hover effects (pointer cursor, underline, background highlight)
+  - **Implementation**: 3-line template change + 10-line click handler + CSS styling
+  - **Specifications**:
+    - spec.md FR-066 (Clickable labels functional requirement)
+    - ui-spec.md §Phase 99 (Visual design, interaction patterns, examples)
+    - data-model.md §Phase 99 (Component changes, selection flow, testing strategy)
+  - **Tasks**: tasks.md Phase 99 (T1000-T1010: 11 tasks)
+    - Documentation (3 tasks: spec.md, ui-spec.md, data-model.md updates)
+    - Implementation (3 tasks: template, script, CSS)
+    - Testing (4 tasks: integration + E2E)
+    - Final commit (1 task)
+  - **Complexity**: **Low** - Estimated 2-4 hours total (mostly testing)
+  - **Risk**: **Very Low** - Leverages existing Phase 98 infrastructure, no domain changes, well-defined selection API
+  - **Dependencies**: Phase 98 (Dynamic Action Descriptions - provides DescriptionPart with elementId)
+  - **Status**: 📋 PLANNED - All planning documents complete, ready for implementation
 
 * [x] **Dynamic Action Descriptions (Phase 98)** - ✅ COMPLETE (Feb 5, 2026)
   - **User Requirement**: "Action descriptions should be computed dynamically from element properties (e.g., element name, type) so that if the element changes (renamed, properties updated), the description in the Process Tree automatically reflects those changes."

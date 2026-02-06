@@ -17,6 +17,173 @@ Process Tree action descriptions are computed dynamically from current element s
 
 **FR-065**: Process Tree action descriptions MUST be computed dynamically from current element state (labels, construction parameters) rather than stored as static strings. When elements are renamed or dependencies change, action descriptions MUST automatically update to reflect current state. Description format MUST follow pattern: "{ElementType} {CurrentLabel}: {ConstructionMethod}" where construction method includes current parent labels (e.g., "Point A_5: Intersection of line L_2 and circle C_1"). This ensures Process Tree always displays accurate, up-to-date construction history even after elements are renamed.
 
+---
+
+## Phase 99: Clickable Labels in Process Tree
+
+### Overview
+
+Element labels in Process Tree action descriptions become interactive - clicking a label selects the corresponding element in the application. This leverages the existing DescriptionPart infrastructure from Phase 98 which already includes `elementId` for all label parts.
+
+### Architecture
+
+**No Domain Changes Required**: This is purely a presentation layer enhancement. The descriptor system from Phase 98 already provides all necessary data (DescriptionPart with elementId).
+
+### Component Changes
+
+#### ProcessTreeNode.vue
+
+**Template Enhancement** (Lines ~150-152):
+
+```vue
+<!-- BEFORE (Phase 98) -->
+<template v-for="(part, index) in descriptionParts" :key="index">
+  <span v-if="part.type === 'text'">{{ part.content }}</span>
+  <span v-else v-html="formatElementLabel(part.content)"></span>
+</template>
+
+<!-- AFTER (Phase 99) -->
+<template v-for="(part, index) in descriptionParts" :key="index">
+  <span v-if="part.type === 'text'">{{ part.content }}</span>
+  <span 
+    v-else 
+    class="label-clickable"
+    :data-element-id="part.elementId"
+    @click.stop="handleLabelClick(part.elementId, $event)"
+    v-html="formatElementLabel(part.content)"
+  ></span>
+</template>
+```
+
+**Script Enhancement**:
+
+```typescript
+import { useSelectionStore } from '@/stores/selectionStore';
+
+const selectionStore = useSelectionStore();
+
+function handleLabelClick(elementId: string | undefined, event: MouseEvent) {
+  if (!elementId) return;
+  
+  event.stopPropagation(); // Prevent action node selection
+  
+  if (event.shiftKey) {
+    // Multi-select: add to selection
+    selectionStore.addToSelection(elementId);
+  } else {
+    // Single select: replace selection
+    selectionStore.selectSingle(elementId);
+  }
+}
+```
+
+**CSS Enhancement**:
+
+```css
+.label-clickable {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.label-clickable:hover {
+  background-color: rgba(100, 150, 255, 0.1);
+  text-decoration: underline dotted;
+}
+
+.label-clickable:active {
+  transform: scale(0.98);
+}
+
+/* Ensure KaTeX content inside clickable labels inherits pointer cursor */
+.label-clickable .katex {
+  cursor: inherit;
+}
+```
+
+### Selection Flow
+
+**User Action → System Response**:
+
+1. **User clicks label** "A_5" in Process Tree action description
+2. **handleLabelClick** fires with elementId="point2d5"
+3. **selectionStore.selectSingle** called (or addToSelection if Shift)
+4. **Selection state updates** (selectedIds contains "point2d5")
+5. **Reactive updates triggered**:
+   - Elements Panel: Scrolls to A_5, shows selected state
+   - SvgCanvas: Highlights point A_5 with selection color
+   - ThreeView: Highlights point A_5 (if visible in 3D)
+   - ProcessTree: Shows action that created A_5 as selected, related actions highlighted
+
+### Edge Cases
+
+**Deleted Elements**:
+- DescriptionParts for deleted elements return empty array (Phase 98 behavior)
+- No labels rendered → no click handlers → no issue
+
+**Plane Elements**:
+- Projection plane labels (P_H, P_V, auxiliary) are clickable
+- Clicking plane label selects the plane (shows in Elements Panel, no 2D highlight as planes don't have point representation)
+
+**Multi-Plane Selection**:
+- User can select elements from different planes simultaneously (Shift+click)
+- All selected elements highlighted on their respective planes
+- 3D view shows all selected 3D elements or 2D element projections
+
+### Testing Strategy
+
+**Unit Tests**: (Not applicable - purely template/interaction)
+
+**Integration Tests**: ProcessTreeNode.spec.ts
+- Test label click selects element
+- Test Shift+click adds to selection
+- Test click event doesn't propagate to action node
+- Test plain text spans not clickable
+
+**E2E Tests**: processTree.spec.ts
+- Create point A_1, line L_1 through A_1 and A_2
+- Click "A_1" label in line action description
+- Verify A_1 becomes selected in Elements Panel
+- Verify A_1 highlighted in canvas
+- Shift+click "L_1" label in another action
+- Verify both A_1 and L_1 selected
+
+### Performance Considerations
+
+**Click Handler Overhead**: Negligible - one event listener per action node, delegates to labels via event.target
+
+**Selection Update Performance**: Already optimized in Phase 98 - selectionStore updates trigger single reactive update across all components
+
+**Hover Effects**: Pure CSS - no JavaScript overhead
+
+### Implementation Complexity
+
+**Estimated Effort**: 2-4 hours
+- Template changes: 5 minutes (3 lines)
+- Script logic: 15 minutes (handleLabelClick function)
+- CSS styling: 15 minutes (hover effects)
+- Testing: 2-3 hours (integration + E2E)
+
+**Risk Assessment**: **Low**
+- Leverages existing Phase 98 infrastructure (elementId already present)
+- No domain model changes
+- No descriptor changes
+- Pure presentation enhancement
+- Well-defined selection API (selectionStore)
+
+### Future Enhancements (Not Phase 99)
+
+**Ctrl+Click Toggle Selection**: Add toggle mode where Ctrl+click toggles element in/out of selection
+
+**Context Menu on Label**: Right-click label shows context menu with "Select", "Highlight Dependencies", "Jump to Element", "Properties"
+
+**Drag-and-Drop from Label**: Drag label to canvas to create reference or constraint
+
+**Label Tooltips**: Show element details on hover (type, plane, coordinates, feasibility)
+
+---
+
 ### Architecture
 
 #### Action Interface Changes
