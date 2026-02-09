@@ -44,11 +44,12 @@ export class HalfHingeLine2D extends Line2D {
   constructor(
     id: string,
     hingeLineId: string,
-    planeId: string
+    planeId: string,
+    label?: string
   ) {
     // Create a friendly label like "HHL_{7}" from "hingeLine7"
     const numericPart = hingeLineId.match(/\d+/)?.[0] || hingeLineId;
-    super(id, planeId, `HHL_{${numericPart}}`);
+    super(id, planeId, label || `HHL_{${numericPart}}`);
     this.hingeLineId = hingeLineId;
   }
 

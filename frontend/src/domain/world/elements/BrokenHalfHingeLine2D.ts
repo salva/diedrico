@@ -41,16 +41,13 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     siblingBHHLId: string,
     label?: string
   ) {
-    super(id, brokenHingeLineId, planeId);
+    // Create a friendly label like "BHHL_{33}" from "hingeLine33" if not provided
+    const numericPart = brokenHingeLineId.match(/\d+/)?.[0] || brokenHingeLineId;
+    const bhhlLabel = label || `BHHL_{${numericPart}}`;
+    
+    super(id, brokenHingeLineId, planeId, bhhlLabel);
     this.mainHingeId = mainHingeId;
     this.siblingBHHLId = siblingBHHLId;
-    if (label) {
-      this.label = label;
-    } else {
-      // Create a friendly label like "BHHL_{33}" from "hingeLine33"
-      const numericPart = brokenHingeLineId.match(/\d+/)?.[0] || brokenHingeLineId;
-      this.label = `BHHL_{${numericPart}}`;
-    }
   }
 
   /**
