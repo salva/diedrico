@@ -19,7 +19,8 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Rationalize class names for projection planes and related object (Ops, for instance).Ok
+* [ ] Fix the plane selection buttom. Currently the labels are not rendered as latex. Also remove the "Plane" label below as it only clutters the buttom.
+* [ ] Rationalize class names for projection planes and related object (Ops, for instances).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
@@ -51,6 +52,36 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.  
  
 ## ALREADY PLANNED
+
+* [x] **Broken Hinge Lines (BHL) and Distance Transport Guides (Phase 101)** - ✅ PLANNED (Feb 7, 2026)
+  - **User Requirement**: "Plan the feature...Broken HHL, specifically, I want to know how to translate the distances from t2 to t2'"
+  - **Problem**: When an auxiliary projection plane is created by folding plane Q using trace T1 as the hinge, traces T2 (on original plane) and T2' (on folded plane) form a "broken hinge line" - projections of the same 3D line. Distance transport between T2 and T2' requires guides, but standard perpendicular guides don't preserve geometric relationships for BHLs.
+  - **Solution**: Implement Broken Hinge Line architecture where guides are **PARALLEL to the main hinge T1** (not perpendicular). This is geometrically correct because only directions parallel to T1 lie in plane Q and preserve distance relationships between T2 and T2'.
+  - **Key Geometric Principle**:
+    - Regular HingeLine: Guides perpendicular (represent plane perpendicular to both projection planes)
+    - Broken HingeLine: Guides PARALLEL to T1 (represent intersections with planes containing T1)
+  - **Architecture**:
+    - Domain classes: `BrokenHingeLine` (extends HingeLine, stores mainHingeId), `BrokenHalfHingeLine2D` (extends HalfHingeLine2D, stores mainHingeId + siblingBHHLId), `BrokenHalfHingeLineRealization2D` (includes parallelVector)
+    - Guide direction logic: `Guide2DPerpendicularToLine` detects BHHL via instanceof → uses parallelVector (parallel to T1) instead of perpendicular direction
+    - Sibling guide auto-creation: Create guide on T2 → auto-create sibling on T2' (both parallel to T1), linked via SiblingGuide2D
+    - Arc visualization: Dashed gray arc connecting guide points, shows distance transport path (like compass on paper), toggleable via "Show Distance Arcs" setting
+    - Integration: Auto-create BHL when auxiliary plane created (Phase 82)
+  - **Deliverables**:
+    - 4 functional requirements (FR-069 to FR-072) in spec.md
+    - UI specification section in ui-spec.md (visual design, workflows, settings)
+    - Implementation architecture in data-model.md (classes, algorithms, serialization)
+    - 38 tasks (T1811-T1848) across 8 sub-phases in tasks.md
+  - **Dependencies**: Phase 82 (Create Projection Plane Tool), Phase 84 (Hinge Lines Architecture)
+  - **Duration**: 26 days
+  - **Files Modified/Created**:
+    - **New**: BrokenHingeLine.ts, BrokenHalfHingeLine2D.ts, BrokenHalfHingeLineRealization2D.ts, arcGeometry.ts, arcGeometryUtils.ts, AddBrokenHingeLineOp.ts
+    - **Modified**: Guide2D.ts, AddGuide2DPerpendicularToLineOp.ts, CreateProjectionPlaneTool.ts, SvgCanvas.vue, ProjectService.ts
+  - **Specifications**:
+    - spec.md §FR-069 to FR-072 (functional requirements)
+    - ui-spec.md §Broken Hinge Lines (BHL) and Distance Transport (Phase 101)
+    - data-model.md §Phase 101: Broken Hinge Lines
+  - **Tasks**: tasks.md Phase 101 (T1811-T1848: 38 tasks)
+  - **Status**: ✅ PLANNED - Ready for implementation
 
 * [x] **Empty Action Group Filtering (Phase 100)** - ✅ COMPLETE (Feb 6, 2026)
   - **User Requirement**: "When an action group is empty it should become invisible and do not appear in the process tree representation in any way"

@@ -8798,6 +8798,755 @@ const circumferencePointId = pointResult.outputs.pointId;
   - Verify error message: "T2' must be on the same plane as T1"
   - Verify step 3 not completed
 - Test 4: Warning - T2' position differs
+  - Activate tool, select T1, select T2, select T2' at unexpected position
+  - Verify yellow dashed guide shows expected position
+  - Verify T2' position differs from expected
+  - Verify warning shown: "T2' position may be incorrect"
+  - Verify plane still created
+- **Files**: `frontend/tests/integration/createProjectionPlaneTool.test.ts` (NEW)
+
+---
+
+## Phase 101: Broken Hinge Lines (BHL) and Distance Transport Guides
+
+**Status**: 📋 FOR PLANNING (2026-02-07)  
+**Duration**: 26 days  
+**Depends on**: Phase 82 (Create Projection Plane Tool), Phase 84 (Hinge Lines Architecture)
+
+### Overview
+
+Implement Broken Hinge Line (BHL) architecture for auxiliary projection planes. When a 3D plane Q is folded using trace T1 as the hinge, trace T2 (on original plane P2) appears at position T2' (on base plane P1). **T2 and T2' form a "broken" hinge line** - projections of the same 3D line.
+
+**Key Geometric Difference**: For BHLs, guides must be **PARALLEL to the main hinge T1** (not perpendicular like regular HLs), because only directions parallel to T1 lie in plane Q and preserve distance relationships.
+
+**Deliverables**:
+- Domain classes: BrokenHingeLine, BrokenHalfHingeLine2D, BrokenHalfHingeLineRealization2D
+- Modified guide logic: Guide2DPerpendicularToLine detects BHHL → uses parallelVector
+- Sibling guide auto-creation: guide on T2 → auto-create sibling on T2' (both parallel to T1)
+- Arc visualization: dashed gray arc showing distance transport path (like compass on paper)
+- ArcGeometry interface and computeArcGeometry() utility
+- Integration: auto-create BHL when auxiliary plane created (Phase 82)
+
+**Task Count**: 38 tasks (T1811-T1848) across 8 sub-phases
+
+### Sub-phases
+
+#### Phase 101.1: Planning & Documentation (5 days)
+
+### T1811: Document BHL Geometric Principle in spec.md
+- Add functional requirements to spec.md (after FR-057):
+  - **FR-069**: BrokenHingeLine domain architecture
+    - BrokenHingeLine extends HingeLine, stores mainHingeId (reference to T1)
+    - BrokenHalfHingeLine2D extends HalfHingeLine2D, stores mainHingeId and siblingBHHLId
+    - BrokenHalfHingeLineRealization2D includes parallelVector (direction parallel to T1)
+  - **FR-070**: Guide direction distinction (PARALLEL vs PERPENDICULAR)
+    - Guide2DPerpendicularToLine detects source type (instanceof BHHL)
+    - If BHHL: use parallelVector (parallel to T1)
+    - If regular HHL: use perpendicular direction (current behavior)
+  - **FR-071**: Sibling guide auto-creation
+    - Create guide on T2 → auto-create sibling on T2'
+    - Both guides parallel to T1
+    - Linked via SiblingGuide2D
+    - Atomic operation (undo removes both)
+  - **FR-072**: Arc visualization
+    - Dashed arc connecting guide points (show distance transport path)
+    - Stored in SiblingGuide2D.arcGeometry
+    - Paper coordinates (transformed from plane coords)
+    - Toggleable via "Show Distance Arcs" setting
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Files**: `specs/001-dihedral-learning-mvp/spec.md`
+
+### T1812: Document BHL UI Behavior in ui-spec.md
+- Add UI specification section (after Create Projection Plane Tool section):
+  - Section: "Broken Hinge Lines (BHL) and Distance Transport (Phase 101)"
+  - Visual representation: T2 and T2' traces, guides (parallel to T1), arcs
+  - Guide creation workflow:
+    1. User right-clicks T2, selects "Add Guide"
+    2. User clicks point P on T2
+    3. System creates guide through P, parallel to T1
+    4. System auto-creates sibling guide on T2', parallel to T1, intersecting T1 at same point
+    5. System renders arc connecting guide points
+  - Distance transport operation:
+    - Classical paper method: use compass to transfer distance
+    - Digital method: measure on T2, see arc to T2', get corresponding point
+  - Settings:
+    - "Show Distance Arcs" checkbox (default ON)
+    - When OFF: guides remain, arcs hidden
+- Include ASCII art diagrams showing guide/arc geometry
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Files**: `specs/001-dihedral-learning-mvp/ui-spec.md`
+
+### T1813: Document Implementation Architecture in data-model.md
+- Add Phase 101 section (after Phase 82):
+  - Overview: T2 and T2' are projections of same 3D line, parallel to T1
+  - Domain class architectures:
+    - BrokenHingeLine (extends HingeLine, adds mainHingeId, auxiliaryPlaneId)
+    - BrokenHalfHingeLine2D (extends HalfHingeLine2D, adds mainHingeId, siblingBHHLId)
+    - BrokenHalfHingeLineRealization2D (adds parallelVector field)
+  - realize2D() algorithm for BrokenHalfHingeLine2D:
+    - Get main hinge (T1) on this plane
+    - Get T1's direction vector → normalize → parallelVector
+    - Return realization with parallelVector
+  - Guide direction detection:
+    - In Guide2DPerpendicularToLine.realize2D()
+    - instanceof check: BrokenHalfHingeLine2D?
+    - Yes: use parallelVector (parallel to T1)
+    - No: use perpendicular direction (current)
+  - Arc geometry computation:
+    - computeArcGeometry(world, primaryGuide, siblingGuide)
+    - Transform guide points to paper coordinates
+    - Compute control point for quadratic Bezier curve (midpoint with offset)
+    - Return ArcGeometry with startPoint, endPoint, controlPoints, style
+  - Serialization:
+    - BrokenHingeLine JSON format (add mainHingeId, auxiliaryPlaneId fields)
+    - BrokenHalfHingeLine2D JSON format (add mainHingeId, siblingBHHLId fields)
+    - SiblingGuide2D with arcGeometry field (paper coords)
+- Include TypeScript code examples for classes and algorithms
+- **Assignee**: TBD  
+- **Estimate**: 2 days  
+- **Files**: `specs/001-dihedral-learning-mvp/data-model.md`
+
+### T1814: Break Down Tasks in tasks.md
+- Add Phase 101 task breakdown (this section)
+- **Assignee**: TBD  
+- **Estimate**: 0.5 days  
+- **Files**: `specs/001-dihedral-learning-mvp/tasks.md`
+
+### T1815: Update for-planing.md Status
+- Mark Phase 101 as "ALREADY PLANNED"
+- Move from "FOR PLANNING" section to "ALREADY PLANNED" section
+- Update dependency references (Phase 82, Phase 84)
+- **Assignee**: TBD  
+- **Estimate**: 0.5 days  
+- **Files**: `specs/001-dihedral-learning-mvp/for-planing.md`
+
+#### Phase 101.2: Domain Classes (8 days)
+
+### T1816: Create BrokenHingeLine Class
+- Create file `frontend/src/domain/world/BrokenHingeLine.ts`
+- BrokenHingeLine extends HingeLine
+- Add fields:
+  - `mainHingeId: string` (reference to T1)
+  - `auxiliaryPlaneId: string` (which auxiliary plane this BHL belongs to)
+- Constructor validates mainHingeId exists
+- realize3D() calls super.realize3D() (same as regular HingeLine)
+- Export class
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Files**: `frontend/src/domain/world/BrokenHingeLine.ts` (NEW)
+
+### T1817: Create BrokenHalfHingeLine2D Class
+- Create file `frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts`
+- BrokenHalfHingeLine2D extends HalfHingeLine2D
+- Add fields:
+  - `mainHingeId: string` (reference to T1)
+  - `siblingBHHLId: string` (reference to sibling BHHL on other plane)
+- Constructor validates mainHingeId and siblingBHHLId exist
+- realize2D() implementation:
+  - Get BrokenHingeLine from brokenHingeLineId
+  - Get main hinge (T1) from mainHingeId
+  - Find T1's HalfHingeLine2D on this plane
+  - Get T1's direction vector → normalize → parallelVector
+  - Return BrokenHalfHingeLineRealization2D with parallelVector
+- Export class
+- **Assignee**: TBD  
+- **Estimate**: 2 days  
+- **Dependencies**: T1816 (BrokenHingeLine class)  
+- **Files**: `frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts` (NEW)
+
+### T1818: Create BrokenHalfHingeLineRealization2D Class
+- Create file `frontend/src/domain/world/BrokenHalfHingeLineRealization2D.ts`
+- BrokenHalfHingeLineRealization2D extends LineRealization2D
+- Add field: `parallelVector: THREE.Vector2` (direction parallel to main hinge T1)
+- Constructor:
+  ```typescript
+  constructor(
+    elementId: string,
+    planeId: string,
+    point: THREE.Vector2,
+    direction: THREE.Vector2,
+    parallelVector: THREE.Vector2,  // NEW
+    feasible: boolean
+  )
+  ```
+- Store parallelVector in readonly field
+- Export class
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Files**: `frontend/src/domain/world/BrokenHalfHingeLineRealization2D.ts` (NEW)
+
+### T1819: Create ArcGeometry Interface
+- Create file `frontend/src/types/arcGeometry.ts`
+- Define interface:
+  ```typescript
+  export interface ArcGeometry {
+    startPoint: THREE.Vector2;      // Paper coordinates
+    endPoint: THREE.Vector2;        // Paper coordinates
+    controlPoints: THREE.Vector2[]; // Bezier control points
+    center?: THREE.Vector2;         // Optional (if circular arc)
+    radius?: number;                // Optional (if circular arc)
+    style: {
+      color: string;                // e.g., '#999999'
+      dashArray: string;            // e.g., '5,5'
+      width: number;                // Line width in pixels
+      opacity: number;              // 0.0 to 1.0
+    };
+  }
+  ```
+- Export interface
+- **Assignee**: TBD  
+- **Estimate**: 0.5 days  
+- **Files**: `frontend/src/types/arcGeometry.ts` (NEW)
+
+### T1820: Write Unit Tests for BrokenHingeLine
+- Test file: `frontend/tests/unit/domain/brokenHingeLine.spec.ts`
+- Test 1: Constructor stores mainHingeId and auxiliaryPlaneId
+  - Create BrokenHingeLine with mainHingeId = 'hl1', auxiliaryPlaneId = 'aux1'
+  - Verify fields set correctly
+- Test 2: realize3D() calls super.realize3D()
+  - Create mock world with BHL
+  - Call realize3D()
+  - Verify returns HingeLineRealization3D (same as regular HingeLine)
+- Test 3: getDependencies() includes mainHingeId
+  - Create BHL
+  - Call getDependencies()
+  - Verify returns [...super.getDependencies(), mainHingeId]
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1816 (BrokenHingeLine class)  
+- **Files**: `frontend/tests/unit/domain/brokenHingeLine.spec.ts` (NEW)
+
+### T1821: Write Unit Tests for BrokenHalfHingeLine2D
+- Test file: `frontend/tests/unit/domain/elements/brokenHalfHingeLine2D.spec.ts`
+- Test 1: Constructor stores mainHingeId and siblingBHHLId
+  - Create BHHL with mainHingeId = 'hl1', siblingBHHLId = 'bhhl2'
+  - Verify fields set correctly
+- Test 2: realize2D() computes parallelVector
+  - Create mock world with:
+    - BrokenHingeLine (mainHingeId = 'hl1')
+    - HalfHingeLine2D for T1 on this plane (direction = (1, 0))
+    - BrokenHalfHingeLine2D
+  - Call realize2D()
+  - Verify returns BrokenHalfHingeLineRealization2D
+  - Verify parallelVector = (1, 0) normalized
+- Test 3: realize2D() throws if main hinge not on this plane
+  - Create world where T1 is not on BHHL's plane
+  - Call realize2D()
+  - Verify throws error: "Main hinge not found on plane..."
+- **Assignee**: TBD  
+- **Estimate**: 1.5 days  
+- **Dependencies**: T1817 (BrokenHalfHingeLine2D class), T1818 (realization class)  
+- **Files**: `frontend/tests/unit/domain/elements/brokenHalfHingeLine2D.spec.ts` (NEW)
+
+### T1822: Write Unit Tests for BrokenHalfHingeLineRealization2D
+- Test file: `frontend/tests/unit/domain/brokenHalfHingeLineRealization2D.spec.ts`
+- Test 1: Constructor stores parallelVector
+  - Create realization with parallelVector = (1, 0)
+  - Verify field set correctly
+  - Verify extends LineRealization2D (has point, direction, feasible)
+- Test 2: parallelVector is readonly
+  - Create realization
+  - Attempt to modify parallelVector → verify TypeScript error
+- **Assignee**: TBD  
+- **Estimate**: 0.5 days  
+- **Dependencies**: T1818 (realization class)  
+- **Files**: `frontend/tests/unit/domain/brokenHalfHingeLineRealization2D.spec.ts` (NEW)
+
+### T1823: Write Unit Tests for ArcGeometry Interface
+- Test file: `frontend/tests/unit/types/arcGeometry.spec.ts`
+- Test 1: Valid ArcGeometry object structure
+  - Create mock ArcGeometry with all fields
+  - Verify TypeScript accepts it
+  - Verify style fields (color, dashArray, width, opacity) present
+- Test 2: Optional fields (center, radius)
+  - Create ArcGeometry without center/radius
+  - Verify TypeScript accepts it
+  - Create ArcGeometry with center/radius
+  - Verify TypeScript accepts it
+- **Assignee**: TBD  
+- **Estimate**: 0.5 days  
+- **Dependencies**: T1819 (ArcGeometry interface)  
+- **Files**: `frontend/tests/unit/types/arcGeometry.spec.ts` (NEW)
+
+#### Phase 101.3: Guide Direction Logic (5 days)
+
+### T1824: Modify Guide2DPerpendicularToLine to Detect BHHL
+- File: `frontend/src/domain/world/elements/Guide2D.ts`
+- In Guide2DPerpendicularToLine.realize2D():
+  - Add instanceof check: `if (line instanceof BrokenHalfHingeLine2D)`
+  - If true: cast to BrokenHalfHingeLine2D, realize2D(), get parallelVector
+  - Create LineRealization2D with parallelVector direction (parallel to T1)
+  - If false: existing logic (perpendicular direction)
+- Import BrokenHalfHingeLine2D and BrokenHalfHingeLineRealization2D
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1817 (BrokenHalfHingeLine2D class), T1818 (realization class)  
+- **Files**: `frontend/src/domain/world/elements/Guide2D.ts`
+
+### T1825: Add Guide Direction Unit Test - BHHL Parallel Case
+- Test file: `frontend/tests/unit/domain/elements/guide2D.spec.ts`
+- Test: Guide2DPerpendicularToLine with BrokenHalfHingeLine2D
+  - Create mock world with:
+    - BrokenHalfHingeLine2D (realize2D returns parallelVector = (1, 0))
+    - Point2D at (10, 20)
+  - Create Guide2DPerpendicularToLine
+  - Call realize2D()
+  - Verify returned LineRealization2D has:
+    - point = (10, 20)
+    - direction = (1, 0) [PARALLEL to T1, not perpendicular to T2]
+    - feasible = true
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1824 (modified Guide2D)  
+- **Files**: `frontend/tests/unit/domain/elements/guide2D.spec.ts`
+
+### T1826: Add Guide Direction Unit Test - Regular HHL Perpendicular Case
+- Test file: `frontend/tests/unit/domain/elements/guide2D.spec.ts`
+- Test: Guide2DPerpendicularToLine with regular HalfHingeLine2D
+  - Create mock world with:
+    - HalfHingeLine2D (realize2D returns direction = (1, 0))
+    - Point2D at (10, 20)
+  - Create Guide2DPerpendicularToLine
+  - Call realize2D()
+  - Verify returned LineRealization2D has:
+    - point = (10, 20)
+    - direction = (0, 1) [PERPENDICULAR to HHL]
+    - feasible = true
+- Verify existing behavior unchanged for regular HHL
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1824 (modified Guide2D)  
+- **Files**: `frontend/tests/unit/domain/elements/guide2D.spec.ts`
+
+### T1827: Manual Test - Guide Direction on BHHL
+- Manual test procedure:
+  1. Create auxiliary plane (T1, T2, T2') using Phase 82 tool
+  2. Verify T2 and T2' are BrokenHalfHingeLine2D (check console logs)
+  3. Right-click T2, select "Add Guide"
+  4. Click point P on T2
+  5. Verify guide through P is PARALLEL to T1 (measure angles)
+  6. Verify guide is NOT perpendicular to T2
+  7. Repeat for T2' → verify guide parallel to T1
+- Document results in test-results.md
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1824 (modified Guide2D), Phase 82 (auxiliary plane)  
+- **Files**: Manual test (no code files)
+
+### T1828: Manual Test - Guide Direction on Regular HHL
+- Manual test procedure:
+  1. Create regular hinge line (T1 on P_H, T1' on P_V) without auxiliary plane
+  2. Right-click T1, select "Add Guide"
+  3. Click point P on T1
+  4. Verify guide through P is PERPENDICULAR to T1 (measure angle = 90°)
+  5. Verify existing behavior unchanged
+- Document results in test-results.md
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1824 (modified Guide2D)  
+- **Files**: Manual test (no code files)
+
+#### Phase 101.4: Sibling Guide Auto-Creation (6 days)
+
+### T1829: Create AddBrokenHingeLineOp Operation
+- Create file `frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts`
+- Operation creates:
+  - 1 BrokenHingeLine
+  - 2 BrokenHalfHingeLine2D (siblings on plane1 and plane2)
+- Constructor parameters:
+  - brokenHingeLineId, plane1Id, plane2Id, mainHingeId, auxiliaryPlaneId
+  - bhhl1Id, bhhl2Id (IDs for two BHHLs)
+- apply():
+  - Create BrokenHingeLine, add to world
+  - Create two BrokenHalfHingeLine2D, set siblingBHHLId to each other
+  - Add both BHHLs to world
+- undo():
+  - Remove bhhl1, bhhl2, brokenHingeLine from world
+- Export operation
+- **Assignee**: TBD  
+- **Estimate**: 1.5 days  
+- **Dependencies**: T1816 (BrokenHingeLine), T1817 (BrokenHalfHingeLine2D)  
+- **Files**: `frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts` (NEW)
+
+### T1830: Modify AddGuide2DPerpendicularToLineOp for Sibling Creation
+- File: `frontend/src/commands/operations/elements/AddGuide2DPerpendicularToLineOp.ts`
+- After creating primary guide, check if line is BrokenHalfHingeLine2D:
+  - If true:
+    - Get siblingBHHLId from BHHL
+    - Get sibling BHHL from world
+    - Compute corresponding point on sibling plane (where primary guide intersects T1)
+    - Create SiblingGuide2D on sibling plane
+    - Compute arcGeometry using computeArcGeometry() utility
+    - Store arcGeometry in SiblingGuide2D
+    - Add sibling guide to world
+    - Store siblingGuideId in outputs (for undo)
+  - If false: no sibling (existing behavior)
+- undo():
+  - If siblingGuideId in outputs: remove sibling guide
+  - Remove primary guide (existing)
+- **Assignee**: TBD  
+- **Estimate**: 2 days  
+- **Dependencies**: T1817 (BrokenHalfHingeLine2D), T1831 (computeArcGeometry utility)  
+- **Files**: `frontend/src/commands/operations/elements/AddGuide2DPerpendicularToLineOp.ts`
+
+### T1831: Create computeArcGeometry() Utility
+- Create file `frontend/src/utils/arcGeometryUtils.ts`
+- Function signature:
+  ```typescript
+  export function computeArcGeometry(
+    world: World,
+    primaryGuide: Guide2D,
+    siblingGuide: SiblingGuide2D
+  ): ArcGeometry
+  ```
+- Algorithm:
+  - Realize both guides to get their points (plane coordinates)
+  - Get both planes, get planeToPaper matrices
+  - Transform guide points to paper coordinates
+  - Compute control point for quadratic Bezier curve:
+    - Midpoint between start and end
+    - Offset perpendicular to line segment (10% of distance)
+  - Return ArcGeometry with:
+    - startPoint, endPoint (paper coords)
+    - controlPoints: [midpoint with offset]
+    - style: { color: '#999999', dashArray: '5,5', width: 1.5, opacity: 0.5 }
+- Export function
+- **Assignee**: TBD  
+- **Estimate**: 1.5 days  
+- **Dependencies**: T1819 (ArcGeometry interface)  
+- **Files**: `frontend/src/utils/arcGeometryUtils.ts` (NEW)
+
+### T1832: Write Unit Test for AddBrokenHingeLineOp
+- Test file: `frontend/tests/unit/commands/operations/addBrokenHingeLineOp.spec.ts`
+- Test 1: apply() creates BHL and two BHHLs
+  - Create mock world
+  - Create operation
+  - Call apply()
+  - Verify world.getHingeLineById(brokenHingeLineId) returns BrokenHingeLine
+  - Verify world.getElement2DById(bhhl1Id) returns BrokenHalfHingeLine2D
+  - Verify world.getElement2DById(bhhl2Id) returns BrokenHalfHingeLine2D
+  - Verify bhhl1.siblingBHHLId === bhhl2.id
+  - Verify bhhl2.siblingBHHLId === bhhl1.id
+- Test 2: undo() removes BHL and BHHLs
+  - Apply operation
+  - Call undo()
+  - Verify BHL and BHHLs removed from world
+- Test 3: redo() re-creates BHL and BHHLs
+  - Apply → undo → apply again
+  - Verify BHL and BHHLs re-added with same IDs
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1829 (AddBrokenHingeLineOp)  
+- **Files**: `frontend/tests/unit/commands/operations/addBrokenHingeLineOp.spec.ts` (NEW)
+
+### T1833: Write Unit Test for Sibling Guide Creation
+- Test file: `frontend/tests/unit/commands/operations/addGuide2DPerpendicularToLineOp.spec.ts`
+- Test 1: Guide on BHHL creates sibling guide
+  - Create mock world with:
+    - BrokenHalfHingeLine2D (bhhl1 on plane1, bhhl2 on plane2)
+    - Point P1 on plane1
+  - Create AddGuide2DPerpendicularToLineOp for bhhl1
+  - Call apply()
+  - Verify primary guide created on bhhl1
+  - Verify sibling guide created on bhhl2
+  - Verify sibling guide has arcGeometry
+  - Verify outputs.siblingGuideId set
+- Test 2: undo() removes both guides
+  - Apply operation → undo
+  - Verify primary guide removed
+  - Verify sibling guide removed
+- Test 3: Guide on regular HHL does not create sibling
+  - Create mock world with regular HalfHingeLine2D
+  - Create operation
+  - Call apply()
+  - Verify only primary guide created
+  - Verify outputs.siblingGuideId undefined
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1830 (modified AddGuide2DPerpendicularToLineOp)  
+- **Files**: `frontend/tests/unit/commands/operations/addGuide2DPerpendicularToLineOp.spec.ts`
+
+### T1834: Write Unit Test for computeArcGeometry()
+- Test file: `frontend/tests/unit/utils/arcGeometryUtils.spec.ts`
+- Test 1: Compute arc for guides on sibling BHHLs
+  - Create mock world with:
+    - Two planes with planeToPaper matrices
+    - Primary guide on plane1 (point = (10, 20))
+    - Sibling guide on plane2 (point = (15, 25))
+  - Call computeArcGeometry()
+  - Verify returns ArcGeometry with:
+    - startPoint = (10, 20) in paper coords
+    - endPoint = (15, 25) in paper coords
+    - controlPoints.length === 1 (quadratic Bezier)
+    - controlPoint is midpoint with offset
+    - style.color === '#999999'
+    - style.dashArray === '5,5'
+    - style.opacity === 0.5
+- Test 2: Arc control point perpendicular offset
+  - Create guides with known positions
+  - Call computeArcGeometry()
+  - Verify control point offset perpendicular to line segment
+  - Verify offset magnitude = 10% of distance
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1831 (computeArcGeometry utility)  
+- **Files**: `frontend/tests/unit/utils/arcGeometryUtils.spec.ts` (NEW)
+
+#### Phase 101.5: Arc Rendering (5 days)
+
+### T1835: Add Arc Rendering to SvgCanvas Component
+- File: `frontend/src/components/workspace/SvgCanvas.vue`
+- In template, add arc rendering:
+  - Iterate over all SiblingGuide2D with arcGeometry
+  - For each arc:
+    - Extract startPoint, endPoint, controlPoints from arcGeometry
+    - Render SVG path with quadratic Bezier curve:
+      ```svg
+      <path :d="`M ${start.x} ${start.y} Q ${ctrl.x} ${ctrl.y} ${end.x} ${end.y}`"
+            :stroke="arc.style.color"
+            :stroke-width="arc.style.width"
+            :stroke-dasharray="arc.style.dashArray"
+            :opacity="arc.style.opacity"
+            fill="none" />
+      ```
+  - Check "Show Distance Arcs" setting → hide if OFF
+- Import SiblingGuide2D type
+- **Assignee**: TBD  
+- **Estimate**: 1.5 days  
+- **Dependencies**: T1819 (ArcGeometry interface), T1830 (sibling creation)  
+- **Files**: `frontend/src/components/workspace/SvgCanvas.vue`
+
+### T1836: Add "Show Distance Arcs" Setting
+- File: `frontend/src/stores/settingsStore.ts`
+- Add setting:
+  ```typescript
+  showDistanceArcs: {
+    type: 'boolean',
+    default: true,
+    label: 'Show Distance Arcs',
+    description: 'Show arcs visualizing distance transport between broken hinge line traces'
+  }
+  ```
+- Export getter: `getShowDistanceArcs()`
+- **Assignee**: TBD  
+- **Estimate**: 0.5 days  
+- **Files**: `frontend/src/stores/settingsStore.ts`
+
+### T1837: Update SvgCanvas to Use Setting
+- File: `frontend/src/components/workspace/SvgCanvas.vue`
+- Import settingsStore
+- Get showDistanceArcs setting value
+- In arc rendering: `v-if="showDistanceArcs"`
+- When setting changes, re-render canvas
+- **Assignee**: TBD  
+- **Estimate**: 0.5 days  
+- **Dependencies**: T1835 (arc rendering), T1836 (setting)  
+- **Files**: `frontend/src/components/workspace/SvgCanvas.vue`
+
+### T1838: Manual Test - Arc Visualization
+- Manual test procedure:
+  1. Create auxiliary plane (T1, T2, T2') using Phase 82 tool
+  2. Right-click T2, select "Add Guide", click point P on T2
+  3. Verify guide created on T2, sibling guide created on T2'
+  4. Verify dashed gray arc appears connecting guide points
+  5. Verify arc style: color = gray, dashed (5,5), width = 1.5px, opacity = 0.5
+  6. Measure arc: starts at guide on T2, ends at guide on T2'
+  7. Toggle "Show Distance Arcs" setting OFF → verify arc hidden
+  8. Toggle setting ON → verify arc reappears
+- Document results in test-results.md
+- **Assignee**: TBD  
+- **Estimate**: 1.5 days  
+- **Dependencies**: T1835 (arc rendering), T1837 (setting)  
+- **Files**: Manual test (no code files)
+
+### T1839: Manual Test - Arc Updates on Guide Move
+- Manual test procedure:
+  1. Create auxiliary plane, create guide on T2 (sibling on T2')
+  2. Verify arc appears
+  3. Move point P on T2 → verify arc updates in real-time
+  4. Move guide on T2' → verify arc updates
+  5. Delete guide on T2 → verify sibling and arc removed
+  6. Undo delete → verify guide, sibling, arc restored
+- Document results in test-results.md
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1835 (arc rendering)  
+- **Files**: Manual test (no code files)
+
+#### Phase 101.6: Integration with Auxiliary Plane Creation (4 days)
+
+### T1840: Modify CreateProjectionPlaneTool to Create BHL
+- File: `frontend/src/tools/CreateProjectionPlaneTool.ts`
+- In executeWithArguments(), after creating auxiliary plane:
+  - Get the hinge line (T1) ID
+  - Determine plane1 (where T1 is folded to) and plane2 (where T2 remains)
+  - Create AddBrokenHingeLineOp with:
+    - plane1Id = T1's plane (base plane)
+    - plane2Id = T2's plane (original plane)
+    - mainHingeId = hinge line ID (T1)
+    - auxiliaryPlaneId = newly created plane ID
+    - Generate bhhl1Id, bhhl2Id
+  - Add operation to command
+  - Execute command
+- Verify T2 and T2' are now BrokenHalfHingeLine2D (not regular Line2D)
+- **Assignee**: TBD  
+- **Estimate**: 2 days  
+- **Dependencies**: T1829 (AddBrokenHingeLineOp), Phase 82 (tool)  
+- **Files**: `frontend/src/tools/CreateProjectionPlaneTool.ts`
+
+### T1841: Write Integration Test - BHL Created with Aux Plane
+- Test file: `frontend/tests/integration/createProjectionPlaneTool.test.ts`
+- Test: BrokenHingeLine created when auxiliary plane created
+  - Initialize world with P_H, P_V
+  - Create lines T1 (on P_H), T2 (on P_V), T2' (on P_H)
+  - Activate CreateProjectionPlaneTool
+  - Execute tool (select T1, T2, T2')
+  - Verify auxiliary plane created
+  - Verify BrokenHingeLine created with mainHingeId = T1
+  - Verify world.getHingeLineById(...) returns BrokenHingeLine (not regular HingeLine)
+  - Verify two BrokenHalfHingeLine2D created (on P_H and P_V)
+  - Verify BHHLs have siblingBHHLId referencing each other
+- **Assignee**: TBD  
+- **Estimate**: 1.5 days  
+- **Dependencies**: T1840 (modified tool)  
+- **Files**: `frontend/tests/integration/createProjectionPlaneTool.test.ts`
+
+### T1842: Manual Test - End-to-End BHL Workflow
+- Manual test procedure:
+  1. Start with empty canvas
+  2. Create two projection planes (P_H, P_V)
+  3. Draw line T1 on P_H (horizontal)
+  4. Draw line T2 on P_V (vertical, not intersecting T1's projection)
+  5. Activate "Create Projection Plane" tool
+  6. Click T1 → verify highlighted
+  7. Click T2 → verify highlighted
+  8. Draw T2' on P_H (parallel to T1)
+  9. Verify auxiliary plane created
+  10. Verify T2 and T2' are BrokenHalfHingeLine2D (check console logs or inspector)
+  11. Right-click T2, add guide → verify sibling guide on T2', arc rendered
+  12. Measure distance on T2 using guide → verify same distance on T2' (arc endpoint)
+- Document results with screenshots in test-results.md
+- **Assignee**: TBD  
+- **Estimate**: 2 days  
+- **Dependencies**: T1840 (modified tool), T1835 (arc rendering)  
+- **Files**: Manual test (no code files)
+
+#### Phase 101.7: Serialization (5 days)
+
+### T1843: Add BrokenHingeLine Serialization
+- File: `frontend/src/services/ProjectService.ts`
+- In serializeWorld():
+  - Check hinge line type: `if (hl instanceof BrokenHingeLine)`
+  - If true: serialize with type 'BrokenHingeLine', include mainHingeId and auxiliaryPlaneId
+  - If false: existing serialization (type 'HingeLine')
+- In deserializeWorld():
+  - Check type: `if (hlData.type === 'BrokenHingeLine')`
+  - If true: instantiate BrokenHingeLine with mainHingeId and auxiliaryPlaneId
+  - If false: existing logic (instantiate HingeLine)
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1816 (BrokenHingeLine class)  
+- **Files**: `frontend/src/services/ProjectService.ts`
+
+### T1844: Add BrokenHalfHingeLine2D Serialization
+- File: `frontend/src/services/ProjectService.ts`
+- In serializeWorld():
+  - Check element type: `if (elem instanceof BrokenHalfHingeLine2D)`
+  - If true: serialize with type 'BrokenHalfHingeLine2D', include mainHingeId and siblingBHHLId
+  - If false: existing serialization
+- In deserializeWorld():
+  - Check type: `if (elemData.type === 'BrokenHalfHingeLine2D')`
+  - If true: instantiate BrokenHalfHingeLine2D with mainHingeId and siblingBHHLId
+  - If false: existing logic
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: T1817 (BrokenHalfHingeLine2D class)  
+- **Files**: `frontend/src/services/ProjectService.ts`
+
+### T1845: Add SiblingGuide2D with ArcGeometry Serialization
+- File: `frontend/src/services/ProjectService.ts`
+- In serializeWorld():
+  - Check guide type: `if (guide instanceof SiblingGuide2D)`
+  - If true: serialize with type 'SiblingGuide2D', include arcGeometry field (paper coords)
+  - arcGeometry should serialize startPoint, endPoint, controlPoints, style
+  - If false: existing serialization
+- In deserializeWorld():
+  - Check type: `if (guideData.type === 'SiblingGuide2D')`
+  - If true: instantiate SiblingGuide2D, set arcGeometry
+  - If false: existing logic
+- **Assignee**: TBD  
+- **Estimate**: 1.5 days  
+- **Dependencies**: T1819 (ArcGeometry interface), T1830 (SiblingGuide2D)  
+- **Files**: `frontend/src/services/ProjectService.ts`
+
+### T1846: Write Unit Test for Serialization Round-Trip
+- Test file: `frontend/tests/unit/services/projectService.spec.ts`
+- Test: Serialize and deserialize world with BHL
+  - Create world with:
+    - BrokenHingeLine (mainHingeId, auxiliaryPlaneId)
+    - BrokenHalfHingeLine2D (mainHingeId, siblingBHHLId)
+    - SiblingGuide2D (arcGeometry)
+  - Serialize world → get JSON
+  - Deserialize JSON → get world2
+  - Verify world2 has:
+    - BrokenHingeLine with same mainHingeId
+    - BrokenHalfHingeLine2D with same mainHingeId, siblingBHHLId
+    - SiblingGuide2D with same arcGeometry
+  - Verify all IDs preserved
+  - Verify sibling references intact
+- **Assignee**: TBD  
+- **Estimate**: 1.5 days  
+- **Dependencies**: T1843, T1844, T1845 (serialization)  
+- **Files**: `frontend/tests/unit/services/projectService.spec.ts`
+
+#### Phase 101.8: Final Testing & Review (2 days)
+
+### T1847: Write Integration Test - Complete Distance Transport Workflow
+- Test file: `frontend/tests/integration/brokenHingeLineDistanceTransport.test.ts`
+- Test: Measure distance on T2, verify on T2' via arc
+  - Create world with auxiliary plane (BHL, BHHLs)
+  - Create point P1 on T2
+  - Add guide through P1 (perpendicular to line, parallel to T1)
+  - Verify sibling guide created on T2'
+  - Measure distance from T1 to guide on T2 (in plane2 coords)
+  - Measure distance from T1 to sibling guide on T2' (in plane1 coords)
+  - Verify distances equal (within tolerance)
+  - Verify arc connects the two guide points (paper coords)
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: All Phase 101 tasks  
+- **Files**: `frontend/tests/integration/brokenHingeLineDistanceTransport.test.ts` (NEW)
+
+### T1848: Write E2E Test - BHL with Playwright
+- Test file: `frontend/tests/e2e/brokenHingeLine.spec.ts`
+- Test: End-to-end BHL workflow in browser
+  - Open app
+  - Create auxiliary plane (T1, T2, T2')
+  - Right-click T2, select "Add Guide"
+  - Click point on T2
+  - Verify guide visible (screenshot)
+  - Verify sibling guide visible on T2' (screenshot)
+  - Verify arc visible between guides (screenshot, check SVG path element)
+  - Toggle "Show Distance Arcs" OFF
+  - Verify arc hidden (screenshot)
+  - Toggle ON → verify arc reappears
+  - Save project
+  - Reload page
+  - Verify BHL, guides, arc restored
+- **Assignee**: TBD  
+- **Estimate**: 1 day  
+- **Dependencies**: All Phase 101 tasks  
+- **Files**: `frontend/tests/e2e/brokenHingeLine.spec.ts` (NEW)
+
+---
+
+## Phase 102: TBD
+
+[Continue with next phase...]
+
+### T1215: Manual Test - Warning Threshold
   - Create T1, T2, T2' with T2' at incorrect position (2 pixels off)
   - Complete tool workflow
   - Verify warning message appears

@@ -15,9 +15,10 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
   constructor(
     private planeId: string,
     private referenceLineId: string,
-    private throughPointId: string
+    private throughPointId: string,
+    private guideId?: string
   ) {
-    this.parameters = { planeId, referenceLineId, throughPointId };
+    this.parameters = { planeId, referenceLineId, throughPointId, guideId };
   }
 
   apply(world: World): OperationResult {
@@ -27,14 +28,16 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      // Use guideId from constructor (for deserialization), outputs (for redo), or let it generate
       const guide = plane.addGuide2D(
         this.referenceLineId,
         this.throughPointId,
         world,
-        this.outputs.guideId
+        this.guideId || this.outputs.guideId
       );
       this.outputs = { guideId: guide.id };
+      // Back-fill generated ID into parameters for persistence
+      this.parameters.guideId = guide.id;
       return {
         success: true,
         outputs: this.outputs
@@ -57,6 +60,16 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
       }
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      referenceLineId: this.referenceLineId,
+      throughPointId: this.throughPointId,
+      guideId: this.outputs.guideId || this.parameters.guideId
+    };
+  }
 }
 
 /**
@@ -76,9 +89,10 @@ export class AddSiblingGuide2DOp implements IOperation {
   constructor(
     private planeId: string,
     private primaryGuideId: string,
-    private referenceLineId: string
+    private referenceLineId: string,
+    private siblingGuideId?: string
   ) {
-    this.parameters = { planeId, primaryGuideId, referenceLineId };
+    this.parameters = { planeId, primaryGuideId, referenceLineId, siblingGuideId };
   }
 
   apply(world: World): OperationResult {
@@ -88,14 +102,16 @@ export class AddSiblingGuide2DOp implements IOperation {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
+      // Use siblingGuideId from constructor (for deserialization), outputs (for redo), or let it generate
       const siblingGuide = plane.addSiblingGuide2D(
         this.primaryGuideId,
         this.referenceLineId,
         world,
-        this.outputs.siblingGuideId
+        this.siblingGuideId || this.outputs.siblingGuideId
       );
       this.outputs = { siblingGuideId: siblingGuide.id };
+      // Back-fill generated ID into parameters for persistence
+      this.parameters.siblingGuideId = siblingGuide.id;
       return {
         success: true,
         outputs: this.outputs
@@ -117,5 +133,15 @@ export class AddSiblingGuide2DOp implements IOperation {
         plane.removeLine(this.outputs.siblingGuideId);
       }
     }
+  }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      primaryGuideId: this.primaryGuideId,
+      referenceLineId: this.referenceLineId,
+      siblingGuideId: this.outputs.siblingGuideId || this.parameters.siblingGuideId
+    };
   }
 }

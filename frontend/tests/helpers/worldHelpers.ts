@@ -46,6 +46,27 @@ export function createTestWorld(): { world: World; commandStack: CommandStack } 
 }
 
 /**
+ * Setup basic world and return with plane IDs for convenience.
+ * Alias for createTestWorld that also returns semantic IDs.
+ * 
+ * @returns Object with world, commandStack, and plane IDs
+ */
+export function setupBasicWorld(): {
+  world: World;
+  commandStack: CommandStack;
+  projPlaneH: string;
+  projPlaneV: string;
+} {
+  const { world, commandStack } = createTestWorld();
+  return {
+    world,
+    commandStack,
+    projPlaneH: getHorizontalPlaneId(world),
+    projPlaneV: getVerticalPlaneId(world),
+  };
+}
+
+/**
  * Get horizontal projection plane from world
  */
 export function getHorizontalPlane(world: World): ProjectionPlane {

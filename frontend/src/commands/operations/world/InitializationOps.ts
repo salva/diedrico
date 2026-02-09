@@ -188,12 +188,14 @@ export class AddOriginPoint2DOp implements IOperation {
   constructor(
     private readonly projPlaneId: string,
     private readonly position: Vector3 = new Vector3(0, 0, 1),
-    private readonly label?: string
+    private readonly label?: string,
+    private readonly pointId?: string
   ) {
     this.parameters = {
       projPlaneId,
       position: { x: position.x, y: position.y, z: position.z },
-      label
+      label,
+      pointId
     };
   }
 
@@ -209,10 +211,11 @@ export class AddOriginPoint2DOp implements IOperation {
       }
       
       // Call element factory method - it handles ID generation and locking
+      // Use pointId from constructor (for deserialization), outputs (for redo), or let it generate
       const originPoint = projPlane.addOriginPoint2D(
         this.position, 
         world, 
-        this.outputs.pointId,
+        this.pointId || this.outputs.pointId,
         this.label
       );
       
@@ -337,11 +340,13 @@ export class AddHalfHingeLine2DOp implements IOperation {
   
   constructor(
     private readonly projPlaneId: string,
-    private readonly hingeLineId: string
+    private readonly hingeLineId: string,
+    private readonly lineId?: string
   ) {
     this.parameters = {
       projPlaneId,
-      hingeLineId
+      hingeLineId,
+      lineId
     };
   }
 
@@ -357,10 +362,11 @@ export class AddHalfHingeLine2DOp implements IOperation {
       }
       
       // Phase 84: Call element factory method without geometry - it handles ID generation
+      // Use lineId from constructor (for deserialization), outputs (for redo), or let it generate
       const halfHingeLine = projPlane.addHalfHingeLine2D(
         this.hingeLineId,
         world,
-        this.outputs.lineId
+        this.lineId || this.outputs.lineId
       );
       
       // Store ID in outputs for redo support

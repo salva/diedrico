@@ -62,6 +62,7 @@ import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
 import { AddAuxiliaryProjectionPlaneOp } from '@/commands/operations/world/AddAuxiliaryProjectionPlaneOp';
+import { AddBrokenHingeLineOp } from '@/commands/operations/world/AddBrokenHingeLineOp';
 
 /**
  * Project data structure based on command stream
@@ -499,18 +500,20 @@ export class ProjectService {
         return circleCircleIntOp;
       
       case 'AddGuide2DPerpendicularToLine':
-        const guideOp = new AddGuide2DPerpendicularToLineOp(parameters.planeId, parameters.referenceLineId, parameters.throughPointId);
-        if (parameters.guideId) {
-          guideOp.outputs = { guideId: parameters.guideId };
-        }
-        return guideOp;
+        return new AddGuide2DPerpendicularToLineOp(
+          parameters.planeId, 
+          parameters.referenceLineId, 
+          parameters.throughPointId,
+          parameters.guideId
+        );
       
       case 'AddSiblingGuide2D':
-        const siblingGuideOp = new AddSiblingGuide2DOp(parameters.planeId, parameters.primaryGuideId, parameters.referenceLineId);
-        if (parameters.guideId) {
-          siblingGuideOp.outputs = { guideId: parameters.guideId };
-        }
-        return siblingGuideOp;
+        return new AddSiblingGuide2DOp(
+          parameters.planeId, 
+          parameters.primaryGuideId, 
+          parameters.referenceLineId,
+          parameters.siblingGuideId
+        );
       
       case 'AddSiblingIntersectionPoint2D':
         const siblingIntOp = new AddSiblingIntersectionPoint2DOp(parameters.planeId, parameters.primaryIntersectionId);
@@ -627,15 +630,30 @@ export class ProjectService {
         return new AddHingeLineOp(hPlaneId, vPlaneId, parameters.hingeLineId);
       
       case 'AddHalfHingeLine2D':
-        const halfHingeLineOp = new AddHalfHingeLine2DOp(
+        return new AddHalfHingeLine2DOp(
           parameters.projPlaneId, 
-          parameters.hingeLineId
+          parameters.hingeLineId,
+          parameters.lineId
         );
-        // Restore the original line ID from serialization
-        if (parameters.lineId) {
-          halfHingeLineOp.outputs = { lineId: parameters.lineId, projPlaneId: parameters.projPlaneId };
+      
+      case 'AddBrokenHingeLine':
+        const brokenHingeLineOp = new AddBrokenHingeLineOp(
+          parameters.mainHingeId,
+          parameters.auxiliaryPlaneId,
+          parameters.plane1Id,
+          parameters.plane2Id,
+          parameters.brokenHingeLineId,
+          parameters.bhhl1Id,
+          parameters.bhhl2Id
+        );
+        if (parameters.brokenHingeLineId) {
+          brokenHingeLineOp.outputs = {
+            brokenHingeLineId: parameters.brokenHingeLineId,
+            bhhl1Id: parameters.bhhl1Id,
+            bhhl2Id: parameters.bhhl2Id
+          };
         }
-        return halfHingeLineOp;
+        return brokenHingeLineOp;
       
       case 'Add3DPlane':
         const plane3DOp = new Add3DPlaneOp(
@@ -703,13 +721,24 @@ export class ProjectService {
         return auxPlaneOp;
       
       case 'AddProcessTreeActionOp':
-        return new AddProcessTreeActionOp(parameters.action, parameters.groupId);
+        const actionOp = new AddProcessTreeActionOp(parameters.action, parameters.groupId);
+        // Restore outputs if available (for operations that have already been applied)
+        if (serializedOp.outputs) {
+          actionOp.outputs = serializedOp.outputs;
+        }
+        return actionOp;
 
       case 'AddProcessTreeActionGroup':
-        // Reconstruct ActionGroup from ID (other properties like description are optional/default)
-        // Note: Ideally all group properties should be serialized, but for now we just need the ID container
+        // Reconstruct ActionGroup with proper flags
         const group = createActionGroup(parameters.groupId);
-        return new AddProcessTreeActionGroupOp(group);
+        group.isOutput = parameters.isOutput ?? true;  // Default to true if not specified
+        group.isAuxiliary = parameters.isAuxiliary ?? false;
+        const groupOp = new AddProcessTreeActionGroupOp(group);
+        // Restore outputs if available
+        if (serializedOp.outputs) {
+          groupOp.outputs = serializedOp.outputs;
+        }
+        return groupOp;
 
       case 'PushSubprocess':
         // Phase 95: Preserve subprocess ID during deserialization

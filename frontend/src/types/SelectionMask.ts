@@ -15,6 +15,7 @@ import { Guide2D } from '@/domain/world/Guide';
 import { SiblingGuide2D } from '@/domain/world/Guide';
 import { Segment2DByPoints } from '@/domain/world/Segment';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
 
 /**
  * Element types that can be matched by selection masks.
@@ -133,12 +134,11 @@ export abstract class SelectionMask {
   }
   
   /**
-   * Create mask matching half-hinge-lines
-   * Half-hinge lines are lines, so this returns a line mask
-   * @deprecated Use SelectionMask.line() instead
+   * Create mask matching half-hinge-lines (including broken half-hinge-lines)
+   * Uses instanceof HalfHingeLine2D which matches both HalfHingeLine2D and BrokenHalfHingeLine2D
    */
   static halfHingeLine(): TypeMask {
-    return new TypeMask('line');
+    return new TypeMask('half-hinge-line');
   }
   
   /**
@@ -235,7 +235,8 @@ export class TypeMask extends SelectionMask {
       case 'guide':
         return element instanceof Guide2D || element instanceof SiblingGuide2D;
       case 'half-hinge-line':
-        return element instanceof HalfHingeLine2D;
+        // Matches both HalfHingeLine2D and BrokenHalfHingeLine2D (since BrokenHalfHingeLine2D extends HalfHingeLine2D)
+        return element instanceof HalfHingeLine2D || element instanceof BrokenHalfHingeLine2D;
       case 'circle':
         return element instanceof Circle2D;
       default:

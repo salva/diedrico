@@ -402,6 +402,9 @@ export class World {
       case 'HingeLine':
         prefix = 'HL_';
         break;
+      case 'BrokenHingeLine':
+        prefix = 'BHL_';
+        break;
       case 'HalfHingeLine':
         prefix = 'HHL_';
         break;

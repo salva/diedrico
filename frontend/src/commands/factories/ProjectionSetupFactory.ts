@@ -162,7 +162,7 @@ export function constructProjectionPlaneSetup(
 
   // Steps 16-18: Create auxiliary projection plane with hinge line and ProcessTree tracking
   // Using factory method that creates plane + hinge line + ProcessTree action in one call
-  PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+  const { projPlaneId } = PlaneSequenceFactory.createAuxiliaryProjectionPlane(
     cmd,
     world,  // world (needed to check if T1 is HalfHingeLine2D)
     plane3DId,
@@ -171,6 +171,17 @@ export function constructProjectionPlaneSetup(
     l5Id,   // T2' (position line)
     P_H.id!,  // Hinge trace plane (connects via hinge line)
     'P_A1',  // Name for the auxiliary projection plane
+    groupId
+  );
+
+  // Phase 101: Create broken hinge line connecting auxiliary plane to P_V
+  // The main hinge is T1 (the original hinge between P_H and P_V)
+  // Create broken hinge line from P_A1 to P_V (the "other" plane)
+  PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane(
+    cmd,
+    hingeLineId,      // Main hinge (T1) between P_H and P_V - the folding hinge
+    projPlaneId,      // Auxiliary plane P_A1
+    P_V.id!,          // Other plane P_V (not the hinge trace plane)
     groupId
   );
 }

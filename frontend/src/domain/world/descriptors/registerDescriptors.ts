@@ -21,7 +21,9 @@ import {
   Line2DParallelDescriptor,
   Line2DPerpendicularToLineDescriptor,
   Line2DTangentToCircleThroughPointDescriptor,
-  Line2DTangentToCircleParallelToLineDescriptor
+  Line2DTangentToCircleParallelToLineDescriptor,
+  HalfHingeLine2DDescriptor,
+  BrokenHalfHingeLine2DDescriptor
 } from './Line2DDescriptors';
 
 import {
@@ -41,7 +43,8 @@ import {
   AuxiliaryProjectionPlaneDescriptor,
   Plane3DFixedDescriptor,
   Plane3DFromTracesDescriptor,
-  HingeLineDescriptor
+  HingeLineDescriptor,
+  BrokenHingeLineDescriptor
 } from './Element3DDescriptors';
 
 // Import element classes
@@ -55,7 +58,9 @@ import { Line3DFromProjections } from '../Line3D';
 import { Segment3DFromProjections } from '../Segment3D';
 import { FixedProjectionPlane, AuxiliaryProjectionPlane } from '../ProjectionPlane';
 import { Plane3DFixed, Plane3DFromTraces } from '../Plane';
-import { HingeLine } from '../HingeLine';
+import { HingeLine, HalfHingeLine2D } from '../HingeLine';
+import { BrokenHingeLine } from '../BrokenHingeLine';
+import { BrokenHalfHingeLine2D } from '../elements/BrokenHalfHingeLine2D';
 
 /**
  * Register all descriptors with the registry.
@@ -78,6 +83,8 @@ export function registerAllDescriptors(): void {
   DescriptorRegistry.register(Line2DPerpendicularToLine, new Line2DPerpendicularToLineDescriptor());
   DescriptorRegistry.register(Line2DTangentToCircleThroughPoint, new Line2DTangentToCircleThroughPointDescriptor());
   DescriptorRegistry.register(Line2DTangentToCircleParallelToLine, new Line2DTangentToCircleParallelToLineDescriptor());
+  DescriptorRegistry.register(HalfHingeLine2D, new HalfHingeLine2DDescriptor());
+  DescriptorRegistry.register(BrokenHalfHingeLine2D, new BrokenHalfHingeLine2DDescriptor());
   
   // 2D Circles
   DescriptorRegistry.register(Circle2DByCenterAndPoint, new Circle2DByCenterAndPointDescriptor());
@@ -97,6 +104,7 @@ export function registerAllDescriptors(): void {
   // 3D Lines
   DescriptorRegistry.register(Line3DFromProjections, new Line3DFromProjectionsDescriptor());
   DescriptorRegistry.register(HingeLine, new HingeLineDescriptor());
+  DescriptorRegistry.register(BrokenHingeLine, new BrokenHingeLineDescriptor());
   
   // 3D Segments
   DescriptorRegistry.register(Segment3DFromProjections, new Segment3DFromProjectionsDescriptor());

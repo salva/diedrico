@@ -2144,6 +2144,106 @@ From T1, T2, T2', the system computes:
 - Measurement tools to verify T2' position
 - Option to auto-compute T2' (with warning that this defeats learning purpose)
 
+---
+
+### Broken Hinge Lines (BHL) and Distance Transport (Phase 101)
+
+#### Overview
+
+When an auxiliary projection plane is created by folding a 3D plane Q using trace T1 as the hinge, the other trace T2 (on plane P2) appears at position T2' (on plane P1) after folding. **T2 and T2' are projections of the same 3D line** - they form what is called a **Broken Hinge Line (BHL)**.
+
+Unlike regular hinge lines where guides are perpendicular, **guides for BHL must be parallel to the main hinge T1**. This is geometrically correct because lines parallel to T1 represent intersections of plane Q with planes containing T1, preserving distance relationships.
+
+#### Visual Representation
+
+**Broken Hinge Line Traces (T2 and T2')**:
+- Rendered as regular lines on their respective planes
+- Optional: Visual indicator that they are sibling traces (matching line style/color)
+- Labels: "T2" on P2, "T2'" on P1 (using KaTeX primes: `T2\prime`)
+
+**Guides on BHL**:
+- **Direction**: Parallel to main hinge T1, NOT perpendicular to T2/T2'
+- **Style**: Same as regular guides (dashed lines, distinct color)
+- **Automatic Sibling**: Creating guide on T2 automatically creates sibling guide on T2'
+- **Behavior**: Both guides parallel to T1, pass through corresponding points
+
+**Arc Visualization** (Distance Transport):
+- **Appearance**: Dashed arc connecting point on primary guide to point on sibling guide
+- **Path**: Drawn in paper coordinates (not plane-specific)
+- **Color**: Light gray (#999999)
+- **Opacity**: 0.5 (semi-transparent)
+- **Line Width**: 1.5px
+- **Dash Pattern**: "5,5" (5px dash, 5px gap)
+- **Purpose**: Shows distance transport path (like compass arc on paper)
+- **Toggle**: "Show Distance Arcs" checkbox in settings (default: ON)
+
+**Example Visual**:
+```
+Plane P2 (contains T2):          Plane P1 (contains T1 and T2'):
+                                   
+  T2 (BHHL)                        T1 (main hinge)    T2' (BHHL)
+  |                                |                   |
+  |   P (point)                    |                   |   P' (transported point)
+  |   |                            |                   |   |
+  ----+-------- guide              +--------           ----+-------- sibling guide
+      |        (parallel to T1)    |                       |        (parallel to T1)
+      |                            |                       |
+       `~~~~~~~~~ arc ~~~~~~~~~~~~'
+        (shows distance transport)
+```
+
+#### Guide Creation on BHL
+
+**Tool Workflow**:
+1. Activate Guide Tool (or Guide Perpendicular to Line Tool)
+2. Select a BrokenHalfHingeLine2D (T2 or T2')
+3. Select a point P on that plane
+4. **System automatically**:
+   - Creates primary guide through P, parallel to main hinge T1
+   - Creates sibling guide on the other plane (T2' or T2), also parallel to T1
+   - Computes arc geometry connecting P on primary to P' on sibling
+   - Renders arc on paper overlay
+
+**User Feedback**:
+- Status bar: "Guide created on T2 (parallel to T1). Sibling guide created on T2'."
+- Arc appears immediately, showing distance transport path
+- Both guides highlighted briefly (animation feedback)
+
+#### Distance Transport Operation
+
+**Classical Paper Method (For Reference)**:
+1. Point P exists on T2
+2. User draws guide through P (parallel to T1 in their head)
+3. User measures distance d from P along T2
+4. User opens compass to distance d
+5. User draws arc from P to T2', maintaining distance d
+6. Intersection of arc with T2' gives transported point P'
+
+**Digital Implementation**:
+1. Point P exists on T2 (or user creates it)
+2. User creates guide on T2 through P → sibling guide auto-created on T2'
+3. System renders arc showing the transport path
+4. User can:
+   - Create point at intersection of sibling guide with T2' (transported point P')
+   - Measure distance along T2, transfer to T2' using guides
+   - Use intersection tool to find P' automatically
+
+#### Settings and Toggles
+
+**Show Distance Arcs**:
+- Location: Settings panel or view options
+- Control: Checkbox (☑/☐)
+- Default: ON (checked)
+- Effect: Shows/hides all arc visualizations for BHL sibling guides
+- Persistence: Saved in user preferences
+
+**Visual States**:
+- **Arcs Visible**: Dashed gray arcs connect all sibling guide pairs
+- **Arcs Hidden**: Only guides visible (no connecting arcs)
+- **Hover State**: Arc brightens slightly when hovering over related guide
+
+---
+
 #### Continuous Visual Feedback
 
 The system provides **constant feedback** during tool operation:

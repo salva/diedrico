@@ -63,4 +63,13 @@ export class AddProcessTreeActionOp implements IOperation {
     // The group itself is handled by its own Op.
 
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      action: this.parameters.action,
+      groupId: this.groupId,
+      outputs: this.outputs
+    };
+  }
 }

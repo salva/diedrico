@@ -34,7 +34,6 @@ import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSib
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { createActionGroup } from '@/domain/processTree/ActionGroup';
-import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 
 /**
  * GuideTool using ArgumentCollectorTool framework
@@ -120,15 +119,10 @@ export class GuideTool extends ArgumentCollectorTool {
     const primaryAction = createGuideAction(guideId);
     cmd.addAndExecute(new AddProcessTreeActionOp(primaryAction, group.id));
     
-    // Record ProcessTree action for sibling guide
-    // HalfHingeLine2D.getSiblingInfo() provides sibling plane and sibling HHL info
-    const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
-    
-    if (!siblingInfo) {
-      throw new Error(`Failed to get sibling info for half-hinge-line ${referenceLineId}`);
+    // Record ProcessTree action for sibling guide (only if sibling was created)
+    if (siblingGuideId) {
+      const siblingAction = createSiblingGuideAction(siblingGuideId);
+      cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, group.id));
     }
-    
-    const siblingAction = createSiblingGuideAction(siblingGuideId);
-    cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, group.id));
   }
 }

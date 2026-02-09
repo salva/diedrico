@@ -18,6 +18,7 @@ import { Vector3 } from 'three';
 import { Line2D, Line2DRealization2D } from './Line';
 import { Line3D } from './Line3D';
 import { Line3DRealization3D } from './Element3DRealization3D';
+import { HalfHingeLineRealization2D } from './HalfHingeLineRealization2D';
 import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 
 /**
@@ -45,7 +46,9 @@ export class HalfHingeLine2D extends Line2D {
     hingeLineId: string,
     planeId: string
   ) {
-    super(id, planeId, `HL_${hingeLineId}`);
+    // Create a friendly label like "HHL_{7}" from "hingeLine7"
+    const numericPart = hingeLineId.match(/\d+/)?.[0] || hingeLineId;
+    super(id, planeId, `HHL_{${numericPart}}`);
     this.hingeLineId = hingeLineId;
   }
 
@@ -141,15 +144,20 @@ export class HalfHingeLine2D extends Line2D {
   /**
    * Realize this half-hinge line using canonical coordinates (Phase 84)
    * 
-   * Returns infinite line: point1 (finite) + point2 (direction with z=0)
+   * Returns HalfHingeLineRealization2D with line geometry and guideVector.
+   * guideVector is PERPENDICULAR to the hinge line (for regular hinge lines).
    * 
    * **Phase 84 Architecture**:
    * - Plane1: Returns canonical coordinates (0,0,1) and (1,0,0) directly
    * - Plane2: Projects 3D line back to plane2 using applyMatrix3x4()
    * 
+   * **Phase 101**: Returns HalfHingeLineRealization2D with guideVector
+   * - guideVector is perpendicular to hinge line direction
+   * - Guide2D uses this vector to create guides
+   * 
    * @param world World instance for accessing HingeLine and plane realizations
    */
-  realize2D(world: import('./World').World): Line2DRealization2D {
+  realize2D(world: import('./World').World): HalfHingeLineRealization2D {
     const hingeLine = world.getHingeLineById(this.hingeLineId)!;
 
     // Plane1: Return canonical coordinates directly
@@ -160,13 +168,18 @@ export class HalfHingeLine2D extends Line2D {
         const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
         if (!plane3DReal.isFeasible()) {
           // Return infeasible realization instead of throwing
-          return Line2DRealization2D.createInfeasible();
+          return HalfHingeLineRealization2D.createInfeasible();
         }
       }
 
-      return new Line2DRealization2D(
+      const hingeDirection = new Vector3(1, 0, 0);  // Canonical u-axis direction
+      const guideVector = new Vector3(0, 1, 0);     // Perpendicular (v-axis direction)
+
+      return new HalfHingeLineRealization2D(
         new Vector3(0, 0, 1),    // Canonical origin
-        new Vector3(1, 0, 0)     // Canonical u-axis direction
+        hingeDirection,           // Hinge line direction
+        guideVector,              // Perpendicular for guides
+        true                      // feasible
       );
     }
 
@@ -177,13 +190,21 @@ export class HalfHingeLine2D extends Line2D {
     // Check feasibility of 3D line (depends on plane1)
     if (!line3D.isFeasible()) {
       // Return infeasible realization instead of throwing
-      return Line2DRealization2D.createInfeasible();
+      return HalfHingeLineRealization2D.createInfeasible();
     }
 
     const origin2D = applyMatrix3x4(line3D.point, plane2Real.threeDToPlane);
     const direction2D = applyMatrix3x4(line3D.direction, plane2Real.threeDToPlane);
     
-    return new Line2DRealization2D(origin2D, direction2D);
+    // Compute perpendicular guide vector
+    const guideVector = new Vector3(-direction2D.y, direction2D.x, 0).normalize();
+    
+    return new HalfHingeLineRealization2D(
+      origin2D,
+      direction2D,
+      guideVector,
+      true  // feasible
+    );
   }
 }
 

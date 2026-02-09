@@ -48,6 +48,7 @@ import {
   type LinePrimitive,
   type SegmentPrimitive,
   type CirclePrimitive,
+  type PathPrimitive,
   type ResolvedStyle,
   RenderLayer,
 } from '../domain/presentation/Paper';
@@ -125,6 +126,14 @@ export class PaperService {
             // Guides (both primary and sibling) are perpendicular lines with special rendering
             const primitive = this.guideToPrimitive(line as Guide2D | SiblingGuide2D, realization, transform, context);
             primitives.push(primitive);
+            
+            // Phase 101: If guide has arcGeometry, create arc primitive
+            if ((line as any).arcGeometry) {
+              const arcPrimitive = this.arcGeometryToPrimitive(line.id!, (line as any).arcGeometry, context);
+              if (arcPrimitive) {
+                primitives.push(arcPrimitive);
+              }
+            }
           } else {
             // RENDER: Normal infinite lines
             const primitive = this.lineToPrimitive(line, realization, transform, context);
@@ -600,6 +609,59 @@ export class PaperService {
       fill: 'none',
       opacity: 1.0,  // FR-002: Guides always 100% opacity
       zIndex: 3, // Guides render below regular lines
+    };
+  }
+
+  /**
+   * Convert arc geometry to a PathPrimitive for broken hinge line guide arcs
+   * 
+   * Phase 101: Broken Hinge Lines
+   * Arcs connect sibling guides on broken hinge lines to visualize distance transport.
+   * Rendered as Bezier curves in paper coordinates (already transformed).
+   * 
+   * @param guideId - ID of the guide that owns this arc
+   * @param arcGeometry - Arc geometry with start/end/control points in paper coords
+   * @param context - Primitive generation context
+   * @returns PathPrimitive for the arc, or null if invalid
+   */
+  private arcGeometryToPrimitive(
+    guideId: string,
+    arcGeometry: ArcGeometry,
+    context: PrimitiveContext
+  ): PathPrimitive | null {
+    if (!arcGeometry.startPoint || !arcGeometry.endPoint || !arcGeometry.controlPoints || arcGeometry.controlPoints.length === 0) {
+      return null;
+    }
+
+    // Arc is already in paper coordinates (computed by computeArcGeometry)
+    // We just need to format it as a PathPrimitive
+    // For quadratic Bezier: start, control, end
+    const points: Array<[number, number]> = [
+      [arcGeometry.startPoint.x, arcGeometry.startPoint.y],
+      [arcGeometry.controlPoints[0].x, arcGeometry.controlPoints[0].y],
+      [arcGeometry.endPoint.x, arcGeometry.endPoint.y]
+    ];
+
+    // Use arc style from arcGeometry
+    const style: ResolvedStyle = {
+      stroke: arcGeometry.style.color,
+      strokeWidth: arcGeometry.style.width,
+      strokeStyle: arcGeometry.style.dashArray ? 'dashed' : 'solid',
+      fill: 'none',
+      opacity: arcGeometry.style.opacity,
+      zIndex: 2, // Arcs render below guides
+    };
+
+    return {
+      type: 'path',
+      id: `arc-${guideId}`,
+      sourceEntityId: guideId,
+      planeId: undefined,  // Arcs span multiple planes
+      layer: RenderLayer.Guides,  // Same layer as guides
+      visible: true,
+      style,
+      points,
+      closed: false,
     };
   }
 

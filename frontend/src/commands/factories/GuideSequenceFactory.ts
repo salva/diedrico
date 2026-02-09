@@ -2,6 +2,9 @@ import type { Command } from '../Command';
 import { World } from '../../domain/world/World';
 import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '../operations/world/AddGuideOp';
 import { HalfHingeLine2D } from '../../domain/world/HingeLine';
+import { BrokenHalfHingeLine2D } from '../../domain/world/elements/BrokenHalfHingeLine2D';
+import { computeArcGeometry } from '../../utils/arcGeometry';
+import { Guide2D, SiblingGuide2D } from '../../domain/world/Guide';
 
 /**
  * Factory for creating guide operation sequences.
@@ -64,11 +67,17 @@ export class GuideSequenceFactory {
     
     console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
     
-    // Check if reference line is a HalfHingeLine (has sibling info)
-    const siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+    // Check if reference line is a HalfHingeLine (regular or broken)
+    // Try HalfHingeLine2D first
+    let siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+    
+    // If not regular HHL, try BrokenHalfHingeLine2D
+    if (!siblingInfo) {
+      siblingInfo = BrokenHalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+    }
     
     if (!siblingInfo) {
-      console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine`);
+      console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D`);
       return { guideId };
     }
     
@@ -92,6 +101,28 @@ export class GuideSequenceFactory {
       `[GuideSequenceFactory] Created sibling guide ${siblingGuideId} ` +
       `in plane ${siblingInfo.siblingPlaneId}`
     );
+    
+    // Phase 101: If reference line is BrokenHalfHingeLine2D, compute arc geometry
+    const referenceLine = world.getLine2D(referenceLineId);
+    if (referenceLine instanceof BrokenHalfHingeLine2D) {
+      console.log(`[GuideSequenceFactory] Reference is BrokenHalfHingeLine2D - computing arc geometry`);
+      
+      const primaryGuideTyped = primaryGuide as Guide2D;
+      const siblingGuide = world.getLine2D(siblingGuideId) as SiblingGuide2D;
+      
+      // Compute arc geometry connecting the two guides
+      const arcGeometry = computeArcGeometry(world, primaryGuideTyped, siblingGuide);
+      
+      if (arcGeometry) {
+        // Store arc in BOTH guides for rendering
+        primaryGuideTyped.arcGeometry = arcGeometry;
+        siblingGuide.arcGeometry = arcGeometry;
+        
+        console.log(`[GuideSequenceFactory] Arc geometry computed and stored`);
+      } else {
+        console.warn(`[GuideSequenceFactory] Failed to compute arc geometry`);
+      }
+    }
     
     return { guideId, siblingGuideId };
   }

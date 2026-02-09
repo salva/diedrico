@@ -14,6 +14,7 @@ import type { Segment3DFromProjections } from '../Segment3D';
 import type { FixedProjectionPlane, AuxiliaryProjectionPlane } from '../ProjectionPlane';
 import type { Plane3DFixed, Plane3DFromTraces } from '../Plane';
 import type { HingeLine } from '../HingeLine';
+import type { BrokenHingeLine } from '../BrokenHingeLine';
 
 /**
  * Descriptor for Point3DByCoordinates - free 3D point defined by coordinates
@@ -230,3 +231,26 @@ export class HingeLineDescriptor implements ElementDescriptor<HingeLine> {
     ];
   }
 }
+
+/**
+ * Descriptor for BrokenHingeLine - distance transport between auxiliary plane traces
+ * Phase 101: Shows connection between auxiliary and other planes via main hinge
+ */
+export class BrokenHingeLineDescriptor implements ElementDescriptor<BrokenHingeLine> {
+  getTypeName(_element: BrokenHingeLine): string {
+    return 'Broken Hinge Line';
+  }
+  
+  getConstructionDescription(element: BrokenHingeLine, world: World): DescriptionPart[] {
+    const plane1 = world.getProjectionPlaneById(element.plane1Id);
+    const plane2 = world.getProjectionPlaneById(element.plane2Id);
+    
+    return [
+      { type: 'text', content: 'distance transport between ' },
+      { type: 'label', content: plane1?.label || plane1?.name || element.plane1Id, elementId: element.plane1Id },
+      { type: 'text', content: ' and ' },
+      { type: 'label', content: plane2?.label || plane2?.name || element.plane2Id, elementId: element.plane2Id }
+    ];
+  }
+}
+

@@ -19193,3 +19193,522 @@ const plane = world.getProjectionPlaneByLabel('P_H')!;
 
 See [tasks.md](tasks.md) for detailed task breakdown (T1625-T1675).
 
+---
+
+## Phase 101: Broken Hinge Lines (BHL) and Distance Transport Guides
+
+**Status**: 📋 FOR PLANNING (2026-02-07)
+
+### Overview
+
+Broken Hinge Lines (BHL) represent traces that appear on different planes after a 3D plane is folded. When an auxiliary projection plane is created by folding plane Q using trace T1 as the hinge, trace T2 (on plane P2) appears at position T2' (on plane P1). **T2 and T2' are projections of the same 3D line**, forming a "broken" hinge line.
+
+**Key Geometric Difference from Regular Hinge Lines**:
+- **Regular HingeLine**: Guides are perpendicular to the hinge (plane perpendicular to both projection planes)
+- **Broken HingeLine**: Guides must be **parallel to the main hinge T1** (planes containing T1 intersecting plane Q)
+
+Being perpendicular to T2/T2' has NO geometric significance. Only directions parallel to the folding hinge preserve distance relationships.
+
+### Domain Classes
+
+#### 1. BrokenHingeLine (extends HingeLine)
+
+```typescript
+/**
+ * Broken Hinge Line - represents a 3D line that appears as two separate
+ * projections (T2 on P2, T2' on P1) after a plane is folded using T1 as hinge
+ */
+export class BrokenHingeLine extends HingeLine {
+  readonly type = 'BrokenHingeLine';
+  
+  // Reference to the main hinge used for folding
+  readonly mainHingeId: string;  // ID of the HingeLine (T1) used for folding
+  
+  // The auxiliary projection plane this BHL belongs to
+  readonly auxiliaryPlaneId: string;
+  
+  constructor(
+    id: string,
+    plane1Id: string,  // Base plane (contains T1 and T2')
+    plane2Id: string,  // Original plane (contains T2)
+    mainHingeId: string,
+    auxiliaryPlaneId: string
+  ) {
+    super(id, plane1Id, plane2Id);
+    this.mainHingeId = mainHingeId;
+    this.auxiliaryPlaneId = auxiliaryPlaneId;
+  }
+  
+  /**
+   * Realize BHL in 3D - same as regular HingeLine
+   * Returns the 3D line geometry (canonical coordinates in plane1)
+   */
+  realize3D(world: World): HingeLineRealization3D {
+    // Same implementation as HingeLine
+    return super.realize3D(world);
+  }
+}
+```
+
+#### 2. BrokenHalfHingeLine2D (extends HalfHingeLine2D)
+
+```typescript
+/**
+ * Broken Half Hinge Line 2D - projection of BHL on one plane
+ * Contains parallelVector (to main hinge) instead of perpendicular vector
+ */
+export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
+  readonly type = 'BrokenHalfHingeLine2D';
+  
+  // Reference to the main hinge (T1) used for folding
+  readonly mainHingeId: string;
+  
+  // Reference to the sibling BrokenHalfHingeLine2D on the other plane
+  readonly siblingBHHLId: string;
+  
+  constructor(
+    id: string,
+    planeId: string,
+    brokenHingeLineId: string,
+    mainHingeId: string,
+    siblingBHHLId: string
+  ) {
+    super(id, planeId, brokenHingeLineId);
+    this.mainHingeId = mainHingeId;
+    this.siblingBHHLId = siblingBHHLId;
+  }
+  
+  /**
+   * Realize BHHL in 2D
+   * Returns line geometry with PARALLEL vector (not perpendicular)
+   */
+  realize2D(world: World): BrokenHalfHingeLineRealization2D {
+    // Get the BrokenHingeLine to access mainHingeId
+    const bhl = world.getHingeLineById(this.brokenHingeLineId) as BrokenHingeLine;
+    
+    // Get the main hinge (T1) that this plane is folded over
+    const mainHinge = world.getHingeLineById(bhl.mainHingeId);
+    
+    // Realize the BHHL line geometry (same as regular HHL)
+    const lineGeometry = super.realize2D(world);
+    
+    // Get the main hinge's projection on THIS plane
+    const mainHingeHHLs = world.getHalfHingeLinesByHingeLineId(mainHinge.id);
+    const mainHingeOnThisPlane = mainHingeHHLs.find(hhl => hhl.planeId === this.planeId);
+    
+    if (!mainHingeOnThisPlane) {
+      throw new Error(
+        `Main hinge ${mainHinge.id} not found on plane ${this.planeId}`
+      );
+    }
+    
+    // Get the main hinge's direction vector (for parallel guides)
+    const mainHingeRealization = mainHingeOnThisPlane.realize2D(world);
+    const parallelVector = mainHingeRealization.direction.clone().normalize();
+    
+    // Return realization with parallel vector
+    return new BrokenHalfHingeLineRealization2D(
+      this.id,
+      this.planeId,
+      lineGeometry.point,
+      lineGeometry.direction,
+      parallelVector,  // NEW: direction parallel to main hinge
+      true
+    );
+  }
+}
+```
+
+#### 3. BrokenHalfHingeLineRealization2D (new class)
+
+```typescript
+/**
+ * Realization of BrokenHalfHingeLine2D with parallel vector
+ */
+export class BrokenHalfHingeLineRealization2D extends LineRealization2D {
+  readonly type = 'BrokenHalfHingeLineRealization2D';
+  
+  // Direction parallel to main hinge T1 (for guide creation)
+  readonly parallelVector: THREE.Vector2;
+  
+  constructor(
+    elementId: string,
+    planeId: string,
+    point: THREE.Vector2,
+    direction: THREE.Vector2,
+    parallelVector: THREE.Vector2,
+    feasible: boolean
+  ) {
+    super(elementId, planeId, point, direction, feasible);
+    this.parallelVector = parallelVector;
+  }
+}
+```
+
+### Guide Direction Logic
+
+#### Modified Guide2DPerpendicularToLine
+
+```typescript
+export class Guide2DPerpendicularToLine extends Guide2D {
+  readonly lineId: string;
+  readonly pointId: string;
+  
+  realize2D(world: World): LineRealization2D {
+    const line = world.getElement2DById(this.lineId);
+    const point = world.getElement2DById(this.pointId) as Point2D;
+    const pointRealization = point.realize2D(world);
+    
+    if (!pointRealization.feasible) {
+      return new LineRealization2D(
+        this.id,
+        this.planeId,
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 0),
+        false
+      );
+    }
+    
+    // Check if line is a BrokenHalfHingeLine2D
+    if (line instanceof BrokenHalfHingeLine2D) {
+      // For BHHL: use parallel vector (to main hinge)
+      const bhhlRealization = line.realize2D(world) as BrokenHalfHingeLineRealization2D;
+      
+      return new LineRealization2D(
+        this.id,
+        this.planeId,
+        pointRealization.position,
+        bhhlRealization.parallelVector.clone(),  // Parallel to main hinge
+        true
+      );
+    } else {
+      // For regular line/HHL: use perpendicular direction (current behavior)
+      const lineRealization = line.realize2D(world);
+      const perpDirection = new THREE.Vector2(
+        -lineRealization.direction.y,
+        lineRealization.direction.x
+      ).normalize();
+      
+      return new LineRealization2D(
+        this.id,
+        this.planeId,
+        pointRealization.position,
+        perpDirection,
+        true
+      );
+    }
+  }
+}
+```
+
+### Sibling Guide Auto-Creation
+
+#### Modified AddGuide2DPerpendicularToLineOp
+
+```typescript
+export class AddGuide2DPerpendicularToLineOp extends Operation {
+  // ... existing fields ...
+  
+  apply(context: OperationContext): void {
+    const line = context.world.getElement2DById(this.lineId);
+    
+    // Create primary guide (existing logic)
+    const guide = new Guide2DPerpendicularToLine(/* ... */);
+    context.world.addElement2D(guide);
+    
+    // Check if line is a BHHL → create sibling guide
+    if (line instanceof BrokenHalfHingeLine2D) {
+      const bhhl = line as BrokenHalfHingeLine2D;
+      
+      // Get sibling BHHL on the other plane
+      const siblingBHHL = context.world.getElement2DById(bhhl.siblingBHHLId);
+      
+      if (siblingBHHL instanceof BrokenHalfHingeLine2D) {
+        // Find corresponding point on sibling plane
+        // (point where primary guide intersects the main hinge)
+        const correspondingPoint = this.computeCorrespondingPoint(
+          context.world,
+          this.pointId,
+          bhhl,
+          siblingBHHL
+        );
+        
+        // Create sibling guide
+        const siblingGuide = new SiblingGuide2D(
+          generateId('siblingGuide'),
+          siblingBHHL.planeId,
+          siblingBHHL.id,
+          correspondingPoint.id,
+          guide.id  // Reference to primary guide
+        );
+        
+        // Compute arc geometry
+        const arcGeometry = computeArcGeometry(
+          context.world,
+          guide,
+          siblingGuide
+        );
+        siblingGuide.arcGeometry = arcGeometry;
+        
+        context.world.addElement2D(siblingGuide);
+        
+        // Store sibling ID in outputs for undo
+        this.outputs.siblingGuideId = siblingGuide.id;
+      }
+    }
+  }
+  
+  undo(context: OperationContext): void {
+    // Remove sibling guide if it was created
+    if (this.outputs.siblingGuideId) {
+      context.world.removeElement2DById(this.outputs.siblingGuideId);
+    }
+    
+    // Remove primary guide (existing logic)
+    context.world.removeElement2DById(this.outputs.guideId);
+  }
+}
+```
+
+### Arc Geometry
+
+#### ArcGeometry Interface
+
+```typescript
+/**
+ * Arc geometry for visualizing distance transport between BHL siblings
+ */
+export interface ArcGeometry {
+  // Start point (on primary BHHL, e.g., T2)
+  startPoint: THREE.Vector2;  // Paper coordinates
+  
+  // End point (on sibling BHHL, e.g., T2')
+  endPoint: THREE.Vector2;    // Paper coordinates
+  
+  // Control points for arc rendering (Bezier curve or circular arc)
+  controlPoints: THREE.Vector2[];
+  
+  // Arc center and radius (if circular arc)
+  center?: THREE.Vector2;
+  radius?: number;
+  
+  // Arc styling
+  style: {
+    color: string;        // e.g., '#999999' (gray)
+    dashArray: string;    // e.g., '5,5' for dashed line
+    width: number;        // Line width in pixels
+    opacity: number;      // 0.0 to 1.0
+  };
+}
+```
+
+#### computeArcGeometry() Utility
+
+```typescript
+/**
+ * Compute arc geometry connecting primary and sibling guide points
+ */
+export function computeArcGeometry(
+  world: World,
+  primaryGuide: Guide2D,
+  siblingGuide: SiblingGuide2D
+): ArcGeometry {
+  // Realize both guides to get their points
+  const primaryRealization = primaryGuide.realize2D(world);
+  const siblingRealization = siblingGuide.realize2D(world);
+  
+  // Get planes
+  const primaryPlane = world.getProjectionPlaneById(primaryGuide.planeId);
+  const siblingPlane = world.getProjectionPlaneById(siblingGuide.planeId);
+  
+  // Transform guide points to paper coordinates
+  const startPoint = primaryPlane.planeToPaper.applyToPoint(
+    primaryRealization.point
+  );
+  const endPoint = siblingPlane.planeToPaper.applyToPoint(
+    siblingRealization.point
+  );
+  
+  // Compute control point for quadratic Bezier curve
+  // (midpoint with slight offset perpendicular to line segment)
+  const midpoint = new THREE.Vector2(
+    (startPoint.x + endPoint.x) / 2,
+    (startPoint.y + endPoint.y) / 2
+  );
+  
+  // Perpendicular offset (10% of distance)
+  const dx = endPoint.x - startPoint.x;
+  const dy = endPoint.y - startPoint.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const offset = distance * 0.1;
+  
+  const controlPoint = new THREE.Vector2(
+    midpoint.x - dy / distance * offset,
+    midpoint.y + dx / distance * offset
+  );
+  
+  return {
+    startPoint,
+    endPoint,
+    controlPoints: [controlPoint],
+    style: {
+      color: '#999999',
+      dashArray: '5,5',
+      width: 1.5,
+      opacity: 0.5
+    }
+  };
+}
+```
+
+### Integration with Auxiliary Plane Creation
+
+#### AddBrokenHingeLineOp (new operation)
+
+```typescript
+/**
+ * Operation to create a BrokenHingeLine and its two BrokenHalfHingeLine2D projections
+ */
+export class AddBrokenHingeLineOp extends Operation {
+  readonly opType = 'AddBrokenHingeLineOp';
+  
+  constructor(
+    public brokenHingeLineId: string,
+    public plane1Id: string,
+    public plane2Id: string,
+    public mainHingeId: string,
+    public auxiliaryPlaneId: string,
+    public bhhl1Id: string,  // BHHL on plane1
+    public bhhl2Id: string   // BHHL on plane2
+  ) {
+    super();
+  }
+  
+  apply(context: OperationContext): void {
+    // Create BrokenHingeLine
+    const bhl = new BrokenHingeLine(
+      this.brokenHingeLineId,
+      this.plane1Id,
+      this.plane2Id,
+      this.mainHingeId,
+      this.auxiliaryPlaneId
+    );
+    context.world.addHingeLine(bhl);
+    
+    // Create two BrokenHalfHingeLine2D (siblings)
+    const bhhl1 = new BrokenHalfHingeLine2D(
+      this.bhhl1Id,
+      this.plane1Id,
+      this.brokenHingeLineId,
+      this.mainHingeId,
+      this.bhhl2Id  // sibling
+    );
+    const bhhl2 = new BrokenHalfHingeLine2D(
+      this.bhhl2Id,
+      this.plane2Id,
+      this.brokenHingeLineId,
+      this.mainHingeId,
+      this.bhhl1Id  // sibling
+    );
+    
+    context.world.addElement2D(bhhl1);
+    context.world.addElement2D(bhhl2);
+  }
+  
+  undo(context: OperationContext): void {
+    context.world.removeElement2DById(this.bhhl1Id);
+    context.world.removeElement2DById(this.bhhl2Id);
+    context.world.removeHingeLineById(this.brokenHingeLineId);
+  }
+}
+```
+
+#### Modified Auxiliary Plane Creation
+
+In Phase 82's auxiliary plane creation, after creating the plane, automatically create the BrokenHingeLine:
+
+```typescript
+// In CreateProjectionPlaneTool.executeWithArguments()
+// ... after auxiliary plane created ...
+
+// Create BrokenHingeLine for T2 and T2'
+const addBrokenHingeLineOp = new AddBrokenHingeLineOp(
+  generateId('brokenHingeLine'),
+  args.t1HingeTrace.planeId,  // plane1 (base plane)
+  args.t2OtherTrace.planeId,  // plane2 (original plane)
+  hingeLineId,                // main hinge (T1)
+  auxiliaryPlaneId,
+  generateId('bhhl'),         // BHHL on plane1 (T2')
+  generateId('bhhl')          // BHHL on plane2 (T2)
+);
+command.addAndExecute(addBrokenHingeLineOp);
+```
+
+### Serialization
+
+**BrokenHingeLine**:
+```json
+{
+  "type": "BrokenHingeLine",
+  "id": "bhl1",
+  "plane1Id": "projPlaneH",
+  "plane2Id": "projPlaneV",
+  "mainHingeId": "hl1",
+  "auxiliaryPlaneId": "auxPlane1"
+}
+```
+
+**BrokenHalfHingeLine2D**:
+```json
+{
+  "type": "BrokenHalfHingeLine2D",
+  "id": "bhhl1",
+  "planeId": "projPlaneH",
+  "brokenHingeLineId": "bhl1",
+  "mainHingeId": "hl1",
+  "siblingBHHLId": "bhhl2"
+}
+```
+
+**SiblingGuide2D with Arc**:
+```json
+{
+  "type": "SiblingGuide2D",
+  "id": "siblingGuide1",
+  "planeId": "projPlaneV",
+  "primaryGuideId": "guide1",
+  "hingeLineId": "bhl1",
+  "arcGeometry": {
+    "startPoint": { "x": 10, "y": 20 },
+    "endPoint": { "x": 15, "y": 25 },
+    "controlPoints": [ { "x": 12.5, "y": 22.5 } ],
+    "style": {
+      "color": "#999999",
+      "dashArray": "5,5",
+      "width": 1.5,
+      "opacity": 0.5
+    }
+  }
+}
+```
+
+### Files Modified/Created
+
+**New Files**:
+- `frontend/src/domain/world/BrokenHingeLine.ts` (BrokenHingeLine class)
+- `frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts` (BrokenHalfHingeLine2D class)
+- `frontend/src/domain/world/BrokenHalfHingeLineRealization2D.ts` (realization class)
+- `frontend/src/types/arcGeometry.ts` (ArcGeometry interface)
+- `frontend/src/utils/arcGeometryUtils.ts` (computeArcGeometry utility)
+- `frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts` (operation)
+
+**Modified Files**:
+- `frontend/src/domain/world/elements/Guide2D.ts` (Guide2DPerpendicularToLine)
+- `frontend/src/commands/operations/elements/AddGuide2DPerpendicularToLineOp.ts` (sibling creation)
+- `frontend/src/tools/CreateProjectionPlaneTool.ts` (auto-create BHL)
+- `frontend/src/components/workspace/SvgCanvas.vue` (arc rendering)
+- `frontend/src/services/ProjectService.ts` (serialization)
+
+### Testing
+
+See tasks.md for complete test breakdown (T1820-T1823 for unit tests, T1826-T1828 for guide tests, T1832-T1834 for sibling tests, T1847-T1848 for integration tests, T1854 for E2E test).

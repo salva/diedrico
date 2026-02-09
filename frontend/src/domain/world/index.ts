@@ -50,3 +50,8 @@ export {
 export {
   Plane3DFromTraces
 } from './Plane';
+
+// Phase 101: Broken Hinge Lines
+export { BrokenHingeLine } from './BrokenHingeLine';
+export { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
+export { HalfHingeLineRealization2D } from './HalfHingeLineRealization2D';

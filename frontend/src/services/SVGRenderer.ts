@@ -127,12 +127,24 @@ export class SVGRenderer {
     );
 
     // Build SVG path data
-    let pathData = `M ${transformedPoints[0].x} ${transformedPoints[0].y}`;
-    for (let i = 1; i < transformedPoints.length; i++) {
-      pathData += ` L ${transformedPoints[i].x} ${transformedPoints[i].y}`;
-    }
-    if (primitive.closed) {
-      pathData += ' Z';
+    // Phase 101: Support quadratic Bezier curves for broken hinge line arcs
+    // If exactly 3 points and not closed: M start Q control end (quadratic Bezier)
+    // Otherwise: M start L ... (line segments)
+    let pathData: string;
+    
+    if (transformedPoints.length === 3 && !primitive.closed) {
+      // Quadratic Bezier curve
+      const [start, control, end] = transformedPoints;
+      pathData = `M ${start.x} ${start.y} Q ${control.x} ${control.y} ${end.x} ${end.y}`;
+    } else {
+      // Line segments (original behavior)
+      pathData = `M ${transformedPoints[0].x} ${transformedPoints[0].y}`;
+      for (let i = 1; i < transformedPoints.length; i++) {
+        pathData += ` L ${transformedPoints[i].x} ${transformedPoints[i].y}`;
+      }
+      if (primitive.closed) {
+        pathData += ' Z';
+      }
     }
 
     return {

@@ -39,4 +39,14 @@ export class AddProcessTreeActionGroupOp implements IOperation {
     const processTree = world.getProcessTree();
     processTree.removeActionGroup(this.group.id);
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      groupId: this.parameters.groupId,
+      isOutput: this.parameters.isOutput,
+      isAuxiliary: this.parameters.isAuxiliary,
+      outputs: this.outputs
+    };
+  }
 }

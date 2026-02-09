@@ -344,6 +344,23 @@ describe('ProjectService - Operation Serialization/Deserialization', () => {
       expect(op.type).toBe('AddHalfHingeLine2D');
     });
 
+    it('should serialize and deserialize AddBrokenHingeLine', () => {
+      const serialized = {
+        opType: 'AddBrokenHingeLine',
+        mainHingeId: 'hinge-line-1',
+        auxiliaryPlaneId: 'aux-plane-1',
+        plane1Id: 'plane-1',
+        plane2Id: 'plane-2',
+        brokenHingeLineId: 'broken-hinge-1',
+        bhhl1Id: 'bhhl-1',
+        bhhl2Id: 'bhhl-2'
+      };
+
+      const op = ProjectService.reconstructOperation(serialized);
+      expect(op).toBeDefined();
+      expect(op.type).toBe('AddBrokenHingeLine');
+    });
+
     it('should serialize and deserialize AddAuxiliaryProjectionPlane', () => {
       const serialized = {
         opType: 'AddAuxiliaryProjectionPlane',

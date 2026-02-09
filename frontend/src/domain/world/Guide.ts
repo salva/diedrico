@@ -22,6 +22,8 @@ import { Vector3 } from 'three';
 import { Line2DPerpendicularToLine, Line2DRealization2D, Line2D, Line2DType } from './Line';
 import { intersectLineLine } from '@/domain/calculations/Intersections';
 import { HalfHingeLine2D } from './HingeLine';
+import { HalfHingeLineRealization2D } from './HalfHingeLineRealization2D';
+import type { ArcGeometry } from '@/types/arcGeometry';
 
 /**
  * Guide2D - Guide line perpendicular to reference line (hinge line or BHL)
@@ -37,6 +39,7 @@ import { HalfHingeLine2D } from './HingeLine';
 export class Guide2D extends Line2DPerpendicularToLine {
   visible: boolean = true;  // Whether guide is visible in the canvas
   siblingGuideId?: string;  // ID of the sibling guide in the paired plane
+  arcGeometry?: ArcGeometry;  // Arc between this guide and sibling (Phase 101: Broken Hinge Lines)
 
   constructor(
     id: string,
@@ -44,11 +47,13 @@ export class Guide2D extends Line2DPerpendicularToLine {
     throughPointId: string,
     planeId: string,
     label?: string,
-    siblingGuideId?: string
+    siblingGuideId?: string,
+    arcGeometry?: ArcGeometry
   ) {
     // Phase 52: Pass 'guide' as type to parent constructor
     super(id, referenceLineId, throughPointId, planeId, label, 'guide');
     this.siblingGuideId = siblingGuideId;
+    this.arcGeometry = arcGeometry;
   }
 
   clone(): Guide2D {
@@ -58,7 +63,8 @@ export class Guide2D extends Line2DPerpendicularToLine {
       this.throughPointId,
       this.planeId,
       this.label,
-      this.siblingGuideId
+      this.siblingGuideId,
+      this.arcGeometry
     );
   }
 
@@ -69,11 +75,16 @@ export class Guide2D extends Line2DPerpendicularToLine {
    * - Missing dependencies: throw Error with [INTERNAL ERROR] prefix
    * - Geometric failures: return realization with feasible=false
    * 
+   * Phase 101: For HalfHingeLine realizations, use the guideVector from realization
+   * - HalfHingeLineRealization2D: use realization.guideVector (perpendicular for regular, parallel to T1 for broken)
+   * - Other lines: compute perpendicular direction (90-degree rotation)
+   * 
    * Algorithm:
    * 1. Get reference line's realization (point + direction)
-   * 2. Compute perpendicular direction using 90-degree rotation
-   * 3. Get the through-point position
-   * 4. Return guide as line through the point with perpendicular direction
+   * 2. If HalfHingeLineRealization2D: use its guideVector
+   * 3. Otherwise: Compute perpendicular direction using 90-degree rotation
+   * 4. Get the through-point position
+   * 5. Return guide as line through the point with computed direction
    * 
    * Perpendicular in 2D homogeneous coordinates:
    * - If line has direction (dx, dy, 0), perpendicular is (-dy, dx, 0)
@@ -117,23 +128,33 @@ export class Guide2D extends Line2DPerpendicularToLine {
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // Compute perpendicular direction using 90-degree rotation
-    // If line direction is (dx, dy, 0), perpendicular is (-dy, dx, 0)
-    const lineDirection = referenceLine.getDirection();
-    const perpendicularDirection = new Vector3(
-      -lineDirection.y,  // -dy
-      lineDirection.x,   // dx
-      0                  // Direction vector, no translation
-    );
+    // Determine guide direction based on reference line type
+    let guideDirection: Vector3;
+    
+    if (referenceLine instanceof HalfHingeLineRealization2D) {
+      // Phase 101: For hinge lines (regular or broken), use the guideVector from realization
+      // - Regular HalfHingeLine2D: guideVector is perpendicular to hinge
+      // - BrokenHalfHingeLine2D: guideVector is parallel to main hinge T1
+      guideDirection = referenceLine.getGuideVector();
+    } else {
+      // For other lines: compute perpendicular direction using 90-degree rotation
+      // If line direction is (dx, dy, 0), perpendicular is (-dy, dx, 0)
+      const lineDirection = referenceLine.getDirection();
+      guideDirection = new Vector3(
+        -lineDirection.y,  // -dy
+        lineDirection.x,   // dx
+        0                  // Direction vector, no translation
+      );
+    }
 
     // Check for degenerate case (shouldn't happen if reference line is valid)
-    if (perpendicularDirection.lengthSq() < 1e-10) {
-      console.warn(`Guide ${this.id}: reference line has zero direction`);
+    if (guideDirection.lengthSq() < 1e-10) {
+      console.warn(`Guide ${this.id}: computed guide direction has zero length`);
       return new Line2DRealization2D(throughPointRealization.position.clone(), new Vector3(1, 0, 0), false);
     }
 
-    // Create guide realization: line through throughPoint with perpendicular direction
-    return new Line2DRealization2D(throughPointRealization.position.clone(), perpendicularDirection, true);
+    // Create guide realization: line through throughPoint with computed direction
+    return new Line2DRealization2D(throughPointRealization.position.clone(), guideDirection, true);
   }
 }
 
@@ -167,17 +188,20 @@ export class SiblingGuide2D extends Line2D {
   readonly referenceLineId: string;  // HalfHingeLine2D in sibling plane
   primaryGuideId: string;  // ID of the primary guide this sibling derives from
   visible: boolean = true;  // Whether guide is visible in the canvas
+  arcGeometry?: ArcGeometry;  // Arc between this guide and primary (Phase 101: Broken Hinge Lines)
 
   constructor(
     id: string,
     referenceLineId: string,
     planeId: string,
     primaryGuideId: string,
-    label?: string
+    label?: string,
+    arcGeometry?: ArcGeometry
   ) {
     super(id, planeId, label);
     this.referenceLineId = referenceLineId;
     this.primaryGuideId = primaryGuideId;
+    this.arcGeometry = arcGeometry;
   }
 
   clone(): SiblingGuide2D {
@@ -186,7 +210,8 @@ export class SiblingGuide2D extends Line2D {
       this.referenceLineId,
       this.planeId,
       this.primaryGuideId,
-      this.label
+      this.label,
+      this.arcGeometry
     );
   }
 
