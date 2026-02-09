@@ -515,6 +515,19 @@ onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeyDown);
 });
 
+// Watch for tool changes and reset tool state
+// This prevents ArgumentCollectorTool state from persisting across tool switches
+watch(() => toolStore.currentTool.value, (newTool, oldTool) => {
+  if (oldTool && oldTool !== newTool) {
+    // Reset the previous tool to clear any accumulated state
+    const previousTool = tools[oldTool];
+    if (previousTool && 'reset' in previousTool && typeof previousTool.reset === 'function') {
+      previousTool.reset();
+      console.log(`[SvgCanvas] Reset tool state for: ${oldTool}`);
+    }
+  }
+});
+
 // Get plane transforms for INPUT (canvas click → plane coordinates)
 function getPlaneTransformsForInput(): Map<string, Matrix3> {
   const transforms = new Map<string, Matrix3>();
