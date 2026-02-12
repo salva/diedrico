@@ -20,7 +20,8 @@ import type { World } from './World';
 import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
-import { HalfHingeLine2D } from './HingeLine';
+import { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
+import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 import { assert } from '@/utils/assert';
 
 export type Point2DType = 
@@ -601,7 +602,6 @@ export class SiblingIntersectionPoint2D extends Point2D {
    */
   realize2D(world: World): Point2DRealization2D {
     // Get primary intersection point's 2D realization
-    // Use world.getPoint2D() which handles hierarchical IDs properly
     const primaryPoint = world.getPoint2D(this.primaryIntersectionId);
     assert(primaryPoint, `[SiblingIntersectionPoint2D] Primary point ${this.primaryIntersectionId} not found for point ${this.id}`);
     const primaryRealization = primaryPoint.realize2D(world);
@@ -609,62 +609,50 @@ export class SiblingIntersectionPoint2D extends Point2D {
     
     // Propagate infeasibility from primary
     if (!primaryRealization.feasible) {
-      console.warn('[SiblingIntersectionPoint2D] Primary point is infeasible, marking sibling as infeasible');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
 
-    // VALIDATION: Verify parametric consistency assumption (inexpensive check)
-    // Find HalfHingeLine2D involved in primary intersection to validate consistency
+    // Check if primary intersection involves a BrokenHalfHingeLine2D.
+    // If so, both BHHLs are 2D representations of the SAME 3D BrokenHingeLine,
+    // and the twin position must be found via 3D round-trip (not coordinate cloning).
     const primaryPointDomain = world.getPoint2D(this.primaryIntersectionId);
-    if (primaryPointDomain && 'elementAId' in primaryPointDomain && 'elementBId' in primaryPointDomain) {
-      const primaryIntersection = primaryPointDomain as any; // Type assertion for intersection-specific properties
-      const elemA = world.getLine2D(primaryIntersection.elementAId);
-      const elemB = world.getLine2D(primaryIntersection.elementBId);
-      
-      // Check if either element is a HalfHingeLine2D
-      const primaryHHL = (elemA instanceof HalfHingeLine2D ? elemA : elemB instanceof HalfHingeLine2D ? elemB : null) as any;
-      if (primaryHHL) {
-        // Find corresponding HalfHingeLine2D on sibling plane
-        const hingeLineId = primaryHHL.hingeLineId;
-        const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPointDomain);
-        if (siblingPlaneId) {
-          const siblingPlane = world.getProjectionPlaneById(siblingPlaneId);
-          assert(siblingPlane, `[SiblingIntersectionPoint2D] Sibling plane ${siblingPlaneId} not found for point ${this.id}`);
-          const siblingHHL = siblingPlane.getAllLines()
-            .find((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === hingeLineId);
-          
-          if (siblingHHL) {
-            // Validate parametric consistency: Q=Q', D=D'
-            const EPSILON = 1e-10;
-            // Phase 84: Validate parametric consistency via realize2D()
-            const primaryRealization = primaryHHL.realize2D(world);
-            const siblingRealization = siblingHHL.realize2D(world);
-            const pointDist = primaryRealization.point1.distanceTo(siblingRealization.point1);
-            const dirDist = primaryRealization.point2.distanceTo(siblingRealization.point2);
-            
-            if (pointDist > EPSILON || dirDist > EPSILON) {
-              throw new Error(
-                `[SiblingIntersectionPoint2D] Parametric consistency violated for ${hingeLineId}!\n` +
-                `  Point distance: ${pointDist}, Direction distance: ${dirDist}\n` +
-                `  Coordinate cloning requires both HalfHingeLine2D use identical (Q, D).\n` +
-                `  This should have been caught during HingeLine construction.`
-              );
-            }
-          }
+    if (primaryPointDomain && 'line1Id' in primaryPointDomain && 'line2Id' in primaryPointDomain) {
+      const intersection = primaryPointDomain as Point2DLineLineIntersection;
+      const line1 = world.getLine2D(intersection.line1Id);
+      const line2 = world.getLine2D(intersection.line2Id);
+
+      const primaryBHHL = (
+        line1 instanceof BrokenHalfHingeLine2D ? line1 :
+        line2 instanceof BrokenHalfHingeLine2D ? line2 :
+        null
+      );
+
+      if (primaryBHHL) {
+        // BHHL 3D round-trip: lift the primary position to 3D and project to sibling plane.
+        // This is correct because both BHHLs represent the same 3D BHL — the primary
+        // intersection point on T2 and the sibling intersection on T2' are the same 3D point.
+        const R = primaryRealization.position;
+        const primaryPlaneReal3D = world.getProjectionPlane3DRealization(primaryBHHL.planeId);
+        const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
+
+        if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
+          console.warn('[SiblingIntersectionPoint2D] 3D plane realization infeasible for BHHL round-trip');
+          return new Point2DRealization2D(new Vector3(0, 0, 1), false);
         }
+
+        // Lift R to 3D (Vector3 → Vector4 homogeneous)
+        const R_3D = applyMatrix4x3(R, primaryPlaneReal3D.planeTo3D);
+        // Project back to sibling plane 2D (Vector4 → Vector3 homogeneous)
+        const R_prime = applyMatrix3x4(R_3D, siblingPlaneReal3D.threeDToPlane);
+
+        console.log(`[SiblingIntersectionPoint2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → R'=(${R_prime.x.toFixed(2)},${R_prime.y.toFixed(2)})`);
+        return new Point2DRealization2D(new Vector3(R_prime.x, R_prime.y, 1), true);
       }
     }
 
-    // Coordinate cloning optimization: mathematically equivalent to parametric scalar transfer
-    // when HalfHingeLine2D parametric consistency holds (Q=Q', D=D')
-    // 
-    // Mathematical basis:
-    //   Primary: R = Q + d·D  (intersection at scalar parameter d)
-    //   Sibling: R' = Q' + d·D'  (same scalar d, consistent Q' and D')
-    //   Result: R' = Q + d·D = R  (coordinates identical)
-    // 
-    // ASSUMPTION: Both HalfHingeLine2D objects use identical (Q, D) parameterization
-    // This is enforced during HingeLine construction and validated above
+    // Regular HHL case: Coordinate cloning is correct because both HalfHingeLine2D
+    // objects share identical parametric representation (same Q and D in local coords).
+    //   Primary: R = Q + d·D   Sibling: R' = Q' + d·D' = Q + d·D = R
     return new Point2DRealization2D(primaryRealization.position.clone());
   }
 }
