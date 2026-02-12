@@ -73,10 +73,22 @@ export class AddBrokenHingeLineOp implements IOperation {
       const bhhl1Id = this.bhhl1Id || this.outputs.bhhl1Id || plane1!.generateLine2DId(world);
       const bhhl2Id = this.bhhl2Id || this.outputs.bhhl2Id || plane2!.generateLine2DId(world);
 
-      // Generate labels
+      // Validation: Ensure IDs match their intended planes
+      if (bhhl1Id && !bhhl1Id.startsWith(this.plane1Id + '/')) {
+        throw new Error(
+          `AddBrokenHingeLineOp: bhhl1Id "${bhhl1Id}" does not start with plane1Id "${this.plane1Id}/". ` +
+          `This indicates a parameter mismatch during deserialization.`
+        );
+      }
+      if (bhhl2Id && !bhhl2Id.startsWith(this.plane2Id + '/')) {
+        throw new Error(
+          `AddBrokenHingeLineOp: bhhl2Id "${bhhl2Id}" does not start with plane2Id "${this.plane2Id}/". ` +
+          `This indicates a parameter mismatch during deserialization.`
+        );
+      }
+
+      // Generate label for BrokenHingeLine only (BHHLs generate their own labels)
       const bhlLabel = world.generateDefaultLabel(bhlId, 'BrokenHingeLine');
-      const bhhl1Label = world.generateDefaultLabel(bhhl1Id, 'Line2D');
-      const bhhl2Label = world.generateDefaultLabel(bhhl2Id, 'Line2D');
 
       // Create BrokenHingeLine (3D entity)
       const brokenHingeLine = new BrokenHingeLine(
@@ -88,24 +100,25 @@ export class AddBrokenHingeLineOp implements IOperation {
         this.auxiliaryPlaneId
       );
 
-      // Create BrokenHalfHingeLine2D on plane1
+      // Phase 102: Create BrokenHalfHingeLine2D passing BrokenHingeLine object
+      // Create BrokenHalfHingeLine2D on plane1 (no label - will generate BHHL_{n})
       const bhhl1 = new BrokenHalfHingeLine2D(
         bhhl1Id,
         this.plane1Id,    // planeId
-        bhlId,            // brokenHingeLineId
+        brokenHingeLine,  // brokenHingeLine object (not just ID)
         this.mainHingeId, // mainHingeId
-        bhhl2Id,          // siblingBHHLId (Reference to sibling on plane2)
-        bhhl1Label        // label (optional)
+        bhhl2Id           // siblingBHHLId (Reference to sibling on plane2)
+        // No label parameter - constructor will generate BHHL_{n}
       );
 
-      // Create BrokenHalfHingeLine2D on plane2
+      // Create BrokenHalfHingeLine2D on plane2 (no label - will generate BHHL_{n})
       const bhhl2 = new BrokenHalfHingeLine2D(
         bhhl2Id,
         this.plane2Id,    // planeId
-        bhlId,            // brokenHingeLineId
+        brokenHingeLine,  // brokenHingeLine object (not just ID)
         this.mainHingeId, // mainHingeId
-        bhhl1Id,          // siblingBHHLId (Reference to sibling on plane1)
-        bhhl2Label        // label (optional)
+        bhhl1Id           // siblingBHHLId (Reference to sibling on plane1)
+        // No label parameter - constructor will generate BHHL_{n}
       );
 
       // Add to World storage

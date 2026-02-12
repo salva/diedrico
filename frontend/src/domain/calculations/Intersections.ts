@@ -22,6 +22,7 @@
 import { Vector3 } from 'three';
 import type { Line2DRealization2D } from '../world/Line';
 import type { Circle2DRealization2D } from '../world/Circle';
+import { Point2DRealization2D } from '../world/Point';
 
 /**
  * Convert line from parametric form to implicit form using homogeneous coordinates
@@ -75,12 +76,12 @@ function lineToImplicitForm(line: Line2DRealization2D): Vector3 {
  * 
  * @param line1 First line in parametric form
  * @param line2 Second line in parametric form
- * @returns Intersection point in homogeneous coordinates, or null if parallel/coincident
+ * @returns Point2DRealization2D with feasible=false if parallel/coincident, feasible=true otherwise
  */
 export function intersectLineLine(
   line1: Line2DRealization2D,
   line2: Line2DRealization2D
-): Vector3 | null {
+): Point2DRealization2D {
   // Convert to implicit form
   const L1 = lineToImplicitForm(line1);
   const L2 = lineToImplicitForm(line2);
@@ -110,8 +111,8 @@ export function intersectLineLine(
   // Check for parallel lines (w ≈ 0)
   const epsilon = 1e-10;
   if (Math.abs(w) < epsilon) {
-    // Lines are parallel or coincident - no unique intersection point
-    return null;
+    // Lines are parallel or coincident - return infeasible realization
+    return new Point2DRealization2D(new Vector3(0, 0, 1), false);
   }
   
   // Convert from homogeneous to Cartesian coordinates
@@ -119,8 +120,8 @@ export function intersectLineLine(
   const x = px / w;
   const y = py / w;
   
-  // Return as point in homogeneous form (x, y, 1)
-  return new Vector3(x, y, 1);
+  // Return as point realization in homogeneous form (x, y, 1)
+  return new Point2DRealization2D(new Vector3(x, y, 1), true);
 }
 
 /**

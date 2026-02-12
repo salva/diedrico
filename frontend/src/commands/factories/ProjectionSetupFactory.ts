@@ -177,6 +177,7 @@ export function constructProjectionPlaneSetup(
   // Phase 101: Create broken hinge line connecting auxiliary plane to P_V
   // The main hinge is T1 (the original hinge between P_H and P_V)
   // Create broken hinge line from P_A1 to P_V (the "other" plane)
+  // T2 trace is derived from auxiliary plane's t2OtherTraceId at realization time
   PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane(
     cmd,
     hingeLineId,      // Main hinge (T1) between P_H and P_V - the folding hinge

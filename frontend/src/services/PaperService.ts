@@ -108,7 +108,11 @@ export class PaperService {
       // HalfHingeLine2D are Line2D entities with type 'half-hinge'
       for (const line of plane.getAllLines()) {
         // Skip invisible lines (Phase 87: Encapsulation support via styleService)
-        if (!resolveVisibility(line, context.world)) continue;
+        const isVisible = resolveVisibility(line, context.world);
+        if (line instanceof HalfHingeLine2D) {
+          console.log(`[PaperService] Checking visibility for ${line.constructor.name}: ${line.id} (${line.label}) - visible: ${isVisible}`);
+        }
+        if (!isVisible) continue;
         
         // REALIZE: Compute line equation (numeric data) from plane - computes and caches
         const realization = plane.realizeLine2D(line, context.world);
@@ -116,7 +120,9 @@ export class PaperService {
         if (realization) {
           // Check most specific types first (subclasses before base classes)
           if (line instanceof HalfHingeLine2D) {
+            console.log(`[PaperService] Creating primitive for ${line.constructor.name}: ${line.id} (${line.label})`);
             const primitive = this.halfHingeLineToPrimitive(line, realization, transform, line.planeId!, context);
+            console.log(`[PaperService] Created primitive:`, primitive.id, 'visible:', primitive.visible, 'layer:', primitive.layer);
             primitives.push(primitive);
           } else if (line instanceof Segment2DByPoints) {
             // Segments are Line2D subclass with finite endpoints

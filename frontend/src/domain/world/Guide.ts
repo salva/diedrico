@@ -23,6 +23,8 @@ import { Line2DPerpendicularToLine, Line2DRealization2D, Line2D, Line2DType } fr
 import { intersectLineLine } from '@/domain/calculations/Intersections';
 import { HalfHingeLine2D } from './HingeLine';
 import { HalfHingeLineRealization2D } from './HalfHingeLineRealization2D';
+import { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
+import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 import type { ArcGeometry } from '@/types/arcGeometry';
 
 /**
@@ -289,40 +291,74 @@ export class SiblingGuide2D extends Line2D {
     const primaryHalfHingeLineRealization = primaryHHL.realize2D(world);
 
     // Find intersection of primary guide with its HalfHingeLine
-    const intersectionPoint = intersectLineLine(primaryGuideRealization, primaryHalfHingeLineRealization)!;
+    const intersectionPointReal = intersectLineLine(primaryGuideRealization, primaryHalfHingeLineRealization);
     
-    // Phase 84: Get primary HalfHingeLine's parametric representation from realize2D()
-    // R = Q + d·D where Q is point1 (origin), D is point2 (direction, z=0)
-    const Q = primaryHalfHingeLineRealization.point1;      // Reference point (origin)
-    const D = primaryHalfHingeLineRealization.point2;      // Direction vector (z=0)
-    const R = intersectionPoint;     // Intersection point
-
-    // Extract scalar d such that R = Q + d·D
-    // We can use either x or y component (whichever has larger direction component to avoid division by small numbers)
-    let d: number;
-    if (Math.abs(D.x) > Math.abs(D.y)) {
-      // Use x component: R.x = Q.x + d·D.x  =>  d = (R.x - Q.x) / D.x
-      d = (R.x - Q.x) / D.x;
-    } else if (Math.abs(D.y) > 1e-10) {
-      // Use y component: R.y = Q.y + d·D.y  =>  d = (R.y - Q.y) / D.y
-      d = (R.y - Q.y) / D.y;
-    } else {
-      console.warn(`[SiblingGuide2D] Primary HalfHingeLine has degenerate direction`);
+    // Check if intersection is feasible (lines not parallel)
+    if (!intersectionPointReal.feasible) {
+      console.warn('[SiblingGuide2D] Primary guide is parallel to its HalfHingeLine - no intersection');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
-
-    // Phase 84: Get sibling HalfHingeLine's parametric representation from realize2D()
-    // R' = Q' + d·D' (identical to primary due to canonical coordinates)
+    
+    // Get sibling HalfHingeLine realization (needed for both approaches)
     const siblingHalfHingeLineRealization = myHHL.realize2D(world);
-    const Q_prime = siblingHalfHingeLineRealization.point1;      // Sibling reference point
-    const D_prime = siblingHalfHingeLineRealization.point2;      // Sibling direction vector
 
-    // Compute twin position using SAME scalar d: R' = Q' + d·D'
-    const twinPosition = new Vector3(
-      Q_prime.x + d * D_prime.x,
-      Q_prime.y + d * D_prime.y,
-      1  // Homogeneous coordinate for a point
-    );
+    let twinPosition: Vector3;
+
+    if (myHHL instanceof BrokenHalfHingeLine2D) {
+      // BHHL 3D round-trip: Both BHHLs (T2 on primary plane, T2' on sibling plane) are
+      // 2D representations of the SAME 3D BrokenHingeLine. The guide intersects T2 at
+      // point R, which corresponds to a unique 3D point on the BHL. The twin position
+      // is simply that same 3D point projected onto the sibling plane.
+      //
+      // Algorithm:
+      // 1. R = guide ∩ T2 in primary plane local coords (already computed)
+      // 2. R_3D = planeTo3D(primaryPlane) × R  (lift to 3D)
+      // 3. R' = threeDToPlane(siblingPlane) × R_3D  (project to sibling plane)
+
+      const R = intersectionPointReal.position;
+
+      const primaryPlaneReal3D = world.getProjectionPlane3DRealization(primaryHHL.planeId);
+      const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
+
+      if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
+        console.warn('[SiblingGuide2D] 3D plane realization infeasible for BHHL round-trip');
+        return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+      }
+
+      // Lift R to 3D (Vector3 → Vector4 homogeneous)
+      const R_3D = applyMatrix4x3(R, primaryPlaneReal3D.planeTo3D);
+      // Project back to sibling plane 2D (Vector4 → Vector3 homogeneous)
+      const R_prime = applyMatrix3x4(R_3D, siblingPlaneReal3D.threeDToPlane);
+
+      twinPosition = new Vector3(R_prime.x, R_prime.y, 1);
+
+      console.log(`[SiblingGuide2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → twin=(${twinPosition.x.toFixed(2)},${twinPosition.y.toFixed(2)})`);
+    } else {
+      // Regular HHL case: Both planes share canonical coordinates.
+      // Use parametric scalar correspondence: R = Q + d·D, R' = Q' + d·D'
+      const Q = primaryHalfHingeLineRealization.point1;
+      const D = primaryHalfHingeLineRealization.point2;
+      const R = intersectionPointReal.position;
+
+      let d: number;
+      if (Math.abs(D.x) > Math.abs(D.y)) {
+        d = (R.x - Q.x) / D.x;
+      } else if (Math.abs(D.y) > 1e-10) {
+        d = (R.y - Q.y) / D.y;
+      } else {
+        console.warn(`[SiblingGuide2D] Primary HalfHingeLine has degenerate direction`);
+        return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+      }
+
+      const Q_prime = siblingHalfHingeLineRealization.point1;
+      const D_prime = siblingHalfHingeLineRealization.point2;
+
+      twinPosition = new Vector3(
+        Q_prime.x + d * D_prime.x,
+        Q_prime.y + d * D_prime.y,
+        1
+      );
+    }
 
     // Compute perpendicular direction using sibling HalfHingeLine realization;
 
@@ -332,23 +368,21 @@ export class SiblingGuide2D extends Line2D {
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // Compute perpendicular direction to sibling HalfHingeLine
-    // If line direction is (dx, dy, 0), perpendicular is (-dy, dx, 0)
-    const hingeDirection = siblingHalfHingeLineRealization.getDirection();
-    const perpendicularDirection = new Vector3(
-      -hingeDirection.y,  // -dy
-      hingeDirection.x,   // dx
-      0                   // Direction vector, no translation
-    );
+    // Compute guide direction using sibling HalfHingeLine realization
+    // Since the sibling reference is always a HalfHingeLine2D, its realization is always
+    // HalfHingeLineRealization2D which provides getGuideVector():
+    // - Regular HalfHingeLine2D: guideVector is perpendicular to hinge
+    // - BrokenHalfHingeLine2D: guideVector is parallel to main hinge T1
+    const guideDirection = (siblingHalfHingeLineRealization as HalfHingeLineRealization2D).getGuideVector();
 
     // Check for degenerate case (shouldn't happen if HalfHingeLine is valid)
-    if (perpendicularDirection.lengthSq() < 1e-10) {
+    if (guideDirection.lengthSq() < 1e-10) {
       console.warn(`SiblingGuide2D ${this.id}: sibling HalfHingeLine has zero direction`);
       return new Line2DRealization2D(twinPosition, new Vector3(1, 0, 0), false);
     }
 
-    // Create sibling guide realization: line through twin position with perpendicular direction
-    return new Line2DRealization2D(twinPosition, perpendicularDirection, true);
+    // Create sibling guide realization: line through twin position with guide direction
+    return new Line2DRealization2D(twinPosition, guideDirection, true);
   }
 }
 

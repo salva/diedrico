@@ -219,6 +219,7 @@ export class PlaneSequenceFactory {
       auxiliaryPlaneId,
       auxiliaryPlaneId,  // plane1Id (BHHL on auxiliary plane)
       otherPlaneId       // plane2Id (BHHL on other plane)
+      // t2TraceId derived from auxiliaryPlane.t2OtherTraceId at realization time
     ));
     
     const brokenHingeLineId = result.outputs.brokenHingeLineId as string;

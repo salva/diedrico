@@ -430,28 +430,32 @@ if (!commandStack) {
   throw new Error('CommandStack not provided');
 }
 
-// Tool registry - map tool names to tool instances
-const tools: Record<string, ITool> = {
-  'point': new PointTool(),
-  'line': new LineTool(),
-  'segment': new SegmentTool(),
-  'circle': new CircleTool(),
-  'guide': new GuideTool(),
-  'intersection': new IntersectionTool(),
-  'parallel-line': new ParallelLineTool(),
-  'perpendicular-line': new PerpendicularLineTool(),
-  'tangent-line-to-circle-through-point': new TangentLineToCircleThroughPointTool(),
-  'tangent-line-to-circle-parallel': new TangentLineToCircleParallelToLineTool(),
+// Tool factory registry - map tool names to factory functions
+// Creates new instances instead of reusing singletons to avoid state leakage
+const toolFactories: Record<string, () => ITool> = {
+  'point': () => new PointTool(),
+  'line': () => new LineTool(),
+  'segment': () => new SegmentTool(),
+  'circle': () => new CircleTool(),
+  'guide': () => new GuideTool(),
+  'intersection': () => new IntersectionTool(),
+  'parallel-line': () => new ParallelLineTool(),
+  'perpendicular-line': () => new PerpendicularLineTool(),
+  'tangent-line-to-circle-through-point': () => new TangentLineToCircleThroughPointTool(),
+  'tangent-line-to-circle-parallel': () => new TangentLineToCircleParallelToLineTool(),
   // Phase 78: 3D Element Creation Tools
-  'create3dpoint': new Create3DPointTool(),
-  'create3dline': new Create3DLineTool(),
-  'create3dsegment': new Create3DSegmentTool(),
-  'create3dplane': new Create3DPlaneTool(),
+  'create3dpoint': () => new Create3DPointTool(),
+  'create3dline': () => new Create3DLineTool(),
+  'create3dsegment': () => new Create3DSegmentTool(),
+  'create3dplane': () => new Create3DPlaneTool(),
   // Phase 82: Auxiliary Projection Plane Tool
-  'createprojectionplane': new CreateProjectionPlaneTool(),
-  'interactiveprojectionsetup': new InteractiveProjectionSetupTool(),
-  'quickprojectionsetup': new QuickProjectionSetupTool(),
+  'createprojectionplane': () => new CreateProjectionPlaneTool(),
+  'interactiveprojectionsetup': () => new InteractiveProjectionSetupTool(),
+  'quickprojectionsetup': () => new QuickProjectionSetupTool(),
 };
+
+// Current tool instance - created fresh when tool is selected
+const currentToolInstance = ref<ITool | null>(null);
 
 // Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
 const renderTick = ref(0);
@@ -515,18 +519,20 @@ onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeyDown);
 });
 
-// Watch for tool changes and reset tool state
-// This prevents ArgumentCollectorTool state from persisting across tool switches
-watch(() => toolStore.currentTool.value, (newTool, oldTool) => {
-  if (oldTool && oldTool !== newTool) {
-    // Reset the previous tool to clear any accumulated state
-    const previousTool = tools[oldTool];
-    if (previousTool && 'reset' in previousTool && typeof previousTool.reset === 'function') {
-      previousTool.reset();
-      console.log(`[SvgCanvas] Reset tool state for: ${oldTool}`);
+// Watch for tool changes and create new tool instance
+// This prevents state leakage by creating fresh instances instead of reusing singletons
+watch(() => toolStore.currentTool.value, (newTool) => {
+  const factory = toolFactories[newTool];
+  if (factory) {
+    currentToolInstance.value = factory();
+    console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+  } else {
+    currentToolInstance.value = null;
+    if (newTool !== 'select') {
+      console.warn(`[SvgCanvas] No tool factory for: ${newTool}`);
     }
   }
-});
+}, { immediate: true }); // Create initial tool instance
 
 // Get plane transforms for INPUT (canvas click → plane coordinates)
 function getPlaneTransformsForInput(): Map<string, Matrix3> {
@@ -1082,11 +1088,16 @@ const renderedPoints = computed(() => {
 });
 
 const renderedLines = computed(() => {
-  return primitives.value
-    .filter(p => p.type === 'line')
-    .map(p => {
+  const linePrimitives = primitives.value.filter(p => p.type === 'line');
+  const bhhlPrimitives = linePrimitives.filter(p => p.id.includes('line2d34') || p.id.includes('line2d35'));
+  if (bhhlPrimitives.length > 0) {
+    console.log('[SvgCanvas] BHHL primitives in renderedLines:', bhhlPrimitives.map(p => `${p.id} (plane: ${p.planeId})`));
+  }
+  return linePrimitives.map(p => {
       const result = svgRenderer.renderPrimitive(p, viewport.value);
-      // console.log('Rendering line primitive:', p, '→ SVG attrs:', result.attributes);
+      if (p.id.includes('line2d34') || p.id.includes('line2d35')) {
+        console.log(`[SvgCanvas] Rendered ${p.id}:`, result.attributes);
+      }
       return {
         primitive: p,
         attrs: result.attributes
@@ -1233,10 +1244,11 @@ function handleCanvasClick(event: MouseEvent) {
   }
   
   // Phase 6.5: Delegate to active tool instead of direct World mutation
-  const activeTool = tools[activeToolName];
+  // Use current tool instance (created fresh on tool switch to avoid state leakage)
+  const activeTool = currentToolInstance.value;
   
   if (!activeTool) {
-    console.warn(`[SvgCanvas] No tool implementation for: ${activeToolName}`);
+    console.warn(`[SvgCanvas] No tool instance for: ${activeToolName}`);
     return;
   }
   
@@ -1529,7 +1541,7 @@ function handleMouseMove(event: MouseEvent) {
   
   // Get active tool's selection mask
   const activeToolName = toolStore.currentTool.value;
-  const activeTool = tools[activeToolName];
+  const activeTool = currentToolInstance.value;
   // 'select' is a special mode (not a tool), allow hover on all elements
   const selectionMask = activeTool ? activeTool.getSelectionMask() : undefined;
   

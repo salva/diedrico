@@ -253,12 +253,14 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
-    const intersectionPoint = intersectLineLine(line1, line2);
+    const intersectionPointReal = intersectLineLine(line1, line2);
     
-    if (!intersectionPoint) {
+    if (!intersectionPointReal.feasible) {
       console.warn('[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
+    
+    const intersectionPoint = intersectionPointReal.position;
     
     // Get the domain objects to check if they're segments
     const line1Domain = world.getLine2D(this.line1Id);
@@ -635,8 +637,8 @@ export class SiblingIntersectionPoint2D extends Point2D {
             // Validate parametric consistency: Q=Q', D=D'
             const EPSILON = 1e-10;
             // Phase 84: Validate parametric consistency via realize2D()
-            const primaryRealization = primaryHHL.realize2D(world)!;
-            const siblingRealization = siblingHHL.realize2D(world)!;
+            const primaryRealization = primaryHHL.realize2D(world);
+            const siblingRealization = siblingHHL.realize2D(world);
             const pointDist = primaryRealization.point1.distanceTo(siblingRealization.point1);
             const dirDist = primaryRealization.point2.distanceTo(siblingRealization.point2);
             

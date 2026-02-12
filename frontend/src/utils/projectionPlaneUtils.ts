@@ -193,10 +193,10 @@ export function computeProjectionPlaneMatrices(
   const planeP1 = world.getProjectionPlaneById(t1Line.planeId!)!;
   const planeP2 = world.getProjectionPlaneById(t2Line.planeId!)!;
   
-  // Realize lines in 2D
-  const t1Realization = t1Line.realize2D(world)!;
-  const t2Realization = t2Line.realize2D(world)!;
-  const t2PrimeRealization = t2PrimeLine.realize2D(world)!;
+  // Realize lines in 2D (always returns realization object, check feasible flag)
+  const t1Realization = t1Line.realize2D(world);
+  const t2Realization = t2Line.realize2D(world);
+  const t2PrimeRealization = t2PrimeLine.realize2D(world);
   
   // Get 3D realizations of projection planes
   const planeP1Realization3D = world.getProjectionPlane3DRealization(planeP1.id!)!;
@@ -371,7 +371,7 @@ export function computeProjectionPlaneMatrices(
   threeDToPlane.set(
     auxUDirIn3D.x, auxUDirIn3D.y, auxUDirIn3D.z, -dotVector3Homogeneous(auxUDirIn3D, new Vector4(auxOriginIn3D.x, auxOriginIn3D.y, auxOriginIn3D.z, 1)),  // Row 0: u = ...
     auxVDirIn3D.x, auxVDirIn3D.y, auxVDirIn3D.z, -dotVector3Homogeneous(auxVDirIn3D, new Vector4(auxOriginIn3D.x, auxOriginIn3D.y, auxOriginIn3D.z, 1)),  // Row 1: v = ...
-    0,             0,             0,             0                       // Row 2: w = 0 (direction)
+    0,             0,             0,             1                       // Row 2: homogeneous (1 for points w=1, 0 for directions w=0)
   );
   
   return {

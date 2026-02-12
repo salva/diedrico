@@ -53,6 +53,28 @@ Note that completing these tasks may require asking the user for additional info
  
 ## ALREADY PLANNED
 
+* [x] **HHL/BHHL Constructor Refactoring (Phase 102)** - ✅ COMPLETE (Feb 10, 2026)
+  - **User Requirement**: "I want the HL to be given as the primary parameter with the plane where they sit. BHHL and HHL must be derived from the BHL and HL geometrical objects plus the plane where they sit"
+  - **Problem**: HalfHingeLine2D and BrokenHalfHingeLine2D constructors received only ID strings (hingeLineId/brokenHingeLineId), making the geometric dependency implicit and reducing type safety. Also, ID label extraction was using the first number in the ID string (e.g., plane number) instead of the line number.
+  - **Solution**: Refactored constructors to receive parent objects (HingeLine/BrokenHingeLine) as primary parameters, making the geometric relationship explicit in the API. Fixed label extraction to correctly parse the line number from IDs like "projPlane28/line2d33" → "BHHL_{33}" (not "BHHL_{28}").
+  - **Implementation**:
+    - Updated `HalfHingeLine2D` constructor: `(id, hingeLine: HingeLine, planeId, label?)`
+    - Updated `BrokenHalfHingeLine2D` constructor: `(id, planeId, brokenHingeLine: BrokenHingeLine, mainHingeId, siblingBHHLId, label?)`
+    - Fixed label extraction regex: `/line2d(\d+)/` to get line number instead of `/\d+/` which got plane number
+    - Updated all call sites: `ProjectionPlane.addHalfHingeLine2D`, `AddBrokenHingeLineOp`, tests
+    - Clone methods use minimal ID-based objects for base class signature compatibility
+  - **Key Benefits**:
+    - Type safety: Compile-time guarantee that parent object exists
+    - API clarity: Geometric dependency is explicit in method signature
+    - Correct labeling: HHL/BHHL labels now use unique global IDs (33, 34) not plane IDs (28, 4)
+    - Prevents errors: Cannot create HHL/BHHL without valid parent object
+  - **Files Modified**:
+    - `HingeLine.ts` (constructor, clone)
+    - `BrokenHalfHingeLine2D.ts` (constructor, clone)
+    - `ProjectionPlane.ts` (addHalfHingeLine2D call site)
+    - `AddBrokenHingeLineOp.ts` (instantiation with brokenHingeLine object)
+    - `SelectionMask.spec.ts` (test update)
+
 * [x] **Broken Hinge Lines (BHL) and Distance Transport Guides (Phase 101)** - ✅ PLANNED (Feb 7, 2026)
   - **User Requirement**: "Plan the feature...Broken HHL, specifically, I want to know how to translate the distances from t2 to t2'"
   - **Problem**: When an auxiliary projection plane is created by folding plane Q using trace T1 as the hinge, traces T2 (on original plane) and T2' (on folded plane) form a "broken hinge line" - projections of the same 3D line. Distance transport between T2 and T2' requires guides, but standard perpendicular guides don't preserve geometric relationships for BHLs.

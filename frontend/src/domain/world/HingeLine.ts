@@ -43,20 +43,24 @@ export class HalfHingeLine2D extends Line2D {
 
   constructor(
     id: string,
-    hingeLineId: string,
+    hingeLine: HingeLine,
     planeId: string,
     label?: string
   ) {
-    // Create a friendly label like "HHL_{7}" from "hingeLine7"
-    const numericPart = hingeLineId.match(/\d+/)?.[0] || hingeLineId;
+    // Create a friendly label like "HHL_{8}" from "projPlane3/line2d8"
+    // Extract the line number after 'line2d' (not the plane number)
+    const numericPart = id.match(/line2d(\d+)/)?.[1] || id.match(/\d+$/)?.[0] || id;
     super(id, planeId, label || `HHL_{${numericPart}}`);
-    this.hingeLineId = hingeLineId;
+    this.hingeLineId = hingeLine.id;
   }
 
   clone(): HalfHingeLine2D {
+    // Note: Cloning requires looking up hingeLine from world, which isn't available here
+    // This is a limitation of the current clone() signature
+    // For now, keep the ID-based approach for clone()
     return new HalfHingeLine2D(
       this.id,
-      this.hingeLineId,
+      { id: this.hingeLineId } as HingeLine,  // Minimal object with just ID
       this.planeId
     );
   }

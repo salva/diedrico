@@ -30,7 +30,7 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
   const segment = new Segment2DByPoints(`${planeId}/segment2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
   const guide = new Guide2D(`${planeId}/guide2d_1`, `${planeId}/point2d_1`, new Vector3(1, 0, 0), planeId);
   const circle = new Circle2DByCenterAndPoint(`${planeId}/circle2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
-  const halfHingeLine = new HalfHingeLine2D(`${planeId}/hhl2d_1`, 'hinge_1', planeId);
+  const halfHingeLine = new HalfHingeLine2D(`${planeId}/hhl2d_1`, { id: 'hinge_1' } as any, planeId);
   
   describe('TypeMask - Exact Type Matching', () => {
     it('T1069.1: point() should match only point type', () => {
