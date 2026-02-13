@@ -15,17 +15,18 @@
           {{ plane.label }}
         </option>
       </select>
+      <div class="formatted-label" v-html="formatElementLabel(activePlaneLabel)"></div>
       <svg class="chevron" width="12" height="12" viewBox="0 0 20 20" aria-hidden="true">
         <path d="M 5 7 L 10 12 L 15 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </div>
-    <span class="caption">Plane</span>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import type { World } from '@/domain/world/World';
+import { formatElementLabel } from '@/utils/formatUtils';
 
 const world = inject<World>('world');
 if (!world) {
@@ -68,6 +69,13 @@ const activePlaneId = computed(() => {
   return world.getActivePlaneId();
 });
 
+const activePlaneLabel = computed(() => {
+  const _ = forceUpdate.value;
+  const planeId = world.getActivePlaneId();
+  const plane = planes.value.find(p => p.id === planeId);
+  return plane?.label || planeId;
+});
+
 function handleSelect(event: Event) {
   const target = event.target as HTMLSelectElement | null;
   if (!target) return;
@@ -82,7 +90,7 @@ function handleSelect(event: Event) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0px;
   padding: 6px 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -112,7 +120,7 @@ function handleSelect(event: Event) {
   padding: 0 18px 0 0;
   font-size: 12px;
   font-weight: 600;
-  color: #333;
+  color: transparent;
   line-height: 1.2;
   cursor: pointer;
 }
@@ -128,9 +136,15 @@ function handleSelect(event: Event) {
   color: #666;
 }
 
-.caption {
-  font-size: 10px;
-  font-weight: 500;
-  color: #555;
+.formatted-label {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
 }
 </style>

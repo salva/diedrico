@@ -1627,3 +1627,5 @@ These use cases cover primitive user actions and micro-interactions. They are in
 
 - **FR-067**: Empty action groups MUST NOT be rendered in the Process Tree. An action group is considered empty when all its children are null (tombstones from deleted actions). Empty action groups MUST be completely invisible (no header, no spacing, no visual trace). This keeps the Process Tree clean and focused on actual construction history. [Phase 100 - Empty Action Group Filtering]
 
+- **FR-073**: The PlaneSelector component MUST render projection plane labels using KaTeX mathematical notation (consistent with Phase 96 element label formatting) to properly display subscripts, superscripts, and Greek letters in plane names (e.g., `P_H` → P_H, `P_V` → P_V, `P_{12}` → P₁₂). The component MUST remove the redundant "Plane" caption text below the dropdown to reduce visual clutter and improve toolbar space efficiency. The dropdown options MUST display formatted plane labels, and the selected plane display MUST show the formatted label inline. [Phase 103 - PlaneSelector LaTeX Rendering]
+

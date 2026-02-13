@@ -19,7 +19,6 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Fix the plane selection buttom. Currently the labels are not rendered as latex. Also remove the "Plane" label below as it only clutters the buttom.
 * [ ] Rationalize class names for projection planes and related object (Ops, for instances).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
@@ -74,6 +73,42 @@ Note that completing these tasks may require asking the user for additional info
     - `ProjectionPlane.ts` (addHalfHingeLine2D call site)
     - `AddBrokenHingeLineOp.ts` (instantiation with brokenHingeLine object)
     - `SelectionMask.spec.ts` (test update)
+
+* [x] **PlaneSelector LaTeX Rendering and Caption Removal (Phase 103)** - 📋 PLANNED (Feb 13, 2026)
+  - **User Requirement**: "Fix the plane selection button. Currently the labels are not rendered as latex. Also remove the 'Plane' label below as it only clutters the button."
+  - **Problem**: PlaneSelector component displays plane labels as plain text (`P_H`, `P_V`) instead of formatted mathematical notation (P_H, P_V) with proper subscripts. The redundant "Plane" caption below the dropdown wastes vertical toolbar space (~10px) and provides no added value.
+  - **Solution**: Integrate Phase 96 `formatElementLabel()` utility to render plane labels with KaTeX mathematical notation. Overlay formatted label on native `<select>` element to preserve accessibility while achieving visual consistency with other UI panels. Remove caption element and reduce component height from 50px to 40px.
+  - **Architecture**:
+    - Import `formatElementLabel` from `@/utils/formatUtils`
+    - Add `activePlaneLabel` computed property to get current plane label
+    - Overlay formatted label div on native select using CSS (position absolute, click-transparent)
+    - Hide native select text with `color: transparent` (functionality preserved)
+    - Remove `<span class="caption">Plane</span>` element entirely
+    - Update CSS: height 50px → 40px, gap 2px → 0px
+  - **Key Benefits**:
+    - Visual consistency: Plane labels match formatting in Elements Panel, Process Tree, Properties Dialog
+    - Better UX: Mathematical subscripts immediately recognizable (P_H not `P_H`)
+    - Space efficiency: 10px vertical space savings in toolbar
+    - Accessibility preserved: Native select still handles keyboard/screen reader interaction
+    - Future-proof: Works with auxiliary planes (e.g., P_{12} → P₁₂)
+  - **Known Limitation**: Dropdown options show plain text (`P_H`) while selected label shows formatted (P_H). Acceptable trade-off - users see formatted label 99% of time (when dropdown closed). Full custom dropdown (with KaTeX in options) would require significant accessibility work and is out of scope for this phase.
+  - **Specifications**:
+    - spec.md FR-073 (functional requirement)
+    - ui-spec.md §PlaneSelector Component (Phase 103) (visual design, removed elements)
+    - data-model.md §Phase 103 (implementation approach, CSS overlay technique)
+  - **Tasks**: tasks.md Phase 103 (T1849-T1857: 8 tasks)
+    - T1849: Specification documents (COMPLETE)
+    - T1850: Import formatElementLabel
+    - T1851: Add activePlaneLabel computed
+    - T1852: Add formatted label overlay
+    - T1853: Hide native text with CSS
+    - T1854: Remove caption element
+    - T1855: Add overlay CSS styles
+    - T1856: Manual/unit testing
+    - T1857: Commit Phase 103
+  - **Files Modified**:
+    - `frontend/src/components/toolbars/PlaneSelector.vue` (template, script, styles)
+  - **Status**: 📋 PLANNED - All specification documentation complete, ready for implementation
 
 * [x] **Broken Hinge Lines (BHL) and Distance Transport Guides (Phase 101)** - ✅ PLANNED (Feb 7, 2026)
   - **User Requirement**: "Plan the feature...Broken HHL, specifically, I want to know how to translate the distances from t2 to t2'"

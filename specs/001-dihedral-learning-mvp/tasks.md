@@ -9542,7 +9542,123 @@ Implement Broken Hinge Line (BHL) architecture for auxiliary projection planes. 
 
 ---
 
-## Phase 102: TBD
+## Phase 102: HHL/BHHL Constructor Refactoring
+
+[Documentation for Phase 102 - see conversation summary and for-planing.md]
+
+---
+
+## Phase 103: PlaneSelector LaTeX Rendering and Caption Removal (8 tasks) [T1849-T1856]
+
+**Goal**: Update PlaneSelector component to render plane labels with KaTeX mathematical notation and remove redundant "Plane" caption.
+
+### T1849: Update Specification Documents (COMPLETE)
+- Add FR-073 to spec.md (functional requirement)
+- Add Phase 103 section to ui-spec.md (visual design, removed elements)
+- Add Phase 103 section to data-model.md (implementation approach, architecture notes)
+- Update for-planing.md (mark as planned, move to "ALREADY PLANNED")
+- **Files**: 
+  - `specs/001-dihedral-learning-mvp/spec.md`
+  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+  - `specs/001-dihedral-learning-mvp/data-model.md`
+  - `specs/001-dihedral-learning-mvp/tasks.md`
+  - `specs/001-dihedral-learning-mvp/for-planing.md`
+
+### T1850: Import formatElementLabel Utility
+- Open `frontend/src/components/toolbars/PlaneSelector.vue`
+- Add import: `import { formatElementLabel } from '@/utils/formatUtils';`
+- Verify TypeScript compilation (no errors)
+- **Files**: `frontend/src/components/toolbars/PlaneSelector.vue`
+
+### T1851: Add activePlaneLabel Computed Property
+- Add computed property to retrieve active plane's label:
+  ```typescript
+  const activePlaneLabel = computed(() => {
+    const _ = forceUpdate.value;
+    const planeId = world.getActivePlaneId();
+    const plane = planes.value.find(p => p.id === planeId);
+    return plane?.label || planeId;
+  });
+  ```
+- **Files**: `frontend/src/components/toolbars/PlaneSelector.vue`
+
+### T1852: Add Formatted Label Overlay in Template
+- After `<select>` element, add overlay div:
+  ```vue
+  <div class="formatted-label" v-html="formatElementLabel(activePlaneLabel)"></div>
+  ```
+- Position absolutely over select dropdown
+- Make click-transparent (`pointer-events: none`)
+- **Files**: `frontend/src/components/toolbars/PlaneSelector.vue`
+
+### T1853: Hide Native Select Text with CSS
+- Update `.plane-select` style:
+  ```css
+  .plane-select {
+    color: transparent;  /* Hide native text, show formatted overlay */
+    /* ...existing styles... */
+  }
+  ```
+- **Files**: `frontend/src/components/toolbars/PlaneSelector.vue`
+
+### T1854: Remove "Plane" Caption Element
+- Remove line: `<span class="caption">Plane</span>`
+- Remove `.caption` CSS block entirely
+- Update `.plane-selector` height: `50px` → `40px`
+- Update `.plane-selector` gap: `2px` → `0px`
+- **Files**: `frontend/src/components/toolbars/PlaneSelector.vue`
+
+### T1855: Add CSS for Formatted Label Overlay
+- Add new CSS block:
+  ```css
+  .formatted-label {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+  }
+  ```
+- Ensure label positioned correctly over select text area
+- **Files**: `frontend/src/components/toolbars/PlaneSelector.vue`
+
+### T1856: Test LaTeX Rendering and Caption Removal
+- Manual test:
+  - Open application
+  - Verify default planes (P_H, P_V) show subscripts (P_H, P_V)
+  - Create auxiliary plane with label `P_{12}`
+  - Switch to auxiliary plane in PlaneSelector
+  - Verify label shows P₁₂ (subscript 12)
+  - Verify "Plane" caption not visible
+  - Verify component height ~40px (not 50px)
+  - Test dropdown functionality (click, select plane)
+  - Test keyboard navigation (Tab, Enter, Arrow keys)
+- Unit test (if time permits):
+  - Mount PlaneSelector with mock planes
+  - Verify formatElementLabel called
+  - Verify caption element not in DOM
+- **Files**: Manual testing, optional `frontend/tests/unit/components/PlaneSelector.spec.ts`
+
+### T1857: Commit Phase 103
+- Run `npx tsc --noEmit` (verify no TypeScript errors)
+- Run `npx vitest run` (verify no test failures)
+- Stage changes: `git add frontend/src/components/toolbars/PlaneSelector.vue specs/`
+- Commit: `git commit -m "Phase 103: PlaneSelector LaTeX rendering and caption removal
+  
+  - Added formatElementLabel import and usage for active plane label
+  - Overlaid formatted label on native select dropdown
+  - Removed redundant 'Plane' caption below dropdown
+  - Reduced component height from 50px to 40px
+  - Maintains native select accessibility (keyboard, screen reader)
+  
+  Implements FR-073. Fixes plane labels not rendering as LaTeX."`
+
+---
+
+## Phase 104: TBD
 
 [Continue with next phase...]
 

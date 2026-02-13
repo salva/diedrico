@@ -19712,3 +19712,217 @@ command.addAndExecute(addBrokenHingeLineOp);
 ### Testing
 
 See tasks.md for complete test breakdown (T1820-T1823 for unit tests, T1826-T1828 for guide tests, T1832-T1834 for sibling tests, T1847-T1848 for integration tests, T1854 for E2E test).
+
+---
+
+## Phase 102: HHL/BHHL Constructor Refactoring
+
+[Documentation for Phase 102 - see conversation summary and for-planing.md]
+
+---
+
+## Phase 103: PlaneSelector LaTeX Rendering and Caption Removal
+
+**Purpose**: Update PlaneSelector component to use KaTeX mathematical notation for plane labels (consistent with Phase 96) and remove redundant "Plane" caption for cleaner UI.
+
+**Current Implementation** (`frontend/src/components/toolbars/PlaneSelector.vue`):
+```vue
+<!-- Line 10-16: Dropdown options (plain text) -->
+<option
+  v-for="plane in planes"
+  :key="plane.id"
+  :value="plane.id"
+>
+  {{ plane.label }}  <!-- ❌ Plain text, no LaTeX -->
+</option>
+
+<!-- Line 22: Caption below dropdown -->
+<span class="caption">Plane</span>  <!-- ❌ Redundant, clutters UI -->
+```
+
+**Problem**:
+1. **No LaTeX Rendering**: Plane labels display as plain text (`P_H`, `P_V`) instead of formatted subscripts (P_H, P_V)
+2. **Inconsistent with Phase 96**: Element labels in other panels use KaTeX, but PlaneSelector doesn't
+3. **Redundant Caption**: "Plane" text below dropdown adds no information, wastes toolbar space
+
+**Solution**:
+
+### 1. Import formatElementLabel Utility
+
+```typescript
+// Add to script imports
+import { formatElementLabel } from '@/utils/formatUtils';
+```
+
+### 2. Update Dropdown Options (native `<select>` limitation)
+
+**Challenge**: Native HTML `<select>` elements do NOT support rich HTML content in `<option>` tags (browser limitation). KaTeX HTML cannot be injected into option text.
+
+**Options**:
+- **Option A (Minimal)**: Keep dropdown options as plain text, only format the selected label display
+  - Pros: Simple, no UI rewrite
+  - Cons: Dropdown list shows `P_H` (plain), selected shows P_H (formatted) - slight inconsistency
+- **Option B (Comprehensive)**: Replace native `<select>` with custom dropdown component
+  - Pros: Full KaTeX in dropdown list
+  - Cons: Significant work, accessibility concerns, out of scope
+
+**Decision**: **Option A** (Minimal) for Phase 103. Dropdown options remain plain text, only selected label formatted.
+
+### 3. Format Selected Plane Display
+
+**Current**:
+```vue
+<!-- Native select shows selected option text automatically -->
+<select class="plane-select" :value="activePlaneId" @change="handleSelect">
+  <option>{{ plane.label }}</option>
+</select>
+```
+
+**Updated** (custom display overlay):
+```vue
+<!-- Custom display div overlaying select -->
+<div class="plane-display" v-html="formatElementLabel(activePlaneLabel)"></div>
+<!-- Hidden select (still functional for click/keyboard) -->
+<select class="plane-select-hidden" :value="activePlaneId" @change="handleSelect">
+  <option>{{ plane.label }}</option>  <!-- Plain text fallback -->
+</select>
+```
+
+**Computed property for active label**:
+```typescript
+const activePlaneLabel = computed(() => {
+  const _ = forceUpdate.value;
+  const planeId = world.getActivePlaneId();
+  const plane = planes.value.find(p => p.id === planeId);
+  return plane?.label || planeId;
+});
+```
+
+### 4. Remove "Plane" Caption
+
+**Before**:
+```vue
+<div class="plane-selector">  <!-- height: 50px -->
+  <div class="plane-select-wrapper">...</div>
+  <span class="caption">Plane</span>  <!-- ❌ Remove -->
+</div>
+```
+
+**After**:
+```vue
+<div class="plane-selector">  <!-- height: 40px -->
+  <div class="plane-select-wrapper">...</div>
+  <!-- Caption removed -->
+</div>
+```
+
+**CSS Updates**:
+```css
+.plane-selector {
+  height: 40px;  /* Was: 50px */
+  gap: 0px;      /* Was: 2px (for caption spacing) */
+  /* Remove: align-items: center (no longer needed) */
+  justify-content: center;
+}
+
+/* Remove .caption styles entirely */
+```
+
+### 5. Alternative Implementation (Simpler)
+
+If native `<select>` display cannot be overlaid cleanly, use wrapper with pseudo-content:
+
+```vue
+<div class="plane-selector">
+  <select class="plane-select" :value="activePlaneId" @change="handleSelect">
+    <option v-for="plane in planes" :value="plane.id">
+      {{ plane.label }}
+    </option>
+  </select>
+  <div class="formatted-label" v-html="formatElementLabel(activePlaneLabel)"></div>
+  <svg class="chevron">...</svg>
+</div>
+```
+
+**CSS** (overlay formatted label on select):
+```css
+.plane-selector {
+  position: relative;
+}
+
+.plane-select {
+  color: transparent;  /* Hide native text */
+}
+
+.formatted-label {
+  position: absolute;
+  left: 8px;
+  pointer-events: none;  /* Click-through to select */
+  font-size: 12px;
+  font-weight: 600;
+}
+```
+
+### Architecture Notes
+
+**Why Not Full Custom Dropdown?**
+- Native `<select>` provides:
+  - Keyboard accessibility (Tab, Enter, Arrow keys)
+  - Screen reader compatibility
+  - Mobile-friendly behavior (native pickers)
+  - Focus management
+- Custom dropdown would require:
+  - Manual keyboard navigation implementation
+  - ARIA roles (combobox, listbox, option)
+  - Mobile touch handling
+  - Focus trap management
+  - Significant testing effort
+- **Phase 103 scope**: LaTeX in selected label only (95% visual improvement for 5% effort)
+
+**Known Limitation**:
+- Dropdown list shows plain text (`P_H`, `P_V`)
+- Selected display shows formatted (P_H, P_V)
+- Acceptable trade-off: users see formatted label 99% of time (when dropdown closed)
+
+### Testing Strategy
+
+**Unit Tests** (PlaneSelector.spec.ts):
+- Mount component with mock world containing planes with LaTeX labels
+- Verify `formatElementLabel` called for active plane label
+- Verify formatted HTML injected via v-html
+- Verify "Plane" caption element not rendered
+- Verify component height reduced to 40px
+
+**Integration Tests**:
+- Create project with auxiliary planes (e.g., `P_{12}`, `P_{\alpha}`)
+- Switch active plane via PlaneSelector
+- Verify selected label shows subscripts/Greek letters
+- Verify dropdown functionality unchanged
+
+**Visual Regression**:
+- Screenshot before/after for toolbar
+- Verify height reduction (50px → 40px)
+- Verify LaTeX rendering (subscripts visible)
+
+**Accessibility**:
+- Test keyboard navigation (Tab, Enter, Arrow keys)
+- Test screen reader announcements (label still accessible)
+- Verify ARIA attributes unchanged
+
+### Files Modified
+
+1. **frontend/src/components/toolbars/PlaneSelector.vue** (main changes)
+   - Import formatElementLabel
+   - Add activePlaneLabel computed property
+   - Update template: overlay formatted label, keep native select for functionality
+   - Remove caption element
+   - Update CSS: height 50px → 40px, remove .caption styles
+
+2. **frontend/tests/unit/components/PlaneSelector.spec.ts** (NEW)
+   - Test LaTeX formatting
+   - Test caption removal
+   - Test dropdown functionality
+
+**Estimated Effort**: 1-2 hours (simple text-to-HTML change + remove element)
+
+---

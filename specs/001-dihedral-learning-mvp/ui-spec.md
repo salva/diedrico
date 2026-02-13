@@ -2515,6 +2515,69 @@ The main viewport is the primary work surface where all geometric constructions 
 
 **Classification**: Active plane is **ViewState** (presentation state). Switching the active plane is **not** a constructive action, is **not** recorded in the ProcessTree, and is **not** part of undo/redo.
 
+---
+
+### PlaneSelector Component (Phase 103)
+
+**Purpose**: Dropdown button in toolbar for selecting the active projection plane. Displays plane labels with mathematical notation.
+
+**Visual Design**:
+- **Layout**: Single compact button with dropdown (no caption text)
+- **Selected Plane Display**: Shows current plane label formatted with KaTeX (e.g., P_H, P_V, P₁₂)
+- **Dropdown Options**: List of all projection planes, each with KaTeX-formatted label
+- **Size**: 40px height (consistent with toolbar buttons), auto-width based on label
+- **Styling**: 
+  - Border: 1px solid #ccc (hover: #999)
+  - Background: white (hover: #e8e8e8)
+  - Font: 12px weight 600 for plane labels
+  - Chevron icon: Downward arrow (12×12px) to indicate dropdown
+
+**Label Formatting** (Phase 96 Integration):
+- **Subscripts**: `P_H` → P_H (horizontal plane), `P_V` → P_V (vertical plane)
+- **Multi-digit subscripts**: `P_{12}` → P₁₂ (auxiliary plane 12)
+- **Greek letters**: `P_{\alpha}` → P_α
+- **Rendering**: Uses `formatElementLabel()` utility from Phase 96
+- **Display**: KaTeX HTML injected via `v-html` directive
+
+**Removed Elements** (Phase 103):
+- **"Plane" Caption**: Previously displayed below dropdown, removed to reduce clutter
+  - Old height: 50px (dropdown + caption)
+  - New height: 40px (dropdown only)
+  - Space savings: 10px vertical, cleaner toolbar appearance
+
+**Interaction**:
+- Click button → Open dropdown menu
+- Click option → Set active plane (calls `world.setActivePlaneId()`)
+- Dropdown closes automatically after selection
+- Current active plane shown in button face
+
+**Accessibility**:
+- ARIA label: "Active plane selector"
+- Keyboard navigation: Tab to focus, Enter/Space to open, Arrow keys to navigate, Enter to select
+- Screen reader: Announces current plane and available options
+
+**Responsive Behavior**:
+- Label width adapts to longest plane name in project
+- Dropdown menu width matches button width (minimum 80px)
+- Z-index: 1000 (appears above canvas, below dialogs)
+
+**Example Appearance**:
+```
+Before (Phase 102):                After (Phase 103):
+┌──────────────┐                   ┌──────────────┐
+│   P_H    ▼   │                   │   P_H    ▼   │  ← KaTeX formatted
+│              │                   └──────────────┘
+│    Plane     │  ← Removed
+└──────────────┘
+     50px                               40px
+```
+
+**Implementation Notes**:
+- Replace plain text `{{ plane.label }}` with `v-html="formatElementLabel(plane.label)"`
+- Remove `<span class="caption">Plane</span>` element
+- Adjust container height CSS from ~50px to 40px
+- Import `formatElementLabel` from `@/utils/formatUtils`
+
 ### Background Grid (Optional)
 
 **Purpose**: Provides measurable visual reference for geometric construction.
