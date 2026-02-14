@@ -414,10 +414,10 @@ function render3DElements() {
       const realization = world.get3DPointRealization(point.id!);
       // console.log('[ThreeView] Got realization:', {
       //   exists: !!realization,
-      //   feasible: realization?.isFeasible
+      //   feasible: realization?.isFeasible()
       // });
       
-      if (!realization || !realization.isFeasible) {
+      if (!realization || !realization.isFeasible()) {
         console.warn('[ThreeView] Skipping point - not feasible');
         continue;
       }
@@ -455,7 +455,7 @@ function render3DElements() {
       if (line.visualStyle?.visible === false) continue;
       
       const realization = world.get3DLineRealization(line.id!);
-      if (!realization || !realization.isFeasible) continue;
+      if (!realization || !realization.isFeasible()) continue;
       
       // Get point and direction on the line for rendering (extend far in both directions)
       const pointOnLineDomain = realization.point;
@@ -499,7 +499,7 @@ function render3DElements() {
       if (segment.visualStyle?.visible === false) continue;
       
       const realization = world.get3DSegmentRealization(segment.id!);
-      if (!realization || !realization.isFeasible) continue;
+      if (!realization || !realization.isFeasible()) continue;
       
       // Get endpoints from Vector4 and convert to Three.js coordinates
       const start = domainToThreeJS(realization.startPoint);
