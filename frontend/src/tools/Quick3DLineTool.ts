@@ -2,9 +2,16 @@
  * Quick3DLineTool - Automatic 3D line creation from predefined projections
  * 
  * Creates a complete 3D line immediately using fixed coordinates:
- * - P_H projection: L_H from (-40, 15) to (40, 15) - horizontal line
- * - P_V projection: L_V from (0, -20) to (0, 40) - vertical line
- * - 3D line: Line3DFromProjections from L_H and L_V
+ * - P_H projection: L_H from (0, 0) to (50, 50) - diagonal line
+ * - P_V projection: L_V from (0, 0) to (50, 50) - diagonal line
+ * - 3D line: Line3DFromProjections through origin with direction (1, 1, 1)
+ * 
+ * Geometric relationship:
+ * - P_H maps (u,v) → (x=u, y=v, z=0)
+ * - L_H has direction (1,1) in P_H → direction (1,1,0) in 3D
+ * - P_V maps (u,v) → (x=u, y=0, z=v)
+ * - L_V has direction (1,1) in P_V → direction (1,0,1) in 3D
+ * - Reconstructed 3D line: direction (1,1,1), through origin
  * 
  * Useful for:
  * - Quick testing without manual projection creation (~100x faster than manual)
@@ -78,22 +85,24 @@ export class Quick3DLineTool implements ITool {
     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
 
     try {
-      // Create P_H projection: horizontal line at y=15
-      const p1_H = new Vector3(-40, 15, 1);
+      // Create P_H projection: line through origin with direction (1, 1)
+      // In 3D: line through (0,0,0) with direction (1,1,0) when z=0
+      const p1_H = new Vector3(0, 0, 1);
       const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p1_H, groupId);
       
-      const p2_H = new Vector3(40, 15, 1);
+      const p2_H = new Vector3(50, 50, 1);
       const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p2_H, groupId);
       
       const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
         cmd, P_H.id!, p1Id_H, p2Id_H, groupId
       );
 
-      // Create P_V projection: vertical line at x=0
-      const p1_V = new Vector3(0, -20, 1);
+      // Create P_V projection: line through origin with direction (1, 1)
+      // In 3D: line through (0,0,0) with direction (1,0,1) when y=0
+      const p1_V = new Vector3(0, 0, 1);
       const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p1_V, groupId);
       
-      const p2_V = new Vector3(0, 40, 1);
+      const p2_V = new Vector3(50, 50, 1);
       const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p2_V, groupId);
       
       const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
@@ -105,10 +114,23 @@ export class Quick3DLineTool implements ITool {
       const result = cmd.addAndExecute(add3DLineOp);
       
       if (!result.success || !result.outputs.line3DId) {
+        console.error('[Quick3DLineTool] Failed to create 3D line:', result.error);
         throw new Error(result.error || 'Failed to create 3D line');
       }
 
       const line3DId = result.outputs.line3DId as string;
+      console.log('[Quick3DLineTool] Created 3D line:', line3DId);
+      
+      // Verify the 3D line realizes correctly
+      const line3D = world.get3DLine(line3DId);
+      if (line3D) {
+        const realization = world.get3DLineRealization(line3DId);
+        console.log('[Quick3DLineTool] 3D line realization:', {
+          feasible: realization?.isFeasible,
+          point: realization ? [realization.point.x, realization.point.y, realization.point.z] : null,
+          direction: realization ? [realization.direction.x, realization.direction.y, realization.direction.z] : null
+        });
+      }
 
       // Record ProcessTree action for 3D line
       const action = createAdd3DLineAction(line3DId);

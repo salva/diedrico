@@ -2658,20 +2658,21 @@ Before (Phase 102):                After (Phase 103):
 
 **Predefined Geometry**:
 - **P_H projection** (horizontal plane):
-  - Point P1: (-40, 15) 
-  - Point P2: (40, 15)
-  - Line L_H: From P1 to P2 (horizontal line at y=15)
+  - Point P1: (0, 0) 
+  - Point P2: (50, 50)
+  - Line L_H: From P1 to P2 (diagonal line with direction (1, 1))
 - **P_V projection** (vertical plane):
-  - Point P3: (0, -20)
-  - Point P4: (0, 40)
-  - Line L_V: From P3 to P4 (vertical line at x=0)
+  - Point P3: (0, 0)
+  - Point P4: (50, 50)
+  - Line L_V: From P3 to P4 (diagonal line with direction (1, 1))
 - **3D Line**: Reconstructed from L_H and L_V projections
 
 **Geometric Result**:
-- 3D line passes through origin region
-- Line direction: Roughly along X-axis with slight Y/Z components
+- 3D line passes through origin (0, 0, 0)
+- Line direction: (1, 1, 1) - diagonal through all three axes
 - Visible in 3D view immediately after creation
 - Projections clearly visible on both P_H and P_V
+- Geometrically valid: L_H projects (1,1,0) and L_V projects (1,0,1), combining to (1,1,1)
 
 **Toolbar Button**:
 - **Family**: Examples family (alongside Folding Plane Setup)

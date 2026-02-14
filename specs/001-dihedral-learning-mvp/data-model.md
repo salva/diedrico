@@ -20295,33 +20295,34 @@ export class Quick3DLineTool implements ITool {
 
 **P_H Projection (Horizontal Plane)**:
 ```
-Point P1_H: (-40, 15) in P_H coordinates
-Point P2_H: (40, 15) in P_H coordinates
-Line L_H: From P1_H to P2_H (horizontal line at y=15)
+Point P1_H: (0, 0) in P_H coordinates
+Point P2_H: (50, 50) in P_H coordinates
+Line L_H: From P1_H to P2_H (diagonal line with direction (1, 1))
 ```
 
 **P_V Projection (Vertical Plane)**:
 ```
-Point P1_V: (0, -20) in P_V coordinates
-Point P2_V: (0, 40) in P_V coordinates
-Line L_V: From P1_V to P2_V (vertical line at x=0)
+Point P1_V: (0, 0) in P_V coordinates
+Point P2_V: (50, 50) in P_V coordinates
+Line L_V: From P1_V to P2_V (diagonal line with direction (1, 1))
 ```
 
 **Rationale for Coordinates**:
-- P_H line horizontal (constant y=15): Easy to see in front view
-- P_V line vertical (constant x=0): Easy to see in side view
-- Lines centered near origin: Visible at default camera position
-- Moderate length (80 units for P_H, 60 units for P_V): Clearly visible without viewport clutter
-- Non-trivial 3D result: Line passes through origin region with visible Z-component
+- Both lines pass through origin: Easy to visualize, symmetric
+- Both lines diagonal (45°): Clear direction, not axis-aligned
+- Moderate length (50 units): Clearly visible without viewport clutter
+- Geometrically consistent: Projections of the same 3D line
+- Simple direction vector (1,1,1): Easy to understand relationship
 
 **3D Line Result**:
 ```
 Using Line3DFromProjections realizeTo3D algorithm:
-- L_H point: (0, 15, 0) + t * (1, 0, 0)
-- L_V point: (0, 0, 0) + s * (0, 1, 0)
-- 3D line passes through region near origin
-- Direction: Mix of X, Y, Z components (not axis-aligned)
+- L_H in 3D: direction (1, 1, 0) on plane z=0
+- L_V in 3D: direction (1, 0, 1) on plane y=0
+- Reconstructed 3D line: point (0, 0, 0), direction (1, 1, 1)
+- Direction: Equal components in X, Y, Z (symmetric)
 - Visible in 3D view when rendered with lineLength=2000
+- Geometrically valid: No skew projections, proper intersection
 ```
 
 **Coordinates Chosen to Avoid**:

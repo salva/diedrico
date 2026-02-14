@@ -113,9 +113,9 @@ Note that completing these tasks may require asking the user for additional info
   - **Implementation**:
     - Create `Quick3DLineTool` class implementing ITool interface
     - Tool activates → executes immediately (no user interaction needed)
-    - Create 4 points: P1_H=(-40,15), P2_H=(40,15) on P_H; P1_V=(0,-20), P2_V=(0,40) on P_V
-    - Create 2 lines: L_H (horizontal at y=15), L_V (vertical at x=0)
-    - Create Line3DFromProjections from L_H and L_V
+    - Create 4 points: P1_H=(0,0), P2_H=(50,50) on P_H; P1_V=(0,0), P2_V=(50,50) on P_V
+    - Create 2 lines: L_H (diagonal (1,1)), L_V (diagonal (1,1))
+    - Create Line3DFromProjections from L_H and L_V → 3D line direction (1,1,1)
     - Record all 7 operations as single ProcessTree action (undoable)
     - Return to selection tool automatically
     - Register tool in examples-family in toolFamilies.ts
