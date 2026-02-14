@@ -67,6 +67,16 @@
 
       <button
         class="nav-button"
+        @click="handleToggleProjections"
+        :class="{ active: showProjectedElements }"
+        title="Toggle 3D Projections (D)"
+        aria-label="Toggle 3D Projections"
+      >
+        <ProjectionIcon class="button-icon" />
+      </button>
+
+      <button
+        class="nav-button"
         @click="handleFitToView"
         title="Fit to View (Ctrl+0)"
         aria-label="Fit to View"
@@ -124,6 +134,7 @@ import OpenFileIcon from '@/components/icons/toolbar/OpenFileIcon.vue';
 import UndoIcon from '@/components/icons/toolbar/UndoIcon.vue';
 import RedoIcon from '@/components/icons/toolbar/RedoIcon.vue';
 import GridIcon from '@/components/icons/toolbar/GridIcon.vue';
+import ProjectionIcon from '@/components/icons/toolbar/ProjectionIcon.vue';
 import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
 
 /**
@@ -179,6 +190,9 @@ const canRedo = computed(() => {
 // Grid visibility
 const gridVisible = computed(() => viewStore.gridVisible.value);
 
+// Phase 106: 3D element projection display
+const showProjectedElements = computed(() => viewStore.showProjectedElements.value);
+
 /**
  * Select a tool
  */
@@ -210,6 +224,13 @@ function handleKeyDown(event: KeyboardEvent) {
   
   // Handle letter shortcuts for tools
   const key = event.key.toUpperCase();
+  
+  // Phase 106: D key toggles 3D element projection display
+  if (key === 'D') {
+    handleToggleProjections();
+    event.preventDefault();
+    return;
+  }
   
   // Find tool with matching shortcut across all families
   for (const family of TOOL_FAMILIES) {
@@ -337,6 +358,13 @@ function handleOpen() {
  */
 function handleToggleGrid() {
   viewStore.toggleGrid();
+}
+
+/**
+ * Toggle 3D element projection display (Phase 106 - T1836)
+ */
+function handleToggleProjections() {
+  viewStore.toggleProjectedElements();
 }
 
 /**

@@ -593,6 +593,7 @@ const primitives = computed(() => {
     selectedIds: selectedIdsSet,  // Selection state (bold highlight)
     cascadeHighlightIds: cascadeHighlightIdsSet,  // Cascade delete preview (orange warning)
     activePlaneId: activePlane.value,  // FR-002: Active plane visual emphasis
+    showProjectedElements: viewStore.showProjectedElements.value,  // Phase 106: 3D element projection display
   };
   
   const prims = paperService.generatePrimitives(context);

@@ -65,9 +65,42 @@ export interface PrimitiveContext {
   cascadeHighlightIds?: Set<string>;   // Elements that will be cascade deleted (orange warning)
   activeSnapTargetId?: string;         // Current snap target
   activePlaneId?: string;              // Active plane for visual emphasis (FR-002)
+  showProjectedElements?: boolean;     // Phase 106: toggle for 3D element projection display
 }
 
 import { resolveVisibility } from '../domain/world/styleService';
+import { applyMatrix3x4 } from '../utils/threeUtils';
+
+/**
+ * Phase 106: Visual styles for projected 3D elements.
+ * Purple, thicker strokes, reduced opacity to differentiate from user-created 2D elements.
+ */
+const PROJECTED_POINT_STYLE: ResolvedStyle = {
+  stroke: '#9B59B6',
+  strokeWidth: 1.5,
+  strokeStyle: 'solid',
+  fill: '#9B59B6',
+  opacity: 0.35,
+  zIndex: 5,
+};
+
+const PROJECTED_LINE_STYLE: ResolvedStyle = {
+  stroke: '#9B59B6',
+  strokeWidth: 3,
+  strokeStyle: 'solid',
+  fill: 'none',
+  opacity: 0.35,
+  zIndex: 5,
+};
+
+const PROJECTED_SEGMENT_STYLE: ResolvedStyle = {
+  stroke: '#9B59B6',
+  strokeWidth: 3,
+  strokeStyle: 'solid',
+  fill: 'none',
+  opacity: 0.35,
+  zIndex: 5,
+};
 
 /**
  * Service for converting domain entities to Paper primitives
@@ -167,6 +200,9 @@ export class PaperService {
     }
 
     // TODO: Add primitives for other element types (arcs, etc.)
+
+    // Phase 106: Generate projected 3D element primitives if enabled
+    primitives.push(...this.generate3DProjectionPrimitives(context));
 
     return primitives;
   }
@@ -851,5 +887,107 @@ export class PaperService {
 
       // TODO: Handle other element types (lines, circles)
     }
+  }
+
+  /**
+   * Phase 106: Generate primitives for 3D elements projected back onto projection planes.
+   * 
+   * For each feasible 3D element × each projection plane:
+   *   1. Project 3D coords → plane coords via applyMatrix3x4(pos, threeDToPlane)
+   *   2. Transform plane coords → paper coords via applyMatrix3(planeToPaper)
+   *   3. Create primitive with projected visual style (purple, transparent)
+   * 
+   * Projected primitives use `proj3d-` ID prefix and are non-interactive.
+   */
+  private generate3DProjectionPrimitives(context: PrimitiveContext): Primitive[] {
+    if (!context.showProjectedElements) return [];
+
+    const primitives: Primitive[] = [];
+    const world = context.world;
+    const EPSILON = 1e-10;
+
+    for (const plane of world.getAllProjectionPlanes()) {
+      const planeRealization = world.getProjectionPlane3DRealization(plane.id);
+      if (!planeRealization) continue;
+
+      const threeDToPlane = planeRealization.threeDToPlane;
+      const planeToPaper = context.planeTransforms.get(plane.id);
+      if (!planeToPaper) continue;
+
+      // Project all feasible 3D points
+      for (const point3D of world.getAll3DPoints()) {
+        const realization = point3D.realize3D(world);
+        if (!realization || !realization.isFeasible()) continue;
+
+        const planeCoords = applyMatrix3x4(realization.position, threeDToPlane);
+        const paperPos = planeCoords.clone().applyMatrix3(planeToPaper);
+
+        primitives.push({
+          type: 'point',
+          id: `proj3d-point-${point3D.id}-on-${plane.id}`,
+          sourceEntityId: point3D.id,
+          planeId: plane.id,
+          layer: RenderLayer.Guides + 3,   // Between Guides(10) and Elements(20)
+          visible: true,
+          style: PROJECTED_POINT_STYLE,
+          position: paperPos,
+          radius: 6,
+        } as PointPrimitive);
+      }
+
+      // Project all feasible 3D lines
+      for (const line3D of world.getAll3DLines()) {
+        const realization = line3D.realize3D(world);
+        if (!realization || !realization.isFeasible()) continue;
+
+        // Project point (w=1) and direction (w=0) separately via threeDToPlane
+        const projPoint = applyMatrix3x4(realization.point, threeDToPlane);
+        const projDir = applyMatrix3x4(realization.direction, threeDToPlane);
+
+        // Skip degenerate cases: direction projects to zero (line perpendicular to plane)
+        if (projDir.length() < EPSILON) continue;
+
+        const paperPoint = projPoint.clone().applyMatrix3(planeToPaper);
+        const paperDir = projDir.clone().applyMatrix3(planeToPaper);
+
+        primitives.push({
+          type: 'line',
+          id: `proj3d-line-${line3D.id}-on-${plane.id}`,
+          sourceEntityId: line3D.id,
+          planeId: plane.id,
+          layer: RenderLayer.Guides + 3,
+          visible: true,
+          style: PROJECTED_LINE_STYLE,
+          point: paperPoint,
+          direction: paperDir,
+        } as LinePrimitive);
+      }
+
+      // Project all feasible 3D segments
+      for (const segment3D of world.getAll3DSegments()) {
+        const realization = segment3D.realize3D(world);
+        if (!realization || !realization.isFeasible()) continue;
+
+        const projStart = applyMatrix3x4(realization.startPoint, threeDToPlane);
+        const projEnd = applyMatrix3x4(realization.endPoint, threeDToPlane);
+
+        const paperStart = projStart.clone().applyMatrix3(planeToPaper);
+        const paperEnd = projEnd.clone().applyMatrix3(planeToPaper);
+
+        primitives.push({
+          type: 'segment',
+          id: `proj3d-segment-${segment3D.id}-on-${plane.id}`,
+          sourceEntityId: segment3D.id,
+          planeId: plane.id,
+          layer: RenderLayer.Guides + 3,
+          visible: true,
+          style: PROJECTED_SEGMENT_STYLE,
+          point1: paperStart,
+          point2: paperEnd,
+        } as SegmentPrimitive);
+      }
+    }
+
+    return primitives;
   }
 }

@@ -30,6 +30,19 @@ const panX = ref(0);
 const panY = ref(0);
 const gridVisible = ref(true); // Grid visible by default
 
+// Phase 106: 3D element projection display toggle with localStorage persistence
+const PROJECTION_STORAGE_KEY = 'diedrico-show-projected-elements';
+
+function loadShowProjectedElements(): boolean {
+  try {
+    return localStorage.getItem(PROJECTION_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+const showProjectedElements = ref(loadShowProjectedElements());
+
 // 3D view display options with localStorage persistence
 const STORAGE_KEY = 'diedrico-threeview-options';
 
@@ -143,6 +156,18 @@ export function useViewStore() {
   }
 
   /**
+   * Toggle 3D element projection display (Phase 106 - T1831/T1832)
+   */
+  function toggleProjectedElements() {
+    showProjectedElements.value = !showProjectedElements.value;
+    try {
+      localStorage.setItem(PROJECTION_STORAGE_KEY, String(showProjectedElements.value));
+    } catch (e) {
+      console.warn('Failed to save projection display state to localStorage:', e);
+    }
+  }
+
+  /**
    * Update 3D view display options (Phase 77.5 - T1203)
    * @param options New display options
    */
@@ -181,6 +206,7 @@ export function useViewStore() {
     panX: computed(() => panX.value),
     panY: computed(() => panY.value),
     gridVisible: computed(() => gridVisible.value),
+    showProjectedElements: computed(() => showProjectedElements.value),
     threeViewOptions: computed(() => threeViewOptions.value),
     viewportState,
     
@@ -192,6 +218,7 @@ export function useViewStore() {
     resetViewport,
     toggleGrid,
     setGridVisible,
+    toggleProjectedElements,
     setThreeViewOptions,
     updateThreeViewOption
   };
