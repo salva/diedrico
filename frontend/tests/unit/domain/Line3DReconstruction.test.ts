@@ -330,31 +330,70 @@ describe('Line3D Reconstruction from Projections', () => {
     expect(len).toBeLessThan(1.01);
   });
 
-  it('should detect infeasible 3D line from parallel plane projections', () => {
-    // Create projections that lift to parallel 3D planes (no unique line intersection)
+  it('should handle original Quick3DLineTool geometry (horizontal + vertical)', () => {
+    // Original geometry from Quick3DLineTool before commit 638f8aee:
+    // - P_H: horizontal line at y=15 (parallel to X axis)
+    // - P_V: vertical line at x=0 (perpendicular to X axis)
     // 
-    // Geometry:
-    // - P_H line vertical (0,1): lifts to 3D direction (0,1,0), plane normal (1,0,0)
-    // - P_V line vertical (0,1): lifts to 3D direction (0,0,1), plane normal (1,0,0)
-    // Both planes have normal (1,0,0) → parallel → no unique intersection line → infeasible
+    // This creates a FEASIBLE 3D line parallel to Z axis at position (0, 15, t)
+    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+
+    // P_H: horizontal line from (-40, 15) to (40, 15) → direction (1, 0)
+    const lineH = createLine2D(P_H, -40, 15, 40, 15, 'lineH_horizontal');
+    
+    // P_V: vertical line from (0, -20) to (0, 40) → direction (0, 1)
+    const lineV = createLine2D(P_V, 0, -20, 0, 40, 'lineV_vertical');
+    
+    const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_original');
+
+    const realization = world.get3DLine(line3D)?.realize3D(world);
+    
+    // Should be FEASIBLE - creates line parallel to Z axis
+    expect(realization).toBeDefined();
+    expect(realization!.isFeasible()).toBe(true);
+    
+    const { point, direction } = realization!;
+    
+    // Direction should be parallel to Z axis
+    const expectedDir = new Vector4(0, 0, 1, 0);
+    expect(areParallel(direction, expectedDir)).toBe(true);
+    
+    // Line should pass through or near x=0, y=15
+    // Check that point (0, 15, 0) is on the line
+    const testPoint = new Vector4(0, 15, 0, 1);
+    expect(pointOnLine(testPoint, point, direction)).toBe(true);
+  });
+
+  it('should detect infeasible 3D line when lifted planes are parallel', () => {
+    // Create projections where the 3D planes (perpendicular to projection planes) are parallel
+    // 
+    // Mathematical analysis:
+    // - P_H vertical line (0,1): lifts to 3D direction (0,1,0)
+    //   Plane perpendicular to P_H: normal = (0,1,0) × (0,0,1) = (1,0,0)
+    // - P_V vertical line (0,1): lifts to 3D direction (0,0,1)  
+    //   Plane perpendicular to P_V: normal = (0,0,1) × (0,-1,0) = (1,0,0)
+    // Both planes have parallel normals (1,0,0) → no unique intersection → infeasible
+    //
+    // Note: This is different from "parallel projections on paper" - these lines happen
+    // to create parallel 3D planes due to the specific geometry of P_H and P_V
     const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
     const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
 
     // P_H: vertical line from (5,0) to (5,10) → direction (0,1)
     const lineH = createLine2D(P_H, 5, 0, 5, 10, 'lineH_vertical');
     
-    // P_V: vertical line from (0,0) to (0,10) → direction (0,1)
+    // P_V: vertical line from (0,0) to (0,10) → direction (0,1) 
     const lineV = createLine2D(P_V, 0, 0, 0, 10, 'lineV_vertical');
     
-    const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_infeasible');
+    const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_parallel_planes');
 
     const realization = world.get3DLine(line3D)?.realize3D(world);
     
-    // Should return a realization, but marked as infeasible
+    // Should return infeasible realization
     expect(realization).toBeDefined();
     expect(realization!.isFeasible()).toBe(false);
     
-    // Verify this matches the bug we found: infeasible elements should not be rendered
-    // (ThreeView.vue checks !realization.isFeasible() - fixed in commit 2b97697c)
+    // Verify ThreeView will skip rendering (fixed in commit 2b97697c)
   });
 });
