@@ -20826,4 +20826,136 @@ Key mathematical detail: when projecting a 3D line's direction vector through `t
 
 - **Point projecting to infinity**: If a 3D line is parallel to a projection plane, its direction projects to a zero vector on that plane. Skip such degenerate projections (check `projDir.length() < epsilon`).
 - **Line projecting to a point**: If a 3D line is perpendicular to a projection plane, it projects to a single point. This naturally results in a zero-length direction — render nothing or render as a point.
+
+## Phase 107: 3D Segment Realization
+
+### Overview
+
+Phase 78 scaffolded the full infrastructure for `Segment3DFromProjections` (domain class, operation, tool, 3D rendering, projection display, descriptors, serialization) but left `realize3D()` as a TODO stub returning placeholder coordinates `(0,0,0)→(1,0,0)`. Phase 107 implements the actual 3D reconstruction algorithm and adds geometric compatibility validation at creation time.
+
+### Architecture: Already Existing (Phase 78)
+
+All of the following are already fully implemented:
+- **`Segment3DFromProjections`** class in `Segment3D.ts` — fields, constructor, `getDependencies()`, `clone()`
+- **`Segment3DRealization3D`** class in `Element3DRealization3D.ts` — `startPoint`, `endPoint`, `getLength()`, `getPointAt(t)`, `getDirection()`
+- **`Add3DSegmentOp`** operation — validates planes, projections, creates element
+- **`Create3DSegmentTool`** — `ArgumentCollectorTool` collecting two segments, validates different planes
+- **`World.ts`** CRUD — `add3DSegment()`, `get3DSegment()`, `remove3DSegment()`, `getAll3DSegments()`, `get3DSegmentRealization()` with caching
+- **`ThreeView.vue`** — renders 3D segments as lines with endpoint spheres
+- **`PaperService.ts`** — projects 3D segments onto 2D planes when projection display is enabled
+- **`Element3DDescriptors.ts`** — `Segment3DFromProjectionsDescriptor` for process tree descriptions
+- **`ProjectService.ts`** — serialization/deserialization of `Add3DSegment` operations
+- **`toolFamilies.ts`** — `create3dsegment` registered in `3d-elements-family`
+
+### Phase 107 Changes
+
+#### 1. Implement `realize3D()` in `Segment3DFromProjections`
+
+The core algorithm reconstructs two 3D endpoint from 2D segment projections. A 3D segment has two endpoints A and B. On plane 1, the segment projects as (A₁, B₁) and on plane 2 as (A₂, B₂). The challenge is **endpoint correspondence**: we don't know whether A₁ corresponds to A₂ or B₂.
+
+**Algorithm**:
+
+```
+function realize3D(world):
+  1. Get segment projections seg1 (on plane1) and seg2 (on plane2)
+  2. Realize both segments → get 2D endpoints:
+     seg1: point1₁(u₁,v₁), point2₁(u₂,v₂) on plane1
+     seg2: point1₂(u₃,v₃), point2₂(u₄,v₄) on plane2
+  3. Get threeDToPlane matrices for both planes
+  4. Try Pairing A: (seg1.p1 ↔ seg2.p1) and (seg1.p2 ↔ seg2.p2)
+     - Reconstruct 3D point from (point1₁, point1₂) → endpointA_a
+     - Reconstruct 3D point from (point2₁, point2₂) → endpointB_a
+     - Both must pass consistency check
+  5. Try Pairing B: (seg1.p1 ↔ seg2.p2) and (seg1.p2 ↔ seg2.p1)
+     - Reconstruct 3D point from (point1₁, point2₂) → endpointA_b
+     - Reconstruct 3D point from (point2₁, point1₂) → endpointB_b
+     - Both must pass consistency check
+  6. Select valid pairing:
+     - If only one pairing is valid → use it
+     - If both are valid → use the one with smaller total consistency error
+     - If neither is valid → return infeasible
+```
+
+**3D Point Reconstruction** (same as `Point3DFromProjections.realize3D()`):
+
+Given two 2D points (u₁,v₁) on plane1 and (u₂,v₂) on plane2:
+1. Form 4 equations from two `threeDToPlane` matrices (each 3×4, rows 1-2 give u,v equations)
+2. Select 3 equations with largest |det| (try eq1,2,3 and eq1,2,4)
+3. Solve 3×3 system via Cramer's rule → (x, y, z)
+4. Verify unused 4th equation within tolerance (1e-6)
+
+This logic should be extracted into a shared utility function `reconstruct3DPointFromProjections()` used by both `Point3DFromProjections` and `Segment3DFromProjections`.
+
+#### 2. Shared Utility: `reconstruct3DPointFromProjections()`
+
+Extract from `Point3DFromProjections.realize3D()` into `frontend/src/utils/threeUtils.ts`:
+
+```typescript
+interface ReconstructionResult {
+  point: Vector4;        // Reconstructed 3D point (x,y,z,1)
+  feasible: boolean;     // Whether reconstruction is consistent
+  error: number;         // Consistency error (4th equation residual)
+}
+
+function reconstruct3DPointFromProjections(
+  pos2D_plane1: Vector3,      // (u₁, v₁, 1) on plane1
+  pos2D_plane2: Vector3,      // (u₂, v₂, 1) on plane2
+  threeDToPlane1: Matrix3x4,  // Projection matrix for plane1
+  threeDToPlane2: Matrix3x4   // Projection matrix for plane2
+): ReconstructionResult
+```
+
+#### 3. Compatibility Validation at Creation Time
+
+In `Add3DSegmentOp.apply()`, after validating that projections exist and are feasible, run a trial reconstruction:
+
+```typescript
+// Get segment endpoints
+const seg1Real = proj1.realize2D(world);
+const seg2Real = proj2.realize2D(world);
+
+// Get projection matrices
+const plane1Real = world.getProjectionPlane3DRealization(plane1Id);
+const plane2Real = world.getProjectionPlane3DRealization(plane2Id);
+
+// Try both pairings
+const pairingA = tryReconstructEndpoints(seg1Real.point1, seg2Real.point1, seg1Real.point2, seg2Real.point2, ...);
+const pairingB = tryReconstructEndpoints(seg1Real.point1, seg2Real.point2, seg1Real.point2, seg2Real.point1, ...);
+
+if (!pairingA.feasible && !pairingB.feasible) {
+  throw new Error('Cannot create 3D segment: projections are geometrically incompatible');
+}
+```
+
+#### 4. Process Tree Action
+
+Add `createAdd3DSegmentAction()` to `Element3DActions.ts`:
+
+```typescript
+export function createAdd3DSegmentAction(segmentId: string): Action {
+  return createAction(segmentId, `3D segment ${segmentId}`);
+}
+```
+
+Update `Create3DSegmentTool.executeOperations()` to create process tree action and action group (matching `Create3DLineTool` pattern).
+
+#### 5. Getting Segment Endpoint Coordinates
+
+The `Segment2DByPoints.realize2D()` returns `Line2DRealization2D(pos1, pos2, true)` where `pos1` and `pos2` are `Vector3` (u,v,1) coordinates of the two endpoints. These are accessed via `realization.point1` and `realization.point2` properties on `Line2DRealization2D`.
+
+Since segments return a `Line2DRealization2D` (not a segment-specific class), we access endpoints through:
+- `realization.point1` — first endpoint (Vector3, homogeneous with z=1)
+- `realization.point2` — second endpoint (Vector3, homogeneous with z=1)
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/domain/world/Segment3D.ts` | Replace TODO stub with full `realize3D()` implementation |
+| `frontend/src/utils/threeUtils.ts` | Add `reconstruct3DPointFromProjections()` utility |
+| `frontend/src/domain/world/Point3D.ts` | Refactor to use shared utility |
+| `frontend/src/commands/operations/world/Add3DSegmentOp.ts` | Add compatibility validation |
+| `frontend/src/domain/processTree/actions/Element3DActions.ts` | Add `createAdd3DSegmentAction()` |
+| `frontend/src/tools/Create3DSegmentTool.ts` | Add process tree action recording |
+| `frontend/tests/unit/domain/segment3D.spec.ts` | New: unit tests for realize3D + compatibility |
 - **Empty world**: If no 3D elements exist, the projection loop simply produces no primitives.

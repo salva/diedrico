@@ -3711,3 +3711,25 @@ The following UI state is saved per project to Google Drive and restored on proj
 - **3D Element Types**: Point3D, Line3D (all subclasses), Segment3D (all subclasses)
 - **Projection Planes**: All planes including P_H, P_V, and any auxiliary projection planes
 - **Skip Rule**: None — project onto all planes including the defining planes (the original 2D elements already exist there, but the projected marker adds visual confirmation)
+
+## 3D Segment Realization (Phase 107)
+
+**Context**: The 3D segment creation tool and rendering infrastructure already exist (Phase 78) but `realize3D()` was a placeholder stub. Phase 107 implements the actual 3D reconstruction from two 2D segment projections and adds compatibility validation.
+
+**No New UI Components**: The Create3DSegmentTool, toolbar button, 3D view rendering, and projection display all already exist. Phase 107 makes them functional by implementing the geometric computation.
+
+**User Workflow** (unchanged):
+1. Create two 2D segments, one on each projection plane (e.g., segment on P_H and segment on P_V)
+2. Select the 3D Segment tool from the 3D Elements toolbar family
+3. Click on the first segment projection (on any plane)
+4. Click on the second segment projection (must be on a different plane)
+5. The 3D segment is reconstructed and displayed in both the 3D view and 2D canvas (if projections toggle is enabled)
+
+**Compatibility Validation Feedback**:
+- If the two segment projections are geometrically incompatible (no valid endpoint pairing exists), the creation is rejected with an error:
+  - `"Cannot create 3D segment: projections are geometrically incompatible (no consistent endpoint pairing found)"`
+- Incompatibility occurs when neither possible pairing of segment endpoints produces consistent 3D points (the unused equation in the overdetermined system fails the tolerance check for both pairings)
+
+**Process Tree Integration**:
+- Creating a 3D segment now records a ProcessTree action (was previously missing)
+- Action description follows existing pattern: "Segment S_n: from projections S_a on P_H and S_b on P_V"

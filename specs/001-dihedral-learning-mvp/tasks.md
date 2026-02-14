@@ -12351,4 +12351,33 @@ Update all action factory functions to include operationType and constructionPar
 
 ---
 
+## Phase 107: 3D Segment Realization (10 tasks) [T1830-T1839]
+
+### Specification Documentation (1 task)
+
+- [ ] T1830 spec.md FR-077, ui-spec.md Phase 107, data-model.md Phase 107, tasks.md Phase 107
+
+### Shared Utility (2 tasks)
+
+- [ ] T1831 threeUtils.ts: Extract `reconstruct3DPointFromProjections()` from Point3DFromProjections.realize3D() — accepts two 2D positions and two threeDToPlane matrices, returns { point: Vector4, feasible: boolean, error: number }
+- [ ] T1832 Point3D.ts: Refactor Point3DFromProjections.realize3D() to use shared `reconstruct3DPointFromProjections()` utility
+
+### Core Realization (2 tasks)
+
+- [ ] T1833 Segment3D.ts: Implement realize3D() — get segment endpoints from realize2D(), get threeDToPlane matrices, try both endpoint pairings via `reconstruct3DPointFromProjections()`, select valid pairing (or infeasible if none), return Segment3DRealization3D
+- [ ] T1834 Add3DSegmentOp.ts: Add compatibility validation — after feasibility check, trial-reconstruct endpoints to verify at least one pairing is consistent; throw descriptive error if incompatible
+
+### Process Tree Integration (2 tasks)
+
+- [ ] T1835 Element3DActions.ts: Add `createAdd3DSegmentAction(segmentId)` function
+- [ ] T1836 Create3DSegmentTool.ts: Add process tree action recording (AddProcessTreeActionGroupOp + AddProcessTreeActionOp), matching Create3DLineTool pattern
+
+### Testing (3 tasks)
+
+- [ ] T1837 Unit test: `reconstruct3DPointFromProjections()` — standard PH/PV reconstruction, consistency check, infeasible cases
+- [ ] T1838 Unit test: `Segment3DFromProjections.realize3D()` — compatible segments on PH/PV, correct endpoint pairing selection, incompatible segments → infeasible, degenerate cases
+- [ ] T1839 Unit test: `Add3DSegmentOp` compatibility validation — compatible projections succeed, incompatible projections throw error
+
+**Checkpoint**: ✅ 3D segments fully functional with geometric reconstruction, compatibility validation, and process tree integration
+
 **Checkpoint**: ✅ ConstructiveAction stores only construction narrative, structural data derived from elements and DependencyService

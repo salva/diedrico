@@ -18,6 +18,8 @@ Note that completing these tasks may require asking the user for additional info
 
 
 ## FOR PLANING
+* [ ] In many occasions overlaying objects are created (or instance, the (B)HHL over the traces of an auxiliary projection plane). When that happens, some objects my hide or made others difficult to understand (again, for instance, dashed HHL get hidden by the regular lines used to define the projection). In order to overcome that a new entity called the OverlapingGroup must be added. It must be added to all the Element2D objects, so that objects which are created to overlap (complimentary guides, HHL, etc. ) are all added into this entity which must be linked from all the instances representing it. When drawing, its contents must be sorted according to some rules and only the **visible** element on top must be drawn. The sorting rules are that: the elements in the active plane get precedence, guides and (B)HHLs have precedence over regular lines. Note that it must be found which operations introduce elements related into that way to previously existing elements. Also, new Ops must be added to lookupOrCreateOverlappingGroup, mergeOverlappingGroups, addElementToOverllappingGroup, etc. Analyze this in deep. All those ops must also support undoing and redoing (as all the ops do)!
+
 * [ ] Rationalize class names for projection planes and related object (Ops, for instances).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
@@ -50,6 +52,18 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.  
  
 ## ALREADY PLANNED
+
+* [x] **3D Segment Realization (Phase 107)** - 📋 PLANNED
+  - **User Requirement**: "Add support for 3D segments. 3D segments can be defined using two segment projections (compatibility of the projections must be checked at creation time)."
+  - **Problem**: Segment3DFromProjections.realize3D() is a TODO stub returning placeholder coordinates. No compatibility validation at creation time. No process tree action recording.
+  - **Solution**: Implement realize3D() using the same Cramer's rule reconstruction as Point3DFromProjections but for two endpoint pairs. Try both possible endpoint pairings (correspondence unknown), select valid one. Extract shared utility reconstruct3DPointFromProjections(). Add compatibility validation in Add3DSegmentOp. Add process tree action.
+  - **Implementation**:
+    - threeUtils.ts: Extract `reconstruct3DPointFromProjections()` shared utility
+    - Segment3D.ts: Full realize3D() with dual-pairing endpoint reconstruction
+    - Add3DSegmentOp.ts: Compatibility validation at creation time
+    - Element3DActions.ts: Add `createAdd3DSegmentAction()`
+    - Create3DSegmentTool.ts: Process tree action recording
+  - **Spec References**: FR-077, Phase 107 in ui-spec.md, data-model.md, tasks.md (T1830-T1839)
 
 * [x] **3D Element Projection Display (Phase 106)** - 📋 PLANNED
   - **User Requirement**: "Add a setting for displaying projections of all the 3d elements back into the projection planes. This is a complex matter which may require many changes into the project and so, needs proper consideration and planning. A control for enabling and disabling the visualization of the projections must be added. Also, the projections must have a different look than regular 2d objects (for instance, a bigger width but more transparent than regular 2d objects)."
