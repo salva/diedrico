@@ -224,9 +224,16 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
     tools: [
       {
         id: 'quickprojectionsetup',
-        label: 'Quick Setup',
+        label: 'Folding Plane Setup',
         icon: ExampleIcon,
-        tooltip: 'Quick projection plane setup with predefined points',
+        tooltip: 'Creates traces T1, T2, T2\' for auxiliary projection plane testing',
+        completionBehavior: 'return-to-selection'
+      },
+      {
+        id: 'quick3dline',
+        label: 'Quick 3D Line',
+        icon: ExampleIcon,
+        tooltip: 'Creates example 3D line from two projections',
         completionBehavior: 'return-to-selection'
       },
       {
