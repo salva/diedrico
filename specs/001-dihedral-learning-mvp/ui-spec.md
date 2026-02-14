@@ -3675,3 +3675,39 @@ The following UI state is saved per project to Google Drive and restored on proj
     - **Trigger**: Creation of a new Action or Subprocess.
     - **Behavior**: The panel continuously scrolls or jumps to the bottom to reveal the newly added row.
     - **Constraint**: This is the *only* automatic scroll event. Toggling visibility or other properties must essentially happen "in place".
+
+### 3D Element Projection Display (Phase 106)
+
+**Purpose**: Allow users to visualize how 3D elements (points, lines, segments) project back onto the 2D projection planes, reinforcing the dihedral projection learning experience.
+
+**Toggle Button**:
+- **Location**: Navigation controls section of main toolbar (next to Grid toggle button)
+- **Behavior**: Click toggles projection display on/off
+- **Visual State**: Active state uses blue highlight (same `.active` CSS class as Grid toggle)
+- **Icon**: Projection/eye icon suggesting 3D-to-2D projection concept
+- **Tooltip**: "Toggle 3D Projections (P)"
+- **Keyboard Shortcut**: `P` key (when canvas focused, not in text input)
+- **Default State**: Off (disabled)
+- **Persistence**: Toggle state saved to localStorage, restored on reload
+
+**Projected Element Visual Style**:
+- **Differentiation from regular 2D elements**: Projected elements must be clearly distinguishable from user-created 2D elements
+- **Stroke Width**: 3px (thicker than regular 1.5px elements)
+- **Opacity**: 0.35 (more transparent than regular elements)
+- **Color**: Purple `#9B59B6` for projected elements (distinct from blue/red 2D elements)
+- **Line Style**: Solid (not dashed — dashed is used for derived projections)
+- **Points**: Rendered as circles with 6px radius, filled with purple at 0.35 opacity
+- **Lines**: Rendered as infinite lines with purple stroke at 0.35 opacity
+- **Segments**: Rendered as finite line segments with purple stroke at 0.35 opacity
+
+**Rendering Behavior**:
+- Projects ALL feasible 3D elements onto ALL projection planes
+- Infeasible 3D elements are excluded (no projection shown)
+- Projected elements render BELOW regular elements (RenderLayer between Guides and Elements)
+- Projected elements are NOT interactive: no hover, no selection, no hit-testing
+- Projection updates reactively when 3D elements change (move, create, delete)
+
+**Scope**:
+- **3D Element Types**: Point3D, Line3D (all subclasses), Segment3D (all subclasses)
+- **Projection Planes**: All planes including P_H, P_V, and any auxiliary projection planes
+- **Skip Rule**: None — project onto all planes including the defining planes (the original 2D elements already exist there, but the projected marker adds visual confirmation)

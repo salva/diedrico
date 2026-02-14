@@ -51,6 +51,18 @@ Note that completing these tasks may require asking the user for additional info
  
 ## ALREADY PLANNED
 
+* [x] **3D Element Projection Display (Phase 106)** - 📋 PLANNED
+  - **User Requirement**: "Add a setting for displaying projections of all the 3d elements back into the projection planes. This is a complex matter which may require many changes into the project and so, needs proper consideration and planning. A control for enabling and disabling the visualization of the projections must be added. Also, the projections must have a different look than regular 2d objects (for instance, a bigger width but more transparent than regular 2d objects)."
+  - **Problem**: Users cannot see how their 3D elements (points, lines, segments) project back onto the 2D projection planes, making it harder to verify 3D constructions and understand dihedral projection relationships.
+  - **Solution**: Add toolbar toggle button that displays projections of all feasible 3D elements onto all projection planes. Projected elements rendered with distinct visual style (purple, thicker strokes, 35% opacity) to differentiate from user-created 2D elements. Projections are non-interactive (no hover/selection).
+  - **Implementation**:
+    - viewStore: `showProjectedElements` toggle with localStorage persistence
+    - PaperService: `generate3DProjectionPrimitives()` projects 3D elements via `applyMatrix3x4(pos, threeDToPlane)` → plane coords → `applyMatrix3(planeToPaper)` → paper coords
+    - Toolbar: Toggle button with `P` keyboard shortcut
+    - Styles: Purple `#9B59B6`, 3px stroke, 0.35 opacity
+    - Hit testing exclusion via `proj3d-` ID prefix
+  - **Spec References**: FR-076, Phase 106 in ui-spec.md, data-model.md, tasks.md (T1830-T1847)
+
 * [x] **HHL/BHHL Constructor Refactoring (Phase 102)** - ✅ COMPLETE (Feb 10, 2026)
   - **User Requirement**: "I want the HL to be given as the primary parameter with the plane where they sit. BHHL and HHL must be derived from the BHL and HL geometrical objects plus the plane where they sit"
   - **Problem**: HalfHingeLine2D and BrokenHalfHingeLine2D constructors received only ID strings (hingeLineId/brokenHingeLineId), making the geometric dependency implicit and reducing type safety. Also, ID label extraction was using the first number in the ID string (e.g., plane number) instead of the line number.

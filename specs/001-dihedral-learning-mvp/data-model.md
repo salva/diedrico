@@ -20602,3 +20602,228 @@ if (!line3D.success) {
 - No new domain logic required
 
 ---
+
+## Phase 106: 3D Element Projection Display
+
+**Purpose**: Display the projections of all feasible 3D elements (points, lines, segments) back onto the 2D projection planes, controlled by a toolbar toggle button. This visual feedback helps learners verify their 3D constructions by seeing where 3D geometry projects onto each plane.
+
+**Context**:
+- 3D elements (Point3D, Line3D, Segment3D) are constructed from 2D projections
+- Each projection plane has a `threeDToPlane` matrix (Matrix3x4) that projects 3D coordinates to plane intrinsic `(u,v,1)` coordinates
+- PaperService already handles plane-to-paper transformation and primitive generation
+- The rendering pipeline: 3D position (Vector4) → `applyMatrix3x4(pos, threeDToPlane)` → plane coords (Vector3) → `applyMatrix3(planeToPaper)` → paper coords → SVG primitive
+
+### 1. View State Extension
+
+**viewStore.ts** — Add projection display toggle:
+
+```typescript
+// New ref alongside gridVisible
+const showProjectedElements = ref(false);
+
+// localStorage persistence key: 'diedrico-show-projected-elements'
+function loadShowProjectedElements(): boolean {
+  try {
+    return localStorage.getItem('diedrico-show-projected-elements') === 'true';
+  } catch { return false; }
+}
+
+function toggleProjectedElements() {
+  showProjectedElements.value = !showProjectedElements.value;
+  localStorage.setItem('diedrico-show-projected-elements', String(showProjectedElements.value));
+}
+```
+
+Exposed via return object as `showProjectedElements: computed(...)` and `toggleProjectedElements`.
+
+### 2. PrimitiveContext Extension
+
+**PaperService.ts** — Add `showProjectedElements` to context:
+
+```typescript
+export interface PrimitiveContext {
+  world: World;
+  planeTransforms: Map<string, Matrix3>;
+  // ... existing fields ...
+  showProjectedElements?: boolean;  // Phase 106: toggle for 3D projections
+}
+```
+
+**SvgCanvas.vue** — Pass toggle value when building context:
+
+```typescript
+const context: PrimitiveContext = {
+  // ... existing fields ...
+  showProjectedElements: viewStore.showProjectedElements.value,
+};
+```
+
+### 3. PaperService Projection Generation
+
+**New method** `generate3DProjectionPrimitives()` added to PaperService class:
+
+```typescript
+private generate3DProjectionPrimitives(context: PrimitiveContext): Primitive[] {
+  if (!context.showProjectedElements) return [];
+  
+  const primitives: Primitive[] = [];
+  const world = context.world;
+  
+  // Iterate all projection planes
+  for (const plane of world.getAllProjectionPlanes()) {
+    const planeRealization = world.getProjectionPlane3DRealization(plane.id);
+    if (!planeRealization) continue;
+    
+    const threeDToPlane = planeRealization.threeDToPlane;
+    const planeToPaper = context.planeTransforms.get(plane.id);
+    if (!planeToPaper) continue;
+    
+    // Project all feasible 3D points
+    for (const point3D of world.getAll3DPoints()) {
+      const realization = point3D.realize3D(world);
+      if (!realization || !realization.isFeasible()) continue;
+      
+      // 3D → plane coords → paper coords
+      const planeCoords = applyMatrix3x4(realization.position, threeDToPlane);
+      const paperPos = planeCoords.clone().applyMatrix3(planeToPaper);
+      
+      primitives.push({
+        type: 'point',
+        id: `proj3d-point-${point3D.id}-on-${plane.id}`,
+        sourceEntityId: point3D.id,
+        planeId: plane.id,
+        layer: RenderLayer.Guides + 3,  // Between Guides(10) and Elements(20)
+        visible: true,
+        style: PROJECTED_POINT_STYLE,
+        position: paperPos,
+        radius: 6,
+      });
+    }
+    
+    // Project all feasible 3D lines
+    for (const line3D of world.getAll3DLines()) {
+      const realization = line3D.realize3D(world);
+      if (!realization || !realization.isFeasible()) continue;
+      
+      // Project point (w=1) and direction (w=0) separately
+      const projPoint = applyMatrix3x4(realization.point, threeDToPlane);
+      const projDir = applyMatrix3x4(realization.direction, threeDToPlane);
+      
+      // Transform to paper coordinates
+      const paperPoint = projPoint.clone().applyMatrix3(planeToPaper);
+      const paperDir = projDir.clone().applyMatrix3(planeToPaper);
+      
+      primitives.push({
+        type: 'line',
+        id: `proj3d-line-${line3D.id}-on-${plane.id}`,
+        sourceEntityId: line3D.id,
+        planeId: plane.id,
+        layer: RenderLayer.Guides + 3,
+        visible: true,
+        style: PROJECTED_LINE_STYLE,
+        point: paperPoint,
+        direction: paperDir,
+      });
+    }
+    
+    // Project all feasible 3D segments
+    for (const segment3D of world.getAll3DSegments()) {
+      const realization = segment3D.realize3D(world);
+      if (!realization || !realization.isFeasible()) continue;
+      
+      const projStart = applyMatrix3x4(realization.startPoint, threeDToPlane);
+      const projEnd = applyMatrix3x4(realization.endPoint, threeDToPlane);
+      
+      const paperStart = projStart.clone().applyMatrix3(planeToPaper);
+      const paperEnd = projEnd.clone().applyMatrix3(planeToPaper);
+      
+      primitives.push({
+        type: 'segment',
+        id: `proj3d-segment-${segment3D.id}-on-${plane.id}`,
+        sourceEntityId: segment3D.id,
+        planeId: plane.id,
+        layer: RenderLayer.Guides + 3,
+        visible: true,
+        style: PROJECTED_SEGMENT_STYLE,
+        point1: paperStart,
+        point2: paperEnd,
+      });
+    }
+  }
+  
+  return primitives;
+}
+```
+
+Called at the end of `generatePrimitives()`:
+```typescript
+// After existing element iteration loops
+primitives.push(...this.generate3DProjectionPrimitives(context));
+```
+
+### 4. Projected Element Styles
+
+Constant styles for projected elements (not interactive, no hover/selection):
+
+```typescript
+const PROJECTED_POINT_STYLE: ResolvedStyle = {
+  stroke: '#9B59B6',     // Purple
+  strokeWidth: 1.5,
+  strokeStyle: 'solid',
+  fill: '#9B59B6',
+  opacity: 0.35,
+  zIndex: 5,
+};
+
+const PROJECTED_LINE_STYLE: ResolvedStyle = {
+  stroke: '#9B59B6',
+  strokeWidth: 3,
+  strokeStyle: 'solid',
+  fill: 'none',
+  opacity: 0.35,
+  zIndex: 5,
+};
+
+const PROJECTED_SEGMENT_STYLE: ResolvedStyle = {
+  stroke: '#9B59B6',
+  strokeWidth: 3,
+  strokeStyle: 'solid',
+  fill: 'none',
+  opacity: 0.35,
+  zIndex: 5,
+};
+```
+
+### 5. Toolbar Toggle Button
+
+**Toolbar.vue** — Add button in navigation-controls section, after Grid toggle:
+
+```vue
+<button
+  class="nav-button"
+  @click="handleToggleProjections"
+  :class="{ active: showProjectedElements }"
+  title="Toggle 3D Projections (P)"
+  aria-label="Toggle 3D Projections"
+>
+  <ProjectionIcon class="button-icon" />
+</button>
+```
+
+**Keyboard shortcut**: `P` key — registered in `handleKeyDown()`.
+
+**Icon**: New `ProjectionIcon.vue` — a simple SVG showing a 3D cube projecting onto a plane.
+
+### 6. Hit Testing Exclusion
+
+Projected primitives use `proj3d-` prefix in their IDs. The hit testing logic in SvgCanvas must skip primitives whose IDs start with `proj3d-` to prevent interaction with projected elements.
+
+### 7. Direction Vector Projection
+
+Key mathematical detail: when projecting a 3D line's direction vector through `threeDToPlane`, the direction's `w` component is `0`. This means `applyMatrix3x4` applies only the rotational/linear part of the matrix (no translation), which correctly transforms the direction without offset. The resulting plane-space direction may need normalization for rendering but preserves orientation.
+
+### 8. Degenerate Cases
+
+- **Point projecting to infinity**: If a 3D line is parallel to a projection plane, its direction projects to a zero vector on that plane. Skip such degenerate projections (check `projDir.length() < epsilon`).
+- **Line projecting to a point**: If a 3D line is perpendicular to a projection plane, it projects to a single point. This naturally results in a zero-length direction — render nothing or render as a point.
+- **Empty world**: If no 3D elements exist, the projection loop simply produces no primitives.

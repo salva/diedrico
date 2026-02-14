@@ -9981,9 +9981,88 @@ Implement Broken Hinge Line (BHL) architecture for auxiliary projection planes. 
 
 ---
 
-## Phase 106: TBD
+## Phase 106: 3D Element Projection Display (18 tasks) [T1830-T1847]
 
-[Continue with next phase...]
+**Goal**: Display projections of all feasible 3D elements (points, lines, segments) back onto all projection planes, controlled by a toolbar toggle button. Implements FR-076.
+
+**Pre-implementation planning**:
+- Add FR-076 to spec.md (3D element projection display with toolbar toggle)
+- Add Phase 106 section to ui-spec.md (toggle button, projected element visual style)
+- Add Phase 106 section to data-model.md (implementation architecture, projection pipeline)
+- Add Phase 106 tasks to tasks.md (this section)
+- Update for-planing.md (mark as planned, move to "ALREADY PLANNED")
+
+### Planning Commit (1 task)
+
+- [ ] T1830 Planning commit:
+  ```
+  git add -A
+  git commit -m "Phase 106: 3D Element Projection Display - Planning Complete
+
+  Implements FR-076. Planning documentation for displaying projections of all
+  feasible 3D elements back onto projection planes.
+
+  Specs: FR-076 in spec.md, Phase 106 sections in ui-spec.md, data-model.md,
+  tasks.md. Feature moved to ALREADY PLANNED in for-planing.md.
+
+  Phase 106 planning complete, ready for implementation."
+  ```
+
+### View State (2 tasks)
+
+- [ ] T1831 viewStore.ts: Add `showProjectedElements` ref with localStorage persistence (`diedrico-show-projected-elements` key)
+- [ ] T1832 viewStore.ts: Add `toggleProjectedElements()` function and expose both via return object
+
+### PrimitiveContext Extension (2 tasks)
+
+- [ ] T1833 PaperService.ts: Add `showProjectedElements?: boolean` field to `PrimitiveContext` interface
+- [ ] T1834 SvgCanvas.vue: Pass `showProjectedElements` from viewStore into PrimitiveContext when building computed primitives
+
+### Toolbar Toggle Button (3 tasks)
+
+- [ ] T1835 Create `ProjectionIcon.vue` in `components/icons/toolbar/` (SVG icon representing 3D-to-2D projection)
+- [ ] T1836 Toolbar.vue: Add projection toggle button in navigation-controls section (after Grid toggle), using `.active` class pattern
+- [ ] T1837 Toolbar.vue: Add `P` keyboard shortcut in `handleKeyDown()` to toggle projections
+
+### PaperService Projection Generation (3 tasks)
+
+- [ ] T1838 PaperService.ts: Add `PROJECTED_POINT_STYLE`, `PROJECTED_LINE_STYLE`, `PROJECTED_SEGMENT_STYLE` constants (purple #9B59B6, opacity 0.35, strokeWidth 3)
+- [ ] T1839 PaperService.ts: Implement `generate3DProjectionPrimitives(context)` method — iterate all planes × all 3D elements, project via `applyMatrix3x4(pos, threeDToPlane)` then `applyMatrix3(planeToPaper)`, create point/line/segment primitives with `proj3d-` prefixed IDs
+- [ ] T1840 PaperService.ts: Call `generate3DProjectionPrimitives()` at end of `generatePrimitives()` and push results into primitives array
+
+### Hit Testing Exclusion (1 task)
+
+- [ ] T1841 SvgCanvas.vue: Ensure hit testing skips primitives with `proj3d-` prefixed IDs (projected elements must not be interactive)
+
+### Testing (5 tasks)
+
+- [ ] T1842 [P] Unit test: viewStore toggleProjectedElements() toggles state and persists to localStorage
+- [ ] T1843 [P] Unit test: PaperService.generate3DProjectionPrimitives() produces correct primitives for a 3D point projected onto P_H and P_V
+- [ ] T1844 [P] Unit test: PaperService.generate3DProjectionPrimitives() produces correct line primitives (point w=1 and direction w=0 projected separately)
+- [ ] T1845 [P] Unit test: PaperService.generate3DProjectionPrimitives() returns empty array when showProjectedElements is false
+- [ ] T1846 [P] Unit test: Infeasible 3D elements are excluded from projection primitives
+
+### Implementation Commit (1 task)
+
+- [ ] T1847 Implementation commit:
+  ```
+  git add -A
+  git commit -m "Phase 106: 3D Element Projection Display - Implementation Complete
+
+  Implements FR-076. Toggle button in toolbar displays projections of all
+  feasible 3D elements back onto projection planes.
+
+  - viewStore: showProjectedElements toggle with localStorage persistence
+  - PaperService: generate3DProjectionPrimitives() projects 3D points/lines/segments
+  - Toolbar: Purple projection toggle button with P keyboard shortcut
+  - Projected elements: purple, thicker stroke, 35% opacity, non-interactive
+  - Hit testing excludes proj3d- prefixed primitives
+  - Unit tests for projection pipeline and toggle state"
+  ```
+
+**Phase 106 Complete**: 3D element projections displayed on all projection planes with toolbar toggle control. Visual style (purple, thick, transparent) clearly distinguishes projected elements from user-created 2D elements.
+
+---
 
 ### T1215: Manual Test - Warning Threshold
   - Create T1, T2, T2' with T2' at incorrect position (2 pixels off)
