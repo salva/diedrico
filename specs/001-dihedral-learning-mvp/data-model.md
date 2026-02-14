@@ -20197,3 +20197,407 @@ frontend/src/components/panels/ThreeView.vue
 **Estimated Effort**: 15-30 minutes (simple constant changes, visual testing)
 
 ---
+
+## Phase 105: Quick 3D Line Example Tool
+
+**Purpose**: Create a one-click example tool that automatically constructs a complete 3D line from two 2D line projections, providing immediate visual demonstration and testing capability without requiring manual construction steps.
+
+**Context**: 
+- Existing **QuickProjectionSetupTool** creates folding plane example (traces T1, T2, T2')
+- Existing **Create3DLineTool** requires user to manually select two 2D lines
+- Gap: No quick way to demonstrate 3D line creation for testing/education
+
+**User Workflow**:
+1. Click "Quick 3D Line" button in Examples toolbar
+2. Tool immediately creates complete setup:
+   - 4 points (2 on P_H, 2 on P_V)
+   - 2 lines (L_H on P_H, L_V on P_V)
+   - 1 Line3DFromProjections (from L_H and L_V)
+3. Tool returns to selection mode
+4. User sees 3D line in 3D view, projections on 2D views
+
+**Comparison with Related Tools**:
+- **QuickProjectionSetupTool**: Auto-creates folding plane traces (14-step construction)
+- **Quick3DLineTool**: Auto-creates 3D line from projections (simpler: 7 steps)
+- **Create3DLineTool**: Interactive tool requiring user to select existing lines
+- **InteractiveProjectionSetupTool**: Step-by-step guide for manual construction
+
+### 1. Tool Implementation Pattern
+
+**Class Structure** (`frontend/src/tools/Quick3DLineTool.ts`):
+
+```typescript
+import { ITool, ToolContext } from './ITool';
+import { AddFreePoint2DOp } from '../commands/operations/AddFreePoint2DOp';
+import { AddLine2DByTwoPointsOp } from '../commands/operations/AddLine2DByTwoPointsOp';
+import { Add3DLineOp } from '../commands/operations/Add3DLineOp';
+import { ProcessTree } from '../commands/processTree/ProcessTree';
+import { createAdd3DLineAction } from '../commands/processTree/actions/Add3DLineAction';
+
+export class Quick3DLineTool implements ITool {
+  readonly name = 'quick3dline';
+  readonly description = 'Creates an example 3D line from two projections';
+  // ... context storage ...
+
+  activate(context: ToolContext): void {
+    // Execute setup immediately (no user interaction)
+    this.executeSetup(context);
+  }
+
+  private executeSetup(context: ToolContext): void {
+    const { world, commandManager, processTree } = context;
+    
+    // 1. Get projection planes
+    const P_H = world.getPlaneById('P_H');
+    const P_V = world.getPlaneById('P_V');
+    
+    // 2. Create points on P_H
+    const p1_H = new AddFreePoint2DOp(P_H.id, new Vector2(-40, 15));
+    const p2_H = new AddFreePoint2DOp(P_H.id, new Vector2(40, 15));
+    
+    // 3. Create line on P_H
+    const line_H = new AddLine2DByTwoPointsOp(p1_H.resultPointId, p2_H.resultPointId);
+    
+    // 4. Create points on P_V
+    const p1_V = new AddFreePoint2DOp(P_V.id, new Vector2(0, -20));
+    const p2_V = new AddFreePoint2DOp(P_V.id, new Vector2(0, 40));
+    
+    // 5. Create line on P_V
+    const line_V = new AddLine2DByTwoPointsOp(p1_V.resultPointId, p2_V.resultPointId);
+    
+    // 6. Create 3D line from projections
+    const line3D = new Add3DLineOp(line_H.resultLineId, line_V.resultLineId);
+    
+    // 7. Record all operations as single command
+    const action = createAdd3DLineAction(line3D.resultLine3DId, [
+      p1_H, p2_H, line_H,
+      p1_V, p2_V, line_V,
+      line3D
+    ]);
+    processTree.addAction(action);
+    commandManager.commit(action);
+    
+    // 8. Return to selection tool
+    context.setTool('select');
+  }
+
+  deactivate(): void {
+    // No cleanup needed (immediate execution)
+  }
+
+  handleCanvasClick(): void {
+    // Ignored (tool returns to select immediately)
+  }
+}
+```
+
+### 2. Predefined Geometry
+
+**P_H Projection (Horizontal Plane)**:
+```
+Point P1_H: (-40, 15) in P_H coordinates
+Point P2_H: (40, 15) in P_H coordinates
+Line L_H: From P1_H to P2_H (horizontal line at y=15)
+```
+
+**P_V Projection (Vertical Plane)**:
+```
+Point P1_V: (0, -20) in P_V coordinates
+Point P2_V: (0, 40) in P_V coordinates
+Line L_V: From P1_V to P2_V (vertical line at x=0)
+```
+
+**Rationale for Coordinates**:
+- P_H line horizontal (constant y=15): Easy to see in front view
+- P_V line vertical (constant x=0): Easy to see in side view
+- Lines centered near origin: Visible at default camera position
+- Moderate length (80 units for P_H, 60 units for P_V): Clearly visible without viewport clutter
+- Non-trivial 3D result: Line passes through origin region with visible Z-component
+
+**3D Line Result**:
+```
+Using Line3DFromProjections realizeTo3D algorithm:
+- L_H point: (0, 15, 0) + t * (1, 0, 0)
+- L_V point: (0, 0, 0) + s * (0, 1, 0)
+- 3D line passes through region near origin
+- Direction: Mix of X, Y, Z components (not axis-aligned)
+- Visible in 3D view when rendered with lineLength=2000
+```
+
+**Coordinates Chosen to Avoid**:
+- ❌ Origin points (0,0): Hard to distinguish from axis
+- ❌ Large coordinates (>100): May be outside default viewport
+- ❌ Parallel lines: Would create degenerate 3D line
+- ❌ Coincident points: Would fail validation
+
+### 3. Operations Sequence
+
+**Execution Order** (7 operations total):
+
+```plaintext
+1. AddFreePoint2DOp → P1_H at (-40, 15) on P_H
+2. AddFreePoint2DOp → P2_H at (40, 15) on P_H
+3. AddLine2DByTwoPointsOp → L_H from P1_H to P2_H
+4. AddFreePoint2DOp → P1_V at (0, -20) on P_V
+5. AddFreePoint2DOp → P2_V at (0, 40) on P_V
+6. AddLine2DByTwoPointsOp → L_V from P1_V to P2_V
+7. Add3DLineOp → Line3D from L_H and L_V
+```
+
+**ProcessTree Recording**:
+```typescript
+// Single action group containing all operations
+const action = createAdd3DLineAction(line3D.resultLine3DId, [
+  p1_H, p2_H, line_H,   // P_H projection
+  p1_V, p2_V, line_V,   // P_V projection
+  line3D                // 3D line construction
+]);
+```
+
+**Undo Behavior**:
+- Single Undo: Removes entire construction (all 7 operations)
+- Redo: Restores complete 3D line with projections
+- ProcessTree: Shows "Add 3D Line" action with child operations
+
+### 4. Validation
+
+**Pre-execution Checks**:
+```typescript
+// Verify projection planes exist
+const P_H = world.getPlaneById('P_H');
+const P_V = world.getPlaneById('P_V');
+if (!P_H || !P_V) {
+  throw new Error('Projection planes P_H and P_V must exist');
+}
+```
+
+**Operation Validations**:
+- `AddFreePoint2DOp`: No constraints (always succeeds)
+- `AddLine2DByTwoPointsOp`: Points must be distinct (guaranteed by predefined coordinates)
+- `Add3DLineOp`: Lines must be on different planes (P_H ≠ P_V, guaranteed)
+
+**Expected Outcome**:
+- All operations succeed on first execution
+- No user error handling needed (predefined data is valid)
+
+### 5. Tool Registration
+
+**Add to toolFamilies.ts** (`frontend/src/config/toolFamilies.ts`):
+
+```typescript
+// examples-family (after quickprojectionsetup)
+{
+  id: 'examples',
+  label: 'Examples',
+  description: 'Example constructions for testing and demonstration',
+  defaultTool: 'quickprojectionsetup',
+  tools: [
+    {
+      id: 'quickprojectionsetup',
+      label: 'Folding Plane Setup',  // ✅ RENAMED from 'Quick Setup'
+      description: 'Creates traces T1, T2, T2\' for auxiliary projection plane testing',
+      returnToSelection: true
+    },
+    {
+      id: 'quick3dline',  // ✅ NEW TOOL
+      label: 'Quick 3D Line',
+      description: 'Creates example 3D line from two projections',
+      returnToSelection: true
+    },
+    {
+      id: 'interactiveprojectionsetup',
+      label: 'Interactive Projection Setup',
+      // ... unchanged ...
+    }
+  ]
+}
+```
+
+**Toolbar Button Properties**:
+- **ID**: `quick3dline`
+- **Label**: `Quick 3D Line`
+- **Icon**: TBD (reuse 3D line icon or create new example icon)
+- **Tooltip**: `Quick 3D line setup - Creates example 3D line from two projections`
+- **Return to Selection**: `true` (auto-switch after execution)
+
+### 6. Comparison with QuickProjectionSetupTool
+
+| Aspect | QuickProjectionSetupTool | Quick3DLineTool |
+|--------|--------------------------|-----------------|
+| **Purpose** | Folding plane traces | 3D line from projections |
+| **Complexity** | 14 operations | 7 operations |
+| **Geometry** | 3 trace lines (T1, T2, T2') | 2 projection lines + 1 3D line |
+| **Factory Used** | constructProjectionPlaneSetup() | Manual operation sequence |
+| **Execution** | Immediate | Immediate |
+| **Return Tool** | Selection | Selection |
+| **ProcessTree** | Single action group | Single action group |
+| **Use Case** | Auxiliary plane testing | 3D visualization testing |
+
+**Design Decision**: **No factory method needed**
+- QuickProjectionSetupTool uses factory because construction is complex (14 steps, geometric relationships)
+- Quick3DLineTool is simple (7 independent steps), inline operations are clearer
+
+### 7. User Experience
+
+**Before Quick3DLine Tool**:
+1. Create 2 points on P_H → Click point tool, click canvas twice
+2. Create line on P_H → Click line tool, select both points
+3. Create 2 points on P_V → Switch plane, click point tool, click canvas twice
+4. Create line on P_V → Click line tool, select both points
+5. Create 3D line → Click 3D line tool, select line on P_H, select line on P_V
+**Total**: 5 tool switches, 8 canvas clicks, 4 element selections (~2-3 minutes)
+
+**After Quick3DLine Tool**:
+1. Click "Quick 3D Line" button
+**Total**: 1 button click (~1 second)
+
+**Improvement**: **~100x faster** for creating test 3D line
+
+**Use Cases**:
+- **Developer Testing**: Quick visual verification of 3D rendering changes
+- **Demo/Screenshots**: Consistent test case for documentation
+- **Learning**: Students see complete 3D line immediately to understand concept
+- **Debugging**: Reproduce 3D line issues without manual setup
+
+### 8. File Modifications
+
+**New File**:
+```plaintext
+frontend/src/tools/Quick3DLineTool.ts (NEW)
+  - Class: Quick3DLineTool implements ITool
+  - Methods: activate(), executeSetup(), deactivate(), handleCanvasClick()
+  - Imports: Operations, ProcessTree, action creators
+```
+
+**Modified Files**:
+```plaintext
+frontend/src/config/toolFamilies.ts
+  Line ~227: label: 'Quick Setup' → label: 'Folding Plane Setup'
+  Line ~232: (Add quick3dline tool entry after quickprojectionsetup)
+
+frontend/src/tools/index.ts (if exists)
+  - Export Quick3DLineTool for tool registry
+```
+
+**No Changes Required**:
+- Operations (AddFreePoint2DOp, AddLine2DByTwoPointsOp, Add3DLineOp): Already exist
+- Action creators (createAdd3DLineAction): Already exist
+- Domain models (Point2D, Line2D, Line3DFromProjections): Already exist
+
+### 9. Testing Strategy
+
+**Unit Tests** (Quick3DLineTool.test.ts):
+```typescript
+describe('Quick3DLineTool', () => {
+  it('should create 4 points (2 on P_H, 2 on P_V)', () => {
+    // Arrange: Setup world with P_H and P_V
+    // Act: tool.activate(context)
+    // Assert: world.getAllPoints().length === 4 (or initial + 4)
+  });
+
+  it('should create 2 lines (1 on P_H, 1 on P_V)', () => {
+    // Assert: world.getAllLines().length === 2
+  });
+
+  it('should create 1 Line3DFromProjections', () => {
+    // Assert: world.getAll3DLines().length === 1
+  });
+
+  it('should return to selection tool after execution', () => {
+    // Assert: context.currentTool === 'select'
+  });
+
+  it('should record operations in ProcessTree as single action', () => {
+    // Assert: processTree.actions.length === 1
+    // Assert: processTree.actions[0].operations.length === 7
+  });
+});
+```
+
+**Integration Tests** (E2E):
+```typescript
+test('Quick 3D Line button creates complete 3D line', async ({ page }) => {
+  // 1. Click "Quick 3D Line" button
+  await page.click('[data-testid="tool-quick3dline"]');
+  
+  // 2. Verify 3D line appears in 3D view
+  await expect(page.locator('.three-view canvas')).toContainVisual('3d-line');
+  
+  // 3. Verify projections appear in P_H and P_V views
+  await expect(page.locator('.canvas-panel[data-plane="P_H"]')).toContainVisual('horizontal-line');
+  await expect(page.locator('.canvas-panel[data-plane="P_V"]')).toContainVisual('vertical-line');
+  
+  // 4. Verify elements panel shows new elements
+  await expect(page.locator('.elements-panel')).toContainText('L_H');
+  await expect(page.locator('.elements-panel')).toContainText('L_V');
+  await expect(page.locator('.elements-panel')).toContainText('Line3D');
+  
+  // 5. Verify undo removes all elements
+  await page.keyboard.press('Control+Z');
+  await expect(page.locator('.elements-panel')).not.toContainText('Line3D');
+});
+```
+
+**Visual Verification**:
+1. Click tool → Verify 3D line appears in 3D view
+2. Check P_H canvas → Verify horizontal line at y=15
+3. Check P_V canvas → Verify vertical line at x=0
+4. Rotate 3D view → Verify line extends to infinity (lineLength=2000)
+5. Undo → Verify all elements removed
+6. Redo → Verify all elements restored
+
+### 10. Error Handling
+
+**Expected Errors**: None (predefined coordinates are valid)
+
+**Defensive Checks** (optional):
+```typescript
+// Verify planes exist
+if (!P_H || !P_V) {
+  console.error('Cannot create quick 3D line: Projection planes missing');
+  context.showMessage('Error: Projection planes P_H and P_V required');
+  context.setTool('select');
+  return;
+}
+
+// Verify operation succeeded
+if (!line3D.success) {
+  console.error('Failed to create 3D line:', line3D.error);
+  context.showMessage('Error: Could not create 3D line');
+  context.setTool('select');
+  return;
+}
+```
+
+**Rationale**: Minimal error handling needed because:
+- Predefined coordinates are guaranteed valid
+- No user input to validate
+- Planes P_H and P_V always exist in normal application state
+- Operations are deterministic
+
+### 11. Implementation Effort
+
+**Estimated Time**: 1-2 hours
+
+**Breakdown**:
+- Create Quick3DLineTool.ts: 30-45 minutes
+  - Copy QuickProjectionSetupTool structure
+  - Replace geometry creation with 7 operations
+  - Test locally
+- Update toolFamilies.ts: 5 minutes
+  - Rename "Quick Setup" → "Folding Plane Setup"
+  - Add quick3dline tool entry
+- Manual testing: 15-20 minutes
+  - Visual verification in 3D view
+  - Test undo/redo
+  - Verify ProcessTree recording
+- Documentation: 10 minutes
+  - Update tool list in README (if exists)
+  - Add inline comments
+
+**Low Risk**: 
+- Tool pattern already proven (QuickProjectionSetupTool)
+- Operations already exist and tested
+- No new domain logic required
+
+---

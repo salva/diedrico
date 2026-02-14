@@ -105,34 +105,40 @@ Note that completing these tasks may require asking the user for additional info
     - data-model.md §Phase 104 (implementation details)
   - **Tasks**: tasks.md Phase 104 (T1858-T1867: 10 tasks)
   - **Status**: 📋 PLANNED - All specification documentation complete, ready for implementation
-    - Remove `<span class="caption">Plane</span>` element entirely
-    - Update CSS: height 50px → 40px, gap 2px → 0px
+
+* [x] **Quick 3D Line Example Tool (Phase 105)** - 📋 PLANNED (Feb 14, 2026)
+  - **User Requirement**: "Create a button similar to QuickSetup that draws a 3d line (and rename QuickSetup to Folding plane)"
+  - **Problem**: No quick way to demonstrate 3D line creation for testing and education. Current workflow requires 5 tool switches and ~2-3 minutes to manually create projections and construct 3D line. "Quick Setup" name is unclear about its purpose (creates folding plane traces).
+  - **Solution**: Create Quick3DLineTool that automatically constructs a complete 3D line from two predefined 2D line projections with a single button click. Rename "Quick Setup" to "Folding Plane Setup" for clarity about its actual purpose.
+  - **Implementation**:
+    - Create `Quick3DLineTool` class implementing ITool interface
+    - Tool activates → executes immediately (no user interaction needed)
+    - Create 4 points: P1_H=(-40,15), P2_H=(40,15) on P_H; P1_V=(0,-20), P2_V=(0,40) on P_V
+    - Create 2 lines: L_H (horizontal at y=15), L_V (vertical at x=0)
+    - Create Line3DFromProjections from L_H and L_V
+    - Record all 7 operations as single ProcessTree action (undoable)
+    - Return to selection tool automatically
+    - Register tool in examples-family in toolFamilies.ts
+    - Rename quickprojectionsetup label: "Quick Setup" → "Folding Plane Setup"
   - **Key Benefits**:
-    - Visual consistency: Plane labels match formatting in Elements Panel, Process Tree, Properties Dialog
-    - Better UX: Mathematical subscripts immediately recognizable (P_H not `P_H`)
-    - Space efficiency: 10px vertical space savings in toolbar
-    - Accessibility preserved: Native select still handles keyboard/screen reader interaction
-    - Future-proof: Works with auxiliary planes (e.g., P_{12} → P₁₂)
-  - **Known Limitation**: Dropdown options show plain text (`P_H`) while selected label shows formatted (P_H). Acceptable trade-off - users see formatted label 99% of time (when dropdown closed). Full custom dropdown (with KaTeX in options) would require significant accessibility work and is out of scope for this phase.
-  - **Specifications**:
-    - spec.md FR-073 (functional requirement)
-    - ui-spec.md §PlaneSelector Component (Phase 103) (visual design, removed elements)
-    - data-model.md §Phase 103 (implementation approach, CSS overlay technique)
-  - **Tasks**: tasks.md Phase 103 (T1849-T1857: 8 tasks)
-    - T1849: Specification documents (COMPLETE)
-    - T1850: Import formatElementLabel
-    - T1851: Add activePlaneLabel computed
-    - T1852: Add formatted label overlay
-    - T1853: Hide native text with CSS
-    - T1854: Remove caption element
-    - T1855: Add overlay CSS styles
-    - T1856: Manual/unit testing
-    - T1857: Commit Phase 103
+    - One-click 3D line creation (~1 second vs. 2-3 minutes manual workflow)
+    - Consistent test case for 3D rendering verification
+    - Educational demonstration of 3D line from projections concept
+    - Clear tool naming: "Folding Plane Setup" explains trace creation purpose
+    - Immediate visual feedback in 3D view (line extends to infinity with Phase 104)
+  - **Pattern**: Similar to QuickProjectionSetupTool but simpler (7 ops vs. 14 ops)
   - **Files Modified**:
-    - `frontend/src/components/toolbars/PlaneSelector.vue` (template, script, styles)
+    - `frontend/src/tools/Quick3DLineTool.ts` (NEW)
+    - `frontend/src/config/toolFamilies.ts` (add quick3dline, rename label)
+    - Tool registration file (export Quick3DLineTool)
+  - **Specifications**:
+    - spec.md FR-075 (functional requirement: Quick 3D Line + rename)
+    - ui-spec.md §Quick 3D Line Example Tool (Phase 105) (tool behavior, visual feedback)
+    - data-model.md §Phase 105 (implementation pattern, geometry, operations)
+  - **Tasks**: tasks.md Phase 105 (T1868-T1877: 10 tasks)
   - **Status**: 📋 PLANNED - All specification documentation complete, ready for implementation
 
-* [x] **Broken Hinge Lines (BHL) and Distance Transport Guides (Phase 101)** - ✅ PLANNED (Feb 7, 2026)
+* [x] **PlaneSelector LaTeX Rendering and Caption Removal (Phase 103)** - 📋 PLANNED (Feb 13, 2026)
   - **User Requirement**: "Plan the feature...Broken HHL, specifically, I want to know how to translate the distances from t2 to t2'"
   - **Problem**: When an auxiliary projection plane is created by folding plane Q using trace T1 as the hinge, traces T2 (on original plane) and T2' (on folded plane) form a "broken hinge line" - projections of the same 3D line. Distance transport between T2 and T2' requires guides, but standard perpendicular guides don't preserve geometric relationships for BHLs.
   - **Solution**: Implement Broken Hinge Line architecture where guides are **PARALLEL to the main hinge T1** (not perpendicular). This is geometrically correct because only directions parallel to T1 lie in plane Q and preserve distance relationships between T2 and T2'.

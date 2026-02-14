@@ -2641,6 +2641,72 @@ Before (Phase 102):                After (Phase 103):
 - LineBasicMaterial `linewidth` property may not work on all WebGL platforms (browser limitation)
 - Very large line lengths (>10000) might cause floating-point precision issues, but 2000 is well within safe range
 
+---
+
+### Quick 3D Line Example Tool (Phase 105)
+
+**Purpose**: Provide a one-click example tool that automatically creates a complete 3D line from two 2D line projections, useful for quick testing and demonstrating the 3D line creation workflow.
+
+**Tool Behavior**:
+- **Activation**: Executes immediately when toolbar button is clicked (no canvas interaction needed)
+- **Auto-construction**: Creates complete setup without requiring user input:
+  1. Creates 4 points: 2 on P_H, 2 on P_V (predefined positions)
+  2. Creates 2 lines: Line L_H on P_H (horizontal), Line L_V on P_V (vertical)
+  3. Creates Line3DFromProjections from L_H and L_V
+  4. Returns to selection tool automatically
+- **Completion**: Single undoable command containing all operations
+
+**Predefined Geometry**:
+- **P_H projection** (horizontal plane):
+  - Point P1: (-40, 15) 
+  - Point P2: (40, 15)
+  - Line L_H: From P1 to P2 (horizontal line at y=15)
+- **P_V projection** (vertical plane):
+  - Point P3: (0, -20)
+  - Point P4: (0, 40)
+  - Line L_V: From P3 to P4 (vertical line at x=0)
+- **3D Line**: Reconstructed from L_H and L_V projections
+
+**Geometric Result**:
+- 3D line passes through origin region
+- Line direction: Roughly along X-axis with slight Y/Z components
+- Visible in 3D view immediately after creation
+- Projections clearly visible on both P_H and P_V
+
+**Toolbar Button**:
+- **Family**: Examples family (alongside Folding Plane Setup)
+- **Label**: "Quick 3D Line"
+- **Icon**: 3D line with projection indicators (or reuse 3D line icon)
+- **Tooltip**: "Quick 3D line setup - Creates example 3D line from two projections"
+
+**Label Rename**:
+- **Previous**: "Quick Setup" → **New**: "Folding Plane Setup"
+- **Rationale**: More descriptive of actual purpose (creates traces for auxiliary projection plane testing)
+- **Tooltip**: "Folding plane setup - Creates T1, T2, T2' traces for auxiliary plane testing"
+
+**Use Cases**:
+- **Quick testing**: Test 3D view rendering without manual construction
+- **Demonstration**: Show students how 3D lines appear from projections
+- **Workflow verification**: Verify 3D line creation pipeline works correctly
+- **Debugging**: Consistent test case for 3D geometry issues
+
+**Comparison with Interactive Tool**:
+- **Interactive Create 3D Line Tool**: User selects two existing 2D lines → Creates 3D line
+- **Quick 3D Line Tool**: Automatically creates both projections AND 3D line → Faster testing
+
+**Implementation Notes**:
+- Similar structure to QuickProjectionSetupTool
+- Immediate execution on activate()
+- Uses PointSequenceFactory and LineSequenceFactory for 2D geometry
+- Uses Add3DLineOp for 3D line creation
+- All operations wrapped in single ProcessTree action group
+
+**Visual Feedback**:
+- Status bar message: "Quick 3D line created"
+- 3D view automatically shows new line
+- Elements Panel updates with new points, lines, and 3D line
+- ProcessTree shows complete construction sequence
+
 ### Background Grid (Optional)
 
 **Purpose**: Provides measurable visual reference for geometric construction.

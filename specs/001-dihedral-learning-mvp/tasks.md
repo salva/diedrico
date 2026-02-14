@@ -9799,7 +9799,189 @@ Implement Broken Hinge Line (BHL) architecture for auxiliary projection planes. 
 
 ---
 
-## Phase 105: TBD
+## Phase 105: Quick 3D Line Example Tool (10 tasks) [T1868-T1877]
+
+**Goal**: Create a one-click example tool that automatically constructs a complete 3D line from two 2D line projections, and rename "Quick Setup" to "Folding Plane Setup" for clarity.
+
+### T1868: Update Specification Documents
+- Add FR-075 to spec.md (functional requirement)
+- Add Phase 105 section to ui-spec.md (tool behavior, button design, visual feedback)
+- Add Phase 105 section to data-model.md (implementation details, geometry, operations)
+- Add Phase 105 tasks to tasks.md (this section)
+- Update for-planing.md (mark as planned, move to "ALREADY PLANNED")
+- **Files**: 
+  - `specs/001-dihedral-learning-mvp/spec.md`
+  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+  - `specs/001-dihedral-learning-mvp/data-model.md`
+  - `specs/001-dihedral-learning-mvp/tasks.md`
+  - `specs/001-dihedral-learning-mvp/for-planing.md`
+
+### T1869: Commit Planning Documentation
+- Stage all specification updates from T1868
+- Commit with message:
+  ```bash
+  git add specs/
+  git commit -m "Phase 105: Quick 3D Line Example Tool - Planning Complete
+  
+  - Added FR-075 functional requirement
+  - Specified Quick 3D Line tool behavior and implementation
+  - Defined predefined geometry for example 3D line
+  - Planned tool registration and toolbar integration
+  - Renamed 'Quick Setup' to 'Folding Plane Setup' in specs
+  
+  Phase 105 planning complete, ready for implementation."
+  ```
+- **Files**: All spec files from T1868
+
+### T1870: Create Quick3DLineTool Class
+- Create new file: `frontend/src/tools/Quick3DLineTool.ts`
+- Implement ITool interface:
+  ```typescript
+  export class Quick3DLineTool implements ITool {
+    readonly name = 'quick3dline';
+    readonly description = 'Creates an example 3D line from two projections';
+    
+    activate(context: ToolContext): void {
+      this.executeSetup(context);
+    }
+    
+    private executeSetup(context: ToolContext): void {
+      // Implementation in next task
+    }
+    
+    deactivate(): void {
+      // No cleanup needed
+    }
+    
+    handleCanvasClick(): void {
+      // Ignored (returns to select immediately)
+    }
+  }
+  ```
+- Add necessary imports (ITool, ToolContext, operations, ProcessTree)
+- **Files**: `frontend/src/tools/Quick3DLineTool.ts` (NEW)
+
+### T1871: Implement executeSetup Method - Create P_H Projection
+- Implement first half of executeSetup():
+  1. Get P_H plane from world
+  2. Create point P1_H at (-40, 15) using AddFreePoint2DOp
+  3. Create point P2_H at (40, 15) using AddFreePoint2DOp
+  4. Create line L_H from P1_H to P2_H using AddLine2DByTwoPointsOp
+  5. Store operations in array for later ProcessTree recording
+- Add error handling if P_H plane doesn't exist
+- **Files**: `frontend/src/tools/Quick3DLineTool.ts`
+- **Method**: executeSetup()
+
+### T1872: Implement executeSetup Method - Create P_V Projection
+- Continue executeSetup() implementation:
+  1. Get P_V plane from world
+  2. Create point P1_V at (0, -20) using AddFreePoint2DOp
+  3. Create point P2_V at (0, 40) using AddFreePoint2DOp
+  4. Create line L_V from P1_V to P2_V using AddLine2DByTwoPointsOp
+  5. Add operations to array
+- Add error handling if P_V plane doesn't exist
+- **Files**: `frontend/src/tools/Quick3DLineTool.ts`
+- **Method**: executeSetup()
+
+### T1873: Implement executeSetup Method - Create 3D Line and Commit
+- Complete executeSetup() implementation:
+  1. Create Line3DFromProjections using Add3DLineOp with L_H and L_V
+  2. Create action group using createAdd3DLineAction with all 7 operations
+  3. Add action to ProcessTree
+  4. Commit via commandManager
+  5. Return to selection tool using context.setTool('select')
+- Verify all operations are recorded as single undoable command
+- **Files**: `frontend/src/tools/Quick3DLineTool.ts`
+- **Method**: executeSetup()
+
+### T1874: Register Quick3DLineTool in Tool Registry
+- Export Quick3DLineTool from tools module (if index.ts exists)
+- Register tool in tool factory or registry (check existing pattern)
+- Verify tool can be instantiated by name 'quick3dline'
+- **Files**: 
+  - `frontend/src/tools/index.ts` (if exists)
+  - Tool registration/factory file (location TBD based on codebase)
+
+### T1875: Update toolFamilies.ts - Rename and Add Tool
+- Open `frontend/src/config/toolFamilies.ts`
+- Find examples-family configuration (around line 219)
+- **Change 1**: Rename "Quick Setup" to "Folding Plane Setup"
+  ```typescript
+  // Before (line ~227):
+  label: 'Quick Setup',
+  
+  // After:
+  label: 'Folding Plane Setup',
+  description: 'Creates traces T1, T2, T2\' for auxiliary projection plane testing',
+  ```
+- **Change 2**: Add quick3dline tool after quickprojectionsetup (around line 232)
+  ```typescript
+  {
+    id: 'quick3dline',
+    label: 'Quick 3D Line',
+    description: 'Creates example 3D line from two projections',
+    returnToSelection: true
+  },
+  ```
+- **Files**: `frontend/src/config/toolFamilies.ts`
+- **Lines**: ~227 (rename), ~232 (add tool)
+
+### T1876: Manual Testing and Visual Verification
+- Start application in development mode
+- Navigate to Examples toolbar family
+- Verify:
+  1. "Folding Plane Setup" button exists (renamed from "Quick Setup")
+  2. "Quick 3D Line" button exists and is clickable
+- Click "Quick 3D Line" button
+- Verify immediate results:
+  - 3D view shows new 3D line extending far (lineLength=2000)
+  - P_H canvas shows horizontal line at y=15
+  - P_V canvas shows vertical line at x=0
+  - Elements panel shows 4 points, 2 lines, 1 Line3D
+  - ProcessTree shows "Add 3D Line" action
+  - Tool automatically returns to selection mode
+- Test undo/redo:
+  - Undo (Ctrl+Z) → All elements removed
+  - Redo (Ctrl+Shift+Z) → All elements restored
+- Test multiple executions:
+  - Click "Quick 3D Line" again → Creates second set of elements
+  - Verify both 3D lines visible in 3D view
+- **Files**: Manual testing
+
+### T1877: Verify TypeScript Compilation and Commit Implementation
+- Run TypeScript compiler:
+  ```bash
+  cd frontend
+  npx tsc --noEmit
+  ```
+- Expected: No new compilation errors
+- If errors exist, fix before committing
+- Stage changes:
+  ```bash
+  git add frontend/src/tools/Quick3DLineTool.ts
+  git add frontend/src/tools/index.ts
+  git add frontend/src/config/toolFamilies.ts
+  ```
+- Commit implementation:
+  ```bash
+  git commit -m "Phase 105: Quick 3D Line Example Tool - Implementation Complete
+  
+  - Created Quick3DLineTool for one-click 3D line creation
+  - Automatically creates 2 projection lines (P_H and P_V) and 3D line
+  - Predefined geometry: L_H at y=15, L_V at x=0
+  - Registered tool in examples-family toolbar
+  - Renamed 'Quick Setup' to 'Folding Plane Setup' for clarity
+  - All operations recorded as single undoable action
+  
+  Implements FR-075. Quick testing and demonstration tool complete."
+  ```
+- **Files**: All modified files from T1870-T1875
+
+**Phase 105 Complete**: Quick 3D Line example tool provides one-click demonstration of 3D line creation from projections. Tool naming clarified with "Folding Plane Setup" rename.
+
+---
+
+## Phase 106: TBD
 
 [Continue with next phase...]
 
