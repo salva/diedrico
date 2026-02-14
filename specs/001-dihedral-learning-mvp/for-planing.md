@@ -18,7 +18,6 @@ Note that completing these tasks may require asking the user for additional info
 
 
 ## FOR PLANING
-
 * [ ] Rationalize class names for projection planes and related object (Ops, for instances).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
@@ -83,6 +82,29 @@ Note that completing these tasks may require asking the user for additional info
     - Add `activePlaneLabel` computed property to get current plane label
     - Overlay formatted label div on native select using CSS (position absolute, click-transparent)
     - Hide native select text with `color: transparent` (functionality preserved)
+
+* [x] **Infinite 3D Line Rendering (Phase 104)** - 📋 PLANNED (Feb 14, 2026)
+  - **User Requirement**: "Fix 3d representation. Currently, 3d lines are represented as a small segment. They should be represented as the 2d lines in projection planes which extend very long (to infinity?)"
+  - **Problem**: 3D lines (Line3DFromProjections, HingeLine, BrokenHingeLine) rendered with very short length (50-100 units) appearing as small disconnected segments instead of infinite lines, making spatial relationships unclear.
+  - **Solution**: Extend 3D line rendering length from 50-100 units to 2000 units (±1000 from point on line), matching the 2000-unit extension used for 2D lines on projection planes in Element2DRenderer3D.
+  - **Implementation**:
+    - Update Line3DFromProjections rendering in ThreeView.vue: Change `lineLength = 50` → `lineLength = 2000`
+    - Update HingeLine rendering in ThreeView.vue: Change `lineLength = 100` → `lineLength = 2000`
+    - Update BrokenHingeLine rendering (if separate): Change to `lineLength = 2000`
+    - No changes to domain/realization layers (Line3D, Line3DRealization3D)
+  - **Key Benefits**:
+    - 3D lines appear infinite like 2D lines on planes, improving spatial understanding
+    - Consistent visual behavior between 2D and 3D line rendering
+    - Lines extend far beyond viewport at all reasonable zoom levels
+    - No performance impact (same vertex count, just different endpoint positions)
+  - **Files Modified**:
+    - `frontend/src/components/panels/ThreeView.vue` (3 line length constants)
+  - **Specifications**:
+    - spec.md FR-074 (functional requirement)
+    - ui-spec.md §Infinite 3D Line Rendering (Phase 104)
+    - data-model.md §Phase 104 (implementation details)
+  - **Tasks**: tasks.md Phase 104 (T1858-T1867: 10 tasks)
+  - **Status**: 📋 PLANNED - All specification documentation complete, ready for implementation
     - Remove `<span class="caption">Plane</span>` element entirely
     - Update CSS: height 50px → 40px, gap 2px → 0px
   - **Key Benefits**:

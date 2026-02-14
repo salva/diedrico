@@ -9658,7 +9658,148 @@ Implement Broken Hinge Line (BHL) architecture for auxiliary projection planes. 
 
 ---
 
-## Phase 104: TBD
+## Phase 104: Infinite 3D Line Rendering (10 tasks) [T1858-T1867]
+
+**Goal**: Extend 3D line rendering length to appear infinite (matching 2D line behavior), improving spatial understanding of line geometry in the 3D view.
+
+### T1858: Update Specification Documents
+- Add FR-074 to spec.md (functional requirement)
+- Add Phase 104 section to ui-spec.md (visual design, rendering behavior)
+- Add Phase 104 section to data-model.md (implementation details, performance notes)
+- Add Phase 104 tasks to tasks.md (this section)
+- Update for-planing.md (mark as planned, move to "ALREADY PLANNED")
+- **Files**: 
+  - `specs/001-dihedral-learning-mvp/spec.md`
+  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+  - `specs/001-dihedral-learning-mvp/data-model.md`
+  - `specs/001-dihedral-learning-mvp/tasks.md`
+  - `specs/001-dihedral-learning-mvp/for-planing.md`
+
+### T1859: Update Line3DFromProjections Rendering Length
+- Open `frontend/src/components/panels/ThreeView.vue`
+- Locate Line3DFromProjections rendering section (around line 468)
+- Change line length constant:
+  ```typescript
+  // Before:
+  const lineLength = 50; // Extend 25 units in each direction
+  
+  // After:
+  const lineLength = 2000; // Extend 1000 units in each direction (appears infinite)
+  ```
+- Update inline comment to reflect new behavior
+- **Files**: `frontend/src/components/panels/ThreeView.vue`
+- **Lines**: ~468
+
+### T1860: Update HingeLine Rendering Length
+- Locate HingeLine rendering section in ThreeView.vue (around line 642)
+- Change line length constant:
+  ```typescript
+  // Before:
+  const lineLength = 100;
+  
+  // After:
+  const lineLength = 2000; // Match 3D line rendering length
+  ```
+- Update inline comment
+- **Files**: `frontend/src/components/panels/ThreeView.vue`
+- **Lines**: ~642
+
+### T1861: Update BrokenHingeLine Rendering Length (if separate)
+- Search for BrokenHingeLine rendering in ThreeView.vue
+- If rendered separately from HingeLine, update its line length to 2000
+- If using same code as HingeLine, skip this task (already covered by T1860)
+- **Files**: `frontend/src/components/panels/ThreeView.vue`
+- **Lines**: Variable (search for "BrokenHingeLine" or "broken hinge")
+
+### T1862: Verify TypeScript Compilation
+- Run TypeScript compiler in no-emit mode
+- Command: `npx tsc --noEmit`
+- Expected: No compilation errors
+- If errors exist, fix before proceeding
+- **Files**: N/A (compilation check only)
+
+### T1863: Manual Visual Testing - Line3DFromProjections
+- Start application in development mode
+- Create scenario:
+  1. Create 2 points on P_H → Create line L_H
+  2. Create 2 points on P_V → Create line L_V
+  3. Use Create 3D Line tool → Select L_H and L_V → Create line L3D
+- Verify in 3D view:
+  - Line extends far beyond viewport at default zoom
+  - Line remains visible when zooming out far
+  - Line appears as infinite (not short segment)
+  - No visual artifacts or clipping
+- Test edge cases:
+  - Rotate camera 360° → Line visible from all angles
+  - Create second 3D line → Both appear infinite
+  - Zoom in/out continuously → Line length appears consistent
+- **Files**: Manual testing
+
+### T1864: Manual Visual Testing - HingeLine
+- Continue from previous test or restart application
+- Verify in 3D view:
+  - Hinge line between P_H and P_V extends far beyond planes
+  - Hinge line appears infinite (not bounded to plane intersection)
+  - Both HingeLine endpoints extend beyond visible area
+- Test navigation:
+  - Zoom out until planes are small → Hinge line still extends far
+  - Rotate view to see hinge line from different angles
+- **Files**: Manual testing
+
+### T1865: Manual Visual Testing - BrokenHingeLine (if applicable)
+- If project has auxiliary planes (Phase 82), test BrokenHingeLine
+- Create auxiliary projection plane using Create Projection Plane Tool
+- Verify in 3D view:
+  - BrokenHingeLine traces (T2, T2') extend far beyond planes
+  - Both halves appear infinite
+  - Spatial relationship clear (folding along main hinge)
+- If no auxiliary planes, skip this test (or note for future testing)
+- **Files**: Manual testing
+
+### T1866: Performance Testing
+- Create stress test scenario:
+  - 10+ 3D lines in same scene
+  - Mix of Line3DFromProjections, HingeLines
+  - Rotate camera continuously
+- Monitor performance:
+  - Frame rate should remain 60 FPS (or close)
+  - No stuttering or lag during camera rotation
+  - No memory leaks (check browser dev tools)
+- Expected: No noticeable performance difference from before
+- Rationale: Line length doesn't affect vertex count (still 2 vertices per line)
+- **Files**: Manual testing
+
+### T1867: Run Test Suite and Commit
+- Run full test suite:
+  ```bash
+  npx vitest run
+  ```
+- Verify no new test failures introduced
+- Note: Existing test failures unrelated to Phase 104 are acceptable
+- Stage changes:
+  ```bash
+  git add frontend/src/components/panels/ThreeView.vue specs/
+  ```
+- Commit with descriptive message:
+  ```bash
+  git commit -m "Phase 104: Infinite 3D line rendering
+  
+  - Extended Line3DFromProjections rendering length from 50 to 2000 units
+  - Extended HingeLine rendering length from 100 to 2000 units
+  - Updated BrokenHingeLine rendering length to 2000 units (if separate)
+  - Lines now appear infinite (extend ±1000 units from point)
+  - Matches 2D line rendering behavior on projection planes
+  - Improves spatial understanding of line geometry in 3D view
+  
+  Implements FR-074. Fixes 3D lines appearing as small segments."
+  ```
+- **Files**: All modified files in Phase 104
+
+**Phase 104 Complete**: 3D lines now render with sufficient length to appear infinite, matching the visual behavior of 2D lines on projection planes.
+
+---
+
+## Phase 105: TBD
 
 [Continue with next phase...]
 

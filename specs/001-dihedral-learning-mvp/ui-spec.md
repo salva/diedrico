@@ -2578,6 +2578,69 @@ Before (Phase 102):                After (Phase 103):
 - Adjust container height CSS from ~50px to 40px
 - Import `formatElementLabel` from `@/utils/formatUtils`
 
+---
+
+### Infinite 3D Line Rendering (Phase 104)
+
+**Purpose**: Render 3D lines with sufficient length to appear as infinite lines extending far beyond typical viewport bounds, providing proper spatial understanding of line geometry.
+
+**Problem Statement**:
+- **Before**: 3D lines rendered as short segments (50 units total length), appearing disconnected and making spatial relationships unclear
+- **After**: 3D lines extend far beyond viewport (≥2000 units), appearing infinite like 2D lines on projection planes
+
+**Affected Line Types**:
+- `Line3DFromProjections` (user-created 3D lines from two 2D projections)
+- `HingeLine` (traces between projection planes)
+- `BrokenHingeLine` (traces on auxiliary planes)
+- All future `Line3D` subclasses
+
+**Visual Design**:
+
+**Line Extension**:
+- **Total length**: 2000 units minimum (±1000 units from a point on the line)
+- **Computation**: Given line defined by point P and direction D:
+  - Start point: `P - 1000 * D`
+  - End point: `P + 1000 * D`
+- **Rationale**: Matches 2D line extension used in `Element2DRenderer3D` (lines extend ±1000 units in plane coordinates)
+
+**Rendering Consistency**:
+- **Style**: Same as before (LineBasicMaterial, orange #FF6B35 for Line3DFromProjections)
+- **Thickness**: Same as before (linewidth: 3, note: may not work on all platforms)
+- **Opacity**: Same as before (no changes to transparency)
+- **Selection**: Same as before (userData properties for picking)
+
+**User-Visible Changes**:
+- 3D lines appear to extend "to infinity" when camera navigates
+- Lines remain fully visible even when zooming out to see entire construction
+- Spatial relationships between lines, planes, and points become clear
+- Consistent with user expectations from 2D view (where lines extend far)
+
+**Example Scenarios**:
+- **Line3DFromProjections**: User creates 3D line from two 2D projections → Line extends far in both directions, clearly showing 3D orientation
+- **HingeLine**: Trace between P_H and P_V → Line extends beyond plane boundaries, showing full spatial relationship
+- **BrokenHingeLine**: Trace on auxiliary plane → Both halves extend far, making folding relationship clear
+
+**Implementation Approach**:
+- Update line rendering in `ThreeView.vue` (3D line rendering section)
+- Change `lineLength` constant from `50` to `2000` (or larger)
+- No changes to line geometry computation (still uses point + direction)
+- No changes to realization layer (Line3DRealization3D unchanged)
+
+**Performance Considerations**:
+- Negligible performance impact (Three.js renders long lines efficiently)
+- No increase in vertex count (still 2 vertices per line)
+- No change to realization computation frequency
+
+**Testing Verification**:
+- Visual inspection: Lines should extend far beyond viewport at default zoom
+- Navigation test: Zoom out far → lines still extend beyond visible area
+- Multiple lines: Create several 3D lines → all appear infinite, not segmented
+
+**Known Limitations**:
+- Lines still finite (not truly infinite), but length sufficient for all practical constructions
+- LineBasicMaterial `linewidth` property may not work on all WebGL platforms (browser limitation)
+- Very large line lengths (>10000) might cause floating-point precision issues, but 2000 is well within safe range
+
 ### Background Grid (Optional)
 
 **Purpose**: Provides measurable visual reference for geometric construction.
