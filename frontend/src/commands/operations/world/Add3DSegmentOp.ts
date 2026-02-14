@@ -18,6 +18,7 @@
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Segment3DFromProjections } from '@/domain/world/Segment3D';
+import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
 
 export class Add3DSegmentOp implements IOperation {
   readonly type = 'Add3DSegment';
@@ -80,6 +81,43 @@ export class Add3DSegmentOp implements IOperation {
       
       if (!proj1Real || !proj2Real || !proj1Real.isFeasible() || !proj2Real.isFeasible()) {
         throw new Error('Cannot create 3D segment: one or both projections are not geometrically feasible');
+      }
+      
+      // Phase 107: Validate compatibility — check that at least one endpoint pairing
+      // produces consistent 3D points
+      const plane1Real3D = world.getProjectionPlane3DRealization(this.plane1Id);
+      const plane2Real3D = world.getProjectionPlane3DRealization(this.plane2Id);
+      
+      if (plane1Real3D && plane2Real3D) {
+        const p1_s1 = proj1Real.point1;
+        const p2_s1 = proj1Real.point2;
+        const p1_s2 = proj2Real.point1;
+        const p2_s2 = proj2Real.point2;
+        
+        // Try pairing A: (s1.p1 ↔ s2.p1) and (s1.p2 ↔ s2.p2)
+        const pA_start = reconstruct3DPointFromProjections(
+          p1_s1, p1_s2, plane1Real3D.threeDToPlane, plane2Real3D.threeDToPlane
+        );
+        const pA_end = reconstruct3DPointFromProjections(
+          p2_s1, p2_s2, plane1Real3D.threeDToPlane, plane2Real3D.threeDToPlane
+        );
+        const pairingA_ok = pA_start.feasible && pA_end.feasible;
+        
+        // Try pairing B: (s1.p1 ↔ s2.p2) and (s1.p2 ↔ s2.p1)
+        const pB_start = reconstruct3DPointFromProjections(
+          p1_s1, p2_s2, plane1Real3D.threeDToPlane, plane2Real3D.threeDToPlane
+        );
+        const pB_end = reconstruct3DPointFromProjections(
+          p2_s1, p1_s2, plane1Real3D.threeDToPlane, plane2Real3D.threeDToPlane
+        );
+        const pairingB_ok = pB_start.feasible && pB_end.feasible;
+        
+        if (!pairingA_ok && !pairingB_ok) {
+          throw new Error(
+            'Cannot create 3D segment: projections are geometrically incompatible ' +
+            '(no consistent endpoint pairing found)'
+          );
+        }
       }
       
       // Use stored ID if available (for redo), otherwise generate new one

@@ -19,6 +19,10 @@ import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+import { createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
 
 /**
  * Create3DSegmentTool using ArgumentCollectorTool framework
@@ -77,12 +81,21 @@ export class Create3DSegmentTool extends ArgumentCollectorTool {
     const plane1Id = proj1.planeId;
     const plane2Id = proj2.planeId;
 
-    cmd.addAndExecute(new Add3DSegmentOp(
+    const result = cmd.addAndExecute(new Add3DSegmentOp(
       projection1Id,
       projection2Id,
       plane1Id,
       plane2Id
     ));
+    
+    const segment3dId = result.outputs.segmentId;
+    
+    const action = createAdd3DSegmentAction(segment3dId);
+    
+    const groupId = `group_${Date.now()}_segment3d`;
+    const group = createActionGroup(groupId);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
   }
 
   protected getCommandDescription(): string {

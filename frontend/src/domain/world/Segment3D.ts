@@ -20,6 +20,7 @@ import { Segment3DRealization3D } from './Element3DRealization3D';
 import type { World } from './World';
 import type { VisualStyle } from './VisualStyle';
 import { createVisualStyle } from './VisualStyle';
+import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
 
 /**
  * Segment3DFromProjections - Segment derived from two 2D segment projections
@@ -80,7 +81,7 @@ export class Segment3DFromProjections extends Element3D {
         );
       }
 
-      // 2. Realize 2D projections to get coordinates
+      // 2. Realize 2D projections to get endpoint coordinates
       const seg1Real = seg1Element.realize2D(world);
       const seg2Real = seg2Element.realize2D(world);
 
@@ -92,13 +93,65 @@ export class Segment3DFromProjections extends Element3D {
         );
       }
 
-      // 3. Reconstruct 3D segment from two 2D projections
-      // TODO: Implement GeometryUtils3D.reconstructSegmentFrom2Projections
-      // For now, return a placeholder
-      const startPoint = new Vector4(0, 0, 0, 1);
-      const endPoint = new Vector4(1, 0, 0, 1);
+      // 3. Get plane 3D realizations for projection matrices
+      const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id);
+      const plane2Real = world.getProjectionPlane3DRealization(this.plane2Id);
 
-      return new Segment3DRealization3D(startPoint, endPoint);
+      if (!plane1Real || !plane2Real) {
+        return new Segment3DRealization3D(
+          new Vector4(0, 0, 0, 1),
+          new Vector4(1, 0, 0, 1),
+          false
+        );
+      }
+
+      // 4. Get segment endpoints (point1 and point2 from Line2DRealization2D)
+      const p1_seg1 = seg1Real.point1;  // First endpoint of segment on plane1
+      const p2_seg1 = seg1Real.point2;  // Second endpoint of segment on plane1
+      const p1_seg2 = seg2Real.point1;  // First endpoint of segment on plane2
+      const p2_seg2 = seg2Real.point2;  // Second endpoint of segment on plane2
+
+      // 5. Try both possible endpoint pairings
+      // Pairing A: seg1.p1 ↔ seg2.p1, seg1.p2 ↔ seg2.p2
+      const pairA_start = reconstruct3DPointFromProjections(
+        p1_seg1, p1_seg2, plane1Real.threeDToPlane, plane2Real.threeDToPlane
+      );
+      const pairA_end = reconstruct3DPointFromProjections(
+        p2_seg1, p2_seg2, plane1Real.threeDToPlane, plane2Real.threeDToPlane
+      );
+      const pairA_valid = pairA_start.feasible && pairA_end.feasible;
+      const pairA_error = pairA_start.error + pairA_end.error;
+
+      // Pairing B: seg1.p1 ↔ seg2.p2, seg1.p2 ↔ seg2.p1
+      const pairB_start = reconstruct3DPointFromProjections(
+        p1_seg1, p2_seg2, plane1Real.threeDToPlane, plane2Real.threeDToPlane
+      );
+      const pairB_end = reconstruct3DPointFromProjections(
+        p2_seg1, p1_seg2, plane1Real.threeDToPlane, plane2Real.threeDToPlane
+      );
+      const pairB_valid = pairB_start.feasible && pairB_end.feasible;
+      const pairB_error = pairB_start.error + pairB_end.error;
+
+      // 6. Select valid pairing
+      if (pairA_valid && pairB_valid) {
+        // Both valid — use the one with smaller total error
+        if (pairA_error <= pairB_error) {
+          return new Segment3DRealization3D(pairA_start.point, pairA_end.point);
+        } else {
+          return new Segment3DRealization3D(pairB_start.point, pairB_end.point);
+        }
+      } else if (pairA_valid) {
+        return new Segment3DRealization3D(pairA_start.point, pairA_end.point);
+      } else if (pairB_valid) {
+        return new Segment3DRealization3D(pairB_start.point, pairB_end.point);
+      } else {
+        // Neither pairing is consistent — infeasible
+        return new Segment3DRealization3D(
+          new Vector4(0, 0, 0, 1),
+          new Vector4(1, 0, 0, 1),
+          false
+        );
+      }
     } catch (error) {
       console.error('[Segment3DFromProjections] realize3D failed:', error);
       return new Segment3DRealization3D(

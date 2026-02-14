@@ -390,3 +390,108 @@ export function applyMatrix3x4(vector: Vector4, matrix: Matrix3x4): Vector3 {
     e[8] * x + e[9] * y + e[10] * z + e[11] * w
   );
 }
+
+/**
+ * Result of reconstructing a 3D point from two 2D projections
+ */
+export interface ReconstructionResult {
+  point: Vector4;        // Reconstructed 3D point (x, y, z, 1)
+  feasible: boolean;     // Whether reconstruction is consistent
+  error: number;         // Consistency error (4th equation residual)
+}
+
+/**
+ * Reconstruct a 3D point from two 2D projections on different planes.
+ * 
+ * Uses the same mathematical formulation as Point3DFromProjections:
+ * - Each plane's threeDToPlane matrix provides 2 equations (u and v rows)
+ * - Together: 4 equations with 3 unknowns (overdetermined)
+ * - Picks the 3-equation subset with largest |det| for numerical stability
+ * - Solves via Cramer's rule
+ * - Checks consistency with unused 4th equation
+ * 
+ * @param pos2D_plane1 2D position on plane1 (u₁, v₁, 1)
+ * @param pos2D_plane2 2D position on plane2 (u₂, v₂, 1)
+ * @param threeDToPlane1 Projection matrix for plane1 (3x4)
+ * @param threeDToPlane2 Projection matrix for plane2 (3x4)
+ * @param tolerance Consistency check tolerance (default 1e-6)
+ * @returns ReconstructionResult with point, feasibility, and error
+ */
+export function reconstruct3DPointFromProjections(
+  pos2D_plane1: Vector3,
+  pos2D_plane2: Vector3,
+  threeDToPlane1: Matrix3x4,
+  threeDToPlane2: Matrix3x4,
+  tolerance: number = 1e-6
+): ReconstructionResult {
+  const M1 = threeDToPlane1.elements;
+  const M2 = threeDToPlane2.elements;
+
+  // Extract coefficients from threeDToPlane matrices (row-major)
+  // Row 1 (u equation): elements[0..3] → u = M[0]*x + M[1]*y + M[2]*z + M[3]
+  // Row 2 (v equation): elements[4..7] → v = M[4]*x + M[5]*y + M[6]*z + M[7]
+  const a11 = M1[0], a12 = M1[1], a13 = M1[2], a14 = M1[3];
+  const a21 = M1[4], a22 = M1[5], a23 = M1[6], a24 = M1[7];
+  const b11 = M2[0], b12 = M2[1], b13 = M2[2], b14 = M2[3];
+  const b21 = M2[4], b22 = M2[5], b23 = M2[6], b24 = M2[7];
+
+  // Compute determinants for both possible 3-equation subsets
+  const det3 = computeDet3x3(
+    a11, a12, a13,
+    a21, a22, a23,
+    b11, b12, b13
+  );
+  const det4 = computeDet3x3(
+    a11, a12, a13,
+    a21, a22, a23,
+    b21, b22, b23
+  );
+
+  const useEq3 = Math.abs(det3) > Math.abs(det4);
+  const det = useEq3 ? det3 : det4;
+
+  if (Math.abs(det) < 1e-10) {
+    return { point: new Vector4(0, 0, 0, 1), feasible: false, error: Infinity };
+  }
+
+  // Build coefficient matrix and RHS vector for chosen equation set
+  const A = useEq3
+    ? [a11, a12, a13, a21, a22, a23, b11, b12, b13]
+    : [a11, a12, a13, a21, a22, a23, b21, b22, b23];
+
+  const b = useEq3
+    ? [pos2D_plane1.x - a14, pos2D_plane1.y - a24, pos2D_plane2.x - b14]
+    : [pos2D_plane1.x - a14, pos2D_plane1.y - a24, pos2D_plane2.y - b24];
+
+  // Solve using Cramer's rule
+  const detX = computeDet3x3(b[0], A[1], A[2], b[1], A[4], A[5], b[2], A[7], A[8]);
+  const detY = computeDet3x3(A[0], b[0], A[2], A[3], b[1], A[5], A[6], b[2], A[8]);
+  const detZ = computeDet3x3(A[0], A[1], b[0], A[3], A[4], b[1], A[6], A[7], b[2]);
+
+  const x = detX / det;
+  const y = detY / det;
+  const z = detZ / det;
+
+  // Verify consistency with unused equation
+  const checkCoeffs = useEq3 ? [b21, b22, b23, b24] : [b11, b12, b13, b14];
+  const checkValue_actual = useEq3 ? pos2D_plane2.y : pos2D_plane2.x;
+  const checkValue_computed = checkCoeffs[0] * x + checkCoeffs[1] * y + checkCoeffs[2] * z + checkCoeffs[3];
+  const error = Math.abs(checkValue_computed - checkValue_actual);
+
+  return {
+    point: new Vector4(x, y, z, 1),
+    feasible: error <= tolerance,
+    error
+  };
+}
+
+/**
+ * Compute determinant of a 3x3 matrix given elements in row-major order
+ */
+function computeDet3x3(
+  a: number, b: number, c: number,
+  d: number, e: number, f: number,
+  g: number, h: number, i: number
+): number {
+  return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+}

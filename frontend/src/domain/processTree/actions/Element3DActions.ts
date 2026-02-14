@@ -34,6 +34,18 @@ export function createAdd3DLineAction(
 }
 
 /**
+ * Create an action for adding a 3D segment from two 2D segment projections
+ * 
+ * Phase 107: Dependencies tracked by DependencyService.
+ * The 3D segment depends on its two 2D segment projections.
+ */
+export function createAdd3DSegmentAction(
+  segmentId: string
+): Action {
+  return createAction(segmentId, `3D segment ${segmentId}`);
+}
+
+/**
  * Create an action for adding a 3D plane from two trace lines
  * 
  * Phase 93: Dependencies tracked by DependencyService.
