@@ -329,4 +329,32 @@ describe('Line3D Reconstruction from Projections', () => {
     expect(len).toBeGreaterThan(0.99);
     expect(len).toBeLessThan(1.01);
   });
+
+  it('should detect infeasible 3D line from parallel plane projections', () => {
+    // Create projections that lift to parallel 3D planes (no unique line intersection)
+    // 
+    // Geometry:
+    // - P_H line vertical (0,1): lifts to 3D direction (0,1,0), plane normal (1,0,0)
+    // - P_V line vertical (0,1): lifts to 3D direction (0,0,1), plane normal (1,0,0)
+    // Both planes have normal (1,0,0) → parallel → no unique intersection line → infeasible
+    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+
+    // P_H: vertical line from (5,0) to (5,10) → direction (0,1)
+    const lineH = createLine2D(P_H, 5, 0, 5, 10, 'lineH_vertical');
+    
+    // P_V: vertical line from (0,0) to (0,10) → direction (0,1)
+    const lineV = createLine2D(P_V, 0, 0, 0, 10, 'lineV_vertical');
+    
+    const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_infeasible');
+
+    const realization = world.get3DLine(line3D)?.realize3D(world);
+    
+    // Should return a realization, but marked as infeasible
+    expect(realization).toBeDefined();
+    expect(realization!.isFeasible()).toBe(false);
+    
+    // Verify this matches the bug we found: infeasible elements should not be rendered
+    // (ThreeView.vue checks !realization.isFeasible() - fixed in commit 2b97697c)
+  });
 });
