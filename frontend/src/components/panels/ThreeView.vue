@@ -465,7 +465,7 @@ function render3DElements() {
       const pointOnLine = domainToThreeJS(pointOnLineDomain);
       const direction = domainDirectionToThreeJS(new THREE.Vector3(directionDomain.x, directionDomain.y, directionDomain.z));
       
-      const lineLength = 50; // Extend 25 units in each direction
+      const lineLength = 2000; // Extend 1000 units in each direction (appears infinite)
       const start = new THREE.Vector3(
         pointOnLine.x - direction.x * lineLength / 2,
         pointOnLine.y - direction.y * lineLength / 2,
@@ -645,7 +645,7 @@ function renderHingeLines() {
       ).normalize();
       
       // Create line extending in both directions from origin
-      const lineLength = 40; // Extend 20 units in each direction
+      const lineLength = 2000; // Extend 1000 units in each direction (appears infinite)
       const start = origin.clone().add(direction.clone().multiplyScalar(-lineLength / 2));
       const end = origin.clone().add(direction.clone().multiplyScalar(lineLength / 2));
       
