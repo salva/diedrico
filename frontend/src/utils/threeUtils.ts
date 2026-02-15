@@ -495,3 +495,88 @@ function computeDet3x3(
 ): number {
   return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
 }
+
+/**
+ * Intersect a 3D line (point + direction) with a 3D plane (point + normal).
+ * 
+ * Uses parametric form: intersection = linePoint + t * lineDir
+ * where t = dot(planePoint - linePoint, planeNormal) / dot(lineDir, planeNormal)
+ * 
+ * @returns The intersection point as Vector4 (w=1), or null if line is parallel to plane
+ */
+export function intersectLinePlane3D(
+  linePoint: Vector4, lineDir: { x: number; y: number; z: number },
+  planePoint: Vector4, planeNormal: { x: number; y: number; z: number }
+): Vector4 | null {
+  const denom = lineDir.x * planeNormal.x + lineDir.y * planeNormal.y + lineDir.z * planeNormal.z;
+
+  if (Math.abs(denom) < 1e-10) {
+    return null; // Line is parallel to plane (or lies in plane)
+  }
+
+  const dx = planePoint.x - linePoint.x;
+  const dy = planePoint.y - linePoint.y;
+  const dz = planePoint.z - linePoint.z;
+  const t = (dx * planeNormal.x + dy * planeNormal.y + dz * planeNormal.z) / denom;
+
+  return new Vector4(
+    linePoint.x + t * lineDir.x,
+    linePoint.y + t * lineDir.y,
+    linePoint.z + t * lineDir.z,
+    1
+  );
+}
+
+/**
+ * Intersect a 3D segment (two endpoints) with a 3D plane (point + normal).
+ * Same as line-plane intersection but restricts parameter t to [0, 1].
+ * 
+ * @returns The intersection point as Vector4 (w=1), or null if segment doesn't cross plane
+ */
+export function intersectSegmentPlane3D(
+  segStart: Vector4, segEnd: Vector4,
+  planePoint: Vector4, planeNormal: { x: number; y: number; z: number }
+): Vector4 | null {
+  const dirX = segEnd.x - segStart.x;
+  const dirY = segEnd.y - segStart.y;
+  const dirZ = segEnd.z - segStart.z;
+
+  const denom = dirX * planeNormal.x + dirY * planeNormal.y + dirZ * planeNormal.z;
+
+  if (Math.abs(denom) < 1e-10) {
+    return null; // Segment is parallel to plane
+  }
+
+  const dx = planePoint.x - segStart.x;
+  const dy = planePoint.y - segStart.y;
+  const dz = planePoint.z - segStart.z;
+  const t = (dx * planeNormal.x + dy * planeNormal.y + dz * planeNormal.z) / denom;
+
+  if (t < -1e-10 || t > 1 + 1e-10) {
+    return null; // Intersection outside segment bounds
+  }
+
+  return new Vector4(
+    segStart.x + t * dirX,
+    segStart.y + t * dirY,
+    segStart.z + t * dirZ,
+    1
+  );
+}
+
+/**
+ * Check if a 3D point lies on a 3D plane within tolerance.
+ * Tests: |dot(point - planePoint, planeNormal)| < tolerance
+ */
+export function isPointOnPlane3D(
+  point: Vector4,
+  planePoint: Vector4,
+  planeNormal: { x: number; y: number; z: number },
+  tolerance: number = 0.5
+): boolean {
+  const dx = point.x - planePoint.x;
+  const dy = point.y - planePoint.y;
+  const dz = point.z - planePoint.z;
+  const dist = Math.abs(dx * planeNormal.x + dy * planeNormal.y + dz * planeNormal.z);
+  return dist < tolerance;
+}

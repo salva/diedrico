@@ -70,11 +70,13 @@ import type { ProjectionPlane } from '../../domain/world/ProjectionPlane';
 import { AuxiliaryProjectionPlane } from '../../domain/world/ProjectionPlane';
 import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
 import { useViewStore } from '../../stores/viewStore';
-import { domainDirectionToThreeJS, domainToThreeJS, applyMatrix4x3 } from '../../utils/threeUtils';
+import { domainDirectionToThreeJS, domainToThreeJS, applyMatrix4x3, intersectLinePlane3D, intersectSegmentPlane3D, isPointOnPlane3D } from '../../utils/threeUtils';
 import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '../../utils/rectangleGrid';
 import { Vector4 } from 'three';
 import type { Plane3DRealization3D } from '../../domain/world/Element3DRealization3D';
 import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '../../config/rendering3D';
+import { useSelectionStore } from '../../stores/selectionStore';
+import { isGuide2D, isSiblingGuide2D } from '../../domain/world/Guide';
 
 /**
  * Generate a simple fallback grid (non-clipped) centered at origin
@@ -118,6 +120,9 @@ let animationFrameId: number;
 // View store for display options persistence (Phase 77.5 - T1203)
 const viewStore = useViewStore();
 const displayOptions = viewStore.threeViewOptions;
+
+// Selection store for guide perpendicular plane (Phase 108)
+const selectionStore = useSelectionStore();
 
 // World instance (injected from App.vue)
 const world = inject<World>('world')!;  // Non-null assertion - World is required
@@ -597,6 +602,171 @@ function render3DElements() {
 }
 
 /**
+ * Render guide perpendicular plane in 3D view (Phase 108)
+ * 
+ * When a guide (Guide2D or SiblingGuide2D) is selected, shows the 3D plane
+ * that the guide represents — perpendicular to the projection plane, containing
+ * the guide line. Also highlights intersections with 3D elements.
+ */
+function renderGuidePerpendicularPlane() {
+  // Remove existing perpendicular plane objects and intersection markers
+  scene.children
+    .filter(child => child.userData.type === 'guide-perpendicular-plane' || child.userData.type === 'guide-intersection-highlight')
+    .forEach(child => scene.remove(child));
+
+  const selectedIds = selectionStore.selectedIdsArray;
+  if (selectedIds.length === 0) return;
+
+  for (const selectedId of selectedIds) {
+    try {
+      // Look up element — guides are Line2D elements on projection planes
+      const line = world.getLine2D(selectedId);
+      if (!line) continue;
+      if (!isGuide2D(line) && !isSiblingGuide2D(line)) continue;
+
+      const planeId = line.planeId;
+      const plane3DReal = world.getProjectionPlane3DRealization(planeId);
+      if (!plane3DReal || !plane3DReal.feasible) continue;
+
+      // Get guide's 2D realization
+      const guideReal = line.realize2D(world);
+      if (!guideReal.feasible) continue;
+
+      const guideDir2D = guideReal.getDirection();
+      const guideThroughPoint = guideReal.point1;
+      const planeTo3D = plane3DReal.planeTo3D;
+
+      // Lift guide through-point to 3D
+      const guidePoint3D = applyMatrix4x3(guideThroughPoint, planeTo3D);
+
+      // Lift guide direction to 3D (z=0 for direction vector)
+      const guideDirInput = new THREE.Vector3(guideDir2D.x, guideDir2D.y, 0);
+      const guideDir3D = applyMatrix4x3(guideDirInput, planeTo3D);
+      // For a direction, subtract origin contribution: direction = transform(v) - transform(0)
+      const origin2D = new THREE.Vector3(0, 0, 0);
+      const origin3D = applyMatrix4x3(origin2D, planeTo3D);
+      const guideDirVec = { 
+        x: guideDir3D.x - origin3D.x, 
+        y: guideDir3D.y - origin3D.y, 
+        z: guideDir3D.z - origin3D.z 
+      };
+
+      // Compute projection plane normal from planeTo3D basis vectors
+      const e = planeTo3D.elements;
+      // U-axis: column 0 → (e[0], e[3], e[6])
+      // V-axis: column 1 → (e[1], e[4], e[7])
+      const Ux = e[0], Uy = e[3], Uz = e[6];
+      const Vx = e[1], Vy = e[4], Vz = e[7];
+      const projPlaneNormal = {
+        x: Uy * Vz - Uz * Vy,
+        y: Uz * Vx - Ux * Vz,
+        z: Ux * Vy - Uy * Vx
+      };
+
+      // Compute perpendicular plane normal = cross(guideDir3D, projPlaneNormal)
+      const perpNormal = {
+        x: guideDirVec.y * projPlaneNormal.z - guideDirVec.z * projPlaneNormal.y,
+        y: guideDirVec.z * projPlaneNormal.x - guideDirVec.x * projPlaneNormal.z,
+        z: guideDirVec.x * projPlaneNormal.y - guideDirVec.y * projPlaneNormal.x
+      };
+      const perpNormalLen = Math.sqrt(perpNormal.x ** 2 + perpNormal.y ** 2 + perpNormal.z ** 2);
+      if (perpNormalLen < 1e-10) continue;
+      perpNormal.x /= perpNormalLen;
+      perpNormal.y /= perpNormalLen;
+      perpNormal.z /= perpNormalLen;
+
+      // Render perpendicular plane mesh
+      const planeSize = getPlaneMeshSize(planeId);
+      const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize);
+      const planeMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00BCD4, // Cyan/teal
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.25
+      });
+      const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+
+      // Position at guide point in Three.js coords
+      const guidePointThree = domainToThreeJS(guidePoint3D);
+      planeMesh.position.copy(guidePointThree);
+
+      // Orient the plane: align default normal (0,0,1) to perpendicular normal in Three.js space
+      const normalDomain = new THREE.Vector3(perpNormal.x, perpNormal.y, perpNormal.z);
+      const normalThree = domainDirectionToThreeJS(normalDomain).normalize();
+      const defaultNormal = new THREE.Vector3(0, 0, 1);
+      const quaternion = new THREE.Quaternion();
+      quaternion.setFromUnitVectors(defaultNormal, normalThree);
+      planeMesh.quaternion.copy(quaternion);
+
+      planeMesh.userData.type = 'guide-perpendicular-plane';
+      scene.add(planeMesh);
+
+      // Compute and render intersections with 3D elements
+      renderGuideIntersections(guidePoint3D, perpNormal);
+
+    } catch (error) {
+      console.warn('[ThreeView] Error rendering guide perpendicular plane:', error);
+    }
+  }
+}
+
+/**
+ * Compute and render intersection markers between a perpendicular plane and 3D elements.
+ */
+function renderGuideIntersections(planePoint: Vector4, planeNormal: { x: number; y: number; z: number }) {
+  const markerGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+  const markerMaterial = new THREE.MeshStandardMaterial({
+    color: 0xFFD700, // Gold
+    emissive: 0x886600,
+    metalness: 0.4,
+    roughness: 0.3
+  });
+
+  function addMarker(position: Vector4) {
+    const threePos = domainToThreeJS(position);
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    marker.position.copy(threePos);
+    marker.userData.type = 'guide-intersection-highlight';
+    scene.add(marker);
+  }
+
+  // Check 3D Points
+  for (const point of world.getAll3DPoints()) {
+    if (point.visualStyle?.visible === false) continue;
+    const real = world.get3DPointRealization(point.id!);
+    if (!real || !real.isFeasible()) continue;
+    const [x, y, z] = real.getCartesian();
+    const pointPos = new Vector4(x, y, z, 1);
+    if (isPointOnPlane3D(pointPos, planePoint, planeNormal)) {
+      addMarker(pointPos);
+    }
+  }
+
+  // Check 3D Lines
+  for (const line of world.getAll3DLines()) {
+    if (line.visualStyle?.visible === false) continue;
+    const real = world.get3DLineRealization(line.id!);
+    if (!real || !real.isFeasible()) continue;
+    const dir = real.getDirection();
+    const intersection = intersectLinePlane3D(real.point, dir, planePoint, planeNormal);
+    if (intersection) {
+      addMarker(intersection);
+    }
+  }
+
+  // Check 3D Segments
+  for (const segment of world.getAll3DSegments()) {
+    if (segment.visualStyle?.visible === false) continue;
+    const real = world.get3DSegmentRealization(segment.id!);
+    if (!real || !real.isFeasible()) continue;
+    const intersection = intersectSegmentPlane3D(real.startPoint, real.endPoint, planePoint, planeNormal);
+    if (intersection) {
+      addMarker(intersection);
+    }
+  }
+}
+
+/**
  * Render all hinge lines in 3D space (Phase 84)
  * 
  * Uses HingeLine.realize3D() to compute 3D geometry from canonical coordinates.
@@ -934,6 +1104,15 @@ onMounted(() => {
       renderHingeLines();
       render2DElements();
       render3DElements(); // Phase 78
+      renderGuidePerpendicularPlane(); // Phase 108: Update intersections when world changes
+    }
+  );
+
+  // Phase 108: Watch selection changes to show/hide guide perpendicular plane
+  watch(
+    () => selectionStore.selectedIdsArray,
+    () => {
+      renderGuidePerpendicularPlane();
     }
   );
 
