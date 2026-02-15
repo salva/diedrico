@@ -20958,4 +20958,94 @@ Since segments return a `Line2DRealization2D` (not a segment-specific class), we
 | `frontend/src/domain/processTree/actions/Element3DActions.ts` | Add `createAdd3DSegmentAction()` |
 | `frontend/src/tools/Create3DSegmentTool.ts` | Add process tree action recording |
 | `frontend/tests/unit/domain/segment3D.spec.ts` | New: unit tests for realize3D + compatibility |
+
+## Phase 108: Guide Perpendicular Plane in 3D View
+
+### Overview
+
+When a guide is selected, the 3D view displays the 3D plane that the guide represents — perpendicular to the projection plane and containing the guide line. Additionally, intersection points between this plane and existing 3D elements are highlighted.
+
+### Computing the Perpendicular Plane
+
+A guide on a projection plane has:
+- A **through-point** in 2D plane coordinates (Vector3, z=1)
+- A **direction** in 2D plane coordinates (Vector3, z=0)
+
+To compute the 3D perpendicular plane:
+
+1. **Lift guide to 3D** using the projection plane's `planeTo3D` matrix:
+   - `guidePoint3D = applyMatrix4x3(guideRealization.point1, planeTo3D)` → Vector4
+   - `guideDir3D = applyMatrix4x3(Vector3(dx, dy, 0), planeTo3D)` → Vector4 (direction, so w≈0)
+
+2. **Compute projection plane normal** from `planeTo3D` basis vectors:
+   - U-axis: columns 0 of planeTo3D → `(e[0], e[3], e[6])`
+   - V-axis: columns 1 of planeTo3D → `(e[1], e[4], e[7])`
+   - Normal = U × V (cross product)
+
+3. **Compute perpendicular plane normal**:
+   - `planeNormal = cross(guideDir3D, projPlaneNormal)`
+   - This is perpendicular to both the guide direction and the projection plane normal
+   - The perpendicular plane contains: the guide line in 3D + the projection plane normal direction
+
+4. **Perpendicular plane definition**: point = guidePoint3D, normal = planeNormal
+
+### 3D Intersection Computations
+
+New utility functions in `threeUtils.ts`:
+
+```typescript
+/**
+ * Intersect a 3D line (point + direction) with a 3D plane (point + normal).
+ * Returns the intersection point as Vector4, or null if line is parallel to plane.
+ * Uses: t = dot(planePoint - linePoint, planeNormal) / dot(lineDir, planeNormal)
+ */
+export function intersectLinePlane3D(
+  linePoint: Vector4, lineDir: { x: number, y: number, z: number },
+  planePoint: Vector4, planeNormal: { x: number, y: number, z: number }
+): Vector4 | null;
+
+/**
+ * Intersect a 3D segment (two endpoints) with a 3D plane.
+ * Returns the intersection point as Vector4, or null if segment doesn't cross plane.
+ * Same as line-plane but restricts parameter t to [0, 1].
+ */
+export function intersectSegmentPlane3D(
+  segStart: Vector4, segEnd: Vector4,
+  planePoint: Vector4, planeNormal: { x: number, y: number, z: number }
+): Vector4 | null;
+
+/**
+ * Check if a 3D point lies on a 3D plane within tolerance.
+ */
+export function isPointOnPlane3D(
+  point: Vector4,
+  planePoint: Vector4, planeNormal: { x: number, y: number, z: number },
+  tolerance?: number
+): boolean;
+```
+
+### ThreeView.vue Changes
+
+1. **Import `useSelectionStore`** from Pinia stores
+2. **Watch `selectionStore.selectedIds`** for changes
+3. **New render function `renderGuidePerpendicularPlane()`**:
+   - Clear previous perpendicular plane objects (filter by `userData.type`)
+   - For each selected ID, check if it's a guide (`isGuide2D` / `isSiblingGuide2D`)
+   - If yes: compute 3D perpendicular plane, render mesh, compute intersections, render markers
+4. **Call from selection watcher**, not from world change handler (selection-driven, not data-driven)
+
+### Visual Style
+
+| Element | Color | Opacity | Size | Three.js Class |
+|---------|-------|---------|------|----------------|
+| Perpendicular plane | `#00BCD4` (cyan) | 0.25 | Config-based | `THREE.Mesh` + `PlaneGeometry` |
+| Intersection marker | `#FFD700` (gold) | 1.0 | radius 0.25 | `THREE.Mesh` + `SphereGeometry` |
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/components/panels/ThreeView.vue` | Add selection watching, `renderGuidePerpendicularPlane()` function |
+| `frontend/src/utils/threeUtils.ts` | Add `intersectLinePlane3D()`, `intersectSegmentPlane3D()`, `isPointOnPlane3D()` |
+| `frontend/tests/unit/utils/guidePerpendicularPlane.spec.ts` | New: tests for 3D intersection utilities and plane computation |
 - **Empty world**: If no 3D elements exist, the projection loop simply produces no primitives.

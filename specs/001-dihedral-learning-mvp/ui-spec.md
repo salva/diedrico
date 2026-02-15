@@ -3733,3 +3733,36 @@ The following UI state is saved per project to Google Drive and restored on proj
 **Process Tree Integration**:
 - Creating a 3D segment now records a ProcessTree action (was previously missing)
 - Action description follows existing pattern: "Segment S_n: from projections S_a on P_H and S_b on P_V"
+
+## Guide Perpendicular Plane in 3D View (Phase 108)
+
+**Context**: Guides are 2D lines on projection planes used to transport points and distances between planes. Each guide geometrically represents a 3D folding plane — a plane perpendicular to the projection plane that contains the guide line. Phase 108 makes this implicit geometric relationship visible in the 3D view when a guide is selected.
+
+**Trigger**: When the user selects a Guide2D or SiblingGuide2D element (via canvas click, Elements Panel click, or Process Tree label click), the 3D view reacts by showing the perpendicular plane.
+
+**Perpendicular Plane Visualization**:
+- Rendered as a semi-transparent mesh (`PlaneGeometry`) in the 3D scene
+- Color: Cyan/teal (`#00BCD4`) to distinguish from regular 3D planes (gray) and 3D elements (orange)
+- Opacity: 0.25 (lighter than regular 3D planes at 0.4) to avoid obscuring other elements
+- Size: Same as projection plane grid size (matches `PLANE_RENDERING_CONFIG`)
+- Position: Centered at the guide's through-point lifted to 3D
+- Orientation: Normal computed as `cross(guideDirection3D, projectionPlaneNormal)`
+- `DoubleSide` rendering so visible from both sides
+- `userData.type = 'guide-perpendicular-plane'` for cleanup
+
+**Intersection Highlighting**:
+- When a perpendicular plane is shown, the system checks all feasible 3D elements for intersections:
+  - **3D Points**: If the point lies on the plane (distance < tolerance), show a highlighted sphere
+  - **3D Lines**: Compute line-plane intersection; if the line is not parallel, show intersection point as sphere
+  - **3D Segments**: Compute segment-plane intersection; if intersection parameter t ∈ [0,1], show intersection point as sphere
+- Intersection markers: Bright yellow (`#FFD700`) spheres with radius 0.25, emissive glow
+- `userData.type = 'guide-intersection-highlight'` for cleanup
+- No markers shown if 3D element is parallel to the plane or does not intersect
+
+**Reactivity**:
+- Selection changes trigger re-computation: old plane/markers removed, new ones added
+- If multiple guides are selected simultaneously, show perpendicular planes for all of them
+- When selection is cleared or changes to non-guide elements, remove all perpendicular planes and markers
+- Computation triggered by watching `selectionStore.selectedIds` in ThreeView.vue
+
+**No New UI Controls**: No new buttons, toggles, or settings. The feature is automatic based on selection state.

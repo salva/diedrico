@@ -12380,4 +12380,35 @@ Update all action factory functions to include operationType and constructionPar
 
 **Checkpoint**: ✅ 3D segments fully functional with geometric reconstruction, compatibility validation, and process tree integration
 
+## Phase 108: Guide Perpendicular Plane in 3D View (10 tasks) [T1840-T1849]
+
+When a guide is selected, the 3D view shows the 3D plane perpendicular to the projection plane that contains the guide line, and highlights intersections with 3D elements.
+
+### Specification Documentation (1 task)
+
+- [ ] T1840 spec.md FR-078, ui-spec.md Phase 108, data-model.md Phase 108, tasks.md Phase 108
+
+### 3D Intersection Utilities (2 tasks)
+
+- [ ] T1841 threeUtils.ts: Add `intersectLinePlane3D(linePoint, lineDir, planePoint, planeNormal)` — returns intersection Vector4 or null if parallel (tolerance 1e-10)
+- [ ] T1842 threeUtils.ts: Add `intersectSegmentPlane3D(segStart, segEnd, planePoint, planeNormal)` — same as line-plane but restrict t ∈ [0,1]; add `isPointOnPlane3D(point, planePoint, planeNormal, tolerance)` helper
+
+### ThreeView Integration (3 tasks)
+
+- [ ] T1843 ThreeView.vue: Import `useSelectionStore`, add reactive watcher on `selectedIds` that triggers `renderGuidePerpendicularPlane()`
+- [ ] T1844 ThreeView.vue: Implement `renderGuidePerpendicularPlane()` — for each selected guide: lift guide to 3D via planeTo3D, compute projection plane normal from planeTo3D basis vectors, compute perpendicular plane normal via cross product, render semi-transparent cyan `PlaneGeometry` mesh
+- [ ] T1845 ThreeView.vue: In `renderGuidePerpendicularPlane()`, compute intersections with all feasible 3D elements (points on plane, line-plane intersections, segment-plane intersections), render gold sphere markers at intersection points
+
+### Cleanup & Reactivity (1 task)
+
+- [ ] T1846 ThreeView.vue: Ensure proper cleanup of perpendicular plane and intersection markers on selection change (remove objects with `userData.type === 'guide-perpendicular-plane'` and `'guide-intersection-highlight'`), handle multi-guide selection
+
+### Testing (3 tasks)
+
+- [ ] T1847 Unit test: `intersectLinePlane3D` — perpendicular intersection, oblique intersection, parallel line (null), line in plane (null)
+- [ ] T1848 Unit test: `intersectSegmentPlane3D` — segment crossing plane, segment not reaching plane (t>1), segment behind plane (t<0), endpoint on plane; `isPointOnPlane3D` — on plane, off plane
+- [ ] T1849 Unit test: Perpendicular plane normal computation — guide on P_H produces correct normal, guide on P_V produces correct normal, guide on auxiliary plane
+
+**Checkpoint**: ✅ Selecting a guide shows its perpendicular 3D plane and highlights intersections with 3D elements
+
 **Checkpoint**: ✅ ConstructiveAction stores only construction narrative, structural data derived from elements and DependencyService

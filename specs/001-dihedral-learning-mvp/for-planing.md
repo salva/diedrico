@@ -18,6 +18,11 @@ Note that completing these tasks may require asking the user for additional info
 
 
 ## FOR PLANING
+
+* [ ] Add a Quick Segment for creating a sample 3d segment in the same way we have the add quick 3d line.
+
+* [ ] Add a mechanism for setting drawing properties correctly. The properties may merge properties set at the process tree (and its parent elements), from the projection plane, from the type of object, on the element itself. When representing and geometric object, all this properties must be merges using a priority system. Final settings must follow a gated behaviour (set-value and value or get-it-from-parents). Then we must also have multipliers for things like transparency or width, where a property is calculated as the final setting which higgeer priority in the hierarchy and the combination of all the multipliers.
+
 * [ ] In many occasions overlaying objects are created (or instance, the (B)HHL over the traces of an auxiliary projection plane). When that happens, some objects my hide or made others difficult to understand (again, for instance, dashed HHL get hidden by the regular lines used to define the projection). In order to overcome that a new entity called the OverlapingGroup must be added. It must be added to all the Element2D objects, so that objects which are created to overlap (complimentary guides, HHL, etc. ) are all added into this entity which must be linked from all the instances representing it. When drawing, its contents must be sorted according to some rules and only the **visible** element on top must be drawn. The sorting rules are that: the elements in the active plane get precedence, guides and (B)HHLs have precedence over regular lines. Note that it must be found which operations introduce elements related into that way to previously existing elements. Also, new Ops must be added to lookupOrCreateOverlappingGroup, mergeOverlappingGroups, addElementToOverllappingGroup, etc. Analyze this in deep. All those ops must also support undoing and redoing (as all the ops do)!
 
 * [ ] Rationalize class names for projection planes and related object (Ops, for instances).Ok
@@ -25,7 +30,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
 * [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
 * [ ] In 3D rotation axis seems to be hardcoded or be limited. For instance, I am not able to rotate the view around the viewer-O axis
-* [ ] When the user selects a guide, the 3D view must show the plane perpendicular to it and highlight any intersection with other 3d elements.
 * [ ] Add support for moving semi-free points and distances along guide lines.
 * [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
@@ -52,6 +56,15 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize and restructure the tool organization.  
  
 ## ALREADY PLANNED
+
+* [x] **Guide Perpendicular Plane in 3D View (Phase 108)** - 📋 PLANNED
+  - **User Requirement**: "When the user selects a guide, the 3D view must show the plane perpendicular to it and highlight any intersection with other 3d elements."
+  - **Problem**: Guides represent 3D folding planes (perpendicular to projection plane, containing the guide line), but this geometric relationship is invisible in the 3D view. No intersection highlighting exists.
+  - **Solution**: When a guide is selected, lift it to 3D via planeTo3D, compute the perpendicular plane normal as cross(guideDir3D, projPlaneNormal), render a semi-transparent cyan mesh. Compute intersections with all 3D elements (line-plane, segment-plane, point-on-plane) and render gold intersection markers.
+  - **Implementation**:
+    - threeUtils.ts: Add `intersectLinePlane3D()`, `intersectSegmentPlane3D()`, `isPointOnPlane3D()`
+    - ThreeView.vue: Import selectionStore, watch selectedIds, add `renderGuidePerpendicularPlane()` function
+  - **Spec References**: FR-078, Phase 108 in ui-spec.md, data-model.md, tasks.md (T1840-T1849)
 
 * [x] **3D Segment Realization (Phase 107)** - 📋 PLANNED
   - **User Requirement**: "Add support for 3D segments. 3D segments can be defined using two segment projections (compatibility of the projections must be checked at creation time)."
