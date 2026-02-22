@@ -19,12 +19,13 @@ Note that completing these tasks may require asking the user for additional info
 
 ## FOR PLANING
 
-* [ ] Add a Quick Segment for creating a sample 3d segment in the same way we have the add quick 3d line.
+* [x] Add a Quick Segment tool for creating a sample 3d segment in the same way we have the add quick 3d line.
 
 * [ ] Add a mechanism for setting drawing properties correctly. The properties may merge properties set at the process tree (and its parent elements), from the projection plane, from the type of object, on the element itself. When representing and geometric object, all this properties must be merges using a priority system. Final settings must follow a gated behaviour (set-value and value or get-it-from-parents). Then we must also have multipliers for things like transparency or width, where a property is calculated as the final setting which higgeer priority in the hierarchy and the combination of all the multipliers.
 
 * [ ] In many occasions overlaying objects are created (or instance, the (B)HHL over the traces of an auxiliary projection plane). When that happens, some objects my hide or made others difficult to understand (again, for instance, dashed HHL get hidden by the regular lines used to define the projection). In order to overcome that a new entity called the OverlapingGroup must be added. It must be added to all the Element2D objects, so that objects which are created to overlap (complimentary guides, HHL, etc. ) are all added into this entity which must be linked from all the instances representing it. When drawing, its contents must be sorted according to some rules and only the **visible** element on top must be drawn. The sorting rules are that: the elements in the active plane get precedence, guides and (B)HHLs have precedence over regular lines. Note that it must be found which operations introduce elements related into that way to previously existing elements. Also, new Ops must be added to lookupOrCreateOverlappingGroup, mergeOverlappingGroups, addElementToOverllappingGroup, etc. Analyze this in deep. All those ops must also support undoing and redoing (as all the ops do)!
 
+* [ ] Write the user documentation.
 * [ ] Rationalize class names for projection planes and related object (Ops, for instances).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
@@ -44,7 +45,6 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
 * [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
 * [ ] Ensure Google Drive logout works correctly.
-* [ ] Why are reverse dependencies estored in the process tree? that seems wrong!
 * [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
 * [ ] Ensure we have a per-plane cache for 2D realizations.
 * [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?

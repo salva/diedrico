@@ -3766,3 +3766,38 @@ The following UI state is saved per project to Google Drive and restored on proj
 - Computation triggered by watching `selectionStore.selectedIds` in ThreeView.vue
 
 **No New UI Controls**: No new buttons, toggles, or settings. The feature is automatic based on selection state.
+
+---
+
+## Phase 109 — Quick 3D Segment Example Tool
+
+**FR-079**: Quick 3D Segment — one-click creation of a complete 3D segment from predefined 2D segment projections.
+
+**Context**: The "Quick 3D Line" tool (Phase 105) provides a fast way to create a sample 3D line for testing and demonstration. Phase 109 adds the equivalent for 3D segments. Since segments have bounded endpoints (unlike infinite lines), the coordinates are chosen to produce a visually distinct, non-trivial segment in 3D space.
+
+**Toolbar Integration**:
+- New tool entry `quick3dsegment` in the `examples-family` tool group
+- Label: "Quick 3D Segment"
+- Completion behavior: `return-to-selection` (tool deactivates after execution)
+- Position: After "Quick 3D Line" in the examples dropdown
+
+**Execution Behavior**:
+- Executes immediately on toolbar click (same pattern as Quick3DLineTool)
+- Also executes on canvas click for consistency
+- No user interaction or argument collection required
+
+**Geometry Created**:
+1. **On P_H** (horizontal plane, maps (u,v) → (x,y,0)):
+   - Free point at (2, 3) → 3D position (2, 3, 0)
+   - Free point at (8, 7) → 3D position (8, 7, 0)
+   - Segment between these two points
+2. **On P_V** (vertical plane, maps (u,v) → (x,0,v)):
+   - Free point at (2, 4) → 3D position (2, 0, 4)
+   - Free point at (8, 6) → 3D position (8, 0, 6)
+   - Segment between these two points
+3. **3D Segment**: `Segment3DFromProjections` from the two 2D segments
+   - Reconstructed endpoints: approximately (2, 3, 4) and (8, 7, 6)
+
+**Process Tree**: A single action group encapsulates all operations (4 points + 2 segments + 1 3D segment + process tree actions).
+
+**Error Handling**: If P_H or P_V is not found, logs error and returns to selection tool. If 3D segment creation fails, entire command is not committed.

@@ -21048,4 +21048,65 @@ export function isPointOnPlane3D(
 | `frontend/src/components/panels/ThreeView.vue` | Add selection watching, `renderGuidePerpendicularPlane()` function |
 | `frontend/src/utils/threeUtils.ts` | Add `intersectLinePlane3D()`, `intersectSegmentPlane3D()`, `isPointOnPlane3D()` |
 | `frontend/tests/unit/utils/guidePerpendicularPlane.spec.ts` | New: tests for 3D intersection utilities and plane computation |
+
+---
+
+## Phase 109 — Quick 3D Segment Example Tool
+
+### Overview
+
+Add a `Quick3DSegmentTool` that creates a complete 3D segment from predefined 2D segment projections in a single click. Follows the exact same pattern as `Quick3DLineTool` (Phase 105).
+
+### New File: `frontend/src/tools/Quick3DSegmentTool.ts`
+
+**Class**: `Quick3DSegmentTool implements ITool`
+
+**Pattern**: Identical to `Quick3DLineTool` — immediate execution in `activate()`, creates a `Command` with all operations, commits, then returns to selection tool.
+
+**Sequence of operations** (all within a single `Command`):
+
+1. `AddProcessTreeActionGroupOp` — create the action group
+2. `PointSequenceFactory.createFreePoint(cmd, P_H.id, [2, 3, 1], groupId)` → `p1Id_H`
+3. `PointSequenceFactory.createFreePoint(cmd, P_H.id, [8, 7, 1], groupId)` → `p2Id_H`
+4. `AddSegment2DByPointsOp(P_H.id, p1Id_H, p2Id_H)` → `segId_H`
+5. `AddProcessTreeActionOp(createAddSegmentAction(segId_H), groupId)` — record segment action
+6. `PointSequenceFactory.createFreePoint(cmd, P_V.id, [2, 4, 1], groupId)` → `p1Id_V`
+7. `PointSequenceFactory.createFreePoint(cmd, P_V.id, [8, 6, 1], groupId)` → `p2Id_V`
+8. `AddSegment2DByPointsOp(P_V.id, p1Id_V, p2Id_V)` → `segId_V`
+9. `AddProcessTreeActionOp(createAddSegmentAction(segId_V), groupId)` — record segment action
+10. `Add3DSegmentOp(segId_H, segId_V, P_H.id, P_V.id)` → `segment3DId`
+11. `AddProcessTreeActionOp(createAdd3DSegmentAction(segment3DId), groupId)` — record 3D segment action
+12. `cmd.commit()` + `commandStack.push(cmd)`
+
+### Tool Registration: `frontend/src/config/toolFamilies.ts`
+
+Add to `examples-family.tools` array:
+
+```typescript
+{ id: 'quick3dsegment', label: 'Quick 3D Segment', completionBehavior: 'return-to-selection' }
+```
+
+### Tool Factory: `frontend/src/tools/ToolFactory.ts`
+
+Add case for `'quick3dsegment'` returning `new Quick3DSegmentTool()`.
+
+### Predefined Coordinates
+
+| Point | Plane | (u, v) | 3D Position |
+|-------|-------|--------|-------------|
+| p1_H | P_H | (2, 3) | (2, 3, 0) |
+| p2_H | P_H | (8, 7) | (8, 7, 0) |
+| p1_V | P_V | (2, 4) | (2, 0, 4) |
+| p2_V | P_V | (8, 6) | (8, 0, 6) |
+
+**Reconstructed 3D segment**: From (2, 3, 4) to (8, 7, 6).
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/tools/Quick3DSegmentTool.ts` | New: Quick 3D Segment tool implementation |
+| `frontend/src/config/toolFamilies.ts` | Add `quick3dsegment` to examples-family |
+| `frontend/src/tools/ToolFactory.ts` | Add case for `quick3dsegment` |
+| `frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts` | New: tests for Quick 3D Segment tool |
 - **Empty world**: If no 3D elements exist, the projection loop simply produces no primitives.

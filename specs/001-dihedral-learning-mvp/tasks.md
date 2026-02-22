@@ -12411,4 +12411,26 @@ When a guide is selected, the 3D view shows the 3D plane perpendicular to the pr
 
 **Checkpoint**: ✅ Selecting a guide shows its perpendicular 3D plane and highlights intersections with 3D elements
 
+---
+
+## Phase 109 — Quick 3D Segment Example Tool
+
+Quick 3D Segment tool: one-click creation of a complete 3D segment from predefined 2D projections, analogous to Quick 3D Line (Phase 105).
+
+### Specification Documentation (1 task)
+
+- [ ] T1850 spec.md FR-079, ui-spec.md Phase 109, data-model.md Phase 109, tasks.md Phase 109
+
+### Tool Implementation (2 tasks)
+
+- [ ] T1851 Create `frontend/src/tools/Quick3DSegmentTool.ts` implementing `ITool` — on activate: find P_H/P_V, create Command, create 4 free points (2 per plane at (2,3)/(8,7) on P_H and (2,4)/(8,6) on P_V), create 2 segments via `AddSegment2DByPointsOp`, create 3D segment via `Add3DSegmentOp`, record ProcessTree actions, commit command, return to selection tool
+- [ ] T1852 Register tool: add `quick3dsegment` entry in `toolFamilies.ts` examples-family, add case in `ToolFactory.ts`
+
+### Testing (2 tasks)
+
+- [ ] T1853 Unit test: Quick3DSegmentTool creates 4 points, 2 segments, and 1 3D segment — verify all elements exist in world after execution
+- [ ] T1854 Unit test: Quick3DSegmentTool 3D segment realization — verify reconstructed endpoints are approximately (2,3,4) and (8,7,6), verify feasibility
+
+**Checkpoint**: ✅ Clicking "Quick 3D Segment" in the examples toolbar creates a complete 3D segment visible in both 2D and 3D views
+
 **Checkpoint**: ✅ ConstructiveAction stores only construction narrative, structural data derived from elements and DependencyService
