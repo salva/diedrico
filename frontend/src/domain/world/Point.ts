@@ -24,13 +24,15 @@ import { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
 import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 import { assert } from '@/utils/assert';
 
-export type Point2DType = 
-  | 'free' 
-  | 'intersection'  // Kept temporarily for backward compatibility
-  | 'line-line-intersection'
-  | 'line-circle-intersection'
-  | 'circle-circle-intersection'
-  | 'sibling-intersection';
+export const POINT_2D_TYPE = {
+  FREE: 'free',
+  INTERSECTION: 'intersection',  // Kept temporarily for backward compatibility
+  LINE_LINE_INTERSECTION: 'line-line-intersection',
+  LINE_CIRCLE_INTERSECTION: 'line-circle-intersection',
+  CIRCLE_CIRCLE_INTERSECTION: 'circle-circle-intersection',
+  SIBLING_INTERSECTION: 'sibling-intersection',
+} as const;
+export type Point2DType = typeof POINT_2D_TYPE[keyof typeof POINT_2D_TYPE];
 
 /**
  * Point2DRealization2D - Stores computed 2D position for a Point2D

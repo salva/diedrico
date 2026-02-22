@@ -16,7 +16,10 @@
 import { Vector3 } from 'three';
 import { Line2D, Line2DRealization2D } from './Line';
 
-export type Segment2DType = 'segment';  // Phase 22.5: Use 'segment' to match Line2DType
+export const SEGMENT_2D_TYPE = {
+  SEGMENT: 'segment',
+} as const;
+export type Segment2DType = typeof SEGMENT_2D_TYPE[keyof typeof SEGMENT_2D_TYPE];  // Phase 22.5: Use 'segment' to match Line2DType
 
 /**
  * Segment2DByPoints - Bounded line segment defined by two endpoint references

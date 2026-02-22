@@ -17,9 +17,11 @@ import { AddFreePoint2DOp } from '../world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '../world/AddLineOp';
 import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
 
-export type ExampleSetupType = 
-  | 'projection-plane-setup'
-  | 'basic-3d-point-setup';
+export const EXAMPLE_SETUP_TYPE = {
+  PROJECTION_PLANE_SETUP: 'projection-plane-setup',
+  BASIC_3D_POINT_SETUP: 'basic-3d-point-setup',
+} as const;
+export type ExampleSetupType = typeof EXAMPLE_SETUP_TYPE[keyof typeof EXAMPLE_SETUP_TYPE];
 
 /**
  * Operation to add a predefined example setup

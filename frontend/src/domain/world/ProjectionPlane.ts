@@ -64,7 +64,11 @@ import { Segment2DByPoints } from './Segment';
 import { Guide2D, SiblingGuide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
 
-export type ProjectionPlaneType = 'base' | 'auxiliary';
+export const PROJECTION_PLANE_TYPE = {
+  BASE: 'base',
+  AUXILIARY: 'auxiliary',
+} as const;
+export type ProjectionPlaneType = typeof PROJECTION_PLANE_TYPE[keyof typeof PROJECTION_PLANE_TYPE];
 
 /**
  * ProjectionPlaneRealization2D - Stores computed 2D transformation matrices for a ProjectionPlane

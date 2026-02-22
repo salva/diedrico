@@ -21,7 +21,19 @@ import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
 import { assert } from '@/utils/assert';
 
-export type Line2DType = 'by-two-points' | 'parallel' | 'perpendicular' | 'perpendicular-to-line' | 'tangent-to-circle-through-point' | 'tangent-to-circle-parallel' | 'half-hinge' | 'segment' | 'guide' | 'sibling-guide';
+export const LINE_2D_TYPE = {
+  BY_TWO_POINTS: 'by-two-points',
+  PARALLEL: 'parallel',
+  PERPENDICULAR: 'perpendicular',
+  PERPENDICULAR_TO_LINE: 'perpendicular-to-line',
+  TANGENT_TO_CIRCLE_THROUGH_POINT: 'tangent-to-circle-through-point',
+  TANGENT_TO_CIRCLE_PARALLEL: 'tangent-to-circle-parallel',
+  HALF_HINGE: 'half-hinge',
+  SEGMENT: 'segment',
+  GUIDE: 'guide',
+  SIBLING_GUIDE: 'sibling-guide',
+} as const;
+export type Line2DType = typeof LINE_2D_TYPE[keyof typeof LINE_2D_TYPE];
 
 /**
  * Line2DRealization2D - Stores computed line using homogeneous coordinates

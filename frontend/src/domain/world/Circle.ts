@@ -17,7 +17,11 @@ import { Vector3 } from 'three';
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
 
-export type Circle2DType = 'by-center-and-point' | 'by-three-points';
+export const CIRCLE_2D_TYPE = {
+  BY_CENTER_AND_POINT: 'by-center-and-point',
+  BY_THREE_POINTS: 'by-three-points',
+} as const;
+export type Circle2DType = typeof CIRCLE_2D_TYPE[keyof typeof CIRCLE_2D_TYPE];
 
 /**
  * Circle2DRealization2D - Stores computed geometry for a Circle2D

@@ -9,7 +9,12 @@
 
 import type { Action } from './Action';
 
-export type ProcessNodeType = 'subprocess' | 'actionGroup' | 'action';
+export const PROCESS_NODE_TYPE = {
+  SUBPROCESS: 'subprocess',
+  ACTION_GROUP: 'actionGroup',
+  ACTION: 'action',
+} as const;
+export type ProcessNodeType = typeof PROCESS_NODE_TYPE[keyof typeof PROCESS_NODE_TYPE];
 
 export interface ProcessNodeBase {
   id: string;

@@ -12595,16 +12595,16 @@ Replace type aliases with interfaces, const objects, or direct usage per project
 
 ### Implementation (6 tasks)
 
-- [ ] T1899 Replace simple aliases: inline `NodeId` → `string`, convert `Matrix3`/`Vector3D` to interfaces, convert `Settings` to interface
-- [ ] T1900 Convert `Line2DType`, `Point2DType`, `Circle2DType`, `Segment2DType` string literal unions to `as const` object + derived type pattern
-- [ ] T1901 Convert `ProjectionPlaneType`, `ToolType`, `ExampleSetupType`, `ProcessNodeType` to same pattern
-- [ ] T1902 Convert `ElementPath`, `ActionPath`, `PlanePath` to branded string interfaces or inline usage
-- [ ] T1903 Convert `Primitive`, `Element2DRealization` to interfaces
-- [ ] T1904 Keep discriminated class unions as documented exceptions (`Element2D`, `Point3D`, `Segment3D`, etc.)
+- [X] T1899 Inline `NodeId` → `string` (33 refs in DependencyGraph.ts); convert `Settings` to explicit interface; `Matrix3`/`Vector3D` kept as tuple types (cannot be interfaces)
+- [X] T1900 Convert `Line2DType`, `Point2DType`, `Circle2DType`, `Segment2DType` string literal unions to `as const` object + derived type pattern
+- [X] T1901 Convert `ProjectionPlaneType`, `ToolType`, `ExampleSetupType`, `ProcessNodeType` to same pattern
+- [X] T1902 Delete dead `ElementPath`, `ActionPath`; `PlanePath` kept (9 refs, not worth inlining)
+- [X] T1903 `Primitive`, `Element2DRealization` are class unions — kept as documented exceptions (same as T1904)
+- [X] T1904 Documented exceptions kept: `Element2D`, `Point3D`, `Segment3D`, `ProcessNode`, `Result`, `Primitive`, `Element2DRealization`, callback aliases
 
 ### Testing (1 task)
 
-- [ ] T1905 Run full test suite, fix any type errors from refactoring
+- [X] T1905 Full test suite: 1228 passing, 14 baseline failures unchanged, no new type errors
 
 **Checkpoint**: ✅ No simple type aliases remain; string unions use const object pattern
 

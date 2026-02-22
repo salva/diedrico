@@ -15,7 +15,30 @@
 import { ref, computed } from 'vue';
 import type { ToolFamilyConfig, ToolConfig } from '../types/ToolConfig';
 
-export type ToolType = 'select' | 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection' | 'transport' | 'parallel-line' | 'perpendicular-line' | 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel' | 'create3dpoint' | 'create3dline' | 'create3dsegment' | 'create3dplane' | 'createprojectionplane' | 'interactiveprojectionsetup' | 'quickprojectionsetup' | 'quick3dline' | 'quick3dsegment';
+export const TOOL_TYPE = {
+  SELECT: 'select',
+  POINT: 'point',
+  LINE: 'line',
+  CIRCLE: 'circle',
+  SEGMENT: 'segment',
+  GUIDE: 'guide',
+  INTERSECTION: 'intersection',
+  TRANSPORT: 'transport',
+  PARALLEL_LINE: 'parallel-line',
+  PERPENDICULAR_LINE: 'perpendicular-line',
+  TANGENT_LINE_TO_CIRCLE_THROUGH_POINT: 'tangent-line-to-circle-through-point',
+  TANGENT_LINE_TO_CIRCLE_PARALLEL: 'tangent-line-to-circle-parallel',
+  CREATE3DPOINT: 'create3dpoint',
+  CREATE3DLINE: 'create3dline',
+  CREATE3DSEGMENT: 'create3dsegment',
+  CREATE3DPLANE: 'create3dplane',
+  CREATEPROJECTIONPLANE: 'createprojectionplane',
+  INTERACTIVEPROJECTIONSETUP: 'interactiveprojectionsetup',
+  QUICKPROJECTIONSETUP: 'quickprojectionsetup',
+  QUICK3DLINE: 'quick3dline',
+  QUICK3DSEGMENT: 'quick3dsegment',
+} as const;
+export type ToolType = typeof TOOL_TYPE[keyof typeof TOOL_TYPE];
 
 const STORAGE_KEY = 'diedrico-tool-last-used';
 

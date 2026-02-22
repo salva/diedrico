@@ -60,7 +60,35 @@ const DEFAULT_SETTINGS = {
   },
 };
 
-export type Settings = typeof DEFAULT_SETTINGS;
+export interface Settings {
+  grid: {
+    visible: boolean;
+    spacing: number;
+    color: string;
+    snapToGrid: boolean;
+  };
+  snap: {
+    enabled: boolean;
+    radius: number;
+  };
+  defaultStyles: {
+    pointColor: string;
+    pointSize: number;
+    lineColor: string;
+    lineWidth: number;
+    circleColor: string;
+    circleWidth: number;
+    guideColor: string;
+    guideWidth: number;
+    guideDashed: boolean;
+  };
+  view3D: {
+    showPlanes: boolean;
+    showProjectionLines: boolean;
+    show2DElements: boolean;
+    initialCameraDistance: number;
+  };
+}
 
 export const useSettingsStore = defineStore('settings', () => {
   // Settings state (initialized from localStorage or defaults)

@@ -1,8 +1,6 @@
 /**
  * Symbolic path types for element addressing
  */
-export type ElementPath = string;  // Format: "/world/elements2D/{id}" or "/world/elements3D/{id}"
-export type ActionPath = string;   // Format: "/process/subprocess/{id}/actionGroup/{id}/action/{id}"
 export type PlanePath = string;    // Format: "/world/planes/{id}"
 
 /**

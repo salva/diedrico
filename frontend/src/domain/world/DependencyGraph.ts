@@ -3,17 +3,15 @@
  * Used for parametric recomputation and hover highlighting
  */
 
-export type NodeId = string;  // ElementId or ActionId
-
 export interface GraphNode {
-  id: NodeId;
+  id: string;
   type: 'element' | 'action';
   infeasible: boolean;
 }
 
 export class DependencyGraph {
-  private nodes: Map<NodeId, GraphNode>;
-  private edges: Map<NodeId, Set<NodeId>>;  // adjacency list: from -> to
+  private nodes: Map<string, GraphNode>;
+  private edges: Map<string, Set<string>>;  // adjacency list: from -> to
 
   constructor() {
     this.nodes = new Map();
@@ -23,7 +21,7 @@ export class DependencyGraph {
   /**
    * Add a node to the graph
    */
-  addNode(id: NodeId, type: 'element' | 'action'): void {
+  addNode(id: string, type: 'element' | 'action'): void {
     if (!this.nodes.has(id)) {
       this.nodes.set(id, { id, type, infeasible: false });
       this.edges.set(id, new Set());
@@ -33,7 +31,7 @@ export class DependencyGraph {
   /**
    * Add a directed edge from -> to (to depends on from)
    */
-  addEdge(from: NodeId, to: NodeId): void {
+  addEdge(from: string, to: string): void {
     if (!this.nodes.has(from)) {
       throw new Error(`Node ${from} not found`);
     }
@@ -55,7 +53,7 @@ export class DependencyGraph {
   /**
    * Remove a node and all its edges
    */
-  removeNode(id: NodeId): void {
+  removeNode(id: string): void {
     // Remove node
     this.nodes.delete(id);
 
@@ -71,10 +69,10 @@ export class DependencyGraph {
   /**
    * Get all ancestors (inputs) of a node via BFS
    */
-  getAncestors(id: NodeId): Set<NodeId> {
-    const ancestors = new Set<NodeId>();
-    const queue: NodeId[] = [id];
-    const visited = new Set<NodeId>();
+  getAncestors(id: string): Set<string> {
+    const ancestors = new Set<string>();
+    const queue: string[] = [id];
+    const visited = new Set<string>();
 
     while (queue.length > 0) {
       const current = queue.shift()!;
@@ -96,10 +94,10 @@ export class DependencyGraph {
   /**
    * Get all descendants (outputs) of a node via BFS
    */
-  getDescendants(id: NodeId): Set<NodeId> {
-    const descendants = new Set<NodeId>();
-    const queue: NodeId[] = [id];
-    const visited = new Set<NodeId>();
+  getDescendants(id: string): Set<string> {
+    const descendants = new Set<string>();
+    const queue: string[] = [id];
+    const visited = new Set<string>();
 
     while (queue.length > 0) {
       const current = queue.shift()!;
@@ -123,12 +121,12 @@ export class DependencyGraph {
   /**
    * Topological sort of affected nodes for recomputation
    */
-  topologicalSort(nodeIds: Set<NodeId>): NodeId[] {
-    const result: NodeId[] = [];
-    const visited = new Set<NodeId>();
-    const temp = new Set<NodeId>();
+  topologicalSort(nodeIds: Set<string>): string[] {
+    const result: string[] = [];
+    const visited = new Set<string>();
+    const temp = new Set<string>();
 
-    const visit = (id: NodeId): void => {
+    const visit = (id: string): void => {
       if (visited.has(id)) return;
       if (temp.has(id)) {
         throw new Error('Cycle detected in dependency graph');
@@ -162,8 +160,8 @@ export class DependencyGraph {
   /**
    * Mark a node and all its descendants as infeasible
    */
-  propagateInfeasibility(id: NodeId): Set<NodeId> {
-    const affected = new Set<NodeId>([id]);
+  propagateInfeasibility(id: string): Set<string> {
+    const affected = new Set<string>([id]);
     const descendants = this.getDescendants(id);
 
     for (const descendantId of descendants) {
@@ -185,7 +183,7 @@ export class DependencyGraph {
   /**
    * Clear infeasibility flag for a node
    */
-  clearInfeasibility(id: NodeId): void {
+  clearInfeasibility(id: string): void {
     const node = this.nodes.get(id);
     if (node) {
       node.infeasible = false;
@@ -195,7 +193,7 @@ export class DependencyGraph {
   /**
    * Check if adding an edge would create a cycle
    */
-  private wouldCreateCycle(from: NodeId, to: NodeId): boolean {
+  private wouldCreateCycle(from: string, to: string): boolean {
     // If 'to' can reach 'from', adding edge 'from' -> 'to' creates cycle
     const reachable = this.getDescendants(to);
     return reachable.has(from);
@@ -204,14 +202,14 @@ export class DependencyGraph {
   /**
    * Get node by id
    */
-  getNode(id: NodeId): GraphNode | undefined {
+  getNode(id: string): GraphNode | undefined {
     return this.nodes.get(id);
   }
 
   /**
    * Check if node exists
    */
-  hasNode(id: NodeId): boolean {
+  hasNode(id: string): boolean {
     return this.nodes.has(id);
   }
 
