@@ -78,6 +78,7 @@
         :coordinates3-d="coordinates3D"
         :save-status="saveStatus"
         :cascade-count="selectionStore.cascadeHighlightIdsArray.length"
+        :tool-step-message="toolStore.currentToolStepMessage"
       />
     </footer>
   </div>

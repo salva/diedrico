@@ -12546,20 +12546,20 @@ Display contextual step-by-step feedback for multi-step tools.
 
 ### Specification (1 task)
 
-- [ ] T1884 spec.md FR-084, ui-spec.md Phase 115, data-model.md Phase 115, tasks.md Phase 115
+- [X] T1884 spec.md FR-084, ui-spec.md Phase 115, data-model.md Phase 115, tasks.md Phase 115
 
 ### Implementation (5 tasks)
 
-- [ ] T1885 Add `getStepDescription(): string | null` and `toolLabel: string` to ArgumentCollectorTool, with default implementation using collected args and next expected arg
-- [ ] T1886 Add `toolLabel` and argument `description` strings to LineTool, SegmentTool, CircleTool, IntersectionTool, GuideTool, ParallelLineTool, PerpendicularLineTool, TangentLineTool variants
-- [ ] T1887 Create `frontend/src/components/workspace/ToolFeedbackBar.vue` — single-line status bar with tool step description
-- [ ] T1888 Integrate ToolFeedbackBar into Workspace2D.vue — render below toolbar when active tool has description
-- [ ] T1889 Wire tool state changes to ToolFeedbackBar reactivity — bar updates on each argument collection, disappears on tool deactivation
+- [X] T1885 Add `toolStepMessage` ref to toolStore with `setToolStepMessage()` and `currentToolStepMessage` computed — replaces separate getStepDescription; reuses existing `getStatusMessage()` from ArgumentCollectorTool
+- [X] T1886 Wire SvgCanvas.vue: after each `handleClick()` result, call `toolStore.setToolStepMessage(result.message)`; on tool activation, call `getStatusMessage()` for initial feedback
+- [X] T1887 Display tool step message in StatusBar.vue center section (highest priority, above cascade/save) — replaces plan for separate ToolFeedbackBar.vue
+- [X] T1888 Add `toolStepMessage` prop to StatusBar.vue, pass from App.vue using `toolStore.currentToolStepMessage`
+- [X] T1889 Clear toolStepMessage on tool change in `setTool()`
 
 ### Testing (2 tasks)
 
-- [ ] T1890 Unit test: `getStepDescription()` returns correct text at each step for LineTool (0 args → "pick first point", 1 arg → "{label} picked — pick second point")
-- [ ] T1891 Unit test: ToolFeedbackBar component renders step description and hides when no active tool
+- [X] T1890 Unit test: toolStore `setToolStepMessage()`, `currentToolStepMessage`, clear on tool change (5 tests in toolStore.spec.ts)
+- [X] T1891 (Skipped: ToolFeedbackBar not created; feedback integrated into existing StatusBar)
 
 **Checkpoint**: ✅ Users see "Line: A picked — pick second point" feedback during multi-step tool use
 

@@ -105,4 +105,35 @@ describe('toolStore', () => {
       });
     });
   });
+
+  describe('Tool Step Message', () => {
+    it('should start with empty step message', () => {
+      expect(toolStore.currentToolStepMessage.value).toBe('');
+    });
+
+    it('should set and get step message', () => {
+      toolStore.setToolStepMessage('Creating line: pick point1, point2');
+      expect(toolStore.currentToolStepMessage.value).toBe('Creating line: pick point1, point2');
+    });
+
+    it('should clear step message when tool changes', () => {
+      toolStore.setToolStepMessage('Creating line: pick point1, point2');
+      toolStore.setTool('point');
+      expect(toolStore.currentToolStepMessage.value).toBe('');
+    });
+
+    it('should update step message as arguments are collected', () => {
+      toolStore.setToolStepMessage('Creating line: pick point1, point2');
+      expect(toolStore.currentToolStepMessage.value).toBe('Creating line: pick point1, point2');
+      
+      toolStore.setToolStepMessage('Creating line: point1 selected, pick point2');
+      expect(toolStore.currentToolStepMessage.value).toBe('Creating line: point1 selected, pick point2');
+    });
+
+    it('should allow clearing step message explicitly', () => {
+      toolStore.setToolStepMessage('Some message');
+      toolStore.setToolStepMessage('');
+      expect(toolStore.currentToolStepMessage.value).toBe('');
+    });
+  });
 });

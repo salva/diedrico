@@ -12,14 +12,18 @@
       </span>
     </div>
     
-    <!-- Center section: Save status and cascade preview -->
+    <!-- Center section: Tool feedback, cascade preview, save status -->
     <div class="status-section status-center">
-      <!-- Cascade deletion preview (higher priority) -->
-      <span v-if="cascadeCount > 0" class="status-item cascade-warning">
+      <!-- Tool step feedback (highest priority) -->
+      <span v-if="toolStepMessage" class="status-item tool-step-message">
+        {{ toolStepMessage }}
+      </span>
+      <!-- Cascade deletion preview -->
+      <span v-else-if="cascadeCount > 0" class="status-item cascade-warning">
         <span class="cascade-icon">⚠️</span>
         <span class="cascade-text">{{ cascadeCount }} element{{ cascadeCount > 1 ? 's' : '' }} will be cascade deleted</span>
       </span>
-      <!-- Save status (lower priority) -->
+      <!-- Save status (lowest priority) -->
       <span v-else-if="saveStatus !== 'idle'" class="status-item save-status" :class="`save-status-${saveStatus}`">
         <span v-if="saveStatus === 'saving'">💾 Saving...</span>
         <span v-else-if="saveStatus === 'saved'">✓ All changes saved</span>
@@ -48,6 +52,7 @@ interface Props {
   coordinates3D?: { x: number; y: number; z: number } | null;
   saveStatus?: 'idle' | 'saving' | 'saved';
   cascadeCount?: number;  // Number of elements that will be cascade deleted
+  toolStepMessage?: string;  // Contextual feedback from the active tool
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -56,7 +61,8 @@ const props = withDefaults(defineProps<Props>(), {
   activeTool: 'Select',
   coordinates3D: null,
   saveStatus: 'idle',
-  cascadeCount: 0
+  cascadeCount: 0,
+  toolStepMessage: ''
 });
 
 const has3DCoordinates = computed(() => {
@@ -140,6 +146,15 @@ const formattedCoordinates = computed(() => {
 .save-status-saved {
   background-color: #d4edda;
   color: #155724;
+}
+
+.tool-step-message {
+  font-size: 12px;
+  color: #1a73e8;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background-color: #e8f0fe;
 }
 
 .cascade-warning {

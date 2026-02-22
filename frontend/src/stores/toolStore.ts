@@ -21,6 +21,7 @@ const STORAGE_KEY = 'diedrico-tool-last-used';
 
 const activeTool = ref<ToolType>('select');
 const lastUsedByFamily = ref<Record<string, string>>({});
+const toolStepMessage = ref<string>('');
 let toolFamilies: ToolFamilyConfig[] = [];
 
 // Load last-used preferences from localStorage on module initialization
@@ -52,6 +53,7 @@ export function useToolStore() {
    */
   function setTool(tool: ToolType) {
     activeTool.value = tool;
+    toolStepMessage.value = ''; // Clear step message when tool changes
   }
 
   /**
@@ -136,9 +138,23 @@ export function useToolStore() {
     return lastUsedByFamily.value[familyId];
   }
 
+  /**
+   * Phase 115: Set contextual tool step feedback message
+   */
+  function setToolStepMessage(message: string) {
+    toolStepMessage.value = message;
+  }
+
+  /**
+   * Phase 115: Get reactive tool step message
+   */
+  const currentToolStepMessage = computed(() => toolStepMessage.value);
+
   return {
     currentTool,
+    currentToolStepMessage,
     setTool,
+    setToolStepMessage,
     isToolActive,
     setToolFamilies,
     getToolFamily,

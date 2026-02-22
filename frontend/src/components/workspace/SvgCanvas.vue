@@ -532,6 +532,11 @@ watch(() => toolStore.currentTool.value, (newTool) => {
   if (factory) {
     currentToolInstance.value = factory();
     console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+    // Show initial tool feedback (e.g. "Creating line: pick point1, point2")
+    if (currentToolInstance.value && 'getStatusMessage' in currentToolInstance.value) {
+      const msg = (currentToolInstance.value as any).getStatusMessage();
+      if (msg) toolStore.setToolStepMessage(msg);
+    }
   } else {
     currentToolInstance.value = null;
     if (newTool !== 'select') {
@@ -1281,6 +1286,9 @@ function handleCanvasClick(event: MouseEvent) {
   } else {
     console.error('[SvgCanvas] Tool operation failed:', result.message);
   }
+
+  // Phase 115: Update tool step message for contextual feedback
+  toolStore.setToolStepMessage(result.message || '');
 }
 
 /**
