@@ -12575,15 +12575,15 @@ Replace ID-derived labels with sequential mathematical naming conventions.
 
 ### Implementation (4 tasks)
 
-- [ ] T1893 Create `frontend/src/domain/world/LabelGenerator.ts` with per-type sequential naming (points: A-Z, lines: r-z, circles: α-ω, guides: g₁+)
-- [ ] T1894 Add `labelGenerator: LabelGenerator` to World, initialize in constructor
-- [ ] T1895 Update `World.generateDefaultLabel()` to use LabelGenerator instead of extracting numeric suffix from ID
-- [ ] T1896 Ensure counters are forward-only (no revert on undo) for label stability
+- [X] T1893 Create `frontend/src/domain/world/LabelGenerator.ts` with per-type sequential naming (points: A-Z, lines: r-z, circles: α-ω, guides: g₁+)
+- [X] T1894 Add `labelGenerator: LabelGenerator` to World, initialize in constructor
+- [X] T1895 Update `World.generateDefaultLabel()` to use LabelGenerator instead of extracting numeric suffix from ID
+- [X] T1896 Counters are forward-only by design (LabelGenerator.setCount only allows forward, reset only in constructor)
 
 ### Testing (2 tasks)
 
-- [ ] T1897 Unit test: LabelGenerator produces A, B, C for points; r, s, t for lines; α, β, γ for circles; wraps with subscripts after exhausting base sequence
-- [ ] T1898 Unit test: Labels are assigned correctly through element creation operations; undo/redo does not reuse labels
+- [X] T1897 Unit test: LabelGenerator produces A, B, C for points; r, s, t for lines; α, β, γ for circles; wraps with subscripts (20 tests in labelGenerator.spec.ts)
+- [X] T1898 Unit test: generateDefaultLabel.test.ts rewritten (24 tests), defaultLabels.integration.test.ts rewritten (9 tests)
 
 **Checkpoint**: ✅ New points labeled A, B, C instead of A_10, A_11
 

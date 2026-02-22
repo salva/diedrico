@@ -108,6 +108,7 @@ import { createActionGroup } from '@/domain/processTree/ActionGroup';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { PushSubprocessOp, PopSubprocessOp } from '@/commands/operations/processTree';
 import type { CommandStack } from '@/commands/CommandStack';
+import { LabelGenerator } from './LabelGenerator';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -151,6 +152,9 @@ export class World {
   private line3DCounter: number = 0;
   private segment3DCounter: number = 0;
   private plane3DUserCounter: number = 0;
+
+  // Phase 116: Sequential mathematical label generator
+  readonly labelGenerator: LabelGenerator = new LabelGenerator();
 
   constructor() {
     // Phase 22.5.3: Element storage removed - stored in ProjectionPlane
@@ -359,63 +363,8 @@ export class World {
    * @returns Human-readable label (e.g., "A_5", "L_{12}")
    * @throws Error if ID format is invalid or element type is unknown
    */
-  generateDefaultLabel(elementId: string, elementType: string): string {
-    // Handle scoped IDs (e.g., "projPlane3/point2d5")
-    // Extract the local ID part after the last "/"
-    const parts = elementId.split('/');
-    const localId = parts[parts.length - 1];
-    
-    // Extract number from local ID (e.g., "point2d5" → 5, "line3d12" → 12)
-    // Handle invalid IDs like "guide2dNaN" from deserialization bugs
-    const match = localId.match(/\d+$/);
-    if (!match) {
-      // Return empty label for graceful degradation - pre-existing serialization bug
-      return '';
-    }
-    const num = parseInt(match[0], 10);
-    
-    // Get prefix based on element type
-    let prefix: string;
-    switch (elementType) {
-      case 'Point2D':
-      case 'Point3D':
-        prefix = 'A_';
-        break;
-      case 'Line2D':
-      case 'Line3D':
-        prefix = 'L_';
-        break;
-      case 'Segment2D':
-      case 'Segment3D':
-        prefix = 'S_';
-        break;
-      case 'Circle2D':
-        prefix = 'C_';
-        break;
-      case 'Guide2D':
-        prefix = 'G_';
-        break;
-      case 'Plane3D':
-      case 'ProjectionPlane':
-        prefix = 'P_';
-        break;
-      case 'HingeLine':
-        prefix = 'HL_';
-        break;
-      case 'BrokenHingeLine':
-        prefix = 'BHL_';
-        break;
-      case 'HalfHingeLine':
-        prefix = 'HHL_';
-        break;
-      default:
-        throw new Error(`Unknown element type: ${elementType}`);
-    }
-    
-    // Format with braces for multi-digit subscripts (KaTeX requirement)
-    // Single digit: A_5 → A₅
-    // Multi-digit: A_{12} → A₁₂ (without braces would render as A₁2)
-    return num <= 9 ? `${prefix}${num}` : `${prefix}{${num}}`;
+  generateDefaultLabel(_elementId: string, elementType: string): string {
+    return this.labelGenerator.next(elementType);
   }
 
   /**

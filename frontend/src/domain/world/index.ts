@@ -43,3 +43,6 @@ export {
 export { BrokenHingeLine } from './BrokenHingeLine';
 export { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
 export { HalfHingeLineRealization2D } from './HalfHingeLineRealization2D';
+
+// Phase 116: Sequential label generation
+export { LabelGenerator } from './LabelGenerator';
