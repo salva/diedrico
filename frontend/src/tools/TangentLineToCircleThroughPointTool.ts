@@ -16,7 +16,7 @@
 import { Vector3 } from 'three';
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolContext } from './ITool';
-import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { AddLine2DTangentToCircleThroughPointOp } from '@/commands/operations/world/AddLineOp';
@@ -57,7 +57,24 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
             name: 'throughPoint', 
             mask: SelectionMask.point()
           }
-        ]
+        ],
+        // Phase 113: Validate point is outside or on the circle
+        setValidator: (args, context: CollectionContext) => {
+          const circleEl = args.get('circle')?.element;
+          const pointEl = args.get('throughPoint')?.element;
+          if (circleEl && pointEl) {
+            const circleRealization = circleEl.realize2D(context.world);
+            const pointRealization = pointEl.realize2D(context.world);
+            if (circleRealization && circleRealization.feasible && pointRealization && pointRealization.feasible) {
+              const dist = pointRealization.position.distanceTo(circleRealization.center);
+              const radius = circleRealization.getRadius();
+              if (dist < radius - 1e-3) {
+                return { valid: false, error: 'Cannot create tangent: point is inside the circle' };
+              }
+            }
+          }
+          return { valid: true };
+        }
       }
     ];
   }

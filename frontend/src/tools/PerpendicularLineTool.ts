@@ -15,9 +15,10 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolContext } from './ITool';
-import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
 import type { Point2D } from '@/domain/world/Point';
 import type { Line2D } from '@/domain/world/Line';
+import type { Element2D } from '@/domain/world/Element2D';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
@@ -53,7 +54,18 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
             name: 'throughPoint', 
             mask: SelectionMask.point() 
           }
-        ]
+        ],
+        // Phase 113: Validate reference line produces a feasible realization
+        setValidator: (args, context: CollectionContext) => {
+          const refLine = args.get('referenceLine')?.element as Line2D | undefined;
+          if (refLine) {
+            const realization = refLine.realize2D(context.world);
+            if (realization && !realization.feasible) {
+              return { valid: false, error: 'Cannot create perpendicular line: reference line is infeasible' };
+            }
+          }
+          return { valid: true };
+        }
       }
     ];
   }

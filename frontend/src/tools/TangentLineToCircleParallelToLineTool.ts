@@ -16,7 +16,7 @@
 import { Vector3 } from 'three';
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolContext } from './ITool';
-import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Command } from '@/commands/Command';
 import { AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
@@ -24,6 +24,7 @@ import { createTangentLineToCircleParallelToLineAction } from '@/domain/processT
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import type { Line2D } from '@/domain/world/Line';
 
 /**
  * TangentLineToCircleParallelToLineTool using ArgumentCollectorTool framework
@@ -58,7 +59,18 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
             name: 'referenceLine', 
             mask: SelectionMask.anyLine()  // Accepts all Line2D subtypes
           }
-        ]
+        ],
+        // Phase 113: Validate reference line is feasible
+        setValidator: (args, context: CollectionContext) => {
+          const refLine = args.get('referenceLine')?.element as Line2D | undefined;
+          if (refLine) {
+            const realization = refLine.realize2D(context.world);
+            if (realization && !realization.feasible) {
+              return { valid: false, error: 'Cannot create tangent: reference line is infeasible' };
+            }
+          }
+          return { valid: true };
+        }
       }
     ];
   }
