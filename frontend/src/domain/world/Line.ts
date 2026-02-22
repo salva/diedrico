@@ -323,12 +323,17 @@ export class Line2DParallel extends Line2D {
     // This is the key difference from perpendicular lines
     const parallelDirection = referenceLine.getDirection();
 
+    // Check for degenerate direction (zero-length from reference line)
+    if (parallelDirection.lengthSq() < 1e-10) {
+      return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+
     // Create parallel line realization
     // Line passes through the specified point with parallel direction
     return new Line2DRealization2D(
-      throughPointRealization.position,  // Through-point (z=1)
-      parallelDirection,                 // Parallel direction (z=0)
-      true                                // Feasible
+      throughPointRealization.position.clone(),  // Through-point (z=1)
+      parallelDirection,                         // Parallel direction (z=0)
+      true                                       // Feasible
     );
   }
 }
