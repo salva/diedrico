@@ -99,6 +99,14 @@ export class Command {
   }
 
   /**
+   * Get the list of operations in this command (read-only access)
+   * Phase 114: Used for post-creation feasibility checking
+   */
+  getOperations(): readonly IOperation[] {
+    return this.operations;
+  }
+
+  /**
    * Get current command status
    */
   get status(): CommandStatus {

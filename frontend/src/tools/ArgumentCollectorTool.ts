@@ -146,12 +146,67 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
       throw error; // Re-throw to be handled by handleClick
     }
 
+    // Phase 114: Post-creation feasibility check
+    // Check if any newly created elements are immediately infeasible
+    this.checkCreatedElementsFeasibility(cmd, world);
+
     // Commit and push to stack
     cmd.commit();
     commandStack.push(cmd);
       
     // Handle tool completion
     this.handleCompletion(context.toolStore);
+  }
+
+  /**
+   * Phase 114: Check if newly created elements are immediately infeasible
+   * Issues a warning log but does NOT abort — infeasibility may resolve when parents move
+   */
+  private checkCreatedElementsFeasibility(cmd: Command, world: import('@/domain/world/World').World): void {
+    for (const op of cmd.getOperations()) {
+      const outputs = op.outputs;
+      // Check all outputs that look like element IDs
+      for (const [key, value] of Object.entries(outputs)) {
+        if (typeof value !== 'string') continue;
+        if (!key.endsWith('Id')) continue;
+        // Skip process tree and group IDs
+        if (key === 'groupId' || key === 'actionId') continue;
+        
+        try {
+          // Try to find and realize the element
+          const elementId = value as string;
+          // Try as point
+          const point = world.getPoint2D(elementId);
+          if (point) {
+            const r = point.realize2D(world);
+            if (r && !r.feasible) {
+              console.warn(`[Feasibility] Newly created element ${elementId} is immediately infeasible`);
+            }
+            continue;
+          }
+          // Try as line
+          const line = world.getLine2D(elementId);
+          if (line) {
+            const r = line.realize2D(world);
+            if (r && !r.feasible) {
+              console.warn(`[Feasibility] Newly created element ${elementId} is immediately infeasible`);
+            }
+            continue;
+          }
+          // Try as circle
+          const circle = world.getCircle2D(elementId);
+          if (circle) {
+            const r = circle.realize2D(world);
+            if (r && !r.feasible) {
+              console.warn(`[Feasibility] Newly created element ${elementId} is immediately infeasible`);
+            }
+            continue;
+          }
+        } catch {
+          // Element not found or realize failed — skip silently
+        }
+      }
+    }
   }
   
   // === Automated Methods (Framework Implementation) ===
