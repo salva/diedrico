@@ -3801,3 +3801,74 @@ The following UI state is saved per project to Google Drive and restored on proj
 **Process Tree**: A single action group encapsulates all operations (4 points + 2 segments + 1 3D segment + process tree actions).
 
 **Error Handling**: If P_H or P_V is not found, logs error and returns to selection tool. If 3D segment creation fails, entire command is not committed.
+
+---
+
+## Phase 115 — Contextual Tool Feedback
+
+**FR-084**: Multi-step tools show contextual feedback.
+
+**New Component: ToolFeedbackBar**
+
+- Rendered in the workspace area, positioned below the toolbar or above the canvas
+- Displays a single-line status message describing. current tool state
+- Background: subtle, semi-transparent banner (e.g., `rgba(0,0,0,0.7)`, white text)
+- Fades in/out with tool activation/deactivation
+
+**Feedback Format**:
+
+| Tool State | Display Text |
+|------------|-------------|
+| LineTool, no args | `Line: pick first point` |
+| LineTool, 1 arg | `Line: {label} picked — pick second point` |
+| SegmentTool, no args | `Segment: pick first endpoint` |
+| SegmentTool, 1 arg | `Segment: {label} picked — pick second endpoint` |
+| CircleTool, no args | `Circle: pick center point` |
+| CircleTool, 1 arg | `Circle: center {label} — pick circumference point` |
+| IntersectionTool, no args | `Intersection: pick first line/circle` |
+| IntersectionTool, 1 arg | `Intersection: {label} picked — pick second line/circle` |
+| GuideTool, no args | `Guide: pick a hinge line` |
+| GuideTool, 1 arg | `Guide: hinge line selected — pick through-point` |
+| Select tool | (no feedback bar shown) |
+
+**Integration**:
+
+- `ArgumentCollectorTool` exposes `getStepDescription(): string` method
+- Each tool overrides to provide human-readable step text
+- Workspace2D.vue watches active tool state and renders ToolFeedbackBar conditionally
+
+---
+
+## Phase 116 — Improve Element Naming
+
+**FR-085**: Sequential mathematical element naming.
+
+**Label Format**:
+
+| Element Type | Sequence | Examples |
+|-------------|----------|---------|
+| Points | A, B, C, ..., Z, A₁, B₁, ... | A, B, C |
+| Lines | r, s, t, ..., z, r₁, s₁, ... | r, s, t |
+| Segments | Same as lines | (shared counter with lines) |
+| Circles | α, β, γ, ..., ω, α₁, β₁, ... | α, β, γ |
+| Guides | g₁, g₂, g₃, ... | g₁, g₂ |
+
+**Display**: Labels rendered via KaTeX (existing `formatElementLabel` infrastructure).
+
+**Counter Management**: Per-type sequential counters maintained in World. Counters advance on creation and do NOT revert on undo (gap-tolerant sequential naming, avoids label instability).
+
+---
+
+## Phase 118 — Process Tree Expand Behavior
+
+**FR-086**: Process tree collapse state management.
+
+**Current Behavior**: All subprocesses start expanded (except "World Initialization"). Adding any element re-renders the tree, and since collapse state is in local `ref()`, it resets to expanded.
+
+**New Behavior**:
+
+1. **Collapse state persisted**: Stored in a Pinia store (`processTreeStore`) keyed by node ID. Survives re-renders.
+2. **Preserve user choices**: When user manually collapses a subprocess, it stays collapsed even when new elements are added elsewhere.
+3. **Auto-expand active subprocess only**: When an element is added to subprocess X, only X is expanded. All other subprocesses remain in their current state.
+4. **Active subprocess indicator**: The subprocess currently receiving new elements has a visual indicator (e.g., subtle highlight or "active" badge).
+5. **Default collapsed**: New subprocesses start collapsed by default. "World Initialization" remains always collapsed.

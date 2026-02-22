@@ -12433,4 +12433,219 @@ Quick 3D Segment tool: one-click creation of a complete 3D segment from predefin
 
 **Checkpoint**: ✅ Clicking "Quick 3D Segment" in the examples toolbar creates a complete 3D segment visible in both 2D and 3D views
 
+---
+
+## Phase 110: Remove Element2DUtils (3 tasks) [T1855-T1857]
+
+Dead code removal: all 7 functions in Element2DUtils.ts have zero runtime consumers.
+
+### Implementation (3 tasks)
+
+- [ ] T1855 Delete `frontend/src/domain/world/Element2DUtils.ts`
+- [ ] T1856 Remove Element2DUtils re-exports from `frontend/src/domain/world/index.ts`
+- [ ] T1857 Delete `frontend/tests/unit/domain/element2dUtils.spec.ts`, run full suite to verify no breakage
+
+**Checkpoint**: ✅ Dead code removed, no test regressions
+
+---
+
+## Phase 111: Degenerate Point Handling in realize2D (5 tasks) [T1858-T1862]
+
+Ensure all realize2D methods handle degenerate/coincident parent points, marking realizations infeasible.
+
+### Specification (1 task)
+
+- [ ] T1858 spec.md FR-080, data-model.md Phase 111, tasks.md Phase 111
+
+### Implementation (2 tasks)
+
+- [ ] T1859 Add degenerate direction check to `Line2DParallel.realize2D()` — if reference line direction has `lengthSq() < 1e-10`, return `feasible=false`
+- [ ] T1860 Audit all realize2D methods confirming degenerate checks exist; document findings
+
+### Testing (2 tasks)
+
+- [ ] T1861 Unit test: Line2DParallel with coincident reference points → infeasible realization
+- [ ] T1862 Unit test: Comprehensive degenerate cases — Line2DByTwoPoints coincident points, Segment coincident points, Circle zero-radius, all return feasible=false
+
+**Checkpoint**: ✅ All realize2D methods safely handle degenerate parent configurations
+
+---
+
+## Phase 112: Segment Intersection Correctness + Tests (8 tasks) [T1863-T1870]
+
+Comprehensive tests for intersection points involving bounded elements (segments) and index fallback verification.
+
+### Specification (1 task)
+
+- [ ] T1863 spec.md FR-081, data-model.md Phase 112, tasks.md Phase 112
+
+### Testing (7 tasks)
+
+- [ ] T1864 Unit test: Line-segment intersection — point inside segment bounds (feasible), point outside segment bounds (infeasible), point at segment endpoint (feasible)
+- [ ] T1865 Unit test: Segment-segment intersection — both parameters in [0,1] (feasible), one outside (infeasible), parallel segments, coincident segments
+- [ ] T1866 Unit test: Segment-circle intersection — intersection inside segment (feasible), intersection outside segment (infeasible), tangent at segment endpoint
+- [ ] T1867 Unit test: Line-circle intersection index fallback — tangent case: index=1 falls back to index=0, returning same point
+- [ ] T1868 Unit test: Circle-circle intersection index fallback — tangent case: index=1 falls back to index=0
+- [ ] T1869 Unit test: Segment-circle intersection with index fallback — bound check combined with index selection
+- [ ] T1870 Fix any bugs discovered during testing in `isPointOnSegment()` or intersection realize2D methods
+
+**Checkpoint**: ✅ All bounded-element intersection combinations tested and correct
+
+---
+
+## Phase 113: Tool Argument Validation (7 tasks) [T1871-T1877]
+
+Add geometric validation to tools creating elements from points.
+
+### Specification (1 task)
+
+- [ ] T1871 spec.md FR-082, data-model.md Phase 113, tasks.md Phase 113
+
+### Implementation (4 tasks)
+
+- [ ] T1872 LineTool: Add `setValidator` checking geometric distance between point1 and point2 realizations > 1e-3
+- [ ] T1873 SegmentTool: Same geometric distance `setValidator` as LineTool
+- [ ] T1874 ParallelLineTool, PerpendicularLineTool: Add reference line feasibility validation
+- [ ] T1875 Audit all remaining tools (TangentLineTool variants, GuideTool, IntersectionTool) for missing validation
+
+### Testing (2 tasks)
+
+- [ ] T1876 Unit test: LineTool and SegmentTool reject coincident points (different IDs but same position)
+- [ ] T1877 Unit test: ParallelLineTool rejects infeasible reference line
+
+**Checkpoint**: ✅ All tools validate arguments before creating elements
+
+---
+
+## Phase 114: Feasibility Validation on Creation (6 tasks) [T1878-T1883]
+
+Add `isFeasible()` convenience method and post-creation feasibility checks.
+
+### Specification (1 task)
+
+- [ ] T1878 spec.md FR-083, data-model.md Phase 114, tasks.md Phase 114
+
+### Implementation (3 tasks)
+
+- [ ] T1879 Add `isFeasible(world: World): boolean` method to Element2D base class, delegating to `realize2D(world).feasible`
+- [ ] T1880 Add post-creation feasibility check in AddLine2DByTwoPointsOp, AddSegment2DByPointsOp, AddCircle2DOp — log warning if immediately infeasible
+- [ ] T1881 Add post-creation feasibility check in AddFreePoint2DOp (should always be feasible, but verify)
+
+### Testing (2 tasks)
+
+- [ ] T1882 Unit test: `isFeasible()` returns true for valid elements, false for elements with coincident parents
+- [ ] T1883 Unit test: Operations log warning when creating immediately infeasible element but still succeed
+
+**Checkpoint**: ✅ All Element2D subclasses have isFeasible(), operations warn on infeasible creation
+
+---
+
+## Phase 115: Contextual Tool Feedback (8 tasks) [T1884-T1891]
+
+Display contextual step-by-step feedback for multi-step tools.
+
+### Specification (1 task)
+
+- [ ] T1884 spec.md FR-084, ui-spec.md Phase 115, data-model.md Phase 115, tasks.md Phase 115
+
+### Implementation (5 tasks)
+
+- [ ] T1885 Add `getStepDescription(): string | null` and `toolLabel: string` to ArgumentCollectorTool, with default implementation using collected args and next expected arg
+- [ ] T1886 Add `toolLabel` and argument `description` strings to LineTool, SegmentTool, CircleTool, IntersectionTool, GuideTool, ParallelLineTool, PerpendicularLineTool, TangentLineTool variants
+- [ ] T1887 Create `frontend/src/components/workspace/ToolFeedbackBar.vue` — single-line status bar with tool step description
+- [ ] T1888 Integrate ToolFeedbackBar into Workspace2D.vue — render below toolbar when active tool has description
+- [ ] T1889 Wire tool state changes to ToolFeedbackBar reactivity — bar updates on each argument collection, disappears on tool deactivation
+
+### Testing (2 tasks)
+
+- [ ] T1890 Unit test: `getStepDescription()` returns correct text at each step for LineTool (0 args → "pick first point", 1 arg → "{label} picked — pick second point")
+- [ ] T1891 Unit test: ToolFeedbackBar component renders step description and hides when no active tool
+
+**Checkpoint**: ✅ Users see "Line: A picked — pick second point" feedback during multi-step tool use
+
+---
+
+## Phase 116: Improve Element Naming (7 tasks) [T1892-T1898]
+
+Replace ID-derived labels with sequential mathematical naming conventions.
+
+### Specification (1 task)
+
+- [ ] T1892 spec.md FR-085, ui-spec.md Phase 116, data-model.md Phase 116, tasks.md Phase 116
+
+### Implementation (4 tasks)
+
+- [ ] T1893 Create `frontend/src/domain/world/LabelGenerator.ts` with per-type sequential naming (points: A-Z, lines: r-z, circles: α-ω, guides: g₁+)
+- [ ] T1894 Add `labelGenerator: LabelGenerator` to World, initialize in constructor
+- [ ] T1895 Update `World.generateDefaultLabel()` to use LabelGenerator instead of extracting numeric suffix from ID
+- [ ] T1896 Ensure counters are forward-only (no revert on undo) for label stability
+
+### Testing (2 tasks)
+
+- [ ] T1897 Unit test: LabelGenerator produces A, B, C for points; r, s, t for lines; α, β, γ for circles; wraps with subscripts after exhausting base sequence
+- [ ] T1898 Unit test: Labels are assigned correctly through element creation operations; undo/redo does not reuse labels
+
+**Checkpoint**: ✅ New points labeled A, B, C instead of A_10, A_11
+
+---
+
+## Phase 117: Remove Type Aliases (7 tasks) [T1899-T1905]
+
+Replace type aliases with interfaces, const objects, or direct usage per project convention.
+
+### Implementation (6 tasks)
+
+- [ ] T1899 Replace simple aliases: inline `NodeId` → `string`, convert `Matrix3`/`Vector3D` to interfaces, convert `Settings` to interface
+- [ ] T1900 Convert `Line2DType`, `Point2DType`, `Circle2DType`, `Segment2DType` string literal unions to `as const` object + derived type pattern
+- [ ] T1901 Convert `ProjectionPlaneType`, `ToolType`, `ExampleSetupType`, `ProcessNodeType` to same pattern
+- [ ] T1902 Convert `ElementPath`, `ActionPath`, `PlanePath` to branded string interfaces or inline usage
+- [ ] T1903 Convert `Primitive`, `Element2DRealization` to interfaces
+- [ ] T1904 Keep discriminated class unions as documented exceptions (`Element2D`, `Point3D`, `Segment3D`, etc.)
+
+### Testing (1 task)
+
+- [ ] T1905 Run full test suite, fix any type errors from refactoring
+
+**Checkpoint**: ✅ No simple type aliases remain; string unions use const object pattern
+
+---
+
+## Phase 118: Process Tree Expand Behavior (7 tasks) [T1906-T1912]
+
+Fix collapse state management in the process tree.
+
+### Specification (1 task)
+
+- [ ] T1906 spec.md FR-086, ui-spec.md Phase 118, data-model.md Phase 118, tasks.md Phase 118
+
+### Implementation (4 tasks)
+
+- [ ] T1907 Create `frontend/src/stores/processTreeStore.ts` — Pinia store with `collapsedNodes: Set<string>`, `activeSubprocessId`, `toggleCollapse()`, `isCollapsed()`, `expandOnly()`
+- [ ] T1908 Refactor ProcessTreeNode.vue to use processTreeStore instead of local `isCollapsed` ref
+- [ ] T1909 Add logic: when new element is added (detected via `dataVersion` change or action count), expand only the receiving subprocess via `processTreeStore.expandOnly()`
+- [ ] T1910 Default new subprocesses to collapsed (except active subprocess)
+
+### Testing (2 tasks)
+
+- [ ] T1911 Unit test: processTreeStore — toggleCollapse, isCollapsed, expandOnly preserves other nodes' state
+- [ ] T1912 Unit test: ProcessTreeNode uses store state, adding element to subprocess X does not expand subprocess Y
+
+**Checkpoint**: ✅ Collapsing subprocesses stays collapsed when new elements are added elsewhere
+
+---
+
+## Phase 119: Per-Plane Realization Cache Verification (5 tasks) [T1913-T1917]
+
+Add dedicated tests verifying the per-plane 2D realization cache (implemented in Phase 22.5).
+
+### Testing (5 tasks)
+
+- [ ] T1913 Unit test: Cache hit — calling `realizePoint2D()` twice returns same object reference
+- [ ] T1914 Unit test: Cache invalidation — moving a point via FreePoint2D position update invalidates cached realization, next call returns fresh computed result
+- [ ] T1915 Unit test: Dependency propagation — changing a point invalidates dependent line realization on same plane
+- [ ] T1916 Unit test: Cross-plane propagation — sibling intersection point invalidation when parent element on other plane changes
+- [ ] T1917 Unit test: Full cache clear — `ProjectionPlane.clear()` resets all realization caches
+
+**Checkpoint**: ✅ Per-plane realization cache correctness verified with dedicated tests
+
 **Checkpoint**: ✅ ConstructiveAction stores only construction narrative, structural data derived from elements and DependencyService

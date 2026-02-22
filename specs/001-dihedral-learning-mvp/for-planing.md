@@ -29,33 +29,83 @@ Note that completing these tasks may require asking the user for additional info
 * [ ] Rationalize class names for projection planes and related object (Ops, for instances).Ok
 * [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
 * [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
-* [ ] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
+* [x] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
 * [ ] In 3D rotation axis seems to be hardcoded or be limited. For instance, I am not able to rotate the view around the viewer-O axis
 * [ ] Add support for moving semi-free points and distances along guide lines.
-* [ ] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
+* [x] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
 * [ ] Improve how elements are shown in the left world listing widget.
 * [ ] Check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
-* [ ] Do not use type aliases in the code.
-* [ ] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
+* [x] Do not use type aliases in the code.
+* [x] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
 * [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
 * [ ] Add support for converting intersections into points automatically while building other elements.
-* [ ] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
-* [ ] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
-* [ ] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
-* [ ] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
-* [ ] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
+* [x] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
+* [x] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
+* [x] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
+* [x] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
+* [x] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
 * [ ] Ensure Google Drive logout works correctly.
-* [ ] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
-* [ ] Ensure we have a per-plane cache for 2D realizations.
+* [x] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
+* [x] Ensure we have a per-plane cache for 2D realizations.
 * [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?
-* [ ] Adding new elements just expands all subprocesses in the process tree
-* [ ] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
+* [x] Adding new elements just expands all subprocesses in the process tree
+* [x] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
 * [ ] Move geometric element variation classes in directories line lines, circles, points, etc.
 * [ ] Add instructions about how to use the project.
 * [ ] Use an automated browser for building UI tests.
 * [ ] Rationalize and restructure the tool organization.  
  
 ## ALREADY PLANNED
+
+* [x] **Remove Element2DUtils (Phase 110)** - 📋 PLANNED
+  - **Problem**: All 7 exported functions in Element2DUtils.ts are dead code (zero runtime consumers). Functions like `hideElement()`/`showElement()` mutate domain objects directly, violating the command architecture. `getElementsOnPlane()` is obsolete since elements moved into ProjectionPlane ownership.
+  - **Solution**: Delete Element2DUtils.ts, remove re-exports from index.ts, delete the associated test file.
+  - **Spec References**: Phase 110 in data-model.md, tasks.md (T1855-T1857)
+
+* [x] **Degenerate Point Handling in realize2D (Phase 111)** - 📋 PLANNED
+  - **Problem**: `Line2DParallel.realize2D()` does not check for degenerate reference line direction. If the reference line is infeasible/degenerate, the parallel line silently inherits bad geometry instead of marking itself infeasible. Other realize2D methods have guards but coverage is incomplete.
+  - **Solution**: Audit all realize2D methods and add degenerate parent checks: zero-length direction vectors, coincident parent points, infeasible parent propagation. Add comprehensive tests.
+  - **Spec References**: FR-080, Phase 111 in data-model.md, tasks.md (T1858-T1862)
+
+* [x] **Segment Intersection Correctness + Tests (Phase 112)** - 📋 PLANNED
+  - **Problem**: No tests exist for intersection points involving segments (bounded elements). The `isPointOnSegment()` check in `Point2DLineLineIntersection.realize2D()` is untested. Index fallback (Math.min pattern) exists but has no explicit tests. No segment-segment or segment-circle intersection tests.
+  - **Solution**: Add comprehensive intersection tests for all bounded-element combinations. Verify index fallback behavior. Test boundary conditions (intersection at endpoint, outside bounds, parallel, coincident).
+  - **Spec References**: FR-081, Phase 112 in data-model.md, tasks.md (T1863-T1870)
+
+* [x] **Tool Argument Validation (Phase 113)** - 📋 PLANNED
+  - **Problem**: LineTool and SegmentTool only check `id !== id` but not whether two distinct points are geometrically coincident. CircleTool has geometric validation but most other tools lack it. Degenerate constructions are silently created.
+  - **Solution**: Add geometric distance checks to all tools that create elements from points. Display error messages via tool feedback system when validation fails. Add comprehensive tests.
+  - **Spec References**: FR-082, Phase 113 in data-model.md, tasks.md (T1871-T1877)
+
+* [x] **Feasibility Validation on Creation (Phase 114)** - 📋 PLANNED
+  - **Problem**: Creation operations never check whether the newly created element is immediately infeasible. Infeasible elements are created silently and only show up as infeasible indicators during rendering. No `isFeasible()` convenience method exists on Element2D subclasses.
+  - **Solution**: Add `isFeasible(world)` method to all Element2D subclasses. Add post-creation feasibility check in relevant operations. Log warnings for immediately-infeasible elements but allow creation (since moving parent points may fix it).
+  - **Spec References**: FR-083, Phase 114 in data-model.md, tasks.md (T1878-T1883)
+
+* [x] **Contextual Tool Feedback (Phase 115)** - 📋 PLANNED
+  - **Problem**: Multi-step tools (line, segment, circle, etc.) provide no visual feedback about what the user has already picked or what input is expected next. The `useToolFeedback` composable exists but is largely unused. Users get confused about tool state.
+  - **Solution**: Create a ToolFeedbackBar component that shows step progress. Extend ArgumentCollectorTool to expose structured state (collected args, next expected). Wire state changes to the feedback UI.
+  - **Spec References**: FR-084, Phase 115 in ui-spec.md, data-model.md, tasks.md (T1884-T1891)
+
+* [x] **Improve Element Naming (Phase 116)** - 📋 PLANNED
+  - **Problem**: Elements get labels derived from their IDs (e.g., `A_5`, `L_{12}`) using a numeric suffix from the global id counter. The label numbering is confusing because it reflects the global creation order across all element types rather than sequential per-type naming.
+  - **Solution**: Implement a `LabelGenerator` service that generates sequential labels per element type: points → A, B, C...; lines → r, s, t...; circles → α, β, γ.... Integrate into element creation operations. Ensure undo/redo stability.
+  - **Spec References**: FR-085, Phase 116 in ui-spec.md, data-model.md, tasks.md (T1892-T1898)
+
+* [x] **Remove Type Aliases (Phase 117)** - 📋 PLANNED
+  - **Problem**: The codebase uses ~36 `export type` declarations including simple aliases (`NodeId = string`), string literal unions (`ToolType`, `Line2DType`), and discriminated unions (`Element2D`, `Point3D`). The project convention requires avoiding type aliases.
+  - **Solution**: Replace simple aliases with direct usage or branded interfaces. Convert string literal unions to `as const` objects with derived types. Keep discriminated class unions as the exception since they require `type` keyword. Systematically update all import sites.
+  - **Spec References**: Phase 117 in data-model.md, tasks.md (T1899-T1905)
+
+* [x] **Process Tree Expand Behavior (Phase 118)** - 📋 PLANNED
+  - **Problem**: Adding new elements expands all subprocesses in the process tree. Collapse state is stored in local `ref()` per component and is lost on re-render. No centralized state management for expand/collapse. Active subprocess is not tracked or visually indicated.
+  - **Solution**: Store collapse state in a Pinia store (keyed by node ID, persisted to localStorage). When new elements are added, only expand the receiving subprocess. Track and display the active subprocess distinctly.
+  - **Spec References**: FR-086, Phase 118 in ui-spec.md, data-model.md, tasks.md (T1906-T1912)
+
+* [x] **Per-Plane Realization Cache Verification (Phase 119)** - 📋 PLANNED
+  - **Problem**: Per-plane caching was implemented in Phase 22.5 but has no dedicated test coverage verifying cache correctness, invalidation behavior, or cross-plane dependency handling.
+  - **Solution**: Add targeted tests verifying: cache hit/miss behavior, invalidation on point movement, cross-plane dependency propagation (sibling points), DependencyService integration. Audit mutation paths to verify all go through the invalidation mechanism.
+  - **Spec References**: Phase 119 in data-model.md, tasks.md (T1913-T1917)
 
 * [x] **Guide Perpendicular Plane in 3D View (Phase 108)** - 📋 PLANNED
   - **User Requirement**: "When the user selects a guide, the 3D view must show the plane perpendicular to it and highlight any intersection with other 3d elements."

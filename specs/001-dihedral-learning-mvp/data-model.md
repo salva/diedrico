@@ -21110,3 +21110,349 @@ Add case for `'quick3dsegment'` returning `new Quick3DSegmentTool()`.
 | `frontend/src/tools/ToolFactory.ts` | Add case for `quick3dsegment` |
 | `frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts` | New: tests for Quick 3D Segment tool |
 - **Empty world**: If no 3D elements exist, the projection loop simply produces no primitives.
+
+---
+
+## Phase 110 — Remove Element2DUtils
+
+### Overview
+
+Delete the dead code file `Element2DUtils.ts` and its associated test. All 7 exported functions have zero runtime consumers.
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/domain/world/Element2DUtils.ts` | **Delete** |
+| `frontend/src/domain/world/index.ts` | Remove re-exports of Element2DUtils functions |
+| `frontend/tests/unit/domain/element2dUtils.spec.ts` | **Delete** |
+
+---
+
+## Phase 111 — Degenerate Point Handling in realize2D
+
+### Overview
+
+Audit all `realize2D()` methods and add degenerate parent checks where missing. The primary gap is `Line2DParallel.realize2D()` which does not verify the reference line's direction.
+
+### Changes
+
+**Line2DParallel.realize2D()** (Line.ts ~L287-L321):
+- Add check: if reference line realization direction has `lengthSq() < 1e-10`, return `feasible=false`
+- This covers the case where the reference line is defined by coincident points
+
+**Audit all other realize2D methods** — most already have guards, but verify:
+- `Line2DTangentToCircleThroughPoint` — ✅ already checks
+- `Line2DTangentToCircleParallelToLine` — ✅ already checks
+- `Guide2D` — ✅ delegates to `Line2DPerpendicularToLine` which checks
+- `SiblingGuide2D` — ✅ checks degenerate HHL direction
+- `Segment2DByPoints` — ✅ checks coincident points
+- `Circle2DByCenterAndPoint` — ✅ checks zero radius
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/domain/world/Line.ts` | Add degenerate direction check to `Line2DParallel.realize2D()` |
+| `frontend/tests/unit/domain/degenerateRealize2D.spec.ts` | New: comprehensive tests for degenerate cases |
+
+---
+
+## Phase 112 — Segment Intersection Correctness + Tests
+
+### Overview
+
+Add comprehensive tests for intersection points involving bounded elements (segments). Verify the existing `isPointOnSegment()` logic and index fallback behavior. Fix any bugs discovered.
+
+### Key Logic to Test
+
+**Point2DLineLineIntersection.realize2D()** (Point.ts):
+- Calls `intersectLineLine()` on infinite line geometry
+- If either parent `isBounded()`, calls `isPointOnSegment()` to check bounds
+- Returns `feasible=false` if intersection is outside segment bounds
+
+**Point2DLineCircleIntersection.realize2D()** (Point.ts):  
+- Calls `intersectLineCircle()` for both intersection points
+- Uses `Math.min(this.index, results.length - 1)` for index fallback
+- If line `isBounded()`, checks `isPointOnSegment()` after getting intersection
+
+**Test Categories**:
+1. Line-segment: intersection inside segment, outside segment, at endpoint
+2. Segment-segment: both inside, one outside, both outside, parallel
+3. Segment-circle: inside + outside bounds, tangent at endpoint
+4. Index fallback: tangent case where only index=0 exists, verify index=1 degrades correctly
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/tests/unit/domain/segmentIntersections.spec.ts` | New: comprehensive segment intersection tests |
+
+---
+
+## Phase 113 — Tool Argument Validation
+
+### Overview
+
+Add geometric validation to tools that create elements from points. Currently LineTool and SegmentTool only compare IDs, not geometric positions.
+
+### Changes per Tool
+
+**LineTool** (LineTool.ts):
+- Add `setValidator`: check distance between point1 and point2 realizations > 1e-3
+- Error message: "Points are too close together"
+
+**SegmentTool** (SegmentTool.ts):
+- Same validation as LineTool
+
+**ParallelLineTool** (ParallelLineTool.ts):
+- Validate reference line is feasible before accepting
+
+**PerpendicularLineTool** (PerpendicularLineTool.ts):
+- Validate reference line is feasible before accepting
+
+**TangentLineTool** variants:
+- Validate circle is feasible, point is outside circle
+
+**IntersectionTool** (IntersectionTool.ts):
+- Already validates via intersect computation — verify
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/tools/LineTool.ts` | Add geometric distance `setValidator` |
+| `frontend/src/tools/SegmentTool.ts` | Add geometric distance `setValidator` |
+| `frontend/src/tools/ParallelLineTool.ts` | Add reference line feasibility check |
+| `frontend/src/tools/PerpendicularLineTool.ts` | Add reference line feasibility check |
+| `frontend/tests/unit/tools/toolValidation.spec.ts` | New: validation tests for all tools |
+
+---
+
+## Phase 114 — Feasibility Validation on Creation
+
+### Overview
+
+Add `isFeasible(world)` convenience method to Element2D base class. Add post-creation feasibility logging in operations.
+
+### Changes
+
+**Element2D base class** (Element2D.ts):
+```typescript
+isFeasible(world: World): boolean {
+  const realization = this.realize2D(world);
+  return realization.feasible;
+}
+```
+
+Each concrete subclass inherits this automatically since `realize2D()` is already implemented.
+
+**Operations** — Add post-creation check to key Ops:
+- `AddFreePoint2DOp.apply()` — after creation, call `point.isFeasible(world)`, log warning if false
+- `AddLine2DByTwoPointsOp.apply()` — same pattern
+- `AddSegment2DByPointsOp.apply()` — same pattern
+- `AddCircle2DOp.apply()` — same pattern
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/domain/world/Element2D.ts` | Add `isFeasible(world)` to base class |
+| `frontend/src/commands/operations/world/AddFreePoint2DOp.ts` | Add post-creation feasibility check |
+| `frontend/src/commands/operations/world/AddLine2DOp.ts` | Add post-creation feasibility check |
+| `frontend/src/commands/operations/world/AddSegmentOp.ts` | Add post-creation feasibility check |
+| `frontend/src/commands/operations/world/AddCircle2DOp.ts` | Add post-creation feasibility check |
+| `frontend/tests/unit/domain/feasibilityValidation.spec.ts` | New: tests for isFeasible method |
+
+---
+
+## Phase 115 — Contextual Tool Feedback
+
+### Overview
+
+Create a ToolFeedbackBar component and wire it to ArgumentCollectorTool's step state.
+
+### New: `ArgumentCollectorTool.getStepDescription()`
+
+```typescript
+getStepDescription(): string | null {
+  if (this.currentViableSets.length === 0) return null;
+  const nextArg = this.getNextExpectedArgument();
+  const collectedLabels = this.collected.map(c => c.element.label || c.element.id);
+  if (collectedLabels.length === 0) {
+    return `${this.toolLabel}: pick ${nextArg.description}`;
+  }
+  return `${this.toolLabel}: ${collectedLabels.join(', ')} picked — pick ${nextArg.description}`;
+}
+```
+
+Each tool provides `toolLabel` and per-argument `description` strings.
+
+### New: `ToolFeedbackBar.vue`
+
+- Renders in Workspace2D when active tool has step description
+- Single-line horizontal bar, semi-transparent dark background, white text
+- Auto-hides when tool is deactivated or has no description
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/tools/ArgumentCollectorTool.ts` | Add `getStepDescription()`, `toolLabel` |
+| `frontend/src/tools/LineTool.ts` | Add `toolLabel = 'Line'`, argument descriptions |
+| `frontend/src/tools/SegmentTool.ts` | Add `toolLabel = 'Segment'`, argument descriptions |
+| `frontend/src/tools/CircleTool.ts` | Add `toolLabel = 'Circle'`, argument descriptions |
+| `frontend/src/tools/IntersectionTool.ts` | Add `toolLabel = 'Intersection'`, argument descriptions |
+| `frontend/src/tools/GuideTool.ts` | Add `toolLabel = 'Guide'`, argument descriptions |
+| `frontend/src/components/workspace/ToolFeedbackBar.vue` | New: contextual feedback component |
+| `frontend/src/components/workspace/Workspace2D.vue` | Import and render ToolFeedbackBar |
+| `frontend/tests/unit/tools/toolFeedback.spec.ts` | New: tests for step descriptions |
+
+---
+
+## Phase 116 — Improve Element Naming
+
+### Overview
+
+Replace ID-derived labels with sequential mathematical naming.
+
+### New: `LabelGenerator` in World
+
+```typescript
+class LabelGenerator {
+  private counters: Map<string, number> = new Map();
+  
+  private static SEQUENCES: Record<string, string[]> = {
+    point: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'],
+    line: ['r','s','t','u','v','w','x','y','z'],
+    circle: ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','σ','τ','υ','φ','χ','ψ','ω'],
+    guide: ['g'],
+  };
+  
+  next(type: string): string {
+    const count = this.counters.get(type) || 0;
+    this.counters.set(type, count + 1);
+    const seq = LabelGenerator.SEQUENCES[type] || ['E'];
+    const idx = count % seq.length;
+    const cycle = Math.floor(count / seq.length);
+    const base = seq[idx];
+    return cycle === 0 ? base : `${base}_{${cycle}}`;
+  }
+}
+```
+
+### Integration
+
+- `World` gets a `labelGenerator: LabelGenerator` instance
+- `ProjectionPlane.addFreePoint2D()` calls `world.labelGenerator.next('point')` for label
+- `ProjectionPlane.addLine2DBetweenTwoPoints()` calls `world.labelGenerator.next('line')`
+- etc.
+- Counter does NOT revert on undo (forward-only, gap-tolerant)
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/domain/world/LabelGenerator.ts` | New: sequential label generation |
+| `frontend/src/domain/world/World.ts` | Add `labelGenerator` property, update `generateDefaultLabel()` |
+| `frontend/tests/unit/domain/labelGenerator.spec.ts` | New: tests for label sequences |
+
+---
+
+## Phase 117 — Remove Type Aliases
+
+### Overview
+
+Systematically replace type aliases with more explicit constructs per the project convention.
+
+### Strategy by Category
+
+**Simple aliases** (inline or interface):
+- `NodeId = string` → use `string` directly
+- `Matrix3 = number[][]` → `interface Matrix3 extends Array<number[]> {}`
+- `Vector3D = { x, y, z }` → `interface Vector3D { x: number; y: number; z: number }`
+- `Settings` → `interface Settings { ... }`
+
+**String literal unions** (const objects):
+- `type Line2DType = 'free' | 'by-two-points' | ...` → `const LINE_2D_TYPES = { ... } as const; type Line2DType = typeof LINE_2D_TYPES[keyof typeof LINE_2D_TYPES]`
+- Same for `Point2DType`, `Circle2DType`, `Segment2DType`, `ProjectionPlaneType`, `ToolType`
+
+**Discriminated class unions** (keep as-is — these require `type` keyword):
+- `type Element2D = Point2D | Line2D | ...` — cannot be expressed as interface
+- These stay as type aliases (documented exception)
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/domain/calculations/CoordinateTransform.ts` | Replace `Matrix3`, `Vector3D` |
+| `frontend/src/domain/world/DependencyGraph.ts` | Inline `NodeId` → `string` |
+| `frontend/src/domain/world/Line.ts` | Convert `Line2DType` to const obj |
+| `frontend/src/domain/world/Point.ts` | Convert `Point2DType` to const obj |
+| `frontend/src/domain/world/Circle.ts` | Convert `Circle2DType` to const obj |
+| `frontend/src/domain/world/Segment.ts` | Convert `Segment2DType` to const obj |
+| `frontend/src/domain/world/ProjectionPlane.ts` | Convert `ProjectionPlaneType` |
+| `frontend/src/stores/toolStore.ts` | Convert `ToolType` to const obj |
+| `frontend/src/types/ElementTypes.ts` | Replace path aliases, keep class unions |
+| Multiple import sites | Update imports as needed |
+
+---
+
+## Phase 118 — Process Tree Expand Behavior
+
+### Overview
+
+Move collapse state out of local `ref()` into a centralized store. Track active subprocess.
+
+### New: `processTreeStore` (Pinia)
+
+```typescript
+export const useProcessTreeStore = defineStore('processTree', {
+  state: () => ({
+    collapsedNodes: new Set<string>(),  // IDs of collapsed nodes
+    activeSubprocessId: string | null,   // subprocess receiving new elements
+  }),
+  actions: {
+    toggleCollapse(nodeId: string) { ... },
+    setCollapsed(nodeId: string, collapsed: boolean) { ... },
+    isCollapsed(nodeId: string): boolean { ... },
+    expandOnly(nodeId: string) { ... },  // expand one, keep others as-is
+  },
+  persist: true,  // localStorage via pinia-plugin-persistedstate
+});
+```
+
+### ProcessTreeNode.vue Changes
+
+- Replace local `isCollapsed = ref(...)` with `processTreeStore.isCollapsed(node.id)`
+- Replace `toggleCollapse()` with `processTreeStore.toggleCollapse(node.id)`
+- Watch for new elements: when action count in a subprocess increases, call `processTreeStore.expandOnly(subprocessId)`
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/stores/processTreeStore.ts` | New: centralized collapse state store |
+| `frontend/src/components/panels/ProcessTreeNode.vue` | Use store, remove local ref |
+| `frontend/tests/unit/stores/processTreeStore.spec.ts` | New: store tests |
+
+---
+
+## Phase 119 — Per-Plane Realization Cache Verification
+
+### Overview
+
+The per-plane 2D realization cache was implemented in Phase 22.5. This phase adds dedicated tests to verify cache correctness.
+
+### Test Scenarios
+
+1. **Cache hit**: Call `realizePoint2D()` twice → second call returns cached result (same object reference)
+2. **Cache miss after invalidation**: Modify a point → DependencyService invalidates → next realization computes fresh
+3. **Cross-plane dependencies**: Sibling intersection point — invalidation on plane A propagates to dependent on plane B
+4. **Full clear**: `ProjectionPlane.clear()` resets all caches
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `frontend/tests/unit/domain/realizationCache.spec.ts` | New: cache correctness tests |
