@@ -237,6 +237,13 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         completionBehavior: 'return-to-selection'
       },
       {
+        id: 'quick3dsegment',
+        label: 'Quick 3D Segment',
+        icon: ExampleIcon,
+        tooltip: 'Creates example 3D segment from two projections',
+        completionBehavior: 'return-to-selection'
+      },
+      {
         id: 'interactiveprojectionsetup',
         label: 'Interactive Setup',
         icon: ExampleIcon,

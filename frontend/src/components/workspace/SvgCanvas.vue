@@ -207,6 +207,7 @@ import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
 import { InteractiveProjectionSetupTool } from '@/tools/ExampleConstructionsTool';
 import { QuickProjectionSetupTool } from '@/tools/QuickProjectionSetupTool';
 import { Quick3DLineTool } from '@/tools/Quick3DLineTool';
+import { Quick3DSegmentTool } from '@/tools/Quick3DSegmentTool';
 import { FreePoint2D } from '@/domain/world/Point';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
@@ -455,6 +456,8 @@ const toolFactories: Record<string, () => ITool> = {
   'quickprojectionsetup': () => new QuickProjectionSetupTool(),
   // Phase 105: Quick 3D Line Example Tool
   'quick3dline': () => new Quick3DLineTool(),
+  // Phase 109: Quick 3D Segment Example Tool
+  'quick3dsegment': () => new Quick3DSegmentTool(),
 };
 
 // Current tool instance - created fresh when tool is selected
