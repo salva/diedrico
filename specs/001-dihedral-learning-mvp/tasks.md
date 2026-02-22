@@ -12640,11 +12640,11 @@ Add dedicated tests verifying the per-plane 2D realization cache (implemented in
 
 ### Testing (5 tasks)
 
-- [ ] T1913 Unit test: Cache hit — calling `realizePoint2D()` twice returns same object reference
-- [ ] T1914 Unit test: Cache invalidation — moving a point via FreePoint2D position update invalidates cached realization, next call returns fresh computed result
-- [ ] T1915 Unit test: Dependency propagation — changing a point invalidates dependent line realization on same plane
-- [ ] T1916 Unit test: Cross-plane propagation — sibling intersection point invalidation when parent element on other plane changes
-- [ ] T1917 Unit test: Full cache clear — `ProjectionPlane.clear()` resets all realization caches
+- [X] T1913 Unit test: Cache hit — calling `realizePoint2D()` twice returns same object reference
+- [X] T1914 Unit test: Cache invalidation — invalidateRealization clears cached realization, next call returns fresh instance
+- [X] T1915 Unit test: Dependency propagation — changing a point invalidates dependent line/circle/intersection on same plane
+- [X] T1916 Unit test: Cross-plane propagation — invalidation clears caches across all planes; unrelated caches unaffected
+- [X] T1917 Unit test: Full cache clear — `ProjectionPlane.clear()` resets all realization caches
 
 **Checkpoint**: ✅ Per-plane realization cache correctness verified with dedicated tests
 
