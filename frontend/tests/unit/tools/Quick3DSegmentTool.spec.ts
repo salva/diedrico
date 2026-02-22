@@ -1,10 +1,12 @@
 /**
  * Unit Tests: Quick3DSegmentTool
  * 
- * Tests the automatic 3D segment creation tool:
- * - Creates 4 free points (2 on P_H, 2 on P_V) and 2 segments
- * - Creates a Segment3DFromProjections from the two 2D segments
- * - 3D segment realization is feasible with correct endpoints
+ * Tests the geometrically constrained 3D segment creation tool:
+ * - Creates line projections on P_H and P_V (4 free points + 2 lines)
+ * - Creates 2 guides on P_H with sibling guides on P_V
+ * - Creates 2 intersection points (sibling guide ∩ L_V) on P_V
+ * - Creates segments on both planes and a 3D segment
+ * - Construction is geometrically constrained via guide system
  * - Returns to selection tool after execution
  * - Records process tree actions
  * 
@@ -19,6 +21,7 @@ import type { ToolContext } from '@/tools/ITool';
 import { Vector3 } from 'three';
 import { Paper } from '@/domain/presentation/Paper';
 import { createTestWorld } from '../../helpers/worldHelpers';
+import { Point2DLineLineIntersection } from '@/domain/world/Point';
 
 describe('Quick3DSegmentTool', () => {
   let tool: Quick3DSegmentTool;
@@ -62,7 +65,6 @@ describe('Quick3DSegmentTool', () => {
       const context = createContext();
       tool.activate(context);
 
-      // Should have created 3D segment(s)
       const segments3D = world.getAll3DSegments();
       expect(segments3D.length).toBeGreaterThanOrEqual(1);
     });
@@ -91,34 +93,48 @@ describe('Quick3DSegmentTool', () => {
   });
 
   describe('Created geometry', () => {
-    it('should create 4 free points (2 on P_H, 2 on P_V)', () => {
+    it('should create 2 free points on P_H', () => {
       const context = createContext();
       const P_H = world.getAllProjectionPlanes().find(p => p.name === 'P_H')!;
-      const P_V = world.getAllProjectionPlanes().find(p => p.name === 'P_V')!;
 
-      const pointsBefore_H = P_H.getAllPoints().length;
-      const pointsBefore_V = P_V.getAllPoints().length;
-
+      const pointsBefore = P_H.getAllPoints().length;
       tool.activate(context);
 
-      // 2 new points on each plane
-      expect(P_H.getAllPoints().length).toBe(pointsBefore_H + 2);
-      expect(P_V.getAllPoints().length).toBe(pointsBefore_V + 2);
+      // 2 free points (segment/line endpoints on P_H)
+      expect(P_H.getAllPoints().length).toBe(pointsBefore + 2);
     });
 
-    it('should create 2 segments (1 on P_H, 1 on P_V)', () => {
+    it('should create 4 points on P_V (2 free + 2 intersection)', () => {
       const context = createContext();
-      const P_H = world.getAllProjectionPlanes().find(p => p.name === 'P_H')!;
       const P_V = world.getAllProjectionPlanes().find(p => p.name === 'P_V')!;
 
-      const linesBefore_H = P_H.getAllLines().length;
-      const linesBefore_V = P_V.getAllLines().length;
-
+      const pointsBefore = P_V.getAllPoints().length;
       tool.activate(context);
 
-      // Segments are stored in lines map, 1 new on each plane
-      expect(P_H.getAllLines().length).toBe(linesBefore_H + 1);
-      expect(P_V.getAllLines().length).toBe(linesBefore_V + 1);
+      // 2 free points (line definition) + 2 intersection points (guide ∩ L_V)
+      expect(P_V.getAllPoints().length).toBe(pointsBefore + 4);
+    });
+
+    it('should create lines and guides on P_H (1 line + 2 guides + 1 segment)', () => {
+      const context = createContext();
+      const P_H = world.getAllProjectionPlanes().find(p => p.name === 'P_H')!;
+
+      const linesBefore = P_H.getAllLines().length;
+      tool.activate(context);
+
+      // L_H + guide1 + guide2 + segment = 4 new line-type elements
+      expect(P_H.getAllLines().length).toBe(linesBefore + 4);
+    });
+
+    it('should create lines, sibling guides, and segment on P_V', () => {
+      const context = createContext();
+      const P_V = world.getAllProjectionPlanes().find(p => p.name === 'P_V')!;
+
+      const linesBefore = P_V.getAllLines().length;
+      tool.activate(context);
+
+      // L_V + siblingGuide1 + siblingGuide2 + segment = 4 new line-type elements
+      expect(P_V.getAllLines().length).toBe(linesBefore + 4);
     });
 
     it('should create exactly 1 3D segment', () => {
@@ -152,7 +168,6 @@ describe('Quick3DSegmentTool', () => {
       const segment = segments[segments.length - 1];
       const realization = world.get3DSegmentRealization(segment.id)!;
 
-      // Endpoints may be in either order, so check both possibilities
       const p1 = realization.startPoint;
       const p2 = realization.endPoint;
 
@@ -167,7 +182,6 @@ describe('Quick3DSegmentTool', () => {
                            Math.abs(p1.y - endpoint2.y) < 0.5 &&
                            Math.abs(p1.z - endpoint2.z) < 0.5;
 
-      // p1 should match one of the expected endpoints
       expect(p1MatchesE1 || p1MatchesE2).toBe(true);
     });
 
@@ -209,8 +223,43 @@ describe('Quick3DSegmentTool', () => {
       const dz = realization.endPoint.z - realization.startPoint.z;
       const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-      // Segment should have non-zero length
       expect(length).toBeGreaterThan(1);
+    });
+  });
+
+  describe('Geometric constraints', () => {
+    it('should use intersection points (not free points) for P_V segment endpoints', () => {
+      const context = createContext();
+      const P_V = world.getAllProjectionPlanes().find(p => p.name === 'P_V')!;
+
+      tool.activate(context);
+
+      // P_V should have intersection points (Point2DLineLineIntersection)
+      const allPoints = P_V.getAllPoints();
+      const intersectionPoints = allPoints.filter(p => p instanceof Point2DLineLineIntersection);
+      expect(intersectionPoints.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should create guides on P_H', () => {
+      const context = createContext();
+      const P_H = world.getAllProjectionPlanes().find(p => p.name === 'P_H')!;
+
+      tool.activate(context);
+
+      const allLines = P_H.getAllLines();
+      const guides = allLines.filter(l => l.type === 'guide');
+      expect(guides.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should create sibling guides on P_V', () => {
+      const context = createContext();
+      const P_V = world.getAllProjectionPlanes().find(p => p.name === 'P_V')!;
+
+      tool.activate(context);
+
+      const allLines = P_V.getAllLines();
+      const siblingGuides = allLines.filter(l => l.type === 'sibling-guide');
+      expect(siblingGuides.length).toBeGreaterThanOrEqual(2);
     });
   });
 
