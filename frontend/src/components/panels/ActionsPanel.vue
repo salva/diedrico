@@ -60,6 +60,7 @@ import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleE
 import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
+import { useProcessTreeStore } from '@/stores/processTreeStore';
 
 // Emits
 const emit = defineEmits<{
@@ -73,6 +74,7 @@ const commandStack = inject<CommandStack>('commandStack')!;
 
 // Selection store
 const selectionStore = useSelectionStore();
+const processTreeStore = useProcessTreeStore();
 
 // Local state
 const treeContainer = ref<HTMLElement | null>(null);
@@ -146,6 +148,12 @@ onMounted(() => {
 
     stackVersion.value++;
     console.log('[ActionsPanel] stackVersion incremented to:', stackVersion.value);
+
+    // Phase 118: Only expand the subprocess that received the new element
+    if (shouldScroll) {
+      const activeId = processTree.value.getCurrentSubprocess().id;
+      processTreeStore.ensureExpanded(activeId);
+    }
 
     if (shouldScroll) {
       nextTick(() => {

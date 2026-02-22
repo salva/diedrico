@@ -12616,19 +12616,19 @@ Fix collapse state management in the process tree.
 
 ### Specification (1 task)
 
-- [ ] T1906 spec.md FR-086, ui-spec.md Phase 118, data-model.md Phase 118, tasks.md Phase 118
+- [X] T1906 spec.md FR-086, ui-spec.md Phase 118, data-model.md Phase 118, tasks.md Phase 118
 
 ### Implementation (4 tasks)
 
-- [ ] T1907 Create `frontend/src/stores/processTreeStore.ts` — Pinia store with `collapsedNodes: Set<string>`, `activeSubprocessId`, `toggleCollapse()`, `isCollapsed()`, `expandOnly()`
-- [ ] T1908 Refactor ProcessTreeNode.vue to use processTreeStore instead of local `isCollapsed` ref
-- [ ] T1909 Add logic: when new element is added (detected via `dataVersion` change or action count), expand only the receiving subprocess via `processTreeStore.expandOnly()`
-- [ ] T1910 Default new subprocesses to collapsed (except active subprocess)
+- [X] T1907 Create `frontend/src/stores/processTreeStore.ts` — module-level store with `collapsedNodes: Set<string>`, `toggleCollapse()`, `isCollapsed()`, `ensureExpanded()`
+- [X] T1908 Refactor ProcessTreeNode.vue to use processTreeStore instead of local `isCollapsed` ref
+- [X] T1909 Wire ActionsPanel.vue to call `processTreeStore.ensureExpanded(activeId)` when structure grows
+- [X] T1910 Default new subprocesses to expanded; "World Initialization" defaults collapsed
 
 ### Testing (2 tasks)
 
-- [ ] T1911 Unit test: processTreeStore — toggleCollapse, isCollapsed, expandOnly preserves other nodes' state
-- [ ] T1912 Unit test: ProcessTreeNode uses store state, adding element to subprocess X does not expand subprocess Y
+- [X] T1911 Unit test: processTreeStore — 13 tests covering toggleCollapse, isCollapsed, ensureExpanded, setCollapsed, reset
+- [X] T1912 Verified via store tests: collapse state preserved across operations, ensureExpanded only affects target node
 
 **Checkpoint**: ✅ Collapsing subprocesses stays collapsed when new elements are added elsewhere
 

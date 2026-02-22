@@ -196,6 +196,7 @@ import type { World } from '@/domain/world/World';
 import { formatElementLabel } from '@/utils/formatUtils';
 import { getActionDescriptionParts } from '@/domain/processTree/Action';
 import { useSelectionStore } from '@/stores/selectionStore';
+import { useProcessTreeStore } from '@/stores/processTreeStore';
 import { Element2D } from '@/domain/world/Element2D';
 
 // Props
@@ -223,8 +224,11 @@ const emit = defineEmits<{
 }>();
 
 // Local state
-const isCollapsed = ref(
-  props.node.type === 'subprocess' && props.node.name === 'World Initialization'
+const processTreeStore = useProcessTreeStore();
+const isCollapsed = computed(() =>
+  props.node.type === 'subprocess'
+    ? processTreeStore.isCollapsed(props.node.id, props.node.name)
+    : false
 );
 const isEditing = ref(false);
 const editName = ref('');
@@ -354,7 +358,7 @@ const selectionStore = useSelectionStore();
 
 // Methods
 function toggleCollapse() {
-  isCollapsed.value = !isCollapsed.value;
+  processTreeStore.toggleCollapse(props.node.id);
 }
 
 function handleLabelClick(elementId: string | undefined, event: MouseEvent) {
