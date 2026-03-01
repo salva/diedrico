@@ -88,7 +88,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/nicosalva/diedrico' },
+      { icon: 'github', link: 'https://github.com/salva/diedrico' },
     ],
 
     search: {
