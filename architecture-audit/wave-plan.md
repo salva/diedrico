@@ -35,17 +35,20 @@ Each implementation wave must run the mandatory validation cadence recorded unde
 - `frontend/src/domain/world/Element2D.ts`
 - `frontend/src/domain/world/styleService.ts`
 - `frontend/src/domain/world/descriptors/`
+- `frontend/src/domain/world/descriptors/DescriptorRegistry.ts`
+- `frontend/src/domain/world/descriptors/registerDescriptors.ts`
+- `frontend/src/main.ts` only to relocate runtime descriptor-registration composition if needed
 - `frontend/src/services/DependencyService.ts` or its replacement location
 - initialization command/factory paths currently coupled to `World` (`frontend/src/commands/operations/world/InitializationOps.ts`, `frontend/src/commands/factories/ProjectionSetupFactory.ts`, related app startup call sites)
 - focused domain/application boundary tests
 
 **Baseline grounding**
 
-The baseline states that `World` is the canonical root but imports `DependencyService`, `Command`, initialization factories, process-tree operations, and `CommandStack` while commands import `World`, creating the most central inversion (`risk-register.md` R1; `domain-model.md` “Coupling observations”; `quality-report.md` Q3). It also identifies `Element2D.realize2D(world: World)` and `styleService` walking `World`/`ProcessTree` as domain-internal root coupling (`domain-model.md` corrections; `risk-register.md` R11).
+The baseline states that `World` is the canonical root but imports `DependencyService`, `Command`, initialization factories, process-tree operations, and `CommandStack` while commands import `World`, creating the most central inversion (`risk-register.md` R1; `domain-model.md` “Coupling observations”; `quality-report.md` Q3). It also identifies `Element2D.realize2D(world: World)` and `styleService` walking `World`/`ProcessTree` as domain-internal root coupling (`domain-model.md` corrections; `risk-register.md` R11). Baseline corrections also identify descriptor registration as a runtime composition point: `DescriptorRegistry.ts` maps element classes to descriptor logic and `registerDescriptors.ts` is invoked before app mount, so Wave 001 proposals must evaluate this coupling when removing application/service imports from the domain boundary (`inventory.md` corrections; `architecture-map.md` addendum).
 
 **Target outcome**
 
-`World` becomes a domain-owned model root with no imports from commands, command stacks, application services, Vue, or persistence. Initialization orchestration lives outside the domain root in an application/use-case layer. Domain realization and visibility dependencies are expressed through narrow domain ports/contexts rather than the whole `World` object where practical within this wave.
+`World` becomes a domain-owned model root with no imports from commands, command stacks, application services, Vue, or persistence. Initialization orchestration lives outside the domain root in an application/use-case layer. Domain realization, descriptor registration, and visibility dependencies are expressed through narrow domain ports/contexts rather than the whole `World` object where practical within this wave. If `styleService.ts` still needs process-tree-specific cleanup after the `World` dependency is removed, that residual ProcessTree ownership question is explicitly deferred to Wave 005 rather than hidden in this boundary wave.
 
 **Explicit DELETE list**
 
@@ -228,13 +231,13 @@ Depends on Wave 004 because process-tree mutations participate in command/undo a
 
 **Scope**
 
-- `frontend/src/components/workspace/SvgCanvas.vue`
-- `frontend/src/components/panels/ActionsPanel.vue`
-- `frontend/src/components/toolbars/Toolbar.vue`
-- `frontend/src/tools/**`
-- command sequence factories under `frontend/src/commands/factories/` and `frontend/src/services/factories/`
-- `frontend/src/composables/useCommandExecution.ts`
-- focused component/tool/controller tests and e2e construction flows
+- Primary one-cycle target: `frontend/src/components/workspace/SvgCanvas.vue`, `frontend/src/tools/**`, `frontend/src/composables/useCommandExecution.ts`, and the command-construction factories needed by canvas tools
+- Secondary call sites only if they share the same extracted controller without broadening the implementation: `frontend/src/components/panels/ActionsPanel.vue`, `frontend/src/components/toolbars/Toolbar.vue`, `frontend/src/commands/factories/`, `frontend/src/services/factories/`
+- focused tool-controller/use-case tests plus e2e construction flows
+
+**Scope guard**
+
+This wave must remain one implementation cycle. During proposal drafting, if removing direct operation construction from `SvgCanvas.vue`/tools and from `ActionsPanel.vue`/`Toolbar.vue` requires separate controller concepts or independent validation surfaces, the proposal must split the work through a reviewed wave-plan edit before implementation. The preferred split is: 006a canvas/tool command controllers, then 006b panel/toolbar command-intent cleanup.
 
 **Baseline grounding**
 
@@ -242,18 +245,18 @@ The baseline flags UI components directly importing `Command` and concrete opera
 
 **Target outcome**
 
-Vue components emit user intents and render state. Application use-cases/tool controllers own command creation, validation orchestration, and command-stack execution. Tool/factory modules have a coherent location and dependency direction.
+The primary canvas/tool path has Vue components emit user intents and render state while application use-cases/tool controllers own command creation, validation orchestration, and command-stack execution. Tool/factory modules touched by that path have a coherent location and dependency direction; broader panel/toolbar cleanup proceeds here only if it stays within the same controller boundary and one-cycle validation budget.
 
 **Explicit DELETE list**
 
-- Delete direct imports of concrete operations from Vue components.
-- Delete duplicate factory layers or misleading service/command factory split once the reviewed target location is chosen.
+- Delete direct imports of concrete operations from the canvas/tool Vue path addressed by this wave; if panel/toolbar imports remain after a reviewed split, they must be named as the next dependent wave rather than left as accidental residue.
+- Delete duplicate factory layers or misleading service/command factory split for the command-construction path selected by the reviewed proposal.
 - Delete component methods that only assemble command internals and are replaced by use-case/controller calls.
 - Delete obsolete tests that mount components to inspect command internals; replace with controller/use-case tests plus behavior tests.
 
 **Success criteria**
 
-- `SvgCanvas.vue`, `ActionsPanel.vue`, and `Toolbar.vue` no longer import concrete operation classes.
+- `SvgCanvas.vue` and the active tool path no longer import concrete operation classes; `ActionsPanel.vue` and `Toolbar.vue` are also cleaned in this wave only if the proposal proves they fit the same controller extraction, otherwise a reviewed follow-up wave is added before implementation proceeds beyond the canvas/tool slice.
 - Tool controllers/use-cases have focused tests independent of Vue rendering.
 - Existing e2e construction, guide, intersection, dynamic-plane, selection, and undo/redo flows pass.
 
@@ -334,7 +337,7 @@ The baseline identifies `ThreeView.vue` as a 1,201-line god component combining 
 
 **Dependencies**
 
-Depends on Waves 003 and 007 so 3D rendering does not depend on deleted store paths and can share selector patterns with 2D rendering.
+Depends directly on Waves 003 and 007 so 3D rendering does not depend on deleted store paths and can share selector patterns with 2D rendering; through Wave 007 it also transitively depends on Waves 001–006 and their cleaned domain/use-case boundaries.
 
 ---
 
@@ -503,7 +506,7 @@ Depends on Waves 004, 006, 007, and 009 so placeholder/delete decisions are made
 
 **Baseline grounding**
 
-The baseline inventories current docs and specs and notes that current code comments still cite the original MVP spec for world/process/command concepts (`inventory.md` Specs and Docs sections). Earlier objectives require docs/comments waves after central domain, persistence, rendering, tool-state, and UI composition work.
+The baseline inventories the current `specs/001-dihedral-learning-mvp/` tree and the docs areas under `docs/architecture/`, `docs/api/`, `docs/guide/`, and `docs/contributing/testing.md` (`inventory.md` Specs and Docs sections). It also notes that current code comments still cite the original MVP spec for world/process/command concepts and that README-only operation placeholders are deletion candidates (`inventory.md` corrections; `quality-report.md` Q21; `risk-register.md` R13). Earlier objectives require docs/comments waves after central domain, persistence, rendering, tool-state, and UI composition work.
 
 **Target outcome**
 
