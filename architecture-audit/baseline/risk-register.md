@@ -184,6 +184,6 @@ Scope: current `develop` source tree only. Risks are ranked by impact on long-te
 
 **Likelihood:** High. `paper/` and `toolbar/` are README-only today.
 
-**Evidence:** `frontend/src/commands/operations/` contains `paper/` and `toolbar/`, but each contains only `README.md` and no operation implementations.
+**Evidence:** `frontend/src/commands/operations/` contains `paper/` and `toolbar/`, but each contains only `README.md` and no operation implementations. The paper placeholder lists `InvalidateCacheOp`, `SetVisibilityOp`, and `UpdateHighlightOp` only under "Future Operations" (`frontend/src/commands/operations/paper/README.md:7`, `frontend/src/commands/operations/paper/README.md:8`, `frontend/src/commands/operations/paper/README.md:9`, `frontend/src/commands/operations/paper/README.md:10`); the toolbar placeholder similarly lists `SetActiveToolOp`, `SetToolFeedbackOp`, and `SetToolOptionsOp` only under "Future Operations" (`frontend/src/commands/operations/toolbar/README.md:7`, `frontend/src/commands/operations/toolbar/README.md:8`, `frontend/src/commands/operations/toolbar/README.md:9`, `frontend/src/commands/operations/toolbar/README.md:10`).
 
 **Mitigation direction:** Delete placeholder directories unless an implementation wave immediately replaces them with real operations.

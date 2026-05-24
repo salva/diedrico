@@ -123,7 +123,7 @@ The earlier Q12 understated the issue. `Workspace2D.vue` does not merely conflic
 
 ### Q21. Vacant operation directories are README-only placeholders
 
-`frontend/src/commands/operations/paper/` and `frontend/src/commands/operations/toolbar/` contain only `README.md` files and no operation implementations. Under the current no-backcompat/aggressive-deletion priorities, these are dead specification placeholders unless a wave immediately implements them. They should be deleted rather than preserved as aspirational architecture.
+`frontend/src/commands/operations/paper/` and `frontend/src/commands/operations/toolbar/` contain only `README.md` files and no operation implementations. The paper README's concrete content is a "Future Operations" list (`frontend/src/commands/operations/paper/README.md:7`, `frontend/src/commands/operations/paper/README.md:8`, `frontend/src/commands/operations/paper/README.md:9`, `frontend/src/commands/operations/paper/README.md:10`), and the toolbar README has the same future-only shape (`frontend/src/commands/operations/toolbar/README.md:7`, `frontend/src/commands/operations/toolbar/README.md:8`, `frontend/src/commands/operations/toolbar/README.md:9`, `frontend/src/commands/operations/toolbar/README.md:10`). Under the current no-backcompat/aggressive-deletion priorities, these are dead specification placeholders unless a wave immediately implements them. They should be deleted rather than preserved as aspirational architecture.
 
 ### Q22. Frontend imports backend implementation type directly
 
