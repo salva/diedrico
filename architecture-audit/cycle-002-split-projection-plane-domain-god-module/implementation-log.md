@@ -97,3 +97,106 @@ Earlier failed iteration logs are retained in the same validation directory and 
 ## Full validation / preview note
 
 This implementation stage completed the Wave 002 focused validation required before review. The full mandatory cadence (`npm run lint`, full Vitest, build, e2e, and live preview refresh) remains for the dedicated `cycle-002-validation-and-preview-refresh` stage per the current stage assignment.
+
+## Mandatory validation and preview refresh — cycle-002-validation-and-preview-refresh
+
+**Validation date:** 2026-05-25  
+**Stage:** `cycle-002-validation-and-preview-refresh`  
+**Task:** `t1-run-wave-002-validation-preview`
+
+Full stdout/stderr for every command below was captured under `architecture-audit/cycle-002-split-projection-plane-domain-god-module/validation/`.
+
+### Environment preparation
+
+- `npm install`
+  - Logs: `npm-install.stdout.log`, `npm-install.stderr.log`
+  - Result: failed before dependency reification because root-owned files under `node_modules/@algolia/abtesting` could not be renamed (`EACCES`). This prevented repairing the missing lint dependency in-place.
+  - Classification: environment/pre-existing workspace ownership issue, not attributable to Wave 002 source changes.
+- `ls -la node_modules/.bin ...; ls -ld node_modules ...`
+  - Logs: `environment-node-modules.stdout.log`, `environment-node-modules.stderr.log`
+  - Result: confirms mixed root/salva ownership and missing `eslint` executable in `node_modules/.bin`.
+
+### Static Wave 002 deletion/import/type checks
+
+- Old monolith import grep:
+  - Command: `grep -R "from ['\"]@/domain/world/ProjectionPlane['\"]\|from ['\"]./ProjectionPlane['\"]" -n frontend/src frontend/tests || true`
+  - Logs: `static-import-grep-validation.stdout.log`, `static-import-grep-validation.stderr.log`
+  - Result: pass; no remaining imports from the deleted monolith surface.
+- Projection-plane `any` context grep:
+  - Command: `grep -R "realize[23]D(.*any\|world: any\|_world: any" -n frontend/src/domain/world/projectionPlane frontend/src/domain/world || true`
+  - Logs: `static-any-grep-validation.stdout.log`, `static-any-grep-validation.stderr.log`
+  - Result: pass for Wave 002 projection-plane modules. Remaining matches are pre-existing outside the split module: `frontend/src/domain/world/Element3D.ts` and `frontend/src/domain/world/Plane.ts`.
+- Deleted file check:
+  - Command: `test ! -e frontend/src/domain/world/ProjectionPlane.ts && echo deleted`
+  - Logs: `static-deleted-check-validation.stdout.log`, `static-deleted-check-validation.stderr.log`
+  - Result: pass; stdout `deleted`.
+
+### Lint
+
+- `npm run lint`
+  - Logs: `root-lint.stdout.log`, `root-lint.stderr.log`
+  - Result: failed with `sh: 1: eslint: not found`.
+  - Classification: environment/dependency installation issue. `package.json` delegates lint to the frontend workspace; the failure occurs before source linting and is not evidence of a Wave 002 source defect.
+- `npm run lint --workspace=frontend`
+  - Logs: `frontend-lint.stdout.log`, `frontend-lint.stderr.log`
+  - Result: failed with `sh: 1: eslint: not found`.
+  - Classification: same environment/dependency installation issue as root lint.
+
+### Focused Wave 002 Vitest
+
+- `npm run test --workspace=frontend -- tests/unit/projectionPlane.spec.ts tests/unit/coordinateTransform.spec.ts tests/unit/utils/coordinateTransform.spec.ts tests/unit/domain/realizationCache.spec.ts`
+  - Logs: `focused-projection-plane-validation.stdout.log`, `focused-projection-plane-validation.stderr.log`
+  - Result: pass; 4 files, 61 tests passed.
+- `npm run test --workspace=frontend -- tests/integration/worldInitialization.spec.ts tests/unit/commands/initializationOps.spec.ts`
+  - Logs: `focused-initialization-validation.stdout.log`, `focused-initialization-validation.stderr.log`
+  - Result: pass; 2 files, 32 tests passed, 1 skipped.
+- `npm run test --workspace=frontend -- tests/unit/commands/factories/GuideSequenceFactory.spec.ts tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts tests/integration/factories/AllFactories.spec.ts`
+  - Logs: `focused-guide-intersection-validation.stdout.log`, `focused-guide-intersection-validation.stderr.log`
+  - Result: pass; 3 files, 11 tests passed, 4 skipped. Existing factory `console.log` noise remains outside this wave.
+
+### Full tests
+
+- `npm run test`
+  - Logs: `root-full-vitest.stdout.log`, `root-full-vitest.stderr.log`
+  - Result: failed in legacy/unfocused tests.
+  - Evidence: `tests/integration/guide-creation.test.ts` imports missing `../../src/commands/operations/AddFreePoint2DOp`; `tests/unit/selectionMask.spec.ts` expected broad GuideTool line matching that current tool behavior rejects; `tests/unit/architecture/noCommandSubclasses.spec.ts` has a broken `path` default import; `tests/unit/calculations/intersections.spec.ts` expects `.x/.y/.z` fields from intersection realization objects; `tests/unit/components/propertiesDialog.spec.ts` receives no emitted `close/save`; `tests/unit/tools/GuideTool.test.ts` calls removed `tool.onMouseDown` API.
+  - Classification: pre-existing/unrelated full-suite debt. The failure set is outside the Wave 002 projection-plane split and the focused projection-plane/world-initialization/factory coverage passed.
+- `npm run test --workspace=backend`
+  - Logs: `backend-test.stdout.log`, `backend-test.stderr.log`
+  - Result: pass; 1 file, 15 tests passed.
+
+### Builds
+
+- `npm run build`
+  - Logs: `root-build.stdout.log`, `root-build.stderr.log`
+  - Result: failed in frontend `vue-tsc` before app source compilation: `Search string not found: "/supportedTSExtensions = .*(?=;)/"` under Node.js v24.15.0.
+  - Classification: toolchain compatibility/environment issue (`vue-tsc`/TypeScript/Node), not attributable to Wave 002 source changes.
+- `npm run build --workspace=frontend`
+  - Logs: `frontend-build.stdout.log`, `frontend-build.stderr.log`
+  - Result: same `vue-tsc` toolchain failure as root build.
+  - Classification: toolchain compatibility/environment issue, not Wave 002-attributable.
+- `npm run build --workspace=backend`
+  - Logs: `backend-build.stdout.log`, `backend-build.stderr.log`
+  - Result: pass; `tsc` completed.
+
+### E2E / Playwright
+
+- `npm run test:e2e --workspace=frontend`
+  - Logs: `frontend-e2e.stdout.log`, `frontend-e2e.stderr.log`
+  - Result: failed during Playwright test-file parsing before browser execution.
+  - Evidence: syntax errors in `frontend/tests/e2e/keyboard-shortcuts.spec.ts` at line 267 and `frontend/tests/e2e/selection-mask.spec.ts` at line 188.
+  - Classification: pre-existing malformed e2e test files unrelated to Wave 002 projection-plane module split.
+
+### Live preview refresh
+
+- Initial refresh attempt:
+  - Logs: `preview-server.stdout.log`, `preview-server.stderr.log`, `preview-refresh-probe.stdout.log`, `preview-refresh-probe.stderr.log`, `preview-process-check.stdout.log`, `preview-process-check.stderr.log`
+  - Result: started an additional Vite server on 5174 because an earlier Vite server still occupied 5173; both were reachable.
+- Final refresh:
+  - Command: stopped the duplicate Vite processes, then ran `npm run dev -- --host 0.0.0.0 --port 5173` from `frontend/` via `nohup`.
+  - Logs: `preview-server-final.stdout.log`, `preview-server-final.stderr.log`, `preview-server-final.pid`, `preview-refresh-final-probe.stdout.log`, `preview-refresh-final-probe.stderr.log`
+  - Result: pass. Probe returned `HTTP/1.1 200 OK` for `http://127.0.0.1:5173/`, and the process list shows Vite running with `--host 0.0.0.0 --port 5173`.
+
+## Validation acceptance
+
+Wave 002 validation is **accepted with classified residual validation debt**. The Wave 002-specific static checks and focused Vitest suites all passed, the deleted monolith remained deleted, and no remaining failure was attributable to the projection-plane module split. Mandatory root/frontend lint and build commands are currently blocked by workspace dependency/toolchain issues, full frontend Vitest fails in legacy tests outside Wave 002 scope, and Playwright e2e fails because malformed legacy e2e test files cannot parse. These residual issues should become future cleanup/validation-hardening work, but they do not reject Wave 002 because the attributable Wave 002 checks pass and the preview was successfully refreshed and probed.
