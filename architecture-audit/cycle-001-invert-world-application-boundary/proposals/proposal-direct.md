@@ -13,6 +13,8 @@ This is the shortest path to the Wave 001 target: `World` becomes constructible 
 ## Evidence this proposal addresses
 
 - `World.ts` currently imports `DependencyService`, `Command`, `buildWorldInitialization`, and `CommandStack` (`frontend/src/domain/world/World.ts:94`, `frontend/src/domain/world/World.ts:105`, `frontend/src/domain/world/World.ts:106`, `frontend/src/domain/world/World.ts:110`).
+- `DependencyService` is directly imported only by `World.ts` (`frontend/src/domain/world/World.ts:94`); other code obtains it through `world.getDependencyService()` (`frontend/src/domain/world/World.ts:711`). Wave 001 should therefore treat the move as a single domain-ownership relocation, not a broad service refactor.
+- `CommandStack` imports `Command` and has no `World` import or constructor declaration (`frontend/src/commands/CommandStack.ts:16`, `frontend/src/commands/CommandStack.ts:22`). Existing helper code passes `new CommandStack(world)` (`frontend/tests/helpers/worldHelpers.ts:42`), but that argument is unused by the current class shape; the implementation should remove the stale argument while preserving the one-way dependency `commands -> domain World` through `Command`, not `World -> CommandStack`.
 - `World.initialize(commandStack)` constructs and pushes `Command` infrastructure from inside the domain root (`frontend/src/domain/world/World.ts:197`, `frontend/src/domain/world/World.ts:206`).
 - `App.vue` has three active initialization call sites (`frontend/src/App.vue:323`, `frontend/src/App.vue:384`, `frontend/src/App.vue:439`).
 - The existing sequence factory already contains the geometric setup sequence (`frontend/src/commands/factories/InitializationSequenceFactory.ts:39`) and sets the active plane at the end (`frontend/src/commands/factories/InitializationSequenceFactory.ts:143`).
@@ -55,9 +57,11 @@ Primary changes:
   - Delete imports of `Command`, `CommandStack`, `buildWorldInitialization`, `createActionGroup`, `AddProcessTreeActionGroupOp`, `PushSubprocessOp`, and `PopSubprocessOp`.
   - Replace `DependencyService` service-layer import with a domain-owned location or domain port (see next bullet).
 - `frontend/src/services/DependencyService.ts`
-  - Move to a domain path such as `frontend/src/domain/dependencies/DependencyGraph.ts` or `frontend/src/domain/world/DependencyService.ts`, or rename to a domain concept if implementation can update imports in one bounded change.
-  - Keep behavior unchanged; do not redesign process/dependency ownership in this wave.
-- New file such as `frontend/src/application/world/initializeWorld.ts` or `frontend/src/commands/factories/WorldInitializationUseCase.ts`
+  - Move mechanically to `frontend/src/domain/world/DependencyService.ts` and keep the exported class name `DependencyService` for Wave 001.
+  - Update `World.ts` to import it via the local/domain path (for example `./DependencyService`).
+  - Delete the old `frontend/src/services/DependencyService.ts` file after the move; do not leave a service-layer re-export, compatibility shim, or parallel path.
+  - Keep behavior unchanged; do not rename it to `DependencyGraph` or redesign process/dependency ownership in this wave. A conceptual rename can be proposed in a later dependency/process-tree wave if still valuable.
+- New file `frontend/src/application/world/initializeWorld.ts`
   - Own construction of the initialization command and command-stack push.
   - Reuse `buildWorldInitialization` to avoid changing the geometric sequence.
 - `frontend/src/App.vue`
@@ -114,6 +118,35 @@ Architectural behavior changes:
 - Initialization is an application use case that records a command in `CommandStack`.
 - `World.ts` no longer imports from `frontend/src/commands/` or `frontend/src/services/`.
 
+
+## Complete test update surface for `world.initialize(commandStack)`
+
+The implementation wave must update every verified direct `world.initialize(commandStack)` consumer in the same change set; no intermediate commit may leave the test suite depending on the deleted API.
+
+Verified direct call sites from current source/test inspection:
+
+| File | Evidence | Required update |
+|---|---|---|
+| `frontend/src/domain/world/World.ts` | method declaration at `frontend/src/domain/world/World.ts:193` | Delete the method and replace coverage with application-initializer tests. |
+| `frontend/src/App.vue` | active calls at `frontend/src/App.vue:323`, `frontend/src/App.vue:384`, `frontend/src/App.vue:439`; stale comment at `frontend/src/App.vue:157` | Import `initializeWorld` and replace active calls; delete stale commented call. |
+| `frontend/tests/integration/worldInitialization.spec.ts` | direct calls at lines 21, 50, 67, 82, 114, 124, 149, 151, 169, 184, 198, 221, 247, 260 | Convert this file into integration coverage for `initializeWorld(world, commandStack)`, preserving assertions for planes, origins, hinge lines, idempotency, active plane, and process-tree records. |
+| `frontend/tests/unit/commands/initializeWorldCommand.spec.ts` | direct call at `frontend/tests/unit/commands/initializeWorldCommand.spec.ts:26` | Replace old command/world API expectation with focused initializer/command-stack behavior, or delete obsolete assertions that only prove `World.initialize` exists. |
+| `frontend/tests/helpers/worldHelpers.ts` | `createTestWorld()` creates `new CommandStack(world)` and calls `world.initialize(commandStack)` at `frontend/tests/helpers/worldHelpers.ts:42` and `frontend/tests/helpers/worldHelpers.ts:44` | Import the new application initializer, construct `new CommandStack()` with no stale world argument, call `initializeWorld(world, commandStack)`, and keep returning `{ world, commandStack }` so downstream tests using the helper do not need broad churn. |
+
+The round-01 review mentioned additional files that reference initialization textually (`frontend/tests/e2e/active-plane-shortcuts.spec.ts`, `frontend/tests/unit/services/paperService.spec.ts`). They are not direct `world.initialize(commandStack)` call sites in the current grep result, but the implementation must still run focused/full tests because they may depend transitively on `createTestWorld()` or initialized-world behavior.
+
+## CommandStack dependency direction and constructor implications
+
+Current `CommandStack` depends only on `Command` (`frontend/src/commands/CommandStack.ts:16`) and its class has no declared constructor (`frontend/src/commands/CommandStack.ts:22`), so it does not import or own `World`. The command objects it stores already carry the allowed application/command-layer dependency toward the domain model. Wave 001 must preserve this direction:
+
+`application initializer -> Command/CommandStack -> World`
+
+and must not introduce:
+
+`World -> CommandStack` or `CommandStack -> application initializer`.
+
+The stale `new CommandStack(world)` helper call (`frontend/tests/helpers/worldHelpers.ts:42`) should be removed as part of the test update because the argument is not part of the current `CommandStack` contract.
+
 ## Validation plan for implementation wave
 
 Focused validation:
@@ -141,7 +174,7 @@ Mandatory wave validation cadence:
 
 | Risk | Impact | Mitigation |
 |---|---:|---|
-| Moving `DependencyService` imports may touch many command/tool files. | Medium | Keep the move mechanical and behavior-preserving; if too broad, introduce a domain-local export and delete the service-layer file only when all imports are updated. |
+| Moving `DependencyService` imports may touch many command/tool files. | Low | Current evidence shows only `World.ts` directly imports it; keep the move mechanical to `frontend/src/domain/world/DependencyService.ts` and delete the old service path with no re-export. |
 | `World.initialize` idempotency currently checks `projectionPlanes.size > 0`; external initializer must preserve it. | Medium | Unit-test empty and non-empty cases. |
 | Initialization group ID uses `Date.now()`, which can make tests nondeterministic. | Low/Medium | Hide group ID generation behind a small function with injectable deterministic ID in tests, or assert shape rather than exact ID. |
 | `App.vue` sign-out reassigns `world` and re-provides it after setup. | Medium but adjacent | Do not broaden unless the initializer replacement exposes a bug; record as later app-shell risk. |

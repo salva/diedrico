@@ -8,7 +8,7 @@
 
 Instead of only moving `World.initialize(commandStack)` into a standalone function, introduce a small application runtime/composition module that owns the `World`, `CommandStack`, and world initialization use case together. Vue components receive a typed runtime object or provided ports rather than constructing and coordinating the model root directly. This still deletes `World.initialize(commandStack)` and forbidden `World` imports, but it places the fix one layer higher: the application shell becomes responsible for lifecycle orchestration, while `World` is only the domain model.
 
-This proposal is more structural than the direct proposal, but still bounded if it targets only the world/command initialization boundary and does not attempt full `App.vue` shell extraction (reserved for Wave 009).
+Round-01 review found that this runtime is not actually bounded for Wave 001 because `App.vue` already performs sign-out, load-clear, and stale re-provide lifecycle operations that a runtime would have to own to be coherent. Therefore this corrected restructure proposal explicitly declines introducing `ProjectRuntime` in Wave 001. The runtime concept should be carried forward as Wave 009 input, while Wave 001 should choose the direct initializer proposal.
 
 ## Evidence this proposal addresses
 
@@ -19,7 +19,9 @@ This proposal is more structural than the direct proposal, but still bounded if 
 
 ## Target design
 
-Create an application boundary such as:
+**Corrected Wave 001 position:** do not introduce `ProjectRuntime` in this wave. Use the direct proposal's `frontend/src/application/world/initializeWorld.ts` use case as the complete Wave 001 application boundary. This still tests the higher-level option and rejects it for this cycle because a partial runtime would either bypass sign-out/load lifecycle or expand into Wave 009.
+
+Rejected runtime sketch for later Wave 009 input:
 
 ```ts
 // frontend/src/application/runtime/createProjectRuntime.ts
@@ -32,7 +34,7 @@ export interface ProjectRuntime {
 export function createProjectRuntime(): ProjectRuntime { ... }
 ```
 
-For Wave 001, the runtime contract is intentionally narrow:
+If revived in Wave 009, the runtime contract cannot be merely narrow; it must include the full lifecycle currently spread through `App.vue`. The previously considered narrow contract was:
 
 - `createProjectRuntime()` postcondition: returns one freshly constructed `World` and one freshly constructed `CommandStack` that remain the references provided to Vue children for the lifetime of the mounted app instance.
 - `initializeWorld()` precondition: may be called during project creation/load fallback when the runtime's `world` is empty or partially restored.
@@ -45,7 +47,7 @@ The runtime internally composes:
 - `new CommandStack()`,
 - `initializeWorld(world, commandStack)`.
 
-Lifecycle reset/load methods such as `resetForNewProject()` or `clearForLoad()` are deliberately excluded from the Wave 001 runtime API unless a reviewed implementation mini-cycle defines their preconditions, postconditions, and Vue provide/inject reference semantics. Those methods overlap with Wave 009 app-shell extraction and must not be invented as vague convenience wrappers in this wave.
+Round-01 correction: lifecycle reset/load/sign-out methods cannot be excluded if a runtime is introduced, because `App.vue` currently clears/reassigns world state and command history during load/sign-out paths. Adding them now would enter Wave 009 app-shell extraction; omitting them would leave an incoherent partial wrapper. Therefore the restructure proposal is rejected for Wave 001 in favor of the direct proposal.
 
 Dependency direction becomes:
 
@@ -59,19 +61,18 @@ Primary changes:
 
 - `frontend/src/domain/world/World.ts`
   - Same required deletion as direct proposal: remove `initialize(commandStack)` and forbidden imports.
-- New `frontend/src/application/runtime/createProjectRuntime.ts` or equivalent
-  - Creates and owns the `World` + `CommandStack` pair.
-  - Exposes only `initializeWorld()` for Wave 001; reset/load lifecycle methods remain out of scope unless separately specified and reviewed.
-  - Internally uses existing `InitializationSequenceFactory.buildWorldInitialization(...)`.
+- Do **not** add `frontend/src/application/runtime/createProjectRuntime.ts` in Wave 001.
+  - Record runtime extraction as a Wave 009/app-shell candidate instead.
+  - Use the direct proposal's `frontend/src/application/world/initializeWorld.ts` as the only new application boundary for this wave.
 - New `frontend/src/application/world/initializeWorld.ts` or internal runtime helper
   - Builds the initialization command and pushes it to the stack.
 - `frontend/src/App.vue`
-  - Replace direct `new World()` and `new CommandStack()` composition with the runtime.
-  - Continue providing `world` and `commandStack` if child components still inject those tokens, but source them from `runtime`.
-  - Replace `world.initialize(commandStack)` calls with `runtime.initializeWorld()`.
-  - Avoid broad project-shell extraction; do not move Drive/autosave/keyboard/sign-out/load-reset behavior in this wave unless a reviewed mini-cycle first defines exact runtime reference semantics.
+  - Keep direct `new World()` and `new CommandStack()` composition in Wave 001; do not introduce a runtime wrapper.
+  - Replace `world.initialize(commandStack)` calls with `initializeWorld(world, commandStack)` from the new application use case.
+  - Delete the stale commented old initialization call.
+  - Avoid broad project-shell extraction; Drive/autosave/keyboard/sign-out/load-reset behavior remains in `App.vue` until a future reviewed runtime/app-shell wave.
 - `frontend/src/services/DependencyService.ts`
-  - Move/rename into a domain-owned dependency location, or introduce a domain dependency graph object as in the direct proposal.
+  - Same concrete direct-plan move: mechanically move to `frontend/src/domain/world/DependencyService.ts`, keep the exported class name/behavior, update `World.ts` to import it from the domain path, and delete the old service-layer file with no re-export. Current evidence shows `World.ts` is the only direct importer.
 - `frontend/src/main.ts`
   - Optionally replace raw descriptor registration with a tiny `bootstrapApplication()` composition function if the runtime module becomes the clear place for startup composition. Otherwise leave descriptor registration as-is.
 
@@ -94,8 +95,8 @@ Required deletes:
 
 Additional restructure deletes:
 
-- Delete direct runtime construction from `App.vue` (`new World()`, `new CommandStack()`) if the runtime module replaces it fully, while preserving stable provided `world`/`commandStack` object references.
-- Delete any compatibility bridge that exposes `world.initialize()` from the runtime.
+- Do not delete direct `new World()` / `new CommandStack()` construction from `App.vue` in Wave 001; that deletion belongs to a future coherent runtime/app-shell wave.
+- Delete/avoid any compatibility bridge that re-exposes `world.initialize()` from an application module or future runtime.
 - Delete old service-layer `DependencyService` file/path if fully moved into domain.
 
 ## Expected behavior change
@@ -104,26 +105,41 @@ No user-visible behavior change is intended.
 
 Architectural behavior changes are broader than the direct proposal:
 
-- `App.vue` stops being the first owner of the world/command pair and instead consumes an application runtime.
+- `App.vue` remains the owner of the world/command pair for Wave 001, but delegates initialization orchestration to the application initializer.
 - `World` becomes a pure model root.
-- The runtime becomes the single application composition point for initialization decisions.
+- A full runtime remains a future Wave 009/app-shell concern, not a Wave 001 artifact.
 - Descriptor registration remains explicit runtime composition and is not hidden inside `World`.
 
 The geometric result must remain identical to current initialization: `P_H`, `P_V`, origin points, hinge line/halves, process-tree records, and active plane are still created.
+
+
+## Complete test update surface for `world.initialize(commandStack)`
+
+Even though this restructure proposal is rejected for Wave 001, any accepted Wave 001 implementation must update the same verified test surface as the direct proposal:
+
+| File | Evidence | Required update |
+|---|---|---|
+| `frontend/src/domain/world/World.ts` | method declaration at `frontend/src/domain/world/World.ts:193` | Delete the method and replace coverage with application-initializer tests. |
+| `frontend/src/App.vue` | active calls at `frontend/src/App.vue:323`, `frontend/src/App.vue:384`, `frontend/src/App.vue:439`; stale comment at `frontend/src/App.vue:157` | Replace with `initializeWorld(world, commandStack)` and delete stale commented call. |
+| `frontend/tests/integration/worldInitialization.spec.ts` | direct calls at lines 21, 50, 67, 82, 114, 124, 149, 151, 169, 184, 198, 221, 247, 260 | Convert to initializer integration coverage while preserving geometric/process-tree assertions. |
+| `frontend/tests/unit/commands/initializeWorldCommand.spec.ts` | direct call at line 26 | Replace obsolete `World.initialize` API assertion with initializer/command-stack behavior or delete if redundant. |
+| `frontend/tests/helpers/worldHelpers.ts` | `new CommandStack(world)` and `world.initialize(commandStack)` at lines 42 and 44 | Import/call `initializeWorld(world, commandStack)`, remove the stale constructor argument, and keep returning `{ world, commandStack }`. |
+
+The review-mentioned `frontend/tests/e2e/active-plane-shortcuts.spec.ts` and `frontend/tests/unit/services/paperService.spec.ts` are not direct call sites in current grep output, but may depend on initialized-world behavior and must be covered by focused/full validation.
+
+## CommandStack dependency direction and constructor implications
+
+`CommandStack` currently imports `Command` only (`frontend/src/commands/CommandStack.ts:16`) and declares no constructor (`frontend/src/commands/CommandStack.ts:22`); it does not import `World` or own application initialization. The existing `new CommandStack(world)` in `frontend/tests/helpers/worldHelpers.ts:42` is a stale extra argument and should be removed during the accepted direct implementation. The allowed direction remains `application initializer -> commands/CommandStack -> domain World`; the forbidden direction is `World -> CommandStack`.
 
 ## Validation plan for implementation wave
 
 Focused validation:
 
-1. Unit-test `createProjectRuntime()`:
-   - constructs a `World` and `CommandStack`,
-   - exposes stable object references intended for Vue `provide()`/`inject`,
-   - initializes an empty world exactly once,
-   - does not define reset/load lifecycle methods in Wave 001 unless their reference-stability contract is added through a reviewed mini-cycle.
+1. Do not add `createProjectRuntime()` tests in Wave 001 because the runtime is rejected for this wave.
 2. Unit-test world initializer internals as in direct proposal.
 3. Architecture test:
    - `World.ts` has no imports from `frontend/src/commands/`, `frontend/src/services/`, Vue components, stores, or persistence.
-   - `App.vue` no longer constructs `World`/`CommandStack` directly if runtime replacement is accepted.
+   - `App.vue` initialization calls use the application initializer; direct construction remains until a future runtime/app-shell wave.
 4. Regression test for project creation/load fallback lifecycle if feasible at unit/component level.
 
 Mandatory wave validation cadence:
@@ -139,11 +155,11 @@ Mandatory wave validation cadence:
 
 | Risk | Impact | Mitigation |
 |---|---:|---|
-| This can drift into Wave 009 `App.vue` shell extraction. | High | Hard scope guard: only move world/command/runtime initialization composition; leave Drive/autosave/keyboard/select-all/sign-out/load-reset orchestration in `App.vue` unless separately specified and reviewed. |
-| Child components may assume separate injected `world`/`commandStack` tokens. | Medium | Continue providing the same tokens from the runtime; do not force broad injection changes in this wave. |
-| Replacing direct `new World()` on sign-out may expose stale-provide behavior. | Medium | Do not add sign-out/reset runtime APIs in Wave 001; preserve stable provided references and record the existing sign-out stale-provide concern as a Wave 009 risk. |
-| More files touched than the direct proposal. | Medium | Keep runtime API minimal and resist refactoring persistence/UI shell behavior. |
-| Moving `DependencyService` into domain may still be broad. | Medium | Same mitigation as direct proposal: mechanical import update or domain-local re-export only if deletion can still be completed. |
+| This can drift into Wave 009 `App.vue` shell extraction. | High | Reject runtime for Wave 001; only move initialization orchestration into `initializeWorld(world, commandStack)`. |
+| Child components may assume separate injected `world`/`commandStack` tokens. | Medium | Do not change provide/inject tokens in Wave 001; App.vue continues providing the existing objects. |
+| Introducing runtime without sign-out/load APIs would create stale-reference or bypass behavior. | High | Reject runtime for Wave 001; record it as Wave 009 input where sign-out/load/autosave lifecycle can be designed together. |
+| More files touched than the direct proposal. | Medium | Avoid extra runtime files; use the direct proposal's implementation surface. |
+| Moving `DependencyService` into domain may still be broad. | Low | Current evidence shows only `World.ts` directly imports it; mechanically move to `frontend/src/domain/world/DependencyService.ts` and delete the old service path with no re-export. |
 
 ## Comparison with direct proposal
 
@@ -151,11 +167,11 @@ Mandatory wave validation cadence:
 |---|---|---|
 | Deletes `World.initialize(commandStack)` | Yes | Yes |
 | Removes `World` command/application imports | Yes | Yes |
-| Moves ownership one conceptual layer higher | Partly: initializer function | More clearly: runtime/composition module |
-| Touches `App.vue` | Replaces call sites only | Replaces world/stack construction and call sites |
-| Risk of broadening into app shell | Low | Medium/high unless guarded |
-| Better long-term boundary | Good | Better, if kept bounded |
+| Moves ownership one conceptual layer higher | Partly: initializer function | Runtime/composition module rejected for Wave 001 |
+| Touches `App.vue` | Replaces call sites only | Rejected for Wave 001; future runtime would replace construction and lifecycle together |
+| Risk of broadening into app shell | Low | High for restructure in Wave 001 |
+| Better long-term boundary | Good | Better only when handled as a future full app-shell lifecycle wave |
 
 ## Recommendation
 
-Use the restructure proposal only if the reviewer agrees the current `App.vue` ownership of `World` + `CommandStack` is part of the same boundary inversion and can be corrected without entering Wave 009 scope. Otherwise choose the direct proposal now and record application runtime extraction as a future app-shell/use-case concern.
+Do not choose the restructure proposal for Wave 001. Choose the direct initializer proposal now. Record `ProjectRuntime`/application shell extraction as Wave 009 input, where reset, load-clear, sign-out, autosave, and Vue provide/inject reference semantics can be designed as one coherent lifecycle boundary.
