@@ -1,0 +1,60 @@
+# Wave 005 preview binding evidence
+timestamp=2026-05-25T22:28:43+00:00
+cwd=/work/diedrico
+node=v24.15.0
+npm=11.12.1
+
+## Existing listener on :5173 before correction
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=329763,fd=22))
+
+Stopping existing preview listener PIDs: 329763 
+
+## Listener after stop
+State Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+
+## Starting preview command
+npm run dev --workspace=frontend -- --host 0.0.0.0
+started_pid=333285
+
+## Waiting for listener and HTTP readiness
+ready_after_seconds=2
+
+## Active listener on :5173 after correction
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=333301,fd=22))
+
+## Process command line
+ 333285       1 npm run dev --host 0.0.0.0
+child_pids=333300 
+ 333300  333285 sh -c vite --host 0.0.0.0
+
+## Startup log tail
+
+> diedrico-frontend@0.1.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v5.4.21  ready in 339 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.0.3.113:5173/
+10:07:16 PM [vite] page reload src/domain/world/DependencyService.ts
+10:07:16 PM [vite] page reload src/commands/operations/world/RemoveElementOps.ts
+10:18:57 PM [vite] page reload playwright-report/index.html
+
+> diedrico-frontend@0.1.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v5.4.21  ready in 291 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.0.3.113:5173/
+
+## HTTP probes
+localhost_status=200
+container_ip=10.0.3.113
+container_ip_status=200
+
+ready=1

@@ -155,3 +155,26 @@ No failing validation command is attributable to the Wave 005 API deletions or t
 - Frontend build remains blocked by `vue-tsc` compatibility with the current Node/TypeScript runtime before code compilation.
 - Full frontend Vitest and Playwright remain blocked by repository-wide stale tests/spec syntax that predate Wave 005 and are outside this wave's corrective scope.
 - These validation debts should become future tooling/test-cleanup work; they do not justify restoring any deleted Wave 005 compatibility API.
+
+## Preview binding correction — t3-correct-preview-binding-evidence
+
+Reviewer `t2-review-stage-validation` blocked on insufficient proof that the live preview was bound on `0.0.0.0`; the previous evidence only showed a `127.0.0.1` reachability probe. The correction reran the preview refresh with stable logs and explicit socket/process evidence.
+
+Logs:
+
+- `validation/t3-preview-binding-evidence.stdout` / `.stderr`: canonical evidence log written by the correction script.
+- `validation/t3-preview-binding-command.stdout.log` / `.stderr.log`: command wrapper output captured by Saivage.
+- `validation/live-preview.stdout` / `.stderr`: Vite dev-server output after restart.
+- `validation/live-preview.pid`: refreshed preview parent PID.
+
+Result: PASS. Evidence recorded in `t3-preview-binding-evidence.stdout`:
+
+- The pre-correction listener on port 5173 was stopped: `Stopping existing preview listener PIDs: 329763`.
+- The preview was restarted with the required command: `npm run dev --workspace=frontend -- --host 0.0.0.0`.
+- The refreshed process tree shows `npm run dev --host 0.0.0.0` with child `sh -c vite --host 0.0.0.0`.
+- `ss -ltnp 'sport = :5173'` after correction shows `LISTEN ... 0.0.0.0:5173 ... users:(("MainThread",pid=333301,fd=22))`, proving the active listener is bound to all interfaces rather than only localhost.
+- Vite startup output includes `Network: http://10.0.3.113:5173/`.
+- HTTP probes returned `localhost_status=200` and `container_ip_status=200` for `http://10.0.3.113:5173/`.
+
+This resolves the preview-binding evidence blocker without code changes or deviations from Wave 005 scope.
+

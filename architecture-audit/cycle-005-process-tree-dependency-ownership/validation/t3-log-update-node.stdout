@@ -1,0 +1,6 @@
+architecture-audit/cycle-005-process-tree-dependency-ownership/implementation-log.md:159:## Preview binding correction — t3-correct-preview-binding-evidence
+architecture-audit/cycle-005-process-tree-dependency-ownership/implementation-log.md:175:- `ss -ltnp 'sport = :5173'` after correction shows `LISTEN ... 0.0.0.0:5173 ... users:(("MainThread",pid=333301,fd=22))`, proving the active listener is bound to all interfaces rather than only localhost.
+architecture-audit/cycle-005-process-tree-dependency-ownership/implementation-log.md:177:- HTTP probes returned `localhost_status=200` and `container_ip_status=200` for `http://10.0.3.113:5173/`.
+architecture-audit/cycle-005-process-tree-dependency-ownership/validation/t3-preview-binding-evidence.stdout:9:LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=329763,fd=22))
+architecture-audit/cycle-005-process-tree-dependency-ownership/validation/t3-preview-binding-evidence.stdout:25:LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=333301,fd=22))
+architecture-audit/cycle-005-process-tree-dependency-ownership/validation/t3-preview-binding-evidence.stdout:58:container_ip_status=200

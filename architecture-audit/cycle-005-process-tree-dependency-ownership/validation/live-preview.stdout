@@ -7,3 +7,15 @@
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://10.0.3.113:5173/
+10:07:16 PM [vite] page reload src/domain/world/DependencyService.ts
+10:07:16 PM [vite] page reload src/commands/operations/world/RemoveElementOps.ts
+10:18:57 PM [vite] page reload playwright-report/index.html
+
+> diedrico-frontend@0.1.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v5.4.21  ready in 291 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.0.3.113:5173/
