@@ -16,6 +16,9 @@ Implemented `architecture-audit/cycle-005-process-tree-dependency-ownership/deci
   - Deleted `DependencyService.rebuildDependencyMaps()` no-op shim.
   - Deleted `DependencyService.getActionDependencies()` action-era placeholder.
   - Removed stale comments tying the service to process-tree action scanning.
+  - Correction `t3-correct-deletion-sequence-coverage`: fixed `getElementsInDeletionOrder()` to return leaf dependents before selected roots, matching its dependents-first contract and the deletion factory's referential-integrity requirement.
+- `frontend/src/commands/operations/world/RemoveElementOps.ts`
+  - Correction `t3-correct-deletion-sequence-coverage`: fixed `RemoveSegment2DOp` runtime subtype detection to use the concrete `Segment2DByPoints` constructor instead of the erased `Segment2D` type alias.
 - `frontend/src/App.vue`
   - Removed the post-delete call to the deleted no-op `rebuildDependencyMaps()`.
 - `frontend/src/commands/factories/README.md`
@@ -30,8 +33,10 @@ Implemented `architecture-audit/cycle-005-process-tree-dependency-ownership/deci
   - Rewrote helper setup to explicit action-group insertion.
   - Replaced stale dependency rebuild shortcut with real `DependencyService.registerNode(line.id, [p1.id, p2.id])` setup.
 - `frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts`
-  - Deleted the stale skipped cascade-deletion suite that preserved compatibility names and no-op rebuild calls.
-  - Kept active tests that do not rely on removed compatibility APIs.
+  - Initial implementation over-deleted the stale skipped cascade suite and left only two minimal active tests; reviewer correction restored meaningful active factory coverage.
+  - Current coverage uses explicit `ActionGroup` + `addActionToGroup()` setup and real `DependencyService.registerNode(...)`; it does not call implicit process-tree insertion or deleted rebuild/action-dependency shims.
+  - Active scenarios now cover empty selection, single point deletion with process-action tombstoning, element-without-action deletion, dependency-driven point→line and point→circle cascades, multiple independent point deletion, undo/redo for cascade deletion, and segment deletion dispatch.
+  - The restored tests exposed and drove the narrow fixes to deletion ordering and segment subtype detection listed above.
 
 ## Explicit DELETE list completion
 
@@ -59,18 +64,24 @@ All stdout/stderr logs are under `architecture-audit/cycle-005-process-tree-depe
 - `static-process-world-definitions.*` — no removed process/world definitions; exit 1/no matches.
 - `static-dependency-shims.*` — no removed dependency-service shim definitions/calls; exit 1/no matches.
 - `static-actions-panel-scope.*` — no Wave 006 use-case extraction markers; exit 0 due `|| true`, no matches.
+- `t3-static-deleted-names.*` — reran deleted-name check after reviewer correction; exit 1/no matches in active source/tests.
 
 ### Focused tests
 
 Passed:
 
 - `focused-process-tree.*`: `npm run test --workspace=frontend -- tests/unit/processTree.spec.ts` — 15 passed.
-- `focused-deletion-dependency-rerun.*`: `npm run test --workspace=frontend -- tests/unit/commands/factories/DeletionSequenceFactory.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts` — 15 passed.
+- `focused-deletion-dependency-rerun.*`: original implementation focused deletion/dependency rerun — 15 passed before reviewer correction, but with insufficient factory coverage.
+- `t3-focused-deletion-sequence-factory-rerun.*`: corrected `DeletionSequenceFactory.spec.ts` — 8 passed.
+- `t3-focused-deletion-dependency.*`: corrected deletion/dependency set (`DeletionSequenceFactory.spec.ts`, `removeElementOps.spec.ts`, `projectService.cascadeDeletion.spec.ts`) — 21 passed.
 - `focused-subprocess-stack.*`: subprocess stack/project-service tests — 21 passed.
 - `focused-command-persistence.*`: initialize world, command stack, round trip, determinism tests — 59 passed.
-- `focused-dependency-graph.*`: `tests/unit/dependencyGraph.spec.ts` — 34 passed, proving real dependency registration/query behavior remains.
+- `focused-dependency-graph.*`: original dependency graph suite — 34 passed.
+- `t3-focused-dependency-graph.*`: reran dependency graph suite after deletion-order correction — 34 passed.
 
 A first deletion-focused run (`focused-deletion-dependency.*`) failed because the rewritten empty-selection test committed an empty command; the test was corrected to assert zero operations without committing, then the rerun passed.
+
+During reviewer correction, `t3-focused-deletion-sequence-factory.*` initially failed and identified two attributable defects: `DependencyService.getElementsInDeletionOrder()` returned selected roots before dependents despite its dependents-first contract, and `RemoveSegment2DOp` used an erased `Segment2D` type alias in an `instanceof` check. Both were corrected, then `t3-focused-deletion-sequence-factory-rerun.*`, `t3-focused-deletion-dependency.*`, and `t3-focused-dependency-graph.*` passed.
 
 ### Full cadence
 
@@ -92,4 +103,4 @@ A first deletion-focused run (`focused-deletion-dependency.*`) failed because th
 
 - `ActionsPanel.vue` still directly imports/construes process-tree operation classes. This is intentionally deferred to Wave 006 per the decision.
 - Repository-wide validation debt remains: missing eslint binary, vue-tsc/Node 24 build crash, malformed e2e specs, and unrelated full-suite failures. These should be addressed in separate waves/tooling cleanup, not by restoring deleted compatibility APIs.
-- Deletion factory active coverage is intentionally narrower after deleting stale skipped compatibility tests; existing integration cascade deletion and remove-element focused tests cover real incremental dependency behavior without rebuild shims.
+- Deletion factory coverage now explicitly exercises representative cascade behavior without compatibility shims. Remaining breadth beyond these representative factory scenarios is covered by the focused remove-element and integration cascade-deletion suites.

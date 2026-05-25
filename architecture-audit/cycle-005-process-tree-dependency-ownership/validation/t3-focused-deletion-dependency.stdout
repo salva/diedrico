@@ -1,0 +1,88 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/factories/DeletionSequenceFactory.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 21ms
+ ✓ tests/integration/projectService.cascadeDeletion.spec.ts  (4 tests) 25ms
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle empty selection gracefully
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [],
+  cascaded: [],
+  total: [],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should delete a single point and tombstone its explicit process-tree action
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [],
+  total: [ 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [],
+  total: [ 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should cascade delete a dependent line before deleting its defining point
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should cascade delete a dependent circle through real dependency registration
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/circle2d12' ],
+  total: [ 'projPlane3/circle2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should delete multiple independent points and their explicit process-tree actions
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [
+    'projPlane3/point2d10',
+    'projPlane3/point2d11',
+    'projPlane3/point2d12'
+  ],
+  cascaded: [],
+  total: [
+    'projPlane3/point2d10',
+    'projPlane3/point2d11',
+    'projPlane3/point2d12'
+  ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should support undo and redo for dependency-driven cascade deletion
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should dispatch segment deletion to RemoveSegment2D without deleting defining points
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/segment2d12' ],
+  cascaded: [],
+  total: [ 'projPlane3/segment2d12' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+ ✓ tests/unit/commands/factories/DeletionSequenceFactory.spec.ts  (8 tests) 37ms
+
+ Test Files  3 passed (3)
+      Tests  21 passed (21)
+   Start at  22:07:33
+   Duration  1.99s (transform 964ms, setup 0ms, collect 1.99s, tests 83ms, environment 2.29s, prepare 425ms)
+

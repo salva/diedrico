@@ -1,0 +1,216 @@
+frontend/src/App.vue:254:  const allElementsToDelete = dependencyService.getElementsInDeletionOrder(selectedIds);
+frontend/src/utils/rectangleGrid.ts:22:export interface Segment2D {
+frontend/src/utils/rectangleGrid.ts:106:export function clipSegmentToRectangle(segment: Segment2D, rect: Rectangle2D): Segment2D | null {
+frontend/src/utils/rectangleGrid.ts:209:export function generateClippedGrid(rect: Rectangle2D, divisions: number = 20): Segment2D[] {
+frontend/src/utils/rectangleGrid.ts:213:  const segments: Segment2D[] = [];
+frontend/src/utils/rectangleGrid.ts:241:    const segment: Segment2D = {
+frontend/src/utils/rectangleGrid.ts:258:    const segment: Segment2D = {
+frontend/src/utils/rectangleGrid.ts:278:    const segment: Segment2D = {
+frontend/src/utils/rectangleGrid.ts:295:    const segment: Segment2D = {
+frontend/tests/e2e/command-chaining.spec.ts:59: * command.addAndExecute(new AddSegment2DByPointsOp({
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:11:import { Segment2DByPoints } from '../Segment';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:339:   * Phase 95: Generate unique Segment2D ID (camelCase format)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:341:  generateSegment2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:837:   * Factory method: Create and add a Segment2DByPoints to this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:844:   * @returns The created Segment2DByPoints
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:846:  addSegment2DBetweenPoints(
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:851:  ): Segment2DByPoints {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:874:      id = this.generateSegment2DId(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:878:    const label = world.generateDefaultLabel(id, 'Segment2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:880:    const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id, label);
+frontend/src/types/SelectionMask.ts:16:import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/src/types/SelectionMask.ts:27:  | 'segment'         // Specifically Segment2DByPoints only
+frontend/src/types/SelectionMask.ts:44:  if (element instanceof Segment2DByPoints) {
+frontend/src/types/SelectionMask.ts:234:        return element instanceof Segment2DByPoints;
+frontend/tests/e2e/distance-transport.spec.ts:60:    // const transportedSegment = await canvasV.locator('[data-element-kind="Segment2DByPoints"]');
+frontend/tests/e2e/distance-transport.spec.ts:82:    // const transportedSegment = await page.locator('[data-element-kind="Segment2DByPoints"][data-is-derived="true"]');
+frontend/tests/e2e/distance-transport.spec.ts:100:    // const transportedSegment = await page.locator('[data-element-kind="Segment2DByPoints"][data-is-derived="true"]');
+frontend/src/domain/world/World.ts:87:import { Segment2D, Segment2DByPoints } from './Segment';
+frontend/src/domain/world/World.ts:836:   * Get Segment2D by hierarchical ID (Phase 45)
+frontend/src/domain/world/World.ts:841:   * @returns Segment2D or undefined if not found or not a segment
+frontend/src/domain/world/World.ts:844:  getSegment2D(id: string): Segment2D | undefined {
+frontend/src/domain/world/World.ts:852:    if (line && line instanceof Segment2DByPoints) {
+frontend/src/domain/world/World.ts:853:      return line as Segment2D;
+frontend/src/domain/world/DependencyService.ts:236:  getElementsInDeletionOrder(elementIds: string[]): string[] {
+frontend/src/commands/Command.ts:32: *    cmd.addAndExecute(new AddSegment2DOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+frontend/src/tools/SegmentTool.ts:26:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/tools/SegmentTool.ts:90:    const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1.id, point2.id));
+frontend/tests/unit/world/generateDefaultLabel.test.ts:78:      expect(world.generateDefaultLabel('segment2d1', 'Segment2D')).toBe('s');
+frontend/tests/unit/world/generateDefaultLabel.test.ts:174:      const l2 = world.generateDefaultLabel('segment2d1', 'Segment2D');
+frontend/tests/unit/selectionMask.spec.ts:20:import { Segment2D } from '@/domain/world/Segment';
+frontend/src/tools/Quick3DSegmentTool.ts:36:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/tools/Quick3DSegmentTool.ts:158:      const addSegH = new AddSegment2DByPointsOp(P_H.id!, p1Id_H, p2Id_H);
+frontend/src/tools/Quick3DSegmentTool.ts:167:      const addSegV = new AddSegment2DByPointsOp(P_V.id!, int1Id_V, int2Id_V);
+frontend/tests/unit/rectangleGrid.test.ts:2:import { clipSegmentToRectangle, generateClippedGrid, computeBounds, type Rectangle2D, type Segment2D } from '../../src/utils/rectangleGrid';
+frontend/tests/unit/rectangleGrid.test.ts:34:    const segment: Segment2D = {
+frontend/tests/unit/rectangleGrid.test.ts:58:    const segment: Segment2D = {
+frontend/tests/unit/rectangleGrid.test.ts:82:    const segment: Segment2D = {
+frontend/tests/unit/rectangleGrid.test.ts:104:    const segment: Segment2D = {
+frontend/src/domain/world/descriptors/registerDescriptors.ts:32:  Segment2DByPointsDescriptor,
+frontend/src/domain/world/descriptors/registerDescriptors.ts:54:import { Segment2DByPoints } from '../Segment';
+frontend/src/domain/world/descriptors/registerDescriptors.ts:95:  DescriptorRegistry.register(Segment2DByPoints, new Segment2DByPointsDescriptor());
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:13:import type { Segment2DByPoints } from '../Segment';
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:71: * Descriptor for Segment2DByPoints - segment between two points
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:73:export class Segment2DByPointsDescriptor implements ElementDescriptor<Segment2DByPoints> {
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:74:  getTypeName(_element: Segment2DByPoints): string {
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:78:  getConstructionDescription(element: Segment2DByPoints, world: World): DescriptionPart[] {
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:13:import { AddSegment2DByPointsOp } from './AddSegmentOp';
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:21:import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from './RemoveElementOps';
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:52:  registry.register('AddSegment2DByPoints', d => restoreOutput(new AddSegment2DByPointsOp(s(d, 'planeId'), s(d, 'point1Id'), s(d, 'point2Id')), { segmentId: so(d, 'segmentId') }));
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:63:  registry.register('RemoveSegment2D', d => new RemoveSegment2DOp(s(d, 'planeId'), s(d, 'segmentId')));
+frontend/src/domain/world/Segment3D.ts:37:  projection1: string;  // Segment2D ID on first plane
+frontend/src/domain/world/Segment3D.ts:38:  projection2: string;  // Segment2D ID on second plane (must be different)
+frontend/src/domain/world/Segment.ts:2: * Segment2D - Finite line segment in 2D projection plane
+frontend/src/domain/world/Segment.ts:22:export type Segment2DType = typeof SEGMENT_2D_TYPE[keyof typeof SEGMENT_2D_TYPE];  // Phase 22.5: Use 'segment' to match Line2DType
+frontend/src/domain/world/Segment.ts:25: * Segment2DByPoints - Bounded line segment defined by two endpoint references
+frontend/src/domain/world/Segment.ts:28:export class Segment2DByPoints extends Line2D {
+frontend/src/domain/world/Segment.ts:44:  clone(): Segment2DByPoints {
+frontend/src/domain/world/Segment.ts:45:    return new Segment2DByPoints(
+frontend/src/domain/world/Segment.ts:81:      throw new Error(`[Segment2DByPoints] Point ${this.point1Id} not found in plane ${this.planeId} for segment ${this.id}`);
+frontend/src/domain/world/Segment.ts:84:      throw new Error(`[Segment2DByPoints] Point ${this.point2Id} not found in plane ${this.planeId} for segment ${this.id}`);
+frontend/src/domain/world/Segment.ts:112:export type Segment2D = Segment2DByPoints;
+frontend/tests/unit/types/SelectionMask.spec.ts:18:import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/tests/unit/types/SelectionMask.spec.ts:30:  const segment = new Segment2DByPoints(`${planeId}/segment2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
+frontend/src/components/dialogs/PropertiesDialog.vue:221:  const segment = props.world.getSegment2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:243:  const segment = props.world.getSegment2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:304:  const segment = props.world.getSegment2D(props.elementId);
+frontend/src/domain/world/LabelGenerator.ts:30:    case 'Segment2D':
+frontend/src/components/panels/ThreeView.vue:74:import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '../../utils/rectangleGrid';
+frontend/src/components/panels/ThreeView.vue:84:function generateFallbackGrid(halfSize: number, divisions: number): Segment2D[] {
+frontend/src/components/panels/ThreeView.vue:85:  const segments: Segment2D[] = [];
+frontend/src/components/panels/ThreeView.vue:299:    let gridSegments: Segment2D[];
+frontend/src/components/panels/ElementsPanel.vue:133:import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/src/components/panels/ElementsPanel.vue:214:    const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
+frontend/src/components/panels/ElementsPanel.vue:215:    const segments = allLines.filter(l => l instanceof Segment2DByPoints);
+frontend/src/components/panels/ElementsPanel.vue:283:  } else if (element instanceof Segment2DByPoints) {
+frontend/src/commands/operations/world/RemoveElementOps.ts:14:import type { Segment2D } from '@/domain/world/Segment';
+frontend/src/commands/operations/world/RemoveElementOps.ts:193: * RemoveSegment2DOp - Remove a segment from a projection plane
+frontend/src/commands/operations/world/RemoveElementOps.ts:195:export class RemoveSegment2DOp implements IOperation {
+frontend/src/commands/operations/world/RemoveElementOps.ts:196:  readonly type = 'RemoveSegment2D';
+frontend/src/commands/operations/world/RemoveElementOps.ts:200:  private removedSegment?: Segment2D;
+frontend/src/commands/operations/world/RemoveElementOps.ts:222:      this.removedSegment = line instanceof Segment2D ? line : undefined;
+frontend/src/services/Element2DRenderer3D.ts:210:   * Render a Segment2D (bounded line) as a line segment in 3D space
+frontend/src/commands/operations/world/AddSegmentOp.ts:2: * AddSegment2DByPointsOp - Operation to add a Segment2DByPoints using ProjectionPlane factory method
+frontend/src/commands/operations/world/AddSegmentOp.ts:4: * Wraps ProjectionPlane.addSegment2DBetweenPoints() in the Operation interface.
+frontend/src/commands/operations/world/AddSegmentOp.ts:10:export class AddSegment2DByPointsOp implements IOperation {
+frontend/src/commands/operations/world/AddSegmentOp.ts:11:  readonly type = 'AddSegment2DByPoints';
+frontend/src/commands/operations/world/AddSegmentOp.ts:31:      const segment = plane.addSegment2DBetweenPoints(
+frontend/src/services/PaperService.ts:35:import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/src/services/PaperService.ts:160:          } else if (line instanceof Segment2DByPoints) {
+frontend/src/services/PaperService.ts:396:   * Convert a Segment2D + realization to a SegmentPrimitive
+frontend/src/services/PaperService.ts:403:    segment: Segment2D,
+frontend/src/services/PaperService.ts:450:    segment: Segment2D,
+frontend/tests/integration/world/defaultLabels.integration.test.ts:79:      const segment = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:156:      const segment = plane.addSegment2DBetweenPoints(p2.id, p3.id, world);
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:8: * 2. Referencing existing Segment2D elements as projections
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:29:    private projection1Id: string,     // ID of first Segment2D projection
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:30:    private projection2Id: string,     // ID of second Segment2D projection
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:22:import { AddSegment2DByPointsOp } from '../../../../src/commands/operations/world/AddSegmentOp';
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:255:    it('should dispatch segment deletion to RemoveSegment2D without deleting defining points', () => {
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:261:      const segmentResult = setupCmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1Id, point2Id));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:282:        'RemoveSegment2D',
+frontend/tests/unit/commands/removeElementOps.spec.ts:5: * - RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp
+frontend/tests/integration/phase76-fail-fast.spec.ts:42:    it('should throw descriptive error when plane does not exist for getSegment2D', () => {
+frontend/tests/integration/phase76-fail-fast.spec.ts:44:        world.getSegment2D('nonexistent_plane/S1');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:30:  AddSegment2DByPointsOp 
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:114:   * Test that AddSegment2DByPoints is self-contained
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:116:  it('AddSegment2DByPoints should be self-contained', () => {
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:120:    cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:244:    cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1Result.outputs.pointId, p3Result.outputs.pointId));
+frontend/tests/unit/commands/createSegment.spec.ts:2: * Tests for creating segments using Command + AddSegment2DByPointsOp
+frontend/tests/unit/commands/createSegment.spec.ts:7:import { AddSegment2DByPointsOp } from '../../../src/commands/operations/world/AddSegmentOp';
+frontend/tests/unit/commands/createSegment.spec.ts:31:      const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1Id, point2Id));
+frontend/tests/unit/commands/createSegment.spec.ts:51:      const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(
+frontend/tests/unit/commands/createSegment.spec.ts:68:      const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(
+frontend/tests/unit/commands/createSegment.spec.ts:91:      const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:125:  describe('Segment2DByPoints', () => {
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:132:      const segment = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:145:      const segment = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/labelGenerator.spec.ts:65:    it('should share counter between Line2D, Line3D, Segment2D, Segment3D', () => {
+frontend/tests/unit/domain/labelGenerator.spec.ts:68:      expect(gen.next('Segment2D')).toBe('t');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:27:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:33:import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from '@/commands/operations/world/RemoveElementOps';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:68:  it('AddSegment2DByPoints survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:69:    const op = new AddSegment2DByPointsOp('projPlaneH', 'point1', 'point2');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:73:    expect(result.type).toBe('AddSegment2DByPoints');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:175:  it('RemoveSegment2D survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:176:    const op = new RemoveSegment2DOp('projPlaneH', 'segment1');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:180:    expect(result.type).toBe('RemoveSegment2D');
+frontend/tests/unit/domain/segment.spec.ts:4: * Tests the Segment2D geometry classes:
+frontend/tests/unit/domain/segment.spec.ts:5: * - Segment2DByPoints: Defines segment by two point IDs
+frontend/tests/unit/domain/segment.spec.ts:13:import { Segment2DByPoints, Segment2D } from '@/domain/world/Segment';
+frontend/tests/unit/domain/segment.spec.ts:19:describe('Segment2D', () => {
+frontend/tests/unit/domain/segment.spec.ts:38:  describe('Segment2DByPoints', () => {
+frontend/tests/unit/domain/segment.spec.ts:40:      const segment = new Segment2DByPoints(planeH.id + '/seg1', point1Id, point2Id, planeH.id);
+frontend/tests/unit/domain/segment.spec.ts:43:      expect(segment instanceof Segment2DByPoints).toBe(true);  // Phase 22.5: extends Line2D
+frontend/tests/unit/domain/segment.spec.ts:50:      const original = new Segment2DByPoints(planeH.id + '/seg1', point1Id, point2Id, planeH.id);
+frontend/tests/unit/domain/segment.spec.ts:61:      const segment = planeH.addSegment2DBetweenPoints(point1Id, point2Id, world);
+frontend/tests/unit/domain/segment.spec.ts:76:      const segment = new Segment2DByPoints(planeH.id + '/seg1', point3.id, point4.id, planeH.id);
+frontend/tests/unit/domain/world.spec.ts:379:    describe('addSegment2DBetweenPoints', () => {
+frontend/tests/unit/domain/world.spec.ts:384:        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/world.spec.ts:396:        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world, customId);
+frontend/tests/unit/domain/world.spec.ts:405:          planeH.addSegment2DBetweenPoints(p1.id, p1.id, world);
+frontend/tests/unit/domain/world.spec.ts:509:        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/world.spec.ts:561:        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:6: * - Segment2DByPoints (bounded segments)
+frontend/tests/unit/domain/lineHierarchy.spec.ts:17:import { Segment2DByPoints } from '../../../src/domain/world/Segment';
+frontend/tests/unit/domain/lineHierarchy.spec.ts:47:      expect(Segment2DByPoints).toBeDefined();
+frontend/tests/unit/domain/lineHierarchy.spec.ts:55:      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:174:  describe('Segment2DByPoints extends Line2D', () => {
+frontend/tests/unit/domain/lineHierarchy.spec.ts:177:      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:180:      expect(segment).toBeInstanceOf(Segment2DByPoints);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:185:      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:197:      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:210:      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:285:        new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id)
+frontend/tests/unit/domain/lineHierarchy.spec.ts:300:      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:303:      expect(segment).toBeInstanceOf(Segment2DByPoints);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:311:        new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id)
+frontend/tests/unit/domain/lineHierarchy.spec.ts:328:    it('should narrow Line2D to Segment2DByPoints', () => {
+frontend/tests/unit/domain/lineHierarchy.spec.ts:330:      const line: Line2D = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:332:      if (line instanceof Segment2DByPoints) {
+frontend/tests/unit/domain/lineHierarchy.spec.ts:333:        // TypeScript knows this is Segment2DByPoints now
+frontend/tests/unit/domain/lineHierarchy.spec.ts:337:        throw new Error('Should be Segment2DByPoints');
+frontend/tests/unit/domain/lineHierarchy.spec.ts:357:      const line: Line2D = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:359:      if (line instanceof Segment2DByPoints) {
+frontend/tests/unit/domain/lineHierarchy.spec.ts:364:        throw new Error('Should be Segment2DByPoints');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:17:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/tests/unit/domain/segment3DRealization.spec.ts:98:  function createSegment2D(planeId: string, x1: number, y1: number, x2: number, y2: number): string {
+frontend/tests/unit/domain/segment3DRealization.spec.ts:102:    const seg = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:113:    const seg1Id = createSegment2D(planeH.id!, 2, 3, 6, 7);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:114:    const seg2Id = createSegment2D(planeV.id!, 2, 4, 6, 8);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:149:    const seg1Id = createSegment2D(planeH.id!, 1, 2, 5, 6);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:150:    const seg2Id = createSegment2D(planeV.id!, 5, 7, 1, 3);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:182:    const seg1Id = createSegment2D(planeH.id!, 1, 2, 3, 4);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:183:    const seg2Id = createSegment2D(planeV.id!, 10, 5, 20, 15);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:204:    const seg1Id = createSegment2D(planeH.id!, 0, 0, 10, 0);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:205:    const seg2Id = createSegment2D(planeV.id!, 0, 0, 10, 0);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:231:  function createSegment2DWithOps(planeId: string, x1: number, y1: number, x2: number, y2: number): string {
+frontend/tests/unit/domain/segment3DRealization.spec.ts:240:    const addSeg = new AddSegment2DByPointsOp(planeId, p1Id, p2Id);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:250:    const seg1Id = createSegment2DWithOps(planeH.id!, 3, 5, 7, 9);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:251:    const seg2Id = createSegment2DWithOps(planeV.id!, 3, 2, 7, 4);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:265:    const seg1Id = createSegment2DWithOps(planeH.id!, 1, 2, 3, 4);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:266:    const seg2Id = createSegment2DWithOps(planeV.id!, 10, 5, 20, 15);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:278:    const seg1Id = createSegment2DWithOps(planeH.id!, 0, 0, 5, 5);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:279:    const seg2Id = createSegment2DWithOps(planeH.id!, 1, 1, 6, 6);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:14:import { Segment2DByPoints } from '../../../src/domain/world/Segment';
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:114:      const segment = new Segment2DByPoints(planeH.id + '/seg1', p1Id, p2Id, planeH.id);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:27:  RemoveSegment2DOp, 
+frontend/src/commands/factories/DeletionSequenceFactory.ts:32:import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/src/commands/factories/DeletionSequenceFactory.ts:62:    const allElementsToDelete = dependencyService.getElementsInDeletionOrder(selectedIds);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:70:      order: 'dependents-first (proper deletion order)'
+frontend/src/commands/factories/DeletionSequenceFactory.ts:111:          if (line instanceof Segment2DByPoints) {
+frontend/src/commands/factories/DeletionSequenceFactory.ts:112:            cmd.addAndExecute(new RemoveSegment2DOp(planeId, elementId));
+frontend/tests/unit/domain/segmentIntersections.spec.ts:82:      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:104:      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:124:      const seg1 = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:129:      const seg2 = plane.addSegment2DBetweenPoints(p3.id, p4.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:145:      const seg1 = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:150:      const seg2 = plane.addSegment2DBetweenPoints(p3.id, p4.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:164:      const seg1 = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:169:      const seg2 = plane.addSegment2DBetweenPoints(p3.id, p4.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:183:      const seg1 = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:188:      const seg2 = plane.addSegment2DBetweenPoints(p3.id, p4.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:279:      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:299:      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:318:      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);

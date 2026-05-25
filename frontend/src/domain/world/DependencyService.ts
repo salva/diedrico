@@ -222,8 +222,8 @@ export class DependencyService {
    * referential integrity during the deletion process.
    * 
    * Algorithm:
-   * 1. Compute dependency depth for each element (max distance from leaves)
-   * 2. Sort by depth descending (higher depth = more dependents = delete first)
+   * 1. Compute dependency depth for each element (max distance to dependent leaves)
+   * 2. Sort by depth ascending (leaf dependents before selected roots)
    * 
    * Example: Point P, Line L (depends on P)
    * - L has depth 0 (no dependents)
@@ -279,11 +279,11 @@ export class DependencyService {
       computeDepth(elementId, new Set());
     }
     
-    // Sort by depth descending (higher depth = has more dependents = delete first)
+    // Sort by depth ascending: leaf dependents first, selected roots last.
     return Array.from(allElements).sort((a, b) => {
       const depthA = depths.get(a) || 0;
       const depthB = depths.get(b) || 0;
-      return depthB - depthA; // Descending order
+      return depthA - depthB;
     });
   }
 
