@@ -51,7 +51,7 @@ Same aggressive deletion set as the direct proposal:
 - `frontend/src/services/ValidationService.ts`
 - `frontend/tests/integration/formatUtils.integration.spec.ts`
 - `frontend/src/types/ElementTypes.ts` unconditionally after deleting the above consumers plus `worldStore`/workspace/composables; all current importers are in this delete set, so keeping the file would preserve a parallel domain model without callers.
-- Store-backed workspace tests/fixtures and TODO e2e references that only assert future `Workspace2D` integration, including explicit deletion/rewrite handling for `frontend/tests/e2e/dynamic-planes.spec.ts` references to `window.getWorld()` / `worldStore` when the `main.ts` debug helpers are removed.
+- Store-backed workspace tests/fixtures and TODO e2e references that only assert future `Workspace2D` integration, including mandatory deletion of `frontend/tests/e2e/dynamic-planes.spec.ts` when the `main.ts` debug helpers are removed. Do not rewrite that spec through debug injection or preserve `window.getWorld()` / `worldStore` for it.
 
 No compatibility aliases such as `worldStore.world`, `LegacyElementTypes`, `Workspace2D` re-export barrels, or adapter stores are allowed.
 
