@@ -11,14 +11,8 @@ After this wave, there is one authoritative geometric state source: `World` and 
 
 - `frontend/src/main.ts`
   - Delete the dev helpers that import `./stores/worldStore` and read `worldStore.world`, because the current store has no `world` field (`frontend/src/main.ts:39`, `frontend/src/main.ts:43`, `frontend/src/main.ts:52`, `frontend/src/main.ts:57`, `frontend/src/main.ts:60`; `frontend/src/stores/worldStore.ts:6`). If dev helper functionality is still desired, expose it from the `World` instance provided by `App.vue` only in a later app-shell/debug cleanup wave; do not preserve a store shim here.
-- `frontend/src/components/dialogs/ElementPropertiesDialog.vue`
-  - Replace any `ElementTypes`-only DTO typing with domain element/read-model types or local narrow props, so `ElementTypes.ts` can be deleted rather than kept as a legacy domain model.
-- `frontend/src/components/panels/ElementGroup.vue`
-  - Replace `ElementTypes` DTO usage with a local UI row/read-model type or a domain-derived interface.
-- `frontend/src/services/ValidationService.ts`
-  - If the service is active, retarget it to domain elements or delete it if evidence during implementation proves no active source imports it.
-- `frontend/tests/integration/formatUtils.integration.spec.ts`
-  - Convert fixtures away from `ElementTypes` or delete the test if it only covers deleted DTO formatting.
+- `frontend/src/main.ts` and active tests that still rely on its dev helpers
+  - Delete the broken `worldStore` debug helper surface; explicitly handle e2e references such as `frontend/tests/e2e/dynamic-planes.spec.ts` that call `window.getWorld()` by deleting or rewriting them during implementation rather than preserving the helper.
 - Architecture tests under `frontend/tests/unit/architecture/**`
   - Add/update a boundary test asserting no source imports `@/stores/worldStore`, `../stores/worldStore`, `Workspace2D.vue`, `ElementRenderer.vue`, or `@/types/ElementTypes` after the deletion.
 - Focused tests around active user flows if existing tests already cover them: world initialization, active-plane select-all/delete, Paper hit testing, and tool construction flows.
@@ -37,9 +31,17 @@ Delete these files outright, with no compatibility barrels or re-export shims:
   - Evidence: only active source import is `Workspace2D.vue` (`frontend/src/components/workspace/Workspace2D.vue:79`, `frontend/src/components/workspace/Workspace2D.vue:87`); reads `worldStore.elements2D` (`frontend/src/composables/useElementGeometry.ts:33`, `frontend/src/composables/useElementGeometry.ts:34`, `frontend/src/composables/useElementGeometry.ts:139`, `frontend/src/composables/useElementGeometry.ts:140`); leaves line/circle distance unimplemented (`frontend/src/composables/useElementGeometry.ts:70`, `frontend/src/composables/useElementGeometry.ts:79`) and fakes intersections (`frontend/src/composables/useElementGeometry.ts:202`, `frontend/src/composables/useElementGeometry.ts:204`).
 - `frontend/src/stores/worldStore.ts`
   - Evidence: owns duplicate geometry maps and dependency graph (`frontend/src/stores/worldStore.ts:6` through `frontend/src/stores/worldStore.ts:10`), mutates them (`frontend/src/stores/worldStore.ts:96`, `frontend/src/stores/worldStore.ts:106`, `frontend/src/stores/worldStore.ts:130`, `frontend/src/stores/worldStore.ts:140`, `frontend/src/stores/worldStore.ts:150`, `frontend/src/stores/worldStore.ts:158`, `frontend/src/stores/worldStore.ts:166`, `frontend/src/stores/worldStore.ts:180`), and does not expose the `world` field expected by `main.ts` debug helpers (`frontend/src/main.ts:43`, `frontend/src/main.ts:60`).
+- `frontend/src/components/dialogs/ElementPropertiesDialog.vue`
+  - Evidence: imports only the parallel `ElementTypes` DTO (`frontend/src/components/dialogs/ElementPropertiesDialog.vue:125`) and has no production importer; reviewer W1 found its only active reference is the dead `frontend/tests/integration/formatUtils.integration.spec.ts` fixture. Delete instead of converting.
+- `frontend/src/components/panels/ElementGroup.vue`
+  - Evidence: imports only the parallel `ElementTypes` DTO (`frontend/src/components/panels/ElementGroup.vue:27`) and has zero active production importers per reviewer W1. Delete instead of converting.
+- `frontend/src/services/ValidationService.ts`
+  - Evidence: imports `ElementTypes` (`frontend/src/services/ValidationService.ts:3`) and has zero active production importers per reviewer W1. Delete instead of retargeting.
+- `frontend/tests/integration/formatUtils.integration.spec.ts`
+  - Evidence: imports `ElementTypes` (`frontend/tests/integration/formatUtils.integration.spec.ts:11`) only to mount/test dead `ElementPropertiesDialog.vue`; delete with the dead component rather than preserving obsolete fixtures.
 - `frontend/src/types/ElementTypes.ts`
-  - Delete if the implementation can convert its few remaining active consumers to local read-model/domain types in this cycle. Evidence: it defines a parallel structural geometry model (`frontend/src/types/ElementTypes.ts:9`, `frontend/src/types/ElementTypes.ts:196`) separate from domain classes and projection-plane ownership.
-- Any tests or fixtures that only import deleted store/workspace/type files, including TODO e2e comments that still require `Workspace2D` integration if touched during implementation. At minimum, delete or rewrite references in `frontend/tests/e2e/basic-construction.spec.ts` and `frontend/tests/e2e/distance-transport.spec.ts` if those specs are edited for e2e repair in the implementation wave.
+  - Delete unconditionally after the dead consumers above and `worldStore`/workspace/composables are removed. Evidence: current grep shows every importer is one of the files being deleted (`ElementPropertiesDialog.vue`, `ElementGroup.vue`, `ElementRenderer.vue`, `Workspace2D.vue`, `useElementGeometry.ts`, `useSnapping.ts`, `ValidationService.ts`, `worldStore.ts`, `formatUtils.integration.spec.ts`), and it defines a parallel structural geometry model (`frontend/src/types/ElementTypes.ts:9`, `frontend/src/types/ElementTypes.ts:196`) separate from domain classes and projection-plane ownership.
+- Any tests or fixtures that only import deleted store/workspace/type files, including TODO e2e comments that still require `Workspace2D` integration if touched during implementation. Explicitly delete or rewrite `frontend/tests/e2e/dynamic-planes.spec.ts` references to `window.getWorld()` / `worldStore` when `main.ts` debug helpers are removed, and delete or rewrite references in `frontend/tests/e2e/basic-construction.spec.ts` and `frontend/tests/e2e/distance-transport.spec.ts` if those specs are edited for e2e repair in the implementation wave.
 
 ## Expected behavior change
 
@@ -63,7 +65,7 @@ Run and capture all logs under `architecture-audit/cycle-003-authoritative-world
 - `test ! -e frontend/src/stores/worldStore.ts && echo deleted`
 - `test ! -e frontend/src/composables/useSnapping.ts && echo deleted`
 - `test ! -e frontend/src/composables/useElementGeometry.ts && echo deleted`
-- `test ! -e frontend/src/types/ElementTypes.ts && echo deleted` if the reviewed implementation deletes it; otherwise grep must prove it is no longer a geometry-authority type and the decision must explain why deletion was impossible in one cycle.
+- `test ! -e frontend/src/types/ElementTypes.ts && echo deleted`
 - `grep -R "worldStore\|useWorldStore\|Workspace2D\|ElementRenderer\|ElementTypes\|useSnapping\|useElementGeometry" -n frontend/src frontend/tests || true` and review every remaining match.
 
 ### Focused Vitest
@@ -89,7 +91,7 @@ Known validation debt from Waves 001–002 (missing `eslint`, `vue-tsc` crash un
 
 ## Risks
 
-- `ElementTypes.ts` may have a few active non-dead consumers. The implementation must not keep it as a parallel domain model; it should either delete it or convert it to local UI read-model types with a clear grep proving no geometry authority remains.
+- Deleting the now-identified dead `ElementTypes` consumers is prerequisite to unconditional `ElementTypes.ts` deletion; implementation must not preserve any compatibility shim or local conversion for `ElementPropertiesDialog.vue`, `ElementGroup.vue`, `ValidationService.ts`, or `formatUtils.integration.spec.ts`.
 - Removing `main.ts` debug helpers may affect developer console workflows, but the current helpers are already broken by the absent `worldStore.world` field and should not block architectural cleanup.
 - Full e2e validation is currently blocked by malformed legacy specs. If not repaired in this wave, the implementation log must classify that blockage and still perform static/focused/live preview checks for the touched surfaces.
 - Deleting files can reveal stale tests that import them. Those tests should be deleted or rewritten if they only encode the old store-backed workspace path; do not add compatibility shims.
