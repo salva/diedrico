@@ -2,7 +2,14 @@
 
 ## Summary
 
-Implement Wave 006 as a reviewed split: **006a extracts canvas/tool command construction into application tool controllers**, and **006b handles `ActionsPanel.vue`/`Toolbar.vue` command-intent cleanup** in a dependent wave. This direct proposal keeps 006a to one cycle and targets the active canvas construction path.
+This is a candidate implementation proposal for **006a only**. It must not be implemented from the current single Wave 006 plan entry. The explicit gating outcome of the scout stage is: first run a reviewed wave-plan edit that formalizes **006a canvas/tool command controllers** and **006b `ActionsPanel.vue`/`Toolbar.vue` command-intent cleanup** as separate dependent waves; only after that sign-off may this 006a proposal be selected for implementation.
+
+## Gating status
+
+- **Implementation readiness:** blocked until `architecture-audit/wave-plan.md` is reviewed/edited to split Wave 006 into 006a and 006b.
+- **Current proposal scope:** 006a canvas/tool path only.
+- **Required next step:** decision/plan-edit mini-cycle records the split before any implementation stage.
+- **Reason:** including `ActionsPanel.vue` and `Toolbar.vue` in the same implementation would combine independent controller/use-case surfaces and validation concerns; excluding them without plan edit would leave known leaks as ambiguous residue.
 
 ## Target outcome
 
@@ -63,7 +70,7 @@ Implement Wave 006 as a reviewed split: **006a extracts canvas/tool command cons
 - Delete duplicate/misleading factory split for selected path: move or delete `frontend/src/services/factories/PlaneSequenceFactory.ts` if it only exists as a construction sequence peer of `commands/factories`.
 - Delete `useCommandExecution.ts` if static search confirms it is unused by active source.
 - Delete tests that inspect tool-created `Command` internals; replace with controller tests and behavior assertions.
-- Do **not** delete `ActionsPanel.vue`/`Toolbar.vue` command leaks in 006a; instead add the reviewed 006b wave before implementation or record them as explicit next-wave targets in the edited plan.
+- Do **not** delete `ActionsPanel.vue`/`Toolbar.vue` command leaks in 006a; the reviewed wave-plan edit must first create 006b as the explicit dependent wave before 006a implementation can start.
 
 ## Expected behavior change
 
@@ -74,7 +81,7 @@ No intentional user-visible behavior change. Construction, guide/sibling-guide c
 - Tool interaction state and command lifecycle are currently intertwined in `ArgumentCollectorTool`; extracting them may accidentally change completion behavior or status messaging.
 - Some validation is mixed between UI selection constraints and domain construction constraints, especially intersections and projection-plane trace validation. The controller split must avoid moving hit-test/mask concerns into application use-cases while also removing command construction from tools.
 - Quick/example construction tools (`QuickProjectionSetupTool`, `Quick3DLineTool`, `Quick3DSegmentTool`, `ExampleConstructionsTool`) may reveal debug/demo paths that should be deleted rather than migrated if not user-facing.
-- Leaving panel/toolbar leaks for 006b requires an explicit reviewed wave-plan edit; otherwise Wave 006 success criteria would be ambiguous.
+- Leaving panel/toolbar leaks for 006b is acceptable only after the reviewed wave-plan split is recorded. Without that split, this proposal is procedurally blocked and must not be implemented.
 
 ## Validation plan for implementation
 

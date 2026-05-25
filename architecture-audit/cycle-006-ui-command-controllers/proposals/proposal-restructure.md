@@ -2,7 +2,14 @@
 
 ## Summary
 
-This proposal asks whether the fix belongs one conceptual layer higher than direct tool-controller extraction. It does: the durable abstraction should be **application construction use-cases** with thin tool controllers/adapters. Tool controllers translate UI interaction state into use-case requests, while construction use-cases own command assembly and process-tree action semantics. This still requires the same reviewed split: 006a canvas/tool use-cases/controllers, then 006b panel/toolbar intent cleanup.
+This proposal asks whether the fix belongs one conceptual layer higher than direct tool-controller extraction. It does: the durable abstraction should be **application construction use-cases** with thin tool controllers/adapters. Tool controllers translate UI interaction state into use-case requests, while construction use-cases own command assembly and process-tree action semantics. This is still a **006a-only candidate** and is procedurally blocked until a reviewed wave-plan edit formalizes 006a canvas/tool use-cases/controllers and 006b panel/toolbar intent cleanup as separate dependent waves.
+
+## Gating status
+
+- **Implementation readiness:** blocked under the current single Wave 006 plan entry.
+- **Required next step:** run a reviewed wave-plan edit/decision that splits Wave 006 into 006a canvas/tool construction use-cases/controllers and 006b panel/toolbar command-intent cleanup.
+- **Current proposal scope:** 006a only; `ActionsPanel.vue` and `Toolbar.vue` are explicit 006b targets, not optional leftovers.
+- **Reason:** the higher-level construction-use-case boundary should be proven first on the canvas/tool construction surface; panel process-history edits and toolbar example/debug setup require separate use-case concepts and validation.
 
 ## Target outcome
 
@@ -39,10 +46,10 @@ The current leaks are not only in Vue components. `ITool` declares that tools tr
 - Refactor `frontend/src/tools/**` to retain interaction state only: argument specs, masks, hit-test-compatible validators, and status messages.
 - Refactor `SvgCanvas.vue` to call a controller/use-case facade for tool completion, style update, and point movement.
 
-### Explicitly out of 006a / new 006b
+### Explicitly out of 006a / required new 006b
 
-- `ActionsPanel.vue` process-tree stack/edit use-cases are a separate process-history application surface.
-- `Toolbar.vue` Alt+E example setup should become either a construction-example use-case or be deleted as debug/example functionality; this is a separate cleanup from canvas tools.
+- `ActionsPanel.vue` process-tree stack/edit use-cases are a separate process-history application surface and must be captured in the formal 006b plan entry before 006a implementation begins.
+- `Toolbar.vue` Alt+E example setup should become either a construction-example use-case or be deleted as debug/example functionality; this separate cleanup must be captured in the formal 006b plan entry before 006a implementation begins.
 
 ## Explicit DELETE list
 
@@ -52,7 +59,7 @@ The current leaks are not only in Vue components. `ITool` declares that tools tr
 - Delete duplicate sequence-factory namespace split between `commands/factories` and `services/factories` for construction use-cases addressed in 006a.
 - Delete or privatize factories that are just application use-case internals; do not leave public factory layers that encourage UI imports.
 - Delete obsolete tests asserting tools call specific operations; replace with use-case/controller behavior tests.
-- Add 006b DELETE targets to the edited wave plan: `ActionsPanel.vue` operation imports, `Toolbar.vue` Alt+E concrete operation construction, and panel/toolbar command-internal tests if any.
+- Add 006b DELETE targets to the edited wave plan before implementation: `ActionsPanel.vue` operation imports, `Toolbar.vue` Alt+E concrete operation construction, and panel/toolbar command-internal tests if any. Until this edit is reviewed and accepted, this proposal remains blocked.
 
 ## Expected behavior change
 
@@ -86,4 +93,4 @@ Full cadence:
 
 ## Recommendation
 
-Choose this restructure proposal if the reviewer agrees the construction use-case layer is the right durable boundary. It better satisfies the project priority order (clean architecture before minimal change) while still respecting the scope guard through a 006a/006b split.
+Choose this restructure proposal only after the reviewed 006a/006b wave-plan split is recorded. It better satisfies the project priority order (clean architecture before minimal change) while respecting the scope guard, but it is not implementation-ready under the current single Wave 006 entry.

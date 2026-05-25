@@ -11,7 +11,7 @@ Wave 006 premises still hold after Waves 001–005: the command, persistence, pr
 1. **Canvas/tool construction path** — `SvgCanvas.vue` instantiates tools and passes `world` + `commandStack`; `ArgumentCollectorTool` and many concrete tools create `Command`s, add operations, create process-tree action groups/actions, and push commands.
 2. **Panel/toolbar command path** — `ActionsPanel.vue` directly creates process-tree commands, while `Toolbar.vue` contains an Alt+E example setup that directly constructs world operations.
 
-Because these surfaces require separate controller concepts and validation surfaces, Wave 006 should proceed as **006a canvas/tool command controllers only**, with a reviewed wave-plan split before implementation to add **006b panel/toolbar command-intent cleanup**. The direct proposal below is therefore intentionally bounded to canvas/tools. It explicitly names remaining panel/toolbar leaks as dependent follow-up work rather than silently broadening this cycle.
+Because these surfaces require separate controller concepts and validation surfaces, **Wave 006 cannot proceed to implementation under the current one-wave plan entry**. The required outcome of this scout stage is a **gating decision**: before any implementation stage is scheduled, the authoritative `architecture-audit/wave-plan.md` must go through a reviewed plan-edit mini-cycle that formalizes **006a canvas/tool command controllers** and **006b panel/toolbar command-intent cleanup** as separate dependent waves. The proposals below are therefore candidate implementation proposals for 006a only; they are not implementation-ready until that reviewed wave-plan split is accepted.
 
 ## Accounting for completed Waves 001–005
 
@@ -46,12 +46,12 @@ Because these surfaces require separate controller concepts and validation surfa
 
 `useCommandExecution.ts` claims to build/execute commands but uses the legacy `processStore`, calls `command.addAndExecute()` without operations, and exposes broad `CommandResult<T = any>` (`frontend/src/composables/useCommandExecution.ts:1-18`, `frontend/src/composables/useCommandExecution.ts:27-43`, `frontend/src/composables/useCommandExecution.ts:56-80`). It is not used by the active canvas/tool path found above and should be deleted or replaced by the new application execution helper if no active call sites remain.
 
-## Scope recommendation / remaining-wave re-rank
+## Gating outcome / remaining-wave re-rank
 
-The remaining wave order after Wave 005 should stay centrality-first, but Wave 006 must be split before implementation:
+The remaining wave order after Wave 005 should stay centrality-first, but this stage must **stop before implementation** and route to a reviewed wave-plan edit. The required plan edit is:
 
-1. **006a — Canvas/tool command controllers** (current cycle continuation after reviewed plan edit): `SvgCanvas.vue`, `frontend/src/tools/**`, `useCommandExecution.ts`, and command/sequence factories used by canvas tools.
-2. **006b — Panel/toolbar command-intent cleanup** (new immediate dependent wave): `ActionsPanel.vue`, `Toolbar.vue`, any process-history use-cases, example/debug construction use-cases, and related tests.
+1. **006a — Canvas/tool command controllers** (new immediate implementation wave only after reviewed plan-edit sign-off): `SvgCanvas.vue`, `frontend/src/tools/**`, `useCommandExecution.ts`, and command/sequence factories used by canvas tools.
+2. **006b — Panel/toolbar command-intent cleanup** (new dependent wave after 006a): `ActionsPanel.vue`, `Toolbar.vue`, any process-history use-cases, example/debug construction use-cases, and related tests.
 3. Wave 007 — 2D rendering selectors/adapters.
 4. Wave 008 — 3D rendering adapters.
 5. Wave 009 — App shell services.
@@ -60,7 +60,14 @@ The remaining wave order after Wave 005 should stay centrality-first, but Wave 0
 8. Wave 012 — placeholders/debug surfaces.
 9. Wave 013 — docs/spec reconciliation.
 
-Proceeding without the split would either leave `ActionsPanel.vue`/`Toolbar.vue` as accidental residue or force the implementation wave to solve canvas tools, process-history mutations, and debug/example toolbar construction in one cycle, which violates the Wave 006 scope guard.
+Proceeding without the reviewed split is a blocker: it would either leave `ActionsPanel.vue`/`Toolbar.vue` as accidental residue or force the implementation wave to solve canvas tools, process-history mutations, and debug/example toolbar construction in one cycle, which violates the Wave 006 scope guard. Therefore the next stage after this scout/review correction must be a reviewed wave-plan edit or decision that explicitly records the accepted split; no 006 implementation should be dispatched from the current single Wave 006 entry.
+
+## Concrete wave-plan delta for the gating edit
+
+The decision/plan-edit stage can apply this delta to `architecture-audit/wave-plan.md` before implementation:
+
+- Replace current Wave 006 with **006a — Canvas/tool command controllers**. Scope: `SvgCanvas.vue`, `frontend/src/tools/**`, selected command/sequence factories used by canvas tools, `useCommandExecution.ts` if unused or adapter-worthy, and controller/use-case tests. Target: Vue/canvas/tools emit intent and interaction state while application controllers/use-cases own command construction, validation orchestration, command-stack execution, and undo/redo command lifecycle for canvas construction, point movement, and style update. DELETE: direct concrete operation/`Command`/`CommandStack` imports from the selected canvas/tool path; open-command tool APIs; obsolete tests that inspect tool command internals; misleading duplicate factory namespace for selected canvas construction. Success: no active canvas/tool source imports concrete operations or pushes commands directly, focused controller/use-case tests pass, full validation cadence/e2e/preview refresh recorded. Depends on Waves 001–005.
+- Insert **006b — Panel/toolbar command-intent cleanup** immediately after 006a. Scope: `ActionsPanel.vue`, `Toolbar.vue`, process-history edit use-cases, debug/example construction setup, and related tests. Target: panel/toolbar components emit typed user intents and application use-cases own process-tree mutations/example setup command construction. DELETE: `ActionsPanel.vue` operation/`Command` imports, `Toolbar.vue` Alt+E concrete operation construction or the shortcut itself if deemed debug-only, and panel/toolbar command-internal tests. Success: no panel/toolbar source directly creates concrete commands/operations, behavior/e2e coverage for action edits and any retained example setup passes. Depends on 006a.
 
 ## Validation implications for eventual implementation
 
