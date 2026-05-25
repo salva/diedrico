@@ -1,0 +1,15 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/processTree.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 10ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  22:17:23
+   Duration  981ms (transform 99ms, setup 0ms, collect 102ms, tests 10ms, environment 494ms, prepare 89ms)
+
+EXIT_CODE=0

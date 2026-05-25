@@ -1,0 +1,15 @@
+
+/work/diedrico/node_modules/vue-tsc/bin/vue-tsc.js:68
+			throw err;
+			^
+Search string not found: "/supportedTSExtensions = .*(?=;)/"
+(Use `node --trace-uncaught ...` to show where the exception was thrown)
+
+Node.js v24.15.0
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vue-tsc && vite build

@@ -1,0 +1,8 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/services/DependencyService.spec.ts tests/integration/dependency-graph.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+EXIT_CODE=1

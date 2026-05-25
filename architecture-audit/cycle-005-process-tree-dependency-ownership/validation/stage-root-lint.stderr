@@ -1,0 +1,8 @@
+sh: 1: eslint: not found
+npm error Lifecycle script `lint` failed with error:
+npm error code 127
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore

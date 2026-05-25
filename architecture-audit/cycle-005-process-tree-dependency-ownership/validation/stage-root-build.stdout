@@ -1,0 +1,9 @@
+
+> diedrico@0.1.0 build
+> npm run build --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+EXIT_CODE=1

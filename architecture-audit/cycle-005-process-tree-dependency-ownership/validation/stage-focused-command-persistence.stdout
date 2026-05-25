@@ -1,0 +1,18 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/initializeWorldCommand.spec.ts tests/unit/commands/commandStack.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/integration/projectService.determinism.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/commands/commandStack.spec.ts  (28 tests) 18ms
+ ✓ tests/unit/commands/initializeWorldCommand.spec.ts  (11 tests) 23ms
+ ✓ tests/unit/services/ProjectService.roundTrip.spec.ts  (18 tests) 27ms
+ ✓ tests/integration/projectService.determinism.spec.ts  (2 tests) 32ms
+
+ Test Files  4 passed (4)
+      Tests  59 passed (59)
+   Start at  22:17:54
+   Duration  1.78s (transform 839ms, setup 0ms, collect 2.29s, tests 100ms, environment 2.84s, prepare 491ms)
+
+EXIT_CODE=0

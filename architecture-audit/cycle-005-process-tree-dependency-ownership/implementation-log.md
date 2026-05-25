@@ -104,3 +104,54 @@ During reviewer correction, `t3-focused-deletion-sequence-factory.*` initially f
 - `ActionsPanel.vue` still directly imports/construes process-tree operation classes. This is intentionally deferred to Wave 006 per the decision.
 - Repository-wide validation debt remains: missing eslint binary, vue-tsc/Node 24 build crash, malformed e2e specs, and unrelated full-suite failures. These should be addressed in separate waves/tooling cleanup, not by restoring deleted compatibility APIs.
 - Deletion factory coverage now explicitly exercises representative cascade behavior without compatibility shims. Remaining breadth beyond these representative factory scenarios is covered by the focused remove-element and integration cascade-deletion suites.
+
+## Validation-and-preview stage rerun — cycle-005-validation-and-preview-refresh
+
+Validation stage `t1-run-validation-and-refresh-preview` reran the mandatory cadence with stage-prefixed stable logs under `architecture-audit/cycle-005-process-tree-dependency-ownership/validation/`.
+
+### Static deleted-API/reference checks
+
+All required deleted-surface checks returned no active source/test matches; `rg` exit code `1` is recorded in the stdout log as the expected no-match result:
+
+- `stage-static-deleted-names.stdout` / `.stderr`: `rg -n "\.addAction\(|getActionsDependingOnElement|World\.addAction|ProcessTree\.addAction|rebuildDependencyMaps\(|getActionDependencies" frontend/src frontend/tests` — PASS, no matches (`EXIT_CODE=1`).
+- `stage-static-process-world-definitions.stdout` / `.stderr`: `rg -n "addAction\(|getActionsDependingOnElement" frontend/src/domain/processTree/ProcessTree.ts frontend/src/domain/world/World.ts` — PASS, no matches (`EXIT_CODE=1`).
+- `stage-static-dependency-shims.stdout` / `.stderr`: `rg -n "rebuildDependencyMaps|getActionDependencies" frontend/src/domain/world/DependencyService.ts frontend/src frontend/tests` — PASS, no matches (`EXIT_CODE=1`).
+- `stage-static-actions-panel-scope.stdout` / `.stderr`: `rg -n "process-history use-case|processHistoryUseCases|application/processTree" frontend/src/components/panels/ActionsPanel.vue frontend/src/application frontend/tests` — PASS, no Wave 006 process-history extraction markers (`EXIT_CODE=1`).
+
+### Focused Wave 005 validation
+
+Passed:
+
+- `stage-focused-process-tree.stdout` / `.stderr`: `npm run test --workspace=frontend -- tests/unit/processTree.spec.ts` — 15 tests passed.
+- `stage-focused-subprocess-stack.stdout` / `.stderr`: `npm run test --workspace=frontend -- tests/integration/processTree-stack.test.ts tests/unit/services/ProjectService.subprocess.spec.ts` — 21 tests passed.
+- `stage-focused-deletion-dependency.stdout` / `.stderr`: `npm run test --workspace=frontend -- tests/unit/commands/factories/DeletionSequenceFactory.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts` — 21 tests passed. The stderr warning for an element with no producing action is expected behavior asserted by the test.
+- `stage-focused-dependency-graph-rerun.stdout` / `.stderr`: `npm run test --workspace=frontend -- tests/unit/dependencyGraph.spec.ts` — 34 tests passed.
+- `stage-focused-command-persistence.stdout` / `.stderr`: `npm run test --workspace=frontend -- tests/unit/commands/initializeWorldCommand.spec.ts tests/unit/commands/commandStack.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/integration/projectService.determinism.spec.ts` — 59 tests passed.
+
+Non-attributable operator-path error, corrected immediately:
+
+- `stage-focused-dependency-graph.stdout` / `.stderr`: first dependency graph command used nonexistent paths (`tests/unit/services/DependencyService.spec.ts`, `tests/integration/dependency-graph.test.ts`) and failed with `No test files found`; this was a validation command path mistake, not a product failure. The correct existing dependency graph spec was then run and passed in `stage-focused-dependency-graph-rerun.*`.
+
+### Full cadence
+
+- `stage-root-lint.stdout` / `.stderr`: `npm run lint` — FAIL, classified pre-existing/tooling. Evidence: `sh: 1: eslint: not found`; the frontend script invokes an eslint binary that is not installed in the current dependency tree. This is unrelated to Wave 005 process-tree/dependency API deletion.
+- `stage-frontend-lint.stdout` / `.stderr`: `npm run lint --workspace=frontend` — FAIL, same pre-existing/tooling missing `eslint` binary.
+- `stage-root-test.stdout` / `.stderr`: `npm run test` — FAIL, classified pre-existing/unrelated. Evidence includes malformed/stale import `tests/integration/guide-creation.test.ts` importing missing `../../src/commands/operations/AddFreePoint2DOp`, stale `selectionMask`, `intersections`, `propertiesDialog`, and `GuideTool` assertions. The Wave 005 focused suites covering touched process-tree, dependency, deletion, undo/redo, and persistence behavior passed.
+- `stage-backend-test.stdout` / `.stderr`: `npm run test --workspace=backend` — PASS, 15 tests passed.
+- `stage-root-build.stdout` / `.stderr`: `npm run build` — FAIL, classified pre-existing/tooling. Evidence: `vue-tsc` throws `Search string not found: "/supportedTSExtensions = .*(?=;)/"` on `Node.js v24.15.0` before compiling app code.
+- `stage-frontend-build.stdout` / `.stderr`: `npm run build --workspace=frontend` — FAIL, same pre-existing `vue-tsc`/Node 24 tooling incompatibility.
+- `stage-backend-build.stdout` / `.stderr`: `npm run build --workspace=backend` — PASS (`tsc`).
+- `stage-frontend-e2e.stdout` / `.stderr`: `npm run test:e2e --workspace=frontend` — FAIL before executing tests, classified pre-existing e2e-spec syntax debt. Evidence: syntax errors in `frontend/tests/e2e/keyboard-shortcuts.spec.ts` at `267:10160` and `frontend/tests/e2e/selection-mask.spec.ts` at `188:2`.
+
+No failing validation command is attributable to the Wave 005 API deletions or the corrected deletion-order/segment-dispatch fixes. The required focused Wave 005 coverage passed after the implementation-stage corrections.
+
+### Live preview refresh and reachability
+
+- `stage-live-preview-refresh-and-probe.stdout` / `.stderr`: stopped the previously tracked Wave 005 preview process if present, found an existing single preview already reachable on `http://127.0.0.1:5173/`, avoided starting a duplicate, and recorded an HTTP `200 OK` probe response from Vite. The tracked preview command remains `npm run dev --workspace=frontend -- --host 0.0.0.0` when a new server is needed; this probe confirms the live app endpoint answered after refresh/probe handling.
+
+### Validation-stage residual risks
+
+- Full lint remains blocked by missing eslint installation/configuration.
+- Frontend build remains blocked by `vue-tsc` compatibility with the current Node/TypeScript runtime before code compilation.
+- Full frontend Vitest and Playwright remain blocked by repository-wide stale tests/spec syntax that predate Wave 005 and are outside this wave's corrective scope.
+- These validation debts should become future tooling/test-cleanup work; they do not justify restoring any deleted Wave 005 compatibility API.

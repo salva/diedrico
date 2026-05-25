@@ -1,0 +1,15 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/dependencyGraph.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/dependencyGraph.spec.ts  (34 tests) 14ms
+
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Start at  22:17:49
+   Duration  954ms (transform 67ms, setup 0ms, collect 65ms, tests 14ms, environment 456ms, prepare 83ms)
+
+EXIT_CODE=0

@@ -1,0 +1,15 @@
+
+> diedrico-backend@0.1.0 test
+> vitest run
+
+
+ RUN  v1.6.1 /work/diedrico/backend
+
+ ✓ tests/integration/projects.spec.ts  (15 tests) 181ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  22:18:36
+   Duration  953ms (transform 108ms, setup 0ms, collect 246ms, tests 181ms, environment 0ms, prepare 111ms)
+
+EXIT_CODE=0

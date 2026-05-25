@@ -1,0 +1,5 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+EXIT_CODE=1
