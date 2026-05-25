@@ -81,7 +81,7 @@
  */
 
 import { Vector4, Matrix3 } from 'three';
-import { applyMatrix4x3, Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
+import { applyMatrix4x3, Matrix4x3 } from '@/utils/threeUtils';
 import { Point2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
 import { Line2D } from './Line';
 import { Segment2D, Segment2DByPoints } from './Segment';

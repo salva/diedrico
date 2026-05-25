@@ -311,7 +311,7 @@ export class DependencyService {
    * @returns Array of dependency edges created by this action
    * @deprecated Phase 91: Actions no longer drive dependencies. Cannot query by action ID.
    */
-  getActionDependencies(actionId: string): DependencyEdge[] {
+  getActionDependencies(_actionId: string): DependencyEdge[] {
     // const edges: DependencyEdge[] = [];
     
     // this.traverseTree(this.processTree.root, (node: ProcessNode) => {
