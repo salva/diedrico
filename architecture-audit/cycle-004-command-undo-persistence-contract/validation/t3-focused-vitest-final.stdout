@@ -1,0 +1,15 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/commands/createIntersectionPoint.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (6 tests) 10ms
+ ✓ tests/unit/commands/createIntersectionPoint.spec.ts  (4 tests) 22ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  12:43:42
+   Duration  1.69s (transform 630ms, setup 0ms, collect 1.39s, tests 32ms, environment 966ms, prepare 181ms)
+

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { deserializeOperation, getRegisteredOperationTypes, serializeOperation } from '@/commands/operations/OperationRegistry';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddGuide2DPerpendicularToLineOp } from '@/commands/operations/world/AddGuideOp';
+import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
 import { Vector3 } from 'three';
 
 describe('OperationRegistry', () => {
@@ -28,6 +29,25 @@ describe('OperationRegistry', () => {
     const op = deserializeOperation(descriptor);
     expect(op.type).toBe('AddFreePoint2D');
     expect(serializeOperation(op)).toEqual(descriptor);
+  });
+
+  it('round-trips AddIntersectionPoint2D line identifiers and restored output state', () => {
+    const descriptor = {
+      opType: 'AddIntersectionPoint2D',
+      planeId: 'projPlane3',
+      line1Id: 'projPlane3/line2d4',
+      line2Id: 'projPlane3/line2d5',
+      index: 0,
+      pointId: 'projPlane3/point2d12'
+    };
+
+    const restored = deserializeOperation(descriptor);
+    expect(restored.type).toBe('AddIntersectionPoint2D');
+    expect(serializeOperation(restored)).toEqual(descriptor);
+
+    const created = new AddIntersectionPoint2DOp(descriptor.planeId, descriptor.line1Id, descriptor.line2Id, descriptor.index);
+    created.outputs = { pointId: descriptor.pointId };
+    expect(serializeOperation(created)).toEqual(descriptor);
   });
 
   it('persists AddGuide generated IDs from output state, not mutable parameters', () => {

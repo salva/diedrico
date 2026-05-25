@@ -72,8 +72,8 @@ export class AddIntersectionPoint2DOp implements IOperation {
     return {
       opType: this.type,
       planeId: this.parameters.planeId,
-      element1Id: this.parameters.element1Id,
-      element2Id: this.parameters.element2Id,
+      line1Id: this.parameters.line1Id,
+      line2Id: this.parameters.line2Id,
       index: this.parameters.index,
       pointId: this.outputs.pointId
     };

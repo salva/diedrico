@@ -1,0 +1,20 @@
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:2: * AddIntersectionPoint2DOp - Operation to add an IntersectionPoint2D using ProjectionPlane factory method
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:13:export class AddIntersectionPoint2DOp implements IOperation {
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:14:  readonly type = 'AddIntersectionPoint2D';
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:20:    private line1Id: string,
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:21:    private line2Id: string,
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:24:    this.parameters = { planeId, line1Id, line2Id, index };
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:37:        this.line1Id,
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:38:        this.line2Id,
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:75:      line1Id: this.parameters.line1Id,
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:76:      line2Id: this.parameters.line2Id,
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:5:import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:36:  it('round-trips AddIntersectionPoint2D line identifiers and restored output state', () => {
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:38:      opType: 'AddIntersectionPoint2D',
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:40:      line1Id: 'projPlane3/line2d4',
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:41:      line2Id: 'projPlane3/line2d5',
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:47:    expect(restored.type).toBe('AddIntersectionPoint2D');
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:50:    const created = new AddIntersectionPoint2DOp(descriptor.planeId, descriptor.line1Id, descriptor.line2Id, descriptor.index);
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:20:import { AddIntersectionPoint2DOp } from './AddIntersectionPointOp';
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:54:  registry.register('AddLineLineIntersectionPoint2D', d => restoreOutput(new AddLineLineIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id')), { pointId: so(d, 'pointId') }));
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:60:  registry.register('AddIntersectionPoint2D', d => restoreOutput(new AddIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id'), n(d, 'index')), { pointId: so(d, 'pointId') }));
