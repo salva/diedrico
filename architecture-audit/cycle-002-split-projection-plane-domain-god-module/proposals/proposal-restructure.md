@@ -23,6 +23,7 @@ The base `ProjectionPlane` currently mixes stable aggregate state with broad con
 - Mutation methods accept optional `World` and perform dependency registration/dirty marking (`frontend/src/domain/world/ProjectionPlane.ts:244-252`).
 - Construction helpers create typed domain elements and call `world.generateDefaultLabel`, `world.getLine2D`, `world.getHingeLineById`, `world.getSiblingPlaneForIntersection`, and related cross-aggregate APIs (`frontend/src/domain/world/ProjectionPlane.ts:779-875`, `frontend/src/domain/world/ProjectionPlane.ts:938-1045`, `frontend/src/domain/world/ProjectionPlane.ts:1109-1145`, `frontend/src/domain/world/ProjectionPlane.ts:1150-1157`, `frontend/src/domain/world/ProjectionPlane.ts:1410-1413`).
 - Realization methods still expose broad `any` world context (`frontend/src/domain/world/ProjectionPlane.ts:1428`, `frontend/src/domain/world/ProjectionPlane.ts:1436`, `frontend/src/domain/world/ProjectionPlane.ts:1689`, `frontend/src/domain/world/ProjectionPlane.ts:1747`).
+- Per-element realization and ID-generation helpers also import the concrete `World` type directly (`realizePoint2D`, `realizeLine2D`, `realizeCircle2D`, `generatePoint2DId`, `generateLine2DId`, `generateSegment2DId`, `generateCircle2DId`, `generateGuide2DId`; `frontend/src/domain/world/ProjectionPlane.ts:465`, `frontend/src/domain/world/ProjectionPlane.ts:489`, `frontend/src/domain/world/ProjectionPlane.ts:513`, `frontend/src/domain/world/ProjectionPlane.ts:538`, `frontend/src/domain/world/ProjectionPlane.ts:546`, `frontend/src/domain/world/ProjectionPlane.ts:554`, `frontend/src/domain/world/ProjectionPlane.ts:562`, `frontend/src/domain/world/ProjectionPlane.ts:570`). These must be covered by the same context-narrowing work, not treated as separate acceptable coupling.
 - `AddAuxiliaryProjectionPlaneOp` directly constructs an auxiliary projection plane and mutates `world.projectionPlanes` (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:95-118`), showing that command operations already act as application/domain coordinators.
 
 ## Proposed architecture
@@ -63,7 +64,8 @@ The selection criterion should be dependency direction:
 - identity/metadata (`id`, `name`, `isActive`, `isVisible`, `color`, `plane3DId`),
 - element collection ownership (`addPoint`, `removePoint`, `getPoint`, `getAllPoints`, etc.) with no dirty/dependency side effects,
 - realization caches and cache invalidation,
-- abstract `clone`, `getDependencies`, `realize2D`, `realize3D` with typed context.
+- abstract `clone`, `getDependencies`, `realize2D`, `realize3D` with typed context,
+- per-element realization/read helpers with typed projection-plane contexts rather than direct `World` imports.
 
 `ProjectionPlane` does **not** create specific `FreePoint2D`, `Line2DParallel`, `Guide2D`, `SiblingIntersectionPoint2D`, or `HalfHingeLine2D` objects.
 
@@ -112,14 +114,18 @@ This proposal recommends option 1 only if a pre-implementation grep shows the he
 - Update `frontend/src/domain/world/World.ts` imports (`frontend/src/domain/world/World.ts:92`) and any calls that create fixed projection planes.
 - Update all commands/factories/tests that call construction helper methods on planes.
 - Update `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts` import, delete its auxiliary-plane creation debug `console.log` noise (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:112-114`, `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:119`, `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:123`), and consider replacing direct `world.projectionPlanes.set(...)` with a typed world/domain method if in scope (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:95-118`).
-- Update tests importing `BaseProjectionPlane` from the old monolith to current/focused symbols (`frontend/tests/unit/coordinateTransform.spec.ts:9`, `frontend/tests/unit/projectionPlane.spec.ts:9`, `frontend/tests/unit/projectionPlane.spec.ts:180-183`).
+- Update tests importing `BaseProjectionPlane` from the old monolith to current/focused symbols (`frontend/tests/unit/coordinateTransform.spec.ts:9`, `frontend/tests/unit/utils/coordinateTransform.spec.ts:21`, `frontend/tests/unit/services/paperService.spec.ts:13`, `frontend/tests/unit/projectionPlane.spec.ts:9`, `frontend/tests/unit/projectionPlane.spec.ts:180-183`). Use `FixedProjectionPlane` for concrete P_H/P_V plane instances and `ProjectionPlane` only where an abstract base type is intended.
+
+### `BaseProjectionPlane` current-state clarification
+
+This proposal assumes the `BaseProjectionPlane` test imports are **already invalid in the current tree**, not a supported API to preserve. Source evidence shows `BaseProjectionPlane` is not exported by `frontend/src/domain/world/ProjectionPlane.ts` and appears only in comments. Restructure implementation must therefore delete those imports/types and replace them with `FixedProjectionPlane` for concrete fixed planes, rather than introducing aliases, wrappers, or a compatibility export.
 
 ## DELETE list
 
 - Delete the all-in-one `frontend/src/domain/world/ProjectionPlane.ts`.
 - Delete construction helper methods from the `ProjectionPlane` entity once moved to `PlaneElementConstructionService`.
 - Delete optional `world?: import('./World').World` side-effect parameters from plane collection methods.
-- Delete `any` projection-plane realization context signatures.
+- Delete `any` projection-plane realization context signatures and direct `import('./World').World` parameters from per-element realization, ID-generation, and construction helper paths by replacing them with explicit context interfaces.
 - Delete stale `BaseProjectionPlane` imports/types rather than adding aliases to preserve the old test vocabulary.
 - Delete debug logging in auxiliary realization that is not behaviorally required.
 - Delete same-path command debug logging in `AddAuxiliaryProjectionPlaneOp.ts` unless the implementation explicitly defers it as out of scope with rationale.

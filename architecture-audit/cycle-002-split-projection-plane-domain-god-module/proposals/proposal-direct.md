@@ -69,7 +69,7 @@ export interface ProjectionPlaneMutationContext extends ProjectionPlaneRealizati
 }
 ```
 
-The exact method set should be derived mechanically from the extracted helper methods, but the principle is binding: replace `world: any` realization signatures with a named domain read context and replace `world?: import('./World').World` collection side-effect parameters with a named mutation/dependency context. `World` already satisfies these methods without adapter code.
+The exact method set should be derived mechanically from the extracted helper methods, but the principle is binding: replace `world: any` realization signatures with a named domain read context and replace direct `World`-typed parameters with named contexts. This includes the abstract/concrete `realize2D`/`realize3D` methods **and** the per-element helpers currently typed as `world: import('./World').World` (`realizePoint2D`, `realizeLine2D`, `realizeCircle2D`, `generatePoint2DId`, `generateLine2DId`, `generateSegment2DId`, `generateCircle2DId`, `generateGuide2DId`) plus construction helpers that currently accept direct `World` parameters. Replace `world?: import('./World').World` collection side-effect parameters with a named mutation/dependency context. `World` should satisfy these methods structurally without adapter code, but projection-plane modules must not import `World` for these contracts.
 
 Fixed planes should accept an unused optional typed context only if required for API symmetry:
 
@@ -113,7 +113,11 @@ Known direct consumers of `frontend/src/domain/world/ProjectionPlane.ts` must be
 ### Test consumers
 
 - Update tests importing from `@/domain/world/ProjectionPlane` or relative `ProjectionPlane` paths.
-- Replace stale `BaseProjectionPlane` test imports/types with `FixedProjectionPlane` or `ProjectionPlane` as appropriate. Current evidence shows `BaseProjectionPlane` appears in tests but is not exported by the current file (`architecture-audit/cycle-002-split-projection-plane-domain-god-module/validation/symbol-surfaces.stdout.log`; `frontend/tests/unit/projectionPlane.spec.ts:9`, `frontend/tests/unit/projectionPlane.spec.ts:180-183`).
+- Replace stale `BaseProjectionPlane` test imports/types with `FixedProjectionPlane` for concrete P_H/P_V plane instances, or abstract `ProjectionPlane` only where the test truly needs the base type. Current evidence shows `BaseProjectionPlane` appears in tests but is not exported by the current file (`architecture-audit/cycle-002-split-projection-plane-domain-god-module/validation/symbol-surfaces.stdout.log`; `frontend/tests/unit/projectionPlane.spec.ts:9`, `frontend/tests/unit/projectionPlane.spec.ts:180-183`; `frontend/tests/unit/coordinateTransform.spec.ts:9`; `frontend/tests/unit/utils/coordinateTransform.spec.ts:21`; `frontend/tests/unit/services/paperService.spec.ts:13`).
+
+### `BaseProjectionPlane` current-state clarification
+
+Wave 002 should treat the `BaseProjectionPlane` imports as **pre-existing broken test code**, not as a behavior that must be preserved. Current source evidence shows `BaseProjectionPlane` is not exported from `frontend/src/domain/world/ProjectionPlane.ts` and only appears in comments, while multiple tests import or type against it. Therefore the implementation must not add a compatibility alias; it should fix those tests by replacing concrete P_H/P_V references with `FixedProjectionPlane` and using `ProjectionPlane` only for abstract base typing.
 
 ## DELETE list
 
@@ -128,12 +132,12 @@ Known direct consumers of `frontend/src/domain/world/ProjectionPlane.ts` must be
 ## Implementation steps
 
 1. Create the `projectionPlane/` subdirectory and move realization value types into `ProjectionPlaneRealization.ts` without behavior changes.
-2. Define typed realization/mutation contexts in `ProjectionPlaneContext.ts` and update fixed/auxiliary/base signatures away from `any`.
+2. Define typed realization/mutation contexts in `ProjectionPlaneContext.ts` and update fixed/auxiliary/base signatures away from `any` and away from direct `import('./World').World` parameters in per-element realization, ID-generation, and construction helper methods.
 3. Extract element maps and realization caches into `ProjectionPlaneElementStore.ts`; keep public methods on `ProjectionPlane` initially delegating to the store so operations/tests do not need broad behavior rewrites.
 4. Move the abstract `ProjectionPlane` base into `projectionPlane/ProjectionPlane.ts` with metadata, storage delegation, shared backward-matrix helpers, and either delegated or mixed-in construction helper methods.
 5. Move `FixedProjectionPlane` to `FixedProjectionPlane.ts`.
 6. Move `AuxiliaryProjectionPlane` to `AuxiliaryProjectionPlane.ts` and replace `any` context plus debug logging as described.
-7. Update imports in `World.ts`, `AddAuxiliaryProjectionPlaneOp.ts`, type collectors, services, and tests.
+7. Update imports in `World.ts`, `AddAuxiliaryProjectionPlaneOp.ts`, type collectors, services, and tests; specifically replace invalid `BaseProjectionPlane` test imports/types with `FixedProjectionPlane` for P_H/P_V concrete planes (or `ProjectionPlane` only for abstract base references).
 8. Remove old `frontend/src/domain/world/ProjectionPlane.ts` and verify grep shows no imports from it.
 9. Add/update architecture or unit tests to assert no `frontend/src/domain/world/ProjectionPlane.ts` file remains and no projection-plane `realize2D/realize3D` signatures use `any`.
 
