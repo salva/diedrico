@@ -1,0 +1,51 @@
+  pointId: null,
+  cmd: null,
+  startClientX: 0,
+  startClientY: 0,
+  moved: false
+});
+
+// Viewport pan in select mode (T965: drag empty space pans)
+const viewportPan = ref<{
+  active: boolean;
+  startX: number;
+  startY: number;
+}>({
+  active: false,
+  startX: 0,
+  startY: 0
+});
+
+let ignoreNextClick = false;
+
+function isMovableFreePoint(point: any): point is FreePoint2D {
+  return point instanceof FreePoint2D && !point.locked;
+}
+
+function endPointDrag(commit: boolean): void {
+  if (!pointDrag.value.active) return;
+
+  const cmd = pointDrag.value.cmd;
+
+  try {
+    if (cmd) {
+      if (commit && (cmd as any).operations && (cmd as any).operations.length > 0) {
+        cmd.commit();
+        commandStack.push(cmd);
+      } else {
+        cmd.rollback();
+      }
+    }
+  } finally {
+    pointDrag.value = {
+      active: false,
+      planeId: null,
+      pointId: null,
+      cmd: null,
+      startClientX: 0,
+      startClientY: 0,
+      moved: false
+    };
+    renderTick.value++;
+  }
+}

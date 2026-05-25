@@ -93,9 +93,13 @@ describe('Round-Trip Serialization Tests', () => {
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddGuide2DPerpendicularToLine');
-    expect(result.parameters.planeId).toBe('projPlaneH');
-    expect(result.parameters.referenceLineId).toBe('lineId');
-    expect(result.parameters.throughPointId).toBe('pointId');
+    expect(result.serialize()).toEqual({
+      opType: 'AddGuide2DPerpendicularToLine',
+      planeId: 'projPlaneH',
+      referenceLineId: 'lineId',
+      throughPointId: 'pointId',
+      guideId: undefined
+    });
   });
 
   it('AddSiblingGuide2D survives round-trip', () => {
@@ -104,9 +108,13 @@ describe('Round-Trip Serialization Tests', () => {
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('AddSiblingGuide2D');
-    expect(result.parameters.planeId).toBe('projPlaneV');
-    expect(result.parameters.primaryGuideId).toBe('primaryGuide');
-    expect(result.parameters.referenceLineId).toBe('refLine');
+    expect(result.serialize()).toEqual({
+      opType: 'AddSiblingGuide2D',
+      planeId: 'projPlaneV',
+      primaryGuideId: 'primaryGuide',
+      referenceLineId: 'refLine',
+      siblingGuideId: undefined
+    });
   });
 
   it('AddLineLineIntersectionPoint2D survives round-trip', () => {

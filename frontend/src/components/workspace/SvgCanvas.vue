@@ -318,7 +318,7 @@ function endPointDrag(commit: boolean): void {
 
   try {
     if (cmd) {
-      if (commit && (cmd as any).operations && (cmd as any).operations.length > 0) {
+      if (commit && cmd.getOperations().length > 0) {
         cmd.commit();
         commandStack.push(cmd);
       } else {

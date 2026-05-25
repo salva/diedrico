@@ -1,0 +1,223 @@
+frontend/src/App.vue:473:  if ((window as any).__autoSaveInterval) {
+frontend/src/App.vue:474:    clearInterval((window as any).__autoSaveInterval);
+frontend/src/App.vue:490:  (window as any).__autoSaveInterval = checkInterval;
+frontend/src/App.vue:571:      if ((window as any).__autoSaveInterval) {
+frontend/src/App.vue:572:        clearInterval((window as any).__autoSaveInterval);
+frontend/src/App.vue:1057:  if ((window as any).__autoSaveInterval) {
+frontend/src/App.vue:1058:    clearInterval((window as any).__autoSaveInterval);
+frontend/src/utils/arcGeometry.ts:71:    const siblingThroughPoint = siblingPlane.getPoint((siblingGuide as any).primaryGuideId 
+frontend/src/types/CommandTypes.ts:16:  outputs: Record<string, any>;  // Dictionary of symbolic paths or fixed values
+frontend/src/stores/settingsStore.ts:226:    (settings.value as any)[category] = structuredClone((DEFAULT_SETTINGS as any)[category]);
+frontend/src/types/SelectionMask.ts:264: * Kept for backward compatibility and explicit subtype specification
+frontend/src/services/SVGRenderer.ts:450:    throw new Error(`Unhandled primitive type: ${(_exhaustive as any).type}`);
+frontend/src/components/workspace/SvgCanvas.vue:321:      if (commit && (cmd as any).operations && (cmd as any).operations.length > 0) {
+frontend/src/components/workspace/SvgCanvas.vue:537:      const msg = (currentToolInstance.value as any).getStatusMessage();
+frontend/src/services/PaperService.ts:170:            if ((line as any).arcGeometry) {
+frontend/src/services/PaperService.ts:171:              const arcPrimitive = this.arcGeometryToPrimitive(line.id!, (line as any).arcGeometry, context);
+frontend/src/services/GoogleDriveService.ts:100:          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+frontend/src/services/GoogleDriveService.ts:226:        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+frontend/src/services/GoogleDriveService.ts:498:      const rawName = (data as any).name;
+frontend/tests/unit/commands.spec.ts:11:  parameters: Record<string, any>;
+frontend/tests/unit/commands.spec.ts:12:  outputs: Record<string, any> = {};
+frontend/tests/unit/commandStack.spec.ts:12:  parameters: Record<string, any> = {};
+frontend/tests/unit/commandStack.spec.ts:13:  outputs: Record<string, any> = {};
+frontend/tests/unit/commandStack.spec.ts:91:      (cmd as any).canUndo = () => false;
+frontend/src/components/toolbars/ToolFamilyButton.vue:31:        :class="{ active: toolStore.isToolActive(tool.id as any) }"
+frontend/src/components/toolbars/ToolFamilyButton.vue:37:        <span v-if="toolStore.isToolActive(tool.id as any)" class="checkmark">✓</span>
+frontend/src/components/toolbars/ToolFamilyButton.vue:61:  return props.family.tools.some(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/components/toolbars/ToolFamilyButton.vue:66:  const activeTool = props.family.tools.find(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/tools/ITool.ts:70:  getState?(): Record<string, any>;
+frontend/tests/unit/types/SelectionMask.spec.ts:33:  const halfHingeLine = new HalfHingeLine2D(`${planeId}/hhl2d_1`, { id: 'hinge_1' } as any, planeId);
+frontend/src/tools/BaseTool.ts:52:  getState?(): Record<string, any>;
+frontend/tests/unit/services/renderService.spec.ts:293:      // Should have same structure as any other point
+frontend/src/components/panels/ThreeView.vue:1143:  (window as any).__threeViewWorldChangeHandler = handleWorldChange;
+frontend/src/components/panels/ThreeView.vue:1148:  const handleWorldChange = (window as any).__threeViewWorldChangeHandler;
+frontend/src/components/panels/ThreeView.vue:1151:    delete (window as any).__threeViewWorldChangeHandler;
+frontend/src/tools/ArgumentCollectorTool.ts:418:  getState(): Record<string, any> {
+frontend/tests/unit/tools/pointTool.spec.ts:40:    toolStore: {} as any, // Mock tool store
+frontend/tests/unit/tools/pointTool.spec.ts:123:      const position = (createdPoint as any).position;
+frontend/tests/unit/services/paperService.spec.ts:65:      const pointPrimitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:111:      const pointPrimitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:139:      const pointPrimitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:162:      const pointPrimitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:189:      const primitive1 = primitives.find(p => p.sourceEntityId === pointH.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:190:      const primitive2 = primitives.find(p => p.sourceEntityId === pointV.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:242:      const primitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:263:      const primitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:299:      const freePrimitive = primitives.find(p => p.sourceEntityId === freePoint.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:300:      const intersectionPrimitive = primitives.find(p => p.sourceEntityId === intersectionPoint.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:336:      const freePrimitive = primitives.find(p => p.sourceEntityId === freePoint.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:337:      const intersectionPrimitive = primitives.find(p => p.sourceEntityId === intersectionPoint.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:456:      expect((point1Updated as any).position).toBeDefined();
+frontend/tests/unit/services/paperService.spec.ts:473:      const pointPrimitive = primitives[0] as any;
+frontend/tests/unit/services/paperService.spec.ts:491:      const pointPrimitive = primitives[0] as any;
+frontend/tests/unit/services/paperService.spec.ts:530:        expect((hingeLinePrimitive as any).style.opacity).toBe(1.0);
+frontend/tests/unit/services/paperService.spec.ts:552:      let pointHPrimitive = primitives.find(p => p.sourceEntityId === pointH.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:553:      let pointVPrimitive = primitives.find(p => p.sourceEntityId === pointV.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:566:      pointHPrimitive = primitives.find(p => p.sourceEntityId === pointH.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:567:      pointVPrimitive = primitives.find(p => p.sourceEntityId === pointV.id) as any;
+frontend/tests/unit/services/googleDriveService.spec.ts:13:  callback: null as any,
+frontend/tests/unit/services/googleDriveService.spec.ts:47:global.gapi = mockGapi as any;
+frontend/tests/unit/services/googleDriveService.spec.ts:48:(global as any).google = mockGoogle;
+frontend/tests/unit/components/propertiesDialog.spec.ts:296:      const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+frontend/tests/unit/components/propertiesDialog.spec.ts:328:      const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:326:    const localId = `point2d${world.getNextId()}`;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:334:    const localId = `line2d${world.getNextId()}`;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:342:    const localId = `segment2d${world.getNextId()}`;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:350:    const localId = `circle2d${world.getNextId()}`;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:358:    const localId = `guide2d${world.getNextId()}`;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1110:    (primaryPoint as any).siblingPointId = siblingPoint.id;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:23:  getNextId(): number;
+frontend/src/commands/CommandStack.ts:64:    this.undoStack.push(command);
+frontend/src/commands/CommandStack.ts:99:    this.undoStack.push(command);
+frontend/src/domain/world/World.ts:269:  getNextId(): number {
+frontend/src/domain/world/styleService.ts:99:        if ('isOutput' in child && (child as any).isOutput) {
+frontend/src/domain/world/BrokenHingeLine.ts:83:      ? (auxPlane as any).t2PrimeLineId   // T2' on hinge plane (e.g., projPlane3)
+frontend/src/domain/world/BrokenHingeLine.ts:84:      : (auxPlane as any).t2OtherTraceId; // T2 on other plane (e.g., projPlane4)
+frontend/src/components/dialogs/PropertiesDialog.vue:291:      const intersectionPoint = point as any; // Type assertion for intersection-specific properties
+frontend/src/components/dialogs/PropertiesDialog.vue:298:    const lineByPoints = line as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:306:    const segmentByPoints = segment as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:314:    const circleByCenterRadius = circle as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:322:    const guidePerp = guide as any;
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:129:      ) as any;
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:34:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:35:  outputs: Record<string, any> = {};
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:112:      ? (auxPlane as any).t2PrimeLineId   // T2' on hinge plane
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:113:      : (auxPlane as any).t2OtherTraceId; // T2 on other plane
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:35:    const restored = plane.getPoint(point.id) as any;
+frontend/src/domain/presentation/Paper.ts:711:   * Check if paper has any dirty primitives
+frontend/tests/unit/commands/initializationOps.spec.ts:321:      expect((world as any).hingeLines.has('hl_undo')).toBe(true);
+frontend/tests/unit/commands/initializationOps.spec.ts:325:      expect((world as any).hingeLines.has('hl_undo')).toBe(false);
+frontend/tests/unit/commands/initializationOps.spec.ts:326:      expect((world as any).mainHingeLineId).toBeUndefined();
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:66:    beforeState: Record<string, any>;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:67:    afterState: Record<string, any>;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:75:    beforeState: Record<string, any>,
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:76:    afterState: Record<string, any>,
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:155:        (hhl as any).hingeLineId === hl.id && hhl.id === element.t1HingeTraceId
+frontend/src/domain/calculations/CoordinateTransform.ts:45: * For backward compatibility with tests, also accepts string plane names.
+frontend/src/domain/calculations/CoordinateTransform.ts:95: * For backward compatibility with tests, also accepts string plane names.
+frontend/src/domain/world/Segment.ts:111:// Export legacy type alias for backward compatibility during migration
+frontend/tests/unit/commands/command.spec.ts:28:  outputs: Record<string, any> = {};
+frontend/tests/unit/commands/command.spec.ts:69:  parameters: Record<string, any>;
+frontend/tests/unit/commands/command.spec.ts:70:  outputs: Record<string, any> = {};
+frontend/src/domain/world/Point.ts:29:  INTERSECTION: 'intersection',  // Kept temporarily for backward compatibility
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:22:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:23:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:34:    const pos = this.newPosition as any;
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:64:        this.previousPosition = toVector3((freePoint as any).position);
+frontend/tests/unit/domain/guide.spec.ts:227:      expect((siblingGuide as any).throughPointId).toBeUndefined();
+frontend/tests/unit/domain/guide.spec.ts:244:      expect((cloned as any).throughPointId).toBeUndefined();
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:37:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:38:  outputs: Record<string, any> = {};
+frontend/tests/unit/domain/element2d.spec.ts:107:      point.visualStyle = { ...point.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:119:      line.visualStyle = { ...line.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:131:      circle.visualStyle = { ...circle.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:309:      elements.forEach(el => el.visualStyle = { ...el.visualStyle, visible: false } as any);
+frontend/tests/unit/domain/element2d.spec.ts:331:      elements[1].visualStyle = { ...elements[1].visualStyle, visible: false } as any;  // Hide the line
+frontend/src/commands/operations/world/RemoveElementOps.ts:26:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:27:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:113:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:114:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:197:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:198:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:282:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:283:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:373:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:374:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:424:      if ('siblingGuideId' in this.removedGuide && (this.removedGuide as any).siblingGuideId) {
+frontend/src/commands/operations/world/RemoveElementOps.ts:425:        const siblingGuideId = (this.removedGuide as any).siblingGuideId;
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:117:      expect((primaryGuide as any).siblingGuideId).toBe(result.siblingGuideId);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:118:      expect((siblingGuide as any).primaryGuideId).toBe(result.guideId);
+frontend/src/commands/operations/world/InitializationOps.ts:34:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:35:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:82:      (world as any).planes3D.delete(this.outputs.planeId);
+frontend/src/commands/operations/world/InitializationOps.ts:106:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:107:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:158:      (world as any).projectionPlanes.delete(this.outputs.projPlaneId);
+frontend/src/commands/operations/world/InitializationOps.ts:185:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:186:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:275:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:276:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:315:      (world as any).hingeLines.delete(this.outputs.hingeLineId);
+frontend/src/commands/operations/world/InitializationOps.ts:316:      (world as any).mainHingeLineId = undefined;
+frontend/src/commands/operations/world/InitializationOps.ts:338:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:339:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:420:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:421:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:29:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:30:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:126:      (world as any).hingeLines.set(bhlId, brokenHingeLine);
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:173:      (world as any).hingeLines.delete(this.outputs.brokenHingeLineId);
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:15:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:16:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddCircleOp.ts:13:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddCircleOp.ts:14:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:22:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:23:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:70:            (primaryPoint as any).siblingPointId = undefined;
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:27:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:28:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddGuideOp.ts:12:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddGuideOp.ts:13:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddGuideOp.ts:84:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddGuideOp.ts:85:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts:15:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts:16:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddSegmentOp.ts:12:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddSegmentOp.ts:13:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddFreePointOp.ts:13:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddFreePointOp.ts:14:  outputs: Record<string, any> = {};
+frontend/tests/integration/pointCreation.spec.ts:69:      const position = (createdPoint as any).position;
+frontend/tests/integration/pointCreation.spec.ts:415:      const createdPoint = world.getPoint2DById(pointId) as any;
+frontend/tests/integration/pointCreation.spec.ts:424:      const restoredPoint = world.getPoint2DById(pointId) as any;
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:25:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:26:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts:15:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts:16:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts:15:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts:16:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:12:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:13:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:78:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:79:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:145:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:146:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:212:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:213:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:281:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:282:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/Add3DPointOp.ts:30:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/Add3DPointOp.ts:31:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:27:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:28:  outputs: Record<string, any> = {};
+frontend/src/commands/factories/GuideSequenceFactory.ts:98:    (primaryGuide as any).siblingGuideId = siblingGuideId;
+frontend/src/commands/operations/world/Add3DLineOp.ts:24:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/Add3DLineOp.ts:25:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:16:  parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:17:  outputs: Record<string, any> = {};
+frontend/src/commands/factories/ProjectionSetupFactory.ts:63:    line => line instanceof HalfHingeLine2D && (line as any).hingeLineId === hingeLineId
+frontend/src/commands/factories/ProjectionSetupFactory.ts:64:  ) as any;
+frontend/src/commands/factories/ProjectionSetupFactory.ts:108:    line => line instanceof HalfHingeLine2D && (line as any).hingeLineId === hingeLineId
+frontend/src/commands/factories/ProjectionSetupFactory.ts:109:  ) as any;
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:10:  parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:11:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:26:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:27:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:102:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:103:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:142:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:143:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:10:  parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:11:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:17:  parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:18:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:16:  parameters: Record<string, any> = {};
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:17:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:14:  parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:15:  outputs: Record<string, any> = {};
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:48:        l => (l as any).hingeLineId === mainHingeLine.id
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:98:      expect((primaryPoint as any).siblingPointId).toBe(result.siblingPointId);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:99:      expect((siblingPoint as any).primaryIntersectionId).toBe(result.pointId);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:148:        l => (l as any).hingeLineId === mainHingeLine.id
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:10:  parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:11:  outputs: Record<string, any> = {};

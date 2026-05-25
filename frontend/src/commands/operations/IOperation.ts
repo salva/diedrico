@@ -11,7 +11,7 @@ import type { World } from '@/domain/world/World';
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
 export interface JsonObject {
-  [key: string]: any;
+  [key: string]: JsonValue | undefined;
 }
 
 export interface OperationResult<TOutputs extends JsonObject = JsonObject> {

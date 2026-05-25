@@ -1,0 +1,57 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/command.spec.ts tests/unit/commands/commandStack.spec.ts tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/unit/services/ProjectService.selfContainment.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/integration/projectService.determinism.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/commands/commandStack.spec.ts  (28 tests) 15ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 18ms
+ ✓ tests/integration/projectService.cascadeDeletion.spec.ts  (4 tests) 23ms
+ ✓ tests/unit/services/ProjectService.roundTrip.spec.ts  (18 tests) 31ms
+ ✓ tests/integration/projectService.determinism.spec.ts  (2 tests) 33ms
+ ✓ tests/unit/services/ProjectService.selfContainment.spec.ts  (8 tests) 38ms
+stdout | tests/unit/services/ProjectService.selfContainment.spec.ts > ProjectService Self-Containment Tests > UpdateElementStyleOp should be self-contained
+[UpdateElementStyleOp] Applied style to: projPlane3/point2d10 {
+  color: '#FF0000',
+  lineWidth: 2,
+  lineStyle: 'solid',
+  opacity: 1,
+  visible: true,
+  inherited: true
+}
+[UpdateElementStyleOp] Applied style to: projPlane3/point2d10 {
+  color: '#FF0000',
+  lineWidth: 2,
+  lineStyle: 'solid',
+  opacity: 1,
+  visible: true,
+  inherited: true
+}
+
+stdout | tests/unit/services/ProjectService.selfContainment.spec.ts > ProjectService Self-Containment Tests > Complex multi-operation sequence should be self-contained
+[UpdateElementStyleOp] Applied style to: projPlane3/point2d10 {
+  color: '#0000FF',
+  lineWidth: 2,
+  lineStyle: 'solid',
+  opacity: 1,
+  visible: true,
+  inherited: true
+}
+[UpdateElementStyleOp] Applied style to: projPlane3/point2d10 {
+  color: '#0000FF',
+  lineWidth: 2,
+  lineStyle: 'solid',
+  opacity: 1,
+  visible: true,
+  inherited: true
+}
+
+ ✓ tests/unit/commands/command.spec.ts  (35 tests) 43ms
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (5 tests) 6ms
+
+ Test Files  8 passed (8)
+      Tests  105 passed (105)
+   Start at  12:23:14
+   Duration  2.60s (transform 1.32s, setup 3ms, collect 4.53s, tests 207ms, environment 5.51s, prepare 982ms)
+

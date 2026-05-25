@@ -1,0 +1,33 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddGuide2DPerpendicularToLine survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:96:30
+     94|     
+     95|     expect(result.type).toBe('AddGuide2DPerpendicularToLine');
+     96|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+     97|     expect(result.parameters.referenceLineId).toBe('lineId');
+     98|     expect(result.parameters.throughPointId).toBe('pointId');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddSiblingGuide2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:107:30
+    105|     
+    106|     expect(result.type).toBe('AddSiblingGuide2D');
+    107|     expect(result.parameters.planeId).toBe('projPlaneV');
+       |                              ^
+    108|     expect(result.parameters.primaryGuideId).toBe('primaryGuide');
+    109|     expect(result.parameters.referenceLineId).toBe('refLine');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/commands/command.spec.ts tests/unit/commands/commandStack.spec.ts tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/unit/services/ProjectService.selfContainment.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/integration/projectService.determinism.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts

@@ -1,0 +1,4 @@
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:202:    expect(result.parameters.guideId).toBe('guide1');
+frontend/src/components/workspace/SvgCanvas.vue:321:      if (commit && (cmd as any).operations && (cmd as any).operations.length > 0) {
+frontend/src/commands/CommandStack.ts:64:    this.undoStack.push(command);
+frontend/src/commands/CommandStack.ts:99:    this.undoStack.push(command);

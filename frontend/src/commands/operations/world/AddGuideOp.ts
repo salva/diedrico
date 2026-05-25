@@ -1,39 +1,43 @@
 /**
  * AddGuide2DPerpendicularToLineOp - Operation to add a Guide2DPerpendicularToLine using ProjectionPlane factory method
- * 
+ *
  * Wraps ProjectionPlane.addGuide2D() in the Operation interface.
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+
+interface AddGuideOutput extends JsonObject {
+  guideId?: string;
+}
+
+interface AddSiblingGuideOutput extends JsonObject {
+  siblingGuideId?: string;
+}
 
 export class AddGuide2DPerpendicularToLineOp implements IOperation {
   readonly type = 'AddGuide2DPerpendicularToLine';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: AddGuideOutput = {};
 
   constructor(
-    private planeId: string,
-    private referenceLineId: string,
-    private throughPointId: string,
-    private guideId?: string
-  ) {
-    this.parameters = { planeId, referenceLineId, throughPointId, guideId };
-  }
+    private readonly planeId: string,
+    private readonly referenceLineId: string,
+    private readonly throughPointId: string,
+    private readonly restoredGuideId?: string
+  ) {}
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<AddGuideOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
-      
-      // Use guideId from constructor (for deserialization), outputs (for redo), or let it generate
+
       const guide = plane.addGuide2D(
         this.referenceLineId,
         this.throughPointId,
         world,
-        this.guideId || this.outputs.guideId
+        this.restoredGuideId ?? this.outputs.guideId
       );
       this.outputs = { guideId: guide.id };
       return {
@@ -53,7 +57,6 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
     if (this.outputs.guideId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        // Guides are stored in the lines Map
         plane.removeLine(this.outputs.guideId);
       }
     }
@@ -72,40 +75,36 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
 
 /**
  * AddSiblingGuide2DOp - Operation to add a sibling guide in the paired projection plane
- * 
+ *
  * Sibling guides are automatically created when a primary Guide2D is created.
  * This operation wraps ProjectionPlane.addSiblingGuide2D().
- * 
+ *
  * Architecture note: Sibling creation must be done at command level using specific ops,
  * not embedded in the world layer (as per architecture requirements).
  */
 export class AddSiblingGuide2DOp implements IOperation {
   readonly type = 'AddSiblingGuide2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: AddSiblingGuideOutput = {};
 
   constructor(
-    private planeId: string,
-    private primaryGuideId: string,
-    private referenceLineId: string,
-    private siblingGuideId?: string
-  ) {
-    this.parameters = { planeId, primaryGuideId, referenceLineId, siblingGuideId };
-  }
+    private readonly planeId: string,
+    private readonly primaryGuideId: string,
+    private readonly referenceLineId: string,
+    private readonly restoredSiblingGuideId?: string
+  ) {}
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<AddSiblingGuideOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
-      
-      // Use siblingGuideId from constructor (for deserialization), outputs (for redo), or let it generate
+
       const siblingGuide = plane.addSiblingGuide2D(
         this.primaryGuideId,
         this.referenceLineId,
         world,
-        this.siblingGuideId || this.outputs.siblingGuideId
+        this.restoredSiblingGuideId ?? this.outputs.siblingGuideId
       );
       this.outputs = { siblingGuideId: siblingGuide.id };
       return {
@@ -125,7 +124,6 @@ export class AddSiblingGuide2DOp implements IOperation {
     if (this.outputs.siblingGuideId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        // Sibling guides are stored in the lines Map
         plane.removeLine(this.outputs.siblingGuideId);
       }
     }
