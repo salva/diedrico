@@ -25,7 +25,7 @@ test.describe('Basic Construction Workflow', () => {
   });
 
   test('should create points and display them in Elements panel', async ({ page }) => {
-    // TODO: Once Workspace2D and PointTool are integrated:
+    // TODO: Replace placeholder with UI-driven point-tool coverage when the current SvgCanvas workflow has stable test IDs:
     
     // 1. Select Point tool from toolbar
     // await page.click('[data-testid="point-tool"]');
@@ -50,7 +50,7 @@ test.describe('Basic Construction Workflow', () => {
   });
 
   test('should create segment from two points', async ({ page }) => {
-    // TODO: Once Workspace2D and SegmentTool are integrated:
+    // TODO: Replace placeholder with UI-driven segment-tool coverage when the current SvgCanvas workflow has stable test IDs:
     
     // 1. Create two points first
     // ... (same as above)
@@ -76,7 +76,7 @@ test.describe('Basic Construction Workflow', () => {
   });
 
   test('should display actions in Actions panel', async ({ page }) => {
-    // TODO: Once Workspace2D, panels, and tools are integrated:
+    // TODO: Replace placeholder with UI-driven panel/tool coverage when the current app shell exposes stable test IDs:
     
     // 1. Create a point
     // ... (create point workflow)
@@ -124,7 +124,6 @@ test.describe('Basic Construction Workflow', () => {
  * Implementation Notes:
  * 
  * Prerequisites before these tests can run:
- * - Workspace2D component must be integrated into main app
  * - PointTool and SegmentTool must be integrated with toolbar
  * - ActionsPanel and ElementsPanel must be rendered in app layout
  * - Canvas click handlers must trigger command execution

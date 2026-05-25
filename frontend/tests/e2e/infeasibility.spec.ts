@@ -189,7 +189,7 @@ test.describe('Infeasibility Detection and Rendering', () => {
  * Prerequisites:
  * - Infeasibility validation logic must be implemented
  * - DependencyGraph.propagateInfeasibility must be integrated
- * - ElementRenderer must apply infeasible styles (T103)
+ * - Current rendering path must apply infeasible styles
  * - Actions panel must show infeasibility badges
  * - Elements panel must show infeasibility badges
  * 

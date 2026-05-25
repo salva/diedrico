@@ -27,7 +27,7 @@ test.describe('Distance Transport Workflow', () => {
   });
 
   test('should transport segment from P_H to P_V', async ({ page }) => {
-    // TODO: Once Workspace2D and transport tools are integrated:
+    // TODO: Replace placeholder with UI-driven distance-transport coverage when the current SvgCanvas workflow exposes stable test IDs:
     
     // 1. Create a guide
     // await page.click('[data-testid="point-tool"]');
