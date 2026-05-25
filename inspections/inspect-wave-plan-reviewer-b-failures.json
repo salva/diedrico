@@ -1,0 +1,97 @@
+{
+  "id": "inspect-wave-plan-reviewer-b-failures",
+  "requested_by": "planner",
+  "requested_at": "2026-05-25T03:26:40.000Z",
+  "completed_at": "2026-05-25T03:29:00.000Z",
+  "scope": "Repeated Manager/harness failures for wave-plan reviewer-B stages wave-plan-reviewer-b-round-01 and wave-plan-reviewer-b-round-01-retry.",
+  "status": "completed",
+  "questions_answered": [
+    "What concrete failure pattern is visible in .saivage/stages/wave-plan-reviewer-b-round-01*/summary.json and plan history?",
+    "Is there any hidden reviewer-B artifact or report outside architecture-audit/wave-plan-reviews/round-01-reviewer-b.md that can be accepted?",
+    "What stage objective/acceptance criteria changes are most likely to produce the required reviewer-B artifact while preserving the mandatory separate reviewer stage?",
+    "Should the plan remove or retain wave-plan-decision until reviewer-B sign-off exists?"
+  ],
+  "findings": [
+    {
+      "title": "Executive summary",
+      "severity": "high",
+      "answer": "The two reviewer-B wave-plan stages failed before producing the required artifact; both stage summaries record reviewer worker cancellations and explicit absence of architecture-audit/wave-plan-reviews/round-01-reviewer-b.md. No acceptable hidden reviewer-B wave-plan artifact exists in the audited safe paths. The plan must retain wave-plan-decision as a pending gate, but it must not execute or pass until a separate reviewer-B stage produces a real sign-off or corrections artifact."
+    },
+    {
+      "title": "Q1: Concrete failure pattern in summaries and plan history",
+      "severity": "high",
+      "answer": "The pattern is missing-artifact failure after reviewer runtime cancellation, surfaced through harness/schema failures in plan history. wave-plan-reviewer-b-round-01 summary says the reviewer worker was cancelled on both attempts before producing the review artifact, with attempt 1 failing with 'LLM error: Agent cancelled' and the retry failing immediately with 'Cancelled' (.saivage/stages/wave-plan-reviewer-b-round-01/summary.json:4,10,26). It records files_created as empty for both reviewer tasks and missing_required containing architecture-audit/wave-plan-reviews/round-01-reviewer-b.md (.saivage/stages/wave-plan-reviewer-b-round-01/summary.json:11,27,39-46). Acceptance criteria passed only stage separation/no reviewer-A work, while artifact existence and verdict criteria failed (.saivage/stages/wave-plan-reviewer-b-round-01/summary.json:48-68). The retry stage repeats the same pattern: first dispatch ran but failed with 'LLM error: Agent cancelled', second failed immediately with 'Cancelled', and no artifact was produced (.saivage/stages/wave-plan-reviewer-b-round-01-retry/summary.json:4,10,17,46-48,65-82). Plan history adds the harness/schema wrapper facts: original reviewer-B failed with 'issues file fields were null' and retry failed with 'escalation.created_at required', while both history entries say no artifact/sign-off/corrections existed (.saivage/plan-history.json:208-223,226-241). Root cause visible from these artifacts is not a wave-plan content rejection; it is the reviewer/manager/harness execution path failing before the mandatory artifact is written."
+    },
+    {
+      "title": "Q2: Hidden artifact/report search result",
+      "severity": "high",
+      "answer": "No acceptable hidden reviewer-B wave-plan artifact or report was found. architecture-audit/wave-plan-reviews contains only round-01-reviewer-a.md, not round-01-reviewer-b.md (tmp/inspector-workspace/wave-plan-reviewer-b-evidence.txt, section 'wave-plan review dir'). Both wave-plan reviewer-B stage directories contain only summary.json and tasks.json, with no reports/ or reviews/ subdirectory (tmp/inspector-workspace/wave-plan-reviewer-b-evidence.txt, section 'b stage dirs'). A safe reviewer-B filename search found baseline reviewer-B artifacts and baseline stage reports, plus the two failed wave-plan reviewer-B stage metadata files, but no wave-plan reviewer-B report other than tasks/summary metadata (tmp/inspector-workspace/wave-plan-reviewer-b-evidence.txt, section 'reviewer-b named safe files'). Baseline reviewer-B artifacts cannot be accepted for Phase 2 wave-plan sign-off because they review the Phase 1 baseline, not architecture-audit/wave-plan.md."
+    },
+    {
+      "title": "Q3: Stage objective/acceptance changes most likely to produce reviewer-B artifact",
+      "severity": "medium",
+      "answer": "The most likely successful change is to schedule a fresh separate reviewer-B stage whose objective prioritizes writing the markdown artifact early and forbids returning schema-problematic structured issues. The stage should remain separate from reviewer-A, assigned to the reviewer role, and require the first task to create architecture-audit/wave-plan-reviews/round-01-reviewer-b.md with a minimal header, inputs reviewed, criteria list, and final verdict; then fill wave-by-wave assessment. Acceptance should be filesystem-first: pass only if that exact file exists and contains either 'SIGN OFF \u2014 no further corrections required' or 'REQUIRED CORRECTIONS' with numbered actionable items. To reduce cancellation risk, narrow the requested output format and explicitly instruct that any blockers/content issues must be written into the markdown artifact rather than returned as null issue fields or escalation; if the reviewer cannot complete exhaustive prose, it should still write REQUIRED CORRECTIONS explaining incomplete review rather than leaving no artifact. Do not add a manager-authored substitution criterion: unlike the reviewer-A retry, the active project objective says both reviewers must be served by the reviewer agent role in separate plan stages, so acceptance should preserve reviewer-B provenance instead of allowing manager synthesis."
+    },
+    {
+      "title": "Q4: wave-plan-decision disposition",
+      "severity": "high",
+      "answer": "Retain wave-plan-decision as the pending gate, but do not run it as a decision that can pass until reviewer-B sign-off exists. Removing the stage would obscure the required Phase 2 gate; advancing it now would violate the dual-reviewer protocol because only reviewer-A has an accepted wave-plan sign-off. The current pending stage should either remain blocked or be preceded by a new reviewer-B-only retry stage. Its acceptance criteria should explicitly fail closed when architecture-audit/wave-plan-reviews/round-01-reviewer-b.md is absent or lacks a valid SIGN OFF/REQUIRED CORRECTIONS verdict."
+    }
+  ],
+  "evidence": [
+    ".saivage/stages/wave-plan-reviewer-b-round-01/summary.json:4 states both reviewer attempts were cancelled before producing architecture-audit/wave-plan-reviews/round-01-reviewer-b.md.",
+    ".saivage/stages/wave-plan-reviewer-b-round-01/summary.json:10 and :26 record 'LLM error: Agent cancelled' then immediate 'Cancelled'.",
+    ".saivage/stages/wave-plan-reviewer-b-round-01/summary.json:44-46 lists round-01-reviewer-b.md as missing_required.",
+    ".saivage/stages/wave-plan-reviewer-b-round-01-retry/summary.json:4 records a 57-minute cancelled run, only reviewer-A present, and an immediate second cancellation.",
+    ".saivage/stages/wave-plan-reviewer-b-round-01-retry/summary.json:65-82 records failed artifact existence and verdict criteria.",
+    ".saivage/plan-history.json:208-223 records original reviewer-B stage failed at schema boundary because issues file fields were null and no artifact existed.",
+    ".saivage/plan-history.json:226-241 records retry failed at schema boundary because escalation.created_at was required and no artifact existed.",
+    "tmp/inspector-workspace/wave-plan-reviewer-b-evidence.txt shows architecture-audit/wave-plan-reviews contains only round-01-reviewer-a.md and the reviewer-B wave-plan stage directories contain only tasks.json and summary.json."
+  ],
+  "recommendations": [
+    {
+      "priority": "P0",
+      "action": "Insert/schedule a fresh separate stage, e.g. wave-plan-reviewer-b-round-01-retry-02, assigned only to the reviewer role, before wave-plan-decision.",
+      "acceptance_criteria": [
+        "architecture-audit/wave-plan-reviews/round-01-reviewer-b.md exists",
+        "File header identifies Reviewer-B and the fresh stage id",
+        "File states inputs reviewed including architecture-audit/wave-plan.md and signed-off baseline decision",
+        "File contains exactly one final verdict: 'SIGN OFF \u2014 no further corrections required' or 'REQUIRED CORRECTIONS' with numbered actionable corrections",
+        "No reviewer-A artifact is modified"
+      ]
+    },
+    {
+      "priority": "P0",
+      "action": "Revise reviewer-B stage instructions to require artifact-first behavior: write a minimal markdown skeleton and final verdict to architecture-audit/wave-plan-reviews/round-01-reviewer-b.md before returning any structured task issues; document all plan issues in markdown rather than returning null issue/file fields or escalating for content concerns.",
+      "acceptance_criteria": [
+        "Stage objective says missing artifact is unacceptable unless filesystem write fails",
+        "Structured issues, if any, use non-null safe file strings or are omitted in favor of markdown REQUIRED CORRECTIONS",
+        "Cancellation/incomplete review is represented as REQUIRED CORRECTIONS in the artifact if the reviewer can write files"
+      ]
+    },
+    {
+      "priority": "P1",
+      "action": "Keep wave-plan-decision pending and make it fail closed unless both architecture-audit/wave-plan-reviews/round-01-reviewer-a.md and round-01-reviewer-b.md exist and contain compatible SIGN OFF verdicts, or else report the exact correction/reviewer rerun stages needed.",
+      "acceptance_criteria": [
+        "wave-plan-decision is not removed from the plan",
+        "wave-plan-decision does not create architecture-audit/wave-plan-decision.md without reviewer-B artifact",
+        "If reviewer-B is missing or requires corrections, decision summary names the next required correction/reviewer stage"
+      ]
+    }
+  ],
+  "artifacts": [
+    "inspections/inspect-wave-plan-reviewer-b-failures.json",
+    "tmp/inspector-workspace/wave-plan-reviewer-b-evidence.txt"
+  ],
+  "commands_run": [
+    "list_dir /work/diedrico/tools/inspector (not found; no reusable inspector tools available)",
+    "search_files /work/diedrico/.saivage/stages wave-plan-reviewer-b-round-01*/summary.json",
+    "read_file reviewer-B summary/task files and .saivage/plan-history.json",
+    "search_files /work/diedrico **/*reviewer-b* (safe artifact search; did not inspect forbidden config/secret files)",
+    "find/nl evidence command wrote tmp/inspector-workspace/wave-plan-reviewer-b-evidence.txt"
+  ],
+  "limitations": [
+    "I did not read forbidden Saivage configuration/secret files such as .saivage/saivage.json or auth profiles, per project secret-safety rules.",
+    "The available toolset did not include a dedicated MCP git_commit function; I used git via shell and committed only inspections/inspect-wave-plan-reviewer-b-failures.json."
+  ]
+}
