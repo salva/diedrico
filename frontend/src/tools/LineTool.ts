@@ -14,15 +14,9 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext } from './ITool';
-import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
 import type { Element2D } from '@/domain/world/Element2D';
-import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
-import { Command } from '@/commands/Command';
-import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
-import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 /**
  * LineTool using ArgumentCollectorTool framework
@@ -72,21 +66,5 @@ export class LineTool extends ArgumentCollectorTool {
   /**
    * Execute line creation operations
    */
-  protected executeOperations(
-    cmd: Command,
-    args: Map<string, ArgumentValue>,
-    context: ToolContext
-  ): void {
-    const point1 = args.get('point1')!.element as Point2D;
-    const point2 = args.get('point2')!.element as Point2D;
-    const { planeId } = context;
 
-    // Create user action group for this tool operation
-    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const group = createActionGroup(groupId);
-    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
-
-    // Factory handles operation AND ProcessTree action
-    LineSequenceFactory.createLineByTwoPoints(cmd, planeId, point1.id, point2.id, groupId);
-  }
 }

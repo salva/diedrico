@@ -1,0 +1,235 @@
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts [ tests/unit/tools/pointTool.spec.ts ]
+Error: Transform failed with 1 error:
+/work/diedrico/frontend/tests/unit/tools/pointTool.spec.ts:255:42: ERROR: Expected ")" but found ":"
+ ❯ failureErrorWithLog ../node_modules/vite/node_modules/esbuild/lib/main.js:1472:15
+ ❯ ../node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+ ❯ responseCallbacks.<computed> ../node_modules/vite/node_modules/esbuild/lib/main.js:622:9
+ ❯ handleIncomingPacket ../node_modules/vite/node_modules/esbuild/lib/main.js:677:12
+ ❯ Socket.readFromStdout ../node_modules/vite/node_modules/esbuild/lib/main.js:600:7
+ ❯ Socket.emit node:events:509:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Two-Click Workflow > should require two clicks to create circle
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:71:70
+     69|         planeCoords: new Vector3(100, 100, 1),
+     70|         canvasCoords: new Vector3(100, 100, 1),
+     71|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+     72|         world,
+     73|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T983: Both Points Snap (No Duplicates) > should snap to existing points for both center and circumference
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:129:70
+    127|         planeCoords: new Vector3(100, 100, 1),
+    128|         canvasCoords: new Vector3(100, 100, 1),
+    129|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+    130|         world,
+    131|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T984: Require Both Points to Exist > should reject circle when circumference point does not exist
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:181:70
+    179|         planeCoords: new Vector3(100, 100, 1),
+    180|         canvasCoords: new Vector3(100, 100, 1),
+    181|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+    182|         world,
+    183|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T985: Minimum Radius Validation with Snapped Points > should accept circle when snapped points meet minimum radius
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:235:70
+    233|         planeCoords: new Vector3(100, 100, 1),
+    234|         canvasCoords: new Vector3(100, 100, 1),
+    235|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+    236|         world,
+    237|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Error Handling > should reject invalid plane
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:272:70
+    270|         planeCoords: new Vector3(100, 100, 1),
+    271|         canvasCoords: new Vector3(100, 100, 1),
+    272|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+    273|         world,
+    274|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Error Handling > should reject invalid coordinates
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:288:70
+    286|         planeCoords: new Vector3(100, 100, 0), // Invalid homogeneous …
+    287|         canvasCoords: new Vector3(100, 100, 1),
+    288|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+    289|         world,
+    290|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Tool State Reset > should reset state after successful circle creation
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:316:70
+    314|         planeCoords: new Vector3(100, 100, 1),
+    315|         canvasCoords: new Vector3(100, 100, 1),
+    316|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+    317|         world,
+    318|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:375:70
+    373|         planeCoords: new Vector3(100, 100, 1),
+    374|         canvasCoords: new Vector3(100, 100, 1),
+    375|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+    376|         world,
+    377|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+ReferenceError: toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts:450:70
+    448|         planeCoords: new Vector3(100, 100, 1),
+    449|         canvasCoords: new Vector3(100, 100, 1),
+    450|         commandSink: new CanvasToolController({ world, commandStack, t…
+       |                                                                      ^
+    451|         world,
+    452|         paper,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should reject selecting the same point twice
+ReferenceError: toolStore is not defined
+ ❯ makeContext tests/unit/tools/toolValidation.spec.ts:44:68
+     42|       planeCoords: coords.clone(),
+     43|       canvasCoords: coords.clone(),
+     44|       commandSink: new CanvasToolController({ world, commandStack, too…
+       |                                                                    ^
+     45|       world,
+     46|       paper,
+ ❯ tests/unit/tools/toolValidation.spec.ts:74:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should accept two different points
+ReferenceError: toolStore is not defined
+ ❯ makeContext tests/unit/tools/toolValidation.spec.ts:44:68
+     42|       planeCoords: coords.clone(),
+     43|       canvasCoords: coords.clone(),
+     44|       commandSink: new CanvasToolController({ world, commandStack, too…
+       |                                                                    ^
+     45|       world,
+     46|       paper,
+ ❯ tests/unit/tools/toolValidation.spec.ts:90:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should reject selecting the same point twice
+ReferenceError: toolStore is not defined
+ ❯ makeContext tests/unit/tools/toolValidation.spec.ts:44:68
+     42|       planeCoords: coords.clone(),
+     43|       canvasCoords: coords.clone(),
+     44|       commandSink: new CanvasToolController({ world, commandStack, too…
+       |                                                                    ^
+     45|       world,
+     46|       paper,
+ ❯ tests/unit/tools/toolValidation.spec.ts:104:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should accept two different points
+ReferenceError: toolStore is not defined
+ ❯ makeContext tests/unit/tools/toolValidation.spec.ts:44:68
+     42|       planeCoords: coords.clone(),
+     43|       canvasCoords: coords.clone(),
+     44|       commandSink: new CanvasToolController({ world, commandStack, too…
+       |                                                                    ^
+     45|       world,
+     46|       paper,
+ ❯ tests/unit/tools/toolValidation.spec.ts:120:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should reject zero-radius circle (center == circumference)
+ReferenceError: toolStore is not defined
+ ❯ makeContext tests/unit/tools/toolValidation.spec.ts:44:68
+     42|       planeCoords: coords.clone(),
+     43|       canvasCoords: coords.clone(),
+     44|       commandSink: new CanvasToolController({ world, commandStack, too…
+       |                                                                    ^
+     45|       world,
+     46|       paper,
+ ❯ tests/unit/tools/toolValidation.spec.ts:135:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should accept valid center and circumference point
+ReferenceError: toolStore is not defined
+ ❯ makeContext tests/unit/tools/toolValidation.spec.ts:44:68
+     42|       planeCoords: coords.clone(),
+     43|       canvasCoords: coords.clone(),
+     44|       commandSink: new CanvasToolController({ world, commandStack, too…
+       |                                                                    ^
+     45|       world,
+     46|       paper,
+ ❯ tests/unit/tools/toolValidation.spec.ts:148:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > ParallelLineTool > should accept valid reference line and create parallel
+ReferenceError: toolStore is not defined
+ ❯ makeContext tests/unit/tools/toolValidation.spec.ts:44:68
+     42|       planeCoords: coords.clone(),
+     43|       canvasCoords: coords.clone(),
+     44|       commandSink: new CanvasToolController({ world, commandStack, too…
+       |                                                                    ^
+     45|       world,
+     46|       paper,
+ ❯ tests/unit/tools/toolValidation.spec.ts:171:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/18]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > PerpendicularLineTool > should accept valid reference line and create perpendicular
+ReferenceError: toolStore is not defined
+ ❯ makeContext tests/unit/tools/toolValidation.spec.ts:44:68
+     42|       planeCoords: coords.clone(),
+     43|       canvasCoords: coords.clone(),
+     44|       commandSink: new CanvasToolController({ world, commandStack, too…
+       |                                                                    ^
+     45|       world,
+     46|       paper,
+ ❯ tests/unit/tools/toolValidation.spec.ts:191:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/18]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts

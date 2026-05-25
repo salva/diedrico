@@ -1,0 +1,43 @@
+--- prohibited canvas/tool imports/usages ---
+frontend/src/components/workspace/SvgCanvas.vue:188:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/workspace/SvgCanvas.vue:214:import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+frontend/src/components/workspace/SvgCanvas.vue:424:// Command infrastructure - injected from App.vue
+frontend/src/components/workspace/SvgCanvas.vue:425:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/workspace/SvgCanvas.vue:426:if (!commandStack) {
+frontend/src/components/workspace/SvgCanvas.vue:427:  throw new Error('CommandStack not provided');
+frontend/src/components/workspace/SvgCanvas.vue:429:const canvasToolController = new CanvasToolController({ world, commandStack, toolStore });
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:80:  protected getCommandDescription(): string {
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:76:  protected getCommandDescription(): string {
+frontend/src/tools/ParallelLineTool.ts:71:  protected getCommandDescription(): string {
+frontend/src/tools/CreateProjectionPlaneTool.ts:169:  protected getCommandDescription(): string {
+frontend/src/tools/PointTool.ts:60:  protected getCommandDescription(): string {
+frontend/src/composables/useCommandExecution.ts:2:import type { Command } from '@/commands/Command';
+frontend/src/composables/useCommandExecution.ts:7:export interface CommandResult<T = any> {
+frontend/src/composables/useCommandExecution.ts:17:export function useCommandExecution() {
+frontend/src/composables/useCommandExecution.ts:27:  const executeCommand = async <T = any>(command: Command): Promise<CommandResult<T>> => {
+frontend/src/composables/useCommandExecution.ts:34:          error: validation.error || 'Command validation failed'
+frontend/src/composables/useCommandExecution.ts:42:      processStore.pushCommand(command);
+frontend/src/composables/useCommandExecution.ts:51:        error: error instanceof Error ? error.message : 'Command execution failed'
+frontend/src/composables/useCommandExecution.ts:59:  const previewCommand = async <T = any>(command: Command): Promise<CommandResult<T>> => {
+frontend/src/composables/useCommandExecution.ts:65:          error: validation.error || 'Command validation failed'
+frontend/src/composables/useCommandExecution.ts:78:        error: error instanceof Error ? error.message : 'Command preview failed'
+frontend/src/composables/useCommandExecution.ts:112:    executeCommand,
+frontend/src/composables/useCommandExecution.ts:113:    previewCommand,
+frontend/src/tools/IntersectionTool.ts:75:  protected getCommandDescription(): string {
+frontend/src/tools/Create3DSegmentTool.ts:66:  protected getCommandDescription(): string {
+frontend/src/tools/PerpendicularLineTool.ts:71:  protected getCommandDescription(): string {
+frontend/src/tools/Create3DPlaneTool.ts:66:  protected getCommandDescription(): string {
+frontend/src/tools/ITool.ts:14:import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+frontend/src/tools/ITool.ts:23:  commandSink: ToolCommandSink;
+frontend/src/tools/Create3DPointTool.ts:84:  protected getCommandDescription(): string {
+frontend/src/tools/Create3DLineTool.ts:66:  protected getCommandDescription(): string {
+frontend/src/tools/ArgumentCollectorTool.ts:100:      type: this.name as import('@/application/tools/ToolCommandIntents').ConstructionIntentType,
+frontend/src/tools/ArgumentCollectorTool.ts:101:      description: this.getCommandDescription(),
+frontend/src/tools/ArgumentCollectorTool.ts:111:  protected getCommandDescription(): string {
+frontend/src/tools/ArgumentCollectorTool.ts:127:   * @param context - Tool execution context (world, commandStack, etc.)
+frontend/src/tools/ArgumentCollectorTool.ts:140:      throw new Error(result.message || `Failed to ${this.getCommandDescription().toLowerCase()}`);
+frontend/src/tools/ArgumentCollectorTool.ts:245:          return { success: true, message: `${this.getCommandDescription()} completed successfully` };
+frontend/src/tools/ArgumentCollectorTool.ts:251:        return { success: false, message: `Failed to ${this.getCommandDescription().toLowerCase()}: ${message}` };
+--- useCommandExecution refs ---
+frontend/src/composables/useCommandExecution.ts:17:export function useCommandExecution() {
+--- ActionsPanel/Toolbar diff status ---

@@ -1,0 +1,33 @@
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts [ tests/unit/tools/CircleTool.spec.ts ]
+Error: Transform failed with 1 error:
+/work/diedrico/frontend/tests/unit/tools/CircleTool.spec.ts:75:8: ERROR: Expected "}" but found "toolStore"
+ ❯ failureErrorWithLog ../node_modules/vite/node_modules/esbuild/lib/main.js:1472:15
+ ❯ ../node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+ ❯ responseCallbacks.<computed> ../node_modules/vite/node_modules/esbuild/lib/main.js:622:9
+ ❯ handleIncomingPacket ../node_modules/vite/node_modules/esbuild/lib/main.js:677:12
+ ❯ Socket.readFromStdout ../node_modules/vite/node_modules/esbuild/lib/main.js:600:7
+ ❯ Socket.emit node:events:509:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts [ tests/unit/tools/toolValidation.spec.ts ]
+Error: Transform failed with 1 error:
+/work/diedrico/frontend/tests/unit/tools/toolValidation.spec.ts:48:8: ERROR: Expected "}" but found "toolStore"
+ ❯ failureErrorWithLog ../node_modules/vite/node_modules/esbuild/lib/main.js:1472:15
+ ❯ ../node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+ ❯ responseCallbacks.<computed> ../node_modules/vite/node_modules/esbuild/lib/main.js:622:9
+ ❯ handleIncomingPacket ../node_modules/vite/node_modules/esbuild/lib/main.js:677:12
+ ❯ Socket.readFromStdout ../node_modules/vite/node_modules/esbuild/lib/main.js:600:7
+ ❯ Socket.emit node:events:509:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts

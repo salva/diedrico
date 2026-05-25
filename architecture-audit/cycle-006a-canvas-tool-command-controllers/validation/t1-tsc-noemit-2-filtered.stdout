@@ -1,0 +1,43 @@
+frontend/src/tools/ArgumentCollectorTool.ts(100,25): error TS2339: Property 'getCommandDescription' does not exist on type 'ArgumentCollectorTool'.
+frontend/src/tools/ArgumentCollectorTool.ts(131,59): error TS2339: Property 'getCommandDescription' does not exist on type 'ArgumentCollectorTool'.
+frontend/src/tools/ArgumentCollectorTool.ts(236,52): error TS2339: Property 'getCommandDescription' does not exist on type 'ArgumentCollectorTool'.
+frontend/src/tools/ArgumentCollectorTool.ts(242,61): error TS2339: Property 'getCommandDescription' does not exist on type 'ArgumentCollectorTool'.
+frontend/src/tools/CircleTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/Create3DLineTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/Create3DPlaneTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/Create3DPointTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/Create3DSegmentTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/CreateProjectionPlaneTool.ts(24,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/GuideTool.ts(27,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/GuideTool.ts(28,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/IntersectionTool.ts(21,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/IntersectionTool.ts(22,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/IntersectionTool.ts(25,1): error TS6192: All imports in import declaration are unused.
+frontend/src/tools/LineTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/LineTool.ts(18,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/LineTool.ts(20,1): error TS6133: 'Point2D' is declared but its value is never read.
+frontend/src/tools/ParallelLineTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/ParallelLineTool.ts(19,1): error TS6133: 'Point2D' is declared but its value is never read.
+frontend/src/tools/ParallelLineTool.ts(20,1): error TS6133: 'Element2D' is declared but its value is never read.
+frontend/src/tools/ParallelLineTool.ts(55,65): error TS2304: Cannot find name 'Line2D'.
+frontend/src/tools/PerpendicularLineTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/PerpendicularLineTool.ts(19,1): error TS6133: 'Point2D' is declared but its value is never read.
+frontend/src/tools/PerpendicularLineTool.ts(20,1): error TS6133: 'Element2D' is declared but its value is never read.
+frontend/src/tools/PerpendicularLineTool.ts(55,65): error TS2304: Cannot find name 'Line2D'.
+frontend/src/tools/PointTool.ts(15,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/PointTool.ts(16,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/Quick3DLineTool.ts(68,20): error TS2339: Property 'commandStack' does not exist on type 'ToolContext'.
+frontend/src/tools/Quick3DSegmentTool.ts(72,20): error TS2339: Property 'commandStack' does not exist on type 'ToolContext'.
+frontend/src/tools/Quick3DSegmentTool.ts(108,13): error TS6133: 'lineId_H' is declared but its value is never read.
+frontend/src/tools/QuickProjectionSetupTool.ts(55,20): error TS2339: Property 'commandStack' does not exist on type 'ToolContext'.
+frontend/src/tools/SegmentTool.ts(20,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/SegmentTool.ts(21,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/SegmentTool.ts(23,1): error TS6133: 'Point2D' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(18,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(19,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(58,65): error TS2304: Cannot find name 'Line2D'.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(85,11): error TS6133: 'determineTangentIndex' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(18,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(19,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(90,11): error TS6133: 'determineTangentIndex' is declared but its value is never read.
+frontend/src/types/ToolArgumentCollector.ts(124,78): error TS2694: Namespace '"/work/diedrico/frontend/src/tools/ArgumentCollectorTool"' has no exported member 'ArgumentValue'.

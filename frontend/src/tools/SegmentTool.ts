@@ -17,17 +17,9 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext } from './ITool';
-import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
 import type { Element2D } from '@/domain/world/Element2D';
-import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
-import { Command } from '@/commands/Command';
-import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
-import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
-import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
 
 /**
  * SegmentTool using ArgumentCollectorTool framework
@@ -77,25 +69,5 @@ export class SegmentTool extends ArgumentCollectorTool {
   /**
    * Execute segment creation operations
    */
-  protected executeOperations(
-    cmd: Command,
-    args: Map<string, ArgumentValue>,
-    context: ToolContext
-  ): void {
-    const point1 = args.get('point1')!.element as Point2D;
-    const point2 = args.get('point2')!.element as Point2D;
-    const { planeId } = context;
 
-    // Create segment operation
-    const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1.id, point2.id));
-    const segmentId = result.outputs.segmentId;
-    
-    // Record ProcessTree action
-    const action = createSegmentAction(segmentId);
-
-    const groupId = `group_${Date.now()}_segment`;
-    const group = createActionGroup(groupId);
-    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
-    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
-  }
 }

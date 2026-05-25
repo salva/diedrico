@@ -14,16 +14,9 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext } from './ITool';
 import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
-import type { Point2D } from '@/domain/world/Point';
-import type { Line2D } from '@/domain/world/Line';
-import type { Element2D } from '@/domain/world/Element2D';
 import { SelectionMask } from '@/types/SelectionMask';
-import { Command } from '@/commands/Command';
-import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
-import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { Line2D } from '@/domain/world/Line';
 
 /**
  * ParallelLineTool using ArgumentCollectorTool framework
@@ -73,30 +66,7 @@ export class ParallelLineTool extends ArgumentCollectorTool {
   /**
    * Execute parallel line creation operations
    */
-  protected executeOperations(
-    cmd: Command,
-    args: Map<string, import('@/types/ToolArgumentCollector').ArgumentValue>,
-    context: ToolContext
-  ): void {
-    const { planeId } = context;
-    
-    const referenceLine = args.get('referenceLine')!.element as Line2D;
-    const throughPoint = args.get('throughPoint')!.element as Point2D;
-    
-    // Create user action group for this tool operation
-    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const group = createActionGroup(groupId);
-    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
 
-    // Factory handles operation AND ProcessTree action
-    LineSequenceFactory.createParallelLine(
-      cmd,
-      planeId,
-      referenceLine.id,
-      throughPoint.id,
-      groupId
-    );
-  }
 
   protected getCommandDescription(): string {
     return "Create parallel line";

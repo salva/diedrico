@@ -1,0 +1,11 @@
+frontend/src/tools/Create3DLineTool.ts(40,30): error TS2314: Generic type 'Map<K, V>' requires 2 type argument(s).
+frontend/src/tools/Create3DPlaneTool.ts(40,30): error TS2314: Generic type 'Map<K, V>' requires 2 type argument(s).
+frontend/src/tools/Create3DPointTool.ts(54,30): error TS2314: Generic type 'Map<K, V>' requires 2 type argument(s).
+frontend/src/tools/Create3DSegmentTool.ts(40,30): error TS2314: Generic type 'Map<K, V>' requires 2 type argument(s).
+frontend/src/tools/CreateProjectionPlaneTool.ts(142,30): error TS2314: Generic type 'Map<K, V>' requires 2 type argument(s).
+frontend/src/tools/IntersectionTool.ts(24,1): error TS6192: All imports in import declaration are unused.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(85,11): error TS6133: 'determineTangentIndex' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(62,45): error TS2339: Property 'position' does not exist on type 'Element2DRealization'.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(62,83): error TS2339: Property 'center' does not exist on type 'Element2DRealization'.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(63,48): error TS2339: Property 'getRadius' does not exist on type 'Element2DRealization'.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(89,11): error TS6133: 'determineTangentIndex' is declared but its value is never read.

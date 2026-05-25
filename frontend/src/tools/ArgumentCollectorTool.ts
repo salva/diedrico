@@ -10,7 +10,7 @@
  * - Dynamic selection masks: Computed as union of all viable next arguments
  * - Automatic UI feedback: Status messages show progress and next expected arguments
  * - Three-layer validation: Type (SelectionMask), argument-level (validator), set-level (setValidator)
- * - Automatic execution: Creates geometric object when exactly one complete set is found
+ * - Automatic execution: Emits construction intent when exactly one complete set is found
  * 
  * Usage Pattern:
  * ```typescript
@@ -41,13 +41,13 @@ import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult, ITool } from './ITool';
 import { SelectionMask, NoneMask } from '@/types/SelectionMask';
-import { Command } from '@/commands/Command';
 import type { 
   ToolArgumentSpec, 
   ToolArgumentSet, 
   CollectionContext,
   ArgumentValue
 } from '@/types/ToolArgumentCollector';
+export type { ArgumentValue } from '@/types/ToolArgumentCollector';
 
 /**
  * Abstract base class for tools that collect multiple geometric arguments
@@ -88,24 +88,25 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
   protected abstract getArgumentSets(): ToolArgumentSet[];
   
   /**
-   * Execute operations inside command (to be implemented by subclasses)
-   * 
-   * Subclasses implement this method with just the operation logic.
-   * The framework handles command creation, commit/rollback, and error handling.
-   * 
-   * @param cmd - Command to add operations to
-   * @param args - Map of collected arguments (name → {element, planeCoords})
-   * @param context - Tool execution context (world, commandStack, etc.)
+   * Build a typed construction intent from collected arguments.
+   * Subclasses keep interaction-specific validation, while application
+   * controllers own command construction/execution.
    */
-  protected abstract executeOperations(
-    cmd: Command,
+  protected buildConstructionIntent(
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ): void;
+  ) {
+    return {
+      type: this.name as import('@/application/tools/ToolCommandIntents').ConstructionIntentType,
+      description: this.getCommandDescription(),
+      planeId: context.planeId,
+      args
+    };
+  }
+
 
   /**
-   * Get command description for this tool
-   * Override to customize command name in undo/redo stack
+   * Get command description for application command stack entries.
    */
   protected getCommandDescription(): string {
     return `Create ${this.name}`;
@@ -118,96 +119,30 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
    * BUT ONLY if the completed set does not have its own execute callback.
    * 
    * Framework handles:
-   * - Command creation
-   * - Operation execution (via executeOperations)
-   * - Commit on success / Rollback on error
-   * - Command stack management
+   * - Typed intent emission through the application command sink
    * - Tool completion
    * 
    * @param setIndex - Index of the completed argument set in getArgumentSets()
    * @param args - Map of collected arguments (name → {element, planeCoords})
-   * @param context - Tool execution context (world, commandStack, etc.)
+   * @param context - Tool execution context (world, command sink, etc.)
    * @throws Error if operation fails (will be caught by handleClick)
    */
   protected execute(
-    _setIndex: number, 
+    _setIndex: number,
     args: Map<string, ArgumentValue>,
     context: ToolContext
   ): void {
-    const { commandStack, world } = context;
-    const cmd = new Command(this.getCommandDescription(), world);
-    
-    try {
-      // Execute tool-specific operations
-      this.executeOperations(cmd, args, context);
-    } catch (error) {
-      // Rollback on error
-      cmd.rollback();
-      throw error; // Re-throw to be handled by handleClick
+    const result = context.commandSink.executeConstructionIntent(
+      this.buildConstructionIntent(args, context)
+    );
+
+    if (!result.success) {
+      throw new Error(result.message || `Failed to ${this.getCommandDescription().toLowerCase()}`);
     }
 
-    // Phase 114: Post-creation feasibility check
-    // Check if any newly created elements are immediately infeasible
-    this.checkCreatedElementsFeasibility(cmd, world);
-
-    // Commit and push to stack
-    cmd.commit();
-    commandStack.push(cmd);
-      
-    // Handle tool completion
     this.handleCompletion(context.toolStore);
   }
 
-  /**
-   * Phase 114: Check if newly created elements are immediately infeasible
-   * Issues a warning log but does NOT abort — infeasibility may resolve when parents move
-   */
-  private checkCreatedElementsFeasibility(cmd: Command, world: import('@/domain/world/World').World): void {
-    for (const op of cmd.getOperations()) {
-      const outputs = op.outputs;
-      // Check all outputs that look like element IDs
-      for (const [key, value] of Object.entries(outputs)) {
-        if (typeof value !== 'string') continue;
-        if (!key.endsWith('Id')) continue;
-        // Skip process tree and group IDs
-        if (key === 'groupId' || key === 'actionId') continue;
-        
-        try {
-          // Try to find and realize the element
-          const elementId = value as string;
-          // Try as point
-          const point = world.getPoint2D(elementId);
-          if (point) {
-            const r = point.realize2D(world);
-            if (r && !r.feasible) {
-              console.warn(`[Feasibility] Newly created element ${elementId} is immediately infeasible`);
-            }
-            continue;
-          }
-          // Try as line
-          const line = world.getLine2D(elementId);
-          if (line) {
-            const r = line.realize2D(world);
-            if (r && !r.feasible) {
-              console.warn(`[Feasibility] Newly created element ${elementId} is immediately infeasible`);
-            }
-            continue;
-          }
-          // Try as circle
-          const circle = world.getCircle2D(elementId);
-          if (circle) {
-            const r = circle.realize2D(world);
-            if (r && !r.feasible) {
-              console.warn(`[Feasibility] Newly created element ${elementId} is immediately infeasible`);
-            }
-            continue;
-          }
-        } catch {
-          // Element not found or realize failed — skip silently
-        }
-      }
-    }
-  }
   
   // === Automated Methods (Framework Implementation) ===
   

@@ -24,16 +24,8 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext } from './ITool';
-import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
-import { Command } from '@/commands/Command';
-import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
-import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
-import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSiblingGuideAction';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
-import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
 
 /**
  * GuideTool using ArgumentCollectorTool framework
@@ -87,42 +79,5 @@ export class GuideTool extends ArgumentCollectorTool {
    * - createGuideAction (primary guide)
    * - createSiblingGuideAction (sibling guide)
    */
-  protected executeOperations(
-    cmd: Command,
-    args: Map<string, ArgumentValue>,
-    context: ToolContext
-  ): void {
-    const referenceLine = args.get('referenceLine')!.element!;
-    const throughPoint = args.get('throughPoint')!.element!;
-    const referenceLineId = referenceLine.id;
-    const throughPointId = throughPoint.id;
-    const { planeId, world } = context;
 
-    // Use factory to create guide with sibling
-    // This creates both primary and sibling guides automatically
-    const result = GuideSequenceFactory.createGuideWithSibling(
-      cmd, 
-      planeId, 
-      referenceLineId, 
-      throughPointId, 
-      world
-    );
-    
-    const guideId = result.guideId;
-    const siblingGuideId = result.siblingGuideId;
-
-    const groupId = `group_${Date.now()}_guide`;
-    const group = createActionGroup(groupId);
-    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
-    
-    // Record ProcessTree action for primary guide
-    const primaryAction = createGuideAction(guideId);
-    cmd.addAndExecute(new AddProcessTreeActionOp(primaryAction, group.id));
-    
-    // Record ProcessTree action for sibling guide (only if sibling was created)
-    if (siblingGuideId) {
-      const siblingAction = createSiblingGuideAction(siblingGuideId);
-      cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, group.id));
-    }
-  }
 }

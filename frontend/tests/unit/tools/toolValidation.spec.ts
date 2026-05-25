@@ -26,6 +26,7 @@ import { Command } from '@/commands/Command';
 import { createTestWorld } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import type { ToolContext } from '@/tools/ITool';
+import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { Vector3, Matrix3 } from 'three';
 import { Paper } from '@/domain/presentation/Paper';
 
@@ -40,10 +41,11 @@ describe('Tool Argument Validation', () => {
       planeId,
       planeCoords: coords.clone(),
       canvasCoords: coords.clone(),
-      commandStack,
+      commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
       world,
       paper,
-      paperToPlaneTransform: new Matrix3().identity()
+      paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
     };
   }
 

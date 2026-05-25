@@ -14,14 +14,9 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolContext } from './ITool';
 import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
 import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
-import { Command } from '@/commands/Command';
-import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
-import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 /**
  * CircleTool using ArgumentCollectorTool framework
@@ -80,29 +75,6 @@ export class CircleTool extends ArgumentCollectorTool {
   /**
    * Execute circle creation operations
    */
-  protected executeOperations(
-    cmd: Command,
-    args: Map<string, import('@/types/ToolArgumentCollector').ArgumentValue>,
-    context: ToolContext
-  ): void {
-    const { planeId } = context;
-    
-    const center = args.get('center')!.element as Point2D;
-    const circumferencePoint = args.get('circumferencePoint')!.element as Point2D;
-    
-    // Create user action group for this tool operation
-    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const group = createActionGroup(groupId);
-    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
 
-    // Factory handles operation AND ProcessTree action
-    CircleSequenceFactory.createCircleByCenterAndPoint(
-      cmd, 
-      planeId, 
-      center.id, 
-      circumferencePoint.id,
-      groupId
-    );
-  }
 }
 

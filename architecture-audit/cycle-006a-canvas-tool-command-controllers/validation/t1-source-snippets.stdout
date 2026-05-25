@@ -1,0 +1,1526 @@
+
+### frontend/src/components/workspace/SvgCanvas.vue
+0001: <template>
+0002:   <div class="svg-canvas-container">
+0003:     <svg
+0004:       ref="svgElement"
+0005:       class="svg-canvas"
+0006:       xmlns="http://www.w3.org/2000/svg"
+0007:       :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+0008:       preserveAspectRatio="xMidYMid meet"
+0009:       @mousedown="handleMouseDown"
+0010:       @click="handleCanvasClick"
+0011:       @dblclick="handleDoubleClick"
+0012:       @mousemove="handleMouseMove"
+0013:       @wheel.prevent="handleWheel"
+0014:     >
+0015:       <!-- Background grid (T275) - Zoom-adaptive grid display -->
+0016:       <g v-if="viewStore.gridVisible.value" class="background-grid">
+0017:         <line
+0018:           v-for="line in gridLines"
+0019:           :key="line.key"
+0020:           :x1="line.x1"
+0021:           :y1="line.y1"
+0022:           :x2="line.x2"
+0023:           :y2="line.y2"
+0024:           :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+0025:           :stroke-width="line.major ? 1 : 0.5"
+0026:         />
+0027:       </g>
+0028:       
+0029:       <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
+0030:       <line
+0031:         v-for="{ primitive, attrs } in renderedLines"
+0032:         :key="primitive.id"
+0033:         v-bind="attrs"
+0034:       />
+0035:       
+0036:       <!-- Render all segments through Paper pipeline -->
+0037:       <line
+0038:         v-for="{ primitive, attrs } in renderedSegments"
+0039:         :key="primitive.id"
+0040:         v-bind="attrs"
+0041:       />
+0042:       
+0043:       <!-- Render all guides through Paper pipeline -->
+0044:       <line
+0045:         v-for="{ primitive, attrs } in renderedGuides"
+0046:         :key="primitive.id"
+0047:         v-bind="attrs"
+0048:       />
+0049:       
+0050:       <!-- Render all circles through Paper pipeline -->
+0051:       <circle
+0052:         v-for="{ primitive, attrs } in renderedCircles"
+0053:         :key="primitive.id"
+0054:         v-bind="attrs"
+0055:       />
+0056:       
+0057:       <!-- Render all arcs through Paper pipeline -->
+0058:       <path
+0059:         v-for="{ primitive, attrs } in renderedArcs"
+0060:         :key="primitive.id"
+0061:         v-bind="attrs"
+0062:       />
+0063:       
+0064:       <!-- Render all points through Paper pipeline -->
+0065:       <circle
+0066:         v-for="{ primitive, attrs } in renderedPoints"
+0067:         :key="primitive.id"
+0068:         v-bind="attrs"
+0069:       />
+0070:       
+0071:       <!-- Snap preview indicator - orange glow around snap target point -->
+0072:       <circle
+0073:         v-if="snapTarget.pointId && snapTarget.position"
+0074:         :cx="snapTarget.position.x"
+0075:         :cy="snapTarget.position.y"
+0076:         :r="8"
+0077:         fill="none"
+0078:         stroke="#FF6B35"
+0079:         stroke-width="2"
+0080:         opacity="0.8"
+0081:         class="snap-indicator"
+0082:       />
+0083:       
+0084:       <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+0085:       <g v-if="viewStore.gridVisible.value" class="grid-labels">
+0086:         <!-- Top edge labels (U-coordinates) -->
+0087:         <text
+0088:           v-for="label in gridLabels.top"
+0089:           :key="label.key"
+0090:           :x="label.position"
+0091:           :y="12"
+0092:           class="grid-label"
+0093:           text-anchor="middle"
+0094:         >
+0095:           {{ label.value }}
+0096:         </text>
+0097:         
+0098:         <!-- Bottom edge labels (U-coordinates) -->
+0099:         <text
+0100:           v-for="label in gridLabels.bottom"
+0101:           :key="label.key"
+0102:           :x="label.position"
+0103:           :y="canvasHeight - 4"
+0104:           class="grid-label"
+0105:           text-anchor="middle"
+0106:         >
+0107:           {{ label.value }}
+0108:         </text>
+0109:         
+0110:         <!-- Left edge labels (V-coordinates) -->
+0111:         <text
+0112:           v-for="label in gridLabels.left"
+0113:           :key="label.key"
+0114:           :x="4"
+0115:           :y="label.position"
+0116:           class="grid-label"
+0117:           text-anchor="start"
+0118:           dominant-baseline="middle"
+0119:         >
+0120:           {{ label.value }}
+0121:         </text>
+0122:         
+0123:         <!-- Right edge labels (V-coordinates) -->
+0124:         <text
+0125:           v-for="label in gridLabels.right"
+0126:           :key="label.key"
+0127:           :x="canvasWidth - 4"
+0128:           :y="label.position"
+0129:           class="grid-label"
+0130:           text-anchor="end"
+0131:           dominant-baseline="middle"
+0132:         >
+0133:           {{ label.value }}
+0134:         </text>
+0135:       </g>
+0136:     </svg>
+0137:     
+0138:     <!-- Hover tooltip -->
+0139:     <div 
+0140:       v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
+0141:       class="hover-tooltip"
+0142:       :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+0143:     >
+0144:       {{ hoverHighlight.hoveredElementLabel.value }}
+0145:     </div>
+0146:     
+0147:     <!-- Properties Dialog -->
+0148:     <PropertiesDialog
+0149:       :is-open="showPropertiesDialog"
+0150:       :element-id="propertiesElementId"
+0151:       :world="world"
+0152:       @close="showPropertiesDialog = false"
+0153:       @save="handleSaveProperties"
+0154:     />
+0155:   </div>
+0156: </template>
+0157: 
+0158: <script setup lang="ts">
+0159: /**
+0160:  * SvgCanvas.vue - Main 2D drawing canvas component
+0161:  * 
+0162:  * This is the primary workspace where all 2D geometric elements are rendered.
+0163:  * Uses SVG for crisp, scalable vector graphics per Constitution Principle IV.
+0164:  * 
+0165:  * Rendering Pipeline:
+0166:  * 1. World (domain objects + realizations) 
+0167:  * 2. → PaperService (generates Paper primitives in paper coordinates)
+0168:  * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+0169:  * 4. → SVG elements
+0170:  * 
+0171:  * Key requirements:
+0172:  * - SVG element (not HTML Canvas) per ui-spec.md
+0173:  * - All rendering goes through Paper abstraction layer
+0174:  * - Generic rendering algorithms (no special cases for fixed elements)
+0175:  * - Will support pan/zoom viewport transformations in Phase 6
+0176:  * - Elements rendered using principle-based algorithms (Constitution Principle IV)
+0177:  * 
+0178:  * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+0179:  */
+0180: 
+0181: import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+0182: import { Matrix3, Vector3 } from 'three';
+0183: import { World } from '@/domain/world/World';
+0184: import { Paper } from '@/domain/presentation/Paper';
+0185: import { PaperService, type PrimitiveContext } from '@/services/PaperService';
+0186: import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+0187: import { InputService } from '@/services/InputService';
+0188: import { CommandStack } from '@/commands/CommandStack';
+0189: import { Command } from '@/commands/Command';
+0190: import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+0191: import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+0192: import { PointTool } from '@/tools/PointTool';
+0193: import { LineTool } from '@/tools/LineTool';
+0194: import { SegmentTool } from '@/tools/SegmentTool';
+0195: import { CircleTool } from '@/tools/CircleTool';
+0196: import { GuideTool } from '@/tools/GuideTool';
+0197: import { IntersectionTool } from '@/tools/IntersectionTool';
+0198: import { ParallelLineTool } from '@/tools/ParallelLineTool';
+0199: import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+0200: import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+0201: import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+0202: import { Create3DPointTool } from '@/tools/Create3DPointTool';
+0203: import { Create3DLineTool } from '@/tools/Create3DLineTool';
+0204: import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+0205: import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+0206: import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+0207: import { InteractiveProjectionSetupTool } from '@/tools/ExampleConstructionsTool';
+0208: import { QuickProjectionSetupTool } from '@/tools/QuickProjectionSetupTool';
+0209: import { Quick3DLineTool } from '@/tools/Quick3DLineTool';
+0210: import { Quick3DSegmentTool } from '@/tools/Quick3DSegmentTool';
+0211: import { FreePoint2D } from '@/domain/world/Point';
+0212: import { useToolStore } from '@/stores/toolStore';
+0213: import { useViewStore } from '@/stores/viewStore';
+0214: import { useSelectionStore } from '@/stores/selectionStore';
+0215: import { useViewport } from '@/composables/useViewport';
+0216: import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+0217: import { screenTo3D } from '@/utils/coordinateTransform';
+0218: import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+0219: import type { ITool } from '@/tools/ITool';
+0220: 
+0221: // Define emits
+0222: const emit = defineEmits<{
+0223:   'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+0224:   'update-active-plane': [planeInfo: { id: string; name: string }];
+0225: }>();
+0226: 
+0227: const svgElement = ref<SVGSVGElement | null>(null);
+0228: 
+0229: // Track World version changes (World is not reactive by itself)
+0230: const worldVersion = ref(0);
+0231: let versionPollId: number | null = null;
+0232: let lastWorldVersion = 0;
+0233: 
+0234: // Active plane - derived from World (managed by App.vue)
+0235: const activePlane = computed(() => {
+0236:   // Depend on worldVersion so plane switching triggers recomputation
+0237:   const _ = worldVersion.value;
+0238:   return world.getActivePlaneId();
+0239: });
+0240: 
+0241: // Dynamic canvas dimensions - updated based on container size
+0242: const canvasWidth = ref(1600);
+0243: const canvasHeight = ref(1000);
+0244: 
+0245: // Properties dialog state
+0246: const showPropertiesDialog = ref(false);
+0247: const propertiesElementId = ref<string | null>(null);
+0248: 
+0249: // Viewport transformation (pan/zoom)
+0250: const viewStore = useViewStore();
+0251: const viewport = computed<ViewportTransform>(() => {
+0252:   const vp = viewStore.viewportState.value;
+0253:   // Update Paper's viewport transform when it changes
+0254:   paper.setViewportTransform(vp);
+0255:   return vp;
+0256: });
+0257: 
+0258: // Setup viewport interactions (pan/zoom)
+0259: const viewportComposable = useViewport({ element: svgElement });
+0260: 
+0278: // Drag-to-move (Select mode)
+0279: const pointDrag = ref<{
+0283:   cmd: Command | null;
+0297: // Viewport pan in select mode (T965: drag empty space pans)
+0314: function endPointDrag(commit: boolean): void {
+0315:   if (!pointDrag.value.active) return;
+0317:   const cmd = pointDrag.value.cmd;
+0329:     pointDrag.value = {
+0354:     // T956: Cancel point drag on Esc
+0355:     if (pointDrag.value.active) {
+0357:       endPointDrag(false);
+0429: // Command infrastructure - injected from App.vue
+0430: const commandStack = inject<CommandStack>('commandStack')!;
+0432:   throw new Error('CommandStack not provided');
+0523: // Global key handling (Esc cancels point-drag)
+1338:  * Handle mouse down for select-mode drag-to-move of free points.
+1339:  * T954: Check if clicking on movable point, start drag if so
+1348:   // Only left button drag, no modifiers (Shift is handled by useViewport)
+1375:       // Start point drag (T954)
+1378:       pointDrag.value = {
+1382:         cmd: new Command(`Move point ${point.label ?? hit.elementId}`, world),
+1391:   // No movable point hit - start viewport pan (T965: Drag empty space pans)
+1392:   // Note: useViewport composable handles Shift+drag pan automatically
+1393:   // Here we handle non-Shift drag when selection tool is active
+1440: function handleSaveProperties(changes: any) {
+1443:   // Create command using base Command + Operation pattern per data-model.md
+1444:   const cmd = new Command(`Update style: ${changes.elementId}`, world);
+1477:  * T955: Continuous feedback for point dragging
+1478:  * T965: Viewport pan when dragging empty space
+1483:   // T965: Handle viewport pan in select mode (drag empty space)
+1497:   // T955: Live preview for point dragging (Select mode)
+1498:   if (pointDrag.value.active && pointDrag.value.planeId && pointDrag.value.pointId && pointDrag.value.cmd) {
+1499:     // Small drag threshold to avoid turning clicks into moves
+1500:     const dx = event.clientX - pointDrag.value.startClientX;
+1501:     const dy = event.clientY - pointDrag.value.startClientY;
+1502:     if (!pointDrag.value.moved && (dx * dx + dy * dy) < 9) {
+1505:     pointDrag.value.moved = true;
+1516:     const paperToPlane = planeTransforms.get(pointDrag.value.planeId);
+1528:     pointDrag.value.cmd.rollback();
+1529:     pointDrag.value.cmd.addAndExecute(
+1530:       new UpdateFreePoint2DPositionOp(pointDrag.value.planeId, pointDrag.value.pointId, planePos)
+1648:   // Check if viewport pan via useViewport (Shift+drag or middle-click drag) was active
+1664:   // End point drag
+1665:   if (!pointDrag.value.active) return;
+1666:   if (pointDrag.value.moved) {
+1668:     endPointDrag(true);
+1670:     endPointDrag(false);
+
+### frontend/src/tools/PointTool.ts
+0001: /**
+0002:  * PointTool - Tool for creating free points (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Uses SelectionMask.none() to capture just the mouse position without selecting
+0007:  * any existing element. Framework creates ArgumentValue with element=null.
+0008:  * 
+0009:  * Code reduction: ~80 lines → ~50 lines (37% reduction)
+0010:  * 
+0011:  * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
+0012:  */
+0013: 
+0014: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0015: import type { ToolContext } from './ITool';
+0016: import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+0017: import { SelectionMask } from '@/types/SelectionMask';
+0018: import { Command } from '@/commands/Command';
+0019: import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+0020: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0021: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0022: 
+0023: /**
+0024:  * PointTool using ArgumentCollectorTool framework
+0025:  * 
+0026:  * Framework handles:
+0027:  * - Click capture with SelectionMask.none()
+0028:  * - ArgumentValue creation with element=null, planeCoords from click
+0029:  * - Automatic execution when position captured
+0030:  * 
+0031:  * Custom behavior:
+0032:  * - Creates free point at mouse position (no element selection)
+0033:  */
+0034: export class PointTool extends ArgumentCollectorTool {
+0035:   readonly name = 'point';
+0036:   readonly completionBehavior = 'stay-active' as const;
+0037: 
+0038:   /**
+0039:    * Define argument specification
+0040:    * Single argument with SelectionMask.none() - just captures position
+0041:    */
+0042:   protected getArgumentSets(): ToolArgumentSet[] {
+0043:     return [
+0044:       {
+0045:         arguments: [
+0046:           { 
+0047:             name: 'position', 
+0048:             mask: SelectionMask.none()  // No element selection - just mouse position
+0049:           }
+0050:         ]
+0051:       }
+0052:     ];
+0053:   }
+0054: 
+0055:   /**
+0056:    * Execute point creation operations
+0057:    */
+0058:   protected executeOperations(
+0059:     cmd: Command,
+0060:     args: Map<string, ArgumentValue>,
+0061:     context: ToolContext
+0062:   ): void {
+0063:     const positionArg = args.get('position')!;
+0064:     const planeCoords = positionArg.planeCoords;
+0065:     const { planeId, world } = context;
+0066: 
+0067:     // Validate coordinates
+0068:     if (!this.validateCoordinates(planeCoords)) {
+0069:       throw new Error('Invalid coordinates: NaN or Infinity not allowed');
+0070:     }
+0071: 
+0072:     // Validate plane exists
+0073:     const plane = world.getProjectionPlaneById(planeId);
+0074:     if (!plane) {
+0075:       throw new Error(`Plane not found: ${planeId}`);
+0076:     }
+0077: 
+0078:     // Create user action group for this tool operation
+0079:     const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+0080:     const group = createActionGroup(groupId);
+0081:     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+0082: 
+0083:     // Use factory to create free point with ProcessTree action
+0084:     PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
+0085:   }
+0086: 
+0087:   /**
+0088:    * Validate that coordinates are finite numbers
+0089:    */
+0090:   private validateCoordinates(coords: any): boolean {
+0091:     if (!coords) return false;
+0092:     const { x, y, z } = coords;
+0093:     return (
+0094:       typeof x === 'number' && isFinite(x) &&
+0095:       typeof y === 'number' && isFinite(y) &&
+0096:       typeof z === 'number' && isFinite(z)
+0097:     );
+0098:   }
+0099: 
+0100:   protected getCommandDescription(): string {
+0101:     return "Create free point";
+0102:   }
+0103: }
+
+### frontend/src/tools/LineTool.ts
+0001: /**
+0002:  * LineTool - Tool for creating lines through two points (Phase 64 Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * Declarative argument specification replaces manual state machine.
+0006:  * 
+0007:  * Arguments:
+0008:  * - point1: Point2D (first point on line)
+0009:  * - point2: Point2D (second point on line)
+0010:  * 
+0011:  * Code reduction: ~150 lines → ~70 lines (53% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import type { Element2D } from '@/domain/world/Element2D';
+0020: import type { Point2D } from '@/domain/world/Point';
+0021: import { SelectionMask } from '@/types/SelectionMask';
+0022: import { Command } from '@/commands/Command';
+0023: import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+0024: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0025: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0026: 
+0027: /**
+0028:  * LineTool using ArgumentCollectorTool framework
+0029:  * 
+0030:  * Framework handles:
+0031:  * - Argument collection (any-order, though semantically both are 'point')
+0032:  * - Selection mask computation (point only)
+0033:  * - UI feedback ("Creating line: pick point1, point2")
+0034:  * - Automatic execution when both points collected
+0035:  */
+0036: export class LineTool extends ArgumentCollectorTool {
+0037:   readonly name = 'line';
+0038:   readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
+0039: 
+0040:   /**
+0041:    * Define argument specification
+0042:    * Single set with two point arguments
+0043:    */
+0044:   protected getArgumentSets(): ToolArgumentSet[] {
+0045:     return [
+0046:       {
+0047:         arguments: [
+0048:           { 
+0049:             name: 'point1', 
+0050:             mask: SelectionMask.point() 
+0051:           },
+0052:           { 
+0053:             name: 'point2', 
+0054:             mask: SelectionMask.point(),
+0055:             // Argument-level validator: Ensure different from point1
+0056:             validator: (element: Element2D, context: CollectionContext) => {
+0057:               const point1 = context.collected.get('point1');
+0058:               if (point1 && element.id === point1.element!.id) {
+0059:                 return {
+0060:                   valid: false,
+0061:                   error: 'Cannot create line: must select two different points'
+0062:                 };
+0063:               }
+0064:               return { valid: true };
+0065:             }
+0066:           }
+0067:         ]
+0068:       }
+0069:     ];
+0070:   }
+0071: 
+0072:   /**
+0073:    * Execute line creation operations
+0074:    */
+0075:   protected executeOperations(
+0076:     cmd: Command,
+0077:     args: Map<string, ArgumentValue>,
+0078:     context: ToolContext
+0079:   ): void {
+0080:     const point1 = args.get('point1')!.element as Point2D;
+0081:     const point2 = args.get('point2')!.element as Point2D;
+0082:     const { planeId } = context;
+0083: 
+0084:     // Create user action group for this tool operation
+0085:     const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+0086:     const group = createActionGroup(groupId);
+0087:     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+0088: 
+0089:     // Factory handles operation AND ProcessTree action
+0090:     LineSequenceFactory.createLineByTwoPoints(cmd, planeId, point1.id, point2.id, groupId);
+0091:   }
+0092: }
+
+### frontend/src/tools/GuideTool.ts
+0001: /**
+0002:  * GuideTool - Tool for creating guides perpendicular to reference lines (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Implements two-click workflow (order-independent):
+0007:  * 1. First click: Select reference line (hinge line) OR through-point
+0008:  * 2. Second click: Select the other element (point OR hinge line)
+0009:  * 3. Create guide perpendicular to reference line, passing through the point
+0010:  * 
+0011:  * Guides are special construction lines used in dihedral geometry for transporting
+0012:  * points and distances between projection planes. They render as dashed lines.
+0013:  * 
+0014:  * **Special behavior:**
+0015:  * - Always creates TWO guides (primary + sibling on paired plane)
+0016:  * - Sibling guide uses HalfHingeLine2D.getSiblingInfo()
+0017:  * - Registers TWO ProcessTree actions (primary + sibling)
+0018:  * 
+0019:  * Code reduction: ~221 lines → ~150 lines (32% reduction)
+0020:  * 
+0021:  * Reference: 
+0022:  * - specs/001-dihedral-learning-mvp/spec.md §US3 - Create Guide
+0023:  * - specs/001-dihedral-learning-mvp/spec.md §Guides
+0024:  */
+0025: 
+0026: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0027: import type { ToolContext } from './ITool';
+0028: import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+0029: import { SelectionMask } from '@/types/SelectionMask';
+0030: import { Command } from '@/commands/Command';
+0031: import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+0032: import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+0033: import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSiblingGuideAction';
+0034: import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+0035: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0036: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0037: 
+0038: /**
+0039:  * GuideTool using ArgumentCollectorTool framework
+0040:  * 
+0041:  * Framework handles:
+0042:  * - Any-order argument collection (line→point OR point→line)
+0043:  * - Selection mask computation (dynamic based on collected arguments)
+0044:  * - UI feedback ("Creating guide: pick half-hinge-line, point")
+0045:  * - Automatic execution when both elements collected
+0046:  * 
+0047:  * Custom behavior:
+0048:  * - Creates TWO guides (primary + sibling) via GuideSequenceFactory
+0049:  * - Registers TWO ProcessTree actions
+0050:  * - Uses HalfHingeLine2D.getSiblingInfo() for sibling plane detection
+0051:  */
+0052: export class GuideTool extends ArgumentCollectorTool {
+0053:   readonly name = 'guide';
+0054:   readonly completionBehavior = 'stay-active' as const;
+0055: 
+0056:   /**
+0057:    * Define argument specification
+0058:    * Single set with any-order half-hinge-line and point
+0059:    */
+0060:   protected getArgumentSets(): ToolArgumentSet[] {
+0061:     return [
+0062:       {
+0063:         // ArgumentCollectorTool automatically supports any-order collection!
+0064:         // User can select line→point OR point→line
+0065:         arguments: [
+0066:           { 
+0067:             name: 'referenceLine', 
+0068:             mask: SelectionMask.halfHingeLine()
+0069:           },
+0070:           { 
+0071:             name: 'throughPoint', 
+0072:             mask: SelectionMask.point()
+0073:           }
+0074:         ]
+0075:       }
+0076:     ];
+0077:   }
+0078: 
+0079:   /**
+0080:    * Execute guide creation operations
+0081:    * 
+0082:    * Creates:
+0083:    * - Primary guide on active plane
+0084:    * - Sibling guide on paired plane (automatically via GuideSequenceFactory)
+0085:    * 
+0086:    * Records TWO ProcessTree actions:
+0087:    * - createGuideAction (primary guide)
+0088:    * - createSiblingGuideAction (sibling guide)
+0089:    */
+0090:   protected executeOperations(
+0091:     cmd: Command,
+0092:     args: Map<string, ArgumentValue>,
+0093:     context: ToolContext
+0094:   ): void {
+0095:     const referenceLine = args.get('referenceLine')!.element!;
+0096:     const throughPoint = args.get('throughPoint')!.element!;
+0097:     const referenceLineId = referenceLine.id;
+0098:     const throughPointId = throughPoint.id;
+0099:     const { planeId, world } = context;
+0100: 
+0101:     // Use factory to create guide with sibling
+0102:     // This creates both primary and sibling guides automatically
+0103:     const result = GuideSequenceFactory.createGuideWithSibling(
+0104:       cmd, 
+0105:       planeId, 
+0106:       referenceLineId, 
+0107:       throughPointId, 
+0108:       world
+0109:     );
+0110:     
+0111:     const guideId = result.guideId;
+0112:     const siblingGuideId = result.siblingGuideId;
+0113: 
+0114:     const groupId = `group_${Date.now()}_guide`;
+0115:     const group = createActionGroup(groupId);
+0116:     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+0117:     
+0118:     // Record ProcessTree action for primary guide
+0119:     const primaryAction = createGuideAction(guideId);
+0120:     cmd.addAndExecute(new AddProcessTreeActionOp(primaryAction, group.id));
+0121:     
+0122:     // Record ProcessTree action for sibling guide (only if sibling was created)
+0123:     if (siblingGuideId) {
+0124:       const siblingAction = createSiblingGuideAction(siblingGuideId);
+0125:       cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, group.id));
+0126:     }
+0127:   }
+0128: }
+
+### frontend/src/tools/IntersectionTool.ts
+0001: /**
+0002:  * IntersectionTool - Tool for creating intersection points (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Supports intersections between:
+0007:  * - Line-Line
+0008:  * - Line-Circle (and Circle-Line)
+0009:  * - Circle-Circle
+0010:  * 
+0011:  * When multiple intersection points exist (line-circle or circle-circle),
+0012:  * the tool picks the intersection point nearest to the mouse cursor using
+0013:  * the planeCoords from ArgumentValue.
+0014:  * 
+0015:  * Code reduction: ~407 lines → ~250 lines (38% reduction)
+0016:  * 
+0017:  * Reference: specs/001-dihedral-learning-mvp/spec.md
+0018:  */
+0019: 
+0020: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0021: import type { ToolContext } from './ITool';
+0022: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0023: import type { Element2D } from '@/domain/world/Element2D';
+0024: import { SelectionMask } from '@/types/SelectionMask';
+0025: import { Command } from '@/commands/Command';
+0026: import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+0027: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0028: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0029: import { 
+0030:   areLinesParallel, 
+0031:   intersectLineCircle, 
+0032:   intersectCircleCircle 
+0033: } from '@/domain/calculations/Intersections';
+0034: import type { World } from '@/domain/world/World';
+0035: import { Line2D } from '@/domain/world/Line';
+0036: import { Circle2D } from '@/domain/world/Circle';
+0037: 
+0038: /**
+0039:  * IntersectionTool using ArgumentCollectorTool framework
+0040:  * 
+0041:  * Framework handles:
+0042:  * - Argument collection (element1, element2)
+0043:  * - Selection mask computation (lines and circles)
+0044:  * - UI feedback ("Creating intersection: pick element1, element2")
+0045:  * - Automatic execution when both elements collected
+0046:  */
+0047: export class IntersectionTool extends ArgumentCollectorTool {
+0048:   readonly name = 'intersection';
+0049:   readonly completionBehavior = 'stay-active' as const;
+0050: 
+0051:   /**
+0052:    * Define argument specification
+0053:    * Single set with two line-or-circle arguments
+0054:    */
+0055:   protected getArgumentSets(): ToolArgumentSet[] {
+0056:     return [
+0057:       {
+0058:         arguments: [
+0059:           { 
+0060:             name: 'element1', 
+0061:             mask: SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle())
+0062:           },
+0063:           { 
+0064:             name: 'element2', 
+0065:             mask: SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle()),
+0066:             // Argument-level validator: Ensure different from element1
+0067:             validator: (element: Element2D, context: CollectionContext) => {
+0068:               const element1 = context.collected.get('element1');
+0069:               if (element1 && element.id === element1.element!.id) {
+0070:                 return {
+0071:                   valid: false,
+0072:                   error: 'Cannot create intersection: must select two different elements'
+0073:                 };
+0074:               }
+0075:               return { valid: true };
+0076:             }
+0077:           }
+0078:         ]
+0079:       }
+0080:     ];
+0081:   }
+0082: 
+0083:   /**
+0084:    * Execute intersection creation operations
+0085:    */
+0086:   protected executeOperations(
+0087:     cmd: Command,
+0088:     args: Map<string, ArgumentValue>,
+0089:     context: ToolContext
+0090:   ): void {
+0091:     const elem1Value = args.get('element1')!;
+0092:     const elem2Value = args.get('element2')!;
+0093:     const element1 = elem1Value.element!;
+0094:     const element2 = elem2Value.element!;
+0095:     const planeCoords = elem2Value.planeCoords; // Use second click position for index calculation
+0096:     const { planeId, world } = context;
+0097: 
+0098:     // Create user action group for this tool operation
+0099:     const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+0100:     const group = createActionGroup(groupId);
+0101:     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+0102: 
+0103:     // Determine intersection type and create appropriate intersection
+0104:     // Factory handles operation AND ProcessTree actions (including siblings)
+0105:     if (element1 instanceof Line2D && element2 instanceof Line2D) {
+0106:       // Line-Line intersection
+0107:       
+0108:       // Validate not parallel - need to realize lines first
+0109:       const line1Realization = element1.realize2D(world);
+0110:       const line2Realization = element2.realize2D(world);
+0111:       
+0112:       if (!line1Realization || !line2Realization) {
+0113:         throw new Error('Could not realize lines.');
+0114:       }
+0115:       
+0116:       if (areLinesParallel(line1Realization, line2Realization)) {
+0117:         throw new Error('Lines are parallel and do not intersect.');
+0118:       }
+0119:       
+0120:       // Factory handles operation AND ProcessTree actions
+0121:       IntersectionSequenceFactory.createLineLineIntersection(
+0122:         cmd, planeId, element1.id, element2.id, world, groupId
+0123:       );
+0124:       
+0125:     } else if (element1 instanceof Line2D && element2 instanceof Circle2D) {
+0126:       // Line-Circle intersection (element1 is line, element2 is circle)
+0127:       const index = this.computeLineCircleIntersectionIndex(
+0128:         element1.id, element2.id, planeCoords, world
+0129:       );
+0130:       
+0131:       if (index === null) {
+0132:         throw new Error('Line and circle do not intersect.');
+0133:       }
+0134:       
+0135:       // Factory handles operation AND ProcessTree actions
+0136:       IntersectionSequenceFactory.createLineCircleIntersection(
+0137:         cmd, planeId, element1.id, element2.id, index, world, groupId
+0138:       );
+0139:       
+0140:     } else if (element1 instanceof Circle2D && element2 instanceof Line2D) {
+0141:       // Line-Circle intersection (element1 is circle, element2 is line)
+0142:       const index = this.computeLineCircleIntersectionIndex(
+0143:         element2.id, element1.id, planeCoords, world
+0144:       );
+0145:       
+0146:       if (index === null) {
+0147:         throw new Error('Circle and line do not intersect.');
+0148:       }
+0149:       
+0150:       // Factory handles operation AND ProcessTree actions
+0151:       IntersectionSequenceFactory.createLineCircleIntersection(
+0152:         cmd, planeId, element2.id, element1.id, index, world, groupId
+0153:       );
+0154:       
+0155:     } else if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
+0156:       // Circle-Circle intersection
+0157:       const index = this.computeCircleCircleIntersectionIndex(
+0158:         element1.id, element2.id, planeCoords, world
+0159:       );
+0160:       
+0161:       if (index === null) {
+0162:         throw new Error('Circles do not intersect.');
+0163:       }
+0164:       
+0165:       // Factory handles operation AND ProcessTree actions
+0166:       IntersectionSequenceFactory.createCircleCircleIntersection(
+0167:         cmd, planeId, element1.id, element2.id, index, world, groupId
+0168:       );
+0169:       
+0170:     } else {
+0171:       throw new Error('Unsupported element type combination for intersection.');
+0172:     }
+0173:   }
+0174: 
+0175:   protected getCommandDescription(): string {
+0176:     return "Create intersection point";
+0177:   }
+0178: 
+0179:   /**
+0180:    * Compute which line-circle intersection point is closest to mouse position
+0181:    * Returns 0 or 1, or null if no intersection
+0182:    */
+0183:   private computeLineCircleIntersectionIndex(
+0184:     lineId: string,
+0185:     circleId: string,
+0186:     mousePos: THREE.Vector3,
+0187:     world: World
+0188:   ): number | null {
+0189:     const line = world.getLine2D(lineId);
+0190:     const circle = world.getCircle2D(circleId);
+0191:     
+0192:     if (!line || !circle) return null;
+0193:     
+0194:     const lineRealization = line.realize2D(world);
+0195:     const circleRealization = circle.realize2D(world);
+0196:     
+0197:     if (!lineRealization || !circleRealization) return null;
+0198:     
+0199:     const intersections = intersectLineCircle(lineRealization, circleRealization);
+0200:     
+0201:     if (intersections.length === 0) return null;
+0202:     if (intersections.length === 1) return 0;
+0203:     
+0204:     // Two intersections - pick closest to mouse
+0205:     const dist0 = intersections[0].distanceTo(mousePos);
+0206:     const dist1 = intersections[1].distanceTo(mousePos);
+0207:     
+0208:     return dist0 <= dist1 ? 0 : 1;
+0209:   }
+0210: 
+0211:   /**
+0212:    * Compute which circle-circle intersection point is closest to mouse position
+0213:    * Returns 0 or 1, or null if no intersection
+0214:    */
+0215:   private computeCircleCircleIntersectionIndex(
+0216:     circle1Id: string,
+0217:     circle2Id: string,
+0218:     mousePos: THREE.Vector3,
+0219:     world: World
+0220:   ): number | null {
+0221:     const circle1 = world.getCircle2D(circle1Id);
+0222:     const circle2 = world.getCircle2D(circle2Id);
+0223:     
+0224:     if (!circle1 || !circle2) return null;
+0225:     
+0226:     const circle1Realization = circle1.realize2D(world);
+0227:     const circle2Realization = circle2.realize2D(world);
+0228:     
+0229:     if (!circle1Realization || !circle2Realization) return null;
+0230:     
+0231:     const intersections = intersectCircleCircle(circle1Realization, circle2Realization);
+0232:     
+0233:     if (intersections.length === 0) return null;
+0234:     if (intersections.length === 1) return 0;
+0235:     
+0236:     // Two intersections - pick closest to mouse
+0237:     const dist0 = intersections[0].distanceTo(mousePos);
+0238:     const dist1 = intersections[1].distanceTo(mousePos);
+0239:     
+0240:     return dist0 <= dist1 ? 0 : 1;
+0241:   }
+0242: }
+
+### frontend/src/tools/CreateProjectionPlaneTool.ts
+0001: /**
+0002:  * CreateProjectionPlaneTool - Creates auxiliary projection planes (Phase 82)
+0003:  * 
+0004:  * Three-argument workflow:
+0005:  * 1. T1 (hinge trace): Any line on any plane
+0006:  * 2. T2 (other trace): Any line on DIFFERENT plane than T1 (validator checks)
+0007:  * 3. T2' (position line): Any line on SAME plane as T1 (validator checks, warns if far from expected)
+0008:  * 
+0009:  * Creates:
+0010:  * - Plane3DFromTraces (from T1 and T2)
+0011:  * - AuxiliaryProjectionPlane (with T1, T2, T2' trace dependencies)
+0012:  * - HingeLine (between T1's plane and new projection plane)
+0013:  * - ProcessTree action
+0014:  * 
+0015:  * Validation:
+0016:  * - T1 and T2 must be on different planes
+0017:  * - T2' must be on same plane as T1
+0018:  * - T2' position warning: If far from expected position (computed via computeExpectedT2Prime)
+0019:  * 
+0020:  * Reference: data-model.md §Phase 82 - Create Projection Plane Tool
+0021:  */
+0022: 
+0023: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0024: import type { ToolContext } from './ITool';
+0025: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0026: import { SelectionMask } from '@/types/SelectionMask';
+0027: import { Command } from '@/commands/Command';
+0028: import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+0029: import { computeExpectedT2Prime, computeLineDistance } from '@/utils/projectionPlaneUtils';
+0030: import type { Element2D } from '@/domain/world/Element2D';
+0031: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0032: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0033: 
+0034: /**
+0035:  * Tool for creating auxiliary projection planes using ArgumentCollectorTool framework
+0036:  * 
+0037:  * Pattern: Extends ArgumentCollectorTool with 3-argument set and validators
+0038:  * - Base class handles argument collection, viable set tracking, execution
+0039:  * - Subclass defines argument specs, validators, and operation logic
+0040:  */
+0041: export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
+0042:   readonly name = 'createprojectionplane';
+0043:   readonly completionBehavior = 'stay-active' as const;
+0044: 
+0045:   /**
+0046:    * Distance threshold for T2' position warning (in plane units)
+0047:    * If T2' is further than this from expected position, show warning
+0048:    */
+0049:   private readonly POSITION_WARNING_THRESHOLD = 10;
+0050: 
+0051:   protected getArgumentSets(): ToolArgumentSet[] {
+0052:     return [
+0053:       {
+0054:         arguments: [
+0055:           { 
+0056:             name: 't1HingeTrace', 
+0057:             mask: SelectionMask.line()
+0058:           },
+0059:           { 
+0060:             name: 't2OtherTrace', 
+0061:             mask: SelectionMask.line(),
+0062:             validator: (element: Element2D, context: CollectionContext) => {
+0063:               // T2 must be on DIFFERENT plane than T1
+0064:               const t1 = context.collected.get('t1HingeTrace');
+0065:               if (!t1) return { valid: true }; // T1 not yet collected
+0066:               
+0067:               const t1PlaneId = t1.element!.planeId;
+0068:               const t2PlaneId = element.planeId;
+0069:               
+0070:               if (t1PlaneId === t2PlaneId) {
+0071:                 return { 
+0072:                   valid: false, 
+0073:                   error: 'T2 must be on a DIFFERENT plane than T1' 
+0074:                 };
+0075:               }
+0076:               
+0077:               return { valid: true };
+0078:             }
+0079:           },
+0080:           { 
+0081:             name: 't2PrimePositionLine', 
+0082:             mask: SelectionMask.line(),
+0083:             validator: (element: Element2D, context: CollectionContext) => {
+0084:               // T2' must be on SAME plane as T1
+0085:               const t1 = context.collected.get('t1HingeTrace');
+0086:               if (!t1) return { valid: true }; // T1 not yet collected
+0087:               
+0088:               const t1PlaneId = t1.element!.planeId;
+0089:               const t2PrimePlaneId = element.planeId;
+0090:               
+0091:               if (t1PlaneId !== t2PrimePlaneId) {
+0092:                 return { 
+0093:                   valid: false, 
+0094:                   error: 'T2\' must be on the SAME plane as T1' 
+0095:                 };
+0096:               }
+0097:               
+0098:               // Compute expected T2' position and check distance
+0099:               const t2 = context.collected.get('t2OtherTrace');
+0100:               if (!t2) return { valid: true }; // T2 not yet collected, can't compute expected position
+0101:               
+0102:               const t1LineId = t1.element!.id;
+0103:               const t2LineId = t2.element!.id;
+0104:               const t2PrimeLineId = element.id;
+0105:               
+0106:               try {
+0107:                 const expected = computeExpectedT2Prime(
+0108:                   t1LineId,
+0109:                   t2LineId,
+0110:                   context.world
+0111:                 );
+0112:                 
+0113:                 if (!expected) {
+0114:                   // Expected position could not be computed (e.g., parallel traces)
+0115:                   return { valid: true, warning: 'Could not compute expected T2\' position' };
+0116:                 }
+0117:                 
+0118:                 // Get realized T2' line to compute distance
+0119:                 const t2PrimeLineModel = context.world.getLine2D(t2PrimeLineId);
+0120:                 if (!t2PrimeLineModel) {
+0121:                   return { valid: true, warning: 'Could not validate T2\' position' };
+0122:                 }
+0123:                 
+0124:                 const t2PrimeRealization = t2PrimeLineModel.realize2D(context.world);
+0125:                 if (!t2PrimeRealization) {
+0126:                   return { valid: true, warning: 'Could not validate T2\' position' };
+0127:                 }
+0128:                 
+0129:                 // Compute distance between selected T2' and expected T2'
+0130:                 const distance = computeLineDistance(t2PrimeRealization, expected);
+0131:                 
+0132:                 if (distance > this.POSITION_WARNING_THRESHOLD) {
+0133:                   return { 
+0134:                     valid: true, 
+0135:                     warning: `T2' is ${distance.toFixed(1)} units from expected position (unfolding T2)` 
+0136:                   };
+0137:                 }
+0138:                 
+0139:                 return { valid: true };
+0140:               } catch (error) {
+0141:                 // Error computing expected position - allow but warn
+0142:                 return { valid: true, warning: 'Could not validate T2\' position' };
+0143:               }
+0144:             }
+0145:           }
+0146:         ],
+0147:         setValidator: (args: Map<string, ArgumentValue>, context: CollectionContext) => {
+0148:           // Additional set-level validation (if needed)
+0149:           // Currently all validation is done at argument level
+0150:           const t1 = args.get('t1HingeTrace');
+0151:           const t2 = args.get('t2OtherTrace');
+0152:           const t2Prime = args.get('t2PrimePositionLine');
+0153:           
+0154:           if (!t1 || !t2 || !t2Prime) {
+0155:             return { valid: false, error: 'Missing required arguments' };
+0156:           }
+0157:           
+0158:           // Verify planes exist
+0159:           const t1Plane = context.world.getProjectionPlaneById(t1.element!.planeId);
+0160:           const t2Plane = context.world.getProjectionPlaneById(t2.element!.planeId);
+0161:           
+0162:           if (!t1Plane || !t2Plane) {
+0163:             return { valid: false, error: 'One or more projection planes not found' };
+0164:           }
+0165:           
+0166:           return { valid: true };
+0167:         }
+0168:       }
+0169:     ];
+0170:   }
+0171: 
+0172:   protected executeOperations(
+0173:     cmd: Command,
+0174:     args: Map<string, ArgumentValue>,
+0175:     _context: ToolContext
+0176:   ): void {
+0177:     const t1 = args.get('t1HingeTrace')!.element!;
+0178:     const t2 = args.get('t2OtherTrace')!.element!;
+0179:     const t2Prime = args.get('t2PrimePositionLine')!.element!;
+0180:     
+0181:     const t1Id = t1.id;
+0182:     const t2Id = t2.id;
+0183:     const t2PrimeId = t2Prime.id;
+0184:     const t1PlaneId = t1.planeId;
+0185:     const t2PlaneId = t2.planeId;
+0186: 
+0187:     const groupId = `group_${Date.now()}_create_proj_plane`;
+0188:     const group = createActionGroup(groupId);
+0189:     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+0190: 
+0191:     // Step 1: Create 3D plane from T1 and T2 using factory (handles ProcessTree action)
+0192:     const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
+0193:       cmd,
+0194:       t1Id,
+0195:       t2Id,
+0196:       t1PlaneId,
+0197:       t2PlaneId,
+0198:       undefined,
+0199:       groupId
+0200:     );
+0201:     
+0202:     // Steps 2-4: Create auxiliary projection plane with hinge line and ProcessTree tracking
+0203:     // Using factory method that creates plane + hinge line + ProcessTree action in one call
+0204:     PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+0205:       cmd,
+0206:       _context.world,  // world (needed to check if T1 is HalfHingeLine2D)
+0207:       plane3DId,
+0208:       t1Id,       // T1 (hinge trace)
+0209:       t2Id,       // T2 (other trace)
+0210:       t2PrimeId,  // T2' (position line)
+0211:       t1PlaneId,   // Hinge trace plane (connects via hinge line)
+0212:       undefined,
+0213:       groupId
+0214:     );
+0215:   }
+0216: 
+0217:   protected getCommandDescription(): string {
+0218:     return "Create auxiliary projection plane";
+0219:   }
+0220: }
+
+### frontend/src/tools/Create3DPointTool.ts
+0001: /**
+0002:  * Create3DPointTool - Creates 3D points from projections (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow:
+0007:  * 1. Collect two 2D point projections (any order)
+0008:  * 2. Validate they're on DIFFERENT planes (validator)
+0009:  * 3. Create Point3DFromProjections
+0010:  * 
+0011:  * Code reduction: ~215 lines → ~110 lines (49% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import { SelectionMask } from '@/types/SelectionMask';
+0020: import { Command } from '@/commands/Command';
+0021: import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+0022: import { createAdd3DPointAction } from '@/domain/processTree/actions/Element3DActions';
+0023: import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+0024: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0025: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0026: 
+0027: /**
+0028:  * Create3DPointTool using ArgumentCollectorTool framework
+0029:  * 
+0030:  * Framework handles:
+0031:  * - Any-order argument collection (projection1, projection2)
+0032:  * - Selection mask computation (point + point)
+0033:  * - UI feedback
+0034:  * - Automatic execution when both projections collected
+0035:  * 
+0036:  * Custom behavior:
+0037:  * - Set-level validator ensures projections are on DIFFERENT planes
+0038:  */
+0039: export class Create3DPointTool extends ArgumentCollectorTool {
+0040:   readonly name = 'create3dpoint';
+0041:   readonly completionBehavior = 'stay-active' as const;
+0042: 
+0043:   /**
+0044:    * Define argument specification
+0045:    * Two point arguments with different-plane validation
+0046:    */
+0047:   protected getArgumentSets(): ToolArgumentSet[] {
+0048:     return [
+0049:       {
+0050:         arguments: [
+0051:           { 
+0052:             name: 'projection1', 
+0053:             mask: SelectionMask.point()
+0054:           },
+0055:           { 
+0056:             name: 'projection2', 
+0057:             mask: SelectionMask.point()
+0058:           }
+0059:         ],
+0060:         // Set-level validator: Ensure projections are on different planes
+0061:         setValidator: (args: Map<string, ArgumentValue>, context: CollectionContext) => {
+0062:           const proj1 = args.get('projection1')!;
+0063:           const proj2 = args.get('projection2')!;
+0064:           
+0065:           // Get plane IDs from elements
+0066:           const plane1 = context.world.getProjectionPlaneById(proj1.element!.planeId);
+0067:           const plane2 = context.world.getProjectionPlaneById(proj2.element!.planeId);
+0068:           
+0069:           if (!plane1 || !plane2) {
+0070:             return { valid: false, error: 'One or both projection planes not found' };
+0071:           }
+0072:           
+0073:           if (plane1.id === plane2.id) {
+0074:             return { 
+0075:               valid: false, 
+0076:               error: 'Cannot create 3D point: both projections must be on DIFFERENT planes' 
+0077:             };
+0078:           }
+0079:           
+0080:           return { valid: true };
+0081:         }
+0082:       }
+0083:     ];
+0084:   }
+0085: 
+0086:   /**
+0087:    * Execute 3D point creation operations
+0088:    */
+0089:   protected executeOperations(
+0090:     cmd: Command,
+0091:     args: Map<string, ArgumentValue>,
+0092:     context: ToolContext
+0093:   ): void {
+0094:     const proj1 = args.get('projection1')!.element!;
+0095:     const proj2 = args.get('projection2')!.element!;
+0096:     
+0097:     const projection1Id = proj1.id;
+0098:     const projection2Id = proj2.id;
+0099:     const plane1Id = proj1.planeId;
+0100:     const plane2Id = proj2.planeId;
+0101: 
+0102:     // Execute Add3DPointOp
+0103:     const result = cmd.addAndExecute(new Add3DPointOp(
+0104:       projection1Id,
+0105:       projection2Id,
+0106:       plane1Id,
+0107:       plane2Id
+0108:     ));
+0109:     
+0110:     const point3dId = result.outputs.pointId;
+0111:     
+0112:     // Register ProcessTree action for dependency tracking
+0113:     const action = createAdd3DPointAction(point3dId);
+0114:     
+0115:     const groupId = `group_${Date.now()}_point3d`;
+0116:     const group = createActionGroup(groupId);
+0117:     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+0118:     cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
+0119:   }
+0120: 
+0121:   protected getCommandDescription(): string {
+0122:     return "Create 3D point from projections";
+0123:   }
+0124: }
+
+### frontend/src/tools/QuickProjectionSetupTool.ts
+0001: /**
+0002:  * QuickProjectionSetupTool - Automatic projection plane setup with predefined points
+0003:  * 
+0004:  * Creates a complete 14-step geometric construction immediately using fixed coordinates:
+0005:  * - A1 = (-20, 20) on P_H
+0006:  * - A2 = (0, 10) on P_H
+0007:  * - B1 = (0, 20) on P_V
+0008:  * 
+0009:  * Useful for:
+0010:  * - Quick testing without manual point selection
+0011:  * - Creating consistent example setups
+0012:  * - Demonstrating auxiliary projection plane workflow
+0013:  * 
+0014:  * Related: InteractiveProjectionSetupTool (user selects points)
+0015:  */
+0016: 
+0017: import type { ITool, ToolContext, ToolResult } from './ITool';
+0018: import type { SelectionMask } from '@/types/SelectionMask';
+0019: import { Command } from '@/commands/Command';
+0020: import { Vector3 } from 'three';
+0021: import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+0022: import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+0023: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0024: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0025: 
+0026: /**
+0027:  * Tool that automatically creates projection plane setup with predefined points
+0028:  * 
+0029:  * Executes immediately on activation (toolbar click) - no canvas interaction needed
+0030:  */
+0031: export class QuickProjectionSetupTool implements ITool {
+0032:   readonly name = 'quickprojectionsetup';
+0033: 
+0034:   activate(context: ToolContext): void {
+0035:     // Execute setup immediately on tool activation
+0036:     this.executeSetup(context);
+0037:   }
+0038: 
+0039:   deactivate(_context: ToolContext): void {
+0040:     // No state to clean up
+0041:   }
+0042: 
+0043:   handleClick(context: ToolContext): ToolResult {
+0044:     // Also allow execution on canvas click (for consistency)
+0045:     this.executeSetup(context);
+0046:     return { success: true, message: 'Quick projection setup created' };
+0047:   }
+0048: 
+0049:   getSelectionMask(): SelectionMask | undefined {
+0050:     // Tool doesn't need to select anything
+0051:     return undefined;
+0052:   }
+0053: 
+0054:   private executeSetup(context: ToolContext): void {
+0055:     const { world, commandStack, toolStore } = context;
+0056:     
+0057:     // Find P_H and P_V
+0058:     const P_H = world.getAllProjectionPlanes().find(p => p.name === 'P_H');
+0059:     const P_V = world.getAllProjectionPlanes().find(p => p.name === 'P_V');
+0060:     
+0061:     if (!P_H || !P_V) {
+0062:       console.error('Standard projection planes not found');
+0063:       toolStore.setTool('select');
+0064:       return;
+0065:     }
+0066: 
+0067:     const cmd = new Command('Quick projection setup', world);
+0068: 
+0069:     // Create operation group for this tool execution
+0070:     const groupId = `group_${Date.now()}_quick_setup`;
+0071:     const group = createActionGroup(groupId);
+0072:     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+0073: 
+0074:     // Create A1 on P_H
+0075:     const a1Pos = new Vector3(-20, 20, 1);
+0076:     const { pointId: a1Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a1Pos, groupId);
+0077:     const a1Point = world.getPoint2D(a1Id);
+0078:     if (a1Point) a1Point.label = 'A1';
+0079: 
+0080:     // Create A2 on P_H  
+0081:     const a2Pos = new Vector3(0, 10, 1);
+0082:     const { pointId: a2Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a2Pos, groupId);
+0083:     const a2Point = world.getPoint2D(a2Id);
+0084:     if (a2Point) a2Point.label = 'A2';
+0085: 
+0086:     // Create B1 on P_V
+0087:     const b1Pos = new Vector3(0, 20, 1);
+0088:     const { pointId: b1Id } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, b1Pos, groupId);
+0089:     const b1Point = world.getPoint2D(b1Id);
+0090:     if (b1Point) b1Point.label = 'B1';
+0091: 
+0092:     // Construct complete projection plane setup
+0093:     constructProjectionPlaneSetup(cmd, context, a1Id, a2Id, b1Id, groupId);
+0094: 
+0095:     // Commit and push command, then return to selection tool
+0096:     cmd.commit();
+0097:     commandStack.push(cmd);
+0098:     toolStore.setTool('select');
+0099:   }
+0100: }
+0101: 
+
+### frontend/src/types/ToolArgumentCollector.ts
+0001: /**
+0002:  * ToolArgumentCollector.ts - Framework interfaces for multi-argument tool construction (Phase 64)
+0003:  * 
+0004:  * Provides declarative interfaces for tools that collect multiple geometric arguments
+0005:  * (e.g., CircleTool needs center + circumference point, TangentLineTool needs circle + point OR circle + line).
+0006:  * 
+0007:  * Key Features:
+0008:  * - Any-order collection: Arguments can be selected in any sequence
+0009:  * - Mutually exclusive sets: Support multiple construction methods (e.g., tangent via circle+point OR circle+line)
+0010:  * - Dynamic selection masks: Automatically computed as union of viable next arguments
+0011:  * - Automatic UI feedback: Status messages generated based on viable sets and collected arguments
+0012:  * - Three-layer validation: Type (via SelectionMask), argument-level (per spec), set-level (cross-argument)
+0013:  * 
+0014:  * Reference: data-model.md §Tool Argument Collection Framework (Phase 64)
+0015:  */
+0016: 
+0017: import type { SelectionMask } from './SelectionMask';
+0018: import type { Element2D } from '@/domain/world/Element2D';
+0019: import type { World } from '@/domain/world/World';
+0020: import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+0021: import type { Vector3 } from 'three';
+0022: 
+0023: /**
+0024:  * Value of a collected argument: element + position where user clicked
+0025:  * 
+0026:  * For tools with SelectionMask.none():
+0027:  * - element is null (nothing selected)
+0028:  * - planeCoords contains free position where user clicked (e.g., PointTool creates free point)
+0029:  * 
+0030:  * For tools with tangent lines:
+0031:  * - element is the circle/line selected
+0032:  * - planeCoords determines index (angle-based) via mouse position
+0033:  * 
+0034:  * This structure ensures every argument captures complete "what happened" record.
+0035:  */
+0036: export interface ArgumentValue {
+0037:   /** Selected element (null if SelectionMask.none() used) */
+0038:   element: Element2D | null;
+0039:   
+0040:   /** Position in plane coordinates where user clicked */
+0041:   planeCoords: Vector3;
+0042: }
+0043: 
+0044: /**
+0045:  * Declarative specification for a single argument in a tool's argument set
+0046:  * 
+0047:  * Example:
+0048:  * ```typescript
+0049:  * { 
+0050:  *   name: 'center', 
+0051:  *   mask: SelectionMask.point(),
+0052:  *   validator: (element, context) => {
+0053:  *     // Optional: Check if element is suitable
+0054:  *     return { valid: true };
+0055:  *   }
+0056:  * }
+0057:  * ```
+0058:  */
+0059: export interface ToolArgumentSpec {
+0060:   /**
+0061:    * Semantic name for this argument (e.g., 'center', 'referenceCircle', 'throughPoint')
+0062:    * Used as key in collected arguments map and in status messages
+0063:    */
+0064:   name: string;
+0065:   
+0066:   /**
+0067:    * Selection mask defining which element types are acceptable
+0068:    * Framework uses this for Paper.hitTest() filtering and computing next viable selections
+0069:    */
+0070:   mask: SelectionMask;
+0071:   
+0072:   /**
+0073:    * Optional argument-level validator
+0074:    * Called after type checking (SelectionMask) but before set-level validation
+0075:    * 
+0076:    * Use cases:
+0077:    * - Check geometric constraints (e.g., "point must be outside circle")
+0078:    * - Validate element properties (e.g., "line must not be vertical")
+0079:    * - Cross-reference with already-collected arguments
+0080:    * 
+0081:    * @param element - The element being validated
+0082:    * @param context - Current collection context (world, plane, collected arguments)
+0083:    * @returns Validation result with optional error message
+0084:    */
+0085:   validator?: (element: Element2D, context: CollectionContext) => ValidationResult;
+0086: }
+0087: 
+0088: /**
+0089:  * Declarative specification for a complete argument set (one construction method)
+0090:  * 
+0091:  * Tools with multiple construction methods define multiple ToolArgumentSets.
+0092:  * Example: TangentLineTool might have two sets:
+0093:  * - Set 1: [{ name: 'circle', mask: circle() }, { name: 'throughPoint', mask: point() }]
+0094:  * - Set 2: [{ name: 'circle', mask: circle() }, { name: 'referenceLine', mask: anyLine() }]
+0095:  * 
+0096:  * Framework tracks which sets are still viable as arguments are collected.
+0097:  */
+0098: export interface ToolArgumentSet {
+0099:   /**
+0100:    * Array of argument specifications for this construction method
+0101:    * Order doesn't matter - framework supports any-order collection
+0102:    */
+0103:   arguments: ToolArgumentSpec[];
+0104:   
+0105:   /**
+0106:    * Optional human-readable label for this construction method
+0107:    * Used in UI feedback when multiple sets are viable
+0108:    * Example: "Tangent through point" vs "Tangent parallel to line"
+0109:    */
+0110:   label?: string;
+0111:   
+0112:   /**
+0113:    * Optional set-level validator
+0114:    * Called when all arguments in set are collected, before execution
+0115:    * 
+0116:    * Use cases:
+0117:    * - Cross-argument validation (e.g., "point must be outside circle")
+0118:    * - Geometric feasibility (e.g., "circle and line must not intersect")
+0119:    * 
+0120:    * @param args - Map of collected arguments (name → {element, planeCoords})
+0121:    * @param context - Current collection context (world, plane, collected arguments)
+0122:    * @returns Validation result with optional error message
+0123:    */
+0124:   setValidator?: (args: Map<string, import('../tools/ArgumentCollectorTool').ArgumentValue>, context: CollectionContext) => ValidationResult;  
+0125:   /**
+0126:    * Optional execution callback for this specific argument set
+0127:    * 
+0128:    * If provided, this callback is invoked when this set is completed.
+0129:    * If not provided, falls back to tool's execute() method (which receives setIndex).
+0130:    * 
+0131:    * Use cases:
+0132:    * - Multi-method tools: Each construction method has its own execution logic
+0133:    * - Cleaner code: Avoids if/switch on setIndex in tool's execute() method
+0134:    * 
+0135:    * Example:
+0136:    * ```typescript
+0137:    * {
+0138:    *   arguments: [{ name: 'circle', mask: circle() }, { name: 'point', mask: point() }],
+0139:    *   execute: (args, context) => {
+0140:    *     const circle = args.get('circle')!.element as Circle2D;
+0141:    *     const point = args.get('point')!.element as Point2D;
+0142:    *     // Create tangent through point...
+0143:    *   }
+0144:    * }
+0145:    * ```
+0146:    * 
+0147:    * @param args - Map of collected arguments (name → {element, planeCoords})
+0148:    * @param context - Tool execution context (world, commandStack, planeId, etc.)
+0149:    * @returns Tool result (success/failure message)
+0150:    */
+0151:   execute?: (args: Map<string, ArgumentValue>, context: import('../tools/ITool').ToolContext) => import('../tools/ITool').ToolResult;}
+0152: 
+0153: /**
+0154:  * Context provided to validators during argument collection
+0155:  * Gives validators access to world state and already-collected arguments
+0156:  */
+0157: export interface CollectionContext {
+0158:   /**
+0159:    * World instance for accessing geometric data
+0160:    */
+0161:   world: World;
+0162:   
+0163:   /**
+0164:    * Current projection plane where tool is operating
+0165:    */
+0166:   plane: ProjectionPlane;
+0167:   
+0168:   /**
+0169:    * Arguments collected so far (name → {element, planeCoords})
+0170:    * Validators can reference previously collected arguments for cross-validation
+0171:    * Access element via: collected.get('argName')?.element
+0172:    * Access position via: collected.get('argName')?.planeCoords
+0173:    */
+0174:   collected: Map<string, ArgumentValue>;
+0175: }
+0176: 
+0177: /**
+0178:  * Result from argument or set validation
+0179:  */
+0180: export interface ValidationResult {
+0181:   /**
+0182:    * Whether validation passed
+0183:    */
+0184:   valid: boolean;
+0185:   
+0186:   /**
+0187:    * Optional error message if validation failed
+0188:    * Displayed to user in tool status message
+0189:    */
+0190:   error?: string;
+0191: }

@@ -1,0 +1,366 @@
+frontend/src/commands/factories/DeletionSequenceFactory.ts(85,41): error TS2339: Property 'id' does not exist on type 'Action'.
+frontend/src/commands/factories/DeletionSequenceFactory.ts(86,38): error TS2339: Property 'id' does not exist on type 'Action'.
+frontend/src/commands/factories/DeletionSequenceFactory.ts(88,36): error TS2339: Property 'id' does not exist on type 'Action'.
+frontend/src/commands/factories/GuideSequenceFactory.ts(81,16): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/GuideSequenceFactory.ts(90,9): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/GuideSequenceFactory.ts(97,42): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/GuideSequenceFactory.ts(111,44): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/GuideSequenceFactory.ts(114,72): error TS2345: Argument of type 'SiblingGuide2D' is not assignable to parameter of type 'Guide2D'.
+  Property 'throughPointId' is missing in type 'SiblingGuide2D' but required in type 'Guide2D'.
+frontend/src/commands/factories/GuideSequenceFactory.ts(127,14): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/GuideSequenceFactory.ts(127,23): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(95,74): error TS2554: Expected 1 arguments, but got 4.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(106,13): error TS2554: Expected 1 arguments, but got 3.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(145,76): error TS2554: Expected 1 arguments, but got 5.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(156,13): error TS2554: Expected 1 arguments, but got 3.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(194,78): error TS2554: Expected 1 arguments, but got 5.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(225,43): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(235,63): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(237,9): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts(249,14): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/PointSequenceFactory.ts(46,38): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/factories/PointSequenceFactory.ts(50,14): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts(208,50): error TS2554: Expected 9 arguments, but got 8.
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts(30,43): error TS2345: Argument of type 'import("/work/diedrico/frontend/src/domain/processTree/ActionGroup").ActionGroup' is not assignable to parameter of type 'import("/work/diedrico/frontend/src/domain/processTree/ProcessTree").ActionGroup'.
+  Types of property 'isAuxiliary' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts(19,64): error TS6138: Property 'subprocessId' is declared but its value is never read.
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts(23,7): error TS2741: Property 'outputs' is missing in type '{ success: false; error: string; }' but required in type 'OperationResult<JsonObject>'.
+frontend/src/commands/operations/viewState/ViewStateOperations.ts(5,32): error TS2307: Cannot find module '../Command' or its corresponding type declarations.
+frontend/src/commands/operations/viewState/ViewStateOperations.ts(6,38): error TS2307: Cannot find module '../../types/CommandTypes' or its corresponding type declarations.
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts(73,88): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts(74,88): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts(39,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddCircleOp.ts(35,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddFreePointOp.ts(32,57): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddGuideOp.ts(39,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddGuideOp.ts(106,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts(22,13): error TS6138: Property 'index' is declared but its value is never read.
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts(39,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts(39,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts(37,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddLineOp.ts(34,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddLineOp.ts(100,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddLineOp.ts(130,22): error TS2339: Property 'circleId' does not exist on type 'AddLine2DParallelToLineOp'.
+frontend/src/commands/operations/world/AddLineOp.ts(132,19): error TS2339: Property 'tangentIndex' does not exist on type 'AddLine2DParallelToLineOp'.
+frontend/src/commands/operations/world/AddLineOp.ts(167,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddLineOp.ts(197,22): error TS2339: Property 'circleId' does not exist on type 'AddLine2DPerpendicularToLineOp'.
+frontend/src/commands/operations/world/AddLineOp.ts(199,19): error TS2339: Property 'tangentIndex' does not exist on type 'AddLine2DPerpendicularToLineOp'.
+frontend/src/commands/operations/world/AddLineOp.ts(236,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddLineOp.ts(305,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddSegmentOp.ts(34,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts(42,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/InitializationOps.ts(217,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/InitializationOps.ts(368,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(61,55): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(94,39): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(147,53): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(180,37): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(232,56): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(265,40): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(316,57): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(349,41): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(436,76): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(447,54): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(453,55): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(491,40): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/RemoveElementOps.ts(498,51): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts(61,9): error TS2322: Type 'Line2D | undefined' is not assignable to type 'Point2D | undefined'.
+  Type 'Line2D' is not assignable to type 'Point2D'.
+    The types returned by 'realize2D(...)' are incompatible between these types.
+      Type 'Line2DRealization2D' is missing the following properties from type 'Point2DRealization2D': position, getPosition
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts(64,9): error TS2322: Type 'Circle2D | undefined' is not assignable to type 'Point2D | undefined'.
+  Type 'Circle2D' is not assignable to type 'Point2D'.
+    The types returned by 'realize2D(...)' are incompatible between these types.
+      Type 'Circle2DRealization2D | null' is not assignable to type 'Point2DRealization2D'.
+        Type 'null' is not assignable to type 'Point2DRealization2D'.
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts(123,9): error TS2322: Type 'Line2D | undefined' is not assignable to type 'Point2D | undefined'.
+  Type 'Line2D' is not assignable to type 'Point2D'.
+    The types returned by 'realize2D(...)' are incompatible between these types.
+      Type 'Line2DRealization2D' is missing the following properties from type 'Point2DRealization2D': position, getPosition
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts(126,9): error TS2322: Type 'Circle2D | undefined' is not assignable to type 'Point2D | undefined'.
+  Type 'Circle2D' is not assignable to type 'Point2D'.
+    The types returned by 'realize2D(...)' are incompatible between these types.
+      Type 'Circle2DRealization2D | null' is not assignable to type 'Point2DRealization2D'.
+        Type 'null' is not assignable to type 'Point2DRealization2D'.
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts(143,3): error TS2416: Property 'serialize' in type 'UpdateElementStyleOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>>'.
+  Type '() => { opType: string; elementId: string; planeId: string; newStyle: StyleProperties; outputs: Record<string, any>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; elementId: string; planeId: string; newStyle: StyleProperties; outputs: Record<string, any>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'newStyle' is incompatible with index signature.
+        Type 'StyleProperties' is not assignable to type 'JsonValue | undefined'.
+          Type 'StyleProperties' is not assignable to type 'JsonObject'.
+            Index signature for type 'string' is missing in type 'StyleProperties'.
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts(66,48): error TS2322: Type 'UpdateElementStyleOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; elementId: string; planeId: string; newStyle: StyleProperties; outputs: Record<string, any>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'newStyle' is incompatible with index signature.
+        Type 'StyleProperties' is not assignable to type 'JsonValue | undefined'.
+          Type 'StyleProperties' is not assignable to type 'JsonObject'.
+            Index signature for type 'string' is missing in type 'StyleProperties'.
+frontend/src/components/icons/toolbar/index.ts(6,31): error TS2307: Cannot find module './SelectionToolIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(7,27): error TS2307: Cannot find module './FreePointIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(8,35): error TS2307: Cannot find module './IntersectionPointIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(9,33): error TS2307: Cannot find module './LineByTwoPointsIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(10,25): error TS2307: Cannot find module './SegmentIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(11,30): error TS2307: Cannot find module './ParallelLineIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(12,35): error TS2307: Cannot find module './PerpendicularLineIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(13,37): error TS2307: Cannot find module './TangentThroughPointIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(14,33): error TS2307: Cannot find module './TangentParallelIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(15,24): error TS2307: Cannot find module './CircleIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(16,27): error TS2307: Cannot find module './GuideLineIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(17,32): error TS2307: Cannot find module './TransportPointIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(18,25): error TS2307: Cannot find module './NewFileIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(19,26): error TS2307: Cannot find module './OpenFileIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(20,26): error TS2307: Cannot find module './SaveFileIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(21,22): error TS2307: Cannot find module './UndoIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(22,22): error TS2307: Cannot find module './RedoIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(23,24): error TS2307: Cannot find module './ZoomInIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(24,25): error TS2307: Cannot find module './ZoomOutIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(25,25): error TS2307: Cannot find module './ZoomFitIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(26,21): error TS2307: Cannot find module './PanIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(27,29): error TS2307: Cannot find module './ActivePlaneIcon.vue' or its corresponding type declarations.
+frontend/src/components/icons/toolbar/index.ts(28,22): error TS2307: Cannot find module './GridIcon.vue' or its corresponding type declarations.
+frontend/src/composables/useCommandExecution.ts(30,40): error TS2339: Property 'validate' does not exist on type 'Command'.
+frontend/src/composables/useCommandExecution.ts(39,36): error TS2554: Expected 1 arguments, but got 0.
+frontend/src/composables/useCommandExecution.ts(42,20): error TS2339: Property 'pushCommand' does not exist on type 'Store<"process", ProcessState, { getNodeByPath: (state: { root: { type: "process"; id: string; name: string; isOutput: boolean; children: ({ id: string; type: "actionGroup"; children: any; isOutput: boolean; isAuxiliary?: boolean | undefined; created: Date; } | { ...; })[]; showIntermediates: boolean; defaultStyle?:...'.
+frontend/src/composables/useCommandExecution.ts(46,9): error TS2322: Type 'OperationResult<JsonObject>' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'OperationResult<JsonObject>'.
+frontend/src/composables/useCommandExecution.ts(61,40): error TS2339: Property 'validate' does not exist on type 'Command'.
+frontend/src/composables/useCommandExecution.ts(69,36): error TS2554: Expected 1 arguments, but got 0.
+frontend/src/composables/useCommandExecution.ts(73,9): error TS2322: Type 'OperationResult<JsonObject>' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'OperationResult<JsonObject>'.
+frontend/src/composables/useCommandExecution.ts(87,25): error TS2339: Property 'undo' does not exist on type 'Store<"process", ProcessState, { getNodeByPath: (state: { root: { type: "process"; id: string; name: string; isOutput: boolean; children: ({ id: string; type: "actionGroup"; children: any; isOutput: boolean; isAuxiliary?: boolean | undefined; created: Date; } | { ...; })[]; showIntermediates: boolean; defaultStyle?:...'.
+frontend/src/composables/useCommandExecution.ts(94,25): error TS2339: Property 'redo' does not exist on type 'Store<"process", ProcessState, { getNodeByPath: (state: { root: { type: "process"; id: string; name: string; isOutput: boolean; children: ({ id: string; type: "actionGroup"; children: any; isOutput: boolean; isAuxiliary?: boolean | undefined; created: Date; } | { ...; })[]; showIntermediates: boolean; defaultStyle?:...'.
+frontend/src/composables/useCommandExecution.ts(101,25): error TS2339: Property 'canUndo' does not exist on type 'Store<"process", ProcessState, { getNodeByPath: (state: { root: { type: "process"; id: string; name: string; isOutput: boolean; children: ({ id: string; type: "actionGroup"; children: any; isOutput: boolean; isAuxiliary?: boolean | undefined; created: Date; } | { ...; })[]; showIntermediates: boolean; defaultStyle?:...'.
+frontend/src/composables/useCommandExecution.ts(108,25): error TS2339: Property 'canRedo' does not exist on type 'Store<"process", ProcessState, { getNodeByPath: (state: { root: { type: "process"; id: string; name: string; isOutput: boolean; children: ({ id: string; type: "actionGroup"; children: any; isOutput: boolean; isAuxiliary?: boolean | undefined; created: Date; } | { ...; })[]; showIntermediates: boolean; defaultStyle?:...'.
+frontend/src/composables/useHoverHighlight.ts(16,30): error TS6133: 'Ref' is declared but its value is never read.
+frontend/src/config/toolFamilies.ts(13,27): error TS2307: Cannot find module '@/components/icons/toolbar/FreePointIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(14,35): error TS2307: Cannot find module '@/components/icons/toolbar/IntersectionPointIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(15,33): error TS2307: Cannot find module '@/components/icons/toolbar/LineByTwoPointsIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(16,30): error TS2307: Cannot find module '@/components/icons/toolbar/ParallelLineIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(17,35): error TS2307: Cannot find module '@/components/icons/toolbar/PerpendicularLineIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(18,37): error TS2307: Cannot find module '@/components/icons/toolbar/TangentThroughPointIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(19,33): error TS2307: Cannot find module '@/components/icons/toolbar/TangentParallelIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(20,25): error TS2307: Cannot find module '@/components/icons/toolbar/SegmentIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(21,24): error TS2307: Cannot find module '@/components/icons/toolbar/CircleIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(22,27): error TS2307: Cannot find module '@/components/icons/toolbar/GuideLineIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(23,32): error TS2307: Cannot find module '@/components/icons/toolbar/TransportPointIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(24,31): error TS2307: Cannot find module '@/components/icons/toolbar/Create3DPointIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(25,30): error TS2307: Cannot find module '@/components/icons/toolbar/Create3DLineIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(26,33): error TS2307: Cannot find module '@/components/icons/toolbar/Create3DSegmentIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(27,31): error TS2307: Cannot find module '@/components/icons/toolbar/Create3DPlaneIcon.vue' or its corresponding type declarations.
+frontend/src/config/toolFamilies.ts(28,25): error TS2307: Cannot find module '@/components/icons/toolbar/FreePointIcon.vue' or its corresponding type declarations.
+frontend/src/domain/calculations/CoordinateTransform.ts(19,15): error TS2305: Module '"../world/Plane"' has no exported member 'Plane3DCoordinateSystem'.
+frontend/src/domain/presentation/Paper.ts(379,63): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/domain/presentation/Paper.ts(413,61): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/domain/presentation/Paper.ts(441,65): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/domain/presentation/Paper.ts(486,45): error TS6133: 'world' is declared but its value is never read.
+frontend/src/domain/presentation/Paper.ts(493,11): error TS6133: 'distanceToPrimitive' is declared but its value is never read.
+frontend/src/domain/presentation/Paper.ts(550,11): error TS6133: 'getSnapPoint' is declared but its value is never read.
+frontend/src/domain/presentation/Paper.ts(793,11): error TS6133: 'distanceToSegmentInPlaneSpace' is declared but its value is never read.
+frontend/src/domain/presentation/Paper.ts(819,11): error TS6133: 'snapToSegmentInPlaneSpace' is declared but its value is never read.
+frontend/src/domain/processTree/ActionGroup.ts(6,15): error TS2305: Module '"./Action"' has no exported member 'ConstructiveAction'.
+frontend/src/domain/processTree/ProcessTree.ts(356,18): error TS2339: Property 'id' does not exist on type 'Action'.
+frontend/src/domain/world/Circle.ts(139,25): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Circle.ts(140,32): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Circle.ts(235,20): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Circle.ts(236,20): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Circle.ts(237,20): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/HingeLine.ts(18,18): error TS6133: 'Line2DRealization2D' is declared but its value is never read.
+frontend/src/domain/world/Line.ts(222,20): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Line.ts(223,20): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Line.ts(311,21): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Line.ts(323,26): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Line.ts(562,20): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Line.ts(568,26): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Line.ts(739,20): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Segment.ts(77,16): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/Segment.ts(78,16): error TS18048: 'plane' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts(74,9): error TS2345: Argument of type 'ProjectionPlaneRealizationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneRealizationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 86 more.
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts(125,9): error TS2345: Argument of type 'ProjectionPlaneRealizationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneRealizationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 86 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(6,23): error TS6133: 'IntersectionPoint2D' is declared but its value is never read.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(260,41): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(284,40): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(308,42): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(428,19): error TS18048: 'l1' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(428,32): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(429,19): error TS18048: 'l2' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(429,32): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(475,18): error TS18048: 'lineElement' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(475,40): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(476,20): error TS18048: 'circleElement' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(476,44): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(527,21): error TS18048: 'circle1Element' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(527,46): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(528,21): error TS18048: 'circle2Element' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(528,46): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(593,48): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(594,48): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(647,27): error TS18048: 'refLineElement' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(647,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(694,27): error TS18048: 'refLineElement' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(694,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(805,27): error TS18048: 'refLineElement' is possibly 'undefined'.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(805,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(968,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts(1017,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+frontend/src/domain/world/styleService.ts(70,51): error TS2339: Property 'id' does not exist on type 'Action'.
+frontend/src/main.ts(18,17): error TS2307: Cannot find module './App.vue' or its corresponding type declarations.
+frontend/src/services/GeometryService.ts(5,8): error TS2307: Cannot find module '../domain/calculations/intersections' or its corresponding type declarations.
+frontend/src/services/GeometryService.ts(34,9): error TS2322: Type 'Ok<unknown>' is not assignable to type 'Result<{ x: number; y: number; } | null, string>'.
+  Type 'Ok<unknown>' is not assignable to type 'Ok<{ x: number; y: number; } | null>'.
+    Type 'unknown' is not assignable to type '{ x: number; y: number; } | null'.
+frontend/src/services/GoogleDriveService.ts(166,34): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+frontend/src/services/GoogleDriveService.ts(202,34): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+frontend/src/services/GoogleDriveService.ts(526,13): error TS6133: 'response' is declared but its value is never read.
+frontend/src/services/PaperService.ts(33,10): error TS2300: Duplicate identifier 'HalfHingeLine2D'.
+frontend/src/services/PaperService.ts(36,10): error TS2300: Duplicate identifier 'Guide2D'.
+frontend/src/services/PaperService.ts(36,35): error TS6133: 'isGuide2D' is declared but its value is never read.
+frontend/src/services/PaperService.ts(36,46): error TS6133: 'isSiblingGuide2D' is declared but its value is never read.
+frontend/src/services/PaperService.ts(40,15): error TS2300: Duplicate identifier 'Guide2D'.
+frontend/src/services/PaperService.ts(42,15): error TS2300: Duplicate identifier 'HalfHingeLine2D'.
+frontend/src/services/PaperService.ts(131,57): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/services/PaperService.ts(151,55): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/services/PaperService.ts(192,59): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/services/PaperService.ts(223,11): error TS6133: 'isHighlighted' is declared but its value is never read.
+frontend/src/services/PaperService.ts(325,11): error TS6133: 'isHighlighted' is declared but its value is never read.
+frontend/src/services/PaperService.ts(403,14): error TS2304: Cannot find name 'Segment2D'.
+frontend/src/services/PaperService.ts(450,14): error TS2304: Cannot find name 'Segment2D'.
+frontend/src/services/PaperService.ts(671,18): error TS2304: Cannot find name 'ArcGeometry'.
+frontend/src/services/PaperService.ts(672,5): error TS6133: 'context' is declared but its value is never read.
+frontend/src/services/PaperService.ts(722,11): error TS6133: 'hingeLineToPrimitive' is declared but its value is never read.
+frontend/src/services/PaperService.ts(793,5): error TS6133: 'planeId' is declared but its value is never read.
+frontend/src/services/PaperService.ts(878,57): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+frontend/src/services/ProjectService.ts(93,52): error TS18048: 'record.nextElementId' is possibly 'undefined'.
+frontend/src/services/RenderService.ts(126,11): error TS2339: Property 'minU' does not exist on type 'Plane3D'.
+frontend/src/services/RenderService.ts(126,17): error TS2339: Property 'maxU' does not exist on type 'Plane3D'.
+frontend/src/services/RenderService.ts(126,23): error TS2339: Property 'minV' does not exist on type 'Plane3D'.
+frontend/src/services/RenderService.ts(126,29): error TS2339: Property 'maxV' does not exist on type 'Plane3D'.
+frontend/src/services/factories/PlaneSequenceFactory.ts(73,43): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/services/factories/PlaneSequenceFactory.ts(79,14): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+frontend/src/services/factories/PlaneSequenceFactory.ts(176,27): error TS2345: Argument of type 'UpdateElementStyleOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; elementId: string; planeId: string; newStyle: StyleProperties; outputs: Record<string, any>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'newStyle' is incompatible with index signature.
+        Type 'StyleProperties' is not assignable to type 'JsonValue | undefined'.
+          Type 'StyleProperties' is not assignable to type 'JsonObject'.
+            Index signature for type 'string' is missing in type 'StyleProperties'.
+frontend/src/stores/processStore.ts(5,15): error TS2305: Module '"../domain/processTree/Action"' has no exported member 'ConstructiveAction'.
+frontend/src/stores/viewStore.ts(59,3): error TS2741: Property 'showReferenceAxes' is missing in type '{ showPlanes: true; show2DElementsOnPlanes: false; showLinkingVisuals: false; showGrid: true; }' but required in type 'ThreeViewDisplayOptions'.
+frontend/src/tools/ArgumentCollectorTool.ts(100,25): error TS2339: Property 'getCommandDescription' does not exist on type 'ArgumentCollectorTool'.
+frontend/src/tools/ArgumentCollectorTool.ts(131,59): error TS2339: Property 'getCommandDescription' does not exist on type 'ArgumentCollectorTool'.
+frontend/src/tools/ArgumentCollectorTool.ts(236,52): error TS2339: Property 'getCommandDescription' does not exist on type 'ArgumentCollectorTool'.
+frontend/src/tools/ArgumentCollectorTool.ts(242,61): error TS2339: Property 'getCommandDescription' does not exist on type 'ArgumentCollectorTool'.
+frontend/src/tools/CircleTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/Create3DLineTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/Create3DPlaneTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/Create3DPointTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/Create3DSegmentTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/CreateProjectionPlaneTool.ts(24,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/GuideTool.ts(27,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/GuideTool.ts(28,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/IntersectionTool.ts(21,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/IntersectionTool.ts(22,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/IntersectionTool.ts(25,1): error TS6192: All imports in import declaration are unused.
+frontend/src/tools/LineTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/LineTool.ts(18,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/LineTool.ts(20,1): error TS6133: 'Point2D' is declared but its value is never read.
+frontend/src/tools/ParallelLineTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/ParallelLineTool.ts(19,1): error TS6133: 'Point2D' is declared but its value is never read.
+frontend/src/tools/ParallelLineTool.ts(20,1): error TS6133: 'Element2D' is declared but its value is never read.
+frontend/src/tools/ParallelLineTool.ts(55,65): error TS2304: Cannot find name 'Line2D'.
+frontend/src/tools/PerpendicularLineTool.ts(17,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/PerpendicularLineTool.ts(19,1): error TS6133: 'Point2D' is declared but its value is never read.
+frontend/src/tools/PerpendicularLineTool.ts(20,1): error TS6133: 'Element2D' is declared but its value is never read.
+frontend/src/tools/PerpendicularLineTool.ts(55,65): error TS2304: Cannot find name 'Line2D'.
+frontend/src/tools/PointTool.ts(15,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/PointTool.ts(16,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/Quick3DLineTool.ts(68,20): error TS2339: Property 'commandStack' does not exist on type 'ToolContext'.
+frontend/src/tools/Quick3DSegmentTool.ts(72,20): error TS2339: Property 'commandStack' does not exist on type 'ToolContext'.
+frontend/src/tools/Quick3DSegmentTool.ts(108,13): error TS6133: 'lineId_H' is declared but its value is never read.
+frontend/src/tools/QuickProjectionSetupTool.ts(55,20): error TS2339: Property 'commandStack' does not exist on type 'ToolContext'.
+frontend/src/tools/SegmentTool.ts(20,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/SegmentTool.ts(21,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/SegmentTool.ts(23,1): error TS6133: 'Point2D' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(18,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(19,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(58,65): error TS2304: Cannot find name 'Line2D'.
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts(85,11): error TS6133: 'determineTangentIndex' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(18,1): error TS6133: 'ToolContext' is declared but its value is never read.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(19,32): error TS6196: 'ArgumentValue' is declared but never used.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts(90,11): error TS6133: 'determineTangentIndex' is declared but its value is never read.
+frontend/src/types/ToolArgumentCollector.ts(124,78): error TS2694: Namespace '"/work/diedrico/frontend/src/tools/ArgumentCollectorTool"' has no exported member 'ArgumentValue'.

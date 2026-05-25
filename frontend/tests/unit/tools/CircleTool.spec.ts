@@ -20,6 +20,7 @@ import { createTestWorld } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import type { ToolContext } from '@/tools/ITool';
+import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { Vector3, Matrix3 } from 'three';
 import { Paper } from '@/domain/presentation/Paper';
 
@@ -67,10 +68,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const firstResult = tool.handleClick(firstClickContext);
@@ -82,10 +84,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const secondResult = tool.handleClick(secondClickContext);
@@ -125,10 +128,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const firstResult = tool.handleClick(firstClickContext);
@@ -140,10 +144,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const secondResult = tool.handleClick(secondClickContext);
@@ -177,10 +182,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const firstResult = tool.handleClick(firstClickContext);
@@ -191,10 +197,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(300, 300, 1),
         canvasCoords: new Vector3(400, 400, 1), // Far from any existing point
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const secondResult = tool.handleClick(secondClickContext);
@@ -231,10 +238,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const firstResult = tool.handleClick(firstClickContext);
@@ -245,10 +253,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100.002, 100, 1),
         canvasCoords: new Vector3(100.002, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const secondResult = tool.handleClick(secondClickContext);
@@ -268,10 +277,11 @@ describe('CircleTool', () => {
         planeId: 'invalid_plane',
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const result = tool.handleClick(context);
@@ -284,10 +294,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 0), // Invalid homogeneous coordinate (w = 0)
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
 
       const result = tool.handleClick(context);
@@ -312,10 +323,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
       tool.handleClick(firstClickContext);
 
@@ -324,10 +336,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
       const result = tool.handleClick(secondClickContext);
       expect(result.success).toBe(true);
@@ -337,10 +350,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
       const thirdResult = tool.handleClick(thirdClickContext);
       expect(thirdResult.success).toBe(true);
@@ -371,10 +385,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
       tool.handleClick(centerClickContext);
 
@@ -383,10 +398,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(150, 100, 1),
         canvasCoords: new Vector3(150, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
       const result = tool.handleClick(circumferenceClickContext);
       expect(result.success).toBe(true);
@@ -446,10 +462,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
       tool.handleClick(centerClickContext);
 
@@ -457,10 +474,11 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(150, 100, 1),
         canvasCoords: new Vector3(150, 100, 1),
-        commandStack,
+        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
         world,
         paper,
-        paperToPlaneTransform: new Matrix3().identity()
+        paperToPlaneTransform: new Matrix3().identity(),
+        toolStore: {} as any,
       };
       tool.handleClick(circumferenceClickContext);
 

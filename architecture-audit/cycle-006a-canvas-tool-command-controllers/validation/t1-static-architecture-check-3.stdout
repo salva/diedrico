@@ -1,0 +1,7 @@
+--- prohibited concrete command leaks after deletion ---
+--- remaining command stack mentions in selected path ---
+frontend/src/components/workspace/SvgCanvas.vue:188:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/workspace/SvgCanvas.vue:425:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/workspace/SvgCanvas.vue:426:if (!commandStack) {
+frontend/src/components/workspace/SvgCanvas.vue:427:  throw new Error('CommandStack not provided');
+frontend/src/components/workspace/SvgCanvas.vue:429:const canvasToolController = new CanvasToolController({ world, commandStack, toolStore });

@@ -1,37 +1,30 @@
 /**
- * ITool - Interface for geometric construction tools
- * 
- * Tools are responsible for translating user input into commands.
- * They handle the interaction logic and validation, then create
- * and execute commands via the CommandStack.
- * 
- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Tool Interactions
- * 
- * Architecture:
- * User input → Tool.handleClick() → Command creation → CommandStack.push()
- * 
- * Tools do NOT mutate World directly - they always go through commands.
+ * ITool - Interface for geometric construction tools.
+ *
+ * Tools collect interaction arguments and emit typed application intents.
+ * Application controllers own command creation, validation orchestration,
+ * commit/rollback, and command-stack execution.
  */
 
 import type { Vector3 } from 'three';
-import type { CommandStack } from '@/commands/CommandStack';
 import type { World } from '@/domain/world/World';
 import type { Paper } from '@/domain/presentation/Paper';
 import type { SelectionMask } from '@/types/SelectionMask';
 import type { useToolStore } from '@/stores/toolStore';
+import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
 
 /**
- * Context provided to tools when handling user input
+ * Context provided to tools when handling user input.
  */
 export interface ToolContext {
-  planeId: string;          // Which projection plane the click occurred on
-  planeCoords: Vector3;     // Click position in plane intrinsic coordinates (u, v, 1)
-  canvasCoords: { x: number; y: number }; // Click position in canvas/screen pixels
-  commandStack: CommandStack;  // Stack for executing commands
-  world: World;             // World for validation and queries
-  paper: Paper;             // Paper for spatial queries (hit testing, snapping)
-  paperToPlaneTransform: any;  // Transform matrix from paper to plane coordinates (Matrix3 | undefined)
-  toolStore: ReturnType<typeof useToolStore>; // Tool store for managing tool state and completion behavior
+  planeId: string;
+  planeCoords: Vector3;
+  canvasCoords: { x: number; y: number };
+  commandSink: ToolCommandSink;
+  world: World;
+  paper: Paper;
+  paperToPlaneTransform: any;
+  toolStore: ReturnType<typeof useToolStore>;
 }
 
 /**
@@ -39,33 +32,18 @@ export interface ToolContext {
  */
 export interface ToolResult {
   success: boolean;
-  message?: string;  // User-facing message (success or error)
+  message?: string;
 }
 
 /**
- * Base interface for all tools
+ * Base interface for all tools.
  */
 export interface ITool {
-  /**
-   * Tool identifier (matches ToolType from toolStore)
-   */
   readonly name: string;
-  
-  /**
-   * Handle a click event on the canvas
-   * 
-   * @param context - Tool context with planeId, coords (plane+canvas), commandStack, world
-   * @returns Result indicating success/failure and optional message
-   */
   handleClick(context: ToolContext): ToolResult;
-  
-  /**
-   * Optional: Cancel ongoing multi-step operation
-   */
+  activate?(context: ToolContext): void;
+  deactivate?(context: ToolContext): void;
   cancel?(): void;
-  
-  /**
-   * Optional: Get current tool state for UI feedback
-   */
   getState?(): Record<string, any>;
+  getSelectionMask?(): SelectionMask | undefined;
 }

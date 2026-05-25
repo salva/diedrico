@@ -1,0 +1,78 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/tools/toolValidation.spec.ts  (8 tests | 5 failed) 53ms
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should accept two different points
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should accept two different points
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should accept valid center and circumference point
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > ParallelLineTool > should accept valid reference line and create parallel
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > PerpendicularLineTool > should accept valid reference line and create perpendicular
+     → expected false to be true // Object.is equality
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ❯ tests/unit/tools/CircleTool.spec.ts  (10 tests | 6 failed) 52ms
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Two-Click Workflow > should require two clicks to create circle
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T983: Both Points Snap (No Duplicates) > should snap to existing points for both center and circumference
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T985: Minimum Radius Validation with Snapped Points > should accept circle when snapped points meet minimum radius
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Tool State Reset > should reset state after successful circle creation
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+     → Cannot read properties of undefined (reading 'realize2D')
+ ❯ tests/unit/tools/pointTool.spec.ts  (22 tests | 17 failed) 76ms
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create free point on valid click
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create point with correct coordinates
+     → expected undefined to be an instance of FreePoint2D
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create point on correct plane
+     → Cannot read properties of undefined (reading 'planeId')
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should accept valid Vector3 homogeneous coordinates
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should reject NaN coordinates
+     → expected 'Failed to create free point: Cannot r…' to contain 'Invalid coordinates'
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should reject Infinity coordinates
+     → expected 'Failed to create free point: Cannot r…' to contain 'Invalid coordinates'
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should accept valid plane_H
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should accept valid plane_V
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should reject invalid plane ID
+     → expected 'Failed to create free point: Cannot r…' to contain 'Plane not found'
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Error Handling > should handle command execution errors
+     → expected 'Failed to create free point: Cannot r…' to contain 'Mock execution error'
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Multiple Operations > should create multiple points in sequence
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Multiple Operations > should maintain command stack for multiple operations
+     → Nothing to undo
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive success message
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive failure message for invalid coordinates
+     → expected 'Failed to create free point: Cannot r…' to contain 'Invalid coordinates'
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive failure message for invalid plane
+     → expected 'Failed to create free point: Cannot r…' to contain 'Plane not found'
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Integration with Command Pattern > should allow undo after point creation
+     → expected +0 to be 1 // Object.is equality
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Integration with Command Pattern > should allow redo after undo
+     → expected +0 to be 1 // Object.is equality
+
+ Test Files  3 failed (3)
+      Tests  28 failed | 12 passed (40)
+   Start at  23:33:17
+   Duration  2.30s (transform 1.01s, setup 0ms, collect 2.70s, tests 181ms, environment 2.23s, prepare 518ms)
+

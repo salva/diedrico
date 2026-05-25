@@ -1,0 +1,371 @@
+
+### ArgumentCollectorTool.ts
+import { Vector3 } from 'three';
+import { BaseTool } from './BaseTool';
+import type { ToolContext, ToolResult, ITool } from './ITool';
+import { SelectionMask, NoneMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import type { 
+ * - handleClick(): Automated argument collection with validation
+   * @throws Error if operation fails (will be caught by handleClick)
+    const cmd = new Command(this.getCommandDescription(), world);
+      throw error; // Re-throw to be handled by handleClick
+  handleClick(context: ToolContext): ToolResult {
+
+### BaseTool.ts
+ * Subclasses override handleClick() to implement specific tool behavior.
+import type { ToolContext, ToolResult } from './ITool';
+import type { useToolStore } from '@/stores/toolStore';
+  abstract handleClick(context: ToolContext): ToolResult;
+
+### CircleTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+import type { Point2D } from '@/domain/world/Point';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+  protected executeOperations(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    CircleSequenceFactory.createCircleByCenterAndPoint(
+
+### Create3DLineTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+  protected executeOperations(
+    const result = cmd.addAndExecute(new Add3DLineOp(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
+
+### Create3DPlaneTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+  protected executeOperations(
+    PlaneSequenceFactory.create3DPlaneFromTraces(
+
+### Create3DPointTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+import { createAdd3DPointAction } from '@/domain/processTree/actions/Element3DActions';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+  protected executeOperations(
+    // Execute Add3DPointOp
+    const result = cmd.addAndExecute(new Add3DPointOp(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
+
+### Create3DSegmentTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+import { createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+  protected executeOperations(
+    const result = cmd.addAndExecute(new Add3DSegmentOp(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
+
+### CreateProjectionPlaneTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+import { computeExpectedT2Prime, computeLineDistance } from '@/utils/projectionPlaneUtils';
+import type { Element2D } from '@/domain/world/Element2D';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+  protected executeOperations(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
+    PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+
+### ExampleConstructionsTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+  protected executeOperations(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+
+### GuideTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSiblingGuideAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+ * - Creates TWO guides (primary + sibling) via GuideSequenceFactory
+   * - Sibling guide on paired plane (automatically via GuideSequenceFactory)
+  protected executeOperations(
+    const result = GuideSequenceFactory.createGuideWithSibling(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(primaryAction, group.id));
+      cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, group.id));
+
+### ITool.ts
+ * User input → Tool.handleClick() → Command creation → CommandStack.push()
+import type { Vector3 } from 'three';
+import type { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { Paper } from '@/domain/presentation/Paper';
+import type { SelectionMask } from '@/types/SelectionMask';
+import type { useToolStore } from '@/stores/toolStore';
+  handleClick(context: ToolContext): ToolResult;
+
+### IntersectionTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { Element2D } from '@/domain/world/Element2D';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { 
+import type { World } from '@/domain/world/World';
+import { Line2D } from '@/domain/world/Line';
+import { Circle2D } from '@/domain/world/Circle';
+  protected executeOperations(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+      IntersectionSequenceFactory.createLineLineIntersection(
+      IntersectionSequenceFactory.createLineCircleIntersection(
+      IntersectionSequenceFactory.createLineCircleIntersection(
+      IntersectionSequenceFactory.createCircleCircleIntersection(
+
+### LineTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { Element2D } from '@/domain/world/Element2D';
+import type { Point2D } from '@/domain/world/Point';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+  protected executeOperations(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    LineSequenceFactory.createLineByTwoPoints(cmd, planeId, point1.id, point2.id, groupId);
+
+### ParallelLineTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { Point2D } from '@/domain/world/Point';
+import type { Line2D } from '@/domain/world/Line';
+import type { Element2D } from '@/domain/world/Element2D';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+  protected executeOperations(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    LineSequenceFactory.createParallelLine(
+
+### PerpendicularLineTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { Point2D } from '@/domain/world/Point';
+import type { Line2D } from '@/domain/world/Line';
+import type { Element2D } from '@/domain/world/Element2D';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+  protected executeOperations(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    LineSequenceFactory.createPerpendicularLine(
+
+### PointTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+  protected executeOperations(
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
+
+### Quick3DLineTool.ts
+import type { ITool, ToolContext, ToolResult } from './ITool';
+import type { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { Vector3 } from 'three';
+import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+  activate(context: ToolContext): void {
+  deactivate(_context: ToolContext): void {
+  handleClick(context: ToolContext): ToolResult {
+    const cmd = new Command('Quick 3D line setup', world);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+      const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p1_H, groupId);
+      const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p2_H, groupId);
+      const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
+      const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p1_V, groupId);
+      const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p2_V, groupId);
+      const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
+      const add3DLineOp = new Add3DLineOp(lineId_H, lineId_V, P_H.id!, P_V.id!);
+      cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+
+### Quick3DSegmentTool.ts
+import type { ITool, ToolContext, ToolResult } from './ITool';
+import type { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { Vector3 } from 'three';
+import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+import { createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
+import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+  activate(context: ToolContext): void {
+  deactivate(_context: ToolContext): void {
+  handleClick(context: ToolContext): ToolResult {
+    const cmd = new Command('Quick 3D segment setup', world);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+      const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(
+      const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(
+      const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
+      const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(
+      const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(
+      const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
+        GuideSequenceFactory.createGuideWithSibling(
+      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(guide1Id), groupId));
+        cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(sibGuide1Id), groupId));
+        GuideSequenceFactory.createGuideWithSibling(
+      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(guide2Id), groupId));
+        cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(sibGuide2Id), groupId));
+      const { pointId: int1Id_V } = IntersectionSequenceFactory.createLineLineIntersection(
+      const { pointId: int2Id_V } = IntersectionSequenceFactory.createLineLineIntersection(
+      const addSegH = new AddSegment2DByPointsOp(P_H.id!, p1Id_H, p2Id_H);
+      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(segId_H), groupId));
+      const addSegV = new AddSegment2DByPointsOp(P_V.id!, int1Id_V, int2Id_V);
+      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(segId_V), groupId));
+      const add3DSegmentOp = new Add3DSegmentOp(segId_H, segId_V, P_H.id!, P_V.id!);
+      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(segment3DId), groupId));
+
+### QuickProjectionSetupTool.ts
+import type { ITool, ToolContext, ToolResult } from './ITool';
+import type { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { Vector3 } from 'three';
+import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+  activate(context: ToolContext): void {
+  deactivate(_context: ToolContext): void {
+  handleClick(context: ToolContext): ToolResult {
+    const cmd = new Command('Quick projection setup', world);
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    const { pointId: a1Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a1Pos, groupId);
+    const { pointId: a2Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a2Pos, groupId);
+    const { pointId: b1Id } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, b1Pos, groupId);
+
+### SegmentTool.ts
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { Element2D } from '@/domain/world/Element2D';
+import type { Point2D } from '@/domain/world/Point';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+  protected executeOperations(
+    const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1.id, point2.id));
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
+
+### TangentLineToCircleParallelToLineTool.ts
+import { Vector3 } from 'three';
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+import { createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import type { Line2D } from '@/domain/world/Line';
+  protected executeOperations(
+      new AddLine2DTangentToCircleParallelToLineOp(planeId, circleId, referenceLineId, tangentIndex)
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));
+
+### TangentLineToCircleThroughPointTool.ts
+import { Vector3 } from 'three';
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolContext } from './ITool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+import { Command } from '@/commands/Command';
+import { AddLine2DTangentToCircleThroughPointOp } from '@/commands/operations/world/AddLineOp';
+import { createTangentLineToCircleThroughPointAction } from '@/domain/processTree/actions/CreateTangentLineAction';
+import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+import { createActionGroup } from '@/domain/processTree/ActionGroup';
+  protected executeOperations(
+      new AddLine2DTangentToCircleThroughPointOp(planeId, circleId, throughPointId, tangentIndex)
+    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    cmd.addAndExecute(new AddProcessTreeActionOp(action, group.id));

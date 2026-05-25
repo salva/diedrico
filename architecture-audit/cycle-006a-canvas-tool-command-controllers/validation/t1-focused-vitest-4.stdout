@@ -1,0 +1,16 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/tools/toolValidation.spec.ts  (0 test)
+ ❯ tests/unit/tools/CircleTool.spec.ts  (0 test)
+ ✓ tests/unit/tools/pointTool.spec.ts  (22 tests) 36ms
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  22 passed (22)
+   Start at  23:34:09
+   Duration  2.61s (transform 946ms, setup 0ms, collect 1.22s, tests 36ms, environment 2.35s, prepare 500ms)
+

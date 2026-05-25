@@ -15,6 +15,7 @@ import { PointTool } from '@/tools/PointTool';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { ToolContext } from '@/tools/ITool';
+import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { Vector3 } from 'three';
 import { Paper } from '@/domain/presentation/Paper';
 import { FreePoint2D } from '@/domain/world/Point';
@@ -33,7 +34,7 @@ describe('PointTool', () => {
     planeId,
     planeCoords,
     canvasCoords,
-    commandStack,
+    commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
     world,
     paper,
     paperToPlaneTransform: undefined,

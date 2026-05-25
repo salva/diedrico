@@ -185,10 +185,6 @@ import { Paper } from '@/domain/presentation/Paper';
 import { PaperService, type PrimitiveContext } from '@/services/PaperService';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
-import { CommandStack } from '@/commands/CommandStack';
-import { Command } from '@/commands/Command';
-import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
-import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import { PointTool } from '@/tools/PointTool';
 import { LineTool } from '@/tools/LineTool';
 import { SegmentTool } from '@/tools/SegmentTool';
@@ -204,10 +200,6 @@ import { Create3DLineTool } from '@/tools/Create3DLineTool';
 import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
 import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
 import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
-import { InteractiveProjectionSetupTool } from '@/tools/ExampleConstructionsTool';
-import { QuickProjectionSetupTool } from '@/tools/QuickProjectionSetupTool';
-import { Quick3DLineTool } from '@/tools/Quick3DLineTool';
-import { Quick3DSegmentTool } from '@/tools/Quick3DSegmentTool';
 import { FreePoint2D } from '@/domain/world/Point';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
@@ -217,6 +209,8 @@ import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
 import type { ITool } from '@/tools/ITool';
+import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
 
 // Define emits
 const emit = defineEmits<{
@@ -280,7 +274,7 @@ const pointDrag = ref<{
   active: boolean;
   planeId: string | null;
   pointId: string | null;
-  cmd: Command | null;
+  moveSession: FreePointMoveSession | null;
   startClientX: number;
   startClientY: number;
   moved: boolean;
@@ -288,7 +282,7 @@ const pointDrag = ref<{
   active: false,
   planeId: null,
   pointId: null,
-  cmd: null,
+  moveSession: null,
   startClientX: 0,
   startClientY: 0,
   moved: false
@@ -314,15 +308,15 @@ function isMovableFreePoint(point: any): point is FreePoint2D {
 function endPointDrag(commit: boolean): void {
   if (!pointDrag.value.active) return;
 
-  const cmd = pointDrag.value.cmd;
+  const moveSession = pointDrag.value.moveSession;
 
   try {
-    if (cmd) {
-      if (commit && cmd.getOperations().length > 0) {
-        cmd.commit();
-        commandStack.push(cmd);
+    if (moveSession) {
+      if (commit) {
+        const result = moveSession.commit();
+        if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
       } else {
-        cmd.rollback();
+        moveSession.cancel();
       }
     }
   } finally {
@@ -330,7 +324,7 @@ function endPointDrag(commit: boolean): void {
       active: false,
       planeId: null,
       pointId: null,
-      cmd: null,
+      moveSession: null,
       startClientX: 0,
       startClientY: 0,
       moved: false
@@ -426,11 +420,11 @@ if (!world) {
 // Paper instance for spatial queries and rendering
 const paper = new Paper();
 
-// Command infrastructure - injected from App.vue
-const commandStack = inject<CommandStack>('commandStack')!;
-if (!commandStack) {
-  throw new Error('CommandStack not provided');
-}
+const canvasToolController = createCanvasToolController({
+  world,
+  commandStack: inject('commandStack'),
+  toolStore
+});
 
 // Tool factory registry - map tool names to factory functions
 // Creates new instances instead of reusing singletons to avoid state leakage
@@ -452,12 +446,6 @@ const toolFactories: Record<string, () => ITool> = {
   'create3dplane': () => new Create3DPlaneTool(),
   // Phase 82: Auxiliary Projection Plane Tool
   'createprojectionplane': () => new CreateProjectionPlaneTool(),
-  'interactiveprojectionsetup': () => new InteractiveProjectionSetupTool(),
-  'quickprojectionsetup': () => new QuickProjectionSetupTool(),
-  // Phase 105: Quick 3D Line Example Tool
-  'quick3dline': () => new Quick3DLineTool(),
-  // Phase 109: Quick 3D Segment Example Tool
-  'quick3dsegment': () => new Quick3DSegmentTool(),
 };
 
 // Current tool instance - created fresh when tool is selected
@@ -1269,7 +1257,7 @@ function handleCanvasClick(event: MouseEvent) {
     planeId: activePlaneId,
     planeCoords: planePos,
     canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
-    commandStack,
+    commandSink: canvasToolController,
     world,
     paper,
     paperToPlaneTransform: paperToPlane,
@@ -1379,7 +1367,7 @@ function handleMouseDown(event: MouseEvent) {
         active: true,
         planeId: activePlane.value,
         pointId: hit.elementId,
-        cmd: new Command(`Move point ${point.label ?? hit.elementId}`, world),
+        moveSession: canvasToolController.startFreePointMove({ planeId: activePlane.value, pointId: hit.elementId, label: point.label ?? hit.elementId }),
         startClientX: event.clientX,
         startClientY: event.clientY,
         moved: false
@@ -1439,34 +1427,23 @@ function handleDoubleClick(event: MouseEvent) {
  */
 function handleSaveProperties(changes: any) {
   console.log('[SvgCanvas] Saving property changes:', changes);
-  
-  // Create command using base Command + Operation pattern per data-model.md
-  const cmd = new Command(`Update style: ${changes.elementId}`, world);
-  
-  try {
-    // Create and execute style update operation
-    const styleOp = new UpdateElementStyleOp(
-      changes.elementId,
-      activePlane.value, // TODO: Get actual planeId from element
-      {
-        color: changes.color,
-        lineWidth: changes.lineWidth,
-        lineStyle: changes.lineStyle,
-        opacity: changes.opacity,
-        visible: changes.visible
-      }
-    );
-    
-    cmd.addAndExecute(styleOp);
-    cmd.commit();
-    commandStack.push(cmd);
-    
-    // Trigger reactivity
+  const result = canvasToolController.updateElementStyle({
+    elementId: changes.elementId,
+    planeId: activePlane.value,
+    style: {
+      color: changes.color,
+      lineWidth: changes.lineWidth,
+      lineStyle: changes.lineStyle,
+      opacity: changes.opacity,
+      visible: changes.visible
+    }
+  });
+
+  if (result.success) {
     renderTick.value++;
     console.log('[SvgCanvas] Style updated and command added to stack');
-  } catch (error) {
-    console.error('[SvgCanvas] Style update failed:', error);
-    cmd.rollback();
+  } else {
+    console.error('[SvgCanvas] Style update failed:', result.message);
   }
 }
 
@@ -1495,7 +1472,7 @@ function handleMouseMove(event: MouseEvent) {
   }
 
   // T955: Live preview for point dragging (Select mode)
-  if (pointDrag.value.active && pointDrag.value.planeId && pointDrag.value.pointId && pointDrag.value.cmd) {
+  if (pointDrag.value.active && pointDrag.value.planeId && pointDrag.value.pointId && pointDrag.value.moveSession) {
     // Small drag threshold to avoid turning clicks into moves
     const dx = event.clientX - pointDrag.value.startClientX;
     const dy = event.clientY - pointDrag.value.startClientY;
@@ -1524,11 +1501,12 @@ function handleMouseMove(event: MouseEvent) {
     );
     if (!planePos) return;
 
-    // Preview update: rollback previous op and apply the new one.
-    pointDrag.value.cmd.rollback();
-    pointDrag.value.cmd.addAndExecute(
-      new UpdateFreePoint2DPositionOp(pointDrag.value.planeId, pointDrag.value.pointId, planePos)
-    );
+    // Preview update delegated to application use-case.
+    const result = pointDrag.value.moveSession.preview(planePos);
+    if (!result.success) {
+      console.error('[SvgCanvas] Point move preview failed:', result.message);
+      return;
+    }
     renderTick.value++;
     return;
   }

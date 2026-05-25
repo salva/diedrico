@@ -1,0 +1,497 @@
+
+--- 270-340 ---
+0270: const tooltipPosition = ref({ x: 0, y: 0 });
+0271: 
+0272: // Snap target tracking - shows visual indicator when hovering near a point
+0273: const snapTarget = ref<{ pointId: string | null; position: { x: number; y: number } | null }>({
+0274:   pointId: null,
+0275:   position: null
+0276: });
+0277: 
+0278: // Drag-to-move (Select mode)
+0279: const pointDrag = ref<{
+0280:   active: boolean;
+0281:   planeId: string | null;
+0282:   pointId: string | null;
+0283:   cmd: Command | null;
+0284:   startClientX: number;
+0285:   startClientY: number;
+0286:   moved: boolean;
+0287: }>({
+0288:   active: false,
+0289:   planeId: null,
+0290:   pointId: null,
+0291:   cmd: null,
+0292:   startClientX: 0,
+0293:   startClientY: 0,
+0294:   moved: false
+0295: });
+0296: 
+0297: // Viewport pan in select mode (T965: drag empty space pans)
+0298: const viewportPan = ref<{
+0299:   active: boolean;
+0300:   startX: number;
+0301:   startY: number;
+0302: }>({
+0303:   active: false,
+0304:   startX: 0,
+0305:   startY: 0
+0306: });
+0307: 
+0308: let ignoreNextClick = false;
+0309: 
+0310: function isMovableFreePoint(point: any): point is FreePoint2D {
+0311:   return point instanceof FreePoint2D && !point.locked;
+0312: }
+0313: 
+0314: function endPointDrag(commit: boolean): void {
+0315:   if (!pointDrag.value.active) return;
+0316: 
+0317:   const cmd = pointDrag.value.cmd;
+0318: 
+0319:   try {
+0320:     if (cmd) {
+0321:       if (commit && cmd.getOperations().length > 0) {
+0322:         cmd.commit();
+0323:         commandStack.push(cmd);
+0324:       } else {
+0325:         cmd.rollback();
+0326:       }
+0327:     }
+0328:   } finally {
+0329:     pointDrag.value = {
+0330:       active: false,
+0331:       planeId: null,
+0332:       pointId: null,
+0333:       cmd: null,
+0334:       startClientX: 0,
+0335:       startClientY: 0,
+0336:       moved: false
+0337:     };
+0338:     renderTick.value++;
+0339:   }
+0340: }
+
+--- 425-500 ---
+0425: 
+0426: // Paper instance for spatial queries and rendering
+0427: const paper = new Paper();
+0428: 
+0429: // Command infrastructure - injected from App.vue
+0430: const commandStack = inject<CommandStack>('commandStack')!;
+0431: if (!commandStack) {
+0432:   throw new Error('CommandStack not provided');
+0433: }
+0434: 
+0435: // Tool factory registry - map tool names to factory functions
+0436: // Creates new instances instead of reusing singletons to avoid state leakage
+0437: const toolFactories: Record<string, () => ITool> = {
+0438:   'point': () => new PointTool(),
+0439:   'line': () => new LineTool(),
+0440:   'segment': () => new SegmentTool(),
+0441:   'circle': () => new CircleTool(),
+0442:   'guide': () => new GuideTool(),
+0443:   'intersection': () => new IntersectionTool(),
+0444:   'parallel-line': () => new ParallelLineTool(),
+0445:   'perpendicular-line': () => new PerpendicularLineTool(),
+0446:   'tangent-line-to-circle-through-point': () => new TangentLineToCircleThroughPointTool(),
+0447:   'tangent-line-to-circle-parallel': () => new TangentLineToCircleParallelToLineTool(),
+0448:   // Phase 78: 3D Element Creation Tools
+0449:   'create3dpoint': () => new Create3DPointTool(),
+0450:   'create3dline': () => new Create3DLineTool(),
+0451:   'create3dsegment': () => new Create3DSegmentTool(),
+0452:   'create3dplane': () => new Create3DPlaneTool(),
+0453:   // Phase 82: Auxiliary Projection Plane Tool
+0454:   'createprojectionplane': () => new CreateProjectionPlaneTool(),
+0455:   'interactiveprojectionsetup': () => new InteractiveProjectionSetupTool(),
+0456:   'quickprojectionsetup': () => new QuickProjectionSetupTool(),
+0457:   // Phase 105: Quick 3D Line Example Tool
+0458:   'quick3dline': () => new Quick3DLineTool(),
+0459:   // Phase 109: Quick 3D Segment Example Tool
+0460:   'quick3dsegment': () => new Quick3DSegmentTool(),
+0461: };
+0462: 
+0463: // Current tool instance - created fresh when tool is selected
+0464: const currentToolInstance = ref<ITool | null>(null);
+0465: 
+0466: // Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
+0467: const renderTick = ref(0);
+0468: 
+0469: // Throttle for coordinate updates (limits update frequency)
+0470: let lastCoordinateUpdate = 0;
+0471: const COORDINATE_UPDATE_THROTTLE_MS = 50; // 20fps for coordinate updates
+0472: 
+0473: // Update canvas dimensions based on container size
+0474: function updateCanvasDimensions() {
+0475:   if (!svgElement.value) return;
+0476:   
+0477:   const rect = svgElement.value.getBoundingClientRect();
+0478:   // Use container dimensions as logical coordinates (1:1 mapping)
+0479:   canvasWidth.value = rect.width;
+0480:   canvasHeight.value = rect.height;
+0481: }
+0482: 
+0483: // Initialize canvas on mount
+0484: const resizeHandler = () => updateCanvasDimensions();
+0485: 
+0486: onMounted(() => {
+0487:   // World is already initialized by initialization factory in constructor
+0488:   // Just trigger initial render
+0489:   renderTick.value++;
+0490: 
+0491:   // Set initial canvas dimensions
+0492:   updateCanvasDimensions();
+0493: 
+0494:   // Update dimensions on window resize
+0495:   window.addEventListener('resize', resizeHandler);
+0496: 
+0497:   // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+0498:   lastWorldVersion = world.getVersion();
+0499:   worldVersion.value = lastWorldVersion;
+0500:   versionPollId = window.setInterval(() => {
+
+--- 1328-1458 ---
+1328:   // Get viewport state AFTER zoom
+1329:   const newViewport = viewStore.viewportState.value;
+1330:   console.log('[Zoom] AFTER:', {
+1331:     zoom: newViewport.zoom,
+1332:     pan: { x: newViewport.panX, y: newViewport.panY },
+1333:     delta: delta
+1334:   });
+1335: }
+1336: 
+1337: /**
+1338:  * Handle mouse down for select-mode drag-to-move of free points.
+1339:  * T954: Check if clicking on movable point, start drag if so
+1340:  * T965: Otherwise, prepare for viewport pan
+1341:  */
+1342: function handleMouseDown(event: MouseEvent) {
+1343:   if (!svgElement.value) return;
+1344: 
+1345:   const activeToolName = toolStore.currentTool.value;
+1346:   if (activeToolName !== 'select') return;
+1347: 
+1348:   // Only left button drag, no modifiers (Shift is handled by useViewport)
+1349:   if (event.button !== 0) return;
+1350:   if (event.shiftKey || event.altKey || event.metaKey || event.ctrlKey) return;
+1351: 
+1352:   const svg = svgElement.value;
+1353:   const pt = svg.createSVGPoint();
+1354:   pt.x = event.clientX;
+1355:   pt.y = event.clientY;
+1356: 
+1357:   const ctm = svg.getScreenCTM();
+1358:   if (!ctm) return;
+1359:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+1360: 
+1361:   const planeTransforms = getPlaneTransformsForInput();
+1362:   const paperToPlane = planeTransforms.get(activePlane.value);
+1363:   if (!paperToPlane) return;
+1364: 
+1365:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+1366:   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+1367:   
+1368:   // Check if we hit a movable point
+1369:   if (hit && hit.elementType === 'point') {
+1370:     const plane = world.getProjectionPlaneById(activePlane.value);
+1371:     if (!plane) throw new Error(`Active plane not found: ${activePlane.value}`);
+1372:     const point = plane.getPoint(hit.elementId);
+1373:     
+1374:     if (point && isMovableFreePoint(point)) {
+1375:       // Start point drag (T954)
+1376:       selectionStore.selectSingle(hit.elementId);
+1377: 
+1378:       pointDrag.value = {
+1379:         active: true,
+1380:         planeId: activePlane.value,
+1381:         pointId: hit.elementId,
+1382:         cmd: new Command(`Move point ${point.label ?? hit.elementId}`, world),
+1383:         startClientX: event.clientX,
+1384:         startClientY: event.clientY,
+1385:         moved: false
+1386:       };
+1387:       return;
+1388:     }
+1389:   }
+1390:   
+1391:   // No movable point hit - start viewport pan (T965: Drag empty space pans)
+1392:   // Note: useViewport composable handles Shift+drag pan automatically
+1393:   // Here we handle non-Shift drag when selection tool is active
+1394:   viewportPan.value = {
+1395:     active: true,
+1396:     startX: event.clientX,
+1397:     startY: event.clientY
+1398:   };
+1399: }
+1400: 
+1401: /**
+1402:  * Handle double-click to show properties dialog
+1403:  * T188: Show properties dialog when user double-clicks an element
+1404:  */
+1405: function handleDoubleClick(event: MouseEvent) {
+1406:   // Get SVG element for coordinate conversion
+1407:   if (!svgElement.value) return;
+1408:   
+1409:   // Transform screen coordinates to SVG coordinates
+1410:   const svg = svgElement.value;
+1411:   const pt = svg.createSVGPoint();
+1412:   pt.x = event.clientX;
+1413:   pt.y = event.clientY;
+1414:   
+1415:   const ctm = svg.getScreenCTM();
+1416:   if (!ctm) return;
+1417:   
+1418:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+1419:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+1420:   
+1421:   // Get plane transform for hit testing
+1422:   const planeTransforms = getPlaneTransformsForInput();
+1423:   const paperToPlane = planeTransforms.get(activePlane.value);
+1424:   
+1425:   // Hit test to find element under cursor
+1426:   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+1427:   
+1428:   if (hit) {
+1429:     // Element found - show properties dialog
+1430:     propertiesElementId.value = hit.elementId;
+1431:     showPropertiesDialog.value = true;
+1432:     console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+1433:   }
+1434: }
+1435: 
+1436: /**
+1437:  * Handle property changes from the properties dialog
+1438:  * T193: Apply property changes and record as command
+1439:  */
+1440: function handleSaveProperties(changes: any) {
+1441:   console.log('[SvgCanvas] Saving property changes:', changes);
+1442:   
+1443:   // Create command using base Command + Operation pattern per data-model.md
+1444:   const cmd = new Command(`Update style: ${changes.elementId}`, world);
+1445:   
+1446:   try {
+1447:     // Create and execute style update operation
+1448:     const styleOp = new UpdateElementStyleOp(
+1449:       changes.elementId,
+1450:       activePlane.value, // TODO: Get actual planeId from element
+1451:       {
+1452:         color: changes.color,
+1453:         lineWidth: changes.lineWidth,
+1454:         lineStyle: changes.lineStyle,
+1455:         opacity: changes.opacity,
+1456:         visible: changes.visible
+1457:       }
+1458:     );
+
+--- 1470-1680 ---
+1470:   }
+1471: }
+1472: 
+1473: /**
+1474:  * Handle mouse movement for hover feedback and 3D coordinate display
+1475:  * Uses Paper.hitTest() to detect elements near cursor
+1476:  * Computes 3D coordinates from cursor position with debouncing
+1477:  * T955: Continuous feedback for point dragging
+1478:  * T965: Viewport pan when dragging empty space
+1479:  */
+1480: function handleMouseMove(event: MouseEvent) {
+1481:   if (!svgElement.value) return;
+1482: 
+1483:   // T965: Handle viewport pan in select mode (drag empty space)
+1484:   if (viewportPan.value.active) {
+1485:     const dx = event.clientX - viewportPan.value.startX;
+1486:     const dy = event.clientY - viewportPan.value.startY;
+1487:     
+1488:     // Adjust pan by dividing by zoom - at high zoom, screen pixels translate to smaller world movement
+1489:     const zoom = viewport.value.zoom;
+1490:     viewStore.adjustPan(dx / zoom, dy / zoom);
+1491:     
+1492:     viewportPan.value.startX = event.clientX;
+1493:     viewportPan.value.startY = event.clientY;
+1494:     return;
+1495:   }
+1496: 
+1497:   // T955: Live preview for point dragging (Select mode)
+1498:   if (pointDrag.value.active && pointDrag.value.planeId && pointDrag.value.pointId && pointDrag.value.cmd) {
+1499:     // Small drag threshold to avoid turning clicks into moves
+1500:     const dx = event.clientX - pointDrag.value.startClientX;
+1501:     const dy = event.clientY - pointDrag.value.startClientY;
+1502:     if (!pointDrag.value.moved && (dx * dx + dy * dy) < 9) {
+1503:       return;
+1504:     }
+1505:     pointDrag.value.moved = true;
+1506: 
+1507:     const svg = svgElement.value;
+1508:     const pt = svg.createSVGPoint();
+1509:     pt.x = event.clientX;
+1510:     pt.y = event.clientY;
+1511:     const ctm = svg.getScreenCTM();
+1512:     if (!ctm) return;
+1513:     const canvasPoint = pt.matrixTransform(ctm.inverse());
+1514: 
+1515:     const planeTransforms = getPlaneTransformsForInput();
+1516:     const paperToPlane = planeTransforms.get(pointDrag.value.planeId);
+1517:     if (!paperToPlane) return;
+1518: 
+1519:     const planePos = inputService.canvasToPlaneCoordinates(
+1520:       canvasPoint.x,
+1521:       canvasPoint.y,
+1522:       paperToPlane,
+1523:       viewport.value
+1524:     );
+1525:     if (!planePos) return;
+1526: 
+1527:     // Preview update: rollback previous op and apply the new one.
+1528:     pointDrag.value.cmd.rollback();
+1529:     pointDrag.value.cmd.addAndExecute(
+1530:       new UpdateFreePoint2DPositionOp(pointDrag.value.planeId, pointDrag.value.pointId, planePos)
+1531:     );
+1532:     renderTick.value++;
+1533:     return;
+1534:   }
+1535:   
+1536:   // Update tooltip position (offset from cursor)
+1537:   tooltipPosition.value = {
+1538:     x: event.clientX + 15,
+1539:     y: event.clientY + 15
+1540:   };
+1541:   
+1542:   // Get canvas position (in SVG user space)
+1543:   const svg = svgElement.value;
+1544:   const pt = svg.createSVGPoint();
+1545:   pt.x = event.clientX;
+1546:   pt.y = event.clientY;
+1547:   
+1548:   const ctm = svg.getScreenCTM();
+1549:   if (!ctm) return;
+1550:   
+1551:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+1552:   
+1553:   // Get paperToPlane transform for active plane
+1554:   const planeTransformsInput = getPlaneTransformsForInput();
+1555:   const paperToPlane = planeTransformsInput.get(activePlane.value);
+1556:   
+1557:   // Get active tool's selection mask
+1558:   const activeToolName = toolStore.currentTool.value;
+1559:   const activeTool = currentToolInstance.value;
+1560:   // 'select' is a special mode (not a tool), allow hover on all elements
+1561:   const selectionMask = activeTool ? activeTool.getSelectionMask() : undefined;
+1562:   
+1563:   // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
+1564:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+1565:   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world, selectionMask); // FR-002: Hit test in plane space
+1566:   
+1567:   // Update snap target if hovering over a point within snap radius
+1568:   // Per ui-spec.md: "Point Snap: When cursor within snap radius of existing point: bright outline or glow"
+1569:   if (hit && hit.elementType === 'point') {
+1570:     // Point is within snap radius - show snap preview indicator
+1571:     snapTarget.value = {
+1572:       pointId: hit.elementId,
+1573:       position: { x: canvasPoint.x, y: canvasPoint.y }
+1574:     };
+1575:   } else {
+1576:     // No point nearby - clear snap indicator
+1577:     snapTarget.value = {
+1578:       pointId: null,
+1579:       position: null
+1580:     };
+1581:   }
+1582:   
+1583:   // Update hover state in Paper only if it changed
+1584:   const previousHovered = paper.getHoveredElement();
+1585:   const newHovered = hit ? hit.elementId : undefined;
+1586:   
+1587:   if (previousHovered !== newHovered) {
+1588:     paper.setHoveredElement(newHovered);
+1589:     
+1590:     // Update global hover state for UI feedback
+1591:     if (newHovered && hit) {
+1592:       const label = getElementLabel(newHovered, hit.elementType, activePlane.value);
+1593:       hoverHighlight.setHoveredElement(
+1594:         newHovered,
+1595:         hit.elementType,
+1596:         label,
+1597:         false // Not temporary - show tooltip
+1598:       );
+1599:     } else {
+1600:       hoverHighlight.clearHover();
+1601:     }
+1602:     
+1603:     // Trigger re-render only when hover state actually changes
+1604:     renderTick.value++;
+1605:   }
+1606:   
+1607:   // Compute 3D coordinates with throttling (limits update frequency)
+1608:   const now = Date.now();
+1609:   if (now - lastCoordinateUpdate < COORDINATE_UPDATE_THROTTLE_MS) {
+1610:     return; // Skip this update, too soon since last one
+1611:   }
+1612:   lastCoordinateUpdate = now;
+1613:   
+1614:   // Get viewport transform matrix
+1615:   const viewportState = viewport.value;
+1616:   
+1617:   // Convert ViewportTransform to Matrix3
+1618:   const s = 1 / viewportState.zoom;
+1619:   const tx = -viewportState.panX;
+1620:   const ty = -viewportState.panY;
+1621:   const viewportMatrix = new Matrix3().set(
+1622:     s,  0,  tx,
+1623:     0,  s,  ty,
+1624:     0,  0,  1
+1625:   );
+1626:   
+1627:   // Compute 3D coordinates through full transformation pipeline
+1628:   const result = screenTo3D(
+1629:     event.clientX,
+1630:     event.clientY,
+1631:     svg,
+1632:     viewportMatrix,
+1633:     activePlane.value,
+1634:     world
+1635:   );
+1636:   
+1637:   if (result.success && result.coordinates) {
+1638:     emit('update-3d-coordinates', result.coordinates);
+1639:   } else {
+1640:     // Cursor not over plane or error - emit null
+1641:     emit('update-3d-coordinates', null);
+1642:   }
+1643: }
+1644: 
+1645: // Commit point move on global mouseup (even if mouseup happens outside SVG)
+1646: // T957: Handle viewport pan end
+1647: function handleGlobalMouseUp() {
+1648:   // Check if viewport pan via useViewport (Shift+drag or middle-click drag) was active
+1649:   // If so, suppress next click to prevent unwanted tool actions
+1650:   if (viewportComposable.isPanning.value) {
+1651:     ignoreNextClick = true;
+1652:   }
+1653:   
+1654:   // End viewport pan
+1655:   if (viewportPan.value.active) {
+1656:     viewportPan.value = {
+1657:       active: false,
+1658:       startX: 0,
+1659:       startY: 0
+1660:     };
+1661:     return;
+1662:   }
+1663:   
+1664:   // End point drag
+1665:   if (!pointDrag.value.active) return;
+1666:   if (pointDrag.value.moved) {
+1667:     ignoreNextClick = true;
+1668:     endPointDrag(true);
+1669:   } else {
+1670:     endPointDrag(false);
+1671:   }
+1672: }
+1673: 
+1674: onMounted(() => {
+1675:   window.addEventListener('mouseup', handleGlobalMouseUp);
+1676: });
+1677: 
+1678: onUnmounted(() => {
+1679:   window.removeEventListener('mouseup', handleGlobalMouseUp);
+1680: });

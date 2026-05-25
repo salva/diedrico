@@ -1,0 +1,256 @@
+frontend/src/components/workspace/SvgCanvas.vue:1268:  const result = activeTool.handleClick({
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:18:import type { ToolContext } from './ITool';
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:89:    context: ToolContext
+frontend/tests/helpers/worldHelpers.ts:42:export function createTestWorld(): { world: World; commandStack: CommandStack } {
+frontend/tests/helpers/worldHelpers.ts:57:  commandStack: CommandStack;
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:18:import type { ToolContext } from './ITool';
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:85:    context: ToolContext
+frontend/src/tools/SegmentTool.ts:20:import type { ToolContext } from './ITool';
+frontend/src/tools/SegmentTool.ts:83:    context: ToolContext
+frontend/src/tools/QuickProjectionSetupTool.ts:17:import type { ITool, ToolContext, ToolResult } from './ITool';
+frontend/src/tools/QuickProjectionSetupTool.ts:34:  activate(context: ToolContext): void {
+frontend/src/tools/QuickProjectionSetupTool.ts:39:  deactivate(_context: ToolContext): void {
+frontend/src/tools/QuickProjectionSetupTool.ts:43:  handleClick(context: ToolContext): ToolResult {
+frontend/src/tools/QuickProjectionSetupTool.ts:54:  private executeSetup(context: ToolContext): void {
+frontend/src/tools/Quick3DSegmentTool.ts:28:import type { ITool, ToolContext, ToolResult } from './ITool';
+frontend/src/tools/Quick3DSegmentTool.ts:54:  activate(context: ToolContext): void {
+frontend/src/tools/Quick3DSegmentTool.ts:58:  deactivate(_context: ToolContext): void {
+frontend/src/tools/Quick3DSegmentTool.ts:62:  handleClick(context: ToolContext): ToolResult {
+frontend/src/tools/Quick3DSegmentTool.ts:71:  private executeSetup(context: ToolContext): void {
+frontend/src/tools/Quick3DLineTool.ts:27:import type { ITool, ToolContext, ToolResult } from './ITool';
+frontend/src/tools/Quick3DLineTool.ts:47:  activate(context: ToolContext): void {
+frontend/src/tools/Quick3DLineTool.ts:52:  deactivate(_context: ToolContext): void {
+frontend/src/tools/Quick3DLineTool.ts:56:  handleClick(context: ToolContext): ToolResult {
+frontend/src/tools/Quick3DLineTool.ts:67:  private executeSetup(context: ToolContext): void {
+frontend/src/tools/PointTool.ts:15:import type { ToolContext } from './ITool';
+frontend/src/tools/PointTool.ts:61:    context: ToolContext
+frontend/src/tools/PerpendicularLineTool.ts:17:import type { ToolContext } from './ITool';
+frontend/src/tools/PerpendicularLineTool.ts:79:    context: ToolContext
+frontend/src/tools/ParallelLineTool.ts:17:import type { ToolContext } from './ITool';
+frontend/src/tools/ParallelLineTool.ts:79:    context: ToolContext
+frontend/src/tools/LineTool.ts:17:import type { ToolContext } from './ITool';
+frontend/src/tools/LineTool.ts:78:    context: ToolContext
+frontend/src/tools/IntersectionTool.ts:21:import type { ToolContext } from './ITool';
+frontend/src/tools/IntersectionTool.ts:89:    context: ToolContext
+frontend/src/tools/Create3DPointTool.ts:17:import type { ToolContext } from './ITool';
+frontend/src/tools/Create3DPointTool.ts:92:    context: ToolContext
+frontend/src/tools/CircleTool.ts:17:import type { ToolContext } from './ITool';
+frontend/src/tools/CircleTool.ts:86:    context: ToolContext
+frontend/src/tools/ITool.ts:11: * User input → Tool.handleClick() → Command creation → CommandStack.push()
+frontend/src/tools/ITool.ts:26:export interface ToolContext {
+frontend/src/tools/ITool.ts:30:  commandStack: CommandStack;  // Stack for executing commands
+frontend/src/tools/ITool.ts:60:  handleClick(context: ToolContext): ToolResult;
+frontend/src/tools/ExampleConstructionsTool.ts:14:import type { ToolContext } from './ITool';
+frontend/src/tools/ExampleConstructionsTool.ts:80:    context: ToolContext
+frontend/src/tools/Create3DPlaneTool.ts:17:import type { ToolContext } from './ITool';
+frontend/src/tools/Create3DPlaneTool.ts:70:    _context: ToolContext
+frontend/src/tools/GuideTool.ts:27:import type { ToolContext } from './ITool';
+frontend/src/tools/GuideTool.ts:93:    context: ToolContext
+frontend/src/tools/BaseTool.ts:7: * Subclasses override handleClick() to implement specific tool behavior.
+frontend/src/tools/BaseTool.ts:13:import type { ToolContext, ToolResult } from './ITool';
+frontend/src/tools/BaseTool.ts:29:  abstract handleClick(context: ToolContext): ToolResult;
+frontend/src/tools/CreateProjectionPlaneTool.ts:24:import type { ToolContext } from './ITool';
+frontend/src/tools/CreateProjectionPlaneTool.ts:175:    _context: ToolContext
+frontend/src/tools/Create3DLineTool.ts:17:import type { ToolContext } from './ITool';
+frontend/src/tools/Create3DLineTool.ts:74:    context: ToolContext
+frontend/src/tools/ArgumentCollectorTool.ts:42:import type { ToolContext, ToolResult, ITool } from './ITool';
+frontend/src/tools/ArgumentCollectorTool.ts:60: * - handleClick(): Automated argument collection with validation
+frontend/src/tools/ArgumentCollectorTool.ts:103:    context: ToolContext
+frontend/src/tools/ArgumentCollectorTool.ts:135:    context: ToolContext
+frontend/src/tools/ArgumentCollectorTool.ts:227:  handleClick(context: ToolContext): ToolResult {
+frontend/src/tools/Create3DSegmentTool.ts:17:import type { ToolContext } from './ITool';
+frontend/src/tools/Create3DSegmentTool.ts:74:    context: ToolContext
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:23:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:26:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:85:function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:21:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:47:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:51:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:76:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:106:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:125:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:144:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:172:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:194:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:217:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:260:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/commands/commandStackObserver.spec.ts:27:  let commandStack: CommandStack;
+frontend/tests/unit/commands/commandStackObserver.spec.ts:31:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/commands/commandStack.spec.ts:31:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:39:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:42:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:248:function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+frontend/tests/unit/commands/removeElementOps.spec.ts:26:  let commandStack: CommandStack;
+frontend/tests/unit/commands/removeElementOps.spec.ts:29:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/integration/projectService.determinism.spec.ts:97:      const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/projectService.determinism.spec.ts:154:      const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:30:  let commandStack: CommandStack;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:34:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:29:  let commandStack: CommandStack;
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:68:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:112:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:149:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:197:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/guide-creation.test.ts:12:  let commandStack: CommandStack;
+frontend/tests/unit/tools/GuideTool.test.ts:9:  let commandStack: CommandStack;
+frontend/tests/integration/processTree-stack.test.ts:13:  let commandStack: CommandStack;
+frontend/tests/unit/tools/toolValidation.spec.ts:28:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/unit/tools/toolValidation.spec.ts:34:  let commandStack: CommandStack;
+frontend/tests/unit/tools/toolValidation.spec.ts:38:  function makeContext(coords: Vector3): ToolContext {
+frontend/tests/unit/tools/toolValidation.spec.ts:60:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/tools/toolValidation.spec.ts:74:      const r1 = tool.handleClick(ctx);
+frontend/tests/unit/tools/toolValidation.spec.ts:77:      const r2 = tool.handleClick(ctx);
+frontend/tests/unit/tools/toolValidation.spec.ts:89:      const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:92:      const r2 = tool.handleClick(makeContext(new Vector3(200, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:104:      const r1 = tool.handleClick(ctx);
+frontend/tests/unit/tools/toolValidation.spec.ts:107:      const r2 = tool.handleClick(ctx);
+frontend/tests/unit/tools/toolValidation.spec.ts:119:      const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:122:      const r2 = tool.handleClick(makeContext(new Vector3(200, 200, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:134:      const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:137:      const r2 = tool.handleClick(makeContext(new Vector3(100.0001, 100.0001, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:147:      const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:150:      const r2 = tool.handleClick(makeContext(new Vector3(200, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:170:      const r1 = tool.handleClick(makeContext(new Vector3(150, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:173:      const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:190:      const r1 = tool.handleClick(makeContext(new Vector3(150, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:193:      const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)));
+frontend/tests/integration/pointCreation.spec.ts:25:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/integration/pointCreation.spec.ts:31:  let commandStack: CommandStack;
+frontend/tests/integration/pointCreation.spec.ts:43:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:51:      const result = tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:75:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:83:      const toolResult = tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:100:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:108:      const result = tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:124:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:132:      tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:146:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:154:      const result = tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:173:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:181:      tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:205:        const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:211:        const result = tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:247:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:255:      tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:276:        const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:282:        tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:309:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:316:      const result = tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:331:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:338:      const result = tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:352:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:360:      tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:374:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:382:      const result = tool.handleClick(context);
+frontend/tests/integration/pointCreation.spec.ts:403:      const context: ToolContext = {
+frontend/tests/integration/pointCreation.spec.ts:411:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:20:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:29:  let commandStack: CommandStack;
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:35:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:42:  const createContext = (): ToolContext => ({
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:66:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:74:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:83:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:89:      tool.handleClick(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:101:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:112:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:123:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:134:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:144:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:153:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:165:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:190:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:215:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:235:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:247:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:258:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:271:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:280:      tool.activate(context);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:291:      tool.activate(context);
+frontend/tests/integration/factories/AllFactories.spec.ts:29:  let commandStack: CommandStack;
+frontend/tests/integration/factories/AllFactories.spec.ts:33:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/tools/CircleTool.spec.ts:22:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/unit/tools/CircleTool.spec.ts:29:  let commandStack: CommandStack;
+frontend/tests/unit/tools/CircleTool.spec.ts:35:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/tools/CircleTool.spec.ts:66:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:76:      const firstResult = tool.handleClick(firstClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:81:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:91:      const secondResult = tool.handleClick(secondClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:124:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:134:      const firstResult = tool.handleClick(firstClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:139:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:149:      const secondResult = tool.handleClick(secondClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:176:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:186:      const firstResult = tool.handleClick(firstClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:190:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:200:      const secondResult = tool.handleClick(secondClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:230:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:240:      const firstResult = tool.handleClick(firstClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:244:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:254:      const secondResult = tool.handleClick(secondClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:267:      const context: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:277:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/CircleTool.spec.ts:283:      const context: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:293:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/CircleTool.spec.ts:311:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:320:      tool.handleClick(firstClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:323:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:332:      const result = tool.handleClick(secondClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:336:      const thirdClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:345:      const thirdResult = tool.handleClick(thirdClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:370:      const centerClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:379:      tool.handleClick(centerClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:382:      const circumferenceClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:391:      const result = tool.handleClick(circumferenceClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:445:      const centerClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:454:      tool.handleClick(centerClickContext);
+frontend/tests/unit/tools/CircleTool.spec.ts:456:      const circumferenceClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:465:      tool.handleClick(circumferenceClickContext);
+frontend/tests/unit/tools/pointTool.spec.ts:5: * - handleClick() builds generic Command with AddFreePoint2DOp
+frontend/tests/unit/tools/pointTool.spec.ts:17:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/unit/tools/pointTool.spec.ts:26:  let commandStack: CommandStack;
+frontend/tests/unit/tools/pointTool.spec.ts:31:  // Helper to create complete ToolContext
+frontend/tests/unit/tools/pointTool.spec.ts:32:  const createToolContext = (planeId: string, planeCoords: Vector3, canvasCoords = { x: 100, y: 100 }): ToolContext => ({
+frontend/tests/unit/tools/pointTool.spec.ts:47:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/tools/pointTool.spec.ts:75:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:80:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:98:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:103:      tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:110:      const context = createToolContext(verticalPlaneId, planeCoords);
+frontend/tests/unit/tools/pointTool.spec.ts:112:      tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:130:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:135:      tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:149:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:154:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:160:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:165:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:172:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:177:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:186:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:191:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:197:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:202:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:208:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:213:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:221:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:226:      tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:241:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:246:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:258:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:263:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:273:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:278:      tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:305:        const context = createToolContext(horizontalPlaneId, pos);
+frontend/tests/unit/tools/pointTool.spec.ts:306:        const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:322:        const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:326:        tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:355:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:360:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:368:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:373:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:380:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:385:      const result = tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:395:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:400:      tool.handleClick(context);
+frontend/tests/unit/tools/pointTool.spec.ts:424:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:429:      tool.handleClick(context);

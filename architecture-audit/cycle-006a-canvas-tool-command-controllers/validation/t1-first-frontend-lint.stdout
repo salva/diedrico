@@ -1,0 +1,4 @@
+
+> diedrico-frontend@0.1.0 lint
+> eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore
+

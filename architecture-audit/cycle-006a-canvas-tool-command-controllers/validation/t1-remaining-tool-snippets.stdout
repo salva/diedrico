@@ -1,0 +1,430 @@
+
+### Create3DPointTool.ts
+0001: /**
+0002:  * Create3DPointTool - Creates 3D points from projections (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow:
+0007:  * 1. Collect two 2D point projections (any order)
+0008:  * 2. Validate they're on DIFFERENT planes (validator)
+0009:  * 3. Create Point3DFromProjections
+0010:  * 
+0011:  * Code reduction: ~215 lines → ~110 lines (49% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+0018: import { SelectionMask } from '@/types/SelectionMask';
+0019: 
+0020: /**
+0021:  * Create3DPointTool using ArgumentCollectorTool framework
+0022:  * 
+0023:  * Framework handles:
+0024:  * - Any-order argument collection (projection1, projection2)
+0025:  * - Selection mask computation (point + point)
+0026:  * - UI feedback
+0027:  * - Automatic execution when both projections collected
+0028:  * 
+0029:  * Custom behavior:
+0030:  * - Set-level validator ensures projections are on DIFFERENT planes
+0031:  */
+0032: export class Create3DPointTool extends ArgumentCollectorTool {
+0033:   readonly name = 'create3dpoint';
+0034:   readonly completionBehavior = 'stay-active' as const;
+0035: 
+0036:   /**
+0037:    * Define argument specification
+0038:    * Two point arguments with different-plane validation
+0039:    */
+0040:   protected getArgumentSets(): ToolArgumentSet[] {
+0041:     return [
+0042:       {
+0043:         arguments: [
+0044:           { 
+0045:             name: 'projection1', 
+0046:             mask: SelectionMask.point()
+0047:           },
+0048:           { 
+0049:             name: 'projection2', 
+0050:             mask: SelectionMask.point()
+0051:           }
+0052:         ],
+0053:         // Set-level validator: Ensure projections are on different planes
+0054:         setValidator: (args: Map<string>, context: CollectionContext) => {
+0055:           const proj1 = args.get('projection1')!;
+0056:           const proj2 = args.get('projection2')!;
+0057:           
+0058:           // Get plane IDs from elements
+0059:           const plane1 = context.world.getProjectionPlaneById(proj1.element!.planeId);
+0060:           const plane2 = context.world.getProjectionPlaneById(proj2.element!.planeId);
+0061:           
+0062:           if (!plane1 || !plane2) {
+0063:             return { valid: false, error: 'One or both projection planes not found' };
+0064:           }
+0065:           
+0066:           if (plane1.id === plane2.id) {
+0067:             return { 
+0068:               valid: false, 
+0069:               error: 'Cannot create 3D point: both projections must be on DIFFERENT planes' 
+0070:             };
+0071:           }
+0072:           
+0073:           return { valid: true };
+0074:         }
+0075:       }
+0076:     ];
+0077:   }
+0078: 
+0079:   /**
+0080:    * Execute 3D point creation operations
+0081:    */
+0082: 
+0083: 
+0084:   protected getCommandDescription(): string {
+0085:     return "Create 3D point from projections";
+0086:   }
+0087: }
+
+### IntersectionTool.ts
+0001: /**
+0002:  * IntersectionTool - Tool for creating intersection points (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Supports intersections between:
+0007:  * - Line-Line
+0008:  * - Line-Circle (and Circle-Line)
+0009:  * - Circle-Circle
+0010:  * 
+0011:  * When multiple intersection points exist (line-circle or circle-circle),
+0012:  * the tool picks the intersection point nearest to the mouse cursor using
+0013:  * the planeCoords from ArgumentValue.
+0014:  * 
+0015:  * Code reduction: ~407 lines → ~250 lines (38% reduction)
+0016:  * 
+0017:  * Reference: specs/001-dihedral-learning-mvp/spec.md
+0018:  */
+0019: 
+0020: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0021: import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+0022: import type { Element2D } from '@/domain/world/Element2D';
+0023: import { SelectionMask } from '@/types/SelectionMask';
+0024: import { 
+0025:   areLinesParallel, 
+0026:   intersectLineCircle, 
+0027:   intersectCircleCircle 
+0028: } from '@/domain/calculations/Intersections';
+0029: 
+0030: /**
+0031:  * IntersectionTool using ArgumentCollectorTool framework
+0032:  * 
+0033:  * Framework handles:
+0034:  * - Argument collection (element1, element2)
+0035:  * - Selection mask computation (lines and circles)
+0036:  * - UI feedback ("Creating intersection: pick element1, element2")
+0037:  * - Automatic execution when both elements collected
+0038:  */
+0039: export class IntersectionTool extends ArgumentCollectorTool {
+0040:   readonly name = 'intersection';
+0041:   readonly completionBehavior = 'stay-active' as const;
+0042: 
+0043:   /**
+0044:    * Define argument specification
+0045:    * Single set with two line-or-circle arguments
+0046:    */
+0047:   protected getArgumentSets(): ToolArgumentSet[] {
+0048:     return [
+0049:       {
+0050:         arguments: [
+0051:           { 
+0052:             name: 'element1', 
+0053:             mask: SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle())
+0054:           },
+0055:           { 
+0056:             name: 'element2', 
+0057:             mask: SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle()),
+0058:             // Argument-level validator: Ensure different from element1
+0059:             validator: (element: Element2D, context: CollectionContext) => {
+0060:               const element1 = context.collected.get('element1');
+0061:               if (element1 && element.id === element1.element!.id) {
+0062:                 return {
+0063:                   valid: false,
+0064:                   error: 'Cannot create intersection: must select two different elements'
+0065:                 };
+0066:               }
+0067:               return { valid: true };
+0068:             }
+0069:           }
+0070:         ]
+0071:       }
+0072:     ];
+0073:   }
+0074: 
+0075:   /**
+0076:    * Execute intersection creation operations
+0077:    */
+0078: 
+0079: 
+0080:   protected getCommandDescription(): string {
+0081:     return "Create intersection point";
+0082:   }
+0083: 
+0084:   /**
+0085:    * Compute which line-circle intersection point is closest to mouse position
+0086:    * Returns 0 or 1, or null if no intersection
+0087:    */
+0088: 
+0089: 
+0090:   /**
+0091:    * Compute which circle-circle intersection point is closest to mouse position
+0092:    * Returns 0 or 1, or null if no intersection
+0093:    */
+0094: 
+0095: }
+
+### TangentLineToCircleThroughPointTool.ts
+0001: /**
+0002:  * TangentLineToCircleThroughPointTool - Tangent lines to circle through point (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow with automatic angle-based indexing:
+0007:  * 1. Collect circle and external point (any order)
+0008:  * 2. Determine tangent index based on mouse position angle
+0009:  * 3. Create tangent line
+0010:  * 
+0011:  * Code reduction: ~276 lines → ~190 lines (31% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-045
+0014:  */
+0015: 
+0016: import { Vector3 } from 'three';
+0017: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0018: import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import { SelectionMask } from '@/types/SelectionMask';
+0020: 
+0021: /**
+0022:  * TangentLineToCircleThroughPointTool using ArgumentCollectorTool framework
+0023:  * 
+0024:  * Framework handles:
+0025:  * - Any-order argument collection (circle + point)
+0026:  * - Selection mask computation
+0027:  * - UI feedback
+0028:  * - Automatic execution when both elements collected
+0029:  * 
+0030:  * Custom behavior:
+0031:  * - Determines tangent index based on mouse position (which of 2 tangents is closer)
+0032:  */
+0033: export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
+0034:   readonly name = 'tangent-line-to-circle-through-point';
+0035:   readonly completionBehavior = 'stay-active' as const;
+0036: 
+0037:   /**
+0038:    * Define argument specification
+0039:    * Single set with circle and point
+0040:    */
+0041:   protected getArgumentSets(): ToolArgumentSet[] {
+0042:     return [
+0043:       {
+0044:         arguments: [
+0045:           { 
+0046:             name: 'circle', 
+0047:             mask: SelectionMask.circle()
+0048:           },
+0049:           { 
+0050:             name: 'throughPoint', 
+0051:             mask: SelectionMask.point()
+0052:           }
+0053:         ],
+0054:         // Phase 113: Validate point is outside or on the circle
+0055:         setValidator: (args, context: CollectionContext) => {
+0056:           const circleEl = args.get('circle')?.element;
+0057:           const pointEl = args.get('throughPoint')?.element;
+0058:           if (circleEl && pointEl) {
+0059:             const circleRealization = circleEl.realize2D(context.world);
+0060:             const pointRealization = pointEl.realize2D(context.world);
+0061:             if (circleRealization && circleRealization.feasible && pointRealization && pointRealization.feasible) {
+0062:               const dist = pointRealization.position.distanceTo(circleRealization.center);
+0063:               const radius = circleRealization.getRadius();
+0064:               if (dist < radius - 1e-3) {
+0065:                 return { valid: false, error: 'Cannot create tangent: point is inside the circle' };
+0066:               }
+0067:             }
+0068:           }
+0069:           return { valid: true };
+0070:         }
+0071:       }
+0072:     ];
+0073:   }
+0074: 
+0075:   /**
+0076:    * Execute tangent line creation operations
+0077:    * Uses mouse position from second click to determine which tangent to create
+0078:    */
+0079: 
+0080: 
+0081:   protected getCommandDescription(): string {
+0082:     return "Create tangent line to circle through point";
+0083:   }
+0084: 
+0085:   /**
+0086:    * Determine which tangent line to create based on mouse position
+0087:    * Returns 0 or 1 for the tangent point closest to mouse
+0088:    */
+0089:   private determineTangentIndex(
+0090:     planeId: string,
+0091:     circleId: string,
+0092:     throughPointId: string,
+0093:     mousePos: Vector3,
+0094:     world: import('@/domain/world/World').World
+0095:   ): 0 | 1 {
+0096:     const plane = world.getProjectionPlaneById(planeId);
+0097:     if (!plane) throw new Error(`Plane not found: ${planeId}`);
+0098: 
+0099:     // Get circle realization
+0100:     const circle = plane.getCircle(circleId);
+0101:     if (!circle) throw new Error(`Circle not found: ${circleId}`);
+0102:     const circleReal = circle.realize2D(world);
+0103:     if (!circleReal || !circleReal.feasible) throw new Error(`Circle infeasible: ${circleId}`);
+0104: 
+0105:     // Get external point realization
+0106:     const point = plane.getPoint(throughPointId);
+0107:     if (!point) throw new Error(`Point not found: ${throughPointId}`);
+0108:     const pointReal = point.realize2D(world);
+0109:     if (!pointReal || !pointReal.feasible) throw new Error(`Point infeasible: ${throughPointId}`);
+0110: 
+0111:     const center = circleReal.center;
+0112:     const radius = circleReal.getRadius();
+0113:     const externalPoint = pointReal.position;
+0114: 
+0115:     // Vector from center to external point
+0116:     const dx = externalPoint.x - center.x;
+0117:     const dy = externalPoint.y - center.y;
+0118:     const distance = Math.sqrt(dx * dx + dy * dy);
+0119: 
+0120:     // Angle from center to external point
+
+### TangentLineToCircleParallelToLineTool.ts
+0001: /**
+0002:  * TangentLineToCircleParallelToLineTool - Tangent to circle parallel to line (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow with automatic angle-based indexing:
+0007:  * 1. Collect circle and reference line (any order)
+0008:  * 2. Determine tangent index based on mouse position
+0009:  * 3. Create tangent line parallel to reference
+0010:  * 
+0011:  * Code reduction: ~282 lines → ~190 lines (33% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-046, §FR-047
+0014:  */
+0015: 
+0016: import { Vector3 } from 'three';
+0017: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0018: import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import { SelectionMask } from '@/types/SelectionMask';
+0020: import { Line2D } from '@/domain/world/Line';
+0021: 
+0022: /**
+0023:  * TangentLineToCircleParallelToLineTool using ArgumentCollectorTool framework
+0024:  * 
+0025:  * Framework handles:
+0026:  * - Any-order argument collection (circle + line)
+0027:  * - Selection mask computation (circle + anyLine)
+0028:  * - UI feedback
+0029:  * - Automatic execution when both elements collected
+0030:  * 
+0031:  * Custom behavior:
+0032:  * - Determines tangent index based on mouse position (which of 2 tangents is closer)
+0033:  * - Accepts any Line2D subtype as reference (line, segment, guide, half-hinge-line)
+0034:  */
+0035: export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool {
+0036:   readonly name = 'tangent-line-to-circle-parallel';
+0037:   readonly completionBehavior = 'stay-active' as const;
+0038: 
+0039:   /**
+0040:    * Define argument specification
+0041:    * Single set with circle and any line type
+0042:    */
+0043:   protected getArgumentSets(): ToolArgumentSet[] {
+0044:     return [
+0045:       {
+0046:         arguments: [
+0047:           { 
+0048:             name: 'circle', 
+0049:             mask: SelectionMask.circle()
+0050:           },
+0051:           { 
+0052:             name: 'referenceLine', 
+0053:             mask: SelectionMask.anyLine()  // Accepts all Line2D subtypes
+0054:           }
+0055:         ],
+0056:         // Phase 113: Validate reference line is feasible
+0057:         setValidator: (args, context: CollectionContext) => {
+0058:           const refLine = args.get('referenceLine')?.element as Line2D | undefined;
+0059:           if (refLine) {
+0060:             const realization = refLine.realize2D(context.world);
+0061:             if (realization && !realization.feasible) {
+0062:               return { valid: false, error: 'Cannot create tangent: reference line is infeasible' };
+0063:             }
+0064:           }
+0065:           return { valid: true };
+0066:         }
+0067:       }
+0068:     ];
+0069:   }
+0070: 
+0071:   /**
+0072:    * Execute tangent line creation operations
+0073:    * Uses mouse position from second click to determine which tangent to create
+0074:    */
+0075: 
+0076: 
+0077:   protected getCommandDescription(): string {
+0078:     return "Create tangent line to circle parallel to line";
+0079:   }
+0080: 
+0081:   /**
+0082:    * Determine which tangent line to create based on mouse position
+0083:    * Returns 0 or 1 for the tangent point closest to mouse
+0084:    */
+0085:   private determineTangentIndex(
+0086:     planeId: string,
+0087:     circleId: string,
+0088:     referenceLineId: string,
+0089:     mousePos: Vector3,
+0090:     world: import('@/domain/world/World').World
+0091:   ): 0 | 1 {
+0092:     const plane = world.getProjectionPlaneById(planeId);
+0093:     if (!plane) throw new Error(`Plane not found: ${planeId}`);
+0094: 
+0095:     // Get circle realization
+0096:     const circle = plane.getCircle(circleId);
+0097:     if (!circle) throw new Error(`Circle not found: ${circleId}`);
+0098:     const circleReal = circle.realize2D(world);
+0099:     if (!circleReal || !circleReal.feasible) throw new Error(`Circle infeasible: ${circleId}`);
+0100: 
+0101:     // Get reference line realization (may be on any plane)
+0102:     const refLineElement = world.getLine2D(referenceLineId);
+0103:     if (!refLineElement) throw new Error(`Reference line not found: ${referenceLineId}`);
+0104:     const refLine = refLineElement.realize2D(world);
+0105:     if (!refLine || !refLine.feasible) throw new Error(`Reference line infeasible: ${referenceLineId}`);
+0106: 
+0107:     const center = circleReal.center;
+0108:     const radius = circleReal.getRadius();
+0109: 
+0110:     // Reference line direction (normalized)
+0111:     const refDirection = refLine.point2.clone().normalize();
+0112: 
+0113:     // Perpendicular direction (90° CCW rotation)
+0114:     const perpDirection = new Vector3(-refDirection.y, refDirection.x, 0);
+0115: 
+0116:     // Compute signed distance from center to reference line
+0117:     const refPoint = refLine.point1;
+0118:     const a = -refDirection.y;
+0119:     const b = refDirection.x;
+0120:     const c = refDirection.y * refPoint.x - refDirection.x * refPoint.y;

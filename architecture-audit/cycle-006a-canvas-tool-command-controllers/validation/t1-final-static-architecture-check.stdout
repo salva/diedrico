@@ -1,0 +1,10 @@
+--- selected path concrete command/factory leak check ---
+--- command stack mentions (allowed: SvgCanvas injection into controller only) ---
+frontend/src/components/workspace/SvgCanvas.vue:188:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/workspace/SvgCanvas.vue:425:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/workspace/SvgCanvas.vue:426:if (!commandStack) {
+frontend/src/components/workspace/SvgCanvas.vue:427:  throw new Error('CommandStack not provided');
+frontend/src/components/workspace/SvgCanvas.vue:429:const canvasToolController = new CanvasToolController({ world, commandStack, toolStore });
+--- deleted quick/example active imports ---
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:333:  it('should handle original Quick3DLineTool geometry (horizontal + vertical)', () => {
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:334:    // Original geometry from Quick3DLineTool before commit 638f8aee:

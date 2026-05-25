@@ -1,0 +1,1 @@
+frontend/src/components/workspace/SvgCanvas.vue:425:  commandStack: inject('commandStack'),

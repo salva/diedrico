@@ -1,0 +1,7 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run frontend/tests/unit/tools/pointTool.spec.ts frontend/tests/unit/tools/CircleTool.spec.ts frontend/tests/unit/tools/toolValidation.spec.ts frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+

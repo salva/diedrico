@@ -1,0 +1,171 @@
+
+--- 1440-1470 ---
+1440: function handleSaveProperties(changes: any) {
+1441:   console.log('[SvgCanvas] Saving property changes:', changes);
+1442:   
+1443:   // Create command using base Command + Operation pattern per data-model.md
+1444:   const cmd = new Command(`Update style: ${changes.elementId}`, world);
+1445:   
+1446:   try {
+1447:     // Create and execute style update operation
+1448:     const styleOp = new UpdateElementStyleOp(
+1449:       changes.elementId,
+1450:       activePlane.value, // TODO: Get actual planeId from element
+1451:       {
+1452:         color: changes.color,
+1453:         lineWidth: changes.lineWidth,
+1454:         lineStyle: changes.lineStyle,
+1455:         opacity: changes.opacity,
+1456:         visible: changes.visible
+1457:       }
+1458:     );
+1459:     
+1460:     cmd.addAndExecute(styleOp);
+1461:     cmd.commit();
+1462:     commandStack.push(cmd);
+1463:     
+1464:     // Trigger reactivity
+1465:     renderTick.value++;
+1466:     console.log('[SvgCanvas] Style updated and command added to stack');
+1467:   } catch (error) {
+1468:     console.error('[SvgCanvas] Style update failed:', error);
+1469:     cmd.rollback();
+1470:   }
+
+--- 900-1035 ---
+0900:     return (x_paper + viewport.value.panX) * zoom;
+0901:   };
+0902:   
+0903:   // Helper: Find where grid line with constant v intersects a horizontal line (y_paper = constant)
+0904:   // Returns screen x position
+0905:   const findVLineIntersectionWithHorizontal = (v: number, y_paper: number): number | null => {
+0906:     // Line: origin_paper + u*u_paper + v*v_paper
+0907:     // Want: origin_paper.y + u*u_paper.y + v*v_paper.y = y_paper
+0908:     // Solve for u: u = (y_paper - origin_paper.y - v*v_paper.y) / u_paper.y
+0909:     if (Math.abs(u_paper.y) < 1e-10) return null; // Grid line parallel to horizontal
+0910:     const u = (y_paper - origin_paper.y - v * v_paper.y) / u_paper.y;
+0911:     const x_paper = origin_paper.x + u * u_paper.x + v * v_paper.x;
+0912:     return (x_paper + viewport.value.panX) * zoom;
+0913:   };
+0914:   
+0915:   // Helper: Find where grid line with constant u intersects a vertical line (x_paper = constant)
+0916:   // Returns screen y position
+0917:   const findULineIntersectionWithVertical = (u: number, x_paper: number): number | null => {
+0918:     // Line: origin_paper + u*u_paper + v*v_paper
+0919:     // Want: origin_paper.x + u*u_paper.x + v*v_paper.x = x_paper
+0920:     // Solve for v: v = (x_paper - origin_paper.x - u*u_paper.x) / v_paper.x
+0921:     if (Math.abs(v_paper.x) < 1e-10) return null; // Grid line parallel to vertical
+0922:     const v = (x_paper - origin_paper.x - u * u_paper.x) / v_paper.x;
+0923:     const y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y;
+0924:     return (y_paper + viewport.value.panY) * zoom;
+0925:   };
+0926:   
+0927:   // Helper: Find where grid line with constant v intersects a vertical line (x_paper = constant)
+0928:   // Returns screen y position
+0929:   const findVLineIntersectionWithVertical = (v: number, x_paper: number): number | null => {
+0930:     // Line: origin_paper + u*u_paper + v*v_paper
+0931:     // Want: origin_paper.x + u*u_paper.x + v*v_paper.x = x_paper
+0932:     // Solve for u: u = (x_paper - origin_paper.x - v*v_paper.x) / u_paper.x
+0933:     if (Math.abs(u_paper.x) < 1e-10) return null; // Grid line parallel to vertical
+0934:     const u = (x_paper - origin_paper.x - v * v_paper.x) / u_paper.x;
+0935:     const y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y;
+0936:     return (y_paper + viewport.value.panY) * zoom;
+0937:   };
+0938: 
+0939:   const topLabels: GridLabel[] = [];
+0940:   const bottomLabels: GridLabel[] = [];
+0941:   const leftLabels: GridLabel[] = [];
+0942:   const rightLabels: GridLabel[] = [];
+0943: 
+0944:   if (uIsHorizontal) {
+0945:     // U varies along top/bottom edges, V varies along left/right edges
+0946:     
+0947:     // TOP EDGE (y_screen = 0 → y_paper = -panY)
+0948:     const y_paper_top = 0 / zoom - viewport.value.panY;
+0949:     const topLeft_uv = paperToUV(screenToPaper(0, 0));
+0950:     const topRight_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
+0951:     const uMin_top = Math.min(topLeft_uv.u, topRight_uv.u);
+0952:     const uMax_top = Math.max(topLeft_uv.u, topRight_uv.u);
+0953:     const uStart_top = Math.floor(uMin_top / majorSpacing) * majorSpacing;
+0954:     const uEnd_top = Math.ceil(uMax_top / majorSpacing) * majorSpacing;
+0955:     
+0956:     for (let u = uStart_top; u <= uEnd_top; u += majorSpacing) {
+0957:       const screenX = findULineIntersectionWithHorizontal(u, y_paper_top);
+0958:       if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
+0959:         topLabels.push({ key: `top-${u}`, value: u, position: screenX, edge: 'top' });
+0960:       }
+0961:     }
+0962:     
+0963:     // BOTTOM EDGE (y_screen = canvasHeight → y_paper = canvasHeight/zoom - panY)
+0964:     const y_paper_bottom = canvasHeight.value / zoom - viewport.value.panY;
+0965:     const bottomLeft_uv = paperToUV(screenToPaper(0, canvasHeight.value));
+0966:     const bottomRight_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
+0967:     const uMin_bottom = Math.min(bottomLeft_uv.u, bottomRight_uv.u);
+0968:     const uMax_bottom = Math.max(bottomLeft_uv.u, bottomRight_uv.u);
+0969:     const uStart_bottom = Math.floor(uMin_bottom / majorSpacing) * majorSpacing;
+0970:     const uEnd_bottom = Math.ceil(uMax_bottom / majorSpacing) * majorSpacing;
+0971:     
+0972:     for (let u = uStart_bottom; u <= uEnd_bottom; u += majorSpacing) {
+0973:       const screenX = findULineIntersectionWithHorizontal(u, y_paper_bottom);
+0974:       if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
+0975:         bottomLabels.push({ key: `bottom-${u}`, value: u, position: screenX, edge: 'bottom' });
+0976:       }
+0977:     }
+0978:     
+0979:     // LEFT EDGE (x_screen = 0 → x_paper = -panX)
+0980:     const x_paper_left = 0 / zoom - viewport.value.panX;
+0981:     const leftTop_uv = paperToUV(screenToPaper(0, 0));
+0982:     const leftBottom_uv = paperToUV(screenToPaper(0, canvasHeight.value));
+0983:     const vMin_left = Math.min(leftTop_uv.v, leftBottom_uv.v);
+0984:     const vMax_left = Math.max(leftTop_uv.v, leftBottom_uv.v);
+0985:     const vStart_left = Math.floor(vMin_left / majorSpacing) * majorSpacing;
+0986:     const vEnd_left = Math.ceil(vMax_left / majorSpacing) * majorSpacing;
+0987:     
+0988:     for (let v = vStart_left; v <= vEnd_left; v += majorSpacing) {
+0989:       const screenY = findVLineIntersectionWithVertical(v, x_paper_left);
+0990:       if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
+0991:         leftLabels.push({ key: `left-${v}`, value: v, position: screenY, edge: 'left' });
+0992:       }
+0993:     }
+0994:     
+0995:     // RIGHT EDGE (x_screen = canvasWidth → x_paper = canvasWidth/zoom - panX)
+0996:     const x_paper_right = canvasWidth.value / zoom - viewport.value.panX;
+0997:     const rightTop_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
+0998:     const rightBottom_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
+0999:     const vMin_right = Math.min(rightTop_uv.v, rightBottom_uv.v);
+1000:     const vMax_right = Math.max(rightTop_uv.v, rightBottom_uv.v);
+1001:     const vStart_right = Math.floor(vMin_right / majorSpacing) * majorSpacing;
+1002:     const vEnd_right = Math.ceil(vMax_right / majorSpacing) * majorSpacing;
+1003:     
+1004:     for (let v = vStart_right; v <= vEnd_right; v += majorSpacing) {
+1005:       const screenY = findVLineIntersectionWithVertical(v, x_paper_right);
+1006:       if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
+1007:         rightLabels.push({ key: `right-${v}`, value: v, position: screenY, edge: 'right' });
+1008:       }
+1009:     }
+1010:     
+1011:   } else {
+1012:     // V varies along top/bottom edges, U varies along left/right edges
+1013:     
+1014:     // TOP EDGE
+1015:     const y_paper_top = 0 / zoom - viewport.value.panY;
+1016:     const topLeft_uv = paperToUV(screenToPaper(0, 0));
+1017:     const topRight_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
+1018:     const vMin_top = Math.min(topLeft_uv.v, topRight_uv.v);
+1019:     const vMax_top = Math.max(topLeft_uv.v, topRight_uv.v);
+1020:     const vStart_top = Math.floor(vMin_top / majorSpacing) * majorSpacing;
+1021:     const vEnd_top = Math.ceil(vMax_top / majorSpacing) * majorSpacing;
+1022:     
+1023:     for (let v = vStart_top; v <= vEnd_top; v += majorSpacing) {
+1024:       const screenX = findVLineIntersectionWithHorizontal(v, y_paper_top);
+1025:       if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
+1026:         topLabels.push({ key: `top-${v}`, value: v, position: screenX, edge: 'top' });
+1027:       }
+1028:     }
+1029:     
+1030:     // BOTTOM EDGE
+1031:     const y_paper_bottom = canvasHeight.value / zoom - viewport.value.panY;
+1032:     const bottomLeft_uv = paperToUV(screenToPaper(0, canvasHeight.value));
+1033:     const bottomRight_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
+1034:     const vMin_bottom = Math.min(bottomLeft_uv.v, bottomRight_uv.v);
+1035:     const vMax_bottom = Math.max(bottomLeft_uv.v, bottomRight_uv.v);

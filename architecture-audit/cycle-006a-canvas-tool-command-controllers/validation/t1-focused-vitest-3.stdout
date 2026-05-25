@@ -1,0 +1,50 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/tools/pointTool.spec.ts  (0 test)
+ ❯ tests/unit/tools/toolValidation.spec.ts  (8 tests | 8 failed) 21ms
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should reject selecting the same point twice
+     → toolStore is not defined
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should accept two different points
+     → toolStore is not defined
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should reject selecting the same point twice
+     → toolStore is not defined
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should accept two different points
+     → toolStore is not defined
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should reject zero-radius circle (center == circumference)
+     → toolStore is not defined
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should accept valid center and circumference point
+     → toolStore is not defined
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > ParallelLineTool > should accept valid reference line and create parallel
+     → toolStore is not defined
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > PerpendicularLineTool > should accept valid reference line and create perpendicular
+     → toolStore is not defined
+ ❯ tests/unit/tools/CircleTool.spec.ts  (10 tests | 9 failed) 24ms
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Two-Click Workflow > should require two clicks to create circle
+     → toolStore is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T983: Both Points Snap (No Duplicates) > should snap to existing points for both center and circumference
+     → toolStore is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T984: Require Both Points to Exist > should reject circle when circumference point does not exist
+     → toolStore is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T985: Minimum Radius Validation with Snapped Points > should accept circle when snapped points meet minimum radius
+     → toolStore is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Error Handling > should reject invalid plane
+     → toolStore is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Error Handling > should reject invalid coordinates
+     → toolStore is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Tool State Reset > should reset state after successful circle creation
+     → toolStore is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+     → toolStore is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+     → toolStore is not defined
+
+ Test Files  3 failed (3)
+      Tests  17 failed | 1 passed (18)
+   Start at  23:33:38
+   Duration  1.96s (transform 765ms, setup 0ms, collect 1.89s, tests 45ms, environment 1.68s, prepare 355ms)
+

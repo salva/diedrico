@@ -1,0 +1,1147 @@
+frontend/src/components/workspace/SvgCanvas.vue:188:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/workspace/SvgCanvas.vue:214:import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+frontend/src/components/workspace/SvgCanvas.vue:424:// Command infrastructure - injected from App.vue
+frontend/src/components/workspace/SvgCanvas.vue:425:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/workspace/SvgCanvas.vue:426:if (!commandStack) {
+frontend/src/components/workspace/SvgCanvas.vue:427:  throw new Error('CommandStack not provided');
+frontend/src/components/workspace/SvgCanvas.vue:429:const canvasToolController = new CanvasToolController({ world, commandStack, toolStore });
+frontend/src/tools/Create3DPointTool.ts:85:  protected getCommandDescription(): string {
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:82:  protected getCommandDescription(): string {
+frontend/src/tools/Create3DPlaneTool.ts:67:  protected getCommandDescription(): string {
+frontend/src/tools/Create3DLineTool.ts:67:  protected getCommandDescription(): string {
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:77:  protected getCommandDescription(): string {
+frontend/src/tools/IntersectionTool.ts:81:  protected getCommandDescription(): string {
+frontend/src/tools/QuickProjectionSetupTool.ts:19:import { Command } from '@/commands/Command';
+frontend/src/tools/QuickProjectionSetupTool.ts:21:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/QuickProjectionSetupTool.ts:22:import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+frontend/src/tools/QuickProjectionSetupTool.ts:23:import { createActionGroup } from '@/domain/processTree/ActionGroup';
+frontend/src/tools/QuickProjectionSetupTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/QuickProjectionSetupTool.ts:55:    const { world, commandStack, toolStore } = context;
+frontend/src/tools/QuickProjectionSetupTool.ts:67:    const cmd = new Command('Quick projection setup', world);
+frontend/src/tools/QuickProjectionSetupTool.ts:72:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/QuickProjectionSetupTool.ts:76:    const { pointId: a1Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a1Pos, groupId);
+frontend/src/tools/QuickProjectionSetupTool.ts:82:    const { pointId: a2Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a2Pos, groupId);
+frontend/src/tools/QuickProjectionSetupTool.ts:88:    const { pointId: b1Id } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, b1Pos, groupId);
+frontend/src/tools/QuickProjectionSetupTool.ts:97:    commandStack.push(cmd);
+frontend/src/tools/ArgumentCollectorTool.ts:99:      type: this.name as import('@/application/tools/ToolCommandIntents').ConstructionIntentType,
+frontend/src/tools/ArgumentCollectorTool.ts:100:      description: this.getCommandDescription(),
+frontend/src/tools/ArgumentCollectorTool.ts:118:   * @param context - Tool execution context (world, commandStack, etc.)
+frontend/src/tools/ArgumentCollectorTool.ts:131:      throw new Error(result.message || `Failed to ${this.getCommandDescription().toLowerCase()}`);
+frontend/src/tools/ArgumentCollectorTool.ts:236:          return { success: true, message: `${this.getCommandDescription()} completed successfully` };
+frontend/src/tools/ArgumentCollectorTool.ts:242:        return { success: false, message: `Failed to ${this.getCommandDescription().toLowerCase()}: ${message}` };
+frontend/src/tools/ITool.ts:14:import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+frontend/src/tools/ITool.ts:23:  commandSink: ToolCommandSink;
+frontend/src/tools/CreateProjectionPlaneTool.ts:170:  protected getCommandDescription(): string {
+frontend/src/tools/GuideTool.ts:41: * - Creates TWO guides (primary + sibling) via GuideSequenceFactory
+frontend/src/tools/GuideTool.ts:77:   * - Sibling guide on paired plane (automatically via GuideSequenceFactory)
+frontend/src/tools/Quick3DSegmentTool.ts:30:import { Command } from '@/commands/Command';
+frontend/src/tools/Quick3DSegmentTool.ts:32:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:33:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:34:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:35:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:36:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/tools/Quick3DSegmentTool.ts:37:import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+frontend/src/tools/Quick3DSegmentTool.ts:38:import { createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
+frontend/src/tools/Quick3DSegmentTool.ts:39:import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+frontend/src/tools/Quick3DSegmentTool.ts:40:import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+frontend/src/tools/Quick3DSegmentTool.ts:41:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/Quick3DSegmentTool.ts:42:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Quick3DSegmentTool.ts:43:import { createActionGroup } from '@/domain/processTree/ActionGroup';
+frontend/src/tools/Quick3DSegmentTool.ts:72:    const { world, commandStack, toolStore } = context;
+frontend/src/tools/Quick3DSegmentTool.ts:93:    const cmd = new Command('Quick 3D segment setup', world);
+frontend/src/tools/Quick3DSegmentTool.ts:97:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/Quick3DSegmentTool.ts:102:      const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:105:      const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:108:      const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DSegmentTool.ts:113:      const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:116:      const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:119:      const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DSegmentTool.ts:126:        GuideSequenceFactory.createGuideWithSibling(
+frontend/src/tools/Quick3DSegmentTool.ts:129:      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(guide1Id), groupId));
+frontend/src/tools/Quick3DSegmentTool.ts:131:        cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(sibGuide1Id), groupId));
+frontend/src/tools/Quick3DSegmentTool.ts:136:        GuideSequenceFactory.createGuideWithSibling(
+frontend/src/tools/Quick3DSegmentTool.ts:139:      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(guide2Id), groupId));
+frontend/src/tools/Quick3DSegmentTool.ts:141:        cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(sibGuide2Id), groupId));
+frontend/src/tools/Quick3DSegmentTool.ts:150:      const { pointId: int1Id_V } = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/tools/Quick3DSegmentTool.ts:153:      const { pointId: int2Id_V } = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/tools/Quick3DSegmentTool.ts:158:      const addSegH = new AddSegment2DByPointsOp(P_H.id!, p1Id_H, p2Id_H);
+frontend/src/tools/Quick3DSegmentTool.ts:164:      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(segId_H), groupId));
+frontend/src/tools/Quick3DSegmentTool.ts:167:      const addSegV = new AddSegment2DByPointsOp(P_V.id!, int1Id_V, int2Id_V);
+frontend/src/tools/Quick3DSegmentTool.ts:173:      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(segId_V), groupId));
+frontend/src/tools/Quick3DSegmentTool.ts:176:      const add3DSegmentOp = new Add3DSegmentOp(segId_H, segId_V, P_H.id!, P_V.id!);
+frontend/src/tools/Quick3DSegmentTool.ts:184:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(segment3DId), groupId));
+frontend/src/tools/Quick3DSegmentTool.ts:187:      commandStack.push(cmd);
+frontend/src/tools/Create3DSegmentTool.ts:67:  protected getCommandDescription(): string {
+frontend/src/tools/Quick3DLineTool.ts:29:import { Command } from '@/commands/Command';
+frontend/src/tools/Quick3DLineTool.ts:31:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/Quick3DLineTool.ts:32:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/Quick3DLineTool.ts:33:import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+frontend/src/tools/Quick3DLineTool.ts:34:import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
+frontend/src/tools/Quick3DLineTool.ts:35:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/Quick3DLineTool.ts:36:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Quick3DLineTool.ts:37:import { createActionGroup } from '@/domain/processTree/ActionGroup';
+frontend/src/tools/Quick3DLineTool.ts:68:    const { world, commandStack, toolStore } = context;
+frontend/src/tools/Quick3DLineTool.ts:80:    const cmd = new Command('Quick 3D line setup', world);
+frontend/src/tools/Quick3DLineTool.ts:85:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/Quick3DLineTool.ts:91:      const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p1_H, groupId);
+frontend/src/tools/Quick3DLineTool.ts:94:      const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p2_H, groupId);
+frontend/src/tools/Quick3DLineTool.ts:96:      const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DLineTool.ts:103:      const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p1_V, groupId);
+frontend/src/tools/Quick3DLineTool.ts:106:      const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p2_V, groupId);
+frontend/src/tools/Quick3DLineTool.ts:108:      const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DLineTool.ts:113:      const add3DLineOp = new Add3DLineOp(lineId_H, lineId_V, P_H.id!, P_V.id!);
+frontend/src/tools/Quick3DLineTool.ts:137:      cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/tools/Quick3DLineTool.ts:141:      commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/construction/ConstructionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/ConstructionUseCases.ts:4:import type { ToolConstructionIntent, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+frontend/src/application/construction/ConstructionUseCases.ts:8:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:9:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:10:import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:11:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:12:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:13:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:14:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/application/construction/ConstructionUseCases.ts:15:import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+frontend/src/application/construction/ConstructionUseCases.ts:16:import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+frontend/src/application/construction/ConstructionUseCases.ts:17:import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+frontend/src/application/construction/ConstructionUseCases.ts:18:import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+frontend/src/application/construction/ConstructionUseCases.ts:19:import { createActionGroup } from '@/domain/processTree/ActionGroup';
+frontend/src/application/construction/ConstructionUseCases.ts:20:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/construction/ConstructionUseCases.ts:21:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/application/construction/ConstructionUseCases.ts:22:import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+frontend/src/application/construction/ConstructionUseCases.ts:23:import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+frontend/src/application/construction/ConstructionUseCases.ts:24:import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSiblingGuideAction';
+frontend/src/application/construction/ConstructionUseCases.ts:25:import { createAdd3DPointAction, createAdd3DLineAction, createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
+frontend/src/application/construction/ConstructionUseCases.ts:26:import { createTangentLineToCircleThroughPointAction, createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
+frontend/src/application/construction/ConstructionUseCases.ts:32:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:35:export function executeConstructionIntent({ intent, world, commandStack }: ExecuteConstructionParams): ToolCommandResult {
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:40:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/construction/ConstructionUseCases.ts:44:    commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:52:function executeConstructionOperations(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+frontend/src/application/construction/ConstructionUseCases.ts:61:      PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:67:      LineSequenceFactory.createLineByTwoPoints(cmd, planeId, p1.id, p2.id, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:73:      const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1.id, p2.id));
+frontend/src/application/construction/ConstructionUseCases.ts:74:      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:80:      CircleSequenceFactory.createCircleByCenterAndPoint(cmd, planeId, center.id, circumferencePoint.id, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:86:      const result = GuideSequenceFactory.createGuideWithSibling(cmd, planeId, referenceLineId, throughPointId, world);
+frontend/src/application/construction/ConstructionUseCases.ts:87:      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:88:      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:94:      LineSequenceFactory.createParallelLine(cmd, planeId, line.id, point.id, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:100:      LineSequenceFactory.createPerpendicularLine(cmd, planeId, line.id, point.id, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:111:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(planeId, circle.id, point.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:112:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:119:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(planeId, circle.id, line.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:120:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:126:      const result = cmd.addAndExecute(new Add3DPointOp(p1.id, p2.id, p1.planeId, p2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:127:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:133:      const result = cmd.addAndExecute(new Add3DLineOp(l1.id, l2.id, l1.planeId, l2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:134:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:140:      const result = cmd.addAndExecute(new Add3DSegmentOp(s1.id, s2.id, s1.planeId, s2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:141:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:147:      PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:154:      const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:155:      PlaneSequenceFactory.createAuxiliaryProjectionPlane(cmd, world, plane3DId, t1.id, t2.id, t2Prime.id, t1.planeId, undefined, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:166:function createIntersection(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+frontend/src/application/construction/ConstructionUseCases.ts:175:    IntersectionSequenceFactory.createLineLineIntersection(cmd, intent.planeId, element1.id, element2.id, world, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:179:    IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:183:    IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element2.id, element1.id, index, world, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:187:    IntersectionSequenceFactory.createCircleCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
+frontend/src/application/construction/ConstructionUseCases.ts:225:function checkCreatedElementsFeasibility(cmd: Command, world: World): void {
+frontend/src/tools/ExampleConstructionsTool.ts:17:import { Command } from '@/commands/Command';
+frontend/src/tools/ExampleConstructionsTool.ts:18:import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+frontend/src/tools/ExampleConstructionsTool.ts:19:import { createActionGroup } from '@/domain/processTree/ActionGroup';
+frontend/src/tools/ExampleConstructionsTool.ts:20:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/ExampleConstructionsTool.ts:77:  protected executeOperations(
+frontend/src/tools/ExampleConstructionsTool.ts:78:    cmd: Command,
+frontend/src/tools/ExampleConstructionsTool.ts:88:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/ExampleConstructionsTool.ts:93:  protected getCommandDescription(): string {
+frontend/src/tools/PointTool.ts:61:  protected getCommandDescription(): string {
+frontend/src/application/tools/ToolCommandIntents.ts:57:export interface ToolCommandResult {
+frontend/src/application/tools/ToolCommandIntents.ts:63:  preview(position: Vector3): ToolCommandResult;
+frontend/src/application/tools/ToolCommandIntents.ts:64:  commit(): ToolCommandResult;
+frontend/src/application/tools/ToolCommandIntents.ts:68:export interface ToolCommandSink {
+frontend/src/application/tools/ToolCommandIntents.ts:69:  executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult;
+frontend/src/application/tools/ToolCommandIntents.ts:70:  executeQuickIntent(intent: QuickToolIntent): ToolCommandResult;
+frontend/src/application/tools/ToolCommandIntents.ts:72:  updateElementStyle(request: StyleUpdateRequest): ToolCommandResult;
+frontend/src/application/world/initializeWorld.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/world/initializeWorld.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/world/initializeWorld.ts:3:import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
+frontend/src/application/world/initializeWorld.ts:4:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/world/initializeWorld.ts:5:import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/processTree';
+frontend/src/application/world/initializeWorld.ts:6:import { createActionGroup } from '@/domain/processTree/ActionGroup';
+frontend/src/application/world/initializeWorld.ts:19:export function initializeWorld(world: World, commandStack: CommandStack): void {
+frontend/src/application/world/initializeWorld.ts:22:  const initCmd = new Command('Initialize World', world);
+frontend/src/application/world/initializeWorld.ts:28:  initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/world/initializeWorld.ts:34:  commandStack.push(initCmd);
+frontend/src/application/tools/CanvasToolController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/tools/CanvasToolController.ts:4:import type { ToolCommandSink, ToolConstructionIntent, QuickToolIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from './ToolCommandIntents';
+frontend/src/application/tools/CanvasToolController.ts:12:  commandStack: CommandStack;
+frontend/src/application/tools/CanvasToolController.ts:16:export class CanvasToolController implements ToolCommandSink {
+frontend/src/application/tools/CanvasToolController.ts:21:    this.movement = new CanvasPointMovementUseCase(deps.world, deps.commandStack);
+frontend/src/application/tools/CanvasToolController.ts:22:    this.style = new CanvasStyleUseCase(deps.world, deps.commandStack);
+frontend/src/application/tools/CanvasToolController.ts:25:  executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult {
+frontend/src/application/tools/CanvasToolController.ts:29:      commandStack: this.deps.commandStack
+frontend/src/application/tools/CanvasToolController.ts:37:  executeQuickIntent(intent: QuickToolIntent): ToolCommandResult {
+frontend/src/application/tools/CanvasToolController.ts:41:      commandStack: this.deps.commandStack
+frontend/src/application/tools/CanvasToolController.ts:51:  updateElementStyle(request: StyleUpdateRequest): ToolCommandResult {
+frontend/src/tools/PerpendicularLineTool.ts:73:  protected getCommandDescription(): string {
+frontend/src/tools/ParallelLineTool.ts:73:  protected getCommandDescription(): string {
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:2:import { Command } from '@/commands/Command';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:5:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:6:import type { MoveFreePointRequest, FreePointMoveSession, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:16:      preview: (position: Vector3): ToolCommandResult => {
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:19:          cmd.addAndExecute(new UpdateFreePoint2DPositionOp(request.planeId, request.pointId, position));
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:27:      commit: (): ToolCommandResult => {
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:33:        this.commandStack.push(cmd);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:4:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:5:import type { StyleUpdateRequest, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:8:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasStyleUseCase.ts:10:  update(request: StyleUpdateRequest): ToolCommandResult {
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style));
+frontend/src/application/canvas/CanvasStyleUseCase.ts:15:      this.commandStack.push(cmd);
+
+### ArgumentCollectorTool.ts
+0001: /**
+0002:  * ArgumentCollectorTool.ts - Base class for multi-argument tool construction (Phase 64)
+0003:  * 
+0004:  * Provides automated argument collection workflow for tools that need multiple geometric elements.
+0005:  * Subclasses declare argument specifications; base class handles collection, validation, and UI feedback.
+0006:  * 
+0007:  * Key Features:
+0008:  * - Any-order collection: Users can select arguments in any sequence
+0009:  * - Automatic viable set tracking: Framework prunes incompatible argument sets as arguments are collected
+0010:  * - Dynamic selection masks: Computed as union of all viable next arguments
+0011:  * - Automatic UI feedback: Status messages show progress and next expected arguments
+0012:  * - Three-layer validation: Type (SelectionMask), argument-level (validator), set-level (setValidator)
+0013:  * - Automatic execution: Emits construction intent when exactly one complete set is found
+0014:  * 
+0015:  * Usage Pattern:
+0016:  * ```typescript
+0017:  * class CircleTool extends ArgumentCollectorTool {
+0018:  *   readonly name = 'circle';
+0019:  *   
+0020:  *   getArgumentSets(): ToolArgumentSet[] {
+0021:  *     return [{
+0022:  *       arguments: [
+0023:  *         { name: 'center', mask: SelectionMask.point() },
+0024:  *         { name: 'circumferencePoint', mask: SelectionMask.point() }
+0025:  *       ]
+0026:  *     }];
+0027:  *   }
+0028:  *   
+0029:  *   execute(setIndex: number, args: Map<string, Element2D>): ToolResult {
+0030:  *     const center = args.get('center') as Point2D;
+0031:  *     const circum = args.get('circumferencePoint') as Point2D;
+0032:  *     // Create circle...
+0033:  *   }
+0034:  * }
+0035:  * ```
+0036:  * 
+0037:  * Reference: data-model.md §Tool Argument Collection Framework (Phase 64)
+0038:  */
+0039: 
+0055:  * - getArgumentSets(): Define all possible argument combinations (mutually exclusive)
+0070:   private viableSets: number[] = []; // Indices into getArgumentSets()
+0087:   protected abstract getArgumentSets(): ToolArgumentSet[];
+0094:   protected buildConstructionIntent(
+0116:    * @param setIndex - Index of the completed argument set in getArgumentSets()
+0127:       this.buildConstructionIntent(args, context)
+0160:       const argumentSets = this.getArgumentSets();
+0222:       const argumentSets = this.getArgumentSets();
+0261:       const argumentSets = this.getArgumentSets();
+0293:     const argumentSets = this.getArgumentSets();
+0370:     const argumentSets = this.getArgumentSets();
+0428:     const argumentSets = this.getArgumentSets();
+0477:     const argumentSets = this.getArgumentSets();
+0502:     const argumentSets = this.getArgumentSets();
+
+### BaseTool.ts
+0001: /**
+0002:  * BaseTool - Abstract base class for tools with common functionality
+0003:  * 
+0004:  * Provides helper methods for:
+0005:  * - Completion behavior (stay-active vs return-to-selection)
+0006:  * 
+0007:  * Subclasses override handleClick() to implement specific tool behavior.
+0008:  * Subclasses must declare completionBehavior to control post-operation behavior.
+0009:  * 
+0010:  * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+0011:  */
+0012: 
+0013: import type { ToolContext, ToolResult } from './ITool';
+0014: import type { useToolStore } from '@/stores/toolStore';
+0015: 
+0016: export abstract class BaseTool {
+0017:   abstract readonly name: string;
+0018: 
+0019:   /**
+0020:    * Completion behavior: what happens after tool completes its operation
+0021:    * - 'stay-active': Tool remains active for repeated use (primitives: Point, Line, Segment, Circle)
+0022:    * - 'return-to-selection': Tool deactivates to selection mode (complex: Tangent, Intersection, etc.)
+0023:    */
+0024:   abstract readonly completionBehavior: 'stay-active' | 'return-to-selection';
+0025: 
+0026:   /**
+0027:    * Abstract method: subclasses implement specific tool behavior
+0028:    */
+0029:   abstract handleClick(context: ToolContext): ToolResult;
+0030: 
+0031:   /**
+0032:    * Handle tool completion: switch tool or stay active based on completionBehavior
+0033:    * Should be called after successful operation, before returning success result
+0034:    * 
+0035:    * @param toolStore Tool store for switching active tool
+0036:    */
+0037:   protected handleCompletion(toolStore: ReturnType<typeof useToolStore>): void {
+0038:     if (this.completionBehavior === 'return-to-selection') {
+0039:       toolStore.setTool('select');
+
+### CircleTool.ts
+0001: /**
+0002:  * CircleTool - Tool for creating circles by center point and circumference point (Phase 64)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * Declarative argument specification replaces manual state machine.
+0006:  * 
+0007:  * Arguments:
+0008:  * - center: Point2D (center of circle)
+0009:  * - circumferencePoint: Point2D (defines radius and angle zero reference)
+0010:  * 
+0011:  * Code reduction: 192 lines → ~60 lines (68% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §US2 - Create circles
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+0019: import type { Point2D } from '@/domain/world/Point';
+0020: import { SelectionMask } from '@/types/SelectionMask';
+0021: 
+0022: /**
+0023:  * CircleTool using ArgumentCollectorTool framework
+0024:  * 
+0025:  * Framework handles:
+0026:  * - Argument collection (any-order, though semantically both are 'point' so order doesn't matter)
+0027:  * - Selection mask computation (point only)
+0028:  * - UI feedback ("Creating circle: pick center, circumferencePoint")
+0029:  * - Automatic execution when both points collected
+0030:  */
+0031: export class CircleTool extends ArgumentCollectorTool {
+0032:   readonly name = 'circle';
+0033:   readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
+0034: 
+0035:   /**
+0036:    * Define argument specification
+0037:    * Single set with two point arguments
+0038:    */
+0039:   protected getArgumentSets(): ToolArgumentSet[] {
+
+### Create3DLineTool.ts
+0001: /**
+0002:  * Create3DLineTool - Creates 3D lines from projections (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow:
+0007:  * 1. Collect two 2D line projections (any order)
+0008:  * 2. Validate they're on DIFFERENT planes (validator)
+0009:  * 3. Create Line3DFromProjections
+0010:  * 
+0011:  * Code reduction: ~169 lines → ~110 lines (35% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import { SelectionMask } from '@/types/SelectionMask';
+0020: 
+0021: /**
+0022:  * Create3DLineTool using ArgumentCollectorTool framework
+0023:  */
+0024: export class Create3DLineTool extends ArgumentCollectorTool {
+0025:   readonly name = 'create3dline';
+0026:   readonly completionBehavior = 'stay-active' as const;
+0027: 
+0028:   protected getArgumentSets(): ToolArgumentSet[] {
+0029:     return [
+0030:       {
+0031:         arguments: [
+0032:           { 
+0033:             name: 'projection1', 
+0034:             mask: SelectionMask.line()
+0035:           },
+0036:           { 
+0037:             name: 'projection2', 
+0038:             mask: SelectionMask.line()
+0039:           }
+0067:   protected getCommandDescription(): string {
+
+### Create3DPlaneTool.ts
+0001: /**
+0002:  * Create3DPlaneTool - Creates 3D planes from trace lines (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow:
+0007:  * 1. Collect two trace lines (any order)
+0008:  * 2. Validate they're on DIFFERENT planes (validator)
+0009:  * 3. Create Plane3DFromTraces
+0010:  * 
+0011:  * Code reduction: ~156 lines → ~100 lines (36% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import { SelectionMask } from '@/types/SelectionMask';
+0020: 
+0021: /**
+0022:  * Create3DPlaneTool using ArgumentCollectorTool framework
+0023:  */
+0024: export class Create3DPlaneTool extends ArgumentCollectorTool {
+0025:   readonly name = 'create3dplane';
+0026:   readonly completionBehavior = 'stay-active' as const;
+0027: 
+0028:   protected getArgumentSets(): ToolArgumentSet[] {
+0029:     return [
+0030:       {
+0031:         arguments: [
+0032:           { 
+0033:             name: 'trace1', 
+0034:             mask: SelectionMask.line()
+0035:           },
+0036:           { 
+0037:             name: 'trace2', 
+0038:             mask: SelectionMask.line()
+0039:           }
+0067:   protected getCommandDescription(): string {
+
+### Create3DPointTool.ts
+0001: /**
+0002:  * Create3DPointTool - Creates 3D points from projections (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow:
+0007:  * 1. Collect two 2D point projections (any order)
+0008:  * 2. Validate they're on DIFFERENT planes (validator)
+0009:  * 3. Create Point3DFromProjections
+0010:  * 
+0011:  * Code reduction: ~215 lines → ~110 lines (49% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import { SelectionMask } from '@/types/SelectionMask';
+0020: 
+0021: /**
+0022:  * Create3DPointTool using ArgumentCollectorTool framework
+0023:  * 
+0024:  * Framework handles:
+0025:  * - Any-order argument collection (projection1, projection2)
+0026:  * - Selection mask computation (point + point)
+0027:  * - UI feedback
+0028:  * - Automatic execution when both projections collected
+0029:  * 
+0030:  * Custom behavior:
+0031:  * - Set-level validator ensures projections are on DIFFERENT planes
+0032:  */
+0033: export class Create3DPointTool extends ArgumentCollectorTool {
+0034:   readonly name = 'create3dpoint';
+0035:   readonly completionBehavior = 'stay-active' as const;
+0036: 
+0037:   /**
+0038:    * Define argument specification
+0039:    * Two point arguments with different-plane validation
+0041:   protected getArgumentSets(): ToolArgumentSet[] {
+0085:   protected getCommandDescription(): string {
+
+### Create3DSegmentTool.ts
+0001: /**
+0002:  * Create3DSegmentTool - Creates 3D segments from projections (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow:
+0007:  * 1. Collect two 2D segment projections (any order)
+0008:  * 2. Validate they're on DIFFERENT planes (validator)
+0009:  * 3. Create Segment3DFromProjections
+0010:  * 
+0011:  * Code reduction: ~157 lines → ~100 lines (36% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import { SelectionMask } from '@/types/SelectionMask';
+0020: 
+0021: /**
+0022:  * Create3DSegmentTool using ArgumentCollectorTool framework
+0023:  */
+0024: export class Create3DSegmentTool extends ArgumentCollectorTool {
+0025:   readonly name = 'create3dsegment';
+0026:   readonly completionBehavior = 'stay-active' as const;
+0027: 
+0028:   protected getArgumentSets(): ToolArgumentSet[] {
+0029:     return [
+0030:       {
+0031:         arguments: [
+0032:           { 
+0033:             name: 'projection1', 
+0034:             mask: SelectionMask.segment()
+0035:           },
+0036:           { 
+0037:             name: 'projection2', 
+0038:             mask: SelectionMask.segment()
+0039:           }
+0067:   protected getCommandDescription(): string {
+
+### CreateProjectionPlaneTool.ts
+0001: /**
+0002:  * CreateProjectionPlaneTool - Creates auxiliary projection planes (Phase 82)
+0003:  * 
+0004:  * Three-argument workflow:
+0005:  * 1. T1 (hinge trace): Any line on any plane
+0006:  * 2. T2 (other trace): Any line on DIFFERENT plane than T1 (validator checks)
+0007:  * 3. T2' (position line): Any line on SAME plane as T1 (validator checks, warns if far from expected)
+0008:  * 
+0009:  * Creates:
+0010:  * - Plane3DFromTraces (from T1 and T2)
+0011:  * - AuxiliaryProjectionPlane (with T1, T2, T2' trace dependencies)
+0012:  * - HingeLine (between T1's plane and new projection plane)
+0013:  * - ProcessTree action
+0014:  * 
+0015:  * Validation:
+0016:  * - T1 and T2 must be on different planes
+0017:  * - T2' must be on same plane as T1
+0018:  * - T2' position warning: If far from expected position (computed via computeExpectedT2Prime)
+0019:  * 
+0020:  * Reference: data-model.md §Phase 82 - Create Projection Plane Tool
+0021:  */
+0022: 
+0023: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0024: import type { ToolContext } from './ITool';
+0025: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0026: import { SelectionMask } from '@/types/SelectionMask';
+0027: import { computeExpectedT2Prime, computeLineDistance } from '@/utils/projectionPlaneUtils';
+0028: import type { Element2D } from '@/domain/world/Element2D';
+0029: 
+0030: /**
+0031:  * Tool for creating auxiliary projection planes using ArgumentCollectorTool framework
+0032:  * 
+0033:  * Pattern: Extends ArgumentCollectorTool with 3-argument set and validators
+0034:  * - Base class handles argument collection, viable set tracking, execution
+0035:  * - Subclass defines argument specs, validators, and operation logic
+0036:  */
+0037: export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
+0038:   readonly name = 'createprojectionplane';
+0039:   readonly completionBehavior = 'stay-active' as const;
+0047:   protected getArgumentSets(): ToolArgumentSet[] {
+0170:   protected getCommandDescription(): string {
+
+### ExampleConstructionsTool.ts
+0001: /**
+0002:  * InteractiveProjectionSetupTool - Interactive tool for creating projection plane setups
+0003:  * 
+0004:  * Allows user to select 3 points (A1, A2 on P_H and B1 on P_V) and creates the complete
+0005:  * 14-step geometric construction for projection plane setup with traces T1, T2, T2'.
+0006:  * 
+0007:  * Provides complete geometric constructions that demonstrate proper dihedral geometry
+0008:  * and facilitate testing of complex features like auxiliary projection planes.
+0009:  * 
+0010:  * Reference: specs/001-dihedral-learning-mvp/example-setups.md
+0011:  */
+0012: 
+0013: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0014: import type { ToolContext } from './ITool';
+0015: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0016: import { SelectionMask } from '@/types/SelectionMask';
+0017: import { Command } from '@/commands/Command';
+0018: import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+0019: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0020: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0021: 
+0022: /**
+0023:  * Interactive tool for creating projection plane setup from user-selected points
+0024:  * 
+0025:  * User selects:
+0026:  * - A1, A2 on P_H (horizontal plane)
+0027:  * - B1 on P_V (vertical plane)
+0028:  * 
+0029:  * Tool constructs complete T1, T2, T2' setup with proper geometric unfolding.
+0030:  */
+0031: export class InteractiveProjectionSetupTool extends ArgumentCollectorTool {
+0032:   readonly name = 'interactiveprojectionsetup';
+0033:   readonly completionBehavior = 'return-to-selection' as const;
+0034: 
+0035:   protected getArgumentSets(): ToolArgumentSet[] {
+0036:     return [
+0037:       {
+0038:         arguments: [
+0039:           {
+0093:   protected getCommandDescription(): string {
+
+### GuideTool.ts
+0001: /**
+0002:  * GuideTool - Tool for creating guides perpendicular to reference lines (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Implements two-click workflow (order-independent):
+0007:  * 1. First click: Select reference line (hinge line) OR through-point
+0008:  * 2. Second click: Select the other element (point OR hinge line)
+0009:  * 3. Create guide perpendicular to reference line, passing through the point
+0010:  * 
+0011:  * Guides are special construction lines used in dihedral geometry for transporting
+0012:  * points and distances between projection planes. They render as dashed lines.
+0013:  * 
+0014:  * **Special behavior:**
+0015:  * - Always creates TWO guides (primary + sibling on paired plane)
+0016:  * - Sibling guide uses HalfHingeLine2D.getSiblingInfo()
+0017:  * - Registers TWO ProcessTree actions (primary + sibling)
+0018:  * 
+0019:  * Code reduction: ~221 lines → ~150 lines (32% reduction)
+0020:  * 
+0021:  * Reference: 
+0022:  * - specs/001-dihedral-learning-mvp/spec.md §US3 - Create Guide
+0023:  * - specs/001-dihedral-learning-mvp/spec.md §Guides
+0024:  */
+0025: 
+0026: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0027: import type { ToolContext } from './ITool';
+0028: import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+0029: import { SelectionMask } from '@/types/SelectionMask';
+0030: 
+0031: /**
+0032:  * GuideTool using ArgumentCollectorTool framework
+0033:  * 
+0034:  * Framework handles:
+0035:  * - Any-order argument collection (line→point OR point→line)
+0036:  * - Selection mask computation (dynamic based on collected arguments)
+0037:  * - UI feedback ("Creating guide: pick half-hinge-line, point")
+0038:  * - Automatic execution when both elements collected
+0039:  * 
+0053:   protected getArgumentSets(): ToolArgumentSet[] {
+
+### ITool.ts
+0001: /**
+0002:  * ITool - Interface for geometric construction tools.
+0003:  *
+0004:  * Tools collect interaction arguments and emit typed application intents.
+0005:  * Application controllers own command creation, validation orchestration,
+0006:  * commit/rollback, and command-stack execution.
+0007:  */
+0008: 
+0009: import type { Vector3 } from 'three';
+0010: import type { World } from '@/domain/world/World';
+0011: import type { Paper } from '@/domain/presentation/Paper';
+0012: import type { SelectionMask } from '@/types/SelectionMask';
+0013: import type { useToolStore } from '@/stores/toolStore';
+0014: import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+0015: 
+0016: /**
+0017:  * Context provided to tools when handling user input.
+0018:  */
+0019: export interface ToolContext {
+0020:   planeId: string;
+0021:   planeCoords: Vector3;
+0022:   canvasCoords: { x: number; y: number };
+0023:   commandSink: ToolCommandSink;
+0024:   world: World;
+0025:   paper: Paper;
+0026:   paperToPlaneTransform: any;
+0027:   toolStore: ReturnType<typeof useToolStore>;
+0028: }
+0029: 
+0030: /**
+0031:  * Result of a tool operation
+0032:  */
+0033: export interface ToolResult {
+0034:   success: boolean;
+0035:   message?: string;
+0036: }
+0037: 
+0038: /**
+0039:  * Base interface for all tools.
+
+### IntersectionTool.ts
+0001: /**
+0002:  * IntersectionTool - Tool for creating intersection points (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Supports intersections between:
+0007:  * - Line-Line
+0008:  * - Line-Circle (and Circle-Line)
+0009:  * - Circle-Circle
+0010:  * 
+0011:  * When multiple intersection points exist (line-circle or circle-circle),
+0012:  * the tool picks the intersection point nearest to the mouse cursor using
+0013:  * the planeCoords from ArgumentValue.
+0014:  * 
+0015:  * Code reduction: ~407 lines → ~250 lines (38% reduction)
+0016:  * 
+0017:  * Reference: specs/001-dihedral-learning-mvp/spec.md
+0018:  */
+0019: 
+0020: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0021: import type { ToolContext } from './ITool';
+0022: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0023: import type { Element2D } from '@/domain/world/Element2D';
+0024: import { SelectionMask } from '@/types/SelectionMask';
+0025: import { 
+0026:   areLinesParallel, 
+0027:   intersectLineCircle, 
+0028:   intersectCircleCircle 
+0029: } from '@/domain/calculations/Intersections';
+0030: 
+0031: /**
+0032:  * IntersectionTool using ArgumentCollectorTool framework
+0033:  * 
+0034:  * Framework handles:
+0035:  * - Argument collection (element1, element2)
+0036:  * - Selection mask computation (lines and circles)
+0037:  * - UI feedback ("Creating intersection: pick element1, element2")
+0038:  * - Automatic execution when both elements collected
+0039:  */
+0048:   protected getArgumentSets(): ToolArgumentSet[] {
+0081:   protected getCommandDescription(): string {
+
+### LineTool.ts
+0001: /**
+0002:  * LineTool - Tool for creating lines through two points (Phase 64 Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * Declarative argument specification replaces manual state machine.
+0006:  * 
+0007:  * Arguments:
+0008:  * - point1: Point2D (first point on line)
+0009:  * - point2: Point2D (second point on line)
+0010:  * 
+0011:  * Code reduction: ~150 lines → ~70 lines (53% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import type { Element2D } from '@/domain/world/Element2D';
+0020: import type { Point2D } from '@/domain/world/Point';
+0021: import { SelectionMask } from '@/types/SelectionMask';
+0022: 
+0023: /**
+0024:  * LineTool using ArgumentCollectorTool framework
+0025:  * 
+0026:  * Framework handles:
+0027:  * - Argument collection (any-order, though semantically both are 'point')
+0028:  * - Selection mask computation (point only)
+0029:  * - UI feedback ("Creating line: pick point1, point2")
+0030:  * - Automatic execution when both points collected
+0031:  */
+0032: export class LineTool extends ArgumentCollectorTool {
+0033:   readonly name = 'line';
+0034:   readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
+0035: 
+0036:   /**
+0037:    * Define argument specification
+0038:    * Single set with two point arguments
+0039:    */
+0040:   protected getArgumentSets(): ToolArgumentSet[] {
+
+### ParallelLineTool.ts
+0001: /**
+0002:  * ParallelLineTool - Tool for creating lines parallel to a reference line through a point (Phase 64)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * Framework automatically handles flexible workflow (point→line OR line→point).
+0006:  * 
+0007:  * Arguments:
+0008:  * - referenceLineId: Any Line2D subtype (lines, segments, guides, half-hinge-lines)
+0009:  * - throughPointId: Point2D through which parallel line passes
+0010:  * 
+0011:  * Code reduction: 186 lines → ~60 lines (68% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-043 (Parallel Line Tool)
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import type { Point2D } from '@/domain/world/Point';
+0020: import type { Element2D } from '@/domain/world/Element2D';
+0021: import { SelectionMask } from '@/types/SelectionMask';
+0022: 
+0023: /**
+0024:  * ParallelLineTool using ArgumentCollectorTool framework
+0025:  * 
+0026:  * Framework handles:
+0027:  * - Any-order collection (point→line OR line→point automatically)
+0028:  * - Selection mask computation (union of point and anyLine)
+0029:  * - UI feedback showing what's been selected and what's next
+0030:  * - Automatic execution when both arguments collected
+0031:  */
+0032: export class ParallelLineTool extends ArgumentCollectorTool {
+0033:   readonly name = 'parallel-line';
+0034:   readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
+0035: 
+0036:   /**
+0037:    * Define argument specification
+0038:    * Single set with point and any-line arguments
+0039:    */
+0040:   protected getArgumentSets(): ToolArgumentSet[] {
+0073:   protected getCommandDescription(): string {
+
+### PerpendicularLineTool.ts
+0001: /**
+0002:  * PerpendicularLineTool - Tool for creating lines perpendicular to a reference line through a point (Phase 64)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * Framework automatically handles flexible workflow (point→line OR line→point).
+0006:  * 
+0007:  * Arguments:
+0008:  * - referenceLineId: Any Line2D subtype (lines, segments, guides, half-hinge-lines)
+0009:  * - throughPointId: Point2D through which perpendicular line passes
+0010:  * 
+0011:  * Code reduction: 186 lines → ~106 lines (43% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-044 (Perpendicular Line Tool)
+0014:  */
+0015: 
+0016: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0017: import type { ToolContext } from './ITool';
+0018: import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+0019: import type { Point2D } from '@/domain/world/Point';
+0020: import type { Element2D } from '@/domain/world/Element2D';
+0021: import { SelectionMask } from '@/types/SelectionMask';
+0022: 
+0023: /**
+0024:  * PerpendicularLineTool using ArgumentCollectorTool framework
+0025:  * 
+0026:  * Framework handles:
+0027:  * - Any-order collection (point→line OR line→point automatically)
+0028:  * - Selection mask computation (union of point and anyLine)
+0029:  * - UI feedback showing what's been selected and what's next
+0030:  * - Automatic execution when both arguments collected
+0031:  */
+0032: export class PerpendicularLineTool extends ArgumentCollectorTool {
+0033:   readonly name = 'perpendicular-line';
+0034:   readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
+0035: 
+0036:   /**
+0037:    * Define argument specification
+0038:    * Single set with point and any-line arguments
+0039:    */
+0040:   protected getArgumentSets(): ToolArgumentSet[] {
+0073:   protected getCommandDescription(): string {
+
+### PointTool.ts
+0001: /**
+0002:  * PointTool - Tool for creating free points (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Uses SelectionMask.none() to capture just the mouse position without selecting
+0007:  * any existing element. Framework creates ArgumentValue with element=null.
+0008:  * 
+0009:  * Code reduction: ~80 lines → ~50 lines (37% reduction)
+0010:  * 
+0011:  * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
+0012:  */
+0013: 
+0014: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0015: import type { ToolContext } from './ITool';
+0016: import type { ToolArgumentSet, ArgumentValue } from '@/types/ToolArgumentCollector';
+0017: import { SelectionMask } from '@/types/SelectionMask';
+0018: 
+0019: /**
+0020:  * PointTool using ArgumentCollectorTool framework
+0021:  * 
+0022:  * Framework handles:
+0023:  * - Click capture with SelectionMask.none()
+0024:  * - ArgumentValue creation with element=null, planeCoords from click
+0025:  * - Automatic execution when position captured
+0026:  * 
+0027:  * Custom behavior:
+0028:  * - Creates free point at mouse position (no element selection)
+0029:  */
+0030: export class PointTool extends ArgumentCollectorTool {
+0031:   readonly name = 'point';
+0032:   readonly completionBehavior = 'stay-active' as const;
+0033: 
+0034:   /**
+0035:    * Define argument specification
+0036:    * Single argument with SelectionMask.none() - just captures position
+0037:    */
+0038:   protected getArgumentSets(): ToolArgumentSet[] {
+0039:     return [
+0061:   protected getCommandDescription(): string {
+
+### Quick3DLineTool.ts
+0001: /**
+0002:  * Quick3DLineTool - Automatic 3D line creation from predefined projections
+0003:  * 
+0004:  * Creates a complete 3D line immediately using fixed coordinates:
+0005:  * - P_H projection: L_H from (0, 0) to (50, 50) - diagonal line
+0006:  * - P_V projection: L_V from (0, 0) to (50, 50) - diagonal line
+0007:  * - 3D line: Line3DFromProjections through origin with direction (1, 1, 1)
+0008:  * 
+0009:  * Geometric relationship:
+0010:  * - P_H maps (u,v) → (x=u, y=v, z=0)
+0011:  * - L_H has direction (1,1) in P_H → direction (1,1,0) in 3D
+0012:  * - P_V maps (u,v) → (x=u, y=0, z=v)
+0013:  * - L_V has direction (1,1) in P_V → direction (1,0,1) in 3D
+0014:  * - Reconstructed 3D line: direction (1,1,1), through origin
+0015:  * 
+0016:  * Useful for:
+0017:  * - Quick testing without manual projection creation (~100x faster than manual)
+0018:  * - Creating consistent example 3D lines for demo/screenshots
+0019:  * - Demonstrating 3D line from projections concept
+0020:  * 
+0021:  * Pattern: Similar to QuickProjectionSetupTool (immediate execution)
+0022:  * Related: Create3DLineTool (interactive, user selects existing lines)
+0023:  * 
+0024:  * Phase 105
+0025:  */
+0026: 
+0027: import type { ITool, ToolContext, ToolResult } from './ITool';
+0028: import type { SelectionMask } from '@/types/SelectionMask';
+0029: import { Command } from '@/commands/Command';
+0030: import { Vector3 } from 'three';
+0031: import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+0032: import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+0033: import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+0034: import { createAdd3DLineAction } from '@/domain/processTree/actions/Element3DActions';
+0035: import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+0036: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0037: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0038: 
+0039: /**
+
+### Quick3DSegmentTool.ts
+0001: /**
+0002:  * Quick3DSegmentTool - Automatic 3D segment creation using geometrically constrained construction
+0003:  * 
+0004:  * Creates a complete 3D segment using the correct dihedral geometry construction:
+0005:  * 1. Create line projections L_H and L_V (the containing line on each plane)
+0006:  * 2. Use guides perpendicular to the hinge line through the P_H endpoints
+0007:  * 3. Find intersection of sibling guides with L_V → constrained P_V endpoints
+0008:  * 4. Create segments on both planes and the 3D segment
+0009:  * 
+0010:  * Coordinates:
+0011:  * - P_H line/segment endpoints: (2, 3) and (8, 7)
+0012:  * - P_V line definition points: (2, 4) and (8, 6)
+0013:  * - P_V segment endpoints: intersection of sibling guides with L_V (constrained)
+0014:  * - 3D segment: From approximately (2, 3, 4) to (8, 7, 6)
+0015:  * 
+0016:  * Constraint mechanism:
+0017:  * - The guide on P_H at x=u creates a sibling guide on P_V also at x=u
+0018:  * - The sibling guide intersects L_V, giving a constrained point on P_V
+0019:  * - Moving a P_H point moves its guide → moves sibling → moves P_V intersection
+0020:  * - The 3D segment stays feasible because correspondence is enforced by guides
+0021:  * 
+0022:  * Pattern: Same as Quick3DLineTool (Phase 105) — immediate execution
+0023:  * Related: Create3DSegmentTool (interactive, user selects existing segments)
+0024:  * 
+0025:  * Phase 109
+0026:  */
+0027: 
+0028: import type { ITool, ToolContext, ToolResult } from './ITool';
+0029: import type { SelectionMask } from '@/types/SelectionMask';
+0030: import { Command } from '@/commands/Command';
+0031: import { Vector3 } from 'three';
+0032: import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+0033: import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+0034: import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+0035: import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+0036: import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+0037: import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+0038: import { createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
+0039: import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+
+### QuickProjectionSetupTool.ts
+0001: /**
+0002:  * QuickProjectionSetupTool - Automatic projection plane setup with predefined points
+0003:  * 
+0004:  * Creates a complete 14-step geometric construction immediately using fixed coordinates:
+0005:  * - A1 = (-20, 20) on P_H
+0006:  * - A2 = (0, 10) on P_H
+0007:  * - B1 = (0, 20) on P_V
+0008:  * 
+0009:  * Useful for:
+0010:  * - Quick testing without manual point selection
+0011:  * - Creating consistent example setups
+0012:  * - Demonstrating auxiliary projection plane workflow
+0013:  * 
+0014:  * Related: InteractiveProjectionSetupTool (user selects points)
+0015:  */
+0016: 
+0017: import type { ITool, ToolContext, ToolResult } from './ITool';
+0018: import type { SelectionMask } from '@/types/SelectionMask';
+0019: import { Command } from '@/commands/Command';
+0020: import { Vector3 } from 'three';
+0021: import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+0022: import { constructProjectionPlaneSetup } from '../commands/factories/ProjectionSetupFactory';
+0023: import { createActionGroup } from '@/domain/processTree/ActionGroup';
+0024: import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+0025: 
+0026: /**
+0027:  * Tool that automatically creates projection plane setup with predefined points
+0028:  * 
+0029:  * Executes immediately on activation (toolbar click) - no canvas interaction needed
+0030:  */
+0031: export class QuickProjectionSetupTool implements ITool {
+0032:   readonly name = 'quickprojectionsetup';
+0033: 
+0034:   activate(context: ToolContext): void {
+0035:     // Execute setup immediately on tool activation
+0036:     this.executeSetup(context);
+0037:   }
+0038: 
+0039:   deactivate(_context: ToolContext): void {
+
+### SegmentTool.ts
+0001: /**
+0002:  * SegmentTool - Tool for creating finite line segments between two points (Phase 64 Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * Declarative argument specification replaces manual state machine.
+0006:  * 
+0007:  * Arguments:
+0008:  * - point1: Point2D (first endpoint of segment)
+0009:  * - point2: Point2D (second endpoint of segment)
+0010:  * 
+0011:  * Unlike LineTool which creates infinite lines, SegmentTool creates finite segments
+0012:  * that only exist between their two endpoints.
+0013:  * 
+0014:  * Code reduction: ~155 lines → ~75 lines (52% reduction)
+0015:  * 
+0016:  * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+0017:  */
+0018: 
+0019: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0020: import type { ToolContext } from './ITool';
+0021: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0022: import type { Element2D } from '@/domain/world/Element2D';
+0023: import type { Point2D } from '@/domain/world/Point';
+0024: import { SelectionMask } from '@/types/SelectionMask';
+0025: 
+0026: /**
+0027:  * SegmentTool using ArgumentCollectorTool framework
+0028:  * 
+0029:  * Framework handles:
+0030:  * - Argument collection (any-order, though semantically both are 'point')
+0031:  * - Selection mask computation (point only)
+0032:  * - UI feedback ("Creating segment: pick point1, point2")
+0033:  * - Automatic execution when both points collected
+0034:  */
+0035: export class SegmentTool extends ArgumentCollectorTool {
+0036:   readonly name = 'segment';
+0037:   readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
+0038: 
+0039:   /**
+0043:   protected getArgumentSets(): ToolArgumentSet[] {
+
+### TangentLineToCircleParallelToLineTool.ts
+0001: /**
+0002:  * TangentLineToCircleParallelToLineTool - Tangent to circle parallel to line (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow with automatic angle-based indexing:
+0007:  * 1. Collect circle and reference line (any order)
+0008:  * 2. Determine tangent index based on mouse position
+0009:  * 3. Create tangent line parallel to reference
+0010:  * 
+0011:  * Code reduction: ~282 lines → ~190 lines (33% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-046, §FR-047
+0014:  */
+0015: 
+0016: import { Vector3 } from 'three';
+0017: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0018: import type { ToolContext } from './ITool';
+0019: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0020: import { SelectionMask } from '@/types/SelectionMask';
+0021: 
+0022: /**
+0023:  * TangentLineToCircleParallelToLineTool using ArgumentCollectorTool framework
+0024:  * 
+0025:  * Framework handles:
+0026:  * - Any-order argument collection (circle + line)
+0027:  * - Selection mask computation (circle + anyLine)
+0028:  * - UI feedback
+0029:  * - Automatic execution when both elements collected
+0030:  * 
+0031:  * Custom behavior:
+0032:  * - Determines tangent index based on mouse position (which of 2 tangents is closer)
+0033:  * - Accepts any Line2D subtype as reference (line, segment, guide, half-hinge-line)
+0034:  */
+0035: export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool {
+0036:   readonly name = 'tangent-line-to-circle-parallel';
+0037:   readonly completionBehavior = 'stay-active' as const;
+0038: 
+0039:   /**
+0043:   protected getArgumentSets(): ToolArgumentSet[] {
+0077:   protected getCommandDescription(): string {
+
+### TangentLineToCircleThroughPointTool.ts
+0001: /**
+0002:  * TangentLineToCircleThroughPointTool - Tangent lines to circle through point (ArgumentCollectorTool Migration)
+0003:  * 
+0004:  * Migrated to ArgumentCollectorTool framework.
+0005:  * 
+0006:  * Two-argument workflow with automatic angle-based indexing:
+0007:  * 1. Collect circle and external point (any order)
+0008:  * 2. Determine tangent index based on mouse position angle
+0009:  * 3. Create tangent line
+0010:  * 
+0011:  * Code reduction: ~276 lines → ~190 lines (31% reduction)
+0012:  * 
+0013:  * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-045
+0014:  */
+0015: 
+0016: import { Vector3 } from 'three';
+0017: import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+0018: import type { ToolContext } from './ITool';
+0019: import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+0020: import { SelectionMask } from '@/types/SelectionMask';
+0021: 
+0022: /**
+0023:  * TangentLineToCircleThroughPointTool using ArgumentCollectorTool framework
+0024:  * 
+0025:  * Framework handles:
+0026:  * - Any-order argument collection (circle + point)
+0027:  * - Selection mask computation
+0028:  * - UI feedback
+0029:  * - Automatic execution when both elements collected
+0030:  * 
+0031:  * Custom behavior:
+0032:  * - Determines tangent index based on mouse position (which of 2 tangents is closer)
+0033:  */
+0034: export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
+0035:   readonly name = 'tangent-line-to-circle-through-point';
+0036:   readonly completionBehavior = 'stay-active' as const;
+0037: 
+0038:   /**
+0039:    * Define argument specification
+0042:   protected getArgumentSets(): ToolArgumentSet[] {
+0082:   protected getCommandDescription(): string {
