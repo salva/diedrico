@@ -1,0 +1,588 @@
+worldStore declarations/actions
+6:interface WorldState {
+7:  elements2D: Map<string, Element2D>;
+8:  elements3D: Map<string, Element3D>;
+9:  guides: Map<string, Guide>;
+10:  dependencyGraph: DependencyGraph;
+13:export const useWorldStore = defineStore('world', {
+15:    elements2D: new Map(),
+16:    elements3D: new Map(),
+17:    guides: new Map(),
+18:    dependencyGraph: new DependencyGraph()
+25:    allElements2D: (state) => Array.from(state.elements2D.values()),
+30:    allElements3D: (state) => Array.from(state.elements3D.values()),
+36:      return state.elements2D.get(id) || state.elements3D.get(id);
+43:      return Array.from(state.elements2D.values()).filter(
+52:      return Array.from(state.elements3D.values()).filter(
+58:     * Get all guides as array
+60:    allGuides: (state) => Array.from(state.guides.values()),
+66:      return state.guides.get(id);
+70:     * Get guides for a specific plane
+73:      return Array.from(state.guides.values()).filter(
+82:      const infeasible2D = Array.from(state.elements2D.values()).filter(
+85:      const infeasible3D = Array.from(state.elements3D.values()).filter(
+96:    addElement2D(element: Element2D): void {
+97:      this.elements2D.set(element.id, element);
+100:      this.dependencyGraph.addNode(element.id, 'element');
+106:    addElement3D(element: Element3D): void {
+107:      this.elements3D.set(element.id, element);
+110:      this.dependencyGraph.addNode(element.id, 'element');
+117:      return this.elements2D.get(id);
+124:      return this.elements3D.get(id);
+130:    updateElement2D(id: string, updates: Partial<Element2D>): void {
+131:      const element = this.elements2D.get(id);
+133:        this.elements2D.set(id, { ...element, ...updates } as Element2D);
+141:      const element = this.elements3D.get(id);
+143:        this.elements3D.set(id, { ...element, ...updates } as Element3D);
+150:    removeElement2D(id: string): void {
+151:      this.elements2D.delete(id);
+159:      this.elements3D.delete(id);
+166:    addGuide(guide: Guide): void {
+167:      this.guides.set(guide.id, guide);
+174:      return this.guides.get(id);
+180:    removeGuide(id: string): void {
+181:      this.guides.delete(id);
+188:      this.elements2D.clear();
+189:      this.elements3D.clear();
+190:      this.guides.clear();
+191:      this.dependencyGraph = new DependencyGraph();
+Workspace2D legacy imports/usages
+37:        <ElementRenderer
+66:import { useWorldStore } from '@/stores/worldStore';
+69:import ElementRenderer from './ElementRenderer.vue';
+81:const worldStore = useWorldStore();
+197:  const result = command.execute();
+250:  const result = command.execute();
+299:  const result = command.execute();
+366:    const result = command.execute();
+440:    const result = command.execute();
+514:    const result = command.execute();
+ElementRenderer legacy imports/usages
+4:    <!-- Point2D -->
+6:      v-if="element.kind.startsWith('Point2D')"
+7:      :cx="getPointX(element as Point2D)"
+8:      :cy="getPointY(element as Point2D)"
+14:    <!--Label for Point2D -->
+16:      v-if="element.kind.startsWith('Point2D') && element.name"
+17:      :x="getPointX(element as Point2D) + labelOffset"
+18:      :y="getPointY(element as Point2D) - labelOffset"
+28:      :x1="getPointX(getElement(element.point1Id) as Point2D)"
+29:      :y1="getPointY(getElement(element.point1Id) as Point2D)"
+30:      :x2="getPointX(getElement(element.point2Id) as Point2D)"
+31:      :y2="getPointY(getElement(element.point2Id) as Point2D)"
+38:    <!-- Line2D (extended to viewport bounds) -->
+40:      v-if="element.kind.startsWith('Line2D')"
+64:    <!-- Circle2D -->
+66:      v-if="element.kind.startsWith('Circle2D')"
+80:import type { Element2D, Point2D, Point2DFree, Point2DDerived, Segment2DByPoints, Line2D, Circle2D } from '@/types/ElementTypes';
+81:import { useWorldStore } from '@/stores/worldStore';
+84:  element: Element2D;
+88:const worldStore = useWorldStore();
+93:// Get element from world store
+94:function getElement(id: string): Element2D | undefined {
+98:// Helper to get X coordinate for any Point2D variant
+99:function getPointX(point: Point2D): number {
+100:  if (point.kind === 'Point2DFree' || point.kind === 'Point2DDerived') {
+101:    return (point as Point2DFree | Point2DDerived).x;
+103:  // For Point2DOnElement and Point2DFromIntersection, we need to compute
+108:// Helper to get Y coordinate for any Point2D variant
+109:function getPointY(point: Point2D): number {
+110:  if (point.kind === 'Point2DFree' || point.kind === 'Point2DDerived') {
+111:    return (point as Point2DFree | Point2DDerived).y;
+113:  // For Point2DOnElement and Point2DFromIntersection, we need to compute
+121:  if (element.kind === 'Line2DByTwoPoints') {
+122:    const p1 = getElement(element.point1Id) as Point2D;
+123:    const p2 = getElement(element.point2Id) as Point2D;
+144:  if (element.kind === 'Line2DByTwoPoints') {
+145:    const p1 = getElement(element.point1Id) as Point2D;
+146:    const p2 = getElement(element.point2Id) as Point2D;
+165:  if (element.kind === 'Line2DByTwoPoints') {
+166:    const p1 = getElement(element.point1Id) as Point2D;
+167:    const p2 = getElement(element.point2Id) as Point2D;
+186:  if (element.kind === 'Line2DByTwoPoints') {
+187:    const p1 = getElement(element.point1Id) as Point2D;
+188:    const p2 = getElement(element.point2Id) as Point2D;
+210:    const point = getElement(element.throughPointId) as Point2D;
+228:    const point = getElement(element.throughPointId) as Point2D;
+246:  if (element.kind === 'Circle2DByCenterAndPoint') {
+247:    const center = getElement(element.centerPointId) as Point2D;
+250:  if (element.kind === 'Circle2DByThreePoints') {
+258:  if (element.kind === 'Circle2DByCenterAndPoint') {
+259:    const center = getElement(element.centerPointId) as Point2D;
+262:  if (element.kind === 'Circle2DByThreePoints') {
+270:  if (element.kind === 'Circle2DByCenterAndPoint') {
+271:    const center = getElement(element.centerPointId) as Point2D;
+272:    const circumference = getElement(element.circumferencePointId) as Point2D;
+284:  if (element.kind === 'Circle2DByThreePoints') {
+useSnapping store geometry
+2:import { useWorldStore } from '@/stores/worldStore';
+11:  const worldStore = useWorldStore();
+71:  const snapToPoint = (x: number, y: number): { x: number; y: number; snapped: boolean } => {
+87:    snapToPoint
+useElementGeometry store geometry
+11:import { useWorldStore } from '@/stores/worldStore';
+13:import type { Element2D, Point2D, Segment2D, Line2D, Circle2D } from '@/types/ElementTypes';
+16: * Get coordinates of a Point2D element
+18:function getPointCoordinates(point: Point2D): { x: number; y: number } | null {
+19:  if (point.kind === 'Point2DFree' || point.kind === 'Point2DDerived') {
+22:  // For Point2DOnElement and Point2DFromIntersection, coordinates need to be computed
+33:  const point1 = worldStore.elements2D.get(segment.point1Id) as Point2D;
+34:  const point2 = worldStore.elements2D.get(segment.point2Id) as Point2D;
+70:function distanceToLine(_x: number, _y: number, _line: Line2D, _worldStore: any): number {
+79:function distanceToCircle(_x: number, _y: number, _circle: Circle2D, _worldStore: any): number {
+86:  const worldStore = useWorldStore();
+109:      if (element.kind.startsWith('Point2D')) continue;
+113:      } else if (element.kind.startsWith('Line2D')) {
+114:        distance = distanceToLine(x, y, element as Line2D, worldStore);
+115:      } else if (element.kind.startsWith('Circle2D')) {
+116:        distance = distanceToCircle(x, y, element as Circle2D, worldStore);
+139:      const point1 = worldStore.elements2D.get(segment.point1Id) as Point2D;
+140:      const point2 = worldStore.elements2D.get(segment.point2Id) as Point2D;
+185:      if (el.kind.startsWith('Point2D')) return false;
+190:      } else if (el.kind.startsWith('Line2D')) {
+191:        distance = distanceToLine(x, y, el as Line2D, worldStore);
+192:      } else if (el.kind.startsWith('Circle2D')) {
+193:        distance = distanceToCircle(x, y, el as Circle2D, worldStore);
+ElementTypes legacy shape
+9:export interface Element2DBase {
+25:export interface Point2DFree extends Element2DBase {
+26:  kind: 'Point2DFree';
+34:export interface Point2DOnElement extends Element2DBase {
+35:  kind: 'Point2DOnElement';
+43:export interface Point2DFromIntersection extends Element2DBase {
+44:  kind: 'Point2DFromIntersection';
+53:export interface Point2DDerived extends Element2DBase {
+54:  kind: 'Point2DDerived';
+63:export type Point2D = 
+64:  | Point2DFree 
+65:  | Point2DOnElement 
+66:  | Point2DFromIntersection 
+67:  | Point2DDerived;
+76:export interface Segment2DByPoints extends Element2DBase {
+77:  kind: 'Segment2DByPoints';
+82:export type Segment2D = Segment2DByPoints;
+91:export interface Line2DByTwoPoints extends Element2DBase {
+92:  kind: 'Line2DByTwoPoints';
+100:export interface Line2DParallelThroughPoint extends Element2DBase {
+101:  kind: 'Line2DParallelThroughPoint';
+109:export interface Line2DPerpendicularThroughPoint extends Element2DBase {
+110:  kind: 'Line2DPerpendicularThroughPoint';
+115:export type Line2D = 
+116:  | Line2DByTwoPoints 
+117:  | Line2DParallelThroughPoint 
+118:  | Line2DPerpendicularThroughPoint;
+128:export interface Circle2DByCenterAndPoint extends Element2DBase {
+129:  kind: 'Circle2DByCenterAndPoint';
+137:export interface Circle2DByThreePoints extends Element2DBase {
+138:  kind: 'Circle2DByThreePoints';
+144:export type Circle2D = 
+145:  | Circle2DByCenterAndPoint 
+146:  | Circle2DByThreePoints;
+155:export interface Arc2DByCenterAndPoints extends Element2DBase {
+171:export interface Guide2DPerpendicularToLine extends Element2DBase {
+172:  kind: 'Guide2DPerpendicularToLine';
+177:export type Guide2D = Guide2DPerpendicularToLine;
+186:export interface BHLProjection2D extends Element2DBase {
+196:export type Element2D = 
+197:  | Point2D 
+198:  | Segment2D 
+199:  | Line2D 
+200:  | Circle2D 
+202:  | Guide2D
+212:export interface Element3DBase {
+223:export interface Point3DFromProjections extends Element3DBase {
+225:  projectionHId: string;         // Point2D on horizontal plane
+226:  projectionVId: string;         // Point2D on vertical plane
+234:export interface Line3DFromProjections extends Element3DBase {
+236:  projectionHId: string;         // Line2D on horizontal plane
+237:  projectionVId: string;         // Line2D on vertical plane
+245:export interface Segment3DByPoints extends Element3DBase {
+256:export interface Plane3DByTraces extends Element3DBase {
+258:  traceHId: string;              // Line2D horizontal trace
+259:  traceVId: string;              // Line2D vertical trace
+267:export type Element3D = 
+276:export interface VisualStyle {
+288:export function isPoint2D(element: Element2D): element is Point2D {
+289:  return element.kind === 'Point2DFree' 
+290:    || element.kind === 'Point2DOnElement' 
+291:    || element.kind === 'Point2DFromIntersection' 
+292:    || element.kind === 'Point2DDerived';
+295:export function isSegment2D(element: Element2D): element is Segment2D {
+296:  return element.kind === 'Segment2DByPoints';
+299:export function isLine2D(element: Element2D): element is Line2D {
+300:  return element.kind === 'Line2DByTwoPoints' 
+301:    || element.kind === 'Line2DParallelThroughPoint' 
+302:    || element.kind === 'Line2DPerpendicularThroughPoint';
+305:export function isCircle2D(element: Element2D): element is Circle2D {
+306:  return element.kind === 'Circle2DByCenterAndPoint' 
+307:    || element.kind === 'Circle2DByThreePoints';
+314:export function isGuide2D(element: Element2D): element is Guide2D {
+315:  return element.kind === 'Guide2DPerpendicularToLine';
+325:export function isPoint3D(element: Element3D): element is Point3D {
+329:export function isLine3D(element: Element3D): element is Line3D {
+333:export function isSegment3D(element: Element3D): element is Segment3D {
+337:export function isPlane3D(element: Element3D): element is Plane3D {
+World authoritative state
+33: *    const plane = world.getProjectionPlaneById(planeId);
+40: *    const plane = world.getProjectionPlaneById(planeId);
+50: *    for (const plane of world.getAllProjectionPlanes()) {
+59: *    const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+60: *    const verticalPlane = world.getProjectionPlaneByLabel('P_V');
+95:import { ProcessTree } from '../processTree/ProcessTree';
+113:  projectionPlanes: Map<string, ProjectionPlane>;  // All projection planes (base + auxiliary)
+121:  private processTree: ProcessTree;
+124:  private dependencyService: DependencyService;
+159:    this.projectionPlanes = new Map();
+177:    this.processTree = new ProcessTree();
+178:    this.dependencyService = new DependencyService();
+242:    for (const plane of this.projectionPlanes.values()) {
+248:    this.projectionPlanes.clear();
+253:    this.processTree = new ProcessTree();
+254:    this.dependencyService = new DependencyService();
+346:    if (this.activePlaneId && !this.projectionPlanes.has(this.activePlaneId)) {
+347:      const firstPlane = this.projectionPlanes.values().next().value;
+389:    this.dependencyService.registerNode(id, []);
+411:  addProjectionPlane(
+436:    this.projectionPlanes.set(id, projPlane);
+439:    this.dependencyService.registerNode(id, projPlane.getDependencies());
+474:    this.dependencyService.registerNode(id, hingeLine.getDependencies());
+485:    for (const plane of this.projectionPlanes.values()) {
+499:    for (const plane of this.projectionPlanes.values()) {
+530:    const planeRealization3D = this.getProjectionPlane3DRealization(point.planeId!);
+551:  getProjectionPlane2DRealization(planeId: string): ProjectionPlaneRealization2D | undefined {
+559:    const plane = this.projectionPlanes.get(planeId);
+577:  getProjectionPlane3DRealization(planeId: string): ProjectionPlaneRealization3D | undefined {
+585:    const plane = this.projectionPlanes.get(planeId);
+606:    this.dependencyService.invalidateCascade(pointId, (id: string) => {
+615:      for (const [projPlaneId, projPlane] of this.projectionPlanes) {
+627:      for (const plane of this.projectionPlanes.values()) {
+649:    this.dependencyService.invalidateCascade(lineId, (id: string) => {
+661:      for (const plane of this.projectionPlanes.values()) {
+720:  getProjectionPlaneById(id: string): ProjectionPlane | undefined {
+721:    return this.projectionPlanes.get(id);
+731:  getProjectionPlaneByLabel(label: string): ProjectionPlane {
+732:    for (const plane of this.projectionPlanes.values()) {
+744:  getAllProjectionPlanes(): ProjectionPlane[] {
+745:    return Array.from(this.projectionPlanes.values());
+761:    const plane = this.getProjectionPlaneById(containerId);
+783:    const plane = this.getProjectionPlaneById(containerId);
+800:    const plane = this.getProjectionPlaneById(containerId);
+817:    const plane = this.getProjectionPlaneById(containerId);
+835:    const plane = this.getProjectionPlaneById(containerId);
+858:    const plane = this.getProjectionPlaneById(containerId);
+881:    return this.processTree;
+887:  getDependencyService(): DependencyService {
+888:    return this.dependencyService;
+897:    const result = this.processTree.addAction(action, groupName);
+930:    const plane = this.projectionPlanes.get(planeId);
+1033:   * Or world.getAllProjectionPlanes() to iterate planes
+1082:    this.dependencyService.registerNode(point.id!, point.getDependencies());
+1099:    this.dependencyService.unregisterNode(id);
+1115:    this.dependencyService.registerNode(line.id!, line.getDependencies());
+1132:    this.dependencyService.unregisterNode(id);
+1148:    this.dependencyService.registerNode(segment.id!, segment.getDependencies());
+1165:    this.dependencyService.unregisterNode(id);
+1181:    this.dependencyService.registerNode(plane.id!, plane.getDependencies());
+1198:    this.dependencyService.unregisterNode(id);
+ProjectionPlane authoritative state
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:14:import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:38:  private readonly elementStore: ProjectionPlaneElementStore;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:54:    this.elementStore = new ProjectionPlaneElementStore();
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:58:   * Clear all elements and realizations from this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:102:   * Get all points on this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:154:   * Get all lines on this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:170:   * Note: This includes segments, guides, and all Line2D subtypes
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:207:   * Get all circles on this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:272:   * @param line Line to realize (includes segments, guides, hinge lines - all Line2D subtypes)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:286:      return undefined;  // Cannot compute (e.g., missing dependency points)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:320:  // These methods create and add 2D elements to this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:425:    // Validate lines exist
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:472:    // Validate elements exist
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:524:    // Validate circles exist
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:576:    // Validate points exist
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:587:    // Validate points are distinct
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:592:    // Validate points have distinct positions
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:597:      throw new Error(`Cannot compute point realizations. Points may depend on missing elements.`);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:856:    // Validate points exist
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:867:    // Validate points are distinct
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:882:    this.addLine(segment, world);  // Segments are stored as lines
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:906:    // Validate points exist
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:917:    // Validate points are distinct
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:983:    this.addLine(guide, world);  // Guides are stored as lines
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:990:   * Sibling guides are automatically created when a primary Guide2D is created.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1044:    this.addLine(siblingGuide, world);  // Sibling guides are stored as lines
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1120:   * Origin points cannot be moved or deleted by user actions.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1273:    // For ROW-MAJOR storage, column k elements are at indices: k, k+3, k+6, k+9
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1277:      planeTo3D.elements[0],   // m11 (column 1, row 1)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1278:      planeTo3D.elements[3],   // m21 (column 1, row 2)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1279:      planeTo3D.elements[6]    // m31 (column 1, row 3)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1283:      planeTo3D.elements[1],   // m12 (column 2, row 1)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1284:      planeTo3D.elements[4],   // m22 (column 2, row 2)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1285:      planeTo3D.elements[7]    // m32 (column 2, row 3)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1289:      planeTo3D.elements[2],   // m13 (column 3, row 1)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1290:      planeTo3D.elements[5],   // m23 (column 3, row 2)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1291:      planeTo3D.elements[8]    // m33 (column 3, row 3)
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:11:export class ProjectionPlaneElementStore {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:12:  private readonly points = new Map<string, Point2D>();
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:13:  private readonly lines = new Map<string, Line2D>();
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:14:  private readonly circles = new Map<string, Circle2D>();
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:20:    this.points.clear();
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:21:    this.lines.clear();
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:22:    this.circles.clear();
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:30:    this.points.set(point.id, point);
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:35:  getPoint(id: string): Point2D | undefined { return this.points.get(id); }
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:36:  getAllPoints(): Point2D[] { return Array.from(this.points.values()); }
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:39:    const removed = this.points.delete(id);
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:52:    this.lines.set(line.id, line);
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:56:  getLine(id: string): Line2D | undefined { return this.lines.get(id); }
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:57:  getAllLines(): Line2D[] { return Array.from(this.lines.values()); }
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:60:    const removed = this.lines.delete(id);
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:73:    this.circles.set(circle.id, circle);
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:77:  getCircle(id: string): Circle2D | undefined { return this.circles.get(id); }
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:78:  getAllCircles(): Circle2D[] { return Array.from(this.circles.values()); }
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:81:    const removed = this.circles.delete(id);
+Active imports
+frontend/src/components/dialogs/ElementPropertiesDialog.vue:125:import type { Element2D } from '../../types/ElementTypes';
+frontend/src/components/panels/ElementGroup.vue:27:import type { Element2D } from '../../types/ElementTypes';
+frontend/src/components/workspace/ElementRenderer.vue:80:import type { Element2D, Point2D, Point2DFree, Point2DDerived, Segment2DByPoints, Line2D, Circle2D } from '@/types/ElementTypes';
+frontend/src/components/workspace/ElementRenderer.vue:81:import { useWorldStore } from '@/stores/worldStore';
+frontend/src/components/workspace/ElementRenderer.vue:88:const worldStore = useWorldStore();
+frontend/src/components/workspace/Workspace2D.vue:66:import { useWorldStore } from '@/stores/worldStore';
+frontend/src/components/workspace/Workspace2D.vue:69:import ElementRenderer from './ElementRenderer.vue';
+frontend/src/components/workspace/Workspace2D.vue:70:import type { Element2D } from '@/types/ElementTypes';
+frontend/src/components/workspace/Workspace2D.vue:77:import { useSnapping } from '@/composables/useSnapping';
+frontend/src/components/workspace/Workspace2D.vue:79:import { useElementGeometry } from '@/composables/useElementGeometry';
+frontend/src/components/workspace/Workspace2D.vue:81:const worldStore = useWorldStore();
+frontend/src/components/workspace/Workspace2D.vue:85:const { snapToPoint } = useSnapping();
+frontend/src/components/workspace/Workspace2D.vue:87:const { findNearestElement, closestPointOnElement, findIntersectingElements } = useElementGeometry();
+frontend/src/composables/useElementGeometry.ts:2: * useElementGeometry - Composable for geometric calculations on 2D elements
+frontend/src/composables/useElementGeometry.ts:11:import { useWorldStore } from '@/stores/worldStore';
+frontend/src/composables/useElementGeometry.ts:13:import type { Element2D, Point2D, Segment2D, Line2D, Circle2D } from '@/types/ElementTypes';
+frontend/src/composables/useElementGeometry.ts:85:export function useElementGeometry() {
+frontend/src/composables/useElementGeometry.ts:86:  const worldStore = useWorldStore();
+frontend/src/composables/useSnapping.ts:2:import { useWorldStore } from '@/stores/worldStore';
+frontend/src/composables/useSnapping.ts:4:import type { Point2D } from '@/types/ElementTypes';
+frontend/src/composables/useSnapping.ts:10:export function useSnapping(snapRadius: Ref<number> = { value: 10 } as Ref<number>) {
+frontend/src/composables/useSnapping.ts:11:  const worldStore = useWorldStore();
+frontend/src/services/ValidationService.ts:3:import type { Element2D, Element3D } from '../types/ElementTypes';
+frontend/src/stores/worldStore.ts:2:import type { Element2D, Element3D } from '../types/ElementTypes';
+frontend/src/stores/worldStore.ts:13:export const useWorldStore = defineStore('world', {
+frontend/src/main.ts:41:    import('./stores/worldStore').then(({ useWorldStore }) => {
+frontend/src/main.ts:42:      const worldStore = useWorldStore();
+frontend/src/main.ts:50:    import('./stores/worldStore').then(({ useWorldStore }) => {
+frontend/src/main.ts:51:      const worldStore = useWorldStore();
+frontend/src/main.ts:58:    return import('./stores/worldStore').then(({ useWorldStore }) => {
+frontend/src/main.ts:59:      const worldStore = useWorldStore();
+frontend/tests/integration/formatUtils.integration.spec.ts:11:import type { Element2D } from '@/types/ElementTypes';
+frontend/tests/e2e/dynamic-planes.spec.ts:26:      const worldStore = worldStoreModule.useWorldStore ? worldStoreModule.useWorldStore() : undefined;
+worldStore data symbols
+frontend/src/commands/factories/README.md:24:3. **Pattern is domain-specific** (guides, intersections, deletion, not generic "create element")
+frontend/src/commands/factories/README.md:167:it('guide factory creates both guides when using HHL', () => {
+frontend/src/commands/factories/README.md:174:  const guides = world.getAllGuides();
+frontend/src/commands/factories/README.md:175:  expect(guides).toHaveLength(2);
+frontend/src/commands/factories/README.md:176:  expect(guides[0].siblingGuideId).toBe(guides[1].id);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:107:        // Check if it's a line (includes segments and guides)
+frontend/src/commands/factories/GuideSequenceFactory.ts:15: * - Creating sibling guides on complementary planes
+frontend/src/commands/factories/GuideSequenceFactory.ts:113:      // Compute arc geometry connecting the two guides
+frontend/src/commands/factories/GuideSequenceFactory.ts:117:        // Store arc in BOTH guides for rendering
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:12: * - Auto-creating sibling guides when guide is placed on BHHL
+frontend/src/commands/operations/world/AddGuideOp.ts:78: * Sibling guides are automatically created when a primary Guide2D is created.
+frontend/src/commands/operations/world/AddGuideOp.ts:132:        // Sibling guides are stored in the lines Map
+frontend/src/commands/operations/world/README.md:5:**Scope**: Points, lines, segments, circles, guides, intersections, dependencies, element properties.
+frontend/src/commands/operations/IOperation.ts:118:  outputs: Record<string, any>;  // Named outputs (e.g., { "elementPath": "/world/elements2D/p1", "x": 100 })
+frontend/src/components/dialogs/PropertiesDialog.vue:279:  // Lines, segments, and guides don't show coordinates directly
+frontend/src/components/panels/ElementsPanel.vue:62:                  v-if="planeGroup.elements.guides.length > 0"
+frontend/src/components/panels/ElementsPanel.vue:64:                  :elements="planeGroup.elements.guides"
+frontend/src/components/panels/ElementsPanel.vue:217:    const guides = allLines.filter(l => l instanceof Guide2D);
+frontend/src/components/panels/ElementsPanel.vue:237:        guides: guides.map(formatElement)
+frontend/src/components/panels/ElementsPanel.vue:239:      hasElements: points.length + lines.length + segments.length + circles.length + guides.length > 0
+frontend/src/components/panels/ThreeView.vue:622:      // Look up element — guides are Line2D elements on projection planes
+frontend/src/components/workspace/ElementRenderer.vue:95:  return worldStore.elements2D.get(id);
+frontend/src/components/workspace/SvgCanvas.vue:43:      <!-- Render all guides through Paper pipeline -->
+frontend/src/composables/useElementGeometry.ts:33:  const point1 = worldStore.elements2D.get(segment.point1Id) as Point2D;
+frontend/src/composables/useElementGeometry.ts:34:  const point2 = worldStore.elements2D.get(segment.point2Id) as Point2D;
+frontend/src/composables/useElementGeometry.ts:139:      const point1 = worldStore.elements2D.get(segment.point1Id) as Point2D;
+frontend/src/composables/useElementGeometry.ts:140:      const point2 = worldStore.elements2D.get(segment.point2Id) as Point2D;
+frontend/src/domain/presentation/Paper.ts:71:  Guides = 10,        // Construction guides
+frontend/src/domain/presentation/Paper.ts:459:    // Note: Segments, guides, and hinge lines are all handled in the line iteration above
+frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts:4: * Sibling guides are automatically created when creating a guide perpendicular
+frontend/src/domain/world/Guide.ts:18: * @see specs/001-dihedral-learning-mvp/spec.md#guides
+frontend/src/domain/world/Guide.ts:167: * is automatically created in the other plane (e.g., P_V). Both guides:
+frontend/src/domain/world/Guide.ts:173: * Sibling guides use the same coordinate optimization as sibling intersection points:
+frontend/src/domain/world/Guide.ts:181: * - Both guides have equal geometric status
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:5: * guides perpendicular/parallel to this hinge line. This architectural decision keeps
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:31: * - guideVector: Direction for creating guides (perpendicular or parallel depending on type)
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:68:   * Get the guide vector (direction for creating guides)
+frontend/src/domain/world/HingeLine.ts:35: * Guides reference HalfHingeLine2D (not HingeLine) because guides are perpendicular
+frontend/src/domain/world/HingeLine.ts:92:   * (guides, intersection points, etc.)
+frontend/src/domain/world/HingeLine.ts:161:   * - Guide2D uses this vector to create guides
+frontend/src/domain/world/HingeLine.ts:186:        guideVector,              // Perpendicular for guides
+frontend/src/domain/world/Line.ts:369: * This is the base class for Guide2D (guides are lines with special rendering/behavior).
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:4: * Descriptors for circles, segments, and guides.
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:5: * after an auxiliary projection plane is created. Unlike regular HalfHingeLine2D where guides
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:6: * are perpendicular, guides for BrokenHalfHingeLine2D must be PARALLEL to the main hinge T1.
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:14: * - Stores siblingBHHLId for creating linked guides on both T2 and T2'
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:154:    // Get T1's direction on THIS plane for parallel guides
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:216:    // Return realization with BHHL at T2/T2' and guides parallel to T1
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:238:   * Returns the sibling BHHL ID and plane ID for creating linked guides.
+frontend/src/domain/world/World.ts:849:   * Type-safe variant of getElement2D() for guides
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:170:   * Note: This includes segments, guides, and all Line2D subtypes
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:272:   * @param line Line to realize (includes segments, guides, hinge lines - all Line2D subtypes)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:990:   * Sibling guides are automatically created when a primary Guide2D is created.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1044:    this.addLine(siblingGuide, world);  // Sibling guides are stored as lines
+frontend/src/services/Element2DRenderer3D.ts:93:    // Render lines (includes segments, guides, etc.)
+frontend/src/services/PaperService.ts:580:   * NOTE: Uses Line2DRealization2D per architectural principle - guides are
+frontend/src/services/PaperService.ts:627:    _activePlaneId?: string,  // Ignored - guides always 100% opacity
+frontend/src/services/PaperService.ts:643:      stroke = '#9C27B0'; // Purple for guides
+frontend/src/services/PaperService.ts:650:      strokeStyle: 'dashed',  // Dashed style distinguishes guides from lines
+frontend/src/services/PaperService.ts:661:   * Arcs connect sibling guides on broken hinge lines to visualize distance transport.
+frontend/src/services/PaperService.ts:694:      zIndex: 2, // Arcs render below guides
+frontend/src/services/PaperService.ts:702:      layer: RenderLayer.Guides,  // Same layer as guides
+frontend/src/services/PaperService.ts:775:      zIndex: 2, // Hinge lines render below guides
+frontend/src/services/PaperService.ts:845:      zIndex: 2 + zIndexBoost, // Hinge lines render below guides
+frontend/src/services/RenderService.ts:166: * Works for ANY line (including hinge lines, guides, user-created lines) - no special cases.
+frontend/src/stores/worldStore.ts:7:  elements2D: Map<string, Element2D>;
+frontend/src/stores/worldStore.ts:8:  elements3D: Map<string, Element3D>;
+frontend/src/stores/worldStore.ts:9:  guides: Map<string, Guide>;
+frontend/src/stores/worldStore.ts:10:  dependencyGraph: DependencyGraph;
+frontend/src/stores/worldStore.ts:15:    elements2D: new Map(),
+frontend/src/stores/worldStore.ts:16:    elements3D: new Map(),
+frontend/src/stores/worldStore.ts:17:    guides: new Map(),
+frontend/src/stores/worldStore.ts:18:    dependencyGraph: new DependencyGraph()
+frontend/src/stores/worldStore.ts:25:    allElements2D: (state) => Array.from(state.elements2D.values()),
+frontend/src/stores/worldStore.ts:30:    allElements3D: (state) => Array.from(state.elements3D.values()),
+frontend/src/stores/worldStore.ts:36:      return state.elements2D.get(id) || state.elements3D.get(id);
+frontend/src/stores/worldStore.ts:43:      return Array.from(state.elements2D.values()).filter(
+frontend/src/stores/worldStore.ts:52:      return Array.from(state.elements3D.values()).filter(
+frontend/src/stores/worldStore.ts:58:     * Get all guides as array
+frontend/src/stores/worldStore.ts:60:    allGuides: (state) => Array.from(state.guides.values()),
+frontend/src/stores/worldStore.ts:66:      return state.guides.get(id);
+frontend/src/stores/worldStore.ts:70:     * Get guides for a specific plane
+frontend/src/stores/worldStore.ts:73:      return Array.from(state.guides.values()).filter(
+frontend/src/stores/worldStore.ts:82:      const infeasible2D = Array.from(state.elements2D.values()).filter(
+frontend/src/stores/worldStore.ts:85:      const infeasible3D = Array.from(state.elements3D.values()).filter(
+frontend/src/stores/worldStore.ts:97:      this.elements2D.set(element.id, element);
+frontend/src/stores/worldStore.ts:100:      this.dependencyGraph.addNode(element.id, 'element');
+frontend/src/stores/worldStore.ts:107:      this.elements3D.set(element.id, element);
+frontend/src/stores/worldStore.ts:110:      this.dependencyGraph.addNode(element.id, 'element');
+frontend/src/stores/worldStore.ts:117:      return this.elements2D.get(id);
+frontend/src/stores/worldStore.ts:124:      return this.elements3D.get(id);
+frontend/src/stores/worldStore.ts:131:      const element = this.elements2D.get(id);
+frontend/src/stores/worldStore.ts:133:        this.elements2D.set(id, { ...element, ...updates } as Element2D);
+frontend/src/stores/worldStore.ts:141:      const element = this.elements3D.get(id);
+frontend/src/stores/worldStore.ts:143:        this.elements3D.set(id, { ...element, ...updates } as Element3D);
+frontend/src/stores/worldStore.ts:151:      this.elements2D.delete(id);
+frontend/src/stores/worldStore.ts:159:      this.elements3D.delete(id);
+frontend/src/stores/worldStore.ts:167:      this.guides.set(guide.id, guide);
+frontend/src/stores/worldStore.ts:174:      return this.guides.get(id);
+frontend/src/stores/worldStore.ts:181:      this.guides.delete(id);
+frontend/src/stores/worldStore.ts:188:      this.elements2D.clear();
+frontend/src/stores/worldStore.ts:189:      this.elements3D.clear();
+frontend/src/stores/worldStore.ts:190:      this.guides.clear();
+frontend/src/stores/worldStore.ts:191:      this.dependencyGraph = new DependencyGraph();
+frontend/src/tools/GuideTool.ts:2: * GuideTool - Tool for creating guides perpendicular to reference lines (ArgumentCollectorTool Migration)
+frontend/src/tools/GuideTool.ts:15: * - Always creates TWO guides (primary + sibling on paired plane)
+frontend/src/tools/GuideTool.ts:48: * - Creates TWO guides (primary + sibling) via GuideSequenceFactory
+frontend/src/tools/GuideTool.ts:102:    // This creates both primary and sibling guides automatically
+frontend/src/tools/ParallelLineTool.ts:8: * - referenceLineId: Any Line2D subtype (lines, segments, guides, half-hinge-lines)
+frontend/src/tools/ParallelLineTool.ts:51:            mask: SelectionMask.anyLine() // Accepts lines, segments, guides, half-hinge-lines
+frontend/src/tools/PerpendicularLineTool.ts:8: * - referenceLineId: Any Line2D subtype (lines, segments, guides, half-hinge-lines)
+frontend/src/tools/PerpendicularLineTool.ts:51:            mask: SelectionMask.anyLine() // Accepts lines, segments, guides, half-hinge-lines
+frontend/src/tools/Quick3DSegmentTool.ts:6: * 2. Use guides perpendicular to the hinge line through the P_H endpoints
+frontend/src/tools/Quick3DSegmentTool.ts:7: * 3. Find intersection of sibling guides with L_V → constrained P_V endpoints
+frontend/src/tools/Quick3DSegmentTool.ts:13: * - P_V segment endpoints: intersection of sibling guides with L_V (constrained)
+frontend/src/tools/Quick3DSegmentTool.ts:20: * - The 3D segment stays feasible because correspondence is enforced by guides
+frontend/src/tools/Quick3DSegmentTool.ts:48: * Uses guides and intersections to enforce geometric correspondence between planes.
+frontend/src/tools/Quick3DSegmentTool.ts:123:      // === Step 3: Create guides through P_H segment endpoints ===
+frontend/src/tools/Quick3DSegmentTool.ts:145:        throw new Error('Failed to create sibling guides on P_V');
+frontend/src/tools/Quick3DSegmentTool.ts:148:      // === Step 4: Find intersection of sibling guides with L_V on P_V ===
+frontend/src/types/SelectionMask.ts:26:  | 'line'            // Regular lines only (excludes segments/guides/half-hinge-lines)
+frontend/src/types/SelectionMask.ts:105:   * Create mask matching all lines (including guides and half-hinge lines)
+frontend/src/types/SelectionMask.ts:121:   * Create mask matching guides
+frontend/src/utils/arcGeometry.ts:2: * computeArcGeometry - Compute arc visualization between sibling guides
+frontend/src/utils/arcGeometry.ts:19: * - Arc is perpendicular to both guides at endpoints (smooth tangent transition)
+frontend/src/utils/arcGeometry.ts:37: * Compute arc geometry between two sibling guides
+frontend/src/utils/arcGeometry.ts:45:    // Realize both guides in their respective 2D plane coordinates
+frontend/src/utils/arcGeometry.ts:61:    // For guides (which are lines), get the through-point as the arc start/end
+frontend/tests/integration/guide-creation.test.ts:117:      // Verify both guides exist
+frontend/tests/integration/guide-creation.test.ts:137:      //   - Both guides parallel to main hinge T1
+frontend/tests/integration/guide-creation.test.ts:147:      // This error occurred when GuideTool assumed all guides had siblings
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:107:      // Verify both guides exist in world
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:219:      // Verify guides still exist after commit
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:230:      const cmd = new Command('Create multiple guides', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:236:      // Create two guides at different positions
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:255:      // Should have created 4 guides total (2 primaries + 2 siblings)
+frontend/tests/unit/commands/createGuide.spec.ts:2: * Tests for creating guides using Command + AddGuide2DPerpendicularToLineOp
+frontend/tests/unit/domain/guide.spec.ts:12: * - specs/001-dihedral-learning-mvp/spec.md#guides
+frontend/tests/unit/domain/lineHierarchy.spec.ts:7: * - Guide2D (construction guides)
+frontend/tests/unit/services/paperService.spec.ts:497:    it('should apply 100% opacity to guides regardless of active plane', () => {
+frontend/tests/unit/services/paperService.spec.ts:499:      // For now, we'll test the style resolver directly if guides aren't implemented yet
+frontend/tests/unit/services/paperService.spec.ts:512:      // This will be verified when guides are rendered
+frontend/tests/unit/services/paperService.spec.ts:513:      expect(true).toBe(true); // Placeholder until guides are implemented
+frontend/tests/unit/tools/GuideTool.test.ts:59:      // 3. Both guides in ProcessTree
+frontend/tests/unit/tools/GuideTool.test.ts:69:      // 3. Both guides parallel to main hinge T1
+frontend/tests/unit/tools/GuideTool.test.ts:76:      // assumed all guides have siblings and threw error when
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:6: * - Creates 2 guides on P_H with sibling guides on P_V
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:118:    it('should create lines and guides on P_H (1 line + 2 guides + 1 segment)', () => {
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:129:    it('should create lines, sibling guides, and segment on P_V', () => {
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:243:    it('should create guides on P_H', () => {
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:250:      const guides = allLines.filter(l => l.type === 'guide');
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:251:      expect(guides.length).toBeGreaterThanOrEqual(2);
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:254:    it('should create sibling guides on P_V', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:117:    it('should produce g_2, g_3 for subsequent guides', () => {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:94:  test('should maintain full opacity for guides regardless of active plane', async ({ page }) => {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:119:    const guides = page.locator('line[data-layer="guides"]');
+frontend/tests/e2e/active-plane-emphasis.spec.ts:120:    if (await guides.count() > 0) {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:121:      const guide = guides.first();
+frontend/tests/e2e/guide-creation.spec.ts:52:    // 7. Verify guide rendered (guides are also rendered as line elements but with different styling)
+frontend/tests/e2e/guide-creation.spec.ts:82:    // Check that at least one line has dashed stroke (guides have stroke-dasharray)
+frontend/tests/e2e/guide-creation.spec.ts:195:  test('should create multiple guides on same reference line', async ({ page }) => {
+frontend/tests/e2e/guide-creation.spec.ts:234:    // Verify three guides created (3 more lines than reference line)
+frontend/tests/e2e/persistence.spec.ts:54:      elements2D: [
+frontend/tests/e2e/persistence.spec.ts:76:    expect(updateResponse.elements2D).toHaveLength(1);
+frontend/tests/e2e/persistence.spec.ts:77:    expect(updateResponse.elements2D[0].label).toBe('A');
+frontend/tests/e2e/persistence.spec.ts:92:    expect(loadedProject.elements2D).toHaveLength(1);
+frontend/tests/e2e/persistence.spec.ts:93:    expect(loadedProject.elements2D[0].label).toBe('A');
+frontend/tests/e2e/persistence.spec.ts:94:    expect(loadedProject.elements2D[0].x).toBe(100);
+frontend/tests/e2e/persistence.spec.ts:95:    expect(loadedProject.elements2D[0].y).toBe(200);
+frontend/tests/e2e/persistence.spec.ts:137:        elements2D: [
+frontend/tests/e2e/persistence.spec.ts:167:    expect(loadedProject.elements2D).toHaveLength(1);
+frontend/tests/e2e/persistence.spec.ts:168:    expect(loadedProject.elements2D[0].label).toBe('B');
+frontend/tests/e2e/selection-mask.spec.ts:169:    // After selecting point: only guides should highlight
+missing command import files
+FreePoint2DCommand:
+PointOnElement2DCommand:
+Intersection2DCommand:
+Segment2DCommand:
+Line2DCommand:
+Circle2DCommand:
+related tests
+frontend/tests/e2e/basic-construction.spec.ts
+frontend/tests/e2e/circle-tool-snapping.spec.ts
+frontend/tests/e2e/guide-creation.spec.ts
+frontend/tests/e2e/parametric-update.spec.ts
+frontend/tests/e2e/selection-mask.spec.ts
+frontend/tests/e2e/selection.spec.ts
+frontend/tests/e2e/undo-redo-fix.spec.ts
+frontend/tests/e2e/undo-redo.spec.ts
+frontend/tests/integration/guide-creation.test.ts
+frontend/tests/integration/worldInitialization.spec.ts
+frontend/tests/unit/commands/createGuide.spec.ts
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts
+frontend/tests/unit/commands/initializationOps.spec.ts
+frontend/tests/unit/commands/removeElementOps.spec.ts
+frontend/tests/unit/domain/element2dRealization.spec.ts
+frontend/tests/unit/domain/element2d.spec.ts
+frontend/tests/unit/domain/elementId.spec.ts
+frontend/tests/unit/domain/guide.spec.ts
+frontend/tests/unit/domain/Line3DReconstruction.test.ts
+frontend/tests/unit/domain/Point3DReconstruction.test.ts
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts
+frontend/tests/unit/projectionPlaneMatrix.test.ts
+frontend/tests/unit/projectionPlane.spec.ts
+frontend/tests/unit/selectionMask.spec.ts
+frontend/tests/unit/stores/selectionStore.spec.ts
+frontend/tests/unit/tools/GuideTool.test.ts
+frontend/tests/unit/types/SelectionMask.spec.ts
+frontend/tests/unit/utils/guidePerpendicularPlane.spec.ts
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts

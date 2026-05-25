@@ -1,0 +1,396 @@
+main.ts worldStore globals
+     1	/**
+     2	 * main.ts - Application entry point
+     3	 * 
+     4	 * Initializes the Vue 3 application with:
+     5	 * - Vue 3 Composition API
+     6	 * - TypeScript support
+     7	 * - Pinia state management
+     8	 * 
+     9	 * Per Constitution Principle I, the application follows a layered architecture:
+    10	 * - Presentation Layer: Vue components (this layer)
+    11	 * - Application Layer: Services, composables (to be added)
+    12	 * - Domain Layer: Business logic (World, Point, etc.)
+    13	 * - Data Layer: Storage, persistence (to be added)
+    14	 */
+    15	
+    16	import { createApp } from 'vue';
+    17	import { createPinia } from 'pinia';
+    18	import App from './App.vue';
+    19	import './assets/styles/main.css';
+    20	import 'katex/dist/katex.min.css';
+    21	import './assets/styles/katex-overrides.css';
+    22	
+    23	// Register all element descriptors for dynamic action descriptions
+    24	import { registerAllDescriptors } from './domain/world/descriptors/registerDescriptors';
+    25	registerAllDescriptors();
+    26	
+    27	const app = createApp(App);
+    28	const pinia = createPinia();
+    29	
+    30	app.use(pinia);
+    31	
+    32	app.mount('#app');
+    33	
+    34	// Debug helpers - expose to window for console access
+    35	// Usage: window.dumpDependencies() or window.dumpDependencies('proj_plane_')
+    36	if (import.meta.env.DEV) {
+    37	  (window as any).THREE = await import('three');
+    38	
+    39	  (window as any).dumpDependencies = (filterPrefix?: string) => {
+    40	    // Import dynamically to avoid circular dependencies
+    41	    import('./stores/worldStore').then(({ useWorldStore }) => {
+    42	      const worldStore = useWorldStore();
+    43	      const depService = worldStore.world.getDependencyService();
+    44	      depService.dumpDependencyGraph(filterPrefix);
+    45	    });
+    46	  };
+    47	  
+    48	  (window as any).traceInvalidation = (elementId: string) => {
+    49	    // Import dynamically to avoid circular dependencies
+    50	    import('./stores/worldStore').then(({ useWorldStore }) => {
+    51	      const worldStore = useWorldStore();
+    52	      const depService = worldStore.world.getDependencyService();
+    53	      return depService.traceInvalidation(elementId);
+    54	    });
+    55	  };
+    56	  
+    57	  (window as any).getWorld = () => {
+    58	    return import('./stores/worldStore').then(({ useWorldStore }) => {
+    59	      const worldStore = useWorldStore();
+    60	      return worldStore.world;
+    61	    });
+    62	  };
+    63	  
+    64	  console.log('Debug helpers available:');
+    65	  console.log('  window.dumpDependencies() - dump full dependency graph');
+    66	  console.log('  window.dumpDependencies("proj_plane_") - filter by prefix');
+    67	  console.log('  window.traceInvalidation("element_id") - trace invalidation propagation');
+    68	  console.log('  window.getWorld() - get World instance (returns Promise)');
+    69	}
+    70	
+ElementPropertiesDialog ElementTypes use
+   110	        <div class="dialog-actions">
+   111	          <button type="button" class="btn btn-secondary" @click="handleCancel">
+   112	            Cancel
+   113	          </button>
+   114	          <button type="submit" class="btn btn-primary" :disabled="!isLabelValid">
+   115	            Apply Changes
+   116	          </button>
+   117	        </div>
+   118	      </form>
+   119	    </div>
+   120	  </div>
+   121	</template>
+   122	
+   123	<script setup lang="ts">
+   124	import { ref, watch, computed } from 'vue';
+   125	import type { Element2D } from '../../types/ElementTypes';
+   126	import type { VisualStyle } from '../../domain/world/VisualStyle';
+   127	import { formatElementLabel, validateLabelSyntax } from '@/utils/formatUtils';
+   128	
+   129	const props = defineProps<{
+   130	  isOpen: boolean;
+   131	  element: Element2D | null;
+   132	}>();
+   133	
+   134	const emit = defineEmits<{
+   135	  close: [];
+   136	  save: [elementId: string, name: string, style: VisualStyle];
+   137	}>();
+   138	
+   139	const localName = ref('');
+   140	const localStyle = ref<VisualStyle>({
+   141	  color: '#000000',
+   142	  lineWidth: 2,
+   143	  lineStyle: 'solid',
+   144	  opacity: 1.0,
+   145	  visible: true,
+   146	  inherited: false
+   147	});
+   148	
+   149	// Label validation and preview
+   150	const isLabelValid = computed(() => {
+   151	  if (!localName.value) return true; // Empty is valid
+   152	  return validateLabelSyntax(localName.value).valid;
+   153	});
+   154	
+   155	const labelPreview = computed(() => {
+   156	  if (!localName.value) return '';
+   157	  return formatElementLabel(localName.value);
+   158	});
+   159	
+   160	// Watch for element changes and update local state
+   161	watch(() => props.element, (newElement) => {
+   162	  if (newElement) {
+   163	    localName.value = newElement.name || '';
+   164	    localStyle.value = { ...newElement.visualStyle };
+   165	  }
+   166	}, { immediate: true });
+   167	
+   168	// Reset form when dialog opens
+   169	watch(() => props.isOpen, (isOpen) => {
+   170	  if (isOpen && props.element) {
+ElementGroup ElementTypes use
+     1	<template>
+     2	  <div class="element-group">
+     3	    <div class="group-header" @click="toggleExpanded">
+     4	      <span class="expand-icon" :class="{ expanded: isExpanded }">▶</span>
+     5	      <span class="group-title">{{ title }}</span>
+     6	      <span class="element-count">({{ elements.length }})</span>
+     7	    </div>
+     8	    <div v-if="isExpanded" class="group-content">
+     9	      <div
+    10	        v-for="element in elements"
+    11	        :key="element.id"
+    12	        class="element-item"
+    13	        :class="{
+    14	          'infeasible': element.infeasible
+    15	        }"
+    16	        @click="handleElementClick(element)"
+    17	      >
+    18	        <span class="element-name">{{ element.name || element.id }}</span>
+    19	        <span v-if="element.infeasible" class="infeasible-badge" title="Infeasible constraint">!</span>
+    20	      </div>
+    21	    </div>
+    22	  </div>
+    23	</template>
+    24	
+    25	<script setup lang="ts">
+    26	import { ref } from 'vue';
+    27	import type { Element2D } from '../../types/ElementTypes';
+    28	
+    29	interface Props {
+    30	  title: string;
+    31	  elements: Element2D[];
+    32	}
+    33	
+    34	const props = defineProps<Props>();
+    35	
+    36	const emit = defineEmits<{
+    37	  'element-click': [element: Element2D];
+    38	}>();
+    39	
+    40	const isExpanded = ref(true);
+    41	
+    42	function toggleExpanded() {
+    43	  isExpanded.value = !isExpanded.value;
+    44	}
+    45	
+    46	function handleElementClick(element: Element2D) {
+    47	  emit('element-click', element);
+    48	}
+    49	</script>
+    50	
+    51	<style scoped>
+    52	.element-group {
+    53	  margin-bottom: 8px;
+    54	}
+    55	
+    56	.group-header {
+    57	  display: flex;
+    58	  align-items: center;
+    59	  padding: 6px 8px;
+    60	  background-color: var(--color-background-soft);
+    61	  border: 1px solid var(--color-border);
+    62	  border-radius: 4px;
+    63	  cursor: pointer;
+    64	  user-select: none;
+    65	  transition: background-color 0.2s ease;
+    66	}
+    67	
+    68	.group-header:hover {
+    69	  background-color: var(--color-background-mute);
+    70	}
+    71	
+    72	.expand-icon {
+    73	  display: inline-block;
+    74	  margin-right: 6px;
+    75	  font-size: 10px;
+    76	  transition: transform 0.2s ease;
+    77	  color: var(--color-text-muted);
+    78	}
+    79	
+    80	.expand-icon.expanded {
+ValidationService ElementTypes use
+     1	import type { Result } from '../types/ResultTypes';
+     2	import { Ok, Err, InfeasibilityReason } from '../types/ResultTypes';
+     3	import type { Element2D, Element3D } from '../types/ElementTypes';
+     4	import { isWithinDistance } from '../domain/calculations/distances';
+     5	
+     6	/**
+     7	 * Service for validation and infeasibility checks
+     8	 */
+     9	export class ValidationService {
+    10	  private static readonly COINCIDENCE_THRESHOLD = 1e-6;
+    11	  private static readonly COLLINEARITY_THRESHOLD = 1e-10;
+    12	
+    13	  /**
+    14	   * Validate an element for infeasibility
+    15	   */
+    16	  static validateElement(element: Element2D | Element3D): Result<void, InfeasibilityReason> {
+    17	    // This is a placeholder - actual validation depends on element type
+    18	    // and would need access to world state to check related elements
+    19	    
+    20	    if (element.infeasible) {
+    21	      return Err(InfeasibilityReason.MissingDependency);
+    22	    }
+    23	    
+    24	    return Ok(undefined);
+    25	  }
+    26	
+    27	  /**
+    28	   * Check if two points are coincident
+    29	   */
+    30	  static checkCoincidentPoints(
+    31	    point1: { x: number; y: number },
+    32	    point2: { x: number; y: number }
+    33	  ): Result<void, InfeasibilityReason> {
+    34	    if (isWithinDistance(point1, point2, this.COINCIDENCE_THRESHOLD)) {
+    35	      return Err(InfeasibilityReason.CoincidentPoints);
+    36	    }
+    37	    return Ok(undefined);
+    38	  }
+    39	
+    40	  /**
+    41	   * Check if three points are collinear
+    42	   */
+    43	  static checkCollinearity(
+    44	    p1: { x: number; y: number },
+    45	    p2: { x: number; y: number },
+    46	    p3: { x: number; y: number }
+    47	  ): Result<void, InfeasibilityReason> {
+    48	    // Calculate cross product to check collinearity
+    49	    // (p2 - p1) × (p3 - p1) = 0 for collinear points
+    50	    const crossProduct = 
+    51	      (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+    52	    
+    53	    if (Math.abs(crossProduct) < this.COLLINEARITY_THRESHOLD) {
+    54	      return Err(InfeasibilityReason.CollinearPoints);
+    55	    }
+    56	    
+    57	    return Ok(undefined);
+    58	  }
+    59	
+    60	  /**
+    61	   * Check if two lines are parallel
+    62	   */
+    63	  static checkParallelLines(
+    64	    line1: { x1: number; y1: number; x2: number; y2: number },
+    65	    line2: { x1: number; y1: number; x2: number; y2: number }
+    66	  ): Result<void, InfeasibilityReason> {
+    67	    const dx1 = line1.x2 - line1.x1;
+    68	    const dy1 = line1.y2 - line1.y1;
+    69	    const dx2 = line2.x2 - line2.x1;
+    70	    const dy2 = line2.y2 - line2.y1;
+    71	    
+    72	    // Check if cross product is near zero (parallel lines)
+    73	    const crossProduct = dx1 * dy2 - dy1 * dx2;
+    74	    
+    75	    if (Math.abs(crossProduct) < this.COLLINEARITY_THRESHOLD) {
+    76	      return Err(InfeasibilityReason.ParallelLines);
+    77	    }
+    78	    
+    79	    return Ok(undefined);
+    80	  }
+    81	
+    82	  /**
+    83	   * Check if a circle has zero radius
+    84	   */
+    85	  static checkZeroRadius(radius: number): Result<void, InfeasibilityReason> {
+    86	    if (radius < this.COINCIDENCE_THRESHOLD) {
+    87	      return Err(InfeasibilityReason.InvalidRadius);
+    88	    }
+    89	    return Ok(undefined);
+    90	  }
+    91	
+    92	  /**
+    93	   * Check if a line has zero length
+    94	   */
+    95	  static checkZeroLength(
+    96	    line: { x1: number; y1: number; x2: number; y2: number }
+    97	  ): Result<void, InfeasibilityReason> {
+    98	    const dx = line.x2 - line.x1;
+    99	    const dy = line.y2 - line.y1;
+   100	    const length = Math.sqrt(dx * dx + dy * dy);
+   101	    
+   102	    if (length < this.COINCIDENCE_THRESHOLD) {
+   103	      return Err(InfeasibilityReason.InvalidRadius); // Using InvalidRadius for zero-length lines
+   104	    }
+   105	    
+   106	    return Ok(undefined);
+   107	  }
+   108	
+   109	  /**
+   110	   * Check if an intersection exists
+   111	   */
+   112	  static checkIntersectionExists(
+   113	    intersectionResult: { x: number; y: number } | null
+   114	  ): Result<void, InfeasibilityReason> {
+   115	    if (intersectionResult === null) {
+   116	      return Err(InfeasibilityReason.NoIntersection);
+   117	    }
+   118	    return Ok(undefined);
+   119	  }
+   120	
+dynamic-planes worldStore use
+     1	import { test, expect } from '@playwright/test';
+     2	
+     3	test.describe('Dynamic Projection Planes', () => {
+     4	  test.beforeEach(async ({ page }) => {
+     5	    await page.goto('http://localhost:5173');
+     6	    await page.waitForTimeout(1000); // Wait for initialization
+     7	  });
+     8	
+     9	  test('should display new projection planes in the Elements Panel', async ({ page }) => {
+    10	    // 1. Verify initial state (P_H and P_V exist)
+    11	    const elementsPanel = page.locator('.panel-content');
+    12	    
+    13	    // Check for P_H (using regex for text match)
+    14	    await expect(elementsPanel.locator('.plane-name', { hasText: /P\s*H.*Horizontal/ })).toBeVisible({ timeout: 10000 });
+    15	    
+    16	    // Check for P_V
+    17	    await expect(elementsPanel.locator('.plane-name', { hasText: /P\s*V.*Vertical/ })).toBeVisible();
+    18	
+    19	    // 2. Add a new plane via console injection
+    20	    await page.evaluate(async () => {
+    21	      const THREE = (window as any).THREE;
+    22	      if (!THREE) throw new Error('THREE not exposed on window');
+    23	      
+    24	      const worldStoreModule = await (window as any).getWorld();
+    25	      const world = worldStoreModule.world;
+    26	      const worldStore = worldStoreModule.useWorldStore ? worldStoreModule.useWorldStore() : undefined;
+    27	
+    28	      // Get P_H matrices to clone (P_H usually exists)
+    29	      const ph = world.getProjectionPlaneById('projPlaneH');
+    30	      if (!ph) throw new Error('P_H not found');
+    31	      
+    32	      const m1 = ph.getPlaneToPaperMatrix();
+    33	      const m2 = ph.getPlaneTo3DMatrix();
+    34	      const m3 = ph.get3DToPlaneMatrix();
+    35	
+    36	      // Create new plane
+    37	      const newPlane = world.addProjectionPlane(
+    38	        'plane3d_new',
+    39	        m1, m2, m3, // Reuse matrices
+    40	        'proj_plane_New', // ID
+    41	        'P_New' // Name
+    42	      );
+    43	      
+    44	      // Elements Panel only shows planes with elements.
+    45	      // Add a point to the new plane.
+    46	      newPlane.addFreePoint2D(
+    47	        new THREE.Vector3(100, 100, 0),
+    48	        world,
+    49	        'point_new_1',
+    50	        'Point 1'
+    51	      );
+    52	      
+    53	      console.log('Added P_New and point_new_1');
+    54	
+    55	      // Force reactivity update
+    56	      if (worldStore) {
+    57	        world.notifyChange();
+    58	      }
+    59	    });
+    60	
