@@ -1,0 +1,51 @@
+360: }
+361: 
+362: /**
+363:  * Get display label for an element
+364:  * @param elementId - ID of the element
+365:  * @param elementType - Type of the element (point, line, segment, etc.)
+366:  * @param planeId - ID of the plane containing the element (optional, will search all planes if not provided)
+367:  */
+368: function getElementLabel(elementId: string, elementType: string, planeId?: string): string {
+369:   let element: any;
+370:   
+371:   // If planeId is provided, only search that plane
+372:   if (planeId) {
+373:     const plane = world.getProjectionPlaneById(planeId);
+374:     if (plane) {
+375:       switch (elementType) {
+376:         case 'point':
+377:           element = plane.getPoint(elementId);
+378:           break;
+379:         case 'line':
+380:         case 'half-hinge-line':
+381:         case 'segment':  // Segments are Line2D objects, use getLine
+382:         case 'guide':  // Guides are Line2D objects, use getLine
+383:           element = plane.getLine(elementId);
+384:           break;
+385:         case 'circle':
+386:           element = plane.getCircle(elementId);
+387:           break;
+388:         case 'arc':
+389:           element = plane.getArc(elementId);
+390:           break;
+391:       }
+392:     }
+393:   } else {
+394:     // Search all planes if no planeId provided
+395:     for (const plane of world.projectionPlanes.values()) {
+396:       switch (elementType) {
+397:         case 'point':
+398:           element = plane.getPoint(elementId);
+399:           break;
+400:         case 'line':
+401:         case 'half-hinge-line':
+402:         case 'segment':  // Segments are Line2D objects, use getLine
+403:         case 'guide':  // Guides are Line2D objects, use getLine
+404:           element = plane.getLine(elementId);
+405:           break;
+406:         case 'circle':
+407:           element = plane.getCircle(elementId);
+408:           break;
+409:         case 'arc':
+410:           element = plane.getArc(elementId);

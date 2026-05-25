@@ -1,0 +1,25 @@
+437: const toolFactories: Record<string, () => ITool> = {
+438:   'point': () => new PointTool(),
+439:   'line': () => new LineTool(),
+440:   'segment': () => new SegmentTool(),
+441:   'circle': () => new CircleTool(),
+442:   'guide': () => new GuideTool(),
+443:   'intersection': () => new IntersectionTool(),
+444:   'parallel-line': () => new ParallelLineTool(),
+445:   'perpendicular-line': () => new PerpendicularLineTool(),
+446:   'tangent-line-to-circle-through-point': () => new TangentLineToCircleThroughPointTool(),
+447:   'tangent-line-to-circle-parallel': () => new TangentLineToCircleParallelToLineTool(),
+448:   // Phase 78: 3D Element Creation Tools
+449:   'create3dpoint': () => new Create3DPointTool(),
+450:   'create3dline': () => new Create3DLineTool(),
+451:   'create3dsegment': () => new Create3DSegmentTool(),
+452:   'create3dplane': () => new Create3DPlaneTool(),
+453:   // Phase 82: Auxiliary Projection Plane Tool
+454:   'createprojectionplane': () => new CreateProjectionPlaneTool(),
+455:   'interactiveprojectionsetup': () => new InteractiveProjectionSetupTool(),
+456:   'quickprojectionsetup': () => new QuickProjectionSetupTool(),
+457:   // Phase 105: Quick 3D Line Example Tool
+458:   'quick3dline': () => new Quick3DLineTool(),
+459:   // Phase 109: Quick 3D Segment Example Tool
+460:   'quick3dsegment': () => new Quick3DSegmentTool(),
+461: };

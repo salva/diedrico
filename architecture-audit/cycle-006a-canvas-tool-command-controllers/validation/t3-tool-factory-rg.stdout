@@ -1,0 +1,9 @@
+207:import { InteractiveProjectionSetupTool } from '@/tools/ExampleConstructionsTool';
+209:import { Quick3DLineTool } from '@/tools/Quick3DLineTool';
+210:import { Quick3DSegmentTool } from '@/tools/Quick3DSegmentTool';
+437:const toolFactories: Record<string, () => ITool> = {
+438:  'point': () => new PointTool(),
+455:  'interactiveprojectionsetup': () => new InteractiveProjectionSetupTool(),
+458:  'quick3dline': () => new Quick3DLineTool(),
+460:  'quick3dsegment': () => new Quick3DSegmentTool(),
+531:  const factory = toolFactories[newTool];

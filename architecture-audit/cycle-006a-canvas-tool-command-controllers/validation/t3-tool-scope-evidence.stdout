@@ -1,0 +1,178 @@
+185: import { PaperService, type PrimitiveContext } from '@/services/PaperService';
+186: import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+187: import { InputService } from '@/services/InputService';
+188: import { CommandStack } from '@/commands/CommandStack';
+189: import { Command } from '@/commands/Command';
+190: import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+191: import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+192: import { PointTool } from '@/tools/PointTool';
+193: import { LineTool } from '@/tools/LineTool';
+194: import { SegmentTool } from '@/tools/SegmentTool';
+195: import { CircleTool } from '@/tools/CircleTool';
+196: import { GuideTool } from '@/tools/GuideTool';
+197: import { IntersectionTool } from '@/tools/IntersectionTool';
+198: import { ParallelLineTool } from '@/tools/ParallelLineTool';
+199: import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+200: import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+201: import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+202: import { Create3DPointTool } from '@/tools/Create3DPointTool';
+203: import { Create3DLineTool } from '@/tools/Create3DLineTool';
+204: import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+205: import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+206: import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+207: import { InteractiveProjectionSetupTool } from '@/tools/ExampleConstructionsTool';
+208: import { QuickProjectionSetupTool } from '@/tools/QuickProjectionSetupTool';
+209: import { Quick3DLineTool } from '@/tools/Quick3DLineTool';
+210: import { Quick3DSegmentTool } from '@/tools/Quick3DSegmentTool';
+211: import { FreePoint2D } from '@/domain/world/Point';
+212: import { useToolStore } from '@/stores/toolStore';
+213: import { useViewStore } from '@/stores/viewStore';
+214: import { useSelectionStore } from '@/stores/selectionStore';
+215: import { useViewport } from '@/composables/useViewport';
+520:   }
+521: });
+522: 
+523: // Global key handling (Esc cancels point-drag)
+524: onMounted(() => {
+525:   window.addEventListener('keydown', handleGlobalKeyDown);
+526: });
+527: 
+528: // Watch for tool changes and create new tool instance
+529: // This prevents state leakage by creating fresh instances instead of reusing singletons
+530: watch(() => toolStore.currentTool.value, (newTool) => {
+531:   const factory = toolFactories[newTool];
+532:   if (factory) {
+533:     currentToolInstance.value = factory();
+534:     console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+535:     // Show initial tool feedback (e.g. "Creating line: pick point1, point2")
+536:     if (currentToolInstance.value && 'getStatusMessage' in currentToolInstance.value) {
+537:       const msg = (currentToolInstance.value as any).getStatusMessage();
+538:       if (msg) toolStore.setToolStepMessage(msg);
+539:     }
+540:   } else {
+541:     currentToolInstance.value = null;
+542:     if (newTool !== 'select') {
+543:       console.warn(`[SvgCanvas] No tool factory for: ${newTool}`);
+544:     }
+545:   }
+546: }, { immediate: true }); // Create initial tool instance
+547: 
+548: // Get plane transforms for INPUT (canvas click → plane coordinates)
+549: function getPlaneTransformsForInput(): Map<string, Matrix3> {
+550:   const transforms = new Map<string, Matrix3>();
+
+Tool files with Command imports:
+frontend/src/components/workspace/SvgCanvas.vue:188:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/workspace/SvgCanvas.vue:189:import { Command } from '@/commands/Command';
+frontend/src/components/workspace/SvgCanvas.vue:430:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/workspace/SvgCanvas.vue:432:  throw new Error('CommandStack not provided');
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:21:import { Command } from '@/commands/Command';
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:25:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:123:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:21:import { Command } from '@/commands/Command';
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:25:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:118:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/SegmentTool.ts:25:import { Command } from '@/commands/Command';
+frontend/src/tools/SegmentTool.ts:29:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/SegmentTool.ts:98:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/QuickProjectionSetupTool.ts:19:import { Command } from '@/commands/Command';
+frontend/src/tools/QuickProjectionSetupTool.ts:21:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/QuickProjectionSetupTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/QuickProjectionSetupTool.ts:72:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/QuickProjectionSetupTool.ts:76:    const { pointId: a1Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a1Pos, groupId);
+frontend/src/tools/QuickProjectionSetupTool.ts:82:    const { pointId: a2Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a2Pos, groupId);
+frontend/src/tools/QuickProjectionSetupTool.ts:88:    const { pointId: b1Id } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, b1Pos, groupId);
+frontend/src/tools/ExampleConstructionsTool.ts:17:import { Command } from '@/commands/Command';
+frontend/src/tools/ExampleConstructionsTool.ts:20:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/ExampleConstructionsTool.ts:88:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/Quick3DSegmentTool.ts:30:import { Command } from '@/commands/Command';
+frontend/src/tools/Quick3DSegmentTool.ts:32:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:33:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:34:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:35:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:42:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Quick3DSegmentTool.ts:97:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/Quick3DSegmentTool.ts:102:      const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:105:      const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:108:      const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DSegmentTool.ts:113:      const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:116:      const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:119:      const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DSegmentTool.ts:126:        GuideSequenceFactory.createGuideWithSibling(
+frontend/src/tools/Quick3DSegmentTool.ts:136:        GuideSequenceFactory.createGuideWithSibling(
+frontend/src/tools/Quick3DSegmentTool.ts:150:      const { pointId: int1Id_V } = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/tools/Quick3DSegmentTool.ts:153:      const { pointId: int2Id_V } = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/tools/Create3DLineTool.ts:20:import { Command } from '@/commands/Command';
+frontend/src/tools/Create3DLineTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Create3DLineTool.ts:97:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/CreateProjectionPlaneTool.ts:27:import { Command } from '@/commands/Command';
+frontend/src/tools/CreateProjectionPlaneTool.ts:28:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/tools/CreateProjectionPlaneTool.ts:32:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/CreateProjectionPlaneTool.ts:189:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/CreateProjectionPlaneTool.ts:192:    const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
+frontend/src/tools/CreateProjectionPlaneTool.ts:204:    PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+frontend/src/tools/Quick3DLineTool.ts:29:import { Command } from '@/commands/Command';
+frontend/src/tools/Quick3DLineTool.ts:31:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/Quick3DLineTool.ts:32:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/Quick3DLineTool.ts:36:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Quick3DLineTool.ts:85:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/Quick3DLineTool.ts:91:      const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p1_H, groupId);
+frontend/src/tools/Quick3DLineTool.ts:94:      const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p2_H, groupId);
+frontend/src/tools/Quick3DLineTool.ts:96:      const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DLineTool.ts:103:      const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p1_V, groupId);
+frontend/src/tools/Quick3DLineTool.ts:106:      const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p2_V, groupId);
+frontend/src/tools/Quick3DLineTool.ts:108:      const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/CircleTool.ts:21:import { Command } from '@/commands/Command';
+frontend/src/tools/CircleTool.ts:22:import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
+frontend/src/tools/CircleTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/CircleTool.ts:96:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/CircleTool.ts:99:    CircleSequenceFactory.createCircleByCenterAndPoint(
+frontend/src/tools/LineTool.ts:22:import { Command } from '@/commands/Command';
+frontend/src/tools/LineTool.ts:23:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/LineTool.ts:25:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/LineTool.ts:87:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/LineTool.ts:90:    LineSequenceFactory.createLineByTwoPoints(cmd, planeId, point1.id, point2.id, groupId);
+frontend/src/tools/Create3DSegmentTool.ts:20:import { Command } from '@/commands/Command';
+frontend/src/tools/Create3DSegmentTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Create3DSegmentTool.ts:97:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/PointTool.ts:18:import { Command } from '@/commands/Command';
+frontend/src/tools/PointTool.ts:19:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/PointTool.ts:21:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/PointTool.ts:81:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/PointTool.ts:84:    PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
+frontend/src/tools/ArgumentCollectorTool.ts:44:import { Command } from '@/commands/Command';
+frontend/src/tools/Create3DPointTool.ts:20:import { Command } from '@/commands/Command';
+frontend/src/tools/Create3DPointTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Create3DPointTool.ts:117:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/IntersectionTool.ts:25:import { Command } from '@/commands/Command';
+frontend/src/tools/IntersectionTool.ts:26:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/src/tools/IntersectionTool.ts:28:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/IntersectionTool.ts:101:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/IntersectionTool.ts:121:      IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/tools/IntersectionTool.ts:136:      IntersectionSequenceFactory.createLineCircleIntersection(
+frontend/src/tools/IntersectionTool.ts:151:      IntersectionSequenceFactory.createLineCircleIntersection(
+frontend/src/tools/IntersectionTool.ts:166:      IntersectionSequenceFactory.createCircleCircleIntersection(
+frontend/src/tools/PerpendicularLineTool.ts:23:import { Command } from '@/commands/Command';
+frontend/src/tools/PerpendicularLineTool.ts:24:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/PerpendicularLineTool.ts:26:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/PerpendicularLineTool.ts:89:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/PerpendicularLineTool.ts:92:    LineSequenceFactory.createPerpendicularLine(
+frontend/src/tools/Create3DPlaneTool.ts:20:import { Command } from '@/commands/Command';
+frontend/src/tools/Create3DPlaneTool.ts:21:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/tools/Create3DPlaneTool.ts:81:    PlaneSequenceFactory.create3DPlaneFromTraces(
+frontend/src/tools/ITool.ts:6: * and execute commands via the CommandStack.
+frontend/src/tools/ITool.ts:11: * User input → Tool.handleClick() → Command creation → CommandStack.push()
+frontend/src/tools/ITool.ts:17:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/tools/ITool.ts:30:  commandStack: CommandStack;  // Stack for executing commands
+frontend/src/tools/GuideTool.ts:30:import { Command } from '@/commands/Command';
+frontend/src/tools/GuideTool.ts:31:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/src/tools/GuideTool.ts:35:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/GuideTool.ts:48: * - Creates TWO guides (primary + sibling) via GuideSequenceFactory
+frontend/src/tools/GuideTool.ts:84:   * - Sibling guide on paired plane (automatically via GuideSequenceFactory)
+frontend/src/tools/GuideTool.ts:103:    const result = GuideSequenceFactory.createGuideWithSibling(
+frontend/src/tools/GuideTool.ts:116:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/ParallelLineTool.ts:23:import { Command } from '@/commands/Command';
+frontend/src/tools/ParallelLineTool.ts:24:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/ParallelLineTool.ts:26:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/ParallelLineTool.ts:89:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/tools/ParallelLineTool.ts:92:    LineSequenceFactory.createParallelLine(
