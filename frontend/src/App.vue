@@ -816,11 +816,7 @@ function handleDeleteSelected() {
     // Commit and push to command stack
     deleteCommand.commit();
     commandStack.push(deleteCommand);
-    
-    // Rebuild dependency maps after deletion
-    const dependencyService = world.getDependencyService();
-    dependencyService.rebuildDependencyMaps();
-    
+
     // Clear selection
     selectionStore.clearSelection();
     

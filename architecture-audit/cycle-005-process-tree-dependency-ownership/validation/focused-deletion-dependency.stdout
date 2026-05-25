@@ -1,0 +1,34 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/factories/DeletionSequenceFactory.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 36ms
+ ✓ tests/integration/projectService.cascadeDeletion.spec.ts  (4 tests) 35ms
+ ❯ tests/unit/commands/factories/DeletionSequenceFactory.spec.ts  (2 tests | 1 failed) 34ms
+   ❯ tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle empty selection gracefully
+     → Cannot commit empty command
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle empty selection gracefully
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [],
+  cascaded: [],
+  total: [],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [],
+  total: [ 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 14 passed (15)
+   Start at  21:54:44
+   Duration  2.45s (transform 1.18s, setup 0ms, collect 2.77s, tests 105ms, environment 2.51s, prepare 470ms)
+

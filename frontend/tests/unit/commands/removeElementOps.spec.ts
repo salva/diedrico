@@ -18,6 +18,7 @@ import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import { createTestWorld } from '../../helpers/worldHelpers';
 import type { Action } from '@/domain/processTree/Action';
+import type { ActionGroup } from '@/domain/processTree/ProcessTree';
 import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('RemoveElement Operations (T286, T290)', () => {
@@ -40,9 +41,23 @@ describe('RemoveElement Operations (T286, T290)', () => {
       description: `Test action for ${elementId}`,
       isOutput: true
     };
-    const actionGroup = world.getProcessTree().addAction(action);
+    const processTree = world.getProcessTree();
+    const actionGroup: ActionGroup = {
+      id: `test-group-${elementId}`,
+      type: 'actionGroup',
+      children: [],
+      isAuxiliary: false,
+      isOutput: true,
+      created: new Date()
+    };
+    processTree.addActionGroup(actionGroup);
+    const index = processTree.addActionToGroup(action, actionGroup.id);
+    const actionNode = actionGroup.children[index];
+    if (!actionNode) {
+      throw new Error('Failed to insert test action');
+    }
     // Return the ActionNode ID (not Action ID, which doesn't exist)
-    return actionGroup.children[0].id;
+    return actionNode.id;
   }
 
   describe('RemovePoint2DOp', () => {
@@ -129,7 +144,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode2 = addTestAction(p2.id);
       const actionNode3 = addTestAction(line.id);
       
-      world.getDependencyService().rebuildDependencyMaps();
+      world.getDependencyService().registerNode(line.id, [p1.id, p2.id]);
       
       // Build delete command with cascade
       const deleteCmd = new Command('Delete point with cascade', world);

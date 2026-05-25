@@ -1,0 +1,3 @@
+stderr | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Element projPlane3/point2d10 has no producing action - skipping
+

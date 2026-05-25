@@ -1,0 +1,25 @@
+stderr | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Element projPlane3/point2d10 has no producing action - skipping
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle empty selection gracefully
+Error: Cannot commit empty command
+ ❯ Command.commit src/commands/Command.ts:212:13
+    210|   commit(): void {
+    211|     if (this.operations.length === 0) {
+    212|       throw new Error('Cannot commit empty command');
+       |             ^
+    213|     }
+    214|     this._status = CommandStatus.Committed;
+ ❯ tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:31:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/commands/factories/DeletionSequenceFactory.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts

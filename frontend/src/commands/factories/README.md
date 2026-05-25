@@ -112,7 +112,7 @@ DeletionSequenceFactory.createCascadeDeletion(
 
 cmd.commit();
 commandStack.push(cmd);
-dependencyService.rebuildDependencyMaps();
+// Dependency graph is updated incrementally by world/projection-plane operations.
 ```
 
 ## Architecture

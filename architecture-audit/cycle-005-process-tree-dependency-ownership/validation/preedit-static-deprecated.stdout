@@ -1,0 +1,50 @@
+frontend/src/App.vue:822:    dependencyService.rebuildDependencyMaps();
+frontend/src/domain/world/World.ts:904:   * Use this instead of getProcessTree().addAction() directly
+frontend/src/domain/world/World.ts:908:    const result = this.processTree.addAction(action, groupName);
+frontend/src/domain/world/DependencyService.ts:130:  rebuildDependencyMaps(): void {
+frontend/src/domain/world/DependencyService.ts:314:  getActionDependencies(_actionId: string): DependencyEdge[] {
+frontend/src/domain/processTree/ProcessTree.ts:150:      "ProcessTree.addAction() is deprecated. Use addActionGroup() then addActionToGroup(). " +
+frontend/src/domain/processTree/ProcessTree.ts:406:  getActionsDependingOnElement(elementId: string): Action[] {
+frontend/src/domain/processTree/ProcessTree.ts:411:    console.warn('ProcessTree.getActionsDependingOnElement() is deprecated. Use DependencyService.getDependents()');
+frontend/tests/unit/commands/removeElementOps.spec.ts:43:    const actionGroup = world.getProcessTree().addAction(action);
+frontend/tests/unit/commands/removeElementOps.spec.ts:132:      world.getDependencyService().rebuildDependencyMaps();
+frontend/src/commands/factories/README.md:115:dependencyService.rebuildDependencyMaps();
+frontend/tests/unit/processTree.spec.ts:36:      const group = tree.addAction(action);
+frontend/tests/unit/processTree.spec.ts:47:      const group = tree.addAction(action);
+frontend/tests/unit/processTree.spec.ts:59:      tree.addAction(action1);
+frontend/tests/unit/processTree.spec.ts:60:      tree.addAction(action2);
+frontend/tests/unit/processTree.spec.ts:97:      tree.addAction(action1);
+frontend/tests/unit/processTree.spec.ts:98:      tree.addAction(action2);
+frontend/tests/unit/processTree.spec.ts:99:      tree.addAction(action3);
+frontend/tests/unit/processTree.spec.ts:115:      tree.addAction(action1);
+frontend/tests/unit/processTree.spec.ts:140:      const group = tree.addAction(action);
+frontend/tests/unit/processTree.spec.ts:161:      tree.addAction(action1);
+frontend/tests/unit/processTree.spec.ts:162:      tree.addAction(action2);
+frontend/tests/unit/processTree.spec.ts:163:      tree.addAction(action3);
+frontend/tests/unit/processTree.spec.ts:172:      tree.addAction(action);
+frontend/tests/unit/processTree.spec.ts:179:  describe('getActionsDependingOnElement', () => {
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:55:      world.getProcessTree().addAction(action);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:86:      world.getProcessTree().addAction(createPointAction(point1Id, new Vector3(100, 200, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:87:      world.getProcessTree().addAction(createPointAction(point2Id, new Vector3(300, 400, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:88:      world.getProcessTree().addAction(createLineAction(lineId, point1Id, point2Id, planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:93:      world.getDependencyService().rebuildDependencyMaps();
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:125:      world.getProcessTree().addAction(createPointAction(centerId, new Vector3(200, 200, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:126:      world.getProcessTree().addAction(createPointAction(circumId, new Vector3(300, 200, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:127:      world.getProcessTree().addAction(createCircleAction(circleId, centerId, circumId, planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:132:      world.getDependencyService().rebuildDependencyMaps();
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:161:      world.getProcessTree().addAction(createPointAction(point1Id, new Vector3(100, 200, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:162:      world.getProcessTree().addAction(createPointAction(point2Id, new Vector3(300, 400, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:163:      world.getProcessTree().addAction(createLineAction(lineId, point1Id, point2Id, planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:168:      world.getDependencyService().rebuildDependencyMaps();
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:194:      world.getProcessTree().addAction(action);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:223:      world.getProcessTree().addAction(createPointAction(point1Id, new Vector3(100, 200, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:224:      world.getProcessTree().addAction(createPointAction(point2Id, new Vector3(300, 400, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:225:      world.getProcessTree().addAction(createPointAction(point3Id, new Vector3(500, 600, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:256:      world.getProcessTree().addAction(createPointAction(point1Id, new Vector3(100, 200, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:257:      world.getProcessTree().addAction(createPointAction(point2Id, new Vector3(300, 400, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:258:      world.getProcessTree().addAction(createLineAction(lineId, point1Id, point2Id, planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:264:      world.getDependencyService().rebuildDependencyMaps();
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:305:      world.getProcessTree().addAction(createPointAction(point1Id, new Vector3(100, 200, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:306:      world.getProcessTree().addAction(createPointAction(point2Id, new Vector3(300, 400, 1), 'free', planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:307:      world.getProcessTree().addAction(createLineAction(segmentId, point1Id, point2Id, planeId));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:312:      world.getDependencyService().rebuildDependencyMaps();

@@ -1,0 +1,32 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/factories/DeletionSequenceFactory.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 21ms
+ ✓ tests/unit/commands/factories/DeletionSequenceFactory.spec.ts  (2 tests) 12ms
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle empty selection gracefully
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [],
+  cascaded: [],
+  total: [],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [],
+  total: [ 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+ ✓ tests/integration/projectService.cascadeDeletion.spec.ts  (4 tests) 19ms
+
+ Test Files  3 passed (3)
+      Tests  15 passed (15)
+   Start at  21:54:56
+   Duration  1.83s (transform 768ms, setup 0ms, collect 1.92s, tests 52ms, environment 1.97s, prepare 396ms)
+

@@ -899,18 +899,6 @@ export class World {
     return this.dependencyService;
   }
 
-  /**
-   * Add an action to the process tree and update dependency tracking
-   * Use this instead of getProcessTree().addAction() directly
-   * Phase 85: Removed parentSubprocessId parameter - uses subprocess stack
-   */
-  addAction(action: any, groupName?: string): any {
-    const result = this.processTree.addAction(action, groupName);
-    return result;
-  }
-
-
-
   // ========================================
   // HingeLine Methods
   // ========================================

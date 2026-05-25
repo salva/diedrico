@@ -4,12 +4,12 @@
  * Tests the process tree's ability to:
  * - Track construction actions
  * - Maintain tree structure
- * - Query actions by dependencies
  * - Traverse in execution order
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ProcessTree } from '@/domain/processTree/ProcessTree';
+import { ProcessTree, type ActionGroup } from '@/domain/processTree/ProcessTree';
+import type { Action } from '@/domain/processTree/Action';
 import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
 import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
 import { Vector3 } from 'three';
@@ -21,6 +21,20 @@ describe('ProcessTree', () => {
     tree = new ProcessTree();
   });
 
+  function addActionInExplicitGroup(action: Action, groupId = `group-${action.elementId}`): ActionGroup {
+    const group: ActionGroup = {
+      id: groupId,
+      type: 'actionGroup',
+      children: [],
+      isAuxiliary: false,
+      isOutput: true,
+      created: new Date()
+    };
+    tree.addActionGroup(group);
+    tree.addActionToGroup(action, group.id);
+    return group;
+  }
+
   describe('initialization', () => {
     it('should create a root subprocess', () => {
       expect(tree.root).toBeDefined();
@@ -30,10 +44,10 @@ describe('ProcessTree', () => {
     });
   });
 
-  describe('addAction', () => {
-    it('should add a point action to the tree', () => {
+  describe('explicit action-group insertion', () => {
+    it('should add a point action to an explicit group', () => {
       const action = createPointAction('point_1');
-      const group = tree.addAction(action);
+      const group = addActionInExplicitGroup(action);
 
       expect(group.type).toBe('actionGroup');
       expect(group.children).toHaveLength(1);
@@ -42,9 +56,9 @@ describe('ProcessTree', () => {
       expect(tree.root.children).toContain(group);
     });
 
-    it('should add a line action to the tree', () => {
+    it('should add a line action to an explicit group', () => {
       const action = createLineAction('line_1');
-      const group = tree.addAction(action);
+      const group = addActionInExplicitGroup(action);
 
       expect(group.type).toBe('actionGroup');
       expect(group.children).toHaveLength(1);
@@ -52,12 +66,12 @@ describe('ProcessTree', () => {
       expect(group.children[0].elementId).toBe(action.elementId);
     });
 
-    it('should create separate action groups for each action', () => {
+    it('should preserve caller-created separate action groups', () => {
       const action1 = createPointAction('point_1');
       const action2 = createPointAction('point_2');
 
-      tree.addAction(action1);
-      tree.addAction(action2);
+      addActionInExplicitGroup(action1);
+      addActionInExplicitGroup(action2);
 
       expect(tree.root.children).toHaveLength(2);
     });
@@ -94,9 +108,9 @@ describe('ProcessTree', () => {
       const action2 = createPointAction('point_2');
       const action3 = createLineAction('line_1');
 
-      tree.addAction(action1);
-      tree.addAction(action2);
-      tree.addAction(action3);
+      addActionInExplicitGroup(action1);
+      addActionInExplicitGroup(action2);
+      addActionInExplicitGroup(action3);
 
       const actions = tree.getAllActions();
       expect(actions.length).toBe(3);
@@ -112,7 +126,7 @@ describe('ProcessTree', () => {
       const action2 = createPointAction('point_2');
 
       // Add action to root first
-      tree.addAction(action1);
+      addActionInExplicitGroup(action1);
 
       // Manually add action to subprocess for testing
       const group = {
@@ -137,7 +151,7 @@ describe('ProcessTree', () => {
   describe('findAction', () => {
     it('should find action by ID (ActionNode ID)', () => {
       const action = createPointAction('point_1');
-      const group = tree.addAction(action);
+      const group = addActionInExplicitGroup(action);
       const actionNode = group.children[0];
 
       // Phase 93: findAction uses ActionNode id (not Action id)
@@ -158,9 +172,9 @@ describe('ProcessTree', () => {
       const action2 = createPointAction('point_2');
       const action3 = createLineAction('line_1');
 
-      tree.addAction(action1);
-      tree.addAction(action2);
-      tree.addAction(action3);
+      addActionInExplicitGroup(action1);
+      addActionInExplicitGroup(action2);
+      addActionInExplicitGroup(action3);
 
       const producers = tree.getActionsProducingElement('point_1');
       expect(producers).toHaveLength(1);
@@ -169,24 +183,10 @@ describe('ProcessTree', () => {
 
     it('should return empty array if no action produces the element', () => {
       const action = createPointAction('point_1');
-      tree.addAction(action);
+      addActionInExplicitGroup(action);
 
       const producers = tree.getActionsProducingElement('point_99');
       expect(producers).toEqual([]);
-    });
-  });
-
-  describe('getActionsDependingOnElement', () => {
-    it.skip('should find actions that depend on a specific element - SKIPPED: Phase 92 dependencies in DependencyService', () => {
-      // Phase 92: Dependencies not stored in actions, use DependencyService instead
-    });
-
-    it.skip('should return empty array if no action depends on the element - SKIPPED: Phase 92 dependencies in DependencyService', () => {
-      // Phase 92: Dependencies not stored in actions, use DependencyService instead
-    });
-
-    it.skip('should find multiple dependents - SKIPPED: Phase 92 dependencies in DependencyService', () => {
-      // Phase 92: Dependencies not stored in actions, use DependencyService instead
     });
   });
 

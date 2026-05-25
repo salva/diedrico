@@ -1,0 +1,15 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/integration/processTree-stack.test.ts tests/unit/services/ProjectService.subprocess.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 12ms
+ ✓ tests/integration/processTree-stack.test.ts  (16 tests) 23ms
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  21:55:03
+   Duration  1.78s (transform 753ms, setup 0ms, collect 1.25s, tests 35ms, environment 1.20s, prepare 297ms)
+

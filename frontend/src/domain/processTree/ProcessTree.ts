@@ -140,30 +140,6 @@ export class ProcessTree {
     this.notifyChange();
   }
 
-  /**
-   * DEPRECATED: Use addActionGroup() + addActionToGroup() instead.
-   * This method implicitly creates an ActionGroup, which breaks Undo logic.
-   * Issues warning but still works for backwards compatibility.
-   */
-  addAction(action: Action, groupName?: string): ActionGroup {
-    console.warn(
-      "ProcessTree.addAction() is deprecated. Use addActionGroup() then addActionToGroup(). " +
-      "This ensures Undo correctly removes the group."
-    );
-    
-    // Create a new group for this action
-    const group: ActionGroup = {
-      id: this.generateId(),
-      type: 'actionGroup',
-      children: [],
-      isOutput: true,
-      created: new Date()
-    };
-    this.addActionGroup(group);
-    this.addActionToGroup(action, group.id);
-    return group;
-  }
-
   findSubprocessById(subprocessId: string): Subprocess | undefined {
     let found: Subprocess | undefined;
     this.traverseSubprocesses(this.root, (subprocess) => {
@@ -399,20 +375,6 @@ export class ProcessTree {
   }
 
   /**
-   * Get actions that depend on a specific element (by input ID)
-   * Phase 92: Use DependencyService.getDependents(elementId) instead
-   * @deprecated Use world.dependencyService.getDependents(elementId) instead
-   */
-  getActionsDependingOnElement(elementId: string): Action[] {
-    // This method is deprecated - dependencies now tracked by DependencyService
-    // To find actions depending on an element:
-    // 1. Get dependents: world.dependencyService.getDependents(elementId)
-    // 2. For each dependent, find its action via getActionsProducingElement(dependentId)
-    console.warn('ProcessTree.getActionsDependingOnElement() is deprecated. Use DependencyService.getDependents()');
-    return [];
-  }
-
-  /**
    * Remove an action from the tree (creates tombstone at same index)
    * Uses stable indices - action index never changes
    * 
@@ -609,8 +571,7 @@ export class ProcessTree {
   }
 
   /**
-  /**
-   * Phase 95: Generate unique ID (camelCase format)
+   * Generate unique node ID (camelCase format).
    */
   private generateId(): string {
     return `node${Date.now()}${Math.random().toString(36).substr(2, 9)}`;

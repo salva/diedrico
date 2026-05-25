@@ -1,11 +1,11 @@
 /**
  * DependencyService.ts
  * 
- * Service for tracking and querying element dependencies in the process tree.
+ * Service for tracking and querying element dependencies in the world dependency graph.
  * Enables parametric behavior by maintaining relationships between base and derived elements.
  * 
  * Dependency Tracking:
- * - Every constructive action records inputs (dependencies) and outputs (produced elements)
+ * - Every registered element records input element IDs (dependencies)
  * - Bidirectional lookup: find what depends on an element AND what an element depends on
  * - Circular dependency detection to prevent invalid construction graphs
  * 
@@ -14,7 +14,6 @@
  * - Cascading updates propagate through dependency chains
  * 
  * Reference: specs/001-dihedral-learning-mvp/spec.md §Parametric Behavior and Dependencies
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree
  */
 
 
@@ -123,22 +122,6 @@ export class DependencyService {
     this.dependentsMap.clear();
     this.dependenciesMap.clear();
   }
-
-  /**
-   * @deprecated Phase 91: Do not use. Dependencies are now managed incrementally.
-   */
-  rebuildDependencyMaps(): void {
-    console.warn('DependencyService.rebuildDependencyMaps is deprecated and no-op. Dependencies are managed incrementally.');
-  }
-
-  /**
-   * @deprecated Phase 91: Internal helper removed.
-   */
-  // private traverseTree(node: any, callback: any): void {
-  //   // No-op
-  // }
-
-
 
   /**
    * Get all elements that depend on the given element
@@ -305,36 +288,6 @@ export class DependencyService {
   }
 
   /**
-   * Get dependency edges for a specific action
-   * 
-   * @param actionId - Action ID to query
-   * @returns Array of dependency edges created by this action
-   * @deprecated Phase 91: Actions no longer drive dependencies. Cannot query by action ID.
-   */
-  getActionDependencies(_actionId: string): DependencyEdge[] {
-    // const edges: DependencyEdge[] = [];
-    
-    // this.traverseTree(this.processTree.root, (node: ProcessNode) => {
-    //   if (node.type === 'action' && node.id === actionId) {
-    //     const action = node as ActionNode;
-    //     for (const inputId of action.inputs) {
-    //       for (const outputId of action.outputs) {
-    //         edges.push({
-    //           fromElementId: inputId,
-    //           toElementId: outputId,
-    //           actionId: action.id
-    //         });
-    //       }
-    //     }
-    //   }
-    // });
-    
-    // return edges;
-    return [];
-  }
-
-
-  /**
    * Get full dependency information for an element
    * 
    * @param elementId - Element to query
@@ -485,14 +438,5 @@ export class DependencyService {
     
     console.log('=== END DEPENDENCY GRAPH ===');
   }
-
-
-
-  /**
-   * Traverse process tree depth-first, calling visitor for each node
-   * @deprecated Phase 91: Removed.
-   */
-  // private traverseTree(node: ProcessNode, visitor: (node: ProcessNode) => void): void {
-  // }
 }
 
