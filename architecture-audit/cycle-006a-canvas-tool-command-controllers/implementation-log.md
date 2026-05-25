@@ -105,3 +105,48 @@ The stage task required focused validation; the mandatory full cadence remains f
 - `ActionsPanel.vue` and `Toolbar.vue` remain direct command-construction leak candidates for Wave 006b by design.
 - Quick/example tool deletion removes those debug/example canvas registrations; if product wants user-facing examples later, they should be reintroduced through a reviewed application intent/controller design, not by resurrecting tool-owned command construction.
 - Full e2e/live validation is still required in the next validation stage because this wave touches user-observable canvas behavior.
+
+## t3 reviewer-blocker corrections — ambiguous intents and focused tests
+
+Follow-up task `t3-correct-ambiguous-intents-and-tests` corrected the reviewer blockers from `t2-review-stage`.
+
+### Source corrections
+
+- `frontend/src/application/tools/ToolCommandIntents.ts` now models ambiguous construction metadata as typed intent variants:
+  - tangent intents require `{ tangentIndex, selectionPoint }` metadata;
+  - intersection intents require `{ selectionPoint }` metadata;
+  - non-ambiguous construction intents cannot carry ambiguity metadata.
+- `frontend/src/tools/IntersectionTool.ts` overrides `buildConstructionIntent()` to pass the cursor/selection point used for line-circle and circle-circle disambiguation across the tool/controller boundary.
+- `frontend/src/tools/TangentLineToCircleThroughPointTool.ts` overrides `buildConstructionIntent()` to pass typed tangent metadata. It computes `tangentIndex` by comparing the cursor selection point with the two actual candidate tangent points derived from the current circle/through-point geometry.
+- `frontend/src/tools/TangentLineToCircleParallelToLineTool.ts` overrides `buildConstructionIntent()` to pass typed tangent metadata. It computes `tangentIndex` by comparing the cursor selection point with the two actual parallel tangent candidates derived from the current circle/reference-line geometry.
+- `frontend/src/application/construction/ConstructionUseCases.ts` now consumes the typed metadata and no longer reads tangent choice through an ad-hoc `(intent as any).tangentIndex` fallback or recomputes intersection cursor choice from the second generic argument value.
+- `frontend/src/tools/ArgumentCollectorTool.ts` keeps the default builder only for non-ambiguous construction intents; ambiguous tools must supply typed metadata explicitly.
+
+### Focused tests added
+
+- Added `frontend/tests/unit/application/canvasToolControllers.spec.ts` covering:
+  - construction use-case command lifecycle and rollback/no-stack-pollution on failed construction;
+  - typed line-circle intersection metadata selecting the intended intersection branch;
+  - typed tangent metadata preserving non-default tangent index selection;
+  - point movement preview/cancel/commit plus undo stack effects;
+  - style update command creation plus undo stack effects;
+  - tool delegation through `ToolCommandSink` with explicit tangent/intersection metadata;
+  - static SvgCanvas delegation assertions for controller-owned movement/style paths;
+  - PointTool delegation through `CanvasToolController`.
+
+### t3 validation commands and logs
+
+All logs are under `architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/`.
+
+- Initial controller test run exposed an expected-test mismatch, not a source failure: `t3-focused-controllers-v1.stdout/.stderr`.
+- Intermediate controller/static-test iterations fixed test harness path/import issues: `t3-focused-controllers-v2` through `t3-focused-controllers-v6`.
+- Existing t1 focused tool coverage rerun: `t3-focused-tools.stdout/.stderr` passed 40/40 tests.
+- Final controller-only focused run: `t3-focused-controllers-final.stdout/.stderr` passed 8/8 tests.
+- Final combined focused run after geometry-based tangent choice tightening: `t3-focused-combined-postchoice.stdout/.stderr` passed 48/48 tests across `canvasToolControllers.spec.ts`, `pointTool.spec.ts`, `CircleTool.spec.ts`, and `toolValidation.spec.ts`.
+- Static metadata/controller boundary scan: `t3-static-metadata-boundary.stdout/.stderr` confirms selected-path ambiguity metadata now appears in the typed tool/application boundary, with command internals remaining in application modules and tests only.
+- TypeScript fallback filtered to changed Wave 006a files: `t3-tsc-filtered-final.stdout/.stderr` produced no diagnostics; full unfiltered output remains captured in `t3-tsc-noemit-final.combined` and still includes unrelated project-wide diagnostics outside the changed files as previously documented.
+
+### Residual scope notes
+
+- This correction did not modify `ActionsPanel.vue` or `Toolbar.vue`; they remain Wave 006b residual command-intent cleanup scope.
+- The full mandatory validation/e2e/preview cadence remains for the dedicated validation-and-preview-refresh stage; this t3 task supplied the missing focused controller/use-case/canvas/tool delegation evidence required by the reviewer blocker.

@@ -24,12 +24,35 @@ export type QuickToolIntentType =
   | 'quick3dline'
   | 'quick3dsegment';
 
-export interface ToolConstructionIntent {
+export type TangentChoiceMetadata = {
+  tangentIndex: 0 | 1;
+  selectionPoint: Vector3;
+};
+
+export type IntersectionChoiceMetadata = {
+  selectionPoint: Vector3;
+};
+
+interface BaseToolConstructionIntent {
   type: ConstructionIntentType;
   description: string;
   planeId: string;
   args: Map<string, ArgumentValue>;
 }
+
+export type ToolConstructionIntent =
+  | (BaseToolConstructionIntent & {
+      type: 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel';
+      metadata: TangentChoiceMetadata;
+    })
+  | (BaseToolConstructionIntent & {
+      type: 'intersection';
+      metadata: IntersectionChoiceMetadata;
+    })
+  | (BaseToolConstructionIntent & {
+      type: Exclude<ConstructionIntentType, 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel' | 'intersection'>;
+      metadata?: never;
+    });
 
 export interface QuickToolIntent {
   type: QuickToolIntentType;

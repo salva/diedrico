@@ -40,6 +40,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult, ITool } from './ITool';
+import type { ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
 import { SelectionMask, NoneMask } from '@/types/SelectionMask';
 import type { 
   ToolArgumentSpec, 
@@ -95,9 +96,9 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
   protected buildConstructionIntent(
     args: Map<string, ArgumentValue>,
     context: ToolContext
-  ) {
+  ): ToolConstructionIntent {
     return {
-      type: this.name as import('@/application/tools/ToolCommandIntents').ConstructionIntentType,
+      type: this.name as Exclude<import('@/application/tools/ToolCommandIntents').ConstructionIntentType, 'intersection' | 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel'>,
       description: this.getCommandDescription(),
       planeId: context.planeId,
       args

@@ -14,8 +14,11 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext, ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';
+import { Vector3 } from 'three';
 
 /**
  * TangentLineToCircleThroughPointTool using ArgumentCollectorTool framework
@@ -71,14 +74,56 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
     ];
   }
 
-  /**
-   * Execute tangent line creation operations
-   * Uses mouse position from second click to determine which tangent to create
-   */
 
+  protected buildConstructionIntent(
+    args: Map<string, ArgumentValue>,
+    context: ToolContext
+  ): ToolConstructionIntent {
+    const selectionPoint = args.get('throughPoint')?.planeCoords ?? context.planeCoords;
+    return {
+      type: 'tangent-line-to-circle-through-point',
+      description: this.getCommandDescription(),
+      planeId: context.planeId,
+      args,
+      metadata: {
+        tangentIndex: this.chooseTangentIndex(args, selectionPoint, context),
+        selectionPoint
+      }
+    };
+  }
+
+  private chooseTangentIndex(args: Map<string, ArgumentValue>, selectionPoint: Vector3, context: ToolContext): 0 | 1 {
+    const circleId = args.get('circle')?.element?.id;
+    const pointId = args.get('throughPoint')?.element?.id;
+    if (!circleId || !pointId) return 0;
+
+    const circle = context.world.getCircle2D(circleId);
+    const throughPoint = context.world.getPoint2D(pointId);
+    const circleRealization = circle?.realize2D(context.world);
+    const pointRealization = throughPoint?.realize2D(context.world);
+    if (!circleRealization?.feasible || !pointRealization?.feasible) return 0;
+
+    const center = circleRealization.center;
+    const externalPoint = pointRealization.position;
+    const radius = circleRealization.getRadius();
+    const dx = externalPoint.x - center.x;
+    const dy = externalPoint.y - center.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance <= radius) return 0;
+
+    const angleCP = Math.atan2(dy, dx);
+    const angleBeta = Math.acos(radius / distance);
+    const candidate0 = tangentPoint(center, radius, angleCP + angleBeta);
+    const candidate1 = tangentPoint(center, radius, angleCP - angleBeta);
+    return candidate0.distanceTo(selectionPoint) <= candidate1.distanceTo(selectionPoint) ? 0 : 1;
+  }
 
   protected getCommandDescription(): string {
     return "Create tangent line to circle through point";
   }
 
+}
+
+function tangentPoint(center: Vector3, radius: number, angle: number): Vector3 {
+  return new Vector3(center.x + radius * Math.cos(angle), center.y + radius * Math.sin(angle), 1);
 }

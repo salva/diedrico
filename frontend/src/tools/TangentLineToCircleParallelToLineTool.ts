@@ -14,9 +14,12 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext, ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Line2D } from '@/domain/world/Line';
+import { Vector3 } from 'three';
 
 /**
  * TangentLineToCircleParallelToLineTool using ArgumentCollectorTool framework
@@ -67,10 +70,55 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
     ];
   }
 
-  /**
-   * Execute tangent line creation operations
-   * Uses mouse position from second click to determine which tangent to create
-   */
+
+  protected buildConstructionIntent(
+    args: Map<string, ArgumentValue>,
+    context: ToolContext
+  ): ToolConstructionIntent {
+    const circle = args.get('circle')?.element;
+    const selectionPoint = args.get('referenceLine')?.planeCoords ?? context.planeCoords;
+    return {
+      type: 'tangent-line-to-circle-parallel',
+      description: this.getCommandDescription(),
+      planeId: context.planeId,
+      args,
+      metadata: {
+        tangentIndex: this.chooseTangentIndex(selectionPoint, circle?.id, args, context),
+        selectionPoint
+      }
+    };
+  }
+
+  private chooseTangentIndex(selectionPoint: Vector3, circleId: string | undefined, args: Map<string, ArgumentValue>, context: ToolContext): 0 | 1 {
+    const referenceLineId = args.get('referenceLine')?.element?.id;
+    if (!circleId || !referenceLineId) return 0;
+    const circle = context.world.getCircle2D(circleId);
+    const referenceLine = context.world.getLine2D(referenceLineId);
+    const circleRealization = circle?.realize2D(context.world);
+    const lineRealization = referenceLine?.realize2D(context.world);
+    if (!circleRealization?.feasible || !lineRealization?.feasible) return 0;
+
+    const center = circleRealization.center;
+    const radius = circleRealization.getRadius();
+    const refDirection = lineRealization.getDirection().clone().normalize();
+    const perpDirection = new Vector3(-refDirection.y, refDirection.x, 0);
+    const refPoint = lineRealization.point1;
+    const a = -refDirection.y;
+    const b = refDirection.x;
+    const c = refDirection.y * refPoint.x - refDirection.x * refPoint.y;
+    const signedDistance = a * center.x + b * center.y + c;
+
+    const candidate0 = signedDistance > 0
+      ? center.clone().sub(perpDirection.clone().multiplyScalar(radius))
+      : center.clone().add(perpDirection.clone().multiplyScalar(radius));
+    const candidate1 = signedDistance > 0
+      ? center.clone().add(perpDirection.clone().multiplyScalar(radius))
+      : center.clone().sub(perpDirection.clone().multiplyScalar(radius));
+    candidate0.z = 1;
+    candidate1.z = 1;
+
+    return candidate0.distanceTo(selectionPoint) <= candidate1.distanceTo(selectionPoint) ? 0 : 1;
+  }
 
 
   protected getCommandDescription(): string {

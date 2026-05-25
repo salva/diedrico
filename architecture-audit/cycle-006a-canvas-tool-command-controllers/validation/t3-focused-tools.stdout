@@ -1,0 +1,32 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/tools/toolValidation.spec.ts  (8 tests) 37ms
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d11
+  projPlane3/point2d11 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+ ✓ tests/unit/tools/CircleTool.spec.ts  (10 tests) 40ms
+ ✓ tests/unit/tools/pointTool.spec.ts  (22 tests) 51ms
+
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+   Start at  23:46:02
+   Duration  2.29s (transform 1.00s, setup 1ms, collect 3.01s, tests 128ms, environment 2.15s, prepare 436ms)
+

@@ -107,7 +107,7 @@ function executeConstructionOperations(cmd: Command, intent: ToolConstructionInt
     case 'tangent-line-to-circle-through-point': {
       const circle = args.get('circle')!.element as Circle2D;
       const point = args.get('throughPoint')!.element as Point2D;
-      const tangentIndex = (intent as any).tangentIndex ?? 0;
+      const tangentIndex = intent.metadata.tangentIndex;
       const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(planeId, circle.id, point.id, tangentIndex));
       cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
       return;
@@ -115,7 +115,7 @@ function executeConstructionOperations(cmd: Command, intent: ToolConstructionInt
     case 'tangent-line-to-circle-parallel': {
       const circle = args.get('circle')!.element as Circle2D;
       const line = args.get('referenceLine')!.element as Line2D;
-      const tangentIndex = (intent as any).tangentIndex ?? 0;
+      const tangentIndex = intent.metadata.tangentIndex;
       const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(planeId, circle.id, line.id, tangentIndex));
       cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
       return;
@@ -163,10 +163,10 @@ function executeConstructionOperations(cmd: Command, intent: ToolConstructionInt
   }
 }
 
-function createIntersection(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+function createIntersection(cmd: Command, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
   const element1 = intent.args.get('element1')!.element!;
   const element2 = intent.args.get('element2')!.element!;
-  const planeCoords = intent.args.get('element2')!.planeCoords;
+  const selectionPoint = intent.metadata.selectionPoint;
   if (element1 instanceof Line2D && element2 instanceof Line2D) {
     const r1 = element1.realize2D(world);
     const r2 = element2.realize2D(world);
@@ -174,15 +174,15 @@ function createIntersection(cmd: Command, intent: ToolConstructionIntent, world:
     if (areLinesParallel(r1, r2)) throw new Error('Lines are parallel and do not intersect.');
     IntersectionSequenceFactory.createLineLineIntersection(cmd, intent.planeId, element1.id, element2.id, world, groupId);
   } else if (element1 instanceof Line2D && element2 instanceof Circle2D) {
-    const index = lineCircleIndex(element1.id, element2.id, planeCoords, world);
+    const index = lineCircleIndex(element1.id, element2.id, selectionPoint, world);
     if (index === null) throw new Error('Line and circle do not intersect.');
     IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
   } else if (element1 instanceof Circle2D && element2 instanceof Line2D) {
-    const index = lineCircleIndex(element2.id, element1.id, planeCoords, world);
+    const index = lineCircleIndex(element2.id, element1.id, selectionPoint, world);
     if (index === null) throw new Error('Circle and line do not intersect.');
     IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element2.id, element1.id, index, world, groupId);
   } else if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
-    const index = circleCircleIndex(element1.id, element2.id, planeCoords, world);
+    const index = circleCircleIndex(element1.id, element2.id, selectionPoint, world);
     if (index === null) throw new Error('Circles do not intersect.');
     IntersectionSequenceFactory.createCircleCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
   } else {

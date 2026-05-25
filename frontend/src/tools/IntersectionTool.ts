@@ -18,7 +18,9 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext, ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
 import type { Element2D } from '@/domain/world/Element2D';
 import { SelectionMask } from '@/types/SelectionMask';
 
@@ -67,10 +69,20 @@ export class IntersectionTool extends ArgumentCollectorTool {
     ];
   }
 
-  /**
-   * Execute intersection creation operations
-   */
 
+  protected buildConstructionIntent(
+    args: Map<string, ArgumentValue>,
+    context: ToolContext
+  ): ToolConstructionIntent {
+    const selectionPoint = args.get('element2')?.planeCoords ?? context.planeCoords;
+    return {
+      type: 'intersection',
+      description: this.getCommandDescription(),
+      planeId: context.planeId,
+      args,
+      metadata: { selectionPoint }
+    };
+  }
 
   protected getCommandDescription(): string {
     return "Create intersection point";
