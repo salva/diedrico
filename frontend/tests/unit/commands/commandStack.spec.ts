@@ -35,7 +35,7 @@ describe('CommandStack (R018)', () => {
     // Create fresh World and CommandStack without initialization
     // This ensures empty command stacks for testing command stack behavior
     world = new World();
-    commandStack = new CommandStack(world);
+    commandStack = new CommandStack();
   });
 
   describe('Initialization', () => {

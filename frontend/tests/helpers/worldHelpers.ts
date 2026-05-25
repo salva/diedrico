@@ -16,6 +16,7 @@
 
 import { World } from '../../src/domain/world/World';
 import { CommandStack } from '../../src/commands/CommandStack';
+import { initializeWorld } from '../../src/application/world/initializeWorld';
 import type { ProjectionPlane } from '../../src/domain/world/ProjectionPlane';
 import type { FreePoint2D } from '../../src/domain/world/Point';
 import type { HingeLine } from '../../src/domain/world/HingeLine';
@@ -40,8 +41,8 @@ import type { HingeLine } from '../../src/domain/world/HingeLine';
  */
 export function createTestWorld(): { world: World; commandStack: CommandStack } {
   const world = new World();
-  const commandStack = new CommandStack(world);
-  world.initialize(commandStack);
+  const commandStack = new CommandStack();
+  initializeWorld(world, commandStack);
   return { world, commandStack };
 }
 

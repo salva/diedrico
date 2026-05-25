@@ -10,6 +10,7 @@ import { World } from '@/domain/world/World';
 import { Command } from '@/commands/Command';
 import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
 import { CommandStack } from '@/commands/CommandStack';
+import { initializeWorld } from '@/application/world/initializeWorld';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { getMainHingeLine } from '../../helpers/worldHelpers';
 import { createActionGroup } from '@/domain/processTree/ActionGroup';
@@ -23,7 +24,7 @@ describe('InitializeWorldCommand', () => {
     // Phase 47: Explicit initialization needed
     world = new World();
     commandStack = new CommandStack();
-    world.initialize(commandStack);
+    initializeWorld(world, commandStack);
   });
 
   describe('Command Creation', () => {
@@ -43,7 +44,7 @@ describe('InitializeWorldCommand', () => {
 
   describe('World Initialization', () => {
     it('should create all fundamental elements', () => {
-      // World already initialized in constructor
+      // World already initialized by application initializer in beforeEach
 
       // Verify projection planes created
       const projPlanes = world.getAllProjectionPlanes();

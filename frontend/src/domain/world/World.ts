@@ -91,7 +91,7 @@ import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D, Plane3DFixed } from './Plane';
 import { ProjectionPlane, ProjectionPlaneRealization2D, ProjectionPlaneRealization3D, FixedProjectionPlane } from './ProjectionPlane';
 import { ProcessTree } from '../processTree/ProcessTree';
-import { DependencyService } from '@/services/DependencyService';
+import { DependencyService } from './DependencyService';
 import { Element2D } from './Element2D';
 
 // Phase 78: 3D element domain types
@@ -102,12 +102,6 @@ import type { Segment3D } from './Segment3D';
 // Phase 78: 3D element realization types (Element3DRealization3D.ts)
 import { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plane3DRealization3D } from './Element3DRealization3D';
 import { getContainerIdFromElementId } from './ElementId';
-import { Command } from '@/commands/Command';
-import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
-import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
-import { PushSubprocessOp, PopSubprocessOp } from '@/commands/operations/processTree';
-import type { CommandStack } from '@/commands/CommandStack';
 import { LabelGenerator } from './LabelGenerator';
 
 export class World {
@@ -181,39 +175,9 @@ export class World {
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService();
     
-    // Phase 47: Static initialization removed. 
-    // Initialization is now an explicit action triggered by App.vue via initialize()
-    // This allows the initialization command to be part of the recorded history.
-  }
-
-  /**
-   * Initialize the world with default elements (P_H, P_V, etc.)
-   * Adds the initialization command to the provided CommandStack.
-   */
-  initialize(commandStack: CommandStack): void {
-    // Only initialize if empty (or forcefully if needed, but safer to check)
-    if (this.projectionPlanes.size > 0) return;
-
-    const initCmd = new Command('Initialize World', this);
-    
-    // Phase 85: Use subprocess for initialization organization
-    initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
-    
-    const groupId = `group_init_${Date.now()}`;
-    const group = createActionGroup(groupId);
-    initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
-    
-    buildWorldInitialization(this, initCmd, groupId);
-    
-    initCmd.addAndExecute(new PopSubprocessOp());
-    
-    // Commit the command
-    initCmd.commit();
-    
-    // Push via stack so it is recorded
-    commandStack.push(initCmd);
-    
-    this.notifyChange();
+    // Phase 47: Static initialization removed.
+    // Initialization is now an explicit application use case so command history
+    // orchestration stays outside the domain root.
   }
 
   /**

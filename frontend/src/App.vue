@@ -121,6 +121,7 @@ import { useSelectionStore } from './stores/selectionStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useAuthStore } from './stores/authStore';
 import { World } from './domain/world/World';
+import { initializeWorld } from './application/world/initializeWorld';
 import { GoogleDriveService } from './services/GoogleDriveService';
 import { ProjectService, type ProjectData } from './services/ProjectService';
 // Google Drive configuration (from environment variables)
@@ -151,10 +152,8 @@ provide('world', world);
 const commandStack = new CommandStack();
 provide('commandStack', commandStack);
 
-// Phase 95: World initialization is now explicit (on file load or new project)
-// Do NOT initialize world here automatically.
-// See handleNewProject and handleOpenProject.
-// world.initialize(commandStack);
+// Phase 95: World initialization is now explicit (on file load or new project).
+// Do NOT initialize world here automatically. See handleNewProject and handleOpenProject.
 
 // Google Drive service (only if credentials are available)
 const driveService = hasGoogleCredentials ? new GoogleDriveService(GOOGLE_CONFIG) : null;
@@ -320,7 +319,7 @@ async function initializeApp() {
 
         // Condition 3: The app fails to load a file and so automatically creates a new one
         console.log('[App] Load failed. Initializing new world automatically.');
-        world.initialize(commandStack);
+        initializeWorld(world, commandStack);
       }
     }
     
@@ -381,7 +380,7 @@ async function handleCreateProject(projectName: string) {
     // Phase 95: Reset World and CommandStack for a fresh start with recordable initialization
     world.clear();
     commandStack.clear();
-    world.initialize(commandStack);
+    initializeWorld(world, commandStack);
 
     // Serialize command history (now contains initialization ops)
     const projectData = ProjectService.serializeCommands(commandStack, world.getNextId(), projectName);
@@ -436,7 +435,7 @@ async function handleOpenProject(fileId: string) {
     // force initialization now.
     if (world.getAllProjectionPlanes().length === 0) {
       console.warn('[App] Legacy file detected (no planes). Initializing default world.');
-      world.initialize(commandStack);
+      initializeWorld(world, commandStack);
     }
     
     // Notify consumers that world has been reset (using version increment)
