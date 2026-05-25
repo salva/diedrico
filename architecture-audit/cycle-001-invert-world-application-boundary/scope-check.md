@@ -59,7 +59,7 @@ Potential adjustment: `DependencyService` is currently under `frontend/src/servi
 ## Scope risks for implementation
 
 - `App.vue` currently reassigns `world = new World()` on sign-out and calls `provide('world', world)` again (`frontend/src/App.vue:778`, `frontend/src/App.vue:779`). This stale-injection pattern is adjacent to initialization but likely belongs to later app-shell cleanup unless it blocks replacing `world.initialize(...)`.
-- `InitializationOps.ts` still uses private casts such as `(world as any)` and `world.getDependencyService()` (`frontend/src/commands/operations/world/InitializationOps.ts:83`, `frontend/src/commands/operations/world/InitializationOps.ts:159`). Those are persistence/command contract cleanup candidates for Wave 004 unless needed to remove the `DependencyService` service import from `World`.
+- `InitializationOps.ts` still uses private casts such as `(world as any)` and `world.getDependencyService()` (`frontend/src/commands/operations/world/InitializationOps.ts:82`, `frontend/src/commands/operations/world/InitializationOps.ts:83`, `frontend/src/commands/operations/world/InitializationOps.ts:158`, `frontend/src/commands/operations/world/InitializationOps.ts:159`). Those are persistence/command contract cleanup candidates for Wave 004 unless needed to remove the `DependencyService` service import from `World`.
 - `styleService` can accept a narrower process-tree context in Wave 001, but full process-tree dependency ownership should remain Wave 005.
 
 ## Scope decision

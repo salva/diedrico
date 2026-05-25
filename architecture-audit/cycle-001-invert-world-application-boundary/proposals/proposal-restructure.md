@@ -27,19 +27,25 @@ export interface ProjectRuntime {
   readonly world: World;
   readonly commandStack: CommandStack;
   initializeWorld(): void;
-  resetForNewProject(): void;
-  clearForLoad(): void;
 }
 
 export function createProjectRuntime(): ProjectRuntime { ... }
 ```
 
+For Wave 001, the runtime contract is intentionally narrow:
+
+- `createProjectRuntime()` postcondition: returns one freshly constructed `World` and one freshly constructed `CommandStack` that remain the references provided to Vue children for the lifetime of the mounted app instance.
+- `initializeWorld()` precondition: may be called during project creation/load fallback when the runtime's `world` is empty or partially restored.
+- `initializeWorld()` postcondition: preserves the current initialization idempotency rule; if projection planes already exist it leaves the world and command stack unchanged, otherwise it records the initialization command exactly as the direct proposal does.
+- It must not replace `runtime.world` or `runtime.commandStack` after Vue `provide()` has exposed them, because doing so would make injected child references stale.
+
 The runtime internally composes:
 
 - `new World()`,
 - `new CommandStack()`,
-- `initializeWorld(world, commandStack)`,
-- reset/clear behavior needed by project lifecycle.
+- `initializeWorld(world, commandStack)`.
+
+Lifecycle reset/load methods such as `resetForNewProject()` or `clearForLoad()` are deliberately excluded from the Wave 001 runtime API unless a reviewed implementation mini-cycle defines their preconditions, postconditions, and Vue provide/inject reference semantics. Those methods overlap with Wave 009 app-shell extraction and must not be invented as vague convenience wrappers in this wave.
 
 Dependency direction becomes:
 
@@ -55,7 +61,7 @@ Primary changes:
   - Same required deletion as direct proposal: remove `initialize(commandStack)` and forbidden imports.
 - New `frontend/src/application/runtime/createProjectRuntime.ts` or equivalent
   - Creates and owns the `World` + `CommandStack` pair.
-  - Exposes `initializeWorld()` and reset/clear methods.
+  - Exposes only `initializeWorld()` for Wave 001; reset/load lifecycle methods remain out of scope unless separately specified and reviewed.
   - Internally uses existing `InitializationSequenceFactory.buildWorldInitialization(...)`.
 - New `frontend/src/application/world/initializeWorld.ts` or internal runtime helper
   - Builds the initialization command and pushes it to the stack.
@@ -63,7 +69,7 @@ Primary changes:
   - Replace direct `new World()` and `new CommandStack()` composition with the runtime.
   - Continue providing `world` and `commandStack` if child components still inject those tokens, but source them from `runtime`.
   - Replace `world.initialize(commandStack)` calls with `runtime.initializeWorld()`.
-  - Avoid broad project-shell extraction; do not move Drive/autosave/keyboard behavior in this wave unless it is required to keep the runtime coherent.
+  - Avoid broad project-shell extraction; do not move Drive/autosave/keyboard/sign-out/load-reset behavior in this wave unless a reviewed mini-cycle first defines exact runtime reference semantics.
 - `frontend/src/services/DependencyService.ts`
   - Move/rename into a domain-owned dependency location, or introduce a domain dependency graph object as in the direct proposal.
 - `frontend/src/main.ts`
@@ -88,7 +94,7 @@ Required deletes:
 
 Additional restructure deletes:
 
-- Delete direct runtime construction from `App.vue` (`new World()`, `new CommandStack()`) if the runtime module replaces it fully.
+- Delete direct runtime construction from `App.vue` (`new World()`, `new CommandStack()`) if the runtime module replaces it fully, while preserving stable provided `world`/`commandStack` object references.
 - Delete any compatibility bridge that exposes `world.initialize()` from the runtime.
 - Delete old service-layer `DependencyService` file/path if fully moved into domain.
 
@@ -111,8 +117,9 @@ Focused validation:
 
 1. Unit-test `createProjectRuntime()`:
    - constructs a `World` and `CommandStack`,
+   - exposes stable object references intended for Vue `provide()`/`inject`,
    - initializes an empty world exactly once,
-   - clears/resets without replacing injected references unexpectedly if reset methods are included.
+   - does not define reset/load lifecycle methods in Wave 001 unless their reference-stability contract is added through a reviewed mini-cycle.
 2. Unit-test world initializer internals as in direct proposal.
 3. Architecture test:
    - `World.ts` has no imports from `frontend/src/commands/`, `frontend/src/services/`, Vue components, stores, or persistence.
@@ -132,9 +139,9 @@ Mandatory wave validation cadence:
 
 | Risk | Impact | Mitigation |
 |---|---:|---|
-| This can drift into Wave 009 `App.vue` shell extraction. | High | Hard scope guard: only move world/command/runtime initialization composition; leave Drive/autosave/keyboard/select-all orchestration in `App.vue`. |
+| This can drift into Wave 009 `App.vue` shell extraction. | High | Hard scope guard: only move world/command/runtime initialization composition; leave Drive/autosave/keyboard/select-all/sign-out/load-reset orchestration in `App.vue` unless separately specified and reviewed. |
 | Child components may assume separate injected `world`/`commandStack` tokens. | Medium | Continue providing the same tokens from the runtime; do not force broad injection changes in this wave. |
-| Replacing direct `new World()` on sign-out may expose stale-provide behavior. | Medium | Prefer runtime reset that preserves object identity if practical; otherwise record as Wave 009 risk. |
+| Replacing direct `new World()` on sign-out may expose stale-provide behavior. | Medium | Do not add sign-out/reset runtime APIs in Wave 001; preserve stable provided references and record the existing sign-out stale-provide concern as a Wave 009 risk. |
 | More files touched than the direct proposal. | Medium | Keep runtime API minimal and resist refactoring persistence/UI shell behavior. |
 | Moving `DependencyService` into domain may still be broad. | Medium | Same mitigation as direct proposal: mechanical import update or domain-local re-export only if deletion can still be completed. |
 
