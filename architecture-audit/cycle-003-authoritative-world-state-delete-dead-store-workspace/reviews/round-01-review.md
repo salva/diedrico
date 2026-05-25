@@ -199,3 +199,43 @@ Proposal Restructure is architecturally forward-looking but should be deferred b
 | 6. Validation sufficiency | Adequate (one addition needed) | Adequate (same addition needed) |
 
 **Recommended proposal after B1 resolution:** Proposal Direct
+
+---
+
+## Follow-up Recheck — B1 Resolution (same stage, same reviewer)
+
+**Date:** 2026-05-25
+**Trigger:** Manager edited both proposals in-place to resolve B1; re-review requested.
+
+### B1 Recheck
+
+**Original B1:** Both proposals needed to specify that `dynamic-planes.spec.ts` should be **deleted** (not rewritten with a new debug injection path) and include an e2e grep validation check.
+
+**Proposal Direct — RESOLVED ✅**
+
+The proposal now explicitly states in three places:
+1. Files to change: "delete `frontend/tests/e2e/dynamic-planes.spec.ts` during implementation because it depends on the broken `window.getWorld()` debug helper / store-backed path; do not rewrite it through debug injection and do not preserve the helper."
+2. DELETE list: "Explicitly delete `frontend/tests/e2e/dynamic-planes.spec.ts` when `main.ts` debug helpers are removed; it must not be rewritten through debug injection or kept alive by preserving `window.getWorld()` / `worldStore`."
+3. Validation: Added `grep -n "getWorld\|worldStore\|useWorldStore" frontend/tests/e2e/*.spec.ts || true` and confirm zero matches after deleting `dynamic-planes.spec.ts` and removing debug-helper references.
+
+All three aspects of B1 (preferred resolution, rationale, validation check) are addressed. The language is unambiguous — "do not rewrite," "must not be rewritten," "confirm zero matches."
+
+**Proposal Restructure — RESOLVED ✅**
+
+The proposal now explicitly states in two places:
+1. DELETE list: "including mandatory deletion of `frontend/tests/e2e/dynamic-planes.spec.ts` when the `main.ts` debug helpers are removed. Do not rewrite that spec through debug injection or preserve `window.getWorld()` / `worldStore` for it."
+2. Validation: Same e2e grep check added as Proposal Direct.
+
+All aspects of B1 are addressed. The language is similarly unambiguous — "mandatory deletion," "Do not rewrite."
+
+### New Blocker Check
+
+No new blocking issues were introduced by the edits. The changes were surgical additions to the `dynamic-planes.spec.ts` handling language and the validation grep check. No other proposal content was modified. The scores, warnings, and recommendations from the original review remain valid.
+
+### Updated Verdict
+
+**NO BLOCKING ISSUES**
+
+All blocking issues from the original round-01 review are resolved. The remaining warnings (W1: stale TODOs, W2: query boundary scope guard, W3: DependencyGraph consumer count) are non-blocking and accepted as residual items for the implementation phase.
+
+**Recommended proposal:** Proposal Direct
