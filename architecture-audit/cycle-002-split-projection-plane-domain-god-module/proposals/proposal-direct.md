@@ -93,12 +93,22 @@ Auxiliary planes should require the typed realization context because trace line
 - Add `frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts`.
 - Add `frontend/src/domain/world/projectionPlane/ProjectionPlaneConstruction.ts` only if keeping construction helpers as prototype methods would leave the base module too large.
 - Update `frontend/src/domain/world/World.ts` imports and type references (`frontend/src/domain/world/World.ts:92`).
-- Update any domain world barrel if it exports projection-plane symbols (`frontend/src/domain/world/index.ts`).
+- Do not update `frontend/src/domain/world/index.ts` for this wave unless implementation deliberately introduces a new public projection-plane export surface; current evidence shows it exports no projection-plane symbols.
 
-### Command/application consumers
+### Command/application/domain/UI consumers
 
-- Update `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts` import for `AuxiliaryProjectionPlane` (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:21-24`).
-- Update any operation/factory imports discovered by a full grep before implementation.
+Known direct consumers of `frontend/src/domain/world/ProjectionPlane.ts` must be updated explicitly, not left to a generic grep catch-all:
+
+- Update `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts` import for `AuxiliaryProjectionPlane` (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:23`) and delete its auxiliary-plane creation debug `console.log` noise in the same path (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:112-114`, `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:119`, `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:123`).
+- Update `frontend/src/components/panels/ThreeView.vue` imports for `ProjectionPlane` and `AuxiliaryProjectionPlane` (`frontend/src/components/panels/ThreeView.vue:69-70`).
+- Update descriptor imports in `frontend/src/domain/world/descriptors/Element3DDescriptors.ts` (`frontend/src/domain/world/descriptors/Element3DDescriptors.ts:14`) and `frontend/src/domain/world/descriptors/registerDescriptors.ts` (`frontend/src/domain/world/descriptors/registerDescriptors.ts:59`).
+- Update `frontend/src/services/Element2DRenderer3D.ts` type import (`frontend/src/services/Element2DRenderer3D.ts:23`).
+- Update `frontend/src/types/ToolArgumentCollector.ts` type import (`frontend/src/types/ToolArgumentCollector.ts:20`).
+- Run a final grep for any remaining `ProjectionPlane.ts` imports before deletion; the known current consumer list is captured in `architecture-audit/cycle-002-split-projection-plane-domain-god-module/review-correction-targeted-grep.stdout.log`.
+
+### Domain barrel assessment
+
+`frontend/src/domain/world/index.ts` currently exports element/realization/3D/label symbols but no projection-plane symbols, so Wave 002 should **not** update that barrel unless implementation deliberately introduces a new public projection-plane export surface. Prefer direct focused imports over widening the barrel.
 
 ### Test consumers
 
@@ -112,6 +122,7 @@ Auxiliary planes should require the typed realization context because trace line
 - Delete stale `BaseProjectionPlane` imports/types in tests unless a real class with that name is intentionally introduced. Prefer not to introduce the class because current runtime class is `FixedProjectionPlane`.
 - Delete any `ProjectionPlane.ts` compatibility barrel or re-export if it exists only to hide the old monolith.
 - Delete auxiliary-plane `console.log` debug noise inside realization if not required by tests/behavior (`frontend/src/domain/world/ProjectionPlane.ts:1694-1697`, `frontend/src/domain/world/ProjectionPlane.ts:1710`, `frontend/src/domain/world/ProjectionPlane.ts:1719`, `frontend/src/domain/world/ProjectionPlane.ts:1763`). Keep explicit error reporting only if reviewed as user-meaningful or diagnostically necessary.
+- Delete same-path command debug `console.log` noise in `AddAuxiliaryProjectionPlaneOp.ts` while updating its auxiliary-plane import (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:112-114`, `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:119`, `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:123`).
 - Delete obsolete comments that claim a dual-storage migration period is active; the base class comment still says “Dual storage period” (`frontend/src/domain/world/ProjectionPlane.ts:167-171`) even though current ownership is `ProjectionPlane`.
 
 ## Implementation steps

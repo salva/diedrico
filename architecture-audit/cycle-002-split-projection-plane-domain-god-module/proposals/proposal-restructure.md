@@ -75,8 +75,13 @@ The selection criterion should be dependency direction:
 - `addLine2DBetweenTwoPoints(plane, point1Id, point2Id, context, id?)`,
 - `addLineLineIntersection(plane, line1Id, line2Id, context, index?, id?)`,
 - `addCircle2DByCenterAndPoint(plane, centerPointId, circumferencePointId, context, id?)`,
+- `addSegment2DBetweenPoints(plane, point1Id, point2Id, context, id?)`,
 - `addGuide2D(plane, referenceLineId, throughPointId, context, id?)`,
+- `addSiblingGuide2D(plane, primaryGuideId, referenceLineId, throughPointId, context, id?)`,
+- `addSiblingIntersectionPoint(plane, primaryIntersectionId, context, id?)`,
 - `addHalfHingeLine2D(plane, hingeLineId, context, id?)`.
+
+A current targeted grep shows this API migration surface is large: 732 helper-call matches total, including 34 under `frontend/src/` and 698 under `frontend/tests/` (`architecture-audit/cycle-002-split-projection-plane-domain-god-module/review-correction-targeted-grep.stdout.log`). This count includes broad `addLine2D`/`addSegment2D`/`addCircle2D` patterns and should be refined before implementation, but it is already large enough that this proposal should not be selected for Wave 002 without a reviewed wave-plan split or an explicit decision accepting a much larger cycle.
 
 The service receives a typed `PlaneElementConstructionContext` that includes ID generation, label generation, dependency registration, cross-plane lookup, sibling-plane lookup, and dirty marking. `World` can satisfy the context structurally. This makes cross-aggregate/use-case needs explicit instead of hiding them in a plane entity method.
 
@@ -106,7 +111,7 @@ This proposal recommends option 1 only if a pre-implementation grep shows the he
 
 - Update `frontend/src/domain/world/World.ts` imports (`frontend/src/domain/world/World.ts:92`) and any calls that create fixed projection planes.
 - Update all commands/factories/tests that call construction helper methods on planes.
-- Update `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts` import and consider replacing direct `world.projectionPlanes.set(...)` with a typed world/domain method if in scope (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:95-118`).
+- Update `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts` import, delete its auxiliary-plane creation debug `console.log` noise (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:112-114`, `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:119`, `frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:123`), and consider replacing direct `world.projectionPlanes.set(...)` with a typed world/domain method if in scope (`frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:95-118`).
 - Update tests importing `BaseProjectionPlane` from the old monolith to current/focused symbols (`frontend/tests/unit/coordinateTransform.spec.ts:9`, `frontend/tests/unit/projectionPlane.spec.ts:9`, `frontend/tests/unit/projectionPlane.spec.ts:180-183`).
 
 ## DELETE list
@@ -117,6 +122,7 @@ This proposal recommends option 1 only if a pre-implementation grep shows the he
 - Delete `any` projection-plane realization context signatures.
 - Delete stale `BaseProjectionPlane` imports/types rather than adding aliases to preserve the old test vocabulary.
 - Delete debug logging in auxiliary realization that is not behaviorally required.
+- Delete same-path command debug logging in `AddAuxiliaryProjectionPlaneOp.ts` unless the implementation explicitly defers it as out of scope with rationale.
 - Delete any wrappers, re-export barrels, or “old API” adapters that simply forward `plane.addX(...)` to the construction service.
 
 ## Expected behavior
@@ -144,7 +150,7 @@ Run and capture:
 grep -R "\.addFreePoint2D\|\.addLineLineIntersection\|\.addLine2D\|\.addSegment2D\|\.addCircle2D\|\.addGuide2D\|\.addHalfHingeLine2D" -n frontend/src frontend/tests
 ```
 
-If the surface is too large to update in one bounded cycle, do **not** implement this restructure directly. Instead, perform a wave-plan edit to split the construction-service move into its own later wave.
+Current correction evidence already found 732 broad helper-call matches (34 source, 698 test) in `architecture-audit/cycle-002-split-projection-plane-domain-god-module/review-correction-targeted-grep.stdout.log`. If a refined grep remains anywhere near this size, do **not** implement this restructure directly in Wave 002. Instead, perform a wave-plan edit to split the construction-service move into its own later wave.
 
 ### Focused tests
 
