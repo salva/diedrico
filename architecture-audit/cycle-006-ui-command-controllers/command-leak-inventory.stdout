@@ -1,0 +1,889 @@
+
+== SvgCanvas imports/command/tool lines ==
+     1	<template>
+     2	  <div class="svg-canvas-container">
+     3	    <svg
+     4	      ref="svgElement"
+     5	      class="svg-canvas"
+     6	      xmlns="http://www.w3.org/2000/svg"
+     7	      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+     8	      preserveAspectRatio="xMidYMid meet"
+     9	      @mousedown="handleMouseDown"
+    10	      @click="handleCanvasClick"
+    11	      @dblclick="handleDoubleClick"
+    12	      @mousemove="handleMouseMove"
+    13	      @wheel.prevent="handleWheel"
+    14	    >
+    15	      <!-- Background grid (T275) - Zoom-adaptive grid display -->
+    16	      <g v-if="viewStore.gridVisible.value" class="background-grid">
+    17	        <line
+    18	          v-for="line in gridLines"
+    19	          :key="line.key"
+    20	          :x1="line.x1"
+    21	          :y1="line.y1"
+    22	          :x2="line.x2"
+    23	          :y2="line.y2"
+    24	          :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+    25	          :stroke-width="line.major ? 1 : 0.5"
+    26	        />
+    27	      </g>
+    28	      
+    29	      <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
+    30	      <line
+    31	        v-for="{ primitive, attrs } in renderedLines"
+    32	        :key="primitive.id"
+    33	        v-bind="attrs"
+    34	      />
+    35	      
+    36	      <!-- Render all segments through Paper pipeline -->
+    37	      <line
+    38	        v-for="{ primitive, attrs } in renderedSegments"
+    39	        :key="primitive.id"
+    40	        v-bind="attrs"
+    41	      />
+    42	      
+    43	      <!-- Render all guides through Paper pipeline -->
+    44	      <line
+    45	        v-for="{ primitive, attrs } in renderedGuides"
+    46	        :key="primitive.id"
+    47	        v-bind="attrs"
+    48	      />
+    49	      
+    50	      <!-- Render all circles through Paper pipeline -->
+    51	      <circle
+    52	        v-for="{ primitive, attrs } in renderedCircles"
+    53	        :key="primitive.id"
+    54	        v-bind="attrs"
+    55	      />
+    56	      
+    57	      <!-- Render all arcs through Paper pipeline -->
+    58	      <path
+    59	        v-for="{ primitive, attrs } in renderedArcs"
+    60	        :key="primitive.id"
+    61	        v-bind="attrs"
+    62	      />
+    63	      
+    64	      <!-- Render all points through Paper pipeline -->
+    65	      <circle
+    66	        v-for="{ primitive, attrs } in renderedPoints"
+    67	        :key="primitive.id"
+    68	        v-bind="attrs"
+    69	      />
+    70	      
+    71	      <!-- Snap preview indicator - orange glow around snap target point -->
+    72	      <circle
+    73	        v-if="snapTarget.pointId && snapTarget.position"
+    74	        :cx="snapTarget.position.x"
+    75	        :cy="snapTarget.position.y"
+    76	        :r="8"
+    77	        fill="none"
+    78	        stroke="#FF6B35"
+    79	        stroke-width="2"
+    80	        opacity="0.8"
+    81	        class="snap-indicator"
+    82	      />
+    83	      
+    84	      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+    85	      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+    86	        <!-- Top edge labels (U-coordinates) -->
+    87	        <text
+    88	          v-for="label in gridLabels.top"
+    89	          :key="label.key"
+    90	          :x="label.position"
+    91	          :y="12"
+    92	          class="grid-label"
+    93	          text-anchor="middle"
+    94	        >
+    95	          {{ label.value }}
+    96	        </text>
+    97	        
+    98	        <!-- Bottom edge labels (U-coordinates) -->
+    99	        <text
+   100	          v-for="label in gridLabels.bottom"
+   101	          :key="label.key"
+   102	          :x="label.position"
+   103	          :y="canvasHeight - 4"
+   104	          class="grid-label"
+   105	          text-anchor="middle"
+   106	        >
+   107	          {{ label.value }}
+   108	        </text>
+   109	        
+   110	        <!-- Left edge labels (V-coordinates) -->
+   111	        <text
+   112	          v-for="label in gridLabels.left"
+   113	          :key="label.key"
+   114	          :x="4"
+   115	          :y="label.position"
+   116	          class="grid-label"
+   117	          text-anchor="start"
+   118	          dominant-baseline="middle"
+   119	        >
+   120	          {{ label.value }}
+   121	        </text>
+   122	        
+   123	        <!-- Right edge labels (V-coordinates) -->
+   124	        <text
+   125	          v-for="label in gridLabels.right"
+   126	          :key="label.key"
+   127	          :x="canvasWidth - 4"
+   128	          :y="label.position"
+   129	          class="grid-label"
+   130	          text-anchor="end"
+   131	          dominant-baseline="middle"
+   132	        >
+   133	          {{ label.value }}
+   134	        </text>
+   135	      </g>
+   136	    </svg>
+   137	    
+   138	    <!-- Hover tooltip -->
+   139	    <div 
+   140	      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
+   141	      class="hover-tooltip"
+   142	      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+   143	    >
+   144	      {{ hoverHighlight.hoveredElementLabel.value }}
+   145	    </div>
+   146	    
+   147	    <!-- Properties Dialog -->
+   148	    <PropertiesDialog
+   149	      :is-open="showPropertiesDialog"
+   150	      :element-id="propertiesElementId"
+   151	      :world="world"
+   152	      @close="showPropertiesDialog = false"
+   153	      @save="handleSaveProperties"
+   154	    />
+   155	  </div>
+   156	</template>
+   157	
+   158	<script setup lang="ts">
+   159	/**
+   160	 * SvgCanvas.vue - Main 2D drawing canvas component
+   161	 * 
+   162	 * This is the primary workspace where all 2D geometric elements are rendered.
+   163	 * Uses SVG for crisp, scalable vector graphics per Constitution Principle IV.
+   164	 * 
+   165	 * Rendering Pipeline:
+   166	 * 1. World (domain objects + realizations) 
+   167	 * 2. → PaperService (generates Paper primitives in paper coordinates)
+   168	 * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+   169	 * 4. → SVG elements
+   170	 * 
+   171	 * Key requirements:
+   172	 * - SVG element (not HTML Canvas) per ui-spec.md
+   173	 * - All rendering goes through Paper abstraction layer
+   174	 * - Generic rendering algorithms (no special cases for fixed elements)
+   175	 * - Will support pan/zoom viewport transformations in Phase 6
+   176	 * - Elements rendered using principle-based algorithms (Constitution Principle IV)
+   177	 * 
+   178	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+   179	 */
+   180	
+   181	import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+   182	import { Matrix3, Vector3 } from 'three';
+   183	import { World } from '@/domain/world/World';
+   184	import { Paper } from '@/domain/presentation/Paper';
+   185	import { PaperService, type PrimitiveContext } from '@/services/PaperService';
+   186	import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+   187	import { InputService } from '@/services/InputService';
+   188	import { CommandStack } from '@/commands/CommandStack';
+   189	import { Command } from '@/commands/Command';
+   190	import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+   191	import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+   192	import { PointTool } from '@/tools/PointTool';
+   193	import { LineTool } from '@/tools/LineTool';
+   194	import { SegmentTool } from '@/tools/SegmentTool';
+   195	import { CircleTool } from '@/tools/CircleTool';
+   196	import { GuideTool } from '@/tools/GuideTool';
+   197	import { IntersectionTool } from '@/tools/IntersectionTool';
+   198	import { ParallelLineTool } from '@/tools/ParallelLineTool';
+   199	import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+   200	import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+   201	import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+   202	import { Create3DPointTool } from '@/tools/Create3DPointTool';
+   203	import { Create3DLineTool } from '@/tools/Create3DLineTool';
+   204	import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+   205	import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+   206	import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+   207	import { InteractiveProjectionSetupTool } from '@/tools/ExampleConstructionsTool';
+   208	import { QuickProjectionSetupTool } from '@/tools/QuickProjectionSetupTool';
+   209	import { Quick3DLineTool } from '@/tools/Quick3DLineTool';
+   210	import { Quick3DSegmentTool } from '@/tools/Quick3DSegmentTool';
+   211	import { FreePoint2D } from '@/domain/world/Point';
+   212	import { useToolStore } from '@/stores/toolStore';
+   213	import { useViewStore } from '@/stores/viewStore';
+   214	import { useSelectionStore } from '@/stores/selectionStore';
+   215	import { useViewport } from '@/composables/useViewport';
+   216	import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+   217	import { screenTo3D } from '@/utils/coordinateTransform';
+   218	import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+   219	import type { ITool } from '@/tools/ITool';
+   220	
+   221	// Define emits
+   222	const emit = defineEmits<{
+   223	  'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+   224	  'update-active-plane': [planeInfo: { id: string; name: string }];
+   225	}>();
+   226	
+   227	const svgElement = ref<SVGSVGElement | null>(null);
+   228	
+   229	// Track World version changes (World is not reactive by itself)
+   230	const worldVersion = ref(0);
+   231	let versionPollId: number | null = null;
+   232	let lastWorldVersion = 0;
+   233	
+   234	// Active plane - derived from World (managed by App.vue)
+   235	const activePlane = computed(() => {
+   236	  // Depend on worldVersion so plane switching triggers recomputation
+   237	  const _ = worldVersion.value;
+   238	  return world.getActivePlaneId();
+   239	});
+   240	
+   241	// Dynamic canvas dimensions - updated based on container size
+   242	const canvasWidth = ref(1600);
+   243	const canvasHeight = ref(1000);
+   244	
+   245	// Properties dialog state
+   246	const showPropertiesDialog = ref(false);
+   247	const propertiesElementId = ref<string | null>(null);
+   248	
+   249	// Viewport transformation (pan/zoom)
+   250	const viewStore = useViewStore();
+   251	const viewport = computed<ViewportTransform>(() => {
+   252	  const vp = viewStore.viewportState.value;
+   253	  // Update Paper's viewport transform when it changes
+   254	  paper.setViewportTransform(vp);
+   255	  return vp;
+   256	});
+   257	
+   258	// Setup viewport interactions (pan/zoom)
+   259	const viewportComposable = useViewport({ element: svgElement });
+   260	
+
+== Command execution composable ==
+     1	import { useProcessStore } from '@/stores/processStore';
+     2	import type { Command } from '@/commands/Command';
+     3	
+     4	/**
+     5	 * Result type for command execution
+     6	 */
+     7	export interface CommandResult<T = any> {
+     8	  success: boolean;
+     9	  value?: T;
+    10	  error?: string;
+    11	}
+    12	
+    13	/**
+    14	 * Composable for building and executing commands
+    15	 * Handles command construction, validation, and execution with undo/redo
+    16	 */
+    17	export function useCommandExecution() {
+    18	  const processStore = useProcessStore();
+    19	
+    20	  /**
+    21	   * Execute a command with full lifecycle
+    22	   * 1. Validate command
+    23	   * 2. Execute (addAndExecute on command)
+    24	   * 3. Add to command history
+    25	   * 4. Return result
+    26	   */
+    27	  const executeCommand = async <T = any>(command: Command): Promise<CommandResult<T>> => {
+    28	    try {
+    29	      // Validate command before execution
+    30	      const validation = await command.validate();
+    31	      if (!validation.valid) {
+    32	        return {
+    33	          success: false,
+    34	          error: validation.error || 'Command validation failed'
+    35	        };
+    36	      }
+    37	
+    38	      // Execute command (this calls addAndExecute which commits all operations)
+    39	      const result = await command.addAndExecute();
+    40	
+    41	      // Add to command history for undo/redo
+    42	      processStore.pushCommand(command);
+    43	
+    44	      return {
+    45	        success: true,
+    46	        value: result
+    47	      };
+    48	    } catch (error) {
+    49	      return {
+    50	        success: false,
+    51	        error: error instanceof Error ? error.message : 'Command execution failed'
+    52	      };
+    53	    }
+    54	  };
+    55	
+    56	  /**
+    57	   * Execute command without adding to history (for preview/test)
+    58	   */
+    59	  const previewCommand = async <T = any>(command: Command): Promise<CommandResult<T>> => {
+    60	    try {
+    61	      const validation = await command.validate();
+    62	      if (!validation.valid) {
+    63	        return {
+    64	          success: false,
+    65	          error: validation.error || 'Command validation failed'
+    66	        };
+    67	      }
+    68	
+    69	      const result = await command.addAndExecute();
+    70	
+    71	      return {
+    72	        success: true,
+    73	        value: result
+    74	      };
+    75	    } catch (error) {
+    76	      return {
+    77	        success: false,
+    78	        error: error instanceof Error ? error.message : 'Command preview failed'
+    79	      };
+    80	    }
+    81	  };
+    82	
+    83	  /**
+    84	   * Undo last command
+    85	   */
+    86	  const undo = (): boolean => {
+    87	    return processStore.undo();
+    88	  };
+    89	
+    90	  /**
+    91	   * Redo last undone command
+    92	   */
+    93	  const redo = (): boolean => {
+    94	    return processStore.redo();
+    95	  };
+    96	
+    97	  /**
+    98	   * Check if undo is available
+    99	   */
+   100	  const canUndo = (): boolean => {
+   101	    return processStore.canUndo;
+   102	  };
+   103	
+   104	  /**
+   105	   * Check if redo is available
+   106	   */
+   107	  const canRedo = (): boolean => {
+   108	    return processStore.canRedo;
+   109	  };
+   110	
+   111	  return {
+   112	    executeCommand,
+   113	    previewCommand,
+   114	    undo,
+   115	    redo,
+   116	    canUndo,
+   117	    canRedo
+   118	  };
+   119	}
+
+== operation imports in tools/components/factories ==
+frontend/src/components/workspace/SvgCanvas.vue:188:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/workspace/SvgCanvas.vue:190:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/components/workspace/SvgCanvas.vue:191:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/src/components/workspace/SvgCanvas.vue:321:      if (commit && cmd.getOperations().length > 0) {
+frontend/src/components/workspace/SvgCanvas.vue:430:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/workspace/SvgCanvas.vue:432:  throw new Error('CommandStack not provided');
+frontend/src/components/workspace/SvgCanvas.vue:1382:        cmd: new Command(`Move point ${point.label ?? hit.elementId}`, world),
+frontend/src/components/workspace/SvgCanvas.vue:1443:  // Create command using base Command + Operation pattern per data-model.md
+frontend/src/components/workspace/SvgCanvas.vue:1444:  const cmd = new Command(`Update style: ${changes.elementId}`, world);
+frontend/src/components/panels/ActionsPanel.vue:54:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/panels/ActionsPanel.vue:56:import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+frontend/src/components/panels/ActionsPanel.vue:57:import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+frontend/src/components/panels/ActionsPanel.vue:58:import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+frontend/src/components/panels/ActionsPanel.vue:59:import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+frontend/src/components/panels/ActionsPanel.vue:60:import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+frontend/src/components/panels/ActionsPanel.vue:73:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/panels/ActionsPanel.vue:267:  const cmd = new Command('Push subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:276:    const cmd = new Command('Pop subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:291:  const cmd = new Command('Toggle subprocess encapsulation', world);
+frontend/src/components/panels/ActionsPanel.vue:300:  const cmd = new Command('Toggle output status', world);
+frontend/src/components/panels/ActionsPanel.vue:309:  const cmd = new Command('Rename subprocess', world);
+frontend/src/components/toolbars/Toolbar.vue:121:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/toolbars/Toolbar.vue:125:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/src/components/toolbars/Toolbar.vue:126:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/src/components/toolbars/Toolbar.vue:164:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/toolbars/Toolbar.vue:166:  throw new Error('CommandStack not provided');
+frontend/src/components/toolbars/Toolbar.vue:175:// Reactive trigger for CommandStack updates (Phase 91)
+frontend/src/components/toolbars/Toolbar.vue:263:    const cmd = new Command('Add projection plane example setup', world);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:22:import { AddLine2DTangentToCircleThroughPointOp } from '@/commands/operations/world/AddLineOp';
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:24:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:25:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:86:  protected executeOperations(
+frontend/src/tools/QuickProjectionSetupTool.ts:21:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/QuickProjectionSetupTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/QuickProjectionSetupTool.ts:67:    const cmd = new Command('Quick projection setup', world);
+frontend/src/tools/QuickProjectionSetupTool.ts:76:    const { pointId: a1Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a1Pos, groupId);
+frontend/src/tools/QuickProjectionSetupTool.ts:82:    const { pointId: a2Id } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, a2Pos, groupId);
+frontend/src/tools/QuickProjectionSetupTool.ts:88:    const { pointId: b1Id } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, b1Pos, groupId);
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:22:import { AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:24:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:25:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:82:  protected executeOperations(
+frontend/src/tools/Quick3DSegmentTool.ts:32:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:33:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:34:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:35:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/src/tools/Quick3DSegmentTool.ts:36:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/tools/Quick3DSegmentTool.ts:37:import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+frontend/src/tools/Quick3DSegmentTool.ts:41:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/Quick3DSegmentTool.ts:42:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Quick3DSegmentTool.ts:93:    const cmd = new Command('Quick 3D segment setup', world);
+frontend/src/tools/Quick3DSegmentTool.ts:102:      const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:105:      const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:108:      const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DSegmentTool.ts:113:      const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:116:      const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(
+frontend/src/tools/Quick3DSegmentTool.ts:119:      const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DSegmentTool.ts:126:        GuideSequenceFactory.createGuideWithSibling(
+frontend/src/tools/Quick3DSegmentTool.ts:136:        GuideSequenceFactory.createGuideWithSibling(
+frontend/src/tools/Quick3DSegmentTool.ts:150:      const { pointId: int1Id_V } = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/tools/Quick3DSegmentTool.ts:153:      const { pointId: int2Id_V } = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/tools/SegmentTool.ts:26:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/tools/SegmentTool.ts:28:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/SegmentTool.ts:29:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/SegmentTool.ts:80:  protected executeOperations(
+frontend/src/tools/Quick3DLineTool.ts:31:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/Quick3DLineTool.ts:32:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/Quick3DLineTool.ts:33:import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+frontend/src/tools/Quick3DLineTool.ts:35:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/Quick3DLineTool.ts:36:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Quick3DLineTool.ts:80:    const cmd = new Command('Quick 3D line setup', world);
+frontend/src/tools/Quick3DLineTool.ts:91:      const { pointId: p1Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p1_H, groupId);
+frontend/src/tools/Quick3DLineTool.ts:94:      const { pointId: p2Id_H } = PointSequenceFactory.createFreePoint(cmd, P_H.id!, p2_H, groupId);
+frontend/src/tools/Quick3DLineTool.ts:96:      const { lineId: lineId_H } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/tools/Quick3DLineTool.ts:103:      const { pointId: p1Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p1_V, groupId);
+frontend/src/tools/Quick3DLineTool.ts:106:      const { pointId: p2Id_V } = PointSequenceFactory.createFreePoint(cmd, P_V.id!, p2_V, groupId);
+frontend/src/tools/Quick3DLineTool.ts:108:      const { lineId: lineId_V } = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:2: * HingeLineSequenceFactory - Builds operation sequence for complete hinge line creation
+frontend/src/commands/factories/CircleSequenceFactory.ts:2: * CircleSequenceFactory - Factory for creating circle operation sequences
+frontend/src/commands/factories/CircleSequenceFactory.ts:31:export class CircleSequenceFactory {
+frontend/src/commands/factories/GuideSequenceFactory.ts:21:export class GuideSequenceFactory {
+frontend/src/commands/factories/GuideSequenceFactory.ts:38:   * const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/GuideSequenceFactory.ts:39:   * const result = GuideSequenceFactory.createGuideWithSibling(
+frontend/src/commands/factories/GuideSequenceFactory.ts:58:    console.log(`[GuideSequenceFactory] createGuideWithSibling called: plane=${planeId}, refLine=${referenceLineId}, point=${throughPointId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:66:    console.log(`[GuideSequenceFactory] Primary guide created: ${guideId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:68:    console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:80:      console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:84:    console.log(`[GuideSequenceFactory] Sibling plane: ${siblingInfo.siblingPlaneId}, HHL: ${siblingInfo.siblingHalfHingeLineId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:101:      `[GuideSequenceFactory] Created sibling guide ${siblingGuideId} ` +
+frontend/src/commands/factories/GuideSequenceFactory.ts:108:      console.log(`[GuideSequenceFactory] Reference is BrokenHalfHingeLine2D - computing arc geometry`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:121:        console.log(`[GuideSequenceFactory] Arc geometry computed and stored`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:123:        console.warn(`[GuideSequenceFactory] Failed to compute arc geometry`);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:2: * DeletionSequenceFactory - Factory for cascade deletion sequences
+frontend/src/commands/factories/DeletionSequenceFactory.ts:30:} from '@/commands/operations/world/RemoveElementOps';
+frontend/src/commands/factories/DeletionSequenceFactory.ts:31:import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+frontend/src/commands/factories/DeletionSequenceFactory.ts:36: * DeletionSequenceFactory - Factory for cascade deletion sequences
+frontend/src/commands/factories/DeletionSequenceFactory.ts:41:export class DeletionSequenceFactory {
+frontend/src/commands/factories/DeletionSequenceFactory.ts:66:    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+frontend/src/commands/factories/DeletionSequenceFactory.ts:80:        console.warn(`[DeletionSequenceFactory] Element ${elementId} has no producing action - skipping`);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:132:        console.warn(`[DeletionSequenceFactory] Element ${elementId} not found in any plane`);
+frontend/src/commands/factories/README.md:1:# Operation Sequence Factories
+frontend/src/commands/factories/README.md:5:Operation Sequence Factories encapsulate common multi-operation patterns used across tools and command builders. They promote testability, reusability, and maintainability by centralizing complex sequencing logic.
+frontend/src/commands/factories/README.md:12:- `GuideSequenceFactory` - Handles guide creation with conditional sibling
+frontend/src/commands/factories/README.md:13:- `IntersectionSequenceFactory` - Dispatches to correct intersection type and handles siblings
+frontend/src/commands/factories/README.md:14:- `DeletionSequenceFactory` - Handles cascade deletion with topological sorting
+frontend/src/commands/factories/README.md:18:- `GenericSequenceFactory` - Abstract pattern requiring caller to know internals
+frontend/src/commands/factories/README.md:46:  // Operations execute immediately
+frontend/src/commands/factories/README.md:56:- Operations execute immediately (world state updated for subsequent ops)
+frontend/src/commands/factories/README.md:60:### GuideSequenceFactory
+frontend/src/commands/factories/README.md:64:const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/README.md:67:GuideSequenceFactory.createGuideWithSibling(
+frontend/src/commands/factories/README.md:80:### IntersectionSequenceFactory
+frontend/src/commands/factories/README.md:84:const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/README.md:87:IntersectionSequenceFactory.createIntersection(
+frontend/src/commands/factories/README.md:100:### DeletionSequenceFactory
+frontend/src/commands/factories/README.md:104:const cmd = new Command('Delete elements', world);
+frontend/src/commands/factories/README.md:107:DeletionSequenceFactory.createCascadeDeletion(
+frontend/src/commands/factories/README.md:125:Operations (atomic changes)
+frontend/src/commands/factories/README.md:133:- **Operation**: Single atomic change, serializable, undo/redo
+frontend/src/commands/factories/README.md:143:describe('GuideSequenceFactory', () => {
+frontend/src/commands/factories/README.md:145:    const cmd = new Command('Test', mockWorld);
+frontend/src/commands/factories/README.md:146:    GuideSequenceFactory.createGuideWithSibling(cmd, planeId, lineId, pointId, mockWorld);
+frontend/src/commands/factories/README.md:153:    const cmd = new Command('Test', mockWorldWithHHL);
+frontend/src/commands/factories/README.md:154:    GuideSequenceFactory.createGuideWithSibling(cmd, planeId, hhlId, pointId, mockWorldWithHHL);
+frontend/src/commands/factories/README.md:164:Test with real World and CommandStack:
+frontend/src/commands/factories/README.md:169:  const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/README.md:171:  GuideSequenceFactory.createGuideWithSibling(cmd, planeId, hhlId, pointId, world);
+frontend/src/commands/factories/README.md:195:### GuideSequenceFactory
+frontend/src/commands/factories/README.md:204:**Tests**: `GuideSequenceFactory.spec.ts`
+frontend/src/commands/factories/README.md:206:### DeletionSequenceFactory
+frontend/src/commands/factories/README.md:215:**Tests**: `DeletionSequenceFactory.spec.ts`
+frontend/src/commands/factories/README.md:217:### IntersectionSequenceFactory
+frontend/src/commands/factories/README.md:227:**Tests**: `IntersectionSequenceFactory.spec.ts`
+frontend/src/commands/factories/README.md:232:- CircleSequenceFactory (if auxiliary point + circle pattern becomes complex)
+frontend/src/commands/factories/README.md:233:- SegmentSequenceFactory (if auxiliary points + segment pattern becomes complex)
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:2: * IntersectionSequenceFactory - Factory for creating intersection point sequences
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:27: * const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:34: *   result = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:68:export class IntersectionSequenceFactory {
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:240:          `[IntersectionSequenceFactory] Created sibling intersection ${siblingPointId} ` +
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:246:      console.warn('[IntersectionSequenceFactory] Failed to create sibling intersection:', siblingError);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:16:import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
+frontend/src/commands/factories/InitializationSequenceFactory.ts:32: * CRITICAL: This factory does NOT generate element IDs. Operations call World/ProjectionPlane
+frontend/src/commands/factories/InitializationSequenceFactory.ts:33: * factory methods which auto-generate IDs. Operations store generated IDs in outputs for redo support.
+frontend/src/commands/factories/InitializationSequenceFactory.ts:142:  // Phase 89: Direct state mutation (Active Plane is UI state, not Operation)
+frontend/src/commands/factories/PointSequenceFactory.ts:2: * PointSequenceFactory - Factory for creating free point sequences with ProcessTree actions
+frontend/src/commands/factories/PointSequenceFactory.ts:17:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/src/commands/factories/PointSequenceFactory.ts:18:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/commands/factories/PointSequenceFactory.ts:21:export class PointSequenceFactory {
+frontend/src/commands/factories/LineSequenceFactory.ts:2: * LineSequenceFactory - Factory for creating line operation sequences
+frontend/src/commands/factories/LineSequenceFactory.ts:21: * const cmd = new Command('Create construction', world);
+frontend/src/commands/factories/LineSequenceFactory.ts:24: * const lineResult = LineSequenceFactory.createLineByTwoPoints(
+frontend/src/commands/factories/LineSequenceFactory.ts:29: * const parallelResult = LineSequenceFactory.createParallelLine(
+frontend/src/commands/factories/LineSequenceFactory.ts:58:export class LineSequenceFactory {
+frontend/src/tools/Create3DPlaneTool.ts:21:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/tools/Create3DPlaneTool.ts:67:  protected executeOperations(
+frontend/src/tools/Create3DPlaneTool.ts:81:    PlaneSequenceFactory.create3DPlaneFromTraces(
+frontend/src/tools/CreateProjectionPlaneTool.ts:28:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/tools/CreateProjectionPlaneTool.ts:32:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/CreateProjectionPlaneTool.ts:172:  protected executeOperations(
+frontend/src/tools/CreateProjectionPlaneTool.ts:192:    const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
+frontend/src/tools/CreateProjectionPlaneTool.ts:204:    PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+frontend/src/tools/Create3DLineTool.ts:21:import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+frontend/src/tools/Create3DLineTool.ts:23:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/Create3DLineTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Create3DLineTool.ts:71:  protected executeOperations(
+frontend/src/tools/Create3DSegmentTool.ts:21:import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+frontend/src/tools/Create3DSegmentTool.ts:23:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/Create3DSegmentTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Create3DSegmentTool.ts:71:  protected executeOperations(
+frontend/src/tools/Create3DPointTool.ts:21:import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+frontend/src/tools/Create3DPointTool.ts:23:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/Create3DPointTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/Create3DPointTool.ts:89:  protected executeOperations(
+frontend/src/tools/CircleTool.ts:22:import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
+frontend/src/tools/CircleTool.ts:24:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/CircleTool.ts:83:  protected executeOperations(
+frontend/src/tools/CircleTool.ts:99:    CircleSequenceFactory.createCircleByCenterAndPoint(
+frontend/src/tools/GuideTool.ts:31:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/src/tools/GuideTool.ts:34:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/tools/GuideTool.ts:35:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/GuideTool.ts:48: * - Creates TWO guides (primary + sibling) via GuideSequenceFactory
+frontend/src/tools/GuideTool.ts:84:   * - Sibling guide on paired plane (automatically via GuideSequenceFactory)
+frontend/src/tools/GuideTool.ts:90:  protected executeOperations(
+frontend/src/tools/GuideTool.ts:103:    const result = GuideSequenceFactory.createGuideWithSibling(
+frontend/src/tools/LineTool.ts:23:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/LineTool.ts:25:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/LineTool.ts:75:  protected executeOperations(
+frontend/src/tools/LineTool.ts:90:    LineSequenceFactory.createLineByTwoPoints(cmd, planeId, point1.id, point2.id, groupId);
+frontend/src/tools/IntersectionTool.ts:26:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/src/tools/IntersectionTool.ts:28:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/IntersectionTool.ts:86:  protected executeOperations(
+frontend/src/tools/IntersectionTool.ts:121:      IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/tools/IntersectionTool.ts:136:      IntersectionSequenceFactory.createLineCircleIntersection(
+frontend/src/tools/IntersectionTool.ts:151:      IntersectionSequenceFactory.createLineCircleIntersection(
+frontend/src/tools/IntersectionTool.ts:166:      IntersectionSequenceFactory.createCircleCircleIntersection(
+frontend/src/tools/ParallelLineTool.ts:24:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/ParallelLineTool.ts:26:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/ParallelLineTool.ts:76:  protected executeOperations(
+frontend/src/tools/ParallelLineTool.ts:92:    LineSequenceFactory.createParallelLine(
+frontend/src/tools/PerpendicularLineTool.ts:24:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/tools/PerpendicularLineTool.ts:26:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/PerpendicularLineTool.ts:76:  protected executeOperations(
+frontend/src/tools/PerpendicularLineTool.ts:92:    LineSequenceFactory.createPerpendicularLine(
+frontend/src/tools/ArgumentCollectorTool.ts:100:  protected abstract executeOperations(
+frontend/src/tools/ArgumentCollectorTool.ts:122:   * - Operation execution (via executeOperations)
+frontend/src/tools/ArgumentCollectorTool.ts:138:    const cmd = new Command(this.getCommandDescription(), world);
+frontend/src/tools/ArgumentCollectorTool.ts:142:      this.executeOperations(cmd, args, context);
+frontend/src/tools/ArgumentCollectorTool.ts:166:    for (const op of cmd.getOperations()) {
+frontend/src/tools/ExampleConstructionsTool.ts:20:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/ExampleConstructionsTool.ts:77:  protected executeOperations(
+frontend/src/services/factories/PlaneSequenceFactory.ts:2: * PlaneSequenceFactory - Factory for creating 3D plane sequences with ProcessTree actions
+frontend/src/services/factories/PlaneSequenceFactory.ts:12: * Operations automatically record actions to current subprocess.
+frontend/src/services/factories/PlaneSequenceFactory.ts:19:import { Add3DPlaneOp } from '@/commands/operations/world/Add3DPlaneOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:20:import { AddAuxiliaryProjectionPlaneOp } from '@/commands/operations/world/AddAuxiliaryProjectionPlaneOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:21:import { AddHingeLineOp, AddHalfHingeLine2DOp } from '@/commands/operations/world/InitializationOps';
+frontend/src/services/factories/PlaneSequenceFactory.ts:22:import { AddBrokenHingeLineOp } from '@/commands/operations/world/AddBrokenHingeLineOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:23:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:24:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:35:export class PlaneSequenceFactory {
+frontend/src/services/factories/PlaneSequenceFactory.ts:132:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for projPlane:', projPlaneId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:134:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for projPlane');
+frontend/src/services/factories/PlaneSequenceFactory.ts:144:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for hingeLine:', hingeLineId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:149:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for hingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:154:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #1:', hhl1Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:159:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:163:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #2:', hhl2Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:168:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #2');
+frontend/src/services/factories/PlaneSequenceFactory.ts:230:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BrokenHingeLine:', brokenHingeLineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:235:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BrokenHingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:237:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #1:', bhhl1Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:242:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:243:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:245:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #2:', bhhl2Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:250:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #2');
+frontend/src/commands/factories/ProjectionSetupFactory.ts:17:import { IntersectionSequenceFactory } from './IntersectionSequenceFactory';
+frontend/src/commands/factories/ProjectionSetupFactory.ts:18:import { LineSequenceFactory } from './LineSequenceFactory';
+frontend/src/commands/factories/ProjectionSetupFactory.ts:19:import { CircleSequenceFactory } from './CircleSequenceFactory';
+frontend/src/commands/factories/ProjectionSetupFactory.ts:20:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/commands/factories/ProjectionSetupFactory.ts:71:  const l1Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_H.id!, a1Id, a2Id, groupId);
+frontend/src/commands/factories/ProjectionSetupFactory.ts:78:  const a3Result = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/commands/factories/ProjectionSetupFactory.ts:85:  const l2Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_V.id!, b1Id, b2Id, groupId);
+frontend/src/commands/factories/ProjectionSetupFactory.ts:94:  const l3Result = LineSequenceFactory.createPerpendicularLine(cmd, P_H.id!, l1Id, a1Id, groupId);
+frontend/src/commands/factories/ProjectionSetupFactory.ts:98:  const c1Result = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/commands/factories/ProjectionSetupFactory.ts:114:  const l4Result = LineSequenceFactory.createPerpendicularLine(cmd, P_V.id!, halfHingeLineVId, c1SiblingId, groupId);
+frontend/src/commands/factories/ProjectionSetupFactory.ts:118:  const c2Result = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/src/commands/factories/ProjectionSetupFactory.ts:124:  const d1Result = CircleSequenceFactory.createCircleByCenterAndPoint(cmd, P_V.id!, b2Id, c2Id, groupId);
+frontend/src/commands/factories/ProjectionSetupFactory.ts:128:  const c3Result = IntersectionSequenceFactory.createLineCircleIntersection(
+frontend/src/commands/factories/ProjectionSetupFactory.ts:134:  const d2Result = CircleSequenceFactory.createCircleByCenterAndPoint(cmd, P_H.id!, a3Id, c3SiblingId, groupId);
+frontend/src/commands/factories/ProjectionSetupFactory.ts:138:  const c4Result = IntersectionSequenceFactory.createLineCircleIntersection(
+frontend/src/commands/factories/ProjectionSetupFactory.ts:144:  const l5Result = LineSequenceFactory.createLineByTwoPoints(cmd, P_H.id!, a3Id, c4Id, groupId);
+frontend/src/commands/factories/ProjectionSetupFactory.ts:153:  const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
+frontend/src/commands/factories/ProjectionSetupFactory.ts:165:  const { projPlaneId } = PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+frontend/src/commands/factories/ProjectionSetupFactory.ts:181:  PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane(
+frontend/src/tools/ITool.ts:6: * and execute commands via the CommandStack.
+frontend/src/tools/ITool.ts:11: * User input → Tool.handleClick() → Command creation → CommandStack.push()
+frontend/src/tools/ITool.ts:17:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/tools/ITool.ts:30:  commandStack: CommandStack;  // Stack for executing commands
+frontend/src/tools/PointTool.ts:19:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/tools/PointTool.ts:21:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/tools/PointTool.ts:58:  protected executeOperations(
+frontend/src/tools/PointTool.ts:84:    PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
+
+== tests mentioning tools/factories/actions/toolbar ==
+frontend/tests/e2e/selection-mask.spec.ts:21:  test('PointTool: no elements highlight (empty mask)', async ({ page }) => {
+frontend/tests/e2e/selection-mask.spec.ts:32:    // Check that point does NOT have hover class (PointTool has empty mask)
+frontend/tests/e2e/selection-mask.spec.ts:41:  test('LineTool: only points highlight', async ({ page }) => {
+frontend/tests/e2e/selection-mask.spec.ts:51:    // Now test: LineTool should only highlight points, not lines
+frontend/tests/e2e/selection-mask.spec.ts:75:  test('GuideTool: dynamic mask changes after first selection', async ({ page }) => {
+frontend/tests/e2e/selection-mask.spec.ts:120:  test('IntersectionTool: only lines highlight', async ({ page }) => {
+frontend/tests/e2e/selection-mask.spec.ts:190:  test('SegmentTool: only points highlight', async ({ page }) => {
+frontend/tests/e2e/selection-mask.spec.ts:225:  test('CircleTool: only points highlight', async ({ page }) => {
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:105:    // Step 5: Use Line Tool to create line from A to C
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:112:    // Tool should select point A (not the underlying line)
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:119:    // Tool should select point C (not the underlying horizontal line)
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:131:  test('T979: Tool input respects distance adjustment', async ({ page }) => {
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:147:    // Now use Segment Tool (requires two points)
+frontend/tests/e2e/navigation.spec.ts:4: * E2E Test: Navigation During Tool Usage
+frontend/tests/e2e/navigation.spec.ts:15:test.describe('Navigation and Tool Interaction', () => {
+frontend/tests/e2e/navigation.spec.ts:252: * - Tools must check if event is navigation vs tool interaction
+frontend/tests/e2e/create-point.spec.ts:24:    const pointToolButton = page.locator('button:has-text("Point")');
+frontend/tests/e2e/create-point.spec.ts:25:    await expect(pointToolButton).toBeVisible();
+frontend/tests/e2e/create-point.spec.ts:26:    await pointToolButton.click();
+frontend/tests/e2e/create-point.spec.ts:29:    await expect(pointToolButton).toHaveClass(/active/);
+frontend/tests/e2e/create-point.spec.ts:116:    const pointTool = page.locator('button:has-text("Point")');
+frontend/tests/e2e/create-point.spec.ts:117:    await pointTool.click();
+frontend/tests/e2e/create-point.spec.ts:118:    await expect(pointTool).toHaveClass(/active/);
+frontend/tests/e2e/create-point.spec.ts:122:    await pointTool.click();
+frontend/tests/e2e/create-point.spec.ts:124:    // Tool should no longer be active
+frontend/tests/e2e/line-creation.spec.ts:26:    const pointToolButton = page.locator('button:has-text("Point")');
+frontend/tests/e2e/line-creation.spec.ts:27:    await pointToolButton.click();
+frontend/tests/e2e/line-creation.spec.ts:41:    const lineToolButton = page.locator('button:has-text("Line")');
+frontend/tests/e2e/line-creation.spec.ts:42:    await expect(lineToolButton).toBeVisible();
+frontend/tests/e2e/line-creation.spec.ts:43:    await lineToolButton.click();
+frontend/tests/e2e/line-creation.spec.ts:46:    await expect(lineToolButton).toHaveClass(/active/);
+frontend/tests/e2e/line-creation.spec.ts:138:    const pointToolButton = page.locator('button:has-text("Point")');
+frontend/tests/e2e/line-creation.spec.ts:139:    await pointToolButton.click();
+frontend/tests/e2e/line-creation.spec.ts:140:    await expect(pointToolButton).toHaveClass(/active/);
+frontend/tests/e2e/line-creation.spec.ts:143:    const lineToolButton = page.locator('button:has-text("Line")');
+frontend/tests/e2e/line-creation.spec.ts:144:    await lineToolButton.click();
+frontend/tests/e2e/line-creation.spec.ts:147:    await expect(pointToolButton).not.toHaveClass(/active/);
+frontend/tests/e2e/line-creation.spec.ts:150:    await expect(lineToolButton).toHaveClass(/active/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:269: * - Tool shortcuts (P, L, S, C, G) for activating tools
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:289:  test.describe('Tool Shortcuts (T273)', () => {
+frontend/tests/e2e/command-chaining.spec.ts:35: * Example: Hypothetical SegmentTool with auto-created points
+frontend/tests/e2e/command-chaining.spec.ts:37: * // Tool builds a multi-operation command
+frontend/tests/e2e/command-chaining.spec.ts:80: * - Tools can access intermediate outputs via `command.operations[i].outputs`
+frontend/tests/e2e/infeasibility.spec.ts:33:    // await selectSegmentTool(page);
+frontend/tests/e2e/circle-tool-snapping.spec.ts:2: * E2E Test: Circle Tool Circumference Point Snapping (Phase 56)
+frontend/tests/e2e/circle-tool-snapping.spec.ts:13: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Circle Tool Point Snapping
+frontend/tests/e2e/circle-tool-snapping.spec.ts:18:test.describe('Circle Tool: Circumference Point Snapping', () => {
+frontend/tests/e2e/circle-tool-snapping.spec.ts:238:    // Tool should either deactivate or reset to waiting-center state
+frontend/tests/e2e/hover.spec.ts:27:    // Tooltip should contain element ID or label
+frontend/tests/e2e/hover.spec.ts:52:    // Tooltip should be hidden
+frontend/tests/e2e/hover.spec.ts:142:    // Tooltip text should have changed
+frontend/tests/e2e/hover.spec.ts:143:    const pointTooltip = await tooltip.textContent();
+frontend/tests/e2e/hover.spec.ts:144:    expect(pointTooltip).toBeTruthy();
+frontend/tests/e2e/basic-construction.spec.ts:28:    // TODO: Replace placeholder with UI-driven point-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:53:    // TODO: Replace placeholder with UI-driven segment-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:127: * - PointTool and SegmentTool must be integrated with toolbar
+frontend/tests/e2e/basic-construction.spec.ts:128: * - ActionsPanel and ElementsPanel must be rendered in app layout
+frontend/tests/unit/commands.spec.ts:3:import type { IOperation } from '../../src/commands/operations/IOperation';
+frontend/tests/unit/commands.spec.ts:4:import type { OperationResult } from '../../src/commands/operations/IOperation';
+frontend/tests/unit/tools/toolValidation.spec.ts:6: * - LineTool rejects same point twice
+frontend/tests/unit/tools/toolValidation.spec.ts:7: * - SegmentTool rejects same point twice
+frontend/tests/unit/tools/toolValidation.spec.ts:8: * - CircleTool rejects zero-radius circle
+frontend/tests/unit/tools/toolValidation.spec.ts:9: * - ParallelLineTool rejects infeasible reference line
+frontend/tests/unit/tools/toolValidation.spec.ts:10: * - PerpendicularLineTool rejects infeasible reference line
+frontend/tests/unit/tools/toolValidation.spec.ts:11: * - TangentLineToCircleThroughPointTool rejects point inside circle
+frontend/tests/unit/tools/toolValidation.spec.ts:17:import { LineTool } from '@/tools/LineTool';
+frontend/tests/unit/tools/toolValidation.spec.ts:18:import { SegmentTool } from '@/tools/SegmentTool';
+frontend/tests/unit/tools/toolValidation.spec.ts:19:import { CircleTool } from '@/tools/CircleTool';
+frontend/tests/unit/tools/toolValidation.spec.ts:20:import { ParallelLineTool } from '@/tools/ParallelLineTool';
+frontend/tests/unit/tools/toolValidation.spec.ts:21:import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+frontend/tests/unit/tools/toolValidation.spec.ts:22:import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+frontend/tests/unit/tools/toolValidation.spec.ts:27:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/tools/toolValidation.spec.ts:28:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/unit/tools/toolValidation.spec.ts:32:describe('Tool Argument Validation', () => {
+frontend/tests/unit/tools/toolValidation.spec.ts:38:  function makeContext(coords: Vector3): ToolContext {
+frontend/tests/unit/tools/toolValidation.spec.ts:67:  describe('LineTool', () => {
+frontend/tests/unit/tools/toolValidation.spec.ts:69:      const tool = new LineTool();
+frontend/tests/unit/tools/toolValidation.spec.ts:85:      const tool = new LineTool();
+frontend/tests/unit/tools/toolValidation.spec.ts:98:  describe('SegmentTool', () => {
+frontend/tests/unit/tools/toolValidation.spec.ts:100:      const tool = new SegmentTool();
+frontend/tests/unit/tools/toolValidation.spec.ts:115:      const tool = new SegmentTool();
+frontend/tests/unit/tools/toolValidation.spec.ts:128:  describe('CircleTool', () => {
+frontend/tests/unit/tools/toolValidation.spec.ts:130:      const tool = new CircleTool();
+frontend/tests/unit/tools/toolValidation.spec.ts:143:      const tool = new CircleTool();
+frontend/tests/unit/tools/toolValidation.spec.ts:156:  describe('ParallelLineTool', () => {
+frontend/tests/unit/tools/toolValidation.spec.ts:158:      const tool = new ParallelLineTool();
+frontend/tests/unit/tools/toolValidation.spec.ts:179:  describe('PerpendicularLineTool', () => {
+frontend/tests/unit/tools/toolValidation.spec.ts:181:      const tool = new PerpendicularLineTool();
+frontend/tests/e2e/distance-transport.spec.ts:30:    // TODO: Replace placeholder with UI-driven distance-transport coverage when the current SvgCanvas workflow exposes stable test IDs:
+frontend/tests/unit/commandStack.spec.ts:4:import type { IOperation } from '../../src/commands/operations/IOperation';
+frontend/tests/unit/commandStack.spec.ts:5:import type { OperationResult } from '../../src/commands/operations/IOperation';
+frontend/tests/e2e/active-plane-emphasis.spec.ts:96:    const guideTool = page.locator('[data-testid="tool-guide"]');
+frontend/tests/e2e/active-plane-emphasis.spec.ts:98:    if (await guideTool.count() === 0) {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:103:    await guideTool.click();
+frontend/tests/unit/tools/pointTool.spec.ts:2: * Unit Tests: PointTool
+frontend/tests/unit/tools/pointTool.spec.ts:8: * - Tool returns success/failure correctly
+frontend/tests/unit/tools/pointTool.spec.ts:14:import { PointTool } from '@/tools/PointTool';
+frontend/tests/unit/tools/pointTool.spec.ts:17:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/unit/tools/pointTool.spec.ts:23:describe('PointTool', () => {
+frontend/tests/unit/tools/pointTool.spec.ts:24:  let tool: PointTool;
+frontend/tests/unit/tools/pointTool.spec.ts:31:  // Helper to create complete ToolContext
+frontend/tests/unit/tools/pointTool.spec.ts:32:  const createToolContext = (planeId: string, planeCoords: Vector3, canvasCoords = { x: 100, y: 100 }): ToolContext => ({
+frontend/tests/unit/tools/pointTool.spec.ts:46:    tool = new PointTool();
+frontend/tests/unit/tools/pointTool.spec.ts:67:  describe('Tool Identity', () => {
+frontend/tests/unit/tools/pointTool.spec.ts:75:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:98:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:110:      const context = createToolContext(verticalPlaneId, planeCoords);
+frontend/tests/unit/tools/pointTool.spec.ts:130:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:149:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:160:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:172:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:186:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:197:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:208:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:221:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:241:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:258:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:273:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:305:        const context = createToolContext(horizontalPlaneId, pos);
+frontend/tests/unit/tools/pointTool.spec.ts:322:        const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:355:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:364:      // Message format changed in ArgumentCollectorTool migration
+frontend/tests/unit/tools/pointTool.spec.ts:368:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:380:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:395:      const context = createToolContext(
+frontend/tests/unit/tools/pointTool.spec.ts:424:      const context = createToolContext(
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:2: * Unit Tests: Quick3DSegmentTool
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:17:import { Quick3DSegmentTool } from '@/tools/Quick3DSegmentTool';
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:20:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:26:describe('Quick3DSegmentTool', () => {
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:27:  let tool: Quick3DSegmentTool;
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:31:  let mockToolStore: any;
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:34:    tool = new Quick3DSegmentTool();
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:39:    mockToolStore = { setTool: vi.fn() };
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:42:  const createContext = (): ToolContext => ({
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:50:    toolStore: mockToolStore,
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:53:  describe('Tool identity', () => {
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:76:      expect(mockToolStore.setTool).toHaveBeenCalledWith('select');
+frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts:91:      expect(mockToolStore.setTool).toHaveBeenCalledWith('select');
+frontend/tests/unit/tools/GuideTool.test.ts:3:import { GuideTool } from '../../../src/tools/GuideTool';
+frontend/tests/unit/tools/GuideTool.test.ts:7:describe('GuideTool', () => {
+frontend/tests/unit/tools/GuideTool.test.ts:10:  let tool: GuideTool;
+frontend/tests/unit/tools/GuideTool.test.ts:16:    tool = new GuideTool(world, commandStack);
+frontend/tests/unit/tools/GuideTool.test.ts:75:      // This is the regression test for the bug where GuideTool
+frontend/tests/unit/tools/CircleTool.spec.ts:2: * Unit Tests: CircleTool
+frontend/tests/unit/tools/CircleTool.spec.ts:15:import { CircleTool } from '@/tools/CircleTool';
+frontend/tests/unit/tools/CircleTool.spec.ts:20:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/tools/CircleTool.spec.ts:21:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/tests/unit/tools/CircleTool.spec.ts:22:import type { ToolContext } from '@/tools/ITool';
+frontend/tests/unit/tools/CircleTool.spec.ts:26:describe('CircleTool', () => {
+frontend/tests/unit/tools/CircleTool.spec.ts:27:  let tool: CircleTool;
+frontend/tests/unit/tools/CircleTool.spec.ts:34:    tool = new CircleTool();
+frontend/tests/unit/tools/CircleTool.spec.ts:44:  describe('Tool Identity', () => {
+frontend/tests/unit/tools/CircleTool.spec.ts:66:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:81:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:124:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:136:      expect(firstResult.message).toContain('Creating circle');  // ArgumentCollectorTool framework message
+frontend/tests/unit/tools/CircleTool.spec.ts:139:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:176:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:190:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:230:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:244:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:256:      expect(secondResult.message).toContain('completed successfully');  // ArgumentCollectorTool completion message
+frontend/tests/unit/tools/CircleTool.spec.ts:267:      const context: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:279:      expect(result.message).toContain('selectable');  // ArgumentCollectorTool error message
+frontend/tests/unit/tools/CircleTool.spec.ts:283:      const context: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:295:      expect(result.message).toContain('selectable');  // ArgumentCollectorTool error message
+frontend/tests/unit/tools/CircleTool.spec.ts:299:  describe('Tool State Reset', () => {
+frontend/tests/unit/tools/CircleTool.spec.ts:311:      const firstClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:323:      const secondClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:336:      const thirdClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:347:      expect(thirdResult.message).toContain('Creating circle'); // Back to first state (ArgumentCollectorTool message)
+frontend/tests/unit/tools/CircleTool.spec.ts:370:      const centerClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:382:      const circumferenceClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:445:      const centerClickContext: ToolContext = {
+frontend/tests/unit/tools/CircleTool.spec.ts:456:      const circumferenceClickContext: ToolContext = {
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:7: * - "No Subclasses Needed: Tools create operations directly and pass to generic Command"
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:2:import { deserializeOperation, getRegisteredOperationTypes, serializeOperation } from '@/commands/operations/OperationRegistry';
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:3:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:4:import { AddGuide2DPerpendicularToLineOp } from '@/commands/operations/world/AddGuideOp';
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:5:import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
+frontend/tests/unit/stores/toolStore.spec.ts:2: * Tests for toolStore.ts - Tool selection state management
+frontend/tests/unit/stores/toolStore.spec.ts:6:import { useToolStore } from '@/stores/toolStore';
+frontend/tests/unit/stores/toolStore.spec.ts:9:  let toolStore: ReturnType<typeof useToolStore>;
+frontend/tests/unit/stores/toolStore.spec.ts:12:    toolStore = useToolStore();
+frontend/tests/unit/stores/toolStore.spec.ts:14:    toolStore.setTool('select');
+frontend/tests/unit/stores/toolStore.spec.ts:17:  describe('Tool Selection', () => {
+frontend/tests/unit/stores/toolStore.spec.ts:19:      expect(toolStore.currentTool.value).toBe('select');
+frontend/tests/unit/stores/toolStore.spec.ts:20:      expect(toolStore.isToolActive('select')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:24:      toolStore.setTool('point');
+frontend/tests/unit/stores/toolStore.spec.ts:25:      expect(toolStore.currentTool.value).toBe('point');
+frontend/tests/unit/stores/toolStore.spec.ts:26:      expect(toolStore.isToolActive('point')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:27:      expect(toolStore.isToolActive('select')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:31:      toolStore.setTool('line');
+frontend/tests/unit/stores/toolStore.spec.ts:32:      expect(toolStore.currentTool.value).toBe('line');
+frontend/tests/unit/stores/toolStore.spec.ts:33:      expect(toolStore.isToolActive('line')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:37:      toolStore.setTool('circle');
+frontend/tests/unit/stores/toolStore.spec.ts:38:      expect(toolStore.currentTool.value).toBe('circle');
+frontend/tests/unit/stores/toolStore.spec.ts:39:      expect(toolStore.isToolActive('circle')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:43:      toolStore.setTool('segment');
+frontend/tests/unit/stores/toolStore.spec.ts:44:      expect(toolStore.currentTool.value).toBe('segment');
+frontend/tests/unit/stores/toolStore.spec.ts:45:      expect(toolStore.isToolActive('segment')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:49:      toolStore.setTool('point');
+frontend/tests/unit/stores/toolStore.spec.ts:50:      expect(toolStore.isToolActive('point')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:52:      toolStore.setTool('line');
+frontend/tests/unit/stores/toolStore.spec.ts:53:      expect(toolStore.isToolActive('line')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:54:      expect(toolStore.isToolActive('point')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:56:      toolStore.setTool('select');
+frontend/tests/unit/stores/toolStore.spec.ts:57:      expect(toolStore.isToolActive('select')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:58:      expect(toolStore.isToolActive('line')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:62:  describe('Tool State Queries', () => {
+frontend/tests/unit/stores/toolStore.spec.ts:64:      toolStore.setTool('point');
+frontend/tests/unit/stores/toolStore.spec.ts:65:      expect(toolStore.isToolActive('line')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:66:      expect(toolStore.isToolActive('circle')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:67:      expect(toolStore.isToolActive('segment')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:68:      expect(toolStore.isToolActive('select')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:72:      toolStore.setTool('circle');
+frontend/tests/unit/stores/toolStore.spec.ts:73:      expect(toolStore.isToolActive('circle')).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:74:      expect(toolStore.isToolActive('point')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:75:      expect(toolStore.isToolActive('line')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:80:    it('should update currentTool computed property when tool changes', () => {
+frontend/tests/unit/stores/toolStore.spec.ts:81:      expect(toolStore.currentTool.value).toBe('select');
+frontend/tests/unit/stores/toolStore.spec.ts:83:      toolStore.setTool('point');
+frontend/tests/unit/stores/toolStore.spec.ts:84:      expect(toolStore.currentTool.value).toBe('point');
+frontend/tests/unit/stores/toolStore.spec.ts:86:      toolStore.setTool('line');
+frontend/tests/unit/stores/toolStore.spec.ts:87:      expect(toolStore.currentTool.value).toBe('line');
+frontend/tests/unit/stores/toolStore.spec.ts:91:  describe('Tool Types', () => {
+frontend/tests/unit/stores/toolStore.spec.ts:102:        toolStore.setTool(tool);
+frontend/tests/unit/stores/toolStore.spec.ts:103:        expect(toolStore.currentTool.value).toBe(tool);
+frontend/tests/unit/stores/toolStore.spec.ts:104:        expect(toolStore.isToolActive(tool)).toBe(true);
+frontend/tests/unit/stores/toolStore.spec.ts:109:  describe('Tool Step Message', () => {
+frontend/tests/unit/stores/toolStore.spec.ts:111:      expect(toolStore.currentToolStepMessage.value).toBe('');
+frontend/tests/unit/stores/toolStore.spec.ts:115:      toolStore.setToolStepMessage('Creating line: pick point1, point2');
+frontend/tests/unit/stores/toolStore.spec.ts:116:      expect(toolStore.currentToolStepMessage.value).toBe('Creating line: pick point1, point2');
+frontend/tests/unit/stores/toolStore.spec.ts:120:      toolStore.setToolStepMessage('Creating line: pick point1, point2');
+frontend/tests/unit/stores/toolStore.spec.ts:121:      toolStore.setTool('point');
+frontend/tests/unit/stores/toolStore.spec.ts:122:      expect(toolStore.currentToolStepMessage.value).toBe('');
+frontend/tests/unit/stores/toolStore.spec.ts:126:      toolStore.setToolStepMessage('Creating line: pick point1, point2');
+frontend/tests/unit/stores/toolStore.spec.ts:127:      expect(toolStore.currentToolStepMessage.value).toBe('Creating line: pick point1, point2');
+frontend/tests/unit/stores/toolStore.spec.ts:129:      toolStore.setToolStepMessage('Creating line: point1 selected, pick point2');
