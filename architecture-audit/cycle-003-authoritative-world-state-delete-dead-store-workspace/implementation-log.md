@@ -77,3 +77,48 @@ Logs are captured under `architecture-audit/cycle-003-authoritative-world-state-
 - Rendering selectors/read-model/query boundary remains deferred to the planned rendering-selector wave; no query boundary was introduced here.
 - Tool-controller/use-case extraction remains deferred to the planned tool/application wave.
 - Future dynamic-plane e2e coverage, if needed, should be UI-driven against the active app path rather than console/debug injection.
+
+## Validation-and-preview refresh stage update
+
+**Stage:** `cycle-003-validation-and-preview-refresh`  
+**Task:** `t1-run-validation-cadence`  
+**Validation directory:** `architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/validation/`
+
+### Mandatory cadence results
+
+| Check | Command | Logs | Result | Classification |
+|---|---|---|---|---|
+| Static deletion/reference check | `architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/validation/static-deletion-reference-check.sh` | `static-deletion-reference-check.stdout.log`, `static-deletion-reference-check.stderr.log` | PASS | Wave 003 acceptance check passed. All delete-list paths are absent; remaining forbidden-token hits are only the intentional term list in `frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts`; e2e `getWorld`/`worldStore` scan has zero matches. |
+| Root lint | `npm run lint` | `root-lint.stdout.log`, `root-lint.stderr.log` | FAIL | Pre-existing/unrelated tooling debt. The command delegates to frontend lint and fails before linting project files with `sh: 1: eslint: not found`. Wave 003 did not alter lint dependencies or eslint configuration. |
+| Frontend lint | `npm run lint --workspace=frontend` | `frontend-lint.stdout.log`, `frontend-lint.stderr.log` | FAIL | Pre-existing/unrelated tooling debt. Same `eslint: not found` failure as root lint. |
+| Focused Vitest | `npm run test --workspace=frontend -- tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts tests/integration/worldInitialization.spec.ts tests/unit/projectionPlane.spec.ts tests/unit/domain/realizationCache.spec.ts tests/unit/domain/paperHitTesting.spec.ts tests/unit/services/paperService.spec.ts tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/commands/commandStack.spec.ts tests/unit/commands/updateFreePoint2DPositionOp.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts` | `focused-vitest-validation.stdout.log`, `focused-vitest-validation.stderr.log` | PASS | Wave 003 acceptance check passed: 11 files passed, 143 tests passed, 1 skipped. |
+| Full frontend/root Vitest | `npm run test` | `root-vitest.stdout.log`, `root-vitest.stderr.log` | FAIL | Pre-existing/unrelated test debt. Failures are in untouched calculation/component/tool specs: `tests/unit/calculations/intersections.spec.ts` line 48 and adjacent line-intersection assertions, `tests/unit/components/propertiesDialog.spec.ts` lines 69/82/95/295/329, and `tests/unit/tools/GuideTool.test.ts` line 26 (`tool.onMouseDown is not a function`). These are outside Wave 003's deleted store/workspace path and not introduced by the validation task. See `failure-line-citations.stdout.log`. |
+| Backend tests | `npm run test --workspace=backend` | `backend-test.stdout.log`, `backend-test.stderr.log` | PASS | Backend unaffected: 1 file, 15 tests passed. |
+| Root build | `npm run build` | `root-build.stdout.log`, `root-build.stderr.log` | FAIL | Pre-existing/unrelated environment/tooling debt. The command delegates to frontend build and `vue-tsc` aborts before project type checking with `Search string not found: "/supportedTSExtensions = .*(?=;)/"` under Node.js v24.15.0. Wave 003 did not alter TypeScript/vue-tsc versions or build config. |
+| Frontend build | `npm run build --workspace=frontend` | `frontend-build.stdout.log`, `frontend-build.stderr.log` | FAIL | Same pre-existing/unrelated `vue-tsc`/TypeScript compatibility failure as root build. |
+| Backend build | `npm run build --workspace=backend` | `backend-build.stdout.log`, `backend-build.stderr.log` | PASS | Backend unaffected; `tsc` completed successfully. |
+| Playwright e2e | `npm run test:e2e --workspace=frontend` | `frontend-e2e.stdout.log`, `frontend-e2e.stderr.log` | FAIL | Pre-existing/unrelated malformed e2e-spec debt. Playwright fails during test-file parsing before app execution: `frontend/tests/e2e/keyboard-shortcuts.spec.ts:267` contains concatenated cascade-deletion spec text, and `frontend/tests/e2e/selection-mask.spec.ts:188` has an unexpected token. Wave 003 deleted `dynamic-planes.spec.ts` and only reworded stale TODOs in other e2e files; it did not create these parse errors. See `failure-line-citations.stdout.log`. |
+
+### Failed/diagnostic validation attempts
+
+- `preview-refresh.stdout.log` / `preview-refresh.stderr.log` — first preview refresh attempt used `/bin/sh` with `set -o pipefail` and failed immediately (`Illegal option -o pipefail`).
+- `preview-refresh-rerun.stdout.log` / `preview-refresh-rerun.stderr.log` — second preview refresh attempt used an over-broad `pkill -f` pattern that matched its command shell and exited before starting the server.
+- Both were command-wrapper defects in this validation task, not application defects; the final refresh below succeeded.
+
+### Live preview refresh
+
+- Final command wrapper: `architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/validation/refresh-preview.sh`
+- Server logs: `preview-server.stdout.log`, `preview-server.stderr.log`
+- Probe logs: `preview-refresh-final.stdout.log`, `preview-refresh-final.stderr.log`
+- Result: PASS. The preview server was restarted with `npm run dev --workspace=frontend -- --host 0.0.0.0`; the PID was recorded in `preview-server.pid`; `curl -I --max-time 10 http://127.0.0.1:5173/` returned `HTTP/1.1 200 OK`.
+
+### Validation acceptance decision
+
+Wave 003 validation is **accepted** for the implemented deletion scope. The Wave-specific static deletion/import checks and focused tests passed, backend tests/build passed, and the live preview was refreshed and reachable. The remaining mandatory-cadence failures are classified as pre-existing or unrelated repository/tooling debt with cited log evidence: missing frontend `eslint`, `vue-tsc` incompatibility under the current Node/TypeScript environment, unrelated full-Vitest failures in untouched tests, and malformed legacy e2e specs outside the Wave 003 delete target.
+
+### Residual risks / future corrective scope
+
+- Restore lint tooling by adding/resolving the frontend ESLint dependency/configuration or deleting the obsolete lint script if lint is intentionally unavailable.
+- Fix the environment/toolchain mismatch causing `vue-tsc` to crash before type checking (`vue-tsc` vs TypeScript/Node compatibility).
+- Repair or delete stale full-suite tests that do not match current APIs (`intersections.spec.ts`, `propertiesDialog.spec.ts`, `GuideTool.test.ts`).
+- Repair or delete malformed legacy e2e specs (`keyboard-shortcuts.spec.ts`, `selection-mask.spec.ts`) so Playwright can parse and execute the active e2e suite.
