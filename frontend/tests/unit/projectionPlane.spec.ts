@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { BaseProjectionPlane } from '@/domain/world/ProjectionPlane';
+import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
 import { FreePoint2D, Point2DRealization2D } from '@/domain/world/Point';
 import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { Circle2DByCenterAndPoint, Circle2DRealization2D } from '@/domain/world/Circle';
@@ -179,8 +179,8 @@ describe('ProjectionPlane Transformations', () => {
 
 describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
   let world: World;
-  let planeH: BaseProjectionPlane;
-  let planeV: BaseProjectionPlane;
+  let planeH: FixedProjectionPlane;
+  let planeV: FixedProjectionPlane;
 
   beforeEach(() => {
     const { world: w } = createTestWorld();

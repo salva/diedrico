@@ -20,7 +20,7 @@
 import * as THREE from 'three';
 import type { World } from '../domain/world/World';
 import type { Element2D } from '../domain/world/Element2D';
-import type { ProjectionPlane } from '../domain/world/ProjectionPlane';
+import type { ProjectionPlane } from '../domain/world/projectionPlane/ProjectionPlane';
 import type { Point2D } from '../domain/world/Point';
 import type { Line2D } from '../domain/world/Line';
 import type { Circle2D } from '../domain/world/Circle';

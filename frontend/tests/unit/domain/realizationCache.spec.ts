@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
 import type { World } from '@/domain/world/World';
-import type { ProjectionPlane } from '@/domain/world/ProjectionPlane';
+import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Per-Plane Realization Cache (Phase 119)', () => {

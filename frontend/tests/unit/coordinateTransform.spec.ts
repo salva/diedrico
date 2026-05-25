@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
-import { BaseProjectionPlane } from '@/domain/world/ProjectionPlane';
+import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
 import { createTestWorld } from '../helpers/worldHelpers';
 import { InputService } from '@/services/InputService';
 import type { ViewportTransform } from '@/services/InputService';

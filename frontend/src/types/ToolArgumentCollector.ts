@@ -17,7 +17,7 @@
 import type { SelectionMask } from './SelectionMask';
 import type { Element2D } from '@/domain/world/Element2D';
 import type { World } from '@/domain/world/World';
-import type { ProjectionPlane } from '@/domain/world/ProjectionPlane';
+import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { Vector3 } from 'three';
 
 /**

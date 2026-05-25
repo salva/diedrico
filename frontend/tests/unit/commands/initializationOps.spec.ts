@@ -359,9 +359,7 @@ describe('Initialization Operations', () => {
     });
 
     it('should create half hinge line', () => {
-      const point = new Vector3(0, 0, 1);
-      const direction = new Vector3(1, 0, 0);
-      const op = new AddHalfHingeLine2DOp('proj_plane_h', 'hl_test', point, direction);
+      const op = new AddHalfHingeLine2DOp('proj_plane_h', 'hl_test');
       const result = op.apply(world);
 
       expect(result.success).toBe(true);
@@ -376,7 +374,7 @@ describe('Initialization Operations', () => {
     });
 
     it('should return error if plane not found', () => {
-      const op = new AddHalfHingeLine2DOp('nonexistent', 'hl', new Vector3(0, 0, 1), new Vector3(1, 0, 0));
+      const op = new AddHalfHingeLine2DOp('nonexistent', 'hl');
       const result = op.apply(world);
 
       expect(result.success).toBe(false);

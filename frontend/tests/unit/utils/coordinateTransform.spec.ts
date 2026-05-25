@@ -18,7 +18,7 @@ import {
   screenTo3D
 } from '@/utils/coordinateTransform';
 import type { World } from '@/domain/world/World';
-import { BaseProjectionPlane } from '@/domain/world/ProjectionPlane';
+import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
 import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Coordinate Transformation Pipeline', () => {

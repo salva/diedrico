@@ -1,68 +1,19 @@
-/**
- * ProjectionPlane - Abstract base class for all projection planes
- * 
- * ARCHITECTURAL PRINCIPLE - Shared Realization Pattern:
- * Both FixedProjectionPlane (fixed P_H, P_V) and AuxiliaryProjectionPlane (user-created)
- * extend this class and implement realize3D() returning ProjectionPlaneRealization3D.
- * 
- * This ensures uniform treatment:
- * - World.getProjectionPlane3DRealization() works for ALL plane types
- * - Rendering code (ThreeView, SvgCanvas) treats all planes uniformly
- * - No special-casing based on plane type
- * 
- * Two subclasses with different computation strategies:
- * - FixedProjectionPlane: realize3D() returns pre-computed constant matrices
- * - AuxiliaryProjectionPlane: realize3D() computes matrices from trace dependencies
- * 
- * This class represents the DEFINITION/RULE of a projection plane.
- * Actual transformation matrices are stored in PlaneRealization objects.
- * 
- * Two types of projection planes:
- * - Base planes (P_H, P_V): Predetermined transformations (computed on-demand but constant)
- * - Auxiliary planes: Dynamic transformations computed from trace/hinge and supporting 3D plane
- * 
- * Design principles:
- * - Principle V: Transformation matrices computed and cached in realizations
- * - Base planes: Transformations are constant but stored in realization cache
- * - Auxiliary planes: Transformations computed from geometric dependencies
- * 
- * Phase 22.5 Architecture:
- * - Each ProjectionPlane owns its 2D elements (points, lines, circles)
- * - Element storage moved from World to ProjectionPlane for better encapsulation
- * - Realization caches stored per-plane for locality
- * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#projectionplane
- * @see specs/001-dihedral-learning-mvp/refactoring-projection-plane-ownership.md
- */
-
 import { Matrix3, Vector3 } from 'three';
 import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
-import { buildElementId } from './ElementId';
-import { Realization } from './Realization';
-import { Element } from './Element';
-import { computeProjectionPlaneMatrices } from '@/utils/projectionPlaneUtils';
-import type { Point2D, Point2DRealization2D } from './Point';
-import { 
-  FreePoint2D,
-  IntersectionPoint2D,
-  Point2DLineLineIntersection,
-  Point2DLineCircleIntersection,
-  Point2DCircleCircleIntersection,
-  SiblingIntersectionPoint2D
-} from './Point';
-import type { Line2D, Line2DRealization2D } from './Line';
-import { 
-  Line2DByTwoPoints, 
-  Line2DParallel, 
-  Line2DPerpendicularToLine,
-  Line2DTangentToCircleThroughPoint,
-  Line2DTangentToCircleParallelToLine
-} from './Line';
-import type { Circle2D, Circle2DRealization2D } from './Circle';
-import { Circle2DByCenterAndPoint } from './Circle';
-import { Segment2DByPoints } from './Segment';
-import { Guide2D, SiblingGuide2D } from './Guide';
-import { HingeLine, HalfHingeLine2D } from './HingeLine';
+import { buildElementId } from '../ElementId';
+import { Element } from '../Element';
+import type { Point2D, Point2DRealization2D } from '../Point';
+import { FreePoint2D, IntersectionPoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
+import type { Line2D, Line2DRealization2D } from '../Line';
+import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
+import type { Circle2D, Circle2DRealization2D } from '../Circle';
+import { Circle2DByCenterAndPoint } from '../Circle';
+import { Segment2DByPoints } from '../Segment';
+import { Guide2D, SiblingGuide2D } from '../Guide';
+import { HalfHingeLine2D } from '../HingeLine';
+import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
+import type { ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
 
 export const PROJECTION_PLANE_TYPE = {
   BASE: 'base',
@@ -70,109 +21,6 @@ export const PROJECTION_PLANE_TYPE = {
 } as const;
 export type ProjectionPlaneType = typeof PROJECTION_PLANE_TYPE[keyof typeof PROJECTION_PLANE_TYPE];
 
-/**
- * ProjectionPlaneRealization2D - Stores computed 2D transformation matrices for a ProjectionPlane
- * This is the cache of evaluated 2D plane transformations for paper/canvas rendering.
- * 
- * Phase 94: Simple data holder - stores both forward and backward matrices as public fields.
- * Computation happens in realize2D() methods of ProjectionPlane subclasses.
- */
-export class ProjectionPlaneRealization2D extends Realization {
-  planeId: string;
-  
-  // Plane-to-paper: 3x3 homogeneous matrix
-  // Transforms plane (u,v) coordinates → paper (x,y) coordinates
-  // Usage: [x, y, 1] = M × [u, v, 1]
-  planeToPaper2D: Matrix3;
-  
-  // Paper-to-plane: Inverse of planeToPaper2D
-  // Transforms paper (x,y) coordinates → plane (u,v) coordinates
-  // Used for mouse input conversion
-  paperToPlane2D: Matrix3;
-
-  constructor(
-    planeId: string,
-    planeToPaper2D: Matrix3,
-    paperToPlane2D: Matrix3,
-    feasible: boolean = true
-  ) {
-    super(feasible);
-    this.planeId = planeId;
-    this.planeToPaper2D = planeToPaper2D;
-    this.paperToPlane2D = paperToPlane2D;
-  }
-
-  /**
-   * Clone this realization
-   */
-  clone(): ProjectionPlaneRealization2D {
-    return new ProjectionPlaneRealization2D(
-      this.planeId,
-      this.planeToPaper2D.clone(),
-      this.paperToPlane2D.clone(),
-      this.feasible
-    );
-  }
-}
-
-/**
- * ProjectionPlaneRealization3D - Stores computed 3D transformation matrices for a ProjectionPlane
- * This is the cache of evaluated 3D plane transformation for Three.js rendering.
- * Uses Matrix4x3 for dimension-changing transforms (2D homogeneous → 3D homogeneous).
- * 
- * Phase 94: Simple data holder - stores both forward and backward matrices as public fields.
- * Computation happens in realize3D() methods of ProjectionPlane subclasses.
- */
-export class ProjectionPlaneRealization3D extends Realization {
-  planeId: string;
-  
-  // Forward: Plane (u,v,1) → 3D (x,y,z,w)
-  // 4x3 matrix transforms Vector3 to Vector4 (homogeneous coordinates)
-  // Usage: [x, y, z, w] = M × [u, v, 1]
-  planeTo3D: Matrix4x3;
-  
-  // Inverse: 3D (x,y,z,w) → Plane (u,v,1)
-  // 3x4 matrix transforms Vector4 to Vector3 (homogeneous coordinates)
-  // Usage: [u, v, 1] = M × [x, y, z, w]
-  threeDToPlane: Matrix3x4;
-
-  constructor(
-    planeId: string,
-    planeTo3D: Matrix4x3,
-    threeDToPlane: Matrix3x4,
-    feasible: boolean = true
-  ) {
-    super(feasible);
-    this.planeId = planeId;
-    this.planeTo3D = planeTo3D;
-    this.threeDToPlane = threeDToPlane;
-  }
-
-  /**
-   * Clone this realization
-   */
-  clone(): ProjectionPlaneRealization3D {
-    return new ProjectionPlaneRealization3D(
-      this.planeId,
-      this.planeTo3D.clone(),
-      this.threeDToPlane.clone(),
-      this.feasible
-    );
-  }
-}
-
-/**
- * Base ProjectionPlane class - represents the rule/definition of a projection plane
- * 
- * Phase 22.5: Each plane owns its 2D elements
- * - Element storage: points, lines, circles Maps
- * - Realization caches: pointRealizations, lineRealizations, circleRealizations
- * - Dual storage period: Both World and ProjectionPlane store elements during migration
- * 
- * Phase 98: ProjectionPlane extends Element
- * - Projection planes are geometric elements with id and label
- * - Enables uniform handling via descriptor pattern
- */
 export abstract class ProjectionPlane extends Element {
   abstract readonly type: ProjectionPlaneType;
   name: string;
@@ -187,15 +35,7 @@ export abstract class ProjectionPlane extends Element {
    */
   abstract getDependencies(): string[];
 
-  // Phase 22.5: Element storage (2D elements that belong to this plane)
-  private points: Map<string, Point2D>;
-  private lines: Map<string, Line2D>;
-  private circles: Map<string, Circle2D>;
-  
-  // Phase 22.5: Realization caches (computed 2D positions/equations)
-  private pointRealizations: Map<string, Point2DRealization2D>;
-  private lineRealizations: Map<string, Line2DRealization2D>;
-  private circleRealizations: Map<string, Circle2DRealization2D>;
+  private readonly elementStore: ProjectionPlaneElementStore;
 
   constructor(
     id: string,
@@ -205,22 +45,13 @@ export abstract class ProjectionPlane extends Element {
     color: string = '#000000',
     plane3DId?: string
   ) {
-    super(id, name);  // Call Element constructor with id and label
+    super(id, name);
     this.name = name;
     this.isActive = isActive;
     this.isVisible = isVisible;
     this.color = color;
     this.plane3DId = plane3DId;
-    
-    // Initialize element storage
-    this.points = new Map();
-    this.lines = new Map();
-    this.circles = new Map();
-    
-    // Initialize realization caches
-    this.pointRealizations = new Map();
-    this.lineRealizations = new Map();
-    this.circleRealizations = new Map();
+    this.elementStore = new ProjectionPlaneElementStore();
   }
 
   /**
@@ -228,12 +59,7 @@ export abstract class ProjectionPlane extends Element {
    * Used when loading projects or resetting the world
    */
   clear(): void {
-    this.points.clear();
-    this.lines.clear();
-    this.circles.clear();
-    this.pointRealizations.clear();
-    this.lineRealizations.clear();
-    this.circleRealizations.clear();
+    this.elementStore.clear();
   }
 
   // ==================== Point Methods ====================
@@ -241,22 +67,15 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Add a point to this plane
    */
-  addPoint(point: Point2D, world?: import('./World').World): void {
-    if (!point.id) {
-      throw new Error('Cannot add point without ID');
-    }
-    this.points.set(point.id, point);
-    if (world) {
-      world.getDependencyService().registerNode(point.id, point.getDependencies());
-      world.markDirty();
-    }
+  addPoint(point: Point2D, context?: ProjectionPlaneMutationContext): void {
+    this.elementStore.addPoint(point, context);
   }
 
   /**
    * Get a point by ID
    */
   getPoint(id: string): Point2D | undefined {
-    return this.points.get(id);
+    return this.elementStore.getPoint(id);
   }
 
   /**
@@ -271,7 +90,7 @@ export abstract class ProjectionPlane extends Element {
    * const originH = plane.getPoint2DByLabel('O_H');
    */
   getPoint2DByLabel(label: string): Point2D {
-    for (const point of this.points.values()) {
+    for (const point of this.elementStore.getAllPoints()) {
       if (point.label === label) {
         return point;
       }
@@ -283,20 +102,14 @@ export abstract class ProjectionPlane extends Element {
    * Get all points on this plane
    */
   getAllPoints(): Point2D[] {
-    return Array.from(this.points.values());
+    return this.elementStore.getAllPoints();
   }
 
   /**
    * Remove a point from this plane
    */
-  removePoint(id: string, world?: import('./World').World): boolean {
-    this.pointRealizations.delete(id);  // Clear cached realization
-    const removed = this.points.delete(id);
-    if (removed && world) {
-      world.getDependencyService().unregisterNode(id);
-      world.markDirty();
-    }
-    return removed;
+  removePoint(id: string, context?: ProjectionPlaneMutationContext): boolean {
+    return this.elementStore.removePoint(id, context);
   }
 
   /**
@@ -304,21 +117,21 @@ export abstract class ProjectionPlane extends Element {
    * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
    */
   getPointRealization2D(id: string): Point2DRealization2D | undefined {
-    return this.pointRealizations.get(id);
+    return this.elementStore.getPointRealization2D(id);
   }
 
   /**
    * Set/cache point realization
    */
   setPointRealization2D(id: string, realization: Point2DRealization2D): void {
-    this.pointRealizations.set(id, realization);
+    this.elementStore.setPointRealization2D(id, realization);
   }
 
   /**
    * Clear point realization cache
    */
   clearPointRealization2D(id: string): void {
-    this.pointRealizations.delete(id);
+    this.elementStore.clearPointRealization2D(id);
   }
 
   // ==================== Line Methods ====================
@@ -326,42 +139,29 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Add a line to this plane
    */
-  addLine(line: Line2D, world?: import('./World').World): void {
-    if (!line.id) {
-      throw new Error('Cannot add line without ID');
-    }
-    this.lines.set(line.id, line);
-    if (world) {
-      world.getDependencyService().registerNode(line.id, line.getDependencies());
-      world.markDirty();
-    }
+  addLine(line: Line2D, context?: ProjectionPlaneMutationContext): void {
+    this.elementStore.addLine(line, context);
   }
 
   /**
    * Get a line by ID
    */
   getLine(id: string): Line2D | undefined {
-    return this.lines.get(id);
+    return this.elementStore.getLine(id);
   }
 
   /**
    * Get all lines on this plane
    */
   getAllLines(): Line2D[] {
-    return Array.from(this.lines.values());
+    return this.elementStore.getAllLines();
   }
 
   /**
    * Remove a line from this plane
    */
-  removeLine(id: string, world?: import('./World').World): boolean {
-    this.lineRealizations.delete(id);  // Clear cached realization
-    const removed = this.lines.delete(id);
-    if (removed && world) {
-      world.getDependencyService().unregisterNode(id);
-      world.markDirty();
-    }
-    return removed;
+  removeLine(id: string, context?: ProjectionPlaneMutationContext): boolean {
+    return this.elementStore.removeLine(id, context);
   }
 
   /**
@@ -370,21 +170,21 @@ export abstract class ProjectionPlane extends Element {
    * Note: This includes segments, guides, and all Line2D subtypes
    */
   getLineRealization2D(id: string): Line2DRealization2D | undefined {
-    return this.lineRealizations.get(id);
+    return this.elementStore.getLineRealization2D(id);
   }
 
   /**
    * Set/cache line realization
    */
   setLineRealization2D(id: string, realization: Line2DRealization2D): void {
-    this.lineRealizations.set(id, realization);
+    this.elementStore.setLineRealization2D(id, realization);
   }
 
   /**
    * Clear line realization cache
    */
   clearLineRealization2D(id: string): void {
-    this.lineRealizations.delete(id);
+    this.elementStore.clearLineRealization2D(id);
   }
 
   // ==================== Circle Methods ====================
@@ -392,42 +192,29 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Add a circle to this plane
    */
-  addCircle(circle: Circle2D, world?: import('./World').World): void {
-    if (!circle.id) {
-      throw new Error('Cannot add circle without ID');
-    }
-    this.circles.set(circle.id, circle);
-    if (world) {
-      world.getDependencyService().registerNode(circle.id, circle.getDependencies());
-      world.markDirty();
-    }
+  addCircle(circle: Circle2D, context?: ProjectionPlaneMutationContext): void {
+    this.elementStore.addCircle(circle, context);
   }
 
   /**
    * Get a circle by ID
    */
   getCircle(id: string): Circle2D | undefined {
-    return this.circles.get(id);
+    return this.elementStore.getCircle(id);
   }
 
   /**
    * Get all circles on this plane
    */
   getAllCircles(): Circle2D[] {
-    return Array.from(this.circles.values());
+    return this.elementStore.getAllCircles();
   }
 
   /**
    * Remove a circle from this plane
    */
-  removeCircle(id: string, world?: import('./World').World): boolean {
-    this.circleRealizations.delete(id);  // Clear cached realization
-    const removed = this.circles.delete(id);
-    if (removed && world) {
-      world.getDependencyService().unregisterNode(id);
-      world.markDirty();
-    }
-    return removed;
+  removeCircle(id: string, context?: ProjectionPlaneMutationContext): boolean {
+    return this.elementStore.removeCircle(id, context);
   }
 
   /**
@@ -435,21 +222,21 @@ export abstract class ProjectionPlane extends Element {
    * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
    */
   getCircleRealization2D(id: string): Circle2DRealization2D | undefined {
-    return this.circleRealizations.get(id);
+    return this.elementStore.getCircleRealization2D(id);
   }
 
   /**
    * Set/cache circle realization
    */
   setCircleRealization2D(id: string, realization: Circle2DRealization2D): void {
-    this.circleRealizations.set(id, realization);
+    this.elementStore.setCircleRealization2D(id, realization);
   }
 
   /**
    * Clear circle realization cache
    */
   clearCircleRealization2D(id: string): void {
-    this.circleRealizations.delete(id);
+    this.elementStore.clearCircleRealization2D(id);
   }
 
   // ==================== Realization Computation Methods ====================
@@ -462,9 +249,9 @@ export abstract class ProjectionPlane extends Element {
    * @param world World context for querying dependencies
    * @returns Point2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizePoint2D(point: Point2D, world: import('./World').World): Point2DRealization2D | undefined {
+  realizePoint2D(point: Point2D, world: ProjectionPlaneMutationContext): Point2DRealization2D | undefined {
     // Check cache first
-    const cached = this.pointRealizations.get(point.id);
+    const cached = this.elementStore.getPointRealization2D(point.id);
     if (cached) {
       return cached;
     }
@@ -476,7 +263,7 @@ export abstract class ProjectionPlane extends Element {
     }
 
     // Cache the result
-    this.pointRealizations.set(point.id, realization);
+    this.elementStore.setPointRealization2D(point.id, realization);
     return realization;
   }
 
@@ -486,9 +273,9 @@ export abstract class ProjectionPlane extends Element {
    * @param world World context for querying dependencies
    * @returns Line2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizeLine2D(line: Line2D, world: import('./World').World): Line2DRealization2D | undefined {
+  realizeLine2D(line: Line2D, world: ProjectionPlaneMutationContext): Line2DRealization2D | undefined {
     // Check cache first
-    const cached = this.lineRealizations.get(line.id);
+    const cached = this.elementStore.getLineRealization2D(line.id);
     if (cached) {
       return cached;
     }
@@ -500,7 +287,7 @@ export abstract class ProjectionPlane extends Element {
     }
 
     // Cache the result
-    this.lineRealizations.set(line.id, realization);
+    this.elementStore.setLineRealization2D(line.id, realization);
     return realization;
   }
 
@@ -510,9 +297,9 @@ export abstract class ProjectionPlane extends Element {
    * @param world World context for querying dependencies
    * @returns Circle2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizeCircle2D(circle: Circle2D, world: import('./World').World): Circle2DRealization2D | undefined {
+  realizeCircle2D(circle: Circle2D, world: ProjectionPlaneMutationContext): Circle2DRealization2D | undefined {
     // Check cache first
-    const cached = this.circleRealizations.get(circle.id);
+    const cached = this.elementStore.getCircleRealization2D(circle.id);
     if (cached) {
       return cached;
     }
@@ -524,7 +311,7 @@ export abstract class ProjectionPlane extends Element {
     }
 
     // Cache the result
-    this.circleRealizations.set(circle.id, realization);
+    this.elementStore.setCircleRealization2D(circle.id, realization);
     return realization;
   }
 
@@ -535,7 +322,7 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Phase 95: Generate unique Point2D ID (camelCase format)
    */
-  generatePoint2DId(world: import('./World').World): string {
+  generatePoint2DId(world: ProjectionPlaneMutationContext): string {
     const localId = `point2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
@@ -543,7 +330,7 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Phase 95: Generate unique Line2D ID (camelCase format)
    */
-  generateLine2DId(world: import('./World').World): string {
+  generateLine2DId(world: ProjectionPlaneMutationContext): string {
     const localId = `line2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
@@ -551,7 +338,7 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Phase 95: Generate unique Segment2D ID (camelCase format)
    */
-  generateSegment2DId(world: import('./World').World): string {
+  generateSegment2DId(world: ProjectionPlaneMutationContext): string {
     const localId = `segment2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
@@ -559,7 +346,7 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Phase 95: Generate unique Circle2D ID (camelCase format)
    */
-  generateCircle2DId(world: import('./World').World): string {
+  generateCircle2DId(world: ProjectionPlaneMutationContext): string {
     const localId = `circle2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
@@ -567,7 +354,7 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Phase 95: Generate unique Guide2D ID (camelCase format)
    */
-  generateGuide2DId(world: import('./World').World): string {
+  generateGuide2DId(world: ProjectionPlaneMutationContext): string {
     const localId = `guide2d${world.getNextId()}`;
     return buildElementId(this.id, localId);
   }
@@ -591,7 +378,7 @@ export abstract class ProjectionPlane extends Element {
    */
   addFreePoint2D(
     position: Vector3,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string,
     label?: string
   ): FreePoint2D {
@@ -628,7 +415,7 @@ export abstract class ProjectionPlane extends Element {
   addLineLineIntersection(
     line1Id: string,
     line2Id: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Point2DLineLineIntersection {
     if (!this.id) {
@@ -675,7 +462,7 @@ export abstract class ProjectionPlane extends Element {
     lineId: string,
     circleId: string,
     index: number,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Point2DLineCircleIntersection {
     if (!this.id) {
@@ -727,7 +514,7 @@ export abstract class ProjectionPlane extends Element {
     circle1Id: string,
     circle2Id: string,
     index: number,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Point2DCircleCircleIntersection {
     if (!this.id) {
@@ -779,7 +566,7 @@ export abstract class ProjectionPlane extends Element {
   addLine2DBetweenTwoPoints(
     point1Id: string,
     point2Id: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DByTwoPoints {
     if (!this.id) {
@@ -842,7 +629,7 @@ export abstract class ProjectionPlane extends Element {
   addLine2DParallelToLine(
     referenceLineId: string,
     throughPointId: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DParallel {
     if (!this.id) {
@@ -889,7 +676,7 @@ export abstract class ProjectionPlane extends Element {
   addLine2DPerpendicularToLine(
     referenceLineId: string,
     throughPointId: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DPerpendicularToLine {
     if (!this.id) {
@@ -939,7 +726,7 @@ export abstract class ProjectionPlane extends Element {
     circleId: string,
     throughPointId: string,
     tangentIndex: 0 | 1,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DTangentToCircleThroughPoint {
     if (!this.id) {
@@ -1000,7 +787,7 @@ export abstract class ProjectionPlane extends Element {
     circleId: string,
     referenceLineId: string,
     tangentIndex: 0 | 1,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DTangentToCircleParallelToLine {
     if (!this.id) {
@@ -1059,7 +846,7 @@ export abstract class ProjectionPlane extends Element {
   addSegment2DBetweenPoints(
     point1Id: string,
     point2Id: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Segment2DByPoints {
     if (!this.id) {
@@ -1109,7 +896,7 @@ export abstract class ProjectionPlane extends Element {
   addCircle2DByCenterAndPoint(
     centerPointId: string,
     circumferencePointId: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Circle2DByCenterAndPoint {
     if (!this.id) {
@@ -1159,7 +946,7 @@ export abstract class ProjectionPlane extends Element {
   addGuide2D(
     referenceLineId: string,
     throughPointId: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): Guide2D {
     if (!this.id) {
@@ -1214,9 +1001,9 @@ export abstract class ProjectionPlane extends Element {
   addSiblingGuide2D(
     primaryGuideId: string,
     referenceLineId: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
-  ): import('./Guide').SiblingGuide2D {
+  ): SiblingGuide2D {
     if (!this.id) {
       throw new Error('Cannot add sibling guide to plane without ID');
     }
@@ -1277,9 +1064,9 @@ export abstract class ProjectionPlane extends Element {
    */
   addSiblingIntersectionPoint(
     primaryIntersectionId: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
-  ): import('./Point').SiblingIntersectionPoint2D {
+  ): SiblingIntersectionPoint2D {
     if (!this.id) {
       throw new Error('Cannot add sibling intersection point to plane without ID');
     }
@@ -1340,7 +1127,7 @@ export abstract class ProjectionPlane extends Element {
    */
   addOriginPoint2D(
     position: Vector3,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string,
     label?: string
   ): FreePoint2D {
@@ -1380,7 +1167,7 @@ export abstract class ProjectionPlane extends Element {
    */
   addHalfHingeLine2D(
     hingeLineId: string,
-    world: import('./World').World,
+    world: ProjectionPlaneMutationContext,
     id?: string
   ): HalfHingeLine2D {
     if (!this.id) {
@@ -1425,7 +1212,7 @@ export abstract class ProjectionPlane extends Element {
    * 
    * @param world - World instance for element lookup (auxiliary planes need this)
    */
-  abstract realize2D(world: any): ProjectionPlaneRealization2D;
+  abstract realize2D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D;
 
   /**
    * Calculate the 3D realization (transformation matrix) for this projection plane
@@ -1433,7 +1220,7 @@ export abstract class ProjectionPlane extends Element {
    * 
    * @param world - World instance for element lookup (auxiliary planes need this)
    */
-  abstract realize3D(world: any): ProjectionPlaneRealization3D;
+  abstract realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D;
 
   /**
    * Protected helper: Compute backward 2D matrix (paperToPlane) from forward matrix (planeToPaper)
@@ -1519,279 +1306,3 @@ export abstract class ProjectionPlane extends Element {
   }
 }
 
-/**
- * FixedProjectionPlane - For P_H and P_V with predetermined transformations
- * 
- * Phase 94: Stores only forward matrices. Backward matrices computed in realize methods.
- * The rule is: "this is P_H" or "this is P_V"
- * These planes have fixed positions in paper coordinate system.
- * Their transformation matrices are predetermined constants stored in the object.
- * 
- * Note: Not to be confused with the abstract base class ProjectionPlane.
- * "Fixed" means these planes have immutable, pre-determined transformations.
- */
-export class FixedProjectionPlane extends ProjectionPlane {
-  readonly type: ProjectionPlaneType = 'base';
-
-  // Predetermined forward transformation matrices (part of the plane definition)
-  private readonly planeToPaper2D: Matrix3;
-  private readonly planeTo3D: Matrix4x3;
-
-  constructor(
-    id: string,
-    name: string,
-    planeToPaper2D: Matrix3,
-    planeTo3D: Matrix4x3,
-    isActive: boolean = false,
-    isVisible: boolean = true,
-    color: string = '#000000',
-    plane3DId?: string
-  ) {
-    super(id, name, isActive, isVisible, color, plane3DId);
-    this.planeToPaper2D = planeToPaper2D;
-    this.planeTo3D = planeTo3D;
-  }
-
-  clone(): FixedProjectionPlane {
-    return new FixedProjectionPlane(
-      this.id,
-      this.name,
-      this.planeToPaper2D.clone(),
-      this.planeTo3D.clone(),
-      this.isActive,
-      this.isVisible,
-      this.color,
-      this.plane3DId
-    );
-  }
-  
-  getDependencies(): string[] {
-    return []; // Fixed planes have no dependencies on other elements
-  }
-  
-  /**
-   * Calculate the 2D transformation realization for this fixed plane
-   * Computes paperToPlane2D (inverse) using shared base class helper.
-   * 
-   * @param _world - World instance (not used for fixed planes, but required for API uniformity)
-   */
-  realize2D(_world: any): ProjectionPlaneRealization2D {
-    if (!this.id) {
-      throw new Error('Cannot create realization for plane without ID');
-    }
-    
-    // Use shared helper to compute backward matrix with determinant check
-    const { paperToPlane, feasible } = this.computeBackward2DMatrix(this.planeToPaper2D);
-    
-    return new ProjectionPlaneRealization2D(
-      this.id,
-      this.planeToPaper2D.clone(),
-      paperToPlane,
-      feasible
-    );
-  }
-
-  /**
-   * Calculate the 3D transformation realization for this fixed plane
-   * Computes threeDToPlane (projection) from planeTo3D basis vectors using shared helper.
-   * 
-   * @param _world - World instance (not used for fixed planes, but required for API uniformity)
-   */
-  realize3D(_world: any): ProjectionPlaneRealization3D {
-    if (!this.id) {
-      throw new Error('Cannot create realization for plane without ID');
-    }
-    
-    // Use shared helper to compute backward matrix from basis vectors
-    const threeDToPlane = this.computeBackward3DMatrix(this.planeTo3D);
-    
-    return new ProjectionPlaneRealization3D(
-      this.id,
-      this.planeTo3D.clone(),
-      threeDToPlane,
-      true  // Fixed planes are always feasible
-    );
-  }
-}
-
-/**
- * AuxiliaryProjectionPlane - User-created projection planes with dynamic transformations
- * 
- * CRITICAL DISTINCTION:
- * - BaseProjectionPlane (P_H, P_V): Initialization only, pre-computed matrices, no dependencies
- * - AuxiliaryProjectionPlane: User-created, matrices computed via realize3D() from traces
- * 
- * Realization Pattern (like Point3DFromProjections, Plane3DFromTraces):
- * - Constructor stores trace IDs (dependencies), NOT matrices
- * - realize3D() computes matrices on demand from current trace positions using computeProjectionPlaneMatrices()
- * - Matrices recalculate automatically when traces move (parametric behavior)
- * - Returns ProjectionPlaneRealization3D (SAME TYPE as BaseProjectionPlane)
- * 
- * The transformation is computed through geometric unfolding:
- * 1. Determine 3D plane Q from T1 and T2 traces (using Plane3DFromTraces)
- * 2. Compute coordinate system: origin, U-axis (from T1), V-axis (from T2' orientation)
- * 3. Build transformation matrices via computeProjectionPlaneMatrices()
- */
-export class AuxiliaryProjectionPlane extends ProjectionPlane {
-  readonly type: ProjectionPlaneType = 'auxiliary';
-
-  // Dependencies for computing transformation (the RULE)
-  readonly t1HingeTraceId: string;      // Trace line used as hinge (T1)
-  readonly t2OtherTraceId: string;      // Other trace line on different plane (T2)
-  readonly t2PrimeLineId: string;       // Position/orientation line on same plane as T1 (T2')
-
-  constructor(
-    id: string,
-    name: string,
-    t1HingeTraceId: string,
-    t2OtherTraceId: string,
-    t2PrimeLineId: string,
-    isActive: boolean = false,
-    isVisible: boolean = true,
-    color: string = '#000000',
-    plane3DId?: string
-  ) {
-    super(id, name, isActive, isVisible, color, plane3DId);
-    this.t1HingeTraceId = t1HingeTraceId;
-    this.t2OtherTraceId = t2OtherTraceId;
-    this.t2PrimeLineId = t2PrimeLineId;
-  }
-
-  clone(): AuxiliaryProjectionPlane {
-    return new AuxiliaryProjectionPlane(
-      this.id,
-      this.name,
-      this.t1HingeTraceId,
-      this.t2OtherTraceId,
-      this.t2PrimeLineId,
-      this.isActive,
-      this.isVisible,
-      this.color,
-      this.plane3DId
-    );
-  }
-
-  /**
-   * Get dependencies - returns IDs of trace lines this plane depends on
-   * Used for invalidation tracking when traces move
-   */
-  getDependencies(): string[] {
-    return [this.t1HingeTraceId, this.t2OtherTraceId, this.t2PrimeLineId];
-  }
-
-  /**
-   * Calculate the 3D transformation realization for this auxiliary plane
-   * Computes transformation matrices from trace dependencies using computeProjectionPlaneMatrices().
-   * 
-   * @param world - World instance for element lookup
-   * @returns ProjectionPlaneRealization3D with computed transformation matrices
-   */
-  realize3D(world: any): ProjectionPlaneRealization3D {
-    if (!this.id) {
-      throw new Error('Cannot create realization for plane without ID');
-    }
-    
-    console.log('[AuxiliaryProjectionPlane.realize3D] Starting realization for', this.id);
-    console.log('[AuxiliaryProjectionPlane.realize3D] t1HingeTraceId:', this.t1HingeTraceId);
-    console.log('[AuxiliaryProjectionPlane.realize3D] t2OtherTraceId:', this.t2OtherTraceId);
-    console.log('[AuxiliaryProjectionPlane.realize3D] t2PrimeLineId:', this.t2PrimeLineId);
-    
-    try {
-      // Compute transformation matrices from trace dependencies
-      const matrices = computeProjectionPlaneMatrices(
-        this.t1HingeTraceId,
-        this.t2OtherTraceId,
-        this.t2PrimeLineId,
-        world
-      );
-      
-      if (!matrices) {
-        // Trace lines are not feasible - return infeasible realization
-        console.log('[AuxiliaryProjectionPlane.realize3D] Cannot compute matrices - traces not feasible');
-        return new ProjectionPlaneRealization3D(
-          this.id,
-          new Matrix4x3(),
-          new Matrix3x4(),
-          false
-        );
-      }
-      
-      console.log('[AuxiliaryProjectionPlane.realize3D] Successfully computed matrices for', this.id);
-      
-      return new ProjectionPlaneRealization3D(
-        this.id,
-        matrices.planeTo3D,
-        matrices.threeDToPlane,
-        true
-      );
-      
-    } catch (error) {
-      console.error('[AuxiliaryProjectionPlane] Failed to compute realization:', error);
-      // Return infeasible realization with fallback identity matrices
-      return new ProjectionPlaneRealization3D(
-        this.id,
-        new Matrix4x3(),
-        new Matrix3x4(),
-        false
-      );
-    }
-  }
-
-  /**
-   * Calculate the 2D realization (transformation matrices) for this auxiliary plane
-   * Unlike base planes, this requires World context to resolve trace dependencies.
-   * 
-   * @param world - World instance for element lookup
-   * @returns ProjectionPlaneRealization2D with computed transformation matrices
-   */
-  realize2D(world: any): ProjectionPlaneRealization2D {
-    if (!this.id) {
-      throw new Error('Cannot create realization for plane without ID');
-    }
-    
-    try {
-      // Compute transformation matrices
-      const matrices = computeProjectionPlaneMatrices(
-        this.t1HingeTraceId,
-        this.t2OtherTraceId,
-        this.t2PrimeLineId,
-        world
-      );
-      
-      if (!matrices) {
-        // Trace lines are not feasible - return infeasible realization
-        console.log('[AuxiliaryProjectionPlane.realize2D] Cannot compute matrices - traces not feasible');
-        const identityMatrix = new Matrix3();
-        identityMatrix.identity();
-        return new ProjectionPlaneRealization2D(
-          this.id,
-          identityMatrix,
-          identityMatrix.clone(),
-          false
-        );
-      }
-      
-      // Use shared helper to compute backward matrix with determinant check
-      const { paperToPlane, feasible } = this.computeBackward2DMatrix(matrices.planeToPaper);
-      
-      return new ProjectionPlaneRealization2D(
-        this.id,
-        matrices.planeToPaper,
-        paperToPlane,
-        feasible
-      );
-      
-    } catch (error) {
-      console.error('[AuxiliaryProjectionPlane] Failed to compute 2D realization:', error);
-      // Return fallback identity matrices
-      const identityMatrix = new Matrix3();
-      identityMatrix.identity();
-      return new ProjectionPlaneRealization2D(
-        this.id,
-        identityMatrix,
-        identityMatrix.clone(),
-        false
-      );
-    }
-  }
-}

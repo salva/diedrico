@@ -10,7 +10,7 @@ import { PaperService, type PrimitiveContext } from '../../../src/services/Paper
 import type { World } from '../../../src/domain/world/World';
 import { createTestWorld } from '../../helpers/worldHelpers';
 import { type Point2D, FreePoint2D, Point2DLineLineIntersection } from '../../../src/domain/world/Point';
-import { BaseProjectionPlane } from '../../../src/domain/world/ProjectionPlane';
+import { FixedProjectionPlane } from '../../../src/domain/world/projectionPlane/FixedProjectionPlane';
 import { RenderLayer, Paper, type PointPrimitive } from '../../../src/domain/presentation/Paper';
 
 describe('PaperService', () => {

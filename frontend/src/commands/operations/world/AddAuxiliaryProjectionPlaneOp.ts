@@ -14,13 +14,13 @@
  * 
  * The operation is reversible (undo removes the plane).
  * 
- * @see AuxiliaryProjectionPlane in ProjectionPlane.ts
+ * @see AuxiliaryProjectionPlane in projectionPlane/AuxiliaryProjectionPlane.ts
  * @see computeProjectionPlaneMatrices in projectionPlaneUtils.ts
  */
 
 import type { IOperation, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
-import { AuxiliaryProjectionPlane } from '@/domain/world/ProjectionPlane';
+import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
 
 export class AddAuxiliaryProjectionPlaneOp implements IOperation {
   readonly type = 'AddAuxiliaryProjectionPlane';
@@ -109,18 +109,13 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       
       // Add to World storage
       world.projectionPlanes.set(projPlaneId, plane);
-      console.log('[AddAuxiliaryProjectionPlaneOp] Added projection plane:', projPlaneId);
-      console.log('[AddAuxiliaryProjectionPlaneOp] World now has', world.projectionPlanes.size, 'projection planes');
-      console.log('[AddAuxiliaryProjectionPlaneOp] Projection plane IDs:', Array.from(world.projectionPlanes.keys()));
       
       // Register with dependency service (CRITICAL for parametric updates)
       // When trace lines move, the dependency service will find this plane and invalidate it
       world.getDependencyService().registerNode(projPlaneId, plane.getDependencies());
-      console.log('[AddAuxiliaryProjectionPlaneOp] Registered dependencies:', plane.getDependencies());
       
       // Mark World as dirty (triggers reactivity)
       world.markDirty();
-      console.log('[AddAuxiliaryProjectionPlaneOp] World.markDirty() called');
       
       // Store outputs for undo
       this.outputs = { projPlaneId };
