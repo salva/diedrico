@@ -1,0 +1,92 @@
+     1	import { describe, it, expect, beforeEach } from 'vitest';
+     2	import type { World } from '../../src/domain/world/World';
+     3	import type { CommandStack } from '../../src/commands/CommandStack';
+     4	import { Command } from '../../src/commands/Command';
+     5	import { AddFreePoint2DOp } from '../../src/commands/operations/AddFreePoint2DOp';
+     6	import { AddLine2DOp } from '../../src/commands/operations/AddLine2DOp';
+     7	import { GuideSequenceFactory } from '../../src/commands/factories/GuideSequenceFactory';
+     8	import { setupBasicWorld } from '../helpers/worldHelpers';
+     9	
+    10	describe('Guide Creation - Integration Tests', () => {
+    11	  let world: World;
+    12	  let commandStack: CommandStack;
+    13	
+    14	  beforeEach(() => {
+    15	    const setup = setupBasicWorld();
+    16	    world = setup.world;
+    17	    commandStack = setup.commandStack;
+    18	  });
+    19	
+    20	  describe('Regular Line Reference', () => {
+    21	    it('should create guide on regular line without sibling', () => {
+    22	      const { projPlaneH } = setupBasicWorld();
+    23	      const planeId = projPlaneH;
+    24	
+    25	      // Create two points and a line between them
+    26	      const cmd = new Command('Setup test geometry', world);
+    27	      
+    28	      const point1Result = cmd.addAndExecute(
+    29	        new AddFreePoint2DOp(planeId, [100, 100, 1])
+    30	      );
+    31	      const point1Id = point1Result.outputs.pointId;
+    32	
+    33	      const point2Result = cmd.addAndExecute(
+    34	        new AddFreePoint2DOp(planeId, [200, 100, 1])
+    35	      );
+    36	      const point2Id = point2Result.outputs.pointId;
+    37	
+    38	      const lineResult = cmd.addAndExecute(
+    39	        new AddLine2DOp(planeId, point1Id, point2Id)
+    40	      );
+   260	
+   261	
+   262	
+   263	
+   264	
+   265	
+   266	
+   267	});  });    await expect(cascadeWarning).toContainText('2 elements will be cascade deleted');    await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning shows both lines will be deleted        await page.waitForTimeout(100);    await page.keyboard.up('Shift');    await canvas.click({ position: { x: 200, y: 100 } });    await page.keyboard.down('Shift');    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select point 1 with Shift+click on point 2 to multi-select        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 50 } });    await canvas.click({ position: { x: 100, y: 100 } }); // Line 1-3    await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } }); // Line 1-2    await page.keyboard.press('l');        await canvas.click({ position: { x: 150, y: 50 } });  // Point 3    await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create: 3 points + 2 lines forming a triangle        const canvas = page.locator('svg.diedrico-canvas');  test('should show correct cascade count for multiple selected elements', async ({ page }) => {  });    await expect(cascadeWarning).not.toBeVisible();    // Verify cascade warning is gone        await page.waitForTimeout(100);    await page.keyboard.press('Escape');    // Press Escape to clear selection        await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning is shown        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select point to show cascade preview        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    await page.keyboard.press('p');    // Create point and line        const canvas = page.locator('svg.diedrico-canvas');  test('should clear cascade preview when selection is cleared', async ({ page }) => {  });    expect(lines).toBe(1);  // Only line 2 remains    expect(points).toBe(3); // Points 2, 3, 4 remain    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify cascade: point 1 and line 1 deleted, but line 2 and points 3,4 remain        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Delete point 1 (should cascade delete line 1)        expect(lines).toBe(2);    expect(points).toBe(4);    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();        // For now, just verify we have the base construction    // This would be at (150, 100) where the two lines cross    // Create intersection point (if tool exists)        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 150 } });    await canvas.click({ position: { x: 150, y: 50 } });    // Create line 2 (vertical through points 3-4)        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    // Create line 1 (horizontal through points 1-2)    await page.keyboard.press('l');        await canvas.click({ position: { x: 150, y: 150 } }); // Point 4    await canvas.click({ position: { x: 150, y: 50 } });  // Point 3    await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');        // When Point 1 is deleted, everything should cascade    // Create chain: Point 1 → Line → Intersection Point → Circle        const canvas = page.locator('svg.diedrico-canvas');  test('should delete multiple levels of dependencies', async ({ page }) => {  });    expect(circles).toBe(0);    expect(lines).toBe(0);    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    // Verify cascade deletion again        await page.waitForTimeout(300);    await page.keyboard.press('Control+y');    // Redo deletion        expect(circles).toBe(1); // Circle restored    expect(lines).toBe(1);   // Line restored    expect(points).toBeGreaterThanOrEqual(2);    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify all elements restored        await page.waitForTimeout(300);    await page.keyboard.press('Control+z');    // Undo deletion        expect(circles).toBe(0); // Circle deleted    expect(lines).toBe(0);   // Line deleted    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    // Verify cascade deletion        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Delete point 1 (should cascade delete line and circle)        expect(circles).toBe(1);    expect(lines).toBe(1);    expect(points).toBeGreaterThanOrEqual(2); // At least 2 points (may have more from circle)    let circles = await page.locator('circle[id^="circle-"]').count();    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();    // Verify initial state        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 100 } }); // Radius point    await canvas.click({ position: { x: 100, y: 100 } }); // Circle center at point 1    await page.keyboard.press('c');        await canvas.click({ position: { x: 200, y: 100 } }); // to point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Line from point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create: 2 points + line + circle on first point        const canvas = page.locator('svg.diedrico-canvas');  test('should undo cascade deletion and restore all elements (T291, T292)', async ({ page }) => {  });    expect(lines).toBe(0);  // Line deleted due to cascade    expect(points).toBe(1); // Only point 2 remains    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify cascade deletion: both line and point are deleted        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select and delete point 1        expect(lines).toBe(1);    expect(points).toBe(2);    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();    // Verify initial state        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } }); // Click point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Click point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create construction: 2 points + 1 line between them        const canvas = page.locator('svg.diedrico-canvas');  test('should delete dependents when deleting a point (T288, T292)', async ({ page }) => {  });    // For now we verify the warning message which confirms cascade detection works    // Note: This would require checking SVG element styles, which is complex in Playwright    // Verify cascade highlighted elements have orange color        await expect(cascadeWarning).toContainText('1 element will be cascade deleted');    // Verify it shows the correct count (1 line will be cascade deleted)        await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning appears in status bar        await page.waitForTimeout(300);        await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Switch to select tool and select point 1        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } }); // Click point 2 to create line    await canvas.click({ position: { x: 100, y: 100 } }); // Click point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create a point and a line that depends on it        const canvas = page.locator('svg.diedrico-canvas');  test('should show cascade preview when selecting element with dependents (T289)', async ({ page }) => {  });    await page.waitForSelector('svg.diedrico-canvas');    // Wait for app to load    await page.goto('/');  test.beforeEach(async ({ page }) => {test.describe('Cascade Deletion', () => {import { test, expect } from '@playwright/test'; */ * Reference: specs/001-dihedral-learning-mvp/data-model.md - Deletion and Dependency Cascading * Reference: specs/001-dihedral-learning-mvp/tasks.md - Phase 30: T285-T292 *  * - Dependency tracking and cascade computation * - Undo/redo support for cascade deletion * - Proper deletion order (dependents before dependencies) * - Status bar message showing count of cascade elements * - Visual feedback showing which elements will be cascade deleted (orange highlight) * Tests the cascade deletion functionality implemented in Phase 30: *  * 
+   268	 * Tests the complete keyboard shortcut functionality implemented in Phase 27:
+   269	 * - Tool shortcuts (P, L, S, C, G) for activating tools
+   270	 * - Ctrl+A: Select all elements in active plane
+   271	 * - Ctrl+0: Fit to view
+   272	 * - Esc: Cancel/deselect
+   180	    // Hover over point - should NOT highlight anymore
+   181	    await page.mouse.move(100, 100);
+   182	    await page.waitForTimeout(200);
+   183	    
+   184	    const pointHasHoverAfter = await pointElement.evaluate(el => 
+   185	      el.classList.contains('hover') || el.classList.contains('hovered')
+   186	    );
+   187	    expect(pointHasHoverAfter).toBe(false);
+   188	  });
+   189	
+   190	  test('SegmentTool: only points highlight', async ({ page }) => {
+   191	    // Create points
+   192	    await page.click('[data-testid="tool-point"]');
+   108	    });
+   109	
+   110	    describe('GuideTool dynamic mask', () => {
+   111	      it('returns half-hinge-line and point mask in initial state', () => {
+   112	        const tool = new GuideTool();
+   113	        const mask = tool.getSelectionMask();
+   114	        const testPoint = createTestPoint();
+   115	        const testLine = createTestLine();
+   116	        expect(mask.matches(testLine)).toBe(true);  // All lines including half-hinge-lines
+   117	        expect(mask.matches(testPoint)).toBe(true);
+   118	      });
+   119	
+   120	      // Note: Testing state transitions requires actually clicking with the tool
+    24	import { describe, it, expect } from 'vitest';
+    25	import { execSync } from 'child_process';
+    26	import path from 'path';
+    27	
+    28	describe('Architecture: Command Pattern', () => {
+    29	  it('should NOT have any Command subclasses in production code', () => {
+    30	    // Search for "extends Command" pattern in TypeScript files
+    31	    // Exclude test files, node_modules, and dist
+    32	    const projectRoot = path.resolve(__dirname, '../../..');
+    33	    
+    34	    try {
+    35	      // Use grep to find "extends Command" pattern
+    36	      // -r: recursive

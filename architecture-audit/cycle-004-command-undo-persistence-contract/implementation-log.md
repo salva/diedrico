@@ -87,3 +87,38 @@ Additional focused validation logs:
   - Command: `rg -n "AddIntersectionPoint2D|element1Id|element2Id|line1Id|line2Id" frontend/src/commands/operations/world/AddIntersectionPointOp.ts frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts frontend/tests/unit/commands/operations/operationRegistry.spec.ts`
   - Logs: `t3-addintersection-static-check.stdout`, `t3-addintersection-static-check.stderr`
   - Result: active AddIntersection serializer/registry/test paths use `line1Id` / `line2Id`; no stale `element1Id` / `element2Id` fields remain in those scoped files.
+
+## Validation stage — cycle-004-validation-and-preview-refresh
+
+Validation logs are under `architecture-audit/cycle-004-command-undo-persistence-contract/validation/`.
+
+| Check | Command | Logs | Result | Classification |
+| --- | --- | --- | --- | --- |
+| Root lint | `npm run lint` | `root-lint.stdout`, `root-lint.stderr` | Failed: `eslint: not found` | Pre-existing/tooling dependency issue. The failure occurs before linting source and is identical through the root script's frontend workspace delegation. Not attributable to Wave 004 command/undo persistence changes. |
+| Frontend lint | `npm run lint --workspace=frontend` | `frontend-lint.stdout`, `frontend-lint.stderr` | Failed: `eslint: not found` | Pre-existing/tooling dependency issue; `eslint` is invoked by package script but is not installed in the current dependency tree. Not attributable to Wave 004. |
+| Focused Wave 004 Vitest | `npm run test --workspace=frontend -- tests/unit/commands/command.spec.ts tests/unit/commands/commandStack.spec.ts tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/unit/services/ProjectService.selfContainment.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/integration/projectService.determinism.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts tests/unit/commands/createIntersectionPoint.spec.ts` | `focused-vitest.stdout`, `focused-vitest.stderr` | Passed: 9 files, 110 tests | Wave 004 accepted for focused operation serialization, save/open/local persistence, undo/redo-after-load, deterministic replay/restoration, and touched command/ProjectService coverage. |
+| Full frontend Vitest via root | `npm run test` | `root-full-vitest.stdout`, `root-full-vitest.stderr` | Failed: 1 failed suite and 18 failed tests | Unrelated/pre-existing stale test debt. Failures include stale import paths in `frontend/tests/integration/guide-creation.test.ts:5-6`, an architecture test bug in `frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:26,32` (`path` default import has no `resolve`), selection/tool expectation drift in `frontend/tests/unit/selectionMask.spec.ts:116`, unrelated geometry calculation expectations, PropertiesDialog close/save expectations, and stale GuideTool API expectations (`tool.onMouseDown is not a function`). Focused Wave 004 persistence/command tests pass. |
+| Backend Vitest | `npm run test --workspace=backend` | `backend-vitest.stdout`, `backend-vitest.stderr` | Passed: 1 file, 15 tests | No Wave 004 backend regression. |
+| Root build | `npm run build` | `root-build.stdout`, `root-build.stderr` | Failed: `vue-tsc` throws `Search string not found: "/supportedTSExtensions = .*(?=;)/"` under Node.js `v24.15.0` | Pre-existing/toolchain incompatibility also observed during implementation. Failure occurs before project source typechecking; not attributable to Wave 004. |
+| Frontend build | `npm run build --workspace=frontend` | `frontend-build.stdout`, `frontend-build.stderr` | Failed: same `vue-tsc`/Node 24 error | Pre-existing/toolchain incompatibility; not attributable to Wave 004. |
+| Backend build | `npm run build --workspace=backend` | `backend-build.stdout`, `backend-build.stderr` | Passed | No Wave 004 backend regression. |
+| Frontend e2e / Playwright | `npm run test:e2e --workspace=frontend` | `frontend-e2e.stdout`, `frontend-e2e.stderr` | Failed at test parsing | Unrelated/pre-existing e2e fixture corruption. `frontend/tests/e2e/keyboard-shortcuts.spec.ts:267` contains concatenated cascade-deletion test text inside the file, and `frontend/tests/e2e/selection-mask.spec.ts:188` reports a syntax error. The runner fails before exercising the app or Wave 004 persistence behavior. |
+| Static deletion/reference check | `rg -n "\(cmd as any\)\.operations|\(world as any\)\.nextId|\(op as any\)\.parameters|\(commandStack as any\)\.undoStack|reconstructOperation|migrateProjectData|migrateIdToCamelCase|migrateOperationParams|Skipping corrupted|parameters\.guideId|outputs\.guideId \|\|" frontend/src frontend/tests/unit/services frontend/tests/unit/commands/operations || true` | `static-deletion-check.stdout`, `static-deletion-check.stderr` | Passed for active Wave 004 delete-list intent | Only hit is `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:202`, which asserts `RemoveGuide2D`'s input `parameters.guideId`; it is not the removed AddGuide generated-ID fallback pattern. |
+
+Validation acceptance: **accepted with non-attributable repository/tooling failures**. All mandatory commands applicable to the repo were run and logged. No failure was attributable to Wave 004 because the Wave 004 focused persistence/command/serialization tests pass, backend tests/build pass, and observed full-suite/build/e2e failures are either dependency/toolchain failures before source validation or stale unrelated tests outside the touched command/ProjectService persistence contract.
+
+Residual risks / follow-up candidates from validation:
+
+- Install or restore the frontend lint toolchain (`eslint`) or remove the stale lint script in a dedicated tooling cleanup wave.
+- Resolve the Node 24 / `vue-tsc` incompatibility so frontend builds can typecheck in this container.
+- Repair or delete stale full-suite/e2e tests with obsolete imports, malformed files, and old tool APIs as part of a test-suite architecture wave.
+
+## Live preview refresh
+
+Preview refresh was completed after validation classification:
+
+- Command: `nohup npm run dev --workspace=frontend -- --host 0.0.0.0 > architecture-audit/cycle-004-command-undo-persistence-contract/validation/live-preview-refresh.stdout 2> architecture-audit/cycle-004-command-undo-persistence-contract/validation/live-preview-refresh.stderr &`
+- PID file: `architecture-audit/cycle-004-command-undo-persistence-contract/validation/live-preview.pid`
+- Probe command: `curl -I --max-time 10 http://127.0.0.1:5173/`
+- Probe logs: `live-preview-probe-retry.stdout`, `live-preview-probe-retry.stderr`
+- Result: HTTP `200 OK`; Vite reported `vite --host 0.0.0.0`, local URL `http://localhost:5173/`, and network URL `http://10.0.3.113:5173/`.
