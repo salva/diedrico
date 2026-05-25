@@ -28,7 +28,7 @@ This proposal is intentionally more disruptive than the direct registry proposal
 ### Snapshot contract
 
 - Create `frontend/src/domain/world/WorldSnapshot.ts`
-  - Define current-schema snapshot DTOs for projection planes, 2D elements (points/lines/segments/circles/guides), 3D planes/elements, hinge lines, process tree/action groups, dependency-relevant references, label generator state if needed, active plane, and ID counters.
+  - Define current-schema snapshot DTOs for projection planes, 2D elements (points/lines/segments/circles/guides), 3D planes/elements, hinge lines, process tree/action groups, dependency-relevant references, label generator state if needed, active plane, and ID counters. These DTOs must preserve construction definitions, not just rendered coordinates: for example, line-line intersection points must store the construction type and parent line IDs/index, point-line/circle dependencies must keep parent references, and auxiliary/3D reconstructed elements must store the fields needed to recompute after a source element moves.
   - Use JSON-compatible typed fields, not `any` or class instances.
 
 - Create `frontend/src/domain/world/WorldSnapshotMapper.ts` or `frontend/src/application/project/WorldSnapshotMapper.ts`
@@ -115,8 +115,8 @@ This proposal is intentionally more disruptive than the direct registry proposal
 
 - **Undo/redo after load acceptance risk:** The Wave 004 acceptance criteria name undo/redo after load. If reviewers interpret that as preserving historic command-by-command undo from before save, a pure snapshot is insufficient. It can only guarantee undo/redo for post-load edits or a single replace-world load command unless command history is also persisted.
 - **Snapshot mapper scope risk:** `World` and `ProcessTree` may lack enough typed read/restore APIs. Adding them could expand into Wave 005 process ownership or a domain god-serializer if not tightly bounded.
-- **Parametric/process graph completeness risk:** A snapshot must include construction definitions and process/dependency links, not just rendered coordinates, or parametric updates will break. This is harder than typed operation replay because operations already encode dependencies during apply.
-- **One-cycle size risk:** Comprehensive world snapshot export/restore across fixed planes, auxiliary planes, guides, intersections, 3D elements, process tree, and dependency service may exceed a single wave implementation cycle.
+- **Parametric/process graph completeness risk:** A snapshot must include construction definitions and process/dependency links, not just rendered coordinates, or parametric updates will break. This is harder than typed operation replay because operations already encode dependencies during apply. If this proposal is selected, `WorldSnapshot` must include construction-type-specific payloads for every dependent element class and tests must prove parametric recomputation still works after load.
+- **One-cycle size risk:** Comprehensive world snapshot export/restore across fixed planes, auxiliary planes, guides, intersections, 3D elements, process tree, and dependency service may exceed a single wave implementation cycle. Estimated scope is roughly 2-4 new snapshot/mapper/load-command modules, 8-12 modified domain/application/service/test files, and 3+ deleted/replaced legacy persistence tests, versus Proposal Direct's smaller shape of 1 registry contract, 2-3 family registrar modules, targeted Command/CommandStack/World API changes, ProjectService cleanup, and rewritten contract tests. The snapshot proposal is therefore materially larger and should only be chosen if reviewers intentionally reject command-stream persistence.
 
 ## Validation plan for implementation wave
 

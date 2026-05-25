@@ -33,7 +33,7 @@ This proposal is the direct implementation of Wave 004 because it preserves the 
   - Add `CommandSnapshot` / `RestoredCommandInput` types containing `{ id, timestamp, description, operations }`.
   - Add `toSnapshot()` or `getSerializableOperations()` that uses `getOperations()` internally and never exposes mutable internals.
   - Add a static restoration factory, e.g. `Command.restore(input, world)`, that creates a real committed command with restored ID/timestamp/status/operations.
-  - Make constructor optionally accept a typed internal identity argument only for restore, or introduce a private constructor path if TypeScript allows a clean factory.
+  - Change the constructor signature/factory path so restoration can supply persisted identity and timestamp instead of using the normal nondeterministic `generateId()` / `new Date()` path (`frontend/src/commands/Command.ts:94-99`, `frontend/src/commands/Command.ts:230-235`). The public editing path should keep generating fresh identity; only `Command.restore(...)` may pass restored metadata.
   - Delete stale comments tying persistence to broad operation `parameters` once the registry owns serialization.
 
 - `frontend/src/commands/CommandStack.ts`
@@ -57,16 +57,16 @@ This proposal is the direct implementation of Wave 004 because it preserves the 
     - `interface IOperation<TDescriptor extends OperationDescriptor = OperationDescriptor> { readonly type: TDescriptor['opType']; serialize(): TDescriptor; ... }`
   - Delete fallback-oriented documentation that says ProjectService will use `parameters` when `serialize()` is absent.
 
-- Create `frontend/src/commands/operations/OperationRegistry.ts`
-  - Own the mapping from `opType` to typed `deserialize` functions.
+- Create `frontend/src/commands/operations/OperationRegistry.ts` plus family-level descriptor registration modules
+  - Own the mapping from `opType` to typed `deserialize` functions without making one giant registry file import every concrete operation directly.
+  - Use a concrete composition pattern: each operation family exports a small registrar, e.g. `commands/operations/world/registerWorldOperationDescriptors.ts`, `processTree/registerProcessTreeOperationDescriptors.ts`, and `viewState/registerViewStateOperationDescriptors.ts`, each with `register...(registry: OperationRegistry): void`; a single `registerAllOperations(registry)` composer imports only these family registrars.
   - Export `serializeOperation(op: IOperation): SerializedOperationDescriptor` and `deserializeOperation(descriptor: SerializedOperationDescriptor): IOperation`.
-  - Register operation descriptors by importing operation groups or explicit per-operation descriptor modules.
-  - Include a runtime assertion that every registered descriptor has a unique `opType`.
+  - Include a runtime assertion that every registered descriptor has a unique `opType`, and registry coverage tests that fail if an active family operation is not registered.
 
 - Operation files under `frontend/src/commands/operations/world/**`, `processTree/**`, and active `viewState/**` if persisted
   - Convert each active operation to return a typed descriptor from `serialize()`.
   - Provide a colocated `restore`/`fromDescriptor` function or static factory used by the registry.
-  - Stop mutating broad `parameters` for persistence. Operations may keep typed readonly input fields and typed output fields, but serialization must be explicit.
+  - Delete mutable `parameters: Record<string, any>` from the main `IOperation` contract. Operations should expose typed readonly input fields and typed output fields, and `serialize()` should return a discriminated descriptor. Generated outputs such as guide IDs currently back-filled into `this.parameters.guideId` in `AddGuide2DPerpendicularToLineOp` / `AddSiblingGuide2DOp` (`frontend/src/commands/operations/world/AddGuideOp.ts:31-40`, `frontend/src/commands/operations/world/AddGuideOp.ts:105-114`) must move to typed output state, not a mutable persistence bag.
   - Normalize current format only. Use one canonical vector/matrix representation (arrays are already emitted by several serializers, e.g. `AddFreePoint2DOp.serialize()` at `frontend/src/commands/operations/world/AddFreePointOp.ts:56-62`) and delete old object-vs-array acceptance.
 
 ### Project service
@@ -74,7 +74,7 @@ This proposal is the direct implementation of Wave 004 because it preserves the 
 - `frontend/src/services/ProjectService.ts`
   - Keep `ProjectData` as the app-level file shape but type it around command snapshots and operation descriptors.
   - Replace direct imports of concrete operations (`frontend/src/services/ProjectService.ts:23-65`) with imports from the registry/contract module only.
-  - Replace `serializeCommands(commandStack, nextElementId, projectName)` internals with typed command-stack and operation-registry APIs.
+  - Replace `serializeCommands(commandStack, nextElementId, projectName)` internals with typed command-stack and operation-registry APIs. The saved `ProjectData.nextElementId` should remain the next ID value, but callers must read it without incrementing the counter.
   - Replace `deserializeCommands(...)` fake command object and private stack mutation with `Command.restore(...)` + `commandStack.restoreCommittedCommands(...)`.
   - Delete `migrateIdToCamelCase`, `migrateHierarchicalId`, `migrateOperationParams`, and `migrateProjectData`.
   - Delete `reconstructOperation()` switch from `ProjectService`; if callers still need deserialization for tests, expose it from `OperationRegistry` instead.
@@ -122,7 +122,7 @@ This proposal is the direct implementation of Wave 004 because it preserves the 
 - Delete migration/backcompat code:
   - ID migration helpers and logs (`frontend/src/services/ProjectService.ts:99-255`).
   - Corrupted `AddLine2DPerpendicularToLine` skip returning `null as any` (`frontend/src/services/ProjectService.ts:423-429`).
-  - Legacy `AddIntersectionPoint2D` branch if no active current-format command still emits it (`frontend/src/services/ProjectService.ts:564-566`).
+  - Legacy `AddIntersectionPoint2D` service-switch branch (`frontend/src/services/ProjectService.ts:564-566`). The class itself currently remains exported and is used by command unit tests (`frontend/src/commands/operations/world/AddIntersectionPointOp.ts:13-14`; `frontend/tests/unit/commands/createIntersectionPoint.spec.ts:46`); delete the class only if implementation confirms those tests represent dead architecture, otherwise move its current-format restoration into the registry.
   - Legacy `AddPlane3D` orientation branch (`frontend/src/services/ProjectService.ts:572-581`).
   - Object-format vector fallbacks and parameter-name fallbacks (`frontend/src/services/ProjectService.ts:583-630`) unless the current serializer still emits them; if so, change the serializer and tests to one current shape.
 - Delete the monolithic operation reconstruction switch from `ProjectService` (`frontend/src/services/ProjectService.ts:395-761`) after registry replacement.
@@ -135,7 +135,7 @@ This proposal is the direct implementation of Wave 004 because it preserves the 
 
 - Current-format project save/open continues to work for active command histories.
 - Undo/redo after load uses real restored `Command` instances and the typed `CommandStack` restoration API, not fake object literals.
-- Saving a project no longer increments the world element counter as a side effect.
+- Saving a project no longer increments the world element counter as a side effect: `ProjectData.nextElementId` still stores the next ID value, but serialization obtains it through `world.peekNextId()` (or equivalent) instead of the incrementing `world.getNextId()`.
 - Old schema versions, corrupted operation records, and legacy object/parameter aliases fail fast with clear current-schema errors instead of being migrated or skipped.
 - Drive-backed persistence behavior remains the same at the user level because `App.vue` still hands project data to `GoogleDriveService`; only the project data contract changes internally.
 
