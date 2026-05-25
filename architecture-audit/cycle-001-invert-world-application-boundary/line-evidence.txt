@@ -1,0 +1,54 @@
+frontend/src/domain/world/descriptors/DescriptorRegistry.ts:52:        `Did you forget to call registerAllDescriptors()?`
+frontend/src/main.ts:24:import { registerAllDescriptors } from './domain/world/descriptors/registerDescriptors';
+frontend/src/main.ts:25:registerAllDescriptors();
+frontend/src/main.ts:43:      const depService = worldStore.world.getDependencyService();
+frontend/src/main.ts:52:      const depService = worldStore.world.getDependencyService();
+frontend/src/domain/world/Element2D.ts:1:import { World } from './World';
+frontend/src/domain/world/Element2D.ts:108:  abstract realize2D(world: World): Element2DRealization | null;
+frontend/src/App.vue:115:import { CommandStack } from './commands/CommandStack';
+frontend/src/App.vue:116:import { Command } from './commands/Command';
+frontend/src/App.vue:123:import { World } from './domain/world/World';
+frontend/src/App.vue:147:let world = new World();
+frontend/src/App.vue:148:provide('world', world);
+frontend/src/App.vue:157:// world.initialize(commandStack);
+frontend/src/App.vue:254:  const dependencyService = world.getDependencyService();
+frontend/src/App.vue:323:        world.initialize(commandStack);
+frontend/src/App.vue:384:    world.initialize(commandStack);
+frontend/src/App.vue:439:      world.initialize(commandStack);
+frontend/src/App.vue:778:    world = new World();
+frontend/src/App.vue:779:    provide('world', world);
+frontend/src/App.vue:796: * - Cascade computation (all dependent elements via DependencyService)
+frontend/src/App.vue:822:    const dependencyService = world.getDependencyService();
+frontend/src/domain/world/styleService.ts:58:export function resolveVisibility(element: Element, world: World): boolean {
+frontend/src/domain/world/styleService.ts:65:  const tree = world.getProcessTree();
+frontend/src/services/DependencyService.ts:2: * DependencyService.ts
+frontend/src/services/DependencyService.ts:42:export class DependencyService {
+frontend/src/services/DependencyService.ts:49:    // DependencyService is now a stateful container, managed by World via Element interaction.
+frontend/src/services/DependencyService.ts:131:    console.warn('DependencyService.rebuildDependencyMaps is deprecated and no-op. Dependencies are managed incrementally.');
+frontend/src/domain/world/World.ts:94:import { DependencyService } from '@/services/DependencyService';
+frontend/src/domain/world/World.ts:105:import { Command } from '@/commands/Command';
+frontend/src/domain/world/World.ts:106:import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
+frontend/src/domain/world/World.ts:110:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/domain/world/World.ts:128:  private dependencyService: DependencyService;
+frontend/src/domain/world/World.ts:182:    this.dependencyService = new DependencyService();
+frontend/src/domain/world/World.ts:197:    const initCmd = new Command('Initialize World', this);
+frontend/src/domain/world/World.ts:206:    buildWorldInitialization(this, initCmd, groupId);
+frontend/src/domain/world/World.ts:288:    this.dependencyService = new DependencyService();
+frontend/src/domain/world/World.ts:914:  getProcessTree(): ProcessTree {
+frontend/src/domain/world/World.ts:921:  getDependencyService(): DependencyService {
+frontend/src/domain/world/World.ts:927:   * Use this instead of getProcessTree().addAction() directly
+frontend/src/domain/world/descriptors/registerDescriptors.ts:72:export function registerAllDescriptors(): void {
+frontend/src/commands/factories/InitializationSequenceFactory.ts:4:  AddPlane3DFixedOp,
+frontend/src/commands/factories/InitializationSequenceFactory.ts:10:  createInitializePlane3DAction,
+frontend/src/commands/factories/InitializationSequenceFactory.ts:39:export function buildWorldInitialization(world: World, cmd: Command, groupId: string): void {
+frontend/src/commands/factories/InitializationSequenceFactory.ts:42:  const planeHOp = new AddPlane3DFixedOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:52:    createInitializePlane3DAction(planeHId),
+frontend/src/commands/factories/InitializationSequenceFactory.ts:57:  const planeVOp = new AddPlane3DFixedOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:67:    createInitializePlane3DAction(planeVId),
+frontend/src/commands/factories/InitializationSequenceFactory.ts:143:  world.setActivePlaneId(projPlaneHId);
+frontend/src/commands/operations/world/InitializationOps.ts:9: * - AddPlane3DFixedOp: Create a fixed 3D plane (P_H or P_V)
+frontend/src/commands/operations/world/InitializationOps.ts:26: * AddPlane3DFixedOp - Create a fixed 3D plane
+frontend/src/commands/operations/world/InitializationOps.ts:32:export class AddPlane3DFixedOp implements IOperation {
+frontend/src/commands/operations/world/InitializationOps.ts:83:      world.getDependencyService().unregisterNode(this.outputs.planeId);
+frontend/src/commands/operations/world/InitializationOps.ts:159:      world.getDependencyService().unregisterNode(this.outputs.projPlaneId);
+frontend/src/commands/operations/world/InitializationOps.ts:431:      const processTree = world.getProcessTree();
