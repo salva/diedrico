@@ -88,7 +88,7 @@ describe('ProjectService Determinism Tests', () => {
     commandStack.push(cmd6);
     
     // Step 2: Serialize the project
-    const serialized = ProjectService.serializeCommands(commandStack, 'Determinism Test Project');
+    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Determinism Test Project');
     
     // Step 3: Deserialize 5 times and capture World state
     const worldStates: any[] = [];
@@ -145,7 +145,7 @@ describe('ProjectService Determinism Tests', () => {
     cmd.commit();
     commandStack.push(cmd);
     
-    const serialized = ProjectService.serializeCommands(commandStack, 'ID Test');
+    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'ID Test');
     
     // Deserialize 3 times
     const idSets: string[][] = [];

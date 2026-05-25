@@ -37,4 +37,8 @@ export class PushSubprocessOp implements IOperation {
     // Undo by popping the subprocess from the stack
     world.getProcessTree().popSubprocess();
   }
+
+  serialize() {
+    return { opType: this.type, subprocessName: this.parameters.subprocessName, subprocessId: this.outputs.subprocessId, outputs: this.outputs };
+  }
 }

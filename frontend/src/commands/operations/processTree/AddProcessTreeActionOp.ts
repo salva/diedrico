@@ -58,7 +58,7 @@ export class AddProcessTreeActionOp implements IOperation {
       world.getProcessTree().removeActionByElementId(this.outputs.elementId);
     }
 
-    // Legacy fallback removed: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.
+    // Removed fallback: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.
     // If this op added an action to a group, undoing it naturally removes the action.
     // The group itself is handled by its own Op.
 

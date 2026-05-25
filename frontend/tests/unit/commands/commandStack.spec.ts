@@ -3,8 +3,7 @@
  * 
  * Tests the command history management (R018):
  * - push() adds pre-built, committed commands to undo stack
- * - execute() provides backward compatibility
- * - undo() moves command from undo to redo stack
+ *  * - undo() moves command from undo to redo stack
  * - redo() moves command from redo back to undo stack
  * - canUndo/canRedo return correct booleans
  * - clear() empties both stacks
@@ -24,7 +23,8 @@ const createMockOperation = (name: string = 'mock'): IOperation => ({
   parameters: {},
   outputs: { mockData: name },
   apply: () => ({ success: true, outputs: { mockData: name } }),
-  undo: () => {}
+  undo: () => {},
+  serialize: () => ({ opType: `Mock_${name}`, mockData: name })
 });
 
 describe('CommandStack (R018)', () => {
@@ -433,4 +433,27 @@ describe('CommandStack (R018)', () => {
       expect(commandStack.getRedoCount()).toBe(0);
     });
   });
+
+  describe('restoreCommittedCommands()', () => {
+    it('restores committed history and clears redo state', () => {
+      const cmd1 = Command.restore({ id: 'cmd-1', timestamp: '2024-01-01T00:00:00.000Z', description: 'Restored 1', operations: [createMockOperation('1')] }, world);
+      const cmd2 = Command.restore({ id: 'cmd-2', timestamp: '2024-01-02T00:00:00.000Z', description: 'Restored 2', operations: [createMockOperation('2')] }, world);
+
+      commandStack.restoreCommittedCommands([cmd1, cmd2]);
+
+      expect(commandStack.getCommittedCommands()).toEqual([cmd1, cmd2]);
+      expect(commandStack.getUndoCount()).toBe(2);
+      expect(commandStack.getRedoCount()).toBe(0);
+      expect(commandStack.canUndo()).toBe(true);
+      expect(commandStack.canRedo()).toBe(false);
+    });
+
+    it('rejects non-committed command history', () => {
+      const cmd = new Command('Building', world);
+      cmd.addAndExecute(createMockOperation('building'));
+
+      expect(() => commandStack.restoreCommittedCommands([cmd])).toThrow('Can only restore committed commands');
+    });
+  });
+
 });

@@ -69,8 +69,24 @@
  * @sealed - This class must NOT be extended. All domain logic belongs in Operation classes.
  */
 
-import type { IOperation, OperationResult } from './operations/IOperation';
+import type { IOperation, OperationResult, OperationDescriptor } from './operations/IOperation';
+import { serializeOperation } from './operations/OperationRegistry';
 import type { World } from '@/domain/world/World';
+
+export interface CommandSnapshot {
+  id: string;
+  timestamp: string;
+  description: string;
+  status: CommandStatus;
+  operations: OperationDescriptor[];
+}
+
+export interface RestoredCommandInput {
+  id: string;
+  timestamp: string | Date;
+  description: string;
+  operations: readonly IOperation[];
+}
 
 export enum CommandStatus {
   Building = 'building',      // Operations being added/executed
@@ -98,12 +114,40 @@ export class Command {
     this.world = world;
   }
 
+  static restore(input: RestoredCommandInput, world: World): Command {
+    if (!input.id || !input.description) {
+      throw new Error('Cannot restore command without id and description');
+    }
+    if (input.operations.length === 0) {
+      throw new Error(`Cannot restore empty command: ${input.id}`);
+    }
+    const command = new Command(input.description, world);
+    Object.defineProperty(command, 'id', { value: input.id, configurable: false });
+    Object.defineProperty(command, 'timestamp', { value: input.timestamp instanceof Date ? input.timestamp : new Date(input.timestamp), configurable: false });
+    command.operations = [...input.operations];
+    command._status = CommandStatus.Committed;
+    return command;
+  }
+
   /**
    * Get the list of operations in this command (read-only access)
    * Phase 114: Used for post-creation feasibility checking
    */
   getOperations(): readonly IOperation[] {
     return this.operations;
+  }
+
+  toSnapshot(): CommandSnapshot {
+    if (this._status !== CommandStatus.Committed) {
+      throw new Error('Only committed commands can be snapshotted');
+    }
+    return {
+      id: this.id,
+      timestamp: this.timestamp.toISOString(),
+      description: this.description,
+      status: this._status,
+      operations: this.operations.map(operation => serializeOperation(operation))
+    };
   }
 
   /**

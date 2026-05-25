@@ -137,4 +137,18 @@ export class Add3DPointOp implements IOperation {
       world.remove3DPoint(this.outputs.pointId);
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      projection1Id: this.parameters.projection1Id,
+      projection2Id: this.parameters.projection2Id,
+      plane1Id: this.parameters.plane1Id,
+      plane2Id: this.parameters.plane2Id,
+      label: this.parameters.label,
+      visualStyle: this.parameters.visualStyle,
+      pointId: this.outputs.pointId
+    };
+  }
+
 }

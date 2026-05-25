@@ -270,6 +270,17 @@ export class World {
     return this.nextId++;
   }
 
+  peekNextId(): number {
+    return this.nextId;
+  }
+
+  restoreNextId(nextElementId: number): void {
+    if (!Number.isInteger(nextElementId) || nextElementId < 1) {
+      throw new Error(`Invalid next element ID: ${nextElementId}`);
+    }
+    this.nextId = nextElementId;
+  }
+
 
 
   /**

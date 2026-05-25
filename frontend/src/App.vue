@@ -383,7 +383,7 @@ async function handleCreateProject(projectName: string) {
     initializeWorld(world, commandStack);
 
     // Serialize command history (now contains initialization ops)
-    const projectData = ProjectService.serializeCommands(commandStack, world.getNextId(), projectName);
+    const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), projectName);
     
     // Create file in Google Drive
     const fileId = await driveService.createFile(projectName, projectData);
@@ -521,7 +521,7 @@ async function performAutoSave() {
     console.log(`[App] Performing auto-save. Commands in stack: ${commandStack.getUndoCount()}`);
 
     // Serialize command history
-    const projectData = ProjectService.serializeCommands(commandStack, world.getNextId(), currentProjectName.value);
+    const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), currentProjectName.value);
     
     // Debug: Check serialized command count
     console.log(`[App] Serialized commands count: ${projectData.commands.length}`);
@@ -544,7 +544,7 @@ async function performAutoSave() {
     if (error.message?.includes('File not found') || error.message?.includes('deleted')) {
       console.warn('[App] File deleted on server. Re-creating...');
       try {
-        const projectData = ProjectService.serializeCommands(commandStack, world.getNextId(), currentProjectName.value);
+        const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), currentProjectName.value);
         const newFileId = await driveService.createFile(currentProjectName.value, projectData);
         currentFileId.value = newFileId;
         
@@ -581,7 +581,7 @@ async function performAutoSave() {
       try {
         if (!currentProjectName.value) throw new Error('No project name');
         
-        const projectData = ProjectService.serializeCommands(commandStack, world.getNextId(), currentProjectName.value);
+        const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), currentProjectName.value);
         const newFileId = await driveService.createFile(currentProjectName.value, projectData);
         
         // Update state with new ID

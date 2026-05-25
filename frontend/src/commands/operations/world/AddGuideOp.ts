@@ -36,8 +36,6 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
         this.guideId || this.outputs.guideId
       );
       this.outputs = { guideId: guide.id };
-      // Back-fill generated ID into parameters for persistence
-      this.parameters.guideId = guide.id;
       return {
         success: true,
         outputs: this.outputs
@@ -67,7 +65,7 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
       planeId: this.planeId,
       referenceLineId: this.referenceLineId,
       throughPointId: this.throughPointId,
-      guideId: this.outputs.guideId || this.parameters.guideId
+      guideId: this.outputs.guideId
     };
   }
 }
@@ -110,8 +108,6 @@ export class AddSiblingGuide2DOp implements IOperation {
         this.siblingGuideId || this.outputs.siblingGuideId
       );
       this.outputs = { siblingGuideId: siblingGuide.id };
-      // Back-fill generated ID into parameters for persistence
-      this.parameters.siblingGuideId = siblingGuide.id;
       return {
         success: true,
         outputs: this.outputs
@@ -141,7 +137,7 @@ export class AddSiblingGuide2DOp implements IOperation {
       planeId: this.planeId,
       primaryGuideId: this.primaryGuideId,
       referenceLineId: this.referenceLineId,
-      siblingGuideId: this.outputs.siblingGuideId || this.parameters.siblingGuideId
+      siblingGuideId: this.outputs.siblingGuideId
     };
   }
 }

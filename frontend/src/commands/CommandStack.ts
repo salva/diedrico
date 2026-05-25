@@ -13,7 +13,7 @@
  * - redo(): Pops from redo stack, pushes back to undo stack
  */
 
-import { Command } from './Command';
+import { Command, CommandStatus } from './Command';
 
 type Unsubscribe = () => void;
 type ChangeListener = () => void;
@@ -132,8 +132,23 @@ export class CommandStack {
   /**
    * Get commands from undo stack for serialization
    */
-  getCommands(): Command[] {
+  getCommands(): readonly Command[] {
     return [...this.undoStack];
+  }
+
+  getCommittedCommands(): readonly Command[] {
+    return this.getCommands();
+  }
+
+  restoreCommittedCommands(commands: readonly Command[]): void {
+    for (const command of commands) {
+      if (command.status !== CommandStatus.Committed) {
+        throw new Error('Can only restore committed commands');
+      }
+    }
+    this.undoStack = [...commands];
+    this.redoStack = [];
+    this.notify();
   }
 
   /**
@@ -142,5 +157,6 @@ export class CommandStack {
   clear(): void {
     this.undoStack = [];
     this.redoStack = [];
+    this.notify();
   }
 }

@@ -127,8 +127,9 @@ export class AddLine2DParallelToLineOp implements IOperation {
     return {
       opType: this.type,
       planeId: this.planeId,
-      referenceLineId: this.referenceLineId,
+      circleId: this.circleId,
       throughPointId: this.throughPointId,
+      index: this.tangentIndex,
       lineId: this.outputs.lineId
     };
   }
@@ -193,8 +194,9 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
     return {
       opType: this.type,
       planeId: this.planeId,
-      referenceLineId: this.referenceLineId,
+      circleId: this.circleId,
       throughPointId: this.throughPointId,
+      index: this.tangentIndex,
       lineId: this.outputs.lineId
     };
   }
@@ -260,8 +262,9 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     return {
       opType: this.type,
       planeId: this.planeId,
-      referenceLineId: this.referenceLineId,
+      circleId: this.circleId,
       throughPointId: this.throughPointId,
+      index: this.tangentIndex,
       lineId: this.outputs.lineId
     };
   }
@@ -323,5 +326,16 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
         plane.removeLine(this.outputs.lineId);
       }
     }
+  }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      circleId: this.circleId,
+      referenceLineId: this.referenceLineId,
+      index: this.tangentIndex,
+      lineId: this.outputs.lineId
+    };
   }
 }

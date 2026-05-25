@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import { ProjectService } from '@/services/ProjectService';
+import { deserializeOperation } from '@/commands/operations/OperationRegistry';
 import { Command } from '@/commands/Command';
 import { createTestWorld } from '../../helpers/worldHelpers';
 
@@ -83,18 +84,22 @@ describe('ProjectService Subprocess Operations Serialization', () => {
  */
 function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
   // 1. Create command with operation
-  const cmd = new Command('Test command');
-  (cmd as any).operations = [op];
-  (commandStack as any).undoStack.push(cmd);
+  const cmd = Command.restore({
+    id: 'cmd-test',
+    timestamp: '2024-01-01T00:00:00.000Z',
+    description: 'Test command',
+    operations: [op]
+  }, world);
+  commandStack.restoreCommittedCommands([cmd]);
   
   // 2. Serialize
-  const projectData = ProjectService.serializeCommands(commandStack, 'test-project');
+  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
   
   // 3. Deserialize using private method via type assertion
   // Note: World initialization pushes commands to stack, so get the last command (our test command)
   const lastCommandIdx = projectData.commands.length - 1;
   const serializedOp = projectData.commands[lastCommandIdx].operations[0];
-  const reconstructed = (ProjectService as any).reconstructOperation(serializedOp);
+  const reconstructed = deserializeOperation(serializedOp);
   
   return reconstructed;
 }

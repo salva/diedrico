@@ -57,4 +57,14 @@ export class AddSegment2DByPointsOp implements IOperation {
       }
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      planeId: this.planeId,
+      point1Id: this.point1Id,
+      point2Id: this.point2Id,
+      segmentId: this.outputs.segmentId
+    };
+  }
 }

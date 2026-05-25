@@ -168,4 +168,18 @@ export class Add3DSegmentOp implements IOperation {
       world.remove3DSegment(this.outputs.segmentId);
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      projection1Id: this.parameters.projection1Id,
+      projection2Id: this.parameters.projection2Id,
+      plane1Id: this.parameters.plane1Id,
+      plane2Id: this.parameters.plane2Id,
+      label: this.parameters.label,
+      visualStyle: this.parameters.visualStyle,
+      segmentId: this.outputs.segmentId
+    };
+  }
+
 }

@@ -19,9 +19,9 @@ export class ToggleEncapsulationOp implements IOperation {
     try {
       console.log(`[ToggleEncapsulationOp.apply] subprocessId: ${this.subprocessId}`);
       processTree.toggleSubprocessEncapsulation(this.subprocessId);
-      return { success: true };
+      return { success: true, outputs: this.outputs };
     } catch (e: any) {
-      return { success: false, error: e.message };
+      return { success: false, outputs: {}, error: e.message };
     }
   }
 
@@ -34,5 +34,9 @@ export class ToggleEncapsulationOp implements IOperation {
     const processTree = world.getProcessTree();
     console.log(`[ToggleEncapsulationOp.redo] subprocessId: ${this.subprocessId}`);
     processTree.toggleSubprocessEncapsulation(this.subprocessId);
+  }
+
+  serialize() {
+    return { opType: this.type, subprocessId: this.parameters.subprocessId };
   }
 }

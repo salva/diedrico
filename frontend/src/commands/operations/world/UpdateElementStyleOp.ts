@@ -139,4 +139,14 @@ export class UpdateElementStyleOp implements IOperation {
       console.error('[UpdateElementStyleOp] Undo failed:', error);
     }
   }
+
+  serialize() {
+    return {
+      opType: this.type,
+      elementId: this.elementId,
+      planeId: this.planeId,
+      newStyle: this.newStyle,
+      outputs: this.outputs
+    };
+  }
 }

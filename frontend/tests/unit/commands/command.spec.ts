@@ -18,6 +18,7 @@ import { Command, CommandStatus } from '@/commands/Command';
 import type { IOperation, OperationResult } from '@/commands/operations/IOperation';
 import type { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
+import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { createTestWorld } from '../../helpers/worldHelpers';
 
 // Mock operation for testing
@@ -55,6 +56,10 @@ class MockOperation implements IOperation {
 
   undo(_world: World): void {
     this.undoCalled = true;
+  }
+
+  serialize() {
+    return { opType: this.type, outputValue: this.outputValue, outputs: this.outputs };
   }
 }
 
@@ -537,4 +542,43 @@ describe('Generic Command Class (R017)', () => {
       }).toThrow('Redo failed');
     });
   });
+
+  describe('Command.restore()', () => {
+    it('restores command metadata and operation order without using normal generated identity', () => {
+      const op1 = new MockOperation('one');
+      const op2 = new MockOperation('two');
+      const restored = Command.restore({
+        id: 'cmd-restored',
+        timestamp: '2024-02-03T04:05:06.000Z',
+        description: 'Restored command',
+        operations: [op1, op2]
+      }, world);
+
+      expect(restored.id).toBe('cmd-restored');
+      expect(restored.timestamp.toISOString()).toBe('2024-02-03T04:05:06.000Z');
+      expect(restored.description).toBe('Restored command');
+      expect(restored.status).toBe(CommandStatus.Committed);
+      expect(restored.getOperations()).toEqual([op1, op2]);
+    });
+
+    it('snapshots committed commands through typed operation descriptors', () => {
+      const op = new AddFreePoint2DOp('projPlaneH', new Vector3(1, 2, 1));
+      op.outputs = { pointId: 'projPlaneH/point2d10' };
+      const restored = Command.restore({
+        id: 'cmd-snapshot',
+        timestamp: '2024-01-01T00:00:00.000Z',
+        description: 'Test Command',
+        operations: [op]
+      }, world);
+
+      expect(restored.toSnapshot()).toMatchObject({
+        id: 'cmd-snapshot',
+        timestamp: '2024-01-01T00:00:00.000Z',
+        description: 'Test Command',
+        status: CommandStatus.Committed,
+        operations: [{ opType: 'AddFreePoint2D', pointId: 'projPlaneH/point2d10' }]
+      });
+    });
+  });
+
 });

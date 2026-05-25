@@ -22,7 +22,6 @@ export class PopSubprocessOp implements IOperation {
     // Store info about subprocess being popped for undo
     const currentSubprocess = world.getProcessTree().getCurrentSubprocess();
     this.poppedSubprocessId = currentSubprocess.id;
-    this.poppedSubprocessName = currentSubprocess.name;
     
     world.getProcessTree().popSubprocess();
     return { success: true, outputs: {} };
@@ -35,5 +34,9 @@ export class PopSubprocessOp implements IOperation {
     
     // Restore the subprocess to the stack
     world.getProcessTree().restoreSubprocessToStack(this.poppedSubprocessId);
+  }
+
+  serialize() {
+    return { opType: this.type, outputs: this.outputs };
   }
 }

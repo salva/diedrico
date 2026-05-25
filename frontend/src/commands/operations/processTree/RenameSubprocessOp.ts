@@ -28,7 +28,7 @@ export class RenameSubprocessOp implements IOperation {
     }
 
     processTree.renameSubprocess(this.subprocessId, this.newName);
-    return { success: true };
+    return { success: true, outputs: this.outputs };
   }
 
   undo(world: World): void {
@@ -41,5 +41,9 @@ export class RenameSubprocessOp implements IOperation {
   redo(world: World): void {
     const processTree = world.getProcessTree();
     processTree.renameSubprocess(this.subprocessId, this.newName);
+  }
+
+  serialize() {
+    return { opType: this.type, subprocessId: this.parameters.subprocessId, newName: this.parameters.newName };
   }
 }

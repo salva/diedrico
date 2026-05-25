@@ -82,6 +82,10 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
     const processTree = world.getProcessTree();
     processTree.restoreAction(this.removedAction, this.groupId, this.index);
   }
+
+  serialize() {
+    return { opType: this.type, actionId: this.actionId, outputs: this.outputs };
+  }
 }
 
 /**
@@ -107,7 +111,7 @@ export class RemoveActionGroupFromProcessTreeOp implements IOperation {
     this.parameters = { groupId };
   }
 
-  apply(world: World): OperationResult {
+  apply(_world: World): OperationResult {
     return {
       success: false,
       outputs: {},
@@ -115,10 +119,15 @@ export class RemoveActionGroupFromProcessTreeOp implements IOperation {
     };
   }
 
-  undo(world: World): void {
+  undo(_world: World): void {
     throw new Error('Not implemented');
   }
+
+  serialize() {
+    return { opType: this.type, groupId: this.groupId, outputs: this.outputs };
+  }
 }
+
 
 /**
  * RemoveSubprocessFromProcessTreeOp - Remove an entire Subprocess
@@ -142,7 +151,7 @@ export class RemoveSubprocessFromProcessTreeOp implements IOperation {
     this.parameters = { subprocessId };
   }
 
-  apply(world: World): OperationResult {
+  apply(_world: World): OperationResult {
     return {
       success: false,
       outputs: {},
@@ -150,7 +159,12 @@ export class RemoveSubprocessFromProcessTreeOp implements IOperation {
     };
   }
 
-  undo(world: World): void {
+  undo(_world: World): void {
     throw new Error('Not implemented');
   }
+
+  serialize() {
+    return { opType: this.type, subprocessId: this.subprocessId, outputs: this.outputs };
+  }
 }
+

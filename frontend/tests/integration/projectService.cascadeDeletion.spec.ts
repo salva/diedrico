@@ -62,7 +62,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
     expect(plane.getPoint(p2Id)).toBeDefined();
 
     // Serialize
-    const serialized = ProjectService.serializeCommands(commandStack, 'Deletion Test');
+    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Deletion Test');
 
     // Deserialize into fresh World
     const { world: freshWorld, commandStack: freshStack } = createTestWorld();
@@ -108,7 +108,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
     commandStack.push(delete3Cmd);
 
     // Serialize
-    const serialized = ProjectService.serializeCommands(commandStack, 'Multiple Deletions');
+    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Multiple Deletions');
     const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
 
@@ -145,7 +145,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
     commandStack.push(deleteCmd);
 
     // Serialize
-    const serialized = ProjectService.serializeCommands(commandStack, 'Undo/Redo Test');
+    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Undo/Redo Test');
     const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
 
@@ -193,7 +193,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
     expect(p1Id).not.toBe(p2Id);
 
     // Serialize
-    const serialized = ProjectService.serializeCommands(commandStack, 'Create-Delete-Create Test');
+    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Create-Delete-Create Test');
     const { world: freshWorld, commandStack: freshStack } = createTestWorld();
     ProjectService.deserializeCommands(serialized, freshWorld, freshStack);
 

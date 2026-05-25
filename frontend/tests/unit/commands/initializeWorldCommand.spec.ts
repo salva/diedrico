@@ -179,7 +179,7 @@ describe('InitializeWorldCommand', () => {
       
       buildWorldInitialization(world, cmd, groupId);
       
-      const operations = (cmd as any).operations;
+      const operations = cmd.getOperations();
 
       // Should have initialization operations
       // Phase 93: ActionGroup + world ops + ProcessTree actions
