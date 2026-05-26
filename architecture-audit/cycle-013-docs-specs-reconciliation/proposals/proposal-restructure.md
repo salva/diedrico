@@ -2,13 +2,13 @@
 
 ## Summary
 
-Replace the stale MVP-spec-centered documentation model with a smaller current-docs boundary: product/user documentation lives under `docs/guide/`, architecture/reference documentation lives under `docs/architecture/` and `docs/api/`, and historical implementation planning under `specs/001-dihedral-learning-mvp/` is deleted after harvesting any still-current user/product statements. This is a higher-level fix than patching individual stale lines because the main architectural problem is not isolated inaccuracies; it is that README/source comments still treat an obsolete MVP planning tree as authority.
+Replace the stale MVP-spec-centered documentation model with a smaller current-docs boundary: product/user documentation lives under `docs/guide/`, architecture/reference documentation lives under `docs/architecture/` and `docs/api/`, and historical implementation planning under `specs/001-dihedral-learning-mvp/` is deleted only where scout evidence or implementation-time file inspection proves it obsolete after harvesting any still-current user/product statements. This is a higher-level fix than patching individual stale lines because the main architectural problem is not isolated inaccuracies; it is that README/source comments still treat an obsolete MVP planning tree as authority.
 
 ## Restructured documentation boundary
 
 1. **`README.md` becomes a concise entry point**
    - Current purpose, frontend-only setup, current scripts, links to current docs.
-   - No backend workspace claims (`README.md:86`, `README.md:128-130`).
+   - No backend workspace claims (`README.md:86`, `README.md:128-130`) because Wave 010 selected backend project API deletion and the implementation log confirms the entire `backend/` workspace was deleted (`architecture-audit/cycle-010-backend-frontend-project-contract/decision.md`, "Convergence decision"; `architecture-audit/cycle-010-backend-frontend-project-contract/implementation-log.md`, "Deleted legacy surfaces").
    - No instruction to keep MVP `spec.md`, `data-model.md`, or `tasks.md` in sync (`README.md:158-164`, `README.md:190-205`).
 2. **`docs/architecture/**` becomes the sole architecture authority**
    - Pages are organized around current cleaned boundaries: domain model, application/use-case/controllers, command/undo and persistence contract, rendering selectors/adapters, stores/runtime state, app shell/Drive integration, validation gates.
@@ -21,9 +21,9 @@ Replace the stale MVP-spec-centered documentation model with a smaller current-d
 5. **`docs/contributing/testing.md` becomes validation runbook truth**
    - Current root/frontend commands from `package.json:13-21` and `frontend/package.json:7-16`.
    - Known Wave 012 residual failure classifications clearly separated from implementation success criteria.
-6. **`specs/001-dihedral-learning-mvp/**` is deleted**
-   - It is no longer authoritative, contains old phase ledgers, migration plans, placeholder operation folders, backend/API assumptions, and command-subclass history (`specs/001-dihedral-learning-mvp/for-planing.md:3206-3251`, `specs/001-dihedral-learning-mvp/for-planing.md:3497`).
-   - Any still-current product requirements are copied into current docs before deletion.
+6. **`specs/001-dihedral-learning-mvp/**` stops being an active authority; evidenced stale files are deleted and remaining files require file-specific inspection**
+   - The scout directly proves that `for-planing.md`, `tasks.md`, `data-model.md`, and Wave-010-touched backend contract/quickstart/research/plan material preserve obsolete phase ledgers, migration plans, placeholder operation folders, backend/API assumptions, and command-subclass history (`specs/001-dihedral-learning-mvp/for-planing.md:3206-3251`, `specs/001-dihedral-learning-mvp/for-planing.md:3497`; `architecture-audit/cycle-010-backend-frontend-project-contract/implementation-log.md`, "Source files changed").
+   - The current scout does not prove every remaining spec file is obsolete. `spec.md`, `ui-spec.md`, `example-setups.md`, phase summaries, `checklists/**`, and remaining `contracts/**` must be inspected during implementation; any still-current product requirements are copied into current docs before deletion.
 7. **Source comments cite current concepts, not historical specs**
    - Remove old `specs/001-dihedral-learning-mvp` references from comments in canvas/stores/header/auth/command stack (`frontend/src/components/workspace/SvgCanvas.vue:172-178`, `frontend/src/stores/toolStore.ts:11-12`, `frontend/src/stores/settingsStore.ts:13-14`, `frontend/src/components/header/ProjectNameDisplay.vue:55`, `frontend/src/stores/authStore.ts:4-8`, `frontend/src/commands/CommandStack.ts:8-13`).
 
@@ -70,26 +70,13 @@ Replace the stale MVP-spec-centered documentation model with a smaller current-d
 
 ## Files/docs/specs to DELETE
 
-Delete the obsolete historical specification tree after harvesting any still-current product statements:
+Delete the obsolete historical specification files with evidence, and require file-by-file implementation verification before broader deletion:
 
-- `specs/001-dihedral-learning-mvp/spec.md`
-- `specs/001-dihedral-learning-mvp/ui-spec.md`
-- `specs/001-dihedral-learning-mvp/data-model.md`
-- `specs/001-dihedral-learning-mvp/tasks.md`
-- `specs/001-dihedral-learning-mvp/for-planing.md`
-- `specs/001-dihedral-learning-mvp/plan.md`
-- `specs/001-dihedral-learning-mvp/research.md`
-- `specs/001-dihedral-learning-mvp/quickstart.md`
-- `specs/001-dihedral-learning-mvp/example-setups.md`
-- `specs/001-dihedral-learning-mvp/data-model-optimization.md`
-- `specs/001-dihedral-learning-mvp/phase-78-completion-summary.md`
-- `specs/001-dihedral-learning-mvp/phase-83-generic-projection-plane-plan.md`
-- `specs/001-dihedral-learning-mvp/phase-84-geometry-free-hinge-lines.md`
-- `specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md`
-- `specs/001-dihedral-learning-mvp/phase-96-implementation-summary.md`
-- `specs/001-dihedral-learning-mvp/checklists/**`
-- `specs/001-dihedral-learning-mvp/contracts/**`
-- The empty `specs/001-dihedral-learning-mvp/` directory itself if no replacement content remains.
+- Delete `specs/001-dihedral-learning-mvp/for-planing.md` because it contains obsolete operation-folder, migration, and command-subclass phase history (`specs/001-dihedral-learning-mvp/for-planing.md:3206-3251`, `specs/001-dihedral-learning-mvp/for-planing.md:3497`).
+- Delete or fully rewrite `specs/001-dihedral-learning-mvp/tasks.md` and `specs/001-dihedral-learning-mvp/data-model.md` after removing README/source-comment references that still present them as current authority (`README.md:158-164`; `frontend/src/stores/toolStore.ts:11-12`; `frontend/src/commands/CommandStack.ts:8-13`).
+- Delete or fully rewrite Wave-010-evidenced stale backend/project contract files if their remaining content is historical rather than current docs: `specs/001-dihedral-learning-mvp/contracts/api.yaml`, `quickstart.md`, `research.md`, and `plan.md` (`architecture-audit/cycle-010-backend-frontend-project-contract/implementation-log.md`, "Source files changed").
+- Inspect before deleting: `spec.md`, `ui-spec.md`, `example-setups.md`, `data-model-optimization.md`, `phase-78-completion-summary.md`, `phase-83-generic-projection-plane-plan.md`, `phase-84-geometry-free-hinge-lines.md`, `phase-85-subprocess-stack-architecture.md`, `phase-96-implementation-summary.md`, `checklists/**`, and any remaining `contracts/**`. Delete them only with file-specific stale-content rationale or after harvesting still-current product/user requirements into current docs.
+- Delete the empty `specs/001-dihedral-learning-mvp/` directory only if verified deletion/rewrite leaves no replacement content there.
 
 Also delete or fully rewrite any docs page that primarily restates the deleted spec tree rather than current code.
 
@@ -105,7 +92,7 @@ Documentation behavior:
 
 ## Why restructure is preferable
 
-The direct approach can make individual lines accurate, but it leaves two competing authorities: current docs and the old MVP specs. Current evidence shows README and source comments still cite MVP documents as architecture truth (`README.md:134`, `README.md:158-164`; `frontend/src/stores/toolStore.ts:11-12`; `frontend/src/commands/CommandStack.ts:8`). As long as that tree remains, stale phase-ledger content such as optional `paper/`/`toolbar/` operations (`specs/001-dihedral-learning-mvp/for-planing.md:3206-3229`) and `ProjectService.reconstructOperation()` switch expansion (`specs/001-dihedral-learning-mvp/for-planing.md:3237-3251`) can keep resurfacing in comments and docs. A documentation-boundary rewrite deletes the obsolete authority instead of curating it forever.
+The direct approach can make individual lines accurate, but it leaves two competing authorities: current docs and the old MVP specs. Current evidence shows README and source comments still cite MVP documents as architecture truth (`README.md:134`, `README.md:158-164`; `frontend/src/stores/toolStore.ts:11-12`; `frontend/src/commands/CommandStack.ts:8`). As long as that tree remains, stale phase-ledger content such as optional `paper/`/`toolbar/` operations (`specs/001-dihedral-learning-mvp/for-planing.md:3206-3229`) and `ProjectService.reconstructOperation()` switch expansion (`specs/001-dihedral-learning-mvp/for-planing.md:3237-3251`) can keep resurfacing in comments and docs. A documentation-boundary rewrite deletes the obsolete authority where evidenced, and prevents unevidenced remaining spec files from retaining authority unless they are rewritten into current docs.
 
 ## Validation plan
 
@@ -134,8 +121,8 @@ Record all stdout/stderr under `architecture-audit/cycle-013-docs-specs-reconcil
 
 ## Risks and mitigations
 
-- **Risk:** deleting the spec tree removes requirements that are not yet represented elsewhere.  
-  **Mitigation:** harvest still-current product/user requirements into `docs/guide/what-is-diedrico.md`, `docs/guide/workspace.md`, and `docs/guide/tools.md`; do not preserve implementation history.
+- **Risk:** deleting spec files without enough file-specific evidence removes requirements that are not yet represented elsewhere.  
+  **Mitigation:** delete only evidenced stale files or files inspected during implementation; harvest still-current product/user requirements into `docs/guide/what-is-diedrico.md`, `docs/guide/workspace.md`, and `docs/guide/tools.md`; do not preserve implementation history as architecture authority.
 - **Risk:** docs rewrite could overstate architecture cleanliness or hide residual debt.  
   **Mitigation:** include a short "known validation debt" section in testing docs based on Wave 012 logs, clearly marked as pre-existing and not a design target.
 - **Risk:** large deletion causes broken VitePress links.  

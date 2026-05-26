@@ -9,7 +9,7 @@ Perform a bounded reconciliation of stale documentation, MVP specs, README mater
 ### README and current docs
 
 - `README.md`
-  - Remove `backend/` from project structure and backend technology claims (`README.md:86`, `README.md:128-130`).
+  - Remove `backend/` from project structure and backend technology claims (`README.md:86`, `README.md:128-130`) because Wave 010's decision selected backend project API deletion and its implementation log confirms the entire backend workspace was deleted when no current non-project backend responsibility remained (`architecture-audit/cycle-010-backend-frontend-project-contract/decision.md`, "Convergence decision"; `architecture-audit/cycle-010-backend-frontend-project-contract/implementation-log.md`, "Deleted legacy surfaces").
   - Replace `specs/001-dihedral-learning-mvp/` as authoritative architecture/spec source (`README.md:88-93`, `README.md:158-164`).
   - Replace contribution workflow that instructs updates to MVP `spec.md`, `data-model.md`, `tasks.md`, and `for-planing.md` (`README.md:190-205`) with current docs/audit/wave discipline.
   - Update scripts/testing notes to current root/frontend command truth (`package.json:13-21`, `frontend/package.json:7-16`) and known Wave 012 residual validation debt.
@@ -68,8 +68,8 @@ Perform a bounded reconciliation of stale documentation, MVP specs, README mater
 
 - `specs/001-dihedral-learning-mvp/**`
   - Remove active references from README/docs/comments first.
-  - Delete stale MVP planning/history/spec artifacts that are no longer authoritative, especially files preserving old implementation phases, migration stories, backend/API assumptions, command-subclass tasks, and placeholder operation families.
-  - If reviewers require retaining user-facing functional requirements, copy only the still-current product-level requirements into `docs/guide/` or `docs/architecture/` before deleting the original MVP spec tree.
+  - Delete stale MVP planning/history/spec artifacts that are evidenced as no longer authoritative, especially inspected files preserving old implementation phases, migration stories, backend/API assumptions, command-subclass tasks, and placeholder operation families.
+  - Do **not** treat the entire spec tree as automatically deletable from the current scout evidence alone. For any remaining spec file not directly evidenced in `scope-check.md`, inspect it during implementation, harvest still-current product/user requirements into `docs/guide/` or `docs/architecture/`, and then either delete it with file-specific rationale or leave it only if it is rewritten as current documentation authority.
 
 ## Files/docs/specs to DELETE
 
@@ -78,7 +78,8 @@ Aggressively delete rather than caveat:
 - `specs/001-dihedral-learning-mvp/for-planing.md` — old phase/task ledger with placeholder operations, migrations, command-subclass history, and stale implementation strategy (`specs/001-dihedral-learning-mvp/for-planing.md:3206-3251`, `specs/001-dihedral-learning-mvp/for-planing.md:3497`).
 - `specs/001-dihedral-learning-mvp/tasks.md` — historical implementation task breakdown no longer used by the current wave process.
 - `specs/001-dihedral-learning-mvp/data-model.md` — replace with current `docs/architecture/**` architecture pages instead of preserving a 70+ phase data-model history (`README.md:162`).
-- `specs/001-dihedral-learning-mvp/phase-*.md`, `research.md`, `plan.md`, `quickstart.md`, `example-setups.md`, `data-model-optimization.md`, `checklists/**`, and `contracts/**` if implementation confirms they are only stale MVP planning artifacts and no longer referenced.
+- `specs/001-dihedral-learning-mvp/quickstart.md`, `research.md`, `plan.md`, and `contracts/api.yaml` sections already shown stale by Wave 010 backend-project cleanup, if implementation confirms their remaining content is historical rather than current docs.
+- `specs/001-dihedral-learning-mvp/phase-*.md`, `spec.md`, `ui-spec.md`, `example-setups.md`, `data-model-optimization.md`, `checklists/**`, and any remaining `contracts/**` files only after file-by-file implementation inspection proves they are stale or after their still-current product requirements are harvested into current docs.
 - Any docs page under `docs/architecture/**`, `docs/api/**`, or `docs/guide/**` that is mostly obsolete and cheaper/cleaner to replace than patch.
 - Source comments that cite deleted MVP spec files.
 
@@ -120,8 +121,8 @@ Required stable logs under `architecture-audit/cycle-013-docs-specs-reconciliati
 
 ## Risks and mitigations
 
-- **Risk:** deleting the entire MVP spec tree may remove still-useful product requirements.  
-  **Mitigation:** before deletion, scan active references and preserve only current product-level requirements in current docs; do not keep stale phase/task architecture documents.
+- **Risk:** deleting spec files without enough evidence may remove still-useful product requirements.  
+  **Mitigation:** delete only files directly evidenced as stale or inspected during implementation; preserve only current product-level requirements in current docs; do not keep stale phase/task architecture documents.
 - **Risk:** broad docs rewrite may accidentally document future desired architecture rather than current code.  
   **Mitigation:** cite current source/package evidence and keep claims tied to post-Wave-012 source truth.
 - **Risk:** docs build may expose unrelated VitePress/sidebar issues.  

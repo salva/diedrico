@@ -22,14 +22,14 @@ Known residual validation/tooling debt should not be pulled into this wave: full
 - Root validation and workspace truth is frontend-only: `package.json:7-9` lists only the `frontend` workspace, and root scripts delegate build/test/lint/e2e/docs to frontend or VitePress (`package.json:13-21`).
 - Frontend build/test script truth is `vue-tsc && vite build`, `vitest run`, `vitest run tests/unit/architecture`, and `playwright test` (`frontend/package.json:7-16`).
 - Wave 012 architecture gates now explicitly forbid stale backend project terms in frontend source/tests (`frontend/tests/unit/architecture/importBoundaries.spec.ts:6-12`) and preserve deleted-surface checks for placeholder/debug families per the implementation log.
-- The cleaned runtime no longer has an active backend workspace even though README still documents `backend/` as an Express backend (`README.md:86`, `README.md:128-130`).
+- Wave 010 explicitly selected deletion of the disconnected backend project API/storage path and allowed backend workspace deletion if no current non-project backend responsibility remained (`architecture-audit/cycle-010-backend-frontend-project-contract/decision.md`, "Convergence decision" and "Binding implementation scope"). Its implementation log confirms the entire `backend/` workspace was deleted and root workspaces now exclude it (`architecture-audit/cycle-010-backend-frontend-project-contract/implementation-log.md`, "Deleted legacy surfaces"; `package.json:7-9`), while README still documents `backend/` as an Express backend (`README.md:86`, `README.md:128-130`).
 - The current application has application/controller boundaries around tools, construction, process history, toolbar, app shell, rendering selectors/adapters, and a snapshot-oriented ProjectService from earlier waves; docs still describe old tool-created commands, command-sourced persistence, and private operation reconstruction.
 
 ## Docs/specs/source-comment findings
 
 ### README
 
-- README still lists `backend/` as "Express backend (optional, for future features)" (`README.md:86`) and a Backend technology section with Express/TypeScript (`README.md:128-130`), despite the root workspace including only `frontend` (`package.json:7-9`) and Wave 010 having resolved the backend stance away from an active backend workspace.
+- README still lists `backend/` as "Express backend (optional, for future features)" (`README.md:86`) and a Backend technology section with Express/TypeScript (`README.md:128-130`), despite Wave 010's reviewed decision to delete the disconnected backend project API/storage path and the implementation log's confirmation that the entire `backend/` workspace was deleted because no proven non-project backend responsibility remained (`architecture-audit/cycle-010-backend-frontend-project-contract/decision.md`, "Convergence decision"; `architecture-audit/cycle-010-backend-frontend-project-contract/implementation-log.md`, "Deleted legacy surfaces").
 - README presents `specs/001-dihedral-learning-mvp/` as "Complete feature specifications" and points to `data-model.md` as architecture documentation and `tasks.md` as implementation task breakdown (`README.md:88-93`, `README.md:158-164`). Those files are MVP-era planning artifacts, not the post-wave architecture authority.
 - README contribution workflow instructs contributors to keep spec/data-model/tasks in sync and use `for-planing.md` for planned features (`README.md:190-205`), which conflicts with the current wave/audit process and no-backcompat refactor discipline.
 - README testing commands are broadly correct at script-name level (`README.md:100-107`, `README.md:171-182`) but omit known current failures/tooling debt and documentation commands present at root (`package.json:17-19`).
@@ -58,7 +58,7 @@ Known residual validation/tooling debt should not be pulled into this wave: full
 - The MVP spec tree is large and still referenced by README as authoritative documentation (`README.md:158-164`) and by source comments (examples below). It contains old implementation phases and backcompat/migration notes, such as operation reorganization into `world/`, `processTree/`, `paper/`, `toolbar/`, and `viewState/` folders plus optional Paper/Toolbar operations (`specs/001-dihedral-learning-mvp/for-planing.md:3206-3229`), even though Wave 012 deleted README-only `paper/` and `toolbar/` operation families.
 - It still describes adding missing `ProjectService.reconstructOperation()` switch cases and a future schema migration framework (`specs/001-dihedral-learning-mvp/for-planing.md:3237-3251`), conflicting with the cleaned Wave 004 persistence stance.
 - It contains an explicit note that Command subclasses must be removed (`specs/001-dihedral-learning-mvp/for-planing.md:3497`), which is historical task narrative rather than current architecture reference.
-- Because active docs and comments still cite this tree, the implementation should either delete it after removing references, or move a minimal functional/user-facing specification into current docs and delete the stale planning/history files.
+- Current scout evidence directly supports deleting or rewriting the stale planning/history files that were inspected and cited above (`for-planing.md`, `tasks.md`, `data-model.md`, backend-contract quickstart/research/plan material already touched by Wave 010, and source-comment references to `spec.md`/`ui-spec.md`). It does **not** by itself prove that every file in the spec tree is obsolete; implementation must inspect remaining files such as `spec.md`, `ui-spec.md`, `example-setups.md`, phase summaries, `checklists/**`, and `contracts/**` before deleting them, and must harvest any still-current product/user requirements into current docs first.
 
 ### Source comments that cite obsolete specs
 
@@ -76,7 +76,7 @@ These are comment/documentation edits only; no runtime behavior should change.
 In scope for Wave 013 implementation:
 
 - Edit/delete docs/specs/README/source comments to match current architecture.
-- Delete stale MVP planning/spec artifacts once active references are removed.
+- Delete stale MVP planning/spec artifacts that are evidenced as obsolete; inspect remaining spec files before deleting them and harvest still-current product/user requirements into current docs.
 - Update testing documentation to current root/frontend commands and known residual failure classifications from Wave 012.
 - Add docs/reference scans or architecture documentation gates only if they are documentation checks, not broad validation-tooling repair.
 
