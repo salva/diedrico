@@ -1,0 +1,8 @@
+
+> diedrico@0.1.0 lint
+> npm run lint --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 lint
+> vue-tsc --noEmit
+

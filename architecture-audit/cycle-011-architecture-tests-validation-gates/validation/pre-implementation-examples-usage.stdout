@@ -1,0 +1,10 @@
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:2: * AddExampleSetupOp - Add predefined geometric setups for testing/debugging
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:21:  PROJECTION_PLANE_SETUP: 'projection-plane-setup',
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:22:  BASIC_3D_POINT_SETUP: 'basic-3d-point-setup',
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:32:export class AddExampleSetupOp implements IOperation {
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:50:        case 'projection-plane-setup':
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:53:        case 'basic-3d-point-setup':
+frontend/src/components/menus/ExamplesMenu.vue:18:        @click="addExample('projection-plane-setup')"
+frontend/src/components/menus/ExamplesMenu.vue:30:        @click="addExample('basic-3d-point-setup')"
+frontend/src/components/menus/ExamplesMenu.vue:53:import { AddExampleSetupOp, type ExampleSetupType } from '@/commands/operations/debug/AddExampleSetupOp';
+frontend/src/components/menus/ExamplesMenu.vue:73:    cmd.addAndExecute(new AddExampleSetupOp(setupType));

@@ -1,0 +1,134 @@
+{
+  "task_id": "t1-run-validation-and-preview-refresh",
+  "stage_id": "cycle-011-validation-and-preview-refresh",
+  "status": "completed",
+  "commit_sha": "ba43852fa29b40037180514b6b9039b7366b4077",
+  "summary": "Ran the Wave 011 validation cadence and refreshed the live preview. Root/frontend lint and architecture gates passed; focused app-shell Vitest and focused Playwright backend-deletion guard passed. Root/frontend full Vitest, root/frontend build, and root/frontend broad e2e were attempted with stable logs and classified as pre-existing/unrelated validation debt: full Vitest fails in historical guide-creation/intersection/PropertiesDialog tests, build fails in vue-tsc on Node 24.15.0, and broad e2e fails before execution due to corrupted e2e spec syntax. Updated architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md with fresh log paths, classifications, residual risks, and preview evidence. Refreshed the Vite live preview on 0.0.0.0:5173 and verified HTTP 200 reachability.",
+  "checklist_results": [
+    {
+      "item": "All mandatory validation commands are attempted where scripts exist, with stdout/stderr captured under architecture-audit/cycle-011-architecture-tests-validation-gates/validation/.",
+      "required": true,
+      "passed": true,
+      "notes": "Attempted root/frontend lint, focused architecture tests, full root/frontend Vitest, root/frontend build, root/frontend e2e, focused app-shell Vitest, focused Playwright, static scans, and live preview refresh/probe. Logs are in the Wave 011 validation directory with stable stdout/stderr filenames."
+    },
+    {
+      "item": "Any failures are classified with log evidence; no Wave-011-attributable failure remains accepted as passing.",
+      "required": true,
+      "passed": true,
+      "notes": "Full Vitest/build/broad e2e failures are documented in implementation-log.md and supported by root-test/frontend-test/root-build/frontend-build/root-test-e2e/frontend-test-e2e logs plus full-vitest-tail.stdout. None are attributable to Wave 011 touched files."
+    },
+    {
+      "item": "Static checks show Wave 011 decision constraints hold and no Wave 012/Wave 013 or unrelated cleanup occurred.",
+      "required": true,
+      "passed": true,
+      "notes": "Architecture gates pass. static-examples-deleted-scan.stdout shows no remaining ExamplesMenu/AddExampleSetupOp/operations-debug source references except the architecture assertion text and no stale backend package/playwright terms. No unrelated source files were edited in this validation task."
+    },
+    {
+      "item": "Focused tests/static scans verify executable architecture/static gates and root/frontend validation command truthfulness after backend deletion.",
+      "required": true,
+      "passed": true,
+      "notes": "npm run lint and npm run test:architecture delegate to executable frontend architecture tests and pass at root/frontend. Focused app-shell tests and focused Playwright guard also pass."
+    },
+    {
+      "item": "Live preview refresh includes 0.0.0.0 binding evidence and HTTP reachability; live smoke passes or records justified limitation.",
+      "required": true,
+      "passed": true,
+      "notes": "Stopped existing Vite listeners, started npm run dev -- --host 0.0.0.0, verified listener on 0.0.0.0:5173 in live-preview-binding.stdout, and curl -I http://127.0.0.1:5173/ returned HTTP/1.1 200 OK in live-preview-probe.stdout."
+    },
+    {
+      "item": "implementation-log.md records validation results and preview refresh/reachability/binding evidence.",
+      "required": true,
+      "passed": true,
+      "notes": "Added a Validation refresh section with command list, log paths, pass/fail classifications, preview command, binding/probe evidence, and conclusion."
+    },
+    {
+      "item": "If validation passes or only pre-existing unrelated failures remain, changes/report artifacts are committed if needed and the stage completes.",
+      "required": true,
+      "passed": true,
+      "notes": "Only pre-existing/unrelated failures remain; validation artifacts and report are being committed."
+    }
+  ],
+  "issues_found": [
+    {
+      "severity": "warning",
+      "description": "Full Vitest remains blocked by pre-existing test debt outside Wave 011: one stale import suite plus 15 failing intersection/PropertiesDialog tests.",
+      "file": "frontend/tests/integration/guide-creation.test.ts",
+      "line": 1,
+      "error_output": "Error: Failed to resolve import \"../../src/commands/operations/AddFreePoint2DOp\" from \"tests/integration/guide-creation.test.ts\"; tests/unit/calculations/intersections.spec.ts: 10 failed; tests/unit/components/propertiesDialog.spec.ts: 5 failed; Test Files 3 failed | 100 passed | 1 skipped; Tests 15 failed | 1198 passed | 45 skipped | 11 todo.",
+      "root_cause": "Historical tests expect deleted/changed APIs and UI behaviors not touched by Wave 011 validation-gate work.",
+      "suggestion": "Plan a focused validation-health wave to either repair or delete obsolete guide-creation/intersection/PropertiesDialog tests according to current architecture."
+    },
+    {
+      "severity": "warning",
+      "description": "Root and frontend builds fail before bundling because vue-tsc is incompatible with Node 24.15.0 in this environment.",
+      "file": "frontend/package.json",
+      "line": 8,
+      "error_output": "Search string not found: \"/supportedTSExtensions = .*(?=;)/\"\nNode.js v24.15.0\nnpm error command sh -c vue-tsc && vite build",
+      "root_cause": "The configured vue-tsc version crashes against the installed TypeScript/Node 24 toolchain before Vite build can run; Wave 011 did not change vue-tsc or build tooling.",
+      "suggestion": "Run a tooling-quality wave to upgrade/replace vue-tsc or pin a compatible Node/toolchain, then address any real type errors exposed after the crash is resolved."
+    },
+    {
+      "severity": "warning",
+      "description": "Broad Playwright e2e fails during spec parsing because existing e2e files contain corrupted TypeScript syntax.",
+      "file": "frontend/tests/e2e/keyboard-shortcuts.spec.ts",
+      "line": 267,
+      "error_output": "SyntaxError: /work/diedrico/frontend/tests/e2e/keyboard-shortcuts.spec.ts: Unexpected token (267:10160); SyntaxError: /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts: Unexpected token (188:2)",
+      "root_cause": "Pre-existing corrupted broad e2e specs prevent Playwright from discovering/running the suite; Wave 011 only ran and passed the focused app-shell/backend-deletion guard.",
+      "suggestion": "Repair or delete the corrupted e2e specs in a dedicated validation-health wave before relying on broad Playwright as a quality gate."
+    },
+    {
+      "severity": "info",
+      "description": "Live preview was successfully refreshed and is listening on 0.0.0.0:5173 with HTTP 200 reachability.",
+      "file": "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-binding.stdout",
+      "line": 4,
+      "error_output": "LISTEN 0 511 0.0.0.0:5173 0.0.0.0:*; live-preview-probe.stdout: HTTP/1.1 200 OK; LIVE_PREVIEW_PROBE_EXIT=0",
+      "root_cause": "Expected validation-stage preview refresh result.",
+      "suggestion": "Keep this server running for reviewer/live-smoke use."
+    }
+  ],
+  "files_modified": [
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-lint-final.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-lint-final.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-lint-final.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-lint-final.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-test-architecture.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-test-architecture.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-test-architecture.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-test-architecture.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/focused-app-shell.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/focused-app-shell.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/focused-playwright-wave010.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/focused-playwright-wave010.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-test.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-test.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-test.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-test.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/full-vitest-tail.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/full-vitest-tail.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-build.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-build.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-build.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-build.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-test-e2e.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/root-test-e2e.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-test-e2e.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/frontend-test-e2e.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/static-examples-deleted-scan.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/static-examples-deleted-scan.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/static-scan-run.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/static-scan-run.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh-command.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh-command.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh.pid",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-binding.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-binding.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-probe.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-probe.stderr",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/update-implementation-log.stdout",
+    "architecture-audit/cycle-011-architecture-tests-validation-gates/validation/update-implementation-log.stderr",
+    ".saivage/stages/cycle-011-validation-and-preview-refresh/reports/t1-run-validation-and-preview-refresh.json"
+  ]
+}

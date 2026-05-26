@@ -1,0 +1,61 @@
+⎯⎯⎯⎯⎯⎯ Failed Suites 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts [ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts ]
+TypeError: createRequire is not a function
+ ❯ tests/unit/architecture/helpers/sourceScanner.ts:3:17
+      1| import { createRequire } from 'node:module';
+      2| 
+      3| const require = createRequire(import.meta.url);
+       |                 ^
+      4| const fs = require('node:fs') as typeof import('node:fs');
+      5| 
+ ❯ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:2:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/unit/architecture/importBoundaries.spec.ts [ tests/unit/architecture/importBoundaries.spec.ts ]
+TypeError: createRequire is not a function
+ ❯ tests/unit/architecture/helpers/sourceScanner.ts:3:17
+      1| import { createRequire } from 'node:module';
+      2| 
+      3| const require = createRequire(import.meta.url);
+       |                 ^
+      4| const fs = require('node:fs') as typeof import('node:fs');
+      5| 
+ ❯ tests/unit/architecture/importBoundaries.spec.ts:2:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/unit/architecture/noCommandSubclasses.spec.ts [ tests/unit/architecture/noCommandSubclasses.spec.ts ]
+TypeError: createRequire is not a function
+ ❯ tests/unit/architecture/helpers/sourceScanner.ts:3:17
+      1| import { createRequire } from 'node:module';
+      2| 
+      3| const require = createRequire(import.meta.url);
+       |                 ^
+      4| const fs = require('node:fs') as typeof import('node:fs');
+      5| 
+ ❯ tests/unit/architecture/noCommandSubclasses.spec.ts:2:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/unit/architecture/worldBoundary.spec.ts [ tests/unit/architecture/worldBoundary.spec.ts ]
+TypeError: createRequire is not a function
+ ❯ tests/unit/architecture/helpers/sourceScanner.ts:3:17
+      1| import { createRequire } from 'node:module';
+      2| 
+      3| const require = createRequire(import.meta.url);
+       |                 ^
+      4| const fs = require('node:fs') as typeof import('node:fs');
+      5| 
+ ❯ tests/unit/architecture/worldBoundary.spec.ts:2:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+npm error Lifecycle script `test:architecture` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/architecture

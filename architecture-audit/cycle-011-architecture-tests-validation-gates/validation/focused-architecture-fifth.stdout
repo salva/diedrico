@@ -1,0 +1,17 @@
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/architecture/noCommandSubclasses.spec.ts  (0 test)
+ ❯ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (0 test)
+ ❯ tests/unit/architecture/worldBoundary.spec.ts  (0 test)
+ ❯ tests/unit/architecture/importBoundaries.spec.ts  (0 test)
+
+ Test Files  4 failed (4)
+      Tests  no tests
+   Start at  08:57:59
+   Duration  1.17s (transform 113ms, setup 0ms, collect 0ms, tests 0ms, environment 2.48s, prepare 497ms)
+

@@ -1,0 +1,39 @@
+-rw-r--r-- 1 salva salva 1097 May 26 08:56 frontend/package.json
+-rw-r--r-- 1 root  root   823 May 26 07:05 package.json
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/architecture/importBoundaries.spec.ts  (5 tests | 5 failed) 20ms
+   ❯ tests/unit/architecture/importBoundaries.spec.ts > Architecture: import boundaries > keeps UI components from importing command construction surfaces
+     → default.join is not a function
+   ❯ tests/unit/architecture/importBoundaries.spec.ts > Architecture: import boundaries > keeps command construction available to application/use-case modules
+     → default.join is not a function
+   ❯ tests/unit/architecture/importBoundaries.spec.ts > Architecture: import boundaries > forbids frontend source and tests from importing backend implementation files
+     → default.join is not a function
+   ❯ tests/unit/architecture/importBoundaries.spec.ts > Architecture: import boundaries > keeps stale backend project API and DTO terms out of active frontend code
+     → default.join is not a function
+   ❯ tests/unit/architecture/importBoundaries.spec.ts > Architecture: import boundaries > does not reference the deleted debug examples setup surface from active source or tests
+     → default.join is not a function
+ ❯ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test | 1 failed) 12ms
+   ❯ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts > Architecture: deleted legacy world-state paths > active source and tests do not reference deleted store/workspace geometry surfaces
+     → default.join is not a function
+ ❯ tests/unit/architecture/worldBoundary.spec.ts  (2 tests | 2 failed) 12ms
+   ❯ tests/unit/architecture/worldBoundary.spec.ts > Architecture: domain world boundary > keeps every domain module independent of application, command, service, UI, store, and persistence layers
+     → default.join is not a function
+   ❯ tests/unit/architecture/worldBoundary.spec.ts > Architecture: domain world boundary > keeps World.ts specifically free of outer-layer imports
+     → default.join is not a function
+ ❯ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests | 2 failed) 10ms
+   ❯ tests/unit/architecture/noCommandSubclasses.spec.ts > Architecture: Command Pattern > does not subclass the generic Command container in production code
+     → default.join is not a function
+   ❯ tests/unit/architecture/noCommandSubclasses.spec.ts > Architecture: Command Pattern > documents Command as sealed and operation-backed
+     → default.join is not a function
+
+ Test Files  4 failed (4)
+      Tests  10 failed (10)
+   Start at  08:56:33
+   Duration  1.27s (transform 173ms, setup 1ms, collect 276ms, tests 54ms, environment 2.77s, prepare 598ms)
+
