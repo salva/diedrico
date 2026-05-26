@@ -1,0 +1,3161 @@
+===== README.md =====
+     1	# Diedrico
+     2	
+     3	**An educational web application for teaching dihedral (orthographic) projection**
+     4	
+     5	Diedrico is an interactive learning tool designed to help engineering students understand and master dihedral projection—the fundamental technical drawing system used in engineering, architecture, and design. Unlike traditional CAD tools that focus on final results, Diedrico emphasizes the **constructive process**, making each geometric operation explicit and traceable.
+     6	
+     7	## 🎯 Purpose
+     8	
+     9	Diedrico is built for:
+    10	
+    11	- **Engineering students** learning orthographic/dihedral projection in technical drawing courses
+    12	- **Instructors** who want to demonstrate construction sequences step-by-step
+    13	- **Self-learners** exploring geometric principles of multi-view projection
+    14	
+    15	The application focuses on **how** drawings are constructed, not just what they look like. Every element has explicit dependencies, every construction is parametric, and geometric relationships update automatically when inputs change.
+    16	
+    17	## ✨ Key Features
+    18	
+    19	### Educational Focus
+    20	- **Explicit construction process**: Every element is created through deliberate user operations
+    21	- **Dependency tracking**: See how elements depend on each other through the Process Tree
+    22	- **Parametric behavior**: Move points and watch dependent geometry update automatically
+    23	- **No implicit entities**: All points, lines, and intersections must be created explicitly
+    24	
+    25	### Geometric Tools
+    26	- **Multiple projection planes**: Work with horizontal (P_H) and vertical (P_V) planes simultaneously
+    27	- **Rich element types**: Points, lines, segments, circles with multiple construction methods
+    28	- **Specialized constructions**: Parallel/perpendicular lines, tangent lines, intersections
+    29	- **Guide lines**: Create perpendicular guides for transporting distances between planes
+    30	- **Distance transport**: Transfer measurements between projection planes using guides
+    31	
+    32	### Workspace
+    33	- **2D primary view**: Main drawing area showing all projection planes in dihedral configuration
+    34	- **3D auxiliary view**: Floating overlay for spatial understanding (read-only)
+    35	- **Active plane system**: One plane receives new constructions; all planes remain visible
+    36	- **Flexible navigation**: Pan (Shift + drag), zoom (mouse wheel), intuitive interactions
+    37	
+    38	### Modern Architecture
+    39	- **Undo/Redo system**: Full command history with arbitrary undo depth
+    40	- **Process Tree**: Visual representation of construction sequence and dependencies
+    41	- **Google Drive integration**: Save and load projects from your Drive account
+    42	- **Responsive UI**: Works on desktop browsers with clear visual feedback
+    43	
+    44	## 🚀 Getting Started
+    45	
+    46	### Prerequisites
+    47	
+    48	- **Node.js** 18.0.0 or higher
+    49	- **npm** 9.0.0 or higher
+    50	- Modern web browser (Chrome, Firefox, Edge, Safari)
+    51	
+    52	### Installation
+    53	
+    54	1. **Clone the repository**:
+    55	   ```bash
+    56	   git clone https://github.com/yourusername/diedrico.git
+    57	   cd diedrico
+    58	   ```
+    59	
+    60	2. **Install dependencies**:
+    61	   ```bash
+    62	   npm install
+    63	   ```
+    64	
+    65	3. **Start the development server**:
+    66	   ```bash
+    67	   npm run dev
+    68	   ```
+    69	
+    70	4. **Open in browser**:
+    71	   Navigate to `http://localhost:5173`
+    72	
+    73	### Project Structure
+    74	
+    75	```
+    76	diedrico/
+    77	├── frontend/          # Vue 3 + TypeScript frontend application
+    78	│   ├── src/
+    79	│   │   ├── commands/     # Command pattern (undo/redo)
+    80	│   │   ├── components/   # Vue components (UI)
+    81	│   │   ├── domain/       # Core domain model (geometry)
+    82	│   │   ├── services/     # Application services
+    83	│   │   ├── stores/       # Pinia state management
+    84	│   │   └── tools/        # Interactive construction tools
+    85	│   └── tests/         # Unit, integration, and E2E tests
+    86	├── backend/           # Express backend (optional, for future features)
+    87	├── docs/              # Deployment and setup documentation
+    88	└── specs/             # Complete feature specifications
+    89	    └── 001-dihedral-learning-mvp/
+    90	        ├── spec.md           # Functional requirements
+    91	        ├── ui-spec.md        # UI/UX specifications
+    92	        ├── data-model.md     # Architecture documentation
+    93	        └── tasks.md          # Implementation task breakdown
+    94	```
+    95	
+    96	## 🛠️ Development
+    97	
+    98	### Available Scripts
+    99	
+   100	**Frontend development**:
+   101	```bash
+   102	npm run dev              # Start Vite dev server
+   103	npm run build            # Build for production
+   104	npm run test             # Run unit tests
+   105	npm run test:watch       # Run tests in watch mode
+   106	npm run test:e2e         # Run Playwright E2E tests
+   107	npm run lint             # Lint and fix code
+   108	```
+   109	
+   110	**Full workspace**:
+   111	```bash
+   112	npm run dev              # Start frontend dev server
+   113	npm test                 # Run all tests
+   114	```
+   115	
+   116	### Technology Stack
+   117	
+   118	**Frontend**:
+   119	- **Vue 3** with Composition API for reactive UI
+   120	- **TypeScript** for type safety
+   121	- **Pinia** for state management
+   122	- **Three.js** for 3D visualization
+   123	- **D3.js** for 2D geometric operations
+   124	- **Vite** for fast development and builds
+   125	- **Vitest** for unit testing
+   126	- **Playwright** for E2E testing
+   127	
+   128	**Backend** (minimal, planned for future features):
+   129	- **Express** for API endpoints
+   130	- **TypeScript** for consistency
+   131	
+   132	### Architecture Principles
+   133	
+   134	Diedrico follows strict architectural principles documented in [data-model.md](specs/001-dihedral-learning-mvp/data-model.md):
+   135	
+   136	1. **Parametric by default**: All geometric elements update when dependencies change
+   137	2. **Explicit dependencies**: Process Tree tracks all element relationships
+   138	3. **Command pattern**: All mutations through undoable commands
+   139	4. **No implicit entities**: User must explicitly create all geometric objects
+   140	5. **Plane-based organization**: 2D elements belong to specific projection planes
+   141	6. **Type-safe domain model**: Comprehensive TypeScript types for all geometry
+   142	
+   143	### Key Concepts
+   144	
+   145	**Process Tree**: Every geometric element is created by an Action that tracks its inputs (dependencies). The Process Tree is the complete history of construction operations, enabling:
+   146	- Parametric updates (change inputs, outputs recalculate)
+   147	- Dependency visualization (see what depends on what)
+   148	- Construction replay (understand the sequence)
+   149	
+   150	**Element Variations**: Each element type (Point, Line, Circle) has multiple construction methods. For example, points can be:
+   151	- Free (positioned anywhere)
+   152	- Intersection (where two elements cross)
+   153	- On-element (constrained to a line or circle)
+   154	- Transported (transferred between projection planes)
+   155	
+   156	**Realization**: The actual geometric representation (x, y coordinates, etc.) computed from an element's definition and dependencies. Realizations are cached and invalidated when dependencies change.
+   157	
+   158	## 📚 Documentation
+   159	
+   160	- **[Feature Specification](specs/001-dihedral-learning-mvp/spec.md)**: Complete functional requirements (FR-001 through FR-052)
+   161	- **[UI Specification](specs/001-dihedral-learning-mvp/ui-spec.md)**: Detailed UI/UX guidelines and interaction patterns
+   162	- **[Data Model](specs/001-dihedral-learning-mvp/data-model.md)**: Architecture documentation with 70+ implementation phases
+   163	- **[Tasks](specs/001-dihedral-learning-mvp/tasks.md)**: Detailed task breakdown for all features
+   164	- **[Deployment Guide](docs/DEPLOYMENT.md)**: Production deployment instructions
+   165	- **[Google Drive Setup](docs/GOOGLE_DRIVE_SETUP.md)**: Configure Drive integration
+   166	
+   167	## 🧪 Testing
+   168	
+   169	Diedrico has comprehensive test coverage across multiple levels:
+   170	
+   171	**Unit Tests** (Vitest):
+   172	```bash
+   173	npm run test             # Run all unit tests
+   174	npm run test:watch       # Watch mode for TDD
+   175	```
+   176	
+   177	**Integration Tests**: Test interactions between domain model, commands, and services
+   178	
+   179	**E2E Tests** (Playwright):
+   180	```bash
+   181	npm run test:e2e         # Run E2E tests headless
+   182	npm run test:e2e:headed  # Run with browser UI
+   183	```
+   184	
+   185	Test organization:
+   186	- `frontend/tests/unit/` - Domain model, calculations, utilities
+   187	- `frontend/tests/integration/` - Command execution, tool workflows
+   188	- `frontend/tests/e2e/` - Complete user workflows
+   189	
+   190	## 🤝 Contributing
+   191	
+   192	Contributions are welcome! However, please note:
+   193	
+   194	1. **Read the specifications first**: Familiarize yourself with [spec.md](specs/001-dihedral-learning-mvp/spec.md) and [data-model.md](specs/001-dihedral-learning-mvp/data-model.md)
+   195	2. **Follow architectural principles**: The codebase has strict conventions (see Architecture Principles above)
+   196	3. **Write tests**: All new features require unit tests; complex features need integration tests
+   197	4. **Update documentation**: Keep spec.md, data-model.md, and tasks.md in sync with code
+   198	
+   199	### Development Workflow
+   200	
+   201	1. Check [for-planing.md](specs/001-dihedral-learning-mvp/for-planing.md) for planned features
+   202	2. Pick a feature and plan it:
+   203	   - Add to spec.md (functional requirements)
+   204	   - Add to ui-spec.md (if UI changes needed)
+   205	   - Document in data-model.md (architecture details)
+   206	   - Break down in tasks.md (implementation tasks)
+   207	3. Implement following task order
+   208	4. Write comprehensive tests
+   209	5. Update documentation to reflect completion
+   210	
+   211	## 📄 License
+   212	
+   213	This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+   214	
+   215	**In brief**: You are free to use, modify, and distribute this software, but any derivative works must also be licensed under GPL v3.0. This ensures that educational tools remain open and accessible to all.
+   216	
+   217	Key permissions:
+   218	- ✅ **Commercial use**: Use in commercial environments
+   219	- ✅ **Modification**: Adapt and improve the software
+   220	- ✅ **Distribution**: Share with others
+
+===== docs/architecture/commands.md =====
+     1	# Command System
+     2	
+     3	All mutations to the `World` go through the command system, enabling undo/redo, serialization, and history tracking.
+     4	
+     5	## Architecture
+     6	
+     7	```
+     8	CommandStack
+     9	├── undoStack: Command[]
+    10	└── redoStack: Command[]
+    11	
+    12	Command
+    13	├── operations: IOperation[]
+    14	├── status: Building | Committed | Undone
+    15	├── addAndExecute(op) → executes immediately, stores for undo
+    16	├── commit() → finalizes, pushes to stack
+    17	├── undo() → reverses all ops in reverse order
+    18	└── redo() → reapplies all ops in original order
+    19	```
+    20	
+    21	## IOperation Interface
+    22	
+    23	Every mutation is an `IOperation`:
+    24	
+    25	```typescript
+    26	interface IOperation {
+    27	  type: string
+    28	  parameters: Record<string, unknown>
+    29	  outputs: Record<string, unknown>
+    30	  apply(world: World): OperationResult
+    31	  undo(world: World): void
+    32	  serialize?(): SerializedOperation
+    33	}
+    34	```
+    35	
+    36	**Requirements:**
+    37	- **Deterministic** — same inputs always produce the same outputs
+    38	- **Serializable** — can be saved to JSON and reconstructed
+    39	- **Self-contained** — all data needed is in `parameters` and `outputs`
+    40	- **Reversible** — `undo()` fully reverses `apply()`
+    41	
+    42	## Operation Categories
+    43	
+    44	### World Operations
+    45	
+    46	| Operation | Purpose |
+    47	|-----------|---------|
+    48	| `AddFreePoint2DOp` | Create a point at (u, v) on a plane |
+    49	| `AddLine2DByTwoPointsOp` | Create line through two points |
+    50	| `AddSegment2DByPointsOp` | Create segment between two points |
+    51	| `AddCircle2DByCenterAndPointOp` | Create circle from center + radius point |
+    52	| `AddGuide2DPerpendicularToLineOp` | Create guide perpendicular to hinge |
+    53	| `AddSiblingGuide2DOp` | Auto-create paired guide on sibling plane |
+    54	| `AddLineLineIntersectionPoint2DOp` | Intersection of two lines |
+    55	| `AddLineCircleIntersectionPoint2DOp` | Line-circle intersection |
+    56	| `AddCircleCircleIntersectionPoint2DOp` | Circle-circle intersection |
+    57	| `AddSiblingIntersectionPoint2DOp` | Paired intersection on sibling plane |
+    58	| `Add3DPointOp` | Create 3D point from projections |
+    59	| `Add3DLineOp` | Create 3D line from projections |
+    60	| `Add3DSegmentOp` | Create 3D segment from projections |
+    61	| `Add3DPlaneOp` | Create 3D plane from three points |
+    62	| `AddAuxiliaryProjectionPlaneOp` | Create new projection plane |
+    63	| `AddBrokenHingeLineOp` | Add fold line for auxiliary plane |
+    64	| `UpdateFreePoint2DPositionOp` | Move a free point |
+    65	| `UpdateElementStyleOp` | Change visual style |
+    66	| `RemovePoint2DOp` / `RemoveLine2DOp` / ... | Delete elements |
+    67	
+    68	### Process Tree Operations
+    69	
+    70	| Operation | Purpose |
+    71	|-----------|---------|
+    72	| `AddProcessTreeActionOp` | Record action in tree |
+    73	| `AddProcessTreeActionGroupOp` | Create action group |
+    74	| `PushSubprocessOp` / `PopSubprocessOp` | Manage subprocess stack |
+    75	| `RenameSubprocessOp` | Rename subprocess |
+    76	| `ToggleEncapsulationOp` | Toggle intermediate visibility |
+    77	| `ToggleOutputOp` | Toggle output flag |
+    78	
+    79	## Command Lifecycle
+    80	
+    81	```
+    82	1. Tool creates new Command
+    83	2. Tool calls command.addAndExecute(op1)  → op1.apply(world)
+    84	3. Tool calls command.addAndExecute(op2)  → op2.apply(world)
+    85	4. If any op fails → entire command rolls back
+    86	5. command.commit() → pushed to CommandStack.undoStack
+    87	6. User presses Ctrl+Z → command.undo() → ops reversed
+    88	7. User presses Ctrl+Y → command.redo() → ops reapplied
+    89	```
+    90	
+    91	## Command Factories
+    92	
+    93	Factories encapsulate common multi-operation patterns:
+    94	
+    95	| Factory | Operations Created |
+    96	|---------|-------------------|
+    97	| `PointSequenceFactory` | Point + process tree entries |
+    98	| `LineSequenceFactory` | Line + process tree entries |
+    99	| `CircleSequenceFactory` | Circle + process tree entries |
+   100	| `GuideSequenceFactory` | Guide + sibling guide + tree entries |
+   101	| `IntersectionSequenceFactory` | Intersection points + siblings + tree entries |
+   102	| `DeletionSequenceFactory` | Remove element + dependency cleanup |
+   103	| `InitializationSequenceFactory` | World setup (planes, hinges, origin) |
+   104	| `ProjectionSetupFactory` | Standard folding plane setup |
+   105	
+   106	## Serialization
+   107	
+   108	Commands serialize to JSON for persistence:
+   109	
+   110	```json
+   111	{
+   112	  "operations": [
+   113	    {
+   114	      "type": "AddFreePoint2DOp",
+   115	      "parameters": { "planeId": "projPlane1", "u": 3.5, "v": 2.0 },
+   116	      "outputs": { "pointId": "projPlane1/point2d5" }
+   117	    }
+   118	  ]
+   119	}
+   120	```
+   121	
+   122	The `ProjectService.reconstructOperation()` switch handles deserialization of all operation types.
+
+===== docs/architecture/stores.md =====
+     1	# Stores
+     2	
+     3	Diedrico uses Pinia for reactive state management. Each store handles a specific concern.
+     4	
+     5	## Store Overview
+     6	
+     7	| Store | Purpose |
+     8	|-------|---------|
+     9	| `processStore` | Construction history tree + command stack |
+    10	| `selectionStore` | Selected and highlighted elements |
+    11	| `toolStore` | Active tool and tool family management |
+    12	| `viewStore` | Viewport state (zoom, pan) and 3D options |
+    13	| `settingsStore` | User preferences (grid, snap, styles) |
+    14	| `authStore` | Google authentication state |
+    15	
+    16	## processStore
+    17	
+    18	Manages the `ProcessTree` and `CommandStack`:
+    19	
+    20	**State:**
+    21	- `root: Process` — the process tree
+    22	- `commandHistory: CommandStack` — undo/redo stacks
+    23	
+    24	**Getters:**
+    25	- `getNodeByPath(path)` — find node by tree path
+    26	- `visibleSubprocesses` — subprocesses respecting encapsulation
+    27	- `allActions` — flat list of all actions
+    28	
+    29	**Actions:**
+    30	- `addSubprocess()`, `addActionGroup()`, `addAction()`
+    31	- `removeSubprocess()`, `removeActionGroup()`
+    32	- `clear()` — reset everything
+    33	
+    34	## selectionStore
+    35	
+    36	Tracks which elements are selected and highlighted:
+    37	
+    38	**State:**
+    39	- `selectedIds: Set<string>` — currently selected element IDs
+    40	- `cascadeHighlightIds: Set<string>` — dependents highlighted on hover
+    41	
+    42	**Computed:**
+    43	- `hasSelection` — boolean, any selection exists
+    44	- `selectionCount` — number of selected items
+    45	
+    46	**Actions:**
+    47	- `selectSingle(id)` — replace selection with one element
+    48	- `addToSelection(id)` — add to current selection
+    49	- `toggleSelection(id)` — add or remove (Shift+click)
+    50	- `clearSelection()` — deselect everything
+    51	- `selectMultiple(ids)` — replace with a set
+    52	- `setCascadeHighlight(ids)` — highlight dependents on hover
+    53	
+    54	## toolStore
+    55	
+    56	Manages the active construction tool:
+    57	
+    58	**Tool families** (toolbar groups):
+    59	- Point family: Free Point, Intersection
+    60	- Line family: Line, Parallel, Perpendicular, Tangent variants
+    61	- Segment family: Segment
+    62	- Circle family: Circle
+    63	- Guide family: Guide
+    64	- 3D Elements: 3D Point, 3D Line, 3D Segment, 3D Plane, Aux. Projection Plane
+    65	- Examples: Folding Plane Setup, Quick 3D Line
+    66	
+    67	**Features:**
+    68	- Last-used tool per family (persisted in `localStorage`)
+    69	- Keyboard shortcuts: `P`, `L`, `S`, `C`, `G`, `I`, `Esc`
+    70	- Tool activation/deactivation lifecycle
+    71	- Argument collection state for multi-pick tools
+    72	
+    73	## viewStore
+    74	
+    75	Controls the 2D viewport and 3D display options:
+    76	
+    77	**State:**
+    78	- `zoom`, `panX`, `panY` — 2D canvas viewport
+    79	- `gridVisible` — grid toggle
+    80	- `threeViewOptions` — 3D view toggles (persisted in `localStorage`)
+    81	- `showProjectedElements` — show 3D projections on planes
+    82	
+    83	**Actions:**
+    84	- `setZoom(level)`, `setPan(x, y)`
+    85	- `adjustZoom(delta, focusPoint)` — zoom toward cursor
+    86	- `resetViewport()` — return to default view
+    87	
+    88	## settingsStore
+    89	
+    90	User preferences, auto-saved to `localStorage`:
+    91	
+    92	**Categories:**
+    93	
+    94	| Category | Settings |
+    95	|----------|----------|
+    96	| Grid | Visibility, spacing, snap-to-grid |
+    97	| Snap | Enabled, snap radius |
+    98	| Default Styles | Colors and line widths for points, lines, circles, guides |
+    99	| 3D View | Default visibility of planes, projection lines |
+   100	
+   101	All settings use deep watchers for automatic persistence.
+   102	
+   103	## authStore
+   104	
+   105	Manages Google OAuth2 authentication state for Drive integration.
+
+===== docs/api/services.md =====
+     1	# Services API
+     2	
+     3	Reference for Diedrico's service layer.
+     4	
+     5	## PaperService
+     6	
+     7	Converts domain geometry into drawing primitives for SVG rendering.
+     8	
+     9	```typescript
+    10	class PaperService {
+    11	  generatePrimitives(context: PrimitiveContext): Primitive[]
+    12	  generate3DProjectionPrimitives(context: PrimitiveContext): Primitive[]
+    13	}
+    14	```
+    15	
+    16	**Pipeline**: Iterates all planes → iterates all elements → resolves visibility → generates primitives with resolved styles.
+    17	
+    18	**Primitive generators**: `pointToPrimitive()`, `lineToPrimitive()`, `segmentToPrimitive()`, `circleToPrimitive()`, `halfHingeLineToPrimitive()`, `guideToPrimitive()`.
+    19	
+    20	**Style resolvers**: `resolvePointStyle()`, `resolveLineStyle()` — apply hover, selected, cascade-highlight, snap, and active-plane states.
+    21	
+    22	## SVGRenderer
+    23	
+    24	Converts paper primitives to SVG attributes.
+    25	
+    26	```typescript
+    27	class SVGRenderer {
+    28	  transformPoint(point: Vector2, viewport: Viewport): Vector2
+    29	  inverseTransformPoint(screenPoint: Vector2, viewport: Viewport): Vector2
+    30	  renderPoint(primitive: PointPrimitive): SVGAttributes
+    31	  renderLine(primitive: LinePrimitive, viewport: Viewport): SVGAttributes
+    32	  renderCircle(primitive: CirclePrimitive): SVGAttributes
+    33	  renderPath(primitive: PathPrimitive): SVGAttributes
+    34	}
+    35	```
+    36	
+    37	**Viewport transform**: `(paperCoord + pan) × zoom → screenCoord`
+    38	
+    39	## Element2DRenderer3D
+    40	
+    41	Renders 2D elements in the Three.js 3D scene.
+    42	
+    43	```typescript
+    44	class Element2DRenderer3D {
+    45	  renderElements(world: World, options: RenderOptions): THREE.Group
+    46	  renderPlaneElements(plane: ProjectionPlane, world: World): THREE.Group
+    47	}
+    48	```
+    49	
+    50	**Transforms**: Uses `applyMatrix4x3()` with plane's `planeTo3D` matrix. Points → spheres, Lines → tubes, Circles → tube rings.
+    51	
+    52	## ProjectService
+    53	
+    54	Handles persistence via command-sourcing.
+    55	
+    56	```typescript
+    57	class ProjectService {
+    58	  serialize(world: World, commandStack: CommandStack): ProjectData
+    59	  deserializeAndReplay(data: ProjectData, world: World, commandStack: CommandStack): void
+    60	}
+    61	```
+    62	
+    63	**Schema migration**: Automatically upgrades older project files (snake_case → camelCase, flat → hierarchical IDs).
+    64	
+    65	## GoogleDriveService
+    66	
+    67	Browser-to-Drive integration via `gapi.client`.
+    68	
+    69	```typescript
+    70	class GoogleDriveService {
+    71	  initialize(): Promise<void>
+    72	  signIn(): Promise<void>
+    73	  signOut(): Promise<void>
+    74	  signInSilently(): Promise<boolean>
+    75	  fetchUserProfile(): Promise<UserProfile>
+    76	  listFiles(): Promise<DriveFile[]>
+    77	  getRecentFiles(): Promise<DriveFile[]>
+    78	  createFile(name: string, content: string): Promise<string>
+    79	  updateFile(fileId: string, content: string): Promise<void>
+    80	  readFile(fileId: string): Promise<string>
+    81	  deleteFile(fileId: string): Promise<void>
+    82	}
+    83	```
+    84	
+    85	**Scope**: `drive.file` (app-created files only) + `userinfo.profile` + `userinfo.email`.
+    86	
+    87	## DependencyService
+    88	
+    89	Manages bidirectional element dependency tracking.
+    90	
+    91	```typescript
+    92	class DependencyService {
+    93	  registerNode(outputId: string, inputIds: string[]): void
+    94	  unregisterNode(elementId: string): void
+    95	  getDependents(elementId: string): string[]
+    96	  getDependencies(elementId: string): string[]
+    97	  getAllDependents(elementId: string): string[]  // transitive
+    98	  getAllDependencies(elementId: string): string[]  // transitive
+    99	}
+   100	```
+   101	
+   102	## ValidationService
+   103	
+   104	Validates geometric feasibility and user inputs before operation execution.
+   105	
+   106	## InputService
+   107	
+   108	Handles canvas mouse/touch events, hit-testing, and tool argument routing.
+   109	
+   110	## RenderService
+   111	
+   112	Low-level rendering functions (used primarily in tests): `renderPoint()`, `renderPlane()`, `renderLine()`.
+
+===== docs/contributing/testing.md =====
+     1	# Testing
+     2	
+     3	Diedrico uses a comprehensive testing strategy with Vitest for unit/integration tests and Playwright for E2E tests.
+     4	
+     5	## Test Runner
+     6	
+     7	### Unit & Integration Tests
+     8	
+     9	```bash
+    10	cd frontend
+    11	npm run test           # Run once
+    12	npm run test:watch     # Watch mode
+    13	npm run test:coverage  # With coverage report
+    14	```
+    15	
+    16	Uses **Vitest** with `jsdom` environment.
+    17	
+    18	### E2E Tests
+    19	
+    20	```bash
+    21	cd frontend
+    22	npx playwright test
+    23	```
+    24	
+    25	Uses **Playwright** with Chromium. Configuration in `playwright.config.ts`.
+    26	
+    27	## Test Organization
+    28	
+    29	```
+    30	frontend/tests/
+    31	├── unit/
+    32	│   ├── domain/           # Domain model tests
+    33	│   │   ├── math/         # Vector/matrix operations
+    34	│   │   ├── world/        # World, planes, elements
+    35	│   │   └── processTree/  # Process tree operations
+    36	│   ├── commands/         # Command and operation tests
+    37	│   ├── services/         # Service layer tests
+    38	│   ├── tools/            # Tool behavior tests
+    39	│   └── utils/            # Utility function tests
+    40	├── integration/
+    41	│   └── ...               # Cross-layer integration tests
+    42	└── e2e/
+    43	    └── ...               # Full browser tests
+    44	```
+    45	
+    46	## Writing Tests
+    47	
+    48	### Unit Test Example
+    49	
+    50	```typescript
+    51	import { describe, it, expect } from 'vitest'
+    52	import { FreePoint2D } from '@/domain/world/FreePoint2D'
+    53	
+    54	describe('FreePoint2D', () => {
+    55	  it('should realize at the specified coordinates', () => {
+    56	    const point = new FreePoint2D('p1', 'projPlane1', 3.5, 2.0)
+    57	    const world = createTestWorld()
+    58	    const realization = point.realize2D(world)
+    59	
+    60	    expect(realization.feasible).toBe(true)
+    61	    expect(realization.position[0]).toBeCloseTo(3.5)
+    62	    expect(realization.position[1]).toBeCloseTo(2.0)
+    63	  })
+    64	})
+    65	```
+    66	
+    67	### Test Helpers
+    68	
+    69	Common patterns used in tests:
+    70	
+    71	- `createTestWorld()` — creates a minimal `World` with base planes
+    72	- Direct operation calls — `op.apply(world)` to set up state
+    73	- Realization checks — validate geometry via `realize2D()` / `realize3D()`
+    74	- Feasibility checks — verify `realization.feasible` for valid/invalid inputs
+    75	
+    76	## Test Categories
+    77	
+    78	### Domain Tests
+    79	
+    80	Test pure geometric logic: element creation, realization computation, dependency tracking, coordinate transformations.
+    81	
+    82	### Command Tests
+    83	
+    84	Test operation apply/undo/redo: verify world state after each step, ensure perfect reversal on undo.
+    85	
+    86	### Service Tests
+    87	
+    88	Test PaperService primitive generation, SVGRenderer transforms, ProjectService serialization/deserialization.
+    89	
+    90	### Tool Tests
+    91	
+    92	Test tool argument collection, multi-pick flows, keyboard shortcuts, tool switching.
+    93	
+    94	### Integration Tests
+    95	
+    96	Test complete workflows: create elements → modify → undo → verify.
+    97	
+    98	### E2E Tests
+    99	
+   100	Test the full UI: canvas clicks, panel interactions, selection behavior, keyboard shortcuts.
+   101	
+   102	## Test Baseline
+   103	
+   104	The project maintains a known baseline of pre-existing test results. When running the full test suite, compare against this baseline to detect regressions.
+   105	
+   106	## Tips
+   107	
+   108	- Run tests frequently during development
+   109	- New features should include tests covering:
+   110	  - Happy path (element creation, realization)
+   111	  - Edge cases (degenerate inputs, infeasibility)
+   112	  - Undo/redo correctness
+   113	  - Serialization round-trip
+   114	- Use `toBeCloseTo()` for floating-point comparisons
+   115	- Test feasibility propagation when adding dependent elements
+
+===== docs/architecture/overview.md =====
+     1	# Architecture Overview
+     2	
+     3	Diedrico follows a layered architecture with clear separation between domain logic, state management, commands, and UI.
+     4	
+     5	## Layer Diagram
+     6	
+     7	```
+     8	┌─────────────────────────────────────────────────┐
+     9	│                  Components (Vue)                │
+    10	│  CanvasPanel · ThreeView · ElementsPanel · ...   │
+    11	├─────────────────────────────────────────────────┤
+    12	│                 Stores (Pinia)                   │
+    13	│  toolStore · selectionStore · viewStore · ...    │
+    14	├─────────────────────────────────────────────────┤
+    15	│               Commands & Operations              │
+    16	│  CommandStack · Command · IOperation impls       │
+    17	├─────────────────────────────────────────────────┤
+    18	│                   Services                       │
+    19	│  PaperService · SVGRenderer · ProjectService     │
+    20	├─────────────────────────────────────────────────┤
+    21	│                Domain Model                      │
+    22	│  World · ProjectionPlane · Element2D/3D          │
+    23	└─────────────────────────────────────────────────┘
+    24	```
+    25	
+    26	## Data Flow
+    27	
+    28	### User Action → Domain Change
+    29	
+    30	```
+    31	User clicks canvas
+    32	  → InputService detects click target
+    33	  → Active Tool receives argument (point, line, etc.)
+    34	  → Tool creates Command with Operations
+    35	  → Operations mutate World (add element, update position)
+    36	  → World.markDirty() increments version
+    37	  → Observers re-render (2D canvas, 3D view, panels)
+    38	```
+    39	
+    40	### Rendering Pipeline
+    41	
+    42	```
+    43	Domain (definitions)
+    44	  → realize2D() computes intrinsic (u, v) coordinates
+    45	  → planeToPaper2D matrix transforms to paper space
+    46	  → PaperService generates drawing primitives
+    47	  → SVGRenderer converts to SVG elements with viewport transform
+    48	```
+    49	
+    50	## Key Design Decisions
+    51	
+    52	### Definition vs Realization
+    53	
+    54	Elements store **what they are** (definition), not **where they are** (coordinates). Coordinates are computed lazily via `realize()` and cached. This enables:
+    55	
+    56	- Clean undo/redo (only definitions change)
+    57	- Efficient recomputation (only dirty elements re-realize)
+    58	- Consistent serialization (save definitions, not coordinates)
+    59	
+    60	### Command Sourcing
+    61	
+    62	Persistence saves the command sequence, not world state. On load, commands replay to reconstruct everything. This ensures perfect fidelity and enables schema migration.
+    63	
+    64	### Plane Ownership
+    65	
+    66	Each 2D element belongs to exactly one projection plane. Elements use hierarchical IDs (`{planeId}/{localId}`) to encode this relationship. This avoids cross-plane ambiguity and simplifies lookup.
+    67	
+    68	## Technology Stack
+    69	
+    70	| Layer | Technology |
+    71	|-------|-----------|
+    72	| Framework | Vue 3 (Composition API) |
+    73	| State | Pinia stores |
+    74	| 2D Rendering | D3.js + SVG |
+    75	| 3D Rendering | Three.js + CSS2DRenderer |
+    76	| Math Labels | KaTeX |
+    77	| Build | Vite |
+    78	| Testing | Vitest + Playwright |
+    79	| Backend | Express (minimal REST API) |
+
+===== docs/guide/persistence.md =====
+     1	# Persistence & Google Drive
+     2	
+     3	Diedrico uses **command-sourcing** for persistence: projects are saved as a sequence of commands that can be replayed to reconstruct the state.
+     4	
+     5	## Project File Format
+     6	
+     7	Projects are stored as `.diedrico` JSON files:
+     8	
+     9	```json
+    10	{
+    11	  "id": "project-uuid",
+    12	  "name": "My Construction",
+    13	  "schemaVersion": "6.0.0",
+    14	  "created": "2024-01-01T00:00:00.000Z",
+    15	  "modified": "2024-01-15T12:00:00.000Z",
+    16	  "nextElementId": 42,
+    17	  "commands": [
+    18	    {
+    19	      "operations": [
+    20	        {
+    21	          "type": "AddFreePoint2DOp",
+    22	          "parameters": { "planeId": "projPlane1", "u": 3.5, "v": 2.0 },
+    23	          "outputs": { "pointId": "projPlane1/point2d5" }
+    24	        }
+    25	      ]
+    26	    }
+    27	  ]
+    28	}
+    29	```
+    30	
+    31	### Why Command-Sourcing?
+    32	
+    33	- **Full replay**: The exact sequence of user actions is preserved
+    34	- **Undo/redo**: Native, since the command stack is the save format
+    35	- **Migration**: Schema upgrades can transform operation parameters
+    36	- **Compact**: Only stores deltas, not the full geometric state
+    37	
+    38	## Google Drive Integration
+    39	
+    40	Diedrico integrates directly with Google Drive from the browser — no backend required.
+    41	
+    42	### How It Works
+    43	
+    44	1. **OAuth2 authentication** via Google Identity Services
+    45	2. **`drive.file` scope** — the app can only access files it created
+    46	3. Files stored in a `diedrico/` folder in the user's Drive
+    47	4. Session persistence via `localStorage`
+    48	
+    49	### Operations
+    50	
+    51	| Action | Description |
+    52	|--------|-------------|
+    53	| Sign In | OAuth2 popup, grants `drive.file` + profile scopes |
+    54	| Save | Serializes current `World` + `CommandStack` → uploads JSON |
+    55	| Load | Downloads JSON → replays all commands to reconstruct state |
+    56	| List | Shows recent `.diedrico` files from the app folder |
+    57	| Delete | Removes a project file from Drive |
+    58	
+    59	### Configuration
+    60	
+    61	Google Drive requires a Google Cloud project with the Drive API enabled. See the [Google Drive Setup Guide](/GOOGLE_DRIVE_SETUP) for configuration details.
+    62	
+    63	## ProjectService
+    64	
+    65	The `ProjectService` handles serialization and deserialization:
+    66	
+    67	- `serialize(world, commandStack)` → `ProjectData` JSON
+    68	- `deserializeAndReplay(data, world, commandStack)` → reconstructs state
+    69	- Automatic schema migration from older versions (snake_case → camelCase IDs, hierarchical IDs, etc.)
+    70	
+    71	## Schema Versioning
+    72	
+    73	| Version | Changes |
+    74	|---------|---------|
+    75	| 6.0.0 | Current — camelCase IDs, hierarchical element IDs |
+    76	| Earlier | Various migrations applied automatically on load |
+
+===== docs/guide/tools.md =====
+     1	# Construction Tools
+     2	
+     3	Diedrico provides 21 construction tools organized into 8 families. Select a tool family from the toolbar, then choose a specific tool from the dropdown.
+     4	
+     5	## Selection Tool
+     6	
+     7	**Shortcut**: `Esc`
+     8	
+     9	The default tool. Click elements to select them, Shift+click for multi-select, click empty space to deselect.
+    10	
+    11	## Point Family
+    12	
+    13	### Free Point (`P`)
+    14	
+    15	Click on the canvas to create a point at that position on the active projection plane.
+    16	
+    17	### Intersection Point (`I`)
+    18	
+    19	Click two intersecting elements (lines, circles, segments) to create a point at their intersection. For line-circle and circle-circle intersections, two intersection points are created (indexed 0 and 1).
+    20	
+    21	## Line Family
+    22	
+    23	### Line Through Two Points (`L`)
+    24	
+    25	Click two points to create a line passing through both, extending infinitely.
+    26	
+    27	### Parallel Line
+    28	
+    29	Click a reference line, then click a point. Creates a line through the point, parallel to the reference line.
+    30	
+    31	### Perpendicular Line
+    32	
+    33	Click a reference line, then click a point. Creates a line through the point, perpendicular to the reference line.
+    34	
+    35	### Tangent to Circle Through Point
+    36	
+    37	Click a circle, then click a point outside the circle. Creates a tangent line from the point to the circle.
+    38	
+    39	### Tangent to Circle Parallel to Line
+    40	
+    41	Click a circle, then click a reference line. Creates a tangent line to the circle that is parallel to the reference line.
+    42	
+    43	## Segment Family
+    44	
+    45	### Segment (`S`)
+    46	
+    47	Click two points to create a finite segment between them. Segments behave like lines for intersection purposes but have defined endpoints.
+    48	
+    49	## Circle Family
+    50	
+    51	### Circle (`C`)
+    52	
+    53	Click a center point, then click a radius point. Creates a circle with the center at the first point and radius equal to the distance to the second point.
+    54	
+    55	## Guide Family
+    56	
+    57	### Guide (`G`)
+    58	
+    59	Click a hinge line (or broken hinge line), then click a through-point. Creates a guide line perpendicular to the hinge, used for transporting distances between projection planes. Sibling guides are auto-created on the paired plane.
+    60	
+    61	## 3D Elements Family
+    62	
+    63	### 3D Point
+    64	
+    65	Click two corresponding points on different projection planes. Reconstructs the 3D point from its 2D projections.
+    66	
+    67	### 3D Line
+    68	
+    69	Click two corresponding lines on different projection planes. Reconstructs the 3D line from its 2D projections.
+    70	
+    71	### 3D Segment
+    72	
+    73	Click two corresponding segments on different projection planes. Reconstructs the 3D segment, automatically resolving endpoint pairing.
+    74	
+    75	### 3D Plane
+    76	
+    77	Click three non-collinear 3D points. Defines a 3D plane through all three.
+    78	
+    79	### Auxiliary Projection Plane
+    80	
+    81	Click a trace line on an existing projection plane to create a new auxiliary projection plane folded along that trace.
+    82	
+    83	## Examples Family
+    84	
+    85	### Folding Plane Setup
+    86	
+    87	Creates a standard setup with P_H, P_V, and the hinge line traces. Useful as a starting point for new constructions.
+    88	
+    89	### Quick 3D Line
+    90	
+    91	Creates a complete 3D line example from two predefined 2D line projections with a single click. Useful for testing the 3D view.
+    92	
+    93	## Tool Behavior
+    94	
+    95	- **Stay active**: Most tools remain active after creating an element, letting you create another immediately
+    96	- **Return to selection**: Example tools auto-return to the selection tool after executing
+    97	- **Keyboard shortcuts**: Single-key shortcuts (P, L, S, C, G, I, Esc) for quick tool switching
+    98	- **Argument collection**: Tools that require multiple picks show visual feedback for the current state
+
+===== specs/001-dihedral-learning-mvp/data-model.md =====
+     1	# Data Model: Diedrico MVP
+     2	
+     3	**Date**: 2025-12-22 (Updated: 2026-01-06)  
+     4	**Purpose**: Define domain entities, relationships, validation rules, and state transitions
+     5	
+     6	---
+     7	
+     8	---
+     9	
+    10	## Phase 98: Dynamic Action Descriptions
+    11	
+    12	### Overview
+    13	
+    14	Process Tree action descriptions are computed dynamically from current element state (labels and construction parameters) rather than stored as static strings. This ensures descriptions always reflect current element names even after renaming.
+    15	
+    16	### Functional Requirements
+    17	
+    18	**FR-065**: Process Tree action descriptions MUST be computed dynamically from current element state (labels, construction parameters) rather than stored as static strings. When elements are renamed or dependencies change, action descriptions MUST automatically update to reflect current state. Description format MUST follow pattern: "{ElementType} {CurrentLabel}: {ConstructionMethod}" where construction method includes current parent labels (e.g., "Point A_5: Intersection of line L_2 and circle C_1"). This ensures Process Tree always displays accurate, up-to-date construction history even after elements are renamed.
+    19	
+    20	---
+    21	
+    22	## Phase 99: Clickable Labels in Process Tree
+    23	
+    24	### Overview
+    25	
+    26	Element labels in Process Tree action descriptions become interactive - clicking a label selects the corresponding element in the application. This leverages the existing DescriptionPart infrastructure from Phase 98 which already includes `elementId` for all label parts.
+    27	
+    28	### Architecture
+    29	
+    30	**No Domain Changes Required**: This is purely a presentation layer enhancement. The descriptor system from Phase 98 already provides all necessary data (DescriptionPart with elementId).
+    31	
+    32	### Component Changes
+    33	
+    34	#### ProcessTreeNode.vue
+    35	
+    36	**Template Enhancement** (Lines ~150-152):
+    37	
+    38	```vue
+    39	<!-- BEFORE (Phase 98) -->
+    40	<template v-for="(part, index) in descriptionParts" :key="index">
+    41	  <span v-if="part.type === 'text'">{{ part.content }}</span>
+    42	  <span v-else v-html="formatElementLabel(part.content)"></span>
+    43	</template>
+    44	
+    45	<!-- AFTER (Phase 99) -->
+    46	<template v-for="(part, index) in descriptionParts" :key="index">
+    47	  <span v-if="part.type === 'text'">{{ part.content }}</span>
+    48	  <span 
+    49	    v-else 
+    50	    class="label-clickable"
+    51	    :data-element-id="part.elementId"
+    52	    @click.stop="handleLabelClick(part.elementId, $event)"
+    53	    v-html="formatElementLabel(part.content)"
+    54	  ></span>
+    55	</template>
+    56	```
+    57	
+    58	**Script Enhancement**:
+    59	
+    60	```typescript
+    61	import { useSelectionStore } from '@/stores/selectionStore';
+    62	
+    63	const selectionStore = useSelectionStore();
+    64	
+    65	function handleLabelClick(elementId: string | undefined, event: MouseEvent) {
+    66	  if (!elementId) return;
+    67	  
+    68	  event.stopPropagation(); // Prevent action node selection
+    69	  
+    70	  if (event.shiftKey) {
+    71	    // Multi-select: add to selection
+    72	    selectionStore.addToSelection(elementId);
+    73	  } else {
+    74	    // Single select: replace selection
+    75	    selectionStore.selectSingle(elementId);
+    76	  }
+    77	}
+    78	```
+    79	
+    80	**CSS Enhancement**:
+    81	
+    82	```css
+    83	.label-clickable {
+    84	  cursor: pointer;
+    85	  transition: all 0.15s ease;
+    86	  border-radius: 2px;
+    87	  padding: 0 2px;
+    88	}
+    89	
+    90	.label-clickable:hover {
+    91	  background-color: rgba(100, 150, 255, 0.1);
+    92	  text-decoration: underline dotted;
+    93	}
+    94	
+    95	.label-clickable:active {
+    96	  transform: scale(0.98);
+    97	}
+    98	
+    99	/* Ensure KaTeX content inside clickable labels inherits pointer cursor */
+   100	.label-clickable .katex {
+   101	  cursor: inherit;
+   102	}
+   103	```
+   104	
+   105	### Selection Flow
+   106	
+   107	**User Action → System Response**:
+   108	
+   109	1. **User clicks label** "A_5" in Process Tree action description
+   110	2. **handleLabelClick** fires with elementId="point2d5"
+   111	3. **selectionStore.selectSingle** called (or addToSelection if Shift)
+   112	4. **Selection state updates** (selectedIds contains "point2d5")
+   113	5. **Reactive updates triggered**:
+   114	   - Elements Panel: Scrolls to A_5, shows selected state
+   115	   - SvgCanvas: Highlights point A_5 with selection color
+   116	   - ThreeView: Highlights point A_5 (if visible in 3D)
+   117	   - ProcessTree: Shows action that created A_5 as selected, related actions highlighted
+   118	
+   119	### Edge Cases
+   120	
+   121	**Deleted Elements**:
+   122	- DescriptionParts for deleted elements return empty array (Phase 98 behavior)
+   123	- No labels rendered → no click handlers → no issue
+   124	
+   125	**Plane Elements**:
+   126	- Projection plane labels (P_H, P_V, auxiliary) are clickable
+   127	- Clicking plane label selects the plane (shows in Elements Panel, no 2D highlight as planes don't have point representation)
+   128	
+   129	**Multi-Plane Selection**:
+   130	- User can select elements from different planes simultaneously (Shift+click)
+   131	- All selected elements highlighted on their respective planes
+   132	- 3D view shows all selected 3D elements or 2D element projections
+   133	
+   134	### Testing Strategy
+   135	
+   136	**Unit Tests**: (Not applicable - purely template/interaction)
+   137	
+   138	**Integration Tests**: ProcessTreeNode.spec.ts
+   139	- Test label click selects element
+   140	- Test Shift+click adds to selection
+   141	- Test click event doesn't propagate to action node
+   142	- Test plain text spans not clickable
+   143	
+   144	**E2E Tests**: processTree.spec.ts
+   145	- Create point A_1, line L_1 through A_1 and A_2
+   146	- Click "A_1" label in line action description
+   147	- Verify A_1 becomes selected in Elements Panel
+   148	- Verify A_1 highlighted in canvas
+   149	- Shift+click "L_1" label in another action
+   150	- Verify both A_1 and L_1 selected
+   151	
+   152	### Performance Considerations
+   153	
+   154	**Click Handler Overhead**: Negligible - one event listener per action node, delegates to labels via event.target
+   155	
+   156	**Selection Update Performance**: Already optimized in Phase 98 - selectionStore updates trigger single reactive update across all components
+   157	
+   158	**Hover Effects**: Pure CSS - no JavaScript overhead
+   159	
+   160	### Implementation Complexity
+   161	
+   162	**Estimated Effort**: 2-4 hours
+   163	- Template changes: 5 minutes (3 lines)
+   164	- Script logic: 15 minutes (handleLabelClick function)
+   165	- CSS styling: 15 minutes (hover effects)
+   166	- Testing: 2-3 hours (integration + E2E)
+   167	
+   168	**Risk Assessment**: **Low**
+   169	- Leverages existing Phase 98 infrastructure (elementId already present)
+   170	- No domain model changes
+   171	- No descriptor changes
+   172	- Pure presentation enhancement
+   173	- Well-defined selection API (selectionStore)
+   174	
+   175	### Future Enhancements (Not Phase 99)
+   176	
+   177	**Ctrl+Click Toggle Selection**: Add toggle mode where Ctrl+click toggles element in/out of selection
+   178	
+   179	**Context Menu on Label**: Right-click label shows context menu with "Select", "Highlight Dependencies", "Jump to Element", "Properties"
+   180	
+   181	**Drag-and-Drop from Label**: Drag label to canvas to create reference or constraint
+   182	
+   183	**Label Tooltips**: Show element details on hover (type, plane, coordinates, feasibility)
+   184	
+   185	---
+   186	
+   187	### Architecture
+   188	
+   189	#### Action Interface Changes
+   190	
+   191	**Current Action Interface** (Phase 97):
+   192	```typescript
+   193	export interface Action {
+   194	  elementId: string;        // Element created by this action
+   195	  description: string;      // STATIC description stored as string
+   196	  isOutput: boolean;        // Phase 87: Output flag
+   197	}
+   198	```
+   199	
+   200	**New Action Interface** (Phase 98):
+   201	```typescript
+   202	export interface Action {
+   203	  elementId: string;              // Element created by this action
+   204	  operationType: string;          // Operation type (e.g., "AddFreePoint2D", "AddLineLineIntersection")
+   205	  constructionParams: ConstructionParams;  // Structured construction metadata
+   206	  isOutput: boolean;              // Phase 87: Output flag
+   207	}
+   208	
+   209	// Construction parameters vary by operation type
+   210	export type ConstructionParams = 
+   211	  | { type: 'free' }
+   212	  | { type: 'lineLineIntersection'; line1Id: string; line2Id: string; intersectionIndex: number }
+   213	  | { type: 'lineCircleIntersection'; lineId: string; circleId: string; intersectionIndex: number }
+   214	  | { type: 'circleCircleIntersection'; circle1Id: string; circle2Id: string; intersectionIndex: number }
+   215	  | { type: 'lineThroughPoints'; point1Id: string; point2Id: string }
+   216	  | { type: 'lineParallel'; lineId: string; pointId: string }
+   217	  | { type: 'linePerpendicular'; lineId: string; pointId: string }
+   218	  | { type: 'lineTangent'; circleId: string; pointId: string }
+   219	  | { type: 'segment'; point1Id: string; point2Id: string }
+   220	  | { type: 'circle'; centerId: string; radiusPointId: string }
+
+===== specs/001-dihedral-learning-mvp/for-planing.md =====
+     1	# Not yet planned
+     2	
+     3	This file contains diverse ideas which need to be included in the project.
+     4	
+     5	In general, any idea needs to...
+     6	
+     7	1. Be described in specs.md (unless it is a purely technical issue).
+     8	2. Be described in ui-specs.md if it has a UI component.
+     9	3. Have its implementation detailed in data-model.md.
+    10	4. Be broken down into smaller implementable tasks in tasks.md.
+    11	5. Include corresponding testing tasks.
+    12	6. Be marked here as done and move it to the already planned section.
+    13	7. Implement the new tasks. All of them.
+    14	8. Run all the tests. Fix regressions (some tests may need to be changed, fully rewritten or just removed).
+    15	9. Commit with git.
+    16	
+    17	Note that completing these tasks may require asking the user for additional information and clarification. When in doubt, just ask!!!
+    18	
+    19	
+    20	## FOR PLANING
+    21	
+    22	* [x] Add a Quick Segment tool for creating a sample 3d segment in the same way we have the add quick 3d line.
+    23	
+    24	* [ ] Add a mechanism for setting drawing properties correctly. The properties may merge properties set at the process tree (and its parent elements), from the projection plane, from the type of object, on the element itself. When representing and geometric object, all this properties must be merges using a priority system. Final settings must follow a gated behaviour (set-value and value or get-it-from-parents). Then we must also have multipliers for things like transparency or width, where a property is calculated as the final setting which higgeer priority in the hierarchy and the combination of all the multipliers.
+    25	
+    26	* [ ] In many occasions overlaying objects are created (or instance, the (B)HHL over the traces of an auxiliary projection plane). When that happens, some objects my hide or made others difficult to understand (again, for instance, dashed HHL get hidden by the regular lines used to define the projection). In order to overcome that a new entity called the OverlapingGroup must be added. It must be added to all the Element2D objects, so that objects which are created to overlap (complimentary guides, HHL, etc. ) are all added into this entity which must be linked from all the instances representing it. When drawing, its contents must be sorted according to some rules and only the **visible** element on top must be drawn. The sorting rules are that: the elements in the active plane get precedence, guides and (B)HHLs have precedence over regular lines. Note that it must be found which operations introduce elements related into that way to previously existing elements. Also, new Ops must be added to lookupOrCreateOverlappingGroup, mergeOverlappingGroups, addElementToOverllappingGroup, etc. Analyze this in deep. All those ops must also support undoing and redoing (as all the ops do)!
+    27	
+    28	* [ ] Write the user documentation.
+    29	* [ ] Rationalize class names for projection planes and related object (Ops, for instances).Ok
+    30	* [ ] Draw the grids in the 3d view, grid granularity must be automatically adjusted as for the 2d view.
+    31	* [ ] 2d elements should be represented in the same way in the 3d view as in the main view (for instance, color, dashed lines, etc.)
+    32	* [x] Show contextual tool feedback: display what the user has already picked and what is expected next. For instance, "Creating line: point A picked, another point expected"
+    33	* [ ] In 3D rotation axis seems to be hardcoded or be limited. For instance, I am not able to rotate the view around the viewer-O axis
+    34	* [ ] Add support for moving semi-free points and distances along guide lines.
+    35	* [x] Improve element naming: currently points are assigned generic numeric names; implement meaningful default names.
+    36	* [ ] Improve how elements are shown in the left world listing widget.
+    37	* [ ] Check tests marked as SKIP and check whether they make sense (they are testing some useful functionality or mimicing some common user behaviour) in that case enable and fix them. In many cases you would need to recreate them fully as they may had become architecturally obsolete. Check model-plan in order to decide the best way to implement the functionality. Ask for clarification when needed. Also, if functionality has been removed and is required, tell me about it!!!
+    38	* [x] Do not use type aliases in the code.
+    39	* [x] Ensure all tools perform argument validation checks (for instance, when creating a line, that two different points are used, etc.). Add comprehensive tests for this feature.
+    40	* [ ] Add support for creating new Point2D elements by clickin on random paper places while building other elements instead of forcing the user to use a preexistent point.
+    41	* [ ] Add support for converting intersections into points automatically while building other elements.
+    42	* [x] Add tests for intersections with segments (two segments, segment and line, segment and circle). If the intersection points fall outside the segment, they must be marked as infeasible.
+    43	* [x] When an intersection point has a index of one, but it is infeasible, the index 0 must be considered instead. Check explicitly that segment/circle intersections are handled correctly in that regard.
+    44	* [x] When calculating realizations, check that when two parent points degenerate into the same position they are handled correctly, maybe marking the realization as infeasible.
+    45	* [x] Add validations checking that the just created objects are feasible, or otherwise the creation is aborted. All the 2D elements must implement a method for checking whether they are feasible or not.
+    46	* [x] Ensure that intersections with segments are handled correctly. Add exhaustive tests for all the possible object combinations and geometric dispositions.
+    47	* [ ] Ensure Google Drive logout works correctly.
+    48	* [x] Most of the functions in Element2DUtils are just the wrong abstractions or antipatterns. They should be removed.
+    49	* [x] Ensure we have a per-plane cache for 2D realizations.
+    50	* [ ] Evaluate were having per type collections at the projection plane level makes sense, or actually it would be simple to just have an `elements` collection with everything inside?
+    51	* [x] Adding new elements just expands all subprocesses in the process tree
+    52	* [x] Subprocess handling needs to be rethough to handle the active subprocess and opening and closing them.
+    53	* [ ] Move geometric element variation classes in directories line lines, circles, points, etc.
+    54	* [ ] Add instructions about how to use the project.
+    55	* [ ] Use an automated browser for building UI tests.
+    56	* [ ] Rationalize and restructure the tool organization.  
+    57	 
+    58	## ALREADY PLANNED
+    59	
+    60	* [x] **Remove Element2DUtils (Phase 110)** - 📋 PLANNED
+    61	  - **Problem**: All 7 exported functions in Element2DUtils.ts are dead code (zero runtime consumers). Functions like `hideElement()`/`showElement()` mutate domain objects directly, violating the command architecture. `getElementsOnPlane()` is obsolete since elements moved into ProjectionPlane ownership.
+    62	  - **Solution**: Delete Element2DUtils.ts, remove re-exports from index.ts, delete the associated test file.
+    63	  - **Spec References**: Phase 110 in data-model.md, tasks.md (T1855-T1857)
+    64	
+    65	* [x] **Degenerate Point Handling in realize2D (Phase 111)** - 📋 PLANNED
+    66	  - **Problem**: `Line2DParallel.realize2D()` does not check for degenerate reference line direction. If the reference line is infeasible/degenerate, the parallel line silently inherits bad geometry instead of marking itself infeasible. Other realize2D methods have guards but coverage is incomplete.
+    67	  - **Solution**: Audit all realize2D methods and add degenerate parent checks: zero-length direction vectors, coincident parent points, infeasible parent propagation. Add comprehensive tests.
+    68	  - **Spec References**: FR-080, Phase 111 in data-model.md, tasks.md (T1858-T1862)
+    69	
+    70	* [x] **Segment Intersection Correctness + Tests (Phase 112)** - 📋 PLANNED
+    71	  - **Problem**: No tests exist for intersection points involving segments (bounded elements). The `isPointOnSegment()` check in `Point2DLineLineIntersection.realize2D()` is untested. Index fallback (Math.min pattern) exists but has no explicit tests. No segment-segment or segment-circle intersection tests.
+    72	  - **Solution**: Add comprehensive intersection tests for all bounded-element combinations. Verify index fallback behavior. Test boundary conditions (intersection at endpoint, outside bounds, parallel, coincident).
+    73	  - **Spec References**: FR-081, Phase 112 in data-model.md, tasks.md (T1863-T1870)
+    74	
+    75	* [x] **Tool Argument Validation (Phase 113)** - 📋 PLANNED
+    76	  - **Problem**: LineTool and SegmentTool only check `id !== id` but not whether two distinct points are geometrically coincident. CircleTool has geometric validation but most other tools lack it. Degenerate constructions are silently created.
+    77	  - **Solution**: Add geometric distance checks to all tools that create elements from points. Display error messages via tool feedback system when validation fails. Add comprehensive tests.
+    78	  - **Spec References**: FR-082, Phase 113 in data-model.md, tasks.md (T1871-T1877)
+    79	
+    80	* [x] **Feasibility Validation on Creation (Phase 114)** - 📋 PLANNED
+    81	  - **Problem**: Creation operations never check whether the newly created element is immediately infeasible. Infeasible elements are created silently and only show up as infeasible indicators during rendering. No `isFeasible()` convenience method exists on Element2D subclasses.
+    82	  - **Solution**: Add `isFeasible(world)` method to all Element2D subclasses. Add post-creation feasibility check in relevant operations. Log warnings for immediately-infeasible elements but allow creation (since moving parent points may fix it).
+    83	  - **Spec References**: FR-083, Phase 114 in data-model.md, tasks.md (T1878-T1883)
+    84	
+    85	* [x] **Contextual Tool Feedback (Phase 115)** - 📋 PLANNED
+    86	  - **Problem**: Multi-step tools (line, segment, circle, etc.) provide no visual feedback about what the user has already picked or what input is expected next. The `useToolFeedback` composable exists but is largely unused. Users get confused about tool state.
+    87	  - **Solution**: Create a ToolFeedbackBar component that shows step progress. Extend ArgumentCollectorTool to expose structured state (collected args, next expected). Wire state changes to the feedback UI.
+    88	  - **Spec References**: FR-084, Phase 115 in ui-spec.md, data-model.md, tasks.md (T1884-T1891)
+    89	
+    90	* [x] **Improve Element Naming (Phase 116)** - 📋 PLANNED
+    91	  - **Problem**: Elements get labels derived from their IDs (e.g., `A_5`, `L_{12}`) using a numeric suffix from the global id counter. The label numbering is confusing because it reflects the global creation order across all element types rather than sequential per-type naming.
+    92	  - **Solution**: Implement a `LabelGenerator` service that generates sequential labels per element type: points → A, B, C...; lines → r, s, t...; circles → α, β, γ.... Integrate into element creation operations. Ensure undo/redo stability.
+    93	  - **Spec References**: FR-085, Phase 116 in ui-spec.md, data-model.md, tasks.md (T1892-T1898)
+    94	
+    95	* [x] **Remove Type Aliases (Phase 117)** - 📋 PLANNED
+    96	  - **Problem**: The codebase uses ~36 `export type` declarations including simple aliases (`NodeId = string`), string literal unions (`ToolType`, `Line2DType`), and discriminated unions (`Element2D`, `Point3D`). The project convention requires avoiding type aliases.
+    97	  - **Solution**: Replace simple aliases with direct usage or branded interfaces. Convert string literal unions to `as const` objects with derived types. Keep discriminated class unions as the exception since they require `type` keyword. Systematically update all import sites.
+    98	  - **Spec References**: Phase 117 in data-model.md, tasks.md (T1899-T1905)
+    99	
+   100	* [x] **Process Tree Expand Behavior (Phase 118)** - 📋 PLANNED
+   101	  - **Problem**: Adding new elements expands all subprocesses in the process tree. Collapse state is stored in local `ref()` per component and is lost on re-render. No centralized state management for expand/collapse. Active subprocess is not tracked or visually indicated.
+   102	  - **Solution**: Store collapse state in a Pinia store (keyed by node ID, persisted to localStorage). When new elements are added, only expand the receiving subprocess. Track and display the active subprocess distinctly.
+   103	  - **Spec References**: FR-086, Phase 118 in ui-spec.md, data-model.md, tasks.md (T1906-T1912)
+   104	
+   105	* [x] **Per-Plane Realization Cache Verification (Phase 119)** - 📋 PLANNED
+   106	  - **Problem**: Per-plane caching was implemented in Phase 22.5 but has no dedicated test coverage verifying cache correctness, invalidation behavior, or cross-plane dependency handling.
+   107	  - **Solution**: Add targeted tests verifying: cache hit/miss behavior, invalidation on point movement, cross-plane dependency propagation (sibling points), DependencyService integration. Audit mutation paths to verify all go through the invalidation mechanism.
+   108	  - **Spec References**: Phase 119 in data-model.md, tasks.md (T1913-T1917)
+   109	
+   110	* [x] **Guide Perpendicular Plane in 3D View (Phase 108)** - 📋 PLANNED
+   111	  - **User Requirement**: "When the user selects a guide, the 3D view must show the plane perpendicular to it and highlight any intersection with other 3d elements."
+   112	  - **Problem**: Guides represent 3D folding planes (perpendicular to projection plane, containing the guide line), but this geometric relationship is invisible in the 3D view. No intersection highlighting exists.
+   113	  - **Solution**: When a guide is selected, lift it to 3D via planeTo3D, compute the perpendicular plane normal as cross(guideDir3D, projPlaneNormal), render a semi-transparent cyan mesh. Compute intersections with all 3D elements (line-plane, segment-plane, point-on-plane) and render gold intersection markers.
+   114	  - **Implementation**:
+   115	    - threeUtils.ts: Add `intersectLinePlane3D()`, `intersectSegmentPlane3D()`, `isPointOnPlane3D()`
+   116	    - ThreeView.vue: Import selectionStore, watch selectedIds, add `renderGuidePerpendicularPlane()` function
+   117	  - **Spec References**: FR-078, Phase 108 in ui-spec.md, data-model.md, tasks.md (T1840-T1849)
+   118	
+   119	* [x] **3D Segment Realization (Phase 107)** - 📋 PLANNED
+   120	  - **User Requirement**: "Add support for 3D segments. 3D segments can be defined using two segment projections (compatibility of the projections must be checked at creation time)."
+   121	  - **Problem**: Segment3DFromProjections.realize3D() is a TODO stub returning placeholder coordinates. No compatibility validation at creation time. No process tree action recording.
+   122	  - **Solution**: Implement realize3D() using the same Cramer's rule reconstruction as Point3DFromProjections but for two endpoint pairs. Try both possible endpoint pairings (correspondence unknown), select valid one. Extract shared utility reconstruct3DPointFromProjections(). Add compatibility validation in Add3DSegmentOp. Add process tree action.
+   123	  - **Implementation**:
+   124	    - threeUtils.ts: Extract `reconstruct3DPointFromProjections()` shared utility
+   125	    - Segment3D.ts: Full realize3D() with dual-pairing endpoint reconstruction
+   126	    - Add3DSegmentOp.ts: Compatibility validation at creation time
+   127	    - Element3DActions.ts: Add `createAdd3DSegmentAction()`
+   128	    - Create3DSegmentTool.ts: Process tree action recording
+   129	  - **Spec References**: FR-077, Phase 107 in ui-spec.md, data-model.md, tasks.md (T1830-T1839)
+   130	
+   131	* [x] **3D Element Projection Display (Phase 106)** - 📋 PLANNED
+   132	  - **User Requirement**: "Add a setting for displaying projections of all the 3d elements back into the projection planes. This is a complex matter which may require many changes into the project and so, needs proper consideration and planning. A control for enabling and disabling the visualization of the projections must be added. Also, the projections must have a different look than regular 2d objects (for instance, a bigger width but more transparent than regular 2d objects)."
+   133	  - **Problem**: Users cannot see how their 3D elements (points, lines, segments) project back onto the 2D projection planes, making it harder to verify 3D constructions and understand dihedral projection relationships.
+   134	  - **Solution**: Add toolbar toggle button that displays projections of all feasible 3D elements onto all projection planes. Projected elements rendered with distinct visual style (purple, thicker strokes, 35% opacity) to differentiate from user-created 2D elements. Projections are non-interactive (no hover/selection).
+   135	  - **Implementation**:
+   136	    - viewStore: `showProjectedElements` toggle with localStorage persistence
+   137	    - PaperService: `generate3DProjectionPrimitives()` projects 3D elements via `applyMatrix3x4(pos, threeDToPlane)` → plane coords → `applyMatrix3(planeToPaper)` → paper coords
+   138	    - Toolbar: Toggle button with `P` keyboard shortcut
+   139	    - Styles: Purple `#9B59B6`, 3px stroke, 0.35 opacity
+   140	    - Hit testing exclusion via `proj3d-` ID prefix
+   141	  - **Spec References**: FR-076, Phase 106 in ui-spec.md, data-model.md, tasks.md (T1830-T1847)
+   142	
+   143	* [x] **HHL/BHHL Constructor Refactoring (Phase 102)** - ✅ COMPLETE (Feb 10, 2026)
+   144	  - **User Requirement**: "I want the HL to be given as the primary parameter with the plane where they sit. BHHL and HHL must be derived from the BHL and HL geometrical objects plus the plane where they sit"
+   145	  - **Problem**: HalfHingeLine2D and BrokenHalfHingeLine2D constructors received only ID strings (hingeLineId/brokenHingeLineId), making the geometric dependency implicit and reducing type safety. Also, ID label extraction was using the first number in the ID string (e.g., plane number) instead of the line number.
+   146	  - **Solution**: Refactored constructors to receive parent objects (HingeLine/BrokenHingeLine) as primary parameters, making the geometric relationship explicit in the API. Fixed label extraction to correctly parse the line number from IDs like "projPlane28/line2d33" → "BHHL_{33}" (not "BHHL_{28}").
+   147	  - **Implementation**:
+   148	    - Updated `HalfHingeLine2D` constructor: `(id, hingeLine: HingeLine, planeId, label?)`
+   149	    - Updated `BrokenHalfHingeLine2D` constructor: `(id, planeId, brokenHingeLine: BrokenHingeLine, mainHingeId, siblingBHHLId, label?)`
+   150	    - Fixed label extraction regex: `/line2d(\d+)/` to get line number instead of `/\d+/` which got plane number
+   151	    - Updated all call sites: `ProjectionPlane.addHalfHingeLine2D`, `AddBrokenHingeLineOp`, tests
+   152	    - Clone methods use minimal ID-based objects for base class signature compatibility
+   153	  - **Key Benefits**:
+   154	    - Type safety: Compile-time guarantee that parent object exists
+   155	    - API clarity: Geometric dependency is explicit in method signature
+   156	    - Correct labeling: HHL/BHHL labels now use unique global IDs (33, 34) not plane IDs (28, 4)
+   157	    - Prevents errors: Cannot create HHL/BHHL without valid parent object
+   158	  - **Files Modified**:
+   159	    - `HingeLine.ts` (constructor, clone)
+   160	    - `BrokenHalfHingeLine2D.ts` (constructor, clone)
+   161	    - `ProjectionPlane.ts` (addHalfHingeLine2D call site)
+   162	    - `AddBrokenHingeLineOp.ts` (instantiation with brokenHingeLine object)
+   163	    - `SelectionMask.spec.ts` (test update)
+   164	
+   165	* [x] **PlaneSelector LaTeX Rendering and Caption Removal (Phase 103)** - 📋 PLANNED (Feb 13, 2026)
+   166	  - **User Requirement**: "Fix the plane selection button. Currently the labels are not rendered as latex. Also remove the 'Plane' label below as it only clutters the button."
+   167	  - **Problem**: PlaneSelector component displays plane labels as plain text (`P_H`, `P_V`) instead of formatted mathematical notation (P_H, P_V) with proper subscripts. The redundant "Plane" caption below the dropdown wastes vertical toolbar space (~10px) and provides no added value.
+   168	  - **Solution**: Integrate Phase 96 `formatElementLabel()` utility to render plane labels with KaTeX mathematical notation. Overlay formatted label on native `<select>` element to preserve accessibility while achieving visual consistency with other UI panels. Remove caption element and reduce component height from 50px to 40px.
+   169	  - **Architecture**:
+   170	    - Import `formatElementLabel` from `@/utils/formatUtils`
+   171	    - Add `activePlaneLabel` computed property to get current plane label
+   172	    - Overlay formatted label div on native select using CSS (position absolute, click-transparent)
+   173	    - Hide native select text with `color: transparent` (functionality preserved)
+   174	
+   175	* [x] **Infinite 3D Line Rendering (Phase 104)** - 📋 PLANNED (Feb 14, 2026)
+   176	  - **User Requirement**: "Fix 3d representation. Currently, 3d lines are represented as a small segment. They should be represented as the 2d lines in projection planes which extend very long (to infinity?)"
+   177	  - **Problem**: 3D lines (Line3DFromProjections, HingeLine, BrokenHingeLine) rendered with very short length (50-100 units) appearing as small disconnected segments instead of infinite lines, making spatial relationships unclear.
+   178	  - **Solution**: Extend 3D line rendering length from 50-100 units to 2000 units (±1000 from point on line), matching the 2000-unit extension used for 2D lines on projection planes in Element2DRenderer3D.
+   179	  - **Implementation**:
+   180	    - Update Line3DFromProjections rendering in ThreeView.vue: Change `lineLength = 50` → `lineLength = 2000`
+   181	    - Update HingeLine rendering in ThreeView.vue: Change `lineLength = 100` → `lineLength = 2000`
+   182	    - Update BrokenHingeLine rendering (if separate): Change to `lineLength = 2000`
+   183	    - No changes to domain/realization layers (Line3D, Line3DRealization3D)
+   184	  - **Key Benefits**:
+   185	    - 3D lines appear infinite like 2D lines on planes, improving spatial understanding
+   186	    - Consistent visual behavior between 2D and 3D line rendering
+   187	    - Lines extend far beyond viewport at all reasonable zoom levels
+   188	    - No performance impact (same vertex count, just different endpoint positions)
+   189	  - **Files Modified**:
+   190	    - `frontend/src/components/panels/ThreeView.vue` (3 line length constants)
+   191	  - **Specifications**:
+   192	    - spec.md FR-074 (functional requirement)
+   193	    - ui-spec.md §Infinite 3D Line Rendering (Phase 104)
+   194	    - data-model.md §Phase 104 (implementation details)
+   195	  - **Tasks**: tasks.md Phase 104 (T1858-T1867: 10 tasks)
+   196	  - **Status**: 📋 PLANNED - All specification documentation complete, ready for implementation
+   197	
+   198	* [x] **Quick 3D Line Example Tool (Phase 105)** - 📋 PLANNED (Feb 14, 2026)
+   199	  - **User Requirement**: "Create a button similar to QuickSetup that draws a 3d line (and rename QuickSetup to Folding plane)"
+   200	  - **Problem**: No quick way to demonstrate 3D line creation for testing and education. Current workflow requires 5 tool switches and ~2-3 minutes to manually create projections and construct 3D line. "Quick Setup" name is unclear about its purpose (creates folding plane traces).
+   201	  - **Solution**: Create Quick3DLineTool that automatically constructs a complete 3D line from two predefined 2D line projections with a single button click. Rename "Quick Setup" to "Folding Plane Setup" for clarity about its actual purpose.
+   202	  - **Implementation**:
+   203	    - Create `Quick3DLineTool` class implementing ITool interface
+   204	    - Tool activates → executes immediately (no user interaction needed)
+   205	    - Create 4 points: P1_H=(0,0), P2_H=(50,50) on P_H; P1_V=(0,0), P2_V=(50,50) on P_V
+   206	    - Create 2 lines: L_H (diagonal (1,1)), L_V (diagonal (1,1))
+   207	    - Create Line3DFromProjections from L_H and L_V → 3D line direction (1,1,1)
+   208	    - Record all 7 operations as single ProcessTree action (undoable)
+   209	    - Return to selection tool automatically
+   210	    - Register tool in examples-family in toolFamilies.ts
+   211	    - Rename quickprojectionsetup label: "Quick Setup" → "Folding Plane Setup"
+   212	  - **Key Benefits**:
+   213	    - One-click 3D line creation (~1 second vs. 2-3 minutes manual workflow)
+   214	    - Consistent test case for 3D rendering verification
+   215	    - Educational demonstration of 3D line from projections concept
+   216	    - Clear tool naming: "Folding Plane Setup" explains trace creation purpose
+   217	    - Immediate visual feedback in 3D view (line extends to infinity with Phase 104)
+   218	  - **Pattern**: Similar to QuickProjectionSetupTool but simpler (7 ops vs. 14 ops)
+   219	  - **Files Modified**:
+   220	    - `frontend/src/tools/Quick3DLineTool.ts` (NEW)
+
+===== specs/001-dihedral-learning-mvp/tasks.md =====
+     1	# Tasks: Diedrico Dihedral Learning MVP
+     2	
+     3	**Input**: Design documents from `/specs/001-dihedral-learning-mvp/`  
+     4	**Prerequisites**: plan.md, spec.md, data-model.md, contracts/, research.md, quickstart.md
+     5	
+     6	**Tests**: Per Diedrico Constitution (Principle VII: Pragmatic Testing), tests are expected where they add clear value: complex domain logic, commands/operations, and critical user journeys SHOULD have tests (unit/integration/E2E). Tests may be written before or after implementation depending on what is most effective.
+     7	
+     8	**Organization**: Tasks follow the 27 incremental phases from plan.md, organized to enable layer-by-layer development.
+     9	
+    10	**Constitution Compliance**: All tasks respect:
+    11	- Layered Architecture (Principle I) - Domain → Application → Presentation → Data
+    12	- Command Pattern (Principle II) - All user actions as commands
+    13	- Frontend-First (Principle III) - Backend only for persistence
+    14	- Technology Discipline (Principle IV) - Vue.js 3, TypeScript, Node.js, Vite, Vitest, Playwright
+    15	
+    16	## Format: `- [ ] [ID] [P?] Description`
+    17	
+    18	- **[P]**: Can run in parallel (different files, no dependencies)
+    19	- Include exact file paths in descriptions
+    20	
+    21	---
+    22	
+    23	## Phase 1: Basic World Data Structures
+    24	
+    25	**Purpose**: Minimal data model foundation  
+    26	**Reference**: [spec.md](./spec.md#conceptual-model-user-pov) - Conceptual Model, [data-model.md](./data-model.md) - World structure
+    27	
+    28	**Implementation Requirements**:
+    29	- **Three.js Vector Types**: ALL coordinates MUST use Three.js types: `Vector3` for 2D (u, v, 1), `Vector4` for 3D (x, y, z, w). Arrays are NOT allowed for coordinates.
+    30	- **Required IDs**: ALL geometric objects MUST have a required `id: string` field. IDs are assigned by World.generatePointId() before construction.
+    31	- **World Container**: Must store all geometric elements in a single root entity per [data-model.md §World Entity](./data-model.md#world-entity). World contains: projection planes, 2D elements, 3D elements, and realization caches.
+    32	- **Realization System**: Points store their DEFINITION (rule), realizations store COMPUTED coordinates. FreePoint2D stores position directly, IntersectionPoint2D stores element1Id/element2Id/index.
+    33	- **Plane Intrinsic Coordinates**: ALL point coordinates MUST be stored in plane-local <u,v> coordinates, NOT canvas pixels per [data-model.md §Coordinate Systems](./data-model.md#coordinate-systems-and-transformations).
+    34	- **No Implicit Logic**: Follow [spec.md §No Implicit Entities Rule](./spec.md#2d-elements-explicit-entities) - only create entities explicitly requested by user, no automatic inference.
+    35	
+    36	**⚠️ CRITICAL**: Read [data-model.md §Architecture Overview](./data-model.md#architecture-overview) and [plan.md §Key Implementation Decisions](./plan.md#key-implementation-decisions) to understand coordinate representation and realization system.
+    37	
+    38	- [X] T001 [P] Create World class in frontend/src/domain/world/World.ts with Map storage and generatePointId()
+    39	- [X] T002 [P] Create Point2D base class, FreePoint2D, IntersectionPoint2D in frontend/src/domain/world/Point.ts using Vector3
+    40	- [X] T003 [P] Create Point2DRealization and Point3DRealization classes using Vector3/Vector4
+    41	- [X] T004 [P] Add realization caches to World: pointRealizations2D, pointRealizations3D (organized by type)
+    42	- [X] T005 [P] Implement RealizationContext interface in World with getPoint2DRealization(), getPoint3DRealization()
+    43	- [X] T006 [P] Implement realize() method in FreePoint2D (returns position) and IntersectionPoint2D (placeholder)
+    44	- [X] T007 [P] Add point storage methods to World (addPoint expects id already set, removePoint, getPointById)
+    45	- [X] T008 [P] Unit test for World class in frontend/tests/unit/domain/world.spec.ts
+    46	- [X] T009 [P] Unit test for Point classes in frontend/tests/unit/domain/point.spec.ts
+    47	
+    48	**Checkpoint**: ✅ Data structures with Three.js types, required IDs, and lazy realization system
+    49	
+    50	---
+    51	
+    52	## Phase 99: Clickable Labels in Process Tree
+    53	
+    54	**Purpose**: Make element labels in Process Tree action descriptions clickable for quick navigation  
+    55	**Reference**: [spec.md FR-066](./spec.md#functional-requirements) - Clickable labels requirement, [ui-spec.md §Phase 99](./ui-spec.md#phase-99-clickable-labels-in-process-tree-ui-specification) - Visual design and interaction patterns, [data-model.md §Phase 99](./data-model.md#phase-99-clickable-labels-in-process-tree) - Implementation architecture
+    56	
+    57	**Implementation Requirements**:
+    58	- **Infrastructure Ready**: Phase 98 DescriptionPart structure already includes `elementId` for all label parts - no domain changes needed
+    59	- **Template-Only Change**: Add click handler to label spans in ProcessTreeNode.vue (lines ~150-152)
+    60	- **Selection Integration**: Use existing selectionStore.selectSingle() and addToSelection() methods
+    61	- **Event Handling**: Click handler must stopPropagation() to prevent action node selection
+    62	- **Multi-Select Support**: Shift+click adds to selection, normal click replaces selection
+    63	- **Visual Feedback**: CSS hover effects (pointer cursor, subtle underline, background highlight)
+    64	
+    65	**⚠️ CRITICAL**: Review [data-model.md §Phase 99 Implementation Complexity](./data-model.md#implementation-complexity) - this is a low-risk, high-value feature with estimated 2-4 hour implementation (mostly testing).
+    66	
+    67	- [ ] T1000 [P] Add FR-066 to spec.md functional requirements section (clickable labels in Process Tree)
+    68	- [ ] T1001 [P] Add Phase 99 UI specification to ui-spec.md (visual design, interaction behavior, examples)
+    69	- [ ] T1002 [P] Add Phase 99 implementation details to data-model.md (component changes, selection flow, edge cases)
+    70	- [ ] T1003 Update ProcessTreeNode.vue template: add click handler to label spans with @click.stop="handleLabelClick(part.elementId, $event)"
+    71	- [ ] T1004 Add handleLabelClick method to ProcessTreeNode.vue script: implements single-select (normal click) and multi-select (Shift+click)
+    72	- [ ] T1005 Add CSS styling to ProcessTreeNode.vue: .label-clickable with hover effects (pointer cursor, underline, background highlight)
+    73	- [ ] T1006 [P] Integration test in frontend/tests/integration/panels/ProcessTreeNode.spec.ts: verify label click selects element, Shift+click adds to selection
+    74	- [ ] T1007 [P] Integration test: verify click event doesn't propagate to action node (stopPropagation works)
+    75	- [ ] T1008 [P] E2E test in frontend/tests/e2e/processTree.spec.ts: create elements, click labels in action descriptions, verify selection in Elements Panel and canvas highlighting
+    76	- [ ] T1009 Update for-planing.md: move "Clickable Labels in Process Tree" to ALREADY PLANNED section with Phase 99 status
+    77	- [ ] T1010 Final commit: "Phase 99: Clickable Labels in Process Tree - Enable element selection via label clicks in action descriptions"
+    78	
+    79	**Checkpoint**: ✅ Element labels in Process Tree clickable, selection works with single/multi-select, visual feedback on hover
+    80	
+    81	---
+    82	
+    83	## Phase 2: Minimal UI Skeleton
+    84	
+    85	**Purpose**: Basic Vue.js application structure  
+    86	**Reference**: [ui-spec.md](./ui-spec.md#application-layout) - UI Layout and Components
+    87	
+    88	**Implementation Requirements**:
+    89	- **Application Layout**: Follow [ui-spec.md §Application Layout](./ui-spec.md#application-layout) exactly - header (toolbar), main workspace (canvas), left sidebar (actions), right sidebar (elements), status bar.
+    90	- **Component Structure**: Use Vue 3 Composition API per [constitution.md](../../.specify/memory/constitution.md#principle-iv-technology-discipline). All components must be .vue single-file components.
+    91	- **SVG Canvas**: Main workspace MUST use SVG element (not HTML5 Canvas) for geometric rendering per [ui-spec.md §Canvas Component](./ui-spec.md#canvas-component). SVG enables precise coordinate mapping and CSS styling.
+    92	- **Responsive Layout**: Canvas must fill available space, sidebars collapsible per [ui-spec.md §Layout Behavior](./ui-spec.md#layout-behavior).
+    93	
+    94	**⚠️ CRITICAL**: Review [ui-spec.md](./ui-spec.md) in full to understand component hierarchy and interaction patterns before coding.
+    95	
+    96	- [X] T006 Setup Vue.js 3 + TypeScript + Vite configuration in frontend/
+    97	- [X] T007 Create App.vue with basic layout structure (header, main workspace, footer)
+    98	- [X] T008 [P] Create SvgCanvas.vue component in frontend/src/components/canvas/ (empty SVG for now)
+    99	- [X] T009 [P] Add basic CSS styling in frontend/src/assets/styles/
+   100	- [X] T010 Mount SvgCanvas in App.vue main workspace area
+   101	
+   102	**Checkpoint**: Application loads and displays empty canvas
+   103	
+   104	---
+   105	
+   106	## Phase 3: Render Fixed Elements
+   107	
+   108	**Purpose**: Display projection planes and coordinate system  
+   109	**Reference**: [spec.md](./spec.md#projection-planes) - Projection Planes P_V and P_H, [spec.md](./spec.md#hinge-lines-hl-and-broken-hinge-lines-bhl) - Hinge Lines
+   110	
+   111	**Implementation Requirements**:
+   112	- **Fixed Elements**: Must create per [spec.md §3D Elements](./spec.md#3d-elements-derived-not-edited): Origin point O at (0,0,0), planes P_V and P_H, hinge line HL_HV. These are ALWAYS present and cannot be deleted.
+   113	- **Plane Definitions**: P_V (vertical, XZ plane at Y=0) and P_H (horizontal, XY plane at Z=0) per [spec.md §Coordinate System](./spec.md#coordinate-system-monge-projection). Must use point+normal representation from [data-model.md §Plane3DByPointAndNormal](./data-model.md#plane3dbypointandnormal).
+   114	- **Coordinate Transformation**: Implement [data-model.md §Transformation Flow](./data-model.md#transformation-flow). Must support bidirectional transforms: plane intrinsic <u,v> ↔ canvas (x,y) for EACH plane.
+   115	- **Three.js Matrices**: ALL transformations use Three.js `Matrix3` (3×3 for 2D). Non-destructive wrappers in threeUtils.ts: `applyMatrix3(vector, matrix)`, `invert(matrix)`.
+   116	- **Visual Rendering**: Origin O = orange (#FF6B35), HL_HV = dashed gray (#333333) per [spec.md §Origin Point O](./spec.md#3d-elements-derived-not-edited).
+   117	
+   118	**⚠️ CRITICAL**: Study [data-model.md §Matrix Representations](./data-model.md#matrix-representations) to understand Three.js Matrix3 usage and custom Matrix4x3/Matrix3x4 for dimension changes.
+   119	
+   120	- [X] T011 [P] Create Plane class in frontend/src/domain/world/Plane.ts with boundaries and normal vector
+   121	- [X] T011b [P] Create threeUtils.ts with non-destructive wrappers: applyMatrix3, invert, add, sub, etc. and Matrix4x3/Matrix3x4 for 2D↔3D
+   122	- [X] T012 Add P_V and P_H fixed planes to World initialization
+   123	- [X] T013 Add origin point (O) and hinge line (HL_HV) to World as regular Point/Line elements
+   124	- [X] T014 [P] Create coordinate transformation utilities - NOW: Paper abstraction (Paper.ts, PaperService.ts, SVGRenderer.ts)
+   125	- [X] T015 [P] Create rendering service - NOW: Integrated into Paper/PaperService/SVGRenderer architecture
+   126	- [X] T016 Implement generic plane rendering (uses Plane boundaries to render as SVG rect)
+   127	- [X] T017 Implement generic point rendering (uses Point coordinates to render as SVG circle)
+   128	- [X] T018 Implement generic line rendering (uses Line endpoints to render as SVG line element)
+   129	- [X] T019 [P] Unit test for Plane class in frontend/tests/unit/domain/plane.spec.ts
+   130	- [X] T020 [P] Unit test for CoordinateTransform - NOW: Should be PaperService tests
+   131	- [X] T021 [P] Unit test for RenderService - NOW: Should be SVGRenderer tests
+   132	
+   133	**Checkpoint**: Fixed elements visible on canvas using generic rendering (US1 partial - workspace initialized)
+   134	
+   135	**Constitution Note**: Rendering MUST use general geometric algorithms (Principle IV) - P_H, P_V, O, HL_HV are rendered using the same logic as user-created elements, no special cases.
+   136	
+   137	---
+   138	
+   139	## Phase 4: Render Points
+   140	
+   141	**Purpose**: Display user-created points using Paper abstraction  
+   142	**Reference**: [spec.md](./spec.md#2d-elements-explicit-entities) - 2D Elements (Points)
+   143	
+   144	**Implementation Requirements**:
+   145	- **Point Representation**: Use [data-model.md §Point2D](./data-model.md#point2d) with Point2DRealization storing <u,v> coordinates.
+   146	- **Paper Architecture**: Transform flow: Point2D → Point2DRealization (u,v) → PaperService (apply PlaneRealization2D) → Paper primitives (x,y) → SVGRenderer (apply viewport) → SVG
+   147	- **Realization System**: Point coordinates cached in Point2DRealization. Plane transformations cached in ProjectionPlaneRealization2D.
+   148	- **Visual States**: Free points = circles, derived points = squares per [spec.md §2D Elements](./spec.md#2d-elements-edited-in-projection-views). Apply hover/selection states from [ui-spec.md §Visual Feedback](./ui-spec.md#visual-feedback-hover-and-selection).
+   149	- **Naming Convention**: Use subscript notation (a_H, b_V) per [spec.md §Naming Conventions](./spec.md#coordinate-system-monge-projection).
+   150	
+   151	**⚠️ CRITICAL**: Architecture now uses Rule → Realization → Paper → SVG pipeline. Points store rules, realizations cache computed values.
+   152	
+   153	- [X] T022 Implement PaperService.pointToPrimitive() to convert Point2DRealization → Paper primitive
+   154	- [X] T023 [P] Apply point styling (color, radius) from Point properties via ResolvedStyle
+   155	- [X] T024 [P] Update SVGRenderer to render PointPrimitive → SVG circles
+   156	- [X] T025 [P] Unit test for Paper primitive generation in frontend/tests/unit/services/paperService.spec.ts
+   157	
+   158	**Checkpoint**: ✅ Points from World data structure render through Paper abstraction
+   159	
+   160	---
+   161	
+   162	## Phase 5: Create Free Points (US1 - Partial)
+   163	
+   164	**Purpose**: First user interaction - placing points  
+   165	**Reference**: [spec.md](./spec.md#us1-place-point-on-active-plane) - US1 Place Point on Active Plane
+   166	
+   167	**Implementation Requirements**:
+   168	- **User Story**: Implement [spec.md §US1](./spec.md#us1-create-2d-free-point-and-view-3d-projection) - User clicks canvas → creates 2D point on active plane → automatically creates 3D point → shows other projection.
+   169	- **Command Pattern**: ALL creation operations MUST use Command pattern per [constitution.md Principle II](../../.specify/memory/constitution.md#principle-ii-command-pattern-for-undoability). Execute/undo/redo must maintain world consistency.
+   170	- **ID Generation**: Before creating point, call world.generatePointId() to get unique ID. Pass ID as first parameter to FreePoint2D constructor.
+   171	- **Canvas to Plane Coordinates**: Convert click (x_canvas, y_canvas) → plane intrinsic <u,v> using inverse transformation from [data-model.md §Transformation Flow](./data-model.md#transformation-flow).
+   172	- **No Implicit Entities**: Follow [spec.md §No Implicit Entities Rule](./spec.md#parametric-behavior-and-dependencies) - User must explicitly create points, system creates no automatic helpers.
+   173	- **Active Plane**: Only create points on the currently active projection plane per [spec.md §Active Projection Plane](./spec.md#coordinate-system-monge-projection).
+   174	
+   175	**⚠️ CRITICAL**: Read [spec.md §US1](./spec.md#us1-create-2d-free-point-and-view-3d-projection) completely to understand the full free point workflow including 3D reconstruction.
+   176	
+   177	- [X] T026 [P] Create Toolbar.vue component in frontend/src/components/toolbars/
+   178	- [X] T027 Add "Point" tool button to Toolbar
+   179	- [X] T028 Create tool store in frontend/src/stores/toolStore.ts for active tool tracking
+   180	- [X] T029 Add click handler to SvgCanvas for point creation
+   181	- [X] T030 Transform SVG click coordinates to world coordinates
+   182	- [X] T031 Create Point instance and add to World on canvas click
+   183	- [X] T032 Trigger canvas re-render when point added
+   184	- [X] T033 [P] Unit test for toolStore in frontend/tests/unit/stores/toolStore.spec.ts
+   185	- [X] T034 [P] E2E test for point creation in frontend/tests/e2e/create-point.spec.ts
+   186	
+   187	**Checkpoint**: User can click Point tool and place points on canvas (US1 partial)
+   188	
+   189	---
+   190	
+   191	## Phase 6: Basic Viewport Pan/Zoom (US6 - Partial)
+   192	
+   193	**Purpose**: Canvas navigation  
+   194	**Reference**: [spec.md](./spec.md#workspace-and-views) - Workspace Navigation (Pan: Shift+drag, Zoom: mouse wheel)
+   195	
+   196	**Implementation Requirements**:
+   197	- **Transformation Hierarchy**: Implement [data-model.md §View Transformation](./data-model.md#coordinate-systems-and-transformations) - Plane intrinsic → canvas → viewport. Must compose three transformation matrices.
+   198	- **Pan Control**: Middle-click drag or spacebar+drag per [ui-spec.md §Viewport Navigation](./ui-spec.md#viewport-navigation). Update viewport offset in ViewportTransform.
+   199	- **Zoom Control**: Mouse wheel or pinch per [ui-spec.md §Viewport Navigation](./ui-spec.md#viewport-navigation). Zoom toward cursor position, not canvas origin.
+   200	- **Homogeneous Coordinates**: Pan/zoom MUST use 3x3 transformation matrices with homogeneous coordinates per [constitution.md Principle V](../../.specify/memory/constitution.md#principle-v-homogeneous-coordinate-system).
+   201	- **Persistent State**: Store viewport transform in viewStore per [data-model.md §View State](./data-model.md#view-state).
+   202	
+   203	**⚠️ CRITICAL**: Review [data-model.md §Transformation Flow](./data-model.md#transformation-flow) diagram to understand how viewport transform fits into the coordinate pipeline.
+   204	
+   205	- [X] T035 Create useViewport composable in frontend/src/composables/useViewport.ts
+   206	- [X] T036 Create viewStore in frontend/src/stores/viewStore.ts for pan/zoom state
+   207	- [X] T037 Add mouse drag handler for panning (Shift + drag or Space + drag)
+   208	- [X] T038 Paper architecture handles viewport transformation (already implemented in SVGRenderer)
+   209	- [X] T039 Add mouse wheel handler for zoom functionality
+   210	- [X] T040 Apply transform to SVG rendering in SvgCanvas (use SVGRenderer.renderPaper())
+   211	- [X] T041 [P] Unit test for viewStore in frontend/tests/unit/stores/viewStore.spec.ts
+   212	- [X] T042 [P] Unit test for useViewport composable (composable is mainly event wiring, tested via integration)
+   213	- [X] T043 [P] E2E test for pan/zoom (deferred - E2E infrastructure needs backend fix)
+   214	
+   215	**Checkpoint**: User can navigate canvas (US6 partial - viewport manipulation)
+   216	
+   217	---
+   218	
+   219	## Phase 6.5: Establish Command/Operation/Tool Infrastructure (URGENT - Constitution Compliance)
+   220	
+
+===== specs/001-dihedral-learning-mvp/spec.md =====
+     1	# Feature Specification: Diedrico Dihedral Learning MVP
+     2	
+     3	**Feature Branch**: `001-dihedral-learning-mvp`  
+     4	**Created**: 2025-12-22  
+     5	**Status**: Draft  
+     6	**Input**: Derived from `pre-spec.md` and `pre-spec-ui.md` (project documentation is in Spanish; this specification is intentionally in English per constitution).
+     7	
+     8	## Conceptual Model (User POV)
+     9	
+    10	This section defines the user-facing mental model, terminology, and UI components of the application. The goal is to make the *constructive process* explicit: the user performs deliberate operations, sees intermediate steps, and understands dependencies.
+    11	
+    12	### Purpose and Learning Focus
+    13	
+    14	- The application is an educational tool for **dihedral/orthographic projection** commonly taught in engineering programs.
+    15	- The primary value is the **constructive process** (how the drawing is built), not only the final drawing.
+    16	- The application does not “fix” mistakes or silently complete constructions; it surfaces infeasibility and lets the learner adjust inputs.
+    17	
+    18	### Workspace and Views
+    19	
+    20	From the user’s perspective, the workspace has two synchronized views:
+    21	
+    22	- **2D View (Primary)**: The main drawing area where all constructions are performed.
+    23	  - The 2D view is where constructions are performed on the active plane; projection plane surfaces are visualized in the 3D overlay.
+    24	  - One plane is always the **active plane** (new 2D elements are created there).
+    25	  - Navigation is always available:
+    26	    - Pan: `Shift` + drag
+    27	    - Zoom: mouse wheel
+    28	- **3D View (Auxiliary, Read-Only)**: A floating overlay used only to improve spatial understanding.
+    29	  - Supports rotate, pan, zoom.
+    30	  - Does not allow selecting or editing geometry.
+    31	  - Can optionally show 2D elements on planes and linking visuals between 3D elements and their 2D projections.
+    32	
+    33	### Projection Planes
+    34	
+    35	A **projection plane** is a named 2D surface where the user draws 2D geometry.
+    36	
+    37	- Default planes:
+    38	  - `P_H`: Horizontal plane (typically displayed horizontally in the 2D view)
+    39	  - `P_V`: Vertical plane (typically displayed vertically in the 2D view)
+    40	- **All projection planes are displayed simultaneously** in the 2D workspace, arranged in dihedral configuration around their shared hinge lines.
+    41	- The system may include additional projection planes later (auxiliary, profile, etc.).
+    42	- The **active plane** determines only *where new elements are created*; it does NOT control visibility.
+    43	- Changing the active plane:
+    44	  - does not hide or show planes,
+    45	  - does not modify existing geometry,
+    46	  - only changes which plane receives new constructions,
+    47	  - updates visual emphasis (active plane elements at full intensity, others de-emphasized).
+    48	
+    49	### Hinge Lines (HL) and Broken Hinge Lines (BHL)
+    50	
+    51	A **hinge line** (HL) is the intersection line shared by two **projection planes** (the actual drawing planes themselves).
+    52	
+    53	- Naming convention: `HL_XY` where `X` and `Y` are plane identifiers.
+    54	  - Example: `HL_HV` is the hinge line shared by `P_H` and `P_V` (the ground line).
+    55	- Hinge lines are the **physical fold lines** between projection planes.
+    56	- For geometric reasoning, hinge lines behave like regular 2D lines.
+    57	
+    58	**Architecture (Phase 84 - Canonical Coordinates)**:
+    59	- **HingeLine** (3D entity): NO geometry storage. The 3D line is computed on-demand from canonical coordinates **(0,0,1)** (origin) and **(1,0,0)** (u-axis direction) in plane1's coordinate system, transformed to 3D via `HingeLine.realize3D()`.
+    60	- **HalfHingeLine2D** (2D entity): Represents how the 3D hinge line appears in each plane's local coordinates. NO geometry storage - computed via `realize2D()`:
+    61	  - **Plane1**: Returns canonical coordinates (0,0,1) and (1,0,0) directly
+    62	  - **Plane2**: Projects the 3D line back to plane2 coordinates
+    63	- **Key Insight**: Hinge line is ALWAYS at v=0 along the u-axis in plane intrinsic coordinates. This makes canonical coordinates universal for ALL hinge lines (base planes, auxiliary planes, etc.).
+    64	
+    65	**Benefits of Canonical Coordinates**:
+    66	- Zero geometry duplication (was: stored in both HalfHingeLine2D objects)
+    67	- Automatic parametric consistency (no validation needed)
+    68	- Extensible to auxiliary projection planes with arbitrary orientations
+    69	- Centralized 3D computation for rendering consistency
+    70	
+    71	**Broken Hinge Lines (BHL)**: When two arbitrary 3D planes intersect (not projection planes), their intersection line is called a **broken hinge line**. For example, with three planes A, B, C:
+    72	- `HL_AB` and `HL_AC` are regular hinge lines (folds between projection planes)
+    73	- `BHL_BC` is the broken hinge line (intersection of planes B and C in 3D space)
+    74	- The BHL_BC appears as **projected lines** on planes B and C (two separate 2D Element lines)
+    75	- Distance transport typically occurs between these BHL projections, not between regular HLs
+    76	
+    77	**Key difference**: Regular HLs are structural (fold lines). BHLs are geometric constructs whose projections are used for transport operations.
+    78	
+    79	### Guides
+    80	
+    81	A **guide** is a key dihedral learning construct:
+    82	
+    83	- Created from:
+    84	  - a hinge line (HL or BHL projection), and
+    85	  - a point on the active plane.
+    86	- Result:
+    87	  - a line **perpendicular** to the selected HL/BHL,
+    88	  - belonging to **both** planes associated with that HL/BHL.
+    89	
+    90	**Important behavior with BHLs**: When a guide is created perpendicular to a BHL projection on one plane, it is **automatically transported** to the other plane's BHL projection. This establishes immediate geometric correspondence between the two projections.
+    91	
+    92	Guides enable transporting points and distances between planes in an explicit, traceable way.
+    93	
+    94	### 2D Elements (Explicit Entities)
+    95	
+    96	2D elements exist on exactly one projection plane and are created explicitly by the user:
+    97	
+    98	- Point
+    99	- Segment
+   100	- Line
+   101	- Circle
+   102	- Arc (optional)
+   103	
+   104	**No implicit entities rule (critical)**:
+   105	- The UI must not create “implicit points” (e.g., a click somewhere along a segment is *not* treated as a point-on-segment).
+   106	- If a later operation needs a point-on-curve/line/segment, the user must first create an explicit 2D point entity (e.g., point-on-element or intersection).
+   107	
+   108	#### Element Construction Methods
+   109	
+   110	Elements of the same type can be constructed in fundamentally different ways. Each construction method becomes a distinct **element variation** with its own creation tool and behavior:
+   111	
+   112	**Points**:
+   113	- **Free Point**: User clicks to position anywhere on the active plane
+   114	  - Tool: Free Point Tool
+   115	  - Example: Drawing a triangle's vertices
+   116	  - Special case: Origin points (O_H, O_V) are Free Points with locked=true
+   117	
+   118	**Note**: Intersection point variations (Line-Line, Line-Circle, Circle-Circle) will be added in future phases.
+   119	
+   120	**Lines**:
+   121	- **Free Line**: User picks two existing points to define the line
+   122	  - Tool: Line Tool + point selection
+   123	  - Example: Connecting two traced points
+   124	
+   125	**Note**: Line variations (Parallel, Perpendicular) will be added in future phases.
+   126	
+   127	**Circles**:
+   128	- **Circle by Center and Point**: Defined by center point and a point on the circumference
+   129	  - Tool: Circle Tool + point selection
+   130	  - Example: Creating an arc construction
+   131	
+   132	**Planes** (3D, created from 2D traces):
+   133	- **Fixed Plane**: P_H and P_V with hard-coded orientations (**INITIALIZATION ONLY**)
+   134	  - **CRITICAL**: NO user tool - users CANNOT create fixed planes via UI
+   135	  - Created only during world initialization (bootstrapping)
+   136	  - P_H at z=0 (horizontal), P_V at y=0 (vertical)
+   137	  - This variation exists solely to represent the fundamental H and V projection planes
+   138	
+   139	**CRITICAL - Initialization-Only Elements**:
+   140	- **Fixed Planes (Plane3DFixed)**: Created automatically during world setup, NO UI tools
+   141	  - P_H and P_V only - these are the horizontal and vertical projection planes
+   142	- **Origin points O_H, O_V**: Created as locked FreePoint2D during initialization
+   143	- **Main hinge line HL_HV**: Created during world initialization
+   144	
+   145	**Note**: User-creatable plane variations (such as auxiliary planes) and 3D object manipulation are deferred to future phases when full 3D support is implemented.
+   146	
+   147	**Why Construction Methods Matter**:
+   148	1. **Different parameters**: Free points need position; intersections need parent elements
+   149	2. **Different dependencies**: Intersections update when parents move; free points don't
+   150	3. **Different validity**: Intersections can become infeasible; free points can't
+   151	4. **Different UI behavior**: Some need index selection; others don't
+   152	5. **Different visualization**: Derived elements (intersections) appear de-emphasized
+   153	
+   154	The construction method is part of the element's identity and persists through undo/redo and save/load.
+   155	### 3D Elements (Derived, Not Edited)
+   156	
+   157	3D elements are derived artifacts created explicitly from compatible 2D inputs:
+   158	
+   159	- 3D point: from two compatible 2D projections (e.g., a point projection on `P_H` and a point projection on `P_V`).
+   160	- 3D line: from compatible 2D projections.
+   161	- 3D segment: from two compatible 2D segments (one per plane) with compatible endpoints.
+   162	- 3D plane: from compatible 2D traces.
+   163	
+   164	3D elements:
+   165	- are not edited directly,
+   166	- exist as a consequence of 2D constructions,
+   167	- are visualized in the 3D view to support learning.
+   168	
+   169	**Origin Point O** (special 3D element):
+   170	
+   171	Every workspace contains a special **origin point** named `O`:
+   172	
+   173	- `O` is a **3D element** defined by hardcoded coordinates (0, 0, 0) in 3D space.
+   174	- Type: `Point3DByCoordinates` (not derived from projections)
+   175	- Geometrically, it sits at the intersection of projection planes `P_H` and `P_V` (on the hinge line `HL_HV`).
+   176	- Its 2D projections are **stored as 2D Point objects** in the World:
+   177	  - `O_H` on `P_H`: locked Point with local coordinates (0, 0) — on the hinge line
+   178	  - `O_V` on `P_V`: locked Point with local coordinates (0, 0) — on the hinge line
+   179	- The 3D point `O` is **defined by** its two projections `O_H` and `O_V` (standard dihedral geometry).
+   180	- The origin point is **always present** from the moment a workspace is created.
+   181	- It is always visible and cannot be deleted or moved (points are locked).
+   182	- It can be used as a reference point in constructions like any other 3D point.
+   183	- Visual appearance: regular point rendering (not a special crosshair), distinguishable by color (#FF6B35 orange).
+   184	
+   185	**Projection Planes P_H and P_V** (special 3D elements):
+   186	
+   187	Every workspace contains two fundamental **projection planes** defined by point + normal vector:
+   188	
+   189	- `P_H`: Horizontal projection plane
+   190	  - Type: `Plane3DByPointAndNormal`
+   191	  - Origin: point `O` (0, 0, 0)
+   192	  - Normal vector: (0, 0, 1) — pointing upward along Z-axis
+   193	  - The plane where "top views" are drawn
+   194	- `P_V`: Vertical projection plane
+   195	  - Type: `Plane3DByPointAndNormal`
+   196	  - Origin: point `O` (0, 0, 0)
+   197	  - Normal vector: (0, 1, 0) — pointing toward viewer along Y-axis
+   198	  - The plane where "front views" are drawn
+   199	
+   200	These planes are **always present**, cannot be deleted, and serve as the fundamental reference surfaces for dihedral projection.
+   201	
+   202	**Hinge Line HL_HV** (special 3D element):
+   203	
+   204	The hinge line between `P_H` and `P_V`:
+   205	
+   206	- `HL_HV` is a **3D element** defined as the intersection of two planes.
+   207	- Type: `Line3DFromPlaneIntersection`
+   208	- Defined by: intersection of `P_H` and `P_V`
+   209	- 3D position: X-axis where y=0 AND z=0 (parametric: (x, 0, 0) for all x)
+   210	- Its 2D projections (`HL_HV_H`, `HL_HV_V`) appear as horizontal lines on each plane:
+   211	  - `HL_HV_H` on `P_H`: horizontal line at v = 0 (plane intrinsic coordinates)
+   212	  - `HL_HV_V` on `P_V`: horizontal line at v = 0 (plane intrinsic coordinates)
+   213	- Visual appearance: dashed gray line (#333333)
+   214	- The hinge line is the "fold line" or "ground line" in traditional dihedral drawings
+   215	- Position is derived from plane intersection, not hardcoded (v=0 is the geometric result)
+   216	- It is **always present** and cannot be deleted
+   217	
+   218	### Coordinate System (Monge Projection)
+   219	
+   220	The application uses **Monge projection** (descriptive geometry) with the following coordinate system conventions:
+
+===== frontend/src/components/workspace/SvgCanvas.vue =====
+     1	<template>
+     2	  <div class="svg-canvas-container">
+     3	    <svg
+     4	      ref="svgElement"
+     5	      class="svg-canvas"
+     6	      xmlns="http://www.w3.org/2000/svg"
+     7	      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+     8	      preserveAspectRatio="xMidYMid meet"
+     9	      @mousedown="handleMouseDown"
+    10	      @click="handleCanvasClick"
+    11	      @dblclick="handleDoubleClick"
+    12	      @mousemove="handleMouseMove"
+    13	      @wheel.prevent="handleWheel"
+    14	    >
+    15	      <!-- Background grid (T275) - Zoom-adaptive grid display -->
+    16	      <g v-if="viewStore.gridVisible.value" class="background-grid">
+    17	        <line
+    18	          v-for="line in gridLines"
+    19	          :key="line.key"
+    20	          :x1="line.x1"
+    21	          :y1="line.y1"
+    22	          :x2="line.x2"
+    23	          :y2="line.y2"
+    24	          :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+    25	          :stroke-width="line.major ? 1 : 0.5"
+    26	        />
+    27	      </g>
+    28	      
+    29	      <!-- Render all lines through canvas presentation model (including HL_HV projections) -->
+    30	      <line
+    31	        v-for="{ primitive, attrs } in renderedLines"
+    32	        :key="primitive.id"
+    33	        v-bind="attrs"
+    34	      />
+    35	      
+    36	      <!-- Render all segments through canvas presentation model -->
+    37	      <line
+    38	        v-for="{ primitive, attrs } in renderedSegments"
+    39	        :key="primitive.id"
+    40	        v-bind="attrs"
+    41	      />
+    42	      
+    43	      <!-- Render all guides through canvas presentation model -->
+    44	      <line
+    45	        v-for="{ primitive, attrs } in renderedGuides"
+    46	        :key="primitive.id"
+    47	        v-bind="attrs"
+    48	      />
+    49	      
+    50	      <!-- Render all circles through canvas presentation model -->
+    51	      <circle
+    52	        v-for="{ primitive, attrs } in renderedCircles"
+    53	        :key="primitive.id"
+    54	        v-bind="attrs"
+    55	      />
+    56	      
+    57	      <!-- Render all arcs through canvas presentation model -->
+    58	      <path
+    59	        v-for="{ primitive, attrs } in renderedArcs"
+    60	        :key="primitive.id"
+    61	        v-bind="attrs"
+    62	      />
+    63	      
+    64	      <!-- Render all points through canvas presentation model -->
+    65	      <circle
+    66	        v-for="{ primitive, attrs } in renderedPoints"
+    67	        :key="primitive.id"
+    68	        v-bind="attrs"
+    69	      />
+    70	      
+    71	      <!-- Snap preview indicator - orange glow around snap target point -->
+    72	      <circle
+    73	        v-if="snapTarget.pointId && snapTarget.position"
+    74	        :cx="snapTarget.position.x"
+    75	        :cy="snapTarget.position.y"
+    76	        :r="8"
+    77	        fill="none"
+    78	        stroke="#FF6B35"
+    79	        stroke-width="2"
+    80	        opacity="0.8"
+    81	        class="snap-indicator"
+    82	      />
+    83	      
+    84	      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+    85	      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+    86	        <!-- Top edge labels (U-coordinates) -->
+    87	        <text
+    88	          v-for="label in gridLabels.top"
+    89	          :key="label.key"
+    90	          :x="label.position"
+    91	          :y="12"
+    92	          class="grid-label"
+    93	          text-anchor="middle"
+    94	        >
+    95	          {{ label.value }}
+    96	        </text>
+    97	        
+    98	        <!-- Bottom edge labels (U-coordinates) -->
+    99	        <text
+   100	          v-for="label in gridLabels.bottom"
+   101	          :key="label.key"
+   102	          :x="label.position"
+   103	          :y="canvasHeight - 4"
+   104	          class="grid-label"
+   105	          text-anchor="middle"
+   106	        >
+   107	          {{ label.value }}
+   108	        </text>
+   109	        
+   110	        <!-- Left edge labels (V-coordinates) -->
+   111	        <text
+   112	          v-for="label in gridLabels.left"
+   113	          :key="label.key"
+   114	          :x="4"
+   115	          :y="label.position"
+   116	          class="grid-label"
+   117	          text-anchor="start"
+   118	          dominant-baseline="middle"
+   119	        >
+   120	          {{ label.value }}
+   121	        </text>
+   122	        
+   123	        <!-- Right edge labels (V-coordinates) -->
+   124	        <text
+   125	          v-for="label in gridLabels.right"
+   126	          :key="label.key"
+   127	          :x="canvasWidth - 4"
+   128	          :y="label.position"
+   129	          class="grid-label"
+   130	          text-anchor="end"
+   131	          dominant-baseline="middle"
+   132	        >
+   133	          {{ label.value }}
+   134	        </text>
+   135	      </g>
+   136	    </svg>
+   137	    
+   138	    <!-- Hover tooltip -->
+   139	    <div 
+   140	      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
+   141	      class="hover-tooltip"
+   142	      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+   143	    >
+   144	      {{ hoverHighlight.hoveredElementLabel.value }}
+   145	    </div>
+   146	    
+   147	    <!-- Properties Dialog -->
+   148	    <PropertiesDialog
+   149	      :is-open="showPropertiesDialog"
+   150	      :element-id="propertiesElementId"
+   151	      :world="world"
+   152	      @close="showPropertiesDialog = false"
+   153	      @save="handleSaveProperties"
+   154	    />
+   155	  </div>
+   156	</template>
+   157	
+   158	<script setup lang="ts">
+   159	/**
+   160	 * SvgCanvas.vue - Main 2D drawing canvas component
+   161	 * 
+   162	 * This is the primary workspace where all 2D geometric elements are rendered.
+   163	 * Uses SVG for crisp, scalable vector graphics per Constitution Principle IV.
+   164	 * 
+   165	 * Rendering Pipeline:
+   166	 * 1. World (domain objects + realizations) 
+   167	 * 2. → CanvasPresentationSelector (generates read-model primitives in paper coordinates)
+   168	 * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+   169	 * 4. → SVG elements
+   170	 * 
+   171	 * Key requirements:
+   172	 * - SVG element (not HTML Canvas) per ui-spec.md
+   173	 * - Rendering consumes the canvas presentation read model
+   174	 * - Generic rendering algorithms (no special cases for fixed elements)
+   175	 * - Will support pan/zoom viewport transformations in Phase 6
+   176	 * - Elements rendered using principle-based algorithms (Constitution Principle IV)
+   177	 * 
+   178	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+   179	 */
+   180	
+   181	import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+   182	import { Matrix3, Vector3 } from 'three';
+   183	import { World } from '@/domain/world/World';
+   184	import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+   185	import { InputService } from '@/services/InputService';
+   186	import { PointTool } from '@/tools/PointTool';
+   187	import { LineTool } from '@/tools/LineTool';
+   188	import { SegmentTool } from '@/tools/SegmentTool';
+   189	import { CircleTool } from '@/tools/CircleTool';
+   190	import { GuideTool } from '@/tools/GuideTool';
+   191	import { IntersectionTool } from '@/tools/IntersectionTool';
+   192	import { ParallelLineTool } from '@/tools/ParallelLineTool';
+   193	import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+   194	import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+   195	import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+   196	import { Create3DPointTool } from '@/tools/Create3DPointTool';
+   197	import { Create3DLineTool } from '@/tools/Create3DLineTool';
+   198	import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+   199	import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+   200	import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+   201	import { FreePoint2D } from '@/domain/world/Point';
+   202	import { useToolStore } from '@/stores/toolStore';
+   203	import { useViewStore } from '@/stores/viewStore';
+   204	import { useSelectionStore } from '@/stores/selectionStore';
+   205	import { useViewport } from '@/composables/useViewport';
+   206	import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+   207	import { screenTo3D } from '@/utils/coordinateTransform';
+   208	import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+   209	import type { ITool } from '@/tools/ITool';
+   210	import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+   211	import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+   212	import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+   213	import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+   214	
+   215	// Define emits
+   216	const emit = defineEmits<{
+   217	  'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+   218	  'update-active-plane': [planeInfo: { id: string; name: string }];
+   219	}>();
+   220	
+
+===== frontend/src/stores/toolStore.ts =====
+     1	/**
+     2	 * toolStore.ts - Tool selection state management
+     3	 * 
+     4	 * Manages the currently active geometric construction tool.
+     5	 * When a tool is selected, the canvas changes its interaction mode
+     6	 * to match the tool's behavior (point placement, line creation, etc.)
+     7	 * 
+     8	 * Supports tool families with dropdown menus, last-used sub-tool memory,
+     9	 * and configurable completion behavior (stay-active vs return-to-selection).
+    10	 * 
+    11	 * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Tool Interactions
+    12	 * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+    13	 */
+    14	
+    15	import { ref, computed } from 'vue';
+    16	import type { ToolFamilyConfig, ToolConfig } from '../types/ToolConfig';
+    17	
+    18	export const TOOL_TYPE = {
+    19	  SELECT: 'select',
+    20	  POINT: 'point',
+    21	  LINE: 'line',
+    22	  CIRCLE: 'circle',
+    23	  SEGMENT: 'segment',
+    24	  GUIDE: 'guide',
+    25	  INTERSECTION: 'intersection',
+    26	  TRANSPORT: 'transport',
+    27	  PARALLEL_LINE: 'parallel-line',
+    28	  PERPENDICULAR_LINE: 'perpendicular-line',
+    29	  TANGENT_LINE_TO_CIRCLE_THROUGH_POINT: 'tangent-line-to-circle-through-point',
+    30	  TANGENT_LINE_TO_CIRCLE_PARALLEL: 'tangent-line-to-circle-parallel',
+    31	  CREATE3DPOINT: 'create3dpoint',
+    32	  CREATE3DLINE: 'create3dline',
+    33	  CREATE3DSEGMENT: 'create3dsegment',
+    34	  CREATE3DPLANE: 'create3dplane',
+    35	  CREATEPROJECTIONPLANE: 'createprojectionplane',
+    36	  INTERACTIVEPROJECTIONSETUP: 'interactiveprojectionsetup',
+    37	  QUICKPROJECTIONSETUP: 'quickprojectionsetup',
+    38	  QUICK3DLINE: 'quick3dline',
+    39	  QUICK3DSEGMENT: 'quick3dsegment',
+    40	} as const;
+    41	export type ToolType = typeof TOOL_TYPE[keyof typeof TOOL_TYPE];
+    42	
+    43	const STORAGE_KEY = 'diedrico-tool-last-used';
+    44	
+    45	const activeTool = ref<ToolType>('select');
+    46	const lastUsedByFamily = ref<Record<string, string>>({});
+    47	const toolStepMessage = ref<string>('');
+    48	let toolFamilies: ToolFamilyConfig[] = [];
+    49	
+    50	// Load last-used preferences from localStorage on module initialization
+    51	function loadFromLocalStorage(): Record<string, string> {
+    52	  try {
+    53	    const stored = localStorage.getItem(STORAGE_KEY);
+    54	    return stored ? JSON.parse(stored) : {};
+    55	  } catch (error) {
+    56	    console.warn('Failed to load last-used tool preferences:', error);
+    57	    return {};
+    58	  }
+    59	}
+    60	
+    61	// Save last-used preferences to localStorage
+    62	function saveToLocalStorage(lastUsed: Record<string, string>): void {
+    63	  try {
+    64	    localStorage.setItem(STORAGE_KEY, JSON.stringify(lastUsed));
+    65	  } catch (error) {
+    66	    console.warn('Failed to save last-used tool preferences:', error);
+    67	  }
+    68	}
+    69	
+    70	// Initialize lastUsedByFamily from localStorage
+    71	lastUsedByFamily.value = loadFromLocalStorage();
+    72	
+    73	export function useToolStore() {
+    74	  /**
+    75	   * Set the active tool
+    76	   */
+    77	  function setTool(tool: ToolType) {
+    78	    activeTool.value = tool;
+    79	    toolStepMessage.value = ''; // Clear step message when tool changes
+    80	  }
+    81	
+    82	  /**
+    83	   * Check if a specific tool is active
+    84	   */
+    85	  function isToolActive(tool: ToolType): boolean {
+    86	    return activeTool.value === tool;
+    87	  }
+    88	
+    89	  /**
+    90	   * Get the current active tool
+    91	   */
+    92	  const currentTool = computed(() => activeTool.value);
+    93	
+    94	  /**
+    95	   * Initialize tool families configuration
+    96	   * Must be called once with TOOL_FAMILIES from config
+    97	   */
+    98	  function setToolFamilies(families: ToolFamilyConfig[]) {
+    99	    toolFamilies = families;
+   100	  }
+   101	
+   102	  /**
+   103	   * Find the family that contains the given tool
+   104	   */
+   105	  function getToolFamily(toolId: string): ToolFamilyConfig | undefined {
+   106	    return toolFamilies.find(family => 
+   107	      family.tools.some(tool => tool.id === toolId)
+   108	    );
+   109	  }
+   110	
+   111	  /**
+   112	   * Get configuration for a specific tool
+   113	   */
+   114	  function getToolConfig(toolId: string): ToolConfig | undefined {
+   115	    for (const family of toolFamilies) {
+   116	      const tool = family.tools.find(t => t.id === toolId);
+   117	      if (tool) return tool;
+   118	    }
+   119	    return undefined;
+   120	  }
+   121	
+   122	  /**
+   123	   * Get completion behavior for a tool
+   124	   */
+   125	  function getCompletionBehavior(toolId: string): 'stay-active' | 'return-to-selection' | undefined {
+   126	    const config = getToolConfig(toolId);
+   127	    return config?.completionBehavior;
+   128	  }
+   129	
+   130	  /**
+   131	   * Activate a tool family - uses last-used sub-tool or default
+   132	   */
+   133	  function activateToolFamily(familyId: string): void {
+   134	    const family = toolFamilies.find(f => f.id === familyId);
+   135	    if (!family) {
+   136	      console.warn(`Tool family not found: ${familyId}`);
+   137	      return;
+   138	    }
+   139	
+   140	    // Use last-used tool for this family, or default if none
+   141	    const toolId = lastUsedByFamily.value[familyId] || family.defaultTool;
+   142	    setTool(toolId as ToolType);
+   143	  }
+   144	
+   145	  /**
+   146	   * Select a specific sub-tool and update last-used memory
+   147	   */
+   148	  function selectSubTool(familyId: string, toolId: string): void {
+   149	    // Update last-used for this family
+   150	    lastUsedByFamily.value[familyId] = toolId;
+   151	    saveToLocalStorage(lastUsedByFamily.value);
+   152	    
+   153	    // Activate the tool
+   154	    setTool(toolId as ToolType);
+   155	  }
+   156	
+   157	  /**
+   158	   * Get the last-used tool for a family (for UI state)
+   159	   */
+   160	  function getLastUsedTool(familyId: string): string | undefined {
+   161	    return lastUsedByFamily.value[familyId];
+   162	  }
+   163	
+   164	  /**
+   165	   * Phase 115: Set contextual tool step feedback message
+   166	   */
+   167	  function setToolStepMessage(message: string) {
+   168	    toolStepMessage.value = message;
+   169	  }
+   170	
+   171	  /**
+   172	   * Phase 115: Get reactive tool step message
+   173	   */
+   174	  const currentToolStepMessage = computed(() => toolStepMessage.value);
+   175	
+   176	  return {
+   177	    currentTool,
+   178	    currentToolStepMessage,
+   179	    setTool,
+   180	    setToolStepMessage,
+   181	    isToolActive,
+   182	    setToolFamilies,
+   183	    getToolFamily,
+   184	    getToolConfig,
+   185	    getCompletionBehavior,
+   186	    activateToolFamily,
+   187	    selectSubTool,
+   188	    getLastUsedTool
+   189	  };
+   190	}
+
+===== frontend/src/stores/settingsStore.ts =====
+     1	/**
+     2	 * Settings Store - User preferences and application settings
+     3	 * 
+     4	 * Manages user-configurable settings with localStorage persistence.
+     5	 * Settings are loaded on application startup and saved automatically on change.
+     6	 * 
+     7	 * Settings Categories:
+     8	 * - Grid: Visibility, spacing, style, snap-to-grid
+     9	 * - Snap: Enable/disable, snap radius (in pixels)
+    10	 * - Default Styles: Colors, line widths for new elements
+    11	 * - 3D View: Initial camera position, display options
+    12	 * 
+    13	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#project-settings-dialog
+    14	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#state-persistence
+    15	 */
+    16	
+    17	import { ref, computed, watch } from 'vue';
+    18	import { defineStore } from 'pinia';
+    19	
+    20	const STORAGE_KEY = 'diedrico_settings_v1';
+    21	
+    22	/**
+    23	 * Default settings values
+    24	 * Following ui-spec.md recommendations
+    25	 */
+    26	const DEFAULT_SETTINGS = {
+    27	  // Grid settings
+    28	  grid: {
+    29	    visible: true,
+    30	    spacing: 20, // Base spacing in world units (adapts with zoom)
+    31	    color: '#E0E0E0',
+    32	    snapToGrid: false,
+    33	  },
+    34	  
+    35	  // Snap settings
+    36	  snap: {
+    37	    enabled: true,
+    38	    radius: 12, // Snap radius in screen pixels (10-15 per spec)
+    39	  },
+    40	  
+    41	  // Default visual styles for new elements
+    42	  defaultStyles: {
+    43	    pointColor: '#000000',
+    44	    pointSize: 3, // Radius in pixels
+    45	    lineColor: '#000000',
+    46	    lineWidth: 1.5, // In pixels
+    47	    circleColor: '#000000',
+    48	    circleWidth: 1.5,
+    49	    guideColor: '#666666',
+    50	    guideWidth: 1,
+    51	    guideDashed: true,
+    52	  },
+    53	  
+    54	  // 3D view settings
+    55	  view3D: {
+    56	    showPlanes: true,
+    57	    showProjectionLines: true,
+    58	    show2DElements: true,
+    59	    initialCameraDistance: 10,
+    60	  },
+    61	};
+    62	
+    63	export interface Settings {
+    64	  grid: {
+    65	    visible: boolean;
+    66	    spacing: number;
+    67	    color: string;
+    68	    snapToGrid: boolean;
+    69	  };
+    70	  snap: {
+    71	    enabled: boolean;
+    72	    radius: number;
+    73	  };
+    74	  defaultStyles: {
+    75	    pointColor: string;
+    76	    pointSize: number;
+    77	    lineColor: string;
+    78	    lineWidth: number;
+    79	    circleColor: string;
+    80	    circleWidth: number;
+    81	    guideColor: string;
+    82	    guideWidth: number;
+    83	    guideDashed: boolean;
+    84	  };
+    85	  view3D: {
+    86	    showPlanes: boolean;
+    87	    showProjectionLines: boolean;
+    88	    show2DElements: boolean;
+    89	    initialCameraDistance: number;
+    90	  };
+    91	}
+    92	
+    93	export const useSettingsStore = defineStore('settings', () => {
+    94	  // Settings state (initialized from localStorage or defaults)
+    95	  const settings = ref<Settings>(loadSettings());
+    96	  
+    97	  /**
+    98	   * Load settings from localStorage
+    99	   * Falls back to defaults if not found or invalid
+   100	   */
+   101	  function loadSettings(): Settings {
+   102	    try {
+   103	      const stored = localStorage.getItem(STORAGE_KEY);
+   104	      if (stored) {
+   105	        const parsed = JSON.parse(stored);
+   106	        // Merge with defaults to handle new settings in updates
+   107	        return {
+   108	          grid: { ...DEFAULT_SETTINGS.grid, ...(parsed.grid || {}) },
+   109	          snap: { ...DEFAULT_SETTINGS.snap, ...(parsed.snap || {}) },
+   110	          defaultStyles: { ...DEFAULT_SETTINGS.defaultStyles, ...(parsed.defaultStyles || {}) },
+   111	          view3D: { ...DEFAULT_SETTINGS.view3D, ...(parsed.view3D || {}) },
+   112	        };
+   113	      }
+   114	    } catch (error) {
+   115	      console.warn('[SettingsStore] Failed to load settings from localStorage:', error);
+   116	    }
+   117	    return structuredClone(DEFAULT_SETTINGS);
+   118	  }
+   119	  
+   120	  /**
+   121	   * Save settings to localStorage
+   122	   */
+   123	  function saveSettings() {
+   124	    try {
+   125	      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings.value));
+   126	      console.log('[SettingsStore] Settings saved to localStorage');
+   127	    } catch (error) {
+   128	      console.error('[SettingsStore] Failed to save settings to localStorage:', error);
+   129	    }
+   130	  }
+   131	  
+   132	  /**
+   133	   * Watch for settings changes and auto-save
+   134	   */
+   135	  watch(settings, () => {
+   136	    saveSettings();
+   137	  }, { deep: true });
+   138	  
+   139	  // Grid settings
+   140	  const gridVisible = computed({
+   141	    get: () => settings.value.grid.visible,
+   142	    set: (value: boolean) => {
+   143	      settings.value.grid.visible = value;
+   144	    },
+   145	  });
+   146	  
+   147	  const gridSpacing = computed({
+   148	    get: () => settings.value.grid.spacing,
+   149	    set: (value: number) => {
+   150	      settings.value.grid.spacing = value;
+   151	    },
+   152	  });
+   153	  
+   154	  const gridColor = computed({
+   155	    get: () => settings.value.grid.color,
+   156	    set: (value: string) => {
+   157	      settings.value.grid.color = value;
+   158	    },
+   159	  });
+   160	  
+   161	  const snapToGrid = computed({
+   162	    get: () => settings.value.grid.snapToGrid,
+   163	    set: (value: boolean) => {
+   164	      settings.value.grid.snapToGrid = value;
+   165	    },
+   166	  });
+   167	  
+   168	  // Snap settings
+   169	  const snapEnabled = computed({
+   170	    get: () => settings.value.snap.enabled,
+   171	    set: (value: boolean) => {
+   172	      settings.value.snap.enabled = value;
+   173	    },
+   174	  });
+   175	  
+   176	  const snapRadius = computed({
+   177	    get: () => settings.value.snap.radius,
+   178	    set: (value: number) => {
+   179	      settings.value.snap.radius = value;
+   180	    },
+   181	  });
+   182	  
+   183	  // Default style getters (read-only for now)
+   184	  const defaultPointColor = computed(() => settings.value.defaultStyles.pointColor);
+   185	  const defaultPointSize = computed(() => settings.value.defaultStyles.pointSize);
+   186	  const defaultLineColor = computed(() => settings.value.defaultStyles.lineColor);
+   187	  const defaultLineWidth = computed(() => settings.value.defaultStyles.lineWidth);
+   188	  const defaultCircleColor = computed(() => settings.value.defaultStyles.circleColor);
+   189	  const defaultCircleWidth = computed(() => settings.value.defaultStyles.circleWidth);
+   190	  const defaultGuideColor = computed(() => settings.value.defaultStyles.guideColor);
+   191	  const defaultGuideWidth = computed(() => settings.value.defaultStyles.guideWidth);
+   192	  const defaultGuideDashed = computed(() => settings.value.defaultStyles.guideDashed);
+   193	  
+   194	  // 3D view settings getters (read-only for now)
+   195	  const showPlanes = computed(() => settings.value.view3D.showPlanes);
+   196	  const showProjectionLines = computed(() => settings.value.view3D.showProjectionLines);
+   197	  const show2DElements = computed(() => settings.value.view3D.show2DElements);
+   198	  const initialCameraDistance = computed(() => settings.value.view3D.initialCameraDistance);
+   199	  
+   200	  /**
+   201	   * Update a specific setting
+   202	   */
+   203	  function updateSetting(path: string, value: any) {
+   204	    const keys = path.split('.');
+   205	    let target: any = settings.value;
+   206	    
+   207	    for (let i = 0; i < keys.length - 1; i++) {
+   208	      target = target[keys[i]];
+   209	    }
+   210	    
+   211	    target[keys[keys.length - 1]] = value;
+   212	  }
+   213	  
+   214	  /**
+   215	   * Reset all settings to defaults
+   216	   */
+   217	  function resetToDefaults() {
+   218	    settings.value = structuredClone(DEFAULT_SETTINGS);
+   219	    console.log('[SettingsStore] Settings reset to defaults');
+   220	  }
+
+===== frontend/src/components/header/ProjectNameDisplay.vue =====
+     1	<template>
+     2	  <div class="project-name-display">
+     3	    <div
+     4	      v-if="!isEditing"
+     5	      class="project-name"
+     6	      :class="{ 'editable': !isRenaming }"
+     7	      @dblclick="startEditing"
+     8	      :title="isRenaming ? '' : 'Double-click to rename (or press Ctrl+R)'"
+     9	    >
+    10	      {{ displayName }}
+    11	      <span v-if="isRenaming" class="save-indicator">💾</span>
+    12	    </div>
+    13	    
+    14	    <div v-else class="edit-mode">
+    15	      <input
+    16	        ref="nameInput"
+    17	        v-model="editedName"
+    18	        type="text"
+    19	        class="name-input"
+    20	        @keydown.enter="saveEdit"
+    21	        @keydown.escape="cancelEdit"
+    22	        :maxlength="100"
+    23	      />
+    24	      <button
+    25	        class="save-button"
+    26	        @mousedown.prevent="saveEdit"
+    27	        :disabled="!isValidName"
+    28	        title="Save (Enter)"
+    29	      >
+    30	        ✓
+    31	      </button>
+    32	      <button
+    33	        class="cancel-button"
+    34	        @mousedown.prevent="cancelEdit"
+    35	        title="Cancel (Escape)"
+    36	      >
+    37	        ✕
+    38	      </button>
+    39	    </div>
+    40	  </div>
+    41	</template>
+    42	
+    43	<script setup lang="ts">
+    44	import { ref, computed, nextTick, watch } from 'vue';
+    45	
+    46	/**
+    47	 * ProjectNameDisplay.vue - Editable project name display component
+    48	 * 
+    49	 * Displays the current project name in the app header with in-place editing.
+    50	 * - Double-click to edit
+    51	 * - Enter to save, Escape to cancel
+    52	 * - Validates name (non-empty, reasonable length, no special characters)
+    53	 * - Shows save indicator while renaming
+    54	 * 
+    55	 * Reference: specs/001-dihedral-learning-mvp/spec.md - Project Name Display and Editing
+    56	 */
+    57	
+    58	interface Props {
+    59	  projectName: string | null;
+    60	  isRenaming?: boolean;
+    61	}
+    62	
+    63	interface Emits {
+    64	  (e: 'rename', newName: string): void;
+    65	}
+    66	
+    67	const props = withDefaults(defineProps<Props>(), {
+    68	  isRenaming: false
+    69	});
+    70	
+    71	const emit = defineEmits<Emits>();
+    72	
+    73	const isEditing = ref(false);
+    74	const editedName = ref('');
+    75	const nameInput = ref<HTMLInputElement | null>(null);
+    76	
+    77	// Display name (default to "Untitled Project" if no name)
+    78	const displayName = computed(() => {
+    79	  return props.projectName || 'Untitled Project';
+    80	});
+    81	
+    82	// Validation: non-empty, no file system reserved characters
+    83	const isValidName = computed(() => {
+    84	  if (!editedName.value.trim()) {
+    85	    return false;
+    86	  }
+    87	  
+    88	  // File system reserved characters: / \ : * ? " < > |
+    89	  const invalidChars = /[\/\\:*?"<>|]/;
+    90	  return !invalidChars.test(editedName.value);
+    91	});
+    92	
+    93	// Start editing mode
+    94	function startEditing() {
+    95	  if (props.isRenaming) {
+    96	    return; // Don't allow editing while a rename is in progress
+    97	  }
+    98	  
+    99	  isEditing.value = true;
+   100	  editedName.value = displayName.value;
+   101	  
+   102	  // Focus and select the input on next tick
+   103	  nextTick(() => {
+   104	    if (nameInput.value) {
+   105	      nameInput.value.focus();
+   106	      nameInput.value.select();
+   107	    }
+   108	  });
+   109	}
+   110	
+   111	// Save the edited name
+   112	function saveEdit() {
+   113	  if (!isValidName.value) {
+   114	    return;
+   115	  }
+   116	  
+   117	  const trimmedName = editedName.value.trim();
+   118	  
+   119	  // Only emit if the name actually changed
+   120	  if (trimmedName !== props.projectName) {
+   121	    emit('rename', trimmedName);
+   122	  }
+   123	  
+   124	  isEditing.value = false;
+   125	}
+   126	
+   127	// Cancel editing and revert to original name
+   128	function cancelEdit() {
+   129	  isEditing.value = false;
+   130	  editedName.value = '';
+   131	}
+   132	
+   133	// Watch for external requests to start editing (e.g., from Ctrl+R shortcut)
+   134	watch(() => props.isRenaming, (renaming) => {
+   135	  if (renaming && isEditing.value) {
+   136	    // If rename fails, stay in edit mode
+   137	    // If rename succeeds, the parent will update projectName and we'll exit edit mode
+   138	  }
+   139	});
+   140	
+   141	// Expose method to start editing (for parent component to trigger via Ctrl+R)
+   142	defineExpose({
+   143	  startEditing
+   144	});
+   145	</script>
+   146	
+   147	<style scoped>
+   148	.project-name-display {
+   149	  display: flex;
+   150	  align-items: center;
+   151	  min-width: 200px;
+   152	}
+   153	
+   154	.project-name {
+   155	  font-size: 1.1rem;
+   156	  font-weight: 600;
+   157	  color: #ecf0f1;
+   158	  padding: 4px 8px;
+   159	  border-radius: 4px;
+   160	  transition: background-color 0.2s;
+   161	  display: flex;
+   162	  align-items: center;
+   163	  gap: 8px;
+   164	}
+   165	
+   166	.project-name.editable {
+   167	  cursor: pointer;
+   168	  border-bottom: 1px dashed rgba(236, 240, 241, 0.4);
+   169	}
+   170	
+   171	.project-name.editable:hover {
+   172	  background-color: rgba(255, 255, 255, 0.1);
+   173	}
+   174	
+   175	.save-indicator {
+   176	  font-size: 0.9rem;
+   177	  animation: pulse 1.5s ease-in-out infinite;
+   178	}
+   179	
+   180	@keyframes pulse {
+   181	  0%, 100% {
+   182	    opacity: 1;
+   183	  }
+   184	  50% {
+   185	    opacity: 0.4;
+   186	  }
+   187	}
+   188	
+   189	.edit-mode {
+   190	  display: flex;
+   191	  align-items: center;
+   192	  gap: 6px;
+   193	}
+   194	
+   195	.name-input {
+   196	  flex: 1;
+   197	  min-width: 200px;
+   198	  padding: 6px 10px;
+   199	  font-size: 1rem;
+   200	  font-weight: 600;
+   201	  border: 2px solid #4A90E2;
+   202	  border-radius: 4px;
+   203	  background-color: white;
+   204	  color: #333;
+   205	  outline: none;
+   206	}
+   207	
+   208	.name-input:focus {
+   209	  border-color: #357ABD;
+   210	}
+   211	
+   212	.save-button,
+   213	.cancel-button {
+   214	  display: flex;
+   215	  align-items: center;
+   216	  justify-content: center;
+   217	  width: 28px;
+   218	  height: 28px;
+   219	  border: none;
+   220	  border-radius: 4px;
+
+===== frontend/src/stores/authStore.ts =====
+     1	/**
+     2	 * authStore.ts - Authentication state management
+     3	 * 
+     4	 * T402: Manages Google Drive authentication state and user profile information.
+     5	 * NOT part of the command stack (authentication is user-specific, not document-specific).
+     6	 * NOT persisted in project files (session-only via session storage).
+     7	 * 
+     8	 * @see specs/001-dihedral-learning-mvp/data-model.md - Authentication State
+     9	 */
+    10	
+    11	import { ref, computed } from 'vue';
+    12	import type { GoogleUserProfile } from '../services/GoogleDriveService';
+    13	
+    14	export interface AuthState {
+    15	  isAuthenticated: boolean;
+    16	  user: GoogleUserProfile | null;
+    17	  accessToken: string | null;
+    18	  tokenExpiry: Date | null;
+    19	}
+    20	
+    21	// Reactive state
+    22	const isAuthenticated = ref(false);
+    23	const user = ref<GoogleUserProfile | null>(null);
+    24	const accessToken = ref<string | null>(null);
+    25	const tokenExpiry = ref<Date | null>(null);
+    26	
+    27	// Session storage keys
+    28	const SESSION_TOKEN_KEY = 'diedrico_access_token';
+    29	const SESSION_PROFILE_KEY = 'diedrico_user_profile';
+    30	const SESSION_EXPIRY_KEY = 'diedrico_token_expiry';
+    31	
+    32	export function useAuthStore() {
+    33	  /**
+    34	   * Set authenticated state with user profile
+    35	   */
+    36	  function setAuthenticated(profile: GoogleUserProfile, token: string, expiry?: Date) {
+    37	    isAuthenticated.value = true;
+    38	    user.value = profile;
+    39	    accessToken.value = token;
+    40	    tokenExpiry.value = expiry || null;
+    41	    
+    42	    // Persist to session storage
+    43	    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    44	    sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+    45	    if (expiry) {
+    46	      sessionStorage.setItem(SESSION_EXPIRY_KEY, expiry.toISOString());
+    47	    }
+    48	  }
+    49	
+    50	  /**
+    51	   * Update user profile information
+    52	   */
+    53	  function setUser(profile: GoogleUserProfile) {
+    54	    user.value = profile;
+    55	    sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+    56	  }
+    57	
+    58	  /**
+    59	   * Clear authentication state (sign out)
+    60	   */
+    61	  function clearAuth() {
+    62	    isAuthenticated.value = false;
+    63	    user.value = null;
+    64	    accessToken.value = null;
+    65	    tokenExpiry.value = null;
+    66	    
+    67	    // Clear session storage
+    68	    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    69	    sessionStorage.removeItem(SESSION_PROFILE_KEY);
+    70	    sessionStorage.removeItem(SESSION_EXPIRY_KEY);
+    71	  }
+    72	
+    73	  /**
+    74	   * Restore authentication state from session storage
+    75	   * Returns true if session was restored, false if no valid session exists
+    76	   */
+    77	  function restoreSession(): boolean {
+    78	    const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
+    79	    const storedProfile = sessionStorage.getItem(SESSION_PROFILE_KEY);
+    80	    const storedExpiry = sessionStorage.getItem(SESSION_EXPIRY_KEY);
+    81	
+    82	    if (!storedToken || !storedProfile) {
+    83	      return false;
+    84	    }
+    85	
+    86	    // Check token expiry if available
+    87	    if (storedExpiry) {
+    88	      const expiry = new Date(storedExpiry);
+    89	      if (expiry < new Date()) {
+    90	        // Token expired, clear session
+    91	        clearAuth();
+    92	        return false;
+    93	      }
+    94	      tokenExpiry.value = expiry;
+    95	    }
+    96	
+    97	    try {
+    98	      const profile = JSON.parse(storedProfile);
+    99	      isAuthenticated.value = true;
+   100	      user.value = profile;
+   101	      accessToken.value = storedToken;
+   102	      return true;
+   103	    } catch (error) {
+   104	      console.error('[AuthStore] Failed to parse stored profile:', error);
+   105	      clearAuth();
+   106	      return false;
+   107	    }
+   108	  }
+   109	
+   110	  /**
+   111	   * Check if token is expired or about to expire (within 5 minutes)
+   112	   */
+   113	  function isTokenExpired(): boolean {
+   114	    if (!tokenExpiry.value) {
+   115	      return false; // No expiry info, assume valid
+   116	    }
+   117	    const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000);
+   118	    return tokenExpiry.value < fiveMinutesFromNow;
+   119	  }
+   120	
+   121	  return {
+   122	    // State (readonly)
+   123	    isAuthenticated: computed(() => isAuthenticated.value),
+   124	    user: computed(() => user.value),
+   125	    accessToken: computed(() => accessToken.value),
+   126	    tokenExpiry: computed(() => tokenExpiry.value),
+   127	    
+   128	    // Actions
+   129	    setAuthenticated,
+   130	    setUser,
+   131	    clearAuth,
+   132	    restoreSession,
+   133	    isTokenExpired,
+   134	  };
+   135	}
+
+===== frontend/src/commands/CommandStack.ts =====
+     1	/**
+     2	 * CommandStack - Manages undo/redo history
+     3	 * 
+     4	 * Maintains two stacks:
+     5	 * - undoStack: Commands that can be undone
+     6	 * - redoStack: Commands that have been undone and can be redone
+     7	 * 
+     8	 * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+     9	 * 
+    10	 * Behavior:
+    11	 * - execute(): Adds command to undo stack, clears redo stack
+    12	 * - undo(): Pops from undo stack, pushes to redo stack
+    13	 * - redo(): Pops from redo stack, pushes back to undo stack
+    14	 */
+    15	
+    16	import { Command, CommandStatus } from './Command';
+    17	
+    18	type Unsubscribe = () => void;
+    19	type ChangeListener = () => void;
+    20	
+    21	export class CommandStack {
+    22	  private undoStack: Command[] = [];
+    23	  private redoStack: Command[] = [];
+    24	  private listeners: ChangeListener[] = [];
+    25	
+    26	  /**
+    27	   * Subscribe to changes in the stack
+    28	   * @param callback Function to call when stack changes (push, undo, redo)
+    29	   * @returns Unsubscribe function
+    30	   */
+    31	  subscribe(callback: ChangeListener): Unsubscribe {
+    32	    this.listeners.push(callback);
+    33	    return () => {
+    34	      this.listeners = this.listeners.filter(l => l !== callback);
+    35	    };
+    36	  }
+    37	
+    38	  private notify(): void {
+    39	    this.listeners.forEach(cb => cb());
+    40	  }
+    41	
+    42	  /**
+    43	   * Push a pre-built and committed command to the undo stack
+    44	   * Clears the redo stack (can't redo after new action)
+    45	   * 
+    46	   * Phase 47: Non-undoable commands (canUndo() === false) are not added to the stack.
+    47	   * This allows world initialization and other non-undoable commands to execute
+    48	   * without appearing in undo history.
+    49	   * 
+    50	   * Note: Commands should be built, executed, and committed by tools before pushing
+    51	   */
+    52	  push(command: Command): void {
+    53	    // Verify command is committed (not building)
+    54	    if (command.status !== 'committed') {
+    55	      throw new Error('Can only push committed commands to stack');
+    56	    }
+    57	    
+    58	    // Phase 47: Skip non-undoable commands
+    59	    if (!command.canUndo()) {
+    60	      return;
+    61	    }
+    62	    
+    63	    // Add to undo stack
+    64	    this.undoStack.push(command);
+    65	    
+    66	    // Clear redo stack (new action invalidates redo history)
+    67	    this.redoStack = [];
+    68	    
+    69	    this.notify();
+    70	  }
+    71	
+    72	  /**
+    73	   * Undo the most recent command
+    74	   * Moves command from undo stack to redo stack
+    75	   */
+    76	  undo(): void {
+    77	    if (this.undoStack.length === 0) {
+    78	      throw new Error('Nothing to undo');
+    79	    }
+    80	    
+    81	    const command = this.undoStack.pop()!;
+    82	    command.undo();
+    83	    this.redoStack.push(command);
+    84	    
+    85	    this.notify();
+    86	  }
+    87	
+    88	  /**
+    89	   * Redo the most recently undone command
+    90	   * Moves command from redo stack back to undo stack
+    91	   */
+    92	  redo(): void {
+    93	    if (this.redoStack.length === 0) {
+    94	      throw new Error('Nothing to redo');
+    95	    }
+    96	    
+    97	    const command = this.redoStack.pop()!;
+    98	    command.redo();
+    99	    this.undoStack.push(command);
+   100	    
+   101	    this.notify();
+   102	  }
+   103	
+   104	  /**
+   105	   * Check if undo is available
+   106	   */
+   107	  canUndo(): boolean {
+   108	    return this.undoStack.length > 0;
+   109	  }
+   110	
+   111	  /**
+   112	   * Check if redo is available
+   113	   */
+   114	  canRedo(): boolean {
+   115	    return this.redoStack.length > 0;
+   116	  }
+   117	
+   118	  /**
+   119	   * Get number of commands in undo stack
+   120	   */
+   121	  getUndoCount(): number {
+   122	    return this.undoStack.length;
+   123	  }
+   124	
+   125	  /**
+   126	   * Get number of commands in redo stack
+   127	   */
+   128	  getRedoCount(): number {
+   129	    return this.redoStack.length;
+   130	  }
+   131	
+   132	  /**
+   133	   * Get commands from undo stack for serialization
+   134	   */
+   135	  getCommands(): readonly Command[] {
+   136	    return [...this.undoStack];
+   137	  }
+   138	
+   139	  getCommittedCommands(): readonly Command[] {
+   140	    return this.getCommands();
+   141	  }
+   142	
+   143	  restoreCommittedCommands(commands: readonly Command[]): void {
+   144	    for (const command of commands) {
+   145	      if (command.status !== CommandStatus.Committed) {
+   146	        throw new Error('Can only restore committed commands');
+   147	      }
+   148	    }
+   149	    this.undoStack = [...commands];
+   150	    this.redoStack = [];
+   151	    this.notify();
+   152	  }
+   153	
+   154	  /**
+   155	   * Clear all history
+   156	   */
+   157	  clear(): void {
+   158	    this.undoStack = [];
+   159	    this.redoStack = [];
+   160	    this.notify();
+   161	  }
+   162	}
+
+===== package.json =====
+     1	{
+     2	  "name": "diedrico",
+     3	  "version": "0.1.0",
+     4	  "description": "Educational web application for teaching dihedral/orthographic projection",
+     5	  "private": true,
+     6	  "license": "GPL-3.0-or-later",
+     7	  "workspaces": [
+     8	    "frontend"
+     9	  ],
+    10	  "scripts": {
+    11	    "dev": "npm run dev:frontend",
+    12	    "dev:frontend": "npm run dev --workspace=frontend",
+    13	    "build": "npm run build --workspace=frontend",
+    14	    "test": "npm run test --workspace=frontend",
+    15	    "test:frontend": "npm run test --workspace=frontend",
+    16	    "lint": "npm run lint --workspace=frontend",
+    17	    "docs:dev": "vitepress dev docs",
+    18	    "docs:build": "vitepress build docs",
+    19	    "docs:preview": "vitepress preview docs",
+    20	    "test:architecture": "npm run test:architecture --workspace=frontend",
+    21	    "test:e2e": "npm run test:e2e --workspace=frontend"
+    22	  },
+    23	  "devDependencies": {
+    24	    "concurrently": "^8.2.2",
+    25	    "vitepress": "^1.6.4"
+    26	  },
+    27	  "engines": {
+    28	    "node": ">=18.0.0",
+    29	    "npm": ">=9.0.0"
+    30	  }
+    31	}
+
+===== frontend/package.json =====
+     1	{
+     2	  "name": "diedrico-frontend",
+     3	  "version": "0.1.0",
+     4	  "type": "module",
+     5	  "license": "GPL-3.0-or-later",
+     6	  "scripts": {
+     7	    "dev": "vite",
+     8	    "build": "vue-tsc && vite build",
+     9	    "preview": "vite preview",
+    10	    "test": "vitest run",
+    11	    "test:watch": "vitest",
+    12	    "test:ui": "vitest --ui",
+    13	    "test:architecture": "vitest run tests/unit/architecture",
+    14	    "test:e2e": "playwright test",
+    15	    "test:e2e:headed": "playwright test --headed",
+    16	    "lint": "npm run test:architecture"
+    17	  },
+    18	  "dependencies": {
+    19	    "@types/katex": "^0.16.8",
+    20	    "d3": "^7.8.5",
+    21	    "katex": "^0.16.28",
+    22	    "pinia": "^2.1.7",
+    23	    "three": "^0.160.0",
+    24	    "vue": "^3.4.0"
+    25	  },
+    26	  "devDependencies": {
+    27	    "@playwright/test": "^1.40.0",
+    28	    "@types/d3": "^7.4.3",
+    29	    "@types/gapi": "^0.0.47",
+    30	    "@types/gapi.client.drive-v3": "^0.0.5",
+    31	    "@types/three": "^0.160.0",
+    32	    "@vitejs/plugin-vue": "^5.0.0",
+    33	    "@vitest/ui": "^1.0.0",
+    34	    "@vue/test-utils": "^2.4.6",
+    35	    "@vue/tsconfig": "^0.5.0",
+    36	    "jsdom": "^27.3.0",
+    37	    "typescript": "^5.3.0",
+    38	    "vite": "^5.0.0",
+    39	    "vitest": "^1.0.0",
+    40	    "vue-tsc": "^1.8.0"
+    41	  }
+    42	}
+
+===== frontend/tests/unit/architecture/importBoundaries.spec.ts =====
+     1	import { describe, expect, it } from 'vitest';
+     2	import { findContentMatches, findForbiddenImports, scanTextFiles, type ScannedFile } from './helpers/sourceScanner';
+     3	
+     4	const frontendSourceAndTests = () => scanTextFiles(['src', 'tests']);
+     5	
+     6	const staleBackendProjectTerms = new RegExp([
+     7	  ['localhost:3000', 'api', 'projects'].join('/'),
+     8	  '/api/' + 'projects',
+     9	  'Project' + 'DTO',
+    10	  'Project' + 'Metadata',
+    11	  'Open' + 'Project' + 'Dialog',
+    12	].join('|'));
+    13	
+    14	function isArchitectureSpec(file: ScannedFile): boolean {
+    15	  return file.projectPath.startsWith('tests/unit/architecture/');
+    16	}
+    17	
+    18	
+    19	const wave012ConsoleHygieneFiles = [
+    20	  'src/services/GoogleDriveService.ts',
+    21	  'src/utils/rectangleGrid.ts',
+    22	  'src/utils/projectionPlaneUtils.ts',
+    23	  'src/domain/world/HingeLine.ts',
+    24	  'src/domain/world/Guide.ts',
+    25	  'src/commands/operations/world/UpdateElementStyleOp.ts',
+    26	  'src/commands/operations/world/RemoveElementOps.ts',
+    27	  'src/commands/operations/processTree/ToggleOutputOp.ts',
+    28	  'src/commands/operations/processTree/ToggleEncapsulationOp.ts',
+    29	];
+    30	
+    31	function isWave012ConsoleHygieneFile(file: ScannedFile): boolean {
+    32	  return wave012ConsoleHygieneFiles.includes(file.projectPath);
+    33	}
+    34	
+    35	function isWave010NegativeE2EGuard(file: ScannedFile): boolean {
+    36	  return file.projectPath === 'tests/e2e/wave010-app-shell-project-flow.spec.ts';
+    37	}
+    38	
+    39	describe('Architecture: import boundaries', () => {
+    40	  it('keeps UI components from importing command construction surfaces', () => {
+    41	    const componentFiles = scanTextFiles(['src/components']);
+    42	
+    43	    expect(findForbiddenImports(componentFiles, [
+    44	      /^@\/commands(\/|$)/,
+    45	      /^@\/application\/commands(\/|$)/,
+    46	      /commands\/operations/,
+    47	      /CommandStack$/,
+    48	      /CommandFactory$/,
+    49	    ])).toEqual([]);
+    50	  });
+    51	
+    52	  it('keeps command construction available to application/use-case modules', () => {
+    53	    const applicationFiles = scanTextFiles(['src/application']);
+    54	    const commandImports = applicationFiles.flatMap(file =>
+    55	      file.imports
+    56	        .filter(importSource => /^@\/commands(\/|$)/.test(importSource) || /commands\/operations/.test(importSource))
+    57	        .map(importSource => `${file.projectPath} imports ${importSource}`),
+    58	    );
+    59	
+    60	    expect(commandImports.length).toBeGreaterThan(0);
+    61	  });
+    62	
+    63	  it('forbids frontend source and tests from importing backend implementation files', () => {
+    64	    const files = frontendSourceAndTests();
+    65	
+    66	    expect(findForbiddenImports(files, [/backend\/src/, /^backend\/src/])).toEqual([]);
+    67	    expect(findContentMatches(files, /backend\/src\//g, { exclude: isArchitectureSpec })).toEqual([]);
+    68	  });
+    69	
+    70	  it('keeps stale backend project API and DTO terms out of active frontend code', () => {
+    71	    const files = frontendSourceAndTests();
+    72	
+    73	    expect(findContentMatches(files, staleBackendProjectTerms, {
+    74	      exclude: file => isArchitectureSpec(file) || isWave010NegativeE2EGuard(file),
+    75	    })).toEqual([]);
+    76	  });
+    77	
+    78	  it('does not reference deleted debug/example/placeholder operation surfaces from active source or tests', () => {
+    79	    const files = frontendSourceAndTests();
+    80	
+    81	    expect(findContentMatches(files, /operations\/(paper|toolbar|debug)|ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
+    82	      exclude: isArchitectureSpec,
+    83	    })).toEqual([]);
+    84	  });
+    85	
+    86	  it('keeps routine console noise out of the Wave 012 cleanup files only', () => {
+    87	    const files = frontendSourceAndTests().filter(isWave012ConsoleHygieneFile);
+    88	
+    89	    expect(files.map(file => file.projectPath).sort()).toEqual([...wave012ConsoleHygieneFiles].sort());
+    90	    expect(findContentMatches(files, /console\.(log|debug|info)\s*\(/g)).toEqual([]);
+    91	  });
+    92	});
+

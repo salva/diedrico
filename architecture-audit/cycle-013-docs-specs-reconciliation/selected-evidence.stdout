@@ -1,0 +1,994 @@
+README high-signal
+    70	4. **Open in browser**:
+    71	   Navigate to `http://localhost:5173`
+    72	
+    73	### Project Structure
+    74	
+    75	```
+    76	diedrico/
+    77	├── frontend/          # Vue 3 + TypeScript frontend application
+    78	│   ├── src/
+    79	│   │   ├── commands/     # Command pattern (undo/redo)
+    80	│   │   ├── components/   # Vue components (UI)
+    81	│   │   ├── domain/       # Core domain model (geometry)
+    82	│   │   ├── services/     # Application services
+    83	│   │   ├── stores/       # Pinia state management
+    84	│   │   └── tools/        # Interactive construction tools
+    85	│   └── tests/         # Unit, integration, and E2E tests
+    86	├── backend/           # Express backend (optional, for future features)
+    87	├── docs/              # Deployment and setup documentation
+    88	└── specs/             # Complete feature specifications
+    89	    └── 001-dihedral-learning-mvp/
+    90	        ├── spec.md           # Functional requirements
+    91	        ├── ui-spec.md        # UI/UX specifications
+    92	        ├── data-model.md     # Architecture documentation
+    93	        └── tasks.md          # Implementation task breakdown
+    94	```
+    95	
+    96	## 🛠️ Development
+    97	
+    98	### Available Scripts
+    99	
+   100	**Frontend development**:
+   101	```bash
+   102	npm run dev              # Start Vite dev server
+   103	npm run build            # Build for production
+   104	npm run test             # Run unit tests
+   105	npm run test:watch       # Run tests in watch mode
+   106	npm run test:e2e         # Run Playwright E2E tests
+   107	npm run lint             # Lint and fix code
+   108	```
+   109	
+   110	**Full workspace**:
+   111	```bash
+   112	npm run dev              # Start frontend dev server
+   113	npm test                 # Run all tests
+   114	```
+   115	
+   116	### Technology Stack
+   117	
+   118	**Frontend**:
+   119	- **Vue 3** with Composition API for reactive UI
+   120	- **TypeScript** for type safety
+   121	- **Pinia** for state management
+   122	- **Three.js** for 3D visualization
+   123	- **D3.js** for 2D geometric operations
+   124	- **Vite** for fast development and builds
+   125	- **Vitest** for unit testing
+   126	- **Playwright** for E2E testing
+   127	
+   128	**Backend** (minimal, planned for future features):
+   129	- **Express** for API endpoints
+   130	- **TypeScript** for consistency
+   131	
+   132	### Architecture Principles
+   133	
+   134	Diedrico follows strict architectural principles documented in [data-model.md](specs/001-dihedral-learning-mvp/data-model.md):
+   135	
+   136	1. **Parametric by default**: All geometric elements update when dependencies change
+   137	2. **Explicit dependencies**: Process Tree tracks all element relationships
+   138	3. **Command pattern**: All mutations through undoable commands
+   139	4. **No implicit entities**: User must explicitly create all geometric objects
+   140	5. **Plane-based organization**: 2D elements belong to specific projection planes
+   141	6. **Type-safe domain model**: Comprehensive TypeScript types for all geometry
+   142	
+   143	### Key Concepts
+   144	
+   145	**Process Tree**: Every geometric element is created by an Action that tracks its inputs (dependencies). The Process Tree is the complete history of construction operations, enabling:
+   146	- Parametric updates (change inputs, outputs recalculate)
+   147	- Dependency visualization (see what depends on what)
+   148	- Construction replay (understand the sequence)
+   149	
+   150	**Element Variations**: Each element type (Point, Line, Circle) has multiple construction methods. For example, points can be:
+   151	- Free (positioned anywhere)
+   152	- Intersection (where two elements cross)
+   153	- On-element (constrained to a line or circle)
+   154	- Transported (transferred between projection planes)
+   155	
+   156	**Realization**: The actual geometric representation (x, y coordinates, etc.) computed from an element's definition and dependencies. Realizations are cached and invalidated when dependencies change.
+   157	
+   158	## 📚 Documentation
+   159	
+   160	- **[Feature Specification](specs/001-dihedral-learning-mvp/spec.md)**: Complete functional requirements (FR-001 through FR-052)
+   161	- **[UI Specification](specs/001-dihedral-learning-mvp/ui-spec.md)**: Detailed UI/UX guidelines and interaction patterns
+   162	- **[Data Model](specs/001-dihedral-learning-mvp/data-model.md)**: Architecture documentation with 70+ implementation phases
+   163	- **[Tasks](specs/001-dihedral-learning-mvp/tasks.md)**: Detailed task breakdown for all features
+   164	- **[Deployment Guide](docs/DEPLOYMENT.md)**: Production deployment instructions
+   165	- **[Google Drive Setup](docs/GOOGLE_DRIVE_SETUP.md)**: Configure Drive integration
+   166	
+   167	## 🧪 Testing
+   168	
+   169	Diedrico has comprehensive test coverage across multiple levels:
+   170	
+   171	**Unit Tests** (Vitest):
+   172	```bash
+   173	npm run test             # Run all unit tests
+   174	npm run test:watch       # Watch mode for TDD
+   175	```
+   176	
+   177	**Integration Tests**: Test interactions between domain model, commands, and services
+   178	
+   179	**E2E Tests** (Playwright):
+   180	```bash
+   181	npm run test:e2e         # Run E2E tests headless
+   182	npm run test:e2e:headed  # Run with browser UI
+   183	```
+   184	
+   185	Test organization:
+   186	- `frontend/tests/unit/` - Domain model, calculations, utilities
+   187	- `frontend/tests/integration/` - Command execution, tool workflows
+   188	- `frontend/tests/e2e/` - Complete user workflows
+   189	
+   190	## 🤝 Contributing
+
+commands docs
+     1	# Command System
+     2	
+     3	All mutations to the `World` go through the command system, enabling undo/redo, serialization, and history tracking.
+     4	
+     5	## Architecture
+     6	
+     7	```
+     8	CommandStack
+     9	├── undoStack: Command[]
+    10	└── redoStack: Command[]
+    11	
+    12	Command
+    13	├── operations: IOperation[]
+    14	├── status: Building | Committed | Undone
+    15	├── addAndExecute(op) → executes immediately, stores for undo
+    16	├── commit() → finalizes, pushes to stack
+    17	├── undo() → reverses all ops in reverse order
+    18	└── redo() → reapplies all ops in original order
+    19	```
+    20	
+    21	## IOperation Interface
+    22	
+    23	Every mutation is an `IOperation`:
+    24	
+    25	```typescript
+    26	interface IOperation {
+    27	  type: string
+    28	  parameters: Record<string, unknown>
+    29	  outputs: Record<string, unknown>
+    30	  apply(world: World): OperationResult
+    31	  undo(world: World): void
+    32	  serialize?(): SerializedOperation
+    33	}
+    34	```
+    35	
+    36	**Requirements:**
+    37	- **Deterministic** — same inputs always produce the same outputs
+    38	- **Serializable** — can be saved to JSON and reconstructed
+    39	- **Self-contained** — all data needed is in `parameters` and `outputs`
+    40	- **Reversible** — `undo()` fully reverses `apply()`
+    41	
+    42	## Operation Categories
+    43	
+    44	### World Operations
+    45	
+    46	| Operation | Purpose |
+    47	|-----------|---------|
+    48	| `AddFreePoint2DOp` | Create a point at (u, v) on a plane |
+    49	| `AddLine2DByTwoPointsOp` | Create line through two points |
+    50	| `AddSegment2DByPointsOp` | Create segment between two points |
+    51	| `AddCircle2DByCenterAndPointOp` | Create circle from center + radius point |
+    52	| `AddGuide2DPerpendicularToLineOp` | Create guide perpendicular to hinge |
+    53	| `AddSiblingGuide2DOp` | Auto-create paired guide on sibling plane |
+    54	| `AddLineLineIntersectionPoint2DOp` | Intersection of two lines |
+    55	| `AddLineCircleIntersectionPoint2DOp` | Line-circle intersection |
+    56	| `AddCircleCircleIntersectionPoint2DOp` | Circle-circle intersection |
+    57	| `AddSiblingIntersectionPoint2DOp` | Paired intersection on sibling plane |
+    58	| `Add3DPointOp` | Create 3D point from projections |
+    59	| `Add3DLineOp` | Create 3D line from projections |
+    60	| `Add3DSegmentOp` | Create 3D segment from projections |
+    61	| `Add3DPlaneOp` | Create 3D plane from three points |
+    62	| `AddAuxiliaryProjectionPlaneOp` | Create new projection plane |
+    63	| `AddBrokenHingeLineOp` | Add fold line for auxiliary plane |
+    64	| `UpdateFreePoint2DPositionOp` | Move a free point |
+    65	| `UpdateElementStyleOp` | Change visual style |
+    66	| `RemovePoint2DOp` / `RemoveLine2DOp` / ... | Delete elements |
+    67	
+    68	### Process Tree Operations
+    69	
+    70	| Operation | Purpose |
+    71	|-----------|---------|
+    72	| `AddProcessTreeActionOp` | Record action in tree |
+    73	| `AddProcessTreeActionGroupOp` | Create action group |
+    74	| `PushSubprocessOp` / `PopSubprocessOp` | Manage subprocess stack |
+    75	| `RenameSubprocessOp` | Rename subprocess |
+    76	| `ToggleEncapsulationOp` | Toggle intermediate visibility |
+    77	| `ToggleOutputOp` | Toggle output flag |
+    78	
+    79	## Command Lifecycle
+    80	
+    81	```
+    82	1. Tool creates new Command
+    83	2. Tool calls command.addAndExecute(op1)  → op1.apply(world)
+    84	3. Tool calls command.addAndExecute(op2)  → op2.apply(world)
+    85	4. If any op fails → entire command rolls back
+    86	5. command.commit() → pushed to CommandStack.undoStack
+    87	6. User presses Ctrl+Z → command.undo() → ops reversed
+    88	7. User presses Ctrl+Y → command.redo() → ops reapplied
+    89	```
+    90	
+    91	## Command Factories
+    92	
+    93	Factories encapsulate common multi-operation patterns:
+    94	
+    95	| Factory | Operations Created |
+    96	|---------|-------------------|
+    97	| `PointSequenceFactory` | Point + process tree entries |
+    98	| `LineSequenceFactory` | Line + process tree entries |
+    99	| `CircleSequenceFactory` | Circle + process tree entries |
+   100	| `GuideSequenceFactory` | Guide + sibling guide + tree entries |
+   101	| `IntersectionSequenceFactory` | Intersection points + siblings + tree entries |
+   102	| `DeletionSequenceFactory` | Remove element + dependency cleanup |
+   103	| `InitializationSequenceFactory` | World setup (planes, hinges, origin) |
+   104	| `ProjectionSetupFactory` | Standard folding plane setup |
+   105	
+   106	## Serialization
+   107	
+   108	Commands serialize to JSON for persistence:
+   109	
+   110	```json
+   111	{
+   112	  "operations": [
+   113	    {
+   114	      "type": "AddFreePoint2DOp",
+   115	      "parameters": { "planeId": "projPlane1", "u": 3.5, "v": 2.0 },
+   116	      "outputs": { "pointId": "projPlane1/point2d5" }
+   117	    }
+   118	  ]
+   119	}
+   120	```
+   121	
+   122	The `ProjectService.reconstructOperation()` switch handles deserialization of all operation types.
+
+stores docs
+     1	# Stores
+     2	
+     3	Diedrico uses Pinia for reactive state management. Each store handles a specific concern.
+     4	
+     5	## Store Overview
+     6	
+     7	| Store | Purpose |
+     8	|-------|---------|
+     9	| `processStore` | Construction history tree + command stack |
+    10	| `selectionStore` | Selected and highlighted elements |
+    11	| `toolStore` | Active tool and tool family management |
+    12	| `viewStore` | Viewport state (zoom, pan) and 3D options |
+    13	| `settingsStore` | User preferences (grid, snap, styles) |
+    14	| `authStore` | Google authentication state |
+    15	
+    16	## processStore
+    17	
+    18	Manages the `ProcessTree` and `CommandStack`:
+    19	
+    20	**State:**
+    21	- `root: Process` — the process tree
+    22	- `commandHistory: CommandStack` — undo/redo stacks
+    23	
+    24	**Getters:**
+    25	- `getNodeByPath(path)` — find node by tree path
+    26	- `visibleSubprocesses` — subprocesses respecting encapsulation
+    27	- `allActions` — flat list of all actions
+    28	
+    29	**Actions:**
+    30	- `addSubprocess()`, `addActionGroup()`, `addAction()`
+    31	- `removeSubprocess()`, `removeActionGroup()`
+    32	- `clear()` — reset everything
+    33	
+    34	## selectionStore
+    35	
+    36	Tracks which elements are selected and highlighted:
+    37	
+    38	**State:**
+    39	- `selectedIds: Set<string>` — currently selected element IDs
+    40	- `cascadeHighlightIds: Set<string>` — dependents highlighted on hover
+    41	
+    42	**Computed:**
+    43	- `hasSelection` — boolean, any selection exists
+    44	- `selectionCount` — number of selected items
+    45	
+    46	**Actions:**
+    47	- `selectSingle(id)` — replace selection with one element
+    48	- `addToSelection(id)` — add to current selection
+    49	- `toggleSelection(id)` — add or remove (Shift+click)
+    50	- `clearSelection()` — deselect everything
+    51	- `selectMultiple(ids)` — replace with a set
+    52	- `setCascadeHighlight(ids)` — highlight dependents on hover
+    53	
+    54	## toolStore
+    55	
+    56	Manages the active construction tool:
+    57	
+    58	**Tool families** (toolbar groups):
+    59	- Point family: Free Point, Intersection
+    60	- Line family: Line, Parallel, Perpendicular, Tangent variants
+    61	- Segment family: Segment
+    62	- Circle family: Circle
+    63	- Guide family: Guide
+    64	- 3D Elements: 3D Point, 3D Line, 3D Segment, 3D Plane, Aux. Projection Plane
+    65	- Examples: Folding Plane Setup, Quick 3D Line
+    66	
+    67	**Features:**
+    68	- Last-used tool per family (persisted in `localStorage`)
+    69	- Keyboard shortcuts: `P`, `L`, `S`, `C`, `G`, `I`, `Esc`
+    70	- Tool activation/deactivation lifecycle
+    71	- Argument collection state for multi-pick tools
+    72	
+    73	## viewStore
+    74	
+    75	Controls the 2D viewport and 3D display options:
+    76	
+    77	**State:**
+    78	- `zoom`, `panX`, `panY` — 2D canvas viewport
+    79	- `gridVisible` — grid toggle
+    80	- `threeViewOptions` — 3D view toggles (persisted in `localStorage`)
+    81	- `showProjectedElements` — show 3D projections on planes
+    82	
+    83	**Actions:**
+    84	- `setZoom(level)`, `setPan(x, y)`
+    85	- `adjustZoom(delta, focusPoint)` — zoom toward cursor
+    86	- `resetViewport()` — return to default view
+    87	
+    88	## settingsStore
+    89	
+    90	User preferences, auto-saved to `localStorage`:
+    91	
+    92	**Categories:**
+    93	
+    94	| Category | Settings |
+    95	|----------|----------|
+    96	| Grid | Visibility, spacing, snap-to-grid |
+    97	| Snap | Enabled, snap radius |
+    98	| Default Styles | Colors and line widths for points, lines, circles, guides |
+    99	| 3D View | Default visibility of planes, projection lines |
+   100	
+   101	All settings use deep watchers for automatic persistence.
+   102	
+   103	## authStore
+   104	
+   105	Manages Google OAuth2 authentication state for Drive integration.
+
+services docs
+    30	  renderPoint(primitive: PointPrimitive): SVGAttributes
+    31	  renderLine(primitive: LinePrimitive, viewport: Viewport): SVGAttributes
+    32	  renderCircle(primitive: CirclePrimitive): SVGAttributes
+    33	  renderPath(primitive: PathPrimitive): SVGAttributes
+    34	}
+    35	```
+    36	
+    37	**Viewport transform**: `(paperCoord + pan) × zoom → screenCoord`
+    38	
+    39	## Element2DRenderer3D
+    40	
+    41	Renders 2D elements in the Three.js 3D scene.
+    42	
+    43	```typescript
+    44	class Element2DRenderer3D {
+    45	  renderElements(world: World, options: RenderOptions): THREE.Group
+    46	  renderPlaneElements(plane: ProjectionPlane, world: World): THREE.Group
+    47	}
+    48	```
+    49	
+    50	**Transforms**: Uses `applyMatrix4x3()` with plane's `planeTo3D` matrix. Points → spheres, Lines → tubes, Circles → tube rings.
+    51	
+    52	## ProjectService
+    53	
+    54	Handles persistence via command-sourcing.
+    55	
+    56	```typescript
+    57	class ProjectService {
+    58	  serialize(world: World, commandStack: CommandStack): ProjectData
+    59	  deserializeAndReplay(data: ProjectData, world: World, commandStack: CommandStack): void
+    60	}
+    61	```
+    62	
+    63	**Schema migration**: Automatically upgrades older project files (snake_case → camelCase, flat → hierarchical IDs).
+    64	
+    65	## GoogleDriveService
+    66	
+    67	Browser-to-Drive integration via `gapi.client`.
+    68	
+    69	```typescript
+    70	class GoogleDriveService {
+    71	  initialize(): Promise<void>
+    72	  signIn(): Promise<void>
+    73	  signOut(): Promise<void>
+    74	  signInSilently(): Promise<boolean>
+    75	  fetchUserProfile(): Promise<UserProfile>
+    76	  listFiles(): Promise<DriveFile[]>
+    77	  getRecentFiles(): Promise<DriveFile[]>
+    78	  createFile(name: string, content: string): Promise<string>
+    79	  updateFile(fileId: string, content: string): Promise<void>
+    80	  readFile(fileId: string): Promise<string>
+    81	  deleteFile(fileId: string): Promise<void>
+    82	}
+    83	```
+    84	
+    85	**Scope**: `drive.file` (app-created files only) + `userinfo.profile` + `userinfo.email`.
+    86	
+    87	## DependencyService
+    88	
+    89	Manages bidirectional element dependency tracking.
+    90	
+
+testing docs
+     1	# Testing
+     2	
+     3	Diedrico uses a comprehensive testing strategy with Vitest for unit/integration tests and Playwright for E2E tests.
+     4	
+     5	## Test Runner
+     6	
+     7	### Unit & Integration Tests
+     8	
+     9	```bash
+    10	cd frontend
+    11	npm run test           # Run once
+    12	npm run test:watch     # Watch mode
+    13	npm run test:coverage  # With coverage report
+    14	```
+    15	
+    16	Uses **Vitest** with `jsdom` environment.
+    17	
+    18	### E2E Tests
+    19	
+    20	```bash
+    21	cd frontend
+    22	npx playwright test
+    23	```
+    24	
+    25	Uses **Playwright** with Chromium. Configuration in `playwright.config.ts`.
+    26	
+    27	## Test Organization
+    28	
+    29	```
+    30	frontend/tests/
+    31	├── unit/
+    32	│   ├── domain/           # Domain model tests
+    33	│   │   ├── math/         # Vector/matrix operations
+    34	│   │   ├── world/        # World, planes, elements
+    35	│   │   └── processTree/  # Process tree operations
+    36	│   ├── commands/         # Command and operation tests
+    37	│   ├── services/         # Service layer tests
+    38	│   ├── tools/            # Tool behavior tests
+    39	│   └── utils/            # Utility function tests
+    40	├── integration/
+    41	│   └── ...               # Cross-layer integration tests
+    42	└── e2e/
+    43	    └── ...               # Full browser tests
+    44	```
+    45	
+    46	## Writing Tests
+    47	
+    48	### Unit Test Example
+    49	
+    50	```typescript
+    51	import { describe, it, expect } from 'vitest'
+    52	import { FreePoint2D } from '@/domain/world/FreePoint2D'
+    53	
+    54	describe('FreePoint2D', () => {
+    55	  it('should realize at the specified coordinates', () => {
+    56	    const point = new FreePoint2D('p1', 'projPlane1', 3.5, 2.0)
+    57	    const world = createTestWorld()
+    58	    const realization = point.realize2D(world)
+    59	
+    60	    expect(realization.feasible).toBe(true)
+    61	    expect(realization.position[0]).toBeCloseTo(3.5)
+    62	    expect(realization.position[1]).toBeCloseTo(2.0)
+    63	  })
+    64	})
+    65	```
+    66	
+    67	### Test Helpers
+    68	
+    69	Common patterns used in tests:
+    70	
+    71	- `createTestWorld()` — creates a minimal `World` with base planes
+    72	- Direct operation calls — `op.apply(world)` to set up state
+    73	- Realization checks — validate geometry via `realize2D()` / `realize3D()`
+    74	- Feasibility checks — verify `realization.feasible` for valid/invalid inputs
+    75	
+    76	## Test Categories
+    77	
+    78	### Domain Tests
+    79	
+    80	Test pure geometric logic: element creation, realization computation, dependency tracking, coordinate transformations.
+    81	
+    82	### Command Tests
+    83	
+    84	Test operation apply/undo/redo: verify world state after each step, ensure perfect reversal on undo.
+    85	
+    86	### Service Tests
+    87	
+    88	Test PaperService primitive generation, SVGRenderer transforms, ProjectService serialization/deserialization.
+    89	
+    90	### Tool Tests
+    91	
+    92	Test tool argument collection, multi-pick flows, keyboard shortcuts, tool switching.
+    93	
+    94	### Integration Tests
+    95	
+    96	Test complete workflows: create elements → modify → undo → verify.
+    97	
+    98	### E2E Tests
+    99	
+   100	Test the full UI: canvas clicks, panel interactions, selection behavior, keyboard shortcuts.
+   101	
+   102	## Test Baseline
+   103	
+   104	The project maintains a known baseline of pre-existing test results. When running the full test suite, compare against this baseline to detect regressions.
+   105	
+   106	## Tips
+   107	
+   108	- Run tests frequently during development
+   109	- New features should include tests covering:
+   110	  - Happy path (element creation, realization)
+   111	  - Edge cases (degenerate inputs, infeasibility)
+   112	  - Undo/redo correctness
+   113	  - Serialization round-trip
+   114	- Use `toBeCloseTo()` for floating-point comparisons
+   115	- Test feasibility propagation when adding dependent elements
+
+source comments
+   170	 * 
+   171	 * Key requirements:
+   172	 * - SVG element (not HTML Canvas) per ui-spec.md
+   173	 * - Rendering consumes the canvas presentation read model
+   174	 * - Generic rendering algorithms (no special cases for fixed elements)
+   175	 * - Will support pan/zoom viewport transformations in Phase 6
+   176	 * - Elements rendered using principle-based algorithms (Constitution Principle IV)
+   177	 * 
+   178	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+   179	 */
+   180	
+   181	import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+   182	import { Matrix3, Vector3 } from 'three';
+   183	import { World } from '@/domain/world/World';
+   184	import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+     1	/**
+     2	 * toolStore.ts - Tool selection state management
+     3	 * 
+     4	 * Manages the currently active geometric construction tool.
+     5	 * When a tool is selected, the canvas changes its interaction mode
+     6	 * to match the tool's behavior (point placement, line creation, etc.)
+     7	 * 
+     8	 * Supports tool families with dropdown menus, last-used sub-tool memory,
+     9	 * and configurable completion behavior (stay-active vs return-to-selection).
+    10	 * 
+    11	 * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Tool Interactions
+    12	 * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+    13	 */
+    14	
+    15	import { ref, computed } from 'vue';
+    16	import type { ToolFamilyConfig, ToolConfig } from '../types/ToolConfig';
+    17	
+    18	export const TOOL_TYPE = {
+    19	  SELECT: 'select',
+    20	  POINT: 'point',
+    21	  LINE: 'line',
+    22	  CIRCLE: 'circle',
+    23	  SEGMENT: 'segment',
+    24	  GUIDE: 'guide',
+     1	/**
+     2	 * Settings Store - User preferences and application settings
+     3	 * 
+     4	 * Manages user-configurable settings with localStorage persistence.
+     5	 * Settings are loaded on application startup and saved automatically on change.
+     6	 * 
+     7	 * Settings Categories:
+     8	 * - Grid: Visibility, spacing, style, snap-to-grid
+     9	 * - Snap: Enable/disable, snap radius (in pixels)
+    10	 * - Default Styles: Colors, line widths for new elements
+    11	 * - 3D View: Initial camera position, display options
+    12	 * 
+    13	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#project-settings-dialog
+    14	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#state-persistence
+    15	 */
+    16	
+    17	import { ref, computed, watch } from 'vue';
+    18	import { defineStore } from 'pinia';
+    19	
+    20	const STORAGE_KEY = 'diedrico_settings_v1';
+    21	
+    22	/**
+    23	 * Default settings values
+    24	 * Following ui-spec.md recommendations
+    48	 * 
+    49	 * Displays the current project name in the app header with in-place editing.
+    50	 * - Double-click to edit
+    51	 * - Enter to save, Escape to cancel
+    52	 * - Validates name (non-empty, reasonable length, no special characters)
+    53	 * - Shows save indicator while renaming
+    54	 * 
+    55	 * Reference: specs/001-dihedral-learning-mvp/spec.md - Project Name Display and Editing
+    56	 */
+    57	
+    58	interface Props {
+    59	  projectName: string | null;
+    60	  isRenaming?: boolean;
+     1	/**
+     2	 * authStore.ts - Authentication state management
+     3	 * 
+     4	 * T402: Manages Google Drive authentication state and user profile information.
+     5	 * NOT part of the command stack (authentication is user-specific, not document-specific).
+     6	 * NOT persisted in project files (session-only via session storage).
+     7	 * 
+     8	 * @see specs/001-dihedral-learning-mvp/data-model.md - Authentication State
+     9	 */
+    10	
+    11	import { ref, computed } from 'vue';
+    12	import type { GoogleUserProfile } from '../services/GoogleDriveService';
+    13	
+    14	export interface AuthState {
+    15	  isAuthenticated: boolean;
+    16	  user: GoogleUserProfile | null;
+    17	  accessToken: string | null;
+    18	  tokenExpiry: Date | null;
+     1	/**
+     2	 * CommandStack - Manages undo/redo history
+     3	 * 
+     4	 * Maintains two stacks:
+     5	 * - undoStack: Commands that can be undone
+     6	 * - redoStack: Commands that have been undone and can be redone
+     7	 * 
+     8	 * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+     9	 * 
+    10	 * Behavior:
+    11	 * - execute(): Adds command to undo stack, clears redo stack
+    12	 * - undo(): Pops from undo stack, pushes to redo stack
+    13	 * - redo(): Pops from redo stack, pushes back to undo stack
+    14	 */
+    15	
+    16	import { Command, CommandStatus } from './Command';
+
+package scripts
+     1	{
+     2	  "name": "diedrico",
+     3	  "version": "0.1.0",
+     4	  "description": "Educational web application for teaching dihedral/orthographic projection",
+     5	  "private": true,
+     6	  "license": "GPL-3.0-or-later",
+     7	  "workspaces": [
+     8	    "frontend"
+     9	  ],
+    10	  "scripts": {
+    11	    "dev": "npm run dev:frontend",
+    12	    "dev:frontend": "npm run dev --workspace=frontend",
+    13	    "build": "npm run build --workspace=frontend",
+    14	    "test": "npm run test --workspace=frontend",
+    15	    "test:frontend": "npm run test --workspace=frontend",
+    16	    "lint": "npm run lint --workspace=frontend",
+    17	    "docs:dev": "vitepress dev docs",
+    18	    "docs:build": "vitepress build docs",
+    19	    "docs:preview": "vitepress preview docs",
+    20	    "test:architecture": "npm run test:architecture --workspace=frontend",
+    21	    "test:e2e": "npm run test:e2e --workspace=frontend"
+    22	  },
+    23	  "devDependencies": {
+    24	    "concurrently": "^8.2.2",
+    25	    "vitepress": "^1.6.4"
+    26	  },
+    27	  "engines": {
+    28	    "node": ">=18.0.0",
+    29	    "npm": ">=9.0.0"
+    30	  }
+    31	}
+     1	{
+     2	  "name": "diedrico-frontend",
+     3	  "version": "0.1.0",
+     4	  "type": "module",
+     5	  "license": "GPL-3.0-or-later",
+     6	  "scripts": {
+     7	    "dev": "vite",
+     8	    "build": "vue-tsc && vite build",
+     9	    "preview": "vite preview",
+    10	    "test": "vitest run",
+    11	    "test:watch": "vitest",
+    12	    "test:ui": "vitest --ui",
+    13	    "test:architecture": "vitest run tests/unit/architecture",
+    14	    "test:e2e": "playwright test",
+    15	    "test:e2e:headed": "playwright test --headed",
+    16	    "lint": "npm run test:architecture"
+    17	  },
+    18	  "dependencies": {
+    19	    "@types/katex": "^0.16.8",
+    20	    "d3": "^7.8.5",
+    21	    "katex": "^0.16.28",
+    22	    "pinia": "^2.1.7",
+    23	    "three": "^0.160.0",
+    24	    "vue": "^3.4.0"
+    25	  },
+
+architecture gate wave012
+     1	import { describe, expect, it } from 'vitest';
+     2	import { findContentMatches, findForbiddenImports, scanTextFiles, type ScannedFile } from './helpers/sourceScanner';
+     3	
+     4	const frontendSourceAndTests = () => scanTextFiles(['src', 'tests']);
+     5	
+     6	const staleBackendProjectTerms = new RegExp([
+     7	  ['localhost:3000', 'api', 'projects'].join('/'),
+     8	  '/api/' + 'projects',
+     9	  'Project' + 'DTO',
+    10	  'Project' + 'Metadata',
+    11	  'Open' + 'Project' + 'Dialog',
+    12	].join('|'));
+    13	
+    14	function isArchitectureSpec(file: ScannedFile): boolean {
+    15	  return file.projectPath.startsWith('tests/unit/architecture/');
+    16	}
+    17	
+    18	
+    19	const wave012ConsoleHygieneFiles = [
+    20	  'src/services/GoogleDriveService.ts',
+    21	  'src/utils/rectangleGrid.ts',
+    22	  'src/utils/projectionPlaneUtils.ts',
+    23	  'src/domain/world/HingeLine.ts',
+    24	  'src/domain/world/Guide.ts',
+    25	  'src/commands/operations/world/UpdateElementStyleOp.ts',
+    26	  'src/commands/operations/world/RemoveElementOps.ts',
+    27	  'src/commands/operations/processTree/ToggleOutputOp.ts',
+    28	  'src/commands/operations/processTree/ToggleEncapsulationOp.ts',
+    29	];
+    30	
+    31	function isWave012ConsoleHygieneFile(file: ScannedFile): boolean {
+    32	  return wave012ConsoleHygieneFiles.includes(file.projectPath);
+    33	}
+    34	
+    35	function isWave010NegativeE2EGuard(file: ScannedFile): boolean {
+    36	  return file.projectPath === 'tests/e2e/wave010-app-shell-project-flow.spec.ts';
+    37	}
+    38	
+    39	describe('Architecture: import boundaries', () => {
+    40	  it('keeps UI components from importing command construction surfaces', () => {
+    41	    const componentFiles = scanTextFiles(['src/components']);
+    42	
+    43	    expect(findForbiddenImports(componentFiles, [
+    44	      /^@\/commands(\/|$)/,
+    45	      /^@\/application\/commands(\/|$)/,
+    46	      /commands\/operations/,
+    47	      /CommandStack$/,
+    48	      /CommandFactory$/,
+    49	    ])).toEqual([]);
+    50	  });
+    51	
+    52	  it('keeps command construction available to application/use-case modules', () => {
+    53	    const applicationFiles = scanTextFiles(['src/application']);
+    54	    const commandImports = applicationFiles.flatMap(file =>
+    55	      file.imports
+    56	        .filter(importSource => /^@\/commands(\/|$)/.test(importSource) || /commands\/operations/.test(importSource))
+    57	        .map(importSource => `${file.projectPath} imports ${importSource}`),
+    58	    );
+    59	
+    60	    expect(commandImports.length).toBeGreaterThan(0);
+    61	  });
+    62	
+    63	  it('forbids frontend source and tests from importing backend implementation files', () => {
+    64	    const files = frontendSourceAndTests();
+    65	
+    66	    expect(findForbiddenImports(files, [/backend\/src/, /^backend\/src/])).toEqual([]);
+    67	    expect(findContentMatches(files, /backend\/src\//g, { exclude: isArchitectureSpec })).toEqual([]);
+    68	  });
+    69	
+    70	  it('keeps stale backend project API and DTO terms out of active frontend code', () => {
+    71	    const files = frontendSourceAndTests();
+    72	
+    73	    expect(findContentMatches(files, staleBackendProjectTerms, {
+    74	      exclude: file => isArchitectureSpec(file) || isWave010NegativeE2EGuard(file),
+    75	    })).toEqual([]);
+    76	  });
+    77	
+    78	  it('does not reference deleted debug/example/placeholder operation surfaces from active source or tests', () => {
+    79	    const files = frontendSourceAndTests();
+    80	
+    81	    expect(findContentMatches(files, /operations\/(paper|toolbar|debug)|ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
+    82	      exclude: isArchitectureSpec,
+    83	    })).toEqual([]);
+    84	  });
+    85	
+    86	  it('keeps routine console noise out of the Wave 012 cleanup files only', () => {
+    87	    const files = frontendSourceAndTests().filter(isWave012ConsoleHygieneFile);
+    88	
+    89	    expect(files.map(file => file.projectPath).sort()).toEqual([...wave012ConsoleHygieneFiles].sort());
+    90	    expect(findContentMatches(files, /console\.(log|debug|info)\s*\(/g)).toEqual([]);
+    91	  });
+    92	});
+
+spec obsolete chunks
+  3200	    - AddLineCircleIntersectionPoint2DOp (line-circle)  
+  3201	    - AddCircleCircleIntersectionPoint2DOp (circle-circle)
+  3202	  - **Tool Responsibility**: IntersectionTool.ts detects types and picks correct operation
+  3203	  - **Constitution Compliance**: Operations are atomic, command handles composition
+  3204	  - **No Action Needed**: Architecture already matches specification perfectly
+  3205	
+  3206	* [X] Reorganize operation files into component-based folders (world/, processTree/, paper/, toolbar/, viewState/) for better cohesion and maintainability.
+  3207	  - **STATUS**: ✅ PLANNED - Phase 41 created
+  3208	  - **Problem**: All 19 operation classes scattered in flat directory structure (`frontend/src/commands/operations/`), mixing concerns
+  3209	  - **Current State**: AddFreePointOp, AddLineOp, RemoveElementOps, ProcessTreeOperations all in same folder
+  3210	  - **Proposed Structure**: 5 component folders organizing operations by which component they modify
+  3211	  - **Components**: World (geometry), ProcessTree (history), Paper (rendering), Toolbar (UI controls), ViewState (presentation)
+  3212	  - **Benefits**: 
+  3213	    - **Cohesion**: All World operations co-located and easy to find
+  3214	    - **Clear ownership**: Obvious which component each operation affects
+  3215	    - **Separation of concerns**: Domain (world/) vs rendering (paper/) vs UI (toolbar/)
+  3216	    - **Cross-component composition**: Commands can still compose ops from multiple folders
+  3217	    - **Scalability**: New component → new folder, pattern established
+  3218	  - **Architecture**: Updated data-model.md with §Component-Based Operation Organization
+  3219	  - **Implementation**: Phase 41 with 16 core tasks (T446-T461) + 2 optional (T462-T463)
+  3220	  - **Task categories**:
+  3221	    - Create folder structure (T446): 5 component folders + READMEs
+  3222	    - Migrate operations (T447-T449): Move 19 operations to correct folders (world/, processTree/, viewState/)
+  3223	    - Barrel exports (T450): index.ts for cleaner imports
+  3224	    - Update imports (T451-T454): ProjectService, tools, commands, all consumers
+  3225	    - Architectural tests (T455-T456): Enforce organization, prevent future violations
+  3226	    - Integration testing (T457-T458): Cross-component commands, full E2E workflow
+  3227	    - Code cleanup (T459-T460): Remove deprecated files (WorldOperations.ts, DependencyOperations.ts)
+  3228	    - Documentation (T461): Update operation development guide
+  3229	  - **Optional**: Create Paper/Toolbar operations (T462-T463) - can be added incrementally after core migration
+  3230	  - **Success Criteria**: All operations organized, no imports broken, old projects still load, architectural tests enforce structure
+  3231	  - **Risk Mitigation**: Systematic import updates, test after each batch, verify serialization still works
+  3232	  - **Schema Impact**: None - purely organizational refactoring, no serialization format change
+  3233	  - **Timing**: After Phase 40 completion (command sourcing fully functional), before new operation types added
+  3234	
+  3235	* [X] Ensure ALL operation types can be serialized to prevent data loss on project save/load. Currently only 8 of 19 operation types are serializable, meaning deletions and style changes are lost!
+  3236	  - **STATUS**: ✅ PLANNED - Phase 40 created
+  3237	  - **Problem**: ProjectService.reconstructOperation() only handles 8 operation types (creation), but 19 operation classes exist
+  3238	  - **Critical Data Loss**: Operations NOT saved: RemovePoint2D, RemoveLine2D, RemoveSegment2D, RemoveCircle2D, RemoveGuide2D (deletions), AddSiblingGuide2D, UpdateElementStyle, RemoveActionFromProcessTree/Group/Subprocess
+  3239	  - **Impact**: Users delete elements or change styles → save project → reload → changes are LOST (only creates persisted)
+  3240	  - **Architecture**: Command sourcing pattern (projects saved as command history, not final state)
+  3241	  - **Benefits**: Audit trail, reproducibility, smaller files, parametric updates
+  3242	  - **Requirements**: Operations must be deterministic, serializable (no closures), self-contained
+  3243	  - **Implementation**: Phase 40 with 15 tasks (T431-T445)
+  3244	  - **Task categories**: 
+  3245	    - Add missing serialization cases (T431-T436): 11 operation types to ProjectService switch
+  3246	    - Architectural test for coverage (T437): Prevent future gaps
+  3247	    - Round-trip serialization tests (T438): Verify no data loss
+  3248	    - Determinism tests (T439): Same commands → same result
+  3249	    - Self-containment tests (T440): No external dependencies
+  3250	    - Documentation (T441): Requirements for future operations
+  3251	    - Schema migration framework (T442): Future enhancement
+  3252	    - Integration tests (T443-T444): Cascade deletion, E2E workflow
+  3253	    - Schema version bump (T445): 3.0.0 → 3.1.0
+  3254	  - **Data Model**: Updated §Persistence Entity: Project to reflect command sourcing (only commands array persisted)
+  3255	  - **Data Model**: Added §Command Sourcing Architecture explaining pattern, benefits, requirements
+  3256	  - **Success Criteria**: All 19 operations serializable, architectural test enforces coverage, no data loss
+  3257	  - **Current Coverage**: 8/19 operations (42% complete) - AddFreePoint2D, AddLine2D, AddSegment2D, AddCircle2D, intersection types, AddGuide2D
+  3258	  - **Schema Version**: Bump to 3.1.0 after completion (currently 3.0.0)
+  3259	  - **Timing**: URGENT - users currently experiencing data loss on any project with deletions or style changes
+  3260	
+  3490	  - Factory methods in ProjectionPlane: addLineLineIntersection(), addLineCircleIntersection(), addCircleCircleIntersection()
+  3491	  - IntersectionTool refactored with type detection
+  3492	  - Specialized ProcessTree actions created
+  3493	  - Legacy IntersectionPoint2DLegacy removed
+  3494	  - Serialization support with schema version 3.0.0
+  3495	  - All 15 tasks complete (T310-T324)
+  3496	
+  3497	* [X] Even if we have already noted it in many cases, and it should be stated that way in the data-model.md file, we still have Command subclasses. Those must be removed, all commands must be implemented using the Command class which should be not derivable. Enforce that in the code if that is possible, and also add a comment explaining it in the class definition!!! Can a test be added for ensuring this condition holds? In that case add the test and document also there that the condition must be enforced.
+  3498	  - **STATUS**: ✅ COMPLETE - Phase 31 implemented
+  3499	  - Transport functionality (TransportPointCommand, TransportDistanceCommand) REMOVED
+  3500	  - UpdateElementStyleCommand refactored to use UpdateElementStyleOp operation
+  3501	  - Command class documented as @sealed with comprehensive architectural explanation
+  3502	  - Architectural test created (tests/unit/architecture/noCommandSubclasses.spec.ts)
+  3503	  - All 12 tasks complete (T298-T309)
+     1	# Data Model: Diedrico MVP
+     2	
+     3	**Date**: 2025-12-22 (Updated: 2026-01-06)  
+     4	**Purpose**: Define domain entities, relationships, validation rules, and state transitions
+     5	
+     6	---
+     7	
+     8	---
+     9	
+    10	## Phase 98: Dynamic Action Descriptions
+    11	
+    12	### Overview
+    13	
+    14	Process Tree action descriptions are computed dynamically from current element state (labels and construction parameters) rather than stored as static strings. This ensures descriptions always reflect current element names even after renaming.
+    15	
+    16	### Functional Requirements
+    17	
+    18	**FR-065**: Process Tree action descriptions MUST be computed dynamically from current element state (labels, construction parameters) rather than stored as static strings. When elements are renamed or dependencies change, action descriptions MUST automatically update to reflect current state. Description format MUST follow pattern: "{ElementType} {CurrentLabel}: {ConstructionMethod}" where construction method includes current parent labels (e.g., "Point A_5: Intersection of line L_2 and circle C_1"). This ensures Process Tree always displays accurate, up-to-date construction history even after elements are renamed.
+    19	
+    20	---
+    21	
+    22	## Phase 99: Clickable Labels in Process Tree
+    23	
+    24	### Overview
+    25	
+    26	Element labels in Process Tree action descriptions become interactive - clicking a label selects the corresponding element in the application. This leverages the existing DescriptionPart infrastructure from Phase 98 which already includes `elementId` for all label parts.
+    27	
+    28	### Architecture
+    29	
+    30	**No Domain Changes Required**: This is purely a presentation layer enhancement. The descriptor system from Phase 98 already provides all necessary data (DescriptionPart with elementId).
+    31	
+    32	### Component Changes
+    33	
+    34	#### ProcessTreeNode.vue
+    35	
+    36	**Template Enhancement** (Lines ~150-152):
+    37	
+    38	```vue
+    39	<!-- BEFORE (Phase 98) -->
+    40	<template v-for="(part, index) in descriptionParts" :key="index">
+    41	  <span v-if="part.type === 'text'">{{ part.content }}</span>
+    42	  <span v-else v-html="formatElementLabel(part.content)"></span>
+    43	</template>
+    44	
+    45	<!-- AFTER (Phase 99) -->
+    46	<template v-for="(part, index) in descriptionParts" :key="index">
+    47	  <span v-if="part.type === 'text'">{{ part.content }}</span>
+    48	  <span 
+    49	    v-else 
+    50	    class="label-clickable"
+    51	    :data-element-id="part.elementId"
+    52	    @click.stop="handleLabelClick(part.elementId, $event)"
+    53	    v-html="formatElementLabel(part.content)"
+    54	  ></span>
+    55	</template>
+    56	```
+    57	
+    58	**Script Enhancement**:
+    59	
+    60	```typescript
+    61	import { useSelectionStore } from '@/stores/selectionStore';
+    62	
+    63	const selectionStore = useSelectionStore();
+    64	
+    65	function handleLabelClick(elementId: string | undefined, event: MouseEvent) {
+    66	  if (!elementId) return;
+    67	  
+    68	  event.stopPropagation(); // Prevent action node selection
+    69	  
+    70	  if (event.shiftKey) {
+    71	    // Multi-select: add to selection
+    72	    selectionStore.addToSelection(elementId);
+    73	  } else {
+    74	    // Single select: replace selection
+    75	    selectionStore.selectSingle(elementId);
+    76	  }
+    77	}
+    78	```
+    79	
+    80	**CSS Enhancement**:
+    81	
+    82	```css
+    83	.label-clickable {
+    84	  cursor: pointer;
+    85	  transition: all 0.15s ease;
+    86	  border-radius: 2px;
+    87	  padding: 0 2px;
+    88	}
+    89	
+    90	.label-clickable:hover {
+    91	  background-color: rgba(100, 150, 255, 0.1);
+    92	  text-decoration: underline dotted;
+    93	}
+    94	
+    95	.label-clickable:active {
+    96	  transform: scale(0.98);
+    97	}
+    98	
+    99	/* Ensure KaTeX content inside clickable labels inherits pointer cursor */
+   100	.label-clickable .katex {
+   101	  cursor: inherit;
+   102	}
+   103	```
+   104	
+   105	### Selection Flow
+   106	
+   107	**User Action → System Response**:
+   108	
+   109	1. **User clicks label** "A_5" in Process Tree action description
+   110	2. **handleLabelClick** fires with elementId="point2d5"
+   111	3. **selectionStore.selectSingle** called (or addToSelection if Shift)
+   112	4. **Selection state updates** (selectedIds contains "point2d5")
+   113	5. **Reactive updates triggered**:
+   114	   - Elements Panel: Scrolls to A_5, shows selected state
+   115	   - SvgCanvas: Highlights point A_5 with selection color
+   116	   - ThreeView: Highlights point A_5 (if visible in 3D)
+   117	   - ProcessTree: Shows action that created A_5 as selected, related actions highlighted
+   118	
+   119	### Edge Cases
+   120	

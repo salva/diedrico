@@ -1,0 +1,1188 @@
+== docs/spec refs to backend/command subclasses/migration/placeholders/worldStore/backend ==
+README.md:86:├── backend/           # Express backend (optional, for future features)
+README.md:106:npm run test:e2e         # Run Playwright E2E tests
+README.md:119:- **Vue 3** with Composition API for reactive UI
+README.md:129:- **Express** for API endpoints
+README.md:134:Diedrico follows strict architectural principles documented in [data-model.md](specs/001-dihedral-learning-mvp/data-model.md):
+README.md:160:- **[Feature Specification](specs/001-dihedral-learning-mvp/spec.md)**: Complete functional requirements (FR-001 through FR-052)
+README.md:161:- **[UI Specification](specs/001-dihedral-learning-mvp/ui-spec.md)**: Detailed UI/UX guidelines and interaction patterns
+README.md:162:- **[Data Model](specs/001-dihedral-learning-mvp/data-model.md)**: Architecture documentation with 70+ implementation phases
+README.md:163:- **[Tasks](specs/001-dihedral-learning-mvp/tasks.md)**: Detailed task breakdown for all features
+README.md:181:npm run test:e2e         # Run E2E tests headless
+README.md:182:npm run test:e2e:headed  # Run with browser UI
+README.md:194:1. **Read the specifications first**: Familiarize yourself with [spec.md](specs/001-dihedral-learning-mvp/spec.md) and [data-model.md](specs/001-dihedral-learning-mvp/data-model.md)
+README.md:201:1. Check [for-planing.md](specs/001-dihedral-learning-mvp/for-planing.md) for planned features
+README.md:241:**Note**: This project is under active development. The current MVP focuses on core dihedral projection features. See [for-planing.md](specs/001-dihedral-learning-mvp/for-planing.md) for upcoming features and improvements.
+docs/guide/persistence.md:40:Diedrico integrates directly with Google Drive from the browser — no backend required.
+docs/guide/persistence.md:54:| Save | Serializes current `World` + `CommandStack` → uploads JSON |
+docs/guide/persistence.md:61:Google Drive requires a Google Cloud project with the Drive API enabled. See the [Google Drive Setup Guide](/GOOGLE_DRIVE_SETUP) for configuration details.
+docs/guide/persistence.md:63:## ProjectService
+docs/guide/persistence.md:65:The `ProjectService` handles serialization and deserialization:
+docs/guide/persistence.md:69:- Automatic schema migration from older versions (snake_case → camelCase IDs, hierarchical IDs, etc.)
+docs/guide/persistence.md:76:| Earlier | Various migrations applied automatically on load |
+docs/guide/getting-started.md:15:# Install all dependencies (frontend + backend)
+docs/guide/getting-started.md:70:├── backend/              # Express API (minimal, file storage)
+docs/contributing/testing.md:88:Test PaperService primitive generation, SVGRenderer transforms, ProjectService serialization/deserialization.
+specs/001-dihedral-learning-mvp/ui-spec.md:14:- **[specs/001-dihedral-learning-mvp/spec.md](spec.md)**: Provides detailed tool behaviors, functional requirements, geometric definitions, and user scenarios. This document references spec.md for functional specifics while focusing on UI structure and interaction patterns.
+specs/001-dihedral-learning-mvp/ui-spec.md:16:- **[specs/001-dihedral-learning-mvp/data-model.md](data-model.md)**: Defines world data structures that the UI dynamically renders.
+specs/001-dihedral-learning-mvp/ui-spec.md:572:- No automatic migration needed
+specs/001-dihedral-learning-mvp/ui-spec.md:643:- Use OAuth2 via Google API client library (gapi.client)
+specs/001-dihedral-learning-mvp/ui-spec.md:687:- If Google Drive API is unavailable, display error with retry option
+specs/001-dihedral-learning-mvp/ui-spec.md:695:- Debouncing prevents excessive API calls during rapid construction
+specs/001-dihedral-learning-mvp/ui-spec.md:940:**Migration**: Old project files (schema 4.0.0, 5.0.0) with underscore IDs are automatically migrated to camelCase format on load (schema version bumped to 6.0.0). New projects use camelCase exclusively.
+specs/001-dihedral-learning-mvp/ui-spec.md:948:**Architectural Principle**: Grid is NOT derived from arbitrary paper/canvas coordinates—it is generated from the plane's origin (0, 0) and intrinsic basis vectors, then transformed through planeToPaper2D matrix to screen space.
+specs/001-dihedral-learning-mvp/ui-spec.md:954:4. Grid labels display actual (u, v) values, NOT transformed paper/canvas pixel values
+specs/001-dihedral-learning-mvp/ui-spec.md:964:- Spacing is in **plane intrinsic (u, v) units**, not paper/canvas pixels
+specs/001-dihedral-learning-mvp/ui-spec.md:2380:- Click "Cancel" button in toolbar/status area (if visible)
+specs/001-dihedral-learning-mvp/ui-spec.md:2514:**Important**: Active plane affects ONLY visual emphasis and creation target. It does NOT control visibility (all planes always visible in MVP).
+specs/001-dihedral-learning-mvp/ui-spec.md:2595:- All future `Line3D` subclasses
+specs/001-dihedral-learning-mvp/ui-spec.md:3551:- Each icon is a Vue SFC in `frontend/src/components/icons/toolbar/`
+specs/001-dihedral-learning-mvp/ui-spec.md:3711:- **3D Element Types**: Point3D, Line3D (all subclasses), Segment3D (all subclasses)
+specs/001-dihedral-learning-mvp/ui-spec.md:3717:**Context**: The 3D segment creation tool and rendering infrastructure already exist (Phase 78) but `realize3D()` was a placeholder stub. Phase 107 implements the actual 3D reconstruction from two 2D segment projections and adds compatibility validation.
+specs/001-dihedral-learning-mvp/ui-spec.md:3838:- Workspace2D.vue watches active tool state and renders ToolFeedbackBar conditionally
+docs/contributing/development-setup.md:16:This installs dependencies for both `frontend/` and `backend/` workspaces.
+docs/contributing/development-setup.md:32:cd backend
+docs/contributing/development-setup.md:36:Runs at `http://localhost:3001` (health check, project API).
+docs/contributing/development-setup.md:65:├── backend/         # Express REST API
+docs/contributing/development-setup.md:94:- `VITE_GOOGLE_API_KEY` — Google API key
+docs/architecture/stores.md:18:Manages the `ProcessTree` and `CommandStack`:
+docs/architecture/stores.md:22:- `commandHistory: CommandStack` — undo/redo stacks
+frontend/src/main.ts:5: * - Vue 3 Composition API
+docs/GOOGLE_DRIVE_SETUP.md:1:# Google Drive API Setup Guide
+docs/GOOGLE_DRIVE_SETUP.md:3:This guide explains how to set up Google Drive API credentials for the Diedrico application.
+docs/GOOGLE_DRIVE_SETUP.md:18:## Step 2: Enable Google Drive API
+docs/GOOGLE_DRIVE_SETUP.md:20:1. In the left sidebar, go to **APIs & Services** → **Library**
+docs/GOOGLE_DRIVE_SETUP.md:21:2. Search for "Google Drive API"
+docs/GOOGLE_DRIVE_SETUP.md:22:3. Click on **Google Drive API**
+docs/GOOGLE_DRIVE_SETUP.md:27:1. Go to **APIs & Services** → **OAuth consent screen**
+docs/GOOGLE_DRIVE_SETUP.md:36:   - Search for "Google Drive API"
+docs/GOOGLE_DRIVE_SETUP.md:45:1. Go to **APIs & Services** → **Credentials**
+docs/GOOGLE_DRIVE_SETUP.md:56:## Step 5: Create API Key
+docs/GOOGLE_DRIVE_SETUP.md:58:1. Still in **APIs & Services** → **Credentials**
+docs/GOOGLE_DRIVE_SETUP.md:59:2. Click **+ Create Credentials** → **API Key**
+docs/GOOGLE_DRIVE_SETUP.md:60:3. **Copy the API Key** immediately
+docs/GOOGLE_DRIVE_SETUP.md:62:5. Under **API restrictions**:
+docs/GOOGLE_DRIVE_SETUP.md:64:   - Select **Google Drive API**
+docs/GOOGLE_DRIVE_SETUP.md:93:# API Key (from Step 5)
+docs/GOOGLE_DRIVE_SETUP.md:94:VITE_GOOGLE_API_KEY=AIzaSyAaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQq
+docs/GOOGLE_DRIVE_SETUP.md:131:- Check that the API is enabled in Google Cloud Console
+docs/GOOGLE_DRIVE_SETUP.md:135:- Verify the API key restrictions allow your domain
+docs/GOOGLE_DRIVE_SETUP.md:149:2. **API Key** ✅ **Safe to expose IF RESTRICTED**
+docs/GOOGLE_DRIVE_SETUP.md:160:- **Domain restrictions**: API key only works from your specified domains
+docs/GOOGLE_DRIVE_SETUP.md:163:- **No backend**: No server means no secret keys to leak
+docs/GOOGLE_DRIVE_SETUP.md:168:If someone copies your Client ID and API Key from your built JavaScript:
+docs/GOOGLE_DRIVE_SETUP.md:171:- ✅ **They could only** consume your API quota (if key unrestricted)
+docs/GOOGLE_DRIVE_SETUP.md:175:1. **Always restrict API keys** to specific domains in production
+docs/GOOGLE_DRIVE_SETUP.md:178:4. **Monitor API usage** in Google Cloud Console
+docs/GOOGLE_DRIVE_SETUP.md:187:2. Update API key restrictions to include your production domain
+docs/GOOGLE_DRIVE_SETUP.md:198:- Google Drive API is **free** for typical usage
+docs/GOOGLE_DRIVE_SETUP.md:201:- See [Google Drive API Pricing](https://developers.google.com/drive/api/guides/limits) for details
+docs/architecture/realization.md:45:- `ProjectionPlaneRealization2D` — mapping to paper/SVG space
+frontend/src/App.vue:111:  apiKey: import.meta.env.VITE_GOOGLE_API_KEY || '',
+docs/DEPLOYMENT.md:19:1. ✅ Set up Google Drive API credentials (see [GOOGLE_DRIVE_SETUP.md](./GOOGLE_DRIVE_SETUP.md))
+docs/DEPLOYMENT.md:51:2. Navigate to **APIs & Services** → **Credentials**
+docs/DEPLOYMENT.md:57:5. Edit your API Key restrictions
+docs/DEPLOYMENT.md:69:   - `VITE_GOOGLE_API_KEY`: Your API Key
+docs/DEPLOYMENT.md:110:          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
+docs/DEPLOYMENT.md:189:   - `VITE_GOOGLE_API_KEY`
+docs/DEPLOYMENT.md:238:vercel env add VITE_GOOGLE_API_KEY production
+docs/DEPLOYMENT.md:309:export VITE_GOOGLE_API_KEY="your-api-key"
+docs/DEPLOYMENT.md:325:- ✅ **API Key**: Safe when restricted to your domain in Google Cloud Console
+docs/DEPLOYMENT.md:328:**Critical**: Always restrict your API key to your production domain (see [GOOGLE_DRIVE_SETUP.md](./GOOGLE_DRIVE_SETUP.md#step-5-create-api-key)). This prevents others from using your credentials even if they copy them from your JavaScript.
+docs/DEPLOYMENT.md:357:- [ ] API keys restricted to production domain in Google Cloud Console
+docs/DEPLOYMENT.md:409:- Check Network tab for failed API requests
+docs/DEPLOYMENT.md:410:- Verify API key restrictions allow your domain
+docs/DEPLOYMENT.md:445:| Google Drive API | Free (1B queries/day) | N/A for typical use |
+docs/DEPLOYMENT.md:460:- [Google Drive API Documentation](https://developers.google.com/drive/api)
+docs/architecture/overview.md:16:│  CommandStack · Command · IOperation impls       │
+docs/architecture/overview.md:19:│  PaperService · SVGRenderer · ProjectService     │
+docs/architecture/overview.md:62:Persistence saves the command sequence, not world state. On load, commands replay to reconstruct everything. This ensures perfect fidelity and enables schema migration.
+docs/architecture/overview.md:72:| Framework | Vue 3 (Composition API) |
+docs/architecture/overview.md:79:| Backend | Express (minimal REST API) |
+docs/architecture/commands.md:8:CommandStack
+docs/architecture/commands.md:86:5. command.commit() → pushed to CommandStack.undoStack
+docs/architecture/commands.md:122:The `ProjectService.reconstructOperation()` switch handles deserialization of all operation types.
+frontend/src/utils/threeUtils.ts:271: * @see specs/001-dihedral-learning-mvp/data-model.md §Coordinate System Note
+specs/001-dihedral-learning-mvp/quickstart.md:1:# Quickstart Guide: Diedrico MVP
+specs/001-dihedral-learning-mvp/quickstart.md:13:- **Persistence**: Frontend app-shell `ProjectPersistencePort` backed by `ProjectService` and Google Drive/local startup behavior
+specs/001-dihedral-learning-mvp/quickstart.md:70:Project startup/open/save behavior uses the app-shell persistence port; no backend project server is required.
+specs/001-dihedral-learning-mvp/quickstart.md:94:│   │   ├── services/     # ProjectService and application services
+specs/001-dihedral-learning-mvp/quickstart.md:147:npm run test:e2e
+specs/001-dihedral-learning-mvp/quickstart.md:152:npm run test:e2e -- --headed
+specs/001-dihedral-learning-mvp/quickstart.md:157:npm run test:e2e -- tests/e2e/basic-exercise.spec.ts
+specs/001-dihedral-learning-mvp/quickstart.md:173:Frontend Google Drive credentials, when used, are configured through frontend environment variables. Do not configure `VITE_API_URL` for project persistence; there is no active backend project API.
+specs/001-dihedral-learning-mvp/quickstart.md:244:- **Feature Specification**: `specs/001-dihedral-learning-mvp/spec.md` - Complete feature requirements
+specs/001-dihedral-learning-mvp/quickstart.md:245:- **Data Model**: `specs/001-dihedral-learning-mvp/data-model.md` - Entity definitions
+specs/001-dihedral-learning-mvp/quickstart.md:262:npm run test:e2e
+specs/001-dihedral-learning-mvp/quickstart.md:271:- **Research Decisions**: `specs/001-dihedral-learning-mvp/research.md` - Technology choices
+specs/001-dihedral-learning-mvp/quickstart.md:272:- **Implementation Plan**: `specs/001-dihedral-learning-mvp/plan.md` - MVP phasing strategy
+frontend/src/utils/projectionPlaneUtils.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 82
+specs/001-dihedral-learning-mvp/plan.md:1:# Implementation Plan: Diedrico Dihedral Learning MVP
+specs/001-dihedral-learning-mvp/plan.md:4:**Input**: Feature specification from `/specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/plan.md:10:**Core Technical Approach**: Vue.js 3 frontend with TypeScript, SVG-based 2D rendering, command pattern for undoable operations, process tree for dependency tracking, and app-shell project persistence through ProjectService/Drive ports.
+specs/001-dihedral-learning-mvp/plan.md:17:**Primary Dependencies**: Vue.js 3 (Composition API), Vite  
+specs/001-dihedral-learning-mvp/plan.md:18:**Storage**: App-shell ProjectPersistencePort with ProjectService/Drive adapter  
+specs/001-dihedral-learning-mvp/plan.md:23:**Constraints**: Client-side geometry calculations, no backend computation, offline-capable after load  
+specs/001-dihedral-learning-mvp/plan.md:24:**Scale/Scope**: MVP with 6 user stories, ~30 geometric operations, educational focus
+specs/001-dihedral-learning-mvp/plan.md:101:See [data-model.md § Realization Layer Boundary](/specs/001-dihedral-learning-mvp/data-model.md#critical-realization-layer-boundary) for detailed examples.
+specs/001-dihedral-learning-mvp/plan.md:163:**Migration**: 5-phase approach with non-breaking changes, dual storage, gradual migration, cleanup. See [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md) for detailed plan.
+specs/001-dihedral-learning-mvp/plan.md:194:See [data-model.md § HingeLine](/specs/001-dihedral-learning-mvp/data-model.md#domain-entity-hingeline) and [data-model.md § Guide](/specs/001-dihedral-learning-mvp/data-model.md#domain-entity-guide) for detailed specifications.
+specs/001-dihedral-learning-mvp/plan.md:201:specs/001-dihedral-learning-mvp/
+specs/001-dihedral-learning-mvp/plan.md:207:├── contracts/           # API contracts (existing)
+specs/001-dihedral-learning-mvp/plan.md:236:│   │   ├── CommandStack.ts
+specs/001-dihedral-learning-mvp/plan.md:243:│   │   ├── ProjectService.ts
+specs/001-dihedral-learning-mvp/plan.md:246:│   │   ├── worldStore.ts
+specs/001-dihedral-learning-mvp/plan.md:420:- CommandStack for undo/redo
+specs/001-dihedral-learning-mvp/plan.md:424:**Outputs**: `frontend/src/commands/Command.ts`, `frontend/src/commands/CommandStack.ts`, specific command implementations  
+specs/001-dihedral-learning-mvp/plan.md:649:- Serialize World to JSON through `ProjectService`
+specs/001-dihedral-learning-mvp/plan.md:654:**Outputs**: `frontend/src/services/ProjectService.ts`, app-shell persistence use cases  
+docs/api/utilities.md:1:# Utilities API
+frontend/src/application/appShell/AppShellRuntime.ts:2:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellRuntime.ts:5:import { ProjectService } from '@/services/ProjectService';
+frontend/src/application/appShell/AppShellRuntime.ts:23:  const commandStack = new CommandStack();
+frontend/src/application/appShell/AppShellRuntime.ts:27:    persistence: options.ports.persistence ?? ProjectService,
+frontend/src/utils/coordinateTransform.ts:14: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Coordinate Systems
+docs/api/services.md:1:# Services API
+docs/api/services.md:52:## ProjectService
+docs/api/services.md:57:class ProjectService {
+docs/api/services.md:58:  serialize(world: World, commandStack: CommandStack): ProjectData
+docs/api/services.md:59:  deserializeAndReplay(data: ProjectData, world: World, commandStack: CommandStack): void
+docs/api/services.md:63:**Schema migration**: Automatically upgrades older project files (snake_case → camelCase, flat → hierarchical IDs).
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:18:    commandStack: CommandStack;
+frontend/src/utils/arcGeometry.ts:27: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101.6
+docs/api/operations.md:1:# Operations API
+docs/api/domain-model.md:1:# Domain Model API
+docs/api/domain-model.md:210:  initialize(commandStack: CommandStack): void
+frontend/src/application/appShell/ProjectSessionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:5:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:13:      commandStack: CommandStack;
+frontend/src/application/appShell/AutoSaveUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AutoSaveUseCases.ts:15:      commandStack: CommandStack;
+specs/001-dihedral-learning-mvp/contracts/api.yaml:3:  title: Diedrico Backend API
+specs/001-dihedral-learning-mvp/contracts/api.yaml:5:    Wave 010 removed the disconnected backend project persistence API. There is no
+specs/001-dihedral-learning-mvp/contracts/api.yaml:6:    active the removed backend project route contract; project persistence is owned by the frontend
+specs/001-dihedral-learning-mvp/contracts/api.yaml:7:    app-shell ProjectPersistencePort and ProjectService/Drive adapter.
+specs/001-dihedral-learning-mvp/checklists/requirements.md:1:# Specification Quality Checklist: Diedrico Dihedral Learning MVP
+specs/001-dihedral-learning-mvp/checklists/requirements.md:5:**Feature**: specs/001-dihedral-learning-mvp/spec.md
+specs/001-dihedral-learning-mvp/checklists/requirements.md:9:- [x] No implementation details (languages, frameworks, APIs)
+frontend/src/application/appShell/SelectionUseCases.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/SelectionUseCases.ts:13:    private readonly commandStack: CommandStack,
+frontend/src/types/arcGeometry.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/types/ToolConfig.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+specs/001-dihedral-learning-mvp/data-model-optimization.md:82:    *   Create `serializeCompact()` in `ProjectService`.
+specs/001-dihedral-learning-mvp/data-model-optimization.md:83:    *   Map `CommandStack` to `CompactHistory`.
+specs/001-dihedral-learning-mvp/data-model-optimization.md:90:    *   Detect legacy format vs new format in `loadFile`.
+specs/001-dihedral-learning-mvp/data-model-optimization.md:126:\n## Status Update (2026-02-02)\n- Implemented 'serialize()' in 'InitializationOps', 'AddFreePointOp', 'AddLineOp' and others.\n- Refactored 'ProjectService' to read/write v4.0.0 Journal Format.
+frontend/src/application/appShell/AppShellPorts.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellPorts.ts:5:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/AppShellPorts.ts:25:  serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData;
+frontend/src/application/appShell/AppShellPorts.ts:27:  deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void;
+specs/001-dihedral-learning-mvp/phase-83-generic-projection-plane-plan.md:54:**Location**: `specs/001-dihedral-learning-mvp/data-model.md` - Add new section after Phase 82.
+specs/001-dihedral-learning-mvp/research.md:1:# Research: Diedrico MVP Technical Decisions
+specs/001-dihedral-learning-mvp/research.md:11:2. **Graphics rendering**: SVG, Canvas API, or library (Three.js for 3D)
+specs/001-dihedral-learning-mvp/research.md:23:- **Simplicity**: For this MVP, we need only 4-5 REST endpoints (CRUD for projects). Express provides exactly what we need without ceremony
+specs/001-dihedral-learning-mvp/research.md:26:- **Performance**: For persistence-only API with low concurrency (single-user educational tool), Express performance is more than sufficient
+specs/001-dihedral-learning-mvp/research.md:29:- **Fastify**: Faster but introduces additional API concepts (schemas, plugins). Overkill for 5 endpoints serving one user at a time
+specs/001-dihedral-learning-mvp/research.md:34:- Middleware: `express.json()`, `cors()` for frontend-backend communication
+specs/001-dihedral-learning-mvp/research.md:36:- No authentication in MVP (single-user, local deployment)
+specs/001-dihedral-learning-mvp/research.md:71:- **Canvas API for 2D**: Rejected. Pixel-based rendering loses quality on zoom. Manual hit detection for 200 elements is complex. No DOM structure for accessibility.
+specs/001-dihedral-learning-mvp/research.md:76:- SVG root in `<Workspace2D>` component; D3 for zoom behavior
+specs/001-dihedral-learning-mvp/research.md:132:- **No server setup**: SQLite would require migrations, schema management. Overkill for MVP
+specs/001-dihedral-learning-mvp/research.md:155:  - Applies migrations sequentially (1.0.0 → 1.1.0 → 2.0.0)
+specs/001-dihedral-learning-mvp/research.md:157:  - MVP starts at 1.0.0; no migrations needed yet
+specs/001-dihedral-learning-mvp/research.md:165:- **SQLite**: Rejected. Adds server-side state, migrations, query complexity. Not needed for single-document storage
+specs/001-dihedral-learning-mvp/research.md:166:- **IndexedDB** (browser-local): Rejected for MVP. Requires backend for sharing/backup. Could add later as offline mode
+specs/001-dihedral-learning-mvp/research.md:167:- **Git-based storage**: Interesting for versioning but over-engineered for MVP
+specs/001-dihedral-learning-mvp/research.md:171:- Frontend `ProjectService` handles serialization/deserialization
+specs/001-dihedral-learning-mvp/research.md:1045:- **Rejected for MVP**: Over-engineered. Grid is simpler and sufficient for 200 elements.
+specs/001-dihedral-learning-mvp/research.md:1077:### Vue.js 3 + Composition API
+specs/001-dihedral-learning-mvp/research.md:1081:1. **Composition over Options API**: Use `<script setup>` for all components
+specs/001-dihedral-learning-mvp/research.md:1084:   - `<Workspace2D>`: Canvas only, delegates to tool components
+specs/001-dihedral-learning-mvp/research.md:1237:**Integration tests** (optional for MVP):
+specs/001-dihedral-learning-mvp/research.md:1272:**API contract** (to be detailed in contracts/api.yaml):
+specs/001-dihedral-learning-mvp/research.md:1275:Wave 010 note: the disconnected backend `the removed backend project route` project CRUD/storage contract was deleted. Active project persistence is the frontend app-shell ProjectPersistencePort backed by ProjectService and Drive/local startup behavior.
+specs/001-dihedral-learning-mvp/research.md:1281:*Not blocking MVP but worth tracking:*
+specs/001-dihedral-learning-mvp/research.md:1294:   - Out of scope for educational single-user MVP
+specs/001-dihedral-learning-mvp/research.md:1298:   - Sync with backend when online
+specs/001-dihedral-learning-mvp/research.md:1393:- **PNG fallbacks (deprecated)**: `org/geogebra/common/icons_toolbar/p32/` and `/p64/`
+specs/001-dihedral-learning-mvp/research.md:1478:### Icons Needed for Diedrico MVP
+specs/001-dihedral-learning-mvp/research.md:1654:| Schema versioning | Embedded version number | Enables future migrations |
+frontend/src/types/SelectionMask.ts:36: * All Line2D subclasses (including Guide2D, HalfHingeLine2D) return 'line'
+frontend/src/types/SelectionMask.ts:48:  // Base types (all subclasses match their base type)
+frontend/src/types/SelectionMask.ts:53:    return 'line';  // Matches ALL Line2D subclasses: regular, perpendicular, parallel, Guide2D, HalfHingeLine2D
+frontend/src/types/SelectionMask.ts:106:   * Since getSelectableType() returns 'line' for all Line2D subclasses,
+frontend/src/types/SelectionMask.ts:154:   * Phase 63: All Line2D subclasses (perpendicular, parallel, by-two-points) map to 'line',
+frontend/src/types/SelectionMask.ts:220: * Example: TypeMask('line') matches Line2D and all subclasses (Guide2D, HalfHingeLine2D, etc.)
+specs/001-dihedral-learning-mvp/phase-78-completion-summary.md:32:- API methods: `getCartesian()`, `getDirection()`, `getLength()`, etc.
+specs/001-dihedral-learning-mvp/phase-78-completion-summary.md:38:- Note: Despite placeholders, system is functional for basic use cases
+specs/001-dihedral-learning-mvp/phase-78-completion-summary.md:291:- `/frontend/src/components/icons/toolbar/Create3DPointIcon.vue` - NEW
+specs/001-dihedral-learning-mvp/phase-78-completion-summary.md:292:- `/frontend/src/components/icons/toolbar/Create3DLineIcon.vue` - NEW
+specs/001-dihedral-learning-mvp/phase-78-completion-summary.md:293:- `/frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue` - NEW
+specs/001-dihedral-learning-mvp/phase-78-completion-summary.md:294:- `/frontend/src/components/icons/toolbar/Create3DPlaneIcon.vue` - NEW
+specs/001-dihedral-learning-mvp/phase-78-completion-summary.md:377:1. Replace GeometryUtils3D placeholders with proper algorithms
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:274:// ProjectService.initializeWorld() or bootstrap code
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:343:- Find world initialization (likely in `ProjectService.ts` or bootstrap)
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:387:- `frontend/src/services/ProjectService.ts` (or bootstrap code) - wrap initialization with Push/Pop
+frontend/src/config/toolFamilies.ts:9: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/config/toolFamilies.ts:13:import FreePointIcon from '@/components/icons/toolbar/FreePointIcon.vue';
+frontend/src/config/toolFamilies.ts:14:import IntersectionPointIcon from '@/components/icons/toolbar/IntersectionPointIcon.vue';
+frontend/src/config/toolFamilies.ts:15:import LineByTwoPointsIcon from '@/components/icons/toolbar/LineByTwoPointsIcon.vue';
+frontend/src/config/toolFamilies.ts:16:import ParallelLineIcon from '@/components/icons/toolbar/ParallelLineIcon.vue';
+frontend/src/config/toolFamilies.ts:17:import PerpendicularLineIcon from '@/components/icons/toolbar/PerpendicularLineIcon.vue';
+frontend/src/config/toolFamilies.ts:18:import TangentThroughPointIcon from '@/components/icons/toolbar/TangentThroughPointIcon.vue';
+frontend/src/config/toolFamilies.ts:19:import TangentParallelIcon from '@/components/icons/toolbar/TangentParallelIcon.vue';
+frontend/src/config/toolFamilies.ts:20:import SegmentIcon from '@/components/icons/toolbar/SegmentIcon.vue';
+frontend/src/config/toolFamilies.ts:21:import CircleIcon from '@/components/icons/toolbar/CircleIcon.vue';
+frontend/src/config/toolFamilies.ts:22:import GuideLineIcon from '@/components/icons/toolbar/GuideLineIcon.vue';
+frontend/src/config/toolFamilies.ts:23:import TransportPointIcon from '@/components/icons/toolbar/TransportPointIcon.vue';
+frontend/src/config/toolFamilies.ts:24:import Create3DPointIcon from '@/components/icons/toolbar/Create3DPointIcon.vue';
+frontend/src/config/toolFamilies.ts:25:import Create3DLineIcon from '@/components/icons/toolbar/Create3DLineIcon.vue';
+frontend/src/config/toolFamilies.ts:26:import Create3DSegmentIcon from '@/components/icons/toolbar/Create3DSegmentIcon.vue';
+frontend/src/config/toolFamilies.ts:27:import Create3DPlaneIcon from '@/components/icons/toolbar/Create3DPlaneIcon.vue';
+frontend/src/config/toolFamilies.ts:28:import ExampleIcon from '@/components/icons/toolbar/FreePointIcon.vue';  // TODO: Create dedicated icon for examples
+frontend/src/config/toolFamilies.ts:39: * 6. Transport Family: transport (placeholder - not yet implemented)
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-045
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-046, §FR-047
+frontend/src/tools/SegmentTool.ts:16: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+frontend/src/tools/Create3DPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/composables/useViewport.ts:11: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Viewport Navigation
+frontend/src/tools/PointTool.ts:11: * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
+frontend/src/tools/Create3DPlaneTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/composables/useHoverHighlight.ts:13: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Unified Hover Highlighting
+specs/001-dihedral-learning-mvp/spec.md:1:# Feature Specification: Diedrico Dihedral Learning MVP
+specs/001-dihedral-learning-mvp/spec.md:542:**Architecture**: All delete operations must go through CommandStack via DeleteElementsCommand. Direct World manipulation (e.g., `world.removePoint2D()`) is forbidden to ensure undo capability and dependency integrity.
+specs/001-dihedral-learning-mvp/spec.md:544:**Note**: This is part of the broader architectural principle that ALL application state modifications (geometric, view, settings) should go through the CommandStack for consistent undo/redo behavior and state management.
+specs/001-dihedral-learning-mvp/spec.md:660:- File list cached for 5 minutes (reduces API calls)
+specs/001-dihedral-learning-mvp/spec.md:1267:  you should still have a viable MVP (Minimum Viable Product) that delivers value.
+specs/001-dihedral-learning-mvp/spec.md:1538:- **FR-027**: The system MUST automatically persist project changes to Google Drive without requiring the user to explicitly save. Changes are debounced (e.g., 2 seconds after last change) to minimize API calls.
+specs/001-dihedral-learning-mvp/spec.md:1575:- **FR-055**: The system MUST render the grid using the active projection plane's intrinsic coordinate system (u, v vectors), not arbitrary paper/canvas coordinates: the grid MUST be derived from the active plane's origin point (0, 0) and intrinsic u and v basis vectors, transformed through the plane's planeToPaper2D matrix to screen coordinates. Major grid lines MUST always be at multiples of powers of 10 (10^n where n is any integer, e.g., 0.1, 1, 10, 100, 1000), with the specific power chosen to maintain visual clarity at the current zoom level. Subdivisions between major lines MUST be exactly 2, 5, or 10, dividing each major interval into smaller cells. The subdivision count MUST be chosen to keep minor grid cells at or above a minimum pixel threshold (15 pixels), selecting the largest subdivision (10 > 5 > 2) that meets this requirement—this ensures maximum grid detail while preventing visual clutter. The algorithm MUST calculate minSpacing = minPixelsPerCell / zoom, then find the smallest value from the sequence (10^n/10, 10^n/5, 10^n/2) that is ≥ minSpacing, determining both the minor spacing and the corresponding major spacing (10^n). Major grid lines (at 10^n intervals) MUST be emphasized with darker color (#C0C0C0) compared to minor lines (#E0E0E0). Grid labels MUST display actual plane-local (u, v) coordinate values at major lines only, not transformed paper/canvas pixel coordinates. The plane's origin (0, 0) MUST be clearly visible when in viewport, marked by the intersection of u=0 and v=0 lines. The hinge line at v=0 MUST naturally align with horizontal grid lines on default planes. Each projection plane MUST show its own grid when active, derived from that plane's unique coordinate system and transformation matrices. The grid architecture MUST support future non-orthogonal planes where u, v vectors may be at arbitrary angles—transformation matrices already handle arbitrary orientations. [Phase 79 - Plane-Based Grid Coordinates]
+specs/001-dihedral-learning-mvp/spec.md:1589:- The MVP includes at least two default projection planes (Horizontal and Vertical) and their hinge line.
+specs/001-dihedral-learning-mvp/spec.md:1591:- The application is a web-based interactive tool; a backend service may be used for project persistence.
+specs/001-dihedral-learning-mvp/spec.md:1592:- The MVP does not attempt to “fix” user mistakes; it surfaces infeasibility instead.
+specs/001-dihedral-learning-mvp/spec.md:1632:- **FR-074**: The 3D view MUST render 3D lines (Line3DFromProjections, HingeLine, BrokenHingeLine, and other Line3D subclasses) with sufficient length to appear as infinite lines extending far beyond the typical viewport bounds, consistent with how 2D lines are rendered on projection planes. The rendering length MUST be at least 2000 units total (±1000 units from a point on the line), matching or exceeding the extension used for 2D lines in the 3D visualization. This ensures 3D lines provide proper spatial understanding and do not appear as small disconnected segments. [Phase 104 - Infinite 3D Line Rendering]
+specs/001-dihedral-learning-mvp/spec.md:1650:- **FR-083**: When a new 2D element is created via an operation, the system MUST verify the element realizes to a feasible state immediately after creation. If immediately infeasible, the operation MUST log a warning but still allow creation (infeasibility may resolve when parent points are moved). All Element2D subclasses MUST implement an `isFeasible(world)` convenience method that calls `realize2D(world)` and returns the feasibility boolean. [Phase 114 - Feasibility Validation on Creation]
+frontend/src/tools/PerpendicularLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-044 (Perpendicular Line Tool)
+frontend/src/tools/Create3DLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/ParallelLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-043 (Parallel Line Tool)
+frontend/src/tools/CircleTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2 - Create circles
+frontend/src/tools/LineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+frontend/src/tools/BaseTool.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/tools/BaseTool.ts:27:   * Abstract method: subclasses implement specific tool behavior
+frontend/src/tools/IntersectionTool.ts:17: * Reference: specs/001-dihedral-learning-mvp/spec.md
+frontend/src/components/LoginStatusWidget.vue:7:  @see specs/001-dihedral-learning-mvp/ui-spec.md - Google Drive Login Status Widget
+frontend/src/components/LoginStatusWidget.vue:36:      <div v-else class="user-avatar-placeholder">
+frontend/src/components/LoginStatusWidget.vue:99: * Get initials from name for avatar placeholder
+frontend/src/components/LoginStatusWidget.vue:192:.user-avatar-placeholder {
+frontend/src/tools/GuideTool.ts:22: * - specs/001-dihedral-learning-mvp/spec.md §US3 - Create Guide
+frontend/src/tools/GuideTool.ts:23: * - specs/001-dihedral-learning-mvp/spec.md §Guides
+frontend/src/application/toolbar/ToolbarHistoryController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/toolbar/ToolbarHistoryController.ts:6:  commandStack: CommandStack;
+frontend/src/application/toolbar/ToolbarHistoryController.ts:17:    throw new Error('CommandStack not provided');
+frontend/src/application/toolbar/ToolbarHistoryController.ts:20:  return new ToolbarHistoryController({ commandStack: deps.commandStack as CommandStack });
+frontend/src/tools/Create3DSegmentTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts:5:  constructor(private readonly commandStack: CommandStack) {}
+frontend/src/application/construction/QuickToolUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/QuickToolUseCases.ts:8:  commandStack: CommandStack;
+frontend/src/stores/viewStore.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md - View Transformation
+specs/001-dihedral-learning-mvp/for-planing.md:81:  - **Problem**: Creation operations never check whether the newly created element is immediately infeasible. Infeasible elements are created silently and only show up as infeasible indicators during rendering. No `isFeasible()` convenience method exists on Element2D subclasses.
+specs/001-dihedral-learning-mvp/for-planing.md:82:  - **Solution**: Add `isFeasible(world)` method to all Element2D subclasses. Add post-creation feasibility check in relevant operations. Log warnings for immediately-infeasible elements but allow creation (since moving parent points may fix it).
+specs/001-dihedral-learning-mvp/for-planing.md:121:  - **Problem**: Segment3DFromProjections.realize3D() is a TODO stub returning placeholder coordinates. No compatibility validation at creation time. No process tree action recording.
+specs/001-dihedral-learning-mvp/for-planing.md:146:  - **Solution**: Refactored constructors to receive parent objects (HingeLine/BrokenHingeLine) as primary parameters, making the geometric relationship explicit in the API. Fixed label extraction to correctly parse the line number from IDs like "projPlane28/line2d33" → "BHHL_{33}" (not "BHHL_{28}").
+specs/001-dihedral-learning-mvp/for-planing.md:155:    - API clarity: Geometric dependency is explicit in method signature
+specs/001-dihedral-learning-mvp/for-planing.md:252:    - **Modified**: Guide2D.ts, AddGuide2DPerpendicularToLineOp.ts, CreateProjectionPlaneTool.ts, SvgCanvas.vue, ProjectService.ts
+specs/001-dihedral-learning-mvp/for-planing.md:457:  - **Migration**: No data migration needed, backward compatible
+specs/001-dihedral-learning-mvp/for-planing.md:463:  - **Status**: Implementation complete. All IDs migrated to camelCase format. UI corruption fixed. Test suite updated (76 passing files, 1072 tests passing).
+specs/001-dihedral-learning-mvp/for-planing.md:466:  - **Implementation**: ID generators updated, ProjectService migration logic added, 100+ test files updated
+specs/001-dihedral-learning-mvp/for-planing.md:472:  - **Problem**: 136 tests failing across 23 files due to Phase 95 camelCase ID migration
+specs/001-dihedral-learning-mvp/for-planing.md:473:  - **Solution**: Updated all test data to use camelCase IDs, fixed component API expectations, deleted obsolete tests
+specs/001-dihedral-learning-mvp/for-planing.md:476:    - ProjectService roundTrip tests: Updated operation parameters
+specs/001-dihedral-learning-mvp/for-planing.md:495:    - ProjectService serialization fallback now includes outputs
+specs/001-dihedral-learning-mvp/for-planing.md:518:    - Preserved legitimate optional chaining (~80+ instances in Vue components, external APIs)
+specs/001-dihedral-learning-mvp/for-planing.md:618:    - Simpler API: Both derived matrix parameters removed from operations
+specs/001-dihedral-learning-mvp/for-planing.md:627:    4. Update ProjectService serialization to omit both derived matrix fields
+specs/001-dihedral-learning-mvp/for-planing.md:628:    5. Update ProjectService deserialization to compute derived matrices from forward matrices
+specs/001-dihedral-learning-mvp/for-planing.md:629:    6. Add migration for old projects (ignore extra derived matrix fields if present)
+specs/001-dihedral-learning-mvp/for-planing.md:640:    - src/services/ProjectService.ts (serialization/deserialization)
+specs/001-dihedral-learning-mvp/for-planing.md:643:    - tests/integration/ProjectService.*.spec.ts (round-trip tests)
+specs/001-dihedral-learning-mvp/for-planing.md:649:    - Operation/World API changes (4 tasks: remove parameters, update signatures)
+specs/001-dihedral-learning-mvp/for-planing.md:651:    - ProjectService serialization (3 tasks: omit inverses, deserialize, migration)
+specs/001-dihedral-learning-mvp/for-planing.md:652:    - Testing (12 tasks: unit tests for inverses, serialization, deserialization, migration, round-trip, performance)
+specs/001-dihedral-learning-mvp/for-planing.md:749:    5. **Phase 93.5**: Update ProjectService deserialization to handle flat format
+specs/001-dihedral-learning-mvp/for-planing.md:750:    6. **Phase 93.6**: Add migration for old project files (detect wrapper, extract fields)
+specs/001-dihedral-learning-mvp/for-planing.md:760:    - ProjectService serialization (3 tasks: serialize flat, deserialize flat, migration)
+specs/001-dihedral-learning-mvp/for-planing.md:762:    - Testing (7 tasks: unit tests, serialization tests, migration tests, integration tests)
+specs/001-dihedral-learning-mvp/for-planing.md:765:    - Old project files need migration (flat structure different from nested)
+specs/001-dihedral-learning-mvp/for-planing.md:768:  - **Migration Impact**: Medium - affects serialization format, requires project file migration
+specs/001-dihedral-learning-mvp/for-planing.md:1040:    - ProcessTree API: Add `removeAction(actionId: string)` method (finds action, removes from parent ActionGroup, cleans empty groups)
+specs/001-dihedral-learning-mvp/for-planing.md:1204:  - **Migration**: No data migration needed, only code changes
+specs/001-dihedral-learning-mvp/for-planing.md:1332:    - Add dependency on worldStore to get active plane
+specs/001-dihedral-learning-mvp/for-planing.md:1389:    2. Design API for user-defined 2D↔3D relationships
+specs/001-dihedral-learning-mvp/for-planing.md:1653:    - Added `"license": "GPL-3.0-or-later"` to all package.json files (root, frontend, backend)
+specs/001-dihedral-learning-mvp/for-planing.md:1669:    - Updated [backend/package.json](../../backend/package.json): Added license field
+specs/001-dihedral-learning-mvp/for-planing.md:1909:  - **Notes**: Inspired by GeoGebra Classic's proven toolbar organization; improves UX without changing tool functionality; all existing tools migrate seamlessly
+specs/001-dihedral-learning-mvp/for-planing.md:1945:  - **Data model**: [data-model.md](data-model.md#phase-68-toolbar-icon-only-design---svg-illustrations-with-color-coded-construction-methods) Icon component architecture, color constants, migration strategy
+specs/001-dihedral-learning-mvp/for-planing.md:1966:    3. **Paper API misuse**: Tests call `paper.setViewport()` which may not exist in current API
+specs/001-dihedral-learning-mvp/for-planing.md:1973:    - 7 failures: `paper.setViewport` - must use correct Paper API or remove if obsolete
+specs/001-dihedral-learning-mvp/for-planing.md:1984:    - paperHitTesting.spec.ts (Paper API usage)
+specs/001-dihedral-learning-mvp/for-planing.md:1987:    - ProjectService.selfContainment.spec.ts (plane not initialized)
+specs/001-dihedral-learning-mvp/for-planing.md:1991:    - T1113: Fix paperHitTesting.spec.ts - use correct Paper API or remove viewport tests if obsolete
+specs/001-dihedral-learning-mvp/for-planing.md:1994:    - T1116: Fix ProjectService.selfContainment.spec.ts - initialize World properly with planes
+specs/001-dihedral-learning-mvp/for-planing.md:2012:  - **Data model**: [data-model.md](./data-model.md#phase-65-test-factory-method-migration---use-projectionplane-factory-methods-for-element-creation) Complete migration patterns with before/after examples
+specs/001-dihedral-learning-mvp/for-planing.md:2013:  - **Tasks**: Phase 65 in [tasks.md](./tasks.md#phase-65-test-factory-method-migration---use-projectionplane-factory-methods) (T1091-T1110: 20 tasks)
+specs/001-dihedral-learning-mvp/for-planing.md:2014:    - Phase 65.1: Service test migration (paperService.spec.ts, renderService.spec.ts)
+specs/001-dihedral-learning-mvp/for-planing.md:2015:    - Phase 65.2: Domain test migration (paperHitTesting.spec.ts, line.spec.ts, etc.)
+specs/001-dihedral-learning-mvp/for-planing.md:2016:    - Phase 65.3: Integration/E2E test migration and final audit
+specs/001-dihedral-learning-mvp/for-planing.md:2046:  - **STATUS**: ✅ COMPLETE (Jan 14, 2026) - Phase 64 implemented with 3 tool migrations
+specs/001-dihedral-learning-mvp/for-planing.md:2058:  - **Data model**: [data-model.md](./data-model.md#tool-argument-collection-framework-phase-64) Complete architecture with interfaces, base class, usage examples, migration strategy
+specs/001-dihedral-learning-mvp/for-planing.md:2069:    - T1087: Unit tests for framework and migrated tools
+specs/001-dihedral-learning-mvp/for-planing.md:2092:    - **Total**: 561 → 338 lines (40% reduction across 3 migrated tools)
+specs/001-dihedral-learning-mvp/for-planing.md:2104:    - **Declarative API**: Tools declare what they need, framework handles collection
+specs/001-dihedral-learning-mvp/for-planing.md:2133:    - ✅ CircleTool migrated (33% code reduction, 191→127 lines)
+specs/001-dihedral-learning-mvp/for-planing.md:2134:    - ✅ ParallelLineTool migrated (43% code reduction, 185→106 lines)
+specs/001-dihedral-learning-mvp/for-planing.md:2135:    - ✅ PerpendicularLineTool migrated (43% code reduction, 185→105 lines)
+specs/001-dihedral-learning-mvp/for-planing.md:2136:    - ⏸️ TangentLineTool migration deferred (multi-method tool, future work)
+specs/001-dihedral-learning-mvp/for-planing.md:2137:    - ⏸️ IntersectionTool migration deferred (three-method tool, future work)
+specs/001-dihedral-learning-mvp/for-planing.md:2140:    - ⏸️ E2E tests deferred (framework behavior validated through migrated tools)
+specs/001-dihedral-learning-mvp/for-planing.md:2141:    - ✅ Consistent UI feedback across all migrated tools (automatic via base class)
+specs/001-dihedral-learning-mvp/for-planing.md:2143:  - **Implementation**: ✅ COMPLETE - Core framework and 3 tool migrations done
+specs/001-dihedral-learning-mvp/for-planing.md:2144:  - **Notes**: Successfully implemented core framework and migrated 3 tools with 40% average code reduction. Remaining tools (TangentLineTool, IntersectionTool) can be migrated when needed. Framework only supports mutually exclusive argument combinations (different element types). Tools requiring same-type arguments (e.g., "2 points" vs "3 points") should use separate tools.
+specs/001-dihedral-learning-mvp/for-planing.md:2162:    - ✅ All 11 tools migrated (CircleTool, GuideTool, IntersectionTool, LineTool, ParallelLineTool, PerpendicularLineTool, PointTool, SegmentTool, TangentLineToCircleParallelToLineTool, TangentLineToCircleThroughPointTool)
+specs/001-dihedral-learning-mvp/for-planing.md:2195:  - **Notes**: Built on Phase 62's 'any-line' solution; provides architectural foundation for future mask extensions; maintained backward compatibility during migration for smooth transition
+specs/001-dihedral-learning-mvp/for-planing.md:2206:    - ✅ Added 'any-line' to SelectableElementType (matches all Line2D subclasses)
+specs/001-dihedral-learning-mvp/for-planing.md:2337:    - T990: Skipped (dependencyService.spec.ts broken with old API)
+specs/001-dihedral-learning-mvp/for-planing.md:2515:    - **Simpler API**: Generic pattern applies to any labeled element
+specs/001-dihedral-learning-mvp/for-planing.md:2523:* [X] **Remove deprecated CommandStack.execute() method**
+specs/001-dihedral-learning-mvp/for-planing.md:2525:  - **Problem**: CommandStack.execute() is marked @deprecated and kept for backward compatibility, but no external code uses it
+specs/001-dihedral-learning-mvp/for-planing.md:2527:    - Method exists in CommandStack.ts (lines 51-70)
+specs/001-dihedral-learning-mvp/for-planing.md:2529:    - Only called internally within CommandStack itself as fallback
+specs/001-dihedral-learning-mvp/for-planing.md:2536:    - **Reduced API surface**: Fewer methods to maintain
+specs/001-dihedral-learning-mvp/for-planing.md:2541:    - Remove method (T916): Delete execute() from CommandStack.ts
+specs/001-dihedral-learning-mvp/for-planing.md:2543:    - Unit tests (T918): Verify CommandStack.push() still works correctly
+specs/001-dihedral-learning-mvp/for-planing.md:2549:* [X] **Complete Segment2DRealization2D migration (Phase 22.5 cleanup)**
+specs/001-dihedral-learning-mvp/for-planing.md:2552:  - **Background**: Phase 22.5 unified segment and line realizations to use Line2DRealization2D, but migration incomplete
+specs/001-dihedral-learning-mvp/for-planing.md:2560:  - **Technical Debt**: Incomplete migration leaving deprecated class in use
+specs/001-dihedral-learning-mvp/for-planing.md:2567:    - **Complete migration**: Finishes Phase 22.5 work
+specs/001-dihedral-learning-mvp/for-planing.md:2578:    - Documentation (T925): Update data-model.md to confirm completion of Phase 22.5 migration
+specs/001-dihedral-learning-mvp/for-planing.md:2693:    - **Minimal Scope**: Only implements what's needed for current MVP initialization (11 tasks vs original 59)
+specs/001-dihedral-learning-mvp/for-planing.md:2706:    - ❌ **CommandStack NOT recreated**: Only cleared, not replaced with new instance
+specs/001-dihedral-learning-mvp/for-planing.md:2716:    1. Create new CommandStack instance when creating/loading projects (not just clear)
+specs/001-dihedral-learning-mvp/for-planing.md:2719:  - **Verification**: Partially complete - World is recreated, but CommandStack is not
+specs/001-dihedral-learning-mvp/for-planing.md:2826:    - ✅ Reusability: Factory can be called from World constructor, tests, migration tools
+specs/001-dihedral-learning-mvp/for-planing.md:2934:       - Special command that CANNOT be undone (not added to CommandStack)
+specs/001-dihedral-learning-mvp/for-planing.md:2940:       - CommandStack checks `cmd.canUndo()` before adding to undo stack
+specs/001-dihedral-learning-mvp/for-planing.md:2999:      // Note: NOT pushed to CommandStack (canUndo = false)
+specs/001-dihedral-learning-mvp/for-planing.md:3018:    - CommandStack.push() checks: `if (!cmd.canUndo()) { return; }` (don't add to stack)
+specs/001-dihedral-learning-mvp/for-planing.md:3024:    - Command infrastructure (T543-T544): Add canUndo mechanism to Command and CommandStack
+specs/001-dihedral-learning-mvp/for-planing.md:3040:  - **Coordination with Phase 46**: Phase 46 (T539-T540) had placeholder tasks for this - Phase 47 provides full implementation
+specs/001-dihedral-learning-mvp/for-planing.md:3122:  - **Implementation Strategy**: Simple cutover (no migration)
+specs/001-dihedral-learning-mvp/for-planing.md:3134:    - Domain: All Element2D subclasses (Point2D, Line2D, Circle2D hierarchies)
+specs/001-dihedral-learning-mvp/for-planing.md:3136:    - Services: ProjectService (serialization), PaperService (rendering), DependencyService
+specs/001-dihedral-learning-mvp/for-planing.md:3141:  - **Success Criteria**: ID utilities work, new elements use paths, migration tool converts old projects, all tests pass, no regressions
+specs/001-dihedral-learning-mvp/for-planing.md:3206:* [X] Reorganize operation files into component-based folders (world/, processTree/, paper/, toolbar/, viewState/) for better cohesion and maintainability.
+specs/001-dihedral-learning-mvp/for-planing.md:3215:    - **Separation of concerns**: Domain (world/) vs rendering (paper/) vs UI (toolbar/)
+specs/001-dihedral-learning-mvp/for-planing.md:3224:    - Update imports (T451-T454): ProjectService, tools, commands, all consumers
+specs/001-dihedral-learning-mvp/for-planing.md:3229:  - **Optional**: Create Paper/Toolbar operations (T462-T463) - can be added incrementally after core migration
+specs/001-dihedral-learning-mvp/for-planing.md:3237:  - **Problem**: ProjectService.reconstructOperation() only handles 8 operation types (creation), but 19 operation classes exist
+specs/001-dihedral-learning-mvp/for-planing.md:3245:    - Add missing serialization cases (T431-T436): 11 operation types to ProjectService switch
+specs/001-dihedral-learning-mvp/for-planing.md:3251:    - Schema migration framework (T442): Future enhancement
+specs/001-dihedral-learning-mvp/for-planing.md:3277:    - Unit tests (T494): Verify base class via concrete subclasses, test type guards
+specs/001-dihedral-learning-mvp/for-planing.md:3320:  - **Data Model**: Added §Element2DRealization2D Base Class with complete specification, code examples, migration guide
+specs/001-dihedral-learning-mvp/for-planing.md:3333:  - **Current Architecture**: App.vue manages World/CommandStack/metadata as separate reactive refs - this is correct
+specs/001-dihedral-learning-mvp/for-planing.md:3334:  - **What Exists**: ProjectService for serialization/deserialization via command replay
+specs/001-dihedral-learning-mvp/for-planing.md:3375:    - Serialization (T468): ProjectService reconstructOperation case
+specs/001-dihedral-learning-mvp/for-planing.md:3497:* [X] Even if we have already noted it in many cases, and it should be stated that way in the data-model.md file, we still have Command subclasses. Those must be removed, all commands must be implemented using the Command class which should be not derivable. Enforce that in the code if that is possible, and also add a comment explaining it in the class definition!!! Can a test be added for ensuring this condition holds? In that case add the test and document also there that the condition must be enforced.
+frontend/src/components/workspace/SvgCanvas.vue:178: * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+frontend/src/application/processHistory/ProcessHistoryController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/processHistory/ProcessHistoryController.ts:17:  commandStack: CommandStack;
+frontend/src/application/processHistory/ProcessHistoryController.ts:29:    throw new Error('CommandStack not provided');
+frontend/src/application/processHistory/ProcessHistoryController.ts:34:    commandStack: deps.commandStack as CommandStack
+frontend/src/stores/toolStore.ts:11: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Tool Interactions
+frontend/src/stores/toolStore.ts:12: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/application/construction/ConstructionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/ConstructionUseCases.ts:32:  commandStack: CommandStack;
+frontend/src/stores/settingsStore.ts:13: * @see specs/001-dihedral-learning-mvp/ui-spec.md#project-settings-dialog
+frontend/src/stores/settingsStore.ts:14: * @see specs/001-dihedral-learning-mvp/ui-spec.md#state-persistence
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:23:    private readonly commandStack: CommandStack
+frontend/src/application/tools/CanvasToolController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/tools/CanvasToolController.ts:12:  commandStack: CommandStack;
+frontend/src/application/tools/CanvasToolController.ts:24:    throw new Error('CommandStack not provided');
+frontend/src/application/tools/CanvasToolController.ts:28:    commandStack: deps.commandStack as CommandStack,
+frontend/src/components/header/ProjectNameDisplay.vue:55: * Reference: specs/001-dihedral-learning-mvp/spec.md - Project Name Display and Editing
+frontend/src/components/toolbars/Toolbar.vue:121:import { createToolbarHistoryController } from '@/application/toolbar/ToolbarHistoryController';
+frontend/src/components/toolbars/Toolbar.vue:126:import SelectionToolIcon from '@/components/icons/toolbar/SelectionToolIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:127:import NewFileIcon from '@/components/icons/toolbar/NewFileIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:128:import OpenFileIcon from '@/components/icons/toolbar/OpenFileIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:129:import UndoIcon from '@/components/icons/toolbar/UndoIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:130:import RedoIcon from '@/components/icons/toolbar/RedoIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:131:import GridIcon from '@/components/icons/toolbar/GridIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:132:import ProjectionIcon from '@/components/icons/toolbar/ProjectionIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:133:import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:142: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+frontend/src/application/canvas/CanvasStyleUseCase.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:8:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/stores/processStore.ts:7:import { CommandStack } from '../commands/CommandStack';
+frontend/src/stores/processStore.ts:11:  commandHistory: CommandStack;
+frontend/src/stores/processStore.ts:17:    commandHistory: new CommandStack()
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/stores/authStore.ts:8: * @see specs/001-dihedral-learning-mvp/data-model.md - Authentication State
+frontend/src/commands/CommandStack.ts:2: * CommandStack - Manages undo/redo history
+frontend/src/commands/CommandStack.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/CommandStack.ts:21:export class CommandStack {
+frontend/src/application/world/initializeWorld.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/world/initializeWorld.ts:19:export function initializeWorld(world: World, commandStack: CommandStack): void {
+frontend/src/components/dialogs/PropertiesDialog.vue:62:                placeholder="#000000"
+frontend/src/components/dialogs/PropertiesDialog.vue:334:  // For now, just show placeholder
+frontend/src/commands/Command.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/Command.ts:10: * ARCHITECTURAL PRINCIPLE: Command MUST NOT be subclassed
+frontend/src/commands/Command.ts:14: * "Architecture: Single Command class (not subclasses) - the real logic is in Operation classes"
+frontend/src/commands/Command.ts:36: * 4. **Architectural Consistency**: Having Command subclasses encourages violating
+frontend/src/commands/Command.ts:54: * not a Command subclass.
+frontend/src/commands/Command.ts:199:   * CommandStack checks this before adding commands to the undo stack.
+frontend/src/components/dialogs/NewProjectDialog.vue:13:            placeholder="Enter project name..."
+frontend/src/components/dialogs/NewProjectDialog.vue:43:import { projectService } from '../../services/ProjectService';
+frontend/src/commands/factories/DeletionSequenceFactory.ts:19: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
+frontend/src/commands/factories/ProjectionSetupFactory.ts:11: * Reference: specs/001-dihedral-learning-mvp/example-setups.md
+frontend/src/commands/factories/CircleSequenceFactory.ts:10: * - Consistent API for circle creation
+frontend/src/commands/factories/LineSequenceFactory.ts:14: * - Consistent API for line creation across different line types
+frontend/src/commands/factories/README.md:164:Test with real World and CommandStack:
+frontend/src/commands/operations/IOperation.ts:5: * each operation's typed descriptor plus the operation registry; ProjectService must
+frontend/src/services/SVGRenderer.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-transformations
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:42: * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
+specs/001-dihedral-learning-mvp/tasks.md:1:# Tasks: Diedrico Dihedral Learning MVP
+specs/001-dihedral-learning-mvp/tasks.md:3:**Input**: Design documents from `/specs/001-dihedral-learning-mvp/`  
+specs/001-dihedral-learning-mvp/tasks.md:43:- [X] T006 [P] Implement realize() method in FreePoint2D (returns position) and IntersectionPoint2D (placeholder)
+specs/001-dihedral-learning-mvp/tasks.md:90:- **Component Structure**: Use Vue 3 Composition API per [constitution.md](../../.specify/memory/constitution.md#principle-iv-technology-discipline). All components must be .vue single-file components.
+specs/001-dihedral-learning-mvp/tasks.md:213:- [X] T043 [P] E2E test for pan/zoom (deferred - E2E infrastructure needs backend fix)
+specs/001-dihedral-learning-mvp/tasks.md:235:- **CommandStack**: Implement undo/redo stack infrastructure for future undo/redo UI (Phase 10)
+specs/001-dihedral-learning-mvp/tasks.md:269:- [X] T063b [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
+specs/001-dihedral-learning-mvp/tasks.md:323:- [X] T074a [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+specs/001-dihedral-learning-mvp/tasks.md:577:**Purpose**: Eliminate Command subclasses, enable operation chaining pattern  
+specs/001-dihedral-learning-mvp/tasks.md:580:**Context**: Current implementation requires Command subclasses (CreateIntersectionPointCommand, CreateFreePointCommand, etc.), but data-model.md documents a single generic Command class where tools build commands directly using operation chaining.
+specs/001-dihedral-learning-mvp/tasks.md:584:// Tool creates command subclass
+specs/001-dihedral-learning-mvp/tasks.md:615:1. **Command is abstract**: Has `abstract execute()` method forcing subclasses
+specs/001-dihedral-learning-mvp/tasks.md:617:3. **CommandStack.execute() calls cmd.execute()**: Should accept pre-built commands
+specs/001-dihedral-learning-mvp/tasks.md:621:- Commands: Command.ts, CommandStack.ts, 6 command subclass files
+specs/001-dihedral-learning-mvp/tasks.md:634:  - Ensure addAndExecute(), commit(), rollback(), undo(), redo() work without subclasses
+specs/001-dihedral-learning-mvp/tasks.md:636:- [X] R002 Update CommandStack API in frontend/src/commands/CommandStack.ts
+specs/001-dihedral-learning-mvp/tasks.md:643:- [X] R003 Add CommandStack.push() convenience method (if execute renamed)
+specs/001-dihedral-learning-mvp/tasks.md:709:  - Uses real World instance instead of mock worldStore
+specs/001-dihedral-learning-mvp/tasks.md:732:**COMPLETED**: All Phase 8 command test files refactored (20/20 tests passing). Command subclasses deleted. All tests use generic Command + Operation pattern calling ProjectionPlane methods.
+specs/001-dihedral-learning-mvp/tasks.md:747:  - Test: Command is concrete (no subclass needed)
+specs/001-dihedral-learning-mvp/tasks.md:755:- [X] R018 [P] Unit tests for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+specs/001-dihedral-learning-mvp/tasks.md:774:  - Included placeholder for future E2E tests when tools implement multi-operation commands
+specs/001-dihedral-learning-mvp/tasks.md:818:- **CommandStack**: Maintain undo/redo stacks. Execute pushes to undo stack, clears redo stack. Undo pops from undo, pushes to redo.
+specs/001-dihedral-learning-mvp/tasks.md:828:- [X] T063 [P] Create CommandStack class in frontend/src/commands/CommandStack.ts
+specs/001-dihedral-learning-mvp/tasks.md:829:  - **DONE in Phase 6.5**: CommandStack with execute(), undo(), redo(), canUndo(), canRedo()
+specs/001-dihedral-learning-mvp/tasks.md:842:- [X] T072 [P] Unit test for CommandStack in frontend/tests/unit/commands/commandStack.spec.ts
+specs/001-dihedral-learning-mvp/tasks.md:843:  - **DONE in Phase 6.5**: T074a - Comprehensive CommandStack tests
+specs/001-dihedral-learning-mvp/tasks.md:875:**Factory Method API Design**:
+specs/001-dihedral-learning-mvp/tasks.md:951:  - Add console warning when old API used
+specs/001-dihedral-learning-mvp/tasks.md:953:  - Plan removal after migration complete
+specs/001-dihedral-learning-mvp/tasks.md:973:    - Removed obsolete operations.spec.ts (old API no longer exists)
+specs/001-dihedral-learning-mvp/tasks.md:982:    - E2E tests don't directly access World API - they test via UI
+specs/001-dihedral-learning-mvp/tasks.md:983:    - E2E test runner has unrelated backend path issue (separate from this task)
+specs/001-dihedral-learning-mvp/tasks.md:987:**Follow-up**: After migration, remove AddElementOp completely and clean up debug logs
+specs/001-dihedral-learning-mvp/tasks.md:1206:**Rationale**: Feature deemed unnecessary for MVP. Distance operations can be achieved through other tool combinations.
+specs/001-dihedral-learning-mvp/tasks.md:1385:  - **IMPACT**: Medium - Style inheritance is nice-to-have for consistency, not critical for MVP
+specs/001-dihedral-learning-mvp/tasks.md:1434:- [X] T200j Refactor Segment2D to extend Line2D (move from separate class to Line2D subclass)
+specs/001-dihedral-learning-mvp/tasks.md:1523:  - **IMPACT**: Low - Dependency indicators are nice-to-have, not essential for MVP
+specs/001-dihedral-learning-mvp/tasks.md:1578:  - **IMPACT**: Medium - Error messages would improve UX but not critical for MVP
+specs/001-dihedral-learning-mvp/tasks.md:1636:- **Google Drive API**: Use gapi.client library for direct browser-to-Drive communication. No backend server required.
+specs/001-dihedral-learning-mvp/tasks.md:1647:- [X] T242 [P] Create ProjectService in frontend/src/services/ProjectService.ts
+specs/001-dihedral-learning-mvp/tasks.md:1654:- [X] T247 Install Google API client library: `npm install @types/gapi @types/gapi.client.drive`
+specs/001-dihedral-learning-mvp/tasks.md:1668:- [X] T261 Handle Google Drive API errors (network, quota, authentication expired)
+specs/001-dihedral-learning-mvp/tasks.md:1897:  - Update file metadata via Google Drive API
+specs/001-dihedral-learning-mvp/tasks.md:1948:  - Mock Google Drive API responses
+specs/001-dihedral-learning-mvp/tasks.md:2025:- **Principle III (Frontend-First)**: All geometry calculations in frontend, Google Drive API for persistence (no backend server)
+specs/001-dihedral-learning-mvp/tasks.md:2081:**Purpose**: Eliminate Guide2DRealization2D subclass, use Line2DRealization2D directly  
+specs/001-dihedral-learning-mvp/tasks.md:2120:  - ✅ Documented in data-model.md: realization subclasses should not be created
+specs/001-dihedral-learning-mvp/tasks.md:2131:**Checkpoint**: All line-based elements use Line2DRealization2D directly, no unnecessary subclasses
+specs/001-dihedral-learning-mvp/tasks.md:2308:  - ElementRenderer.vue: Handle 'sibling-guide' type
+specs/001-dihedral-learning-mvp/tasks.md:2312:  - File: frontend/src/components/renderers/ElementRenderer.vue, frontend/src/components/panels/ElementsPanel.vue
+specs/001-dihedral-learning-mvp/tasks.md:2348:  - File: specs/001-dihedral-learning-mvp/data-model.md
+specs/001-dihedral-learning-mvp/tasks.md:2461:  - File: specs/001-dihedral-learning-mvp/data-model.md
+specs/001-dihedral-learning-mvp/tasks.md:2523:  - File: specs/001-dihedral-learning-mvp/data-model.md
+specs/001-dihedral-learning-mvp/tasks.md:2651:**Purpose**: Ensure all UI operations that modify application state are undoable through CommandStack  
+specs/001-dihedral-learning-mvp/tasks.md:2658:Currently, some UI operations directly manipulate application state without going through the CommandStack. This violates the architectural principle that **all state modifications must be undoable**.
+specs/001-dihedral-learning-mvp/tasks.md:2691:  - Note: Using Command + Operations pattern, not Command subclasses
+specs/001-dihedral-learning-mvp/tasks.md:2702:  - Adds operations for each element type, then commits to CommandStack
+specs/001-dihedral-learning-mvp/tasks.md:2752:- ✅ Command subclasses (Create*Command) still exist but only used in tests
+specs/001-dihedral-learning-mvp/tasks.md:2753:- ⏳ TODO: Update unit tests to use generic Command pattern, then delete Command subclasses
+specs/001-dihedral-learning-mvp/tasks.md:2768:**Purpose**: Enforce architectural principle that Command class should not be subclassed  
+specs/001-dihedral-learning-mvp/tasks.md:2769:**Reference**: [data-model.md](./data-model.md#command-pattern-undoredo) - "Single Command class (not subclasses)"  
+specs/001-dihedral-learning-mvp/tasks.md:2770:**Reference**: [for-planing.md](./for-planing.md#todo) - "We still have Command subclasses. Those must be removed"
+specs/001-dihedral-learning-mvp/tasks.md:2777:> **Architecture**: Single Command class (not subclasses) - the real logic is in Operation classes
+specs/001-dihedral-learning-mvp/tasks.md:2780:Currently there are 3 command subclasses violating this principle:
+specs/001-dihedral-learning-mvp/tasks.md:2787:- All domain logic belongs in Operation classes, not Command subclasses
+specs/001-dihedral-learning-mvp/tasks.md:2788:- Having subclasses encourages violating the Operation pattern
+specs/001-dihedral-learning-mvp/tasks.md:2833:UpdateElementStyleCommand is a placeholder that needs to be converted to use the Operation pattern:
+specs/001-dihedral-learning-mvp/tasks.md:2857:  - Add JSDoc comment at class definition explaining why it must not be subclassed
+specs/001-dihedral-learning-mvp/tasks.md:2864:  - Explain why Command is generic container, not meant to be subclassed
+specs/001-dihedral-learning-mvp/tasks.md:2869:- [X] T308 [D] Add test to verify no Command subclasses exist in codebase
+specs/001-dihedral-learning-mvp/tasks.md:2872:  - Fails if any Command subclasses are found (except in test files)
+specs/001-dihedral-learning-mvp/tasks.md:2874:  - Excludes test files from scan (tests may have mock subclasses)
+specs/001-dihedral-learning-mvp/tasks.md:2875:  - Documents architectural rule that Command must not be subclassed
+specs/001-dihedral-learning-mvp/tasks.md:2879:- [X] T309 [D] Verify all tests pass after Command subclass removal
+specs/001-dihedral-learning-mvp/tasks.md:2881:  - Run E2E tests: `npm run test:e2e`
+specs/001-dihedral-learning-mvp/tasks.md:2895:- Test for no Command subclasses provides ongoing architectural validation
+specs/001-dihedral-learning-mvp/tasks.md:2951:  - Remove element1Id, element2Id, index fields (move to subclasses)
+specs/001-dihedral-learning-mvp/tasks.md:2953:  - Keep existing IntersectionPoint2D implementation as reference during migration
+specs/001-dihedral-learning-mvp/tasks.md:2991:  - Keep 'intersection' type temporarily for backward compatibility during migration
+specs/001-dihedral-learning-mvp/tasks.md:3038:  - Add migration logic: if old IntersectionPoint2D, convert to specialized type
+specs/001-dihedral-learning-mvp/tasks.md:3050:  - ElementRenderer.vue: Handle all intersection point types
+specs/001-dihedral-learning-mvp/tasks.md:3053:  - File: frontend/src/components/renderers/ElementRenderer.vue
+specs/001-dihedral-learning-mvp/tasks.md:3204:  - File: frontend/src/components/toolbar/LoginStatusWidget.vue
+specs/001-dihedral-learning-mvp/tasks.md:3212:  - File: frontend/src/components/toolbar/LoginStatusWidget.vue (style section)
+specs/001-dihedral-learning-mvp/tasks.md:3268:- Authentication state NOT part of CommandStack (not undoable, not in project files)
+specs/001-dihedral-learning-mvp/tasks.md:3281:**Problem**: ProjectService.reconstructOperation() only handles 8 operation types, but 19 operation classes exist. This means operations like deletion, style changes, and ProcessTree operations are NOT saved to files, causing data loss on project reload.
+specs/001-dihedral-learning-mvp/tasks.md:3293:- ❌ AddIntersectionPoint2D (1 legacy intersection op, if still used)
+specs/001-dihedral-learning-mvp/tasks.md:3301:[X] T431 [P] Add RemovePoint2DOp to ProjectService switch in `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:3316:[X] T433 Add AddSiblingGuide2DOp to ProjectService switch
+specs/001-dihedral-learning-mvp/tasks.md:3322:[X] T434 Add UpdateElementStyleOp to ProjectService switch
+specs/001-dihedral-learning-mvp/tasks.md:3328:[X] T435 Add ProcessTree operation cases to ProjectService switch
+specs/001-dihedral-learning-mvp/tasks.md:3334:[X] T436 Verify legacy AddIntersectionPoint2DOp is not used
+specs/001-dihedral-learning-mvp/tasks.md:3336:- If found, either: add to switch OR migrate to specialized intersection ops
+specs/001-dihedral-learning-mvp/tasks.md:3342:- Test: Verify each operation type has case in ProjectService.reconstructOperation()
+specs/001-dihedral-learning-mvp/tasks.md:3351:  - Serialize via ProjectService.serializeCommands()
+specs/001-dihedral-learning-mvp/tasks.md:3352:  - Deserialize via ProjectService.deserializeCommands()
+specs/001-dihedral-learning-mvp/tasks.md:3354:- **Test file**: `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts`
+specs/001-dihedral-learning-mvp/tasks.md:3369:- Check that reconstructed operation doesn't require World/CommandStack state
+specs/001-dihedral-learning-mvp/tasks.md:3372:- **Test file**: `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts`
+specs/001-dihedral-learning-mvp/tasks.md:3406:- Change ProjectService.SCHEMA_VERSION = '3.1.0'
+specs/001-dihedral-learning-mvp/tasks.md:3411:- **Prepare**: Future migration from 3.0.0 → 3.1.0 (no breaking changes)
+specs/001-dihedral-learning-mvp/tasks.md:3412:- **STATUS**: ✅ COMPLETE - Schema version updated in ProjectService.ts
+specs/001-dihedral-learning-mvp/tasks.md:3429:- ✅ All 19 operation types have cases in ProjectService.reconstructOperation()
+specs/001-dihedral-learning-mvp/tasks.md:3458:├── paper/              ← All Paper-modifying operations (NEW)
+specs/001-dihedral-learning-mvp/tasks.md:3459:├── toolbar/            ← All Toolbar-modifying operations (NEW)
+specs/001-dihedral-learning-mvp/tasks.md:3467:- **Separation**: Domain (world/) vs rendering (paper/) vs UI (toolbar/)
+specs/001-dihedral-learning-mvp/tasks.md:3476:- Create folders: `world/`, `processTree/`, `paper/`, `toolbar/`, `viewState/`
+specs/001-dihedral-learning-mvp/tasks.md:3495:  - AddIntersectionPointOp.ts → world/ (legacy, if used)
+specs/001-dihedral-learning-mvp/tasks.md:3522:[X] T451 [P] Update ProjectService.reconstructOperation() import paths
+specs/001-dihedral-learning-mvp/tasks.md:3523:- File: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:3551:- Verify each operation has case in ProjectService.reconstructOperation()
+specs/001-dihedral-learning-mvp/tasks.md:3588:[X] T460 Code cleanup: Check and migrate DependencyOperations.ts
+specs/001-dihedral-learning-mvp/tasks.md:3591:- If used: migrate to `operations/world/DependencyOperations.ts`
+specs/001-dihedral-learning-mvp/tasks.md:3604:- Create `operations/paper/` folder (already created in T446)
+specs/001-dihedral-learning-mvp/tasks.md:3608:- **Note**: Can be added incrementally after core migration
+specs/001-dihedral-learning-mvp/tasks.md:3611:- Create `operations/toolbar/` folder (already created in T446)
+specs/001-dihedral-learning-mvp/tasks.md:3627:- **Gradual migration**: Core organization (T447-T449) first, then update consumers
+specs/001-dihedral-learning-mvp/tasks.md:3633:- ✅ ProjectService.reconstructOperation() works with new paths
+specs/001-dihedral-learning-mvp/tasks.md:3776:[T468] Add sibling intersection to ProjectService serialization
+specs/001-dihedral-learning-mvp/tasks.md:3777:- Update `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:4025:  - All tests use real World, CommandStack, not mocks
+specs/001-dihedral-learning-mvp/tasks.md:4218:- [X] T516 Update serialization in `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:4229:  - **COMPLETE**: ProjectService.determinism and cascadeDeletion tests passing (6 tests)
+specs/001-dihedral-learning-mvp/tasks.md:4445:- [X] T544 Update CommandStack.push() in `frontend/src/commands/CommandStack.ts`
+specs/001-dihedral-learning-mvp/tasks.md:4509:  - Note: NOT pushed to CommandStack (canUndo = false)
+specs/001-dihedral-learning-mvp/tasks.md:4546:  - Verify command not in CommandStack (non-undoable)
+specs/001-dihedral-learning-mvp/tasks.md:4572:- ✅ Command marked non-undoable, not in CommandStack
+specs/001-dihedral-learning-mvp/tasks.md:4813:  - ✅ Tests exist for Element2D instantiation via concrete subclasses
+specs/001-dihedral-learning-mvp/tasks.md:4816:  - ✅ Abstract methods verified implemented by subclasses
+specs/001-dihedral-learning-mvp/tasks.md:4899:- ✅ No duplicate properties in subclasses (DRY principle)
+specs/001-dihedral-learning-mvp/tasks.md:4906:- ✅ No duplicate feasible property in subclasses
+specs/001-dihedral-learning-mvp/tasks.md:4941:- ❌ NO Plane3DByTraces (deferred - not needed for MVP)
+specs/001-dihedral-learning-mvp/tasks.md:4942:- ❌ NO intersection point variations (deferred - not needed for MVP)
+specs/001-dihedral-learning-mvp/tasks.md:4955:  - NOTE: This is the base class, but we only create Plane3DFixed subclass now
+specs/001-dihedral-learning-mvp/tasks.md:4988:  - **COMPLETED**: Updated InitializationSequenceFactory and ProjectService
+specs/001-dihedral-learning-mvp/tasks.md:4990:- [x] T906 Add Plane3DFixed serialization to ProjectService ✅
+specs/001-dihedral-learning-mvp/tasks.md:5015:  - **COMPLETED**: Serialization tests passing, backward compatibility maintained with legacy 'AddPlane3D' type
+specs/001-dihedral-learning-mvp/tasks.md:5054:- **Minimal scope**: Only implements what's needed for current MVP initialization
+specs/001-dihedral-learning-mvp/tasks.md:5117:- [ ] T909 Add Plane3DFixed and Plane3DByTraces serialization to ProjectService
+specs/001-dihedral-learning-mvp/tasks.md:5149:- [ ] T915 Mark old Plane3D class as @deprecated, add migration notes
+specs/001-dihedral-learning-mvp/tasks.md:5151:  - Document migration path in comments
+specs/001-dihedral-learning-mvp/tasks.md:5156:## Phase 50: Remove Deprecated CommandStack.execute() Method ✅ COMPLETE
+specs/001-dihedral-learning-mvp/tasks.md:5158:**Purpose**: Remove unused deprecated method to clean up API surface
+specs/001-dihedral-learning-mvp/tasks.md:5162:**Context**: Phase 31 removed all Command subclasses. The execute() method was kept for backward compatibility but grep search confirms no external code uses it.
+specs/001-dihedral-learning-mvp/tasks.md:5168:- [X] T916 Remove execute() method from CommandStack.ts
+specs/001-dihedral-learning-mvp/tasks.md:5170:  - Verify CommandStack.push() is the only public method for adding commands
+specs/001-dihedral-learning-mvp/tasks.md:5173:  - ✅ Line 11: Changed "CommandStack.execute()" to "CommandStack.push()"
+specs/001-dihedral-learning-mvp/tasks.md:5176:- [X] T918 [P] Unit tests for CommandStack
+specs/001-dihedral-learning-mvp/tasks.md:5186:**Checkpoint**: ✅ CommandStack has single clear API (push), no deprecated methods
+specs/001-dihedral-learning-mvp/tasks.md:5194:**Purpose**: Finish Phase 22.5 migration by removing deprecated realization class
+specs/001-dihedral-learning-mvp/tasks.md:5196:**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 51 specification, [data-model.md](./data-model.md#phase-51-complete-segment2drealization2d-migration) - Implementation details
+specs/001-dihedral-learning-mvp/tasks.md:5231:  - ✅ Noted Phase 22.5 migration complete
+specs/001-dihedral-learning-mvp/tasks.md:5234:**Checkpoint**: ✅ Segment2DRealization2D removed, Phase 22.5 migration complete
+specs/001-dihedral-learning-mvp/tasks.md:5320:  - Implement getDependencies() as abstract (overridden by subclasses)
+specs/001-dihedral-learning-mvp/tasks.md:5323:- [x] T933 Update Plane3D subclasses (Plane3DFixed) ✅
+specs/001-dihedral-learning-mvp/tasks.md:5382:  - Test Element2D.clone() on concrete subclasses
+specs/001-dihedral-learning-mvp/tasks.md:5383:  - Test Element2D.realize2D() on concrete subclasses
+specs/001-dihedral-learning-mvp/tasks.md:5447:- Simpler API: Generic pattern applies to any labeled element
+specs/001-dihedral-learning-mvp/tasks.md:5505:  - Add migration note explaining why getHorizontalOrigin() was removed
+specs/001-dihedral-learning-mvp/tasks.md:5506:  - Files: `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:5535:  - File: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:5610:  - File: `frontend/src/components/toolbar/Toolbar.vue` (or equivalent)
+specs/001-dihedral-learning-mvp/tasks.md:5910:  - Remove placeholder radius parameter (not used)
+specs/001-dihedral-learning-mvp/tasks.md:5923:  - SKIPPED: dependencyService.spec.ts uses old API (DependencyGraph)
+specs/001-dihedral-learning-mvp/tasks.md:5961:- T990: Skipped (dependencyService.spec.ts broken with old API)
+specs/001-dihedral-learning-mvp/tasks.md:5968:- dependencyService.spec.ts needs refactoring to use ProcessTree API (separate task)
+specs/001-dihedral-learning-mvp/tasks.md:6128:  - File: `specs/001-dihedral-learning-mvp/data-model.md` (~line 3400, new section)
+specs/001-dihedral-learning-mvp/tasks.md:6216:  - Step 2 (waiting-point): Execute AddLine2DPerpendicularToLineOp, get lineId from outputs, add CreatePerpendicularLineAction to ProcessTree, commit, push to CommandStack
+specs/001-dihedral-learning-mvp/tasks.md:6291:- File: `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:6753:- File: `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:6920:- Open: `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:6928:- Open: `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:6977:- **Output**: Documentation of usage patterns and migration strategy
+specs/001-dihedral-learning-mvp/tasks.md:7000:- **Acceptance**: Base class implemented with complete API surface
+specs/001-dihedral-learning-mvp/tasks.md:7034:#### T1072: Create migration utilities
+specs/001-dihedral-learning-mvp/tasks.md:7041:- **Documentation**: Document migration path in data-model.md
+specs/001-dihedral-learning-mvp/tasks.md:7055:- **Regression tests**: Run tool tests after each migration
+specs/001-dihedral-learning-mvp/tasks.md:7058:#### T1074: Remove string-based APIs
+specs/001-dihedral-learning-mvp/tasks.md:7065:- **Acceptance**: No string-based mask APIs remain, all tests passing
+specs/001-dihedral-learning-mvp/tasks.md:7120:8. All tools migrated to use SelectionMask classes
+specs/001-dihedral-learning-mvp/tasks.md:7121:9. String-based APIs removed or deprecated
+specs/001-dihedral-learning-mvp/tasks.md:7178:- **Acceptance**: CircleTool migrated with 70%+ code reduction
+specs/001-dihedral-learning-mvp/tasks.md:7185:- **Acceptance**: Both tools migrated with 70%+ code reduction
+specs/001-dihedral-learning-mvp/tasks.md:7192:- **Acceptance**: TangentLineTool migrated with 65%+ code reduction
+specs/001-dihedral-learning-mvp/tasks.md:7199:- **Acceptance**: IntersectionTool migrated with 65%+ code reduction
+specs/001-dihedral-learning-mvp/tasks.md:7202:- Clean up manual state management from all migrated tools
+specs/001-dihedral-learning-mvp/tasks.md:7207:#### T1087: Unit tests for framework and migrated tools
+specs/001-dihedral-learning-mvp/tasks.md:7209:- Tests for all 5 migrated tools with various scenarios
+specs/001-dihedral-learning-mvp/tasks.md:7237:4. CircleTool migrated (70%+ reduction)
+specs/001-dihedral-learning-mvp/tasks.md:7238:5. ParallelLineTool migrated (70%+ reduction)
+specs/001-dihedral-learning-mvp/tasks.md:7239:6. PerpendicularLineTool migrated (70%+ reduction)
+specs/001-dihedral-learning-mvp/tasks.md:7240:7. TangentLineTool migrated (65%+ reduction, two methods)
+specs/001-dihedral-learning-mvp/tasks.md:7241:8. IntersectionTool migrated (65%+ reduction, three methods)
+specs/001-dihedral-learning-mvp/tasks.md:7259:**Reference**: [data-model.md §Phase 65](./data-model.md#phase-65-test-factory-method-migration---use-projectionplane-factory-methods-for-element-creation)
+specs/001-dihedral-learning-mvp/tasks.md:7267:#### T1091: Audit and plan paperService.spec.ts migration
+specs/001-dihedral-learning-mvp/tasks.md:7270:- Plan migration order (simple to complex)
+specs/001-dihedral-learning-mvp/tasks.md:7277:- **Acceptance**: All 19 point instances migrated, tests pass
+specs/001-dihedral-learning-mvp/tasks.md:7283:- **Acceptance**: All line/circle instances migrated, tests pass
+specs/001-dihedral-learning-mvp/tasks.md:7285:#### T1094: Audit and plan renderService.spec.ts migration
+specs/001-dihedral-learning-mvp/tasks.md:7294:- **Acceptance**: All 9 instances migrated, tests pass
+specs/001-dihedral-learning-mvp/tasks.md:7304:#### T1097: Audit and plan paperHitTesting.spec.ts migration
+specs/001-dihedral-learning-mvp/tasks.md:7307:- Plan migration preserving test intent
+specs/001-dihedral-learning-mvp/tasks.md:7314:- **Acceptance**: All instances migrated, tests pass
+specs/001-dihedral-learning-mvp/tasks.md:7316:#### T1099: Audit and plan line.spec.ts migration
+specs/001-dihedral-learning-mvp/tasks.md:7325:- **Acceptance**: All instances migrated, tests pass
+specs/001-dihedral-learning-mvp/tasks.md:7337:- **Acceptance**: All domain tests migrated, tests pass
+specs/001-dihedral-learning-mvp/tasks.md:7350:- Document migration complexity
+specs/001-dihedral-learning-mvp/tasks.md:7357:- **Acceptance**: All integration tests migrated, tests pass
+specs/001-dihedral-learning-mvp/tasks.md:7362:- Document any migrations needed
+specs/001-dihedral-learning-mvp/tasks.md:7470:- **Acceptance**: All tool subclasses must declare completion behavior
+specs/001-dihedral-learning-mvp/tasks.md:7481:      // Stay active - subclass already called reset()
+specs/001-dihedral-learning-mvp/tasks.md:8011:  watch(() => worldStore.world, () => {
+specs/001-dihedral-learning-mvp/tasks.md:8013:      element2DRenderer.renderElements(worldStore.world, displayOptions);
+specs/001-dihedral-learning-mvp/tasks.md:8468:- Add Plane3DByTraces subclass extending Plane3D
+specs/001-dihedral-learning-mvp/tasks.md:8609:- Implement `executeWithArguments(args, context)`: placeholder for now
+specs/001-dihedral-learning-mvp/tasks.md:8692:- Icon: Two planes with fold line between them (design icon or use placeholder)
+specs/001-dihedral-learning-mvp/tasks.md:8858:- **Files**: `specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:8879:- **Files**: `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:8909:- **Files**: `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:8915:- **Files**: `specs/001-dihedral-learning-mvp/tasks.md`
+specs/001-dihedral-learning-mvp/tasks.md:8923:- **Files**: `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:9439:- File: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:9451:- **Files**: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:9454:- File: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:9466:- **Files**: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:9469:- File: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:9482:- **Files**: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:9561:  - `specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9562:  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9563:  - `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:9564:  - `specs/001-dihedral-learning-mvp/tasks.md`
+specs/001-dihedral-learning-mvp/tasks.md:9565:  - `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:9672:  - `specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9673:  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9674:  - `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:9675:  - `specs/001-dihedral-learning-mvp/tasks.md`
+specs/001-dihedral-learning-mvp/tasks.md:9676:  - `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:9813:  - `specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9814:  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9815:  - `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:9816:  - `specs/001-dihedral-learning-mvp/tasks.md`
+specs/001-dihedral-learning-mvp/tasks.md:9817:  - `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:10023:- [ ] T1835 Create `ProjectionIcon.vue` in `components/icons/toolbar/` (SVG icon representing 3D-to-2D projection)
+specs/001-dihedral-learning-mvp/tasks.md:10320:- Run E2E test: `npm run test:e2e`
+specs/001-dihedral-learning-mvp/tasks.md:10993:  const commandStack = new CommandStack();
+specs/001-dihedral-learning-mvp/tasks.md:11272:- [specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md](./phase-85-subprocess-stack-architecture.md) - Complete architecture
+specs/001-dihedral-learning-mvp/tasks.md:11385:- [ ] T1316 Find world initialization code (likely ProjectService.ts or bootstrap code)
+specs/001-dihedral-learning-mvp/tasks.md:11395:- [ ] T1323 Update all factory callers to use new pattern (CreateProjectionPlaneTool, ProjectionSetupFactory, AddExampleSetupOp)
+specs/001-dihedral-learning-mvp/tasks.md:11554:- [ ] T1502 **Refactor ProjectService**: Update `frontend/src/services/ProjectService.ts` (loadProject) to perform initial population of the dependency graph using `rebuildDependencyMaps` (or loop).
+specs/001-dihedral-learning-mvp/tasks.md:11558:- [ ] T1505 **Element Interface**: Add `getDependencies(): string[]` to `Element` (abstract) and implement in ALL 2D/3D subclasses.
+specs/001-dihedral-learning-mvp/tasks.md:11657:- [ ] T1613 **Update ProcessTree Serialization**: Modify `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:11659:  - Add migration logic for loading old format (read old fields, verify, discard)
+specs/001-dihedral-learning-mvp/tasks.md:11685:- [ ] T1618 **Integration Test ProcessTree Serialization**: Test `frontend/tests/integration/services/ProjectService.spec.ts`
+specs/001-dihedral-learning-mvp/tasks.md:11688:  - Test old format migration (load old project, verify data integrity)
+specs/001-dihedral-learning-mvp/tasks.md:11729:Create `createTestWorld()` helper function that returns fully initialized World with CommandStack. See [data-model.md](data-model.md#test-infrastructure-pattern) for detailed rationale.
+specs/001-dihedral-learning-mvp/tasks.md:11735:  - Function: `createTestWorld(): { world: World; commandStack: CommandStack }`
+specs/001-dihedral-learning-mvp/tasks.md:11736:  - Implementation: Create World, create CommandStack, call world.initialize(commandStack), return both
+specs/001-dihedral-learning-mvp/tasks.md:11829:- [ ] T1663 **Fix ProjectService.selfContainment.spec.ts**: Update to use createTestWorld()
+specs/001-dihedral-learning-mvp/tasks.md:11934:- [ ] T1736 [P] Update ProjectService.serialize(): Optimize to save only forward matrices
+specs/001-dihedral-learning-mvp/tasks.md:11938:- [ ] T1737 Update ProjectService.deserialize(): Reconstruct backward matrices on load
+specs/001-dihedral-learning-mvp/tasks.md:11942:- [ ] T1738 Add migration: Ignore old derived matrix fields if present in project files
+specs/001-dihedral-learning-mvp/tasks.md:12066:### 93.5 - ProjectService Serialization Updates (T1690-T1692)
+specs/001-dihedral-learning-mvp/tasks.md:12068:- [ ] T1690 **Update ProjectService.serializeCommands for flat action format**:
+specs/001-dihedral-learning-mvp/tasks.md:12069:  - File: `frontend/src/services/ProjectService.ts`
+specs/001-dihedral-learning-mvp/tasks.md:12073:- [ ] T1691 **Update ProjectService.deserializeCommands to handle flat format**:
+specs/001-dihedral-learning-mvp/tasks.md:12078:- [ ] T1692 **Add migration for old nested action format**:
+specs/001-dihedral-learning-mvp/tasks.md:12106:- [ ] T1696 **Integration tests: ProjectService serialization**:
+specs/001-dihedral-learning-mvp/tasks.md:12111:- [ ] T1697 **Integration tests: ProjectService deserialization**:
+specs/001-dihedral-learning-mvp/tasks.md:12119:  - Verify migration: Action has 4 fields, id/type/timestamp removed
+specs/001-dihedral-learning-mvp/tasks.md:12134:  - Verify migration: Load old project file, verify correct parsing
+specs/001-dihedral-learning-mvp/tasks.md:12141:    - Add migration for old nested action format
+specs/001-dihedral-learning-mvp/tasks.md:12214:- [x] T1777 ui-spec.md: Add Phase 97 UI specification (label display, editing, migration)
+specs/001-dihedral-learning-mvp/tasks.md:12244:- [ ] T1792 [P] ProjectService.serialize(): NO changes needed (element labels already in element.label field)
+specs/001-dihedral-learning-mvp/tasks.md:12245:- [ ] T1793 [P] ProjectService.deserialize(): NO changes needed (element labels already in element.label field)
+specs/001-dihedral-learning-mvp/tasks.md:12274:- [ ] T1808 [T] Verify no visual gap or placeholder when action group is empty
+specs/001-dihedral-learning-mvp/tasks.md:12331:- [ ] T1821 ProjectService.serialize(): Update to save operationType and constructionParams instead of description
+specs/001-dihedral-learning-mvp/tasks.md:12332:- [ ] T1822 ProjectService.deserialize(): Update to load operationType and constructionParams, compute description on-the-fly
+specs/001-dihedral-learning-mvp/tasks.md:12336:- [ ] T1823 ProjectService: Add migration function migrateActionV7toV8() to convert old { description } to new { operationType, constructionParams } with best-effort inference
+specs/001-dihedral-learning-mvp/tasks.md:12539:**Checkpoint**: ✅ All Element2D subclasses have isFeasible(), operations warn on infeasible creation
+frontend/src/commands/factories/InitializationSequenceFactory.ts:30: * It does NOT create a Command subclass, maintaining architecture compliance.
+frontend/src/services/ProjectService.ts:2: * ProjectService - current-schema command-stream persistence orchestration.
+frontend/src/services/ProjectService.ts:6:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/services/ProjectService.ts:24:export class ProjectService {
+frontend/src/services/ProjectService.ts:27:  static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
+frontend/src/services/ProjectService.ts:45:  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+frontend/src/services/InputService.ts:11: * - presentation selectors work at the paper/read-model level
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factories
+specs/001-dihedral-learning-mvp/data-model.md:1:# Data Model: Diedrico MVP
+specs/001-dihedral-learning-mvp/data-model.md:173:- Well-defined selection API (selectionStore)
+specs/001-dihedral-learning-mvp/data-model.md:728:- **After**: Element subclasses implement their own description logic
+specs/001-dihedral-learning-mvp/data-model.md:943:export function migrateActionV7toV8(actionV7: any): Action {
+specs/001-dihedral-learning-mvp/data-model.md:1191:export function migrateToPhase97(world: World): void {
+specs/001-dihedral-learning-mvp/data-model.md:1270:- Integration tests: Serialization round-trip, migration logic
+specs/001-dihedral-learning-mvp/data-model.md:1448:      placeholder="e.g., A_{H}^{\prime}"
+specs/001-dihedral-learning-mvp/data-model.md:1680:- No data migration needed (label field already exists)
+specs/001-dihedral-learning-mvp/data-model.md:1948:**Migration Location**: `ProjectService.deserializeCommands()` calls `migrateProjectData()` before validation
+specs/001-dihedral-learning-mvp/data-model.md:1956:private static migrateProjectData(data: ProjectData): void {
+specs/001-dihedral-learning-mvp/data-model.md:1958:    console.log(`[ProjectService] Migrating from ${data.schemaVersion} to 6.0.0`);
+specs/001-dihedral-learning-mvp/data-model.md:1959:    console.log('[ProjectService] Converting element IDs to camelCase');
+specs/001-dihedral-learning-mvp/data-model.md:1964:        // Recursively migrate all ID parameters
+specs/001-dihedral-learning-mvp/data-model.md:1965:        Object.assign(operation, this.migrateOperationParams(operation));
+specs/001-dihedral-learning-mvp/data-model.md:1970:    console.log('[ProjectService] Migration complete');
+specs/001-dihedral-learning-mvp/data-model.md:1977:1. **Single ID Migration** (`migrateIdToCamelCase`):
+specs/001-dihedral-learning-mvp/data-model.md:1987:2. **Hierarchical ID Migration** (`migrateHierarchicalId`):
+specs/001-dihedral-learning-mvp/data-model.md:1992:3. **Operation Parameter Migration** (`migrateOperationParams`):
+specs/001-dihedral-learning-mvp/data-model.md:1999:- Old project files (4.0.0, 5.0.0) load successfully with auto-migration
+specs/001-dihedral-learning-mvp/data-model.md:2006:- **Backward Compatibility**: Schema 4.0.0/5.0.0 files load correctly with auto-migration
+specs/001-dihedral-learning-mvp/data-model.md:2138:- All Element2D subclasses (Point2D, Line2D, Circle2D hierarchies)
+specs/001-dihedral-learning-mvp/data-model.md:2153:- ProjectService (serialization/deserialization)
+specs/001-dihedral-learning-mvp/data-model.md:2224:**Semantic Accessor Methods** (public API):
+specs/001-dihedral-learning-mvp/data-model.md:2393:**⚠️ Refactoring in Progress**: This document reflects the **new architecture** where ProjectionPlane owns 2D elements. See [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md) for migration plan.
+specs/001-dihedral-learning-mvp/data-model.md:2770:- Stored in 2D workspace component state (e.g., `Workspace2D.vue`)
+specs/001-dihedral-learning-mvp/data-model.md:2853:- Storage: Google Drive API, "diedrico" folder, `.diedrico` file format (JSON)
+specs/001-dihedral-learning-mvp/data-model.md:2882:- Must have at least 2 `planes` (H and V for MVP)
+specs/001-dihedral-learning-mvp/data-model.md:2921:- **CommandStack**: Command history for undo/redo - loaded from `commands` array
+specs/001-dihedral-learning-mvp/data-model.md:2946:ALL application state modifications MUST go through the CommandStack. Direct manipulation of state (e.g., calling `world.removePoint2D()`, `viewState.setZoom()`, or modifying stores directly) is forbidden in application code.
+specs/001-dihedral-learning-mvp/data-model.md:2984:### CommandStack Reactivity (Phase 91)
+specs/001-dihedral-learning-mvp/data-model.md:2986:To support reactive UI components (like Undo/Redo buttons), CommandStack implements the Observer pattern:
+specs/001-dihedral-learning-mvp/data-model.md:2992:class CommandStack {
+specs/001-dihedral-learning-mvp/data-model.md:3010:This allows UI components (Toolbar) to re-evaluate `canUndo`/`canRedo` state when the stack changes, without `CommandStack` itself being a framework-coupled reactive object.
+specs/001-dihedral-learning-mvp/data-model.md:3016:- 1 Project → 1 CommandStack
+specs/001-dihedral-learning-mvp/data-model.md:3020:- `schemaVersion` must match current or migrateable version
+specs/001-dihedral-learning-mvp/data-model.md:3038:  accessToken: string | null;       // OAuth2 access token for API calls
+specs/001-dihedral-learning-mvp/data-model.md:3056:- Authentication state is NOT part of CommandStack (not undoable)
+specs/001-dihedral-learning-mvp/data-model.md:3066:3. **API Calls**: Use access token for all Google Drive operations
+specs/001-dihedral-learning-mvp/data-model.md:3685:- Stored in 2D workspace component state (e.g., `Workspace2D.vue`)
+specs/001-dihedral-learning-mvp/data-model.md:3693:// In Workspace2D.vue or viewStore
+specs/001-dihedral-learning-mvp/data-model.md:3729:- **Note**: In MVP, all projection planes are ALWAYS visible. Plane visibility toggles may be added in future versions.
+specs/001-dihedral-learning-mvp/data-model.md:3733:- Global invariant (MVP): All projection planes are always visible simultaneously
+specs/001-dihedral-learning-mvp/data-model.md:3800:- Each pair of projection planes shares at most one HingeLine (in MVP, exactly one: HL_HV)
+specs/001-dihedral-learning-mvp/data-model.md:4182:   * Must be implemented by concrete subclasses
+specs/001-dihedral-learning-mvp/data-model.md:4214: * - Plane3D (and subclasses: Plane3DFixed, Plane3DByTraces, Plane3DByPointAndNormal)
+specs/001-dihedral-learning-mvp/data-model.md:4247:- `type` discriminator (handled by concrete subclass instanceof checks)
+specs/001-dihedral-learning-mvp/data-model.md:4324:**Design Note**: Currently only 2D elements need realizations (Element2DRealization2D). 3D elements in MVP have fixed geometry (Plane3DFixed) or are defined by references (Plane3DByTraces, HingeLine). If future phases introduce dynamically computed 3D geometry, Element3DRealization3D can extend Realization.
+specs/001-dihedral-learning-mvp/data-model.md:4376:   * Must be implemented by concrete subclasses
+specs/001-dihedral-learning-mvp/data-model.md:4457:- ✅ **Extensibility**: New subclasses automatically match base class checks
+specs/001-dihedral-learning-mvp/data-model.md:4588:- IntersectionData type field (legitimate discriminated union for API structure)
+specs/001-dihedral-learning-mvp/data-model.md:4713:- Unit tests for Element2D base class (instantiation via concrete subclass)
+specs/001-dihedral-learning-mvp/data-model.md:4932:   - Specialized subclasses provide type-specific realization
+specs/001-dihedral-learning-mvp/data-model.md:5260:**Do NOT create subclasses** like `Guide2DRealization2D` or `Segment2DRealization2D`.
+specs/001-dihedral-learning-mvp/data-model.md:6849:1. Add 'any-line' SelectableElementType that matches all Line2D subclasses
+specs/001-dihedral-learning-mvp/data-model.md:7882:- Optional: Add backward compatibility overload during migration
+specs/001-dihedral-learning-mvp/data-model.md:7886:- Add @deprecated warnings to string-based APIs
+specs/001-dihedral-learning-mvp/data-model.md:7887:- Document migration path for any external code
+specs/001-dihedral-learning-mvp/data-model.md:7895:**Phase 5: Remove String-Based APIs** (T1074)
+specs/001-dihedral-learning-mvp/data-model.md:7901:**Backward Compatibility** (optional during migration):
+specs/001-dihedral-learning-mvp/data-model.md:7904:// Temporary overload during migration Phase:
+specs/001-dihedral-learning-mvp/data-model.md:7964:- Run complete E2E test suite after migration
+specs/001-dihedral-learning-mvp/data-model.md:7988:✓ All tools migrated to use SelectionMask classes  
+specs/001-dihedral-learning-mvp/data-model.md:7989:✓ String-based APIs removed or deprecated  
+specs/001-dihedral-learning-mvp/data-model.md:8028:- **Declarative API**: Tools declare what they need, framework handles how to collect it
+specs/001-dihedral-learning-mvp/data-model.md:8274:(See full usage examples, migration strategy, and acceptance criteria in complete data-model.md Phase 64 section)
+specs/001-dihedral-learning-mvp/data-model.md:9377:   * Implementation varies by subclass:
+specs/001-dihedral-learning-mvp/data-model.md:9646: * This eliminates ~150 lines of duplicated quaternion computation across subclasses.
+specs/001-dihedral-learning-mvp/data-model.md:9804: * Plane3DByPointAndNormal - Plane defined by point and normal vector (legacy)
+specs/001-dihedral-learning-mvp/data-model.md:10095:**Hit Testing API**:
+specs/001-dihedral-learning-mvp/data-model.md:10819:- New: Serializes CommandStack (sequence of user actions)
+specs/001-dihedral-learning-mvp/data-model.md:10920:4. **Result**: World and CommandStack fully restored to saved state
+specs/001-dihedral-learning-mvp/data-model.md:10962:- **Future Versions**: When introducing 3.0.0, add migration logic: 2.0.0 → 3.0.0
+specs/001-dihedral-learning-mvp/data-model.md:11038:- `ProjectService.serializeCommands(commandStack, projectName): ProjectData`
+specs/001-dihedral-learning-mvp/data-model.md:11039:- `ProjectService.deserializeCommands(data, world, commandStack): void`
+specs/001-dihedral-learning-mvp/data-model.md:11040:- `ProjectService.validateProjectData(data): void` (throws on invalid)
+specs/001-dihedral-learning-mvp/data-model.md:11341:- Existing serialized ProcessTrees with old format can be migrated on load
+specs/001-dihedral-learning-mvp/data-model.md:11584:- **Cleaner API**: Operations and factories pass only forward matrices, no redundant parameters
+specs/001-dihedral-learning-mvp/data-model.md:11600:8. ⚠️ **Phase 94.8**: ProjectService serialization/deserialization updates (PENDING)
+specs/001-dihedral-learning-mvp/data-model.md:11610:- ✅ `specs/001-dihedral-learning-mvp/for-planing.md` - Architecture documentation updated
+specs/001-dihedral-learning-mvp/data-model.md:11611:- ⚠️ `frontend/src/services/ProjectService.ts` - Serialization optimization deferred
+specs/001-dihedral-learning-mvp/data-model.md:11614:- ProjectService.serialize/deserialize updates (save only forward matrices)
+specs/001-dihedral-learning-mvp/data-model.md:11620:- Old project files with paperToPlane2D and threeDToPlane fields will still load (migration ignores extra fields)
+specs/001-dihedral-learning-mvp/data-model.md:11944:5. **Phase 93.5**: Update ProjectService deserialization
+specs/001-dihedral-learning-mvp/data-model.md:11947:   - Handle both formats for migration period
+specs/001-dihedral-learning-mvp/data-model.md:11949:6. **Phase 93.6**: Add migration for old project files
+specs/001-dihedral-learning-mvp/data-model.md:12005:- **Serialization compatibility**: ProjectService migration handles both formats
+specs/001-dihedral-learning-mvp/data-model.md:12010:- **API compatibility**: ProcessTree lookup by elementId
+specs/001-dihedral-learning-mvp/data-model.md:12027:3. **Integration tests**: ProjectService serialization
+specs/001-dihedral-learning-mvp/data-model.md:12030:   - Test migration converts old nested format
+specs/001-dihedral-learning-mvp/data-model.md:12057:   - Old project files require migration on load
+specs/001-dihedral-learning-mvp/data-model.md:12060:3. **ProcessTree API**: Lookup by elementId vs actionId
+specs/001-dihedral-learning-mvp/data-model.md:12068:- **Phase 93.5-93.6**: ProjectService migration (2 days)
+specs/001-dihedral-learning-mvp/data-model.md:12333:  // NOTE: In MVP, all projection planes are ALWAYS visible (planes map not used)
+specs/001-dihedral-learning-mvp/data-model.md:12336:    planes: Map<PlaneId, boolean>;     // Per-plane visibility (future feature, MVP=all true)
+specs/001-dihedral-learning-mvp/data-model.md:12372:**Architecture**: Single Command class (not subclasses) - the real logic is in Operation classes
+specs/001-dihedral-learning-mvp/data-model.md:12545:- N Commands → 1 CommandStack
+specs/001-dihedral-learning-mvp/data-model.md:12559:- **Undone** → **Committed**: CommandStack.redo() reapplies all operations
+specs/001-dihedral-learning-mvp/data-model.md:12635:**Critical Architecture Rule**: Command MUST NEVER be subclassed. The Command class is @sealed and any attempt to extend it violates the architecture. Factories are the ONLY way to handle complex multi-operation sequences.
+specs/001-dihedral-learning-mvp/data-model.md:12640:1. **Command is @sealed**: NEVER create Command subclasses - this is an architectural violation
+specs/001-dihedral-learning-mvp/data-model.md:12649:World initialization requires a specific sequence of operations (create planes, projection planes, origins, hinge lines, etc.). Creating an `InitializeWorldCommand` subclass would be an architectural violation. Instead, we MUST use a factory:
+specs/001-dihedral-learning-mvp/data-model.md:12716:    // Note: Command is not pushed to CommandStack because world initialization
+specs/001-dihedral-learning-mvp/data-model.md:12723:1. **Architecture Compliance**: Respects @sealed Command class - no subclassing ever
+specs/001-dihedral-learning-mvp/data-model.md:12729:7. **Serialization**: Each operation is independently serializable (Command subclass cannot be serialized)
+specs/001-dihedral-learning-mvp/data-model.md:12895:4. **Serialization** - In ProjectService save/load (ALWAYS required)
+specs/001-dihedral-learning-mvp/data-model.md:12900:**CRITICAL - UI Tool Decision for Current MVP**:
+specs/001-dihedral-learning-mvp/data-model.md:13112:Each element variation has its own serialization format in ProjectService:
+specs/001-dihedral-learning-mvp/data-model.md:13213:   - Add type discriminators to ProjectService
+specs/001-dihedral-learning-mvp/data-model.md:13215:   - Add migration code for old format
+specs/001-dihedral-learning-mvp/data-model.md:13225:   - Clean up migration code (after grace period)
+specs/001-dihedral-learning-mvp/data-model.md:13233:- [ ] Serialization format defined in ProjectService
+specs/001-dihedral-learning-mvp/data-model.md:13245:- Any time you're tempted to subclass Command (FORBIDDEN - use factory instead)
+specs/001-dihedral-learning-mvp/data-model.md:13255:// ❌ FORBIDDEN: Command subclass (VIOLATES @sealed architecture)
+specs/001-dihedral-learning-mvp/data-model.md:13264:    // operations built inside Command subclass
+specs/001-dihedral-learning-mvp/data-model.md:13286:The `noCommandSubclasses.spec.ts` architecture test will fail if any Command subclasses are detected in the codebase. This is intentional - Command subclassing is a serious architectural violation that breaks the Command Pattern and prevents proper serialization.
+specs/001-dihedral-learning-mvp/data-model.md:13291:1. Create Command normally using factory (never subclass)
+specs/001-dihedral-learning-mvp/data-model.md:13293:3. Don't push it to CommandStack
+specs/001-dihedral-learning-mvp/data-model.md:13303:The Command is still created normally (NEVER subclassed), but by not adding it to the CommandStack, it effectively becomes non-undoable.
+specs/001-dihedral-learning-mvp/data-model.md:13343:// ProjectService.deserializeCommands(projectData, world, commandStack)
+specs/001-dihedral-learning-mvp/data-model.md:13404:ProjectService maintains a switch statement mapping operation type strings to operation classes:
+specs/001-dihedral-learning-mvp/data-model.md:13442:**Migration Strategy**: Currently strict - only exact version match accepted. Future: add migration functions to upgrade old formats.
+specs/001-dihedral-learning-mvp/data-model.md:13456:- **Serialization**: `ProjectService.serializeCommands(commandStack, projectName)`
+specs/001-dihedral-learning-mvp/data-model.md:13457:- **Deserialization**: `ProjectService.deserializeCommands(projectData, world, commandStack)`
+specs/001-dihedral-learning-mvp/data-model.md:13458:- **Operation Registry**: `ProjectService.reconstructOperation(serializedOp)`
+specs/001-dihedral-learning-mvp/data-model.md:13459:- **Schema Validation**: `ProjectService.validateProjectData(data)`
+specs/001-dihedral-learning-mvp/data-model.md:13490:├── paper/              ← Paper operations container
+specs/001-dihedral-learning-mvp/data-model.md:13495:├── toolbar/            ← Toolbar operations container
+specs/001-dihedral-learning-mvp/data-model.md:13521:   - `paper/` contains rendering logic (PaperJS, caches)
+specs/001-dihedral-learning-mvp/data-model.md:13522:   - `toolbar/` contains UI control logic
+specs/001-dihedral-learning-mvp/data-model.md:13533:   cmd.addAndExecute(new HighlightElementOp(pointId));      // from paper/
+specs/001-dihedral-learning-mvp/data-model.md:13536:   cmd.addAndExecute(new UpdateToolFeedbackOp("Point created")); // from toolbar/
+specs/001-dihedral-learning-mvp/data-model.md:13578:// operations/paper/HighlightElementOp.ts
+specs/001-dihedral-learning-mvp/data-model.md:13608:- `operations/paper/` - TBD files (rendering operations)
+specs/001-dihedral-learning-mvp/data-model.md:13609:- `operations/toolbar/` - TBD files (UI operations)
+specs/001-dihedral-learning-mvp/data-model.md:13613:1. Create component folders: `world/`, `processTree/`, `paper/`, `toolbar/`, `viewState/`
+specs/001-dihedral-learning-mvp/data-model.md:13617:5. Update ProjectService.reconstructOperation() with new paths
+specs/001-dihedral-learning-mvp/data-model.md:13644:├── paper/
+specs/001-dihedral-learning-mvp/data-model.md:13646:├── toolbar/
+specs/001-dihedral-learning-mvp/data-model.md:13754:  // CommandStack checks this before adding to undo stack
+specs/001-dihedral-learning-mvp/data-model.md:13761:Updated CommandStack to respect `canUndo()`:
+specs/001-dihedral-learning-mvp/data-model.md:13764:class CommandStack {
+specs/001-dihedral-learning-mvp/data-model.md:13876:  - CommandStack doesn't add non-undoable commands
+specs/001-dihedral-learning-mvp/data-model.md:13891:- `src/commands/CommandStack.ts`: Updated `push()` to check `canUndo()`
+specs/001-dihedral-learning-mvp/data-model.md:14165:4. **Simple API**: Factory doesn't return anything, just modifies command
+specs/001-dihedral-learning-mvp/data-model.md:14220:├── CommandStack.ts
+specs/001-dihedral-learning-mvp/data-model.md:14841:### Persistence Entity: CommandStack
+specs/001-dihedral-learning-mvp/data-model.md:14847:interface CommandStack {
+specs/001-dihedral-learning-mvp/data-model.md:14856:class CommandStack {
+specs/001-dihedral-learning-mvp/data-model.md:14912:- 1 Project → 1 CommandStack
+specs/001-dihedral-learning-mvp/data-model.md:14913:- 1 CommandStack → N Commands
+specs/001-dihedral-learning-mvp/data-model.md:14922:interface CommandStackState {
+specs/001-dihedral-learning-mvp/data-model.md:15013:// Validation rules for move operations (MVP):
+specs/001-dihedral-learning-mvp/data-model.md:15029:- CommandStack is NOT serialized to storage by default (too large, ephemeral)
+specs/001-dihedral-learning-mvp/data-model.md:15065:              └── (1) CommandStack ──── (N) Command ──── (N) Operation
+specs/001-dihedral-learning-mvp/data-model.md:15336:- Include `schemaVersion` for migrations
+specs/001-dihedral-learning-mvp/data-model.md:15338:- Storage: Google Drive API, "diedrico" folder, `.diedrico` file extension
+specs/001-dihedral-learning-mvp/data-model.md:15350:- Use Google Drive API `files.update` for existing project
+specs/001-dihedral-learning-mvp/data-model.md:15351:- Prevents excessive API calls during rapid construction
+specs/001-dihedral-learning-mvp/data-model.md:15423:4. **Reusability**: Domain layer could support multiple rendering backends (Canvas, WebGL)
+specs/001-dihedral-learning-mvp/data-model.md:15453:5. **Frontend-owned**: All domain logic in frontend; backend stores JSON
+specs/001-dihedral-learning-mvp/data-model.md:15456:**Next**: Generate API contracts for backend persistence endpoints.
+specs/001-dihedral-learning-mvp/data-model.md:15561:### Phase 50: Remove Deprecated CommandStack.execute() Method
+specs/001-dihedral-learning-mvp/data-model.md:15565:**Problem Statement**: The `CommandStack.execute()` method is marked `@deprecated` and kept for backward compatibility, but analysis shows no external code uses it.
+specs/001-dihedral-learning-mvp/data-model.md:15713:**Scope**: This phase migrates **test files only**. Production code (tools, commands) already uses factory methods correctly.
+specs/001-dihedral-learning-mvp/data-model.md:15723:3. ✅ All tests pass after migration (no behavior change)
+specs/001-dihedral-learning-mvp/data-model.md:15876:- Optional configuration: `options?.visibleOnly` - external API can omit options
+specs/001-dihedral-learning-mvp/data-model.md:15879:- External data: `error.result?.error?.message` - external API structure
+specs/001-dihedral-learning-mvp/data-model.md:15959:- All 116 failures are pre-existing infrastructure issues (ProjectService, DependencyService, etc.)
+specs/001-dihedral-learning-mvp/data-model.md:15969:- **No Backward Compatibility**: User explicitly rejected compatibility wrappers - clean API only
+specs/001-dihedral-learning-mvp/data-model.md:16606:watch(() => worldStore.world, () => {
+specs/001-dihedral-learning-mvp/data-model.md:16608:    element2DRenderer.renderElements(worldStore.world, displayOptions);
+specs/001-dihedral-learning-mvp/data-model.md:16613:watch(() => worldStore.elementVisibilityMap, () => {
+specs/001-dihedral-learning-mvp/data-model.md:16614:  element2DRenderer.updateVisibility(worldStore.elementVisibilityMap);
+specs/001-dihedral-learning-mvp/data-model.md:16729:  const world = worldStore.world;
+specs/001-dihedral-learning-mvp/data-model.md:17900:  // For now, return placeholder
+specs/001-dihedral-learning-mvp/data-model.md:17985:   * CRITICAL: Both subclasses must implement realize3D() returning same type
+specs/001-dihedral-learning-mvp/data-model.md:18922:  - Remove from VisualStyle after migration
+specs/001-dihedral-learning-mvp/data-model.md:18927:function migrateVisibilityToElement(element: Element2D, subprocess: Subprocess): void {
+specs/001-dihedral-learning-mvp/data-model.md:18965:4. Load old project with VisualStyle.visibility → migrates correctly
+specs/001-dihedral-learning-mvp/data-model.md:18979:- ✅ Old projects migrate VisualStyle.visibility → Element.visibility
+specs/001-dihedral-learning-mvp/data-model.md:19050:1.  **Element Interface**: explicit `getDependencies(): string[]` method on `Element` base class (abstract) or implemented in subclasses.
+specs/001-dihedral-learning-mvp/data-model.md:19083:**Approach**: Create `createTestWorld()` helper that returns fully initialized World with CommandStack.
+specs/001-dihedral-learning-mvp/data-model.md:19095:import { CommandStack } from '@/commands/CommandStack';
+specs/001-dihedral-learning-mvp/data-model.md:19107:export function createTestWorld(): { world: World; commandStack: CommandStack } {
+specs/001-dihedral-learning-mvp/data-model.md:19109:  const commandStack = new CommandStack(world);
+specs/001-dihedral-learning-mvp/data-model.md:19178:- ProjectService.selfContainment.spec.ts
+specs/001-dihedral-learning-mvp/data-model.md:19710:- `frontend/src/services/ProjectService.ts` (serialization)
+specs/001-dihedral-learning-mvp/data-model.md:19996:The change applies to all Line3D subclasses rendered in ThreeView:
+specs/001-dihedral-learning-mvp/data-model.md:20006:// - Future Line3D subclasses
+specs/001-dihedral-learning-mvp/data-model.md:20834:Phase 78 scaffolded the full infrastructure for `Segment3DFromProjections` (domain class, operation, tool, 3D rendering, projection display, descriptors, serialization) but left `realize3D()` as a TODO stub returning placeholder coordinates `(0,0,0)→(1,0,0)`. Phase 107 implements the actual 3D reconstruction algorithm and adds geometric compatibility validation at creation time.
+specs/001-dihedral-learning-mvp/data-model.md:20847:- **`ProjectService.ts`** — serialization/deserialization of `Add3DSegment` operations
+specs/001-dihedral-learning-mvp/data-model.md:21248:Each concrete subclass inherits this automatically since `realize2D()` is already implemented.
+specs/001-dihedral-learning-mvp/data-model.md:21293:- Renders in Workspace2D when active tool has step description
+specs/001-dihedral-learning-mvp/data-model.md:21308:| `frontend/src/components/workspace/Workspace2D.vue` | Import and render ToolFeedbackBar |
+frontend/src/services/GoogleDriveService.ts:4: * Service for interacting with Google Drive API to store and retrieve project files.
+frontend/src/services/GoogleDriveService.ts:10: * - No backend server required
+frontend/src/services/GoogleDriveService.ts:12: * @see specs/001-dihedral-learning-mvp/ui-spec.md - Startup Flow and Google Drive Authentication
+frontend/src/services/GoogleDriveService.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md - Persistence Strategy
+frontend/src/services/GoogleDriveService.ts:64:   * Initialize Google API client with new Google Identity Services
+frontend/src/services/GoogleDriveService.ts:82:          // Initialize gapi client (for Drive API calls)
+frontend/src/services/GoogleDriveService.ts:108:          reject(new Error(`Failed to initialize Google API: ${error.error || error.message || JSON.stringify(error)}`));
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/domain/world/Realization.ts:31: * 3D elements in MVP have fixed geometry (Plane3DFixed) or are defined by references
+frontend/src/domain/world/Realization.ts:35: * @see specs/001-dihedral-learning-mvp/data-model.md#realization-base-class
+frontend/src/domain/world/Guide.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#guide
+frontend/src/domain/world/Guide.ts:18: * @see specs/001-dihedral-learning-mvp/spec.md#guides
+frontend/src/domain/world/Guide.ts:186: * @see specs/001-dihedral-learning-mvp/data-model.md#siblingguide2d
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree Action Registration (Phase 81)
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:9: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Element Properties Dialog
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:32: * Per data-model.md Command Pattern: All logic belongs in Operations, not Command subclasses.
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:50:   * @param _world - World instance (not used for fixed planes, but required for API uniformity)
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:72:   * @param _world - World instance (not used for fixed planes, but required for API uniformity)
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:19: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101
+frontend/src/domain/processTree/ProcessTree.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/domain/world/Element3DRealization3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#element3drealization3d
+frontend/src/commands/operations/world/RemoveElementOps.ts:7: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30, T286
+frontend/src/domain/world/Element3D.ts:11: * - Plane3D (and subclasses: Plane3DFixed, Plane3DByTraces, Plane3DByPointAndNormal)
+frontend/src/domain/world/Element3D.ts:23: * - `type` discriminator (handled by concrete subclass instanceof checks)
+frontend/src/domain/world/Element3D.ts:30: * @see specs/001-dihedral-learning-mvp/data-model.md#element3d-class
+frontend/src/domain/world/Element3D.ts:57:   * Must be implemented by concrete subclasses
+frontend/src/domain/processTree/Action.ts:23: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93, §Phase 98
+frontend/src/domain/world/Element2D.ts:64: * @sealed - Cannot be directly subclassed, only Point2D/Line2D/Circle2D extend it
+frontend/src/domain/world/Element2D.ts:97:   * Must be implemented by concrete subclasses
+frontend/src/commands/operations/world/InitializationOps.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:49: * Computation happens in realize3D() methods of ProjectionPlane subclasses.
+frontend/src/domain/world/Element.ts:26: * @see specs/001-dihedral-learning-mvp/data-model.md#element-base-class-hierarchy
+frontend/src/domain/world/Element.ts:58:   * Must be implemented by concrete subclasses
+frontend/src/domain/calculations/Intersections.ts:18: * - specs/001-dihedral-learning-mvp/data-model.md#intersection-calculations
+frontend/src/domain/world/Circle.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#circle2d
+frontend/src/domain/world/Circle.ts:29: * @sealed - This class must not be subclassed
+frontend/src/domain/world/Circle.ts:184: * For MVP, we focus on simpler circle definitions.
+frontend/src/domain/calculations/CoordinateTransform.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
+frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts:11: * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingGuide2D
+frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/BrokenHingeLine.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/World.ts:77: * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
+frontend/src/domain/world/World.ts:230:   * Keep this as a tiny, explicit API instead of exposing notifyChange().
+frontend/src/domain/world/World.ts:575:    // Call realize2D with World context (uniform API for all plane types)
+frontend/src/domain/world/World.ts:601:    // Call realize3D with World context (uniform API for all plane types)
+frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateSegmentAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateParallelLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/Point3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#point3d
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateGuideAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/DependencyService.ts:16: * Reference: specs/001-dihedral-learning-mvp/spec.md §Parametric Behavior and Dependencies
+frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreatePointAction.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateSiblingIntersectionPointAction.ts:11: * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingIntersectionPoint2D
+frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/Point.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
+frontend/src/domain/world/Point.ts:40: * @sealed - This class must not be subclassed
+frontend/src/domain/world/Point.ts:163: * Concrete subclasses:
+frontend/src/domain/world/Point.ts:603:   * @see specs/001-dihedral-learning-mvp/data-model.md §Parametric Consistency Requirement
+frontend/src/domain/world/styleService.ts:9: * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
+frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:9: * Reference: specs/001-dihedral-learning-mvp/spec.md FR-042
+frontend/src/domain/world/Plane.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
+frontend/src/domain/processTree/actions/CreateLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/Line3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line3d
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:20: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/HingeLine.ts:14: * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
+frontend/src/domain/world/HingeLine.ts:38: * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:9: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30
+frontend/src/domain/world/Segment3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#segment3d
+frontend/src/domain/world/Element2DRealization2D.ts:4: * @sealed - This class must not be subclassed by realization types other than
+frontend/src/domain/world/Element2DRealization2D.ts:24: * @see specs/001-dihedral-learning-mvp/data-model.md#element2drealization2d-base-class
+frontend/src/domain/world/Segment.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Segment.ts:111:// Export legacy type alias for backward compatibility during migration
+frontend/src/domain/world/Line.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Line.ts:41: * @sealed - This class must not be subclassed
+frontend/src/domain/world/Line.ts:372:  readonly type: Line2DType;  // Phase 52: Allow subclasses to override with their own type
+frontend/src/domain/world/Line.ts:382:    type: Line2DType = 'perpendicular-to-line'  // Default type, subclasses can override
+frontend/src/domain/world/Line.ts:493: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocirclethroughpoint
+frontend/src/domain/world/Line.ts:675: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocircleparalleltoline
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+
+== source comments mentioning specs/docs/MVP/legacy/backend ==
+frontend/src/components/LoginStatusWidget.vue:7:  @see specs/001-dihedral-learning-mvp/ui-spec.md - Google Drive Login Status Widget
+frontend/src/components/LoginStatusWidget.vue:36:      <div v-else class="user-avatar-placeholder">
+frontend/src/components/LoginStatusWidget.vue:99: * Get initials from name for avatar placeholder
+frontend/src/components/LoginStatusWidget.vue:192:.user-avatar-placeholder {
+frontend/src/components/workspace/SvgCanvas.vue:178: * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+frontend/src/commands/CommandStack.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/Command.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/components/toolbars/Toolbar.vue:142: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+frontend/src/utils/threeUtils.ts:271: * @see specs/001-dihedral-learning-mvp/data-model.md §Coordinate System Note
+frontend/src/utils/projectionPlaneUtils.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 82
+frontend/src/utils/coordinateTransform.ts:14: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Coordinate Systems
+frontend/src/utils/arcGeometry.ts:27: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101.6
+frontend/src/components/panels/ElementTypeGroup.vue:64:  // TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:  // TODO: Clear highlight
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:19: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:9: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Element Properties Dialog
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/operations/world/RemoveElementOps.ts:7: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30, T286
+frontend/src/types/arcGeometry.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/types/ToolConfig.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/commands/operations/world/InitializationOps.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/services/SVGRenderer.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-transformations
+frontend/src/components/header/ProjectNameDisplay.vue:55: * Reference: specs/001-dihedral-learning-mvp/spec.md - Project Name Display and Editing
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:9: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:105:  // TODO: Implement when needed
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:145:  // TODO: Implement when needed
+frontend/src/components/dialogs/PropertiesDialog.vue:62:                placeholder="#000000"
+frontend/src/components/dialogs/PropertiesDialog.vue:333:  // TODO: Get creation action from ProcessTree
+frontend/src/components/dialogs/PropertiesDialog.vue:334:  // For now, just show placeholder
+frontend/src/components/dialogs/PropertiesDialog.vue:357:  // TODO: Load current element properties from world
+frontend/src/services/GoogleDriveService.ts:10: * - No backend server required
+frontend/src/services/GoogleDriveService.ts:12: * @see specs/001-dihedral-learning-mvp/ui-spec.md - Startup Flow and Google Drive Authentication
+frontend/src/services/GoogleDriveService.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md - Persistence Strategy
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/tools/BaseTool.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/components/dialogs/NewProjectDialog.vue:13:            placeholder="Enter project name..."
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree Action Registration (Phase 81)
+frontend/src/domain/world/Circle.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#circle2d
+frontend/src/domain/world/Circle.ts:184: * For MVP, we focus on simpler circle definitions.
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-045
+frontend/src/tools/GuideTool.ts:22: * - specs/001-dihedral-learning-mvp/spec.md §US3 - Create Guide
+frontend/src/tools/GuideTool.ts:23: * - specs/001-dihedral-learning-mvp/spec.md §Guides
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-046, §FR-047
+frontend/src/domain/world/BrokenHingeLine.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/stores/viewStore.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md - View Transformation
+frontend/src/commands/factories/ProjectionSetupFactory.ts:11: * Reference: specs/001-dihedral-learning-mvp/example-setups.md
+frontend/src/tools/Create3DSegmentTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/SegmentTool.ts:16: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+frontend/src/domain/world/Realization.ts:31: * 3D elements in MVP have fixed geometry (Plane3DFixed) or are defined by references
+frontend/src/domain/world/Realization.ts:35: * @see specs/001-dihedral-learning-mvp/data-model.md#realization-base-class
+frontend/src/stores/toolStore.ts:11: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Tool Interactions
+frontend/src/stores/toolStore.ts:12: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/tools/Create3DPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/domain/processTree/ProcessTree.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree
+frontend/src/tools/PointTool.ts:11: * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
+frontend/src/domain/world/Element2DRealization2D.ts:24: * @see specs/001-dihedral-learning-mvp/data-model.md#element2drealization2d-base-class
+frontend/src/stores/settingsStore.ts:13: * @see specs/001-dihedral-learning-mvp/ui-spec.md#project-settings-dialog
+frontend/src/stores/settingsStore.ts:14: * @see specs/001-dihedral-learning-mvp/ui-spec.md#state-persistence
+frontend/src/tools/Create3DPlaneTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:42: * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
+frontend/src/tools/PerpendicularLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-044 (Perpendicular Line Tool)
+frontend/src/tools/Create3DLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/domain/processTree/Action.ts:23: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93, §Phase 98
+frontend/src/tools/ParallelLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-043 (Parallel Line Tool)
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factories
+frontend/src/tools/CircleTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2 - Create circles
+frontend/src/stores/authStore.ts:8: * @see specs/001-dihedral-learning-mvp/data-model.md - Authentication State
+frontend/src/tools/LineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+frontend/src/tools/IntersectionTool.ts:17: * Reference: specs/001-dihedral-learning-mvp/spec.md
+frontend/src/domain/world/World.ts:77: * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
+frontend/src/commands/factories/DeletionSequenceFactory.ts:19: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
+frontend/src/domain/world/Line.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Line.ts:271: * TODO: Implement in later phase when parallel line tool is added
+frontend/src/domain/world/Line.ts:357: * TODO: Implement in later phase when perpendicular line tool is added
+frontend/src/domain/world/Line.ts:493: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocirclethroughpoint
+frontend/src/domain/world/Line.ts:675: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocircleparalleltoline
+frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/DependencyService.ts:16: * Reference: specs/001-dihedral-learning-mvp/spec.md §Parametric Behavior and Dependencies
+frontend/src/domain/processTree/actions/CreateGuideAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/styleService.ts:9: * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
+frontend/src/domain/world/HingeLine.ts:14: * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
+frontend/src/domain/world/HingeLine.ts:38: * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
+frontend/src/domain/calculations/Intersections.ts:18: * - specs/001-dihedral-learning-mvp/data-model.md#intersection-calculations
+frontend/src/config/toolFamilies.ts:9: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/config/toolFamilies.ts:28:import ExampleIcon from '@/components/icons/toolbar/FreePointIcon.vue';  // TODO: Create dedicated icon for examples
+frontend/src/config/toolFamilies.ts:39: * 6. Transport Family: transport (placeholder - not yet implemented)
+frontend/src/config/toolFamilies.ts:213:        icon: Create3DPlaneIcon,  // TODO: Create dedicated icon for auxiliary projection planes
+frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:20: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/calculations/CoordinateTransform.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:9: * Reference: specs/001-dihedral-learning-mvp/spec.md FR-042
+frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/Guide.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#guide
+frontend/src/domain/world/Guide.ts:18: * @see specs/001-dihedral-learning-mvp/spec.md#guides
+frontend/src/domain/world/Guide.ts:186: * @see specs/001-dihedral-learning-mvp/data-model.md#siblingguide2d
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateParallelLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/composables/useViewport.ts:11: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Viewport Navigation
+frontend/src/domain/world/Element3DRealization3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#element3drealization3d
+frontend/src/domain/processTree/actions/CreateLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/composables/useHoverHighlight.ts:13: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Unified Hover Highlighting
+frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateSegmentAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts:11: * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingGuide2D
+frontend/src/domain/world/Element3D.ts:30: * @see specs/001-dihedral-learning-mvp/data-model.md#element3d-class
+frontend/src/domain/processTree/actions/CreateSiblingIntersectionPointAction.ts:11: * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingIntersectionPoint2D
+frontend/src/domain/world/Element.ts:26: * @see specs/001-dihedral-learning-mvp/data-model.md#element-base-class-hierarchy
+frontend/src/domain/processTree/actions/CreatePointAction.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/Segment.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Segment.ts:111:// Export legacy type alias for backward compatibility during migration
+frontend/src/domain/world/Segment3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#segment3d
+frontend/src/domain/world/Point.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
+frontend/src/domain/world/Point.ts:603:   * @see specs/001-dihedral-learning-mvp/data-model.md §Parametric Consistency Requirement
+frontend/src/domain/world/Point3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#point3d
+frontend/src/domain/world/Point3D.ts:186:   * TODO: Implement proper validation in GeometryValidator
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/Plane.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
+frontend/src/domain/world/Line3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line3d
+
+== docs files list ==
+docs/api/domain-model.md
+docs/api/operations.md
+docs/api/services.md
+docs/api/utilities.md
+docs/architecture/commands.md
+docs/architecture/domain-model.md
+docs/architecture/overview.md
+docs/architecture/realization.md
+docs/architecture/rendering.md
+docs/architecture/stores.md
+docs/contributing/development-setup.md
+docs/contributing/testing.md
+docs/DEPLOYMENT.md
+docs/GOOGLE_DRIVE_SETUP.md
+docs/guide/3d-reconstruction.md
+docs/guide/getting-started.md
+docs/guide/hinge-lines.md
+docs/guide/persistence.md
+docs/guide/process-tree.md
+docs/guide/projection-planes.md
+docs/guide/three-view.md
+docs/guide/tools.md
+docs/guide/what-is-diedrico.md
+docs/guide/workspace.md
+docs/index.md
+docs/.vitepress/config.mts
+specs/001-dihedral-learning-mvp/checklists/requirements.md
+specs/001-dihedral-learning-mvp/contracts/api.yaml
+specs/001-dihedral-learning-mvp/data-model.md
+specs/001-dihedral-learning-mvp/data-model-optimization.md
+specs/001-dihedral-learning-mvp/example-setups.md
+specs/001-dihedral-learning-mvp/for-planing.md
+specs/001-dihedral-learning-mvp/phase-78-completion-summary.md
+specs/001-dihedral-learning-mvp/phase-83-generic-projection-plane-plan.md
+specs/001-dihedral-learning-mvp/phase-84-geometry-free-hinge-lines.md
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md
+specs/001-dihedral-learning-mvp/phase-96-implementation-summary.md
+specs/001-dihedral-learning-mvp/plan.md
+specs/001-dihedral-learning-mvp/quickstart.md
+specs/001-dihedral-learning-mvp/research.md
+specs/001-dihedral-learning-mvp/spec.md
+specs/001-dihedral-learning-mvp/tasks.md
+specs/001-dihedral-learning-mvp/ui-spec.md
