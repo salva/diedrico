@@ -1,0 +1,1567 @@
+--- application tree ---
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts
+frontend/src/application/canvas/CanvasStyleUseCase.ts
+frontend/src/application/construction/ConstructionUseCases.ts
+frontend/src/application/construction/QuickToolUseCases.ts
+frontend/src/application/tools/CanvasToolController.ts
+frontend/src/application/tools/ToolCommandIntents.ts
+frontend/src/application/world/initializeWorld.ts
+
+--- line evidence: ActionsPanel imports/handlers/logs ---
+    45	      />
+    46	    </div>
+    47	  </aside>
+    48	</template>
+    49	
+    50	<script setup lang="ts">
+    51	import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
+    52	import type { World } from '@/domain/world/World';
+    53	import type { ProcessTreeNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTreeNode';
+    54	import type { CommandStack } from '@/commands/CommandStack';
+    55	import { Command } from '@/commands/Command';
+    56	import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+    57	import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+    58	import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+    59	import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+    60	import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+    61	import ProcessTreeNode from './ProcessTreeNode.vue';
+    62	import { useSelectionStore } from '@/stores/selectionStore';
+    63	import { useProcessTreeStore } from '@/stores/processTreeStore';
+    64	
+    65	// Emits
+    66	const emit = defineEmits<{
+    67	  highlightElements: [elementIds: string[], temporary: boolean];
+    68	  clearHighlight: [];
+    69	}>();
+    70	
+    71	// Injected dependencies
+    72	const world = inject<World>('world')!;
+    73	const commandStack = inject<CommandStack>('commandStack')!;
+    74	
+    75	// Selection store
+    76	const selectionStore = useSelectionStore();
+    77	const processTreeStore = useProcessTreeStore();
+    78	
+    79	// Local state
+    80	const treeContainer = ref<HTMLElement | null>(null);
+    81	const selectedNodeId = ref<string | null>(null);
+    82	const relatedActionIds = ref<Set<string>>(new Set());
+    83	const stackVersion = ref(0); // Track stack changes
+    84	const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
+    85	
+    86	// Get current ProcessTree - use reactive ref that we update when World changes
+    87	const initialTree = world.getProcessTree();
+    88	console.log('[ActionsPanel] Initial processTree:', initialTree);
+    89	const processTree = ref(initialTree);
+    90	
+    95	});
+    96	const activeSubprocessId = computed(() => {
+    97	  stackVersion.value; // Depend on stack changes
+    98	  return processTree.value.getCurrentSubprocess().id;
+    99	});
+   100	
+   101	// Watch ProcessTree version for reactivity, triggered by stackVersion changes
+   102	const treeVersion = computed(() => {
+   103	  // Depend on stackVersion to trigger updates when push/pop occurs
+   104	  stackVersion.value;
+   105	  return processTree.value.getVersion();
+   106	});
+   107	
+   108	// Keyboard shortcuts for stack management
+   109	function handleKeyDown(event: KeyboardEvent) {
+   110	  if (event.ctrlKey && event.shiftKey) {
+   111	    if (event.key === '[') {
+   112	      event.preventDefault();
+   113	      popSubprocess();
+   114	    } else if (event.key === ']') {
+   115	      event.preventDefault();
+   116	      pushSubprocess();
+   117	    }
+   118	  }
+   119	}
+   120	
+   121	// Subscription cleanup
+   122	let unsubscribeTree: (() => void) | null = null;
+   123	
+   124	function scrollToBottom() {
+   125	  if (treeContainer.value) {
+   126	    treeContainer.value.scrollTop = treeContainer.value.scrollHeight;
+   127	  }
+   128	}
+   129	
+   130	onMounted(() => {
+   131	  console.log('[ActionsPanel] Mounted, processTree.value.root:', processTree.value.root);
+   132	  console.log('[ActionsPanel] Root children count:', processTree.value.root.children.length);
+   133	  
+   134	  // Register keyboard shortcuts
+   135	  window.addEventListener('keydown', handleKeyDown);
+   136	  
+   137	  // Initialize node count
+   138	  lastNodeCount.value = countNodes(processTree.value.root);
+   139	  console.log('[ActionsPanel] Initial node count:', lastNodeCount.value);
+   140	
+   141	  // Subscribe to ProcessTree changes
+   142	  unsubscribeTree = processTree.value.subscribe(() => {
+   143	    console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
+   144	    // Check if structure grew
+   145	    const currentCount = countNodes(processTree.value.root);
+   146	    const shouldScroll = currentCount > lastNodeCount.value;
+   147	    lastNodeCount.value = currentCount;
+   148	
+   149	    stackVersion.value++;
+   150	    console.log('[ActionsPanel] stackVersion incremented to:', stackVersion.value);
+   151	
+   152	    // Phase 118: Only expand the subprocess that received the new element
+   153	    if (shouldScroll) {
+   154	      const activeId = processTree.value.getCurrentSubprocess().id;
+   155	      processTreeStore.ensureExpanded(activeId);
+   156	    }
+   157	
+   158	    if (shouldScroll) {
+   159	      nextTick(() => {
+   160	        scrollToBottom();
+   161	      });
+   162	    }
+   163	  });
+   164	  
+   165	  // Subscribe to World changes to detect when clear() creates new ProcessTree
+   166	  world.subscribeToChanges(() => {
+   167	    console.log('[ActionsPanel] World changed, re-fetching ProcessTree');
+   168	    
+   169	    // Unsubscribe from old tree
+   170	    if (unsubscribeTree) {
+   171	      unsubscribeTree();
+   172	    }
+   173	    
+   174	    // Update ref to point to new ProcessTree instance
+   175	    processTree.value = world.getProcessTree();
+   176	    lastNodeCount.value = countNodes(processTree.value.root);
+   177	    
+   178	    // Subscribe to new tree
+   179	    unsubscribeTree = processTree.value.subscribe(() => {
+   180	      console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
+   220	/**
+   221	 * Find actions that have any of the selected element IDs in their inputs or outputs
+   222	 */
+   223	function findRelatedActions(selectedIds: string[]): void {
+   224	  const related = new Set<string>();
+   225	  const selectedIdSet = new Set(selectedIds);
+   226	
+   227	  // Get all actions from process tree
+   228	  const allActions = processTree.value.getAllActions();
+   229	
+   230	  // Check each action's elementId and dependencies (Phase 92)
+   231	  for (const action of allActions) {
+   232	    // Check if action produces any selected element
+   233	    const producesSelected = selectedIdSet.has(action.elementId);
+   234	    
+   235	    // Check if action depends on any selected element
+   236	    // Dependencies are now in DependencyService, accessible via element
+   237	    const dependsOnSelected = world && world.dependencyService 
+   238	      ? world.dependencyService.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId))
+   239	      : false;
+   240	
+   241	    if (producesSelected || dependsOnSelected) {
+   242	      related.add(action.id);
+   243	    }
+   244	  }
+   245	
+   246	  relatedActionIds.value = related;
+   247	}
+   248	
+   249	/**
+   250	 * Recursively count total nodes in the tree
+   251	 */
+   252	function countNodes(node: ProcessTreeNodeType): number {
+   253	  let count = 1;
+   254	  if (node.children) {
+   255	    for (const child of node.children) {
+   256	      if (child) {
+   257	        count += countNodes(child);
+   258	      }
+   259	    }
+   260	  }
+   261	  return count;
+   262	}
+   263	
+   264	// Stack management handlers
+   265	function pushSubprocess() {
+   266	  const subprocessName = `Subprocess ${Date.now()}`;
+   267	  const cmd = new Command('Push subprocess', world);
+   268	  cmd.addAndExecute(new PushSubprocessOp(subprocessName));
+   269	  cmd.commit();
+   270	  commandStack.push(cmd);
+   271	  stackVersion.value++; // Trigger UI update
+   272	}
+   273	
+   274	function popSubprocess() {
+   275	  if (canPop.value) {
+   276	    const cmd = new Command('Pop subprocess', world);
+   277	    cmd.addAndExecute(new PopSubprocessOp());
+   278	    cmd.commit();
+   279	    commandStack.push(cmd);
+   280	    stackVersion.value++; // Trigger UI update
+   281	  }
+   282	}
+   283	
+   284	// Handle node selection
+   285	function handleNodeSelect(nodeId: string) {
+   286	  selectedNodeId.value = nodeId === selectedNodeId.value ? null : nodeId;
+   287	}
+   288	
+   289	// Handle encapsulation toggle
+   290	function handleToggleEncapsulate(nodeId: string) {
+   291	  const cmd = new Command('Toggle subprocess encapsulation', world);
+   292	  cmd.addAndExecute(new ToggleEncapsulationOp(nodeId));
+   293	  cmd.commit();
+   294	  commandStack.push(cmd);
+   295	  stackVersion.value++; // Force UI update
+   296	}
+   297	
+   298	// Handle output toggle
+   299	function handleToggleOutput(nodeId: string) {
+   300	  const cmd = new Command('Toggle output status', world);
+   301	  cmd.addAndExecute(new ToggleOutputOp(nodeId));
+   302	  cmd.commit();
+   303	  commandStack.push(cmd);
+   304	  stackVersion.value++; // Force UI update
+   305	}
+   306	
+   307	// Handle subprocess rename
+   308	function handleRenameNode(nodeId: string, newName: string) {
+   309	  const cmd = new Command('Rename subprocess', world);
+   310	  cmd.addAndExecute(new RenameSubprocessOp(nodeId, newName));
+   311	  cmd.commit();
+   312	  commandStack.push(cmd);
+   313	  stackVersion.value++; // Force UI update
+   314	}
+   315	</script>
+   316	
+   317	
+   318	<style scoped>
+   319	.actions-panel {
+   320	  width: 100%;
+
+--- line evidence: Toolbar imports/shortcut/example/undo ---
+   115	</template>
+   116	
+   117	<script setup lang="ts">
+   118	import { inject, computed, onMounted, onUnmounted, ref } from 'vue';
+   119	import { useToolStore } from '@/stores/toolStore';
+   120	import { useViewStore } from '@/stores/viewStore';
+   121	import { CommandStack } from '@/commands/CommandStack';
+   122	import { Command } from '@/commands/Command';
+   123	import { Vector3 } from 'three';
+   124	import type { World } from '@/domain/world/World';
+   125	import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+   126	import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+   127	import LoginStatusWidget from '@/components/LoginStatusWidget.vue';
+   128	import PlaneSelector from '@/components/toolbars/PlaneSelector.vue';
+   129	import ToolFamilyButton from '@/components/toolbars/ToolFamilyButton.vue';
+   130	import { TOOL_FAMILIES } from '@/config/toolFamilies';
+   131	import SelectionToolIcon from '@/components/icons/toolbar/SelectionToolIcon.vue';
+   132	import NewFileIcon from '@/components/icons/toolbar/NewFileIcon.vue';
+   133	import OpenFileIcon from '@/components/icons/toolbar/OpenFileIcon.vue';
+   134	import UndoIcon from '@/components/icons/toolbar/UndoIcon.vue';
+   135	import RedoIcon from '@/components/icons/toolbar/RedoIcon.vue';
+   136	import GridIcon from '@/components/icons/toolbar/GridIcon.vue';
+   137	import ProjectionIcon from '@/components/icons/toolbar/ProjectionIcon.vue';
+   138	import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
+   139	
+   140	/**
+   141	 * Toolbar.vue - Tool selection toolbar
+   142	 * 
+   143	 * Provides buttons for selecting geometric construction tools (Point, Line, etc.),
+   144	 * file operations (New, Open), and history controls (Undo/Redo).
+   145	 * Manages active tool state via tool store.
+   146	 * 
+   147	 * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+   148	 */
+   149	
+   150	interface Emits {
+   151	  (e: 'new-project'): void;
+   152	  (e: 'open-project'): void;
+   153	  (e: 'fit-to-view'): void;
+   154	  (e: 'sign-in'): void;
+   155	  (e: 'sign-out'): void;
+   156	}
+   157	
+   158	const emit = defineEmits<Emits>();
+   159	
+   160	const toolStore = useToolStore();
+   161	const viewStore = useViewStore();
+   162	
+   163	// Inject command stack for undo/redo
+   164	const commandStack = inject<CommandStack>('commandStack')!;
+   165	if (!commandStack) {
+   166	  throw new Error('CommandStack not provided');
+   167	}
+   168	
+   169	// Inject world for example setups
+   170	const world = inject<World>('world')!;
+   171	if (!world) {
+   172	  throw new Error('World not provided');
+   173	}
+   174	
+   175	// Reactive trigger for CommandStack updates (Phase 91)
+   205	/**
+   206	 * Handle global keyboard shortcuts
+   207	 * Phase 54.5: Esc activates Selection Tool
+   208	 * Phase 67: Letter shortcuts activate specific sub-tools and update last-used
+   209	 * Alt+E: Add projection plane example setup (for testing)
+   210	 */
+   211	function handleKeyDown(event: KeyboardEvent) {
+   212	  if (event.key === 'Escape') {
+   213	    selectTool('select');
+   214	    event.preventDefault();
+   215	    return;
+   216	  }
+   217	  
+   218	  // Alt+E: Add projection plane example setup
+   219	  if (event.altKey && (event.key === 'e' || event.key === 'E')) {
+   220	    addProjectionPlaneSetup();
+   221	    event.preventDefault();
+   222	    return;
+   223	  }
+   224	  
+   225	  // Handle letter shortcuts for tools
+   226	  const key = event.key.toUpperCase();
+   227	  
+   228	  // Phase 106: D key toggles 3D element projection display
+   229	  if (key === 'D') {
+   230	    handleToggleProjections();
+   231	    event.preventDefault();
+   232	    return;
+   233	  }
+   234	  
+   235	  // Find tool with matching shortcut across all families
+   236	  for (const family of TOOL_FAMILIES) {
+   237	    for (const tool of family.tools) {
+   238	      if (tool.shortcut === key) {
+   239	        // Activate tool directly and update last-used for its family
+   240	        toolStore.selectSubTool(family.id, tool.id);
+   241	        event.preventDefault();
+   242	        return;
+   243	      }
+   244	    }
+   245	  }
+   246	}
+   247	
+   248	/**
+   249	 * Add projection plane example setup (Alt+E)
+   250	 * Creates T1, T2, and T2' lines for testing auxiliary projection plane creation
+   251	 */
+   252	function addProjectionPlaneSetup() {
+   253	  try {
+   254	    const planes = world.getAllProjectionPlanes();
+   255	    const P_H = planes.find((p) => p.name === 'P_H');
+   256	    const P_V = planes.find((p) => p.name === 'P_V');
+   257	
+   258	    if (!P_H || !P_V) {
+   259	      console.error('Standard projection planes P_H and P_V not found');
+   260	      return;
+   261	    }
+   262	
+   263	    const cmd = new Command('Add projection plane example setup', world);
+   264	
+   265	    // T1 on P_H (horizontal trace)
+   266	    const t1_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(150, 0, 1)));
+   267	    const t1_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(450, 0, 1)));
+   268	    const t1 = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+   269	      P_H.id, 
+   270	      t1_p1.outputs.pointId as string, 
+   271	      t1_p2.outputs.pointId as string
+   272	    ));
+   273	    const t1Line = world.getLine2D(t1.outputs.lineId as string);
+   274	    if (t1Line) t1Line.label = 'T1_H';
+   275	
+   276	    // T2 on P_V (diagonal trace)
+   277	    const t2_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_V.id, new Vector3(200, 0, 1)));
+   278	    const t2_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_V.id, new Vector3(400, 150, 1)));
+   279	    const t2 = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+   280	      P_V.id,
+   281	      t2_p1.outputs.pointId as string,
+   282	      t2_p2.outputs.pointId as string
+   283	    ));
+   284	    const t2Line = world.getLine2D(t2.outputs.lineId as string);
+   285	    if (t2Line) t2Line.label = 'T2_V';
+   286	
+   287	    // T2' on P_H (position line)
+   288	    const t2p_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(200, 80, 1)));
+   289	    const t2p_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(400, 120, 1)));
+   290	    const t2p = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+   291	      P_H.id,
+   292	      t2p_p1.outputs.pointId as string,
+   293	      t2p_p2.outputs.pointId as string
+   294	    ));
+   295	    const t2pLine = world.getLine2D(t2p.outputs.lineId as string);
+   296	    if (t2pLine) t2pLine.label = 'T2\'_H';
+   297	
+   298	    cmd.commit();
+   299	    commandStack.push(cmd);
+   300	    
+   301	    console.log('Added projection plane example setup (T1_H, T2_V, T2\'_H)');
+   302	  } catch (error) {
+   303	    console.error('Failed to add projection plane setup:', error);
+   304	  }
+   305	}
+   306	
+   307	onMounted(() => {
+   308	  window.addEventListener('keydown', handleKeyDown);
+   309	  
+   310	  // Subscribe to command stack changes
+   320	    unsubscribeStack();
+   321	  }
+   322	});
+   323	
+   324	/**
+   325	 * Handle undo action
+   326	 */
+   327	function handleUndo() {
+   328	  if (commandStack.canUndo()) {
+   329	    commandStack.undo();
+   330	  }
+   331	}
+   332	
+   333	/**
+   334	 * Handle redo action
+   335	 */
+   336	function handleRedo() {
+   337	  if (commandStack.canRedo()) {
+   338	    commandStack.redo();
+   339	  }
+   340	}
+   341	
+   342	/**
+   343	 * Handle new project button
+   344	 */
+   345	function handleNew() {
+   346	  emit('new-project');
+   347	}
+   348	
+   349	/**
+   350	 * Handle open project button
+   351	 */
+   352	function handleOpen() {
+   353	  emit('open-project');
+   354	}
+   355	
+   356	/**
+   357	 * Toggle grid visibility (T276)
+   358	 */
+   359	function handleToggleGrid() {
+   360	  viewStore.toggleGrid();
+
+--- line evidence: 006a app controller/usecase excerpts ---
+### frontend/src/application/tools/ToolCommandIntents.ts
+     1	import type { Vector3 } from 'three';
+     2	import type { ArgumentValue } from '@/types/ToolArgumentCollector';
+     3	
+     4	export type ConstructionIntentType =
+     5	  | 'point'
+     6	  | 'line'
+     7	  | 'segment'
+     8	  | 'circle'
+     9	  | 'guide'
+    10	  | 'intersection'
+    11	  | 'parallel-line'
+    12	  | 'perpendicular-line'
+    13	  | 'tangent-line-to-circle-through-point'
+    14	  | 'tangent-line-to-circle-parallel'
+    15	  | 'create3dpoint'
+    16	  | 'create3dline'
+    17	  | 'create3dsegment'
+    18	  | 'create3dplane'
+    19	  | 'createprojectionplane'
+    20	  | 'interactiveprojectionsetup';
+    21	
+    22	export type QuickToolIntentType =
+    23	  | 'quickprojectionsetup'
+    24	  | 'quick3dline'
+    25	  | 'quick3dsegment';
+    26	
+    27	export type TangentChoiceMetadata = {
+    28	  tangentIndex: 0 | 1;
+    29	  selectionPoint: Vector3;
+    30	};
+    31	
+    32	export type IntersectionChoiceMetadata = {
+    33	  selectionPoint: Vector3;
+    34	};
+    35	
+    36	interface BaseToolConstructionIntent {
+    37	  type: ConstructionIntentType;
+    38	  description: string;
+    39	  planeId: string;
+    40	  args: Map<string, ArgumentValue>;
+    41	}
+    42	
+    43	export type ToolConstructionIntent =
+    44	  | (BaseToolConstructionIntent & {
+    45	      type: 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel';
+    46	      metadata: TangentChoiceMetadata;
+    47	    })
+    48	  | (BaseToolConstructionIntent & {
+    49	      type: 'intersection';
+    50	      metadata: IntersectionChoiceMetadata;
+    51	    })
+    52	  | (BaseToolConstructionIntent & {
+    53	      type: Exclude<ConstructionIntentType, 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel' | 'intersection'>;
+    54	      metadata?: never;
+    55	    });
+    56	
+    57	export interface QuickToolIntent {
+    58	  type: QuickToolIntentType;
+    59	  description: string;
+    60	}
+    61	
+    62	export interface MoveFreePointRequest {
+    63	  planeId: string;
+    64	  pointId: string;
+    65	  label?: string;
+    66	}
+    67	
+    68	export interface StyleUpdateRequest {
+    69	  elementId: string;
+    70	  planeId: string;
+    71	  style: {
+    72	    color?: string;
+    73	    lineWidth?: number;
+    74	    lineStyle?: 'solid' | 'dashed' | 'dotted';
+    75	    opacity?: number;
+    76	    visible?: boolean;
+    77	  };
+    78	}
+    79	
+    80	export interface ToolCommandResult {
+    81	  success: boolean;
+    82	  message?: string;
+    83	}
+    84	
+    85	export interface FreePointMoveSession {
+    86	  preview(position: Vector3): ToolCommandResult;
+    87	  commit(): ToolCommandResult;
+    88	  cancel(): void;
+    89	}
+    90	
+    91	export interface ToolCommandSink {
+    92	  executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult;
+    93	  executeQuickIntent(intent: QuickToolIntent): ToolCommandResult;
+    94	  startFreePointMove(request: MoveFreePointRequest): FreePointMoveSession;
+    95	  updateElementStyle(request: StyleUpdateRequest): ToolCommandResult;
+    96	}
+### frontend/src/application/tools/CanvasToolController.ts
+     1	import type { CommandStack } from '@/commands/CommandStack';
+     2	import type { World } from '@/domain/world/World';
+     3	import type { useToolStore } from '@/stores/toolStore';
+     4	import type { ToolCommandSink, ToolConstructionIntent, QuickToolIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from './ToolCommandIntents';
+     5	import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
+     6	import { executeQuickToolIntent } from '@/application/construction/QuickToolUseCases';
+     7	import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
+     8	import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
+     9	
+    10	export interface CanvasToolControllerDependencies {
+    11	  world: World;
+    12	  commandStack: CommandStack;
+    13	  toolStore: ReturnType<typeof useToolStore>;
+    14	}
+    15	
+    16	export interface CanvasToolControllerProviderDependencies {
+    17	  world: World;
+    18	  commandStack: unknown;
+    19	  toolStore: ReturnType<typeof useToolStore>;
+    20	}
+    21	
+    22	export function createCanvasToolController(deps: CanvasToolControllerProviderDependencies): CanvasToolController {
+    23	  if (!deps.commandStack) {
+    24	    throw new Error('CommandStack not provided');
+    25	  }
+    26	  return new CanvasToolController({
+    27	    world: deps.world,
+    28	    commandStack: deps.commandStack as CommandStack,
+    29	    toolStore: deps.toolStore
+    30	  });
+    31	}
+    32	
+    33	export class CanvasToolController implements ToolCommandSink {
+    34	  private readonly movement: CanvasPointMovementUseCase;
+    35	  private readonly style: CanvasStyleUseCase;
+    36	
+    37	  constructor(private readonly deps: CanvasToolControllerDependencies) {
+    38	    this.movement = new CanvasPointMovementUseCase(deps.world, deps.commandStack);
+    39	    this.style = new CanvasStyleUseCase(deps.world, deps.commandStack);
+    40	  }
+    41	
+    42	  executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult {
+    43	    const result = executeConstructionIntent({
+    44	      intent,
+    45	      world: this.deps.world,
+    46	      commandStack: this.deps.commandStack
+    47	    });
+    48	    return result;
+    49	  }
+    50	
+    51	  executeQuickIntent(intent: QuickToolIntent): ToolCommandResult {
+    52	    const result = executeQuickToolIntent({
+    53	      intent,
+    54	      world: this.deps.world,
+    55	      commandStack: this.deps.commandStack
+    56	    });
+    57	    this.deps.toolStore.setTool('select');
+    58	    return result;
+    59	  }
+    60	
+    61	  startFreePointMove(request: MoveFreePointRequest): FreePointMoveSession {
+    62	    return this.movement.start(request);
+    63	  }
+    64	
+    65	  updateElementStyle(request: StyleUpdateRequest): ToolCommandResult {
+    66	    return this.style.update(request);
+    67	  }
+    68	}
+### frontend/src/application/construction/ConstructionUseCases.ts
+     1	import { Command } from '@/commands/Command';
+     2	import type { CommandStack } from '@/commands/CommandStack';
+     3	import type { World } from '@/domain/world/World';
+     4	import type { ToolConstructionIntent, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+     5	import type { Point2D } from '@/domain/world/Point';
+     6	import { Line2D } from '@/domain/world/Line';
+     7	import { Circle2D } from '@/domain/world/Circle';
+     8	import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+     9	import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+    10	import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
+    11	import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+    12	import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+    13	import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+    14	import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+    15	import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+    16	import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+    17	import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+    18	import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+    19	import { createActionGroup } from '@/domain/processTree/ActionGroup';
+    20	import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+    21	import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+    22	import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+    23	import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+    24	import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSiblingGuideAction';
+    25	import { createAdd3DPointAction, createAdd3DLineAction, createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
+    26	import { createTangentLineToCircleThroughPointAction, createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
+    27	import { areLinesParallel, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
+    28	
+    29	export interface ExecuteConstructionParams {
+    30	  intent: ToolConstructionIntent;
+    31	  world: World;
+    32	  commandStack: CommandStack;
+    33	}
+    34	
+    35	export function executeConstructionIntent({ intent, world, commandStack }: ExecuteConstructionParams): ToolCommandResult {
+    36	  const cmd = new Command(intent.description, world);
+    37	  try {
+    38	    const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    39	    const group = createActionGroup(groupId);
+    40	    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    41	    executeConstructionOperations(cmd, intent, world, groupId);
+    42	    checkCreatedElementsFeasibility(cmd, world);
+    43	    cmd.commit();
+    44	    commandStack.push(cmd);
+    45	    return { success: true, message: `${intent.description} completed successfully` };
+    46	  } catch (error) {
+    47	    cmd.rollback();
+    48	    return { success: false, message: error instanceof Error ? error.message : String(error) };
+    49	  }
+    50	}
+    51	
+    52	function executeConstructionOperations(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+    53	  const args = intent.args;
+    54	  const planeId = intent.planeId;
+    55	
+    56	  switch (intent.type) {
+    57	    case 'point': {
+    58	      const planeCoords = args.get('position')!.planeCoords;
+    59	      validateCoordinates(planeCoords);
+    60	      if (!world.getProjectionPlaneById(planeId)) throw new Error(`Plane not found: ${planeId}`);
+    61	      PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
+    62	      return;
+    63	    }
+    64	    case 'line': {
+    65	      const p1 = args.get('point1')!.element as Point2D;
+    66	      const p2 = args.get('point2')!.element as Point2D;
+    67	      LineSequenceFactory.createLineByTwoPoints(cmd, planeId, p1.id, p2.id, groupId);
+    68	      return;
+    69	    }
+    70	    case 'segment': {
+    71	      const p1 = args.get('point1')!.element as Point2D;
+    72	      const p2 = args.get('point2')!.element as Point2D;
+    73	      const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1.id, p2.id));
+    74	      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
+    75	      return;
+    76	    }
+    77	    case 'circle': {
+    78	      const center = args.get('center')!.element as Point2D;
+    79	      const circumferencePoint = args.get('circumferencePoint')!.element as Point2D;
+    80	      CircleSequenceFactory.createCircleByCenterAndPoint(cmd, planeId, center.id, circumferencePoint.id, groupId);
+    81	      return;
+    82	    }
+    83	    case 'guide': {
+    84	      const referenceLineId = args.get('referenceLine')!.element!.id;
+    85	      const throughPointId = args.get('throughPoint')!.element!.id;
+    86	      const result = GuideSequenceFactory.createGuideWithSibling(cmd, planeId, referenceLineId, throughPointId, world);
+    87	      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+    88	      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+    89	      return;
+    90	    }
+    91	    case 'parallel-line': {
+    92	      const line = args.get('referenceLine')!.element as Line2D;
+    93	      const point = args.get('throughPoint')!.element as Point2D;
+    94	      LineSequenceFactory.createParallelLine(cmd, planeId, line.id, point.id, groupId);
+    95	      return;
+    96	    }
+    97	    case 'perpendicular-line': {
+    98	      const line = args.get('referenceLine')!.element as Line2D;
+    99	      const point = args.get('throughPoint')!.element as Point2D;
+   100	      LineSequenceFactory.createPerpendicularLine(cmd, planeId, line.id, point.id, groupId);
+   101	      return;
+   102	    }
+   103	    case 'intersection': {
+   104	      createIntersection(cmd, intent, world, groupId);
+   105	      return;
+   106	    }
+   107	    case 'tangent-line-to-circle-through-point': {
+   108	      const circle = args.get('circle')!.element as Circle2D;
+   109	      const point = args.get('throughPoint')!.element as Point2D;
+   110	      const tangentIndex = intent.metadata.tangentIndex;
+   111	      const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(planeId, circle.id, point.id, tangentIndex));
+   112	      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
+   113	      return;
+   114	    }
+   115	    case 'tangent-line-to-circle-parallel': {
+   116	      const circle = args.get('circle')!.element as Circle2D;
+   117	      const line = args.get('referenceLine')!.element as Line2D;
+   118	      const tangentIndex = intent.metadata.tangentIndex;
+   119	      const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(planeId, circle.id, line.id, tangentIndex));
+   120	      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
+   121	      return;
+   122	    }
+   123	    case 'create3dpoint': {
+   124	      const p1 = args.get('projection1')!.element!;
+   125	      const p2 = args.get('projection2')!.element!;
+   126	      const result = cmd.addAndExecute(new Add3DPointOp(p1.id, p2.id, p1.planeId, p2.planeId));
+   127	      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
+   128	      return;
+   129	    }
+   130	    case 'create3dline': {
+   131	      const l1 = args.get('projection1')!.element!;
+   132	      const l2 = args.get('projection2')!.element!;
+   133	      const result = cmd.addAndExecute(new Add3DLineOp(l1.id, l2.id, l1.planeId, l2.planeId));
+   134	      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId as string), groupId));
+   135	      return;
+   136	    }
+   137	    case 'create3dsegment': {
+   138	      const s1 = args.get('projection1')!.element!;
+   139	      const s2 = args.get('projection2')!.element!;
+   140	      const result = cmd.addAndExecute(new Add3DSegmentOp(s1.id, s2.id, s1.planeId, s2.planeId));
+   141	      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
+   142	      return;
+   143	    }
+   144	    case 'create3dplane': {
+   145	      const t1 = args.get('trace1')!.element!;
+   146	      const t2 = args.get('trace2')!.element!;
+   147	      PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
+   148	      return;
+   149	    }
+   150	    case 'createprojectionplane': {
+   151	      const t1 = args.get('t1HingeTrace')!.element!;
+   152	      const t2 = args.get('t2OtherTrace')!.element!;
+   153	      const t2Prime = args.get('t2PrimePositionLine')!.element!;
+   154	      const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
+   155	      PlaneSequenceFactory.createAuxiliaryProjectionPlane(cmd, world, plane3DId, t1.id, t2.id, t2Prime.id, t1.planeId, undefined, groupId);
+   156	      return;
+   157	    }
+   158	    case 'interactiveprojectionsetup': {
+   159	      throw new Error('Interactive projection setup is not retained in Wave 006a application controller');
+   160	    }
+   161	    default:
+   162	      throw new Error(`Unsupported construction intent: ${(intent as any).type}`);
+   163	  }
+   164	}
+   165	
+   166	function createIntersection(cmd: Command, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
+   167	  const element1 = intent.args.get('element1')!.element!;
+   168	  const element2 = intent.args.get('element2')!.element!;
+   169	  const selectionPoint = intent.metadata.selectionPoint;
+   170	  if (element1 instanceof Line2D && element2 instanceof Line2D) {
+   171	    const r1 = element1.realize2D(world);
+   172	    const r2 = element2.realize2D(world);
+   173	    if (!r1 || !r2) throw new Error('Could not realize lines.');
+   174	    if (areLinesParallel(r1, r2)) throw new Error('Lines are parallel and do not intersect.');
+   175	    IntersectionSequenceFactory.createLineLineIntersection(cmd, intent.planeId, element1.id, element2.id, world, groupId);
+   176	  } else if (element1 instanceof Line2D && element2 instanceof Circle2D) {
+   177	    const index = lineCircleIndex(element1.id, element2.id, selectionPoint, world);
+   178	    if (index === null) throw new Error('Line and circle do not intersect.');
+   179	    IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
+   180	  } else if (element1 instanceof Circle2D && element2 instanceof Line2D) {
+   181	    const index = lineCircleIndex(element2.id, element1.id, selectionPoint, world);
+   182	    if (index === null) throw new Error('Circle and line do not intersect.');
+   183	    IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element2.id, element1.id, index, world, groupId);
+   184	  } else if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
+   185	    const index = circleCircleIndex(element1.id, element2.id, selectionPoint, world);
+   186	    if (index === null) throw new Error('Circles do not intersect.');
+   187	    IntersectionSequenceFactory.createCircleCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
+   188	  } else {
+   189	    throw new Error('Unsupported element type combination for intersection.');
+   190	  }
+   191	}
+   192	
+   193	function lineCircleIndex(lineId: string, circleId: string, mousePos: THREE.Vector3, world: World): number | null {
+   194	  const line = world.getLine2D(lineId);
+   195	  const circle = world.getCircle2D(circleId);
+   196	  if (!line || !circle) return null;
+   197	  const lr = line.realize2D(world);
+   198	  const cr = circle.realize2D(world);
+   199	  if (!lr || !cr) return null;
+   200	  const intersections = intersectLineCircle(lr, cr);
+   201	  if (intersections.length === 0) return null;
+   202	  if (intersections.length === 1) return 0;
+   203	  return intersections[0].distanceTo(mousePos) <= intersections[1].distanceTo(mousePos) ? 0 : 1;
+   204	}
+   205	
+   206	function circleCircleIndex(circle1Id: string, circle2Id: string, mousePos: THREE.Vector3, world: World): number | null {
+   207	  const c1 = world.getCircle2D(circle1Id);
+   208	  const c2 = world.getCircle2D(circle2Id);
+   209	  if (!c1 || !c2) return null;
+   210	  const r1 = c1.realize2D(world);
+   211	  const r2 = c2.realize2D(world);
+   212	  if (!r1 || !r2) return null;
+   213	  const intersections = intersectCircleCircle(r1, r2);
+   214	  if (intersections.length === 0) return null;
+   215	  if (intersections.length === 1) return 0;
+   216	  return intersections[0].distanceTo(mousePos) <= intersections[1].distanceTo(mousePos) ? 0 : 1;
+   217	}
+   218	
+   219	function validateCoordinates(coords: any): void {
+   220	  if (!coords || !isFinite(coords.x) || !isFinite(coords.y) || !isFinite(coords.z)) {
+### frontend/src/application/canvas/CanvasPointMovementUseCase.ts
+     1	import type { Vector3 } from 'three';
+     2	import { Command } from '@/commands/Command';
+     3	import type { CommandStack } from '@/commands/CommandStack';
+     4	import type { World } from '@/domain/world/World';
+     5	import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+     6	import type { MoveFreePointRequest, FreePointMoveSession, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+     7	
+     8	export class CanvasPointMovementUseCase {
+     9	  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+    10	
+    11	  start(request: MoveFreePointRequest): FreePointMoveSession {
+    12	    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+    13	    let hasPreview = false;
+    14	
+    15	    return {
+    16	      preview: (position: Vector3): ToolCommandResult => {
+    17	        try {
+    18	          cmd.rollback();
+    19	          cmd.addAndExecute(new UpdateFreePoint2DPositionOp(request.planeId, request.pointId, position));
+    20	          hasPreview = true;
+    21	          return { success: true };
+    22	        } catch (error) {
+    23	          cmd.rollback();
+    24	          return { success: false, message: error instanceof Error ? error.message : String(error) };
+    25	        }
+    26	      },
+    27	      commit: (): ToolCommandResult => {
+    28	        if (!hasPreview) {
+    29	          cmd.rollback();
+    30	          return { success: true };
+    31	        }
+    32	        cmd.commit();
+    33	        this.commandStack.push(cmd);
+    34	        return { success: true };
+    35	      },
+    36	      cancel: (): void => {
+    37	        cmd.rollback();
+    38	      }
+    39	    };
+    40	  }
+    41	}
+### frontend/src/application/canvas/CanvasStyleUseCase.ts
+     1	import { Command } from '@/commands/Command';
+     2	import type { CommandStack } from '@/commands/CommandStack';
+     3	import type { World } from '@/domain/world/World';
+     4	import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+     5	import type { StyleUpdateRequest, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+     6	
+     7	export class CanvasStyleUseCase {
+     8	  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+     9	
+    10	  update(request: StyleUpdateRequest): ToolCommandResult {
+    11	    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+    12	    try {
+    13	      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+    14	      cmd.commit();
+    15	      this.commandStack.push(cmd);
+    16	      return { success: true };
+    17	    } catch (error) {
+    18	      cmd.rollback();
+    19	      return { success: false, message: error instanceof Error ? error.message : String(error) };
+    20	    }
+    21	  }
+    22	}
+
+--- process-tree operation files ---
+### frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts
+     1	/**
+     2	 * AddProcessTreeActionGroupOp - Operation for adding an ActionGroup to the ProcessTree
+     3	 * 
+     4	 * Part of the split operation pattern for N-actions-1-group support.
+     5	 * This operation creates the container group, while AddProcessTreeActionOp adds items to it.
+     6	 */
+     7	
+     8	import type { IOperation, OperationResult } from '../IOperation';
+     9	import type { World } from '@/domain/world/World';
+    10	import type { ActionGroup } from '@/domain/processTree/ActionGroup';
+    11	
+    12	export class AddProcessTreeActionGroupOp implements IOperation {
+    13	  readonly type = 'AddProcessTreeActionGroup';
+    14	  parameters: Record<string, any>;
+    15	  outputs: Record<string, any> = {};
+    16	
+    17	  // Transient reference to group (not serialized, rebuilt during apply?)
+    18	  // Ideally operations should be serializable.
+    19	  // Passing the full group object in constructor means we rely on the caller to create it.
+    20	  constructor(private group: ActionGroup) {
+    21	    // CRITICAL: Store visibility flags for proper serialization
+    22	    this.parameters = { 
+    23	      groupId: group.id,
+    24	      isOutput: group.isOutput,
+    25	      isAuxiliary: group.isAuxiliary
+    26	    };
+    27	  }
+    28	
+    29	  apply(world: World): OperationResult {
+    30	    world.getProcessTree().addActionGroup(this.group);
+    31	    this.outputs = { groupId: this.group.id };
+    32	    
+    33	    // Dependency maps might refer to groups? Probably not, they refer to elements (actions).
+    34	    
+    35	    return { success: true, outputs: this.outputs };
+    36	  }
+    37	
+    38	  undo(world: World): void {
+    39	    const processTree = world.getProcessTree();
+    40	    processTree.removeActionGroup(this.group.id);
+    41	  }
+    42	
+    43	  serialize() {
+    44	    return {
+    45	      opType: this.type,
+    46	      groupId: this.parameters.groupId,
+    47	      isOutput: this.parameters.isOutput,
+    48	      isAuxiliary: this.parameters.isAuxiliary,
+    49	      outputs: this.outputs
+    50	    };
+    51	  }
+    52	}
+### frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
+     1	/**
+     2	 * AddProcessTreeActionOp - Operation for adding ProcessTree actions
+     3	 * 
+     4	 * Wraps ProcessTree action registration as an undoable operation.
+     5	 * This ensures that when commands are undone, both the element AND its
+     6	 * ProcessTree action are removed, preventing orphaned dependency entries.
+     7	 * 
+     8	 * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree Action Registration (Phase 81)
+     9	 */
+    10	
+    11	import type { IOperation, OperationResult } from '../IOperation';
+    12	import type { World } from '@/domain/world/World';
+    13	import type { Action } from '@/domain/processTree/Action';
+    14	
+    15	export class AddProcessTreeActionOp implements IOperation {
+    16	  readonly type = 'AddProcessTreeActionOp';
+    17	  parameters: Record<string, any>;
+    18	  outputs: Record<string, any> = {};
+    19	
+    20	  constructor(action: Action, private groupId: string) {
+    21	    // Store action in parameters for serializability
+    22	    this.parameters = {
+    23	      action: action,
+    24	      groupId: groupId
+    25	    };
+    26	  }
+    27	
+    28	  apply(world: World): OperationResult {
+    29	    // Add action to ProcessTree
+    30	    const action = this.parameters.action as Action;
+    31	    
+    32	    // Add to existing group (Strict Mode: groupId is required)
+    33	    const index = world.getProcessTree().addActionToGroup(action, this.groupId);
+    34	    
+    35	    // Phase 93: Actions no longer have IDs - store elementId for tracking
+    36	    this.outputs = {
+    37	      elementId: action.elementId,  // Store elementId instead of action.id
+    38	      groupId: this.groupId,
+    39	      index: index
+    40	    };
+    41	    
+    42	    return {
+    43	      success: true,
+    44	      outputs: this.outputs
+    45	    };
+    46	  }
+    47	
+    48	  undo(world: World): void {
+    49	    if (!this.outputs.elementId) {
+    50	      throw new Error('Cannot undo: operation was not applied');
+    51	    }
+    52	    
+    53	    // Phase 93: Remove action by elementId
+    54	    // Find the action that produced this element and remove it
+    55	    const actions = world.getProcessTree().getActionsProducingElement(this.outputs.elementId);
+    56	    if (actions.length > 0) {
+    57	      // Remove the most recent action (should be only one, but just in case)
+    58	      world.getProcessTree().removeActionByElementId(this.outputs.elementId);
+    59	    }
+    60	
+    61	    // Removed fallback: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.
+    62	    // If this op added an action to a group, undoing it naturally removes the action.
+    63	    // The group itself is handled by its own Op.
+    64	
+    65	  }
+    66	
+    67	  serialize() {
+    68	    return {
+    69	      opType: this.type,
+    70	      action: this.parameters.action,
+    71	      groupId: this.groupId,
+    72	      outputs: this.outputs
+    73	    };
+    74	  }
+    75	}
+### frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+     1	/**
+     2	 * PopSubprocessOp - Pop subprocess from ProcessTree stack
+     3	 * 
+     4	 * Pops the current subprocess from the ProcessTree stack, returning to the parent subprocess.
+     5	 * The subprocess remains in the tree as a child of its parent - only the stack is affected.
+     6	 * 
+     7	 * Phase 85: ProcessTree Subprocess Stack Architecture
+     8	 * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+     9	 */
+    10	
+    11	import type { IOperation, OperationResult } from '../IOperation';
+    12	import type { World } from '@/domain/world/World';
+    13	
+    14	export class PopSubprocessOp implements IOperation {
+    15	  readonly type = 'PopSubprocess';
+    16	  parameters: Record<string, any> = {};
+    17	  outputs: Record<string, any> = {};
+    18	  
+    19	  private poppedSubprocessId: string | undefined;
+    20	
+    21	  apply(world: World): OperationResult {
+    22	    // Store info about subprocess being popped for undo
+    23	    const currentSubprocess = world.getProcessTree().getCurrentSubprocess();
+    24	    this.poppedSubprocessId = currentSubprocess.id;
+    25	    
+    26	    world.getProcessTree().popSubprocess();
+    27	    return { success: true, outputs: {} };
+    28	  }
+    29	
+    30	  undo(world: World): void {
+    31	    if (!this.poppedSubprocessId) {
+    32	      throw new Error('Cannot undo PopSubprocessOp: no subprocess ID stored');
+    33	    }
+    34	    
+    35	    // Restore the subprocess to the stack
+    36	    world.getProcessTree().restoreSubprocessToStack(this.poppedSubprocessId);
+    37	  }
+    38	
+    39	  serialize() {
+    40	    return { opType: this.type, outputs: this.outputs };
+    41	  }
+    42	}
+### frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+     1	/**
+     2	 * ProcessTreeOperations - Operations for manipulating the construction history tree
+     3	 * 
+     4	 * These operations maintain stable indices using tombstone pattern:
+     5	 * - Removed actions leave null holes in children arrays
+     6	 * - Indices never shift, making undo/redo trivial
+     7	 * - Visualization skips over null entries
+     8	 * 
+     9	 * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30
+    10	 */
+    11	
+    12	import type { IOperation, OperationResult } from '../IOperation';
+    13	import type { World } from '@/domain/world/World';
+    14	import type { ActionNode } from '@/domain/processTree/ProcessTree';
+    15	
+    16	/**
+    17	 * RemoveActionFromProcessTreeOp - Remove an action from the construction history
+    18	 * 
+    19	 * Creates a tombstone (null) at the action's index. The index is preserved
+    20	 * so undo can restore the action at exactly the same position.
+    21	 * 
+    22	 * This is the primary operation used by DeleteElementsCommand.
+    23	 */
+    24	export class RemoveActionFromProcessTreeOp implements IOperation {
+    25	  readonly type = 'RemoveActionFromProcessTree';
+    26	  readonly parameters: Record<string, any>;
+    27	  outputs: Record<string, any> = {};
+    28	  
+    29	  // Stored for undo
+    30	  private removedAction?: ActionNode;
+    31	  private groupId?: string;
+    32	  private index?: number;
+    33	
+    34	  constructor(
+    35	    private actionId: string
+    36	  ) {
+    37	    this.parameters = { actionId };
+    38	  }
+    39	
+    40	  apply(world: World): OperationResult {
+    41	    try {
+    42	      const processTree = world.getProcessTree();
+    43	      const result = processTree.removeAction(this.actionId);
+    44	      
+    45	      if (!result) {
+    46	        return {
+    47	          success: false,
+    48	          outputs: {},
+    49	          error: `Action ${this.actionId} not found in ProcessTree`
+    50	        };
+    51	      }
+    52	      
+    53	      // Store for undo
+    54	      this.removedAction = result.action;
+    55	      this.groupId = result.groupId;
+    56	      this.index = result.index;
+    57	      
+    58	      this.outputs = { 
+    59	        removedActionId: this.actionId,
+    60	        groupId: result.groupId,
+    61	        index: result.index
+    62	      };
+    63	      
+    64	      return {
+    65	        success: true,
+    66	        outputs: this.outputs
+    67	      };
+    68	    } catch (error) {
+    69	      return {
+    70	        success: false,
+    71	        outputs: {},
+    72	        error: error instanceof Error ? error.message : String(error)
+    73	      };
+    74	    }
+    75	  }
+    76	
+    77	  undo(world: World): void {
+    78	    if (!this.removedAction || this.groupId === undefined || this.index === undefined) {
+    79	      throw new Error('Cannot undo: no action data stored');
+    80	    }
+    81	
+    82	    const processTree = world.getProcessTree();
+    83	    processTree.restoreAction(this.removedAction, this.groupId, this.index);
+    84	  }
+    85	
+    86	  serialize() {
+    87	    return { opType: this.type, actionId: this.actionId, outputs: this.outputs };
+    88	  }
+    89	}
+    90	
+    91	/**
+    92	 * RemoveActionGroupFromProcessTreeOp - Remove an entire ActionGroup
+    93	 * 
+    94	 * Used when deleting a group of related elements or when user explicitly
+    95	 * deletes an ActionGroup from the UI.
+    96	 * 
+    97	 * Note: Currently not used by DeleteElementsCommand, but available for
+    98	 * future features (e.g., "delete construction step").
+    99	 */
+   100	export class RemoveActionGroupFromProcessTreeOp implements IOperation {
+   101	  readonly type = 'RemoveActionGroupFromProcessTree';
+   102	  readonly parameters: Record<string, any>;
+   103	  outputs: Record<string, any> = {};
+   104	  
+   105	  // TODO: Implement when needed
+   106	  // Similar pattern: store group data, parent ID, index
+   107	
+   108	  constructor(
+   109	    private groupId: string
+   110	  ) {
+   111	    this.parameters = { groupId };
+   112	  }
+   113	
+   114	  apply(_world: World): OperationResult {
+   115	    return {
+   116	      success: false,
+   117	      outputs: {},
+   118	      error: 'RemoveActionGroupFromProcessTreeOp not yet implemented'
+   119	    };
+   120	  }
+   121	
+   122	  undo(_world: World): void {
+   123	    throw new Error('Not implemented');
+   124	  }
+   125	
+   126	  serialize() {
+   127	    return { opType: this.type, groupId: this.groupId, outputs: this.outputs };
+   128	  }
+   129	}
+   130	
+   131	
+   132	/**
+   133	 * RemoveSubprocessFromProcessTreeOp - Remove an entire Subprocess
+   134	 * 
+   135	 * Used when deleting a subprocess branch. Removes all contained
+   136	 * ActionGroups and Actions recursively.
+   137	 * 
+   138	 * Note: Currently not used, but available for future features.
+   139	 */
+   140	export class RemoveSubprocessFromProcessTreeOp implements IOperation {
+   141	  readonly type = 'RemoveSubprocessFromProcessTree';
+   142	  readonly parameters: Record<string, any>;
+   143	  outputs: Record<string, any> = {};
+   144	  
+   145	  // TODO: Implement when needed
+   146	  // Must store entire subtree for restoration
+   147	
+   148	  constructor(
+   149	    private subprocessId: string
+   150	  ) {
+   151	    this.parameters = { subprocessId };
+   152	  }
+   153	
+   154	  apply(_world: World): OperationResult {
+   155	    return {
+   156	      success: false,
+   157	      outputs: {},
+   158	      error: 'RemoveSubprocessFromProcessTreeOp not yet implemented'
+   159	    };
+   160	  }
+   161	
+   162	  undo(_world: World): void {
+   163	    throw new Error('Not implemented');
+   164	  }
+   165	
+   166	  serialize() {
+   167	    return { opType: this.type, subprocessId: this.subprocessId, outputs: this.outputs };
+   168	  }
+   169	}
+   170	
+### frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+     1	/**
+     2	 * PushSubprocessOp - Push subprocess onto ProcessTree stack
+     3	 * 
+     4	 * Creates a new subprocess and pushes it onto the ProcessTree subprocess stack.
+     5	 * All subsequent actions will be added to this subprocess until it is popped.
+     6	 * 
+     7	 * Phase 85: ProcessTree Subprocess Stack Architecture
+     8	 * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+     9	 */
+    10	
+    11	import type { IOperation, OperationResult } from '../IOperation';
+    12	import type { World } from '@/domain/world/World';
+    13	
+    14	export class PushSubprocessOp implements IOperation {
+    15	  readonly type = 'PushSubprocess';
+    16	  parameters: Record<string, any>;
+    17	  outputs: Record<string, any> = {};
+    18	
+    19	  constructor(private readonly subprocessName: string, private subprocessId?: string) {
+    20	    this.parameters = { subprocessName };
+    21	    // If subprocessId provided (during deserialization), store it in outputs
+    22	    if (subprocessId) {
+    23	      this.outputs = { subprocessId };
+    24	    }
+    25	  }
+    26	
+    27	  apply(world: World): OperationResult {
+    28	    // On replay (deserialization), reuse the stored subprocessId from outputs
+    29	    // This ensures toggle operations can find the correct subprocess
+    30	    const existingId = this.outputs.subprocessId;
+    31	    const subprocess = world.getProcessTree().pushSubprocess(this.subprocessName, existingId);
+    32	    this.outputs = { subprocessId: subprocess.id };
+    33	    return { success: true, outputs: this.outputs };
+    34	  }
+    35	
+    36	  undo(world: World): void {
+    37	    // Undo by popping the subprocess from the stack
+    38	    world.getProcessTree().popSubprocess();
+    39	  }
+    40	
+    41	  serialize() {
+    42	    return { opType: this.type, subprocessName: this.parameters.subprocessName, subprocessId: this.outputs.subprocessId, outputs: this.outputs };
+    43	  }
+    44	}
+### frontend/src/commands/operations/processTree/RenameSubprocessOp.ts
+     1	/**
+     2	 * RenameSubprocessOp - Rename a subprocess in the ProcessTree
+     3	 */
+     4	
+     5	import type { IOperation, OperationResult } from '../IOperation';
+     6	import type { World } from '@/domain/world/World';
+     7	
+     8	export class RenameSubprocessOp implements IOperation {
+     9	  readonly type = 'RenameSubprocess';
+    10	  parameters: Record<string, any>;
+    11	  outputs: Record<string, any> = {};
+    12	  private oldName: string | null = null;
+    13	
+    14	  constructor(private readonly subprocessId: string, private readonly newName: string) {
+    15	    this.parameters = { subprocessId, newName };
+    16	  }
+    17	
+    18	  apply(world: World): OperationResult {
+    19	    const processTree = world.getProcessTree();
+    20	    const subprocess = processTree.findSubprocessById(this.subprocessId);
+    21	    
+    22	    if (!subprocess) {
+    23	      return { success: false, error: `Subprocess not found: ${this.subprocessId}` };
+    24	    }
+    25	
+    26	    if (this.oldName === null) {
+    27	      this.oldName = subprocess.name;
+    28	    }
+    29	
+    30	    processTree.renameSubprocess(this.subprocessId, this.newName);
+    31	    return { success: true, outputs: this.outputs };
+    32	  }
+    33	
+    34	  undo(world: World): void {
+    35	    if (this.oldName !== null) {
+    36	      const processTree = world.getProcessTree();
+    37	      processTree.renameSubprocess(this.subprocessId, this.oldName);
+    38	    }
+    39	  }
+    40	
+    41	  redo(world: World): void {
+    42	    const processTree = world.getProcessTree();
+    43	    processTree.renameSubprocess(this.subprocessId, this.newName);
+    44	  }
+    45	
+    46	  serialize() {
+    47	    return { opType: this.type, subprocessId: this.parameters.subprocessId, newName: this.parameters.newName };
+    48	  }
+    49	}
+### frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts
+     1	/**
+     2	 * ToggleEncapsulationOp - Toggle encapsulation (black-box) mode of a subprocess
+     3	 */
+     4	
+     5	import type { IOperation, OperationResult } from '../IOperation';
+     6	import type { World } from '@/domain/world/World';
+     7	
+     8	export class ToggleEncapsulationOp implements IOperation {
+     9	  readonly type = 'ToggleEncapsulation';
+    10	  parameters: Record<string, any>;
+    11	  outputs: Record<string, any> = {};
+    12	
+    13	  constructor(private readonly subprocessId: string) {
+    14	    this.parameters = { subprocessId };
+    15	  }
+    16	
+    17	  apply(world: World): OperationResult {
+    18	    const processTree = world.getProcessTree();
+    19	    try {
+    20	      console.log(`[ToggleEncapsulationOp.apply] subprocessId: ${this.subprocessId}`);
+    21	      processTree.toggleSubprocessEncapsulation(this.subprocessId);
+    22	      return { success: true, outputs: this.outputs };
+    23	    } catch (e: any) {
+    24	      return { success: false, outputs: {}, error: e.message };
+    25	    }
+    26	  }
+    27	
+    28	  undo(world: World): void {
+    29	    const processTree = world.getProcessTree();
+    30	    processTree.toggleSubprocessEncapsulation(this.subprocessId);
+    31	  }
+    32	
+    33	  redo(world: World): void {
+    34	    const processTree = world.getProcessTree();
+    35	    console.log(`[ToggleEncapsulationOp.redo] subprocessId: ${this.subprocessId}`);
+    36	    processTree.toggleSubprocessEncapsulation(this.subprocessId);
+    37	  }
+    38	
+    39	  serialize() {
+    40	    return { opType: this.type, subprocessId: this.parameters.subprocessId };
+    41	  }
+    42	}
+### frontend/src/commands/operations/processTree/ToggleOutputOp.ts
+     1	/**
+     2	 * ToggleOutputOp - Toggle "isOutput" status of a node
+     3	 */
+     4	
+     5	import type { IOperation, OperationResult } from '../IOperation';
+     6	import type { World } from '@/domain/world/World';
+     7	
+     8	export class ToggleOutputOp implements IOperation {
+     9	  readonly type = 'ToggleOutput';
+    10	  parameters: Record<string, any>;
+    11	  outputs: Record<string, any> = {};
+    12	
+    13	  constructor(private readonly nodeId: string) {
+    14	    this.parameters = { nodeId };
+    15	  }
+    16	
+    17	  apply(world: World): OperationResult {
+    18	    const processTree = world.getProcessTree();
+    19	    try {
+    20	      console.log(`[ToggleOutputOp.apply] nodeId: ${this.nodeId}`);
+    21	      processTree.toggleOutput(this.nodeId);
+    22	      return { success: true, outputs: this.outputs };
+    23	    } catch (e: any) {
+    24	      return { success: false, outputs: {}, error: e.message };
+    25	    }
+    26	  }
+    27	
+    28	  undo(world: World): void {
+    29	    const processTree = world.getProcessTree();
+    30	    processTree.toggleOutput(this.nodeId);
+    31	  }
+    32	
+    33	  redo(world: World): void {
+    34	    const processTree = world.getProcessTree();
+    35	    console.log(`[ToggleOutputOp.redo] nodeId: ${this.nodeId}`);
+    36	    processTree.toggleOutput(this.nodeId);
+    37	  }
+    38	
+    39	  serialize() {
+    40	    return { opType: this.type, nodeId: this.parameters.nodeId };
+    41	  }
+    42	}
+### frontend/src/commands/operations/processTree/index.ts
+     1	// ProcessTree operations - construction history modifications
+     2	export * from './ProcessTreeOperations';
+     3	export * from './PushSubprocessOp';
+     4	export * from './PopSubprocessOp';
+### frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts
+     1	import type { OperationRegistry } from '../OperationRegistry';
+     2	import type { JsonObject } from '../IOperation';
+     3	import { createActionGroup } from '@/domain/processTree/ActionGroup';
+     4	import { AddProcessTreeActionOp } from './AddProcessTreeActionOp';
+     5	import { AddProcessTreeActionGroupOp } from './AddProcessTreeActionGroupOp';
+     6	import { PushSubprocessOp } from './PushSubprocessOp';
+     7	import { PopSubprocessOp } from './PopSubprocessOp';
+     8	import { RenameSubprocessOp } from './RenameSubprocessOp';
+     9	import { ToggleEncapsulationOp } from './ToggleEncapsulationOp';
+    10	import { ToggleOutputOp } from './ToggleOutputOp';
+    11	import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from './ProcessTreeOperations';
+    12	import type { Action } from '@/domain/processTree/Action';
+    13	
+    14	function s(d: JsonObject, key: string): string { const v = d[key]; if (typeof v !== 'string') throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be string`); return v; }
+    15	function so(d: JsonObject, key: string): string | undefined { const v = d[key]; if (v === undefined || v === null) return undefined; if (typeof v !== 'string') throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be string`); return v; }
+    16	function obj(d: JsonObject, key: string): JsonObject { const v = d[key]; if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be object`); return v as JsonObject; }
+    17	function restoreOutput<T extends { outputs: JsonObject }>(op: T, outputs: unknown): T { if (outputs && typeof outputs === 'object' && !Array.isArray(outputs)) op.outputs = outputs as JsonObject; return op; }
+    18	
+    19	export function registerProcessTreeOperationDescriptors(registry: OperationRegistry): void {
+    20	  registry.register('AddProcessTreeActionOp', d => restoreOutput(new AddProcessTreeActionOp(obj(d, 'action') as unknown as Action, s(d, 'groupId')), d.outputs));
+    21	  registry.register('AddProcessTreeActionGroup', d => {
+    22	    const group = createActionGroup(s(d, 'groupId'));
+    23	    group.isOutput = d.isOutput !== false;
+    24	    group.isAuxiliary = d.isAuxiliary === true;
+    25	    return restoreOutput(new AddProcessTreeActionGroupOp(group), d.outputs);
+    26	  });
+    27	  registry.register('PushSubprocess', d => restoreOutput(new PushSubprocessOp(s(d, 'subprocessName'), so(d, 'subprocessId')), d.outputs));
+    28	  registry.register('PopSubprocess', () => new PopSubprocessOp());
+    29	  registry.register('RenameSubprocess', d => new RenameSubprocessOp(s(d, 'subprocessId'), s(d, 'newName')));
+    30	  registry.register('ToggleEncapsulation', d => new ToggleEncapsulationOp(s(d, 'subprocessId')));
+    31	  registry.register('ToggleOutput', d => new ToggleOutputOp(s(d, 'nodeId')));
+    32	  registry.register('RemoveActionFromProcessTree', d => new RemoveActionFromProcessTreeOp(s(d, 'actionId')));
+    33	  registry.register('RemoveActionGroupFromProcessTree', d => new RemoveActionGroupFromProcessTreeOp(s(d, 'groupId')));
+    34	  registry.register('RemoveSubprocessFromProcessTree', d => new RemoveSubprocessFromProcessTreeOp(s(d, 'subprocessId')));
+    35	}
+
+--- tests/source references ActionsPanel/Toolbar/process tree/Alt+E ---
+frontend/tests/integration/processTree-stack.test.ts:6:import { PushSubprocessOp } from '../../src/commands/operations/processTree/PushSubprocessOp';
+frontend/tests/integration/processTree-stack.test.ts:24:    cmd.addAndExecute(new PushSubprocessOp(name));
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:15:    expect(types).toContain('PushSubprocess');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:4: * Purpose: Verify PushSubprocessOp and PopSubprocessOp survive serialization
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:15:import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:17:import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:18:import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:19:import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:31:  it('PushSubprocessOp survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:32:    const op = new PushSubprocessOp('New Subprocess');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:36:    expect(result).toBeInstanceOf(PushSubprocessOp);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:37:    expect(result.type).toBe('PushSubprocess');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:50:  it('RenameSubprocessOp survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:51:    const op = new RenameSubprocessOp('sub-123', 'My New Name');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:55:    expect(result).toBeInstanceOf(RenameSubprocessOp);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:56:    expect(result.type).toBe('RenameSubprocess');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:61:  it('ToggleEncapsulationOp survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:62:    const op = new ToggleEncapsulationOp('sub-123');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:66:    expect(result).toBeInstanceOf(ToggleEncapsulationOp);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:67:    expect(result.type).toBe('ToggleEncapsulation');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:71:  it('ToggleOutputOp survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:72:    const op = new ToggleOutputOp('node-123');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:76:    expect(result).toBeInstanceOf(ToggleOutputOp);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:77:    expect(result.type).toBe('ToggleOutput');
+frontend/tests/e2e/basic-construction.spec.ts:128: * - ActionsPanel and ElementsPanel must be rendered in app layout
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:2: * PushSubprocessOp - Push subprocess onto ProcessTree stack
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:14:export class PushSubprocessOp implements IOperation {
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:15:  readonly type = 'PushSubprocess';
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:2: * RenameSubprocessOp - Rename a subprocess in the ProcessTree
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:8:export class RenameSubprocessOp implements IOperation {
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:9:  readonly type = 'RenameSubprocess';
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:2: * ToggleEncapsulationOp - Toggle encapsulation (black-box) mode of a subprocess
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:8:export class ToggleEncapsulationOp implements IOperation {
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:9:  readonly type = 'ToggleEncapsulation';
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:20:      console.log(`[ToggleEncapsulationOp.apply] subprocessId: ${this.subprocessId}`);
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:35:    console.log(`[ToggleEncapsulationOp.redo] subprocessId: ${this.subprocessId}`);
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:2: * ToggleOutputOp - Toggle "isOutput" status of a node
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:8:export class ToggleOutputOp implements IOperation {
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:9:  readonly type = 'ToggleOutput';
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:20:      console.log(`[ToggleOutputOp.apply] nodeId: ${this.nodeId}`);
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:35:    console.log(`[ToggleOutputOp.redo] nodeId: ${this.nodeId}`);
+frontend/src/commands/operations/processTree/index.ts:3:export * from './PushSubprocessOp';
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:6:import { PushSubprocessOp } from './PushSubprocessOp';
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:8:import { RenameSubprocessOp } from './RenameSubprocessOp';
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:9:import { ToggleEncapsulationOp } from './ToggleEncapsulationOp';
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:10:import { ToggleOutputOp } from './ToggleOutputOp';
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:27:  registry.register('PushSubprocess', d => restoreOutput(new PushSubprocessOp(s(d, 'subprocessName'), so(d, 'subprocessId')), d.outputs));
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:29:  registry.register('RenameSubprocess', d => new RenameSubprocessOp(s(d, 'subprocessId'), s(d, 'newName')));
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:30:  registry.register('ToggleEncapsulation', d => new ToggleEncapsulationOp(s(d, 'subprocessId')));
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:31:  registry.register('ToggleOutput', d => new ToggleOutputOp(s(d, 'nodeId')));
+frontend/src/commands/operations/toolbar/README.md:1:# Toolbar Operations
+frontend/src/commands/operations/toolbar/README.md:12:All Toolbar operations modify UI state (toolStore) to make tool changes undoable.
+frontend/src/components/icons/toolbar/index.ts:3: * Phase 68: Toolbar Icon-Only Design
+frontend/src/components/panels/ActionsPanel.vue:41:        @toggle-output="handleToggleOutput"
+frontend/src/components/panels/ActionsPanel.vue:56:import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+frontend/src/components/panels/ActionsPanel.vue:58:import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+frontend/src/components/panels/ActionsPanel.vue:59:import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+frontend/src/components/panels/ActionsPanel.vue:60:import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+frontend/src/components/panels/ActionsPanel.vue:88:console.log('[ActionsPanel] Initial processTree:', initialTree);
+frontend/src/components/panels/ActionsPanel.vue:131:  console.log('[ActionsPanel] Mounted, processTree.value.root:', processTree.value.root);
+frontend/src/components/panels/ActionsPanel.vue:132:  console.log('[ActionsPanel] Root children count:', processTree.value.root.children.length);
+frontend/src/components/panels/ActionsPanel.vue:139:  console.log('[ActionsPanel] Initial node count:', lastNodeCount.value);
+frontend/src/components/panels/ActionsPanel.vue:143:    console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
+frontend/src/components/panels/ActionsPanel.vue:150:    console.log('[ActionsPanel] stackVersion incremented to:', stackVersion.value);
+frontend/src/components/panels/ActionsPanel.vue:167:    console.log('[ActionsPanel] World changed, re-fetching ProcessTree');
+frontend/src/components/panels/ActionsPanel.vue:180:      console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
+frontend/src/components/panels/ActionsPanel.vue:268:  cmd.addAndExecute(new PushSubprocessOp(subprocessName));
+frontend/src/components/panels/ActionsPanel.vue:292:  cmd.addAndExecute(new ToggleEncapsulationOp(nodeId));
+frontend/src/components/panels/ActionsPanel.vue:299:function handleToggleOutput(nodeId: string) {
+frontend/src/components/panels/ActionsPanel.vue:301:  cmd.addAndExecute(new ToggleOutputOp(nodeId));
+frontend/src/components/panels/ActionsPanel.vue:310:  cmd.addAndExecute(new RenameSubprocessOp(nodeId, newName));
+frontend/src/components/toolbars/Toolbar.vue:141: * Toolbar.vue - Tool selection toolbar
+frontend/src/components/toolbars/Toolbar.vue:147: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+frontend/src/components/toolbars/Toolbar.vue:209: * Alt+E: Add projection plane example setup (for testing)
+frontend/src/components/toolbars/Toolbar.vue:218:  // Alt+E: Add projection plane example setup
+frontend/src/components/toolbars/Toolbar.vue:249: * Add projection plane example setup (Alt+E)
+frontend/src/components/toolbars/Toolbar.vue:263:    const cmd = new Command('Add projection plane example setup', world);
+frontend/src/components/toolbars/Toolbar.vue:301:    console.log('Added projection plane example setup (T1_H, T2_V, T2\'_H)');
+frontend/src/constants/colors.ts:3: * Phase 68: Toolbar Icon-Only Design
+frontend/src/services/factories/PlaneSequenceFactory.ts:11: * Phase 85: Uses PushSubprocessOp/PopSubprocessOp for subprocess stack management.
+frontend/src/application/world/initializeWorld.ts:5:import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/processTree';
+frontend/src/application/world/initializeWorld.ts:24:  initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+frontend/src/App.vue:22:      <Toolbar 
+frontend/src/App.vue:26:        @sign-in="handleToolbarSignIn"
+frontend/src/App.vue:27:        @sign-out="handleToolbarSignOut"
+frontend/src/App.vue:49:            <ActionsPanel 
+frontend/src/App.vue:108:import Toolbar from './components/toolbars/Toolbar.vue';
+frontend/src/App.vue:110:import ActionsPanel from './components/panels/ActionsPanel.vue';
+frontend/src/App.vue:638: * Handle element highlighting from ActionsPanel
+frontend/src/App.vue:734:async function handleToolbarSignIn() {
+frontend/src/App.vue:761:async function handleToolbarSignOut() {
