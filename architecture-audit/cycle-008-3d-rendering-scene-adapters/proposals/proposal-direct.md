@@ -2,7 +2,7 @@
 
 ## Summary
 
-Implement Wave 008 as a direct extraction of the existing 3D rendering behavior into focused 3D presentation and Three.js adapter modules. `ThreeView.vue` becomes a Vue lifecycle/composition shell: it owns refs, watchers, injected `World`, display/selection state, and calls a `ThreeViewController`/scene facade. All low-level Three.js object creation and most domain-to-view conversion move out of the component.
+Implement Wave 008 as a direct extraction of the existing 3D rendering behavior into focused 3D presentation and Three.js adapter modules. `ThreeView.vue` becomes a Vue lifecycle/composition shell: it owns refs, watchers, injected `World`, display/selection state, and calls a `ThreeViewController`/scene facade. All low-level Three.js object creation and all domain-to-view conversion move out of the component. `ThreeView.vue` may read UI stores for display options and selected IDs, but selected IDs must cross into the `threePresentation` input and guide/perpendicular-plane DTO production plus scene-object construction must live outside the component.
 
 This proposal preserves the current behavior and visual semantics while deleting large inline helpers from the component. It is intentionally smaller than the restructure option: the 3D selector is introduced, but only for the current scene needs; it does not attempt to generalize a cross-2D/3D presentation package.
 
@@ -25,7 +25,15 @@ This proposal preserves the current behavior and visual semantics while deleting
   - lifecycle mount/unmount and watchers,
   - calls to a controller/facade such as `threeViewController.mount(...)`, `refresh(...)`, `resize()`, and `dispose()`.
 - Raw Three.js scene setup, projection-plane grids, 2D-on-plane elements, reconstructed 3D elements, hinge lines, guide perpendicular-plane/intersections, labels, axes, cleanup/disposal, and domain-to-view conversion are isolated in focused modules.
-- The new selector/read-model boundary mirrors Wave 007's pattern without touching the 2D canvas path.
+- The new selector/read-model boundary mirrors Wave 007's pattern without touching the 2D canvas path. It is not a single replacement god selector: projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinge/axis geometry are separate selector/read-model concerns, even if a thin controller orchestrates them.
+
+## Non-negotiable shell and selector boundaries
+
+- `ThreeView.vue` may keep Vue lifecycle, template controls, local refs, injected `World`, display-state reads, selection-state reads, and calls into a runtime/controller.
+- `ThreeView.vue` must not perform direct selected-element domain lookup, guide/perpendicular-plane geometry derivation, domain realization traversal, or raw Three.js object construction.
+- Selected IDs flow into the `threePresentation` boundary as plain input (`selectedIds` or equivalent). The boundary returns guide/perpendicular-plane DTOs, guide intersection DTOs, hinge DTOs, and other scene DTOs.
+- Scene-object construction for projection planes, planar elements, reconstructed elements, guides, hinges, axes, and CSS2D labels lives only in `frontend/src/rendering/threeView/` adapters/host modules.
+- The implementation must split read-model construction by concern: projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinge/axis geometry each get a focused selector/read-model module or equivalent focused internal module. A monolithic `ThreePresentationSelector` that absorbs all current `ThreeView.vue` and `Element2DRenderer3D` traversal is explicitly rejected.
 
 ## Files to change
 
@@ -44,10 +52,19 @@ Suggested location: `frontend/src/application/threePresentation/`.
 - `ThreePresentationModel.ts`
   - DTOs for projection-plane grids, auxiliary axes, reference axes, hinge lines, 2D-on-plane elements, reconstructed 3D points/lines/segments/planes, guide perpendicular planes, guide intersection markers, labels, display options, and object group names.
 - `ThreePresentationSelector.ts`
-  - Single raw-domain traversal boundary for 3D view read models.
-  - Reads `World` and selected IDs.
-  - Uses `world.getAllProjectionPlanes()`, projection-plane 3D realizations, 3D element realization APIs, hinge realizations, guide predicates, and visibility/style policies.
+  - Thin orchestrator for concern-specific selectors; it must not become the one large replacement god module.
+  - Accepts `World`, display options, and selected IDs as input, then delegates to the focused selectors below.
   - Produces DTOs; does not import Vue or mutate Three.js `Scene`.
+- `ProjectionPlane3DSelector.ts`
+  - Produces projection-plane surface/grid, reference-axis, auxiliary-axis, and axis-label DTOs.
+- `PlanarElement3DSelector.ts`
+  - Replaces `Element2DRenderer3D` raw `World` traversal with planar 2D-on-3D DTO production for points, lines, segments, and circles.
+- `ReconstructedElement3DSelector.ts`
+  - Produces reconstructed 3D point/line/segment/plane DTOs from domain realizations.
+- `Guide3DSelector.ts`
+  - Receives selected IDs through the presentation input, performs selected-guide lookup and perpendicular-plane/intersection DTO derivation, and returns DTOs only.
+- `HingeAxis3DSelector.ts`
+  - Produces hinge-line, reference-axis, and auxiliary-axis DTOs if axis concerns are not kept with projection-plane selection.
 - `ThreeDisplayStylePolicy.ts`
   - Centralize colors, opacity, tube radii, point radii, line extent constants, guide highlight colors, reference-axis colors, z-fighting offset, and visibility/style mapping for 3D DTOs.
   - May import/reuse existing 2D visibility policy or domain `resolveVisibility` only inside selector/policy, not adapters.
@@ -61,8 +78,9 @@ Suggested location: `frontend/src/rendering/threeView/` or `frontend/src/adapter
 - `ThreeSceneHost.ts`
   - Owns `THREE.Scene`, `PerspectiveCamera`, `WebGLRenderer`, `CSS2DRenderer`, `OrbitControls`, lights, animation loop, resize, and disposal.
 - `ThreeSceneObjectRegistry.ts`
-  - Owns grouped object replacement, `userData.type` normalization, and geometry/material disposal.
-  - Replaces repeated `scene.children.filter(...).forEach(scene.remove)` patterns.
+  - Owns grouped object replacement, `userData.type` normalization, CSS2D label ownership, and geometry/material/label disposal.
+  - Replaces repeated `scene.children.filter(...).forEach(scene.remove)` patterns with atomic group replacement.
+  - Provides focused tests proving old group objects and CSS2D labels are removed/replaced and disposed when a group refreshes.
 - `ProjectionPlaneSceneAdapter.ts`
   - Converts projection-plane grid/mesh/auxiliary-axis DTOs into `BufferGeometry`, `LineSegments`, `ArrowHelper`, and CSS labels.
 - `ThreeElementSceneAdapter.ts`
@@ -73,7 +91,7 @@ Suggested location: `frontend/src/rendering/threeView/` or `frontend/src/adapter
   - Renders guide perpendicular plane DTOs and guide intersection marker DTOs.
 - `HingeSceneAdapter.ts`
   - Renders hinge-line DTOs with dashed line materials.
-- `LabelSceneAdapter.ts` if label creation is not kept inside `ProjectionPlaneSceneAdapter` / `ThreeSceneHost`.
+- `LabelSceneAdapter.ts` if label creation is not kept inside `ProjectionPlaneSceneAdapter` / `ThreeSceneHost`; whichever module owns labels must also own replacement cleanup for CSS2D DOM elements/objects.
 
 ### Existing support modules
 
@@ -103,7 +121,7 @@ Suggested location: `frontend/src/rendering/threeView/` or `frontend/src/adapter
 
 Aggressive delete list for this direct implementation:
 
-- Delete inline helper functions from `ThreeView.vue` after extraction:
+- Delete inline helper functions from `ThreeView.vue` after extraction; do not leave forwarding wrappers that still derive geometry, perform selected-element lookup, or construct Three.js/CSS2D objects:
   - `generateFallbackGrid()` (`frontend/src/components/panels/ThreeView.vue:84-105`).
   - `initThreeScene()` scene setup body (`frontend/src/components/panels/ThreeView.vue:138-216`) except shell call delegation.
   - `compute3DPlaneRectangleCorners()` if it remains a one-line wrapper (`frontend/src/components/panels/ThreeView.vue:229-231`).
@@ -161,17 +179,19 @@ Minimum mandatory cadence with stable logs under `architecture-audit/cycle-008-3
 
 Representative focused assertions:
 
-- Selector emits projection-plane grid DTOs for P_H/P_V and auxiliary planes with clipped/fallback behavior.
+- `ThreeView.vue` shell-boundary scan proves it no longer imports domain projection/guide/hinge types for geometry derivation, no longer performs selected-element domain lookup, and no longer constructs `THREE.*`/`CSS2DObject` objects; it only passes display options, injected `World`, and selected IDs into the runtime/controller.
+- Selector emits projection-plane grid/surface, reference-axis, auxiliary-axis, and label DTOs for P_H/P_V and auxiliary planes with clipped/fallback behavior.
 - Selector emits hinge-line DTOs from `world.getAllHingeLines()` and skips infeasible hinge realizations.
 - Selector emits 2D-on-plane DTOs for visible points, lines, segments, and circles with explicit style and z-fighting offset metadata.
 - Selector emits reconstructed 3D element DTOs for feasible points, lines, segments, and planes.
-- Guide selector emits perpendicular-plane DTO and intersection markers for selected guides.
-- Adapters create expected Three.js object classes and dispose replaced objects.
+- Guide selector receives selected IDs from the presentation input and emits perpendicular-plane DTOs plus intersection-marker DTOs for selected guides; `ThreeView.vue` contains no guide-plane math.
+- Adapter tests cover projection-plane meshes, labels, guide/hinge geometry, planar element objects, reconstructed element objects, and domain-to-view conversion through DTOs rather than raw domain objects.
+- Object-registry/adapter tests prove grouped scene-object replacement disposes old geometries/materials and removes/replaces CSS2D labels; no repeated `scene.children.filter(...).forEach(scene.remove)` clearing pattern remains in `ThreeView.vue`.
 - `ThreeView.vue` shell calls controller refresh on world/display/selection changes and resize/dispose on lifecycle.
 
 ## Risks and mitigations
 
-- **Risk: selector becomes a second god-module.** Mitigation: keep DTO selection split by concern internally or in helper selectors; enforce tests per concern.
+- **Risk: selector becomes a second god-module.** Mitigation: make the concern split mandatory: projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinge/axis geometry are separate selector modules or focused internal modules with tests per concern.
 - **Risk: adapter tests couple to exact Three.js internals.** Mitigation: assert object class/group/userData/material essentials and disposal behavior, not renderer pixel output.
 - **Risk: behavior changes in line clipping/styles.** Mitigation: encode current hard-coded extents/styles as explicit constants first, then improve only if reviewed.
 - **Risk: guide/hinge math accidentally moves from domain to adapters.** Mitigation: selectors may call domain realizations, but adapters consume DTO geometry only.

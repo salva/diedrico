@@ -10,9 +10,9 @@ This option treats `Element2DRenderer3D.ts` as an architectural smell to delete,
 
 The direct extraction moves helper functions into smaller files. This proposal establishes a sharper boundary:
 
-- **Domain/application read side:** `ThreePresentationSelector` converts `World` + display/selection state into immutable DTOs.
+- **Domain/application read side:** concern-split `threePresentation` selectors convert `World` + display state + selected IDs into immutable DTOs. Selected IDs are input to the presentation boundary; guide/perpendicular-plane DTO production happens there, not in `ThreeView.vue`.
 - **Scene adapter side:** adapter modules convert DTOs into Three.js objects and manage disposal.
-- **Vue shell side:** `ThreeView.vue` controls lifecycle and UI options only.
+- **Vue shell side:** `ThreeView.vue` controls lifecycle and UI options only. It may read `viewStore`/`selectionStore` for UI state, but it must not perform selected-element domain lookup, guide/perpendicular-plane math, or raw Three.js/CSS2D object construction.
 
 This mirrors the Wave 007 boundary where `CanvasPresentationSelector` is the raw-domain traversal point and `CanvasPresentationController` is the Vue-facing facade (`frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:13-72`, `frontend/src/application/canvasPresentation/CanvasPresentationController.ts:5-9`). It also prevents the replacement from becoming a collection of scene helpers that still accept `World` everywhere.
 
@@ -47,11 +47,13 @@ ThreeView.vue
 
 Rules:
 
-- `ThreeView.vue` may import Vue, stores for UI state, injected `World`, and the runtime/facade only.
+- `ThreeView.vue` may import Vue, stores for UI state, injected `World`, and the runtime/facade only. Selected IDs are passed into `runtime.refresh({ world, displayOptions, selectedIds })`; guide/perpendicular-plane DTOs and guide intersection DTOs come back from the `threePresentation` boundary through the runtime/adapters.
 - Three.js adapters must not import `World`, projection-plane/domain element classes, Pinia stores, or Vue.
 - Selectors may import domain types/realization APIs and pure utilities, but must not import Three.js renderer classes, Vue, Pinia, `Scene`, `Mesh`, `Line`, or `CSS2DObject`. They may use vector/matrix value types only where unavoidable.
 - Scene host/adapters consume DTOs and manage Three.js objects/disposal.
-- `Element2DRenderer3D.ts` is deleted; no replacement accepts `World`.
+- `Element2DRenderer3D.ts` is deleted; no replacement accepts `World`. No scene adapter may perform domain realization, selected-element lookup, or guide/perpendicular-plane derivation.
+- `ThreePresentationSelector.ts` is an orchestrator only. Projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinge/axis geometry must remain separate selector/read-model concerns; a single large selector file absorbing all old component/service logic is not acceptable.
+- CSS2D labels and scene-object groups are owned by the scene host/registry/adapters with explicit replacement/disposal semantics; repeated `scene.children` clearing patterns must disappear from `ThreeView.vue`.
 
 ## Files to change
 
@@ -105,13 +107,20 @@ Create `frontend/src/rendering/threeView/`:
   - Creates scene/camera/WebGLRenderer/CSS2DRenderer/OrbitControls/lights/animation loop.
 - `ThreeObjectRegistry.ts`
   - Replaces render groups atomically and disposes geometry/material/CSS labels.
+  - Owns CSS2D label cleanup/replacement so labels created for axes/projection planes/guides cannot leak DOM nodes or stale scene objects.
+  - Replaces all repeated `scene.children.filter(...).forEach(scene.remove)` clearing patterns with named group replacement.
 - `ProjectionPlaneSceneAdapter.ts`
+  - Builds projection-plane meshes/grids and consumes projection-plane DTOs only.
 - `PlanarElementSceneAdapter.ts`
+  - Builds planar 2D-on-3D point/line/segment/circle objects from DTOs only.
 - `ReconstructedElementSceneAdapter.ts`
+  - Builds reconstructed 3D point/line/segment/plane objects from DTOs only.
 - `GuideSceneAdapter.ts`
+  - Builds guide perpendicular-plane and guide-intersection objects from DTOs only.
 - `HingeSceneAdapter.ts`
+  - Builds hinge-line objects from DTOs only.
 - `AxisLabelSceneAdapter.ts`
-  - Each consumes DTOs only.
+  - Builds axis/plane labels from DTOs only and delegates CSS2D cleanup to the registry/host.
 
 ### Existing modules
 
@@ -155,7 +164,9 @@ Aggressive delete list:
   - inline `animate()`, `handleResize()`, `cleanup()` implementations (`frontend/src/components/panels/ThreeView.vue:1040-1087`).
 - Delete `console.log` hinge diagnostics (`frontend/src/components/panels/ThreeView.vue:778`, `frontend/src/components/panels/ThreeView.vue:787`).
 - Delete `window as any.__threeViewWorldChangeHandler` bridge (`frontend/src/components/panels/ThreeView.vue:1143-1151`).
-- Delete raw `world.projectionPlanes`, `world.getAll3D*`, `world.getAllHingeLines`, `realize2D(world)`, and `realize3D(world)` calls from `ThreeView.vue` and scene adapters; keep such calls only inside `application/threePresentation` selectors.
+- Delete raw `world.projectionPlanes`, `world.getAll3D*`, `world.getAllHingeLines`, `realize2D(world)`, and `realize3D(world)` calls from `ThreeView.vue` and scene adapters; keep such calls only inside concern-split `application/threePresentation` selectors.
+- Delete direct selected-element domain lookup and guide/perpendicular-plane math from `ThreeView.vue`; selected IDs are plain presentation input.
+- Delete repeated `scene.children.filter(...).forEach(scene.remove)` clearing patterns from `ThreeView.vue` in favor of `ThreeObjectRegistry` group replacement.
 - Delete duplicated 2D/3D special-case style defaults from `Element2DRenderer3D.resolveVisualStyle()` by replacing them with explicit DTO style policy (`frontend/src/services/Element2DRenderer3D.ts:384-402`).
 - Delete infinite-line clipping TODO by making line extent/clipping an explicit selector/policy decision (`frontend/src/services/Element2DRenderer3D.ts:172-178`).
 - Delete any obsolete tests/fixtures that instantiate `Element2DRenderer3D` with a raw `World`; replace with selector and adapter tests.
@@ -183,9 +194,9 @@ Capture all logs under `architecture-audit/cycle-008-3d-rendering-scene-adapters
 
 Run scans that fail the wave if any forbidden pattern remains:
 
-- `ThreeView.vue` contains no `new THREE.`, `scene.children`, `Float32BufferAttribute`, `LineBasicMaterial`, `MeshBasicMaterial`, `SphereGeometry`, `TubeGeometry`, `PlaneGeometry`, `ArrowHelper`, `CSS2DObject`, `world.projectionPlanes`, `getAll3DPoints`, `getAll3DLines`, `getAll3DSegments`, `getAllPlanes`, `getAllHingeLines`, `realize2D(world)`, or `realize3D(world)`.
+- `ThreeView.vue` contains no `new THREE.`, `scene.children`, `Float32BufferAttribute`, `LineBasicMaterial`, `MeshBasicMaterial`, `SphereGeometry`, `TubeGeometry`, `PlaneGeometry`, `ArrowHelper`, `CSS2DObject`, `world.projectionPlanes`, `getAll3DPoints`, `getAll3DLines`, `getAll3DSegments`, `getAllPlanes`, `getAllHingeLines`, `getLine2D`, `isGuideLine`, `isPerpendicularGuide`, `calculateGuidePlaneNormal`, `realize2D(world)`, or `realize3D(world)`. The only allowed flow is UI display/selected IDs + injected `World` into runtime/controller refresh.
 - `frontend/src/rendering/threeView/**` contains no imports from `frontend/src/domain/world/**` and no `World` type.
-- `frontend/src/application/threePresentation/**` contains no imports from Vue, Pinia, `OrbitControls`, `CSS2DRenderer`, `CSS2DObject`, `WebGLRenderer`, or `Scene` adapter classes.
+- `frontend/src/application/threePresentation/**` contains no imports from Vue, Pinia, `OrbitControls`, `CSS2DRenderer`, `CSS2DObject`, `WebGLRenderer`, or `Scene` adapter classes. Selector files remain concern-split (`ProjectionPlane3DSelector`, `PlanarElement3DSelector`, `ReconstructedElement3DSelector`, `Guide3DSelector`, `Hinge3DSelector`/axis equivalent) rather than one god selector.
 - `frontend/src/services/Element2DRenderer3D.ts` is absent.
 - No `console.log` remains in 3D rendering modules.
 
@@ -212,18 +223,19 @@ If known project-level blockers from Wave 007 persist (missing eslint, `vue-tsc`
 
 ### Behavioral coverage expectations
 
-- Projection planes: P_H/P_V and auxiliary projection-plane grid/surface DTOs and adapter objects.
+- ThreeView shell: passes display options, injected `World`, and selected IDs to the runtime/controller, and contains no geometry, selected-domain-lookup, scene setup, label construction, or `scene.children` clearing logic.
+- Projection planes: P_H/P_V and auxiliary projection-plane grid/surface/mesh DTOs, axis/label DTOs, and adapter objects.
 - Hinge lines: feasible hinge DTOs and dashed line object creation.
-- Guides: selected guide yields perpendicular plane and intersection marker DTOs/objects.
+- Guides: selected IDs passed into `threePresentation` yield perpendicular-plane and intersection-marker DTOs/objects; guide/perpendicular-plane derivation is absent from `ThreeView.vue` and adapters.
 - 2D-on-plane: points, infinite lines, finite segments, and circles render as DTOs and objects with visibility/style policy applied.
 - Reconstructed 3D: points, lines, segments, and planes render as DTOs and objects with infeasible/invisible elements skipped.
-- Lifecycle: mount, refresh on world/display/selection changes, resize, and disposal.
+- Lifecycle: mount, scene setup extraction, refresh on world/display/selection changes, resize, grouped object replacement, CSS2D label cleanup/replacement, and full disposal.
 
 ## Risks and mitigations
 
 - **Risk: larger implementation than direct extraction.** Mitigation: keep selectors concern-split but narrowly scoped to current 3D view; no app-shell/persistence/tool changes.
 - **Risk: over-generalizing a presentation model.** Mitigation: DTOs must map to current `ThreeView` responsibilities only; reject generic scene graph abstractions not exercised by current behavior.
-- **Risk: raw domain traversal simply moves from component to one giant selector.** Mitigation: split selectors by concern and add architecture scans/tests for adapter/domain import direction.
+- **Risk: raw domain traversal simply moves from component to one giant selector.** Mitigation: split selectors by concern as a required design constraint and add architecture scans/tests for adapter/domain import direction and selector concern boundaries.
 - **Risk: 2D Wave 007 boundary is accidentally reopened.** Mitigation: consume only shared policies/utilities where necessary; no `SvgCanvas.vue`, `CanvasPresentationSelector`, `Paper`, `SVGRenderer`, command/tool, or 2D interaction changes unless a reviewed mini-cycle approves them.
 - **Risk: scene object disposal regressions.** Mitigation: central `ThreeObjectRegistry` with focused disposal tests for meshes, lines, materials, and CSS labels.
 - **Risk: e2e/live smoke cannot create required 3D state due existing e2e issues.** Mitigation: combine focused selector/adapter tests with live DOM/scene smoke and exact classification of external blockers.
