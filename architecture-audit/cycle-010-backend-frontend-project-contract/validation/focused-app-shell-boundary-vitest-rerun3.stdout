@@ -1,0 +1,18 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/application/appShell/AppShellBoundary.test.ts  (5 tests | 2 failed) 12ms
+   ❯ tests/unit/application/appShell/AppShellBoundary.test.ts > Wave 010 project persistence boundary > forbids frontend source and tests from importing backend implementation files
+     → existsSync is not a function
+   ❯ tests/unit/application/appShell/AppShellBoundary.test.ts > Wave 010 project persistence boundary > keeps stale backend project route assumptions out of frontend source and tests
+     → existsSync is not a function
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  07:08:22
+   Duration  1.49s (transform 163ms, setup 0ms, collect 185ms, tests 12ms, environment 618ms, prepare 138ms)
+

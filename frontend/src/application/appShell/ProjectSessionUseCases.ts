@@ -147,7 +147,7 @@ export class ProjectSessionUseCases {
     }
   }
 
-  showOpenProjectDialog(): void {
+  showStartupProjectChooser(): void {
     this.deps.showStartupDialog.value = true;
   }
 

@@ -1,0 +1,14 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/application/appShell/AppShellBoundary.test.ts  (0 test)
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  07:07:57
+   Duration  1.58s (transform 166ms, setup 0ms, collect 0ms, tests 0ms, environment 699ms, prepare 184ms)
+

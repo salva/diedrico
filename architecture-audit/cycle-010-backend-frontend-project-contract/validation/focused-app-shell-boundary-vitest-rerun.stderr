@@ -1,0 +1,21 @@
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/appShell/AppShellBoundary.test.ts [ tests/unit/application/appShell/AppShellBoundary.test.ts ]
+TypeError: resolve is not a function
+ ❯ tests/unit/application/appShell/AppShellBoundary.test.ts:15:27
+     13| import selection from '@/application/appShell/SelectionUseCases.ts?raw…
+     14| 
+     15| const frontendRoot = path.resolve(__dirname, '../../../..');
+       |                           ^
+     16| const sourceAndTestRoots = [
+     17|   path.join(frontendRoot, 'src'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/application/appShell/AppShellBoundary.test.ts

@@ -19,7 +19,7 @@ function deps() {
     commandStack: { canUndo: () => false, canRedo: () => false, undo: vi.fn(), redo: vi.fn() },
     toolStore: { setTool: vi.fn(), selectSubTool: vi.fn() },
     viewStore: { toggleProjectedElements: vi.fn() },
-    projectSession: { newProject: vi.fn(), showOpenProjectDialog: vi.fn() },
+    projectSession: { newProject: vi.fn(), showStartupProjectChooser: vi.fn() },
     selection: { clearSelection: vi.fn(), deleteSelected: vi.fn(), selectAllInActivePlane: vi.fn() },
     activePlane: { cycle: vi.fn() },
     fitToView: vi.fn(),

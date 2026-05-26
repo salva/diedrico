@@ -1,0 +1,68 @@
+frontend/src/components/dialogs/OpenProjectDialog.vue:57:import type { ProjectMetadata } from '../../../../backend/src/models/Project';
+frontend/src/components/dialogs/OpenProjectDialog.vue:68:const projects = ref<ProjectMetadata[]>([]);
+frontend/src/application/appShell/ProjectSessionUseCases.ts:150:  showOpenProjectDialog(): void {
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:94:    if (key === 'o') { event.preventDefault(); this.deps.projectSession.showOpenProjectDialog(); return; }
+frontend/src/application/appShell/AppShellRuntime.ts:143:      openProjectDialog: () => projectSession.showOpenProjectDialog(),
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:22:    projectSession: { newProject: vi.fn(), showOpenProjectDialog: vi.fn() },
+backend/src/api/projects.ts:8: * GET /api/projects
+backend/src/api/projects.ts:22: * POST /api/projects
+backend/src/api/projects.ts:42: * GET /api/projects/:id
+backend/src/api/projects.ts:62: * PUT /api/projects/:id
+backend/src/api/projects.ts:88: * DELETE /api/projects/:id
+backend/src/models/Project.ts:6:export interface ProjectDTO {
+backend/src/models/Project.ts:57:export interface ProjectMetadata {
+backend/src/models/Project.ts:67:export function createEmptyProject(name: string): ProjectDTO {
+backend/src/storage/ProjectRepository.ts:3:import type { ProjectDTO, ProjectMetadata } from '../models/Project.js';
+backend/src/storage/ProjectRepository.ts:27:  async list(): Promise<ProjectMetadata[]> {
+backend/src/storage/ProjectRepository.ts:29:    const projects: ProjectMetadata[] = [];
+backend/src/storage/ProjectRepository.ts:33:        const project = await this.storage.readJSON<ProjectDTO>(file);
+backend/src/storage/ProjectRepository.ts:53:  async get(projectId: string): Promise<ProjectDTO | null> {
+backend/src/storage/ProjectRepository.ts:56:      return await this.storage.readJSON<ProjectDTO>(filename);
+backend/src/storage/ProjectRepository.ts:68:  async create(name: string): Promise<ProjectDTO> {
+backend/src/storage/ProjectRepository.ts:78:  async update(projectId: string, updates: Partial<ProjectDTO>): Promise<ProjectDTO> {
+backend/src/storage/ProjectRepository.ts:84:    const updated: ProjectDTO = {
+backend/src/server.ts:4:import projectsRouter from './api/projects.js';
+backend/src/server.ts:15:app.use('/api/projects', projectsRouter);
+backend/tests/integration/projects.spec.ts:39:  describe('POST /api/projects', () => {
+backend/tests/integration/projects.spec.ts:42:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:86:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:93:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:100:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:108:  describe('GET /api/projects/:id', () => {
+backend/tests/integration/projects.spec.ts:112:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:120:        .get(`/api/projects/${projectId}`)
+backend/tests/integration/projects.spec.ts:131:        .get('/api/projects/non-existent-id')
+backend/tests/integration/projects.spec.ts:138:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:146:        .get(`/api/projects/${projectId}`)
+backend/tests/integration/projects.spec.ts:157:  describe('PUT /api/projects/:id', () => {
+backend/tests/integration/projects.spec.ts:161:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:201:        .put(`/api/projects/${projectId}`)
+backend/tests/integration/projects.spec.ts:220:        .put('/api/projects/non-existent-id')
+backend/tests/integration/projects.spec.ts:227:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:235:        .put(`/api/projects/${projectId}`)
+backend/tests/integration/projects.spec.ts:244:  describe('GET /api/projects', () => {
+backend/tests/integration/projects.spec.ts:248:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:253:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:258:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:264:        .get('/api/projects')
+backend/tests/integration/projects.spec.ts:280:        .get('/api/projects')
+backend/tests/integration/projects.spec.ts:289:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:296:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:303:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:309:        .get('/api/projects')
+backend/tests/integration/projects.spec.ts:319:  describe('DELETE /api/projects/:id', () => {
+backend/tests/integration/projects.spec.ts:323:        .post('/api/projects')
+backend/tests/integration/projects.spec.ts:331:        .delete(`/api/projects/${projectId}`)
+backend/tests/integration/projects.spec.ts:336:        .get(`/api/projects/${projectId}`)
+backend/tests/integration/projects.spec.ts:342:        .delete('/api/projects/non-existent-id')
+specs/001-dihedral-learning-mvp/contracts/api.yaml:60:                      $ref: '#/components/schemas/ProjectMetadata'
+specs/001-dihedral-learning-mvp/contracts/api.yaml:181:    ProjectMetadata:
+specs/001-dihedral-learning-mvp/plan.md:672:**Outputs**: `backend/src/api/projects.ts`, `frontend/src/services/ProjectService.ts`  
+specs/001-dihedral-learning-mvp/quickstart.md:301:3. CORS is enabled in backend (see `backend/src/server.ts`)
+specs/001-dihedral-learning-mvp/research.md:1275:GET /api/projects
+specs/001-dihedral-learning-mvp/research.md:1278:POST /api/projects
+specs/001-dihedral-learning-mvp/research.md:1282:GET /api/projects/:id
+specs/001-dihedral-learning-mvp/research.md:1285:PUT /api/projects/:id
+specs/001-dihedral-learning-mvp/research.md:1289:DELETE /api/projects/:id
+specs/001-dihedral-learning-mvp/research.md:1297:    await fetch(`/api/projects/${project.id}`, {
+specs/001-dihedral-learning-mvp/research.md:1304:    const response = await fetch(`/api/projects/${id}`);

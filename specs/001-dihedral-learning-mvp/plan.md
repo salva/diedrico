@@ -7,18 +7,18 @@
 
 An educational web application for learning dihedral/orthographic projection using a constructive, step-by-step approach. The application emphasizes the construction process over final results, with explicit dependency tracking, infeasibility detection, and dual 2D/3D visualization.
 
-**Core Technical Approach**: Vue.js 3 frontend with TypeScript, SVG-based 2D rendering, command pattern for undoable operations, process tree for dependency tracking, and file-based JSON persistence via Node.js backend.
+**Core Technical Approach**: Vue.js 3 frontend with TypeScript, SVG-based 2D rendering, command pattern for undoable operations, process tree for dependency tracking, and app-shell project persistence through ProjectService/Drive ports.
 
 **⚠️ Refactoring in Progress**: The data model is being refactored to make ProjectionPlane the owner of 2D elements. See [refactoring-projection-plane-ownership.md](./refactoring-projection-plane-ownership.md) for details.
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x (frontend and backend), Node.js 18+ LTS  
-**Primary Dependencies**: Vue.js 3 (Composition API), Vite, Express  
-**Storage**: File-based JSON (MVP scope)  
+**Language/Version**: TypeScript 5.x frontend, Node.js 18+ tooling  
+**Primary Dependencies**: Vue.js 3 (Composition API), Vite  
+**Storage**: App-shell ProjectPersistencePort with ProjectService/Drive adapter  
 **Testing**: Vitest (unit), Playwright (E2E)  
 **Target Platform**: Modern web browsers (Chrome, Firefox, Safari)  
-**Project Type**: Web application (frontend + backend)  
+**Project Type**: Frontend web application  
 **Performance Goals**: Smooth rendering for 200+ geometric elements, <100ms hover response  
 **Constraints**: Client-side geometry calculations, no backend computation, offline-capable after load  
 **Scale/Scope**: MVP with 6 user stories, ~30 geometric operations, educational focus
@@ -29,7 +29,7 @@ An educational web application for learning dihedral/orthographic projection usi
 
 - [x] **Layered Architecture**: Yes - Clear separation with Domain (World, ProcessTree), Application (Commands, Services), Presentation (Vue components), and Data (FileStorage) layers
 - [x] **Command Pattern**: Yes - All user actions encapsulated as commands (CreatePointCommand, CreateLineCommand, etc.) with execute/undo/validate
-- [x] **Frontend-First**: Yes - All geometric calculations and UI logic in frontend, backend only provides REST API for file persistence
+- [x] **Frontend-First**: Yes - All geometric calculations, UI logic, and active project persistence boundary live in the frontend app shell
 - [x] **Technology Discipline**: Yes - Uses approved stack: Vue.js 3, TypeScript, Vite, Vitest, Playwright, Node.js, Express
 - [x] **Testing Strategy (Pragmatic)**: Yes - Acceptance scenarios defined in spec.md, unit tests for domain logic, E2E tests for critical user workflows
 
@@ -212,23 +212,6 @@ specs/001-dihedral-learning-mvp/
 ### Source Code (repository root)
 
 ```text
-backend/
-├── src/
-│   ├── api/
-│   │   ├── health.ts
-│   │   └── projects.ts
-│   ├── models/
-│   │   └── Project.ts
-│   ├── storage/
-│   │   ├── FileStorage.ts
-│   │   └── ProjectRepository.ts
-│   └── server.ts
-├── tests/
-│   └── integration/
-│       └── projects.spec.ts
-├── package.json
-└── tsconfig.json
-
 frontend/
 ├── src/
 │   ├── components/
@@ -289,7 +272,7 @@ frontend/
 └── playwright.config.ts
 ```
 
-**Structure Decision**: Web application with separate frontend and backend projects. Frontend handles all geometric calculations and rendering (adhering to Frontend-First principle). Backend provides only file persistence API.
+**Structure Decision**: Frontend application. The frontend handles geometric calculations, rendering, command orchestration, and the active app-shell project persistence boundary.
 
 ## Complexity Tracking
 
@@ -663,13 +646,12 @@ This plan follows an incremental, layer-by-layer approach. Each phase adds one s
 
 **Persist projects**
 
-- Serialize World to JSON
-- Backend API for file storage
-- Save/Load buttons
+- Serialize World to JSON through `ProjectService`
+- Save/load through the app-shell persistence port and Drive adapter
 - Auto-save
 
 **Dependencies**: Phase 25  
-**Outputs**: `backend/src/api/projects.ts`, `frontend/src/services/ProjectService.ts`  
+**Outputs**: `frontend/src/services/ProjectService.ts`, app-shell persistence use cases  
 **User Story**: US1 - Persistence (complete)
 
 ---
@@ -709,5 +691,5 @@ This plan follows an incremental, layer-by-layer approach. Each phase adds one s
 
 - **Layered Architecture**: Maintained throughout all phases with clear domain/application/presentation separation
 - **Command Pattern**: Introduced in Phase 10, extended in subsequent phases
-- **Frontend-First**: Backend only introduced in Phase 26 for persistence
+- **Frontend-First**: Project persistence remains an app-shell/frontend boundary
 - **Incremental Development**: Each phase adds one focused capability

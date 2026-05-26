@@ -1,0 +1,6 @@
+drwxrwxr-x 1 salva salva    594 May 26 07:05 .
+drwxrwxr-x 1 salva salva    114 May 26 07:05 frontend/src/components/dialogs
+-rw-r--r-- 1 root  root     838 May 24 21:24 package.json
+-rw-r--r-- 1 root  root  268318 May 25 08:35 package-lock.json
+backend_exists=1
+open_dialog_exists=1

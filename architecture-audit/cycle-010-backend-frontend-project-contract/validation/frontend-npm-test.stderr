@@ -1,0 +1,334 @@
+stderr | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initialization failed: Error: Init failed
+    at /work/diedrico/frontend/tests/unit/services/googleDriveService.spec.ts:123:46
+    at file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///work/diedrico/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+[GoogleDrive] Error details: {}
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Line Intersection > should return infeasible for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Segment Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside one segment
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside both segments
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Circle Intersection > should return infeasible when line does not intersect circle
+[Point2DLineCircleIntersection] Line and circle do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should handle segment partially intersecting circle
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Circle-Circle Intersection > should return infeasible when circles do not intersect
+[Point2DCircleCircleIntersection] Circles do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible line to line-line intersection
+[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible circle to line-circle intersection
+Circle projPlane3/circle2d15: center and circumference point are coincident
+Circle projPlane3/circle2d15: center and circumference point are coincident
+[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/world.spec.ts > ProjectionPlane Factory Methods > Factory Methods > addLineLineIntersection > should throw error for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should detect infeasible 3D line when lifted planes are parallel
+[Line3DFromProjections] Planes are parallel - no intersection
+
+stderr | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Element projPlane3/point2d10 has no producing action - skipping
+
+stderr | tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should not save with validation errors
+[PropertiesDialog] Validation failed
+
+stderr | tests/unit/stores/authStore.spec.ts > authStore > restoreSession > should handle corrupted profile data
+[AuthStore] Failed to parse stored profile: SyntaxError: Unexpected token 'i', "invalid-json{" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at Object.restoreSession (/work/diedrico/frontend/src/stores/authStore.ts:98:28)
+    at /work/diedrico/frontend/tests/unit/stores/authStore.spec.ts:166:34
+    at file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/guide-creation.test.ts [ tests/integration/guide-creation.test.ts ]
+Error: Failed to resolve import "../../src/commands/operations/AddFreePoint2DOp" from "tests/integration/guide-creation.test.ts". Does the file exist?
+ ❯ TransformPluginContext._formatError ../node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41
+ ❯ TransformPluginContext.error ../node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16
+ ❯ normalizeUrl ../node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23
+ ❯ async file:/work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+ ❯ TransformPluginContext.transform ../node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7
+ ❯ PluginContainer.transform ../node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18
+ ❯ loadAndTransform ../node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of perpendicular lines
+AssertionError: expected undefined to be close to 3, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:48:25
+     46|       
+     47|       expect(result).not.toBeNull();
+     48|       expect(result!.x).toBeCloseTo(3, 6);
+       |                         ^
+     49|       expect(result!.y).toBeCloseTo(2, 6);
+     50|       expect(result!.z).toBe(1); // homogeneous coordinate
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of diagonal lines
+AssertionError: expected undefined to be close to 2, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:73:25
+     71|       // x = -x + 4 => 2x = 4 => x = 2, y = 2
+     72|       expect(result).not.toBeNull();
+     73|       expect(result!.x).toBeCloseTo(2, 6);
+       |                         ^
+     74|       expect(result!.y).toBeCloseTo(2, 6);
+     75|       expect(result!.z).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel horizontal lines
+AssertionError: expected Point2DRealization2D{ …(2) } to be null
+ ❯ tests/unit/calculations/intersections.spec.ts:93:22
+     91|       const result = intersectLineLine(line1, line2);
+     92|       
+     93|       expect(result).toBeNull();
+       |                      ^
+     94|     });
+     95|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel vertical lines
+AssertionError: expected Point2DRealization2D{ …(2) } to be null
+ ❯ tests/unit/calculations/intersections.spec.ts:111:22
+    109|       const result = intersectLineLine(line1, line2);
+    110|       
+    111|       expect(result).toBeNull();
+       |                      ^
+    112|     });
+    113|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel diagonal lines
+AssertionError: expected Point2DRealization2D{ …(2) } to be null
+ ❯ tests/unit/calculations/intersections.spec.ts:129:22
+    127|       const result = intersectLineLine(line1, line2);
+    128|       
+    129|       expect(result).toBeNull();
+       |                      ^
+    130|     });
+    131|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect coincident lines
+AssertionError: expected Point2DRealization2D{ …(2) } to be null
+ ❯ tests/unit/calculations/intersections.spec.ts:147:22
+    145|       const result = intersectLineLine(line1, line2);
+    146|       
+    147|       expect(result).toBeNull();
+       |                      ^
+    148|     });
+    149|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle lines with non-unit direction vectors
+AssertionError: expected undefined to be close to 4, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:167:25
+    165|       // Should still find correct intersection at (4, 1)
+    166|       expect(result).not.toBeNull();
+    167|       expect(result!.x).toBeCloseTo(4, 6);
+       |                         ^
+    168|       expect(result!.y).toBeCloseTo(1, 6);
+    169|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should produce homogeneous points with z=1
+AssertionError: expected undefined to be 1 // Object.is equality
+
+- Expected: 
+1
+
++ Received: 
+undefined
+
+ ❯ tests/unit/calculations/intersections.spec.ts:185:25
+    183|       
+    184|       expect(result).not.toBeNull();
+    185|       expect(result!.z).toBe(1); // Homogeneous coordinate
+       |                         ^
+    186|     });
+    187|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection at origin
+AssertionError: expected undefined to be close to +0, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:204:25
+    202|       
+    203|       expect(result).not.toBeNull();
+    204|       expect(result!.x).toBeCloseTo(0, 6);
+       |                         ^
+    205|       expect(result!.y).toBeCloseTo(0, 6);
+    206|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection with negative coordinates
+AssertionError: expected undefined to be close to -5, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:224:25
+    222|       
+    223|       expect(result).not.toBeNull();
+    224|       expect(result!.x).toBeCloseTo(-5, 6);
+       |                         ^
+    225|       expect(result!.y).toBeCloseTo(-3, 6);
+    226|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  tests/unit/architecture/noCommandSubclasses.spec.ts > Architecture: Command Pattern > should NOT have any Command subclasses in production code
+TypeError: default.resolve is not a function
+ ❯ tests/unit/architecture/noCommandSubclasses.spec.ts:32:30
+     30|     // Search for "extends Command" pattern in TypeScript files
+     31|     // Exclude test files, node_modules, and dist
+     32|     const projectRoot = path.resolve(__dirname, '../../..');
+       |                              ^
+     33|     
+     34|     try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:69:40
+     67|       
+     68|       await wrapper.find('.close-button').trigger('click');
+     69|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     70|     });
+     71| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:82:40
+     80|       
+     81|       await wrapper.find('.dialog-overlay').trigger('click');
+     82|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     83|     });
+     84| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:95:40
+     93|       
+     94|       await wrapper.find('.button-secondary').trigger('click');
+     95|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     96|     });
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:295:39
+    293|       
+    294|       // Should emit save event with changes
+    295|       expect(wrapper.emitted('save')).toBeTruthy();
+       |                                       ^
+    296|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    297|       expect(saveEvent.elementId).toStrictEqual(pointId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+TypeError: Cannot read properties of undefined (reading 'color')
+ ❯ tests/unit/components/propertiesDialog.spec.ts:329:24
+    327|       // Should only include color in save event
+    328|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    329|       expect(saveEvent.color).toBe('#FF5733');
+       |                        ^
+    330|       expect(saveEvent.lineWidth).toBeUndefined();
+    331|       expect(saveEvent.lineStyle).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

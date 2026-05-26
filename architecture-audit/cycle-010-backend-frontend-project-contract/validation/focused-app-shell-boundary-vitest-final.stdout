@@ -1,0 +1,16 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/application/appShell/AppShellBoundary.test.ts  (5 tests | 1 failed) 35ms
+   ❯ tests/unit/application/appShell/AppShellBoundary.test.ts > Wave 010 project persistence boundary > keeps stale backend project route assumptions out of frontend source and tests
+     → expected [ …(4) ] to deeply equal []
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  07:08:58
+   Duration  5.20s (transform 2.53s, setup 0ms, collect 3.62s, tests 35ms, environment 657ms, prepare 145ms)
+

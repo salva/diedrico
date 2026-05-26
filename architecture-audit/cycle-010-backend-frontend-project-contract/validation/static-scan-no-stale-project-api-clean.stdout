@@ -1,0 +1,1 @@
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:49:    expect(findOffenders(new RegExp(['localhost:3000', 'api', 'projects'].join('/') + '|/api/' + 'projects|ProjectDTO|ProjectMetadata|OpenProjectDialog'))).toEqual([]);

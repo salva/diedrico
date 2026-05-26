@@ -1,0 +1,14 @@
+frontend/src/application/appShell/ProjectSessionUseCases.ts:150:  showOpenProjectDialog(): void {
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:94:    if (key === 'o') { event.preventDefault(); this.deps.projectSession.showOpenProjectDialog(); return; }
+frontend/src/application/appShell/AppShellRuntime.ts:143:      openProjectDialog: () => projectSession.showOpenProjectDialog(),
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:22:    projectSession: { newProject: vi.fn(), showOpenProjectDialog: vi.fn() },
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:49:    expect(findOffenders(/localhost:3000\/api\/projects|\/api\/projects|ProjectDTO|ProjectMetadata|OpenProjectDialog/)).toEqual([]);
+specs/001-dihedral-learning-mvp/contracts/api.yaml:6:    active /api/projects contract; project persistence is owned by the frontend
+specs/001-dihedral-learning-mvp/quickstart.md:70:Project startup/open/save behavior uses the app-shell persistence port; no backend `/api/projects` server is required.
+specs/001-dihedral-learning-mvp/research.md:1275:GET /api/projects
+specs/001-dihedral-learning-mvp/research.md:1278:POST /api/projects
+specs/001-dihedral-learning-mvp/research.md:1282:GET /api/projects/:id
+specs/001-dihedral-learning-mvp/research.md:1285:PUT /api/projects/:id
+specs/001-dihedral-learning-mvp/research.md:1289:DELETE /api/projects/:id
+specs/001-dihedral-learning-mvp/research.md:1297:    await fetch(`/api/projects/${project.id}`, {
+specs/001-dihedral-learning-mvp/research.md:1304:    const response = await fetch(`/api/projects/${id}`);

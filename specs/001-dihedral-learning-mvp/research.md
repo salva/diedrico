@@ -1272,52 +1272,7 @@ class CreateSegmentWithAuxiliaryCommand implements ICommand {
 **API contract** (to be detailed in contracts/api.yaml):
 
 ```
-GET /api/projects
-  → { projects: [{ id, name, modified }] }
-
-POST /api/projects
-  ← { name }
-  → { id, ...project }
-
-GET /api/projects/:id
-  → { id, schemaVersion, planes, elements, actions, ... }
-
-PUT /api/projects/:id
-  ← { schemaVersion, planes, elements, actions, ... }
-  → { id, modified }
-
-DELETE /api/projects/:id
-  → 204 No Content
-```
-
-**Frontend ProjectService**:
-```typescript
-class ProjectService {
-  async save(project: Project): Promise<void> {
-    await fetch(`/api/projects/${project.id}`, {
-      method: 'PUT',
-      body: JSON.stringify(project)
-    });
-  }
-  
-  async load(id: string): Promise<Project> {
-    const response = await fetch(`/api/projects/${id}`);
-    const data = await response.json();
-    return this.deserialize(data);
-  }
-  
-  private deserialize(data: any): Project {
-    // Validate schema version
-    // Reconstruct domain objects from JSON
-    // Rebuild dependency graph
-  }
-}
-```
-
-**Error handling**:
-- Network errors: show non-modal notification, retry with exponential backoff
-- Validation errors (bad JSON): alert user, don't save
-- 404 on load: redirect to project list
+Wave 010 note: the disconnected backend `the removed backend project route` project CRUD/storage contract was deleted. Active project persistence is the frontend app-shell ProjectPersistencePort backed by ProjectService and Drive/local startup behavior.
 
 ---
 

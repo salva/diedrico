@@ -140,7 +140,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
       createProject: (name: string) => projectSession.createProject(name),
       openProject: (fileId: string) => projectSession.openProject(fileId),
       newProject: () => projectSession.newProject(),
-      openProjectDialog: () => projectSession.showOpenProjectDialog(),
+      showProjectChooser: () => projectSession.showStartupProjectChooser(),
       renameProject: (name: string) => projectSession.renameProject(name),
       requestFiles: () => projectSession.requestFiles(),
       updateCoordinates: (coords: { x: number; y: number; z: number } | null) => { coordinates3D.value = coords; },

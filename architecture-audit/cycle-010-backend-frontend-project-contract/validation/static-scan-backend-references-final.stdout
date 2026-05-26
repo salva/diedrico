@@ -1,0 +1,20 @@
+package-lock.json:3595:    "node_modules/diedrico-backend": {
+package-lock.json:3596:      "resolved": "backend",
+specs/001-dihedral-learning-mvp/contracts/api.yaml:5:    Wave 010 removed the disconnected backend project persistence API. There is no
+specs/001-dihedral-learning-mvp/plan.md:23:**Constraints**: Client-side geometry calculations, no backend computation, offline-capable after load  
+specs/001-dihedral-learning-mvp/quickstart.md:70:Project startup/open/save behavior uses the app-shell persistence port; no backend `/api/projects` server is required.
+specs/001-dihedral-learning-mvp/quickstart.md:173:Frontend Google Drive credentials, when used, are configured through frontend environment variables. Do not configure `VITE_API_URL` for project persistence; there is no active backend project API.
+specs/001-dihedral-learning-mvp/research.md:34:- Middleware: `express.json()`, `cors()` for frontend-backend communication
+specs/001-dihedral-learning-mvp/research.md:166:- **IndexedDB** (browser-local): Rejected for MVP. Requires backend for sharing/backup. Could add later as offline mode
+specs/001-dihedral-learning-mvp/research.md:1275:Wave 010 note: the disconnected backend `/api/projects` project CRUD/storage contract was deleted. Active project persistence is the frontend app-shell ProjectPersistencePort backed by ProjectService and Drive/local startup behavior.
+specs/001-dihedral-learning-mvp/research.md:1298:   - Sync with backend when online
+specs/001-dihedral-learning-mvp/data-model.md:15423:4. **Reusability**: Domain layer could support multiple rendering backends (Canvas, WebGL)
+specs/001-dihedral-learning-mvp/data-model.md:15453:5. **Frontend-owned**: All domain logic in frontend; backend stores JSON
+specs/001-dihedral-learning-mvp/data-model.md:15456:**Next**: Generate API contracts for backend persistence endpoints.
+specs/001-dihedral-learning-mvp/for-planing.md:1653:    - Added `"license": "GPL-3.0-or-later"` to all package.json files (root, frontend, backend)
+specs/001-dihedral-learning-mvp/for-planing.md:1669:    - Updated [backend/package.json](../../backend/package.json): Added license field
+specs/001-dihedral-learning-mvp/spec.md:1591:- The application is a web-based interactive tool; a backend service may be used for project persistence.
+specs/001-dihedral-learning-mvp/tasks.md:213:- [X] T043 [P] E2E test for pan/zoom (deferred - E2E infrastructure needs backend fix)
+specs/001-dihedral-learning-mvp/tasks.md:983:    - E2E test runner has unrelated backend path issue (separate from this task)
+specs/001-dihedral-learning-mvp/tasks.md:1636:- **Google Drive API**: Use gapi.client library for direct browser-to-Drive communication. No backend server required.
+specs/001-dihedral-learning-mvp/tasks.md:2025:- **Principle III (Frontend-First)**: All geometry calculations in frontend, Google Drive API for persistence (no backend server)

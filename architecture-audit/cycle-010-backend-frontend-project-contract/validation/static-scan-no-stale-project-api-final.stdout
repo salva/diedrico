@@ -1,0 +1,4 @@
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:49:    expect(findOffenders(/localhost:3000\/api\/projects|\/api\/projects|ProjectDTO|ProjectMetadata|OpenProjectDialog/)).toEqual([]);
+specs/001-dihedral-learning-mvp/contracts/api.yaml:6:    active /api/projects contract; project persistence is owned by the frontend
+specs/001-dihedral-learning-mvp/quickstart.md:70:Project startup/open/save behavior uses the app-shell persistence port; no backend `/api/projects` server is required.
+specs/001-dihedral-learning-mvp/research.md:1275:Wave 010 note: the disconnected backend `/api/projects` project CRUD/storage contract was deleted. Active project persistence is the frontend app-shell ProjectPersistencePort backed by ProjectService and Drive/local startup behavior.

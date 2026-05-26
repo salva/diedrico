@@ -10,8 +10,7 @@
 Diedrico is an educational web application for learning dihedral/orthographic projection. The system consists of:
 
 - **Frontend**: Vue.js 3 + TypeScript application (all business logic)
-- **Backend**: Node.js + Express REST API (persistence only)
-- **Storage**: JSON files for project data
+- **Persistence**: Frontend app-shell `ProjectPersistencePort` backed by `ProjectService` and Google Drive/local startup behavior
 
 This guide will get you from zero to running the application locally in <10 minutes.
 
@@ -44,7 +43,7 @@ cd diedrico
 
 ### 2. Install Dependencies
 
-Install both frontend and backend dependencies:
+Install frontend dependencies:
 
 ```bash
 # Frontend
@@ -52,35 +51,23 @@ cd frontend
 npm install
 cd ..
 
-# Backend
-cd backend
-npm install
-cd ..
 ```
 
 ---
 
 ## Running the Application
 
-You need to run both the backend and frontend servers.
+Run the frontend development server.
 
-### Option 1: Run Both Servers Manually
+### Run the Frontend Server
 
-**Terminal 1 - Backend**:
-```bash
-cd backend
-npm run dev
-```
-
-The backend API will start on `http://localhost:3000`.
-
-**Terminal 2 - Frontend**:
 ```bash
 cd frontend
 npm run dev
 ```
 
 The frontend will start on `http://localhost:5173` (Vite default).
+Project startup/open/save behavior uses the app-shell persistence port; no backend project server is required.
 
 Open your browser and navigate to **http://localhost:5173**.
 
@@ -92,43 +79,24 @@ Open your browser and navigate to **http://localhost:5173**.
 - Left panel for Constructive Actions
 - Right panel for Elements list
 
-### Option 2: Run with Concurrently (if configured)
-
-If a root-level `package.json` with `concurrently` is set up:
-
-```bash
-npm run dev
-```
-
-This will start both servers simultaneously.
-
 ---
 
 ## Project Structure
 
 ```
 diedrico/
-├── backend/
-│   ├── src/
-│   │   ├── api/          # Express routes
-│   │   ├── storage/      # File-based storage
-│   │   └── server.ts     # Entry point
-│   ├── data/             # JSON project files (created on first save)
-│   ├── package.json
-│   └── tsconfig.json
 ├── frontend/
 │   ├── src/
+│   │   ├── application/  # App-shell use cases and persistence ports
 │   │   ├── components/   # Vue components
 │   │   ├── commands/     # Command pattern implementations
 │   │   ├── domain/       # Domain models (geometry, entities)
-│   │   ├── services/     # Application services
-│   │   ├── stores/       # Pinia state management
+│   │   ├── services/     # ProjectService and application services
 │   │   └── main.ts       # Entry point
 │   ├── tests/
 │   │   ├── unit/         # Vitest unit tests
 │   │   └── e2e/          # Playwright E2E tests
 │   ├── package.json
-│   ├── tsconfig.json
 │   └── vite.config.ts
 └── specs/                # Feature specifications and plans
 ```
@@ -153,21 +121,6 @@ Edit files in `frontend/src/` and see changes immediately in the browser.
 npm run build
 npm run preview  # Test production build locally
 ```
-
-### Backend Development
-
-**Watch Mode**: Auto-restarts server on code changes.
-
-```bash
-cd backend
-npm run dev  # Uses ts-node-dev or nodemon
-```
-
-**Manual Restart**: If watch mode isn't configured, restart manually with `npm run dev`.
-
----
-
-## Testing
 
 ### Unit Tests (Frontend)
 
@@ -217,32 +170,7 @@ npm run test:e2e -- tests/e2e/basic-exercise.spec.ts
 
 Create `.env` files for environment-specific config:
 
-**backend/.env**:
-```env
-PORT=3000
-DATA_DIR=./data
-LOG_LEVEL=info
-```
-
-**frontend/.env**:
-```env
-VITE_API_URL=http://localhost:3000/api
-```
-
-### Backend Storage
-
-Projects are stored in `backend/data/projects/{projectId}.json`.
-
-The directory is created automatically on first save.
-
-**Manual Inspection**:
-```bash
-cat backend/data/projects/<some-uuid>.json | jq .
-```
-
----
-
-## Common Tasks
+Frontend Google Drive credentials, when used, are configured through frontend environment variables. Do not configure `VITE_API_URL` for project persistence; there is no active backend project API.
 
 ### Create a New Project
 
@@ -251,7 +179,7 @@ cat backend/data/projects/<some-uuid>.json | jq .
 3. Enter project name
 4. Click "Create"
 
-The backend creates a new project with default planes (P_H, P_V) and hinge line (HL_HV).
+The app-shell creates a new project through the active persistence port with default planes (P_H, P_V) and hinge line (HL_HV).
 
 ### Open an Existing Project
 
@@ -261,22 +189,7 @@ The backend creates a new project with default planes (P_H, P_V) and hinge line 
 
 ### Reset to Clean State
 
-Delete all projects:
-```bash
-rm -rf backend/data/projects/*.json
-```
-
-### View API Logs
-
-Backend logs requests and errors to console. Increase verbosity:
-
-```bash
-LOG_LEVEL=debug npm run dev
-```
-
----
-
-## Troubleshooting
+Clear the browser/local startup state or remove test Drive files used during development.
 
 ### Port Already in Use
 
@@ -291,15 +204,6 @@ lsof -ti:3000 | xargs kill -9
 PORT=3001 npm run dev
 ```
 
-### Frontend Can't Reach Backend
-
-**Symptom**: Network errors when creating/loading projects
-
-**Check**:
-1. Backend is running: `curl http://localhost:3000/api/health`
-2. Frontend API URL is correct in `.env`: `VITE_API_URL=http://localhost:3000/api`
-3. CORS is enabled in backend (see `backend/src/server.ts`)
-
 ### Missing Dependencies
 
 **Error**: `Cannot find module '...'`
@@ -307,7 +211,6 @@ PORT=3001 npm run dev
 **Solution**: Reinstall dependencies:
 ```bash
 cd frontend && npm install
-cd ../backend && npm install
 ```
 
 ### TypeScript Errors
@@ -323,7 +226,6 @@ cd ../backend && npm install
 
 **Check**:
 1. Dependencies installed: `npm install`
-2. Backend running (for E2E tests): `cd backend && npm run dev`
 3. Update snapshots if intentional: `npm test -- -u`
 
 ---
@@ -341,7 +243,6 @@ cd ../backend && npm install
 
 - **Feature Specification**: `specs/001-dihedral-learning-mvp/spec.md` - Complete feature requirements
 - **Data Model**: `specs/001-dihedral-learning-mvp/data-model.md` - Entity definitions
-- **API Contract**: `specs/001-dihedral-learning-mvp/contracts/api.yaml` - OpenAPI spec
 
 ### Add a New Tool
 
@@ -360,8 +261,6 @@ cd frontend && npm test
 # Frontend E2E tests
 npm run test:e2e
 
-# Backend integration tests (if implemented)
-cd backend && npm test
 ```
 
 ---

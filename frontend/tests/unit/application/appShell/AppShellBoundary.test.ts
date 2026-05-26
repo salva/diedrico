@@ -10,6 +10,18 @@ import keyboard from '@/application/appShell/KeyboardShortcutRouter.ts?raw';
 import projectSession from '@/application/appShell/ProjectSessionUseCases.ts?raw';
 import selection from '@/application/appShell/SelectionUseCases.ts?raw';
 
+const frontendSourceAndTests = import.meta.glob('/{src,tests}/**/*.{ts,tsx,vue,js,mjs,cjs}', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>;
+
+function findOffenders(pattern: RegExp): string[] {
+  return Object.entries(frontendSourceAndTests)
+    .filter(([file]) => !file.endsWith('/tests/unit/application/appShell/AppShellBoundary.test.ts'))
+    .flatMap(([file, content]) => pattern.test(content) ? [file] : []);
+}
+
 describe('Wave 009 app-shell boundaries', () => {
   it('keeps App.vue free of moved shell orchestration imports and browser bridges', () => {
     expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
@@ -25,5 +37,15 @@ describe('Wave 009 app-shell boundaries', () => {
     for (const content of [appShellRuntime, appShellPorts, activePlane, autoSave, keyboard, projectSession, selection]) {
       expect(content).not.toMatch(/components\//);
     }
+  });
+});
+
+describe('Wave 010 project persistence boundary', () => {
+  it('forbids frontend source and tests from importing backend implementation files', () => {
+    expect(findOffenders(/from ['\"][^'\"]*backend\/src|import\([^)]*backend\/src|backend\/src\//)).toEqual([]);
+  });
+
+  it('keeps stale backend project route assumptions out of frontend source and tests', () => {
+    expect(findOffenders(new RegExp([['localhost:3000', 'api', 'projects'].join('/'), '/api/' + 'projects', 'Project' + 'DTO', 'Project' + 'Metadata', 'Open' + 'Project' + 'Dialog'].join('|')))).toEqual([]);
   });
 });

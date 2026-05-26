@@ -91,7 +91,7 @@ export class KeyboardShortcutRouter {
     if (!isModifier) return;
     const key = event.key.toLowerCase();
     if (key === 'n') { event.preventDefault(); void this.deps.projectSession.newProject(); return; }
-    if (key === 'o') { event.preventDefault(); this.deps.projectSession.showOpenProjectDialog(); return; }
+    if (key === 'o') { event.preventDefault(); this.deps.projectSession.showStartupProjectChooser(); return; }
     if (key === 'a') { event.preventDefault(); this.deps.selection.selectAllInActivePlane(); return; }
     if (event.key === '0') { event.preventDefault(); this.deps.fitToView(); return; }
     if (key === 'z' && !event.shiftKey && this.deps.commandStack.canUndo()) { event.preventDefault(); this.deps.commandStack.undo(); return; }
