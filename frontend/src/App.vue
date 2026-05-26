@@ -274,6 +274,9 @@ async function initializeApp() {
   if (!hasGoogleCredentials) {
     console.warn('Google Drive credentials not configured. Running in local-only mode.');
     console.info('To enable Google Drive integration, create a .env file with VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_API_KEY, and VITE_GOOGLE_APP_ID');
+    // Local-only preview still needs the default projection planes so canvas tools
+    // and read models have an active plane to target.
+    initializeWorld(world, commandStack);
     // Don't show startup dialog in development mode without credentials
     showStartupDialog.value = false;
     return;

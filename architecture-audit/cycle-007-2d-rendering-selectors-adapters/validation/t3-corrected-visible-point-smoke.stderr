@@ -1,0 +1,2 @@
+Error: Free Point click on a visible non-overlapped SVG region did not increase rendered point circle count; investigate as possible app/tool/rendering defect.
+    at /work/diedrico/architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/t3-corrected-visible-point-smoke.cjs:97:43

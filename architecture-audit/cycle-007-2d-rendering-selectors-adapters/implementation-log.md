@@ -210,3 +210,25 @@ Validation-stage worker `t1-validation-cadence-static-preview-log` reran the req
 - Full lint/build/e2e remain blocked by project/toolchain/spec problems that predate this validation stage: missing eslint, `vue-tsc` incompatibility with Node v24.15.0, malformed e2e specs, and unrelated frontend Vitest failures.
 - Live 2D click smoke remains inconclusive because the 3D overlay intercepts pointer events at the SVG center; this may be a future UI layering/preview concern, not a Wave 007 canvas-presentation boundary regression.
 - No Wave-007-attributable validation failure remains after the comment-boundary cleanup and focused Vitest pass.
+
+## t3 validation-stage live smoke blocker correction
+
+Reviewer `t2-review-validation-stage` correctly rejected the earlier live point-creation/rendering classification: the strict browser smoke had attempted point creation and observed no rendered SVG point. This correction task re-ran the live investigation with deterministic evidence and fixed the attributable startup defect.
+
+### Root cause and fix
+
+- Reproducer before fix: `validation/t3-corrected-visible-point-smoke.stdout` / `.stderr` clicked a visible, non-overlapped SVG location (`left-middle`, verified by `document.elementFromPoint` as `svg.svg-canvas`) after activating `Free Point`. The click still did not render a point because the browser console reported `[SvgCanvas] No transform for active plane: undefined` and the page had zero projection-plane/grid geometry. This proved the blocker was not merely the 3D overlay center-click interception and not a Wave 007 selector DTO failure.
+- Attributable defect fixed: `frontend/src/App.vue` initialized no default world in local-only preview mode when Google Drive credentials are absent. That left `world.getActivePlaneId()` undefined, so `SvgCanvas` could not convert click coordinates to plane coordinates. The local-only branch now calls `initializeWorld(world, commandStack)` before hiding the startup dialog, matching the app's existing fallback behavior for failed Drive restores and giving the live preview an active projection plane.
+
+### Post-fix evidence
+
+- Corrected live browser smoke: `validation/t3-corrected-visible-point-smoke-after-fix.stdout` / `.stderr` passed. It loaded `http://127.0.0.1:5173/`, verified mounted `svg.svg-canvas`, `g.background-grid`, and `g.grid-labels`, chose a visible SVG point outside the 3D overlay, activated `Free Point`, clicked the SVG, and observed rendered point circles increase from `2` to `3` with console output `[SvgCanvas] Tool operation succeeded: Create free point completed successfully`. The same output records grid lines increasing to a real default-world read model (`82` grid lines) after initialization.
+- Earlier center-click failures remain classified as a separate pre-existing/overlay interaction limitation: `validation/t1-stage-live-browser-smoke2.stderr` shows the `canvas.three-canvas` overlay intercepting center clicks. The passing corrected smoke avoids that overlay and proves the Wave 007 live 2D presentation/rendering path works when the click reaches the SVG.
+- Focused Wave 007 regression tests after the fix: `validation/t3-focused-vitest-after-live-fix.stdout` / `.stderr` passed, 9 files / 65 tests.
+- Static boundary check after the fix: `validation/t3-static-boundary-after-live-fix.stdout` / `.stderr` shows the only source diff is `frontend/src/App.vue`, no Wave 008/3D source diff, and no legacy `SvgCanvas.vue` references to `PrimitiveContext`, `paperService`, `generatePrimitives`, `Paper.hitTest`, direct `world.projectionPlanes`, or component-owned `realize2D(world)` grid logic.
+
+### Corrected classification
+
+- The reviewer blocker is resolved. The no-render live smoke was an attributable application startup/preview initialization defect, fixed in `frontend/src/App.vue`.
+- Live 2D rendering smoke now passes with deterministic evidence on the refreshed preview: default-world grid/read-model geometry is visible and a Free Point click produces a rendered SVG circle through the Wave 007 canvas presentation/renderer boundary.
+- Residual non-attributable validation blockers from the earlier validation cadence remain unchanged: missing `eslint`, `vue-tsc` incompatibility under Node v24.15.0, unrelated full Vitest failures, malformed e2e specs, and center-click interception by the pre-existing 3D overlay.

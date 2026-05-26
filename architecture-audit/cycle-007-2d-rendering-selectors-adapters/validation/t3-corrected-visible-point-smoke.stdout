@@ -1,0 +1,101 @@
+{
+  "status": "failed",
+  "interpretation": "Free Point click on a visible non-overlapped SVG region did not increase rendered point circle count; investigate as possible app/tool/rendering defect.",
+  "before": {
+    "title": "Diedrico - Dihedral Learning MVP",
+    "svgPresent": true,
+    "svgBox": {
+      "x": 300,
+      "y": 91,
+      "width": 980,
+      "height": 612.5
+    },
+    "activePlaneLine": null,
+    "toolLine": "Tool:",
+    "gridGroupPresent": true,
+    "gridLabelGroupPresent": true,
+    "gridLineCount": 0,
+    "gridLabelCount": 0,
+    "circleCount": 0,
+    "visiblePointCircleCount": 0,
+    "lineCount": 0,
+    "pathCount": 0,
+    "renderedGeometryCount": 0,
+    "hitCandidates": [
+      {
+        "name": "left-middle",
+        "x": 400,
+        "y": 397.25,
+        "tag": "svg",
+        "className": "svg-canvas",
+        "isSvgOrChild": true
+      },
+      {
+        "name": "left-upper",
+        "x": 400,
+        "y": 191,
+        "tag": "svg",
+        "className": "svg-canvas",
+        "isSvgOrChild": true
+      },
+      {
+        "name": "top-center",
+        "x": 790,
+        "y": 101,
+        "tag": "svg",
+        "className": "svg-canvas",
+        "isSvgOrChild": true
+      },
+      {
+        "name": "center",
+        "x": 790,
+        "y": 397.25,
+        "tag": "CANVAS",
+        "className": "three-canvas",
+        "isSvgOrChild": false
+      }
+    ]
+  },
+  "clickCandidate": {
+    "name": "left-middle",
+    "x": 400,
+    "y": 397.25,
+    "tag": "svg",
+    "className": "svg-canvas",
+    "isSvgOrChild": true
+  },
+  "after": {
+    "toolLine": "Tool:",
+    "stepText": null,
+    "circleCount": 0,
+    "visiblePointCircleCount": 0,
+    "lineCount": 0,
+    "pathCount": 0,
+    "renderedGeometryCount": 0,
+    "circles": []
+  },
+  "consoleMessages": [
+    "debug: [vite] connecting...",
+    "debug: [vite] connected.",
+    "log: [DEBUG] Environment variables: {clientId: NOT SET, hasApiKey: false, hasAppId: false, allEnvVars: Object}",
+    "log: [DEBUG] hasGoogleCredentials: ",
+    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 0",
+    "log: [ElementsPanel] Computing 3D elements",
+    "log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 0}",
+    "log: [ElementsPanel] Mounted, initial World version: 0",
+    "log: World initialized",
+    "log: Points in world: 0",
+    "log: [ThreeView.renderHingeLines] Called",
+    "log: [ThreeView.renderHingeLines] Found 0 hinge lines: []",
+    "warning: Google Drive credentials not configured. Running in local-only mode.",
+    "info: To enable Google Drive integration, create a .env file with VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_API_KEY, and VITE_GOOGLE_APP_ID",
+    "warning: [GroupMarkerNotSet(crbug.com/242999)!:A0901800E4050000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+    "warning: [.WebGL-0x3ca400143c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x3ca400143c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x3ca400143c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x3ca400143c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+    "log: [SvgCanvas] Created new tool instance: point",
+    "error: [SvgCanvas] No transform for active plane: undefined"
+  ],
+  "pageErrors": []
+}
