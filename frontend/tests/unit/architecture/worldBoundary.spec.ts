@@ -1,32 +1,32 @@
 import { describe, expect, it } from 'vitest';
+import { findForbiddenImports, scanTextFiles } from './helpers/sourceScanner';
 
-describe('Architecture: World boundary', () => {
-  it('World.ts should not import application, commands, services, UI, stores, or persistence layers', () => {
-    const fs = require('fs');
-    const content = fs.readFileSync('src/domain/world/World.ts', 'utf-8');
-    const importLines = content
-      .split('\n')
-      .filter(line => /^import\s/.test(line.trim()));
+const forbiddenOuterLayerImports = [
+  /^@\/application(\/|$)/,
+  /^@\/commands(\/|$)/,
+  /^@\/services(\/|$)/,
+  /^@\/components(\/|$)/,
+  /^@\/stores(\/|$)/,
+  /^@\/persistence(\/|$)/,
+  /^\.\.\/(?:\.\.\/)*application(\/|$)/,
+  /^\.\.\/(?:\.\.\/)*commands(\/|$)/,
+  /^\.\.\/(?:\.\.\/)*services(\/|$)/,
+  /^\.\.\/(?:\.\.\/)*components(\/|$)/,
+  /^\.\.\/(?:\.\.\/)*stores(\/|$)/,
+  /^\.\.\/(?:\.\.\/)*persistence(\/|$)/,
+];
 
-    const forbiddenPatterns = [
-      /@\/application\//,
-      /@\/commands\//,
-      /@\/services\//,
-      /@\/components\//,
-      /@\/stores\//,
-      /@\/persistence\//,
-      /\.\.\/\.\.\/application\//,
-      /\.\.\/\.\.\/commands\//,
-      /\.\.\/\.\.\/services\//,
-      /\.\.\/\.\.\/components\//,
-      /\.\.\/\.\.\/stores\//,
-      /\.\.\/\.\.\/persistence\//,
-    ];
+describe('Architecture: domain world boundary', () => {
+  it('keeps every domain module independent of application, command, service, UI, store, and persistence layers', () => {
+    const domainFiles = scanTextFiles(['src/domain']);
 
-    const violations = importLines.filter(line =>
-      forbiddenPatterns.some(pattern => pattern.test(line))
-    );
+    expect(findForbiddenImports(domainFiles, forbiddenOuterLayerImports)).toEqual([]);
+  });
 
-    expect(violations).toEqual([]);
+  it('keeps World.ts specifically free of outer-layer imports', () => {
+    const worldFile = scanTextFiles(['src/domain/world']).filter(file => file.projectPath === 'src/domain/world/World.ts');
+
+    expect(worldFile).toHaveLength(1);
+    expect(findForbiddenImports(worldFile, forbiddenOuterLayerImports)).toEqual([]);
   });
 });

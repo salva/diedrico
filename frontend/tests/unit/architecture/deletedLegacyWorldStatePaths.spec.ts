@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { findContentMatches, scanTextFiles, type ScannedFile } from './helpers/sourceScanner';
 
 const deletedPathTerms = [
   'worldStore',
@@ -11,42 +12,17 @@ const deletedPathTerms = [
   'getWorld',
 ];
 
+const self = 'tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts';
+
+function isThisArchitectureSpec(file: ScannedFile): boolean {
+  return file.projectPath === self;
+}
+
 describe('Architecture: deleted legacy world-state paths', () => {
   it('active source and tests do not reference deleted store/workspace geometry surfaces', () => {
-    const fs = require('fs');
-    const path = require('path');
-    const sourceRoots = ['src', 'tests'].map((sourceRoot: string) => path.join(process.cwd(), sourceRoot));
-    const ignoredPathFragments = [
-      path.join('tests', 'unit', 'architecture', 'deletedLegacyWorldStatePaths.spec.ts'),
-    ];
+    const files = scanTextFiles(['src', 'tests']);
+    const pattern = new RegExp(deletedPathTerms.join('|'));
 
-    function listTextFiles(directory: string): string[] {
-      return fs.readdirSync(directory).flatMap((entry: string) => {
-        const filePath = path.join(directory, entry);
-        const stat = fs.statSync(filePath);
-
-        if (stat.isDirectory()) {
-          return listTextFiles(filePath);
-        }
-
-        if (/\.(ts|tsx|vue)$/.test(filePath)) {
-          return [filePath];
-        }
-
-        return [];
-      });
-    }
-
-    const violations = sourceRoots
-      .flatMap(listTextFiles)
-      .filter((filePath: string) => !ignoredPathFragments.some(fragment => filePath.endsWith(fragment)))
-      .flatMap((filePath: string) => {
-        const content = fs.readFileSync(filePath, 'utf-8');
-        return deletedPathTerms
-          .filter(term => content.includes(term))
-          .map(term => `${path.relative(process.cwd(), filePath)} contains ${term}`);
-      });
-
-    expect(violations).toEqual([]);
+    expect(findContentMatches(files, pattern, { exclude: isThisArchitectureSpec })).toEqual([]);
   });
 });

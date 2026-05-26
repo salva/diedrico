@@ -16,7 +16,9 @@
     "lint": "npm run lint --workspace=frontend",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "test:architecture": "npm run test:architecture --workspace=frontend",
+    "test:e2e": "npm run test:e2e --workspace=frontend"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

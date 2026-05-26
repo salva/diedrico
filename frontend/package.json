@@ -10,9 +10,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "test:architecture": "vitest run tests/unit/architecture",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+    "lint": "npm run test:architecture"
   },
   "dependencies": {
     "@types/katex": "^0.16.8",
