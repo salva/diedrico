@@ -1,0 +1,14 @@
+=== t3-root-lint ===
+t3-root-lint exit=127
+=== t3-frontend-lint ===
+t3-frontend-lint exit=127
+=== t3-root-test ===
+t3-root-test exit=1
+=== t3-frontend-test ===
+t3-frontend-test exit=1
+=== t3-root-build ===
+t3-root-build exit=1
+=== t3-frontend-build ===
+t3-frontend-build exit=1
+=== t3-frontend-e2e ===
+t3-frontend-e2e exit=1

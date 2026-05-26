@@ -122,3 +122,18 @@ The correction task addressed the review concern that the first implementation e
 - The missing focused selector/shell test evidence is now corrected by passing `t3-focused-vitest-expanded-final2` logs.
 - Required implementation-stage live evidence is now corrected by reachability and browser-smoke logs against the running preview on port 5173.
 - Full mandatory validation cadence and preview refresh still belong to `cycle-008-validation-and-preview-refresh`; this correction did not attempt unrelated Wave 009 App.vue extraction, backend/docs/tooling cleanup, or Wave 007 rendering changes.
+
+## Manager mandatory cadence completion after review blocker
+
+After reviewer round 01 flagged omitted mandatory command evidence, the Manager ran the missing cadence commands directly and captured stable logs under `architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/`:
+
+- `manager-mandatory-cadence-run.stdout` / `.stderr`: wrapper log for the full command batch.
+- `t3-root-lint.stdout.log` / `.stderr.log`: `npm run lint` exited 127. Classification: pre-existing/tooling environment blocker; eslint is not installed/resolvable for the frontend workspace (`sh: 1: eslint: not found`).
+- `t3-frontend-lint.stdout.log` / `.stderr.log`: `npm run lint --workspace=frontend` exited 127 with the same eslint-not-found blocker.
+- `t3-root-test.stdout.log` / `.stderr.log`: `npm run test` exited 1. Classification: pre-existing broad suite failures outside Wave 008, including unresolved stale import `tests/integration/guide-creation.test.ts -> ../../src/commands/operations/AddFreePoint2DOp`, path built-in import shape failure in `tests/unit/architecture/noCommandSubclasses.spec.ts`, old `calculations/intersections.spec.ts` expectation failures, and old `propertiesDialog.spec.ts` event failures. Wave 008 focused tests are covered separately by the passing `t3-focused-vitest-expanded-final2` log.
+- `t3-frontend-test.stdout.log` / `.stderr.log`: `npm run test --workspace=frontend` exited 1 with the same pre-existing broad suite failures.
+- `t3-root-build.stdout.log` / `.stderr.log`: `npm run build` exited 1 before project compilation in `vue-tsc` with the known Node 24 / vue-tsc unsupported TypeScript-extension patch error: `Search string not found: "/supportedTSExtensions = .*(?=;)"`.
+- `t3-frontend-build.stdout.log` / `.stderr.log`: `npm run build --workspace=frontend` exited 1 with the same vue-tsc/Node runtime blocker.
+- `t3-frontend-e2e.stdout.log` / `.stderr.log`: `npm run test:e2e --workspace=frontend` exited 1. Classification: Playwright/e2e command was executed and failed at the existing suite level; focused browser smoke evidence for the 3D canvas/control surface is recorded separately in `t3-live-3d-playwright-smoke-rerun.stdout.log` / `.stderr.log` and passed.
+
+These command failures are recorded as residual project/tooling risks rather than Wave 008 implementation blockers because the focused Wave 008 selector/shell/adapter/registry tests and static boundary scans pass, the live 3D smoke/reachability probes pass, and the failing broad-suite/tooling errors are outside the changed 3D presentation/adapter boundary.
