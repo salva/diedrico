@@ -1,0 +1,119 @@
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:10:import type { CanvasPlaneTransformMap, CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:3:import type { CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:11:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:49:    realizePoint3D: point => point.realize3D(world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:50:    realizeLine3D: line => line.realize3D(world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51:    realizeSegment3D: segment => segment.realize3D(world),
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:6:import type { CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/threePresentation/ThreePresentationModel.ts:1:import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:6:import type { ThreeProjectionPlaneReadModel, ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:4:import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:5:import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/Hinge3DSelector.ts:4:import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/Guide3DSelector.ts:5:import type { ThreeGuideIntersectionReadModel, ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:9:import type { World } from '@/domain/world/World';
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:84:      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(world) })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:85:      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(world), isSegment: line instanceof Segment2DByPoints })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:86:      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(world) })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:98:        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(world) }];
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:117:    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(world) })),
+frontend/src/domain/world/BrokenHingeLine.ts:21:import type { World } from './World';
+frontend/src/domain/world/BrokenHingeLine.ts:69:  realize3D(world: World, context?: { planeId?: string }): Line3DRealization3D {
+frontend/src/domain/world/BrokenHingeLine.ts:99:    const t2Real2D = t2Line.realize2D(world);
+frontend/src/domain/world/Circle.ts:89:  abstract realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D | null;
+frontend/src/domain/world/Circle.ts:136:  realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D {
+frontend/src/domain/world/Circle.ts:153:    const centerRealization = centerPoint.realize2D(world);
+frontend/src/domain/world/Circle.ts:154:    const circumferenceRealization = circumferencePoint.realize2D(world);
+frontend/src/domain/world/Circle.ts:235:  realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D {
+frontend/src/domain/world/Circle.ts:256:    const p1Realization = point1.realize2D(world);
+frontend/src/domain/world/Circle.ts:257:    const p2Realization = point2.realize2D(world);
+frontend/src/domain/world/Circle.ts:258:    const p3Realization = point3.realize2D(world);
+frontend/src/domain/world/Element3D.ts:40:  abstract realize3D(world: any): any;  // Using any to avoid circular dependencies
+frontend/src/domain/world/Guide.ts:100:  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+frontend/src/domain/world/Guide.ts:109:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Guide.ts:124:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Guide.ts:273:  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+frontend/src/domain/world/Guide.ts:277:    const primaryGuideRealization = primaryGuide.realize2D(world);
+frontend/src/domain/world/Guide.ts:285:    const primaryHalfHingeLineRealization = primaryHHL.realize2D(world);
+frontend/src/domain/world/Guide.ts:297:    const siblingHalfHingeLineRealization = myHHL.realize2D(world);
+frontend/src/domain/world/HingeLine.ts:143:  realize2D(world: ProjectionElementRealizationContext): HalfHingeLineRealization2D {
+frontend/src/domain/world/HingeLine.ts:170:    const line3D = hingeLine.realize3D(world);
+frontend/src/domain/world/HingeLine.ts:237:  realize3D(world: ProjectionElementRealizationContext): Line3DRealization3D {
+frontend/src/domain/world/Line.ts:161:  abstract realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D;
+frontend/src/domain/world/Line.ts:219:  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+frontend/src/domain/world/Line.ts:230:    const p1Realization = point1.realize2D(world);
+frontend/src/domain/world/Line.ts:231:    const p2Realization = point2.realize2D(world);
+frontend/src/domain/world/Line.ts:309:  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+frontend/src/domain/world/Line.ts:316:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Line.ts:328:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:425:  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+frontend/src/domain/world/Line.ts:431:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Line.ts:442:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:558:  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+frontend/src/domain/world/Line.ts:566:    const circleRealization = circle.realize2D(world);
+frontend/src/domain/world/Line.ts:572:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:735:  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+frontend/src/domain/world/Line.ts:743:    const circleRealization = circle.realize2D(world);
+frontend/src/domain/world/Line.ts:750:    const refLineRealization = refLine.realize2D(world);
+frontend/src/domain/world/Line3D.ts:20:import type { World } from './World';
+frontend/src/domain/world/Line3D.ts:36:  abstract realize3D(world: World): Line3DRealization3D;
+frontend/src/domain/world/Line3D.ts:73:  realize3D(world: World): Line3DRealization3D {
+frontend/src/domain/world/Line3D.ts:99:      const line1Real = line1Element.realize2D(world);
+frontend/src/domain/world/Line3D.ts:100:      const line2Real = line2Element.realize2D(world);
+frontend/src/domain/world/Line3D.ts:122:      const plane1Real = plane1.realize3D(world);
+frontend/src/domain/world/Line3D.ts:123:      const plane2Real = plane2.realize3D(world);
+frontend/src/domain/world/Plane.ts:36:  realize3D(world: any): Plane3DRealization3D {
+frontend/src/domain/world/Plane.ts:277:    const t1InP1 = t1Line.realize2D(world);
+frontend/src/domain/world/Plane.ts:278:    const t2InP2 = t2Line.realize2D(world);
+frontend/src/domain/world/Point.ts:109:  abstract realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D;
+frontend/src/domain/world/Point.ts:188:  abstract realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D;
+frontend/src/domain/world/Point.ts:237:  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
+frontend/src/domain/world/Point.ts:246:    const line1 = l1.realize2D(world);
+frontend/src/domain/world/Point.ts:247:    const line2 = l2.realize2D(world);
+frontend/src/domain/world/Point.ts:380:  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
+frontend/src/domain/world/Point.ts:389:    const line = l.realize2D(world);
+frontend/src/domain/world/Point.ts:390:    const circle = c.realize2D(world);
+frontend/src/domain/world/Point.ts:508:  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
+frontend/src/domain/world/Point.ts:517:    const circle1 = c1.realize2D(world);
+frontend/src/domain/world/Point.ts:518:    const circle2 = c2.realize2D(world);
+frontend/src/domain/world/Point.ts:603:  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
+frontend/src/domain/world/Point.ts:607:    const primaryRealization = primaryPoint.realize2D(world);
+frontend/src/domain/world/Point3D.ts:20:import type { World } from './World';
+frontend/src/domain/world/Point3D.ts:51:  realize3D(_world: World): Point3DRealization3D {
+frontend/src/domain/world/Point3D.ts:106:  realize3D(world: World): Point3DRealization3D {
+frontend/src/domain/world/Point3D.ts:124:      const proj1Realization = proj1Element.realize2D(world);
+frontend/src/domain/world/Point3D.ts:125:      const proj2Realization = proj2Element.realize2D(world);
+frontend/src/domain/world/Segment.ts:74:  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+frontend/src/domain/world/Segment.ts:90:    const p1Realization = p1.realize2D(world);
+frontend/src/domain/world/Segment.ts:91:    const p2Realization = p2.realize2D(world);
+frontend/src/domain/world/Segment3D.ts:19:import type { World } from './World';
+frontend/src/domain/world/Segment3D.ts:58:  realize3D(world: World): Segment3DRealization3D {
+frontend/src/domain/world/Segment3D.ts:84:      const seg1Real = seg1Element.realize2D(world);
+frontend/src/domain/world/Segment3D.ts:85:      const seg2Real = seg2Element.realize2D(world);
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:10:import type { World } from '../World';
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:10:import type { World } from '../World';
+frontend/src/domain/world/descriptors/ElementDescriptor.ts:9:import type { World } from '../World';
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:10:import type { World } from '../World';
+frontend/src/domain/world/descriptors/Point2DDescriptors.ts:10:import type { World } from '../World';
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:89:  realize2D(world: ProjectionElementRealizationContext): HalfHingeLineRealization2D {
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:125:    const t2Real2D = t2Line.realize2D(world);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:199:    const t1Realization = t1HalfHinge.realize2D(world);
+frontend/src/domain/world/styleService.ts:12:import type { World } from './World';
+frontend/src/domain/world/World.ts:42: *    const realization = point?.realize2D(world);  // Get computed coordinates
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:260:    const realization = point.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:284:    const realization = line.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:308:    const realization = circle.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:434:    const line1 = l1.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:435:    const line2 = l2.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:487:    const line = lineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:488:    const circle = circleElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:545:    const circle1 = circle1Element.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:546:    const circle2 = circle2Element.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:611:    const point1Realization = point1.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:612:    const point2Realization = point2.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:668:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:718:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:832:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:995:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1044:    const referenceLine = refLineElement.realize2D(world);

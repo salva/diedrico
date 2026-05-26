@@ -1,0 +1,21 @@
+ M frontend/src/application/appShell/AppShellPorts.ts
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/factories/PointSequenceFactory.ts
+ M frontend/src/commands/operations/IOperation.ts
+ M frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddFreePointOp.ts
+ M frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+ M frontend/src/components/panels/ActionGroupItem.vue
+ M frontend/src/components/panels/ActionItem.vue
+ M frontend/src/components/toolbars/MainToolbar.vue
+ M frontend/src/composables/useHoverHighlight.ts
+ M frontend/src/domain/calculations/Intersections.ts
+ M frontend/src/domain/processTree/ActionGroup.ts
+ M frontend/src/stores/processStore.ts
+ M frontend/src/stores/viewStore.ts
+?? .saivage/stages/cycle-018-wave-plan-extension/
+?? architecture-audit/cycle-018-wave-plan-extension/
+?? frontend/src/vite-env.d.ts

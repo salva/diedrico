@@ -1,0 +1,14 @@
+frontend/src/domain/world/BrokenHingeLine.ts:82:      ? (auxPlane as any).t2PrimeLineId   // T2' on hinge plane (e.g., projPlane3)
+frontend/src/domain/world/BrokenHingeLine.ts:83:      : (auxPlane as any).t2OtherTraceId; // T2 on other plane (e.g., projPlane4)
+frontend/src/domain/world/Element.ts:76:export function isElement(obj: any): obj is Element {
+frontend/src/domain/world/Element2D.ts:44: * function isElement2D(obj: any): obj is Element2D {
+frontend/src/domain/world/Element2D.ts:117:export function isElement2D(obj: any): obj is Element2D {
+frontend/src/domain/world/Element3D.ts:40:  abstract realize3D(world: any): any;  // Using any to avoid circular dependencies
+frontend/src/domain/world/Element3D.ts:67:export function isElement3D(obj: any): obj is Element3D {
+frontend/src/domain/world/Plane.ts:30:  abstract getPlaneEquation(world: any): Vector4 | null;
+frontend/src/domain/world/Plane.ts:36:  realize3D(world: any): Plane3DRealization3D {
+frontend/src/domain/world/Plane.ts:159:  getPlaneEquation(_world: any): Vector4 {
+frontend/src/domain/world/Plane.ts:269:  getPlaneEquation(world: any): Vector4 | null {
+frontend/src/domain/world/descriptors/DescriptorRegistry.ts:34:    elementClass: new (...args: any[]) => T,
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:155:        (hhl as any).hingeLineId === hl.id && hhl.id === element.t1HingeTraceId
+frontend/src/domain/world/styleService.ts:98:        if ('isOutput' in child && (child as any).isOutput) {

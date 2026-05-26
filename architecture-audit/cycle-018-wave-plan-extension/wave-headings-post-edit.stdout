@@ -1,0 +1,11 @@
+399:## Wave 009 — Extract application shell services from `App.vue`
+437:## Wave 010 — Resolve backend/frontend project-contract architecture
+476:## Wave 011 — Tighten architecture tests and root validation gates
+513:## Wave 012 — Remove vacant placeholders, noisy debug surfaces, and obsolete operation docs
+551:## Wave 013 — Reconcile docs/specs with the cleaned architecture
+588:## Wave 014 — Establish validation contract ownership and delete invalid gates
+666:## Wave 015 — Converge frontend TypeScript contracts around owned boundaries
+789:## Wave 016 — Canvas presentation read ports and overlay interaction boundary
+861:## Wave 017 — Three presentation read ports and realization boundary
+939:## Wave 018 — Domain realization context boundary
+939:## Wave 018 — Domain realization context boundary
