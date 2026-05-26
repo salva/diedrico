@@ -1,0 +1,621 @@
+## direct UI command/operation imports
+frontend/src/stores/processStore.ts:7:import { CommandStack } from '../commands/CommandStack';
+
+## app shell no-op highlight/window/global/debug
+frontend/src/App.vue:43:              @highlight-elements="handleHighlightElements"
+frontend/src/App.vue:44:              @clear-highlight="handleClearHighlight"
+frontend/src/App.vue:54:              @highlight-elements="handleHighlightElements"
+frontend/src/App.vue:55:              @clear-highlight="handleClearHighlight"
+frontend/src/services/factories/PlaneSequenceFactory.ts:140:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for projPlane:', projPlaneId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:142:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for projPlane');
+frontend/src/services/factories/PlaneSequenceFactory.ts:152:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for hingeLine:', hingeLineId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:157:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for hingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:162:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #1:', hhl1Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:167:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:171:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #2:', hhl2Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:176:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #2');
+frontend/src/services/factories/PlaneSequenceFactory.ts:238:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BrokenHingeLine:', brokenHingeLineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:243:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BrokenHingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:245:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #1:', bhhl1Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:250:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:251:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:253:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #2:', bhhl2Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:258:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #2');
+frontend/src/components/workspace/SvgCanvas.vue:319:        if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:490:  console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:493:  console.log('Points in world:', totalPoints);
+frontend/src/components/workspace/SvgCanvas.vue:515:    console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+frontend/src/components/workspace/SvgCanvas.vue:524:      console.warn(`[SvgCanvas] No tool factory for: ${newTool}`);
+frontend/src/components/workspace/SvgCanvas.vue:575:      // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:599:      // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:612:      // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:670:  // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:675:    console.error('[SvgCanvas] No active plane for canvas click');
+frontend/src/components/workspace/SvgCanvas.vue:682:    console.error('[SvgCanvas] No transform for active plane:', activePlaneId);
+frontend/src/components/workspace/SvgCanvas.vue:694:    console.error('[SvgCanvas] Failed to convert canvas to plane coordinates');
+frontend/src/components/workspace/SvgCanvas.vue:698:  // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+frontend/src/components/workspace/SvgCanvas.vue:718:        // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:722:        // console.log('[SvgCanvas] Selected:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:727:      // console.log('[SvgCanvas] Cleared selection');
+frontend/src/components/workspace/SvgCanvas.vue:737:    console.warn(`[SvgCanvas] No tool instance for: ${activeToolName}`);
+frontend/src/components/workspace/SvgCanvas.vue:757:  // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+frontend/src/components/workspace/SvgCanvas.vue:760:    console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:762:    console.error('[SvgCanvas] Tool operation failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:789:  console.log('[Zoom] BEFORE:', {
+frontend/src/components/workspace/SvgCanvas.vue:805:  console.log('[Zoom] AFTER:', {
+frontend/src/components/workspace/SvgCanvas.vue:912:    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:923:    console.error('[SvgCanvas] Cannot save properties without active plane');
+frontend/src/components/workspace/SvgCanvas.vue:927:  console.log('[SvgCanvas] Saving property changes:', changes);
+frontend/src/components/workspace/SvgCanvas.vue:942:    console.log('[SvgCanvas] Style updated and command added to stack');
+frontend/src/components/workspace/SvgCanvas.vue:944:    console.error('[SvgCanvas] Style update failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:1005:      console.error('[SvgCanvas] Point move preview failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:1165:  console.log('[SvgCanvas] fitToView called');
+frontend/src/components/workspace/SvgCanvas.vue:1172:    console.log('[SvgCanvas] No elements to fit, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1206:    console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1230:  console.log('[SvgCanvas] Fit to view:', {
+frontend/src/services/GoogleDriveService.ts:136:          console.error('[GoogleDrive] Initialization failed:', error);
+frontend/src/services/GoogleDriveService.ts:137:          console.error('[GoogleDrive] Error details:', JSON.stringify(error, null, 2));
+frontend/src/services/GoogleDriveService.ts:512:        console.warn('[GoogleDrive] File is in trash, throwing error');
+frontend/src/services/GoogleDriveService.ts:611:      console.error('Failed to generate default name, using "untitled 1":', error);
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:96:      console.error('[AuxiliaryProjectionPlane] Failed to compute realization:', error);
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:151:      console.error('[AuxiliaryProjectionPlane] Failed to compute 2D realization:', error);
+frontend/src/domain/world/HingeLine.ts:258:      console.error(`[HingeLine.realize3D] CRITICAL: HingeLine references non-existent projection plane(s)`, errorInfo);
+frontend/src/domain/world/HingeLine.ts:269:        console.warn(`[HingeLine] Plane3D ${projPlane1.plane3DId} not realized yet for hinge line ${this.id}`);
+frontend/src/application/construction/ConstructionUseCases.ts:232:        if (realization && !realization.feasible) console.warn(`[Feasibility] Newly created element ${value} is immediately infeasible`);
+frontend/src/components/toolbars/ToolFamilyButton.vue:98:    console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
+frontend/src/components/toolbars/ToolFamilyButton.vue:99:    console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
+frontend/src/components/toolbars/ToolFamilyButton.vue:104:  console.log('[ToolFamilyButton] Selecting tool:', toolId);
+frontend/src/domain/world/Guide.ts:113:      console.warn('[Guide2DPerpendicularToLine] Reference line is infeasible, marking guide as infeasible');
+frontend/src/domain/world/Guide.ts:128:      console.warn('[Guide2DPerpendicularToLine] Through-point is infeasible, marking guide as infeasible');
+frontend/src/domain/world/Guide.ts:153:      console.warn(`Guide ${this.id}: computed guide direction has zero length`);
+frontend/src/domain/world/Guide.ts:280:      console.warn('[SiblingGuide2D] Primary guide is infeasible, marking sibling guide as infeasible');
+frontend/src/domain/world/Guide.ts:292:      console.warn('[SiblingGuide2D] Primary guide is parallel to its HalfHingeLine - no intersection');
+frontend/src/domain/world/Guide.ts:318:        console.warn('[SiblingGuide2D] 3D plane realization infeasible for BHHL round-trip');
+frontend/src/domain/world/Guide.ts:342:        console.warn(`[SiblingGuide2D] Primary HalfHingeLine has degenerate direction`);
+frontend/src/domain/world/Guide.ts:360:      console.warn('[SiblingGuide2D] Sibling HalfHingeLine is infeasible, marking sibling guide as infeasible');
+frontend/src/domain/world/Guide.ts:373:      console.warn(`SiblingGuide2D ${this.id}: sibling HalfHingeLine has zero direction`);
+frontend/src/domain/world/Element3DRealization3D.ts:261:      console.error('[Plane3DRealization3D] Cannot compute corners: missing quaternion or originPoint');
+frontend/src/domain/world/World.ts:1027:      console.warn(`[World.getSiblingPlaneForIntersection] HingeLine ${halfHingeLine.hingeLineId} not found`);
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:61:  const highlighted = Boolean(ctx.selected || ctx.hovered);
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:62:  return { stroke: highlighted ? '#6BB6FF' : '#333333', strokeWidth: highlighted ? 2 : 1.5, strokeStyle: 'dashed', fill: 'none', opacity: 1, zIndex: 2 + zBoost((_hinge as HalfHingeLine2D).planeId, ctx.activePlaneId) };
+frontend/src/domain/world/DependencyService.ts:310:    console.log('=== CASCADE INVALIDATION START ===');
+frontend/src/domain/world/DependencyService.ts:311:    console.log(`Root element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:326:        console.log(`${indent}${id} → invalidates ${directDependents.length} descendant(s):`);
+frontend/src/domain/world/DependencyService.ts:328:          console.log(`${indent}  • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:341:    console.log(`=== CASCADE COMPLETE (${visited.size} elements invalidated) ===\n`);
+frontend/src/domain/world/DependencyService.ts:352:    console.log('=== INVALIDATION PROPAGATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:353:    console.log(`Starting from: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:354:    console.log('');
+frontend/src/domain/world/DependencyService.ts:369:      console.log(`${indent}[Depth ${depth}] ${id}`);
+frontend/src/domain/world/DependencyService.ts:371:        console.log(`${indent}  → Invalidates ${dependents.length} dependent(s):`);
+frontend/src/domain/world/DependencyService.ts:373:          console.log(`${indent}    • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:376:        console.log(`${indent}  → (leaf element - no dependents)`);
+frontend/src/domain/world/DependencyService.ts:389:    console.log('');
+frontend/src/domain/world/DependencyService.ts:390:    console.log(`Total elements invalidated: ${trace.length}`);
+frontend/src/domain/world/DependencyService.ts:391:    console.log('=== END INVALIDATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:403:    console.log('=== DEPENDENCY GRAPH ===');
+frontend/src/domain/world/DependencyService.ts:404:    console.log(`Total elements tracked: ${this.dependenciesMap.size}`);
+frontend/src/domain/world/DependencyService.ts:405:    console.log('');
+frontend/src/domain/world/DependencyService.ts:421:      console.log(`Element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:423:        console.log(`  Depends on (${dependencies.length}):`);
+frontend/src/domain/world/DependencyService.ts:424:        dependencies.forEach(dep => console.log(`    <- ${dep}`));
+frontend/src/domain/world/DependencyService.ts:426:        console.log(`  Depends on: (none - base element)`);
+frontend/src/domain/world/DependencyService.ts:430:        console.log(`  Depended on by (${dependents.length}):`);
+frontend/src/domain/world/DependencyService.ts:431:        dependents.forEach(dep => console.log(`    -> ${dep}`));
+frontend/src/domain/world/DependencyService.ts:433:        console.log(`  Depended on by: (none - leaf element)`);
+frontend/src/domain/world/DependencyService.ts:435:      console.log('');
+frontend/src/domain/world/DependencyService.ts:438:    console.log('=== END DEPENDENCY GRAPH ===');
+frontend/src/domain/world/DependencyGraph.ts:3: * Used for parametric recomputation and hover highlighting
+frontend/src/components/panels/ProcessTreeNode.vue:77:          @highlight-elements="(...args) => emit('highlightElements', ...args)"
+frontend/src/components/panels/ProcessTreeNode.vue:78:          @clear-highlight="emit('clearHighlight')"
+frontend/src/components/panels/ProcessTreeNode.vue:121:          @highlight-elements="(...args) => emit('highlightElements', ...args)"
+frontend/src/components/panels/ProcessTreeNode.vue:122:          @clear-highlight="emit('clearHighlight')"
+frontend/src/components/panels/ProcessTreeNode.vue:212:  highlightElements: [elementIds: string[], temporary: boolean];
+frontend/src/components/panels/ProcessTreeNode.vue:213:  clearHighlight: [];
+frontend/src/components/panels/ProcessTreeNode.vue:378:    emit('highlightElements', elementIds, false);
+frontend/src/components/panels/ProcessTreeNode.vue:389:      emit('highlightElements', elementIds, true);
+frontend/src/components/panels/ProcessTreeNode.vue:392:    emit('clearHighlight');
+frontend/src/domain/world/Circle.ts:158:      console.warn('[Circle2DByCenterAndPoint] Parent point is infeasible, marking circle as infeasible');
+frontend/src/domain/world/Circle.ts:169:      console.warn(`Circle ${this.id}: center and circumference point are coincident`);
+frontend/src/domain/world/Circle.ts:262:      console.warn('[Circle2DByThreePoints] Parent point is infeasible, marking circle as infeasible');
+frontend/src/domain/world/Circle.ts:278:      console.warn(`Circle ${this.id}: three points are collinear`);
+frontend/src/domain/world/Circle.ts:311:      console.warn(`Circle ${this.id}: perpendicular bisectors are parallel`);
+frontend/src/components/panels/ElementsPanel.vue:141:  highlightElements: [elementIds: string[], temporary: boolean];
+frontend/src/components/panels/ElementsPanel.vue:142:  clearHighlight: [];
+frontend/src/components/panels/ElementsPanel.vue:165:  console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
+frontend/src/components/panels/ElementsPanel.vue:169:      console.log('[ElementsPanel] World version changed:', lastVersion, '→', currentVersion);
+frontend/src/components/panels/ElementsPanel.vue:188:  console.log('[ElementsPanel] Computing projection planes list, version:', version, 'forceUpdate:', update);
+frontend/src/components/panels/ElementsPanel.vue:241:  console.log('[ElementsPanel] Computing 3D elements');
+frontend/src/components/panels/ElementsPanel.vue:249:  console.log('[ElementsPanel] 3D elements:', {
+frontend/src/components/panels/ElementsPanel.vue:338:  // Emit for highlighting on canvas
+frontend/src/components/panels/ElementsPanel.vue:339:  emit('highlightElements', [elementId], false);
+frontend/src/domain/world/BrokenHingeLine.ts:73:      console.error(`[BrokenHingeLine] Auxiliary plane not found or wrong type: ${this.auxiliaryPlaneId}`);
+frontend/src/domain/world/BrokenHingeLine.ts:88:      console.error(`[BrokenHingeLine] Auxiliary plane ${this.auxiliaryPlaneId} has no ${traceName} trace`);
+frontend/src/domain/world/BrokenHingeLine.ts:95:      console.error(`[BrokenHingeLine] ${traceName} line not found: ${t2TraceId}`);
+frontend/src/domain/world/BrokenHingeLine.ts:117:    console.log(`[BHL ${this.label}] ${traceName} on ${t2Line.planeId}: (${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/BrokenHingeLine.ts:118:    console.log(`[BHL ${this.label}] 3D point: (${point3D.x.toFixed(2)}, ${point3D.y.toFixed(2)}, ${point3D.z.toFixed(2)}, ${point3D.w.toFixed(2)})`);
+frontend/src/components/panels/ElementTypeGroup.vue:64:  // TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:  // TODO: Clear highlight
+frontend/src/components/panels/ActionsPanel.vue:42:        @highlight-elements="(...args) => emit('highlightElements', ...args)"
+frontend/src/components/panels/ActionsPanel.vue:43:        @clear-highlight="emit('clearHighlight')"
+frontend/src/components/panels/ActionsPanel.vue:61:  highlightElements: [elementIds: string[], temporary: boolean];
+frontend/src/components/panels/ActionsPanel.vue:62:  clearHighlight: [];
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:93:      console.error(`[BrokenHalfHingeLine2D] Not a BrokenHingeLine: ${this.hingeLineId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:100:      console.error(`[BHHL ${this.label}] Auxiliary plane not found: ${bhl.auxiliaryPlaneId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:114:      console.error(`[BHHL ${this.label}] No ${traceName} trace on auxiliary plane ${bhl.auxiliaryPlaneId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:121:      console.error(`[BHHL ${this.label}] ${traceName} line not found: ${t2TraceId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:127:      console.error(`[BHHL ${this.label}] ${traceName} realization infeasible`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:148:    console.log(`[BHHL ${this.label}] ${traceName} (${t2TraceId}) on ${t2Line.planeId}: point=(${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:149:    console.log(`[BHHL ${this.label}] origin2D: (${origin2D.x.toFixed(2)}, ${origin2D.y.toFixed(2)}, z=${origin2D.z.toFixed(2)}) on plane ${this.planeId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:154:      console.error(`[BHHL ${this.label}] Main hinge not found: ${bhl.mainHingeId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:161:      console.error(`[BHHL ${this.label}] Plane not found: ${this.planeId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:166:    console.log(`[BHHL ${this.label}] Looking for T1 hinge between ${this.planeId} and ${mainHinge.plane1Id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:168:    console.log(`[BHHL ${this.label}] Available hinge lines:`, allHingeLines.map(hl => `${hl.id}(${hl.plane1Id}-${hl.plane2Id})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:176:      console.error(`[BHHL ${this.label}] T1 hinge not found between ${this.planeId} and ${mainHinge.plane1Id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:180:    console.log(`[BHHL ${this.label}] Found T1 hinge: ${t1HingeLine.id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:184:    console.log(`[BHHL ${this.label}] Lines on plane ${this.planeId}:`, allLinesOnPlane.map(l => `${l.id}(${l.constructor.name})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:193:      console.error(`[BHHL ${this.label}] T1 trace not found on plane ${this.planeId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:197:    console.log(`[BHHL ${this.label}] Found T1 trace: ${t1HalfHinge.id} (${t1HalfHinge.label})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:201:      console.error(`[BHHL ${this.label}] T1 realization infeasible`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:205:    console.log(`[BHHL ${this.label}] T1 realization feasible`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:210:    console.log(`[BHHL ${this.label}] Guide vector parallel to T1: (${guideVector.x.toFixed(2)}, ${guideVector.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:211:    console.log(`[BHHL ${this.label}] ✅ REALIZATION COMPLETE - returning feasible result`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:259:      console.warn(`BrokenHalfHingeLine2D.getSiblingInfo: sibling BHHL ${bhhl.siblingBHHLId} not found`);
+frontend/src/domain/processTree/ProcessTree.ts:238:        console.log(`[ProcessTree.toggleSubprocessEncapsulation] subprocessId: ${subprocessId}, ${oldValue} → ${subprocess.showIntermediates}`);
+frontend/src/domain/processTree/ProcessTree.ts:255:        console.log(`[ProcessTree.toggleOutput] subprocess ${nodeId}, ${oldValue} → ${subprocess.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:272:        console.log(`[ProcessTree.toggleOutput] actionGroup ${nodeId}, ${oldValue} → ${group.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:278:        console.log(`[ProcessTree.toggleOutput] action ${nodeId}, ${oldValue} → ${action.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:292:      console.error(`[ProcessTree.toggleOutput] Node ${nodeId} not found`);
+frontend/src/domain/world/Segment3D.ts:155:      console.error('[Segment3DFromProjections] realize3D failed:', error);
+frontend/src/domain/world/Plane.ts:272:    console.log('[Plane3DFromTraces] getPlaneEquation called for plane:', this.id, 'trace1:', this.trace1, 'trace2:', this.trace2);
+frontend/src/domain/world/Plane.ts:284:      console.warn('[Plane3DFromTraces] Missing projection plane', { plane1, plane2 });
+frontend/src/domain/world/Plane.ts:293:      console.warn('[Plane3DFromTraces] Infeasible realizations', { 
+frontend/src/domain/world/Plane.ts:302:    console.log('[Plane3DFromTraces] All realizations feasible - computing plane');
+frontend/src/domain/world/Plane.ts:308:    console.log('[Plane3DFromTraces] t1 in 3D: t1PointIn3D:', t1PointIn3D, 't1DirIn3D:', t1DirIn3D);
+frontend/src/domain/world/Plane.ts:314:    console.log('[Plane3DFromTraces] t2 in 3D: t2PointIn3D:', t2PointIn3D, 't2DirIn3D:', t2DirIn3D);
+frontend/src/domain/world/Plane.ts:325:      console.warn('[Plane3DFromTraces] Traces do not intersect (parallel or skew lines)');
+frontend/src/domain/world/Plane.ts:329:    console.log('[Plane3DFromTraces] Traces intersect at:', intersection.position);
+frontend/src/domain/world/Plane.ts:337:    console.log('[Plane3DFromTraces] Normalized normal:', [a, b, c]);
+frontend/src/domain/world/Plane.ts:342:    console.log('[Plane3DFromTraces] Plane equation: a=', a, 'b=', b, 'c=', c, 'd=', d);
+frontend/src/domain/world/Point3D.ts:153:      console.error('[Point3DFromProjections] realize3D failed:', error);
+frontend/src/domain/world/Point3D.ts:185:   * TODO: Implement proper validation in GeometryValidator
+frontend/src/domain/world/Line3D.ts:114:      console.log('[Line3DFromProjections] Reconstructing 3D line from projections:', {
+frontend/src/domain/world/Line3D.ts:126:        console.error('[Line3DFromProjections] Could not realize projection planes');
+frontend/src/domain/world/Line3D.ts:141:      console.log('[Line3DFromProjections] 2D line data:', {
+frontend/src/domain/world/Line3D.ts:207:      console.log('[Line3DFromProjections] Plane 1 (3D):', {
+frontend/src/domain/world/Line3D.ts:258:      console.log('[Line3DFromProjections] Plane 2 (3D):', {
+frontend/src/domain/world/Line3D.ts:283:        console.error('[Line3DFromProjections] Planes are parallel - no intersection');
+frontend/src/domain/world/Line3D.ts:296:      console.log('[Line3DFromProjections] 3D line direction:', [direction3D.x, direction3D.y, direction3D.z]);
+frontend/src/domain/world/Line3D.ts:308:      console.log('[Line3DFromProjections] Plane equations:', {
+frontend/src/domain/world/Line3D.ts:326:          console.error('[Line3DFromProjections] Degenerate system fixing z');
+frontend/src/domain/world/Line3D.ts:336:        console.log('[Line3DFromProjections] Fixed z=0, solved for x,y');
+frontend/src/domain/world/Line3D.ts:343:          console.error('[Line3DFromProjections] Degenerate system fixing y');
+frontend/src/domain/world/Line3D.ts:353:        console.log('[Line3DFromProjections] Fixed y=0, solved for x,z');
+frontend/src/domain/world/Line3D.ts:360:          console.error('[Line3DFromProjections] Degenerate system fixing x');
+frontend/src/domain/world/Line3D.ts:370:        console.log('[Line3DFromProjections] Fixed x=0, solved for y,z');
+frontend/src/domain/world/Line3D.ts:373:      console.log('[Line3DFromProjections] 3D line point:', [point3D.x, point3D.y, point3D.z]);
+frontend/src/domain/world/Line3D.ts:374:      console.log('[Line3DFromProjections] ✓ Success! 3D line reconstructed');
+frontend/src/domain/world/Line3D.ts:378:      console.error('[Line3DFromProjections] realize3D failed:', error);
+frontend/src/domain/presentation/Paper.ts:31:  Highlights = 30,    // Hover/selection highlights
+frontend/src/domain/presentation/Paper.ts:249:   * Set which element should be visually highlighted (hover feedback)
+frontend/src/domain/world/descriptors/DescriptionPart.ts:25:   * Element ID (for label parts) - enables hover highlighting and future click interactions
+frontend/src/domain/world/Point.ts:254:      console.warn('[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible');
+frontend/src/domain/world/Point.ts:261:      console.warn('[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)');
+frontend/src/domain/world/Point.ts:279:        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)');
+frontend/src/domain/world/Point.ts:288:        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)');
+frontend/src/domain/world/Point.ts:397:      console.warn('[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible');
+frontend/src/domain/world/Point.ts:404:      console.warn('[Point2DLineCircleIntersection] Line and circle do not intersect');
+frontend/src/domain/world/Point.ts:416:        console.warn('[Point2DLineCircleIntersection] Intersection falls outside segment bounds');
+frontend/src/domain/world/Point.ts:525:      console.warn('[Point2DCircleCircleIntersection] Parent element is infeasible, marking this as infeasible');
+frontend/src/domain/world/Point.ts:532:      console.warn('[Point2DCircleCircleIntersection] Circles do not intersect');
+frontend/src/domain/world/Point.ts:639:          console.warn('[SiblingIntersectionPoint2D] 3D plane realization infeasible for BHHL round-trip');
+frontend/src/domain/world/Point.ts:648:        console.log(`[SiblingIntersectionPoint2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → R'=(${R_prime.x.toFixed(2)},${R_prime.y.toFixed(2)})`);
+frontend/src/domain/world/Line.ts:272: * TODO: Implement in later phase when parallel line tool is added
+frontend/src/domain/world/Line.ts:359: * TODO: Implement in later phase when perpendicular line tool is added
+frontend/src/domain/world/Line.ts:636:    console.log('[TangentLine] Through Point:', {
+frontend/src/domain/world/Line.ts:832:    console.log('[TangentLine] Parallel to Line:', {
+frontend/src/components/dialogs/PropertiesDialog.vue:329:  // TODO: Get creation action from ProcessTree
+frontend/src/components/dialogs/PropertiesDialog.vue:353:  // TODO: Load current element properties from world
+frontend/src/components/dialogs/PropertiesDialog.vue:432:    console.warn('[PropertiesDialog] Validation failed');
+
+## rendering overlay/three canvas
+frontend/src/components/LoginStatusWidget.vue:260:  z-index: 1000;
+frontend/src/components/dialogs/StartupDialog.vue:2:  <div v-if="show" class="dialog-overlay" @click="handleOverlayClick">
+frontend/src/components/dialogs/StartupDialog.vue:116:  // Don't allow closing the startup dialog by clicking overlay
+frontend/src/components/dialogs/StartupDialog.vue:144:.dialog-overlay {
+frontend/src/components/dialogs/StartupDialog.vue:154:  z-index: 9999;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:7:export interface ThreeSceneHostMount { container: HTMLElement; canvas: HTMLCanvasElement }
+frontend/src/rendering/threeView/ThreeSceneHost.ts:30:    this.renderer = new THREE.WebGLRenderer({ canvas: mount.canvas, antialias: true, alpha: false });
+frontend/src/components/dialogs/PropertiesDialog.vue:2:  <div v-if="isOpen" class="dialog-overlay" @click.self="handleCancel">
+frontend/src/components/dialogs/PropertiesDialog.vue:471:.dialog-overlay {
+frontend/src/components/dialogs/PropertiesDialog.vue:481:  z-index: 1000;
+frontend/src/components/workspace/SvgCanvas.vue:2:  <div class="svg-canvas-container">
+frontend/src/components/workspace/SvgCanvas.vue:5:      class="svg-canvas diedrico-canvas"
+frontend/src/components/workspace/SvgCanvas.vue:6:      data-testid="svg-canvas"
+frontend/src/components/workspace/SvgCanvas.vue:8:      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+frontend/src/components/workspace/SvgCanvas.vue:30:      <!-- Render all lines through canvas presentation model (including HL_HV projections) -->
+frontend/src/components/workspace/SvgCanvas.vue:37:      <!-- Render all segments through canvas presentation model -->
+frontend/src/components/workspace/SvgCanvas.vue:44:      <!-- Render all guides through canvas presentation model -->
+frontend/src/components/workspace/SvgCanvas.vue:51:      <!-- Render all circles through canvas presentation model -->
+frontend/src/components/workspace/SvgCanvas.vue:58:      <!-- Render all arcs through canvas presentation model -->
+frontend/src/components/workspace/SvgCanvas.vue:65:      <!-- Render all points through canvas presentation model -->
+frontend/src/components/workspace/SvgCanvas.vue:104:          :y="canvasHeight - 4"
+frontend/src/components/workspace/SvgCanvas.vue:128:          :x="canvasWidth - 4"
+frontend/src/components/workspace/SvgCanvas.vue:161: * SvgCanvas.vue - Main 2D drawing canvas component
+frontend/src/components/workspace/SvgCanvas.vue:174: * - Rendering consumes the canvas presentation read model
+frontend/src/components/workspace/SvgCanvas.vue:211:import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+frontend/src/components/workspace/SvgCanvas.vue:212:import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+frontend/src/components/workspace/SvgCanvas.vue:234:// Dynamic canvas dimensions - updated based on container size
+frontend/src/components/workspace/SvgCanvas.vue:235:const canvasWidth = ref(1600);
+frontend/src/components/workspace/SvgCanvas.vue:236:const canvasHeight = ref(1000);
+frontend/src/components/workspace/SvgCanvas.vue:253:const canvasPresentationController = new CanvasPresentationController();
+frontend/src/components/workspace/SvgCanvas.vue:416:const canvasToolController = createCanvasToolController({
+frontend/src/components/workspace/SvgCanvas.vue:454:// Update canvas dimensions based on container size
+frontend/src/components/workspace/SvgCanvas.vue:460:  canvasWidth.value = rect.width;
+frontend/src/components/workspace/SvgCanvas.vue:461:  canvasHeight.value = rect.height;
+frontend/src/components/workspace/SvgCanvas.vue:464:// Initialize canvas on mount
+frontend/src/components/workspace/SvgCanvas.vue:472:  // Set initial canvas dimensions
+frontend/src/components/workspace/SvgCanvas.vue:529:// Get plane transforms for INPUT (canvas click → plane coordinates)
+frontend/src/components/workspace/SvgCanvas.vue:545:const canvasPresentation = computed(() => {
+frontend/src/components/workspace/SvgCanvas.vue:550:  return canvasPresentationController.buildModel(
+frontend/src/components/workspace/SvgCanvas.vue:552:    { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value },
+frontend/src/components/workspace/SvgCanvas.vue:564:const interactionQuery = computed(() => new CanvasInteractionQuery(canvasPresentation.value.queryItems));
+frontend/src/components/workspace/SvgCanvas.vue:565:const primitives = computed(() => canvasPresentation.value.renderItems.map(item => item.primitive));
+frontend/src/components/workspace/SvgCanvas.vue:566:const gridLines = computed(() => canvasPresentation.value.gridLines);
+frontend/src/components/workspace/SvgCanvas.vue:567:const gridLabels = computed(() => canvasPresentation.value.gridLabels);
+frontend/src/components/workspace/SvgCanvas.vue:574:      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:586:      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:598:      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:611:      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:624:      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:636:      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:645: * Handle canvas click - delegate to active tool
+frontend/src/components/workspace/SvgCanvas.vue:668:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:670:  // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:675:    console.error('[SvgCanvas] No active plane for canvas click');
+frontend/src/components/workspace/SvgCanvas.vue:686:  const planePos = inputService.canvasToPlaneCoordinates(
+frontend/src/components/workspace/SvgCanvas.vue:687:    canvasPoint.x,
+frontend/src/components/workspace/SvgCanvas.vue:688:    canvasPoint.y,
+frontend/src/components/workspace/SvgCanvas.vue:694:    console.error('[SvgCanvas] Failed to convert canvas to plane coordinates');
+frontend/src/components/workspace/SvgCanvas.vue:700:  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+frontend/src/components/workspace/SvgCanvas.vue:711:    const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
+frontend/src/components/workspace/SvgCanvas.vue:741:  // Delegate to tool with context including both canvas and plane coordinates
+frontend/src/components/workspace/SvgCanvas.vue:745:    canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
+frontend/src/components/workspace/SvgCanvas.vue:746:    commandSink: canvasToolController,
+frontend/src/components/workspace/SvgCanvas.vue:776:  // Get mouse position in canvas coordinates
+frontend/src/components/workspace/SvgCanvas.vue:785:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:790:    mouseCanvas: { x: canvasPoint.x, y: canvasPoint.y },
+frontend/src/components/workspace/SvgCanvas.vue:801:  viewStore.adjustZoom(delta, canvasPoint.x, canvasPoint.y);
+frontend/src/components/workspace/SvgCanvas.vue:834:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:843:  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+frontend/src/components/workspace/SvgCanvas.vue:844:  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
+frontend/src/components/workspace/SvgCanvas.vue:860:        moveSession: canvasToolController.startFreePointMove({ planeId: activePlaneId, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+frontend/src/components/workspace/SvgCanvas.vue:896:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:897:  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+frontend/src/components/workspace/SvgCanvas.vue:906:  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
+frontend/src/components/workspace/SvgCanvas.vue:928:  const result = canvasToolController.updateElementStyle({
+frontend/src/components/workspace/SvgCanvas.vue:988:    const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:994:    const planePos = inputService.canvasToPlaneCoordinates(
+frontend/src/components/workspace/SvgCanvas.vue:995:      canvasPoint.x,
+frontend/src/components/workspace/SvgCanvas.vue:996:      canvasPoint.y,
+frontend/src/components/workspace/SvgCanvas.vue:1018:  // Get canvas position (in SVG user space)
+frontend/src/components/workspace/SvgCanvas.vue:1027:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:1041:  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+frontend/src/components/workspace/SvgCanvas.vue:1042:  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane }, selectionMask);
+frontend/src/components/workspace/SvgCanvas.vue:1050:      position: { x: canvasPoint.x, y: canvasPoint.y }
+frontend/src/components/workspace/SvgCanvas.vue:1220:  const zoomX = (canvasWidth.value / boxWidth) * paddingFactor;
+frontend/src/components/workspace/SvgCanvas.vue:1221:  const zoomY = (canvasHeight.value / boxHeight) * paddingFactor;
+frontend/src/components/workspace/SvgCanvas.vue:1227:  const newPanX = (canvasWidth.value / (2 * newZoom)) - boxCenterX;
+frontend/src/components/workspace/SvgCanvas.vue:1228:  const newPanY = (canvasHeight.value / (2 * newZoom)) - boxCenterY;
+frontend/src/components/workspace/SvgCanvas.vue:1233:    viewport: { width: canvasWidth.value, height: canvasHeight.value },
+frontend/src/components/workspace/SvgCanvas.vue:1251:.svg-canvas-container {
+frontend/src/components/workspace/SvgCanvas.vue:1296:.svg-canvas {
+frontend/src/components/workspace/SvgCanvas.vue:1303:.svg-canvas circle,
+frontend/src/components/workspace/SvgCanvas.vue:1304:.svg-canvas line,
+frontend/src/components/workspace/SvgCanvas.vue:1305:.svg-canvas path,
+frontend/src/components/workspace/SvgCanvas.vue:1306:.svg-canvas rect {
+frontend/src/components/workspace/SvgCanvas.vue:1318:  pointer-events: none;
+frontend/src/components/workspace/SvgCanvas.vue:1319:  z-index: 1000;
+frontend/src/components/workspace/SvgCanvas.vue:1332:  pointer-events: none;
+frontend/src/components/dialogs/NewProjectDialog.vue:2:  <div v-if="isOpen" class="dialog-overlay" @click="handleOverlayClick">
+frontend/src/components/dialogs/NewProjectDialog.vue:93:.dialog-overlay {
+frontend/src/components/dialogs/NewProjectDialog.vue:103:  z-index: 1000;
+frontend/src/application/construction/QuickToolUseCases.ts:14:    message: `${intent.type} was removed from the active canvas tool registry in Wave 006a as example/debug construction flow`
+frontend/src/components/toolbars/ToolFamilyButton.vue:202:  z-index: 1000;
+frontend/src/components/panels/ThreeView.vue:3:    <canvas ref="canvasRef" class="three-canvas"></canvas>
+frontend/src/components/panels/ThreeView.vue:35:const canvasRef = ref<HTMLCanvasElement>();
+frontend/src/components/panels/ThreeView.vue:51:  if (!containerRef.value || !canvasRef.value) return;
+frontend/src/components/panels/ThreeView.vue:52:  runtime.mount({ container: containerRef.value, canvas: canvasRef.value });
+frontend/src/components/panels/ThreeView.vue:81:.three-canvas {
+frontend/src/components/toolbars/PlaneSelector.vue:252:  z-index: 1000;
+frontend/src/application/tools/CanvasToolController.ts:7:import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
+frontend/src/application/tools/CanvasToolController.ts:8:import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
+frontend/src/components/panels/ElementsPanel.vue:338:  // Emit for highlighting on canvas
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:11:  hitTest(canvasPos: Vector3, snapRadiusPixels: number, context: CanvasInteractionQueryContext, selectionMask?: SelectionMask): CanvasSnapPoint | null {
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:13:    const canvasToPaper = new Matrix3().set(1 / context.viewport.zoom, 0, -context.viewport.panX, 0, 1 / context.viewport.zoom, -context.viewport.panY, 0, 0, 1);
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:14:    const paperPos = canvasPos.clone().applyMatrix3(canvasToPaper);
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:16:    const radiusVector = new Vector3(snapRadiusPixels, 0, 0).applyMatrix3(canvasToPaper).applyMatrix3(context.paperToPlaneTransform);
+
+## large chunks/vite config
+     1	import { defineConfig } from 'vite'
+     2	import vue from '@vitejs/plugin-vue'
+     3	import { fileURLToPath, URL } from 'node:url'
+     4	
+     5	// https://vitejs.dev/config/
+     6	export default defineConfig({
+     7	  base: process.env.GITHUB_ACTIONS ? '/diedrico/' : '/',
+     8	  plugins: [vue()],
+     9	  resolve: {
+    10	    alias: {
+    11	      '@': fileURLToPath(new URL('./src', import.meta.url))
+    12	    }
+    13	  },
+    14	  server: {
+    15	    port: 5173,
+    16	    proxy: {
+    17	      '/api': {
+    18	        target: 'http://localhost:3000',
+    19	        changeOrigin: true
+    20	      }
+    21	    }
+    22	  }
+    23	})
+
+## current e2e files list and tests
+### frontend/tests/e2e/current-ui-contract.spec.ts
+11:test.describe('Current Diedrico UI contract', () => {
+12:  test('renders the current app shell, canvas, toolbar, status bar, and plane selector', async ({ page }) => {
+26:  test('creates a free point through stable tool and canvas test IDs', async ({ page }) => {
+40:  test('plane selector exposes current projection planes and switches active plane', async ({ page }) => {
+45:    await expect(page.locator('[data-testid^="plane-selector-"]').first()).toBeVisible();
+52:      await page.locator('[data-testid^="plane-selector-"]').first().click();
+57:  test('selection masks allow free-point creation and point-only line argument collection', async ({ page }) => {
+78:  test('updates 3D coordinate status through the current canvas mouse contract', async ({ page }) => {
+### frontend/tests/e2e/keyboard-shortcuts.spec.ts
+3:test.describe('Keyboard shortcuts', () => {
+9:  test('tool shortcut keys activate current tool buttons', async ({ page }) => {
+24:  test('Escape returns to select tool after starting a point workflow', async ({ page }) => {
+### frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts
+3:test.describe('Wave 010 app-shell project boundary', () => {
+4:  test('starts without Google credentials and opens the app-shell project chooser without backend project API calls', async ({ page }) => {
+9:      if (url.includes('localhost:3000/api/projects') || url.includes('/api/projects')) {
+18:    await page.route('http://localhost:3000/**', (route) => {
+
+## operation placeholders/debug dirs
+frontend/src/commands/operations/IOperation.ts
+frontend/src/commands/operations/OperationRegistry.ts
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
+frontend/src/commands/operations/processTree/index.ts
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+frontend/src/commands/operations/processTree/README.md
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts
+frontend/src/commands/operations/viewState/index.ts
+frontend/src/commands/operations/viewState/README.md
+frontend/src/commands/operations/viewState/ViewStateOperations.ts
+frontend/src/commands/operations/world/Add3DLineOp.ts
+frontend/src/commands/operations/world/Add3DPlaneOp.ts
+frontend/src/commands/operations/world/Add3DPointOp.ts
+frontend/src/commands/operations/world/Add3DSegmentOp.ts
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddCircleOp.ts
+frontend/src/commands/operations/world/AddFreePointOp.ts
+frontend/src/commands/operations/world/AddGuideOp.ts
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddLineOp.ts
+frontend/src/commands/operations/world/AddSegmentOp.ts
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/index.ts
+frontend/src/commands/operations/world/InitializationOps.ts
+frontend/src/commands/operations/world/README.md
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts
+frontend/src/commands/operations/world/RemoveElementOps.ts
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts
+
+## test architecture rules
+### frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts
+     1	import { describe, expect, it } from 'vitest';
+     2	import { findContentMatches, scanTextFiles, type ScannedFile } from './helpers/sourceScanner';
+     3	
+     4	const deletedPathTerms = [
+     5	  'worldStore',
+     6	  'useWorldStore',
+     7	  'Workspace2D',
+     8	  'ElementRenderer',
+     9	  'ElementTypes',
+    10	  'useSnapping',
+    11	  'useElementGeometry',
+    12	  'getWorld',
+    13	];
+    14	
+    15	const self = 'tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts';
+    16	
+    17	function isThisArchitectureSpec(file: ScannedFile): boolean {
+    18	  return file.projectPath === self;
+    19	}
+    20	
+    21	describe('Architecture: deleted legacy world-state paths', () => {
+    22	  it('active source and tests do not reference deleted store/workspace geometry surfaces', () => {
+    23	    const files = scanTextFiles(['src', 'tests']);
+    24	    const pattern = new RegExp(deletedPathTerms.join('|'));
+    25	
+    26	    expect(findContentMatches(files, pattern, { exclude: isThisArchitectureSpec })).toEqual([]);
+    27	  });
+    28	});
+### frontend/tests/unit/architecture/importBoundaries.spec.ts
+     1	import { describe, expect, it } from 'vitest';
+     2	import { findContentMatches, findForbiddenImports, scanTextFiles, type ScannedFile } from './helpers/sourceScanner';
+     3	
+     4	const frontendSourceAndTests = () => scanTextFiles(['src', 'tests']);
+     5	
+     6	const staleBackendProjectTerms = new RegExp([
+     7	  ['localhost:3000', 'api', 'projects'].join('/'),
+     8	  '/api/' + 'projects',
+     9	  'Project' + 'DTO',
+    10	  'Project' + 'Metadata',
+    11	  'Open' + 'Project' + 'Dialog',
+    12	].join('|'));
+    13	
+    14	function isArchitectureSpec(file: ScannedFile): boolean {
+    15	  return file.projectPath.startsWith('tests/unit/architecture/');
+    16	}
+    17	
+    18	
+    19	const wave012ConsoleHygieneFiles = [
+    20	  'src/services/GoogleDriveService.ts',
+    21	  'src/utils/rectangleGrid.ts',
+    22	  'src/utils/projectionPlaneUtils.ts',
+    23	  'src/domain/world/HingeLine.ts',
+    24	  'src/domain/world/Guide.ts',
+    25	  'src/commands/operations/world/UpdateElementStyleOp.ts',
+    26	  'src/commands/operations/world/RemoveElementOps.ts',
+    27	  'src/commands/operations/processTree/ToggleOutputOp.ts',
+    28	  'src/commands/operations/processTree/ToggleEncapsulationOp.ts',
+    29	];
+    30	
+    31	function isWave012ConsoleHygieneFile(file: ScannedFile): boolean {
+    32	  return wave012ConsoleHygieneFiles.includes(file.projectPath);
+    33	}
+    34	
+    35	function isWave010NegativeE2EGuard(file: ScannedFile): boolean {
+    36	  return file.projectPath === 'tests/e2e/wave010-app-shell-project-flow.spec.ts';
+    37	}
+    38	
+    39	describe('Architecture: import boundaries', () => {
+    40	  it('keeps UI components from importing command construction surfaces', () => {
+    41	    const componentFiles = scanTextFiles(['src/components']);
+    42	
+    43	    expect(findForbiddenImports(componentFiles, [
+    44	      /^@\/commands(\/|$)/,
+    45	      /^@\/application\/commands(\/|$)/,
+    46	      /commands\/operations/,
+    47	      /CommandStack$/,
+    48	      /CommandFactory$/,
+    49	    ])).toEqual([]);
+    50	  });
+    51	
+    52	  it('keeps command construction available to application/use-case modules', () => {
+    53	    const applicationFiles = scanTextFiles(['src/application']);
+    54	    const commandImports = applicationFiles.flatMap(file =>
+    55	      file.imports
+    56	        .filter(importSource => /^@\/commands(\/|$)/.test(importSource) || /commands\/operations/.test(importSource))
+    57	        .map(importSource => `${file.projectPath} imports ${importSource}`),
+    58	    );
+    59	
+    60	    expect(commandImports.length).toBeGreaterThan(0);
+    61	  });
+    62	
+    63	  it('forbids frontend source and tests from importing backend implementation files', () => {
+    64	    const files = frontendSourceAndTests();
+    65	
+    66	    expect(findForbiddenImports(files, [/backend\/src/, /^backend\/src/])).toEqual([]);
+    67	    expect(findContentMatches(files, /backend\/src\//g, { exclude: isArchitectureSpec })).toEqual([]);
+    68	  });
+    69	
+    70	  it('keeps stale backend project API and DTO terms out of active frontend code', () => {
+    71	    const files = frontendSourceAndTests();
+    72	
+    73	    expect(findContentMatches(files, staleBackendProjectTerms, {
+    74	      exclude: file => isArchitectureSpec(file) || isWave010NegativeE2EGuard(file),
+    75	    })).toEqual([]);
+    76	  });
+    77	
+    78	  it('does not reference deleted debug/example/placeholder operation surfaces from active source or tests', () => {
+    79	    const files = frontendSourceAndTests();
+    80	
+    81	    expect(findContentMatches(files, /operations\/(paper|toolbar|debug)|ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
+    82	      exclude: isArchitectureSpec,
+    83	    })).toEqual([]);
+    84	  });
+    85	
+    86	  it('keeps routine console noise out of the Wave 012 cleanup files only', () => {
+    87	    const files = frontendSourceAndTests().filter(isWave012ConsoleHygieneFile);
+    88	
+    89	    expect(files.map(file => file.projectPath).sort()).toEqual([...wave012ConsoleHygieneFiles].sort());
+    90	    expect(findContentMatches(files, /console\.(log|debug|info)\s*\(/g)).toEqual([]);
+    91	  });
+    92	});
+### frontend/tests/unit/architecture/noCommandSubclasses.spec.ts
+     1	import { describe, expect, it } from 'vitest';
+     2	import { findContentMatches, scanTextFiles, type ScannedFile } from './helpers/sourceScanner';
+     3	
+     4	function isProductionSource(file: ScannedFile): boolean {
+     5	  return file.projectPath.startsWith('src/');
+     6	}
+     7	
+     8	function isCommentOrStringOnly(match: RegExpMatchArray): boolean {
+     9	  const before = match.input?.slice(0, match.index).split('\n').pop() ?? '';
+    10	  return before.trim().startsWith('//') || before.includes('*') || match[0].includes('"extends Command"') || match[0].includes("'extends Command'");
+    11	}
+    12	
+    13	describe('Architecture: Command Pattern', () => {
+    14	  it('does not subclass the generic Command container in production code', () => {
+    15	    const productionFiles = scanTextFiles(['src']).filter(isProductionSource);
+    16	    const violations = findContentMatches(productionFiles, /extends\s+Command\b/g, {
+    17	      describe: (file, match) => `${file.projectPath}: ${match[0]}`,
+    18	    }).filter(violation => {
+    19	      const [projectPath] = violation.split(': ');
+    20	      const file = productionFiles.find(candidate => candidate.projectPath === projectPath);
+    21	      if (!file) {
+    22	        return true;
+    23	      }
+    24	      const match = /extends\s+Command\b/g.exec(file.content);
+    25	      return match ? !isCommentOrStringOnly(match) : true;
+    26	    });
+    27	
+    28	    expect(violations).toEqual([]);
+    29	  });
+    30	
+    31	  it('documents Command as sealed and operation-backed without relying on deleted spec authority', () => {
+    32	    const commandFile = scanTextFiles(['src/commands']).find(file => file.projectPath === 'src/commands/Command.ts');
+    33	
+    34	    expect(commandFile?.content).toContain('@sealed');
+    35	    expect(commandFile?.content).toContain('MUST NOT be subclassed');
+    36	    expect(commandFile?.content).toContain('All domain logic belongs in Operation classes');
+    37	    expect(commandFile?.content).toContain('Application use cases and sequence factories create operations');
+    38	    expect(commandFile?.content).not.toContain('data-model.md');
+    39	  });
+    40	});
+### frontend/tests/unit/architecture/worldBoundary.spec.ts
+     1	import { describe, expect, it } from 'vitest';
+     2	import { findForbiddenImports, scanTextFiles } from './helpers/sourceScanner';
+     3	
+     4	const forbiddenOuterLayerImports = [
+     5	  /^@\/application(\/|$)/,
+     6	  /^@\/commands(\/|$)/,
+     7	  /^@\/services(\/|$)/,
+     8	  /^@\/components(\/|$)/,
+     9	  /^@\/stores(\/|$)/,
+    10	  /^@\/persistence(\/|$)/,
+    11	  /^\.\.\/(?:\.\.\/)*application(\/|$)/,
+    12	  /^\.\.\/(?:\.\.\/)*commands(\/|$)/,
+    13	  /^\.\.\/(?:\.\.\/)*services(\/|$)/,
+    14	  /^\.\.\/(?:\.\.\/)*components(\/|$)/,
+    15	  /^\.\.\/(?:\.\.\/)*stores(\/|$)/,
+    16	  /^\.\.\/(?:\.\.\/)*persistence(\/|$)/,
+    17	];
+    18	
+    19	describe('Architecture: domain world boundary', () => {
+    20	  it('keeps every domain module independent of application, command, service, UI, store, and persistence layers', () => {
+    21	    const domainFiles = scanTextFiles(['src/domain']);
+    22	
+    23	    expect(findForbiddenImports(domainFiles, forbiddenOuterLayerImports)).toEqual([]);
+    24	  });
+    25	
+    26	  it('keeps World.ts specifically free of outer-layer imports', () => {
+    27	    const worldFile = scanTextFiles(['src/domain/world']).filter(file => file.projectPath === 'src/domain/world/World.ts');
+    28	
+    29	    expect(worldFile).toHaveLength(1);
+    30	    expect(findForbiddenImports(worldFile, forbiddenOuterLayerImports)).toEqual([]);
+    31	  });
+    32	});

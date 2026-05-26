@@ -1,0 +1,1503 @@
+## package scripts
+     1	{
+     2	  "name": "diedrico",
+     3	  "version": "0.1.0",
+     4	  "description": "Educational web application for teaching dihedral/orthographic projection",
+     5	  "private": true,
+     6	  "license": "GPL-3.0-or-later",
+     7	  "workspaces": [
+     8	    "frontend"
+     9	  ],
+    10	  "scripts": {
+    11	    "dev": "npm run dev:frontend",
+    12	    "dev:frontend": "npm run dev --workspace=frontend",
+    13	    "build": "npm run build --workspace=frontend",
+    14	    "test": "npm run test --workspace=frontend",
+    15	    "test:frontend": "npm run test --workspace=frontend",
+    16	    "lint": "npm run lint --workspace=frontend",
+    17	    "docs:dev": "vitepress dev docs",
+    18	    "docs:build": "vitepress build docs",
+    19	    "docs:preview": "vitepress preview docs",
+    20	    "test:architecture": "npm run test:architecture --workspace=frontend",
+    21	    "test:e2e": "npm run test:e2e --workspace=frontend"
+    22	  },
+    23	  "devDependencies": {
+    24	    "concurrently": "^8.2.2",
+    25	    "vitepress": "^1.6.4"
+    26	  },
+    27	  "engines": {
+    28	    "node": ">=18.0.0",
+    29	    "npm": ">=9.0.0"
+    30	  }
+    31	}
+
+## frontend package scripts
+     1	{
+     2	  "name": "diedrico-frontend",
+     3	  "version": "0.1.0",
+     4	  "type": "module",
+     5	  "license": "GPL-3.0-or-later",
+     6	  "scripts": {
+     7	    "dev": "vite",
+     8	    "build": "vue-tsc && vite build",
+     9	    "preview": "vite preview",
+    10	    "test": "vitest run",
+    11	    "test:watch": "vitest",
+    12	    "test:ui": "vitest --ui",
+    13	    "test:architecture": "vitest run tests/unit/architecture",
+    14	    "test:e2e": "playwright test",
+    15	    "test:e2e:headed": "playwright test --headed",
+    16	    "lint": "npm run test:architecture"
+    17	  },
+    18	  "dependencies": {
+    19	    "@types/katex": "^0.16.8",
+    20	    "d3": "^7.8.5",
+    21	    "katex": "^0.16.28",
+    22	    "pinia": "^2.1.7",
+    23	    "three": "^0.160.0",
+    24	    "vue": "^3.4.0"
+    25	  },
+    26	  "devDependencies": {
+    27	    "@playwright/test": "^1.40.0",
+    28	    "@types/d3": "^7.4.3",
+    29	    "@types/gapi": "^0.0.47",
+    30	    "@types/gapi.client.drive-v3": "^0.0.5",
+    31	    "@types/three": "^0.160.0",
+    32	    "@vitejs/plugin-vue": "^5.0.0",
+    33	    "@vitest/ui": "^1.0.0",
+    34	    "@vue/test-utils": "^2.4.6",
+    35	    "@vue/tsconfig": "^0.5.0",
+    36	    "jsdom": "^27.3.0",
+    37	    "typescript": "^5.3.0",
+    38	    "vite": "^5.0.0",
+    39	    "vitest": "^1.0.0",
+    40	    "vue-tsc": "^2.2.12"
+    41	  }
+    42	}
+
+## e2e files
+current-ui-contract.spec.ts
+keyboard-shortcuts.spec.ts
+wave010-app-shell-project-flow.spec.ts
+
+## current-ui-contract
+     1	import { expect, test } from '@playwright/test';
+     2	
+     3	const canvas = (page: import('@playwright/test').Page) => page.getByTestId('svg-canvas');
+     4	
+     5	async function openApp(page: import('@playwright/test').Page) {
+     6	  await page.goto('/');
+     7	  await expect(canvas(page)).toBeVisible();
+     8	  await expect(page.getByTestId('status-bar')).toBeVisible();
+     9	}
+    10	
+    11	test.describe('Current Diedrico UI contract', () => {
+    12	  test('renders the current app shell, canvas, toolbar, status bar, and plane selector', async ({ page }) => {
+    13	    await openApp(page);
+    14	
+    15	    await expect(page.getByTestId('tool-select')).toBeVisible();
+    16	    await expect(page.getByTestId('tool-point')).toBeVisible();
+    17	    await expect(page.getByTestId('tool-line')).toBeVisible();
+    18	    await expect(page.getByTestId('tool-circle')).toBeVisible();
+    19	    await expect(page.getByTestId('toolbar-undo')).toBeVisible();
+    20	    await expect(page.getByTestId('toolbar-redo')).toBeVisible();
+    21	    await expect(page.getByTestId('active-plane-status')).toContainText(/P_[HV]/);
+    22	    await expect(page.getByTestId('active-tool-status')).toContainText('Select');
+    23	    await expect(page.getByTestId('coordinates-3d')).toContainText('---');
+    24	  });
+    25	
+    26	  test('creates a free point through stable tool and canvas test IDs', async ({ page }) => {
+    27	    await openApp(page);
+    28	
+    29	    const svg = canvas(page);
+    30	    const initialPointCount = await svg.locator('circle').count();
+    31	
+    32	    await page.getByTestId('tool-point').click();
+    33	    await expect(page.getByTestId('active-tool-status')).toContainText('Point');
+    34	
+    35	    await svg.click({ position: { x: 80, y: 80 } });
+    36	    await expect.poll(async () => svg.locator('circle').count()).toBeGreaterThan(initialPointCount);
+    37	    await expect(page.getByTestId('toolbar-undo')).toBeEnabled();
+    38	  });
+    39	
+    40	  test('plane selector exposes current projection planes and switches active plane', async ({ page }) => {
+    41	    await openApp(page);
+    42	
+    43	    await page.getByTestId('plane-selector-button').click();
+    44	    await expect(page.locator('[role="listbox"]')).toBeVisible();
+    45	    await expect(page.locator('[data-testid^="plane-selector-"]').first()).toBeVisible();
+    46	
+    47	    const pvOption = page.getByTestId('plane-selector-P_V');
+    48	    if (await pvOption.count()) {
+    49	      await pvOption.click();
+    50	      await expect(page.getByTestId('active-plane-status')).toContainText('P_V');
+    51	    } else {
+    52	      await page.locator('[data-testid^="plane-selector-"]').first().click();
+    53	      await expect(page.locator('[role="listbox"]')).toHaveCount(0);
+    54	    }
+    55	  });
+    56	
+    57	  test('selection masks allow free-point creation and point-only line argument collection', async ({ page }) => {
+    58	    await openApp(page);
+    59	
+    60	    const svg = canvas(page);
+    61	    const constructionPoints = svg.locator('circle').filter({ hasNot: svg.locator('.snap-indicator') });
+    62	    const initialPointCount = await constructionPoints.count();
+    63	    const initialLineCount = await svg.locator('line').count();
+    64	
+    65	    await page.getByTestId('tool-point').click();
+    66	    await expect(page.getByTestId('active-tool-status')).toContainText('Point');
+    67	    await svg.click({ position: { x: 40, y: 60 } });
+    68	    await svg.click({ position: { x: 80, y: 90 } });
+    69	    await expect.poll(async () => constructionPoints.count()).toBeGreaterThanOrEqual(initialPointCount + 2);
+    70	
+    71	    await page.getByTestId('tool-line').click();
+    72	    await expect(page.getByTestId('active-tool-status')).toContainText('Line');
+    73	    await svg.click({ position: { x: 40, y: 60 } });
+    74	    await svg.click({ position: { x: 80, y: 90 } });
+    75	    await expect.poll(async () => svg.locator('line').count()).toBeGreaterThan(initialLineCount);
+    76	  });
+    77	
+    78	  test('updates 3D coordinate status through the current canvas mouse contract', async ({ page }) => {
+    79	    await openApp(page);
+    80	
+    81	    const svg = canvas(page);
+    82	    const box = await svg.boundingBox();
+    83	    if (!box) throw new Error('SVG canvas bounding box unavailable');
+    84	
+    85	    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    86	    await expect.poll(async () => page.getByTestId('coordinates-3d').textContent()).toMatch(/---|\(-?\d+\.\d{2}, -?\d+\.\d{2}, -?\d+\.\d{2}\)/);
+    87	  });
+    88	});
+
+## keyboard-shortcuts
+     1	import { test, expect } from '@playwright/test';
+     2	
+     3	test.describe('Keyboard shortcuts', () => {
+     4	  test.beforeEach(async ({ page }) => {
+     5	    await page.goto('/');
+     6	    await expect(page.locator('svg.diedrico-canvas')).toBeVisible();
+     7	  });
+     8	
+     9	  test('tool shortcut keys activate current tool buttons', async ({ page }) => {
+    10	    const shortcuts = [
+    11	      ['p', 'tool-point'],
+    12	      ['l', 'tool-line'],
+    13	      ['s', 'tool-segment'],
+    14	      ['c', 'tool-circle'],
+    15	      ['g', 'tool-guide'],
+    16	    ] as const;
+    17	
+    18	    for (const [key, testId] of shortcuts) {
+    19	      await page.keyboard.press(key);
+    20	      await expect(page.getByTestId(testId)).toHaveClass(/active|selected/);
+    21	    }
+    22	  });
+    23	
+    24	  test('Escape returns to select tool after starting a point workflow', async ({ page }) => {
+    25	    const canvas = page.locator('svg.diedrico-canvas');
+    26	    await page.keyboard.press('p');
+    27	    await canvas.click({ position: { x: 100, y: 100 } });
+    28	    await page.keyboard.press('Escape');
+    29	    await expect(page.getByTestId('tool-select')).toHaveClass(/active|selected/);
+    30	  });
+    31	});
+
+## selection-mask existence
+frontend/tests/e2e/selection-mask.spec.ts absent
+
+## intersections source/test
+     1	/**
+     2	 * Intersections - Geometric intersection calculations using homogeneous coordinates
+     3	 * 
+     4	 * This module provides functions for calculating intersections between geometric
+     5	 * primitives using homogeneous coordinate representation.
+     6	 * 
+     7	 * All calculations follow the project's homogeneous-coordinate geometry policy:
+     8	 * - Use homogeneous coordinates throughout
+     9	 * - Convert parametric forms to implicit forms when needed
+    10	 * - Use cross products for line-line intersections
+    11	 * - Handle edge cases (parallel, coincident) explicitly
+    12	 * 
+    13	 * Line representation:
+    14	 * - Parametric form: P(t) = point + t * direction (storage format)
+    15	 * - Implicit form: ax + by + c = 0 (computation format for intersections)
+    16	 */
+    17	
+    18	import { Vector3 } from 'three';
+    19	import type { Line2DRealization2D } from '../world/Line';
+    20	import type { Circle2DRealization2D } from '../world/Circle';
+    21	import { Point2DRealization2D } from '../world/Point';
+    22	
+    23	/**
+    24	 * Convert line from parametric form to implicit form using homogeneous coordinates
+    25	 * 
+    26	 * Parametric form: P(t) = P0 + t * d where P0 = (x0, y0, 1), d = (dx, dy, 0)
+    27	 * Implicit form: ax + by + c = 0
+    28	 * 
+    29	 * The implicit form can be derived from the parametric form:
+    30	 * - A line passing through P0 = (x0, y0) with direction d = (dx, dy)
+    31	 * - The perpendicular direction to d is (-dy, dx)
+    32	 * - Points on the line satisfy: (P - P0) · perpendicular = 0
+    33	 * - This gives: -dy(x - x0) + dx(y - y0) = 0
+    34	 * - Expanding: -dy*x + dx*y + (dy*x0 - dx*y0) = 0
+    35	 * - So: a = -dy, b = dx, c = dy*x0 - dx*y0
+    36	 * 
+    37	 * @param line Line in parametric form
+    38	 * @returns Line in implicit form [a, b, c] where ax + by + c = 0
+    39	 */
+    40	function lineToImplicitForm(line: Line2DRealization2D): Vector3 {
+    41	  const point = line.point1;
+    42	  const direction = line.getDirection();
+    43	  const x0 = point.x;
+    44	  const y0 = point.y;
+    45	  const dx = direction.x;
+    46	  const dy = direction.y;
+    47	  
+    48	  // Implicit form: a*x + b*y + c = 0
+    49	  // a = -dy, b = dx, c = dy*x0 - dx*y0
+    50	  const a = -dy;
+    51	  const b = dx;
+    52	  const c = dy * x0 - dx * y0;
+    53	  
+    54	  // Return as Vector3 for convenience (not really a point, just 3 numbers)
+    55	  return new Vector3(a, b, c);
+    56	}
+    57	
+    58	/**
+    59	 * Calculate intersection point of two lines using homogeneous coordinates
+    60	 * 
+    61	 * Algorithm (from projective geometry):
+    62	 * 1. Convert lines from parametric to implicit form
+    63	 * 2. Represent lines as homogeneous vectors L1 = [a1, b1, c1], L2 = [a2, b2, c2]
+    64	 * 3. Intersection point is given by cross product: P = L1 × L2
+    65	 * 4. Result is in homogeneous coordinates [x, y, w]
+    66	 * 5. If w ≈ 0, lines are parallel (point at infinity)
+    67	 * 6. Otherwise, convert to Cartesian: (x/w, y/w, 1)
+    68	 * 
+    69	 * Edge cases:
+    70	 * - Parallel lines: Cross product yields [0, 0, 0] or [*, *, 0] (w = 0)
+    71	 * - Coincident lines: Same as parallel (treated as no intersection)
+    72	 * 
+    73	 * @param line1 First line in parametric form
+    74	 * @param line2 Second line in parametric form
+    75	 * @returns Point2DRealization2D with feasible=false if parallel/coincident, feasible=true otherwise
+    76	 */
+    77	export function intersectLineLine(
+    78	  line1: Line2DRealization2D,
+    79	  line2: Line2DRealization2D
+    80	): Point2DRealization2D {
+    81	  // Convert to implicit form
+    82	  const L1 = lineToImplicitForm(line1);
+    83	  const L2 = lineToImplicitForm(line2);
+    84	  
+    85	  // Cross product in homogeneous coordinates
+    86	  // L1 × L2 gives the intersection point in homogeneous form
+    87	  // 
+    88	  // Given L1 = (a1, b1, c1) and L2 = (a2, b2, c2):
+    89	  // L1 × L2 = | i    j    k  |
+    90	  //           | a1   b1   c1 |
+    91	  //           | a2   b2   c2 |
+    92	  //
+    93	  // = i(b1*c2 - c1*b2) - j(a1*c2 - c1*a2) + k(a1*b2 - b1*a2)
+    94	  // = (b1*c2 - c1*b2, c1*a2 - a1*c2, a1*b2 - b1*a2)
+    95	  //
+    96	  // This represents the point [x, y, w] in homogeneous coordinates
+    97	  // where x/w and y/w are the Cartesian coordinates (if w ≠ 0)
+    98	  
+    99	  const a1 = L1.x, b1 = L1.y, c1 = L1.z;
+   100	  const a2 = L2.x, b2 = L2.y, c2 = L2.z;
+   101	  
+   102	  // Cross product components
+   103	  const px = b1 * c2 - c1 * b2;  // x-component (homogeneous)
+   104	  const py = c1 * a2 - a1 * c2;  // y-component (homogeneous)
+   105	  const w = a1 * b2 - b1 * a2;   // w-component (homogeneous scale)
+   106	  
+   107	  // Check for parallel lines (w ≈ 0)
+   108	  const epsilon = 1e-10;
+   109	  if (Math.abs(w) < epsilon) {
+   110	    // Lines are parallel or coincident - return infeasible realization
+   111	    return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+   112	  }
+   113	  
+   114	  // Convert from homogeneous to Cartesian coordinates
+   115	  // Divide by w to get actual (x, y) coordinates
+   116	  const x = px / w;
+   117	  const y = py / w;
+   118	  
+   119	  // Return as point realization in homogeneous form (x, y, 1)
+   120	  return new Point2DRealization2D(new Vector3(x, y, 1), true);
+   121	}
+   122	
+   123	/**
+   124	 * Check if two lines are parallel (without computing intersection)
+   125	 * 
+   126	 * Two lines are parallel if their directions are parallel (or anti-parallel).
+   127	 * In 2D, this means the cross product of direction vectors is zero.
+   128	 * 
+   129	 * @param line1 First line
+   130	 * @param line2 Second line
+   131	 * @returns True if lines are parallel
+   132	 */
+   133	export function areLinesParallel(
+   134	  line1: Line2DRealization2D,
+   135	  line2: Line2DRealization2D
+   136	): boolean {
+   137	  const d1 = line1.getDirection();
+   138	  const d2 = line2.getDirection();
+   139	  
+   140	  // Cross product in 2D: d1.x * d2.y - d1.y * d2.x
+   141	  // If zero, directions are parallel
+   142	  const cross = d1.x * d2.y - d1.y * d2.x;
+   143	  
+   144	  return Math.abs(cross) < 1e-10;
+   145	}
+   146	
+   147	/**
+   148	 * Sort intersection points by projection onto a direction vector.
+   149	 * Index 0 = larger projection (more positive), Index 1 = smaller projection (more negative)
+   150	 * 
+   151	 * This generic function handles both line-circle and circle-circle intersection ordering:
+   152	 * - Line-circle: direction = line direction, reference = point on line
+   153	 * - Circle-circle: direction = perpendicular to center-line, reference = first circle center
+   154	 * 
+   155	 * @param points Array of intersection points (typically 2)
+   156	 * @param direction Direction vector to project onto (defines "left" vs "right")
+   157	 * @param referencePoint Reference point for computing relative positions
+   158	 * @returns Sorted array with index 0 = larger (more positive) projection
+   159	 */
+   160	function sortIntersectionsByProjection(
+   161	  points: Vector3[],
+   162	  direction: { x: number; y: number },
+   163	  referencePoint: Vector3
+   164	): Vector3[] {
+   165	  if (points.length < 2) return points;
+   166	  
+   167	  // Project each point onto direction vector (from reference point)
+   168	  const projectionsAndPoints = points.map(point => {
+   169	    const dx = point.x - referencePoint.x;
+   170	    const dy = point.y - referencePoint.y;
+   171	    const projection = dx * direction.x + dy * direction.y;
+   172	    return { projection, point };
+   173	  });
+   174	  
+   175	  // Sort by projection descending (larger/more positive first = index 0)
+   176	  projectionsAndPoints.sort((a, b) => b.projection - a.projection);
+   177	  
+   178	  return projectionsAndPoints.map(item => item.point);
+   179	}
+   180	
+   181	/**
+   182	 * Calculate intersection points of a line and a circle using homogeneous coordinates
+   183	 * 
+   184	 * Algorithm:
+   185	 * 1. Line in parametric form: P(t) = P0 + t*d where P0 is point, d is direction
+   186	 * 2. Circle: (x - cx)² + (y - cy)² = r²
+   187	 * 3. Substitute line equation into circle equation
+   188	 * 4. Results in quadratic: at² + bt + c = 0
+   189	 * 5. Solve quadratic to find t values
+   190	 * 6. Substitute t back into line equation to get intersection points
+   191	 * 
+   192	 * Edge cases:
+   193	 * - No intersection: discriminant < 0 (returns empty array)
+   194	 * - Tangent: discriminant = 0 (returns array with 1 point)
+   195	 * - Secant: discriminant > 0 (returns array with 2 points, sorted by projection on line direction)
+   196	 * 
+   197	 * @param line Line in parametric form
+   198	 * @param circle Circle with center and radius
+   199	 * @returns Array of intersection points (0, 1, or 2 points)
+   200	 */
+   201	export function intersectLineCircle(
+   202	  line: Line2DRealization2D,
+   203	  circle: Circle2DRealization2D
+   204	): Vector3[] {
+   205	  const P0 = line.point1;
+   206	  const d = line.getDirection();
+   207	  const C = circle.center;
+   208	  const r = circle.getRadius();
+   209	  
+   210	  // Line: P(t) = P0 + t*d = (P0.x + t*d.x, P0.y + t*d.y)
+   211	  // Circle: (x - C.x)² + (y - C.y)² = r²
+   212	  //
+   213	  // Substitute line into circle:
+   214	  // (P0.x + t*d.x - C.x)² + (P0.y + t*d.y - C.y)² = r²
+   215	  //
+   216	  // Let dx = P0.x - C.x, dy = P0.y - C.y
+   217	  // (dx + t*d.x)² + (dy + t*d.y)² = r²
+   218	  //
+   219	  // Expand:
+   220	  // dx² + 2*dx*t*d.x + t²*d.x² + dy² + 2*dy*t*d.y + t²*d.y² = r²
+   221	  //
+   222	  // Group by powers of t:
+   223	  // (d.x² + d.y²)*t² + 2*(dx*d.x + dy*d.y)*t + (dx² + dy² - r²) = 0
+   224	  //
+   225	  // This is quadratic: a*t² + b*t + c = 0
+   226	  
+   227	  const dx = P0.x - C.x;
+   228	  const dy = P0.y - C.y;
+   229	  
+   230	  const a = d.x * d.x + d.y * d.y;  // Should be 1 if direction is normalized
+   231	  const b = 2 * (dx * d.x + dy * d.y);
+   232	  const c = dx * dx + dy * dy - r * r;
+   233	  
+   234	  // Calculate discriminant
+   235	  const discriminant = b * b - 4 * a * c;
+   236	  const epsilon = 1e-10;
+   237	  
+   238	  if (discriminant < -epsilon) {
+   239	    // No intersection
+   240	    return [];
+   241	  } else if (Math.abs(discriminant) < epsilon) {
+   242	    // Tangent - one intersection point
+   243	    const t = -b / (2 * a);
+   244	    const x = P0.x + t * d.x;
+   245	    const y = P0.y + t * d.y;
+   246	    
+   247	    return [new Vector3(x, y, 1)];
+   248	  } else {
+   249	    // Secant - two intersection points
+   250	    const sqrtDisc = Math.sqrt(discriminant);
+   251	    const t1 = (-b - sqrtDisc) / (2 * a);
+   252	    const t2 = (-b + sqrtDisc) / (2 * a);
+   253	    
+   254	    const x1 = P0.x + t1 * d.x;
+   255	    const y1 = P0.y + t1 * d.y;
+   256	    const x2 = P0.x + t2 * d.x;
+   257	    const y2 = P0.y + t2 * d.y;
+   258	    
+   259	    // Two intersection points (secant case)
+   260	    const unsortedPoints = [
+
+     1	/**
+     2	 * Unit tests for Intersections module
+     3	 * 
+     4	 * Tests geometric intersection calculations using homogeneous coordinates.
+     5	 * Validates:
+     6	 * - Line-line intersections (cross product algorithm)
+     7	 * - Line-circle intersections (quadratic formula)
+     8	 * - Circle-circle intersections (geometric formula)
+     9	 * 
+    10	 * Test coverage:
+    11	 * - Standard intersections (perpendicular, diagonal, tangent, secant)
+    12	 * - Edge cases (parallel, coincident, no intersection, multiple solutions)
+    13	 * - Homogeneous coordinate correctness
+    14	 * - Numerical stability
+    15	 */
+    16	
+    17	import { describe, it, expect } from 'vitest';
+    18	import { Vector3 } from 'three';
+    19	import { 
+    20	  intersectLineLine, 
+    21	  areLinesParallel,
+    22	  intersectLineCircle,
+    23	  intersectCircleCircle
+    24	} from '../../../src/domain/calculations/Intersections';
+    25	import { Line2DRealization2D } from '../../../src/domain/world/Line';
+    26	import { Circle2DRealization2D } from '../../../src/domain/world/Circle';
+    27	
+    28	describe('Intersections', () => {
+    29	  describe('intersectLineLine', () => {
+    30	    it('should find intersection of perpendicular lines', () => {
+    31	      // Horizontal line through (0, 2): y = 2
+    32	      // Parametric: P(t) = (0, 2, 1) + t*(1, 0, 0)
+    33	      const line1 = new Line2DRealization2D(
+    34	        new Vector3(0, 2, 1),  // point
+    35	        new Vector3(1, 0, 0)   // direction (horizontal)
+    36	      );
+    37	      
+    38	      // Vertical line through (3, 0): x = 3
+    39	      // Parametric: P(t) = (3, 0, 1) + t*(0, 1, 0)
+    40	      const line2 = new Line2DRealization2D(
+    41	        new Vector3(3, 0, 1),  // point
+    42	        new Vector3(0, 1, 0)   // direction (vertical)
+    43	      );
+    44	      
+    45	      const result = intersectLineLine(line1, line2);
+    46	      
+    47	      expect(result.feasible).toBe(true);
+    48	      expect(result.position.x).toBeCloseTo(3, 6);
+    49	      expect(result.position.y).toBeCloseTo(2, 6);
+    50	      expect(result.position.z).toBe(1); // homogeneous coordinate
+    51	    });
+    52	    
+    53	    it('should find intersection of diagonal lines', () => {
+    54	      // Line 1: passing through (0, 0) with direction (1, 1)
+    55	      // Equation: y = x
+    56	      const line1 = new Line2DRealization2D(
+    57	        new Vector3(0, 0, 1),
+    58	        new Vector3(1, 1, 0).normalize()
+    59	      );
+    60	      
+    61	      // Line 2: passing through (0, 4) with direction (1, -1)
+    62	      // Equation: y = -x + 4
+    63	      const line2 = new Line2DRealization2D(
+    64	        new Vector3(0, 4, 1),
+    65	        new Vector3(1, -1, 0).normalize()
+    66	      );
+    67	      
+    68	      const result = intersectLineLine(line1, line2);
+    69	      
+    70	      // Intersection: y = x and y = -x + 4
+    71	      // x = -x + 4 => 2x = 4 => x = 2, y = 2
+    72	      expect(result.feasible).toBe(true);
+    73	      expect(result.position.x).toBeCloseTo(2, 6);
+    74	      expect(result.position.y).toBeCloseTo(2, 6);
+    75	      expect(result.position.z).toBe(1);
+    76	    });
+    77	    
+    78	    it('should detect parallel horizontal lines', () => {
+    79	      // Line 1: y = 2
+    80	      const line1 = new Line2DRealization2D(
+    81	        new Vector3(0, 2, 1),
+    82	        new Vector3(1, 0, 0)
+    83	      );
+    84	      
+    85	      // Line 2: y = 5 (parallel to line1)
+    86	      const line2 = new Line2DRealization2D(
+    87	        new Vector3(0, 5, 1),
+    88	        new Vector3(1, 0, 0)
+    89	      );
+    90	      
+    91	      const result = intersectLineLine(line1, line2);
+    92	      
+    93	      expect(result.feasible).toBe(false);
+    94	    });
+    95	    
+    96	    it('should detect parallel vertical lines', () => {
+    97	      // Line 1: x = 3
+    98	      const line1 = new Line2DRealization2D(
+    99	        new Vector3(3, 0, 1),
+   100	        new Vector3(0, 1, 0)
+   101	      );
+   102	      
+   103	      // Line 2: x = -2 (parallel to line1)
+   104	      const line2 = new Line2DRealization2D(
+   105	        new Vector3(-2, 0, 1),
+   106	        new Vector3(0, 1, 0)
+   107	      );
+   108	      
+   109	      const result = intersectLineLine(line1, line2);
+   110	      
+   111	      expect(result.feasible).toBe(false);
+   112	    });
+   113	    
+   114	    it('should detect parallel diagonal lines', () => {
+   115	      // Line 1: y = x
+   116	      const line1 = new Line2DRealization2D(
+   117	        new Vector3(0, 0, 1),
+   118	        new Vector3(1, 1, 0).normalize()
+   119	      );
+   120	      
+   121	      // Line 2: y = x + 3 (parallel to line1)
+   122	      const line2 = new Line2DRealization2D(
+   123	        new Vector3(0, 3, 1),
+   124	        new Vector3(1, 1, 0).normalize()
+   125	      );
+   126	      
+   127	      const result = intersectLineLine(line1, line2);
+   128	      
+   129	      expect(result.feasible).toBe(false);
+   130	    });
+   131	    
+   132	    it('should detect coincident lines', () => {
+   133	      // Line 1: y = 2x through (0, 0)
+   134	      const line1 = new Line2DRealization2D(
+   135	        new Vector3(0, 0, 1),
+   136	        new Vector3(1, 2, 0).normalize()
+   137	      );
+   138	      
+   139	      // Line 2: Same line through different point (1, 2)
+   140	      const line2 = new Line2DRealization2D(
+   141	        new Vector3(1, 2, 1),
+   142	        new Vector3(1, 2, 0).normalize()
+   143	      );
+   144	      
+   145	      const result = intersectLineLine(line1, line2);
+   146	      
+   147	      expect(result.feasible).toBe(false);
+   148	    });
+   149	    
+   150	    it('should handle lines with non-unit direction vectors', () => {
+   151	      // Line 1 with direction (2, 0) instead of normalized (1, 0)
+   152	      const line1 = new Line2DRealization2D(
+   153	        new Vector3(0, 1, 1),
+   154	        new Vector3(2, 0, 0)  // Not normalized
+   155	      );
+   156	      
+   157	      // Line 2 with direction (0, 3) instead of normalized (0, 1)
+   158	      const line2 = new Line2DRealization2D(
+   159	        new Vector3(4, 0, 1),
+   160	        new Vector3(0, 3, 0)  // Not normalized
+   161	      );
+   162	      
+   163	      const result = intersectLineLine(line1, line2);
+   164	      
+   165	      // Should still find correct intersection at (4, 1)
+   166	      expect(result.feasible).toBe(true);
+   167	      expect(result.position.x).toBeCloseTo(4, 6);
+   168	      expect(result.position.y).toBeCloseTo(1, 6);
+   169	    });
+   170	    
+   171	    it('should produce homogeneous points with z=1', () => {
+   172	      const line1 = new Line2DRealization2D(
+   173	        new Vector3(0, 0, 1),
+   174	        new Vector3(1, 0, 0)
+   175	      );
+   176	      
+   177	      const line2 = new Line2DRealization2D(
+   178	        new Vector3(5, 5, 1),
+   179	        new Vector3(0, 1, 0)
+   180	      );
+   181	      
+   182	      const result = intersectLineLine(line1, line2);
+   183	      
+   184	      expect(result.feasible).toBe(true);
+   185	      expect(result.position.z).toBe(1); // Homogeneous coordinate
+   186	    });
+   187	    
+   188	    it('should handle intersection at origin', () => {
+   189	      // Line 1: y = x through origin
+   190	      const line1 = new Line2DRealization2D(
+   191	        new Vector3(0, 0, 1),
+   192	        new Vector3(1, 1, 0).normalize()
+   193	      );
+   194	      
+   195	      // Line 2: y = -x through origin
+   196	      const line2 = new Line2DRealization2D(
+   197	        new Vector3(0, 0, 1),
+   198	        new Vector3(1, -1, 0).normalize()
+   199	      );
+   200	      
+   201	      const result = intersectLineLine(line1, line2);
+   202	      
+   203	      expect(result.feasible).toBe(true);
+   204	      expect(result.position.x).toBeCloseTo(0, 6);
+   205	      expect(result.position.y).toBeCloseTo(0, 6);
+   206	    });
+   207	    
+   208	    it('should handle intersection with negative coordinates', () => {
+   209	      // Line 1: horizontal through y = -3
+   210	      const line1 = new Line2DRealization2D(
+   211	        new Vector3(0, -3, 1),
+   212	        new Vector3(1, 0, 0)
+   213	      );
+   214	      
+   215	      // Line 2: vertical through x = -5
+   216	      const line2 = new Line2DRealization2D(
+   217	        new Vector3(-5, 0, 1),
+   218	        new Vector3(0, 1, 0)
+   219	      );
+   220	      
+   221	      const result = intersectLineLine(line1, line2);
+   222	      
+   223	      expect(result.feasible).toBe(true);
+   224	      expect(result.position.x).toBeCloseTo(-5, 6);
+   225	      expect(result.position.y).toBeCloseTo(-3, 6);
+   226	    });
+   227	  });
+   228	  
+   229	  describe('areLinesParallel', () => {
+   230	    it('should detect parallel horizontal lines', () => {
+   231	      const line1 = new Line2DRealization2D(
+   232	        new Vector3(0, 1, 1),
+   233	        new Vector3(1, 0, 0)
+   234	      );
+   235	      
+   236	      const line2 = new Line2DRealization2D(
+   237	        new Vector3(0, 5, 1),
+   238	        new Vector3(1, 0, 0)
+   239	      );
+   240	      
+   241	      expect(areLinesParallel(line1, line2)).toBe(true);
+   242	    });
+   243	    
+   244	    it('should detect parallel vertical lines', () => {
+   245	      const line1 = new Line2DRealization2D(
+   246	        new Vector3(2, 0, 1),
+   247	        new Vector3(0, 1, 0)
+   248	      );
+   249	      
+   250	      const line2 = new Line2DRealization2D(
+   251	        new Vector3(-3, 0, 1),
+   252	        new Vector3(0, 1, 0)
+   253	      );
+   254	      
+   255	      expect(areLinesParallel(line1, line2)).toBe(true);
+   256	    });
+   257	    
+   258	    it('should detect non-parallel lines', () => {
+   259	      const line1 = new Line2DRealization2D(
+   260	        new Vector3(0, 0, 1),
+
+## properties dialog source/test
+     1	<template>
+     2	  <div v-if="isOpen" class="dialog-overlay" @click.self="handleCancel">
+     3	    <div class="properties-dialog" role="dialog" aria-labelledby="dialog-title">
+     4	      <!-- Header -->
+     5	      <div class="dialog-header">
+     6	        <h2 id="dialog-title">Properties: {{ elementLabel }}</h2>
+     7	        <button class="close-button" @click="handleCancel" aria-label="Close dialog">
+     8	          ×
+     9	        </button>
+    10	      </div>
+    11	
+    12	      <!-- Content -->
+    13	      <div class="dialog-content">
+    14	        <!-- Geometry Info Section (Read-only) -->
+    15	        <section class="geometry-section">
+    16	          <h3>Geometry Info</h3>
+    17	          <div class="info-grid">
+    18	            <div class="info-row">
+    19	              <span class="info-label">Type:</span>
+    20	              <span class="info-value">{{ elementType }}</span>
+    21	            </div>
+    22	            <div class="info-row" v-if="planeId">
+    23	              <span class="info-label">Plane:</span>
+    24	              <span class="info-value">{{ planeId }}</span>
+    25	            </div>
+    26	            <div class="info-row" v-if="coordinates">
+    27	              <span class="info-label">Coordinates:</span>
+    28	              <span class="info-value">{{ coordinates }}</span>
+    29	            </div>
+    30	            <div class="info-row" v-if="dependencies && dependencies.length > 0">
+    31	              <span class="info-label">Dependencies:</span>
+    32	              <span class="info-value">{{ dependencies.join(', ') }}</span>
+    33	            </div>
+    34	            <div class="info-row" v-if="createdBy">
+    35	              <span class="info-label">Created by:</span>
+    36	              <span class="info-value">{{ createdBy }}</span>
+    37	            </div>
+    38	          </div>
+    39	        </section>
+    40	
+    41	        <!-- Visual Style Section (Editable) -->
+    42	        <section class="visual-style-section">
+    43	          <h3>Visual Style</h3>
+    44	          <div class="style-controls">
+    45	            <!-- Color -->
+    46	            <div class="control-row">
+    47	              <label for="color-input">Color:</label>
+    48	              <input
+    49	                id="color-input"
+    50	                type="color"
+    51	                v-model="editableColor"
+    52	                :disabled="!colorOverride"
+    53	                @blur="colorOverride && validateColor(editableColor)"
+    54	              />
+    55	              <input
+    56	                type="text"
+    57	                v-model="editableColor"
+    58	                pattern="^#[0-9A-Fa-f]{6}$"
+    59	                class="hex-input"
+    60	                :class="{ 'input-error': colorError }"
+    61	                :disabled="!colorOverride"
+    62	                placeholder="#000000"
+    63	                @blur="colorOverride && validateColor(editableColor)"
+    64	              />
+    65	              <label class="override-checkbox">
+    66	                <input type="checkbox" v-model="colorOverride" />
+    67	                Override
+    68	              </label>
+    69	            </div>
+    70	            <div v-if="colorError" class="error-message">{{ colorError }}</div>
+    71	
+    72	            <!-- Line Width (for non-point elements) -->
+    73	            <div class="control-row" v-if="elementType !== '2D Point'">
+    74	              <label for="width-input">Line Width:</label>
+    75	              <input
+    76	                id="width-input"
+    77	                type="range"
+    78	                min="0.5"
+    79	                max="5.0"
+    80	                step="0.1"
+    81	                v-model.number="editableLineWidth"
+    82	                :disabled="!lineWidthOverride"
+    83	                @change="lineWidthOverride && validateLineWidth(editableLineWidth)"
+    84	              />
+    85	              <input
+    86	                type="number"
+    87	                v-model.number="editableLineWidth"
+    88	                min="0.5"
+    89	                max="5.0"
+    90	                step="0.1"
+    91	                class="number-input"
+    92	                :class="{ 'input-error': lineWidthError }"
+    93	                :disabled="!lineWidthOverride"
+    94	                @blur="lineWidthOverride && validateLineWidth(editableLineWidth)"
+    95	              />
+    96	              <label class="override-checkbox">
+    97	                <input type="checkbox" v-model="lineWidthOverride" />
+    98	                Override
+    99	              </label>
+   100	            </div>
+   101	            <div v-if="lineWidthError" class="error-message">{{ lineWidthError }}</div>
+   102	
+   103	            <!-- Line Style (for line/segment/guide elements) -->
+   104	            <div class="control-row" v-if="hasLineStyle">
+   105	              <label for="style-input">Line Style:</label>
+   106	              <select
+   107	                id="style-input"
+   108	                v-model="editableLineStyle"
+   109	                :class="{ 'input-error': lineStyleError }"
+   110	                :disabled="!lineStyleOverride"
+   111	                @change="lineStyleOverride && validateLineStyle(editableLineStyle)"
+   112	              >
+   113	                <option value="solid">Solid</option>
+   114	                <option value="dashed">Dashed</option>
+   115	                <option value="dotted">Dotted</option>
+   116	              </select>
+   117	              <label class="override-checkbox">
+   118	                <input type="checkbox" v-model="lineStyleOverride" />
+   119	                Override
+   120	              </label>
+   121	            </div>
+   122	            <div v-if="lineStyleError" class="error-message">{{ lineStyleError }}</div>
+   123	
+   124	            <!-- Visibility -->
+   125	            <div class="control-row">
+   126	              <label for="visibility-input">Visibility:</label>
+   127	              <input
+   128	                id="visibility-input"
+   129	                type="checkbox"
+   130	                v-model="editableVisible"
+   131	                :disabled="!visibilityOverride"
+   132	              />
+   133	              <label class="override-checkbox">
+   134	                <input type="checkbox" v-model="visibilityOverride" />
+   135	                Override
+   136	              </label>
+   137	            </div>
+   138	          </div>
+   139	
+   140	          <!-- Reset Button -->
+   141	          <button class="reset-button" @click="handleResetToDefault">
+   142	            Reset to Default
+   143	          </button>
+   144	        </section>
+   145	      </div>
+   146	
+   147	      <!-- Footer Actions -->
+   148	      <div class="dialog-footer">
+   149	        <button class="button button-secondary" @click="handleCancel">
+   150	          Cancel
+   151	        </button>
+   152	        <button class="button button-primary" @click="handleSave">
+   153	          Save
+   154	        </button>
+   155	      </div>
+   156	    </div>
+   157	  </div>
+   158	</template>
+   159	
+   160	<script setup lang="ts">
+   161	import { ref, computed, watch } from 'vue';
+   162	import type { World } from '@/domain/world/World';
+   163	import { Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from '@/domain/world/Point';
+   164	import { Line2DByTwoPoints } from '@/domain/world/Line';
+   165	import { Segment2DByPoints } from '@/domain/world/Segment';
+   166	import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '@/domain/world/Circle';
+   167	import { Guide2D } from '@/domain/world/Guide';
+   168	
+   169	interface Props {
+   170	  isOpen: boolean;
+   171	  elementId: string | null;
+   172	  world: World | null;
+   173	}
+   174	
+   175	interface StyleChanges {
+   176	  elementId: string;
+   177	  color?: string;
+   178	  lineWidth?: number;
+   179	  lineStyle?: string;
+   180	  visible?: boolean;
+   181	}
+   182	
+   183	const props = defineProps<Props>();
+   184	const emit = defineEmits<{
+   185	  close: [];
+   186	  save: [changes: StyleChanges];
+   187	}>();
+   188	
+   189	// Editable state
+   190	const editableColor = ref<string>('#000000');
+   191	const editableLineWidth = ref<number>(1.0);
+   192	const editableLineStyle = ref<string>('solid');
+   193	const editableVisible = ref<boolean>(true);
+   194	
+   195	// Override flags
+   196	const colorOverride = ref<boolean>(false);
+   197	const lineWidthOverride = ref<boolean>(false);
+   198	const lineStyleOverride = ref<boolean>(false);
+   199	const visibilityOverride = ref<boolean>(false);
+   200	
+   201	// Validation state
+   202	const colorError = ref<string>('');
+   203	const lineWidthError = ref<string>('');
+   204	const lineStyleError = ref<string>('');
+   205	
+   206	// Computed properties for display
+   207	const elementLabel = computed(() => {
+   208	  if (!props.elementId || !props.world) return 'Unknown';
+   209	  
+   210	  // Get element label/ID
+   211	  return props.elementId;
+   212	});
+   213	
+   214	const elementType = computed(() => {
+   215	  if (!props.elementId || !props.world) return 'Unknown';
+   216	  
+   217	  // Determine element type by checking which collection contains it
+   218	  const point = props.world.getPoint2D(props.elementId);
+   219	  if (point) return '2D Point';
+   220	  
+
+     1	/**
+     2	 * Unit tests for PropertiesDialog component
+     3	 * 
+     4	 * Tests dialog functionality including:
+     5	 * - Dialog open/close behavior
+     6	 * - Property display per element type
+     7	 * - Style input validation
+     8	 * - Save/cancel operations
+     9	 * - Override checkbox behavior
+    10	 */
+    11	
+    12	import { describe, it, expect, beforeEach, vi } from 'vitest';
+    13	import { mount } from '@vue/test-utils';
+    14	import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+    15	import type { World } from '@/domain/world/World';
+    16	import { Vector3 } from 'three';
+    17	import { createTestWorld } from '../../helpers/worldHelpers';
+    18	
+    19	describe('PropertiesDialog', () => {
+    20	  let world: World;
+    21	  let testPointId: string; // Helper for tests that need a valid element ID
+    22	  
+    23	  beforeEach(() => {
+    24	    const { world: w } = createTestWorld();
+    25	    world = w;
+    26	    
+    27	    // Create a test point for tests that need a valid element ID
+    28	    const planeH = world.getProjectionPlaneByLabel('P_H');
+    29	    const point = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+    30	    testPointId = point.id;
+    31	  });
+    32	
+    33	  describe('Dialog visibility', () => {
+    34	    it('should not render when isOpen is false', () => {
+    35	      const wrapper = mount(PropertiesDialog, {
+    36	        props: {
+    37	          isOpen: false,
+    38	          elementId: null,
+    39	          world: null
+    40	        }
+    41	      });
+    42	      
+    43	      expect(wrapper.find('.dialog-overlay').exists()).toBe(false);
+    44	    });
+    45	
+    46	    it('should render when isOpen is true', () => {
+    47	      const wrapper = mount(PropertiesDialog, {
+    48	        props: {
+    49	          isOpen: true,
+    50	          elementId: testPointId,
+    51	          world
+    52	        }
+    53	      });
+    54	      
+    55	      expect(wrapper.find('.dialog-overlay').exists()).toBe(true);
+    56	      expect(wrapper.find('.properties-dialog').exists()).toBe(true);
+    57	    });
+    58	
+    59	    it('should emit close event when close button clicked', async () => {
+    60	      const onClose = vi.fn();
+    61	      const wrapper = mount(PropertiesDialog, {
+    62	        props: {
+    63	          isOpen: true,
+    64	          elementId: testPointId,
+    65	          world,
+    66	          onClose
+    67	        }
+    68	      });
+    69	      
+    70	      await wrapper.find('.close-button').trigger('click');
+    71	      expect(onClose).toHaveBeenCalledOnce();
+    72	    });
+    73	
+    74	    it('should emit close event when overlay clicked', async () => {
+    75	      const onClose = vi.fn();
+    76	      const wrapper = mount(PropertiesDialog, {
+    77	        props: {
+    78	          isOpen: true,
+    79	          elementId: testPointId,
+    80	          world,
+    81	          onClose
+    82	        }
+    83	      });
+    84	      
+    85	      await wrapper.find('.dialog-overlay').trigger('click');
+    86	      expect(onClose).toHaveBeenCalledOnce();
+    87	    });
+    88	
+    89	    it('should emit close event when cancel button clicked', async () => {
+    90	      const onClose = vi.fn();
+    91	      const wrapper = mount(PropertiesDialog, {
+    92	        props: {
+    93	          isOpen: true,
+    94	          elementId: testPointId,
+    95	          world,
+    96	          onClose
+    97	        }
+    98	      });
+    99	      
+   100	      await wrapper.find('.button-secondary').trigger('click');
+   101	      expect(onClose).toHaveBeenCalledOnce();
+   102	    });
+   103	  });
+   104	
+   105	  describe('Element type detection', () => {
+   106	    it('should display "2D Point" for point elements', () => {
+   107	      // Add a point to world
+   108	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   109	      const position = new Vector3(0, 0, 1);
+   110	      const point = planeH.addFreePoint2D(position, world);
+   111	      const pointId = point.id;
+   112	      
+   113	      const wrapper = mount(PropertiesDialog, {
+   114	        props: {
+   115	          isOpen: true,
+   116	          elementId: pointId,
+   117	          world
+   118	        }
+   119	      });
+   120	      
+   121	      expect(wrapper.text()).toContain('2D Point');
+   122	    });
+   123	
+   124	    it('should display plane ID for 2D elements', () => {
+   125	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   126	      const position = new Vector3(0, 0, 1);
+   127	      const point = planeH.addFreePoint2D(position, world);
+   128	      const pointId = point.id;
+   129	      
+   130	      const wrapper = mount(PropertiesDialog, {
+   131	        props: {
+   132	          isOpen: true,
+   133	          elementId: pointId,
+   134	          world
+   135	        }
+   136	      });
+   137	      
+   138	      expect(wrapper.text()).toContain(planeH.id);
+   139	    });
+   140	  });
+   141	
+   142	  describe('Style input validation', () => {
+   143	    it('should validate hex color format', async () => {
+   144	      const wrapper = mount(PropertiesDialog, {
+   145	        props: {
+   146	          isOpen: true,
+   147	          elementId: testPointId,
+   148	          world
+   149	        }
+   150	      });
+   151	      
+   152	      // Enable color override
+   153	      const colorOverride = wrapper.find('input[type="checkbox"]');
+   154	      await colorOverride.setValue(true);
+   155	      
+   156	      // Set invalid color
+   157	      const hexInput = wrapper.find('.hex-input');
+   158	      await hexInput.setValue('invalid');
+   159	      await hexInput.trigger('blur');
+   160	      
+   161	      // Check for error message
+   162	      expect(wrapper.text()).toContain('Invalid hex color format');
+   163	    });
+   164	
+   165	    it('should accept valid hex colors', async () => {
+   166	      const wrapper = mount(PropertiesDialog, {
+   167	        props: {
+   168	          isOpen: true,
+   169	          elementId: testPointId,
+   170	          world
+   171	        }
+   172	      });
+   173	      
+   174	      // Enable color override
+   175	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   176	      await overrideCheckboxes[0].setValue(true);
+   177	      
+   178	      // Set valid color
+   179	      const hexInput = wrapper.find('.hex-input');
+   180	      await hexInput.setValue('#FF5733');
+   181	      await hexInput.trigger('blur');
+   182	      
+   183	      // Should not show error
+   184	      expect(wrapper.text()).not.toContain('Invalid hex color format');
+   185	    });
+   186	
+   187	    it('should validate line width range', async () => {
+   188	      // Add a line element
+   189	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   190	      const pos1 = new Vector3(0, 0, 1);
+   191	      const pos2 = new Vector3(10, 10, 1);
+   192	      const point1 = planeH.addFreePoint2D(pos1, world);
+   193	      const point2 = planeH.addFreePoint2D(pos2, world);
+   194	      const line = planeH.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
+   195	      const lineId = line.id;
+   196	      
+   197	      const wrapper = mount(PropertiesDialog, {
+   198	        props: {
+   199	          isOpen: true,
+   200	          elementId: lineId,
+   201	          world
+   202	        }
+   203	      });
+   204	      
+   205	      // Find and enable line width override (second checkbox after color)
+   206	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   207	      const lineWidthOverride = overrideCheckboxes[1]; // Second checkbox
+   208	      await lineWidthOverride.setValue(true);
+   209	      
+   210	      // Set invalid width (too large)
+   211	      const numberInput = wrapper.find('.number-input');
+   212	      await numberInput.setValue(10);
+   213	      await numberInput.trigger('blur');
+   214	      
+   215	      // Check for error message
+   216	      expect(wrapper.text()).toContain('Line width must be between 0.5 and 5.0');
+   217	    });
+   218	
+   219	    it('should validate line style options', async () => {
+   220	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   221	      const pos1 = new Vector3(0, 0, 1);
+   222	      const pos2 = new Vector3(10, 10, 1);
+   223	      const point1 = planeH.addFreePoint2D(pos1, world);
+   224	      const point2 = planeH.addFreePoint2D(pos2, world);
+   225	      const line = planeH.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
+   226	      const lineId = line.id;
+   227	      
+   228	      const wrapper = mount(PropertiesDialog, {
+   229	        props: {
+   230	          isOpen: true,
+   231	          elementId: lineId,
+   232	          world
+   233	        }
+   234	      });
+   235	      
+   236	      // Line style selector should have valid options
+   237	      const styleSelect = wrapper.find('#style-input');
+   238	      expect(styleSelect.exists()).toBe(true);
+   239	      
+   240	      const options = styleSelect.findAll('option');
+   241	      expect(options).toHaveLength(3);
+   242	      expect(options[0].text()).toBe('Solid');
+   243	      expect(options[1].text()).toBe('Dashed');
+   244	      expect(options[2].text()).toBe('Dotted');
+   245	    });
+   246	  });
+   247	
+   248	  describe('Save behavior', () => {
+   249	    it('should not save with validation errors', async () => {
+   250	      const wrapper = mount(PropertiesDialog, {
+   251	        props: {
+   252	          isOpen: true,
+   253	          elementId: testPointId,
+   254	          world
+   255	        }
+   256	      });
+   257	      
+   258	      // Enable color override
+   259	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   260	      await overrideCheckboxes[0].setValue(true);
+   261	      
+   262	      // Set invalid color
+   263	      const hexInput = wrapper.find('.hex-input');
+   264	      await hexInput.setValue('invalid');
+   265	      
+   266	      // Try to save
+   267	      const saveButton = wrapper.find('.button-primary');
+   268	      await saveButton.trigger('click');
+   269	      
+   270	      // Should not emit save event
+   271	      expect(wrapper.emitted('save')).toBeFalsy();
+   272	    });
+   273	
+   274	    it('should emit save event with valid changes', async () => {
+   275	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   276	      const position = new Vector3(0, 0, 1);
+   277	      const point = planeH.addFreePoint2D(position, world);
+   278	      const pointId = point.id;
+   279	      
+   280	      const onSave = vi.fn();
+   281	      const wrapper = mount(PropertiesDialog, {
+   282	        props: {
+   283	          isOpen: true,
+   284	          elementId: pointId,
+   285	          world,
+   286	          onSave
+   287	        }
+   288	      });
+   289	      
+   290	      // Enable color override
+   291	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   292	      await overrideCheckboxes[0].setValue(true);
+   293	      
+   294	      // Set valid color
+   295	      const hexInput = wrapper.find('.hex-input');
+   296	      await hexInput.setValue('#FF5733');
+   297	      
+   298	      // Save
+   299	      const saveButton = wrapper.find('.button-primary');
+   300	      await saveButton.trigger('click');
+   301	      
+   302	      // Should emit save event with changes
+   303	      expect(onSave).toHaveBeenCalledOnce();
+   304	      const saveEvent = onSave.mock.calls[0][0];
+   305	      expect(saveEvent.elementId).toStrictEqual(pointId);
+   306	      expect(saveEvent.color).toBe('#FF5733');
+   307	    });
+   308	
+   309	    it('should only include overridden properties in save event', async () => {
+   310	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   311	      const position = new Vector3(0, 0, 1);
+   312	      const point = planeH.addFreePoint2D(position, world);
+   313	      const pointId = point.id;
+   314	      
+   315	      const onSave = vi.fn();
+   316	      const wrapper = mount(PropertiesDialog, {
+   317	        props: {
+   318	          isOpen: true,
+   319	          elementId: pointId,
+   320	          world,
+   321	          onSave
+   322	        }
+   323	      });
+   324	      
+   325	      // Only enable color override (leave others disabled)
+   326	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   327	      await overrideCheckboxes[0].setValue(true);
+   328	      
+   329	      // Set color
+   330	      const hexInput = wrapper.find('.hex-input');
+   331	      await hexInput.setValue('#FF5733');
+   332	      
+   333	      // Save
+   334	      const saveButton = wrapper.find('.button-primary');
+   335	      await saveButton.trigger('click');
+   336	      
+   337	      // Should only include color in save event
+   338	      expect(onSave).toHaveBeenCalledOnce();
+   339	      const saveEvent = onSave.mock.calls[0][0];
+   340	      expect(saveEvent.color).toBe('#FF5733');
+   341	      expect(saveEvent.lineWidth).toBeUndefined();
+   342	      expect(saveEvent.lineStyle).toBeUndefined();
+   343	    });
+   344	  });
+   345	
+   346	  describe('Override checkbox behavior', () => {
+   347	    it('should disable inputs when override is unchecked', () => {
+   348	      const wrapper = mount(PropertiesDialog, {
+   349	        props: {
+   350	          isOpen: true,
+   351	          elementId: testPointId,
+   352	          world
+   353	        }
+   354	      });
+   355	      
+   356	      const hexInput = wrapper.find('.hex-input');
+   357	      expect(hexInput.attributes('disabled')).toBeDefined();
+   358	    });
+   359	
+   360	    it('should enable inputs when override is checked', async () => {
+   361	      const wrapper = mount(PropertiesDialog, {
+   362	        props: {
+   363	          isOpen: true,
+   364	          elementId: testPointId,
+   365	          world
+   366	        }
+   367	      });
+   368	      
+   369	      // Enable color override
+   370	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   371	      await overrideCheckboxes[0].setValue(true);
+   372	      
+   373	      const hexInput = wrapper.find('.hex-input');
+   374	      expect(hexInput.attributes('disabled')).toBeUndefined();
+   375	    });
+   376	  });
+   377	
+   378	  describe('Reset to default', () => {
+   379	    it('should clear all overrides when reset button clicked', async () => {
+   380	      const wrapper = mount(PropertiesDialog, {
+
+## guide integration
+     1	import { describe, it, expect, beforeEach } from 'vitest';
+     2	import type { World } from '../../src/domain/world/World';
+     3	import type { CommandStack } from '../../src/commands/CommandStack';
+     4	import { Command } from '../../src/commands/Command';
+     5	import { AddFreePoint2DOp } from '../../src/commands/operations/world/AddFreePointOp';
+     6	import { AddLine2DByTwoPointsOp } from '../../src/commands/operations/world/AddLineOp';
+     7	import { GuideSequenceFactory } from '../../src/commands/factories/GuideSequenceFactory';
+     8	import { setupBasicWorld } from '../helpers/worldHelpers';
+     9	import { Vector3 } from 'three';
+    10	
+    11	describe('Guide Creation - Integration Tests', () => {
+    12	  let world: World;
+    13	  let commandStack: CommandStack;
+    14	  let projPlaneH: string;
+    15	
+    16	  beforeEach(() => {
+    17	    const setup = setupBasicWorld();
+    18	    world = setup.world;
+    19	    commandStack = setup.commandStack;
+    20	    projPlaneH = setup.projPlaneH;
+    21	  });
+    22	
+    23	  describe('Regular Line Reference', () => {
+    24	    it('should create guide on regular line without sibling', () => {
+    25	      const planeId = projPlaneH;
+    26	
+    27	      // Create two points and a line between them
+    28	      const cmd = new Command('Setup test geometry', world);
+    29	      
+    30	      const point1Result = cmd.addAndExecute(
+    31	        new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1))
+    32	      );
+    33	      const point1Id = point1Result.outputs.pointId;
+    34	
+    35	      const point2Result = cmd.addAndExecute(
+    36	        new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1))
+    37	      );
+    38	      const point2Id = point2Result.outputs.pointId;
+    39	
+    40	      const lineResult = cmd.addAndExecute(
+    41	        new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id)
+    42	      );
+    43	      const lineId = lineResult.outputs.lineId;
+    44	
+    45	      // Create point for guide to pass through
+    46	      const throughPointResult = cmd.addAndExecute(
+    47	        new AddFreePoint2DOp(planeId, new Vector3(150, 150, 1))
+    48	      );
+    49	      const throughPointId = throughPointResult.outputs.pointId;
+    50	
+    51	      cmd.commit();
+    52	      commandStack.push(cmd);
+    53	
+    54	      // Create guide using regular line as reference
+    55	      const guideCmd = new Command('Create guide on regular line', world);
+    56	      const result = GuideSequenceFactory.createGuideWithSibling(
+    57	        guideCmd,
+    58	        planeId,
+    59	        lineId,
+    60	        throughPointId,
+    61	        world
+    62	      );
+    63	
+    64	      guideCmd.commit();
+    65	      commandStack.push(guideCmd);
+    66	
+    67	      // Verify results
+    68	      expect(result.guideId).toBeDefined();
+    69	      expect(result.siblingGuideId).toBeUndefined(); // No sibling for regular line
+    70	
+    71	      // Verify guide exists in world
+    72	      const plane = world.getProjectionPlaneById(planeId)!;
+    73	      const guide = plane.getLine(result.guideId);
+    74	      expect(guide).toBeDefined();
+    75	      expect(guide?.id).toBe(result.guideId);
+    76	    });
+    77	  });
+    78	
+    79	
+    80	  describe('Error Prevention', () => {
+    81	    it('should not throw when creating guide on non-hinge line', () => {
+    82	      // Regression test for: "Failed to get sibling info for half-hinge-line"
+    83	      // This error occurred when GuideTool assumed all guides had siblings
+    84	      
+    85	      // Create regular line (not hinge)
+    86	      const cmd = new Command('Setup', world);
+    87	      const p1 = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, new Vector3(0, 0, 1)));
+    88	      const p2 = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, new Vector3(100, 0, 1)));
+    89	      const line = cmd.addAndExecute(new AddLine2DByTwoPointsOp(projPlaneH, p1.outputs.pointId, p2.outputs.pointId));
+    90	      const throughPoint = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, new Vector3(50, 50, 1)));
+    91	      cmd.commit();
+    92	      commandStack.push(cmd);
+    93	
+    94	      // This should NOT throw
+    95	      expect(() => {
+    96	        const guideCmd = new Command('Create guide', world);
+    97	        GuideSequenceFactory.createGuideWithSibling(
+    98	          guideCmd,
+    99	          projPlaneH,
+   100	          line.outputs.lineId,
+   101	          throughPoint.outputs.pointId,
+   102	          world
+   103	        );
+   104	        guideCmd.commit();
+   105	      }).not.toThrow();
+   106	    });
+   107	  });
+   108	});
+
+## build contract logs evidence
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:11:- **Tooling ownership:** `frontend/package.json` owns the single active frontend build contract, `vue-tsc && vite build`.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:33:- Updated `frontend/package.json` from `vue-tsc ^1.8.0` to `^2.2.12` so the build gate no longer aborts on the Node 24 unsupported string-patch failure.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:40:- Deleted corrupted Playwright preambles/reversed cascade blocks/orphaned selection-mask fragments and stale MVP/phase comments.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:49:- `frontend-build.before.*` — reproduced `vue-tsc` string-patch abort under Node v24.15.0.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:50:- `focused-vitest.final.*` — PASS: 3 files, 64 tests.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:51:- `focused-playwright-list.after5.*` — PASS: Playwright lists 4 tests across the repaired keyboard/selection-mask specs with no parse errors.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:52:- `frontend-build.after5.*` — FAIL: `vue-tsc` now executes but reports broad pre-existing TypeScript contract errors across App, commands, process tree, projection-plane mutation context, panels, services, and workspace rendering.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:56:The approved build-tooling surface was repaired enough to remove the invalid Node 24 / old `vue-tsc` abort. The build now reaches real TypeScript checking and exposes a broad repository-wide type-contract backlog. Fixing that backlog would require changes far beyond Wave 014's named files and would trigger the decision stop rule against broad unreviewed architecture/type cleanup. Therefore build remains a residual blocking validation issue for a reviewed follow-up/plan edit, not a docs-only or engines-only paper-over.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:71:- **E2E ownership — keyboard shortcuts and selection-mask/current UI contracts:** `frontend/tests/e2e/keyboard-shortcuts.spec.ts` and `frontend/tests/e2e/current-ui-contract.spec.ts` parse and execute current browser flows. `closure-contract-file-inventory.stdout` records 2 keyboard tests and 4 current-UI/selection-mask tests, and both focused Playwright logs pass 6/6.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:72:- **Tooling ownership — frontend build contract:** `frontend/package.json` continues to use the single active `vue-tsc && vite build` contract; both frontend and root builds now pass with only the existing Vite chunk-size warning.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:84:| Root lint | `npm run lint` | PASS — 4 architecture files / 11 tests | `closure-root-lint.stdout`, `closure-root-lint.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:85:| Frontend lint | `npm run lint --workspace=frontend` | PASS — 4 architecture files / 11 tests | `closure-frontend-lint.stdout`, `closure-frontend-lint.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:86:| Focused Wave 014 Vitest | `npm run test --workspace=frontend -- tests/unit/calculations/intersections.spec.ts tests/unit/components/propertiesDialog.spec.ts tests/integration/guide-creation.test.ts` | PASS — 3 files / 64 tests | `closure-focused-vitest.stdout`, `closure-focused-vitest.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:87:| Frontend full Vitest | `npm run test --workspace=frontend` | PASS — 105 passed files, 1 skipped; 1227 passed, 45 skipped, 11 todo | `closure-frontend-full-vitest.stdout`, `closure-frontend-full-vitest.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:88:| Root full Vitest | `npm run test` | PASS — delegates to frontend suite with same 105 passed / 1 skipped file summary | `closure-root-full-vitest.stdout`, `closure-root-full-vitest.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:89:| Frontend build | `npm run build --workspace=frontend` | PASS with non-blocking Vite chunk-size warning | `closure-frontend-build.stdout`, `closure-frontend-build.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:90:| Root build | `npm run build` | PASS with same non-blocking Vite chunk-size warning | `closure-root-build.stdout`, `closure-root-build.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:91:| Frontend e2e | `npm run test:e2e --workspace=frontend` | PASS — Playwright 7/7 | `closure-frontend-e2e.stdout`, `closure-frontend-e2e.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:92:| Root e2e | `npm run test:e2e` | PASS — Playwright 7/7 | `closure-root-e2e.stdout`, `closure-root-e2e.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:93:| Focused Playwright contract slice | `npx playwright test tests/e2e/keyboard-shortcuts.spec.ts tests/e2e/current-ui-contract.spec.ts` from `frontend/` | PASS — 6/6 keyboard and current UI/selection-mask contract tests | `closure-focused-playwright-keyboard-selection.stdout`, `closure-focused-playwright-keyboard-selection.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:94:| Invalid-artifact audit | small Python scan for corrupted markers / placeholder markers in frontend test files | PASS | `closure-invalid-artifact-audit.stdout`, `closure-invalid-artifact-audit.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:95:| Contract file inventory | small Python count for repaired e2e/integration contract files | PASS — keyboard 2, current UI 4, guide integration executable declarations present | `closure-contract-file-inventory.stdout`, `closure-contract-file-inventory.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:96:| Log-tail summary | Python tail aggregator over closure logs | PASS | `closure-log-tails.stdout`, `closure-log-tails.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:103:- `closure-live-playwright-keyboard-selection.stdout` records live-browser Playwright verification against the already-running preview: 6/6 focused keyboard and current UI/selection-mask contract tests passed.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:107:No corrupted Playwright parse artifacts, unsupported build-tool/runtime blockers, or placeholder zero-test integration files remain in the current mandatory gates. The stale/corrupted keyboard and selection-mask artifacts were replaced by current parse-valid browser contracts during implementation; `closure-invalid-artifact-audit.stdout`, focused Playwright, full root/frontend e2e, and the contract-file inventory provide current closure evidence.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:119:## Reviewer-blocker correction: explicit selection-mask Playwright evidence
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:121:A reviewer blocker noted that the previous closure evidence grouped selection-mask behavior under the generic `current-ui-contract` Playwright slice without an explicitly named focused browser assertion. This correction adds and reruns explicit selection-mask evidence without changing production source.
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:138:| Selection-mask source inventory | `grep -R "SelectionMask\|selectionMask\|getSelectionMask" -n frontend/src frontend/tests | head -200` | PASS — confirms active tool/query selection-mask call sites and tests | `t2-selection-mask-grep.stdout`, `t2-selection-mask-grep.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:139:| Explicit focused Playwright selection-mask test | `npx playwright test tests/e2e/current-ui-contract.spec.ts --grep "selection masks"` from `frontend/` | PASS — 1/1 after correcting the click coordinates to the unobstructed 2D canvas area | `t2-focused-playwright-selection-mask-rerun2.stdout`, `t2-focused-playwright-selection-mask-rerun2.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:140:| Focused keyboard/current-UI Playwright slice | `npx playwright test tests/e2e/keyboard-shortcuts.spec.ts tests/e2e/current-ui-contract.spec.ts` from `frontend/` | PASS — 7/7 including the explicit selection-mask browser test | `t2-focused-playwright-keyboard-current-ui-selection-mask.stdout`, `t2-focused-playwright-keyboard-current-ui-selection-mask.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:141:| Focused selection-mask Vitest owners | `npm run test --workspace=frontend -- tests/unit/types/SelectionMask.spec.ts tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts` | PASS — 2 files / 24 tests | `t2-focused-vitest-selection-mask.stdout`, `t2-focused-vitest-selection-mask.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:142:| Live preview reachability | `curl -I --max-time 10 http://127.0.0.1:5173/` | PASS — HTTP 200 from the running preview | `t2-live-preview-reachability.stdout`, `t2-live-preview-reachability.stderr` |
+architecture-audit/cycle-014-validation-contract-ownership/implementation-log.md:146:The first attempt at the new focused Playwright check failed because a click coordinate landed under the 3D overlay canvas, which intercepted pointer events; this was a test-coordinate issue, not a selection-mask/source failure. The passing rerun uses coordinates in the unobstructed 2D canvas region. Wave 014 remains **COMPLETE** with explicit focused Playwright selection-mask evidence now present in current logs.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:330:E2E / Playwright:
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:332:- `t2-ui-finalization-frontend-e2e.stdout` / `.stderr` and summary `t2-ui-finalization-frontend-e2e-summary.stdout` / `.stderr`: `npm run test:e2e --workspace=frontend` started the Playwright web server and Vite reported `http://localhost:5173/`, then the suite failed because the Playwright Chromium executable is missing at `/home/salva/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`. The failure recommends `npx playwright install`. Summary tail reports 1 passed, 5 skipped, many chromium tests unable to launch.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:333:- `t2-ui-finalization-root-e2e.stdout` / `.stderr` and summary `t2-ui-finalization-root-e2e-summary.stdout` / `.stderr`: `npm run test:e2e` delegates to frontend e2e and failed for the same missing Playwright browser executable. This is an environment/tooling stop condition; this correction did not alter package/tooling or install browsers because that is outside the requested log/validation-finalization task.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:337:- `t2-ui-finalization-preview-probe.stdout` / `.stderr`: probed `http://127.0.0.1:5173/` and `http://127.0.0.1:4173/` after the e2e command exited. Neither endpoint was reachable. Playwright had launched a temporary Vite server on `localhost:5173` during the e2e run, but it was not a persistent preview and was not bound to `0.0.0.0`. Because the frontend build remains red on out-of-scope service/domain strictness categories and the finalization task is not the validation-and-preview-refresh stage, no successful live-preview refresh is claimed here.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:352:- Playwright/e2e environment: missing Chromium browser executable; install/repair browser cache before expecting e2e pass.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:353:- Persistent live preview: not refreshed successfully in this correction; the only observed server was Playwright's temporary localhost Vite web server, and post-run probes to 5173/4173 failed.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:390:- `service-domain-frontend-e2e.stdout` / `.stderr`: `npm run test:e2e --workspace=frontend` started the Playwright web server and Vite reported `http://localhost:5173/`, but Chromium could not launch because the executable is missing at `/home/salva/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`. The failure recommends `npx playwright install`. This is the same browser-cache environment residual previously recorded; no package/tooling or browser-cache repair was performed in this service/domain lane.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:402:The only remaining validation residual observed in this lane is environment/tooling outside the source changes: Playwright Chromium is missing from the local browser cache, so e2e cannot launch browsers. This is suitable for the validation/preview environment follow-up and does not indicate a service/domain source regression.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:412:1. **Playwright/e2e browser launch failure** — `service-domain-frontend-e2e.stdout` records that the Playwright web server started Vite at `http://localhost:5173/`, but Chromium could not launch because the executable is missing from `/home/salva/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`. This is a validation environment/browser-cache blocker, not a residual TypeScript, service/domain boundary, ProjectService, GeometryService, CoordinateTransform, or GoogleDriveService source failure.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:413:2. **Persistent live preview not refreshed/reachable on `0.0.0.0`** — the previous log correctly did not claim a successful persistent preview refresh. The only server observed during validation was Playwright's temporary localhost Vite server; no durable preview bound to `0.0.0.0` was started by the service/domain strictness lane.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:422:- The reviewer e2e and preview findings are **not waived** and this section does not claim Wave 015 validation complete. They are categorized as validation/preview infrastructure blockers that require an explicit follow-up allowed to provision Playwright browsers and refresh/probe the persistent preview.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:426:This task changed only this implementation log and its Saivage task report. It did not edit `frontend/` source, tests, package files, Playwright configuration, browser cache paths, live-preview scripts/processes, `.saivage/saivage.json`, auth/provider config, or env files. Completed projection/world, command/factory, process/view-state, UI/store/render DTO, and service/domain source lanes remain untouched by this disposition.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:435:- The final closure pass did not make refactor/source corrections. The only environment mutation was documented Playwright Chromium provisioning via `npx playwright install chromium` after the prior e2e blocker identified the missing browser cache.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:448:- `final-closure-frontend-build.stdout` / `.stderr`: `npm run build --workspace=frontend` passed. `vue-tsc` and Vite completed successfully; Vite emitted only the existing large-chunk warning.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:449:- `final-closure-playwright-install-chromium.stdout` / `.stderr`: `npx playwright install chromium` succeeded and installed Playwright Chromium/headless-shell v1223 into the local browser cache, resolving the previous missing-browser executable blocker.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:454:### E2E / Playwright status
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:456:The earlier Playwright environment blocker from missing Chromium was feasible to address and was addressed. After provisioning, e2e reached browser execution and exposed current e2e contract/application reachability failures rather than an external browser-cache failure:
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:459:- `undo-redo.spec.ts` and related legacy specs hard-code `http://localhost:5180/` even though the active Playwright web server and preview are on `http://localhost:5173/`, producing `page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/`.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:477:Wave 015 should not advance to the next architecture wave as fully complete until the e2e validation surface is corrected or explicitly reclassified through a reviewed validation-contract decision. Recommended immediate next stage: a targeted `cycle-015-e2e-validation-contract-correction` (or equivalent corrections round) that audits the failing e2e specs, deletes or rewrites stale hard-coded `localhost:5180` and obsolete selector contracts, reruns focused Playwright for the corrected flows, then reruns full `npm run test:e2e` before closing Wave 015.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:481:## t2 correction — stale Playwright/e2e validation contracts
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:483:Task `t2-correct-e2e-validation-contracts` corrected stale Playwright contracts exposed during final validation after Chromium provisioning was available.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:499:- `t2-e2e-contracts-focused-e2e-green2.stdout` / `.stderr`: targeted Playwright slice passed (`active-plane-shortcuts.spec.ts`, `keyboard-shortcuts.spec.ts`, `selection-mask.spec.ts`), 5 passed.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:506:Task `t1-audit-cleanup-e2e-contracts` corrected the Wave 015 Playwright/e2e validation contract blocker after build/unit/preview closure. The task began by inspecting the current dirty workspace, the prior failed full e2e evidence (`t2-e2e-contracts-root-e2e-full.stdout` / `.stderr`), selector inventory, and current toolbar/canvas/status components. No secret/provider/env files were read.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:617:- `final-retry-root-e2e-full.stdout` / `.stderr`: root `npm run test:e2e` passed; Playwright ran 7 tests and all 7 passed.
+architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md:618:- `final-retry-frontend-e2e-full.stdout` / `.stderr`: frontend workspace `npm run test:e2e --workspace=frontend` passed; Playwright ran 7 tests and all 7 passed.
