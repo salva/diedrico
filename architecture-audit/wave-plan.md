@@ -661,3 +661,125 @@ The result should still be green root/frontend Vitest, build, and e2e, but the p
 
 Depends on Waves 001–013 and should precede any subsequent source refactor wave, because it establishes trustworthy validation ownership for future changes.
 
+---
+
+## Wave 015 — Converge frontend TypeScript contracts around owned boundaries
+
+**Scope**
+
+This wave is bounded to the exact active TypeScript build backlog produced by `architecture-audit/cycle-014-validation-contract-ownership/validation/frontend-build.after5.stdout` and only the direct type/contract-owner dependencies required to eliminate those exact errors honestly. It may touch source/tests/package metadata only where a current build error or its direct owner contract requires convergence of the following boundaries; nearby files, adjacent cleanup, naming/formatting improvements, and unrelated architecture normalization are out of scope:
+
+1. **App shell and service-port boundary**
+   - `frontend/src/App.vue`
+   - auth/project/Drive service port definitions and Vite ambient env typing if present/needed
+   - app lifecycle tests where behavior changes
+2. **Command descriptor and operation boundary**
+   - `frontend/src/commands/factories/**`
+   - `frontend/src/services/factories/**`
+   - `frontend/src/commands/operations/**`
+   - operation descriptor/result/serialization types
+   - focused command/factory/serialization tests
+3. **Process-tree action boundary**
+   - `frontend/src/domain/processTree/**`
+   - process-tree command operations
+   - process store and panels that render action/process-node data
+   - focused process-tree/panel tests where behavior changes
+4. **Projection-plane/world context boundary**
+   - `frontend/src/domain/world/World.ts`
+   - `frontend/src/domain/world/projectionPlane/**`
+   - 2D element realization signatures and mutation/realization context ports
+   - world operations that add/remove/realize projection-plane elements
+   - focused domain tests for projection-plane context behavior
+5. **UI rendering/store DTO boundary**
+   - `frontend/src/components/dialogs/**`
+   - `frontend/src/components/toolbars/**`
+   - `frontend/src/components/workspace/SvgCanvas.vue`
+   - hover/view/tool stores and rendering primitive DTO definitions
+   - focused component/rendering tests where behavior changes
+6. **Service/domain strictness cleanup required by build**
+   - `frontend/src/services/**`
+   - `frontend/src/composables/**`
+   - `frontend/src/domain/calculations/**`
+   - `frontend/src/domain/world/{Circle,Line,Segment}.ts`
+
+If a file has no current `vue-tsc` error and is not a direct owner dependency of a build-error fix, leave it for the existing ordered waves. If a fix reveals a redesign not necessary to make the current build pass honestly, stop for a reviewed delta/mini-cycle instead of expanding Wave 015.
+
+**Target outcome**
+
+The frontend source tree compiles for the current `frontend-build.after5.stdout` error set because cross-layer contracts are explicit and owned, not because errors were hidden. `npm run build --workspace=frontend` succeeds using the existing `vue-tsc && vite build` script, and any root build path succeeds where defined. Each of the six scope boundaries has a concise ownership note in the implementation log describing authoritative types/interfaces after the wave, stale exports/fields/call sites deleted, behavior-bearing tests, and residual architectural questions deferred to future waves.
+
+The result is a trustworthy TypeScript/build gate that future architecture waves and the deferred Wave 014 validation closure can rely on.
+
+**Explicit DELETE list**
+
+Delete stale surfaces proven by the current build log and only where deletion directly resolves a current error, including but not limited to:
+
+- removed action model exports and call sites: `ConstructiveAction`, `ActionType`, stale `Action.id`, `Action.infeasible`, `Action.infeasibilityReason`, `Action.actionType`, and `Action.timestamp` assumptions.
+- stale process-node field reads (`inputs`, `outputs`, `name`) where the current discriminated node model does not guarantee them.
+- stale command operation serialization fields that are not owned by the class, including `circleId`/`tangentIndex` on parallel/perpendicular line operations if still present.
+- stale `JsonValue | undefined` descriptor plumbing where a typed descriptor or validation guard is the correct boundary.
+- stale service singleton imports such as `projectService` where only `ProjectService` is exported.
+- wrong-cased or removed imports such as `../domain/calculations/intersections`, `Plane3DCoordinateSystem`, and `Element2D` from the wrong module.
+- stale renderer/store API reads such as `ProjectionPlane.getArc`, `Primitive.geometry`, missing hover `temporary`, and removed tool-store methods.
+- frontend CommonJS `require` usage.
+- compatibility wrappers, synthetic fields, broad `any`, `@ts-ignore`, `@ts-expect-error`, custom build allowlists, alternate build scripts, or TypeScript config relaxations added only to force build success.
+- dead helper code or tests whose only purpose is to preserve stale type surfaces revealed by the current build errors.
+
+**Anti-overreach constraints**
+
+- Build-log bound: only fix or delete errors from the current `vue-tsc` build and direct contract-owner dependencies that emerge while fixing them.
+- Boundary-first: for repeated errors in one category, fix the owner contract once instead of casting each call site.
+- No compatibility theater: do not add removed fields back to domain models solely for stale UI/store code; align consumers to current authoritative contracts or delete dead paths.
+- No suppression: do not weaken `tsconfig`, disable strict/unused checks, introduce blanket `as any`, add ignore comments, or create a parallel build path.
+- Expansion stop rule: if a category requires conceptual redesign beyond honest closure of current build errors, stop and write a reviewed delta/mini-cycle proposal before continuing.
+- Residual handling: non-build architectural findings discovered during Wave 015 are future-wave candidates only and must not authorize unrelated API normalization or cleanup inside Wave 015.
+
+**Wave 014 repair protection**
+
+Wave 015 depends on and preserves the Wave 014 scoped repairs. Do not revert or reopen these surfaces unless a specific current build error is causally traced to them and documented in the Wave 015 implementation log:
+
+- `frontend/tests/unit/calculations/intersections.spec.ts`
+- `frontend/src/components/dialogs/PropertiesDialog.vue`
+- `frontend/tests/unit/components/propertiesDialog.spec.ts`
+- `frontend/tests/integration/guide-creation.test.ts`
+- `frontend/tests/e2e/keyboard-shortcuts.spec.ts`
+- `frontend/tests/e2e/selection-mask.spec.ts`
+- the `frontend/package.json` `vue-tsc` build-gate upgrade
+
+**Success criteria**
+
+- `npm run build --workspace=frontend` passes using the existing `vue-tsc && vite build` script.
+- Root build passes where defined; if root build is absent or delegates differently, the implementation log records the exact root command status and package-script evidence.
+- All six build-failure boundary categories from `scope-check.md` are represented in the implementation ownership map, with explicit fixed/deleted status for current errors and future-wave notes for non-build discoveries. Residual status cannot include active TypeScript build errors.
+- No type-safety downgrade, parallel build script, allowlist, ignore comment, or compatibility shim is introduced to silence `vue-tsc`.
+- Focused tests cover behavior-bearing changes in command/operation descriptors, process-tree action rendering, projection-plane/world context semantics, app/service ports, and rendering/store DTOs. Pure dead-import/dead-call-site deletions may rely on build plus existing tests.
+- The implementation log records any architectural issues discovered that should become future waves, without expanding Wave 015 beyond current build-contract ownership.
+- No committed Wave 014 scoped repair is reverted or reopened unless the direct causal-link rule above is satisfied.
+
+**Validation requirements**
+
+1. Capture a fresh failing `npm run build --workspace=frontend` before edits to ensure the backlog has not changed.
+2. Run focused Vitest for every behavior-bearing boundary changed.
+3. Run `npm run lint` at root and `npm run lint --workspace=frontend` where defined.
+4. Run root and frontend full Vitest.
+5. Run root and frontend build; build success is mandatory.
+6. Run frontend e2e and root e2e where defined because UI/app/service/rendering contracts may change.
+7. Refresh the live preview on `0.0.0.0:5173`, capture HTTP 200, and run Playwright MCP/live smoke through project creation/rendering/selection enough to prove the compiled app starts.
+
+All stdout/stderr must be captured under the Wave 015 validation directory. If any command is undefined at root, record exact package-script evidence instead of silently skipping.
+
+**Risks**
+
+- Superficial casts could pass build while worsening architecture; implementation and review must reject suppressions and compatibility shims not justified by a real boundary contract.
+- Projection-plane/world context and process-tree categories may still require a larger redesign; enforce the expansion stop rule rather than smuggling later waves into Wave 015.
+- Process-tree UI may be stale/dead; static-search usage before preserving any panel/store path, and delete dead paths rather than rebuilding obsolete fields.
+- Command descriptor fixes may alter persistence/undo behavior; run focused command serialization/undo tests for touched operations and e2e if user-visible flows change.
+- Wave 015 delays Wave 014 closure, but it exists only because Wave 014 cannot honestly close while the active build gate is red.
+
+**Dependencies**
+
+Depends on Wave 014 implementation commits `1b1f37cbbb8fb8da96645c40160fce0384a5b316` and `806e1ac754899d0ad6d0322afd6b4a35a77d0f12`, because those scoped repairs and the `vue-tsc` update reveal the real build backlog. Must complete before `cycle-014-validation-and-preview-refresh`, because Wave 014 success criteria require root/frontend build success and live preview refresh.
+
+**Return-to-Wave-014 closure plan**
+
+After Wave 015 completes, do not proceed to an unrelated refactor wave. Re-enter `cycle-014-validation-and-preview-refresh` and run the full Wave 014 validation cadence with stable logs against the source tree containing both Wave 014 scoped validation repairs and Wave 015 build/type-contract repairs: root/frontend lint where defined, focused and full Vitest, root/frontend build, root/frontend e2e/Playwright, live preview refresh on `0.0.0.0:5173` with HTTP reachability probe, and Playwright MCP/live checks for the repaired keyboard-shortcut and selection-mask flows. Close Wave 014 only if those mandatory gates pass.
