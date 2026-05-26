@@ -7,8 +7,8 @@
  * - Paper coordinates (after viewport transform)
  * - Plane intrinsic coordinates (u, v in projection plane basis)
  * 
- * This service is separate from PaperService because:
- * - PaperService works at the paper level (like a plotter)
+ * This service is separate from canvas presentation selection because:
+ * - presentation selectors work at the paper/read-model level
  * - InputService handles the inverse transformations for user input
  */
 

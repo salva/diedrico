@@ -8,7 +8,7 @@
 
 import type { Vector3 } from 'three';
 import type { World } from '@/domain/world/World';
-import type { Paper } from '@/domain/presentation/Paper';
+import type { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import type { SelectionMask } from '@/types/SelectionMask';
 import type { useToolStore } from '@/stores/toolStore';
 import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
@@ -22,8 +22,9 @@ export interface ToolContext {
   canvasCoords: { x: number; y: number };
   commandSink: ToolCommandSink;
   world: World;
-  paper: Paper;
+  interactionQuery: CanvasInteractionQuery;
   paperToPlaneTransform: any;
+  viewport: { zoom: number; panX: number; panY: number };
   toolStore: ReturnType<typeof useToolStore>;
 }
 

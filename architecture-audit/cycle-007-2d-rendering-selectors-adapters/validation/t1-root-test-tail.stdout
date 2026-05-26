@@ -1,0 +1,161 @@
+[ToggleEncapsulationOp.apply] subprocessId: node1779761518091nfvurpt1t
+[ProcessTree.toggleSubprocessEncapsulation] subprocessId: node1779761518091nfvurpt1t, true → false
+[ToggleOutputOp.apply] nodeId: node1779761518091nfvurpt1t
+[ProcessTree.toggleOutput] subprocess node1779761518091nfvurpt1t, true → false
+
+ ✓ tests/unit/domain/labelGenerator.spec.ts  (20 tests) 34ms
+ ✓ tests/unit/domain/segment.spec.ts  (10 tests) 32ms
+ ✓ tests/unit/composables/hoverHighlight.spec.ts  (11 tests) 15ms
+ ✓ tests/unit/calculations/perpendiculars.spec.ts  (12 tests) 13ms
+ ✓ tests/unit/stores/toolStore.spec.ts  (15 tests) 17ms
+ ✓ tests/unit/commands/createCircle.spec.ts  (4 tests) 28ms
+ ✓ tests/unit/utils/formatUtils.spec.ts  (21 tests) 70ms
+ ✓ tests/unit/commands/createFreePoint.spec.ts  (8 tests | 2 skipped) 64ms
+ ✓ tests/unit/commands/createLine.spec.ts  (4 tests) 25ms
+ ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 11ms
+stdout | tests/unit/rectangleGrid.test.ts > Rectangle Grid Utilities > should clip segment fully inside rectangle
+[clipSegmentToRectangle] First segment debug:
+  Segment: { start: { u: 2, v: 5 }, end: { u: 8, v: 5 } }
+  dx: 6 dy: 0
+  Edge 0: corner1=(0.00, 0.00) corner2=(10.00, 0.00)
+    edge=(10.00, 0.00) normal=(0.00, 10.00)
+    dist1=50.0000 denom=0.0000
+    -> Parallel and inside/on edge
+  Edge 1: corner1=(10.00, 0.00) corner2=(10.00, 10.00)
+    edge=(0.00, 10.00) normal=(-10.00, 0.00)
+    dist1=80.0000 denom=-60.0000
+    t=1.3333
+    -> Leaving: tMax 1.0000 -> 1.0000
+  Edge 2: corner1=(10.00, 10.00) corner2=(0.00, 10.00)
+    edge=(-10.00, 0.00) normal=(0.00, -10.00)
+    dist1=50.0000 denom=0.0000
+    -> Parallel and inside/on edge
+  Edge 3: corner1=(0.00, 10.00) corner2=(0.00, 0.00)
+    edge=(0.00, -10.00) normal=(10.00, 0.00)
+    dist1=20.0000 denom=60.0000
+    t=-0.3333
+    -> Entering: tMin 0.0000 -> 0.0000
+  Final: tMin=0.0000 tMax=1.0000 - ACCEPTED
+
+stdout | tests/unit/rectangleGrid.test.ts > Rectangle Grid Utilities > should generate grid for axis-aligned rectangle
+[generateClippedGrid] Bounds: { minU: 0, maxU: 10, minV: 0, maxV: 10 }
+[generateClippedGrid] Rectangle corners: [ { u: 0, v: 0 }, { u: 10, v: 0 }, { u: 10, v: 10 }, { u: 0, v: 10 } ]
+[generateClippedGrid] Extended bounds: u=[ -0.1 , 10.1 ] v=[ -0.1 , 10.1 ]
+[generateClippedGrid] divisions: 4
+[generateClippedGrid] U-parallel lines clipped: 4
+[generateClippedGrid] V-parallel lines clipped: 4
+[generateClippedGrid] Total segments: 8
+
+ ✓ tests/unit/commands/createSegment.spec.ts  (4 tests) 24ms
+ ✓ tests/unit/stores/processTreeStore.spec.ts  (13 tests) 32ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 40ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 41ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 68ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 32ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 11ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 13ms
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (6 tests) 18ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 23ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 106ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 23ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 4ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (1 test) 5ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 12ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 3ms
+
+ Test Files  4 failed | 90 passed | 1 skipped (95)
+      Tests  16 failed | 1164 passed | 45 skipped | 11 todo (1236)
+   Start at  02:11:37
+   Duration  27.92s (transform 6.96s, setup 17ms, collect 32.46s, tests 4.47s, environment 100.58s, prepare 19.71s)
+
+---ERR---
+     71| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:82:40
+     80|       
+     81|       await wrapper.find('.dialog-overlay').trigger('click');
+     82|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     83|     });
+     84| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:95:40
+     93|       
+     94|       await wrapper.find('.button-secondary').trigger('click');
+     95|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     96|     });
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:295:39
+    293|       
+    294|       // Should emit save event with changes
+    295|       expect(wrapper.emitted('save')).toBeTruthy();
+       |                                       ^
+    296|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    297|       expect(saveEvent.elementId).toStrictEqual(pointId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+TypeError: Cannot read properties of undefined (reading 'color')
+ ❯ tests/unit/components/propertiesDialog.spec.ts:329:24
+    327|       // Should only include color in save event
+    328|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    329|       expect(saveEvent.color).toBe('#FF5733');
+       |                        ^
+    330|       expect(saveEvent.lineWidth).toBeUndefined();
+    331|       expect(saveEvent.lineStyle).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

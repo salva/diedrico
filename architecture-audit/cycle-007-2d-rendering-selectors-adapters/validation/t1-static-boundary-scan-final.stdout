@@ -1,0 +1,47 @@
+--- forbidden deleted/legacy tokens in active rendering paths ---
+--- SvgCanvas forbidden raw rendering/query/grid tokens ---
+--- Paper raw-domain/import/hit scan ---
+6: * selector/query layer; this module intentionally has no World dependency.
+--- renderer adapter domain import scan ---
+--- UI command construction guard ---
+--- Wave 008 guard ---
+--- diff names ---
+.saivage/plan.json
+.saivage/stages/baseline-fresh-analysis/reports/t1-inventory-and-domain.json
+.saivage/stages/baseline-fresh-analysis/reports/t2-architecture-quality-risk.json
+.saivage/stages/cycle-001-decision/reports/t1-write-wave-001-decision.json
+.saivage/stages/cycle-002-fresh-scout-proposals/reports/t2-review-stage-artifacts-retry-01.json
+.saivage/stages/cycle-003-review-round-01/reports/t1-review-wave-003-proposals.json
+.saivage/stages/cycle-003-review-round-01/reports/t2-correct-dynamic-planes-proposal-language.json
+.saivage/stages/cycle-003-review-round-01/reports/t3-review-b1-correction.json
+.saivage/stages/cycle-004-fresh-scout-proposals/tasks.json
+.saivage/stages/cycle-005-decision/reports/t1-write-wave-005-decision.json
+.saivage/stages/cycle-005-implement-process-tree-dependency-ownership/reports/t3-correct-deletion-sequence-coverage.json
+.saivage/stages/wave-plan-draft/reports/t1-draft-wave-plan.json
+architecture-audit/cycle-001-invert-world-application-boundary/proposals/proposal-direct.md
+architecture-audit/cycle-001-invert-world-application-boundary/proposals/proposal-restructure.md
+architecture-audit/cycle-001-invert-world-application-boundary/reviews/corrections-round-01-note.md
+architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/proposals/proposal-direct.md
+architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/proposals/proposal-restructure.md
+architecture-audit/cycle-005-process-tree-dependency-ownership/validation/live-preview.stderr
+architecture-audit/cycle-005-process-tree-dependency-ownership/validation/live-preview.stdout
+architecture-audit/cycle-006a-canvas-tool-command-controllers/decision.md
+architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t1-live-preview.stdout
+frontend/src/commands/operations/paper/README.md
+frontend/src/components/workspace/SvgCanvas.vue
+frontend/src/domain/presentation/Paper.ts
+frontend/src/services/InputService.ts
+frontend/src/services/PaperService.ts
+frontend/src/services/RenderService.ts
+frontend/src/services/SVGRenderer.ts
+frontend/src/tools/ArgumentCollectorTool.ts
+frontend/src/tools/ITool.ts
+frontend/tests/unit/application/canvasToolControllers.spec.ts
+frontend/tests/unit/domain/paperHitTesting.spec.ts
+frontend/tests/unit/selectionMask.spec.ts
+frontend/tests/unit/services/paperService.spec.ts
+frontend/tests/unit/services/projectionDisplay.spec.ts
+frontend/tests/unit/services/renderService.spec.ts
+frontend/tests/unit/tools/CircleTool.spec.ts
+frontend/tests/unit/tools/pointTool.spec.ts
+frontend/tests/unit/tools/toolValidation.spec.ts

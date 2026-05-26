@@ -9,7 +9,7 @@ import { PointTool } from '@/tools/PointTool';
 import { IntersectionTool } from '@/tools/IntersectionTool';
 import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
 import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
-import { Paper } from '@/domain/presentation/Paper';
+import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import type { ToolContext } from '@/tools/ITool';
 import type { ToolCommandSink, ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
 import type { ArgumentValue } from '@/types/ToolArgumentCollector';
@@ -26,8 +26,9 @@ function makeToolContext(overrides: Partial<ToolContext>): ToolContext {
     canvasCoords: overrides.canvasCoords ?? { x: 0, y: 0 },
     commandSink: overrides.commandSink!,
     world: overrides.world!,
-    paper: overrides.paper ?? new Paper(),
-    paperToPlaneTransform: undefined,
+    interactionQuery: overrides.interactionQuery ?? new CanvasInteractionQuery([]),
+    paperToPlaneTransform: overrides.paperToPlaneTransform,
+    viewport: overrides.viewport ?? { zoom: 1, panX: 0, panY: 0 },
     toolStore: {} as any,
   };
 }
@@ -198,8 +199,8 @@ describe('Wave 006a canvas/tool command controllers', () => {
       startFreePointMove: vi.fn(() => ({ preview: vi.fn(() => ({ success: true })), commit: vi.fn(() => ({ success: true })), cancel: vi.fn() })),
       updateElementStyle: vi.fn(() => ({ success: true }))
     };
-    const paper = new Paper();
-    vi.spyOn(paper, 'hitTest')
+    const interactionQuery = new CanvasInteractionQuery([]);
+    vi.spyOn(interactionQuery, 'hitTest')
       .mockReturnValueOnce({ elementId: circle.id } as any)
       .mockReturnValueOnce({ elementId: external.id } as any)
       .mockReturnValueOnce({ elementId: refLine.id } as any)
@@ -207,7 +208,8 @@ describe('Wave 006a canvas/tool command controllers', () => {
       .mockReturnValueOnce({ elementId: refLine.id } as any)
       .mockReturnValueOnce({ elementId: circle.id } as any);
 
-    const base = { planeId: plane.id, world, paper, commandSink: sink };
+    const base = { planeId: plane.id, world, interactionQuery,
+      viewport: { zoom: 1, panX: 0, panY: 0 }, commandSink: sink };
     const throughTool = new TangentLineToCircleThroughPointTool();
     throughTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(0, 0, 1) }));
     throughTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(10, -5, 1) }));
@@ -257,7 +259,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
       planeId,
       planeCoords: new Vector3(21, 22, 1),
       world,
-      paper: new Paper(),
+      interactionQuery: new CanvasInteractionQuery([]) as any,
       commandSink: controller
     }));
 

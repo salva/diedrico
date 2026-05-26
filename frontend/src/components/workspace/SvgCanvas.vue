@@ -26,42 +26,42 @@
         />
       </g>
       
-      <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
+      <!-- Render all lines through canvas presentation model (including HL_HV projections) -->
       <line
         v-for="{ primitive, attrs } in renderedLines"
         :key="primitive.id"
         v-bind="attrs"
       />
       
-      <!-- Render all segments through Paper pipeline -->
+      <!-- Render all segments through canvas presentation model -->
       <line
         v-for="{ primitive, attrs } in renderedSegments"
         :key="primitive.id"
         v-bind="attrs"
       />
       
-      <!-- Render all guides through Paper pipeline -->
+      <!-- Render all guides through canvas presentation model -->
       <line
         v-for="{ primitive, attrs } in renderedGuides"
         :key="primitive.id"
         v-bind="attrs"
       />
       
-      <!-- Render all circles through Paper pipeline -->
+      <!-- Render all circles through canvas presentation model -->
       <circle
         v-for="{ primitive, attrs } in renderedCircles"
         :key="primitive.id"
         v-bind="attrs"
       />
       
-      <!-- Render all arcs through Paper pipeline -->
+      <!-- Render all arcs through canvas presentation model -->
       <path
         v-for="{ primitive, attrs } in renderedArcs"
         :key="primitive.id"
         v-bind="attrs"
       />
       
-      <!-- Render all points through Paper pipeline -->
+      <!-- Render all points through canvas presentation model -->
       <circle
         v-for="{ primitive, attrs } in renderedPoints"
         :key="primitive.id"
@@ -164,13 +164,13 @@
  * 
  * Rendering Pipeline:
  * 1. World (domain objects + realizations) 
- * 2. → PaperService (generates Paper primitives in paper coordinates)
+ * 2. → CanvasPresentationSelector (generates read-model primitives in paper coordinates)
  * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
  * 4. → SVG elements
  * 
  * Key requirements:
  * - SVG element (not HTML Canvas) per ui-spec.md
- * - All rendering goes through Paper abstraction layer
+ * - Rendering consumes the canvas presentation read model
  * - Generic rendering algorithms (no special cases for fixed elements)
  * - Will support pan/zoom viewport transformations in Phase 6
  * - Elements rendered using principle-based algorithms (Constitution Principle IV)
@@ -181,8 +181,6 @@
 import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
 import { Matrix3, Vector3 } from 'three';
 import { World } from '@/domain/world/World';
-import { Paper } from '@/domain/presentation/Paper';
-import { PaperService, type PrimitiveContext } from '@/services/PaperService';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
 import { PointTool } from '@/tools/PointTool';
@@ -211,6 +209,8 @@ import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
 import type { ITool } from '@/tools/ITool';
 import { createCanvasToolController } from '@/application/tools/CanvasToolController';
 import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 
 // Define emits
 const emit = defineEmits<{
@@ -244,8 +244,6 @@ const propertiesElementId = ref<string | null>(null);
 const viewStore = useViewStore();
 const viewport = computed<ViewportTransform>(() => {
   const vp = viewStore.viewportState.value;
-  // Update Paper's viewport transform when it changes
-  paper.setViewportTransform(vp);
   return vp;
 });
 
@@ -253,12 +251,13 @@ const viewport = computed<ViewportTransform>(() => {
 const viewportComposable = useViewport({ element: svgElement });
 
 // Services
-const paperService = new PaperService();
+const canvasPresentationController = new CanvasPresentationController();
 const svgRenderer = new SVGRenderer();
 const inputService = new InputService();
 const toolStore = useToolStore();
 const selectionStore = useSelectionStore();
 const hoverHighlight = useGlobalHoverHighlight();
+const hoveredElementId = ref<string | undefined>(undefined);
 
 // Tooltip position (offset from cursor)
 const tooltipPosition = ref({ x: 0, y: 0 });
@@ -386,7 +385,7 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
     }
   } else {
     // Search all planes if no planeId provided
-    for (const plane of world.projectionPlanes.values()) {
+    for (const plane of world.getAllProjectionPlanes()) {
       switch (elementType) {
         case 'point':
           element = plane.getPoint(elementId);
@@ -416,9 +415,6 @@ const world = inject<World>('world')!;
 if (!world) {
   throw new Error('World not provided');
 }
-
-// Paper instance for spatial queries and rendering
-const paper = new Paper();
 
 const canvasToolController = createCanvasToolController({
   world,
@@ -451,7 +447,7 @@ const toolFactories: Record<string, () => ITool> = {
 // Current tool instance - created fresh when tool is selected
 const currentToolInstance = ref<ITool | null>(null);
 
-// Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
+// Reactivity trigger - increment this to force re-render when non-reactive world/read-model state changes
 const renderTick = ref(0);
 
 // Throttle for coordinate updates (limits update frequency)
@@ -563,522 +559,37 @@ function getPlaneTransformsForRendering(): Map<string, Matrix3> {
   return transforms;
 }
 
-// Generate primitives from World using PaperService
-const primitives = computed(() => {
-  // Access renderTick to make this computed reactive to non-reactive sources (World + Paper)
+// Canvas presentation read model derived from one world/view snapshot.
+const canvasPresentation = computed(() => {
   renderTick.value;
-  
-  // PaperService uses plane-to-paper transforms for rendering
-  const planeTransforms = getPlaneTransformsForRendering();
-  
-  // Get hovered and selected elements for visual highlighting
-  // Per ui-spec.md: Hover = #4A90E2 (lighter), Selection = #0066CC (bold)
-  const hoveredId = paper.getHoveredElement();
-  const hoveredIds = hoveredId ? new Set([hoveredId]) : undefined;
-  
+  const hoveredId = hoveredElementId.value;
   const selectedIds = selectionStore.selectedIdsArray;
-  const selectedIdsSet = selectedIds.length > 0 ? new Set(selectedIds) : undefined;
-  
   const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
-  const cascadeHighlightIdsSet = cascadeHighlightIds.length > 0 ? new Set(cascadeHighlightIds) : undefined;
-  
-  const context: PrimitiveContext = {
+  return canvasPresentationController.buildModel(
     world,
-    planeTransforms,
-    hoveredIds,              // Hover state (lighter highlight)
-    selectedIds: selectedIdsSet,  // Selection state (bold highlight)
-    cascadeHighlightIds: cascadeHighlightIdsSet,  // Cascade delete preview (orange warning)
-    activePlaneId: activePlane.value,  // FR-002: Active plane visual emphasis
-    showProjectedElements: viewStore.showProjectedElements.value,  // Phase 106: 3D element projection display
-  };
-  
-  const prims = paperService.generatePrimitives(context);
-  // console.log('Generated primitives:', prims.length, prims);
-  
-  // Sort primitives by layer first, then z-index (same as Paper.getPrimitives())
-  prims.sort((a, b) => {
-    if (a.layer !== b.layer) {
-      return a.layer - b.layer;
+    { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value },
+    {
+      hoveredIds: hoveredId ? new Set([hoveredId]) : undefined,
+      selectedIds: selectedIds.length > 0 ? new Set(selectedIds) : undefined,
+      cascadeHighlightIds: cascadeHighlightIds.length > 0 ? new Set(cascadeHighlightIds) : undefined,
+      activePlaneId: activePlane.value,
+      showProjectedElements: viewStore.showProjectedElements.value,
+      gridVisible: viewStore.gridVisible.value
     }
-    return a.style.zIndex - b.style.zIndex;
-  });
-  
-  // Update Paper with primitives for spatial queries (hit testing)
-  paper.setPrimitives(prims);
-  
-  return prims;
+  );
 });
 
-/**
- * Phase 79: Plane-Based Grid with Adaptive Spacing/Subdivisions
- * 
- * Grid uses the active projection plane's intrinsic (u,v) coordinate system
- * Transformation pipeline: Plane (u,v) → Paper (x,y) → Screen (pixels)
- * 
- * Major Grid Lines (Powers of 10):
- * - Major lines always at multiples of 10^n (e.g., 0.1, 1, 10, 100, 1000)
- * - Power of 10 chosen based on zoom level to keep reasonable density
- * 
- * Subdivisions (2, 5, or 10):
- * - Minor lines divide each major interval by 2, 5, or 10
- * - Subdivision chosen to keep minor cells >= minimum pixel threshold (15px)
- * - Preference: smallest subdivision that meets threshold (10 > 5 > 2)
- * 
- * Algorithm:
- * - Calculate minimum spacing in plane units: minSpacing = minPixelsPerCell / zoom
- * - Find smallest value from sequence: 10^n/10, 10^n/5, 10^n/2 that is >= minSpacing
- * - This determines both minor spacing and major spacing (10^n)
- * - Example at zoom=1.0: minSpacing=15, chooses 20 (=100/5), major=100, subdivision=5
- * - Example at zoom=0.1: minSpacing=150, chooses 200 (=1000/5), major=1000, subdivision=5
- */
-
-/**
- * Compute adaptive grid parameters based on zoom level
- * Major lines at powers of 10, subdivisions are 2, 5, or 10
- */
-function computeAdaptiveGridParams(zoom: number): {
-  spacing: number;
-  subdivision: number;
-  majorSpacing: number;
-} {
-  const minPixelsPerCell = 15; // Minimum pixels per minor grid cell
-  const minSpacing = minPixelsPerCell / zoom; // Minimum spacing in plane units
-  
-  // Find the smallest spacing from sequence: ..., 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, ...
-  // These are 10^n/10, 10^n/5, 10^n/2 for integer n
-  
-  const logMin = Math.log10(minSpacing);
-  const basePower = Math.floor(logMin);
-  
-  // Try powers of 10 starting from basePower
-  for (let n = basePower; n < basePower + 3; n++) {
-    const base = Math.pow(10, n);
-    
-    // Try subdivisions in order of preference (10 > 5 > 2 gives smallest cells)
-    for (const subdivision of [10, 5, 2]) {
-      const spacing = base / subdivision; // Minor line spacing
-      if (spacing >= minSpacing) {
-        return {
-          spacing,           // Minor line spacing (spacing between all lines)
-          subdivision,       // Number of minor intervals per major interval
-          majorSpacing: base // Major line spacing (10^n)
-        };
-      }
-    }
-  }
-  
-  // Fallback (shouldn't reach here)
-  return { spacing: 1, subdivision: 10, majorSpacing: 10 };
-}
-
-const gridLines = computed(() => {
-  if (!viewStore.gridVisible.value) return [];
-
-  // Depend on worldVersion to trigger recomputation when active plane changes
-  const _ = worldVersion.value;
-  
-  const activePlaneId = world.getActivePlaneId();
-  const plane = world.getProjectionPlaneById(activePlaneId);
-  if (!plane) return [];
-
-  // Get plane realization which contains transformation matrices
-  const planeRealization = plane.realize2D(world);
-
-  const zoom = viewport.value.zoom;
-  const { spacing, subdivision, majorSpacing } = computeAdaptiveGridParams(zoom);
-
-  const lines: Array<{
-    key: string;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    major: boolean;
-  }> = [];
-
-  // Phase 82.2: Transform intrinsic basis to paper space
-  // This approach works for both base planes (identity-like) and auxiliary planes (rotated)
-  const origin_paper = new Vector3(0, 0, 1).applyMatrix3(planeRealization.planeToPaper2D);
-  const u_paper = new Vector3(1, 0, 0).applyMatrix3(planeRealization.planeToPaper2D);
-  const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
-
-  // DEBUG: Log the transformed basis vectors and viewport state
-  // console.log('[gridLines] origin_paper:', origin_paper);
-  // console.log('[gridLines] u_paper:', u_paper);
-  // console.log('[gridLines] v_paper:', v_paper);
-  // console.log('[gridLines] viewport.panX:', viewport.value.panX, 'panY:', viewport.value.panY);
-  // console.log('[gridLines] viewport.zoom:', viewport.value.zoom);
-  // console.log('[gridLines] canvasWidth:', canvasWidth.value, 'canvasHeight:', canvasHeight.value);
-
-  // Calculate viewport bounds in paper coordinates
-  const viewportWidth = canvasWidth.value / zoom;
-  const viewportHeight = canvasHeight.value / zoom;
-  const offsetX = -viewport.value.panX;
-  const offsetY = -viewport.value.panY;
-  
-  // console.log('[gridLines] viewportWidth:', viewportWidth, 'viewportHeight:', viewportHeight);
-  // console.log('[gridLines] offsetX:', offsetX, 'offsetY:', offsetY);
-  // console.log('[gridLines] viewport top-left corner in paper:', offsetX, offsetY);
-  // console.log('[gridLines] viewport center in paper:', offsetX + viewportWidth/2, offsetY + viewportHeight/2);
-
-  // Viewport corners in paper coordinates
-  const viewport_corners_paper = [
-    new Vector3(offsetX, offsetY, 1),
-    new Vector3(offsetX + viewportWidth, offsetY, 1),
-    new Vector3(offsetX, offsetY + viewportHeight, 1),
-    new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1)
-  ];
-
-  // Project viewport corners onto intrinsic axes to find (u,v) range
-  // For each corner: solve (corner - origin_paper) = a*u_paper + b*v_paper
-  const u_coords = viewport_corners_paper.map(corner => {
-    const offset = new Vector3().subVectors(corner, origin_paper);
-    return offset.dot(u_paper) / u_paper.lengthSq();
-  });
-  const v_coords = viewport_corners_paper.map(corner => {
-    const offset = new Vector3().subVectors(corner, origin_paper);
-    return offset.dot(v_paper) / v_paper.lengthSq();
-  });
-
-  const uMin = Math.min(...u_coords);
-  const uMax = Math.max(...u_coords);
-  const vMin = Math.min(...v_coords);
-  const vMax = Math.max(...v_coords);
-
-  // Round to nearest grid spacing (add margin for partial grid lines at edges)
-  const uStart = Math.floor(uMin / spacing) * spacing;
-  const uEnd = Math.ceil(uMax / spacing) * spacing;
-  const vStart = Math.floor(vMin / spacing) * spacing;
-  const vEnd = Math.ceil(vMax / spacing) * spacing;
-
-  // Generate grid lines parallel to v-axis (constant u, extending along v)
-  for (let u = uStart; u <= uEnd; u += spacing) {
-    const isMajor = Math.abs(u % majorSpacing) < 0.01;
-
-    // Line in paper space: origin + u*u_paper + t*v_paper (t varies from vMin to vMax)
-    const base_paper = new Vector3()
-      .addVectors(origin_paper, new Vector3().copy(u_paper).multiplyScalar(u));
-    
-    const p1_paper = new Vector3()
-      .addVectors(base_paper, new Vector3().copy(v_paper).multiplyScalar(vMin));
-    const p2_paper = new Vector3()
-      .addVectors(base_paper, new Vector3().copy(v_paper).multiplyScalar(vMax));
-
-    // Transform to screen coordinates
-    const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
-    const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
-    const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
-    const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
-
-    lines.push({
-      key: `u-${u}`,
-      x1: screenX1,
-      y1: screenY1,
-      x2: screenX2,
-      y2: screenY2,
-      major: isMajor,
-    });
-  }
-
-  // Generate grid lines parallel to u-axis (constant v, extending along u)
-  for (let v = vStart; v <= vEnd; v += spacing) {
-    const isMajor = Math.abs(v % majorSpacing) < 0.01;
-
-    // Line in paper space: origin + t*u_paper + v*v_paper (t varies from uMin to uMax)
-    const base_paper = new Vector3()
-      .addVectors(origin_paper, new Vector3().copy(v_paper).multiplyScalar(v));
-    
-    const p1_paper = new Vector3()
-      .addVectors(base_paper, new Vector3().copy(u_paper).multiplyScalar(uMin));
-    const p2_paper = new Vector3()
-      .addVectors(base_paper, new Vector3().copy(u_paper).multiplyScalar(uMax));
-
-    // Transform to screen coordinates
-    const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
-    const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
-    const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
-    const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
-
-    lines.push({
-      key: `v-${v}`,
-      x1: screenX1,
-      y1: screenY1,
-      x2: screenX2,
-      y2: screenY2,
-      major: isMajor,
-    });
-  }
-
-  return lines;
-});
-
-/**
- * Phase 78: Grid Coordinate Labels (Updated for Phase 79 plane-based grid)
- * GridLabel interface for coordinate label display at viewport borders
- */
-interface GridLabel {
-  key: string;
-  value: number;
-  position: number;
-  edge: 'top' | 'bottom' | 'left' | 'right';
-}
-
-/**
- * Computed property: Grid coordinate labels for all four viewport edges
- * Displays plane-local (u,v) coordinates aligned with the plane-based grid
- * Labels are placed along major grid lines only
- */
-const gridLabels = computed(() => {
-  if (!viewStore.gridVisible.value) {
-    return { top: [], bottom: [], left: [], right: [] };
-  }
-
-  // Depend on worldVersion to trigger recomputation when active plane changes
-  const _ = worldVersion.value;
-  
-  const activePlaneId = world.getActivePlaneId();
-  const plane = world.getProjectionPlaneById(activePlaneId);
-  if (!plane) {
-    return { top: [], bottom: [], left: [], right: [] };
-  }
-
-  // Get plane realization which contains transformation matrices
-  const planeRealization = plane.realize2D(world);
-
-  const zoom = viewport.value.zoom;
-  const { majorSpacing } = computeAdaptiveGridParams(zoom);
-
-  // Phase 82.2: Transform intrinsic basis to paper space
-  const origin_paper = new Vector3(0, 0, 1).applyMatrix3(planeRealization.planeToPaper2D);
-  const u_paper = new Vector3(1, 0, 0).applyMatrix3(planeRealization.planeToPaper2D);
-  const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
-
-  // Step 1: Determine which coordinate is more aligned with horizontal/vertical
-  // If |u_paper.x| / |u_paper.y| > 1, u is more horizontal
-  const uHorizontalRatio = Math.abs(u_paper.x) / (Math.abs(u_paper.y) + 1e-10);
-  const uIsHorizontal = uHorizontalRatio > 1;
-  
-  // Helper: Convert screen coordinates to paper coordinates
-  const screenToPaper = (screenX: number, screenY: number): Vector3 => {
-    return new Vector3(
-      screenX / zoom - viewport.value.panX,
-      screenY / zoom - viewport.value.panY,
-      1
-    );
-  };
-  
-  // Helper: Project paper point onto (u,v) basis
-  const paperToUV = (p_paper: Vector3): { u: number; v: number } => {
-    const offset = new Vector3().subVectors(p_paper, origin_paper);
-    return {
-      u: offset.dot(u_paper) / u_paper.lengthSq(),
-      v: offset.dot(v_paper) / v_paper.lengthSq()
-    };
-  };
-  
-  // Helper: Find where grid line with constant u intersects a horizontal line (y_paper = constant)
-  // Returns screen x position
-  const findULineIntersectionWithHorizontal = (u: number, y_paper: number): number | null => {
-    // Line: origin_paper + u*u_paper + v*v_paper
-    // Want: origin_paper.y + u*u_paper.y + v*v_paper.y = y_paper
-    // Solve for v: v = (y_paper - origin_paper.y - u*u_paper.y) / v_paper.y
-    if (Math.abs(v_paper.y) < 1e-10) return null; // Grid line parallel to horizontal
-    const v = (y_paper - origin_paper.y - u * u_paper.y) / v_paper.y;
-    const x_paper = origin_paper.x + u * u_paper.x + v * v_paper.x;
-    return (x_paper + viewport.value.panX) * zoom;
-  };
-  
-  // Helper: Find where grid line with constant v intersects a horizontal line (y_paper = constant)
-  // Returns screen x position
-  const findVLineIntersectionWithHorizontal = (v: number, y_paper: number): number | null => {
-    // Line: origin_paper + u*u_paper + v*v_paper
-    // Want: origin_paper.y + u*u_paper.y + v*v_paper.y = y_paper
-    // Solve for u: u = (y_paper - origin_paper.y - v*v_paper.y) / u_paper.y
-    if (Math.abs(u_paper.y) < 1e-10) return null; // Grid line parallel to horizontal
-    const u = (y_paper - origin_paper.y - v * v_paper.y) / u_paper.y;
-    const x_paper = origin_paper.x + u * u_paper.x + v * v_paper.x;
-    return (x_paper + viewport.value.panX) * zoom;
-  };
-  
-  // Helper: Find where grid line with constant u intersects a vertical line (x_paper = constant)
-  // Returns screen y position
-  const findULineIntersectionWithVertical = (u: number, x_paper: number): number | null => {
-    // Line: origin_paper + u*u_paper + v*v_paper
-    // Want: origin_paper.x + u*u_paper.x + v*v_paper.x = x_paper
-    // Solve for v: v = (x_paper - origin_paper.x - u*u_paper.x) / v_paper.x
-    if (Math.abs(v_paper.x) < 1e-10) return null; // Grid line parallel to vertical
-    const v = (x_paper - origin_paper.x - u * u_paper.x) / v_paper.x;
-    const y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y;
-    return (y_paper + viewport.value.panY) * zoom;
-  };
-  
-  // Helper: Find where grid line with constant v intersects a vertical line (x_paper = constant)
-  // Returns screen y position
-  const findVLineIntersectionWithVertical = (v: number, x_paper: number): number | null => {
-    // Line: origin_paper + u*u_paper + v*v_paper
-    // Want: origin_paper.x + u*u_paper.x + v*v_paper.x = x_paper
-    // Solve for u: u = (x_paper - origin_paper.x - v*v_paper.x) / u_paper.x
-    if (Math.abs(u_paper.x) < 1e-10) return null; // Grid line parallel to vertical
-    const u = (x_paper - origin_paper.x - v * v_paper.x) / u_paper.x;
-    const y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y;
-    return (y_paper + viewport.value.panY) * zoom;
-  };
-
-  const topLabels: GridLabel[] = [];
-  const bottomLabels: GridLabel[] = [];
-  const leftLabels: GridLabel[] = [];
-  const rightLabels: GridLabel[] = [];
-
-  if (uIsHorizontal) {
-    // U varies along top/bottom edges, V varies along left/right edges
-    
-    // TOP EDGE (y_screen = 0 → y_paper = -panY)
-    const y_paper_top = 0 / zoom - viewport.value.panY;
-    const topLeft_uv = paperToUV(screenToPaper(0, 0));
-    const topRight_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
-    const uMin_top = Math.min(topLeft_uv.u, topRight_uv.u);
-    const uMax_top = Math.max(topLeft_uv.u, topRight_uv.u);
-    const uStart_top = Math.floor(uMin_top / majorSpacing) * majorSpacing;
-    const uEnd_top = Math.ceil(uMax_top / majorSpacing) * majorSpacing;
-    
-    for (let u = uStart_top; u <= uEnd_top; u += majorSpacing) {
-      const screenX = findULineIntersectionWithHorizontal(u, y_paper_top);
-      if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
-        topLabels.push({ key: `top-${u}`, value: u, position: screenX, edge: 'top' });
-      }
-    }
-    
-    // BOTTOM EDGE (y_screen = canvasHeight → y_paper = canvasHeight/zoom - panY)
-    const y_paper_bottom = canvasHeight.value / zoom - viewport.value.panY;
-    const bottomLeft_uv = paperToUV(screenToPaper(0, canvasHeight.value));
-    const bottomRight_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
-    const uMin_bottom = Math.min(bottomLeft_uv.u, bottomRight_uv.u);
-    const uMax_bottom = Math.max(bottomLeft_uv.u, bottomRight_uv.u);
-    const uStart_bottom = Math.floor(uMin_bottom / majorSpacing) * majorSpacing;
-    const uEnd_bottom = Math.ceil(uMax_bottom / majorSpacing) * majorSpacing;
-    
-    for (let u = uStart_bottom; u <= uEnd_bottom; u += majorSpacing) {
-      const screenX = findULineIntersectionWithHorizontal(u, y_paper_bottom);
-      if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
-        bottomLabels.push({ key: `bottom-${u}`, value: u, position: screenX, edge: 'bottom' });
-      }
-    }
-    
-    // LEFT EDGE (x_screen = 0 → x_paper = -panX)
-    const x_paper_left = 0 / zoom - viewport.value.panX;
-    const leftTop_uv = paperToUV(screenToPaper(0, 0));
-    const leftBottom_uv = paperToUV(screenToPaper(0, canvasHeight.value));
-    const vMin_left = Math.min(leftTop_uv.v, leftBottom_uv.v);
-    const vMax_left = Math.max(leftTop_uv.v, leftBottom_uv.v);
-    const vStart_left = Math.floor(vMin_left / majorSpacing) * majorSpacing;
-    const vEnd_left = Math.ceil(vMax_left / majorSpacing) * majorSpacing;
-    
-    for (let v = vStart_left; v <= vEnd_left; v += majorSpacing) {
-      const screenY = findVLineIntersectionWithVertical(v, x_paper_left);
-      if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
-        leftLabels.push({ key: `left-${v}`, value: v, position: screenY, edge: 'left' });
-      }
-    }
-    
-    // RIGHT EDGE (x_screen = canvasWidth → x_paper = canvasWidth/zoom - panX)
-    const x_paper_right = canvasWidth.value / zoom - viewport.value.panX;
-    const rightTop_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
-    const rightBottom_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
-    const vMin_right = Math.min(rightTop_uv.v, rightBottom_uv.v);
-    const vMax_right = Math.max(rightTop_uv.v, rightBottom_uv.v);
-    const vStart_right = Math.floor(vMin_right / majorSpacing) * majorSpacing;
-    const vEnd_right = Math.ceil(vMax_right / majorSpacing) * majorSpacing;
-    
-    for (let v = vStart_right; v <= vEnd_right; v += majorSpacing) {
-      const screenY = findVLineIntersectionWithVertical(v, x_paper_right);
-      if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
-        rightLabels.push({ key: `right-${v}`, value: v, position: screenY, edge: 'right' });
-      }
-    }
-    
-  } else {
-    // V varies along top/bottom edges, U varies along left/right edges
-    
-    // TOP EDGE
-    const y_paper_top = 0 / zoom - viewport.value.panY;
-    const topLeft_uv = paperToUV(screenToPaper(0, 0));
-    const topRight_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
-    const vMin_top = Math.min(topLeft_uv.v, topRight_uv.v);
-    const vMax_top = Math.max(topLeft_uv.v, topRight_uv.v);
-    const vStart_top = Math.floor(vMin_top / majorSpacing) * majorSpacing;
-    const vEnd_top = Math.ceil(vMax_top / majorSpacing) * majorSpacing;
-    
-    for (let v = vStart_top; v <= vEnd_top; v += majorSpacing) {
-      const screenX = findVLineIntersectionWithHorizontal(v, y_paper_top);
-      if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
-        topLabels.push({ key: `top-${v}`, value: v, position: screenX, edge: 'top' });
-      }
-    }
-    
-    // BOTTOM EDGE
-    const y_paper_bottom = canvasHeight.value / zoom - viewport.value.panY;
-    const bottomLeft_uv = paperToUV(screenToPaper(0, canvasHeight.value));
-    const bottomRight_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
-    const vMin_bottom = Math.min(bottomLeft_uv.v, bottomRight_uv.v);
-    const vMax_bottom = Math.max(bottomLeft_uv.v, bottomRight_uv.v);
-    const vStart_bottom = Math.floor(vMin_bottom / majorSpacing) * majorSpacing;
-    const vEnd_bottom = Math.ceil(vMax_bottom / majorSpacing) * majorSpacing;
-    
-    for (let v = vStart_bottom; v <= vEnd_bottom; v += majorSpacing) {
-      const screenX = findVLineIntersectionWithHorizontal(v, y_paper_bottom);
-      if (screenX !== null && screenX >= -10 && screenX <= canvasWidth.value + 10) {
-        bottomLabels.push({ key: `bottom-${v}`, value: v, position: screenX, edge: 'bottom' });
-      }
-    }
-    
-    // LEFT EDGE
-    const x_paper_left = 0 / zoom - viewport.value.panX;
-    const leftTop_uv = paperToUV(screenToPaper(0, 0));
-    const leftBottom_uv = paperToUV(screenToPaper(0, canvasHeight.value));
-    const uMin_left = Math.min(leftTop_uv.u, leftBottom_uv.u);
-    const uMax_left = Math.max(leftTop_uv.u, leftBottom_uv.u);
-    const uStart_left = Math.floor(uMin_left / majorSpacing) * majorSpacing;
-    const uEnd_left = Math.ceil(uMax_left / majorSpacing) * majorSpacing;
-    
-    for (let u = uStart_left; u <= uEnd_left; u += majorSpacing) {
-      const screenY = findULineIntersectionWithVertical(u, x_paper_left);
-      if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
-        leftLabels.push({ key: `left-${u}`, value: u, position: screenY, edge: 'left' });
-      }
-    }
-    
-    // RIGHT EDGE
-    const x_paper_right = canvasWidth.value / zoom - viewport.value.panX;
-    const rightTop_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
-    const rightBottom_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
-    const uMin_right = Math.min(rightTop_uv.u, rightBottom_uv.u);
-    const uMax_right = Math.max(rightTop_uv.u, rightBottom_uv.u);
-    const uStart_right = Math.floor(uMin_right / majorSpacing) * majorSpacing;
-    const uEnd_right = Math.ceil(uMax_right / majorSpacing) * majorSpacing;
-    
-    for (let u = uStart_right; u <= uEnd_right; u += majorSpacing) {
-      const screenY = findULineIntersectionWithVertical(u, x_paper_right);
-      if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
-        rightLabels.push({ key: `right-${u}`, value: u, position: screenY, edge: 'right' });
-      }
-    }
-  }
-
-  return {
-    top: topLabels,
-    bottom: bottomLabels,
-    left: leftLabels,
-    right: rightLabels,
-  };
-});
-
+const interactionQuery = computed(() => new CanvasInteractionQuery(canvasPresentation.value.queryItems));
+const primitives = computed(() => canvasPresentation.value.renderItems.map(item => item.primitive));
+const gridLines = computed(() => canvasPresentation.value.gridLines);
+const gridLabels = computed(() => canvasPresentation.value.gridLabels);
 
 // Render primitives to SVG attributes
 const renderedPoints = computed(() => {
   return primitives.value
     .filter(p => p.type === 'point')
     .map(p => {
-      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
       // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
@@ -1089,15 +600,8 @@ const renderedPoints = computed(() => {
 
 const renderedLines = computed(() => {
   const linePrimitives = primitives.value.filter(p => p.type === 'line');
-  const bhhlPrimitives = linePrimitives.filter(p => p.id.includes('line2d34') || p.id.includes('line2d35'));
-  if (bhhlPrimitives.length > 0) {
-    console.log('[SvgCanvas] BHHL primitives in renderedLines:', bhhlPrimitives.map(p => `${p.id} (plane: ${p.planeId})`));
-  }
   return linePrimitives.map(p => {
-      const result = svgRenderer.renderPrimitive(p, viewport.value);
-      if (p.id.includes('line2d34') || p.id.includes('line2d35')) {
-        console.log(`[SvgCanvas] Rendered ${p.id}:`, result.attributes);
-      }
+      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
       return {
         primitive: p,
         attrs: result.attributes
@@ -1109,7 +613,7 @@ const renderedSegments = computed(() => {
   return primitives.value
     .filter(p => p.type === 'segment')
     .map(p => {
-      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
       // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
@@ -1122,7 +626,7 @@ const renderedCircles = computed(() => {
   return primitives.value
     .filter(p => p.type === 'circle')
     .map(p => {
-      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
       // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
       return {
         primitive: p,
@@ -1135,7 +639,7 @@ const renderedGuides = computed(() => {
   return primitives.value
     .filter(p => p.type === 'line' && p.id.startsWith('guide-'))
     .map(p => {
-      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
       return {
         primitive: p,
         attrs: result.attributes
@@ -1147,7 +651,7 @@ const renderedArcs = computed(() => {
   return primitives.value
     .filter(p => p.type === 'arc')
     .map(p => {
-      const result = svgRenderer.renderPrimitive(p, viewport.value);
+      const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
       return {
         primitive: p,
         attrs: result.attributes
@@ -1183,7 +687,7 @@ function handleCanvasClick(event: MouseEvent) {
   
   // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
   
-  // Step 2-3: Canvas → Paper → Plane using InputService
+  // Step 2-3: Canvas → read model → Plane using InputService
   const activePlaneId = activePlane.value;
   const planeTransforms = getPlaneTransformsForInput();
   const planeTransform = planeTransforms.get(activePlaneId);
@@ -1207,12 +711,9 @@ function handleCanvasClick(event: MouseEvent) {
   
   // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
   
-  // Debug: Check what Paper.hitTest() would return for this click
-  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+    const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
   const paperToPlane = planeTransforms.get(activePlane.value);
-  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);  // FR-002: Hit test in plane space
-  // console.log('[SvgCanvas] Paper.hitTest() result:', hit);
-  // console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
   
   // Phase 20: Handle selection mode when 'select' tool is active
   const activeToolName = toolStore.currentTool.value;
@@ -1222,7 +723,7 @@ function handleCanvasClick(event: MouseEvent) {
     // Click element: Select (Shift+click: add to selection)
     // Click empty: Deselect all
     
-    const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+    const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
     
     if (hit) {
       // Element clicked - handle selection
@@ -1259,8 +760,9 @@ function handleCanvasClick(event: MouseEvent) {
     canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
     commandSink: canvasToolController,
     world,
-    paper,
+    interactionQuery: interactionQuery.value,
     paperToPlaneTransform: paperToPlane,
+    viewport: viewport.value,
     toolStore
   });
   
@@ -1351,7 +853,7 @@ function handleMouseDown(event: MouseEvent) {
   if (!paperToPlane) return;
 
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
-  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
   
   // Check if we hit a movable point
   if (hit && hit.elementType === 'point') {
@@ -1411,7 +913,7 @@ function handleDoubleClick(event: MouseEvent) {
   const paperToPlane = planeTransforms.get(activePlane.value);
   
   // Hit test to find element under cursor
-  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
   
   if (hit) {
     // Element found - show properties dialog
@@ -1449,7 +951,7 @@ function handleSaveProperties(changes: any) {
 
 /**
  * Handle mouse movement for hover feedback and 3D coordinate display
- * Uses Paper.hitTest() to detect elements near cursor
+ * Uses CanvasInteractionQuery to detect elements near cursor
  * Computes 3D coordinates from cursor position with debouncing
  * T955: Continuous feedback for point dragging
  * T965: Viewport pan when dragging empty space
@@ -1538,9 +1040,9 @@ function handleMouseMove(event: MouseEvent) {
   // 'select' is a special mode (not a tool), allow hover on all elements
   const selectionMask = activeTool ? activeTool.getSelectionMask() : undefined;
   
-  // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
+  // Use CanvasInteractionQuery to find element near cursor (filtered by selection mask)
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
-  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world, selectionMask); // FR-002: Hit test in plane space
+  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane }, selectionMask);
   
   // Update snap target if hovering over a point within snap radius
   // Per ui-spec.md: "Point Snap: When cursor within snap radius of existing point: bright outline or glow"
@@ -1558,12 +1060,11 @@ function handleMouseMove(event: MouseEvent) {
     };
   }
   
-  // Update hover state in Paper only if it changed
-  const previousHovered = paper.getHoveredElement();
+  const previousHovered = hoveredElementId.value;
   const newHovered = hit ? hit.elementId : undefined;
   
   if (previousHovered !== newHovered) {
-    paper.setHoveredElement(newHovered);
+    hoveredElementId.value = newHovered;
     
     // Update global hover state for UI feedback
     if (newHovered && hit) {

@@ -161,7 +161,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
    * @returns Tool result with status message
    */
   handleClick(context: ToolContext): ToolResult {
-    const { planeId, canvasCoords, world, paper, paperToPlaneTransform } = context;
+    const { planeId, canvasCoords, world, interactionQuery, paperToPlaneTransform, viewport } = context;
     
     const plane = world.getProjectionPlaneById(planeId)!;
     
@@ -174,7 +174,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     // Hit-test with current selection mask
     const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
     const selectionMask = this.getSelectionMask();
-    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask);
+    const hit = interactionQuery.hitTest(canvasPos, 50, { viewport, activePlaneId: planeId, paperToPlaneTransform }, selectionMask);
     
     // Extract position from context
     const { planeCoords } = context;

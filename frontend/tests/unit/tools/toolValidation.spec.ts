@@ -28,13 +28,25 @@ import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import type { ToolContext } from '@/tools/ITool';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { Vector3, Matrix3 } from 'three';
-import { Paper } from '@/domain/presentation/Paper';
+import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
+
+function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+  return {
+    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+      const world = worldRef();
+      const activePlaneId = context.activePlaneId ?? planeIdRef();
+      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+      return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+    }
+  } as CanvasInteractionQuery;
+}
+import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 
 describe('Tool Argument Validation', () => {
   let world: World;
   let commandStack: CommandStack;
   let planeId: string;
-  let paper: Paper;
+  let interactionQuery: CanvasInteractionQuery;
 
   function makeContext(coords: Vector3): ToolContext {
     return {
@@ -43,7 +55,8 @@ describe('Tool Argument Validation', () => {
       canvasCoords: coords.clone(),
       commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
       world,
-      paper,
+      interactionQuery,
+      viewport: { zoom: 1, panX: 0, panY: 0 },
       paperToPlaneTransform: new Matrix3().identity(),
         toolStore: {} as any,
     };
@@ -62,7 +75,7 @@ describe('Tool Argument Validation', () => {
     const { world: w, commandStack: cs } = createTestWorld();
     world = w;
     commandStack = cs;
-    paper = new Paper();
+    interactionQuery = liveInteractionQuery(() => world, () => planeId);
     planeId = world.getProjectionPlaneByLabel('P_H').id!;
   });
 

@@ -202,7 +202,8 @@ export class SVGRenderer {
    */
   private renderLine(
     primitive: LinePrimitive,
-    viewport: ViewportTransform
+    viewport: ViewportTransform,
+    bounds: { width: number; height: number }
   ): SVGAttributes {
     // Transform point from paper space to canvas space (Vector3 stays as Vector3)
     const canvasPoint = this.transformPoint(
@@ -217,12 +218,12 @@ export class SVGRenderer {
       y: primitive.direction.y * viewport.zoom
     };
 
-    // Get viewport bounds (TODO: get actual canvas dimensions)
+    const margin = Math.max(bounds.width, bounds.height);
     const viewportBounds = {
-      xMin: -5000,
-      xMax: 5000,
-      yMin: -5000,
-      yMax: 5000,
+      xMin: -margin,
+      xMax: bounds.width + margin,
+      yMin: -margin,
+      yMax: bounds.height + margin,
     };
 
     // Find t values where line intersects viewport edges
@@ -422,7 +423,8 @@ export class SVGRenderer {
    */
   renderPrimitive(
     primitive: Primitive,
-    viewport: ViewportTransform
+    viewport: ViewportTransform,
+    bounds: { width: number; height: number } = { width: 1600, height: 1000 }
   ): { element: string; attributes: SVGAttributes } {
     if (primitive.type === 'point') {
       return { element: 'circle', attributes: this.renderPoint(primitive, viewport) };
@@ -431,7 +433,7 @@ export class SVGRenderer {
       return { element: 'path', attributes: this.renderPath(primitive, viewport) };
     }
     if (primitive.type === 'line') {
-      return { element: 'line', attributes: this.renderLine(primitive, viewport) };
+      return { element: 'line', attributes: this.renderLine(primitive, viewport, bounds) };
     }
     if (primitive.type === 'segment') {
       return { element: 'line', attributes: this.renderSegment(primitive, viewport) };

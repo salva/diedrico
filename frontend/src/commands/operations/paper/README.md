@@ -9,4 +9,4 @@ Operations modifying the rendering layer state.
 - `SetVisibilityOp` - Show/hide element in rendering
 - `UpdateHighlightOp` - Change highlight state
 
-All Paper operations modify the presentation layer (PaperService) without affecting the domain model.
+All Paper operations modify the presentation layer (canvas presentation renderer adapters) without affecting the domain model.
