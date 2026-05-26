@@ -2,6 +2,8 @@
 
 ## Summary
 
+Round-01 correction: the extraction is implementation-ready only if selected IDs enter the `threePresentation` boundary as plain input and all selected-guide/perpendicular-plane DTO production, domain lookup, and scene-object construction are outside `ThreeView.vue`. The read-model side must remain concern-split across projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinge/axis geometry; `ThreePresentationSelector.ts` is only an orchestrator, not a replacement god selector. The scene side must validate grouped object replacement, CSS2D label cleanup/replacement, and removal of repeated `scene.children` clearing patterns from `ThreeView.vue`.
+
 Implement Wave 008 as a direct extraction of the existing 3D rendering behavior into focused 3D presentation and Three.js adapter modules. `ThreeView.vue` becomes a Vue lifecycle/composition shell: it owns refs, watchers, injected `World`, display/selection state, and calls a `ThreeViewController`/scene facade. All low-level Three.js object creation and all domain-to-view conversion move out of the component. `ThreeView.vue` may read UI stores for display options and selected IDs, but selected IDs must cross into the `threePresentation` input and guide/perpendicular-plane DTO production plus scene-object construction must live outside the component.
 
 This proposal preserves the current behavior and visual semantics while deleting large inline helpers from the component. It is intentionally smaller than the restructure option: the 3D selector is introduced, but only for the current scene needs; it does not attempt to generalize a cross-2D/3D presentation package.

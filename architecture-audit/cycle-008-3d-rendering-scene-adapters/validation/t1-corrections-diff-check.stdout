@@ -1,0 +1,138 @@
+diff --git a/architecture-audit/cycle-008-3d-rendering-scene-adapters/corrections-round-01-note.md b/architecture-audit/cycle-008-3d-rendering-scene-adapters/corrections-round-01-note.md
+index 2e8b8a5..3acb26c 100644
+--- a/architecture-audit/cycle-008-3d-rendering-scene-adapters/corrections-round-01-note.md
++++ b/architecture-audit/cycle-008-3d-rendering-scene-adapters/corrections-round-01-note.md
+@@ -1,47 +1,79 @@
+ # Wave 008 Corrections Round 01 Note
+ 
+-Source review: `architecture-audit/cycle-008-3d-rendering-scene-adapters/reviews/round-01-review.md`.
++## Source review
+ 
+-This correction stage edited only Wave 008 proposal artifacts. No frontend/backend/specs application source files were modified.
++Corrections are based on `architecture-audit/cycle-008-3d-rendering-scene-adapters/reviews/round-01-review.md`.
+ 
+-## Blocker 1 — Make shell boundary explicit for selection and guide behavior
++Reviewer verdict: **BLOCKING ISSUES**. Proposal Restructure remains the recommended path, but both proposals needed in-place tightening before round-02 review.
+ 
+-Reviewer blocker: both proposals needed to state that `ThreeView.vue` may read UI state but must not keep guide/perpendicular-plane geometry derivation, direct selected-element domain lookup, or raw Three.js object construction. Selected IDs must flow into `threePresentation` input and come back as DTOs.
++## Blocker-to-edit mapping
+ 
+-Edits made:
++### Blocker 1 — Make the shell boundary explicit for selection and guide behavior
+ 
+-- `proposals/proposal-direct.md` summary now says `ThreeView.vue` may read UI stores for display options and selected IDs, but selected IDs must cross into `threePresentation`, with guide/perpendicular-plane DTO production and scene-object construction outside the component.
+-- `proposals/proposal-direct.md` gained a new **Non-negotiable shell and selector boundaries** section forbidding selected-element domain lookup, guide/perpendicular-plane derivation, domain realization traversal, and raw Three.js object construction in `ThreeView.vue`.
+-- `proposals/proposal-direct.md` validation now requires a shell-boundary scan proving `ThreeView.vue` only passes display options, injected `World`, and selected IDs into the runtime/controller.
+-- `proposals/proposal-restructure.md` now states the Vue shell may read `viewStore`/`selectionStore` only for UI state and must pass selected IDs into `runtime.refresh({ world, displayOptions, selectedIds })`; guide/perpendicular-plane DTOs must be produced by `threePresentation`.
+-- `proposals/proposal-restructure.md` static checks now explicitly forbid `getLine2D`, guide predicates, guide normal calculation, and realization calls in `ThreeView.vue`.
++**Reviewer requirement:** both proposals must state that `ThreeView.vue` may read UI state (`viewStore`, `selectionStore`) but must not contain guide/perpendicular-plane geometry derivation, direct selected-element domain lookup, or raw Three.js object construction. Selected IDs must cross into the `threePresentation` boundary as input and guide/perpendicular-plane DTO production plus scene-object construction must live outside `ThreeView.vue`.
+ 
+-## Blocker 2 — Require concern-split selectors, not one replacement god module
++**Edits made in `proposals/proposal-direct.md`:**
+ 
+-Reviewer blocker: projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinges must be separate selector concerns under `application/threePresentation/`; a large `ThreePresentationSelector` would merely rename the god module.
++- Updated the summary to state that `ThreeView.vue` may read UI stores for display options and selected IDs, but selected IDs cross into `threePresentation`, while guide/perpendicular-plane DTO production and scene-object construction live outside the component.
++- Added/confirmed `Non-negotiable shell and selector boundaries` with explicit prohibitions on direct selected-element lookup, guide/perpendicular-plane geometry derivation, domain realization traversal, and raw Three.js object construction in `ThreeView.vue`.
++- Added/confirmed `Guide3DSelector.ts` as the module that receives selected IDs through presentation input and emits guide/perpendicular-plane and intersection DTOs.
++- Tightened validation assertions so shell-boundary scans must prove `ThreeView.vue` no longer imports domain projection/guide/hinge types for geometry derivation, performs selected-element domain lookup, or constructs Three.js/CSS2D objects.
+ 
+-Edits made:
++**Edits made in `proposals/proposal-restructure.md`:**
+ 
+-- `proposals/proposal-direct.md` target outcome and new boundary section now make concern-split selectors mandatory.
+-- `proposals/proposal-direct.md` replaced the old single-selector description with an orchestrating `ThreePresentationSelector.ts` plus `ProjectionPlane3DSelector.ts`, `PlanarElement3DSelector.ts`, `ReconstructedElement3DSelector.ts`, `Guide3DSelector.ts`, and `HingeAxis3DSelector.ts`.
+-- `proposals/proposal-direct.md` risk mitigation now explicitly rejects a second god selector and requires tests per concern.
+-- `proposals/proposal-restructure.md` rules now state `ThreePresentationSelector.ts` is an orchestrator only and that projection-plane, planar-element, reconstructed-element, guide, and hinge/axis selector concerns must remain separate.
+-- `proposals/proposal-restructure.md` static checks now verify selector concern split rather than only adapter/domain import direction.
++- Added/confirmed the `Why this is higher-level than the direct extraction` boundary bullets: domain/application read side receives `World + display state + selected IDs`, scene adapters consume DTOs, and Vue shell controls lifecycle/UI options only.
++- Added/confirmed target-architecture rules requiring `runtime.refresh({ world, displayOptions, selectedIds })` and making guide/perpendicular-plane DTOs flow from `threePresentation` through runtime/adapters.
++- Added/confirmed explicit deletion of direct selected-element lookup and guide/perpendicular-plane math from `ThreeView.vue`.
++- Tightened behavioral coverage expectations for selected IDs producing guide DTOs/objects while guide/perpendicular-plane derivation is absent from `ThreeView.vue` and adapters.
+ 
+-## Blocker 3 — Add explicit deletion/validation for CSS2D label disposal and object-group replacement
++### Blocker 2 — Require concern-split selectors, not one replacement god-module
+ 
+-Reviewer blocker: both proposals mentioned labels and disposal but needed explicit tests/scans for CSS2D label lifecycle, grouped replacement/disposal semantics, and removal of repeated `scene.children` clearing patterns from `ThreeView.vue`.
++**Reviewer requirement:** both proposals must make concern-split selectors non-optional for projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinges/axes. A single `ThreePresentationSelector` must not absorb all current `ThreeView.vue` and `Element2DRenderer3D` traversal.
+ 
+-Edits made:
++**Edits made in `proposals/proposal-direct.md`:**
+ 
+-- `proposals/proposal-direct.md` now defines `ThreeSceneObjectRegistry.ts` as owner of grouped object replacement, CSS2D label ownership, and geometry/material/label disposal, with focused tests for old group and label replacement.
+-- `proposals/proposal-direct.md` now requires label-owning modules to own CSS2D DOM/object cleanup, and validation now tests grouped replacement, geometry/material disposal, CSS2D label removal/replacement, and absence of repeated `scene.children.filter(...).forEach(scene.remove)` in `ThreeView.vue`.
+-- `proposals/proposal-restructure.md` now requires `ThreeObjectRegistry.ts` to replace render groups atomically, dispose geometry/material/CSS labels, own CSS2D label cleanup/replacement, and replace repeated `scene.children` clearing patterns.
+-- `proposals/proposal-restructure.md` delete list and behavioral coverage now explicitly require deleting repeated `scene.children.filter(...).forEach(scene.remove)` patterns and validating grouped object replacement plus CSS2D label cleanup/replacement.
++- Added/confirmed target outcome language that the read-model boundary is not a single replacement god selector.
++- Added/confirmed `Non-negotiable shell and selector boundaries` rejecting a monolithic `ThreePresentationSelector` and requiring separate focused selector/read-model concerns.
++- Expanded the file plan under `frontend/src/application/threePresentation/` to include `ProjectionPlane3DSelector.ts`, `PlanarElement3DSelector.ts`, `ReconstructedElement3DSelector.ts`, `Guide3DSelector.ts`, and `HingeAxis3DSelector.ts`, with `ThreePresentationSelector.ts` only as a thin orchestrator.
++- Added/confirmed focused selector tests split by projection planes, elements, guides, and hinges.
++
++**Edits made in `proposals/proposal-restructure.md`:**
++
++- Added/confirmed the target architecture rule that `ThreePresentationSelector.ts` is an orchestrator only.
++- Added/confirmed separate files for `ProjectionPlane3DSelector.ts`, `PlanarElement3DSelector.ts`, `ReconstructedElement3DSelector.ts`, `Guide3DSelector.ts`, and `Hinge3DSelector.ts`.
++- Added/confirmed static architecture checks that selector files remain concern-split and that one god selector is not acceptable.
++- Added/confirmed risk mitigation explicitly calling out raw domain traversal moving to one giant selector as a risk blocked by required concern splitting.
++
++### Blocker 3 — Add explicit deletion/validation for CSS2D label disposal and object-group replacement
++
++**Reviewer requirement:** both proposals must explicitly require tests/scans for CSS2D label lifecycle and grouped replacement/disposal semantics, replacing repeated `scene.children.filter(...).forEach(scene.remove)` cleanup in `ThreeView.vue`.
++
++**Edits made in `proposals/proposal-direct.md`:**
++
++- Added/confirmed `ThreeSceneObjectRegistry.ts` as the owner of grouped object replacement, `userData.type` normalization, CSS2D label ownership, and geometry/material/label disposal.
++- Added/confirmed adapter and registry tests proving old group objects and CSS2D labels are removed/replaced and disposed during group refresh.
++- Added/confirmed deletion list entries for inline cleanup implementation and repeated scene-child clearing patterns.
++- Tightened validation assertions requiring object-registry/adapter tests for grouped scene-object replacement, old geometry/material disposal, CSS2D label removal/replacement, and absence of repeated `scene.children.filter(...).forEach(scene.remove)` clearing in `ThreeView.vue`.
++
++**Edits made in `proposals/proposal-restructure.md`:**
++
++- Added/confirmed target-architecture rule that CSS2D labels and scene-object groups are owned by scene host/registry/adapters with explicit replacement/disposal semantics.
++- Added/confirmed `ThreeObjectRegistry.ts` responsibilities for atomic group replacement and CSS2D cleanup/replacement so labels cannot leak stale DOM nodes or scene objects.
++- Added/confirmed deletion of repeated `scene.children.filter(...).forEach(scene.remove)` clearing patterns from `ThreeView.vue`.
++- Tightened behavioral coverage expectations for mount, scene setup extraction, refresh, resize, grouped object replacement, CSS2D label cleanup/replacement, and full disposal.
+ 
+ ## Validation-language tightening
+ 
+-Additional edits made to align with the stage acceptance criteria:
++Both proposals now require validation coverage for:
++
++- `ThreeView.vue` shell boundaries and forbidden imports/constructors/domain traversal.
++- Scene setup extraction into a host/runtime.
++- Projection-plane meshes/grids and labels.
++- Guide, hinge, and axis geometry through DTOs/adapters.
++- Domain-to-view conversion only in `application/threePresentation` selectors, never in scene adapters or `ThreeView.vue`.
++- Lifecycle/disposal semantics for grouped scene objects and CSS2D labels.
++- Live/e2e 3D smoke plus the mandatory full validation cadence with logs under `architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/`.
++
++## Scope guard
+ 
+-- Both proposals now call out projection-plane meshes/grids/surfaces, axis/label DTOs, guide/hinge geometry, domain-to-view conversion through DTOs, scene setup extraction, ThreeView shell boundaries, live/e2e 3D smoke, and the mandatory full validation cadence.
+-- Proposal Restructure remains the reviewer-recommended path, with Proposal Direct corrected enough to serve as a fallback only if it enforces the same non-negotiable boundaries.
++No frontend, backend, specs, docs, or application source files were changed for this corrections task. The edits are limited to Wave 008 proposal/correction artifacts and the Saivage task report.
+diff --git a/architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-direct.md b/architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-direct.md
+index 6ed3a29..51f2201 100644
+--- a/architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-direct.md
++++ b/architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-direct.md
+@@ -2,6 +2,8 @@
+ 
+ ## Summary
+ 
++Round-01 correction: the extraction is implementation-ready only if selected IDs enter the `threePresentation` boundary as plain input and all selected-guide/perpendicular-plane DTO production, domain lookup, and scene-object construction are outside `ThreeView.vue`. The read-model side must remain concern-split across projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinge/axis geometry; `ThreePresentationSelector.ts` is only an orchestrator, not a replacement god selector. The scene side must validate grouped object replacement, CSS2D label cleanup/replacement, and removal of repeated `scene.children` clearing patterns from `ThreeView.vue`.
++
+ Implement Wave 008 as a direct extraction of the existing 3D rendering behavior into focused 3D presentation and Three.js adapter modules. `ThreeView.vue` becomes a Vue lifecycle/composition shell: it owns refs, watchers, injected `World`, display/selection state, and calls a `ThreeViewController`/scene facade. All low-level Three.js object creation and all domain-to-view conversion move out of the component. `ThreeView.vue` may read UI stores for display options and selected IDs, but selected IDs must cross into the `threePresentation` input and guide/perpendicular-plane DTO production plus scene-object construction must live outside the component.
+ 
+ This proposal preserves the current behavior and visual semantics while deleting large inline helpers from the component. It is intentionally smaller than the restructure option: the 3D selector is introduced, but only for the current scene needs; it does not attempt to generalize a cross-2D/3D presentation package.
+diff --git a/architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-restructure.md b/architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-restructure.md
+index 96a8f76..85285fc 100644
+--- a/architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-restructure.md
++++ b/architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-restructure.md
+@@ -2,6 +2,8 @@
+ 
+ ## Summary
+ 
++Round-01 correction: the selected Proposal Restructure path is implementation-ready only if `ThreeView.vue` passes display options, injected `World`, and selected IDs into `ThreeViewRuntime`/`threePresentation`, while guide/perpendicular-plane DTO production, selected-element lookup, domain-to-view conversion, and all Three.js/CSS2D object construction live outside the Vue shell. The `threePresentation` package must be concern-split by projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinge/axis geometry; the scene host/registry/adapters must own grouped replacement/disposal and CSS2D label lifecycle with focused validation.
++
+ Implement Wave 008 one conceptual layer higher than a mechanical `ThreeView.vue` extraction: introduce an application-owned `threePresentation` read-model boundary parallel to Wave 007's `canvasPresentation`, then make Three.js adapters pure consumers of that model. The component delegates lifecycle to a `ThreeViewRuntime`, while all domain traversal happens in selectors and all Three.js mutation happens in adapters.
+ 
+ This option treats `Element2DRenderer3D.ts` as an architectural smell to delete, not merely move. It also avoids letting `ThreeView.vue` call individual adapters directly; the component talks to one runtime/facade that composes selector + scene host + adapters.

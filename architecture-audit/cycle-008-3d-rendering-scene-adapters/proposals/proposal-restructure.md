@@ -2,6 +2,8 @@
 
 ## Summary
 
+Round-01 correction: the selected Proposal Restructure path is implementation-ready only if `ThreeView.vue` passes display options, injected `World`, and selected IDs into `ThreeViewRuntime`/`threePresentation`, while guide/perpendicular-plane DTO production, selected-element lookup, domain-to-view conversion, and all Three.js/CSS2D object construction live outside the Vue shell. The `threePresentation` package must be concern-split by projection planes, planar 2D-on-3D elements, reconstructed 3D elements, guides, and hinge/axis geometry; the scene host/registry/adapters must own grouped replacement/disposal and CSS2D label lifecycle with focused validation.
+
 Implement Wave 008 one conceptual layer higher than a mechanical `ThreeView.vue` extraction: introduce an application-owned `threePresentation` read-model boundary parallel to Wave 007's `canvasPresentation`, then make Three.js adapters pure consumers of that model. The component delegates lifecycle to a `ThreeViewRuntime`, while all domain traversal happens in selectors and all Three.js mutation happens in adapters.
 
 This option treats `Element2DRenderer3D.ts` as an architectural smell to delete, not merely move. It also avoids letting `ThreeView.vue` call individual adapters directly; the component talks to one runtime/facade that composes selector + scene host + adapters.
