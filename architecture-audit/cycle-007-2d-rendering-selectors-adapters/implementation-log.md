@@ -97,3 +97,19 @@ Implementation-stage focused validation:
 - Did not refactor `ThreeView.vue` or 3D scene adapters (Wave 008).
 - Did not move application shell, persistence, keyboard routing, or lifecycle orchestration (Wave 009).
 - Did not reintroduce direct UI command construction; tools still emit intents and controllers/use cases own mutations.
+
+## t1b continuation verification
+
+The continuation worker found the Wave 007 source implementation already committed in `951230c30997adb262ba2cbdfb6a17f370803114` and did not need to modify application source.
+
+Additional evidence captured for this handoff/reporting task:
+
+- Focused Vitest rerun: `npm run test --workspace=frontend -- --run tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts tests/unit/services/svgCanvasRenderer.spec.ts tests/unit/application/canvasToolControllers.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts tests/unit/tools/pointTool.spec.ts`
+  - Logs: `validation/t1b-focused-vitest.stdout`, `validation/t1b-focused-vitest.stderr`
+  - Result: passed; 8 files passed, 55 tests passed.
+- Static boundary scan rerun:
+  - Logs: `validation/t1b-static-boundary-scan.stdout`, `validation/t1b-static-boundary-scan.stderr`
+  - Result: no `RenderService.ts`, `PaperService.ts`, obsolete Paper/PaperService/RenderService test files, `PrimitiveContext`, `generatePrimitives`, or `Paper.hitTest` compatibility path found in the Wave 007 2D canvas boundary. Remaining `hitTest` references are `CanvasInteractionQuery` calls/tests. Remaining `world.projectionPlanes` / `realize2D(world)` references are either in the allowed canvas-presentation selector boundary, domain tests, tool tests that build worlds, or `Element2DRenderer3D.ts` (Wave 008 3D scope, unchanged). `SvgCanvas.vue` uses the interaction query and presentation model rather than the deleted raw PaperService/Paper hit-test paths.
+- Git status scoped to Wave 007 source paths showed no uncommitted frontend source/test changes after the prior implementation commit; this continuation task only added verification/reporting artifacts.
+
+Residual validation blockers remain as classified above: missing `eslint`, `vue-tsc` failing under the current Node/toolchain, existing root Vitest failures, and malformed e2e specs. No new Wave 007-attributable focused test failure was found during t1b verification.
