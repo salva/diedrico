@@ -6,11 +6,11 @@
       <!-- Sign in section (if not signed in) -->
       <div v-if="!isSignedIn" class="sign-in-section">
         <p class="info-text">Sign in with your Google account to access your projects</p>
-        <button class="sign-in-button" @click="handleSignIn" :disabled="loading">
-          <span v-if="!loading">Sign in with Google</span>
+        <button class="sign-in-button" @click="handleSignIn" :disabled="props.loading">
+          <span v-if="!props.loading">Sign in with Google</span>
           <span v-else>Signing in...</span>
         </button>
-        <p v-if="error" class="error-text">{{ error }}</p>
+        <p v-if="props.error" class="error-text">{{ props.error }}</p>
       </div>
 
       <!-- Project selection (after sign in) -->
@@ -25,18 +25,18 @@
         <section class="project-section">
           <h2>Open Existing Project</h2>
           
-          <div v-if="loadingFiles" class="loading-files">
+          <div v-if="props.loadingFiles" class="loading-files">
             Loading projects...
           </div>
           
-          <div v-else-if="files.length === 0" class="no-files">
+          <div v-else-if="props.files.length === 0" class="no-files">
             <p>No projects found in your Google Drive.</p>
             <button class="create-button" @click="handleCreateNewProject">Create First Project</button>
           </div>
           
           <div v-else class="file-list">
             <div
-              v-for="file in files"
+              v-for="file in props.files"
               :key="file.id"
               class="file-item"
               :class="{ selected: selectedFileId === file.id }"
@@ -49,28 +49,32 @@
           </div>
           
           <button 
-            v-if="files.length > 0"
+            v-if="props.files.length > 0"
             @click="handleOpenProject" 
-            :disabled="loading || !selectedFileId"
+            :disabled="props.loading || !selectedFileId"
             class="open-button"
           >
             Open
           </button>
         </section>
 
-        <p v-if="error" class="error-text">{{ error }}</p>
+        <p v-if="props.error" class="error-text">{{ props.error }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch } from 'vue';
 import type { GoogleDriveFile } from '../../services/GoogleDriveService';
 
 interface Props {
   show: boolean;
   isSignedIn: boolean;
+  files: GoogleDriveFile[];
+  loading: boolean;
+  loadingFiles: boolean;
+  error: string | null;
 }
 
 interface Emits {
@@ -78,53 +82,21 @@ interface Emits {
   (e: 'open', fileId: string): void;
   (e: 'close'): void;
   (e: 'create-project'): void;
+  (e: 'request-files'): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const selectedFileId = ref<string | null>(null);
-const files = ref<GoogleDriveFile[]>([]);
-const loading = ref(false);
-const loadingFiles = ref(false);
-const error = ref<string | null>(null);
+
 
 // Watch for sign-in status changes
 watch(() => props.isSignedIn, (signedIn) => {
-  if (signedIn) {
-    loadFiles();
-  }
-});
-
-onMounted(() => {
-  if (props.isSignedIn) {
-    loadFiles();
-  }
-});
-
-async function loadFiles() {
-  loadingFiles.value = true;
-  error.value = null;
-  
-  try {
-    // This will be provided by the parent component through a prop or service
-    // For now, we'll emit an event to let the parent handle it
-    const event = new CustomEvent('load-files');
-    window.dispatchEvent(event);
-  } catch (err) {
-    error.value = `Failed to load projects: ${err}`;
-  } finally {
-    loadingFiles.value = false;
-  }
-}
-
-function setFiles(fileList: GoogleDriveFile[]) {
-  files.value = fileList;
-}
+  if (signedIn) emit('request-files');
+}, { immediate: true });
 
 function handleSignIn() {
-  loading.value = true;
-  error.value = null;
   emit('sign-in');
 }
 
@@ -133,19 +105,10 @@ async function handleOpenProject() {
     return;
   }
 
-  loading.value = true;
-  error.value = null;
-  
-  try {
-    emit('open', selectedFileId.value);
-  } catch (err) {
-    error.value = `Failed to open project: ${err}`;
-    loading.value = false;
-  }
+  emit('open', selectedFileId.value);
 }
 
 function handleCreateNewProject() {
-  loading.value = true;
   emit('create-project');
 }
 
@@ -175,13 +138,6 @@ function formatDate(dateString: string): string {
     return date.toLocaleDateString();
   }
 }
-
-// Expose methods for parent component
-defineExpose({
-  setFiles,
-  setError: (err: string) => { error.value = err; },
-  setLoading: (val: boolean) => { loading.value = val; },
-});
 </script>
 
 <style scoped>

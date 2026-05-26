@@ -186,44 +186,7 @@ function selectTool(tool: 'select' | 'point' | 'line' | 'circle' | 'segment' | '
   toolStore.setTool(tool);
 }
 
-/**
- * Handle global keyboard shortcuts
- * Phase 54.5: Esc activates Selection Tool
- * Phase 67: Letter shortcuts activate specific sub-tools and update last-used
- */
-function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    selectTool('select');
-    event.preventDefault();
-    return;
-  }
-
-  // Handle letter shortcuts for tools
-  const key = event.key.toUpperCase();
-
-  // Phase 106: D key toggles 3D element projection display
-  if (key === 'D') {
-    handleToggleProjections();
-    event.preventDefault();
-    return;
-  }
-
-  // Find tool with matching shortcut across all families
-  for (const family of TOOL_FAMILIES) {
-    for (const tool of family.tools) {
-      if (tool.shortcut === key) {
-        // Activate tool directly and update last-used for its family
-        toolStore.selectSubTool(family.id, tool.id);
-        event.preventDefault();
-        return;
-      }
-    }
-  }
-}
-
 onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
-
   // Subscribe to history changes
   unsubscribeHistory = toolbarHistoryController.subscribe(() => {
     historyUpdate.value++;
@@ -231,8 +194,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-
   if (unsubscribeHistory) {
     unsubscribeHistory();
   }

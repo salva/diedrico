@@ -1,0 +1,68 @@
+import { describe, expect, it, vi } from 'vitest';
+import { KeyboardShortcutRouter } from '@/application/appShell/KeyboardShortcutRouter';
+
+function event(key: string, options: Partial<KeyboardEvent> = {}) {
+  return {
+    key,
+    ctrlKey: false,
+    metaKey: false,
+    shiftKey: false,
+    altKey: false,
+    target: document.body,
+    preventDefault: vi.fn(),
+    ...options,
+  } as unknown as KeyboardEvent & { preventDefault: ReturnType<typeof vi.fn> };
+}
+
+function deps() {
+  return {
+    commandStack: { canUndo: () => false, canRedo: () => false, undo: vi.fn(), redo: vi.fn() },
+    toolStore: { setTool: vi.fn(), selectSubTool: vi.fn() },
+    viewStore: { toggleProjectedElements: vi.fn() },
+    projectSession: { newProject: vi.fn(), showOpenProjectDialog: vi.fn() },
+    selection: { clearSelection: vi.fn(), deleteSelected: vi.fn(), selectAllInActivePlane: vi.fn() },
+    activePlane: { cycle: vi.fn() },
+    fitToView: vi.fn(),
+    startRename: vi.fn(),
+  } as any;
+}
+
+describe('KeyboardShortcutRouter', () => {
+  it('installs exactly one listener and removes it on dispose', () => {
+    const d = deps();
+    const router = new KeyboardShortcutRouter(d);
+    const target = { addEventListener: vi.fn(), removeEventListener: vi.fn() };
+    router.install(target as any);
+    router.install(target as any);
+    expect(target.addEventListener).toHaveBeenCalledTimes(1);
+    router.dispose();
+    router.dispose();
+    expect(target.removeEventListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes Escape, Delete, D, Ctrl+A and Tab through shell actions', () => {
+    const d = deps();
+    const router = new KeyboardShortcutRouter(d);
+    router.handle(event('Escape'));
+    expect(d.toolStore.setTool).toHaveBeenCalledWith('select');
+    expect(d.selection.clearSelection).toHaveBeenCalled();
+    router.handle(event('Delete'));
+    expect(d.selection.deleteSelected).toHaveBeenCalled();
+    router.handle(event('D'));
+    expect(d.viewStore.toggleProjectedElements).toHaveBeenCalled();
+    router.handle(event('a', { ctrlKey: true }));
+    expect(d.selection.selectAllInActivePlane).toHaveBeenCalled();
+    router.handle(event('Tab', { shiftKey: true }));
+    expect(d.activePlane.cycle).toHaveBeenCalledWith(-1);
+  });
+
+  it('does not consume text input Delete or tool letters', () => {
+    const d = deps();
+    const router = new KeyboardShortcutRouter(d);
+    const input = document.createElement('input');
+    router.handle(event('Delete', { target: input }));
+    router.handle(event('p', { target: input }));
+    expect(d.selection.deleteSelected).not.toHaveBeenCalled();
+    expect(d.toolStore.setTool).not.toHaveBeenCalled();
+  });
+});
