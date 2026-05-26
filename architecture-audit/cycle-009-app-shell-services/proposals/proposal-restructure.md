@@ -4,6 +4,14 @@
 
 Instead of merely extracting helper composables from `App.vue`, introduce a higher-level `ApplicationRuntime` / `AppShellRuntime` boundary that owns the app's long-lived domain object, command stack, project session, keyboard routing, autosave, active-plane state, and selection orchestration. `App.vue` becomes a pure Vue composition shell over this runtime: it renders layout and binds runtime DTOs/intents to child components. This addresses the deeper smell that `App.vue` is currently both dependency-injection root and application use-case coordinator.
 
+
+## Required ownership constraints from round-01 review
+
+- The runtime must leave exactly **one** authoritative app-shell keyboard interpreter/registry: `KeyboardShortcutRouter`. It is the only module that converts global `keydown` events into shell/tool/projection/undo/redo intents.
+- `Toolbar.vue` must not retain any competing global keyboard listener, local keydown switch, component-side shortcut registry, or fallback shortcut interpretation for Escape, D projection toggle, or tool-family shortcuts. Toolbar remains a render/click adapter and may expose passive label/shortcut metadata to the runtime only through typed data.
+- This narrow `Toolbar.vue` deletion is part of Wave 009 because the app shell cannot own global keyboard routing while a toolbar component owns parallel global shortcuts. The wave must not expand into broader toolbar controller redesign, Wave 006b command semantics, or Wave 010 project/backend contract work.
+- Runtime ownership must be explicit: every listener, subscription, interval, debounce timer, world subscription, auth/storage subscription, and startup-dialog file-list request path has a named owner plus `start/install` and `stop/dispose` semantics. Moving code out of `App.vue` without disposal proof is not an acceptable implementation.
+
 ## Why one layer higher is warranted
 
 The current shell problem is not just file size. `App.vue` constructs global runtime objects (`World`, `CommandStack`, Drive service) (`frontend/src/App.vue:147-159`), provides them to children (`frontend/src/App.vue:149-153`), then later replaces `world` on sign-out and calls `provide()` again (`frontend/src/App.vue:779-782`) despite comments elsewhere saying replacement breaks injected references (`frontend/src/App.vue:428-430`). It also directly imports command classes/factories for deletion (`frontend/src/App.vue:115-117`, `frontend/src/App.vue:803-821`), persistence services for project lifecycle (`frontend/src/App.vue:125-126`, `frontend/src/App.vue:377-467`), browser timers/window globals for autosave (`frontend/src/App.vue:474-493`), and global keyboard listeners (`frontend/src/App.vue:903-1030`). A runtime boundary can centralize these application concerns and make Vue only one adapter.
@@ -28,6 +36,7 @@ The current shell problem is not just file size. `App.vue` constructs global run
 - Add `frontend/src/application/appShell/KeyboardShortcutRouter.ts`
   - Converts `KeyboardEvent` into runtime action calls through a small adapter. Tests can exercise a typed key event abstraction.
   - Owns the full app-level shortcut registry, including shortcuts currently in `App.vue` plus `Toolbar.vue`'s Escape, D projection toggle, and tool-family shortcuts, so there is exactly one global `keydown` listener.
+  - Provides `install(target): void`/`dispose(): void` or equivalent lifecycle methods; duplicate installation must be prevented or deterministically replace the prior listener, and disposal must remove the listener.
 - Add `frontend/src/application/appShell/ActivePlaneUseCases.ts`
   - Active-plane status DTO, update, cycle, subscribe/unsubscribe.
 - Update `frontend/src/components/dialogs/StartupDialog.vue`
@@ -51,6 +60,17 @@ The current shell problem is not just file size. `App.vue` constructs global run
 - Delete routine debug/environment/autosave logs and touched TODO stubs that have no tested behavior.
 - Delete tests that assert App.vue owns these internals; replace with runtime/use-case tests.
 
+
+## Runtime install/start and dispose/stop contract
+
+- `AppShellRuntime.start()` owns startup-time installation for keyboard routing, autosave, active-plane subscription, project-list/startup-dialog state, and any shell watchers. `AppShellRuntime.dispose()` calls every child disposer exactly once and is safe on repeated calls.
+- `KeyboardShortcutRouter.install()` is the only place a global `keydown` listener is attached. `KeyboardShortcutRouter.dispose()` removes it. No component may call `window.addEventListener('keydown', ...)` for shell shortcuts after this wave.
+- `AutoSaveUseCases.start()` owns version polling; `schedule()` owns a single replaceable debounce; `stop()` clears polling, debounce, and saved/idle status timers. Sign-out/auth expiry/open/new must stop or rescope autosave before clearing project state.
+- `ActivePlaneUseCases.start(world)` owns the world subscription for active-plane id/name. It must unsubscribe on runtime disposal and before any shell replacement. The runtime should keep a stable world instance; if a reset is needed, reset the world contents rather than replacing provided references.
+- `ProjectSessionUseCases` owns Drive/project/auth/storage lifecycle. Any storage/auth subscriptions or pending startup/open requests it creates must be abortable or disposed by the runtime.
+- `StartupDialog` file-list handling becomes runtime state plus typed Vue props/events (`request-files`), or an explicit startup-dialog controller. No anonymous `window` custom-event listener may remain; request/list loading/error state must be reset or disposed when the dialog/runtime unmounts.
+- Selection/cascade watchers owned by the runtime must return stop handles and be included in `AppShellRuntime.dispose()`.
+
 ## Expected behavior change
 
 The only intended user-visible behavior change is removal of routine debug logging and more consistent runtime reset semantics on sign-out. Existing flows should remain functionally equivalent: startup/local-only initialization, sign-in/sign-out, create/open/new/rename/autosave, delete/select-all, active-plane cycle/update, 3D overlay presence, undo/redo, fit-to-view, and tool shortcuts.
@@ -62,7 +82,7 @@ The only intended user-visible behavior change is removal of routine debug loggi
 3. Move project session use cases into the runtime and route Drive/localStorage/session/auth interactions through ports.
 4. Move autosave into the runtime with explicit `start`, `schedule`, `stop`, and `dispose` methods.
 5. Move selection and active-plane use cases into runtime controllers.
-6. Install one runtime keyboard router from `App.vue` lifecycle and fold `Toolbar.vue`'s Escape/D/tool-family shortcuts into that router in the same implementation. Toolbar must not retain a global keyboard listener.
+6. Install one runtime keyboard router from `App.vue` lifecycle and fold `Toolbar.vue`'s Escape/D/tool-family shortcuts into that router in the same implementation. Toolbar must not retain a global keyboard listener, shortcut switch, or keyboard registry that can interpret keydown events.
 7. Convert `StartupDialog` file loading to typed events/props.
 8. Add architecture tests that assert `App.vue` is a composition shell and app-shell runtime has no component/rendering imports.
 
@@ -77,13 +97,15 @@ Focused tests:
   - Selection use cases cover cascade preview, delete command composition/push/clear, select-all on active plane, no-active-plane/no-selection no-ops.
   - Active-plane use cases cover subscription updates, update from canvas event, cycle wrap-around.
   - Keyboard router covers all shell and toolbar shortcuts plus text-input exemptions: Escape, D projection toggle, P/L/S/C/G and toolbar family shortcuts, Delete/Backspace, F2, Tab/Shift+Tab, Ctrl/Cmd+N/O/A/0, undo, and redo.
-  - Toolbar component tests verify no global listener registration remains and button/click behavior still routes through typed actions.
+  - Toolbar component tests verify no global listener registration remains, no local shortcut switch/registry interprets keydown events, and button/click behavior still routes through typed actions.
   - StartupDialog emits `request-files` and renders provided file/loading/error state without `window.dispatchEvent`.
 - Static scans:
   - `App.vue` contains no `Command`, `DeletionSequenceFactory`, `ProjectService`, `GoogleDriveService`, `window as any`, `__autoSaveInterval`, `CustomEvent('load-files')`, or environment dump logging.
   - `frontend/src/application/appShell/**` contains no Vue component imports and no rendering adapter imports.
   - `StartupDialog.vue` contains no `window.dispatchEvent`.
-  - `Toolbar.vue` contains no `window.addEventListener('keydown'`, `window.removeEventListener('keydown'`, or local global shortcut handler.
+  - `Toolbar.vue` contains no `window.addEventListener('keydown'`, `window.removeEventListener('keydown'`, local global shortcut handler, keyboard shortcut `switch`, or shortcut registry used to interpret keydown events.
+  - Exactly one module under `frontend/src/application/appShell/` contains global shortcut interpretation; static scan fails if `App.vue`, `Toolbar.vue`, or other components contain shell-key `keydown` decision trees.
+  - Lifecycle/disposal tests prove `AppShellRuntime.dispose()` removes the keyboard listener, clears autosave polling/debounce/status timers, unsubscribes active-plane/world listeners, stops selection cascade watchers, and disposes/resets startup-dialog file-list request state on unmount or runtime replacement.
 
 Mandatory implementation validation:
 

@@ -4,6 +4,14 @@
 
 Move the existing `App.vue` orchestration into focused application-shell composables/services while preserving the current conceptual structure: `App.vue` remains the root layout and provider, but delegates project lifecycle, autosave, selection/delete/select-all/cascade preview, active-plane status, and keyboard routing to typed modules under `frontend/src/application/appShell/` (or equivalent). This proposal is intentionally direct: it extracts the current responsibilities without redesigning the whole runtime container.
 
+
+## Required ownership constraints from round-01 review
+
+- Wave 009 must leave exactly **one** authoritative app-shell keyboard interpreter/registry: `AppKeyboardRouter`. It owns all global `keydown` interpretation for Escape, Delete/Backspace, F2, Tab/Shift+Tab, Ctrl/Cmd+N/O/A/0, undo/redo, D projection toggle, and P/L/S/C/G/tool-family shortcuts.
+- `Toolbar.vue` must not retain a parallel keydown handler, switch statement, shortcut registry, watcher, or fallback path that decides global shortcut behavior. After implementation it may keep only button rendering, click emits/actions, and passive shortcut labels/metadata consumed by `AppKeyboardRouter` through a typed port.
+- Removing `Toolbar.vue`'s global shortcut owner is in Wave 009 scope because a shell keyboard extraction cannot be correct while a toolbar component still owns competing global shell shortcuts. This is not Wave 006b command-controller work or Wave 010 backend-contract work; broader toolbar command/controller redesign remains out of scope.
+- Each extracted shell controller must expose explicit lifecycle ownership. `App.vue` may install/start controllers at mount/runtime creation and must call one disposer at unmount/shell replacement. No controller may hide browser listeners, world subscriptions, intervals, or debounce timers without returning/owning a typed cleanup path.
+
 ## Files to change
 
 - `frontend/src/App.vue`
@@ -23,6 +31,7 @@ Move the existing `App.vue` orchestration into focused application-shell composa
 - Add `frontend/src/application/appShell/AppKeyboardRouter.ts`
   - Become the single global keyboard owner for app-shell shortcuts: escape, delete/backspace, F2, Tab/Shift+Tab active-plane cycling, Ctrl/Cmd+N/O/A/0, undo/redo, D projection toggle, and all toolbar/tool-family shortcuts currently split between `App.vue` and `Toolbar.vue`.
   - Accept typed adapters for shell actions, tool-family selection, projection-display toggle, fit-to-view, and rename focus so it does not import Vue components.
+  - Export an explicit `install(target): () => void` or equivalent disposer; repeated installation against the same shell must be rejected or idempotently replace the old listener so singleton keyboard ownership is testable.
 - Update `frontend/src/components/toolbars/Toolbar.vue`
   - Delete its `window.addEventListener('keydown', handleKeyDown)` / `removeEventListener` ownership and route Escape, D, and tool-family shortcut behavior through the app-shell keyboard router instead.
   - Keep button rendering and click handlers only; keyboard shortcut metadata may remain as display/registry data if consumed by the router through a typed port.
@@ -44,6 +53,16 @@ Move the existing `App.vue` orchestration into focused application-shell composa
 - Delete debug logging from touched App shell paths, especially environment dump logging and routine autosave command-count logs (`frontend/src/App.vue:134-145`, `frontend/src/App.vue:523-530`).
 - Delete TODO/log-only highlight stubs if no implementation is made in this wave; otherwise make them typed no-op boundaries with tests only if review accepts them as still required (`frontend/src/App.vue:640-655`).
 - Delete obsolete App.vue-focused tests that inspect inline methods once replaced by service/controller tests.
+
+
+## Install/start and dispose/stop contract
+
+- `AppKeyboardRouter` owns the only `window`/document `keydown` listener. `start()`/`install()` registers that listener and returns/stores its disposer; `stop()`/`dispose()` removes it. Tests must prove a second router/listener is not installed while one is active and that unmount removes the listener.
+- `AutoSaveController` owns version-poll intervals, debounce timers, and transient saved/idle timeouts. `start()` begins polling only when a project/session is eligible; `schedule()` owns debounce replacement; `stop()` clears polling/debounce/status timers; `dispose()` is safe to call multiple times.
+- `ActivePlaneController` owns the world subscription that derives active-plane id/name. `start(world)` subscribes once to the current stable world; `stop()` unsubscribes. World reset/open/create must reuse the same world instance or explicitly stop and restart the subscription before exposing state.
+- `ProjectSessionController` owns startup/open/create/sign-in/sign-out flows and any storage/auth subscriptions it introduces. It must not replace the provided `World`; it clears/reinitializes the stable world and command stack through typed reset methods.
+- `StartupDialog` file-list handling must become a typed parent/runtime flow. Any request-files listener/subscription belongs to the shell controller or Vue event binding and has a matching cleanup; the current anonymous `window.addEventListener('load-files', ...)` bridge is deleted rather than moved.
+- Selection cascade watchers/subscriptions introduced by `SelectionShellController` must return a stop handle and be disposed with the shell.
 
 ## Expected behavior change
 
@@ -71,12 +90,14 @@ Focused tests:
   - `SelectionShellController`: cascade preview excludes directly selected ids, delete builds/commits/pushes cascade command and clears selection, no-selection is no-op, select-all traverses active-plane points/lines/circles.
   - `ActivePlaneController`: subscription updates id/name and tab cycling wraps through planes.
   - `AppKeyboardRouter`: all shortcuts dispatch expected intents and ignore text inputs where current behavior does, including Escape, D projection toggle, P/L/S/C/G and toolbar family shortcuts, Delete/Backspace, F2, Tab/Shift+Tab, Ctrl/Cmd+N/O/A/0, undo, and redo.
-  - `Toolbar.vue`: no longer registers a global keydown listener; button clicks still invoke tool/projection actions through typed emits/ports.
+  - `Toolbar.vue`: no longer registers a global keydown listener; button clicks still invoke tool/projection actions through typed emits/ports; it contains no shortcut decision switch/map for Escape/D/tool-family keyboard behavior.
   - `StartupDialog` emits typed file-list request without touching `window`.
 - Static boundary tests/scans:
   - `App.vue` has no imports of `Command`, `DeletionSequenceFactory`, or `ProjectService` if those are fully moved to app-shell services.
   - `App.vue` contains no `window as any`, `__autoSaveInterval`, `CustomEvent('load-files')`, or environment dump logging.
-  - `Toolbar.vue` contains no `window.addEventListener('keydown'`, `window.removeEventListener('keydown'`, or local global shortcut handler.
+  - `Toolbar.vue` contains no `window.addEventListener('keydown'`, `window.removeEventListener('keydown'`, local global shortcut handler, keyboard shortcut `switch`, or shortcut registry used to interpret keydown events.
+  - Exactly one app-shell keyboard router module contains global shortcut interpretation; static scan fails if `App.vue`, `Toolbar.vue`, or other components contain `keydown` shortcut trees for these shell shortcuts.
+  - App-shell lifecycle tests prove `AppKeyboardRouter.dispose()` removes its listener, `AutoSaveController.dispose()` clears polling/debounce/status timers, `ActivePlaneController.dispose()` unsubscribes from world changes, `SelectionShellController` stops cascade watchers, and StartupDialog request-files state/listeners are cleaned up on unmount or shell replacement.
   - App-shell application services do not import Vue components or rendering adapters.
 
 Mandatory cadence for implementation stage:
