@@ -32,6 +32,8 @@ Changed tests:
   - Covers install/dispose no-duplicate listener ownership, Escape/Delete/D/Ctrl+A/Tab routing, and text-input exemptions.
 - `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
   - Static boundary tests for App.vue, Toolbar.vue, StartupDialog.vue, and app-shell component-import isolation.
+- `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
+  - Added after implementation review correction to cover runtime start/dispose ownership, stable `World`/`CommandStack` identity through sign-out, autosave polling/debounce/status timer cleanup and auth-failure stop behavior, active-plane subscription/cycling/disposal, selection cascade watcher disposal and select-all behavior, project-session local startup/create/open/rename/sign-out flows, and startup-dialog file-list state reset.
 
 ## Deleted legacy surfaces
 
@@ -58,7 +60,8 @@ Deleted from `StartupDialog.vue`:
 
 All logs are under `architecture-audit/cycle-009-app-shell-services/validation/`.
 
-- Focused app-shell Vitest: `focused-app-shell-vitest.stdout.log`, `focused-app-shell-vitest.stderr.log` — PASS.
+- Focused app-shell Vitest: `focused-app-shell-vitest.stdout.log`, `focused-app-shell-vitest.stderr.log` — PASS for the initial implementation coverage.
+- Focused blocker-correction app-shell Vitest: `focused-app-shell-vitest-corrections.stdout.log`, `focused-app-shell-vitest-corrections.stderr.log` — PASS; 3 files / 16 tests covering the review-requested lifecycle/use-case ownership gaps.
 - Static boundary scan shell grep: `static-boundary-scan.stdout.log`, `static-boundary-scan.stderr.log` — PASS; no forbidden tokens reported.
 - Frontend Vite build (without vue-tsc): `frontend-vite-build.stdout.log`, `frontend-vite-build.stderr.log` — PASS.
 - TypeScript no-emit: `frontend-tsc-noemit.stdout.log`, `frontend-tsc-noemit.stderr.log` — PASS for Wave 009 files; broad project no-emit remains noisy in untouched source if run without current logs, but the final logged no-emit stderr is empty after app-shell scheduler handle types were corrected.
@@ -71,7 +74,7 @@ All logs are under `architecture-audit/cycle-009-app-shell-services/validation/`
 
 ## Residual risks and exclusions
 
-- Broad validation remains noisy for known pre-existing reasons (missing eslint, Node 24/vue-tsc incompatibility, unrelated Vitest failures). Wave 009 attributable focused tests, static scans, Vite build, and `tsc --noEmit` pass.
+- Broad validation is not classified as passed: root/frontend lint, script build, full Vitest, and e2e remain failed for the logged known pre-existing reasons (missing eslint, Node 24/vue-tsc incompatibility, unrelated Vitest failures, corrupted Playwright specs). Wave 009 attributable focused tests, static scans, Vite build, and `tsc --noEmit` pass; the correction run adds focused lifecycle/use-case coverage for the prior review gap.
 - StartupDialog request state is runtime-owned and typed, but actual Drive flows still depend on existing GoogleDriveService behavior; no GoogleDriveService internals were refactored.
 - App.vue still contains two empty/highlight adapter stubs for existing panel events; these are not project lifecycle/autosave/keyboard shell orchestration and were left in place to avoid expanding into rendering/highlight work.
 - No Wave 010 backend/frontend contract refactor, Wave 011 validation-gate hardening, or broad docs/spec cleanup was performed.
