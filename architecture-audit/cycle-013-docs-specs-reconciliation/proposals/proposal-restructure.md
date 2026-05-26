@@ -96,28 +96,34 @@ The direct approach can make individual lines accurate, but it leaves two compet
 
 ## Validation plan
 
-Record all stdout/stderr under `architecture-audit/cycle-013-docs-specs-reconciliation/validation/`.
+Record all stdout/stderr under `architecture-audit/cycle-013-docs-specs-reconciliation/validation/`. The validation gates are evidence-based checks for obsolete active documentation/spec authority, not a generic banned-phrase framework. Root commands remain required by project cadence, but current root scripts delegate to frontend/docs commands where applicable (`package.json:13-21`; `frontend/package.json:7-16`), so logs should label root runs as wrappers and frontend runs as the underlying workspace surface.
 
-1. **Deletion/reference scans**
-   - Fail if active files reference `specs/001-dihedral-learning-mvp` after deletion, except the Wave 013 audit artifacts themselves.
-   - Fail if active docs/source comments mention deleted placeholder surfaces: `operations/paper`, `operations/toolbar`, `AddExampleSetupOp`, `ExamplesMenu`, `projection-plane-setup`, `basic-3d-point-setup`.
-   - Fail if active docs preserve stale phrases: `Express backend`, `ProjectService.reconstructOperation`, `schema migration`, `Tool creates new Command`, `command subclass`, `test:coverage` unless explicitly classified as deleted history in Wave 013 artifacts.
+1. **Deletion/reference scans scoped to active authorities**
+   - Scan active entry points, docs, source comments, and remaining spec files that are proposed for deletion/rewrite: `README.md`, `docs/**`, `frontend/src/**`, and `specs/001-dihedral-learning-mvp/**` while excluding `architecture-audit/cycle-013-docs-specs-reconciliation/**` from pass/fail decisions.
+   - Fail if active files still reference deleted `specs/001-dihedral-learning-mvp/**` paths as current authority after their product/user content has been harvested or deleted.
+   - Fail if active README/docs/source comments still claim an existing `backend/` workspace, Express backend, backend project API, or command-sourced backend persistence path.
+   - Fail if active docs/source comments still present deleted placeholder operation surfaces as current code: `operations/paper`, `operations/toolbar`, `AddExampleSetupOp`, `ExamplesMenu`, `projection-plane-setup`, or `basic-3d-point-setup`.
+   - Fail if active command/persistence documentation still describes removed current behavior such as `ProjectService.reconstructOperation()` switch replay or "Tool creates new Command / addAndExecute" lifecycle.
+   - Fail if current setup/testing docs list nonexistent command names such as `npm run test:coverage`.
+   - Do not fail merely because words such as "schema migration" or "command subclass" appear in a clearly historical explanation, in Wave 013 audit artifacts, or in a rewritten section that explicitly says the model was removed and is not current behavior.
 2. **Docs build**
    - `npm run docs:build` from root (`package.json:17-19`). This is the focused functional gate for documentation restructure.
 3. **Architecture/static gates**
-   - `npm run lint` at root.
-   - `npm run lint --workspace=frontend`.
-   - If a docs-reference architecture test is added, include `npm run test:architecture` at root and workspace.
+   - `npm run lint` at root, recorded as the root wrapper required by project cadence.
+   - `npm run lint --workspace=frontend`, recorded as the underlying frontend workspace command.
+   - If a docs-reference architecture test is added, include both `npm run test:architecture` at root and `npm run test:architecture --workspace=frontend` with the same wrapper/workspace labeling.
 4. **Focused Vitest**
-   - `npm run test:architecture` root/workspace, plus any docs/reference scan script if added.
+   - `npm run test:architecture` at root and `npm run test:architecture --workspace=frontend`, plus any docs/reference scan script added within this wave's docs/spec reconciliation scope.
 5. **Full Vitest**
-   - `npm run test` root/workspace. Classify only the known Wave 012 full-suite signatures as pre-existing: intersection expectation failures, PropertiesDialog close/save emission failures, and zero-test guide-creation file.
+   - `npm run test` at root and `npm run test --workspace=frontend`. Record the wrapper/workspace relationship. Classify only the known Wave 012 full-suite signatures as pre-existing: intersection expectation failures, PropertiesDialog close/save emission failures, and zero-test guide-creation file.
 6. **Build**
-   - `npm run build` root/workspace. Classify the Node 24/`vue-tsc` `supportedTSExtensions` failure as pre-existing unless it changes.
+   - `npm run build` at root and `npm run build --workspace=frontend`. Record the wrapper/workspace relationship. Classify the Node 24/`vue-tsc` `supportedTSExtensions` failure as pre-existing only if unchanged.
 7. **E2E**
-   - `npm run test:e2e` root/workspace. Classify the known corrupted `keyboard-shortcuts.spec.ts` and `selection-mask.spec.ts` parse errors as pre-existing unless signatures change.
+   - `npm run test:e2e` at root and `npm run test:e2e --workspace=frontend`. Record the wrapper/workspace relationship. Classify the known corrupted `keyboard-shortcuts.spec.ts` and `selection-mask.spec.ts` parse errors as pre-existing only if signatures match.
 8. **Live preview**
-   - Because docs/comment changes do not alter app runtime, a live preview refresh may be justified as non-essential; however, project discipline prefers keeping the preview fresh, so run or verify one `0.0.0.0` preview and record a `curl` HTTP 200 probe.
+   - Refresh or verify one `0.0.0.0` preview and record a `curl` HTTP 200 probe. For docs/comment-only implementation, state that this verifies preview continuity rather than changed runtime behavior.
+
+This wave may document current known residual test/tooling debt, but it must not fix or redesign validation tooling, Node 24/`vue-tsc` compatibility, full Vitest health, or broad Playwright spec health. Those remain future reviewed-wave candidates unless a Wave 013 docs/spec/comment edit introduces a new failure.
 
 ## Risks and mitigations
 

@@ -97,27 +97,36 @@ Developer/user behavior:
 
 ## Validation plan
 
-Because this wave changes docs/specs/comments only, implementation validation should still record the mandatory cadence and classify known unrelated failures precisely.
+Because this wave changes docs/specs/comments only, implementation validation should still record the mandatory cadence and classify known unrelated failures precisely. Root validation commands are part of the project cadence, but the current root scripts are wrappers around frontend/docs workspace commands where applicable (`package.json:13-21`; `frontend/package.json:7-16`). Logs should therefore describe root executions as wrapper coverage and frontend executions as the underlying workspace command surface, not as two independent suites.
 
 Required stable logs under `architecture-audit/cycle-013-docs-specs-reconciliation/validation/`:
 
-1. **Reference scans**
-   - `rg -n "specs/001-dihedral-learning-mvp|for-planing|backend/|Express backend|operations/(paper|toolbar)|ProjectService\.reconstructOperation|schema migration|command subclass|Tool creates new Command|test:coverage" README.md docs frontend/src specs || true`
-   - A stricter pass should fail if deleted spec paths or deleted placeholder operation families remain in active docs/source comments.
+1. **Evidence-based reference scans, not phrase policing**
+   - Run scoped scans over active documentation and source comments, excluding Wave 013 audit artifacts and other historical audit logs unless the scan is explicitly informational.
+   - Fail only when an obsolete active authority remains, such as:
+     - active references to deleted `specs/001-dihedral-learning-mvp/**` files after their contents have been harvested or deleted;
+     - active README/docs/source-comment claims that a `backend/` or Express backend workspace exists;
+     - active references to deleted placeholder operation surfaces such as `operations/paper`, `operations/toolbar`, `AddExampleSetupOp`, `ExamplesMenu`, `projection-plane-setup`, or `basic-3d-point-setup`;
+     - active docs preserving removed command/persistence models such as `ProjectService.reconstructOperation()` or "Tool creates new Command" as current behavior;
+     - nonexistent command names such as `npm run test:coverage` in current setup/testing guidance.
+   - Allow legitimate historical explanation inside Wave 013 artifacts and allow rewritten docs to mention removed history only when the text clearly says it is not current behavior.
 2. **Docs build**
    - `npm run docs:build` at root, because root declares VitePress docs scripts (`package.json:17-19`).
 3. **Architecture/static gates**
-   - `npm run lint` at root and `npm run lint --workspace=frontend`, capturing stdout/stderr.
+   - `npm run lint` at root, recording that the root script delegates to frontend architecture linting/static checks.
+   - `npm run lint --workspace=frontend`, recording the underlying frontend workspace execution required by the validation cadence.
 4. **Focused checks**
-   - `npm run test:architecture` at root and `npm run test:architecture --workspace=frontend`, especially if any docs reference gate is added.
+   - `npm run test:architecture` at root and `npm run test:architecture --workspace=frontend`; record root as the wrapper and frontend as the workspace command. Add any docs-reference scan script here only if the implementation creates one within the approved docs/spec reconciliation scope.
 5. **Full Vitest cadence**
-   - `npm run test` at root and `npm run test --workspace=frontend`; expected to fail only with the pre-existing Wave 012 signatures unless fixed by another reviewed wave.
+   - `npm run test` at root and `npm run test --workspace=frontend`; record wrapper/workspace relationship and classify expected failures only if they match the pre-existing Wave 012 signatures.
 6. **Build cadence**
-   - `npm run build` at root and `npm run build --workspace=frontend`; expected to fail only with the pre-existing Node 24/`vue-tsc` signature unless fixed separately.
+   - `npm run build` at root and `npm run build --workspace=frontend`; record wrapper/workspace relationship and classify the pre-existing Node 24/`vue-tsc` signature only if unchanged.
 7. **E2E cadence**
-   - `npm run test:e2e` at root and `npm run test:e2e --workspace=frontend`; because source comments/README/docs are not user-facing app behavior, broad e2e failures may be classified as the pre-existing corrupted spec syntax noted in Wave 012.
+   - `npm run test:e2e` at root and `npm run test:e2e --workspace=frontend`; record wrapper/workspace relationship. Because source comments/README/docs are not app behavior, broad e2e failures may be classified as the pre-existing corrupted spec syntax noted in Wave 012 only if signatures match.
 8. **Live preview refresh**
-   - If implementation touches only docs and comments, preview refresh may be justified as optional. If README/guide changes affect user-facing instructions only, still probe the existing app or refresh the preview per project discipline and record HTTP 200 reachability.
+   - Refresh or verify the existing `0.0.0.0` preview per project discipline and record an HTTP 200 reachability probe. If the implementation truly touches only docs/specs/comments, explain that the probe verifies continuity rather than new runtime behavior.
+
+This validation intentionally does not repair full-suite Vitest failures, Node 24/`vue-tsc` build health, broad Playwright spec corruption, or validation-tooling architecture. Any such work belongs to a future reviewed wave unless a docs-only change introduces a new failure.
 
 ## Risks and mitigations
 
