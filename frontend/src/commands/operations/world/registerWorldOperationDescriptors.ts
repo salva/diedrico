@@ -19,7 +19,7 @@ import { AddCircleCircleIntersectionPoint2DOp } from './AddCircleCircleIntersect
 import { AddSiblingIntersectionPoint2DOp } from './AddSiblingIntersectionPoint2DOp';
 import { AddIntersectionPoint2DOp } from './AddIntersectionPointOp';
 import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from './RemoveElementOps';
-import { UpdateElementStyleOp } from './UpdateElementStyleOp';
+import { UpdateElementStyleOp, parseStyleProperties } from './UpdateElementStyleOp';
 import { UpdateFreePoint2DPositionOp } from './UpdateFreePoint2DPositionOp';
 import {
   CreateInitializationSubprocessOp,
@@ -41,6 +41,7 @@ function s(d: JsonObject, key: string): string { const v = d[key]; if (typeof v 
 function so(d: JsonObject, key: string): string | undefined { const v = d[key]; if (v === undefined || v === null) return undefined; if (typeof v !== 'string') throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be string`); return v; }
 function arr(d: JsonObject, key: string, len: number): number[] { const v = d[key]; if (!Array.isArray(v) || v.length !== len || v.some(x => typeof x !== 'number')) throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be number[${len}]`); return v as number[]; }
 function restoreOutput<T extends { outputs: JsonObject }>(op: T, outputs: JsonObject): T { op.outputs = outputs; return op; }
+function obj(d: JsonObject, key: string): JsonObject { const v = d[key]; if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be object`); return v; }
 
 export function registerWorldOperationDescriptors(registry: OperationRegistry): void {
   registry.register('AddFreePoint2D', d => restoreOutput(new AddFreePoint2DOp(s(d, 'planeId'), new Vector3(...arr(d, 'position', 3))), { pointId: so(d, 'pointId') }));
@@ -57,13 +58,13 @@ export function registerWorldOperationDescriptors(registry: OperationRegistry): 
   registry.register('AddGuide2DPerpendicularToLine', d => restoreOutput(new AddGuide2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId'), so(d, 'guideId')), { guideId: so(d, 'guideId') }));
   registry.register('AddSiblingGuide2D', d => restoreOutput(new AddSiblingGuide2DOp(s(d, 'planeId'), s(d, 'primaryGuideId'), s(d, 'referenceLineId'), so(d, 'siblingGuideId')), { siblingGuideId: so(d, 'siblingGuideId') }));
   registry.register('AddSiblingIntersectionPoint2D', d => restoreOutput(new AddSiblingIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'primaryIntersectionId')), { pointId: so(d, 'pointId') }));
-  registry.register('AddIntersectionPoint2D', d => restoreOutput(new AddIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id'), n(d, 'index')), { pointId: so(d, 'pointId') }));
+  registry.register('AddIntersectionPoint2D', d => restoreOutput(new AddIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id')), { pointId: so(d, 'pointId') }));
   registry.register('RemovePoint2D', d => new RemovePoint2DOp(s(d, 'planeId'), s(d, 'pointId')));
   registry.register('RemoveLine2D', d => new RemoveLine2DOp(s(d, 'planeId'), s(d, 'lineId')));
   registry.register('RemoveSegment2D', d => new RemoveSegment2DOp(s(d, 'planeId'), s(d, 'segmentId')));
   registry.register('RemoveCircle2D', d => new RemoveCircle2DOp(s(d, 'planeId'), s(d, 'circleId')));
   registry.register('RemoveGuide2D', d => new RemoveGuide2DOp(s(d, 'planeId'), s(d, 'guideId')));
-  registry.register('UpdateElementStyle', d => new UpdateElementStyleOp(s(d, 'elementId'), s(d, 'planeId'), (d.newStyle ?? {}) as JsonObject));
+  registry.register('UpdateElementStyle', d => { const payload = obj(d, 'payload'); return new UpdateElementStyleOp(s(payload, 'elementId'), s(payload, 'planeId'), parseStyleProperties(obj(payload, 'newStyle'))); });
   registry.register('UpdateFreePoint2DPosition', d => new UpdateFreePoint2DPositionOp(s(d, 'planeId'), s(d, 'pointId'), new Vector3(...arr(d, 'newPosition', 3))));
   registry.register('CreateInitializationSubprocess', d => new CreateInitializationSubprocessOp(so(d, 'subprocessName')));
   registry.register('AddPlane3DFixed', d => restoreOutput(new AddPlane3DFixedOp(new Vector4(...arr(d, 'point', 4)), new Vector4(...arr(d, 'normal', 4)), so(d, 'planeId'), so(d, 'label')), { planeId: so(d, 'planeId') }));

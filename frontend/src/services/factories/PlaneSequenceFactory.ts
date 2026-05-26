@@ -32,6 +32,14 @@ import {
 } from '@/domain/processTree/actions/InitializeWorldActions';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 
+
+function requireStringOutput(value: unknown, outputName: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`${outputName} missing from operation output`);
+  }
+  return value;
+}
+
 export class PlaneSequenceFactory {
   /**
    * Create a 3D plane from two trace lines on different projection planes
@@ -67,7 +75,7 @@ export class PlaneSequenceFactory {
       label
     ));
     
-    const planeId = result.outputs.planeId;
+    const planeId = requireStringOutput(result.outputs.planeId, 'planeId');
     
     // Create ProcessTree action for dependency tracking
     const action = createAdd3DPlaneAction(planeId);
@@ -124,7 +132,7 @@ export class PlaneSequenceFactory {
       name
     ));
     
-    const projPlaneId = result.outputs.projPlaneId as string;
+    const projPlaneId = requireStringOutput(result.outputs.projPlaneId, 'projPlaneId');
     
     // Create ProcessTree action for dependency tracking
     const projPlaneAction = createProjectionPlaneAction(projPlaneId);
@@ -139,7 +147,7 @@ export class PlaneSequenceFactory {
       projPlaneId,        // plane1Id (new auxiliary plane - defines canonical coords)
       hingeTracePlaneId   // plane2Id (existing plane containing T1)
     ));
-    const hingeLineId = hingeLineResult.outputs.hingeLineId as string;
+    const hingeLineId = requireStringOutput(hingeLineResult.outputs.hingeLineId, 'hingeLineId');
     
     console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for hingeLine:', hingeLineId);
     cmd.addAndExecute(new AddProcessTreeActionOp(
@@ -222,9 +230,9 @@ export class PlaneSequenceFactory {
       // t2TraceId derived from auxiliaryPlane.t2OtherTraceId at realization time
     ));
     
-    const brokenHingeLineId = result.outputs.brokenHingeLineId as string;
-    const bhhl1Id = result.outputs.bhhl1Id as string;
-    const bhhl2Id = result.outputs.bhhl2Id as string;
+    const brokenHingeLineId = requireStringOutput(result.outputs.brokenHingeLineId, 'brokenHingeLineId');
+    const bhhl1Id = requireStringOutput(result.outputs.bhhl1Id, 'bhhl1Id');
+    const bhhl2Id = requireStringOutput(result.outputs.bhhl2Id, 'bhhl2Id');
     
     // Create ProcessTree actions for dependency tracking
     console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BrokenHingeLine:', brokenHingeLineId, 'groupId:', groupId);

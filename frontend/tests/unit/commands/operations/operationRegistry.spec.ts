@@ -3,6 +3,7 @@ import { deserializeOperation, getRegisteredOperationTypes, serializeOperation }
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddGuide2DPerpendicularToLineOp } from '@/commands/operations/world/AddGuideOp';
 import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
+import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { Vector3 } from 'three';
 
 describe('OperationRegistry', () => {
@@ -37,7 +38,6 @@ describe('OperationRegistry', () => {
       planeId: 'projPlane3',
       line1Id: 'projPlane3/line2d4',
       line2Id: 'projPlane3/line2d5',
-      index: 0,
       pointId: 'projPlane3/point2d12'
     };
 
@@ -45,8 +45,34 @@ describe('OperationRegistry', () => {
     expect(restored.type).toBe('AddIntersectionPoint2D');
     expect(serializeOperation(restored)).toEqual(descriptor);
 
-    const created = new AddIntersectionPoint2DOp(descriptor.planeId, descriptor.line1Id, descriptor.line2Id, descriptor.index);
+    const created = new AddIntersectionPoint2DOp(descriptor.planeId, descriptor.line1Id, descriptor.line2Id);
     created.outputs = { pointId: descriptor.pointId };
+    expect(serializeOperation(created)).toEqual(descriptor);
+  });
+
+
+
+  it('round-trips UpdateElementStyle through its typed JSON payload', () => {
+    const descriptor = {
+      opType: 'UpdateElementStyle',
+      payload: {
+        elementId: 'projPlane3/line2d4',
+        planeId: 'projPlane3',
+        newStyle: {
+          color: '#ff0000',
+          lineWidth: 2,
+          lineStyle: 'dashed',
+          opacity: 0.5,
+          visible: false
+        }
+      }
+    };
+
+    const restored = deserializeOperation(descriptor);
+    expect(restored.type).toBe('UpdateElementStyle');
+    expect(serializeOperation(restored)).toEqual(descriptor);
+
+    const created = new UpdateElementStyleOp('projPlane3/line2d4', 'projPlane3', descriptor.payload.newStyle);
     expect(serializeOperation(created)).toEqual(descriptor);
   });
 

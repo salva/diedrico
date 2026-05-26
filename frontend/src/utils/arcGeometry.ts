@@ -27,7 +27,7 @@
  */
 
 import type { World } from '@/domain/world/World';
-import type { Guide2D } from '@/domain/world/Guide';
+import type { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import type { ArcGeometry } from '@/types/arcGeometry';
 import { DEFAULT_ARC_STYLE } from '@/types/arcGeometry';
 import { Vector2, Vector3 } from 'three';
@@ -38,7 +38,7 @@ import { Vector2, Vector3 } from 'three';
 export function computeArcGeometry(
   world: World,
   primaryGuide: Guide2D,
-  siblingGuide: Guide2D
+  siblingGuide: SiblingGuide2D
 ): ArcGeometry | null {
   try {
     // Realize both guides in their respective 2D plane coordinates
@@ -57,43 +57,19 @@ export function computeArcGeometry(
       return null;
     }
 
-    // For guides (which are lines), get the through-point as the arc start/end
-    // The through-point is where the guide intersects the reference line (BHHL)
-    const primaryPlane = world.getProjectionPlaneById(primaryGuide.planeId);
-    const siblingPlane = world.getProjectionPlaneById(siblingGuide.planeId);
-    
-    if (!primaryPlane || !siblingPlane) {
-      return null;
-    }
-
-    const primaryThroughPoint = primaryPlane.getPoint(primaryGuide.throughPointId);
-    const siblingThroughPoint = siblingPlane.getPoint((siblingGuide as any).primaryGuideId 
-      ? primaryGuide.throughPointId  // SiblingGuide2D references primary guide
-      : siblingGuide.throughPointId);
-
-    if (!primaryThroughPoint || !siblingThroughPoint) {
-      return null;
-    }
-
-    const primaryPointReal = primaryThroughPoint.realize2D(world);
-    const siblingPointReal = siblingThroughPoint.realize2D(world);
-
-    if (!primaryPointReal || !siblingPointReal || !primaryPointReal.feasible || !siblingPointReal.feasible) {
-      return null;
-    }
-
-    // Transform to paper coordinates using planeToPaper2D matrix
-    // [x, y, 1] = M × [u, v, 1]
+    // The line realization point anchors are the corresponding guide endpoints in
+    // each plane's intrinsic coordinates. SiblingGuide2D intentionally has no
+    // throughPointId; correspondence is owned by its realization.
     const primaryPt = new Vector3(
-      primaryPointReal.position.x,
-      primaryPointReal.position.y,
-      1  // Homogeneous coordinate
+      primaryReal.point1.x,
+      primaryReal.point1.y,
+      1
     ).applyMatrix3(primaryPlaneReal.planeToPaper2D);
 
     const siblingPt = new Vector3(
-      siblingPointReal.position.x,
-      siblingPointReal.position.y,
-      1  // Homogeneous coordinate
+      siblingReal.point1.x,
+      siblingReal.point1.y,
+      1
     ).applyMatrix3(siblingPlaneReal.planeToPaper2D);
 
     // Create Vector2 for the arc endpoints

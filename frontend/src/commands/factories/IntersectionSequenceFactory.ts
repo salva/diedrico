@@ -91,7 +91,7 @@ export class IntersectionSequenceFactory {
     const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
     
     // Record ProcessTree action for primary intersection
-    const action = createLineLineIntersectionPointAction(result.pointId, planeId, line1Id, line2Id);
+    const action = createLineLineIntersectionPointAction(result.pointId);
     cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     // Record ProcessTree action for sibling if created
@@ -100,11 +100,7 @@ export class IntersectionSequenceFactory {
       if (primaryPoint) {
         const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
         if (siblingPlaneId) {
-          const siblingAction = createSiblingIntersectionPointAction(
-            result.siblingPointId,
-            siblingPlaneId,
-            result.pointId
-          );
+          const siblingAction = createSiblingIntersectionPointAction(result.siblingPointId);
           cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
         }
       }
@@ -141,7 +137,7 @@ export class IntersectionSequenceFactory {
     const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
     
     // Record ProcessTree action for primary intersection
-    const action = createLineCircleIntersectionPointAction(result.pointId, planeId, lineId, circleId, index);
+    const action = createLineCircleIntersectionPointAction(result.pointId);
     cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
     // Record ProcessTree action for sibling if created
@@ -150,11 +146,7 @@ export class IntersectionSequenceFactory {
       if (primaryPoint) {
         const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
         if (siblingPlaneId) {
-          const siblingAction = createSiblingIntersectionPointAction(
-            result.siblingPointId,
-            siblingPlaneId,
-            result.pointId
-          );
+          const siblingAction = createSiblingIntersectionPointAction(result.siblingPointId);
           cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
         }
       }
@@ -190,7 +182,7 @@ export class IntersectionSequenceFactory {
     const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
     
     // Record ProcessTree action for primary intersection
-    const action = createCircleCircleIntersectionPointAction(result.pointId, planeId, circle1Id, circle2Id, index);
+    const action = createCircleCircleIntersectionPointAction(result.pointId);
     
     cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
     
@@ -211,6 +203,9 @@ export class IntersectionSequenceFactory {
     // Execute primary operation and extract outputs
     const result = cmd.addAndExecute(operation);
     const pointId = result.outputs.pointId;
+    if (!pointId) {
+      throw new Error('pointId missing from intersection operation output');
+    }
     
     let siblingPointId: string | undefined;
     
@@ -234,6 +229,9 @@ export class IntersectionSequenceFactory {
           new AddSiblingIntersectionPoint2DOp(siblingPlaneId, pointId)
         );
         siblingPointId = siblingResult.outputs.pointId;
+        if (!siblingPointId) {
+          throw new Error('pointId missing from sibling intersection operation output');
+        }
         
         console.log(
           `[IntersectionSequenceFactory] Created sibling intersection ${siblingPointId} ` +

@@ -148,3 +148,39 @@ Validation evidence captured for this correction:
 Reviewer blocker 2 was formalized as a scope-governance delta rather than hidden as an implementation exception. The minimal delta artifact at `projection-world-split/delta-command-hinge-storage.md` explicitly asks follow-up review to accept or reject the retained `AddBrokenHingeLineOp.ts` plus narrow `World.addHingeLineEntity()` / `World.removeHingeLine()` storage-hook expansion.
 
 Rationale recorded in the delta: reverting only those edits would bring the stage back inside the originally listed files, but it would also restore the exact forbidden `(world as any).hingeLines` private-storage writes/deletes and the old object-shaped broken hinge-line parent path. Keeping the cast-removal fix entirely inside the originally listed projection/world element files is not honest because `AddBrokenHingeLineOp.ts` owns broken-hinge-line creation/undo storage and `World.hingeLines` is private. The delta does not claim automatic closure; it provides the required reviewed artifact so `t4-review-after-corrections` can explicitly accept the narrow command/storage extension or reject it and require a separate mini-cycle.
+
+## t1 command/factory/operation descriptor lane — closure attempt
+
+Task `t1-close-command-factory-operation-contracts` closed the residual command/factory/operation descriptor TypeScript build category called out after the projection/world lane.
+
+### Command/factory ownership map and source changes
+
+- `frontend/src/commands/factories/GuideSequenceFactory.ts`: resolved the `SiblingGuide2D`/`Guide2D` mismatch at the guide factory boundary. The primary guide is now runtime-narrowed to `Guide2D` before bidirectional sibling-link mutation, the sibling guide is runtime-narrowed to `SiblingGuide2D`, and no stale `throughPointId` field is restored onto sibling guides.
+- `frontend/src/utils/arcGeometry.ts`: direct guide-helper owner dependency. `computeArcGeometry()` now accepts the real primary/sibling pair (`Guide2D`, `SiblingGuide2D`) and derives corresponding arc endpoints from each guide realization anchor instead of reading a nonexistent sibling `throughPointId` or using `as any`.
+- `frontend/src/commands/factories/IntersectionSequenceFactory.ts`: aligned process-tree action creation to the current action creator contract. Stale constructor arguments (`planeId`, element ids, index) were deleted from action creator calls; output extraction now fails fast when operation results omit required ids.
+- `frontend/src/commands/operations/world/AddIntersectionPointOp.ts` and `frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts`: removed the unused line-line `index` payload from the legacy AddIntersection operation contract and descriptor restore path rather than preserving an unused compatibility field.
+- `frontend/src/commands/operations/world/AddLineOp.ts`: fixed stale parallel/perpendicular line serializers by emitting `referenceLineId`/`throughPointId` instead of nonexistent tangent/circle fields. Tangent operations retain their circle/index serializers.
+- `frontend/src/commands/operations/world/UpdateElementStyleOp.ts` and `frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts`: made style lookup and serialization owned by the operation. Element lookup now uses the common `Element` base type instead of a `Point2D`-inferred variable; style descriptors use an explicit JSON `payload` with typed parse/serialize guards for `StyleProperties`.
+- `frontend/src/services/factories/PlaneSequenceFactory.ts`: direct owner dependency. Replaced raw `JsonValue | undefined` output plumbing with local `requireStringOutput()` guards before passing ids into process-tree action factories.
+- `frontend/tests/unit/commands/operations/operationRegistry.spec.ts`: updated AddIntersection descriptor round-trip expectations to the narrowed authoritative line-line payload without `index`.
+
+No source modules, tests, fixtures, package/tooling files, UI/store/render DTO files, ProjectService/Google Drive files, ActionsPanel, or Wave 014 protected tests were deleted or modified in this lane. Stale fields deleted from current descriptors: `AddIntersectionPoint2D.index` and bogus `circleId`/`tangentIndex` reads from parallel/perpendicular line serializers.
+
+### Validation evidence
+
+All command output was captured under `architecture-audit/cycle-015-typescript-build-contracts/validation/`:
+
+- `command-factory-prepatch-build.stdout` / `.stderr`: confirmed the assigned prepatch errors in `GuideSequenceFactory.ts`, `IntersectionSequenceFactory.ts`, `AddIntersectionPointOp.ts`, `AddLineOp.ts`, `UpdateElementStyleOp.ts`, `registerWorldOperationDescriptors.ts`, and `PlaneSequenceFactory.ts`.
+- `command-factory-midpatch-build.stdout` / `.stderr`: verified the intersection, AddIntersection, AddLine, UpdateElementStyle, registerWorldOperationDescriptors, and PlaneSequenceFactory descriptor errors were removed; only the guide arc helper mismatch plus out-of-scope categories remained.
+- `command-factory-postpatch-build.stdout` / `.stderr`: verified the guide arc helper mismatch was removed; only `PlaneSequenceFactory` output strictness plus out-of-scope categories remained.
+- `command-factory-focused-tests.stdout` / `.stderr`: focused Vitest passed for `tests/unit/commands/factories/GuideSequenceFactory.spec.ts` and `tests/unit/commands/operations/operationRegistry.spec.ts` (`13 passed`).
+- `command-factory-final-build.stdout` / `.stderr`: `npm run build --workspace=frontend` remains red, but none of the specified command/factory/operation descriptor files report errors. Remaining build failures are outside this lane: process/view-state operations (`PushSubprocessOp.ts`, `RenameSubprocessOp.ts`, `ViewStateOperations.ts`, `RemoveElementOps.ts`), UI/store/render DTO and protected panel categories (`NewProjectDialog.vue`, `PropertiesDialog.vue`, `ActionsPanel.vue`, `ElementTypeGroup.vue`, `ElementsPanel.vue`, `ProcessTreeNode.vue`, `PlaneSelector.vue`, `SvgCanvas.vue`), and non-command service/domain strictness (`CoordinateTransform.ts`, `GeometryService.ts`, `GoogleDriveService.ts`, `ProjectService.ts`).
+- `command-factory-forbidden-scan.stdout` / `.stderr`: scoped scan over the touched lane found no `@ts-ignore`, `@ts-expect-error`, `as any`, or `as unknown as`.
+
+### Protected-surface checks and residual risks
+
+Completed projection/world lane files and the process-tree identity correction were not reopened by this task except for reading referenced artifacts and preserving existing behavior via focused tests. No ActionsPanel, broad UI/service, Google Drive, ProjectService, package/tooling, or Wave 014 protected file changes were made.
+
+This task does not claim full Wave 015 completion because the frontend build is still red on out-of-scope categories listed above. The command/factory/operation descriptor category named by this stage is closed in the current build output.
+
+Additional focused coverage was added for `UpdateElementStyle` typed JSON payload round-tripping in `frontend/tests/unit/commands/operations/operationRegistry.spec.ts`. The rerun evidence is `command-factory-focused-tests-rerun.stdout` / `.stderr`: focused Vitest passed (`14 passed`).

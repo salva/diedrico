@@ -18,10 +18,9 @@ export class AddIntersectionPoint2DOp implements IOperation {
   constructor(
     private planeId: string,
     private line1Id: string,
-    private line2Id: string,
-    private index: number  // Note: index parameter currently unused - line-line intersection has at most 1 point
+    private line2Id: string
   ) {
-    this.parameters = { planeId, line1Id, line2Id, index };
+    this.parameters = { planeId, line1Id, line2Id };
   }
 
   apply(world: World): OperationResult {
@@ -32,7 +31,6 @@ export class AddIntersectionPoint2DOp implements IOperation {
       }
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
-      // Note: index is stored but not used - line-line intersection has at most 1 point
       const point = plane.addLineLineIntersection(
         this.line1Id,
         this.line2Id,
@@ -74,7 +72,6 @@ export class AddIntersectionPoint2DOp implements IOperation {
       planeId: this.parameters.planeId,
       line1Id: this.parameters.line1Id,
       line2Id: this.parameters.line2Id,
-      index: this.parameters.index,
       pointId: this.outputs.pointId
     };
   }

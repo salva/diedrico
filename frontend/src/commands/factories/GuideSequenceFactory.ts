@@ -62,6 +62,9 @@ export class GuideSequenceFactory {
       new AddGuide2DPerpendicularToLineOp(planeId, referenceLineId, throughPointId)
     );
     const guideId = result.outputs.guideId;
+    if (!guideId) {
+      throw new Error('guideId missing from operation output');
+    }
     
     console.log(`[GuideSequenceFactory] Primary guide created: ${guideId}`);
     
@@ -92,10 +95,16 @@ export class GuideSequenceFactory {
       )
     );
     const siblingGuideId = siblingResult.outputs.siblingGuideId;
+    if (!siblingGuideId) {
+      throw new Error('siblingGuideId missing from operation output');
+    }
     
     // Update bidirectional links
-    const primaryGuide = world.getLine2D(guideId)!;
-    (primaryGuide as any).siblingGuideId = siblingGuideId;
+    const primaryGuide = world.getLine2D(guideId);
+    if (!(primaryGuide instanceof Guide2D)) {
+      throw new Error(`Primary guide not found: ${guideId}`);
+    }
+    primaryGuide.siblingGuideId = siblingGuideId;
     
     console.log(
       `[GuideSequenceFactory] Created sibling guide ${siblingGuideId} ` +
@@ -107,15 +116,18 @@ export class GuideSequenceFactory {
     if (referenceLine instanceof BrokenHalfHingeLine2D) {
       console.log(`[GuideSequenceFactory] Reference is BrokenHalfHingeLine2D - computing arc geometry`);
       
-      const primaryGuideTyped = primaryGuide as Guide2D;
-      const siblingGuide = world.getLine2D(siblingGuideId) as SiblingGuide2D;
+      const siblingGuideLine = world.getLine2D(siblingGuideId);
+      if (!(siblingGuideLine instanceof SiblingGuide2D)) {
+        throw new Error(`Sibling guide not found: ${siblingGuideId}`);
+      }
+      const siblingGuide = siblingGuideLine;
       
       // Compute arc geometry connecting the two guides
-      const arcGeometry = computeArcGeometry(world, primaryGuideTyped, siblingGuide);
+      const arcGeometry = computeArcGeometry(world, primaryGuide, siblingGuide);
       
       if (arcGeometry) {
         // Store arc in BOTH guides for rendering
-        primaryGuideTyped.arcGeometry = arcGeometry;
+        primaryGuide.arcGeometry = arcGeometry;
         siblingGuide.arcGeometry = arcGeometry;
         
         console.log(`[GuideSequenceFactory] Arc geometry computed and stored`);

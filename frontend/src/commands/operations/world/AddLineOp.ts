@@ -127,9 +127,8 @@ export class AddLine2DParallelToLineOp implements IOperation {
     return {
       opType: this.type,
       planeId: this.planeId,
-      circleId: this.circleId,
+      referenceLineId: this.referenceLineId,
       throughPointId: this.throughPointId,
-      index: this.tangentIndex,
       lineId: this.outputs.lineId
     };
   }
@@ -194,9 +193,8 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
     return {
       opType: this.type,
       planeId: this.planeId,
-      circleId: this.circleId,
+      referenceLineId: this.referenceLineId,
       throughPointId: this.throughPointId,
-      index: this.tangentIndex,
       lineId: this.outputs.lineId
     };
   }
