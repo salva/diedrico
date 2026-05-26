@@ -27,12 +27,14 @@ The current shell problem is not just file size. `App.vue` constructs global run
   - Cascade preview/delete/select-all use-cases; owns command construction using `DeletionSequenceFactory` so `App.vue` does not import it.
 - Add `frontend/src/application/appShell/KeyboardShortcutRouter.ts`
   - Converts `KeyboardEvent` into runtime action calls through a small adapter. Tests can exercise a typed key event abstraction.
+  - Owns the full app-level shortcut registry, including shortcuts currently in `App.vue` plus `Toolbar.vue`'s Escape, D projection toggle, and tool-family shortcuts, so there is exactly one global `keydown` listener.
 - Add `frontend/src/application/appShell/ActivePlaneUseCases.ts`
   - Active-plane status DTO, update, cycle, subscribe/unsubscribe.
 - Update `frontend/src/components/dialogs/StartupDialog.vue`
   - Remove global file-list event bridge; accept files/loading/error as props and emit typed `request-files`, `sign-in`, `open`, `create-project` events.
-- Optionally update `frontend/src/components/toolbars/Toolbar.vue`
-  - If keyboard conflicts are confirmed during implementation, move its Escape/tool/D projection global listener into the runtime router or a single keyboard registry. Do not otherwise broaden toolbar behavior.
+- Update `frontend/src/components/toolbars/Toolbar.vue`
+  - Required for this wave: delete its global `keydown` listener and local shortcut owner for Escape, D projection toggle, and tool-family shortcuts.
+  - Keep toolbar button rendering/click behavior and expose shortcut metadata or typed actions to the runtime router only through explicit ports/registry data.
 - Tests under `frontend/tests/unit/application/appShell/` and focused shell component tests.
 
 ## Files/tests/docs/fixtures to DELETE
@@ -43,6 +45,7 @@ The current shell problem is not just file size. `App.vue` constructs global run
 - Delete `App.vue` selection command orchestration: cascade watcher body, `handleDeleteSelected`, `handleSelectAll` internals.
 - Delete `App.vue` active-plane implementation internals: subscription/update/cycle logic, retaining only runtime state binding.
 - Delete `App.vue` global keyboard decision tree and listener setup, replacing with runtime-owned install/uninstall.
+- Delete `Toolbar.vue` global keyboard decision tree/listener setup, replacing Escape/D/tool-family keyboard handling with the same runtime-owned router.
 - Delete `StartupDialog.vue` `CustomEvent('load-files')` dispatch and `App.vue` matching anonymous window listener.
 - Delete sign-out `world = new World(); provide('world', world)` replacement path; runtime must keep stable instances and expose reset/clear semantics.
 - Delete routine debug/environment/autosave logs and touched TODO stubs that have no tested behavior.
@@ -59,7 +62,7 @@ The only intended user-visible behavior change is removal of routine debug loggi
 3. Move project session use cases into the runtime and route Drive/localStorage/session/auth interactions through ports.
 4. Move autosave into the runtime with explicit `start`, `schedule`, `stop`, and `dispose` methods.
 5. Move selection and active-plane use cases into runtime controllers.
-6. Install one runtime keyboard router from `App.vue` lifecycle. If Toolbar's global listener remains, document the non-overlap or fold overlapping shortcuts into the runtime in the same implementation if required to avoid duplicate handling.
+6. Install one runtime keyboard router from `App.vue` lifecycle and fold `Toolbar.vue`'s Escape/D/tool-family shortcuts into that router in the same implementation. Toolbar must not retain a global keyboard listener.
 7. Convert `StartupDialog` file loading to typed events/props.
 8. Add architecture tests that assert `App.vue` is a composition shell and app-shell runtime has no component/rendering imports.
 
@@ -73,12 +76,14 @@ Focused tests:
   - Autosave use cases cover debounce, status, update success, deleted-file recreation, auth/quota/network failures, and disposal.
   - Selection use cases cover cascade preview, delete command composition/push/clear, select-all on active plane, no-active-plane/no-selection no-ops.
   - Active-plane use cases cover subscription updates, update from canvas event, cycle wrap-around.
-  - Keyboard router covers all shell shortcuts and text-input exemptions.
+  - Keyboard router covers all shell and toolbar shortcuts plus text-input exemptions: Escape, D projection toggle, P/L/S/C/G and toolbar family shortcuts, Delete/Backspace, F2, Tab/Shift+Tab, Ctrl/Cmd+N/O/A/0, undo, and redo.
+  - Toolbar component tests verify no global listener registration remains and button/click behavior still routes through typed actions.
   - StartupDialog emits `request-files` and renders provided file/loading/error state without `window.dispatchEvent`.
 - Static scans:
   - `App.vue` contains no `Command`, `DeletionSequenceFactory`, `ProjectService`, `GoogleDriveService`, `window as any`, `__autoSaveInterval`, `CustomEvent('load-files')`, or environment dump logging.
   - `frontend/src/application/appShell/**` contains no Vue component imports and no rendering adapter imports.
   - `StartupDialog.vue` contains no `window.dispatchEvent`.
+  - `Toolbar.vue` contains no `window.addEventListener('keydown'`, `window.removeEventListener('keydown'`, or local global shortcut handler.
 
 Mandatory implementation validation:
 
@@ -90,7 +95,7 @@ Mandatory implementation validation:
 
 - This is a larger conceptual change than direct extraction and may touch more files, but it better matches the clean-architecture priority by making the runtime/application boundary explicit.
 - `App.vue` currently relies on component refs for startup-dialog imperative error/file setters and fit-to-view/start-rename. The runtime must avoid depending on Vue component instances directly; `App.vue` should adapt runtime state/actions to component props/events.
-- Global keyboard conflicts with `Toolbar.vue` must be resolved deliberately; leaving two owners of tool shortcuts weakens the target outcome.
+- Global keyboard conflicts with `Toolbar.vue` are resolved deliberately by deleting Toolbar's listener and making the runtime router the single global keyboard owner; implementation must avoid reintroducing shortcut logic as an untyped component-side shim.
 - Because e2e specs are currently syntactically corrupted, implementation validation needs both mandatory attempted e2e logs and focused live smoke to prove user-observable shell behavior.
 
 ## Recommendation

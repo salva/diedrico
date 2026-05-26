@@ -21,7 +21,11 @@ Move the existing `App.vue` orchestration into focused application-shell composa
 - Add `frontend/src/application/appShell/ActivePlaneController.ts`
   - Own world subscription, active-plane id/name DTO, and active-plane cycle/update actions.
 - Add `frontend/src/application/appShell/AppKeyboardRouter.ts`
-  - Map keyboard events to shell intents: escape, delete, F2, tab active-plane cycling, Ctrl/Cmd+N/O/A/0, undo/redo, and tool shortcuts that remain shell-owned.
+  - Become the single global keyboard owner for app-shell shortcuts: escape, delete/backspace, F2, Tab/Shift+Tab active-plane cycling, Ctrl/Cmd+N/O/A/0, undo/redo, D projection toggle, and all toolbar/tool-family shortcuts currently split between `App.vue` and `Toolbar.vue`.
+  - Accept typed adapters for shell actions, tool-family selection, projection-display toggle, fit-to-view, and rename focus so it does not import Vue components.
+- Update `frontend/src/components/toolbars/Toolbar.vue`
+  - Delete its `window.addEventListener('keydown', handleKeyDown)` / `removeEventListener` ownership and route Escape, D, and tool-family shortcut behavior through the app-shell keyboard router instead.
+  - Keep button rendering and click handlers only; keyboard shortcut metadata may remain as display/registry data if consumed by the router through a typed port.
 - Add `frontend/src/application/appShell/BrowserProjectListPort.ts` or equivalent only if needed to remove the `StartupDialog` window event bridge.
 - Update `frontend/src/components/dialogs/StartupDialog.vue`
   - Replace `window.dispatchEvent(new CustomEvent('load-files'))` with typed `emit('load-files')` or an explicit `files/loading/error` prop flow.
@@ -34,6 +38,7 @@ Move the existing `App.vue` orchestration into focused application-shell composa
 - Delete inline selection cascade/delete/select-all command orchestration from `frontend/src/App.vue` after extraction.
 - Delete inline active-plane subscription/cycling DTO logic from `frontend/src/App.vue` after extraction.
 - Delete inline global keyboard decision tree from `frontend/src/App.vue` after extraction.
+- Delete `Toolbar.vue`'s second global keyboard listener and any duplicate Escape/D/tool-shortcut handling that competes with the app-shell router.
 - Delete `window as any.__autoSaveInterval` bridge and all untyped window interval storage in `App.vue`.
 - Delete `StartupDialog.vue`'s `CustomEvent('load-files')` / `window.dispatchEvent` bridge and matching `App.vue` `window.addEventListener('load-files', ...)` listener.
 - Delete debug logging from touched App shell paths, especially environment dump logging and routine autosave command-count logs (`frontend/src/App.vue:134-145`, `frontend/src/App.vue:523-530`).
@@ -52,8 +57,9 @@ No intentional user-visible behavior change except removal of routine debug logg
 4. Extract `SelectionShellController` for cascade preview, delete command construction, and select-all.
 5. Extract `ActivePlaneController` for subscription/name/cycling/update.
 6. Extract `AppKeyboardRouter` and install/uninstall it from `App.vue` through a typed listener disposer.
-7. Replace `StartupDialog` file-list `CustomEvent` with typed emit/prop flow.
-8. Reduce `App.vue` to layout, state/controller composition, and event wiring.
+7. Move the overlapping `Toolbar.vue` Escape/D/tool-family shortcut behavior into the same router and delete Toolbar's own global listener, leaving toolbar buttons as click-only UI adapters.
+8. Replace `StartupDialog` file-list `CustomEvent` with typed emit/prop flow.
+9. Reduce `App.vue` to layout, state/controller composition, and event wiring.
 
 ## Validation plan
 
@@ -64,11 +70,13 @@ Focused tests:
   - `AutoSaveController`: version polling schedules debounce, updateFile success transitions `saving -> saved -> idle`, deleted-file recovery creates replacement and updates storage, auth/quota/network failures are classified, cleanup clears timers.
   - `SelectionShellController`: cascade preview excludes directly selected ids, delete builds/commits/pushes cascade command and clears selection, no-selection is no-op, select-all traverses active-plane points/lines/circles.
   - `ActivePlaneController`: subscription updates id/name and tab cycling wraps through planes.
-  - `AppKeyboardRouter`: all shortcuts dispatch expected intents and ignore text inputs where current behavior does.
+  - `AppKeyboardRouter`: all shortcuts dispatch expected intents and ignore text inputs where current behavior does, including Escape, D projection toggle, P/L/S/C/G and toolbar family shortcuts, Delete/Backspace, F2, Tab/Shift+Tab, Ctrl/Cmd+N/O/A/0, undo, and redo.
+  - `Toolbar.vue`: no longer registers a global keydown listener; button clicks still invoke tool/projection actions through typed emits/ports.
   - `StartupDialog` emits typed file-list request without touching `window`.
 - Static boundary tests/scans:
   - `App.vue` has no imports of `Command`, `DeletionSequenceFactory`, or `ProjectService` if those are fully moved to app-shell services.
   - `App.vue` contains no `window as any`, `__autoSaveInterval`, `CustomEvent('load-files')`, or environment dump logging.
+  - `Toolbar.vue` contains no `window.addEventListener('keydown'`, `window.removeEventListener('keydown'`, or local global shortcut handler.
   - App-shell application services do not import Vue components or rendering adapters.
 
 Mandatory cadence for implementation stage:
@@ -83,6 +91,6 @@ Mandatory cadence for implementation stage:
 ## Risks
 
 - The current sign-out path replaces the provided `World`, while open/create clear the existing object to avoid stale child injections. Fixing this by always retaining the world instance is architecturally correct but may expose assumptions in children.
-- Keyboard routing overlaps with `Toolbar.vue`'s global listener; the direct extraction must not leave double-handled tool shortcuts or Escape behavior.
+- Keyboard routing currently overlaps with `Toolbar.vue`'s global listener; this proposal resolves the risk by making the app-shell router the only global keyboard owner and deleting Toolbar's listener rather than preserving parallel shortcut paths.
 - Autosave tests need timer/storage/Drive ports to avoid brittle fake-window code.
 - Existing broad validation failures may obscure regressions; focused tests and static boundary checks must be strong enough to attribute failures.
