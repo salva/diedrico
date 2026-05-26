@@ -1,0 +1,2213 @@
+--- frontend/src/App.vue
+     1	<template>
+     2	  <div id="app" class="app-container">
+     3	    <!-- Startup Dialog for Google Drive authentication and project selection -->
+     4	    <StartupDialog
+     5	      v-if="showStartupDialog"
+     6	      :show="showStartupDialog"
+     7	      :is-signed-in="isSignedIn"
+     8	      :files="startupFiles"
+     9	      :loading="startupLoading"
+    10	      :loading-files="startupLoadingFiles"
+    11	      :error="startupError"
+    12	      @sign-in="runtime.actions.signIn"
+    13	      @request-files="runtime.actions.requestFiles"
+    14	      @open="runtime.actions.openProject"
+    15	      @create-project="runtime.actions.newProject"
+    16	    />
+    17	
+    18	    <!-- Header: Top toolbar area -->
+    19	    <header class="app-header">
+    20	      <ProjectNameDisplay 
+    21	        ref="projectNameDisplayRef"
+    22	        :project-name="currentProjectName"
+    23	        :is-renaming="isRenamingProject"
+    24	        @rename="runtime.actions.renameProject"
+    25	      />
+    26	      <Toolbar 
+    27	        @new-project="runtime.actions.newProject"
+    28	        @open-project="runtime.actions.showProjectChooser"
+    29	        @fit-to-view="handleFitToView"
+    30	        @sign-in="runtime.actions.toolbarSignIn"
+    31	        @sign-out="runtime.actions.toolbarSignOut"
+    32	      />
+    33	    </header>
+    34	
+    35	    <!-- Main Workspace: Sidebar + Canvas area -->
+    36	    <main class="app-main">
+    37	      <!-- Left Sidebar: Stacked Panels -->
+    38	      <aside class="left-sidebar">
+    39	        <div class="panel-stack">
+    40	          <!-- Elements Panel (top) -->
+    41	          <div class="stacked-panel">
+    42	            <ElementsPanel 
+    43	              @highlight-elements="handleHighlightElements"
+    44	              @clear-highlight="handleClearHighlight"
+    45	            />
+    46	          </div>
+    47	          
+    48	          <!-- Resizer -->
+    49	          <div class="panel-resizer"></div>
+    50	          
+    51	          <!-- Actions Panel (bottom) -->
+    52	          <div class="stacked-panel">
+    53	            <ActionsPanel 
+    54	              @highlight-elements="handleHighlightElements"
+    55	              @clear-highlight="handleClearHighlight"
+    56	            />
+    57	          </div>
+    58	        </div>
+    59	      </aside>
+    60	
+    61	      <!-- Canvas Area -->
+    62	      <div class="canvas-area">
+    63	        <SvgCanvas 
+    64	          ref="svgCanvasRef"
+    65	          @update-3d-coordinates="runtime.actions.updateCoordinates"
+    66	          @update-active-plane="runtime.actions.updateActivePlane"
+    67	        />
+    68	        
+    69	        <!-- 3D View Overlay (Phase 25) -->
+    70	        <div class="three-view-overlay" v-if="show3DView">
+    71	          <ThreeView />
+    72	        </div>
+    73	      </div>
+    74	    </main>
+    75	
+    76	    <!-- Footer: Status bar -->
+    77	    <footer class="app-footer">
+    78	      <StatusBar 
+    79	        :active-plane-id="activePlaneId"
+    80	        :active-plane-name="activePlaneName"
+    81	        :active-tool="activeTool"
+    82	        :coordinates3-d="coordinates3D"
+    83	        :save-status="saveStatus"
+    84	        :cascade-count="selectionStore.cascadeHighlightIdsArray.length"
+    85	        :tool-step-message="toolStore.currentToolStepMessage"
+    86	      />
+    87	    </footer>
+    88	  </div>
+    89	</template>
+    90	
+    91	<script setup lang="ts">
+    92	import { provide, ref, onMounted, onUnmounted } from 'vue';
+    93	import SvgCanvas from './components/workspace/SvgCanvas.vue';
+    94	import Toolbar from './components/toolbars/Toolbar.vue';
+    95	import StatusBar from './components/toolbars/StatusBar.vue';
+    96	import ActionsPanel from './components/panels/ActionsPanel.vue';
+    97	import ElementsPanel from './components/panels/ElementsPanel.vue';
+    98	import ThreeView from './components/panels/ThreeView.vue';
+    99	import StartupDialog from './components/dialogs/StartupDialog.vue';
+   100	import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
+   101	import { useToolStore } from './stores/toolStore';
+   102	import { TOOL_FAMILIES } from './config/toolFamilies';
+   103	import { useSelectionStore } from './stores/selectionStore';
+   104	import { useSettingsStore } from './stores/settingsStore';
+   105	import { useAuthStore } from './stores/authStore';
+   106	import { useViewStore } from './stores/viewStore';
+   107	import { createAppShellRuntime } from './application/appShell/AppShellRuntime';
+   108	
+   109	const GOOGLE_CONFIG = {
+   110	  clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+   111	  apiKey: import.meta.env.VITE_GOOGLE_API_KEY || '',
+   112	  appId: import.meta.env.VITE_GOOGLE_APP_ID || '',
+   113	};
+   114	const hasGoogleCredentials = Boolean(GOOGLE_CONFIG.clientId);
+   115	
+   116	const toolStore = useToolStore();
+   117	toolStore.setToolFamilies(TOOL_FAMILIES);
+   118	const selectionStore = useSelectionStore();
+   119	useSettingsStore();
+   120	const authStore = useAuthStore();
+   121	const viewStore = useViewStore();
+   122	
+   123	const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
+   124	const projectNameDisplayRef = ref<InstanceType<typeof ProjectNameDisplay> | null>(null);
+   125	
+   126	const runtime = createAppShellRuntime({
+   127	  googleConfig: GOOGLE_CONFIG,
+   128	  hasGoogleCredentials,
+   129	  ports: {
+   130	    authStore,
+   131	    selectionStore,
+   132	    toolStore,
+   133	    viewStore,
+   134	  },
+   135	  callbacks: {
+   136	    fitToView: () => svgCanvasRef.value?.fitToView(),
+   137	    startRename: () => projectNameDisplayRef.value?.startEditing(),
+   138	    alert: (message: string) => window.alert(message),
+   139	  },
+   140	});
+   141	
+   142	provide('world', runtime.world);
+   143	provide('commandStack', runtime.commandStack);
+   144	
+   145	const activeTool = toolStore.currentTool;
+   146	const activePlaneId = runtime.state.activePlaneId;
+   147	const activePlaneName = runtime.state.activePlaneName;
+   148	const coordinates3D = runtime.state.coordinates3D;
+   149	const show3DView = runtime.state.show3DView;
+   150	const showStartupDialog = runtime.state.showStartupDialog;
+   151	const isSignedIn = runtime.state.isSignedIn;
+   152	const currentProjectName = runtime.state.currentProjectName;
+   153	const isRenamingProject = runtime.state.isRenamingProject;
+   154	const saveStatus = runtime.state.saveStatus;
+   155	const startupFiles = runtime.state.startupFiles;
+   156	const startupLoading = runtime.state.startupLoading;
+   157	const startupLoadingFiles = runtime.state.startupLoadingFiles;
+   158	const startupError = runtime.state.startupError;
+   159	
+   160	function handleHighlightElements(elementIds: string[], temporary: boolean) {
+   161	  void elementIds;
+   162	  void temporary;
+   163	}
+   164	
+   165	function handleClearHighlight() {}
+   166	
+   167	function handleFitToView() {
+   168	  svgCanvasRef.value?.fitToView();
+   169	}
+   170	
+   171	onMounted(() => runtime.actions.start());
+   172	onUnmounted(() => runtime.actions.dispose());
+   173	</script>
+   174	
+   175	<style scoped>
+   176	.app-container {
+   177	  display: flex;
+   178	  flex-direction: column;
+   179	  width: 100vw;
+   180	  height: 100vh;
+   181	  overflow: hidden;
+   182	  background-color: #f5f5f5;
+   183	}
+   184	
+   185	.app-header {
+   186	  display: flex;
+   187	  align-items: center;
+   188	  justify-content: space-between;
+   189	  padding: 0.75rem 1rem;
+   190	  background-color: #2c3e50;
+   191	  color: #ecf0f1;
+   192	  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+   193	  flex-shrink: 0;
+   194	}
+   195	
+   196	.app-title {
+   197	  font-size: 1.25rem;
+   198	  font-weight: 600;
+   199	  margin: 0;
+   200	}
+   201	
+   202	.header-actions {
+   203	  display: flex;
+   204	  gap: 0.5rem;
+   205	}
+   206	
+   207	.app-main {
+   208	  flex: 1;
+   209	  display: flex;
+   210	  overflow: hidden;
+   211	  position: relative;
+   212	}
+   213	
+   214	.left-sidebar {
+   215	  width: 300px;
+   216	  flex-shrink: 0;
+   217	  overflow: hidden;
+   218	  background-color: #f8f9fa;
+   219	  border-right: 1px solid #dee2e6;
+   220	  display: flex;
+--- frontend/src/commands/factories/GuideSequenceFactory.ts
+     1	import type { Command } from '../Command';
+     2	import { World } from '../../domain/world/World';
+     3	import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '../operations/world/AddGuideOp';
+     4	import { HalfHingeLine2D } from '../../domain/world/HingeLine';
+     5	import { BrokenHalfHingeLine2D } from '../../domain/world/elements/BrokenHalfHingeLine2D';
+     6	import { computeArcGeometry } from '../../utils/arcGeometry';
+     7	import { Guide2D, SiblingGuide2D } from '../../domain/world/Guide';
+     8	
+     9	/**
+    10	 * Factory for creating guide operation sequences.
+    11	 * 
+    12	 * Encapsulates the logic for:
+    13	 * - Creating primary guide perpendicular to reference line
+    14	 * - Detecting HalfHingeLine reference lines
+    15	 * - Creating sibling guides on complementary planes
+    16	 * - Updating bidirectional sibling links
+    17	 * 
+    18	 * @see GuideTool for usage example
+    19	 * @see README.md for factory pattern documentation
+    20	 */
+    21	export class GuideSequenceFactory {
+    22	  /**
+    23	   * Creates a guide with its sibling on the complementary plane.
+    24	   * 
+    25	   * Guides MUST be perpendicular to HalfHingeLines. The sibling guide is
+    26	   * automatically created in the paired plane using coordinate correspondence.
+    27	   * 
+    28	   * @param cmd - Open Command to add operations to
+    29	   * @param planeId - ID of plane where primary guide is created
+    30	   * @param referenceLineId - ID of HalfHingeLine2D to create perpendicular guide to
+    31	   * @param throughPointId - ID of point guide should pass through
+    32	   * @param world - World instance for navigation
+    33	   * 
+    34	   * @returns Object with guideId and siblingGuideId (both always present)
+    35	   * 
+    36	   * @example
+    37	   * ```typescript
+    38	   * const cmd = new Command('Create guide', world);
+    39	   * const result = GuideSequenceFactory.createGuideWithSibling(
+    40	   *   cmd, 
+    41	   *   planeId, 
+    42	   *   referenceLineId, 
+    43	   *   throughPointId, 
+    44	   *   world
+    45	   * );
+    46	   * // Tool handles: process tree action, commit, push to stack
+    47	   * cmd.commit();
+    48	   * commandStack.push(cmd);
+    49	   * ```
+    50	   */
+    51	  static createGuideWithSibling(
+    52	    cmd: Command,
+    53	    planeId: string,
+    54	    referenceLineId: string,
+    55	    throughPointId: string,
+    56	    world: World
+    57	  ): { guideId: string; siblingGuideId?: string } {
+    58	    console.log(`[GuideSequenceFactory] createGuideWithSibling called: plane=${planeId}, refLine=${referenceLineId}, point=${throughPointId}`);
+    59	    
+    60	    // Create primary guide
+    61	    const result = cmd.addAndExecute(
+    62	      new AddGuide2DPerpendicularToLineOp(planeId, referenceLineId, throughPointId)
+    63	    );
+    64	    const guideId = result.outputs.guideId;
+    65	    
+    66	    console.log(`[GuideSequenceFactory] Primary guide created: ${guideId}`);
+    67	    
+    68	    console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
+    69	    
+    70	    // Check if reference line is a HalfHingeLine (regular or broken)
+    71	    // Try HalfHingeLine2D first
+    72	    let siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+    73	    
+    74	    // If not regular HHL, try BrokenHalfHingeLine2D
+    75	    if (!siblingInfo) {
+    76	      siblingInfo = BrokenHalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+    77	    }
+    78	    
+    79	    if (!siblingInfo) {
+    80	      console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D`);
+    81	      return { guideId };
+    82	    }
+    83	    
+    84	    console.log(`[GuideSequenceFactory] Sibling plane: ${siblingInfo.siblingPlaneId}, HHL: ${siblingInfo.siblingHalfHingeLineId}`);
+    85	    
+    86	    // Create sibling guide using coordinate correspondence
+    87	    const siblingResult = cmd.addAndExecute(
+    88	      new AddSiblingGuide2DOp(
+    89	        siblingInfo.siblingPlaneId,
+    90	        guideId,
+    91	        siblingInfo.siblingHalfHingeLineId
+    92	      )
+    93	    );
+    94	    const siblingGuideId = siblingResult.outputs.siblingGuideId;
+    95	    
+    96	    // Update bidirectional links
+    97	    const primaryGuide = world.getLine2D(guideId)!;
+    98	    (primaryGuide as any).siblingGuideId = siblingGuideId;
+    99	    
+   100	    console.log(
+   101	      `[GuideSequenceFactory] Created sibling guide ${siblingGuideId} ` +
+   102	      `in plane ${siblingInfo.siblingPlaneId}`
+   103	    );
+   104	    
+   105	    // Phase 101: If reference line is BrokenHalfHingeLine2D, compute arc geometry
+   106	    const referenceLine = world.getLine2D(referenceLineId);
+   107	    if (referenceLine instanceof BrokenHalfHingeLine2D) {
+   108	      console.log(`[GuideSequenceFactory] Reference is BrokenHalfHingeLine2D - computing arc geometry`);
+   109	      
+   110	      const primaryGuideTyped = primaryGuide as Guide2D;
+   111	      const siblingGuide = world.getLine2D(siblingGuideId) as SiblingGuide2D;
+   112	      
+   113	      // Compute arc geometry connecting the two guides
+   114	      const arcGeometry = computeArcGeometry(world, primaryGuideTyped, siblingGuide);
+   115	      
+   116	      if (arcGeometry) {
+   117	        // Store arc in BOTH guides for rendering
+   118	        primaryGuideTyped.arcGeometry = arcGeometry;
+   119	        siblingGuide.arcGeometry = arcGeometry;
+   120	        
+   121	        console.log(`[GuideSequenceFactory] Arc geometry computed and stored`);
+   122	      } else {
+   123	        console.warn(`[GuideSequenceFactory] Failed to compute arc geometry`);
+   124	      }
+   125	    }
+   126	    
+   127	    return { guideId, siblingGuideId };
+   128	  }
+   129	}
+--- frontend/src/commands/factories/IntersectionSequenceFactory.ts
+     1	/**
+     2	 * IntersectionSequenceFactory - Factory for creating intersection point sequences
+     3	 * 
+     4	 * Phase 74: Refactored to eliminate IntersectionData string discriminator.
+     5	 * Instead of one method with type string dispatch, provides 3 type-specific methods.
+     6	 * Callers use instanceof checks to determine which method to call.
+     7	 * 
+     8	 * Encapsulates the operation sequence for creating intersection points between:
+     9	 * - Line-Line intersections
+    10	 * - Line-Circle intersections (with index for multiple intersections)
+    11	 * - Circle-Circle intersections (with index for multiple intersections)
+    12	 * 
+    13	 * Phase 42: Handles HalfHingeLine2D intersections by creating sibling points
+    14	 * on the complementary plane (follows same pattern as SiblingGuide2D from Phase 36).
+    15	 * 
+    16	 * Pattern: Open Command - Receives an open Command, adds operations to it.
+    17	 * 
+    18	 * Benefits:
+    19	 * - No string discriminator round-trip (instanceof → string → dispatch)
+    20	 * - Type-safe: each method knows exactly what it handles
+    21	 * - Callers use instanceof directly, matching Phase 73 architectural principle
+    22	 * - Testable without tool infrastructure
+    23	 * - Reusable across different UIs or automation contexts
+    24	 * 
+    25	 * Example:
+    26	 * ```typescript
+    27	 * const cmd = new Command('Create intersection', world);
+    28	 * const element1 = world.getLine2D(id1);
+    29	 * const element2 = world.getLine2D(id2);
+    30	 * 
+    31	 * // Caller uses instanceof to select method
+    32	 * let result;
+    33	 * if (element1 instanceof Line2D && element2 instanceof Line2D) {
+    34	 *   result = IntersectionSequenceFactory.createLineLineIntersection(
+    35	 *     cmd, planeId, id1, id2, world
+    36	 *   );
+    37	 * }
+    38	 * ```
+    39	 * 
+    40	 * @see frontend/src/commands/factories/README.md
+    41	 * @see data-model.md §HalfHingeLine2D Intersection Sibling Behavior
+    42	 */
+    43	
+    44	import type { Command } from '../Command';
+    45	import { AddLineLineIntersectionPoint2DOp } from '../operations/world/AddLineLineIntersectionPoint2DOp';
+    46	import { AddLineCircleIntersectionPoint2DOp } from '../operations/world/AddLineCircleIntersectionPoint2DOp';
+    47	import { AddCircleCircleIntersectionPoint2DOp } from '../operations/world/AddCircleCircleIntersectionPoint2DOp';
+    48	import { AddSiblingIntersectionPoint2DOp } from '../operations/world/AddSiblingIntersectionPoint2DOp';
+    49	import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+    50	import { createLineLineIntersectionPointAction } from '@/domain/processTree/actions/CreateLineLineIntersectionPointAction';
+    51	import { createLineCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateLineCircleIntersectionPointAction';
+    52	import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
+    53	import { createSiblingIntersectionPointAction } from '@/domain/processTree/actions/CreateSiblingIntersectionPointAction';
+    54	import type { World } from '@/domain/world/World';
+    55	
+    56	/**
+    57	 * Result of intersection creation with optional sibling point
+    58	 */
+    59	export interface IntersectionResult {
+    60	  pointId: string;
+    61	  siblingPointId?: string;
+    62	}
+    63	
+    64	/**
+    65	 * Factory for creating intersection point operation sequences
+    66	 */
+    67	export class IntersectionSequenceFactory {
+    68	  /**
+    69	   * Create a line-line intersection point.
+    70	   * 
+    71	   * If either line is a HalfHingeLine2D, automatically creates a sibling
+    72	   * intersection point on the complementary plane.
+    73	   * 
+    74	   * @param cmd - Open Command to add operations to
+    75	   * @param planeId - ID of the projection plane
+    76	   * @param line1Id - ID of first line
+    77	   * @param line2Id - ID of second line
+    78	   * @param world - World instance for HHL detection and sibling plane resolution
+    79	   * @returns Object with pointId and optional siblingPointId
+    80	   * @throws Error if operation fails
+    81	   */
+    82	  static createLineLineIntersection(
+    83	    cmd: Command,
+    84	    planeId: string,
+    85	    line1Id: string,
+    86	    line2Id: string,
+    87	    world: World,
+    88	    groupId: string
+    89	  ): IntersectionResult {
+    90	    const operation = new AddLineLineIntersectionPoint2DOp(planeId, line1Id, line2Id);
+    91	    const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
+    92	    
+    93	    // Record ProcessTree action for primary intersection
+    94	    const action = createLineLineIntersectionPointAction(result.pointId, planeId, line1Id, line2Id);
+    95	    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+    96	    
+    97	    // Record ProcessTree action for sibling if created
+    98	    if (result.siblingPointId) {
+    99	      const primaryPoint = world.getPoint2D(result.pointId);
+   100	      if (primaryPoint) {
+   101	        const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
+   102	        if (siblingPlaneId) {
+   103	          const siblingAction = createSiblingIntersectionPointAction(
+   104	            result.siblingPointId,
+   105	            siblingPlaneId,
+   106	            result.pointId
+   107	          );
+   108	          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+   109	        }
+   110	      }
+   111	    }
+   112	    
+   113	    return result;
+   114	  }
+   115	
+   116	  /**
+   117	   * Create a line-circle intersection point.
+   118	   * 
+   119	   * If the line is a HalfHingeLine2D, automatically creates a sibling
+   120	   * intersection point on the complementary plane.
+   121	   * 
+   122	   * @param cmd - Open Command to add operations to
+   123	   * @param planeId - ID of the projection plane
+   124	   * @param lineId - ID of the line
+   125	   * @param circleId - ID of the circle
+   126	   * @param index - Which intersection point (0 or 1) when two exist
+   127	   * @param world - World instance for HHL detection and sibling plane resolution
+   128	   * @returns Object with pointId and optional siblingPointId
+   129	   * @throws Error if operation fails
+   130	   */
+   131	  static createLineCircleIntersection(
+   132	    cmd: Command,
+   133	    planeId: string,
+   134	    lineId: string,
+   135	    circleId: string,
+   136	    index: number,
+   137	    world: World,
+   138	    groupId: string
+   139	  ): IntersectionResult {
+   140	    const operation = new AddLineCircleIntersectionPoint2DOp(planeId, lineId, circleId, index);
+   141	    const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
+   142	    
+   143	    // Record ProcessTree action for primary intersection
+   144	    const action = createLineCircleIntersectionPointAction(result.pointId, planeId, lineId, circleId, index);
+   145	    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+   146	    
+   147	    // Record ProcessTree action for sibling if created
+   148	    if (result.siblingPointId) {
+   149	      const primaryPoint = world.getPoint2D(result.pointId);
+   150	      if (primaryPoint) {
+   151	        const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
+   152	        if (siblingPlaneId) {
+   153	          const siblingAction = createSiblingIntersectionPointAction(
+   154	            result.siblingPointId,
+   155	            siblingPlaneId,
+   156	            result.pointId
+   157	          );
+   158	          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+   159	        }
+   160	      }
+   161	    }
+   162	    
+   163	    return result;
+   164	  }
+   165	
+   166	  /**
+   167	   * Create a circle-circle intersection point.
+   168	   * 
+   169	   * Circles do not create sibling intersections (circles cannot be HalfHingeLines).
+   170	   * 
+   171	   * @param cmd - Open Command to add operations to
+   172	   * @param planeId - ID of the projection plane
+   173	   * @param circle1Id - ID of first circle
+   174	   * @param circle2Id - ID of second circle
+   175	   * @param index - Which intersection point (0 or 1) when two exist
+   176	   * @param world - World instance for validation
+   177	   * @returns Object with pointId and optional siblingPointId
+   178	   * @throws Error if operation fails
+   179	   */
+   180	  static createCircleCircleIntersection(
+   181	    cmd: Command,
+   182	    planeId: string,
+   183	    circle1Id: string,
+   184	    circle2Id: string,
+   185	    index: number,
+   186	    world: World,
+   187	    groupId: string
+   188	  ): IntersectionResult {
+   189	    const operation = new AddCircleCircleIntersectionPoint2DOp(planeId, circle1Id, circle2Id, index);
+   190	    const result = this.executeWithSiblingSupport(cmd, operation, planeId, world);
+   191	    
+   192	    // Record ProcessTree action for primary intersection
+   193	    const action = createCircleCircleIntersectionPointAction(result.pointId, planeId, circle1Id, circle2Id, index);
+   194	    
+   195	    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+   196	    
+   197	    // Note: Circles never create siblings, so no sibling action needed
+   198	    
+   199	    return result;
+   200	  }
+   201	
+   202	  /**
+   203	   * Execute intersection operation and create sibling if needed (shared logic)
+   204	   */
+   205	  private static executeWithSiblingSupport(
+   206	    cmd: Command,
+   207	    operation: AddLineLineIntersectionPoint2DOp | AddLineCircleIntersectionPoint2DOp | AddCircleCircleIntersectionPoint2DOp,
+   208	    planeId: string,
+   209	    world: World
+   210	  ): IntersectionResult {
+   211	    // Execute primary operation and extract outputs
+   212	    const result = cmd.addAndExecute(operation);
+   213	    const pointId = result.outputs.pointId;
+   214	    
+   215	    let siblingPointId: string | undefined;
+   216	    
+   217	    try {
+   218	      // Check if either element is HalfHingeLine2D and get sibling plane
+   219	      const plane = world.getProjectionPlaneById(planeId);
+   220	      if (!plane) {
+--- frontend/src/domain/processTree/Action.ts
+     1	/**
+     2	 * Action - Base interface for construction actions in the process tree
+     3	 * 
+     4	 * Phase 93: Minimal Action interface - only 3 fields
+     5	 * - elementId: The created element (type derivable from element itself)
+     6	 * - description: Human-readable narrative (static for now, dynamic later)
+     7	 * - isOutput: Black box visibility flag (defaults to true)
+     8	 * 
+     9	 * Phase 98: Dynamic Action Descriptions
+    10	 * - Added getDescriptionParts() helper function (not a method on interface)
+    11	 * - Descriptions computed dynamically from current world state
+    12	 * - Uses Descriptor pattern for separation of concerns
+    13	 * 
+    14	 * Removed fields (all redundant):
+    15	 * - id: Actions tied to elements, use elementId
+    16	 * - type: Always 'action', unnecessary discriminator
+    17	 * - actionType: Derivable from element.type
+    18	 * - timestamp: Can be derived from element.created if needed
+    19	 * 
+    20	 * Dependencies: Query world.dependencyService.getDependencies(elementId)
+    21	 * Element properties: Direct access (element.planeId, line.point1Id, etc.)
+    22	 * 
+    23	 */
+    24	
+    25	import type { World } from '@/domain/world/World';
+    26	import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
+    27	import { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistry';
+    28	
+    29	export interface Action {
+    30	  elementId: string;             // Element created by this action
+    31	  description: string;           // Human-readable action narrative
+    32	  isOutput: boolean;             // Phase 87: Output flag (Show in black box stack)
+    33	}
+    34	
+    35	/**
+    36	 * Generate dynamic description parts for an action
+    37	 * 
+    38	 * Format: "{ElementType} {CurrentLabel}: {ConstructionMethod}"
+    39	 * Example: "Point A_5: Intersection of line L_2 and line L_3"
+    40	 * 
+    41	 * Returns array of text and label parts for selective KaTeX rendering.
+    42	 * 
+    43	 * @param action The action to describe
+    44	 * @param world Current world instance for element/label lookup
+    45	 * @returns Array of text and label parts
+    46	 */
+    47	export function getActionDescriptionParts(action: Action, world: World): DescriptionPart[] {
+    48	  // Try projection plane first (simple ID format without '/')
+    49	  if (!action.elementId.includes('/')) {
+    50	    const plane = world.getProjectionPlaneById(action.elementId);
+    51	    if (plane) {
+    52	      const descriptor = DescriptorRegistry.get(plane);
+    53	      const typeName = descriptor.getTypeName(plane).toLowerCase();
+    54	      const label = plane.label || plane.name;
+    55	      const constructionParts = descriptor.getConstructionDescription(plane, world);
+    56	      
+    57	      return [
+    58	        { type: 'label', content: label, elementId: action.elementId },
+    59	        { type: 'text', content: `: ${typeName} ` },
+    60	        ...constructionParts
+    61	      ];
+    62	    }
+    63	  }
+    64	  
+    65	  // Try 2D element
+    66	  try {
+    67	    const element = world.getElement2D(action.elementId);
+    68	    if (element) {
+    69	      const descriptor = DescriptorRegistry.get(element);
+    70	      const typeName = descriptor.getTypeName(element).toLowerCase();
+    71	      const label = element.label || action.elementId;
+    72	      const constructionParts = descriptor.getConstructionDescription(element, world);
+    73	      
+    74	      return [
+    75	        { type: 'label', content: label, elementId: action.elementId },
+    76	        { type: 'text', content: `: ${typeName} ` },
+    77	        ...constructionParts
+    78	      ];
+    79	    }
+    80	  } catch (e) {
+    81	    // Not a 2D element, continue to 3D
+    82	  }
+    83	  
+    84	  // Try 3D element
+    85	  const element3d = world.getElement3DById(action.elementId);
+    86	  if (element3d) {
+    87	    const descriptor = DescriptorRegistry.get(element3d);
+    88	    const typeName = descriptor.getTypeName(element3d).toLowerCase();
+    89	    const label = element3d.label || action.elementId;
+    90	    const constructionParts = descriptor.getConstructionDescription(element3d, world);
+    91	    
+    92	    return [
+    93	      { type: 'label', content: label, elementId: action.elementId },
+    94	      { type: 'text', content: `: ${typeName} ` },
+    95	      ...constructionParts
+    96	    ];
+    97	  }
+    98	  
+    99	  // Element deleted - return empty to hide from UI
+   100	  return [];
+   101	}
+   102	
+   103	/**
+   104	 * Generic action factory - replaces 30+ specialized functions
+   105	 * 
+   106	 * @param elementId - The created element ID
+   107	 * @param description - Optional description (defaults to "Created {elementId}")
+   108	 * @returns Action with isOutput=true by default
+   109	 */
+   110	export function createAction(
+   111	  elementId: string,
+   112	  description?: string
+   113	): Action {
+   114	  return {
+   115	    elementId,
+   116	    description: description ?? `Created ${elementId}`,
+   117	    isOutput: true  // Default to true (user correction from Phase 93 planning)
+   118	  };
+   119	}
+--- frontend/src/domain/processTree/ProcessTree.ts
+     1	/**
+     2	 * ProcessTree - Hierarchical construction history
+     3	 * 
+     4	 * Tracks all construction actions in a tree structure. Actions are grouped
+     5	 * into ActionGroups which can be organized into Subprocesses.
+     6	 * 
+     7	 */
+     8	
+     9	import type { Action } from './Action';
+    10	
+    11	export const PROCESS_NODE_TYPE = {
+    12	  SUBPROCESS: 'subprocess',
+    13	  ACTION_GROUP: 'actionGroup',
+    14	  ACTION: 'action',
+    15	} as const;
+    16	export type ProcessNodeType = typeof PROCESS_NODE_TYPE[keyof typeof PROCESS_NODE_TYPE];
+    17	
+    18	export interface ProcessNodeBase {
+    19	  id: string;
+    20	  type: ProcessNodeType;
+    21	  created: Date;
+    22	}
+    23	
+    24	export interface Subprocess extends ProcessNodeBase {
+    25	  type: 'subprocess';
+    26	  name: string;
+    27	  children: (Subprocess | ActionGroup)[];  // Mixed children, no direct actions
+    28	  showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
+    29	  isOutput: boolean;                       // Phase 87: Output flag (punches through encapsulation)
+    30	}
+    31	
+    32	export interface ActionGroup extends ProcessNodeBase {
+    33	  type: 'actionGroup';
+    34	  children: (ActionNode | null)[];         // Actions or tombstones (null = deleted)
+    35	  isAuxiliary: boolean;                    // Auxiliary actions (lighter styling)
+    36	  isOutput: boolean;                       // Phase 87: Output flag
+    37	}
+    38	
+    39	// ActionNode wraps Action to fit the tree structure
+    40	export interface ActionNode extends ProcessNodeBase, Action {
+    41	  type: 'action';
+    42	}
+    43	
+    44	export type ProcessNode = Subprocess | ActionGroup | ActionNode;
+    45	
+    46	type ChangeListener = (version: number) => void;
+    47	
+    48	export class ProcessTree {
+    49	  root: Subprocess;
+    50	  private _version: number = 0;
+    51	  private subprocessStack: Subprocess[] = [];  // Phase 85: Subprocess stack
+    52	  private listeners: ChangeListener[] = [];
+    53	
+    54	  constructor() {
+    55	    // Initialize with root subprocess
+    56	    // Phase 95: Use fixed ID for root so toggle operations work across sessions
+    57	    this.root = {
+    58	      id: 'root',
+    59	      type: 'subprocess',
+    60	      name: 'Root Process',
+    61	      children: [],
+    62	      showIntermediates: true,
+    63	      isOutput: true, // Root is implicitly an output
+    64	      created: new Date()
+    65	    };
+    66	    // Initialize stack with root
+    67	    this.subprocessStack = [this.root];
+    68	  }
+    69	
+    70	  /**
+    71	   * Get current version for reactivity tracking
+    72	   */
+    73	  getVersion(): number {
+    74	    return this._version;
+    75	  }
+    76	
+    77	  subscribe(listener: ChangeListener): () => void {
+    78	    this.listeners.push(listener);
+    79	    return () => {
+    80	      this.listeners = this.listeners.filter(l => l !== listener);
+    81	    };
+    82	  }
+    83	
+    84	  /**
+    85	   * Increment version to notify of changes
+    86	   */
+    87	  private notifyChange(): void {
+    88	    this._version++;
+    89	    this.listeners.forEach(l => l(this._version));
+    90	  }
+    91	
+    92	  /**
+    93	   * Get the current active subprocess (top of stack)
+    94	   * Phase 85: Stack-based subprocess management
+    95	   */
+    96	  getCurrentSubprocess(): Subprocess {
+    97	    return this.subprocessStack[this.subprocessStack.length - 1];
+    98	  }
+    99	
+   100	  /**
+   101	   * Push a new subprocess onto the stack
+   102	   * All subsequent actions will be added to this subprocess
+   103	   * Phase 85: Stack-based subprocess management
+   104	   * @param id - Optional ID to use (for deserialization), otherwise generates new ID
+   105	   */
+   106	  pushSubprocess(name: string, id?: string): Subprocess {
+   107	    const subprocess: Subprocess = {
+   108	      id: id || this.generateId(),
+   109	      type: 'subprocess',
+   110	      name,
+   111	      children: [],
+   112	      showIntermediates: true,
+   113	      isOutput: true,
+   114	      created: new Date()
+   115	    };
+   116	
+   117	    // Add to current subprocess's children
+   118	    const parent = this.getCurrentSubprocess();
+   119	    parent.children.push(subprocess);
+   120	    
+   121	    // Push onto stack
+   122	    this.subprocessStack.push(subprocess);
+   123	    this.notifyChange();
+   124	
+   125	    return subprocess;
+   126	  }
+   127	
+   128	  /**
+   129	   * Pop the current subprocess from the stack
+   130	   * Returns to parent subprocess
+   131	   * The subprocess remains in the tree as a child of its parent
+   132	   * Phase 85: Stack-based subprocess management
+   133	   */
+   134	  popSubprocess(): void {
+   135	    if (this.subprocessStack.length <= 1) {
+   136	      throw new Error('Cannot pop root subprocess');
+   137	    }
+   138	    this.subprocessStack.pop();
+   139	    this.notifyChange();
+   140	  }
+   141	
+   142	  findSubprocessById(subprocessId: string): Subprocess | undefined {
+   143	    let found: Subprocess | undefined;
+   144	    this.traverseSubprocesses(this.root, (subprocess) => {
+   145	      if (subprocess.id === subprocessId) {
+   146	        found = subprocess;
+   147	      }
+   148	    });
+   149	    return found;
+   150	  }
+   151	
+   152	  /**
+   153	   * Add a subprocess to organize actions
+   154	   */
+   155	  addSubprocess(name: string, parent?: Subprocess): Subprocess {
+   156	    const subprocess: Subprocess = {
+   157	      id: this.generateId(),
+   158	      type: 'subprocess',
+   159	      name,
+   160	      children: [],
+   161	      showIntermediates: true,
+   162	      isOutput: true,
+   163	      created: new Date()
+   164	    };
+   165	
+   166	    const targetParent = parent || this.root;
+   167	    targetParent.children.push(subprocess);
+   168	    this.notifyChange();
+   169	
+   170	    return subprocess;
+   171	  }
+   172	
+   173	  /**
+   174	   * Add a complete ActionGroup to the tree (Phase 81 Refactor)
+   175	   * Adds to the current subprocess on top of the stack.
+   176	   */
+   177	  addActionGroup(group: ActionGroup): void {
+   178	     const currentSubprocess = this.getCurrentSubprocess();
+   179	     currentSubprocess.children.push(group);
+   180	     this.notifyChange();
+   181	  }
+   182	
+   183	  /**
+   184	   * Add an action to an existing group
+   185	   * @param action The action to add
+   186	   * @param groupId The ID of the target ActionGroup
+   187	   * @returns The index where the action was added
+   188	   */
+   189	  addActionToGroup(action: Action, groupId: string): number {
+   190	    let groupFound: ActionGroup | undefined;
+   191	    
+   192	    // Find group
+   193	    this.traverseGroups(this.root, (group) => {
+   194	      if (group.id === groupId) {
+   195	        groupFound = group;
+   196	      }
+   197	    });
+   198	
+   199	    if (!groupFound) {
+   200	      throw new Error(`ActionGroup ${groupId} not found`);
+   201	    }
+   202	
+   203	    // Phase 93: Wrap Action (3 fields) in ActionNode (adds id, type, created)
+   204	    const actionNode: ActionNode = {
+   205	      ...action,
+   206	      id: this.generateId(),  // Generate ID for tree node
+   207	      type: 'action',
+   208	      isOutput: action.isOutput !== undefined ? action.isOutput : true,
+   209	      created: new Date()
+   210	    };
+   211	    
+   212	    const index = groupFound.children.push(actionNode) - 1;
+   213	    this.notifyChange();
+   214	    return index;
+   215	  }
+   216	
+   217	  /**
+   218	   * Rename a subprocess
+   219	   */
+   220	  renameSubprocess(subprocessId: string, newName: string): void {
+--- frontend/src/domain/world/World.ts
+     1	/**
+     2	 * World - Root container for all geometric elements
+     3	 * 
+     4	 * The World class stores all geometric entities (points, lines, segments, circles, planes, etc.)
+     5	 * in the dihedral drawing system. It serves as the central data structure that holds the 
+     6	 * complete state of a construction.
+     7	 * 
+     8	 * Design principles (from Constitution):
+     9	 * - Principle I: Domain layer - pure business logic, no UI dependencies
+    10	 * - Principle V: All points stored in plane intrinsic coordinates (homogeneous)
+    11	 * 
+    12	 * ## Architecture: Element Access Patterns (Phase 48)
+    13	 * 
+    14	 * **Ownership Hierarchy**: World → ProjectionPlane → Element2D
+    15	 * - 2D elements (points, lines, circles, etc.) are stored in and owned by ProjectionPlane
+    16	 * - World provides high-level access methods but does NOT store 2D elements directly
+    17	 * - This ensures proper encapsulation and clear ownership boundaries
+    18	 * 
+    19	 * **How to Access Elements**:
+    20	 * 
+    21	 * 1. **Via Hierarchical ID** (Phase 45 - preferred for known IDs):
+    22	 *    ```typescript
+    23	 *    const point = world.getPoint2D(pointId);        // Returns Point2D | undefined
+    24	 *    const line = world.getLine2D(lineId);           // Returns Line2D | undefined
+    25	 *    const circle = world.getCircle2D(circleId);     // Returns Circle2D | undefined
+    26	 *    const element = world.getElement2D(elementId);  // Returns Element2D | undefined
+    27	 *    ```
+    28	 *    These methods use hierarchical IDs (e.g., "proj_plane_1:point_5") to find the 
+    29	 *    correct plane and retrieve the element. Type-safe and fast.
+    30	 * 
+    31	 * 2. **Via ProjectionPlane** (when you already have the plane):
+    32	 *    ```typescript
+    33	 *    const plane = world.getProjectionPlaneById(planeId);
+    34	 *    const point = plane.getPoint(pointId);
+    35	 *    const line = plane.getLine(lineId);
+    36	 *    ```
+    37	 * 
+    38	 * 3. **Getting Realizations** (computed geometric data):
+    39	 *    ```typescript
+    40	 *    const plane = world.getProjectionPlaneById(planeId);
+    41	 *    const point = plane.getPoint(pointId);
+    42	 *    const realization = point?.realize2D(world);  // Get computed coordinates
+    43	 *    ```
+    44	 *    Realizations contain the actual computed positions/geometry. The domain object
+    45	 *    stores the construction definition (e.g., "intersection of line A and circle B"),
+    46	 *    while the realization stores the computed result (e.g., actual [x, y] coordinates).
+    47	 * 
+    48	 * 4. **Iterating All Elements** (for operations like select-all, export):
+    49	 *    ```typescript
+    50	 *    for (const plane of world.getAllProjectionPlanes()) {
+    51	 *      for (const point of plane.getAllPoints()) {
+    52	 *        // Process each point
+    53	 *      }
+    54	 *    }
+    55	 *    ```
+    56	 * 
+    57	 * 5. **Semantic Access** (Phase 46 - for fixed initial planes):
+    58	 *    ```typescript
+    59	 *    const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+    60	 *    const verticalPlane = world.getProjectionPlaneByLabel('P_V');
+    61	 *    const originH = horizontalPlane.getPoint2DByLabel('O_H');  // Phase 53
+    62	 *    const hingeLine = world.getMainHingeLine();
+    63	 *    ```
+    64	 * 
+    65	 * **Why Facade Methods Were Removed** (Phase 48):
+    66	 * 
+    67	 * Previous versions had convenience methods like `world.getPoint2DRealization(id)` that
+    68	 * bypassed ProjectionPlane ownership. These were removed because:
+    69	 * - **Violated encapsulation**: World shouldn't know about ProjectionPlane's internal storage
+    70	 * - **Tight coupling**: Client code became dependent on World instead of ProjectionPlane
+    71	 * - **Inconsistent patterns**: Some code used facade, some used proper ownership
+    72	 * - **Maintenance burden**: World had to mirror ProjectionPlane's interface
+    73	 * 
+    74	 * The current architecture enforces proper ownership: ProjectionPlane owns its elements,
+    75	 * World provides semantic access and ID-based lookup.
+    76	 * 
+    77	 * @see Phase 45: Hierarchical Element IDs
+    78	 * @see Phase 46: Semantic Accessors
+    79	 * @see Phase 48: Remove World Facade Methods
+    80	 */
+    81	
+    82	import { Vector4, Matrix3 } from 'three';
+    83	import { applyMatrix4x3, Matrix4x3 } from '@/utils/threeUtils';
+    84	import { Point2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
+    85	import { Line2D } from './Line';
+    86	import { Segment2D, Segment2DByPoints } from './Segment';
+    87	import { Circle2D } from './Circle';
+    88	import { Guide2D } from './Guide';
+    89	import { HingeLine, HalfHingeLine2D } from './HingeLine';
+    90	import { Plane3D, Plane3DFixed } from './Plane';
+    91	import { ProjectionPlane } from './projectionPlane/ProjectionPlane';
+    92	import { FixedProjectionPlane } from './projectionPlane/FixedProjectionPlane';
+    93	import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './projectionPlane/ProjectionPlaneRealization';
+    94	import { ProcessTree } from '../processTree/ProcessTree';
+    95	import { DependencyService } from './DependencyService';
+    96	import { Element2D } from './Element2D';
+    97	
+    98	// Phase 78: 3D element domain types
+    99	import type { Point3D } from './Point3D';
+   100	import type { Line3D } from './Line3D';
+   101	import type { Segment3D } from './Segment3D';
+   102	
+   103	// Phase 78: 3D element realization types (Element3DRealization3D.ts)
+   104	import { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plane3DRealization3D } from './Element3DRealization3D';
+   105	import { getContainerIdFromElementId } from './ElementId';
+   106	import { LabelGenerator } from './LabelGenerator';
+   107	
+   108	export class World {
+   109	  // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
+   110	  private hingeLines: Map<string, HingeLine>;
+   111	  private planes3D: Map<string, Plane3D>;        // All 3D planes (base P_H, P_V + user-created)
+   112	  projectionPlanes: Map<string, ProjectionPlane>;  // All projection planes (base + auxiliary)
+   113	  
+   114	  // Phase 78: User-created 3D elements (domain layer - definitions)
+   115	  private points3D: Map<string, Point3D>;        // User-created 3D points from projections
+   116	  private lines3D: Map<string, Line3D>;          // User-created 3D lines from projections
+   117	  private segments3D: Map<string, Segment3D>;    // User-created 3D segments from projections
+   118	  
+   119	  // Construction history
+   120	  private processTree: ProcessTree;
+   121	  
+   122	  // Dependency tracking
+   123	  private dependencyService: DependencyService;
+   124	  
+   125	  // Realization caches - Phase 22.5.3: 2D element realizations now cached in ProjectionPlane
+   126	  private pointRealizations3D: Map<string, Point3DRealization3D>;  // Computed 3D point positions
+   127	  private projectionPlaneRealizations2D: Map<string, ProjectionPlaneRealization2D>;  // Computed plane 2D transforms
+   128	  private projectionPlaneRealizations3D: Map<string, ProjectionPlaneRealization3D>;  // Computed plane 3D transforms
+   129	  
+   130	  // Phase 78: 3D element realization caches (computed numeric geometry)
+   131	  private lineRealizations3D: Map<string, Line3DRealization3D>;       // Computed 3D line geometry
+   132	  private segmentRealizations3D: Map<string, Segment3DRealization3D>; // Computed 3D segment geometry
+   133	  private planeRealizations3D: Map<string, Plane3DRealization3D>;     // Computed 3D plane equations
+   134	  
+   135	  private nextId: number;
+   136	  private _version: number = 0;  // For tracking changes and triggering UI updates
+   137	  private changeListeners: Array<() => void> = [];  // Phase 80: Observer pattern for view updates
+   138	
+   139	  // Active plane tracking
+   140	  private activePlaneId?: string;  // Currently active projection plane for user interactions
+   141	
+   142	  // Fixed elements (always present)
+   143	  originPoint?: Vector4;  // O at (0,0,0) in 3D space
+   144	  
+   145	  // Phase 78: ID generation counters for 3D elements
+   146	  private point3DCounter: number = 0;
+   147	  private line3DCounter: number = 0;
+   148	  private segment3DCounter: number = 0;
+   149	  private plane3DUserCounter: number = 0;
+   150	
+   151	  // Phase 116: Sequential mathematical label generator
+   152	  readonly labelGenerator: LabelGenerator = new LabelGenerator();
+   153	
+   154	  constructor() {
+   155	    // Phase 22.5.3: Element storage removed - stored in ProjectionPlane
+   156	    this.hingeLines = new Map();
+   157	    this.planes3D = new Map();
+   158	    this.projectionPlanes = new Map();
+   159	    
+   160	    // Phase 78: Initialize 3D element storage
+   161	    this.points3D = new Map();
+   162	    this.lines3D = new Map();
+   163	    this.segments3D = new Map();
+   164	    
+   165	    // Initialize realization caches
+   166	    this.pointRealizations3D = new Map();
+   167	    this.projectionPlaneRealizations2D = new Map();
+   168	    this.projectionPlaneRealizations3D = new Map();
+   169	    
+   170	    // Phase 78: Initialize 3D realization caches
+   171	    this.lineRealizations3D = new Map();
+   172	    this.segmentRealizations3D = new Map();
+   173	    this.planeRealizations3D = new Map();
+   174	    
+   175	    this.nextId = 1;
+   176	    this.processTree = new ProcessTree();
+   177	    this.dependencyService = new DependencyService();
+   178	    
+   179	    // Phase 47: Static initialization removed.
+   180	    // Initialization is now an explicit application use case so command history
+   181	    // orchestration stays outside the domain root.
+   182	  }
+   183	
+   184	  /**
+   185	   * Get current version number for change tracking
+   186	   */
+   187	  getVersion(): number {
+   188	    return this._version;
+   189	  }
+   190	
+   191	  /**
+   192	   * Subscribe to World change notifications (Phase 80)
+   193	   * 
+   194	   * Observers will be notified whenever World.markDirty() is called,
+   195	   * which happens after every Command operation completes.
+   196	   * 
+   197	   * @param callback Function to call when World changes
+   198	   */
+   199	  subscribeToChanges(callback: () => void): void {
+   200	    this.changeListeners.push(callback);
+   201	  }
+   202	
+   203	  /**
+   204	   * Unsubscribe from World change notifications (Phase 80)
+   205	   * 
+   206	   * @param callback Function to remove from listeners
+   207	   */
+   208	  unsubscribeFromChanges(callback: () => void): void {
+   209	    const index = this.changeListeners.indexOf(callback);
+   210	    if (index > -1) {
+   211	      this.changeListeners.splice(index, 1);
+   212	    }
+   213	  }
+   214	
+   215	  /**
+   216	   * Notify that world has changed (increment version)
+   217	   * Phase 80: Also notifies all subscribed observers
+   218	   */
+   219	  private notifyChange(): void {
+   220	    this._version++;
+--- frontend/src/domain/world/projectionPlane/ProjectionPlane.ts
+     1	import { Matrix3, Vector3 } from 'three';
+     2	import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
+     3	import { buildElementId } from '../ElementId';
+     4	import { Element } from '../Element';
+     5	import type { Point2D, Point2DRealization2D } from '../Point';
+     6	import { FreePoint2D, IntersectionPoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
+     7	import type { Line2D, Line2DRealization2D } from '../Line';
+     8	import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
+     9	import type { Circle2D, Circle2DRealization2D } from '../Circle';
+    10	import { Circle2DByCenterAndPoint } from '../Circle';
+    11	import { Segment2DByPoints } from '../Segment';
+    12	import { Guide2D, SiblingGuide2D } from '../Guide';
+    13	import { HalfHingeLine2D } from '../HingeLine';
+    14	import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
+    15	import type { ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+    16	import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+    17	
+    18	export const PROJECTION_PLANE_TYPE = {
+    19	  BASE: 'base',
+    20	  AUXILIARY: 'auxiliary',
+    21	} as const;
+    22	export type ProjectionPlaneType = typeof PROJECTION_PLANE_TYPE[keyof typeof PROJECTION_PLANE_TYPE];
+    23	
+    24	export abstract class ProjectionPlane extends Element {
+    25	  abstract readonly type: ProjectionPlaneType;
+    26	  name: string;
+    27	  isActive: boolean;
+    28	  isVisible: boolean;
+    29	  color: string;  // Hex color (#RRGGBB)
+    30	  plane3DId?: string;  // Reference to Plane3D element (geometric definition)
+    31	
+    32	  /**
+    33	   * Get dependency IDs for this plane
+    34	   * Used by DependencyService to build the dependency graph
+    35	   */
+    36	  abstract getDependencies(): string[];
+    37	
+    38	  private readonly elementStore: ProjectionPlaneElementStore;
+    39	
+    40	  constructor(
+    41	    id: string,
+    42	    name: string,
+    43	    isActive: boolean = false,
+    44	    isVisible: boolean = true,
+    45	    color: string = '#000000',
+    46	    plane3DId?: string
+    47	  ) {
+    48	    super(id, name);
+    49	    this.name = name;
+    50	    this.isActive = isActive;
+    51	    this.isVisible = isVisible;
+    52	    this.color = color;
+    53	    this.plane3DId = plane3DId;
+    54	    this.elementStore = new ProjectionPlaneElementStore();
+    55	  }
+    56	
+    57	  /**
+    58	   * Clear all elements and realizations from this plane
+    59	   * Used when loading projects or resetting the world
+    60	   */
+    61	  clear(): void {
+    62	    this.elementStore.clear();
+    63	  }
+    64	
+    65	  // ==================== Point Methods ====================
+    66	
+    67	  /**
+    68	   * Add a point to this plane
+    69	   */
+    70	  addPoint(point: Point2D, context?: ProjectionPlaneMutationContext): void {
+    71	    this.elementStore.addPoint(point, context);
+    72	  }
+    73	
+    74	  /**
+    75	   * Get a point by ID
+    76	   */
+    77	  getPoint(id: string): Point2D | undefined {
+    78	    return this.elementStore.getPoint(id);
+    79	  }
+    80	
+    81	  /**
+    82	   * Get a point by label (semantic access)
+    83	   * Phase 53: Enable label-based point lookup for semantic references
+    84	   * 
+    85	   * @param label - Point label (e.g., 'O_H', 'O_V', 'A', 'B')
+    86	   * @returns Point with matching label
+    87	   * @throws Error if no point found with given label
+    88	   * 
+    89	   * @example
+    90	   * const originH = plane.getPoint2DByLabel('O_H');
+    91	   */
+    92	  getPoint2DByLabel(label: string): Point2D {
+    93	    for (const point of this.elementStore.getAllPoints()) {
+    94	      if (point.label === label) {
+    95	        return point;
+    96	      }
+    97	    }
+    98	    throw new Error(`Point not found on plane ${this.name} with label: ${label}`);
+    99	  }
+   100	
+   101	  /**
+   102	   * Get all points on this plane
+   103	   */
+   104	  getAllPoints(): Point2D[] {
+   105	    return this.elementStore.getAllPoints();
+   106	  }
+   107	
+   108	  /**
+   109	   * Remove a point from this plane
+   110	   */
+   111	  removePoint(id: string, context?: ProjectionPlaneMutationContext): boolean {
+   112	    return this.elementStore.removePoint(id, context);
+   113	  }
+   114	
+   115	  /**
+   116	   * Get point realization (cached 2D position)
+   117	   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+   118	   */
+   119	  getPointRealization2D(id: string): Point2DRealization2D | undefined {
+   120	    return this.elementStore.getPointRealization2D(id);
+   121	  }
+   122	
+   123	  /**
+   124	   * Set/cache point realization
+   125	   */
+   126	  setPointRealization2D(id: string, realization: Point2DRealization2D): void {
+   127	    this.elementStore.setPointRealization2D(id, realization);
+   128	  }
+   129	
+   130	  /**
+   131	   * Clear point realization cache
+   132	   */
+   133	  clearPointRealization2D(id: string): void {
+   134	    this.elementStore.clearPointRealization2D(id);
+   135	  }
+   136	
+   137	  // ==================== Line Methods ====================
+   138	
+   139	  /**
+   140	   * Add a line to this plane
+   141	   */
+   142	  addLine(line: Line2D, context?: ProjectionPlaneMutationContext): void {
+   143	    this.elementStore.addLine(line, context);
+   144	  }
+   145	
+   146	  /**
+   147	   * Get a line by ID
+   148	   */
+   149	  getLine(id: string): Line2D | undefined {
+   150	    return this.elementStore.getLine(id);
+   151	  }
+   152	
+   153	  /**
+   154	   * Get all lines on this plane
+   155	   */
+   156	  getAllLines(): Line2D[] {
+   157	    return this.elementStore.getAllLines();
+   158	  }
+   159	
+   160	  /**
+   161	   * Remove a line from this plane
+   162	   */
+   163	  removeLine(id: string, context?: ProjectionPlaneMutationContext): boolean {
+   164	    return this.elementStore.removeLine(id, context);
+   165	  }
+   166	
+   167	  /**
+   168	   * Get line realization (cached 2D equation)
+   169	   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+   170	   * Note: This includes segments, guides, and all Line2D subtypes
+   171	   */
+   172	  getLineRealization2D(id: string): Line2DRealization2D | undefined {
+   173	    return this.elementStore.getLineRealization2D(id);
+   174	  }
+   175	
+   176	  /**
+   177	   * Set/cache line realization
+   178	   */
+   179	  setLineRealization2D(id: string, realization: Line2DRealization2D): void {
+   180	    this.elementStore.setLineRealization2D(id, realization);
+   181	  }
+   182	
+   183	  /**
+   184	   * Clear line realization cache
+   185	   */
+   186	  clearLineRealization2D(id: string): void {
+   187	    this.elementStore.clearLineRealization2D(id);
+   188	  }
+   189	
+   190	  // ==================== Circle Methods ====================
+   191	
+   192	  /**
+   193	   * Add a circle to this plane
+   194	   */
+   195	  addCircle(circle: Circle2D, context?: ProjectionPlaneMutationContext): void {
+   196	    this.elementStore.addCircle(circle, context);
+   197	  }
+   198	
+   199	  /**
+   200	   * Get a circle by ID
+   201	   */
+   202	  getCircle(id: string): Circle2D | undefined {
+   203	    return this.elementStore.getCircle(id);
+   204	  }
+   205	
+   206	  /**
+   207	   * Get all circles on this plane
+   208	   */
+   209	  getAllCircles(): Circle2D[] {
+   210	    return this.elementStore.getAllCircles();
+   211	  }
+   212	
+   213	  /**
+   214	   * Remove a circle from this plane
+   215	   */
+   216	  removeCircle(id: string, context?: ProjectionPlaneMutationContext): boolean {
+   217	    return this.elementStore.removeCircle(id, context);
+   218	  }
+   219	
+   220	  /**
+--- frontend/src/components/workspace/SvgCanvas.vue
+     1	<template>
+     2	  <div class="svg-canvas-container">
+     3	    <svg
+     4	      ref="svgElement"
+     5	      class="svg-canvas"
+     6	      xmlns="http://www.w3.org/2000/svg"
+     7	      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+     8	      preserveAspectRatio="xMidYMid meet"
+     9	      @mousedown="handleMouseDown"
+    10	      @click="handleCanvasClick"
+    11	      @dblclick="handleDoubleClick"
+    12	      @mousemove="handleMouseMove"
+    13	      @wheel.prevent="handleWheel"
+    14	    >
+    15	      <!-- Background grid (T275) - Zoom-adaptive grid display -->
+    16	      <g v-if="viewStore.gridVisible.value" class="background-grid">
+    17	        <line
+    18	          v-for="line in gridLines"
+    19	          :key="line.key"
+    20	          :x1="line.x1"
+    21	          :y1="line.y1"
+    22	          :x2="line.x2"
+    23	          :y2="line.y2"
+    24	          :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+    25	          :stroke-width="line.major ? 1 : 0.5"
+    26	        />
+    27	      </g>
+    28	      
+    29	      <!-- Render all lines through canvas presentation model (including HL_HV projections) -->
+    30	      <line
+    31	        v-for="{ primitive, attrs } in renderedLines"
+    32	        :key="primitive.id"
+    33	        v-bind="attrs"
+    34	      />
+    35	      
+    36	      <!-- Render all segments through canvas presentation model -->
+    37	      <line
+    38	        v-for="{ primitive, attrs } in renderedSegments"
+    39	        :key="primitive.id"
+    40	        v-bind="attrs"
+    41	      />
+    42	      
+    43	      <!-- Render all guides through canvas presentation model -->
+    44	      <line
+    45	        v-for="{ primitive, attrs } in renderedGuides"
+    46	        :key="primitive.id"
+    47	        v-bind="attrs"
+    48	      />
+    49	      
+    50	      <!-- Render all circles through canvas presentation model -->
+    51	      <circle
+    52	        v-for="{ primitive, attrs } in renderedCircles"
+    53	        :key="primitive.id"
+    54	        v-bind="attrs"
+    55	      />
+    56	      
+    57	      <!-- Render all arcs through canvas presentation model -->
+    58	      <path
+    59	        v-for="{ primitive, attrs } in renderedArcs"
+    60	        :key="primitive.id"
+    61	        v-bind="attrs"
+    62	      />
+    63	      
+    64	      <!-- Render all points through canvas presentation model -->
+    65	      <circle
+    66	        v-for="{ primitive, attrs } in renderedPoints"
+    67	        :key="primitive.id"
+    68	        v-bind="attrs"
+    69	      />
+    70	      
+    71	      <!-- Snap preview indicator - orange glow around snap target point -->
+    72	      <circle
+    73	        v-if="snapTarget.pointId && snapTarget.position"
+    74	        :cx="snapTarget.position.x"
+    75	        :cy="snapTarget.position.y"
+    76	        :r="8"
+    77	        fill="none"
+    78	        stroke="#FF6B35"
+    79	        stroke-width="2"
+    80	        opacity="0.8"
+    81	        class="snap-indicator"
+    82	      />
+    83	      
+    84	      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+    85	      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+    86	        <!-- Top edge labels (U-coordinates) -->
+    87	        <text
+    88	          v-for="label in gridLabels.top"
+    89	          :key="label.key"
+    90	          :x="label.position"
+    91	          :y="12"
+    92	          class="grid-label"
+    93	          text-anchor="middle"
+    94	        >
+    95	          {{ label.value }}
+    96	        </text>
+    97	        
+    98	        <!-- Bottom edge labels (U-coordinates) -->
+    99	        <text
+   100	          v-for="label in gridLabels.bottom"
+   101	          :key="label.key"
+   102	          :x="label.position"
+   103	          :y="canvasHeight - 4"
+   104	          class="grid-label"
+   105	          text-anchor="middle"
+   106	        >
+   107	          {{ label.value }}
+   108	        </text>
+   109	        
+   110	        <!-- Left edge labels (V-coordinates) -->
+   111	        <text
+   112	          v-for="label in gridLabels.left"
+   113	          :key="label.key"
+   114	          :x="4"
+   115	          :y="label.position"
+   116	          class="grid-label"
+   117	          text-anchor="start"
+   118	          dominant-baseline="middle"
+   119	        >
+   120	          {{ label.value }}
+   121	        </text>
+   122	        
+   123	        <!-- Right edge labels (V-coordinates) -->
+   124	        <text
+   125	          v-for="label in gridLabels.right"
+   126	          :key="label.key"
+   127	          :x="canvasWidth - 4"
+   128	          :y="label.position"
+   129	          class="grid-label"
+   130	          text-anchor="end"
+   131	          dominant-baseline="middle"
+   132	        >
+   133	          {{ label.value }}
+   134	        </text>
+   135	      </g>
+   136	    </svg>
+   137	    
+   138	    <!-- Hover tooltip -->
+   139	    <div 
+   140	      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
+   141	      class="hover-tooltip"
+   142	      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+   143	    >
+   144	      {{ hoverHighlight.hoveredElementLabel.value }}
+   145	    </div>
+   146	    
+   147	    <!-- Properties Dialog -->
+   148	    <PropertiesDialog
+   149	      :is-open="showPropertiesDialog"
+   150	      :element-id="propertiesElementId"
+   151	      :world="world"
+   152	      @close="showPropertiesDialog = false"
+   153	      @save="handleSaveProperties"
+   154	    />
+   155	  </div>
+   156	</template>
+   157	
+   158	<script setup lang="ts">
+   159	/**
+   160	 * SvgCanvas.vue - Main 2D drawing canvas component
+   161	 * 
+   162	 * This is the primary workspace where all 2D geometric elements are rendered.
+   163	 * Uses SVG for crisp, scalable vector graphics per Constitution Principle IV.
+   164	 * 
+   165	 * Rendering Pipeline:
+   166	 * 1. World (domain objects + realizations) 
+   167	 * 2. → CanvasPresentationSelector (generates read-model primitives in paper coordinates)
+   168	 * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+   169	 * 4. → SVG elements
+   170	 * 
+   171	 * Key requirements:
+   172	 * - SVG element, not HTML Canvas
+   173	 * - Rendering consumes the canvas presentation read model
+   174	 * - Generic rendering algorithms, with fixed elements represented by selectors
+   175	 * - Pan/zoom viewport transformations remain view state
+   176	 * - Element drawing policy comes from presentation selectors and SVGRenderer
+   177	 */
+   178	
+   179	import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+   180	import { Matrix3, Vector3 } from 'three';
+   181	import { World } from '@/domain/world/World';
+   182	import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+   183	import { InputService } from '@/services/InputService';
+   184	import { PointTool } from '@/tools/PointTool';
+   185	import { LineTool } from '@/tools/LineTool';
+   186	import { SegmentTool } from '@/tools/SegmentTool';
+   187	import { CircleTool } from '@/tools/CircleTool';
+   188	import { GuideTool } from '@/tools/GuideTool';
+   189	import { IntersectionTool } from '@/tools/IntersectionTool';
+   190	import { ParallelLineTool } from '@/tools/ParallelLineTool';
+   191	import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+   192	import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+   193	import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+   194	import { Create3DPointTool } from '@/tools/Create3DPointTool';
+   195	import { Create3DLineTool } from '@/tools/Create3DLineTool';
+   196	import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+   197	import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+   198	import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+   199	import { FreePoint2D } from '@/domain/world/Point';
+   200	import { useToolStore } from '@/stores/toolStore';
+   201	import { useViewStore } from '@/stores/viewStore';
+   202	import { useSelectionStore } from '@/stores/selectionStore';
+   203	import { useViewport } from '@/composables/useViewport';
+   204	import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+   205	import { screenTo3D } from '@/utils/coordinateTransform';
+   206	import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+   207	import type { ITool } from '@/tools/ITool';
+   208	import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+   209	import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+   210	import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+   211	import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+   212	
+   213	// Define emits
+   214	const emit = defineEmits<{
+   215	  'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+   216	  'update-active-plane': [planeInfo: { id: string; name: string }];
+   217	}>();
+   218	
+   219	const svgElement = ref<SVGSVGElement | null>(null);
+   220	
+--- frontend/src/components/panels/ActionItem.vue
+     1	<template>
+     2	  <div
+     3	    class="action-item"
+     4	    :class="{
+     5	      'infeasible': action.infeasible
+     6	    }"
+     7	    :title="action.infeasible ? `Infeasible: ${action.infeasibilityReason || 'Constraint violation'}` : ''"
+     8	  >
+     9	    <div class="action-header">
+    10	      <span class="action-type">{{ formatActionType(action.actionType) }}</span>
+    11	      <span class="timestamp">{{ formatTime(action.timestamp) }}</span>
+    12	    </div>
+    13	    <!-- Phase 92: Display elementId instead of outputs array -->
+    14	    <div v-if="action.elementId" class="action-outputs">
+    15	      <span class="label">Element:</span>
+    16	      <span class="outputs">{{ action.elementId }}</span>
+    17	    </div>
+    18	    <div class="action-description">
+    19	      <span class="description">{{ action.description }}</span>
+    20	    </div>
+    21	  </div>
+    22	</template>
+    23	
+    24	<script setup lang="ts">
+    25	import type { Action } from '../../domain/processTree/Action';
+    26	import { ActionType } from '../../domain/processTree/Action';
+    27	
+    28	interface Props {
+    29	  action: Action;
+    30	}
+    31	
+    32	const props = defineProps<Props>();
+    33	
+    34	/**
+    35	 * Format ActionType enum to readable string
+    36	 */
+    37	function formatActionType(actionType: ActionType): string {
+    38	  // Convert CamelCase to Title Case with spaces
+    39	  return actionType
+    40	    .replace(/([A-Z])/g, ' $1')
+    41	    .trim();
+    42	}
+    43	
+    44	/**
+    45	 * Format timestamp to time string
+    46	 */
+    47	function formatTime(date: Date): string {
+    48	  return date.toLocaleTimeString('en-US', {
+    49	    hour: '2-digit',
+    50	    minute: '2-digit',
+    51	    second: '2-digit'
+    52	  });
+    53	}
+    54	</script>
+    55	
+    56	<style scoped>
+    57	.action-item {
+    58	  padding: 6px 8px;
+    59	  background-color: var(--color-background);
+    60	  border: 1px solid var(--color-border);
+    61	  border-radius: 3px;
+    62	  margin-bottom: 2px;
+    63	  font-size: 12px;
+    64	  transition: background-color 0.2s ease;
+    65	}
+    66	
+    67	.action-item:hover {
+    68	  background-color: var(--color-background-soft);
+    69	}
+    70	
+    71	.action-item.infeasible {
+    72	  border-color: var(--color-error);
+    73	  background-color: rgba(255, 0, 0, 0.05);
+    74	}
+    75	
+    76	.action-header {
+    77	  display: flex;
+    78	  justify-content: space-between;
+    79	  align-items: center;
+    80	  margin-bottom: 4px;
+    81	}
+    82	
+    83	.action-type {
+    84	  font-weight: 600;
+    85	  color: var(--color-heading);
+    86	}
+    87	
+    88	.action-item.infeasible .action-type {
+    89	  color: var(--color-error);
+    90	}
+    91	
+    92	.timestamp {
+    93	  font-size: 11px;
+    94	  color: var(--color-text-muted);
+    95	  font-family: monospace;
+    96	}
+    97	
+    98	.action-outputs,
+    99	.action-inputs {
+   100	  display: flex;
+   101	  gap: 4px;
+   102	  font-size: 11px;
+   103	  margin-top: 2px;
+   104	}
+   105	
+   106	.label {
+   107	  color: var(--color-text-muted);
+   108	  font-weight: 500;
+   109	}
+   110	
+   111	.outputs,
+   112	.inputs {
+   113	  color: var(--color-text);
+   114	  font-family: monospace;
+   115	}
+   116	</style>
+--- frontend/src/services/GeometryService.ts
+     1	import type { Result } from '../types/ResultTypes';
+     2	import { Ok, Err, isOk } from '../types/ResultTypes';
+     3	import {
+     4	  lineLineIntersection
+     5	} from '../domain/calculations/intersections';
+     6	import {
+     7	  perpendicularThroughPoint,
+     8	  perpendicularFoot,
+     9	  arePerpendicular
+    10	} from '../domain/calculations/perpendiculars';
+    11	import {
+    12	  pointPointDistance,
+    13	  pointLineDistance,
+    14	  pointSegmentDistance,
+    15	  closestPointOnLine,
+    16	  closestPointOnSegment,
+    17	  isWithinDistance
+    18	} from '../domain/calculations/distances';
+    19	
+    20	/**
+    21	 * Geometry service that wraps calculation functions with validation and Result types
+    22	 */
+    23	export class GeometryService {
+    24	  /**
+    25	   * Calculate line-line intersection
+    26	   */
+    27	  static calculateLineLineIntersection(
+    28	    line1: { x1: number; y1: number; x2: number; y2: number },
+    29	    line2: { x1: number; y1: number; x2: number; y2: number }
+    30	  ): Result<{ x: number; y: number } | null, string> {
+    31	    try {
+    32	      const result = lineLineIntersection(line1, line2);
+    33	      if (isOk(result)) {
+    34	        return Ok(result.value);
+    35	      } else {
+    36	        return Err(result.error);
+    37	      }
+    38	    } catch (error) {
+    39	      return Err(error instanceof Error ? error.message : 'Unknown error');
+    40	    }
+    41	  }
+    42	
+    43	  /**
+    44	   * Calculate perpendicular line through point
+    45	   */
+    46	  static calculatePerpendicularThroughPoint(
+    47	    line: { x1: number; y1: number; x2: number; y2: number },
+    48	    point: { x: number; y: number }
+    49	  ): Result<{ x1: number; y1: number; x2: number; y2: number }, string> {
+    50	    const result = perpendicularThroughPoint(line, point);
+    51	    if (isOk(result)) {
+    52	      return Ok(result.value);
+    53	    } else {
+    54	      return Err(result.error);
+    55	    }
+    56	  }
+    57	
+    58	  /**
+    59	   * Calculate perpendicular foot from point to line
+    60	   */
+    61	  static calculatePerpendicularFoot(
+    62	    line: { x1: number; y1: number; x2: number; y2: number },
+    63	    point: { x: number; y: number }
+    64	  ): Result<{ x: number; y: number }, string> {
+    65	    const result = perpendicularFoot(line, point);
+    66	    if (isOk(result)) {
+    67	      return Ok(result.value);
+    68	    } else {
+    69	      return Err(result.error);
+    70	    }
+    71	  }
+    72	
+    73	  /**
+    74	   * Check if two lines are perpendicular
+    75	   */
+    76	  static checkPerpendicular(
+    77	    line1: { x1: number; y1: number; x2: number; y2: number },
+    78	    line2: { x1: number; y1: number; x2: number; y2: number }
+    79	  ): boolean {
+    80	    return arePerpendicular(line1, line2);
+    81	  }
+    82	
+    83	  /**
+    84	   * Measure distance between two points
+    85	   */
+    86	  static measurePointPointDistance(
+    87	    point1: { x: number; y: number },
+    88	    point2: { x: number; y: number }
+    89	  ): number {
+    90	    return pointPointDistance(point1, point2);
+    91	  }
+    92	
+    93	  /**
+    94	   * Measure distance from point to line
+    95	   */
+    96	  static measurePointLineDistance(
+    97	    point: { x: number; y: number },
+    98	    line: { x1: number; y1: number; x2: number; y2: number }
+    99	  ): Result<number, string> {
+   100	    const result = pointLineDistance(point, line);
+   101	    if (isOk(result)) {
+   102	      return Ok(result.value);
+   103	    } else {
+   104	      return Err(result.error);
+   105	    }
+   106	  }
+   107	
+   108	  /**
+   109	   * Measure distance from point to segment
+   110	   */
+   111	  static measurePointSegmentDistance(
+   112	    point: { x: number; y: number },
+   113	    segment: { x1: number; y1: number; x2: number; y2: number }
+   114	  ): Result<number, string> {
+   115	    const result = pointSegmentDistance(point, segment);
+   116	    if (isOk(result)) {
+   117	      return Ok(result.value);
+   118	    } else {
+   119	      return Err(result.error);
+   120	    }
+   121	  }
+   122	
+   123	  /**
+   124	   * Find closest point on line
+   125	   */
+   126	  static findClosestPointOnLine(
+   127	    point: { x: number; y: number },
+   128	    line: { x1: number; y1: number; x2: number; y2: number }
+   129	  ): Result<{ x: number; y: number }, string> {
+   130	    const result = closestPointOnLine(point, line);
+   131	    if (isOk(result)) {
+   132	      return Ok(result.value);
+   133	    } else {
+   134	      return Err(result.error);
+   135	    }
+   136	  }
+   137	
+   138	  /**
+   139	   * Find closest point on segment
+   140	   */
+   141	  static findClosestPointOnSegment(
+   142	    point: { x: number; y: number },
+   143	    segment: { x1: number; y1: number; x2: number; y2: number }
+   144	  ): Result<{ x: number; y: number }, string> {
+   145	    const result = closestPointOnSegment(point, segment);
+   146	    if (isOk(result)) {
+   147	      return Ok(result.value);
+   148	    } else {
+   149	      return Err(result.error);
+   150	    }
+   151	  }
+   152	
+   153	  /**
+   154	   * Check if points are within distance threshold
+   155	   */
+   156	  static arePointsWithinDistance(
+   157	    point1: { x: number; y: number },
+   158	    point2: { x: number; y: number },
+   159	    threshold: number
+   160	  ): boolean {
+   161	    return isWithinDistance(point1, point2, threshold);
+   162	  }
+   163	}
+--- frontend/src/services/ProjectService.ts
+     1	/**
+     2	 * ProjectService - current-schema command-stream persistence orchestration.
+     3	 */
+     4	
+     5	import { World } from '@/domain/world/World';
+     6	import type { CommandStack } from '@/commands/CommandStack';
+     7	import { Command, type CommandSnapshot } from '@/commands/Command';
+     8	import type { OperationDescriptor } from '@/commands/operations/IOperation';
+     9	import { deserializeOperation } from '@/commands/operations/OperationRegistry';
+    10	
+    11	export interface ProjectData {
+    12	  id: string;
+    13	  name: string;
+    14	  schemaVersion: string;
+    15	  created: string;
+    16	  modified: string;
+    17	  nextElementId: number;
+    18	  commands: SerializedCommand[];
+    19	}
+    20	
+    21	type SerializedCommand = CommandSnapshot;
+    22	type SerializedOperation = OperationDescriptor;
+    23	
+    24	export class ProjectService {
+    25	  private static readonly SCHEMA_VERSION = '6.0.0';
+    26	
+    27	  static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
+    28	    if (!Number.isInteger(nextElementId) || nextElementId < 1) {
+    29	      throw new Error(`Invalid next element ID: ${nextElementId}`);
+    30	    }
+    31	    const now = new Date().toISOString();
+    32	    const commands = commandStack.getCommittedCommands().map(command => command.toSnapshot());
+    33	
+    34	    return {
+    35	      id: this.generateProjectId(),
+    36	      name: projectName,
+    37	      schemaVersion: this.SCHEMA_VERSION,
+    38	      created: now,
+    39	      modified: now,
+    40	      nextElementId,
+    41	      commands
+    42	    };
+    43	  }
+    44	
+    45	  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+    46	    this.validateProjectData(data);
+    47	    commandStack.clear();
+    48	    world.restoreNextId(data.nextElementId);
+    49	
+    50	    const restoredCommands: Command[] = [];
+    51	    for (const serializedCommand of data.commands) {
+    52	      const operations = serializedCommand.operations.map((descriptor: SerializedOperation) => deserializeOperation(descriptor));
+    53	      for (const operation of operations) {
+    54	        const result = operation.apply(world);
+    55	        if (!result.success) {
+    56	          throw new Error(`Failed to replay operation ${operation.type}: ${result.error}`);
+    57	        }
+    58	      }
+    59	      restoredCommands.push(Command.restore({
+    60	        id: serializedCommand.id,
+    61	        timestamp: serializedCommand.timestamp,
+    62	        description: serializedCommand.description,
+    63	        operations
+    64	      }, world));
+    65	    }
+    66	
+    67	    commandStack.restoreCommittedCommands(restoredCommands);
+    68	
+    69	    if (!world.getActivePlaneId()) {
+    70	      const planes = world.getAllProjectionPlanes();
+    71	      const ph = planes.find(p => p.id === 'projPlaneH' || p.name === 'P_H');
+    72	      if (ph) {
+    73	        world.setActivePlaneId(ph.id);
+    74	      } else if (planes.length > 0) {
+    75	        world.setActivePlaneId(planes[0].id);
+    76	      }
+    77	    }
+    78	  }
+    79	
+    80	  static validateProjectData(data: unknown): asserts data is ProjectData {
+    81	    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    82	      throw new Error('Invalid project file - not a valid JSON object');
+    83	    }
+    84	    const record = data as Partial<ProjectData>;
+    85	    if (record.schemaVersion !== this.SCHEMA_VERSION) {
+    86	      throw new Error(`Unsupported project schema version: ${String(record.schemaVersion)}`);
+    87	    }
+    88	    for (const field of ['id', 'name', 'created', 'modified'] as const) {
+    89	      if (typeof record[field] !== 'string' || record[field]!.length === 0) {
+    90	        throw new Error(`Invalid project file - missing required field: ${field}`);
+    91	      }
+    92	    }
+    93	    if (!Number.isInteger(record.nextElementId) || record.nextElementId < 1) {
+    94	      throw new Error('Invalid project file - nextElementId must be a positive integer');
+    95	    }
+    96	    if (!Array.isArray(record.commands)) {
+    97	      throw new Error('Invalid project file - commands must be an array');
+    98	    }
+    99	    for (const command of record.commands) {
+   100	      this.validateSerializedCommand(command);
+   101	    }
+   102	  }
+   103	
+   104	  private static validateSerializedCommand(command: unknown): asserts command is SerializedCommand {
+   105	    if (!command || typeof command !== 'object' || Array.isArray(command)) {
+   106	      throw new Error('Invalid project file - command must be an object');
+   107	    }
+   108	    const record = command as Partial<SerializedCommand>;
+   109	    if (typeof record.id !== 'string' || record.id.length === 0) {
+   110	      throw new Error('Invalid project file - command missing id');
+   111	    }
+   112	    if (typeof record.timestamp !== 'string' || Number.isNaN(Date.parse(record.timestamp))) {
+   113	      throw new Error(`Invalid project file - command ${record.id} has invalid timestamp`);
+   114	    }
+   115	    if (typeof record.description !== 'string' || record.description.length === 0) {
+   116	      throw new Error(`Invalid project file - command ${record.id} missing description`);
+   117	    }
+   118	    if (record.status !== 'committed') {
+   119	      throw new Error(`Invalid project file - command ${record.id} must be committed`);
+   120	    }
+   121	    if (!Array.isArray(record.operations) || record.operations.length === 0) {
+   122	      throw new Error(`Invalid project file - command ${record.id} must contain operations`);
+   123	    }
+   124	    for (const operation of record.operations) {
+   125	      if (!operation || typeof operation !== 'object' || Array.isArray(operation) || typeof (operation as { opType?: unknown }).opType !== 'string') {
+   126	        throw new Error(`Invalid project file - command ${record.id} has invalid operation descriptor`);
+   127	      }
+   128	    }
+   129	  }
+   130	
+   131	  private static generateProjectId(): string {
+   132	    return `proj_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+   133	  }
+   134	}
+--- frontend/src/components/dialogs/PropertiesDialog.vue
+     1	<template>
+     2	  <div v-if="isOpen" class="dialog-overlay" @click.self="handleCancel">
+     3	    <div class="properties-dialog" role="dialog" aria-labelledby="dialog-title">
+     4	      <!-- Header -->
+     5	      <div class="dialog-header">
+     6	        <h2 id="dialog-title">Properties: {{ elementLabel }}</h2>
+     7	        <button class="close-button" @click="handleCancel" aria-label="Close dialog">
+     8	          ×
+     9	        </button>
+    10	      </div>
+    11	
+    12	      <!-- Content -->
+    13	      <div class="dialog-content">
+    14	        <!-- Geometry Info Section (Read-only) -->
+    15	        <section class="geometry-section">
+    16	          <h3>Geometry Info</h3>
+    17	          <div class="info-grid">
+    18	            <div class="info-row">
+    19	              <span class="info-label">Type:</span>
+    20	              <span class="info-value">{{ elementType }}</span>
+    21	            </div>
+    22	            <div class="info-row" v-if="planeId">
+    23	              <span class="info-label">Plane:</span>
+    24	              <span class="info-value">{{ planeId }}</span>
+    25	            </div>
+    26	            <div class="info-row" v-if="coordinates">
+    27	              <span class="info-label">Coordinates:</span>
+    28	              <span class="info-value">{{ coordinates }}</span>
+    29	            </div>
+    30	            <div class="info-row" v-if="dependencies && dependencies.length > 0">
+    31	              <span class="info-label">Dependencies:</span>
+    32	              <span class="info-value">{{ dependencies.join(', ') }}</span>
+    33	            </div>
+    34	            <div class="info-row" v-if="createdBy">
+    35	              <span class="info-label">Created by:</span>
+    36	              <span class="info-value">{{ createdBy }}</span>
+    37	            </div>
+    38	          </div>
+    39	        </section>
+    40	
+    41	        <!-- Visual Style Section (Editable) -->
+    42	        <section class="visual-style-section">
+    43	          <h3>Visual Style</h3>
+    44	          <div class="style-controls">
+    45	            <!-- Color -->
+    46	            <div class="control-row">
+    47	              <label for="color-input">Color:</label>
+    48	              <input
+    49	                id="color-input"
+    50	                type="color"
+    51	                v-model="editableColor"
+    52	                :disabled="!colorOverride"
+    53	                @blur="colorOverride && validateColor(editableColor)"
+    54	              />
+    55	              <input
+    56	                type="text"
+    57	                v-model="editableColor"
+    58	                pattern="^#[0-9A-Fa-f]{6}$"
+    59	                class="hex-input"
+    60	                :class="{ 'input-error': colorError }"
+    61	                :disabled="!colorOverride"
+    62	                placeholder="#000000"
+    63	                @blur="colorOverride && validateColor(editableColor)"
+    64	              />
+    65	              <label class="override-checkbox">
+    66	                <input type="checkbox" v-model="colorOverride" />
+    67	                Override
+    68	              </label>
+    69	            </div>
+    70	            <div v-if="colorError" class="error-message">{{ colorError }}</div>
+    71	
+    72	            <!-- Line Width (for non-point elements) -->
+    73	            <div class="control-row" v-if="elementType !== '2D Point'">
+    74	              <label for="width-input">Line Width:</label>
+    75	              <input
+    76	                id="width-input"
+    77	                type="range"
+    78	                min="0.5"
+    79	                max="5.0"
+    80	                step="0.1"
+    81	                v-model.number="editableLineWidth"
+    82	                :disabled="!lineWidthOverride"
+    83	                @change="lineWidthOverride && validateLineWidth(editableLineWidth)"
+    84	              />
+    85	              <input
+    86	                type="number"
+    87	                v-model.number="editableLineWidth"
+    88	                min="0.5"
+    89	                max="5.0"
+    90	                step="0.1"
+    91	                class="number-input"
+    92	                :class="{ 'input-error': lineWidthError }"
+    93	                :disabled="!lineWidthOverride"
+    94	                @blur="lineWidthOverride && validateLineWidth(editableLineWidth)"
+    95	              />
+    96	              <label class="override-checkbox">
+    97	                <input type="checkbox" v-model="lineWidthOverride" />
+    98	                Override
+    99	              </label>
+   100	            </div>
+   101	            <div v-if="lineWidthError" class="error-message">{{ lineWidthError }}</div>
+   102	
+   103	            <!-- Line Style (for line/segment/guide elements) -->
+   104	            <div class="control-row" v-if="hasLineStyle">
+   105	              <label for="style-input">Line Style:</label>
+   106	              <select
+   107	                id="style-input"
+   108	                v-model="editableLineStyle"
+   109	                :class="{ 'input-error': lineStyleError }"
+   110	                :disabled="!lineStyleOverride"
+   111	                @change="lineStyleOverride && validateLineStyle(editableLineStyle)"
+   112	              >
+   113	                <option value="solid">Solid</option>
+   114	                <option value="dashed">Dashed</option>
+   115	                <option value="dotted">Dotted</option>
+   116	              </select>
+   117	              <label class="override-checkbox">
+   118	                <input type="checkbox" v-model="lineStyleOverride" />
+   119	                Override
+   120	              </label>
+   121	            </div>
+   122	            <div v-if="lineStyleError" class="error-message">{{ lineStyleError }}</div>
+   123	
+   124	            <!-- Visibility -->
+   125	            <div class="control-row">
+   126	              <label for="visibility-input">Visibility:</label>
+   127	              <input
+   128	                id="visibility-input"
+   129	                type="checkbox"
+   130	                v-model="editableVisible"
+   131	                :disabled="!visibilityOverride"
+   132	              />
+   133	              <label class="override-checkbox">
+   134	                <input type="checkbox" v-model="visibilityOverride" />
+   135	                Override
+   136	              </label>
+   137	            </div>
+   138	          </div>
+   139	
+   140	          <!-- Reset Button -->
+   141	          <button class="reset-button" @click="handleResetToDefault">
+   142	            Reset to Default
+   143	          </button>
+   144	        </section>
+   145	      </div>
+   146	
+   147	      <!-- Footer Actions -->
+   148	      <div class="dialog-footer">
+   149	        <button class="button button-secondary" @click="handleCancel">
+   150	          Cancel
+   151	        </button>
+   152	        <button class="button button-primary" @click="handleSave">
+   153	          Save
+   154	        </button>
+   155	      </div>
+   156	    </div>
+   157	  </div>
+   158	</template>
+   159	
+   160	<script setup lang="ts">
+   161	import { ref, computed, watch } from 'vue';
+   162	import type { World } from '@/domain/world/World';
+   163	
+   164	interface Props {
+   165	  isOpen: boolean;
+   166	  elementId: string | null;
+   167	  world: World | null;
+   168	}
+   169	
+   170	interface StyleChanges {
+   171	  elementId: string;
+   172	  color?: string;
+   173	  lineWidth?: number;
+   174	  lineStyle?: string;
+   175	  visible?: boolean;
+   176	}
+   177	
+   178	const props = defineProps<Props>();
+   179	const emit = defineEmits<{
+   180	  close: [];
+   181	  save: [changes: StyleChanges];
+   182	}>();
+   183	
+   184	// Editable state
+   185	const editableColor = ref<string>('#000000');
+   186	const editableLineWidth = ref<number>(1.0);
+   187	const editableLineStyle = ref<string>('solid');
+   188	const editableVisible = ref<boolean>(true);
+   189	
+   190	// Override flags
+   191	const colorOverride = ref<boolean>(false);
+   192	const lineWidthOverride = ref<boolean>(false);
+   193	const lineStyleOverride = ref<boolean>(false);
+   194	const visibilityOverride = ref<boolean>(false);
+   195	
+   196	// Validation state
+   197	const colorError = ref<string>('');
+   198	const lineWidthError = ref<string>('');
+   199	const lineStyleError = ref<string>('');
+   200	
+   201	// Computed properties for display
+   202	const elementLabel = computed(() => {
+   203	  if (!props.elementId || !props.world) return 'Unknown';
+   204	  
+   205	  // Get element label/ID
+   206	  return props.elementId;
+   207	});
+   208	
+   209	const elementType = computed(() => {
+   210	  if (!props.elementId || !props.world) return 'Unknown';
+   211	  
+   212	  // Determine element type by checking which collection contains it
+   213	  const point = props.world.getPoint2D(props.elementId);
+   214	  if (point) return '2D Point';
+   215	  
+   216	  const line = props.world.getLine2D(props.elementId);
+   217	  if (line) return '2D Line';
+   218	  
+   219	  const segment = props.world.getSegment2D(props.elementId);
+   220	  if (segment) return '2D Segment';
