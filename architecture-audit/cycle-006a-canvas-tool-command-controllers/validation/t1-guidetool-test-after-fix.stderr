@@ -1,0 +1,28 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/tools/GuideTool.test.ts > GuideTool > Guide Creation on Regular Lines > uses the retained ArgumentCollectorTool interaction API instead of the deleted onMouseDown command path
+AssertionError: expected 'Pick ' to contain 'Creating guide'
+
+- Expected
++ Received
+
+- Creating guide
++ Pick 
+
+ ❯ tests/unit/tools/GuideTool.test.ts:23:39
+     21|       expect(typeof tool.handleClick).toBe('function');
+     22|       expect((tool as unknown as { onMouseDown?: unknown }).onMouseDow…
+     23|       expect(tool.getStatusMessage()).toContain('Creating guide');
+       |                                       ^
+     24|       expect(tool.getSelectionMask()).toBeDefined();
+     25|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/tools/GuideTool.test.ts

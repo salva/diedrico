@@ -1,0 +1,16 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/tools/GuideTool.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/tools/GuideTool.test.ts  (8 tests | 1 failed) 16ms
+   ❯ tests/unit/tools/GuideTool.test.ts > GuideTool > Guide Creation on Regular Lines > uses the retained ArgumentCollectorTool interaction API instead of the deleted onMouseDown command path
+     → expected 'Pick ' to contain 'Creating guide'
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  00:01:27
+   Duration  1.63s (transform 522ms, setup 0ms, collect 703ms, tests 16ms, environment 499ms, prepare 90ms)
+

@@ -150,3 +150,42 @@ All logs are under `architecture-audit/cycle-006a-canvas-tool-command-controller
 
 - This correction did not modify `ActionsPanel.vue` or `Toolbar.vue`; they remain Wave 006b residual command-intent cleanup scope.
 - The full mandatory validation/e2e/preview cadence remains for the dedicated validation-and-preview-refresh stage; this t3 task supplied the missing focused controller/use-case/canvas/tool delegation evidence required by the reviewer blocker.
+
+## Validation and preview refresh — `cycle-006a-validation-and-preview-refresh` / `t1-run-validation-cadence-and-refresh-preview`
+
+All new validation artifacts for this stage are under `architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/` with prefix `t1-`.
+
+### Static architecture/deletion checks
+
+- `t1-stage-static-presentation-boundary.stdout/.stderr` — PASS for the selected presentation/tool path. The only remaining `commandStack` hit in `SvgCanvas.vue` is DI into `createCanvasToolController`; there are no direct concrete command operation imports, sequence-factory imports, `Command` construction, `executeOperations`, or `useCommandExecution` hits in `SvgCanvas.vue` or `frontend/src/tools/**`.
+- `t1-stage-static-boundary.stdout/.stderr` — broader scan shows expected `Command`/`CommandStack`/operation imports only inside the new application-owned controller/use-case modules (`frontend/src/application/**`), which is the intended Wave 006a boundary.
+- `t1-stage-static-presentation-boundary.stdout` also confirms `ActionsPanel.vue` and `Toolbar.vue` have no working-tree diff in this stage and remain deferred Wave 006b scope.
+
+### Validation command results and classifications
+
+- Root lint: `npm run lint` → FAIL, classified non-attributable infrastructure/configuration blocker. Evidence: `t1-root-lint.stderr` reports `sh: 1: eslint: not found`; this matches the earlier implementation-stage lint blocker and is not a Wave 006a source diagnostic.
+- Frontend lint: `npm run lint --workspace=frontend` → FAIL, same non-attributable missing `eslint` binary. Evidence: `t1-frontend-lint.stderr`.
+- Focused Wave 006a Vitest: `npm run test --workspace=frontend -- tests/unit/application/canvasToolControllers.spec.ts tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts` → PASS. Evidence: `t1-focused-vitest.stdout` reports 4 files / 48 tests passed.
+- Initial full root/frontend Vitest: `npm run test` and `npm run test --workspace=frontend` → FAIL. Evidence: `t1-root-vitest.stdout/.stderr` and `t1-frontend-vitest.stdout/.stderr`. One failure in `tests/unit/tools/GuideTool.test.ts` was attributable to Wave 006a because the test still called the intentionally deleted `onMouseDown` compatibility path. The test was corrected to assert the retained `ArgumentCollectorTool`/`handleClick` interaction API instead; patch evidence is in `t1-patch-guidetool-test*.stdout/.stderr`, and the focused rerun `t1-guidetool-test-after-fix-v2.stdout` passed 8/8 tests.
+- Final full frontend Vitest after the attributable GuideTool test correction: `npm run test --workspace=frontend` → FAIL with remaining failures classified pre-existing/unrelated to Wave 006a. Evidence: `t1-frontend-vitest-after-guidetest-fix.stdout/.stderr` and tail `t1-frontend-vitest-after-guidetest-fix-tail.stdout` show `GuideTool.test.ts` passing and remaining failures in unrelated `intersections.spec.ts`, `propertiesDialog.spec.ts`, `guide-creation.test.ts` collection, and `noCommandSubclasses.spec.ts` (`default.resolve is not a function`). These are outside the files and behavior changed by Wave 006a.
+- Root build: `npm run build` → FAIL, classified non-attributable tooling blocker. Evidence: `t1-root-build.stderr` reports `vue-tsc` runtime patch failure `Search string not found: "/supportedTSExtensions = .*(?=;)"` under Node.js v24.15.0.
+- Frontend build: `npm run build --workspace=frontend` → FAIL with the same non-attributable `vue-tsc`/Node 24 tooling blocker. Evidence: `t1-frontend-build.stderr`.
+- Backend build: `npm run build --workspace=backend` → PASS. Evidence: `t1-backend-build.stdout/.stderr`.
+- TypeScript fallback: `npx tsc --noEmit -p frontend/tsconfig.json` → project-wide FAIL, but changed-file filter found no diagnostics for Wave 006a files. Evidence: `t1-tsc-noemit.combined` and `t1-tsc-filtered-changed-files.stdout` (`tsc_exit=2` with no filtered changed-file diagnostics).
+- Frontend e2e: `npm run test:e2e --workspace=frontend` → FAIL before behavioral execution, classified pre-existing/unrelated e2e test-file corruption. Evidence: `t1-frontend-e2e.stdout/.stderr` reports syntax errors in `frontend/tests/e2e/keyboard-shortcuts.spec.ts` and `frontend/tests/e2e/selection-mask.spec.ts`, before any Wave 006a canvas behavior can run.
+
+### Validation fix made in this stage
+
+- `frontend/tests/unit/tools/GuideTool.test.ts` was minimally updated because it still asserted the deleted legacy `onMouseDown` interaction path after Wave 006a. The test now asserts that `GuideTool` exposes `handleClick`, does not expose the deleted `onMouseDown` compatibility API, and initializes/advertises the retained argument-collector selection/status path. Focused rerun `t1-guidetool-test-after-fix-v2.stdout` passed 8/8 tests.
+
+### Live preview refresh
+
+- First refresh attempt `t1-live-preview-refresh.stdout/.stderr` exited early while clearing stale preview processes; follow-up inspection `t1-live-preview-inspect.stdout/.stderr` found no running preview process.
+- The preview was restarted with `npm run dev --workspace=frontend -- --host 0.0.0.0`; server stdout/stderr are `t1-live-preview.stdout/.stderr` and PID is `t1-live-preview.pid`.
+- Reachability probe `curl -I http://127.0.0.1:5173/` succeeded on attempt 2. Evidence: `t1-live-preview-refresh-v2.stdout` and `t1-live-preview-probe.stdout` show `HTTP/1.1 200 OK`.
+
+### Residual risks / corrective scope
+
+- No Wave-006a-attributable validation failure remains after correcting the obsolete GuideTool unit test.
+- Remaining blockers are pre-existing or environment/tooling issues: missing `eslint`, `vue-tsc` incompatibility with current Node/TypeScript runtime, unrelated full-suite unit failures, and syntactically corrupt e2e files. These should be addressed in separate validation/tooling/test-hygiene work and should not broaden Wave 006a implementation scope.
+- Because Playwright e2e parsing fails before app launch, live behavioral Playwright coverage for construction/undo-redo could not be completed in this stage; the successful live preview probe confirms the refreshed app is reachable, but e2e test-file repair is required before automated user-visible coverage can run.

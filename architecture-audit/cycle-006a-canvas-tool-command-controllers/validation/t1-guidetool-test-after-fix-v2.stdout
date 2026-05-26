@@ -1,0 +1,14 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/tools/GuideTool.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 15ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  00:01:40
+   Duration  2.06s (transform 664ms, setup 0ms, collect 877ms, tests 15ms, environment 634ms, prepare 108ms)
+

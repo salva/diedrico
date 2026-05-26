@@ -1,7 +1,88 @@
 
 > diedrico-frontend@0.1.0 test
-> vitest run frontend/tests/unit/tools/pointTool.spec.ts frontend/tests/unit/tools/CircleTool.spec.ts frontend/tests/unit/tools/toolValidation.spec.ts frontend/tests/unit/tools/Quick3DSegmentTool.spec.ts
+> vitest run tests/unit/application/canvasToolControllers.spec.ts tests/unit/tools/pointTool.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts
 
 
  RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/tools/toolValidation.spec.ts  (8 tests) 36ms
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d11
+  projPlane3/point2d11 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+ ✓ tests/unit/tools/CircleTool.spec.ts  (10 tests) 103ms
+ ✓ tests/unit/application/canvasToolControllers.spec.ts  (8 tests) 96ms
+stdout | tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > uses typed tangent metadata instead of defaulting tangent choices to index zero
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 0 },
+  distance: 10,
+  angleCP: 0,
+  angleBeta: 60.00000000000001,
+  tangentAngle: -60.00000000000001,
+  tangentPoint: { x: 2.4999999999999996, y: -4.330127018922194 },
+  direction: { x: -7.5, y: -4.330127018922194 },
+  index: 1
+}
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 0 },
+  distance: 10,
+  angleCP: 0,
+  angleBeta: 60.00000000000001,
+  tangentAngle: -60.00000000000001,
+  tangentPoint: { x: 2.4999999999999996, y: -4.330127018922194 },
+  direction: { x: -7.5, y: -4.330127018922194 },
+  index: 1
+}
+
+stdout | tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > previews, cancels, commits, and undoes free-point moves through the movement use case
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+stdout | tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > updates element styles through the style use case with undo support
+[UpdateElementStyleOp] Applied style to: projPlane3/point2d10 {
+  color: '#ff0000',
+  lineWidth: 2,
+  lineStyle: 'dashed',
+  opacity: 0.5,
+  visible: true,
+  inherited: true
+}
+[UpdateElementStyleOp] Restored style for: projPlane3/point2d10 undefined
+
+ ✓ tests/unit/tools/pointTool.spec.ts  (22 tests) 129ms
+
+ Test Files  4 passed (4)
+      Tests  48 passed (48)
+   Start at  23:57:16
+   Duration  4.51s (transform 2.23s, setup 1ms, collect 7.17s, tests 364ms, environment 5.60s, prepare 1.31s)
 

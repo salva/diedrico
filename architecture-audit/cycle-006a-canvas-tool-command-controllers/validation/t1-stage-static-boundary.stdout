@@ -1,0 +1,55 @@
+## Static Wave 006a boundary checks
+# prohibited direct command/operation/factory refs in selected canvas/tool path
+frontend/src/components/workspace/SvgCanvas.vue:425:  commandStack: inject('commandStack'),
+frontend/src/application/construction/QuickToolUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/QuickToolUseCases.ts:8:  commandStack: CommandStack;
+frontend/src/application/canvas/CanvasStyleUseCase.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:8:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:15:      this.commandStack.push(cmd);
+frontend/src/application/tools/CanvasToolController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/tools/CanvasToolController.ts:12:  commandStack: CommandStack;
+frontend/src/application/tools/CanvasToolController.ts:18:  commandStack: unknown;
+frontend/src/application/tools/CanvasToolController.ts:23:  if (!deps.commandStack) {
+frontend/src/application/tools/CanvasToolController.ts:24:    throw new Error('CommandStack not provided');
+frontend/src/application/tools/CanvasToolController.ts:28:    commandStack: deps.commandStack as CommandStack,
+frontend/src/application/tools/CanvasToolController.ts:38:    this.movement = new CanvasPointMovementUseCase(deps.world, deps.commandStack);
+frontend/src/application/tools/CanvasToolController.ts:39:    this.style = new CanvasStyleUseCase(deps.world, deps.commandStack);
+frontend/src/application/tools/CanvasToolController.ts:46:      commandStack: this.deps.commandStack
+frontend/src/application/tools/CanvasToolController.ts:55:      commandStack: this.deps.commandStack
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:2:import { Command } from '@/commands/Command';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:33:        this.commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/construction/ConstructionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/ConstructionUseCases.ts:14:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/application/construction/ConstructionUseCases.ts:18:import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+frontend/src/application/construction/ConstructionUseCases.ts:20:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/construction/ConstructionUseCases.ts:21:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/application/construction/ConstructionUseCases.ts:32:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:35:export function executeConstructionIntent({ intent, world, commandStack }: ExecuteConstructionParams): ToolCommandResult {
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:40:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/construction/ConstructionUseCases.ts:44:    commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:52:function executeConstructionOperations(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+frontend/src/application/construction/ConstructionUseCases.ts:74:      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:87:      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:88:      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:112:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:120:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:127:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:134:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:141:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:166:function createIntersection(cmd: Command, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
+frontend/src/application/construction/ConstructionUseCases.ts:225:function checkCreatedElementsFeasibility(cmd: Command, world: World): void {
+frontend/src/tools/GuideTool.ts:17: * - Registers TWO ProcessTree actions (primary + sibling)
+frontend/src/tools/GuideTool.ts:41: * - Registers TWO ProcessTree actions
+frontend/src/tools/GuideTool.ts:78:   * Records TWO ProcessTree actions:
+frontend/src/tools/CreateProjectionPlaneTool.ts:13: * - ProcessTree action
+# deleted compatibility path
+# deferred Wave 006b files presence
+frontend/src/components/panels/ActionsPanel.vue
+frontend/src/components/toolbars/Toolbar.vue

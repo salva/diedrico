@@ -17,33 +17,11 @@ describe('GuideTool', () => {
   });
 
   describe('Guide Creation on Regular Lines', () => {
-    it('should create guide on regular line without creating sibling', async () => {
-      // Create a free point and a line
-      const { projPlaneH } = setupBasicWorld();
-      const planeId = projPlaneH;
-
-      // Create a free point
-      tool.onMouseDown({ x: 100, y: 100 }, planeId);
-      const world2 = tool['world'];
-      const plane = world2.getProjectionPlane(planeId);
-      const points = Array.from(plane.points.values());
-      const pointId = points[0]?.id;
-      expect(pointId).toBeDefined();
-
-      // Switch to state where we need reference line
-      tool['state'] = {
-        type: 'referenceLine',
-        planeId,
-        throughPointId: pointId!
-      };
-
-      // Create a regular line (not a hinge line)
-      const lineId = `${planeId}/line2d_test`;
-      // Simulate clicking on a regular line - should create guide without sibling
-      // This should NOT throw an error
-      
-      // The actual implementation would require more complex setup
-      // The key is: tool should handle non-hinge lines gracefully
+    it('uses the retained ArgumentCollectorTool interaction API instead of the deleted onMouseDown command path', async () => {
+      expect(typeof tool.handleClick).toBe('function');
+      expect((tool as unknown as { onMouseDown?: unknown }).onMouseDown).toBeUndefined();
+      expect(tool.getSelectionMask()).toBeDefined();
+      expect(tool.getStatusMessage()).toContain('Creating guide');
     });
 
     it('should create sibling guide when reference is HalfHingeLine2D', async () => {

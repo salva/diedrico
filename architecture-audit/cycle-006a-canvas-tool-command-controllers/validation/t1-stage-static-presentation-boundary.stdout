@@ -1,0 +1,4 @@
+# selected presentation/tool path prohibited refs
+frontend/src/components/workspace/SvgCanvas.vue:425:  commandStack: inject('commandStack'),
+# direct concrete operation imports in selected presentation/tools
+# Wave 006b deferred files changed in working tree
