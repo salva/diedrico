@@ -1,0 +1,92 @@
+import { Command } from '@/commands/Command';
+import type { CommandStack } from '@/commands/CommandStack';
+import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+import type { IOperation } from '@/commands/operations/IOperation';
+import type { World } from '@/domain/world/World';
+import type {
+  PopSubprocessRequest,
+  ProcessHistoryResult,
+  ProcessHistoryState,
+  PushSubprocessRequest,
+  RenameSubprocessRequest,
+  ToggleEncapsulationRequest,
+  ToggleOutputRequest
+} from './ProcessHistoryIntents';
+
+export class ProcessHistoryUseCases {
+  constructor(
+    private readonly world: World,
+    private readonly commandStack: CommandStack
+  ) {}
+
+  getState(): ProcessHistoryState {
+    const processTree = this.world.getProcessTree();
+    return {
+      canPop: processTree.getStackDepth() > 1,
+      activeSubprocessId: processTree.getCurrentSubprocess().id,
+      stackDepth: processTree.getStackDepth()
+    };
+  }
+
+  pushSubprocess(request: PushSubprocessRequest = {}): ProcessHistoryResult {
+    const name = request.name ?? `Subprocess ${Date.now()}`;
+    return this.executeProcessCommand('Push subprocess', new PushSubprocessOp(name));
+  }
+
+  popSubprocess(_request: PopSubprocessRequest = {}): ProcessHistoryResult {
+    if (!this.getState().canPop) {
+      return {
+        success: false,
+        state: this.getState(),
+        error: 'Cannot pop root subprocess'
+      };
+    }
+    return this.executeProcessCommand('Pop subprocess', new PopSubprocessOp());
+  }
+
+  toggleEncapsulation(request: ToggleEncapsulationRequest): ProcessHistoryResult {
+    return this.executeProcessCommand(
+      'Toggle subprocess encapsulation',
+      new ToggleEncapsulationOp(request.nodeId)
+    );
+  }
+
+  toggleOutput(request: ToggleOutputRequest): ProcessHistoryResult {
+    return this.executeProcessCommand(
+      'Toggle output status',
+      new ToggleOutputOp(request.nodeId)
+    );
+  }
+
+  renameSubprocess(request: RenameSubprocessRequest): ProcessHistoryResult {
+    return this.executeProcessCommand(
+      'Rename subprocess',
+      new RenameSubprocessOp(request.nodeId, request.newName)
+    );
+  }
+
+  private executeProcessCommand(description: string, operation: IOperation): ProcessHistoryResult {
+    const command = new Command(description, this.world);
+
+    try {
+      command.addAndExecute(operation);
+      command.commit();
+      this.commandStack.push(command);
+      return {
+        success: true,
+        state: this.getState()
+      };
+    } catch (error) {
+      command.rollback();
+      return {
+        success: false,
+        state: this.getState(),
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+}

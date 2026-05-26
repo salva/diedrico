@@ -51,13 +51,7 @@
 import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import type { World } from '@/domain/world/World';
 import type { ProcessTreeNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTreeNode';
-import type { CommandStack } from '@/commands/CommandStack';
-import { Command } from '@/commands/Command';
-import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
-import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
-import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
-import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
-import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+import { createProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useProcessTreeStore } from '@/stores/processTreeStore';
@@ -70,7 +64,10 @@ const emit = defineEmits<{
 
 // Injected dependencies
 const world = inject<World>('world')!;
-const commandStack = inject<CommandStack>('commandStack')!;
+const processHistoryController = createProcessHistoryController({
+  world,
+  commandStack: inject<unknown>('commandStack')
+});
 
 // Selection store
 const selectionStore = useSelectionStore();
@@ -84,18 +81,16 @@ const stackVersion = ref(0); // Track stack changes
 const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
 
 // Get current ProcessTree - use reactive ref that we update when World changes
-const initialTree = world.getProcessTree();
-console.log('[ActionsPanel] Initial processTree:', initialTree);
-const processTree = ref(initialTree);
+const processTree = ref(world.getProcessTree());
 
 // Stack management computed properties
 const canPop = computed(() => {
   stackVersion.value; // Depend on stack changes
-  return processTree.value.getStackDepth() > 1;
+  return processHistoryController.getState().canPop;
 });
 const activeSubprocessId = computed(() => {
   stackVersion.value; // Depend on stack changes
-  return processTree.value.getCurrentSubprocess().id;
+  return processHistoryController.getState().activeSubprocessId;
 });
 
 // Watch ProcessTree version for reactivity, triggered by stackVersion changes
@@ -120,6 +115,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
 // Subscription cleanup
 let unsubscribeTree: (() => void) | null = null;
+let unsubscribeWorld: (() => void) | null = null;
 
 function scrollToBottom() {
   if (treeContainer.value) {
@@ -127,78 +123,63 @@ function scrollToBottom() {
   }
 }
 
+function refreshAfterTreeChange(ensureExpandedForActiveSubprocess: boolean) {
+  const currentCount = countNodes(processTree.value.root);
+  const shouldScroll = currentCount > lastNodeCount.value;
+  lastNodeCount.value = currentCount;
+
+  stackVersion.value++;
+
+  if (shouldScroll && ensureExpandedForActiveSubprocess) {
+    processTreeStore.ensureExpanded(processTree.value.getCurrentSubprocess().id);
+  }
+
+  if (shouldScroll) {
+    nextTick(() => {
+      scrollToBottom();
+    });
+  }
+}
+
+function subscribeToCurrentProcessTree(ensureExpandedForActiveSubprocess: boolean) {
+  unsubscribeTree = processTree.value.subscribe(() => {
+    refreshAfterTreeChange(ensureExpandedForActiveSubprocess);
+  });
+}
+
+function handleWorldChange() {
+  if (unsubscribeTree) {
+    unsubscribeTree();
+  }
+
+  processTree.value = world.getProcessTree();
+  lastNodeCount.value = countNodes(processTree.value.root);
+  subscribeToCurrentProcessTree(false);
+  stackVersion.value++;
+}
+
 onMounted(() => {
-  console.log('[ActionsPanel] Mounted, processTree.value.root:', processTree.value.root);
-  console.log('[ActionsPanel] Root children count:', processTree.value.root.children.length);
-  
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
-  
+
   // Initialize node count
   lastNodeCount.value = countNodes(processTree.value.root);
-  console.log('[ActionsPanel] Initial node count:', lastNodeCount.value);
 
   // Subscribe to ProcessTree changes
-  unsubscribeTree = processTree.value.subscribe(() => {
-    console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
-    // Check if structure grew
-    const currentCount = countNodes(processTree.value.root);
-    const shouldScroll = currentCount > lastNodeCount.value;
-    lastNodeCount.value = currentCount;
+  subscribeToCurrentProcessTree(true);
 
-    stackVersion.value++;
-    console.log('[ActionsPanel] stackVersion incremented to:', stackVersion.value);
-
-    // Phase 118: Only expand the subprocess that received the new element
-    if (shouldScroll) {
-      const activeId = processTree.value.getCurrentSubprocess().id;
-      processTreeStore.ensureExpanded(activeId);
-    }
-
-    if (shouldScroll) {
-      nextTick(() => {
-        scrollToBottom();
-      });
-    }
-  });
-  
   // Subscribe to World changes to detect when clear() creates new ProcessTree
-  world.subscribeToChanges(() => {
-    console.log('[ActionsPanel] World changed, re-fetching ProcessTree');
-    
-    // Unsubscribe from old tree
-    if (unsubscribeTree) {
-      unsubscribeTree();
-    }
-    
-    // Update ref to point to new ProcessTree instance
-    processTree.value = world.getProcessTree();
-    lastNodeCount.value = countNodes(processTree.value.root);
-    
-    // Subscribe to new tree
-    unsubscribeTree = processTree.value.subscribe(() => {
-      console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
-      const currentCount = countNodes(processTree.value.root);
-      const shouldScroll = currentCount > lastNodeCount.value;
-      lastNodeCount.value = currentCount;
-      stackVersion.value++;
-      
-      if (shouldScroll) {
-        nextTick(() => {
-          scrollToBottom();
-        });
-      }
-    });
-    
-    // Force UI update
-    stackVersion.value++;
-  });
+  world.subscribeToChanges(handleWorldChange);
+  unsubscribeWorld = () => world.unsubscribeFromChanges(handleWorldChange);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
   if (unsubscribeTree) {
     unsubscribeTree();
+  }
+  if (unsubscribeWorld) {
+    unsubscribeWorld();
   }
 });
 
@@ -231,10 +212,10 @@ function findRelatedActions(selectedIds: string[]): void {
   for (const action of allActions) {
     // Check if action produces any selected element
     const producesSelected = selectedIdSet.has(action.elementId);
-    
+
     // Check if action depends on any selected element
     // Dependencies are now in DependencyService, accessible via element
-    const dependsOnSelected = world && world.dependencyService 
+    const dependsOnSelected = world && world.dependencyService
       ? world.dependencyService.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId))
       : false;
 
@@ -261,23 +242,20 @@ function countNodes(node: ProcessTreeNodeType): number {
   return count;
 }
 
+function refreshAfterIntent() {
+  stackVersion.value++;
+}
+
 // Stack management handlers
 function pushSubprocess() {
-  const subprocessName = `Subprocess ${Date.now()}`;
-  const cmd = new Command('Push subprocess', world);
-  cmd.addAndExecute(new PushSubprocessOp(subprocessName));
-  cmd.commit();
-  commandStack.push(cmd);
-  stackVersion.value++; // Trigger UI update
+  processHistoryController.pushSubprocess();
+  refreshAfterIntent();
 }
 
 function popSubprocess() {
   if (canPop.value) {
-    const cmd = new Command('Pop subprocess', world);
-    cmd.addAndExecute(new PopSubprocessOp());
-    cmd.commit();
-    commandStack.push(cmd);
-    stackVersion.value++; // Trigger UI update
+    processHistoryController.popSubprocess();
+    refreshAfterIntent();
   }
 }
 
@@ -288,29 +266,20 @@ function handleNodeSelect(nodeId: string) {
 
 // Handle encapsulation toggle
 function handleToggleEncapsulate(nodeId: string) {
-  const cmd = new Command('Toggle subprocess encapsulation', world);
-  cmd.addAndExecute(new ToggleEncapsulationOp(nodeId));
-  cmd.commit();
-  commandStack.push(cmd);
-  stackVersion.value++; // Force UI update
+  processHistoryController.toggleEncapsulation({ nodeId });
+  refreshAfterIntent();
 }
 
 // Handle output toggle
 function handleToggleOutput(nodeId: string) {
-  const cmd = new Command('Toggle output status', world);
-  cmd.addAndExecute(new ToggleOutputOp(nodeId));
-  cmd.commit();
-  commandStack.push(cmd);
-  stackVersion.value++; // Force UI update
+  processHistoryController.toggleOutput({ nodeId });
+  refreshAfterIntent();
 }
 
 // Handle subprocess rename
 function handleRenameNode(nodeId: string, newName: string) {
-  const cmd = new Command('Rename subprocess', world);
-  cmd.addAndExecute(new RenameSubprocessOp(nodeId, newName));
-  cmd.commit();
-  commandStack.push(cmd);
-  stackVersion.value++; // Force UI update
+  processHistoryController.renameSubprocess({ nodeId, newName });
+  refreshAfterIntent();
 }
 </script>
 
