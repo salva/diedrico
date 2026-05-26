@@ -36,14 +36,15 @@ frontend/src/domain/presentation/Paper.ts
 ### New selector/read-model modules
 
 - Add `frontend/src/application/rendering2d/Canvas2DViewModel.ts` defining explicit DTOs:
-  - `Canvas2DViewModel` with `renderItems`, `hitItems`, `planeTransforms`, optional `gridModel`, and metadata for active plane/view toggles.
-  - `RenderItem2D` discriminated union for point, line, segment, circle, guide, hinge-line, arc, projected-3D point/line/segment, and text/label if needed.
-  - `HitItem2D` discriminated union carrying source entity ID, selectable type, plane ID, plane-space geometry, paper-space geometry where needed, and selection-mask metadata.
+  - `Canvas2DViewModel` with `renderItems`, `hitItems`, `planeTransforms`, required `gridModel`, `labelModel`, and metadata for active plane/view toggles. Grid/label extraction is in Wave 007 scope, not a deferred residual, because the scope check identifies active-plane grid realization in `SvgCanvas.vue` as a remaining raw-domain canvas read leak.
+  - `RenderItem2D` discriminated union for point, infinite line, finite segment, circle, guide, sibling guide, hinge line, half-hinge line, arc, projected-3D point/line/segment, grid line, and text/label if needed.
+  - `HitItem2D` discriminated union carrying source entity ID, selectable type, plane ID, plane-space geometry, paper-space geometry where needed, and selection-mask metadata. It must explicitly represent point, infinite-line, finite-segment, guide/sibling-guide, hinge/half-hinge, and circle query geometry rather than collapsing all line-like cases into one unbounded branch.
+  - `SnapPoint2D` / snap-output DTOs for the current snap-preview and construction-input behavior so snapping is derived from selector/query state rather than raw `World` access.
   - `ResolvedRenderStyle2D` replacing ad hoc primitive style construction.
-- Add `frontend/src/application/rendering2d/Canvas2DSelectors.ts` to build `Canvas2DViewModel` from `{ world, activePlaneId, selectedIds, hoveredId, cascadeHighlightIds, highlightedEntityIds, showProjectedElements }`.
+- Add `frontend/src/application/rendering2d/Canvas2DSelectors.ts` to build `Canvas2DViewModel` from `{ world, activePlaneId, selectedIds, hoveredId, cascadeHighlightIds, highlightedEntityIds, showProjectedElements }`. This selector must also build active-plane grid lines and labels from the same plane-transform/read snapshot so `SvgCanvas.vue` no longer realizes grid geometry directly.
 - Add `frontend/src/application/rendering2d/VisibilitySelector.ts` or `ElementVisibilitySelector.ts` to wrap current `resolveVisibility(element, world)` behavior behind selector output. This may initially call the existing domain service, but renderers must not call it.
 - Add `frontend/src/application/rendering2d/StyleSelector.ts` to centralize point/line/segment/circle/guide/hinge/projected-3D style rules currently embedded in `PaperService.ts`.
-- Add `frontend/src/application/rendering2d/PaperHitQuery.ts` to perform hit testing over `HitItem2D` DTOs rather than raw `World`/active-plane iteration.
+- Add `frontend/src/application/rendering2d/PaperHitQuery.ts` to perform hit testing over `HitItem2D` DTOs rather than raw `World`/active-plane iteration. The query contract must preserve current `Paper.hitTest()` semantics for points, infinite lines, finite segments, guides, sibling guides, hinge lines, half-hinge lines, circles, active-plane filtering, selection-mask filtering, closest-element priority, and snap-point output. Segment items must use finite segment distance checks; infinite line, guide, sibling-guide, hinge, and half-hinge items must retain their current line-like pickability only where the active-plane realization currently makes them pickable.
 
 ### Existing rendering services
 
@@ -58,14 +59,15 @@ frontend/src/domain/presentation/Paper.ts
 - Update `frontend/src/components/workspace/SvgCanvas.vue` to:
   - Build a render selector input from existing UI state and `worldVersion`.
   - Consume `Canvas2DViewModel.renderItems` / Paper primitives and `SvgRenderAdapter` output for rendered buckets.
-  - Use `PaperHitQuery` for selection, properties, hover, snap-preview, and drag hit behavior.
+  - Use `PaperHitQuery` for selection, properties, hover, snap-preview, drag hit behavior, and snap-point output.
+  - Consume selector-produced `gridModel`/`labelModel` for active-plane grid rendering instead of realizing grid geometry in the component.
   - Keep existing Wave 006a `createCanvasToolController()` boundaries for tool execution, point movement, and style updates.
   - Remove component-owned `PrimitiveContext` creation and direct `Paper.hitTest(..., world, selectionMask)` calls.
 
 ### Tests
 
-- Add `frontend/tests/unit/application/rendering2d/canvas2DSelectors.spec.ts` covering selector output for points, lines, segments, circles, guides, hinge lines, active-plane emphasis, selected/hovered/cascade style, visibility, z-order, projected-3D toggling, and plane transforms.
-- Add `frontend/tests/unit/application/rendering2d/paperHitQuery.spec.ts` covering hit behavior previously dependent on `Paper.hitTest()`: active-plane filtering, selection masks, point/line/segment/circle/guide hits, snap points, and closest-element priority.
+- Add `frontend/tests/unit/application/rendering2d/canvas2DSelectors.spec.ts` covering selector output for points, infinite lines, finite segments, circles, guides, sibling guides, hinge lines, half-hinge lines, active-plane emphasis, selected/hovered/cascade style, visibility, z-order, projected-3D toggling, plane transforms, grid lines, and grid labels.
+- Add `frontend/tests/unit/application/rendering2d/paperHitQuery.spec.ts` covering hit behavior previously dependent on `Paper.hitTest()`: active-plane filtering, selection masks, point hits, infinite-line hits, finite-segment endpoint/interior/outside misses, circle hits, guide and sibling-guide hits, hinge/half-hinge line hits, snap-point output, and closest-element priority.
 - Add/replace adapter tests under `frontend/tests/unit/services/` for DTO-to-Paper and Paper/SVG conversion.
 - Update existing tests:
   - `frontend/tests/unit/services/paperService.spec.ts`
@@ -82,7 +84,7 @@ frontend/src/domain/presentation/Paper.ts
 - Delete `PaperService` methods that traverse raw `World`, resolve visibility, branch on domain classes, or inspect `(line as any).arcGeometry` after equivalent selector DTO behavior exists.
 - Delete rendering TODO branches replaced by selector outputs, especially `visible: true // TODO` in `PaperService` (`frontend/src/services/PaperService.ts:238`, `:343`, `:437`, `:610`) and `SVGRenderer`'s canvas-dimension TODO (`frontend/src/services/SVGRenderer.ts:220`).
 - Delete normal-path `console.log`/debug output from rendering code (`frontend/src/services/PaperService.ts:146`, `:156`-`:158`; `frontend/src/components/workspace/SvgCanvas.vue:497`, `:500`, `:1094`, `:1420`, `:1674`) where touched by rendering extraction.
-- Delete direct `Paper.hitTest(..., world, ...)` usage in `SvgCanvas.vue` and `Paper.ts`; do not leave a compatibility overload.
+- Delete direct `Paper.hitTest(..., world, ...)` usage in `SvgCanvas.vue` and `Paper.ts`; do not leave a compatibility overload. If `Paper.ts` remains, it must not import `World`, projection-plane classes, concrete domain element classes, or perform raw realization traversal.
 - Delete duplicate primitive special cases that exist only because `PaperService` mixes selector and adapter responsibilities, such as separate raw-domain guide/segment/half-hinge branches in renderer code after selector DTOs discriminate them.
 
 ## Expected behavior change
@@ -90,7 +92,7 @@ frontend/src/domain/presentation/Paper.ts
 Intended user-visible behavior is equivalent:
 
 - Existing 2D canvas output remains visually equivalent for points, lines, segments, circles, guides, hinge lines, arcs, projected 3D elements, selected/hovered/cascade-highlight states, active-plane emphasis, and z-order.
-- Hit behavior remains equivalent for selection, hover tooltip, snap-preview, properties dialog opening, point movement, construction selection masks, and active-plane filtering.
+- Hit behavior remains equivalent for selection, hover tooltip, snap-preview, properties dialog opening, point movement, construction selection masks, active-plane filtering, and snap-point output across points, infinite lines, finite segments, circles, guides/sibling guides, and hinge/half-hinge line paths.
 - Style/visibility behavior becomes explicit in selector outputs instead of scattered through renderers; any current bugs revealed by tests should be fixed in selector logic rather than preserved through shims.
 - Obsolete debug/test-only rendering surfaces are removed.
 
@@ -99,16 +101,20 @@ Intended user-visible behavior is equivalent:
 Run and capture mandatory validation under `architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/`:
 
 1. Static deletion/boundary scans:
-   - Verify `SvgCanvas.vue` has no `Paper.hitTest(... world ...)`, no `PrimitiveContext`, and no direct `paperService.generatePrimitives(context)` path.
-   - Verify renderer adapters do not import `World`, `ProjectionPlane`, or concrete domain element classes except selector modules.
-   - Verify deleted `RenderService.ts` has no imports.
+   - Verify `RenderService.ts` is deleted, or if an implementation decision retains a named file temporarily, verify it is fully unused by production and tests before wave completion; the preferred outcome is deletion with no replacement shim.
+   - Verify renderer adapter modules do not import `World`, projection-plane classes, concrete domain element classes, or domain realization types; raw domain imports are permitted only in selector/query modules.
+   - Verify `SvgCanvas.vue` has no `Paper.hitTest(... world ...)`, no `PrimitiveContext`, no direct `paperService.generatePrimitives(context)` path, and no component-owned active-plane grid realization.
+   - Verify `Paper.ts`, if retained, does not import `World`, projection-plane classes, concrete domain element classes, or perform raw realization traversal.
+   - Verify deleted rendering TODO branches, duplicate raw-domain render special cases, and normal-path rendering debug logs are absent rather than hidden behind compatibility paths.
 2. Root/workspace lint where scripts exist:
    - `npm run lint`
    - `npm run lint --workspace=frontend`
    - Note existing missing-`eslint` blocker if still present, but still capture logs.
 3. Focused Vitest:
    - `npm run test --workspace=frontend -- --run tests/unit/application/rendering2d/canvas2DSelectors.spec.ts tests/unit/application/rendering2d/paperHitQuery.spec.ts tests/unit/services/paperService.spec.ts tests/unit/domain/paperHitTesting.spec.ts tests/unit/selectionMask.spec.ts tests/unit/components/SvgCanvas.gridLabels.spec.ts tests/unit/application/canvasToolControllers.spec.ts`
-   - Include `tests/unit/services/renderService.spec.ts` only if rewritten rather than deleted.
+   - Selector tests must assert rendering DTOs for point, infinite line, finite segment, circle, guide, sibling guide, hinge/half-hinge line, projected-3D, style/visibility, active-plane emphasis, grid, labels, and plane transforms.
+   - Hit-query tests must assert active-plane filtering, selection masks, point/line/finite-segment/circle/guide/sibling-guide/hinge/half-hinge hits, snap-point output, closest-element priority, and misses outside finite segment extents.
+   - Include `tests/unit/services/renderService.spec.ts` only if rewritten as selector/adapter coverage; otherwise delete it with `RenderService.ts`.
 4. Full Vitest:
    - `npm run test`
    - `npm run test --workspace=frontend`
@@ -128,7 +134,7 @@ Run and capture mandatory validation under `architecture-audit/cycle-007-2d-rend
 
 ## Risks and mitigations
 
-- **Risk: hit testing changes while visual rendering passes.** Mitigate by treating hit/query DTOs as first-class selector output and adding focused `PaperHitQuery` tests before deleting old `Paper.hitTest()` behavior.
+- **Risk: hit testing changes while visual rendering passes.** Mitigate by treating hit/query DTOs as first-class selector output and adding focused `PaperHitQuery` tests before deleting old `Paper.hitTest()` behavior, including non-point/non-circle cases: finite segments, guides/sibling guides, hinge/half-hinge line paths, active-plane filtering, selection masks, and snap-point output.
 - **Risk: selector layer becomes a renamed `PaperService` god module.** Mitigate by splitting DTO types, visibility, style, domain traversal, hit query, and adapter mapping into focused modules; renderer adapters must not import raw domain classes.
 - **Risk: projected 3D-on-2D output overlaps Wave 008.** Mitigate by including only the current 2D projected output selector, not Three.js scene extraction; explicitly document any residual for Wave 008.
 - **Risk: Vue canvas remains too large.** Mitigate by removing rendering computations and query logic from `SvgCanvas.vue`, but leave app-shell/keyboard/lifecycle work to Wave 009.
