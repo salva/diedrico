@@ -1,0 +1,307 @@
+--- CanvasPresentationModel ---
+     1	import type { Matrix3, Vector3 } from 'three';
+     2	import type { Primitive, ResolvedStyle } from '@/domain/presentation/Paper';
+     3	
+     4	export type CanvasElementKind =
+     5	  | 'point'
+     6	  | 'infinite-line'
+     7	  | 'finite-segment'
+     8	  | 'circle'
+     9	  | 'guide'
+    10	  | 'sibling-guide'
+    11	  | 'hinge-line'
+    12	  | 'half-hinge-line'
+    13	  | 'arc'
+    14	  | 'projected-3d-point'
+    15	  | 'projected-3d-line'
+    16	  | 'projected-3d-segment';
+    17	
+    18	export interface CanvasStyleState extends ResolvedStyle {}
+    19	
+    20	export interface CanvasRenderItem {
+    21	  id: string;
+    22	  kind: CanvasElementKind;
+    23	  sourceEntityId?: string;
+    24	  planeId?: string;
+    25	  primitive: Primitive;
+    26	  visible: boolean;
+    27	  style: CanvasStyleState;
+    28	}
+    29	
+    30	export interface CanvasQueryItem {
+    31	  id: string;
+    32	  kind: Exclude<CanvasElementKind, 'arc' | 'projected-3d-point' | 'projected-3d-line' | 'projected-3d-segment'>;
+    33	  elementId: string;
+    34	  elementType: string;
+    35	  planeId?: string;
+    36	  selectable: boolean;
+    37	  planeGeometry:
+    38	    | { type: 'point'; position: Vector3; visualRadiusPixels: number }
+    39	    | { type: 'line'; point: Vector3; direction: Vector3 }
+    40	    | { type: 'segment'; point1: Vector3; point2: Vector3 }
+    41	    | { type: 'circle'; center: Vector3; radius: number };
+    42	}
+    43	
+    44	export interface CanvasSnapPoint {
+    45	  elementId: string;
+    46	  elementType: string;
+    47	  primitiveId: string;
+    48	  distance: number;
+    49	  snapPoint: Vector3;
+    50	}
+    51	
+    52	export interface CanvasPlaneTransformModel {
+    53	  planeId: string;
+    54	  planeToPaper: Matrix3;
+    55	  paperToPlane: Matrix3;
+    56	}
+    57	
+    58	export interface CanvasGridLine {
+    59	  key: string;
+    60	  x1: number;
+    61	  y1: number;
+    62	  x2: number;
+    63	  y2: number;
+    64	  major: boolean;
+    65	}
+    66	
+    67	export interface CanvasGridLabel {
+    68	  key: string;
+    69	  value: number;
+    70	  position: number;
+    71	  edge: 'top' | 'bottom' | 'left' | 'right';
+    72	}
+    73	
+    74	export interface CanvasGridLabels {
+    75	  top: CanvasGridLabel[];
+    76	  bottom: CanvasGridLabel[];
+    77	  left: CanvasGridLabel[];
+    78	  right: CanvasGridLabel[];
+    79	}
+    80	
+    81	export interface CanvasViewportModel {
+    82	  zoom: number;
+    83	  panX: number;
+    84	  panY: number;
+    85	  width: number;
+    86	  height: number;
+    87	}
+    88	
+    89	export interface CanvasPresentationModel {
+    90	  renderItems: CanvasRenderItem[];
+    91	  queryItems: CanvasQueryItem[];
+    92	  gridLines: CanvasGridLine[];
+    93	  gridLabels: CanvasGridLabels;
+    94	  planeTransforms: Map<string, CanvasPlaneTransformModel>;
+    95	  activePlaneId?: string;
+    96	}
+    97	
+    98	export interface CanvasPresentationState {
+    99	  hoveredIds?: Set<string>;
+   100	  selectedIds?: Set<string>;
+   101	  cascadeHighlightIds?: Set<string>;
+   102	  activeSnapTargetId?: string;
+   103	  activePlaneId?: string;
+   104	  showProjectedElements?: boolean;
+   105	  gridVisible?: boolean;
+   106	}
+--- CanvasPresentationSelector ---
+     1	import { Matrix3 } from 'three';
+     2	import type { World } from '@/domain/world/World';
+     3	import { Segment2DByPoints } from '@/domain/world/Segment';
+     4	import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+     5	import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+     6	import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive } from '@/domain/presentation/Paper';
+     7	import { applyMatrix3x4 } from '@/utils/threeUtils';
+     8	import type { CanvasPresentationModel, CanvasPresentationState, CanvasQueryItem, CanvasRenderItem, CanvasViewportModel } from './CanvasPresentationModel';
+     9	import { selectCanvasGrid } from './CanvasGridSelector';
+    10	import { circleStyle, guideStyle, hingeStyle, lineStyle, pointStyle, PROJECTED_LINE_STYLE, PROJECTED_POINT_STYLE, PROJECTED_SEGMENT_STYLE, segmentStyle } from './CanvasStylePolicy';
+    11	import { isCanvasElementVisible } from './CanvasVisibilityPolicy';
+    12	
+    13	export class CanvasPresentationSelector {
+    14	  select(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+    15	    const renderItems: CanvasRenderItem[] = [];
+    16	    const queryItems: CanvasQueryItem[] = [];
+    17	    const planeTransforms = new Map();
+    18	    for (const plane of world.getAllProjectionPlanes()) {
+    19	      const realization = world.getProjectionPlane2DRealization(plane.id);
+    20	      if (realization) planeTransforms.set(plane.id, { planeId: plane.id, planeToPaper: realization.planeToPaper2D, paperToPlane: realization.paperToPlane2D });
+    21	    }
+    22	    for (const plane of world.getAllProjectionPlanes()) {
+    23	      const transform = planeTransforms.get(plane.id)?.planeToPaper as Matrix3 | undefined;
+    24	      if (!transform) continue;
+    25	      for (const point of plane.getAllPoints()) {
+    26	        if (!isCanvasElementVisible(point, world)) continue;
+    27	        const realization = plane.realizePoint2D(point, world as any); if (!realization) continue;
+    28	        const s = pointStyle(point, stateFor(point.id!, state));
+    29	        const position = realization.position.clone().applyMatrix3(transform);
+    30	        const primitive: PointPrimitive = { type: 'point', id: `point-${point.id}`, sourceEntityId: point.id, planeId: point.planeId, layer: s.layer, visible: true, style: s.style, position, radius: s.radius };
+    31	        renderItems.push(item(primitive, 'point'));
+    32	        queryItems.push({ id: primitive.id, kind: 'point', elementId: point.id!, elementType: 'point', planeId: point.planeId, selectable: true, planeGeometry: { type: 'point', position: realization.position.clone(), visualRadiusPixels: s.radius } });
+    33	      }
+    34	      for (const line of plane.getAllLines()) {
+    35	        if (!isCanvasElementVisible(line, world)) continue;
+    36	        const realization = plane.realizeLine2D(line, world as any); if (!realization) continue;
+    37	        const kind = line instanceof HalfHingeLine2D ? 'half-hinge-line' : line instanceof Segment2DByPoints ? 'finite-segment' : line instanceof SiblingGuide2D ? 'sibling-guide' : line instanceof Guide2D ? 'guide' : 'infinite-line';
+    38	        if (kind === 'finite-segment') {
+    39	          const style = segmentStyle(line, stateFor(line.id!, state));
+    40	          const primitive: SegmentPrimitive = { type: 'segment', id: `segment-${line.id}`, sourceEntityId: line.id, planeId: line.planeId, layer: RenderLayer.Elements, visible: true, style, point1: realization.point1.clone().applyMatrix3(transform), point2: realization.point2.clone().applyMatrix3(transform) };
+    41	          renderItems.push(item(primitive, kind));
+    42	          queryItems.push({ id: primitive.id, kind, elementId: line.id!, elementType: 'segment', planeId: line.planeId, selectable: true, planeGeometry: { type: 'segment', point1: realization.point1.clone(), point2: realization.point2.clone() } });
+    43	        } else {
+    44	          const style = kind === 'guide' || kind === 'sibling-guide' ? guideStyle(line as Guide2D | SiblingGuide2D, stateFor(line.id!, state)) : kind === 'half-hinge-line' ? hingeStyle(line as HalfHingeLine2D, stateFor(line.id!, state)) : lineStyle(line, stateFor(line.id!, state));
+    45	          const prefix = kind === 'guide' || kind === 'sibling-guide' ? 'guide' : kind === 'half-hinge-line' ? 'halfhingeline' : 'line';
+    46	          const primitive: LinePrimitive = { type: 'line', id: `${prefix}-${line.id}`, sourceEntityId: line.id, planeId: kind === 'guide' || kind === 'sibling-guide' ? undefined : line.planeId, layer: kind === 'guide' || kind === 'sibling-guide' ? RenderLayer.Guides : kind === 'half-hinge-line' ? RenderLayer.HingeLines : RenderLayer.Elements, visible: true, style, point: realization.point1.clone().applyMatrix3(transform), direction: realization.getDirection().applyMatrix3(transform) };
+    47	          renderItems.push(item(primitive, kind));
+    48	          queryItems.push({ id: primitive.id, kind, elementId: line.id!, elementType: kind === 'half-hinge-line' ? 'half-hinge-line' : kind === 'guide' || kind === 'sibling-guide' ? 'guide' : 'line', planeId: line.planeId, selectable: true, planeGeometry: { type: 'line', point: realization.point1.clone(), direction: realization.getDirection() } });
+    49	          const arcGeometry = (line as any).arcGeometry;
+    50	          if (arcGeometry?.startPoint && arcGeometry?.endPoint && arcGeometry?.controlPoints?.length) {
+    51	            const style = { stroke: arcGeometry.style.color, strokeWidth: arcGeometry.style.width, strokeStyle: arcGeometry.style.dashArray ? 'dashed' as const : 'solid' as const, fill: 'none', opacity: arcGeometry.style.opacity, zIndex: 2 };
+    52	            const path: PathPrimitive = { type: 'path', id: `arc-${line.id}`, sourceEntityId: line.id, planeId: undefined, layer: RenderLayer.Guides, visible: true, style, points: [[arcGeometry.startPoint.x, arcGeometry.startPoint.y], [arcGeometry.controlPoints[0].x, arcGeometry.controlPoints[0].y], [arcGeometry.endPoint.x, arcGeometry.endPoint.y]], closed: false };
+    53	            renderItems.push(item(path, 'arc'));
+    54	          }
+    55	        }
+    56	      }
+    57	      for (const circle of plane.getAllCircles()) {
+    58	        if (!isCanvasElementVisible(circle, world)) continue;
+    59	        const realization = plane.realizeCircle2D(circle, world as any); if (!realization) continue;
+    60	        const center = realization.center.clone().applyMatrix3(transform);
+    61	        const radius = realization.radiusVector.clone().applyMatrix3(transform).length();
+    62	        const primitive: CirclePrimitive = { type: 'circle', id: `circle-${circle.id}`, sourceEntityId: circle.id!, planeId: circle.planeId, layer: RenderLayer.Elements, visible: true, style: circleStyle(circle, stateFor(circle.id!, state)), cx: center.x, cy: center.y, radius };
+    63	        renderItems.push(item(primitive, 'circle'));
+    64	        queryItems.push({ id: primitive.id, kind: 'circle', elementId: circle.id!, elementType: 'circle', planeId: circle.planeId, selectable: true, planeGeometry: { type: 'circle', center: realization.center.clone(), radius: realization.getRadius() } });
+    65	      }
+    66	    }
+    67	    if (state.showProjectedElements) renderItems.push(...projected3D(world, planeTransforms));
+    68	    renderItems.sort((a, b) => a.primitive.layer === b.primitive.layer ? a.style.zIndex - b.style.zIndex : a.primitive.layer - b.primitive.layer);
+    69	    const activeTransform = state.activePlaneId ? planeTransforms.get(state.activePlaneId)?.planeToPaper : undefined;
+    70	    const grid = state.gridVisible === false ? { lines: [], labels: { top: [], bottom: [], left: [], right: [] } } : selectCanvasGrid(activeTransform, viewport);
+    71	    return { renderItems, queryItems, gridLines: grid.lines, gridLabels: grid.labels, planeTransforms, activePlaneId: state.activePlaneId };
+    72	  }
+    73	}
+    74	
+    75	function stateFor(id: string, state: CanvasPresentationState) { return { selected: state.selectedIds?.has(id), hovered: state.hoveredIds?.has(id), snapTarget: state.activeSnapTargetId === id, cascade: state.cascadeHighlightIds?.has(id), activePlaneId: state.activePlaneId }; }
+    76	function item(primitive: any, kind: any): CanvasRenderItem { return { id: primitive.id, kind, sourceEntityId: primitive.sourceEntityId, planeId: primitive.planeId, primitive, visible: primitive.visible, style: primitive.style }; }
+    77	function projected3D(world: World, planeTransforms: Map<string, any>): CanvasRenderItem[] {
+    78	  const items: CanvasRenderItem[] = []; const EPSILON = 1e-10;
+    79	  for (const plane of world.getAllProjectionPlanes()) {
+    80	    const planeRealization = world.getProjectionPlane3DRealization(plane.id); const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
+    81	    if (!planeRealization || !planeToPaper) continue;
+    82	    for (const point3D of world.getAll3DPoints()) { const r = point3D.realize3D(world); if (!r?.isFeasible()) continue; const position = applyMatrix3x4(r.position, planeRealization.threeDToPlane).applyMatrix3(planeToPaper); items.push(item({ type: 'point', id: `proj3d-point-${point3D.id}-on-${plane.id}`, sourceEntityId: point3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_POINT_STYLE, position, radius: 6 }, 'projected-3d-point')); }
+    83	    for (const line3D of world.getAll3DLines()) { const r = line3D.realize3D(world); if (!r?.isFeasible()) continue; const dir = applyMatrix3x4(r.direction, planeRealization.threeDToPlane); if (dir.length() < EPSILON) continue; items.push(item({ type: 'line', id: `proj3d-line-${line3D.id}-on-${plane.id}`, sourceEntityId: line3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_LINE_STYLE, point: applyMatrix3x4(r.point, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), direction: dir.applyMatrix3(planeToPaper) }, 'projected-3d-line')); }
+    84	    for (const segment3D of world.getAll3DSegments()) { const r = segment3D.realize3D(world); if (!r?.isFeasible()) continue; items.push(item({ type: 'segment', id: `proj3d-segment-${segment3D.id}-on-${plane.id}`, sourceEntityId: segment3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_SEGMENT_STYLE, point1: applyMatrix3x4(r.startPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), point2: applyMatrix3x4(r.endPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper) }, 'projected-3d-segment')); }
+    85	  }
+    86	  return items;
+    87	}
+--- CanvasPresentationController ---
+     1	import type { World } from '@/domain/world/World';
+     2	import type { CanvasPresentationModel, CanvasPresentationState, CanvasViewportModel } from './CanvasPresentationModel';
+     3	import { CanvasPresentationSelector } from './CanvasPresentationSelector';
+     4	
+     5	export class CanvasPresentationController {
+     6	  constructor(private readonly selector = new CanvasPresentationSelector()) {}
+     7	  buildModel(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+     8	    return this.selector.select(world, viewport, state);
+     9	  }
+    10	}
+--- package scripts ---
+     1	{
+     2	  "name": "diedrico",
+     3	  "version": "0.1.0",
+     4	  "description": "Educational web application for teaching dihedral/orthographic projection",
+     5	  "private": true,
+     6	  "license": "GPL-3.0-or-later",
+     7	  "workspaces": [
+     8	    "frontend",
+     9	    "backend"
+    10	  ],
+    11	  "scripts": {
+    12	    "dev": "npm run dev:frontend",
+    13	    "dev:frontend": "npm run dev --workspace=frontend",
+    14	    "build": "npm run build --workspace=frontend",
+    15	    "test": "npm run test --workspace=frontend",
+    16	    "test:frontend": "npm run test --workspace=frontend",
+    17	    "lint": "npm run lint --workspace=frontend",
+    18	    "docs:dev": "vitepress dev docs",
+    19	    "docs:build": "vitepress build docs",
+    20	    "docs:preview": "vitepress preview docs"
+    21	  },
+    22	  "devDependencies": {
+    23	    "concurrently": "^8.2.2",
+    24	    "vitepress": "^1.6.4"
+    25	  },
+    26	  "engines": {
+    27	    "node": ">=18.0.0",
+    28	    "npm": ">=9.0.0"
+    29	  }
+    30	}
+     1	{
+     2	  "name": "diedrico-frontend",
+     3	  "version": "0.1.0",
+     4	  "type": "module",
+     5	  "license": "GPL-3.0-or-later",
+     6	  "scripts": {
+     7	    "dev": "vite",
+     8	    "build": "vue-tsc && vite build",
+     9	    "preview": "vite preview",
+    10	    "test": "vitest run",
+    11	    "test:watch": "vitest",
+    12	    "test:ui": "vitest --ui",
+    13	    "test:e2e": "playwright test",
+    14	    "test:e2e:headed": "playwright test --headed",
+    15	    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+    16	  },
+    17	  "dependencies": {
+    18	    "@types/katex": "^0.16.8",
+    19	    "d3": "^7.8.5",
+    20	    "katex": "^0.16.28",
+    21	    "pinia": "^2.1.7",
+    22	    "three": "^0.160.0",
+    23	    "vue": "^3.4.0"
+    24	  },
+    25	  "devDependencies": {
+    26	    "@playwright/test": "^1.40.0",
+    27	    "@types/d3": "^7.4.3",
+    28	    "@types/gapi": "^0.0.47",
+    29	    "@types/gapi.client.drive-v3": "^0.0.5",
+    30	    "@types/three": "^0.160.0",
+    31	    "@vitejs/plugin-vue": "^5.0.0",
+    32	    "@vitest/ui": "^1.0.0",
+    33	    "@vue/test-utils": "^2.4.6",
+    34	    "@vue/tsconfig": "^0.5.0",
+    35	    "jsdom": "^27.3.0",
+    36	    "typescript": "^5.3.0",
+    37	    "vite": "^5.0.0",
+    38	    "vitest": "^1.0.0",
+    39	    "vue-tsc": "^1.8.0"
+    40	  }
+    41	}
+--- e2e files ---
+frontend/tests/e2e/active-plane-emphasis.spec.ts
+frontend/tests/e2e/active-plane-shortcuts.spec.ts
+frontend/tests/e2e/basic-construction.spec.ts
+frontend/tests/e2e/circle-tool-snapping.spec.ts
+frontend/tests/e2e/command-chaining.spec.ts
+frontend/tests/e2e/coordinate-display.spec.ts
+frontend/tests/e2e/create-circle.spec.ts
+frontend/tests/e2e/create-point.spec.ts
+frontend/tests/e2e/create-segment.spec.ts
+frontend/tests/e2e/debug.spec.ts
+frontend/tests/e2e/dependencies.spec.ts
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts
+frontend/tests/e2e/distance-transport.spec.ts
+frontend/tests/e2e/guide-creation.spec.ts
+frontend/tests/e2e/hhl-intersection.spec.ts
+frontend/tests/e2e/hover.spec.ts
+frontend/tests/e2e/infeasibility.spec.ts
+frontend/tests/e2e/intersection-creation.spec.ts
+frontend/tests/e2e/keyboard-shortcuts.spec.ts
+frontend/tests/e2e/line-creation.spec.ts
+frontend/tests/e2e/navigation.spec.ts
+frontend/tests/e2e/parametric-update.spec.ts
+frontend/tests/e2e/point-transport.spec.ts
+frontend/tests/e2e/properties.spec.ts
+frontend/tests/e2e/selection-mask.spec.ts
+frontend/tests/e2e/selection.spec.ts
+frontend/tests/e2e/undo-redo-fix.spec.ts
+frontend/tests/e2e/undo-redo.spec.ts

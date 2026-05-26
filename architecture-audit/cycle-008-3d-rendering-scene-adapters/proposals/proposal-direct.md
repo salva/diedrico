@@ -1,0 +1,178 @@
+# Proposal Direct — Extract focused 3D scene adapters from `ThreeView.vue`
+
+## Summary
+
+Implement Wave 008 as a direct extraction of the existing 3D rendering behavior into focused 3D presentation and Three.js adapter modules. `ThreeView.vue` becomes a Vue lifecycle/composition shell: it owns refs, watchers, injected `World`, display/selection state, and calls a `ThreeViewController`/scene facade. All low-level Three.js object creation and most domain-to-view conversion move out of the component.
+
+This proposal preserves the current behavior and visual semantics while deleting large inline helpers from the component. It is intentionally smaller than the restructure option: the 3D selector is introduced, but only for the current scene needs; it does not attempt to generalize a cross-2D/3D presentation package.
+
+## Current evidence addressed
+
+- `ThreeView.vue` currently owns scene/camera/renderer/label renderer/controls variables and inline setup (`frontend/src/components/panels/ThreeView.vue:107-216`).
+- Projection-plane grid and auxiliary axes logic are inline and raw-domain-coupled (`frontend/src/components/panels/ThreeView.vue:239-373`, `frontend/src/components/panels/ThreeView.vue:915-957`).
+- Reconstructed 3D points/lines/segments/planes are inline scene-object construction (`frontend/src/components/panels/ThreeView.vue:394-598`).
+- Guide perpendicular plane and intersection rendering are inline selection/domain/scene logic (`frontend/src/components/panels/ThreeView.vue:611-767`).
+- Hinge rendering is inline and contains debug `console.log` statements (`frontend/src/components/panels/ThreeView.vue:775-838`).
+- `Element2DRenderer3D` mixes raw domain traversal, visibility, realization, style TODOs, conversion, geometry creation, scene mutation, cache cleanup, and an unused visibility update path (`frontend/src/services/Element2DRenderer3D.ts:60-77`, `frontend/src/services/Element2DRenderer3D.ts:83-112`, `frontend/src/services/Element2DRenderer3D.ts:118-443`).
+- Rendering constants already live in `rendering3D.ts` and should be consumed by extracted modules (`frontend/src/config/rendering3D.ts:16-83`).
+
+## Target outcome
+
+- `ThreeView.vue` is reduced to:
+  - template/control checkboxes and styles,
+  - refs for container/canvas,
+  - injected `World`, view options, selected IDs,
+  - lifecycle mount/unmount and watchers,
+  - calls to a controller/facade such as `threeViewController.mount(...)`, `refresh(...)`, `resize()`, and `dispose()`.
+- Raw Three.js scene setup, projection-plane grids, 2D-on-plane elements, reconstructed 3D elements, hinge lines, guide perpendicular-plane/intersections, labels, axes, cleanup/disposal, and domain-to-view conversion are isolated in focused modules.
+- The new selector/read-model boundary mirrors Wave 007's pattern without touching the 2D canvas path.
+
+## Files to change
+
+### Component shell
+
+- `frontend/src/components/panels/ThreeView.vue`
+  - Delete inline helper functions and scene variables.
+  - Keep the controls/template and lifecycle/watch coordination.
+  - Replace direct render calls with calls into the new 3D controller.
+  - Replace `window as any.__threeViewWorldChangeHandler` with a local unsubscribe closure held in component scope.
+
+### 3D presentation/read-model modules to add
+
+Suggested location: `frontend/src/application/threePresentation/`.
+
+- `ThreePresentationModel.ts`
+  - DTOs for projection-plane grids, auxiliary axes, reference axes, hinge lines, 2D-on-plane elements, reconstructed 3D points/lines/segments/planes, guide perpendicular planes, guide intersection markers, labels, display options, and object group names.
+- `ThreePresentationSelector.ts`
+  - Single raw-domain traversal boundary for 3D view read models.
+  - Reads `World` and selected IDs.
+  - Uses `world.getAllProjectionPlanes()`, projection-plane 3D realizations, 3D element realization APIs, hinge realizations, guide predicates, and visibility/style policies.
+  - Produces DTOs; does not import Vue or mutate Three.js `Scene`.
+- `ThreeDisplayStylePolicy.ts`
+  - Centralize colors, opacity, tube radii, point radii, line extent constants, guide highlight colors, reference-axis colors, z-fighting offset, and visibility/style mapping for 3D DTOs.
+  - May import/reuse existing 2D visibility policy or domain `resolveVisibility` only inside selector/policy, not adapters.
+- `ThreePresentationController.ts`
+  - Thin facade matching Wave 007's `CanvasPresentationController`: `buildModel(world, displayOptions, selectedIds)`.
+
+### Three.js scene adapter modules to add
+
+Suggested location: `frontend/src/rendering/threeView/` or `frontend/src/adapters/threeView/`.
+
+- `ThreeSceneHost.ts`
+  - Owns `THREE.Scene`, `PerspectiveCamera`, `WebGLRenderer`, `CSS2DRenderer`, `OrbitControls`, lights, animation loop, resize, and disposal.
+- `ThreeSceneObjectRegistry.ts`
+  - Owns grouped object replacement, `userData.type` normalization, and geometry/material disposal.
+  - Replaces repeated `scene.children.filter(...).forEach(scene.remove)` patterns.
+- `ProjectionPlaneSceneAdapter.ts`
+  - Converts projection-plane grid/mesh/auxiliary-axis DTOs into `BufferGeometry`, `LineSegments`, `ArrowHelper`, and CSS labels.
+- `ThreeElementSceneAdapter.ts`
+  - Converts reconstructed 3D point/line/segment/plane DTOs into meshes/lines.
+- `PlanarElementSceneAdapter.ts`
+  - Replacement for `Element2DRenderer3D`; consumes 2D-on-plane DTOs and creates point/line/segment/circle objects.
+- `GuideSceneAdapter.ts`
+  - Renders guide perpendicular plane DTOs and guide intersection marker DTOs.
+- `HingeSceneAdapter.ts`
+  - Renders hinge-line DTOs with dashed line materials.
+- `LabelSceneAdapter.ts` if label creation is not kept inside `ProjectionPlaneSceneAdapter` / `ThreeSceneHost`.
+
+### Existing support modules
+
+- `frontend/src/services/Element2DRenderer3D.ts`
+  - Delete after replacement by `PlanarElementSceneAdapter`, or reduce to a thin re-export only if all call sites are migrated in the same commit. Preference: delete the file and update imports.
+- `frontend/src/config/rendering3D.ts`
+  - Keep as config. Add only missing constants if needed by DTO/style policy; do not add per-plane compatibility shims.
+- `frontend/src/utils/threeUtils.ts`, `frontend/src/utils/rectangleGrid.ts`
+  - Consume existing helpers. Only change if extraction reveals a tiny pure helper belongs there; otherwise leave untouched.
+
+### Tests to add/update
+
+- Add focused selector tests under `frontend/tests/unit/application/threePresentation/`, e.g.:
+  - `threePresentationSelector.projectionPlanes.spec.ts`
+  - `threePresentationSelector.elements.spec.ts`
+  - `threePresentationSelector.guidesHinges.spec.ts`
+- Add focused adapter tests under `frontend/tests/unit/rendering/threeView/`, e.g.:
+  - `threeSceneObjectRegistry.spec.ts`
+  - `projectionPlaneSceneAdapter.spec.ts`
+  - `planarElementSceneAdapter.spec.ts`
+  - `threeElementSceneAdapter.spec.ts`
+  - `guideAndHingeSceneAdapters.spec.ts`
+- Add or update a Vue shell test under `frontend/tests/unit/components/` only to verify mount calls controller methods and responds to display/selection/world changes without asserting geometry internals.
+- Add or update e2e/live smoke coverage for the 3D canvas if feasible; if existing malformed specs still block global e2e, capture and classify as in Wave 007 validation.
+
+## Files/tests/docs/fixtures to DELETE
+
+Aggressive delete list for this direct implementation:
+
+- Delete inline helper functions from `ThreeView.vue` after extraction:
+  - `generateFallbackGrid()` (`frontend/src/components/panels/ThreeView.vue:84-105`).
+  - `initThreeScene()` scene setup body (`frontend/src/components/panels/ThreeView.vue:138-216`) except shell call delegation.
+  - `compute3DPlaneRectangleCorners()` if it remains a one-line wrapper (`frontend/src/components/panels/ThreeView.vue:229-231`).
+  - `renderProjectionPlanes()` (`frontend/src/components/panels/ThreeView.vue:239-373`).
+  - `render2DElements()` (`frontend/src/components/panels/ThreeView.vue:379-387`).
+  - `render3DElements()` (`frontend/src/components/panels/ThreeView.vue:394-598`).
+  - `renderGuidePerpendicularPlane()` and `renderGuideIntersections()` (`frontend/src/components/panels/ThreeView.vue:611-767`).
+  - `renderHingeLines()` (`frontend/src/components/panels/ThreeView.vue:775-838`).
+  - `renderReferenceAxes()`, `renderAuxiliaryPlaneAxes()`, `createAxisLabel()`, and `createAuxiliaryAxisLabel()` (`frontend/src/components/panels/ThreeView.vue:857-1024`).
+  - Inline `animate()`, `handleResize()`, and `cleanup()` implementations once delegated to `ThreeSceneHost` (`frontend/src/components/panels/ThreeView.vue:1040-1087`).
+- Delete `console.log` debug statements in hinge rendering rather than moving them (`frontend/src/components/panels/ThreeView.vue:778`, `frontend/src/components/panels/ThreeView.vue:787`).
+- Delete `window as any.__threeViewWorldChangeHandler` storage (`frontend/src/components/panels/ThreeView.vue:1143-1151`).
+- Delete `frontend/src/services/Element2DRenderer3D.ts` after its responsibilities are replaced by selector DTOs + `PlanarElementSceneAdapter`.
+- Delete `Element2DRenderer3D.updateVisibility()` if no longer used (`frontend/src/services/Element2DRenderer3D.ts:407-415`).
+- Delete local placeholder style/TODO paths in `Element2DRenderer3D.resolveVisualStyle()` and infinite-line clipping TODO in `renderLine()` by replacing them with explicit DTO style/extents (`frontend/src/services/Element2DRenderer3D.ts:172-178`, `frontend/src/services/Element2DRenderer3D.ts:384-402`).
+- Delete any new compatibility re-export or shim created during extraction before the wave is complete.
+- Delete obsolete tests that assert `Element2DRenderer3D` raw-World traversal if any are discovered; replace with selector/adapter tests.
+
+## Expected behavior change
+
+Intended user-visible behavior: **none**, except removal of routine debug console output from hinge rendering.
+
+The 3D view should still render:
+
+- projection-plane grids and surfaces according to display options,
+- reference axes and auxiliary plane axes/labels,
+- hinge lines,
+- guide perpendicular planes and intersection highlights when guides are selected,
+- 2D point/line/segment/circle geometry positioned on projection planes,
+- reconstructed 3D points, lines, segments, and planes,
+- resize and orbit-control animation behavior.
+
+## Validation plan
+
+Minimum mandatory cadence with stable logs under `architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/`:
+
+1. Static scans before/after implementation:
+   - no `Element2DRenderer3D` import remains if file is deleted,
+   - no `new THREE.*`, `scene.children.filter`, `userData.type` scene clearing, `world.projectionPlanes`, `getAll3D*`, `getAllHingeLines`, `realize2D(world)`, or `realize3D(world)` remain in `ThreeView.vue` except allowed shell/controller wiring,
+   - no `console.log` remains in 3D rendering code.
+2. Root lint: `npm run lint`.
+3. Frontend lint: `npm run lint --workspace=frontend`.
+4. Focused Vitest:
+   - `npm run test --workspace=frontend -- --run frontend/tests/unit/application/threePresentation/... frontend/tests/unit/rendering/threeView/...` adjusted to real paths.
+   - Include existing 3D/domain utility tests: `frontend/tests/unit/domain/Line3DReconstruction.test.ts`, `frontend/tests/unit/domain/Plane3DFromTraces.test.ts`, `frontend/tests/unit/domain/Point3DReconstruction.test.ts`, `frontend/tests/unit/domain/segment3DRealization.spec.ts`, `frontend/tests/unit/utils/threeUtils.spec.ts`.
+5. Full root Vitest: `npm run test`.
+6. Full frontend Vitest: `npm run test --workspace=frontend`.
+7. Root build: `npm run build`.
+8. Frontend build: `npm run build --workspace=frontend`.
+9. E2e/Playwright: `npm run test:e2e --workspace=frontend`, or classify known malformed e2e blockers with exact logs if still present.
+10. Live preview refresh:
+    - restart/refresh Vite bound to `0.0.0.0`,
+    - `curl http://127.0.0.1:5173/` returns HTTP 200,
+    - browser smoke confirms `canvas.three-canvas` mounts and representative 3D objects exist after creating/selecting geometry or loading default projection-plane state.
+
+Representative focused assertions:
+
+- Selector emits projection-plane grid DTOs for P_H/P_V and auxiliary planes with clipped/fallback behavior.
+- Selector emits hinge-line DTOs from `world.getAllHingeLines()` and skips infeasible hinge realizations.
+- Selector emits 2D-on-plane DTOs for visible points, lines, segments, and circles with explicit style and z-fighting offset metadata.
+- Selector emits reconstructed 3D element DTOs for feasible points, lines, segments, and planes.
+- Guide selector emits perpendicular-plane DTO and intersection markers for selected guides.
+- Adapters create expected Three.js object classes and dispose replaced objects.
+- `ThreeView.vue` shell calls controller refresh on world/display/selection changes and resize/dispose on lifecycle.
+
+## Risks and mitigations
+
+- **Risk: selector becomes a second god-module.** Mitigation: keep DTO selection split by concern internally or in helper selectors; enforce tests per concern.
+- **Risk: adapter tests couple to exact Three.js internals.** Mitigation: assert object class/group/userData/material essentials and disposal behavior, not renderer pixel output.
+- **Risk: behavior changes in line clipping/styles.** Mitigation: encode current hard-coded extents/styles as explicit constants first, then improve only if reviewed.
+- **Risk: guide/hinge math accidentally moves from domain to adapters.** Mitigation: selectors may call domain realizations, but adapters consume DTO geometry only.
+- **Risk: e2e remains blocked by pre-existing malformed specs/tooling.** Mitigation: still run mandatory commands, capture logs, and add focused/live browser smoke to prove 3D behavior where global e2e cannot run.

@@ -1,0 +1,248 @@
+84:function generateFallbackGrid(halfSize: number, divisions: number): Segment2D[] {
+121:const viewStore = useViewStore();
+125:const selectionStore = useSelectionStore();
+128:const world = inject<World>('world')!;  // Non-null assertion - World is required
+138:function initThreeScene() {
+139:  // console.log('[ThreeView] initThreeScene called');
+140:  // console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
+141:  // console.log('[ThreeView] World projection planes:', Array.from(world.projectionPlanes.keys()));
+149:  scene = new THREE.Scene();
+150:  scene.background = new THREE.Color(0xf5f5f5); // Light grey background
+154:  camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 10000);
+159:  const domainDirection = new THREE.Vector3(1, 1, 1).normalize(); // Normalize as Vector3
+169:  const domainUpDirection = new THREE.Vector3(0, 0, 1);
+176:  renderer = new THREE.WebGLRenderer({
+202:  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+205:  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+229:function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, planeSize: number): Vector4[] {
+239:function renderProjectionPlanes() {
+240:  // console.log('[ThreeView] renderProjectionPlanes called, showPlanes=', displayOptions.value.showPlanes);
+245:  scene.children
+254:  const projectionPlanes = Array.from(world.projectionPlanes.values());
+256:  // console.log('[ThreeView] Number of projection planes:', projectionPlanes.length);
+259:    // console.log('[ThreeView] Processing projection plane:', projPlane.id);
+261:    const planeRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+262:    // console.log('[ThreeView] Plane realization for', projPlane.id, ':', planeRealization);
+286:    // console.log('[ThreeView] Plane', projPlane.id, 'origin in domain:', Ox, Oy, Oz);
+294:    // console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
+295:    // console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
+309:      const plane3D = world.get3DPlane(plane3DId);
+310:      const plane3DRealization = plane3D ? world.get3DPlaneRealization(plane3D.id!) : null;
+318:        const projPlaneRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+339:    // console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
+344:      const start2D = new THREE.Vector3(segment.start.u, segment.start.v, 1);
+349:      const end2D = new THREE.Vector3(segment.end.u, segment.end.v, 1);
+357:    const geometry = new THREE.BufferGeometry();
+358:    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+359:    const material = new THREE.LineBasicMaterial({ color: 0x888888, opacity: 0.7, transparent: true });
+360:    const gridMesh = new THREE.LineSegments(geometry, material);
+364:    // console.log('[ThreeView] Added projection plane grid for', projPlane.id);
+367:    // console.log('[ThreeView] Checking auxiliary axes:', projPlane instanceof AuxiliaryProjectionPlane, displayOptions.value.showReferenceAxes);
+369:      // console.log('[ThreeView] Calling renderAuxiliaryPlaneAxes');
+379:function render2DElements() {
+394:function render3DElements() {
+396:  scene.children
+407:    const points3D = world.getAll3DPoints();
+408:    // console.log('[ThreeView] render3DElements called - found', points3D.length, '3D points');
+413:        // console.log('[ThreeView] Skipping invisible 3D point:', point.id);
+417:      // console.log('[ThreeView] Processing 3D point:', point.id, point.kind);
+419:      const realization = world.get3DPointRealization(point.id!);
+420:      // console.log('[ThreeView] Got realization:', {
+431:      // console.log('[ThreeView] Point 3D coordinates (domain):', { x, y, z });
+436:      // console.log('[ThreeView] Point 3D coordinates (three):', threePos);
+439:      const geometry = new THREE.SphereGeometry(0.15, 16, 16); // Radius 0.15 (vs 0.1 for 2D)
+440:      const material = new THREE.MeshStandardMaterial({
+446:      const sphere = new THREE.Mesh(geometry, material);
+455:    const lines3D = world.getAll3DLines();
+456:    // console.log('[ThreeView] Rendering', lines3D.length, '3D lines');
+462:      const realization = world.get3DLineRealization(line.id!);
+471:      const direction = domainDirectionToThreeJS(new THREE.Vector3(directionDomain.x, directionDomain.y, directionDomain.z));
+474:      const start = new THREE.Vector3(
+479:      const end = new THREE.Vector3(
+486:      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+487:      const material = new THREE.LineBasicMaterial({
+491:      const lineObj = new THREE.Line(geometry, material);
+499:    const segments3D = world.getAll3DSegments();
+500:    // console.log('[ThreeView] Rendering', segments3D.length, '3D segments');
+506:      const realization = world.get3DSegmentRealization(segment.id!);
+514:      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+515:      const material = new THREE.LineBasicMaterial({
+519:      const segmentObj = new THREE.Line(geometry, material);
+526:      const endpointGeometry = new THREE.SphereGeometry(0.12, 12, 12);
+527:      const endpointMaterial = new THREE.MeshStandardMaterial({
+534:      const startSphere = new THREE.Mesh(endpointGeometry, endpointMaterial);
+539:      const endSphere = new THREE.Mesh(endpointGeometry, endpointMaterial);
+546:    const planes3D = world.getAllPlanes();
+547:    // console.log('[ThreeView] Rendering', planes3D.length, '3D planes');
+550:      const planeRealization = world.get3DPlaneRealization(plane.id!);
+558:      const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+560:      const material = new THREE.MeshBasicMaterial({
+566:      const planeMesh = new THREE.Mesh(geometry, material);
+583:      const normalDomain = new THREE.Vector3(normal.x, normal.y, normal.z);
+587:      const defaultNormal = new THREE.Vector3(0, 0, 1);
+588:      const quaternion = new THREE.Quaternion();
+611:function renderGuidePerpendicularPlane() {
+613:  scene.children
+623:      const line = world.getLine2D(selectedId);
+628:      const plane3DReal = world.getProjectionPlane3DRealization(planeId);
+632:      const guideReal = line.realize2D(world);
+643:      const guideDirInput = new THREE.Vector3(guideDir2D.x, guideDir2D.y, 0);
+646:      const origin2D = new THREE.Vector3(0, 0, 0);
+680:      const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize);
+681:      const planeMaterial = new THREE.MeshBasicMaterial({
+687:      const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+694:      const normalDomain = new THREE.Vector3(perpNormal.x, perpNormal.y, perpNormal.z);
+696:      const defaultNormal = new THREE.Vector3(0, 0, 1);
+697:      const quaternion = new THREE.Quaternion();
+716:function renderGuideIntersections(planePoint: Vector4, planeNormal: { x: number; y: number; z: number }) {
+717:  const markerGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+718:  const markerMaterial = new THREE.MeshStandardMaterial({
+727:    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+734:  for (const point of world.getAll3DPoints()) {
+736:    const real = world.get3DPointRealization(point.id!);
+746:  for (const line of world.getAll3DLines()) {
+748:    const real = world.get3DLineRealization(line.id!);
+758:  for (const segment of world.getAll3DSegments()) {
+760:    const real = world.get3DSegmentRealization(segment.id!);
+775:function renderHingeLines() {
+778:  console.log('[ThreeView.renderHingeLines] Called');
+781:  const existingLines = scene.children.filter(child => child.userData.type === 'hinge-line');
+786:    const hingeLines = world.getAllHingeLines();
+787:    console.log('[ThreeView.renderHingeLines] Found', hingeLines.length, 'hinge lines:', hingeLines.map(hl => ({
+795:      const line3D = hingeLine.realize3D(world);
+814:        new THREE.Vector3(directionDomain.x, directionDomain.y, directionDomain.z)
+823:      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+824:      const material = new THREE.LineDashedMaterial({
+831:      const line = new THREE.Line(geometry, material);
+857:function renderReferenceAxes() {
+859:  scene.children
+867:  const origin = new THREE.Vector3(0, 0, 0);
+871:  const xDirDomain = new THREE.Vector3(1, 0, 0);
+873:  const xArrow = new THREE.ArrowHelper(xDir, origin, axisLength, 0xFF0000, 1, 0.5);
+881:  const yDirDomain = new THREE.Vector3(0, 1, 0);
+883:  const yArrow = new THREE.ArrowHelper(yDir, origin, axisLength, 0x00FF00, 1, 0.5);
+891:  const zDirDomain = new THREE.Vector3(0, 0, 1);
+893:  const zArrow = new THREE.ArrowHelper(zDir, origin, axisLength, 0x0000FF, 1, 0.5);
+915:function renderAuxiliaryPlaneAxes(
+922:  // console.log('[ThreeView] renderAuxiliaryPlaneAxes called for plane', projPlane.id);
+923:  // console.log('[ThreeView] Origin (domain):', Ox, Oy, Oz);
+924:  // console.log('[ThreeView] U-axis (domain):', Ux, Uy, Uz);
+925:  // console.log('[ThreeView] V-axis (domain):', Vx, Vy, Vz);
+930:  // console.log('[ThreeView] Origin (Three.js):', origin.x, origin.y, origin.z);
+936:  const uDirDomain = new THREE.Vector3(Ux, Uy, Uz).normalize();
+938:  // console.log('[ThreeView] U direction (Three.js):', uDir.x, uDir.y, uDir.z);
+939:  const uArrow = new THREE.ArrowHelper(uDir, origin, axisLength, velvetColor, 0.8, 0.4);
+944:  // console.log('[ThreeView] Added U-axis arrow to scene');
+948:  const vDirDomain = new THREE.Vector3(Vx, Vy, Vz).normalize();
+950:  // console.log('[ThreeView] V direction (Three.js):', vDir.x, vDir.y, vDir.z);
+951:  const vArrow = new THREE.ArrowHelper(vDir, origin, axisLength, velvetColor, 0.8, 0.4);
+956:  // console.log('[ThreeView] Added V-axis arrow to scene');
+967:function createAxisLabel(text: string, direction: THREE.Vector3, length: number) {
+1001:function createAuxiliaryAxisLabel(text: string, origin: THREE.Vector3, direction: THREE.Vector3, length: number) {
+1029:function handleDisplayChange() {
+1040:function animate() {
+1051:function handleResize() {
+1067:function cleanup() {
+1100:  watch(
+1112:  watch(
+1120:  watch(
+1143:  (window as any).__threeViewWorldChangeHandler = handleWorldChange;
+1148:  const handleWorldChange = (window as any).__threeViewWorldChangeHandler;
+1151:    delete (window as any).__threeViewWorldChangeHandler;
+--- Element renderer concise ---
+29:import { resolveVisibility } from '../domain/world/styleService';
+43:export class Element2DRenderer3D {
+60:  renderElements(world: World, displayOptions: ThreeViewDisplayOptions): void {
+62:      this.clear();
+67:    this.clear();
+70:    this.activePlaneId = null; // TODO: Get from world or display options
+73:    const planes = Array.from(world.projectionPlanes.values());
+76:      this.renderPlaneElements(plane, world);
+83:  private renderPlaneElements(plane: ProjectionPlane, world: World): void {
+89:      if (!resolveVisibility(point, world)) continue;
+90:      this.renderPoint(point, plane, world, isActivePlane);
+96:      if (!resolveVisibility(line, world)) continue;
+99:      const realization2D = line.realize2D(world);
+101:        this.renderSegment(line, plane, world, isActivePlane);
+103:        this.renderLine(line, plane, world, isActivePlane);
+110:      if (!resolveVisibility(circle, world)) continue;
+111:      this.renderCircle(circle, plane, world, isActivePlane);
+118:  private renderPoint(
+125:    const realization2D = point.realize2D(world);
+131:    const position3D = this.transform2DTo3D(realization2D.position, plane, world);
+137:    const style = this.resolveVisualStyle(point, isActivePlane);
+140:    const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+141:    const material = new THREE.MeshBasicMaterial({
+148:    const sphere = new THREE.Mesh(geometry, material);
+159:  private renderLine(
+166:    const realization2D = line.realize2D(world);
+172:    // TODO: Implement proper plane boundary clipping
+181:    const start3D = this.transform2DTo3D(startPoint2D, plane, world);
+182:    const end3D = this.transform2DTo3D(endPoint2D, plane, world);
+189:    const style = this.resolveVisualStyle(line, isActivePlane);
+192:    const lineCurve = new THREE.LineCurve3(start3D, end3D);
+194:    const geometry = new THREE.TubeGeometry(lineCurve, 1, tubeRadius, 8, false);
+195:    const material = new THREE.MeshBasicMaterial({
+202:    const lineObject = new THREE.Mesh(geometry, material);
+212:  private renderSegment(
+219:    const realization2D = line.realize2D(world);
+225:    const start3D = this.transform2DTo3D(realization2D.point1, plane, world);
+226:    const end3D = this.transform2DTo3D(realization2D.point2, plane, world);
+233:    const style = this.resolveVisualStyle(line, isActivePlane);
+236:    const curve = new THREE.LineCurve3(start3D, end3D);
+238:    const geometry = new THREE.TubeGeometry(curve, 1, tubeRadius, 8, false);
+239:    const material = new THREE.MeshBasicMaterial({
+246:    const lineObject = new THREE.Mesh(geometry, material);
+256:  private renderCircle(
+263:    const realization2D = circle.realize2D(world);
+269:    const center3D = this.transform2DTo3D(realization2D.center, plane, world);
+275:    const style = this.resolveVisualStyle(circle, isActivePlane);
+279:    const ellipseCurve = new THREE.EllipseCurve(
+298:      const point3D = this.transform2DTo3D(pointIn2D, plane, world);
+309:    const circleCurve = new THREE.CatmullRomCurve3(points3D, true); // true = closed curve
+311:    const geometry = new THREE.TubeGeometry(circleCurve, points3D.length, tubeRadius, 8, true);
+312:    const material = new THREE.MeshBasicMaterial({
+319:    const circleObject = new THREE.Mesh(geometry, material); // Mesh instead of LineLoop
+336:  private transform2DTo3D(
+358:    const uAxisDomain = new THREE.Vector3(e[0], e[3], e[6]);
+359:    const vAxisDomain = new THREE.Vector3(e[1], e[4], e[7]);
+362:    const normalDomain = new THREE.Vector3().crossVectors(uAxisDomain, vAxisDomain);
+384:  private resolveVisualStyle(
+389:    // TODO: Implement proper style resolution from element's visual style
+407:  updateVisibility(visibilityMap: Map<string, boolean>): void {
+419:  clear(): void {
+443:    this.geometryCache.clear();
+--- domain 3d concise ---
+frontend/src/domain/world/HingeLine.ts:76:   *   world.getProjectionPlane3DRealization(this.planeId)
+frontend/src/domain/world/HingeLine.ts:173:        const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
+frontend/src/domain/world/HingeLine.ts:193:    const plane2Real = world.getProjectionPlane3DRealization(this.planeId)!;
+frontend/src/domain/world/HingeLine.ts:273:        allHingeLines: world.getAllHingeLines().map(hl => ({ 
+frontend/src/domain/world/HingeLine.ts:288:      const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId);
+frontend/src/domain/world/HingeLine.ts:300:    const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id)!;
+frontend/src/domain/world/World.ts:541:    const planeRealization3D = this.getProjectionPlane3DRealization(point.planeId!);
+frontend/src/domain/world/World.ts:588:  getProjectionPlane3DRealization(planeId: string): ProjectionPlaneRealization3D | undefined {
+frontend/src/domain/world/World.ts:884:  getAllPlanes(): Plane3D[] {
+frontend/src/domain/world/World.ts:916:  getAllHingeLines(): HingeLine[] {
+frontend/src/domain/world/World.ts:1105:  getAll3DPoints(): Point3D[] {
+frontend/src/domain/world/World.ts:1138:  getAll3DLines(): Line3D[] {
+frontend/src/domain/world/World.ts:1171:  getAll3DSegments(): Segment3D[] {
+frontend/src/domain/world/World.ts:1187:  get3DPlane(id: string): Plane3D | undefined {
+frontend/src/domain/world/World.ts:1211:      || this.get3DPlane(id)
+frontend/src/domain/world/World.ts:1221:  get3DPointRealization(id: string): Point3DRealization3D | undefined {
+frontend/src/domain/world/World.ts:1240:  get3DLineRealization(id: string): Line3DRealization3D | undefined {
+frontend/src/domain/world/World.ts:1259:  get3DSegmentRealization(id: string): Segment3DRealization3D | undefined {
+frontend/src/domain/world/World.ts:1278:  get3DPlaneRealization(id: string): Plane3DRealization3D | undefined {
+frontend/src/domain/world/World.ts:1285:    const plane = this.get3DPlane(id);
+frontend/src/domain/world/Guide.ts:320:      const primaryPlaneReal3D = world.getProjectionPlane3DRealization(primaryHHL.planeId);
+frontend/src/domain/world/Guide.ts:321:      const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
+frontend/src/domain/world/BrokenHingeLine.ts:107:    const sourcePlaneReal3D = world.getProjectionPlane3DRealization(t2Line.planeId);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:170:    const allHingeLines = world.getAllHingeLines();
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:152:    const hingeLine = world.getAllHingeLines().find(hl => {
+frontend/src/domain/world/Segment3D.ts:97:      const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id);
+frontend/src/domain/world/Segment3D.ts:98:      const plane2Real = world.getProjectionPlane3DRealization(this.plane2Id);
+frontend/src/domain/world/Point3D.ts:133:      const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id);
+frontend/src/domain/world/Point3D.ts:134:      const plane2Real = world.getProjectionPlane3DRealization(this.plane2Id);
+frontend/src/domain/world/Plane.ts:289:    const p1 = world.getProjectionPlane3DRealization(plane1.id);
+frontend/src/domain/world/Plane.ts:290:    const p2 = world.getProjectionPlane3DRealization(plane2.id);
+frontend/src/domain/world/Point.ts:637:        const primaryPlaneReal3D = world.getProjectionPlane3DRealization(primaryBHHL.planeId);
+frontend/src/domain/world/Point.ts:638:        const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);

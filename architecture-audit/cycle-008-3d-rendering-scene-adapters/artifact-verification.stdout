@@ -1,0 +1,18 @@
+--- generated artifact line counts ---
+  117 architecture-audit/cycle-008-3d-rendering-scene-adapters/scope-check.md
+  178 architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-direct.md
+  233 architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-restructure.md
+  528 total
+--- no source diff names under frontend/backend/specs/docs? ---
+--- cycle-008 artifact files ---
+architecture-audit/cycle-008-3d-rendering-scene-adapters/artifact-verification.stderr
+architecture-audit/cycle-008-3d-rendering-scene-adapters/artifact-verification.stdout
+architecture-audit/cycle-008-3d-rendering-scene-adapters/canvas-presentation-evidence.stderr
+architecture-audit/cycle-008-3d-rendering-scene-adapters/canvas-presentation-evidence.stdout
+architecture-audit/cycle-008-3d-rendering-scene-adapters/concise-evidence.stderr
+architecture-audit/cycle-008-3d-rendering-scene-adapters/concise-evidence.stdout
+architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-direct.md
+architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-restructure.md
+architecture-audit/cycle-008-3d-rendering-scene-adapters/scope-check.md
+architecture-audit/cycle-008-3d-rendering-scene-adapters/scope-evidence.stderr
+architecture-audit/cycle-008-3d-rendering-scene-adapters/scope-evidence.stdout

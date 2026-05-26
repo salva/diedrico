@@ -1,0 +1,2049 @@
+--- ThreeView key lines ---
+    35	        </label>
+    36	      </div>
+    37	    </div>
+    38	  </div>
+    39	</template>
+    40	
+    41	<script setup lang="ts">
+    42	/**
+    43	 * ThreeView.vue - 3D visualization panel
+    44	 * 
+    45	 * Phase 25: 3D View Panel
+    46	 * 
+    47	 * Displays 3D reconstruction of dihedral geometry using Three.js.
+    48	 * - Shows projection planes in 3D space
+    49	 * - Renders 2D elements positioned on their planes (Phase 77 integration)
+    50	 * - Provides orbit camera controls for exploration
+    51	 * - Read-only view for understanding spatial relationships
+    52	 * 
+    53	 * Architecture:
+    54	 * - Three.js Scene: Main 3D container
+    55	 * - PerspectiveCamera: User's viewpoint with OrbitControls
+    56	 * - WebGLRenderer: Renders scene to canvas
+    57	 * - PlaneRenderer3D: Renders projection plane surfaces
+    58	 * - Element2DRenderer3D: Renders 2D elements on planes (Phase 77)
+    59	 * 
+    60	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#3d-view-overlay
+    61	 * @see specs/001-dihedral-learning-mvp/tasks.md#phase-25-3d-view-panel
+    62	 */
+    63	
+    64	import { ref, onMounted, onUnmounted, watch, inject } from 'vue';
+    65	import * as THREE from 'three';
+    66	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+    67	import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+    68	import type { World } from '../../domain/world/World';
+    69	import type { ProjectionPlane } from '../../domain/world/projectionPlane/ProjectionPlane';
+    70	import { AuxiliaryProjectionPlane } from '../../domain/world/projectionPlane/AuxiliaryProjectionPlane';
+    71	import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
+    72	import { useViewStore } from '../../stores/viewStore';
+    73	import { domainDirectionToThreeJS, domainToThreeJS, applyMatrix4x3, intersectLinePlane3D, intersectSegmentPlane3D, isPointOnPlane3D } from '../../utils/threeUtils';
+    74	import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '../../utils/rectangleGrid';
+    75	import { Vector4 } from 'three';
+    76	import type { Plane3DRealization3D } from '../../domain/world/Element3DRealization3D';
+    77	import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '../../config/rendering3D';
+    78	import { useSelectionStore } from '../../stores/selectionStore';
+    79	import { isGuide2D, isSiblingGuide2D } from '../../domain/world/Guide';
+    80	
+    81	/**
+    82	 * Generate a simple fallback grid (non-clipped) centered at origin
+    83	 */
+    84	function generateFallbackGrid(halfSize: number, divisions: number): Segment2D[] {
+    85	  const segments: Segment2D[] = [];
+    86	  const step = (halfSize * 2) / divisions;
+    87	  
+    88	  for (let i = 0; i <= divisions; i++) {
+    89	    const t = -halfSize + i * step;
+    90	    
+    91	    // Lines parallel to U-axis
+    92	    segments.push({
+    93	      start: { u: -halfSize, v: t },
+    94	      end: { u: halfSize, v: t }
+    95	    });
+    96	    
+    97	    // Lines parallel to V-axis
+    98	    segments.push({
+    99	      start: { u: t, v: -halfSize },
+   100	      end: { u: t, v: halfSize }
+   101	    });
+   102	  }
+   103	  
+   104	  return segments;
+   105	}
+   106	
+   107	// Component refs
+   108	const containerRef = ref<HTMLDivElement>();
+   109	const canvasRef = ref<HTMLCanvasElement>();
+   110	
+   111	// Three.js infrastructure
+   112	let scene: THREE.Scene;
+   113	let camera: THREE.PerspectiveCamera;
+   114	let renderer: THREE.WebGLRenderer;
+   115	let labelRenderer: CSS2DRenderer;  // Phase 82: For axis labels
+   116	let controls: OrbitControls;
+   117	let element2DRenderer: Element2DRenderer3D;
+   118	let animationFrameId: number;
+   119	
+   120	// View store for display options persistence (Phase 77.5 - T1203)
+   121	const viewStore = useViewStore();
+   122	const displayOptions = viewStore.threeViewOptions;
+   123	
+   124	// Selection store for guide perpendicular plane (Phase 108)
+   125	const selectionStore = useSelectionStore();
+   126	
+   127	// World instance (injected from App.vue)
+   128	const world = inject<World>('world')!;  // Non-null assertion - World is required
+   129	
+   130	// Phase 80: Reactivity trigger for World changes
+   131	// World is not reactive (performance reasons), so we use a local ref that increments
+   132	// when World notifies us of changes via the observer pattern
+   133	const renderTick = ref(0);
+   134	
+   135	/**
+   136	 * Initialize Three.js scene and infrastructure
+   137	 */
+   138	function initThreeScene() {
+   139	  // console.log('[ThreeView] initThreeScene called');
+   140	  // console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
+   160	  const cameraPos = domainDirectionToThreeJS(domainDirection);
+   161	  camera.position.set(
+   162	    cameraPos.x * cameraDistance,
+   163	    cameraPos.y * cameraDistance,
+   164	    cameraPos.z * cameraDistance
+   165	  );
+   166	  
+   167	  // Set camera up vector to align with domain Z axis (vertical)
+   168	  // Domain Z (0,0,1) stays as (0,0,1) in Three.js (Z unchanged)
+   169	  const domainUpDirection = new THREE.Vector3(0, 0, 1);
+   170	  const upVector = domainDirectionToThreeJS(domainUpDirection);
+   171	  camera.up.set(upVector.x, upVector.y, upVector.z);
+   172	  
+   173	  camera.lookAt(0, 0, 0);
+   174	
+   175	  // Create renderer
+   176	  renderer = new THREE.WebGLRenderer({
+   177	    canvas: canvasRef.value,
+   178	    antialias: true,
+   179	    alpha: false
+   180	  });
+   181	  renderer.setSize(containerRef.value.clientWidth, containerRef.value.clientHeight);
+   182	  renderer.setPixelRatio(window.devicePixelRatio);
+   183	
+   184	  // Create CSS2DRenderer for labels (Phase 82)
+   185	  labelRenderer = new CSS2DRenderer();
+   186	  labelRenderer.setSize(containerRef.value.clientWidth, containerRef.value.clientHeight);
+   187	  labelRenderer.domElement.style.position = 'absolute';
+   188	  labelRenderer.domElement.style.top = '0px';
+   189	  labelRenderer.domElement.style.pointerEvents = 'none';
+   190	  containerRef.value.appendChild(labelRenderer.domElement);
+   191	
+   192	  // Create orbit controls
+   193	  controls = new OrbitControls(camera, renderer.domElement);
+   194	  controls.enableDamping = true;
+   195	  controls.dampingFactor = 0.05;
+   196	  controls.screenSpacePanning = false;
+   197	  controls.minDistance = 2;      // Allow closer zoom (was 5)
+   198	  controls.maxDistance = 500;    // Allow much further zoom out (was 100)
+   199	  controls.maxPolarAngle = Math.PI; // Allow full rotation
+   200	
+   201	  // Add lighting
+   202	  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+   203	  scene.add(ambientLight);
+   204	
+   205	  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+   206	  directionalLight.position.set(10, 10, 10);
+   207	  scene.add(directionalLight);
+   208	
+   209	  // Initialize Element2DRenderer3D service
+   210	  element2DRenderer = new Element2DRenderer3D(scene);
+   211	
+   212	  // Render initial state
+   213	  renderProjectionPlanes();
+   214	  renderHingeLines();
+   215	  render2DElements();
+   216	  render3DElements();  // Render 3D elements including planes on initial load
+   217	
+   218	  // Render reference axes (Phase 82)
+   219	  renderReferenceAxes();
+   220	
+   221	  // Start animation loop
+   222	  animate();
+   223	}
+   224	
+   225	/**
+   226	 * Compute 3D rectangle corners using the precomputed transformation from planeRealization.
+   227	 * Uses the getRectangleCorners() method from Plane3DRealization3D.
+   228	 */
+   229	function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, planeSize: number): Vector4[] {
+   230	  return planeRealization.getRectangleCorners(planeSize);
+   231	}
+   232	
+   233	/**
+   234	 * Render projection plane grids in 3D space
+   235	 * 
+   236	 * Projection planes are 2D coordinate systems, NOT 3D surfaces.
+   237	 * We only render their grids to show their orientation in space.
+   238	 */
+   239	function renderProjectionPlanes() {
+   240	  // console.log('[ThreeView] renderProjectionPlanes called, showPlanes=', displayOptions.value.showPlanes);
+   241	  
+   242	  if (!displayOptions.value.showPlanes || !displayOptions.value.showGrid) return;
+   243	
+   244	  // Clear existing projection plane grids and auxiliary axes
+   245	  scene.children
+   246	    .filter(child => 
+   247	      child.userData.type === 'projection-plane-grid' || 
+   248	      child.userData.type === 'auxiliary-plane-axis' ||
+   249	      child.userData.type === 'auxiliary-plane-axis-label'
+   250	    )
+   250	    )
+   251	    .forEach(child => scene.remove(child));
+   252	
+   253	  // Get all projection planes and render their grids
+   254	  const projectionPlanes = Array.from(world.projectionPlanes.values());
+   255	  
+   256	  // console.log('[ThreeView] Number of projection planes:', projectionPlanes.length);
+   257	
+   258	  for (const projPlane of projectionPlanes) {
+   259	    // console.log('[ThreeView] Processing projection plane:', projPlane.id);
+   260	    
+   261	    const planeRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+   262	    // console.log('[ThreeView] Plane realization for', projPlane.id, ':', planeRealization);
+   263	    
+   264	    if (!planeRealization) {
+   265	      console.warn('[ThreeView] No 3D realization for projection plane', projPlane.id);
+   266	      continue;
+   267	    }
+   268	
+   269	    // Extract transformation from projection plane realization
+   270	    const matrixDomain = planeRealization.planeTo3D;
+   271	    const e = matrixDomain.elements;
+   272	    
+   273	    // Matrix4x3 storage is ROW-MAJOR: [m11, m12, m13, m21, m22, m23, m31, m32, m33, m41, m42, m43]
+   274	    // Maps (u,v,w) → (x,y,z,w_out) where:
+   275	    //   x = m11*u + m12*v + m13*w
+   276	    //   y = m21*u + m22*v + m23*w
+   277	    //   z = m31*u + m32*v + m33*w
+   278	    //   w = m41*u + m42*v + m43*w
+   279	    
+   280	    // Extract origin point in DOMAIN coordinates (u=0, v=0, w=1)
+   281	    const originW = e[11]; // m43 - homogeneous w
+   282	    const Ox = e[2] / originW;   // m13 / w
+   283	    const Oy = e[5] / originW;   // m23 / w
+   284	    const Oz = e[8] / originW;   // m33 / w
+   285	    
+   286	    // console.log('[ThreeView] Plane', projPlane.id, 'origin in domain:', Ox, Oy, Oz);
+   287	    
+   288	    // Extract U-axis and V-axis directions in DOMAIN coordinates (w=0)
+   289	    // U direction (u=1, v=0, w=0): (m11, m21, m31, m41)
+   290	    // V direction (u=0, v=1, w=0): (m12, m22, m32, m42)
+   291	    const Ux = e[0], Uy = e[3], Uz = e[6];  // m11, m21, m31
+   292	    const Vx = e[1], Vy = e[4], Vz = e[7];  // m12, m22, m32
+   293	    
+   294	    // console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
+   295	    // console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
+   296	    
+   297	    // Generate clipped grid for all projection planes
+   298	    // The grid is clipped to the square boundaries of the associated 3D plane
+   299	    let gridSegments: Segment2D[];
+   300	    
+   301	    const plane3DId = projPlane instanceof AuxiliaryProjectionPlane ? projPlane.plane3DId : projPlane.id;
+   302	    if (!plane3DId) {
+   303	      // Fallback for base planes without explicit plane3DId
+   304	      gridSegments = generateFallbackGrid(
+   305	        PLANE_RENDERING_CONFIG.MESH_SIZE / 2,
+   306	        PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS
+   307	      );
+   308	    } else {
+   309	      const plane3D = world.get3DPlane(plane3DId);
+   310	      const plane3DRealization = plane3D ? world.get3DPlaneRealization(plane3D.id!) : null;
+   311	      
+   312	      if (plane3DRealization && plane3DRealization.feasible) {
+   313	        // Get the 3D plane rectangle corners (matches the rendered square)
+   314	        const planeSize = PLANE_RENDERING_CONFIG.MESH_SIZE / 2;
+   315	        const corners = compute3DPlaneRectangleCorners(plane3DRealization, planeSize) as [Vector4, Vector4, Vector4, Vector4];
+   316	        
+   317	        // Convert to projection plane (u,v) coordinates
+   318	        const projPlaneRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+   319	        if (projPlaneRealization) {
+   320	          // Generate grid clipped to the rectangle in (u,v) space
+   321	          const rect2D = convertPlaneRectangleTo2D(corners, projPlaneRealization.threeDToPlane);
+   322	          gridSegments = generateClippedGrid(rect2D, 20);
+   323	        } else {
+   324	          // Fallback if projection plane realization not available
+   325	          gridSegments = generateFallbackGrid(
+   326	            PLANE_RENDERING_CONFIG.MESH_SIZE / 2,
+   327	            PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS
+   328	          );
+   329	        }
+   330	      } else {
+   331	        // Fallback if plane realization not available or infeasible
+   332	        gridSegments = generateFallbackGrid(
+   333	          PLANE_RENDERING_CONFIG.MESH_SIZE / 2,
+   334	          PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS
+   335	        );
+   336	      }
+   337	    }
+   338	    
+   339	    // console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
+   340	    // Convert grid segments from (u,v) to Three.js coordinates
+   341	    const vertices = [];
+   342	    for (const segment of gridSegments) {
+   343	      // Start point: (u, v, 1) → 3D domain → Three.js
+   344	      const start2D = new THREE.Vector3(segment.start.u, segment.start.v, 1);
+   345	      const start3D_domain = applyMatrix4x3(start2D, matrixDomain);
+   346	      const start3D_three = domainToThreeJS(start3D_domain);
+   347	      
+   348	      // End point: (u, v, 1) → 3D domain → Three.js
+   349	      const end2D = new THREE.Vector3(segment.end.u, segment.end.v, 1);
+   350	      const end3D_domain = applyMatrix4x3(end2D, matrixDomain);
+   351	      const end3D_three = domainToThreeJS(end3D_domain);
+   352	      
+   353	      vertices.push(start3D_three.x, start3D_three.y, start3D_three.z);
+   354	      vertices.push(end3D_three.x, end3D_three.y, end3D_three.z);
+   355	    }
+   356	    
+   357	    const geometry = new THREE.BufferGeometry();
+   358	    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+   359	    const material = new THREE.LineBasicMaterial({ color: 0x888888, opacity: 0.7, transparent: true });
+   360	    const gridMesh = new THREE.LineSegments(geometry, material);
+   361	    gridMesh.userData.type = 'projection-plane-grid';
+   362	    gridMesh.userData.planeId = projPlane.id;
+   363	    scene.add(gridMesh);
+   364	    // console.log('[ThreeView] Added projection plane grid for', projPlane.id);
+   365	    
+   366	    // Render auxiliary plane coordinate axes (U, V) if applicable
+   367	    // console.log('[ThreeView] Checking auxiliary axes:', projPlane instanceof AuxiliaryProjectionPlane, displayOptions.value.showReferenceAxes);
+   368	    if (projPlane instanceof AuxiliaryProjectionPlane && displayOptions.value.showReferenceAxes) {
+   369	      // console.log('[ThreeView] Calling renderAuxiliaryPlaneAxes');
+   370	      // We don't need Nx, Ny, Nz anymore - they're unused in the function
+   371	      renderAuxiliaryPlaneAxes(projPlane, Ox, Oy, Oz, Ux, Uy, Uz, Vx, Vy, Vz, 0, 0, 0);
+   372	    }
+   373	  }
+   374	}
+   375	
+   376	/**
+   377	 * Render 2D elements on planes (Phase 77 integration)
+   378	 */
+   379	function render2DElements() {
+   380	  if (!displayOptions.value.show2DElementsOnPlanes || !element2DRenderer) {
+   381	    element2DRenderer?.clear();
+   382	    return;
+   383	  }
+   384	
+   385	  element2DRenderer.renderElements(world, displayOptions.value);
+   386	}
+   387	
+   388	/**
+   389	 * Render 3D elements in 3D space (Phase 78)
+   390	 * 
+   390	 * 
+   391	 * Renders user-created 3D elements (points, lines, segments) with thicker/wider visual style.
+   392	 * 3D elements are reconstructed from 2D projections and displayed in true 3D coordinates.
+   393	 */
+   394	function render3DElements() {
+   395	  // Remove existing 3D elements
+   396	  scene.children
+   397	    .filter(child => child.userData.type === '3d-element')
+   398	    .forEach(child => scene.remove(child));
+   399	
+   400	  // Early return if planes are hidden - this controls visibility of 3D plane surfaces
+   401	  if (!displayOptions.value.showPlanes) {
+   402	    return;
+   403	  }
+   404	
+   405	  try {
+   406	    // Render 3D Points
+   407	    const points3D = world.getAll3DPoints();
+   408	    // console.log('[ThreeView] render3DElements called - found', points3D.length, '3D points');
+   409	    
+   410	    for (const point of points3D) {
+   411	      // Skip invisible 3D points
+   412	      if (point.visualStyle?.visible === false) {
+   413	        // console.log('[ThreeView] Skipping invisible 3D point:', point.id);
+   414	        continue;
+   415	      }
+   416	      
+   417	      // console.log('[ThreeView] Processing 3D point:', point.id, point.kind);
+   418	      
+   419	      const realization = world.get3DPointRealization(point.id!);
+   420	      // console.log('[ThreeView] Got realization:', {
+   421	      //   exists: !!realization,
+   422	      //   feasible: realization?.isFeasible()
+   423	      // });
+   424	      
+   425	      if (!realization || !realization.isFeasible()) {
+   426	        console.warn('[ThreeView] Skipping point - not feasible');
+   427	        continue;
+   428	      }
+   429	      
+   430	      const [x, y, z] = realization.getCartesian();
+   431	      // console.log('[ThreeView] Point 3D coordinates (domain):', { x, y, z });
+   432	      
+   433	      // Convert from domain (left-handed) to Three.js (right-handed) coordinates
+   434	      const domainPos = new Vector4(x, y, z, 1);
+   435	      const threePos = domainToThreeJS(domainPos);
+   436	      // console.log('[ThreeView] Point 3D coordinates (three):', threePos);
+   437	      
+   438	      // Create sphere for 3D point (thicker than 2D points)
+   439	      const geometry = new THREE.SphereGeometry(0.15, 16, 16); // Radius 0.15 (vs 0.1 for 2D)
+   440	      const material = new THREE.MeshStandardMaterial({
+   441	        color: point.visualStyle?.color || '#FF6B35', // Orange for 3D elements
+   442	        emissive: 0x000000,
+   443	        metalness: 0.3,
+   444	        roughness: 0.7
+   445	      });
+   446	      const sphere = new THREE.Mesh(geometry, material);
+   447	      sphere.position.copy(threePos);
+   448	      sphere.userData.type = '3d-element';
+   449	      sphere.userData.elementType = 'point';
+   450	      sphere.userData.elementId = point.id;
+   451	      scene.add(sphere);
+   452	    }
+   453	
+   454	    // Render 3D Lines
+   455	    const lines3D = world.getAll3DLines();
+   456	    // console.log('[ThreeView] Rendering', lines3D.length, '3D lines');
+   457	    
+   458	    for (const line of lines3D) {
+   459	      // Skip invisible 3D lines
+   460	      if (line.visualStyle?.visible === false) continue;
+   461	      
+   462	      const realization = world.get3DLineRealization(line.id!);
+   463	      if (!realization || !realization.isFeasible()) continue;
+   464	      
+   465	      // Get point and direction on the line for rendering (extend far in both directions)
+   466	      const pointOnLineDomain = realization.point;
+   467	      const directionDomain = realization.getDirection();
+   468	      
+   469	      // Convert from domain to Three.js coordinates
+   470	      const pointOnLine = domainToThreeJS(pointOnLineDomain);
+   471	      const direction = domainDirectionToThreeJS(new THREE.Vector3(directionDomain.x, directionDomain.y, directionDomain.z));
+   472	      
+   473	      const lineLength = 2000; // Extend 1000 units in each direction (appears infinite)
+   474	      const start = new THREE.Vector3(
+   475	        pointOnLine.x - direction.x * lineLength / 2,
+   476	        pointOnLine.y - direction.y * lineLength / 2,
+   477	        pointOnLine.z - direction.z * lineLength / 2
+   478	      );
+   479	      const end = new THREE.Vector3(
+   480	        pointOnLine.x + direction.x * lineLength / 2,
+   481	        pointOnLine.y + direction.y * lineLength / 2,
+   482	        pointOnLine.z + direction.z * lineLength / 2
+   483	      );
+   484	      
+   485	      // Create line geometry (thicker than 2D lines)
+   486	      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+   487	      const material = new THREE.LineBasicMaterial({
+   488	        color: line.visualStyle?.color || '#FF6B35',
+   489	        linewidth: 3 // Thicker than 2D (though linewidth may not work on all platforms)
+   490	      });
+   491	      const lineObj = new THREE.Line(geometry, material);
+   492	      lineObj.userData.type = '3d-element';
+   493	      lineObj.userData.elementType = 'line';
+   494	      lineObj.userData.elementId = line.id;
+   495	      scene.add(lineObj);
+   496	    }
+   497	
+   498	    // Render 3D Segments
+   499	    const segments3D = world.getAll3DSegments();
+   500	    // console.log('[ThreeView] Rendering', segments3D.length, '3D segments');
+   501	    
+   502	    for (const segment of segments3D) {
+   503	      // Skip invisible 3D segments
+   504	      if (segment.visualStyle?.visible === false) continue;
+   505	      
+   506	      const realization = world.get3DSegmentRealization(segment.id!);
+   507	      if (!realization || !realization.isFeasible()) continue;
+   508	      
+   509	      // Get endpoints from Vector4 and convert to Three.js coordinates
+   510	      const start = domainToThreeJS(realization.startPoint);
+   511	      const end = domainToThreeJS(realization.endPoint);
+   512	      
+   513	      // Create segment geometry (thicker than 2D segments)
+   514	      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+   515	      const material = new THREE.LineBasicMaterial({
+   516	        color: segment.visualStyle?.color || '#FF6B35',
+   517	        linewidth: 3
+   518	      });
+   519	      const segmentObj = new THREE.Line(geometry, material);
+   520	      segmentObj.userData.type = '3d-element';
+   521	      segmentObj.userData.elementType = 'segment';
+   522	      segmentObj.userData.elementId = segment.id;
+   523	      scene.add(segmentObj);
+   524	      
+   525	      // Add endpoint spheres
+   526	      const endpointGeometry = new THREE.SphereGeometry(0.12, 12, 12);
+   527	      const endpointMaterial = new THREE.MeshStandardMaterial({
+   528	        color: segment.visualStyle?.color || '#FF6B35',
+   529	        emissive: 0x000000,
+   530	        metalness: 0.3,
+   531	        roughness: 0.7
+   532	      });
+   533	      
+   534	      const startSphere = new THREE.Mesh(endpointGeometry, endpointMaterial);
+   535	      startSphere.position.copy(start);
+   536	      startSphere.userData.type = '3d-element';
+   537	      scene.add(startSphere);
+   538	      
+   539	      const endSphere = new THREE.Mesh(endpointGeometry, endpointMaterial);
+   540	      endSphere.position.copy(end);
+   541	      endSphere.userData.type = '3d-element';
+   542	      scene.add(endSphere);
+   543	    }
+   544	
+   545	    // Render 3D Planes (geometric surfaces)
+   546	    const planes3D = world.getAllPlanes();
+   547	    // console.log('[ThreeView] Rendering', planes3D.length, '3D planes');
+   548	    
+   549	    for (const plane of planes3D) {
+   550	      const planeRealization = world.get3DPlaneRealization(plane.id!);
+   551	      if (!planeRealization || !planeRealization.feasible) {
+   552	        console.warn('[ThreeView] Skipping plane - not feasible:', plane.id);
+   553	        continue;
+   554	      }
+   555	
+   556	      // Create plane mesh (semi-transparent surface)
+   557	      const planeSize = getPlaneMeshSize(plane.id);
+   558	      const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+   559	      
+   560	      const material = new THREE.MeshBasicMaterial({
+   560	      const material = new THREE.MeshBasicMaterial({
+   561	        color: 0xBDBDBD,  // Light gray for 3D planes (provides neutral background for blue 2D elements)
+   562	        side: THREE.DoubleSide,
+   563	        transparent: true,
+   564	        opacity: 0.4
+   565	      });
+   566	      const planeMesh = new THREE.Mesh(geometry, material);
+   567	
+   568	      // Use precomputed quaternion and originPoint from realization
+   569	      if (!planeRealization.quaternion || !planeRealization.originPoint) {
+   570	        console.error('[ThreeView] Plane realization missing quaternion or originPoint');
+   571	        continue;
+   572	      }
+   573	      
+   574	      const origin = planeRealization.originPoint;
+   575	      const normal = planeRealization.normal;
+   576	      
+   577	      // Apply domain→Three.js transformation to position
+   578	      const originDomain = new Vector4(origin.x, origin.y, origin.z, origin.w);
+   579	      const originThree = domainToThreeJS(originDomain);
+   580	      
+   581	      // Compute quaternion in Three.js space (not domain space)
+   582	      // Transform the normal to Three.js coordinates
+   583	      const normalDomain = new THREE.Vector3(normal.x, normal.y, normal.z);
+   584	      const normalThree = domainDirectionToThreeJS(normalDomain).normalize();
+   585	      
+   586	      // Compute quaternion to align default (0,0,1) with Three.js-space normal
+   587	      const defaultNormal = new THREE.Vector3(0, 0, 1);
+   588	      const quaternion = new THREE.Quaternion();
+   589	      quaternion.setFromUnitVectors(defaultNormal, normalThree);
+   590	      
+   591	      planeMesh.quaternion.copy(quaternion);
+   592	      planeMesh.position.copy(originThree);
+   593	      planeMesh.userData.type = '3d-element';
+   594	      planeMesh.userData.elementType = 'plane';
+   595	      planeMesh.userData.elementId = plane.id;
+   596	      scene.add(planeMesh);
+   597	    }
+   598	
+   599	  } catch (error) {
+   600	    console.warn('[ThreeView] Error rendering 3D elements:', error);
+   601	  }
+   602	}
+   603	
+   604	/**
+   605	 * Render guide perpendicular plane in 3D view (Phase 108)
+   606	 * 
+   607	 * When a guide (Guide2D or SiblingGuide2D) is selected, shows the 3D plane
+   608	 * that the guide represents — perpendicular to the projection plane, containing
+   609	 * the guide line. Also highlights intersections with 3D elements.
+   610	 */
+   611	function renderGuidePerpendicularPlane() {
+   612	  // Remove existing perpendicular plane objects and intersection markers
+   613	  scene.children
+   614	    .filter(child => child.userData.type === 'guide-perpendicular-plane' || child.userData.type === 'guide-intersection-highlight')
+   615	    .forEach(child => scene.remove(child));
+   616	
+   617	  const selectedIds = selectionStore.selectedIdsArray;
+   618	  if (selectedIds.length === 0) return;
+   619	
+   620	  for (const selectedId of selectedIds) {
+   621	    try {
+   622	      // Look up element — guides are Line2D elements on projection planes
+   623	      const line = world.getLine2D(selectedId);
+   624	      if (!line) continue;
+   625	      if (!isGuide2D(line) && !isSiblingGuide2D(line)) continue;
+   626	
+   627	      const planeId = line.planeId;
+   628	      const plane3DReal = world.getProjectionPlane3DRealization(planeId);
+   629	      if (!plane3DReal || !plane3DReal.feasible) continue;
+   630	
+   631	      // Get guide's 2D realization
+   632	      const guideReal = line.realize2D(world);
+   633	      if (!guideReal.feasible) continue;
+   634	
+   635	      const guideDir2D = guideReal.getDirection();
+   636	      const guideThroughPoint = guideReal.point1;
+   637	      const planeTo3D = plane3DReal.planeTo3D;
+   638	
+   639	      // Lift guide through-point to 3D
+   640	      const guidePoint3D = applyMatrix4x3(guideThroughPoint, planeTo3D);
+   641	
+   642	      // Lift guide direction to 3D (z=0 for direction vector)
+   643	      const guideDirInput = new THREE.Vector3(guideDir2D.x, guideDir2D.y, 0);
+   644	      const guideDir3D = applyMatrix4x3(guideDirInput, planeTo3D);
+   645	      // For a direction, subtract origin contribution: direction = transform(v) - transform(0)
+   646	      const origin2D = new THREE.Vector3(0, 0, 0);
+   647	      const origin3D = applyMatrix4x3(origin2D, planeTo3D);
+   648	      const guideDirVec = { 
+   649	        x: guideDir3D.x - origin3D.x, 
+   650	        y: guideDir3D.y - origin3D.y, 
+   651	        z: guideDir3D.z - origin3D.z 
+   652	      };
+   653	
+   654	      // Compute projection plane normal from planeTo3D basis vectors
+   655	      const e = planeTo3D.elements;
+   656	      // U-axis: column 0 → (e[0], e[3], e[6])
+   657	      // V-axis: column 1 → (e[1], e[4], e[7])
+   658	      const Ux = e[0], Uy = e[3], Uz = e[6];
+   659	      const Vx = e[1], Vy = e[4], Vz = e[7];
+   660	      const projPlaneNormal = {
+   661	        x: Uy * Vz - Uz * Vy,
+   662	        y: Uz * Vx - Ux * Vz,
+   663	        z: Ux * Vy - Uy * Vx
+   664	      };
+   665	
+   666	      // Compute perpendicular plane normal = cross(guideDir3D, projPlaneNormal)
+   667	      const perpNormal = {
+   668	        x: guideDirVec.y * projPlaneNormal.z - guideDirVec.z * projPlaneNormal.y,
+   669	        y: guideDirVec.z * projPlaneNormal.x - guideDirVec.x * projPlaneNormal.z,
+   670	        z: guideDirVec.x * projPlaneNormal.y - guideDirVec.y * projPlaneNormal.x
+   671	      };
+   672	      const perpNormalLen = Math.sqrt(perpNormal.x ** 2 + perpNormal.y ** 2 + perpNormal.z ** 2);
+   673	      if (perpNormalLen < 1e-10) continue;
+   674	      perpNormal.x /= perpNormalLen;
+   675	      perpNormal.y /= perpNormalLen;
+   676	      perpNormal.z /= perpNormalLen;
+   677	
+   678	      // Render perpendicular plane mesh
+   679	      const planeSize = getPlaneMeshSize(planeId);
+   680	      const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize);
+   681	      const planeMaterial = new THREE.MeshBasicMaterial({
+   682	        color: 0x00BCD4, // Cyan/teal
+   683	        side: THREE.DoubleSide,
+   684	        transparent: true,
+   685	        opacity: 0.25
+   686	      });
+   687	      const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+   688	
+   689	      // Position at guide point in Three.js coords
+   690	      const guidePointThree = domainToThreeJS(guidePoint3D);
+   691	      planeMesh.position.copy(guidePointThree);
+   692	
+   693	      // Orient the plane: align default normal (0,0,1) to perpendicular normal in Three.js space
+   694	      const normalDomain = new THREE.Vector3(perpNormal.x, perpNormal.y, perpNormal.z);
+   695	      const normalThree = domainDirectionToThreeJS(normalDomain).normalize();
+   696	      const defaultNormal = new THREE.Vector3(0, 0, 1);
+   697	      const quaternion = new THREE.Quaternion();
+   698	      quaternion.setFromUnitVectors(defaultNormal, normalThree);
+   699	      planeMesh.quaternion.copy(quaternion);
+   700	
+   701	      planeMesh.userData.type = 'guide-perpendicular-plane';
+   702	      scene.add(planeMesh);
+   703	
+   704	      // Compute and render intersections with 3D elements
+   705	      renderGuideIntersections(guidePoint3D, perpNormal);
+   706	
+   707	    } catch (error) {
+   708	      console.warn('[ThreeView] Error rendering guide perpendicular plane:', error);
+   709	    }
+   710	  }
+   711	}
+   712	
+   713	/**
+   714	 * Compute and render intersection markers between a perpendicular plane and 3D elements.
+   715	 */
+   716	function renderGuideIntersections(planePoint: Vector4, planeNormal: { x: number; y: number; z: number }) {
+   717	  const markerGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+   718	  const markerMaterial = new THREE.MeshStandardMaterial({
+   719	    color: 0xFFD700, // Gold
+   720	    emissive: 0x886600,
+   721	    metalness: 0.4,
+   722	    roughness: 0.3
+   723	  });
+   724	
+   725	  function addMarker(position: Vector4) {
+   726	    const threePos = domainToThreeJS(position);
+   727	    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+   728	    marker.position.copy(threePos);
+   729	    marker.userData.type = 'guide-intersection-highlight';
+   730	    scene.add(marker);
+   731	  }
+   732	
+   733	  // Check 3D Points
+   734	  for (const point of world.getAll3DPoints()) {
+   735	    if (point.visualStyle?.visible === false) continue;
+   736	    const real = world.get3DPointRealization(point.id!);
+   737	    if (!real || !real.isFeasible()) continue;
+   738	    const [x, y, z] = real.getCartesian();
+   739	    const pointPos = new Vector4(x, y, z, 1);
+   740	    if (isPointOnPlane3D(pointPos, planePoint, planeNormal)) {
+   741	      addMarker(pointPos);
+   742	    }
+   743	  }
+   744	
+   745	  // Check 3D Lines
+   746	  for (const line of world.getAll3DLines()) {
+   747	    if (line.visualStyle?.visible === false) continue;
+   748	    const real = world.get3DLineRealization(line.id!);
+   749	    if (!real || !real.isFeasible()) continue;
+   750	    const dir = real.getDirection();
+   751	    const intersection = intersectLinePlane3D(real.point, dir, planePoint, planeNormal);
+   752	    if (intersection) {
+   753	      addMarker(intersection);
+   754	    }
+   755	  }
+   756	
+   757	  // Check 3D Segments
+   758	  for (const segment of world.getAll3DSegments()) {
+   759	    if (segment.visualStyle?.visible === false) continue;
+   760	    const real = world.get3DSegmentRealization(segment.id!);
+   760	    const real = world.get3DSegmentRealization(segment.id!);
+   761	    if (!real || !real.isFeasible()) continue;
+   762	    const intersection = intersectSegmentPlane3D(real.startPoint, real.endPoint, planePoint, planeNormal);
+   763	    if (intersection) {
+   764	      addMarker(intersection);
+   765	    }
+   766	  }
+   767	}
+   768	
+   769	/**
+   770	 * Render all hinge lines in 3D space (Phase 84)
+   771	 * 
+   772	 * Uses HingeLine.realize3D() to compute 3D geometry from canonical coordinates.
+   773	 * This eliminates inline geometry computation and provides a consistent, centralized approach.
+   774	 */
+   775	function renderHingeLines() {
+   776	  if (!displayOptions.value.showPlanes) return;
+   777	
+   778	  console.log('[ThreeView.renderHingeLines] Called');
+   779	
+   780	  // Remove existing hinge lines
+   781	  const existingLines = scene.children.filter(child => child.userData.type === 'hinge-line');
+   782	  existingLines.forEach(line => scene.remove(line));
+   783	
+   784	  try {
+   785	    // Iterate through ALL hinge lines
+   786	    const hingeLines = world.getAllHingeLines();
+   787	    console.log('[ThreeView.renderHingeLines] Found', hingeLines.length, 'hinge lines:', hingeLines.map(hl => ({
+   788	      id: hl.id,
+   789	      plane1: hl.plane1Id,
+   790	      plane2: hl.plane2Id
+   791	    })));
+   792	    
+   793	    for (const hingeLine of hingeLines) {
+   794	      // Phase 84: Use realize3D() to get 3D geometry
+   795	      const line3D = hingeLine.realize3D(world);
+   796	      
+   797	      // Skip infeasible hinge lines (e.g., when parent plane is infeasible)
+   798	      if (!line3D.isFeasible()) {
+   799	        continue;
+   800	      }
+   801	      
+   802	      if (!line3D || !line3D.point || !line3D.direction) {
+   803	        console.warn('[ThreeView] Cannot render hinge line: realize3D failed', hingeLine.id);
+   804	        continue;
+   805	      }
+   806	      
+   807	      // Convert from domain coordinates (Vector4) to Three.js coordinates
+   808	      const pointDomain = line3D.point;
+   809	      const directionDomain = line3D.direction;
+   810	      
+   811	      // Convert to Three.js coordinates using domainToThreeJS
+   812	      const origin = domainToThreeJS(pointDomain);
+   813	      const direction = domainDirectionToThreeJS(
+   814	        new THREE.Vector3(directionDomain.x, directionDomain.y, directionDomain.z)
+   815	      ).normalize();
+   816	      
+   817	      // Create line extending in both directions from origin
+   818	      const lineLength = 2000; // Extend 1000 units in each direction (appears infinite)
+   819	      const start = origin.clone().add(direction.clone().multiplyScalar(-lineLength / 2));
+   820	      const end = origin.clone().add(direction.clone().multiplyScalar(lineLength / 2));
+   821	      
+   822	      // Create dashed line geometry
+   823	      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+   824	      const material = new THREE.LineDashedMaterial({
+   825	        color: 0x333333,  // Dark gray per spec
+   826	        dashSize: 0.5,
+   827	        gapSize: 0.3,
+   828	        linewidth: 2
+   829	      });
+   830	      
+   831	      const line = new THREE.Line(geometry, material);
+   832	      line.computeLineDistances(); // Required for dashed lines
+   833	      line.userData.type = 'hinge-line';
+   834	      line.userData.hingeLineId = hingeLine.id;
+   835	      scene.add(line);
+   836	    }
+   837	  } catch (error) {
+   838	    console.warn('[ThreeView] Error rendering hinge lines:', error);
+   839	  }
+   840	}
+   841	
+   842	/**
+   843	 * Render reference coordinate axes at origin (Phase 82)
+   844	 * 
+   845	 * Displays DOMAIN coordinate system axes (Monge projection) with labels:
+   846	 * - X: Red, points right (same in both systems)
+   847	 * - Y: Green, points away from viewer (depth, inverted to -Y in Three.js)
+   848	 * - Z: Blue, points up (vertical in domain, rendered as Y in Three.js)
+   849	 * 
+   850	 * Domain coordinate system (Monge):
+   851	 * - +X = right
+   852	 * - +Y = away from viewer (into screen)
+   853	 * - +Z = up (vertical)
+   854	 * 
+   855	 * Helps understand domain model coordinates and their conversion to Three.js rendering.
+   856	 */
+   857	function renderReferenceAxes() {
+   858	  // Remove existing reference axes and labels
+   859	  scene.children
+   860	    .filter(child => child.userData.type === 'reference-axis' || child.userData.type === 'reference-axis-label')
+   861	    .forEach(child => scene.remove(child));
+   862	  
+   863	  if (!displayOptions.value.showReferenceAxes) {
+   864	    return;  // Axes hidden
+   865	  }
+   866	  
+   867	  const origin = new THREE.Vector3(0, 0, 0);
+   868	  const axisLength = 15;  // Units in Three.js world space
+   869	  
+   870	  // Domain X-axis: convert (1,0,0) domain direction to Three.js
+   871	  const xDirDomain = new THREE.Vector3(1, 0, 0);
+   872	  const xDir = domainDirectionToThreeJS(xDirDomain);
+   873	  const xArrow = new THREE.ArrowHelper(xDir, origin, axisLength, 0xFF0000, 1, 0.5);
+   874	  xArrow.userData.type = 'reference-axis';
+   875	  xArrow.userData.axis = 'x';
+   876	  scene.add(xArrow);
+   877	  createAxisLabel('X', xDir, axisLength);
+   878	  
+   879	  // Domain Y-axis: convert (0,1,0) domain direction to Three.js
+   880	  // In Monge projection, Y points away from viewer (depth)
+   881	  const yDirDomain = new THREE.Vector3(0, 1, 0);
+   882	  const yDir = domainDirectionToThreeJS(yDirDomain);
+   883	  const yArrow = new THREE.ArrowHelper(yDir, origin, axisLength, 0x00FF00, 1, 0.5);
+   884	  yArrow.userData.type = 'reference-axis';
+   885	  yArrow.userData.axis = 'y';
+   886	  scene.add(yArrow);
+   887	  createAxisLabel('Y', yDir, axisLength);
+   888	  
+   889	  // Domain Z-axis: convert (0,0,1) domain direction to Three.js
+   890	  // In Monge projection, Z is the vertical axis (up)
+   891	  const zDirDomain = new THREE.Vector3(0, 0, 1);
+   892	  const zDir = domainDirectionToThreeJS(zDirDomain);
+   893	  const zArrow = new THREE.ArrowHelper(zDir, origin, axisLength, 0x0000FF, 1, 0.5);
+   894	  zArrow.userData.type = 'reference-axis';
+   895	  zArrow.userData.axis = 'z';
+   896	  scene.add(zArrow);
+   897	  createAxisLabel('Z', zDir, axisLength);
+   898	}
+   899	
+   900	/**
+   901	 * Render coordinate axes (U, V) for an auxiliary projection plane (Phase 82.1)
+   902	 * 
+   903	 * Displays the coordinate system of the auxiliary plane:
+   904	 * - U: Velvet, along T1 trace direction
+   905	 * - V: Velvet, perpendicular to U in plane
+   906	 * 
+   907	 * Axes are positioned at the plane's origin (T1∩T2 intersection point in 3D).
+   908	 * 
+   909	 * @param projPlane - The auxiliary projection plane
+   910	 * @param Ox, Oy, Oz - Origin coordinates in DOMAIN space
+   911	 * @param Ux, Uy, Uz - U-axis direction in DOMAIN space
+   912	 * @param Vx, Vy, Vz - V-axis direction in DOMAIN space
+   913	 * @param Nx, Ny, Nz - Normal direction in DOMAIN space (unused)
+   914	 */
+   915	function renderAuxiliaryPlaneAxes(
+   916	  projPlane: ProjectionPlane,
+   917	  Ox: number, Oy: number, Oz: number,
+   918	  Ux: number, Uy: number, Uz: number,
+   919	  Vx: number, Vy: number, Vz: number,
+   920	  _Nx: number, _Ny: number, _Nz: number  // Unused but kept for signature compatibility
+   921	) {
+   922	  // console.log('[ThreeView] renderAuxiliaryPlaneAxes called for plane', projPlane.id);
+   923	  // console.log('[ThreeView] Origin (domain):', Ox, Oy, Oz);
+   924	  // console.log('[ThreeView] U-axis (domain):', Ux, Uy, Uz);
+   925	  // console.log('[ThreeView] V-axis (domain):', Vx, Vy, Vz);
+   926	  
+   927	  // Convert origin from domain to Three.js coordinates
+   928	  const originDomain = new Vector4(Ox, Oy, Oz, 1);  // Homogeneous point
+   929	  const origin = domainToThreeJS(originDomain);
+   930	  // console.log('[ThreeView] Origin (Three.js):', origin.x, origin.y, origin.z);
+   930	  // console.log('[ThreeView] Origin (Three.js):', origin.x, origin.y, origin.z);
+   931	  
+   932	  const axisLength = 10;  // Slightly shorter than world axes for distinction
+   933	  const velvetColor = 0x8B008B;  // Dark magenta/velvet purple
+   934	  
+   935	  // U-axis: convert domain direction to Three.js
+   936	  const uDirDomain = new THREE.Vector3(Ux, Uy, Uz).normalize();
+   937	  const uDir = domainDirectionToThreeJS(uDirDomain);
+   938	  // console.log('[ThreeView] U direction (Three.js):', uDir.x, uDir.y, uDir.z);
+   939	  const uArrow = new THREE.ArrowHelper(uDir, origin, axisLength, velvetColor, 0.8, 0.4);
+   940	  uArrow.userData.type = 'auxiliary-plane-axis';
+   941	  uArrow.userData.axis = 'u';
+   942	  uArrow.userData.planeId = projPlane.id;
+   943	  scene.add(uArrow);
+   944	  // console.log('[ThreeView] Added U-axis arrow to scene');
+   945	  createAuxiliaryAxisLabel('U', origin, uDir, axisLength);
+   946	  
+   947	  // V-axis: convert domain direction to Three.js
+   948	  const vDirDomain = new THREE.Vector3(Vx, Vy, Vz).normalize();
+   949	  const vDir = domainDirectionToThreeJS(vDirDomain);
+   950	  // console.log('[ThreeView] V direction (Three.js):', vDir.x, vDir.y, vDir.z);
+   951	  const vArrow = new THREE.ArrowHelper(vDir, origin, axisLength, velvetColor, 0.8, 0.4);
+   952	  vArrow.userData.type = 'auxiliary-plane-axis';
+   953	  vArrow.userData.axis = 'v';
+   954	  vArrow.userData.planeId = projPlane.id;
+   955	  scene.add(vArrow);
+   956	  // console.log('[ThreeView] Added V-axis arrow to scene');
+   957	  createAuxiliaryAxisLabel('V', origin, vDir, axisLength);
+   958	}
+   959	
+   960	/**
+   961	 * Create a CSS2D label for an axis arrow (Phase 82)
+   962	 * 
+   963	 * @param text - Label text (e.g., "X", "Y", "Z")
+   964	 * @param direction - Unit direction vector of the axis
+   965	 * @param length - Length of the arrow in world units
+   966	 */
+   967	function createAxisLabel(text: string, direction: THREE.Vector3, length: number) {
+   968	  const labelDiv = document.createElement('div');
+   969	  labelDiv.className = 'axis-label';
+   970	  labelDiv.textContent = text;
+   971	  labelDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+   972	  labelDiv.style.padding = '4px 6px';
+   973	  labelDiv.style.border = '1px solid #333';
+   974	  labelDiv.style.borderRadius = '3px';
+   975	  labelDiv.style.fontSize = '14px';
+   976	  labelDiv.style.fontWeight = 'bold';
+   977	  labelDiv.style.fontFamily = 'sans-serif';
+   978	  labelDiv.style.color = '#333';
+   979	  labelDiv.style.userSelect = 'none';
+   980	  labelDiv.style.zIndex = '1000';
+   981	  
+   982	  const label = new CSS2DObject(labelDiv);
+   983	  label.userData.type = 'reference-axis-label';
+   984	  
+   985	  // Position at arrow tip + 1 unit offset to clear arrow head
+   986	  const labelPosition = direction.clone().multiplyScalar(length + 1);
+   987	  label.position.copy(labelPosition);
+   988	  
+   989	  // Add label directly to scene (not to arrow) for proper positioning
+   990	  scene.add(label);
+   991	}
+   992	
+   993	/**
+   994	 * Create a CSS2D label for an auxiliary plane axis arrow (Phase 82.1)
+   995	 * 
+   996	 * @param text - Label text (e.g., "U", "V", "N")
+   997	 * @param origin - Origin position of the axis in Three.js space
+   998	 * @param direction - Unit direction vector of the axis in Three.js space
+   999	 * @param length - Length of the arrow in world units
+  1000	 */
+  1001	function createAuxiliaryAxisLabel(text: string, origin: THREE.Vector3, direction: THREE.Vector3, length: number) {
+  1002	  const labelDiv = document.createElement('div');
+  1003	  labelDiv.className = 'axis-label';
+  1004	  labelDiv.textContent = text;
+  1005	  labelDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+  1006	  labelDiv.style.padding = '3px 5px';
+  1007	  labelDiv.style.border = '1px solid #666';
+  1008	  labelDiv.style.borderRadius = '3px';
+  1009	  labelDiv.style.fontSize = '12px';
+  1010	  labelDiv.style.fontWeight = 'bold';
+  1011	  labelDiv.style.fontFamily = 'sans-serif';
+  1012	  labelDiv.style.color = '#666';
+  1013	  labelDiv.style.userSelect = 'none';
+  1014	  labelDiv.style.zIndex = '999';
+  1015	  
+  1016	  const label = new CSS2DObject(labelDiv);
+  1017	  label.userData.type = 'auxiliary-plane-axis-label';
+  1018	  
+  1019	  // Position at arrow tip + 0.8 unit offset from origin
+  1020	  const labelPosition = origin.clone().add(direction.clone().multiplyScalar(length + 0.8));
+  1021	  label.position.copy(labelPosition);
+  1022	  
+  1023	  scene.add(label);
+  1024	}
+  1025	
+  1026	/**
+  1027	 * Handle display option changes
+  1028	 */
+  1029	function handleDisplayChange() {
+  1030	  renderProjectionPlanes();
+  1031	  renderHingeLines();
+  1032	  render2DElements();
+  1033	  render3DElements(); // Phase 78
+  1034	  renderReferenceAxes(); // Phase 82
+  1035	}
+  1036	
+  1037	/**
+  1038	 * Animation loop
+  1039	 */
+  1040	function animate() {
+  1041	  animationFrameId = requestAnimationFrame(animate);
+  1042	  
+  1043	  controls.update(); // Required for damping
+  1044	  renderer.render(scene, camera);
+  1045	  labelRenderer.render(scene, camera);  // Phase 82: Render CSS2D labels
+  1046	}
+  1047	
+  1048	/**
+  1049	 * Handle window resize
+  1050	 */
+  1051	function handleResize() {
+  1052	  if (!containerRef.value || !camera || !renderer || !labelRenderer) return;
+  1053	
+  1054	  const width = containerRef.value.clientWidth;
+  1055	  const height = containerRef.value.clientHeight;
+  1056	
+  1057	  camera.aspect = width / height;
+  1058	  camera.updateProjectionMatrix();
+  1059	
+  1060	  renderer.setSize(width, height);
+\n--- Element2DRenderer3D key lines ---
+     1	/**
+     2	 * Element2DRenderer3D - Service for rendering 2D elements in 3D space
+     3	 * 
+     4	 * Phase 77: 3D Visualization of 2D Elements on Planes
+     5	 * 
+     6	 * Transforms 2D plane-local coordinates to 3D world coordinates and creates
+     7	 * Three.js geometry for visualization in the 3D view overlay.
+     8	 * 
+     9	 * Key responsibilities:
+    10	 * - Iterate through ALL projection planes (default and user-created)
+    11	 * - Transform 2D element coordinates to 3D using projection plane matrices
+    12	 * - Create appropriate Three.js primitives (spheres, lines, curves)
+    13	 * - Apply visual styles with active plane emphasis
+    14	 * - Manage geometry caching for performance
+    15	 * - Prevent z-fighting with plane surfaces
+    16	 * 
+    17	 * @see specs/001-dihedral-learning-mvp/data-model.md#phase-77-3d-visualization-of-2d-elements-on-planes
+    18	 */
+    19	
+    20	import * as THREE from 'three';
+    21	import type { World } from '../domain/world/World';
+    22	import type { Element2D } from '../domain/world/Element2D';
+    23	import type { ProjectionPlane } from '../domain/world/projectionPlane/ProjectionPlane';
+    24	import type { Point2D } from '../domain/world/Point';
+    25	import type { Line2D } from '../domain/world/Line';
+    26	import type { Circle2D } from '../domain/world/Circle';
+    27	import type { ThreeViewDisplayOptions } from '../types/ThreeViewDisplayOptions';
+    28	import { applyMatrix4x3, domainToThreeJS } from '../utils/threeUtils';
+    29	import { resolveVisibility } from '../domain/world/styleService';
+    30	
+    31	/**
+    32	 * Material style properties for Three.js rendering
+    33	 */
+    34	export interface MaterialStyle {
+    35	  color: number;        // Three.js color (hex number)
+    36	  opacity: number;      // 0.0 to 1.0
+    37	  lineWidth?: number;   // Line width (note: limited support in WebGL)
+    38	}
+    39	
+    40	/**
+    41	 * Main rendering service for 2D elements in 3D space
+    42	 */
+    43	export class Element2DRenderer3D {
+    44	  private scene: THREE.Scene;
+    45	  private geometryCache: Map<string, THREE.Object3D>;
+    46	  private activePlaneId: string | null = null;
+    47	
+    48	  constructor(scene: THREE.Scene) {
+    49	    this.scene = scene;
+    50	    this.geometryCache = new Map();
+    51	  }
+    52	
+    53	  /**
+    54	   * Main entry point: render all visible 2D elements from World
+    55	   * Iterates through ALL projection planes (default and user-created)
+    56	   * 
+    57	   * @param world - World instance with projection planes and elements
+    58	   * @param displayOptions - Display options controlling what to render
+    59	   */
+    60	  renderElements(world: World, displayOptions: ThreeViewDisplayOptions): void {
+    61	    if (!displayOptions.show2DElementsOnPlanes) {
+    62	      this.clear();
+    63	      return;
+    64	    }
+    65	
+    66	    // Clear previous geometry
+    67	    this.clear();
+    68	
+    69	    // Get active plane ID for emphasis
+    70	    this.activePlaneId = null; // TODO: Get from world or display options
+    71	
+    72	    // Iterate through ALL projection planes (no special handling for P_H/P_V)
+    73	    const planes = Array.from(world.projectionPlanes.values());
+    74	    
+    75	    for (const plane of planes) {
+    76	      this.renderPlaneElements(plane, world);
+    77	    }
+    78	  }
+    79	
+    80	  /**
+    81	   * Render all elements on a single projection plane
+    82	   */
+    83	  private renderPlaneElements(plane: ProjectionPlane, world: World): void {
+    84	    const isActivePlane = plane.id === this.activePlaneId;
+    85	
+    86	    // Render points
+    87	    for (const point of plane.getAllPoints()) {
+    88	      // Skip invisible points (Phase 87: Encapsulation support via styleService)
+    89	      if (!resolveVisibility(point, world)) continue;
+    90	      this.renderPoint(point, plane, world, isActivePlane);
+    91	    }
+    92	
+    93	    // Render lines (includes segments, guides, etc.)
+    94	    for (const line of plane.getAllLines()) {
+    95	      // Skip invisible lines (Phase 87: Encapsulation support via styleService)
+    96	      if (!resolveVisibility(line, world)) continue;
+    97	      
+    98	      // Check if it's a segment (bounded line)
+    99	      const realization2D = line.realize2D(world);
+   100	      if (realization2D && realization2D.isBounded()) {
+   101	        this.renderSegment(line, plane, world, isActivePlane);
+   102	      } else {
+   103	        this.renderLine(line, plane, world, isActivePlane);
+   104	      }
+   105	    }
+   106	
+   107	    // Render circles
+   108	    for (const circle of plane.getAllCircles()) {
+   109	      // Skip invisible circles (Phase 87: Encapsulation support via styleService)
+   110	      if (!resolveVisibility(circle, world)) continue;
+   111	      this.renderCircle(circle, plane, world, isActivePlane);
+   112	    }
+   113	  }
+   114	
+   115	  /**
+   116	   * Render a Point2D as a sphere in 3D space
+   117	   */
+   118	  private renderPoint(
+   119	    point: Point2D,
+   120	    plane: ProjectionPlane,
+   121	    world: World,
+   122	    isActivePlane: boolean
+   123	  ): void {
+   124	    // Get 2D realization
+   125	    const realization2D = point.realize2D(world);
+   126	    if (!realization2D || !realization2D.feasible) {
+   127	      return; // Skip infeasible points
+   128	    }
+   129	
+   130	    // Transform to 3D
+   131	    const position3D = this.transform2DTo3D(realization2D.position, plane, world);
+   132	    if (!position3D) {
+   133	      return;
+   134	    }
+   135	
+   136	    // Get visual style
+   137	    const style = this.resolveVisualStyle(point, isActivePlane);
+   138	
+   139	    // Create sphere geometry
+   140	    const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+   140	    const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+   141	    const material = new THREE.MeshBasicMaterial({
+   142	      color: style.color,
+   143	      opacity: style.opacity,
+   144	      transparent: true,
+   145	      depthTest: true,
+   146	      depthWrite: true
+   147	    });
+   148	    const sphere = new THREE.Mesh(geometry, material);
+   149	    sphere.position.copy(position3D);
+   150	
+   151	    // Add to scene and cache
+   152	    this.scene.add(sphere);
+   153	    this.geometryCache.set(point.id, sphere);
+   154	  }
+   155	
+   156	  /**
+   157	   * Render a Line2D as a line segment in 3D space
+   158	   */
+   159	  private renderLine(
+   160	    line: Line2D,
+   161	    plane: ProjectionPlane,
+   162	    world: World,
+   163	    isActivePlane: boolean
+   164	  ): void {
+   165	    // Get 2D realization
+   166	    const realization2D = line.realize2D(world);
+   167	    if (!realization2D || !realization2D.feasible) {
+   168	      return;
+   169	    }
+   170	
+   171	    // Get line endpoints (clipped to plane boundaries)
+   172	    // TODO: Implement proper plane boundary clipping
+   173	    // For now, use a large enough extent
+   174	    const direction = realization2D.getDirection().clone().normalize();
+   175	    const point = realization2D.point1;
+   176	    
+   177	    const startPoint2D = point.clone().add(direction.clone().multiplyScalar(-1000));
+   178	    const endPoint2D = point.clone().add(direction.clone().multiplyScalar(1000));
+   179	
+   180	    // Transform endpoints to 3D
+   181	    const start3D = this.transform2DTo3D(startPoint2D, plane, world);
+   182	    const end3D = this.transform2DTo3D(endPoint2D, plane, world);
+   183	    
+   184	    if (!start3D || !end3D) {
+   185	      return;
+   186	    }
+   187	
+   188	    // Get visual style
+   189	    const style = this.resolveVisualStyle(line, isActivePlane);
+   190	
+   191	    // Create thicker line using TubeGeometry for better visibility
+   192	    const lineCurve = new THREE.LineCurve3(start3D, end3D);
+   193	    const tubeRadius = 0.15; // Thicker lines for visibility
+   194	    const geometry = new THREE.TubeGeometry(lineCurve, 1, tubeRadius, 8, false);
+   195	    const material = new THREE.MeshBasicMaterial({
+   196	      color: style.color,
+   197	      opacity: style.opacity * 0.7, // Reduced opacity for lines
+   198	      transparent: true,
+   199	      depthTest: true,
+   200	      depthWrite: true
+   201	    });
+   202	    const lineObject = new THREE.Mesh(geometry, material);
+   203	
+   204	    // Add to scene and cache
+   205	    this.scene.add(lineObject);
+   206	    this.geometryCache.set(line.id, lineObject);
+   207	  }
+   208	
+   209	  /**
+   210	   * Render a Segment2D (bounded line) as a line segment in 3D space
+   211	   */
+   212	  private renderSegment(
+   213	    line: Line2D,
+   214	    plane: ProjectionPlane,
+   215	    world: World,
+   216	    isActivePlane: boolean
+   217	  ): void {
+   218	    // Get 2D realization
+   219	    const realization2D = line.realize2D(world);
+   220	    if (!realization2D || !realization2D.feasible || !realization2D.isBounded()) {
+   221	      return;
+   222	    }
+   223	
+   224	    // Transform endpoints to 3D
+   225	    const start3D = this.transform2DTo3D(realization2D.point1, plane, world);
+   226	    const end3D = this.transform2DTo3D(realization2D.point2, plane, world);
+   227	    
+   228	    if (!start3D || !end3D) {
+   229	      return;
+   230	    }
+   231	
+   232	    // Get visual style
+   233	    const style = this.resolveVisualStyle(line, isActivePlane);
+   234	
+   235	    // Create thicker line using TubeGeometry for better visibility
+   236	    const curve = new THREE.LineCurve3(start3D, end3D);
+   237	    const tubeRadius = 0.15; // Thicker lines for visibility
+   238	    const geometry = new THREE.TubeGeometry(curve, 1, tubeRadius, 8, false);
+   239	    const material = new THREE.MeshBasicMaterial({
+   240	      color: style.color,
+   241	      opacity: style.opacity * 0.7,
+   242	      transparent: true,
+   243	      depthTest: true,
+   244	      depthWrite: true
+   245	    });
+   246	    const lineObject = new THREE.Mesh(geometry, material);
+   247	
+   248	    // Add to scene and cache
+   249	    this.scene.add(lineObject);
+   250	    this.geometryCache.set(line.id, lineObject);
+   251	  }
+   252	
+   253	  /**
+   254	   * Render a Circle2D as a 3D curve on the plane
+   255	   */
+   256	  private renderCircle(
+   257	    circle: Circle2D,
+   258	    plane: ProjectionPlane,
+   259	    world: World,
+   260	    isActivePlane: boolean
+   261	  ): void {
+   262	    // Get 2D realization
+   263	    const realization2D = circle.realize2D(world);
+   264	    if (!realization2D || !realization2D.feasible) {
+   265	      return;
+   266	    }
+   267	
+   268	    // Transform center to 3D
+   269	    const center3D = this.transform2DTo3D(realization2D.center, plane, world);
+   270	    if (!center3D) {
+   271	      return;
+   272	    }
+   273	
+   274	    // Get visual style
+   275	    const style = this.resolveVisualStyle(circle, isActivePlane);
+   276	
+   277	    // Create circle as a curve with 64 segments for smoothness
+   278	    const radius = realization2D.getRadius();
+   279	    const ellipseCurve = new THREE.EllipseCurve(
+   280	      0, 0,                        // Center offset (we'll position the geometry)
+   281	      radius, radius,              // Radii
+   282	      0, 2 * Math.PI,             // Start/end angle
+   283	      false,                       // Clockwise
+   284	      0                            // Rotation
+   285	    );
+   286	    
+   287	    const points2D = ellipseCurve.getPoints(64);
+   288	    
+   289	    // Transform circle points to 3D
+   290	    // We need to transform each point from the circle's local space to the plane's 3D space
+   291	    const points3D: THREE.Vector3[] = [];
+   292	    for (const p2D of points2D) {
+   293	      // Offset by circle center in 2D
+   294	      const pointIn2D = realization2D.center.clone();
+   295	      pointIn2D.x += p2D.x;
+   296	      pointIn2D.y += p2D.y;
+   297	      
+   298	      const point3D = this.transform2DTo3D(pointIn2D, plane, world);
+   299	      if (point3D) {
+   300	        points3D.push(point3D);
+   301	      }
+   302	    }
+   303	
+   304	    if (points3D.length < 3) {
+   305	      return; // Not enough points to form a circle
+   306	    }
+   307	
+   308	    // Create thicker circle using TubeGeometry for better visibility
+   309	    const circleCurve = new THREE.CatmullRomCurve3(points3D, true); // true = closed curve
+   310	    const tubeRadius = 0.15; // Thicker lines for visibility
+   311	    const geometry = new THREE.TubeGeometry(circleCurve, points3D.length, tubeRadius, 8, true);
+   312	    const material = new THREE.MeshBasicMaterial({
+   313	      color: style.color,
+   314	      opacity: style.opacity * 0.7,
+   315	      transparent: true,
+   316	      depthTest: true,
+   317	      depthWrite: true
+   318	    });
+   319	    const circleObject = new THREE.Mesh(geometry, material); // Mesh instead of LineLoop
+   320	
+   320	
+   321	    // Add to scene and cache
+   322	    this.scene.add(circleObject);
+   323	    this.geometryCache.set(circle.id, circleObject);
+   324	  }
+   325	
+   326	  /**
+   327	   * Transform a 2D point in plane-local coordinates to 3D world coordinates
+   328	   * 
+   329	   * Pipeline: 2D (u,v) → ProjectionPlane matrix → 3D (x,y,z)
+   330	   * 
+   331	   * @param point2D - Point in plane-local coordinates (Vector3 with z=1)
+   332	   * @param plane - Projection plane containing the element
+   333	   * @param world - World instance for plane realization lookup
+   334	   * @returns 3D position with z-fighting offset, or null if transformation fails
+   335	   */
+   336	  private transform2DTo3D(
+   337	    point2D: THREE.Vector3,
+   338	    plane: ProjectionPlane,
+   339	    world: World
+   340	  ): THREE.Vector3 | null {
+   341	    // Ensure plane has ID
+   342	    if (!plane.id) {
+   343	      return null;
+   344	    }
+   345	    
+   346	    // Get plane's 3D realization
+   347	    const planeRealization = world.getProjectionPlane3DRealization(plane.id);
+   348	    if (!planeRealization) {
+   349	      return null;
+   350	    }
+   351	
+   352	    // Apply 4x3 transformation matrix (returns Vector4 in domain coordinates)
+   353	    const position4D = applyMatrix4x3(point2D, planeRealization.planeTo3D);
+   354	    
+   355	    // Apply z-fighting prevention offset along plane normal (in domain coordinates)
+   356	    // Extract U and V basis vectors from transformation matrix (in domain coordinates)
+   357	    const e = planeRealization.planeTo3D.elements;
+   358	    const uAxisDomain = new THREE.Vector3(e[0], e[3], e[6]);
+   359	    const vAxisDomain = new THREE.Vector3(e[1], e[4], e[7]);
+   360	    
+   361	    // Compute normal in domain coordinates
+   362	    const normalDomain = new THREE.Vector3().crossVectors(uAxisDomain, vAxisDomain);
+   363	    normalDomain.normalize();
+   364	    
+   365	    // Offset position in domain coordinates (before conversion to Three.js)
+   366	    position4D.x += normalDomain.x * 0.01;
+   367	    position4D.y += normalDomain.y * 0.01;
+   368	    position4D.z += normalDomain.z * 0.01;
+   369	    
+   370	    // Convert from domain coordinates to Three.js rendering coordinates
+   371	    // This MUST be the last operation - converts left-handed to right-handed system
+   372	    const position3D = domainToThreeJS(position4D);
+   373	
+   374	    return position3D;
+   375	  }
+   376	
+   377	  /**
+   378	   * Resolve visual style for an element with active plane emphasis
+   379	   * 
+   380	   * @param element - Element to get style for
+   381	   * @param isActivePlane - Whether element is on the active plane
+   382	   * @returns Material style properties
+   383	   */
+   384	  private resolveVisualStyle(
+   385	    _element: Element2D,
+   386	    isActivePlane: boolean
+   387	  ): MaterialStyle {
+   388	    // Get element's visual properties
+   389	    // TODO: Implement proper style resolution from element's visual style
+   390	    // For now, use default styling
+   391	    
+   392	    const baseOpacity = 1.0;
+   393	    const activeMultiplier = isActivePlane ? 1.0 : 0.5;
+   394	
+   395	    return {
+   396	      color: 0x2196F3, // Blue (Material Design)
+   397	      opacity: baseOpacity * activeMultiplier,
+   398	      lineWidth: 1
+   399	    };
+   400	  }
+   401	
+   402	  /**
+   403	   * Update visibility of cached elements
+   404	   * 
+   405	   * @param visibilityMap - Map of element IDs to visibility state
+   406	   */
+   407	  updateVisibility(visibilityMap: Map<string, boolean>): void {
+   408	    for (const [elementId, visible] of visibilityMap) {
+   409	      const object = this.geometryCache.get(elementId);
+   410	      if (object) {
+   411	        object.visible = visible;
+   412	      }
+   413	    }
+   414	  }
+   415	
+   416	  /**
+   417	   * Clear all rendered geometry from the scene
+   418	   */
+   419	  clear(): void {
+   420	    // Remove all cached objects from scene
+   421	    for (const object of this.geometryCache.values()) {
+   422	      this.scene.remove(object);
+   423	      
+   424	      // Dispose geometry and materials to free memory
+   425	      if (object instanceof THREE.Mesh) {
+   426	        object.geometry.dispose();
+   427	        if (Array.isArray(object.material)) {
+   428	          object.material.forEach(m => m.dispose());
+   429	        } else {
+   430	          object.material.dispose();
+\n--- rendering3D lines ---
+     1	/**
+     2	 * 3D Rendering Configuration Constants
+     3	 * 
+     4	 * Central configuration for 3D visualization of geometric elements.
+     5	 * These values control the visual extent of infinite geometric objects
+     6	 * (planes, lines, grids) when rendered in the finite 3D view.
+     7	 * 
+     8	 * @remarks These are RENDERING parameters, not geometric properties.
+     9	 * Planes are mathematically infinite but must be clipped for visualization.
+    10	 */
+    11	
+    12	/**
+    13	 * Plane rendering boundaries (world coordinate units)
+    14	 * 
+    15	 * Used to create finite mesh representations of infinite planes.
+    16	 * Determines the visual extent of:
+    17	 * - Projection plane surfaces (semi-transparent rectangles)
+    18	 * - Grid lines on planes
+    19	 * - Clipping boundaries for 2D→3D element rendering
+    20	 */
+    21	export const PLANE_RENDERING_CONFIG = {
+    22	  /**
+    23	   * Minimum U coordinate for plane mesh/grid
+    24	   * U-axis typically corresponds to horizontal direction
+    25	   */
+    26	  MIN_U: -500,
+    27	  
+    28	  /**
+    29	   * Maximum U coordinate for plane mesh/grid
+    30	   */
+    31	  MAX_U: 500,
+    32	  
+    33	  /**
+    34	   * Minimum V coordinate for plane mesh/grid
+    35	   * V-axis typically corresponds to vertical direction
+    36	   */
+    37	  MIN_V: -500,
+    38	  
+    39	  /**
+    40	   * Maximum V coordinate for plane mesh/grid
+    41	   */
+    42	  MAX_V: 500,
+    43	  
+    44	  /**
+    45	   * Size of square plane mesh (edge length in world units)
+    46	   * Used for creating PlaneGeometry in Three.js
+    47	   */
+    48	  MESH_SIZE: 1000,  // Matches 2 × max boundary extent
+    49	  
+    50	  /**
+    51	   * Fallback grid parameters (when clipped grid computation fails)
+    52	   */
+    53	  FALLBACK_GRID: {
+    54	    /**
+    55	     * Half-size of grid extent (±halfSize in both U and V)
+    56	     */
+    57	    HALF_SIZE: 500,
+    58	    
+    59	    /**
+    60	     * Number of grid divisions (creates this many + 1 lines in each direction)
+    61	     */
+    62	    DIVISIONS: 20,
+    63	  },
+    64	} as const;
+    65	
+    66	/**
+    67	 * Get plane rendering boundaries for a specific plane
+    68	 * 
+    69	 * Currently returns same boundaries for all planes.
+    70	 * Can be extended in the future to support per-plane customization.
+    71	 * 
+    72	 * @param _planeId - ID of the plane (reserved for future per-plane config)
+    73	 * @returns Boundary configuration object
+    74	 */
+    75	export function getPlaneBoundaries(_planeId?: string) {
+    76	  return {
+    77	    minU: PLANE_RENDERING_CONFIG.MIN_U,
+    78	    maxU: PLANE_RENDERING_CONFIG.MAX_U,
+    79	    minV: PLANE_RENDERING_CONFIG.MIN_V,
+    80	    maxV: PLANE_RENDERING_CONFIG.MAX_V,
+    81	  };
+    82	}
+    83	
+    84	/**
+    85	 * Get plane mesh size for Three.js PlaneGeometry
+    86	 * 
+    87	 * @param _planeId - ID of the plane (reserved for future per-plane config)
+    88	 * @returns Edge length of square plane mesh
+    89	 */
+    90	export function getPlaneMeshSize(_planeId?: string): number {
+    91	  return PLANE_RENDERING_CONFIG.MESH_SIZE;
+    92	}
+\n--- canvas presentation files ---
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts
+\n--- 3D/tests search ---
+frontend/src/config/rendering3D.ts:2: * 3D Rendering Configuration Constants
+frontend/src/config/rendering3D.ts:4: * Central configuration for 3D visualization of geometric elements.
+frontend/src/config/rendering3D.ts:6: * (planes, lines, grids) when rendered in the finite 3D view.
+frontend/src/config/rendering3D.ts:19: * - Clipping boundaries for 2D→3D element rendering
+frontend/tests/helpers/worldHelpers.ts:28: * - P_H (horizontal) and P_V (vertical) projection planes
+frontend/tests/helpers/worldHelpers.ts:71: * Get horizontal projection plane from world
+frontend/tests/helpers/worldHelpers.ts:78: * Get vertical projection plane from world
+frontend/tests/helpers/worldHelpers.ts:85: * Get horizontal projection plane ID
+frontend/tests/helpers/worldHelpers.ts:92: * Get vertical projection plane ID
+frontend/tests/helpers/worldHelpers.ts:131: * Get hinge line connecting P_H and P_V
+frontend/tests/helpers/worldHelpers.ts:132: * Note: This is a test helper - there's no conceptual 'main' hinge line
+frontend/tests/helpers/worldHelpers.ts:138:  const hingeLines = world.getAllHingeLines();
+frontend/tests/helpers/worldHelpers.ts:139:  const hingeLine = hingeLines.find(
+frontend/tests/helpers/worldHelpers.ts:144:  if (!hingeLine) {
+frontend/tests/helpers/worldHelpers.ts:145:    throw new Error('No hinge line found connecting P_H and P_V');
+frontend/tests/helpers/worldHelpers.ts:148:  return hingeLine;
+frontend/tests/helpers/worldHelpers.ts:152: * Get ID of hinge line connecting P_H and P_V
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:10:import { circleStyle, guideStyle, hingeStyle, lineStyle, pointStyle, PROJECTED_LINE_STYLE, PROJECTED_POINT_STYLE, PROJECTED_SEGMENT_STYLE, segmentStyle } from './CanvasStylePolicy';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:37:        const kind = line instanceof HalfHingeLine2D ? 'half-hinge-line' : line instanceof Segment2DByPoints ? 'finite-segment' : line instanceof SiblingGuide2D ? 'sibling-guide' : line instanceof Guide2D ? 'guide' : 'infinite-line';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:44:          const style = kind === 'guide' || kind === 'sibling-guide' ? guideStyle(line as Guide2D | SiblingGuide2D, stateFor(line.id!, state)) : kind === 'half-hinge-line' ? hingeStyle(line as HalfHingeLine2D, stateFor(line.id!, state)) : lineStyle(line, stateFor(line.id!, state));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:45:          const prefix = kind === 'guide' || kind === 'sibling-guide' ? 'guide' : kind === 'half-hinge-line' ? 'halfhingeline' : 'line';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:46:          const primitive: LinePrimitive = { type: 'line', id: `${prefix}-${line.id}`, sourceEntityId: line.id, planeId: kind === 'guide' || kind === 'sibling-guide' ? undefined : line.planeId, layer: kind === 'guide' || kind === 'sibling-guide' ? RenderLayer.Guides : kind === 'half-hinge-line' ? RenderLayer.HingeLines : RenderLayer.Elements, visible: true, style, point: realization.point1.clone().applyMatrix3(transform), direction: realization.getDirection().applyMatrix3(transform) };
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:48:          queryItems.push({ id: primitive.id, kind, elementId: line.id!, elementType: kind === 'half-hinge-line' ? 'half-hinge-line' : kind === 'guide' || kind === 'sibling-guide' ? 'guide' : 'line', planeId: line.planeId, selectable: true, planeGeometry: { type: 'line', point: realization.point1.clone(), direction: realization.getDirection() } });
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:67:    if (state.showProjectedElements) renderItems.push(...projected3D(world, planeTransforms));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:77:function projected3D(world: World, planeTransforms: Map<string, any>): CanvasRenderItem[] {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:80:    const planeRealization = world.getProjectionPlane3DRealization(plane.id); const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:82:    for (const point3D of world.getAll3DPoints()) { const r = point3D.realize3D(world); if (!r?.isFeasible()) continue; const position = applyMatrix3x4(r.position, planeRealization.threeDToPlane).applyMatrix3(planeToPaper); items.push(item({ type: 'point', id: `proj3d-point-${point3D.id}-on-${plane.id}`, sourceEntityId: point3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_POINT_STYLE, position, radius: 6 }, 'projected-3d-point')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:83:    for (const line3D of world.getAll3DLines()) { const r = line3D.realize3D(world); if (!r?.isFeasible()) continue; const dir = applyMatrix3x4(r.direction, planeRealization.threeDToPlane); if (dir.length() < EPSILON) continue; items.push(item({ type: 'line', id: `proj3d-line-${line3D.id}-on-${plane.id}`, sourceEntityId: line3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_LINE_STYLE, point: applyMatrix3x4(r.point, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), direction: dir.applyMatrix3(planeToPaper) }, 'projected-3d-line')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:84:    for (const segment3D of world.getAll3DSegments()) { const r = segment3D.realize3D(world); if (!r?.isFeasible()) continue; items.push(item({ type: 'segment', id: `proj3d-segment-${segment3D.id}-on-${plane.id}`, sourceEntityId: segment3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_SEGMENT_STYLE, point1: applyMatrix3x4(r.startPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), point2: applyMatrix3x4(r.endPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper) }, 'projected-3d-segment')); }
+frontend/src/components/panels/ThreeView.vue:3:    <canvas ref="canvasRef" class="three-canvas"></canvas>
+frontend/src/components/panels/ThreeView.vue:5:    <!-- 3D View Controls -->
+frontend/src/components/panels/ThreeView.vue:10:          title="Show or hide projection plane surfaces in 3D view"
+frontend/src/components/panels/ThreeView.vue:17:          title="Display 2D geometric elements (points, lines, circles) positioned on their planes in 3D space"
+frontend/src/components/panels/ThreeView.vue:24:          title="Show coordinate grid on each projection plane for spatial reference"
+frontend/src/components/panels/ThreeView.vue:43: * ThreeView.vue - 3D visualization panel
+frontend/src/components/panels/ThreeView.vue:45: * Phase 25: 3D View Panel
+frontend/src/components/panels/ThreeView.vue:47: * Displays 3D reconstruction of dihedral geometry using Three.js.
+frontend/src/components/panels/ThreeView.vue:48: * - Shows projection planes in 3D space
+frontend/src/components/panels/ThreeView.vue:54: * - Three.js Scene: Main 3D container
+frontend/src/components/panels/ThreeView.vue:57: * - PlaneRenderer3D: Renders projection plane surfaces
+frontend/src/components/panels/ThreeView.vue:58: * - Element2DRenderer3D: Renders 2D elements on planes (Phase 77)
+frontend/src/components/panels/ThreeView.vue:71:import { Element2DRenderer3D } from '../../services/Element2DRenderer3D';
+frontend/src/components/panels/ThreeView.vue:73:import { domainDirectionToThreeJS, domainToThreeJS, applyMatrix4x3, intersectLinePlane3D, intersectSegmentPlane3D, isPointOnPlane3D } from '../../utils/threeUtils';
+frontend/src/components/panels/ThreeView.vue:76:import type { Plane3DRealization3D } from '../../domain/world/Element3DRealization3D';
+frontend/src/components/panels/ThreeView.vue:77:import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '../../config/rendering3D';
+frontend/src/components/panels/ThreeView.vue:117:let element2DRenderer: Element2DRenderer3D;
+frontend/src/components/panels/ThreeView.vue:124:// Selection store for guide perpendicular plane (Phase 108)
+frontend/src/components/panels/ThreeView.vue:139:  // console.log('[ThreeView] initThreeScene called');
+frontend/src/components/panels/ThreeView.vue:140:  // console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
+frontend/src/components/panels/ThreeView.vue:141:  // console.log('[ThreeView] World projection planes:', Array.from(world.projectionPlanes.keys()));
+frontend/src/components/panels/ThreeView.vue:144:    console.warn('[ThreeView] containerRef or canvasRef is null!');
+frontend/src/components/panels/ThreeView.vue:209:  // Initialize Element2DRenderer3D service
+frontend/src/components/panels/ThreeView.vue:210:  element2DRenderer = new Element2DRenderer3D(scene);
+frontend/src/components/panels/ThreeView.vue:216:  render3DElements();  // Render 3D elements including planes on initial load
+frontend/src/components/panels/ThreeView.vue:226: * Compute 3D rectangle corners using the precomputed transformation from planeRealization.
+frontend/src/components/panels/ThreeView.vue:227: * Uses the getRectangleCorners() method from Plane3DRealization3D.
+frontend/src/components/panels/ThreeView.vue:229:function compute3DPlaneRectangleCorners(planeRealization: Plane3DRealization3D, planeSize: number): Vector4[] {
+frontend/src/components/panels/ThreeView.vue:234: * Render projection plane grids in 3D space
+frontend/src/components/panels/ThreeView.vue:236: * Projection planes are 2D coordinate systems, NOT 3D surfaces.
+frontend/src/components/panels/ThreeView.vue:240:  // console.log('[ThreeView] renderProjectionPlanes called, showPlanes=', displayOptions.value.showPlanes);
+frontend/src/components/panels/ThreeView.vue:244:  // Clear existing projection plane grids and auxiliary axes
+frontend/src/components/panels/ThreeView.vue:253:  // Get all projection planes and render their grids
+frontend/src/components/panels/ThreeView.vue:256:  // console.log('[ThreeView] Number of projection planes:', projectionPlanes.length);
+frontend/src/components/panels/ThreeView.vue:259:    // console.log('[ThreeView] Processing projection plane:', projPlane.id);
+frontend/src/components/panels/ThreeView.vue:261:    const planeRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+frontend/src/components/panels/ThreeView.vue:262:    // console.log('[ThreeView] Plane realization for', projPlane.id, ':', planeRealization);
+frontend/src/components/panels/ThreeView.vue:265:      console.warn('[ThreeView] No 3D realization for projection plane', projPlane.id);
+frontend/src/components/panels/ThreeView.vue:269:    // Extract transformation from projection plane realization
+frontend/src/components/panels/ThreeView.vue:270:    const matrixDomain = planeRealization.planeTo3D;
+frontend/src/components/panels/ThreeView.vue:286:    // console.log('[ThreeView] Plane', projPlane.id, 'origin in domain:', Ox, Oy, Oz);
+frontend/src/components/panels/ThreeView.vue:294:    // console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
+frontend/src/components/panels/ThreeView.vue:295:    // console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
+frontend/src/components/panels/ThreeView.vue:297:    // Generate clipped grid for all projection planes
+frontend/src/components/panels/ThreeView.vue:298:    // The grid is clipped to the square boundaries of the associated 3D plane
+frontend/src/components/panels/ThreeView.vue:301:    const plane3DId = projPlane instanceof AuxiliaryProjectionPlane ? projPlane.plane3DId : projPlane.id;
+frontend/src/components/panels/ThreeView.vue:302:    if (!plane3DId) {
+frontend/src/components/panels/ThreeView.vue:303:      // Fallback for base planes without explicit plane3DId
+frontend/src/components/panels/ThreeView.vue:309:      const plane3D = world.get3DPlane(plane3DId);
+frontend/src/components/panels/ThreeView.vue:310:      const plane3DRealization = plane3D ? world.get3DPlaneRealization(plane3D.id!) : null;
+frontend/src/components/panels/ThreeView.vue:312:      if (plane3DRealization && plane3DRealization.feasible) {
+frontend/src/components/panels/ThreeView.vue:313:        // Get the 3D plane rectangle corners (matches the rendered square)
+frontend/src/components/panels/ThreeView.vue:315:        const corners = compute3DPlaneRectangleCorners(plane3DRealization, planeSize) as [Vector4, Vector4, Vector4, Vector4];
+frontend/src/components/panels/ThreeView.vue:317:        // Convert to projection plane (u,v) coordinates
+frontend/src/components/panels/ThreeView.vue:318:        const projPlaneRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+frontend/src/components/panels/ThreeView.vue:324:          // Fallback if projection plane realization not available
+frontend/src/components/panels/ThreeView.vue:339:    // console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
+frontend/src/components/panels/ThreeView.vue:343:      // Start point: (u, v, 1) → 3D domain → Three.js
+frontend/src/components/panels/ThreeView.vue:345:      const start3D_domain = applyMatrix4x3(start2D, matrixDomain);
+frontend/src/components/panels/ThreeView.vue:346:      const start3D_three = domainToThreeJS(start3D_domain);
+frontend/src/components/panels/ThreeView.vue:348:      // End point: (u, v, 1) → 3D domain → Three.js
+frontend/src/components/panels/ThreeView.vue:350:      const end3D_domain = applyMatrix4x3(end2D, matrixDomain);
+frontend/src/components/panels/ThreeView.vue:351:      const end3D_three = domainToThreeJS(end3D_domain);
+frontend/src/components/panels/ThreeView.vue:353:      vertices.push(start3D_three.x, start3D_three.y, start3D_three.z);
+frontend/src/components/panels/ThreeView.vue:354:      vertices.push(end3D_three.x, end3D_three.y, end3D_three.z);
+frontend/src/components/panels/ThreeView.vue:364:    // console.log('[ThreeView] Added projection plane grid for', projPlane.id);
+frontend/src/components/panels/ThreeView.vue:367:    // console.log('[ThreeView] Checking auxiliary axes:', projPlane instanceof AuxiliaryProjectionPlane, displayOptions.value.showReferenceAxes);
+frontend/src/components/panels/ThreeView.vue:369:      // console.log('[ThreeView] Calling renderAuxiliaryPlaneAxes');
+frontend/src/components/panels/ThreeView.vue:389: * Render 3D elements in 3D space (Phase 78)
+frontend/src/components/panels/ThreeView.vue:391: * Renders user-created 3D elements (points, lines, segments) with thicker/wider visual style.
+frontend/src/components/panels/ThreeView.vue:392: * 3D elements are reconstructed from 2D projections and displayed in true 3D coordinates.
+frontend/src/components/panels/ThreeView.vue:394:function render3DElements() {
+frontend/src/components/panels/ThreeView.vue:395:  // Remove existing 3D elements
+frontend/src/components/panels/ThreeView.vue:400:  // Early return if planes are hidden - this controls visibility of 3D plane surfaces
+frontend/src/components/panels/ThreeView.vue:406:    // Render 3D Points
+frontend/src/components/panels/ThreeView.vue:407:    const points3D = world.getAll3DPoints();
+frontend/src/components/panels/ThreeView.vue:408:    // console.log('[ThreeView] render3DElements called - found', points3D.length, '3D points');
+frontend/src/components/panels/ThreeView.vue:410:    for (const point of points3D) {
+frontend/src/components/panels/ThreeView.vue:411:      // Skip invisible 3D points
+frontend/src/components/panels/ThreeView.vue:413:        // console.log('[ThreeView] Skipping invisible 3D point:', point.id);
+frontend/src/components/panels/ThreeView.vue:417:      // console.log('[ThreeView] Processing 3D point:', point.id, point.kind);
+frontend/src/components/panels/ThreeView.vue:419:      const realization = world.get3DPointRealization(point.id!);
+frontend/src/components/panels/ThreeView.vue:420:      // console.log('[ThreeView] Got realization:', {
+frontend/src/components/panels/ThreeView.vue:426:        console.warn('[ThreeView] Skipping point - not feasible');
+frontend/src/components/panels/ThreeView.vue:431:      // console.log('[ThreeView] Point 3D coordinates (domain):', { x, y, z });
+frontend/src/components/panels/ThreeView.vue:436:      // console.log('[ThreeView] Point 3D coordinates (three):', threePos);
+frontend/src/components/panels/ThreeView.vue:438:      // Create sphere for 3D point (thicker than 2D points)
+frontend/src/components/panels/ThreeView.vue:441:        color: point.visualStyle?.color || '#FF6B35', // Orange for 3D elements
+frontend/src/components/panels/ThreeView.vue:454:    // Render 3D Lines
+frontend/src/components/panels/ThreeView.vue:455:    const lines3D = world.getAll3DLines();
+frontend/src/components/panels/ThreeView.vue:456:    // console.log('[ThreeView] Rendering', lines3D.length, '3D lines');
+frontend/src/components/panels/ThreeView.vue:458:    for (const line of lines3D) {
+frontend/src/components/panels/ThreeView.vue:459:      // Skip invisible 3D lines
+frontend/src/components/panels/ThreeView.vue:462:      const realization = world.get3DLineRealization(line.id!);
+frontend/src/components/panels/ThreeView.vue:498:    // Render 3D Segments
+frontend/src/components/panels/ThreeView.vue:499:    const segments3D = world.getAll3DSegments();
+frontend/src/components/panels/ThreeView.vue:500:    // console.log('[ThreeView] Rendering', segments3D.length, '3D segments');
+frontend/src/components/panels/ThreeView.vue:502:    for (const segment of segments3D) {
+frontend/src/components/panels/ThreeView.vue:503:      // Skip invisible 3D segments
+frontend/src/components/panels/ThreeView.vue:506:      const realization = world.get3DSegmentRealization(segment.id!);
+frontend/src/components/panels/ThreeView.vue:545:    // Render 3D Planes (geometric surfaces)
+frontend/src/components/panels/ThreeView.vue:546:    const planes3D = world.getAllPlanes();
+frontend/src/components/panels/ThreeView.vue:547:    // console.log('[ThreeView] Rendering', planes3D.length, '3D planes');
+frontend/src/components/panels/ThreeView.vue:549:    for (const plane of planes3D) {
+frontend/src/components/panels/ThreeView.vue:550:      const planeRealization = world.get3DPlaneRealization(plane.id!);
+frontend/src/components/panels/ThreeView.vue:552:        console.warn('[ThreeView] Skipping plane - not feasible:', plane.id);
+frontend/src/components/panels/ThreeView.vue:561:        color: 0xBDBDBD,  // Light gray for 3D planes (provides neutral background for blue 2D elements)
+frontend/src/components/panels/ThreeView.vue:570:        console.error('[ThreeView] Plane realization missing quaternion or originPoint');
+frontend/src/components/panels/ThreeView.vue:600:    console.warn('[ThreeView] Error rendering 3D elements:', error);
+frontend/src/components/panels/ThreeView.vue:605: * Render guide perpendicular plane in 3D view (Phase 108)
+frontend/src/components/panels/ThreeView.vue:607: * When a guide (Guide2D or SiblingGuide2D) is selected, shows the 3D plane
+frontend/src/components/panels/ThreeView.vue:608: * that the guide represents — perpendicular to the projection plane, containing
+frontend/src/components/panels/ThreeView.vue:609: * the guide line. Also highlights intersections with 3D elements.
+frontend/src/components/panels/ThreeView.vue:614:    .filter(child => child.userData.type === 'guide-perpendicular-plane' || child.userData.type === 'guide-intersection-highlight')
+frontend/src/components/panels/ThreeView.vue:622:      // Look up element — guides are Line2D elements on projection planes
+frontend/src/components/panels/ThreeView.vue:628:      const plane3DReal = world.getProjectionPlane3DRealization(planeId);
+frontend/src/components/panels/ThreeView.vue:629:      if (!plane3DReal || !plane3DReal.feasible) continue;
+frontend/src/components/panels/ThreeView.vue:631:      // Get guide's 2D realization
+frontend/src/components/panels/ThreeView.vue:632:      const guideReal = line.realize2D(world);
+frontend/src/components/panels/ThreeView.vue:633:      if (!guideReal.feasible) continue;
+frontend/src/components/panels/ThreeView.vue:635:      const guideDir2D = guideReal.getDirection();
+frontend/src/components/panels/ThreeView.vue:636:      const guideThroughPoint = guideReal.point1;
+frontend/src/components/panels/ThreeView.vue:637:      const planeTo3D = plane3DReal.planeTo3D;
+frontend/src/components/panels/ThreeView.vue:639:      // Lift guide through-point to 3D
+frontend/src/components/panels/ThreeView.vue:640:      const guidePoint3D = applyMatrix4x3(guideThroughPoint, planeTo3D);
+frontend/src/components/panels/ThreeView.vue:642:      // Lift guide direction to 3D (z=0 for direction vector)
+frontend/src/components/panels/ThreeView.vue:643:      const guideDirInput = new THREE.Vector3(guideDir2D.x, guideDir2D.y, 0);
+frontend/src/components/panels/ThreeView.vue:644:      const guideDir3D = applyMatrix4x3(guideDirInput, planeTo3D);
+frontend/src/components/panels/ThreeView.vue:647:      const origin3D = applyMatrix4x3(origin2D, planeTo3D);
+frontend/src/components/panels/ThreeView.vue:648:      const guideDirVec = { 
+frontend/src/components/panels/ThreeView.vue:649:        x: guideDir3D.x - origin3D.x, 
+frontend/src/components/panels/ThreeView.vue:650:        y: guideDir3D.y - origin3D.y, 
+frontend/src/components/panels/ThreeView.vue:651:        z: guideDir3D.z - origin3D.z 
+frontend/src/components/panels/ThreeView.vue:654:      // Compute projection plane normal from planeTo3D basis vectors
+frontend/src/components/panels/ThreeView.vue:655:      const e = planeTo3D.elements;
+frontend/src/components/panels/ThreeView.vue:666:      // Compute perpendicular plane normal = cross(guideDir3D, projPlaneNormal)
+frontend/src/components/panels/ThreeView.vue:668:        x: guideDirVec.y * projPlaneNormal.z - guideDirVec.z * projPlaneNormal.y,
+frontend/src/components/panels/ThreeView.vue:669:        y: guideDirVec.z * projPlaneNormal.x - guideDirVec.x * projPlaneNormal.z,
+frontend/src/components/panels/ThreeView.vue:670:        z: guideDirVec.x * projPlaneNormal.y - guideDirVec.y * projPlaneNormal.x
+frontend/src/components/panels/ThreeView.vue:689:      // Position at guide point in Three.js coords
+frontend/src/components/panels/ThreeView.vue:690:      const guidePointThree = domainToThreeJS(guidePoint3D);
+frontend/src/components/panels/ThreeView.vue:691:      planeMesh.position.copy(guidePointThree);
+frontend/src/components/panels/ThreeView.vue:701:      planeMesh.userData.type = 'guide-perpendicular-plane';
+frontend/src/components/panels/ThreeView.vue:704:      // Compute and render intersections with 3D elements
+frontend/src/components/panels/ThreeView.vue:705:      renderGuideIntersections(guidePoint3D, perpNormal);
+frontend/src/components/panels/ThreeView.vue:708:      console.warn('[ThreeView] Error rendering guide perpendicular plane:', error);
+frontend/src/components/panels/ThreeView.vue:714: * Compute and render intersection markers between a perpendicular plane and 3D elements.
+frontend/src/components/panels/ThreeView.vue:729:    marker.userData.type = 'guide-intersection-highlight';
+frontend/src/components/panels/ThreeView.vue:733:  // Check 3D Points
+frontend/src/components/panels/ThreeView.vue:734:  for (const point of world.getAll3DPoints()) {
+frontend/src/components/panels/ThreeView.vue:736:    const real = world.get3DPointRealization(point.id!);
+frontend/src/components/panels/ThreeView.vue:740:    if (isPointOnPlane3D(pointPos, planePoint, planeNormal)) {
+frontend/src/components/panels/ThreeView.vue:745:  // Check 3D Lines
+frontend/src/components/panels/ThreeView.vue:746:  for (const line of world.getAll3DLines()) {
+frontend/src/components/panels/ThreeView.vue:748:    const real = world.get3DLineRealization(line.id!);
+frontend/src/components/panels/ThreeView.vue:751:    const intersection = intersectLinePlane3D(real.point, dir, planePoint, planeNormal);
+frontend/src/components/panels/ThreeView.vue:757:  // Check 3D Segments
+frontend/src/components/panels/ThreeView.vue:758:  for (const segment of world.getAll3DSegments()) {
+frontend/src/components/panels/ThreeView.vue:760:    const real = world.get3DSegmentRealization(segment.id!);
+frontend/src/components/panels/ThreeView.vue:762:    const intersection = intersectSegmentPlane3D(real.startPoint, real.endPoint, planePoint, planeNormal);
+frontend/src/components/panels/ThreeView.vue:770: * Render all hinge lines in 3D space (Phase 84)
+frontend/src/components/panels/ThreeView.vue:772: * Uses HingeLine.realize3D() to compute 3D geometry from canonical coordinates.
+frontend/src/components/panels/ThreeView.vue:778:  console.log('[ThreeView.renderHingeLines] Called');
+frontend/src/components/panels/ThreeView.vue:780:  // Remove existing hinge lines
+frontend/src/components/panels/ThreeView.vue:781:  const existingLines = scene.children.filter(child => child.userData.type === 'hinge-line');
+frontend/src/components/panels/ThreeView.vue:785:    // Iterate through ALL hinge lines
+frontend/src/components/panels/ThreeView.vue:786:    const hingeLines = world.getAllHingeLines();
+frontend/src/components/panels/ThreeView.vue:787:    console.log('[ThreeView.renderHingeLines] Found', hingeLines.length, 'hinge lines:', hingeLines.map(hl => ({
+frontend/src/components/panels/ThreeView.vue:793:    for (const hingeLine of hingeLines) {
+frontend/src/components/panels/ThreeView.vue:794:      // Phase 84: Use realize3D() to get 3D geometry
+frontend/src/components/panels/ThreeView.vue:795:      const line3D = hingeLine.realize3D(world);
+frontend/src/components/panels/ThreeView.vue:797:      // Skip infeasible hinge lines (e.g., when parent plane is infeasible)
+frontend/src/components/panels/ThreeView.vue:798:      if (!line3D.isFeasible()) {
+frontend/src/components/panels/ThreeView.vue:802:      if (!line3D || !line3D.point || !line3D.direction) {
+frontend/src/components/panels/ThreeView.vue:803:        console.warn('[ThreeView] Cannot render hinge line: realize3D failed', hingeLine.id);
+frontend/src/components/panels/ThreeView.vue:808:      const pointDomain = line3D.point;
+frontend/src/components/panels/ThreeView.vue:809:      const directionDomain = line3D.direction;
+frontend/src/components/panels/ThreeView.vue:833:      line.userData.type = 'hinge-line';
+frontend/src/components/panels/ThreeView.vue:834:      line.userData.hingeLineId = hingeLine.id;
+frontend/src/components/panels/ThreeView.vue:838:    console.warn('[ThreeView] Error rendering hinge lines:', error);
+frontend/src/components/panels/ThreeView.vue:901: * Render coordinate axes (U, V) for an auxiliary projection plane (Phase 82.1)
+frontend/src/components/panels/ThreeView.vue:907: * Axes are positioned at the plane's origin (T1∩T2 intersection point in 3D).
+frontend/src/components/panels/ThreeView.vue:909: * @param projPlane - The auxiliary projection plane
+frontend/src/components/panels/ThreeView.vue:922:  // console.log('[ThreeView] renderAuxiliaryPlaneAxes called for plane', projPlane.id);
+frontend/src/components/panels/ThreeView.vue:923:  // console.log('[ThreeView] Origin (domain):', Ox, Oy, Oz);
+frontend/src/components/panels/ThreeView.vue:924:  // console.log('[ThreeView] U-axis (domain):', Ux, Uy, Uz);
+frontend/src/components/panels/ThreeView.vue:925:  // console.log('[ThreeView] V-axis (domain):', Vx, Vy, Vz);
+frontend/src/components/panels/ThreeView.vue:930:  // console.log('[ThreeView] Origin (Three.js):', origin.x, origin.y, origin.z);
+frontend/src/components/panels/ThreeView.vue:938:  // console.log('[ThreeView] U direction (Three.js):', uDir.x, uDir.y, uDir.z);
+frontend/src/components/panels/ThreeView.vue:944:  // console.log('[ThreeView] Added U-axis arrow to scene');
+frontend/src/components/panels/ThreeView.vue:950:  // console.log('[ThreeView] V direction (Three.js):', vDir.x, vDir.y, vDir.z);
+frontend/src/components/panels/ThreeView.vue:956:  // console.log('[ThreeView] Added V-axis arrow to scene');
+frontend/src/components/panels/ThreeView.vue:1033:  render3DElements(); // Phase 78
+frontend/src/components/panels/ThreeView.vue:1106:      render3DElements(); // Phase 78
+frontend/src/components/panels/ThreeView.vue:1111:  // Phase 108: Watch selection changes to show/hide guide perpendicular plane
+frontend/src/components/panels/ThreeView.vue:1123:      // Re-render planes and hinge lines if showPlanes or showGrid changed
+frontend/src/components/panels/ThreeView.vue:1167:.three-canvas {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:9:  | 'guide'
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:10:  | 'sibling-guide'
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:11:  | 'hinge-line'
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:12:  | 'half-hinge-line'
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:6:import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:12:  readonly t1HingeTraceId: string;      // Trace line used as hinge (T1)
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:25:    plane3DId?: string
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:27:    super(id, name, isActive, isVisible, color, plane3DId);
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:43:      this.plane3DId
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:56:   * Calculate the 3D transformation realization for this auxiliary plane
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:60:   * @returns ProjectionPlaneRealization3D with computed transformation matrices
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:62:  realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D {
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:79:        return new ProjectionPlaneRealization3D(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:88:      return new ProjectionPlaneRealization3D(
+\n--- imports/legacy scans ---
+frontend/src/components/panels/ThreeView.vue:67:import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+frontend/src/components/panels/ThreeView.vue:72:import { useViewStore } from '../../stores/viewStore';
+frontend/src/components/panels/ThreeView.vue:78:import { useSelectionStore } from '../../stores/selectionStore';
+frontend/src/components/panels/ThreeView.vue:121:const viewStore = useViewStore();
+frontend/src/components/panels/ThreeView.vue:125:const selectionStore = useSelectionStore();
+frontend/src/components/panels/ThreeView.vue:139:  // console.log('[ThreeView] initThreeScene called');
+frontend/src/components/panels/ThreeView.vue:140:  // console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
+frontend/src/components/panels/ThreeView.vue:141:  // console.log('[ThreeView] World projection planes:', Array.from(world.projectionPlanes.keys()));
+frontend/src/components/panels/ThreeView.vue:240:  // console.log('[ThreeView] renderProjectionPlanes called, showPlanes=', displayOptions.value.showPlanes);
+frontend/src/components/panels/ThreeView.vue:247:      child.userData.type === 'projection-plane-grid' || 
+frontend/src/components/panels/ThreeView.vue:248:      child.userData.type === 'auxiliary-plane-axis' ||
+frontend/src/components/panels/ThreeView.vue:249:      child.userData.type === 'auxiliary-plane-axis-label'
+frontend/src/components/panels/ThreeView.vue:254:  const projectionPlanes = Array.from(world.projectionPlanes.values());
+frontend/src/components/panels/ThreeView.vue:256:  // console.log('[ThreeView] Number of projection planes:', projectionPlanes.length);
+frontend/src/components/panels/ThreeView.vue:259:    // console.log('[ThreeView] Processing projection plane:', projPlane.id);
+frontend/src/components/panels/ThreeView.vue:261:    const planeRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+frontend/src/components/panels/ThreeView.vue:262:    // console.log('[ThreeView] Plane realization for', projPlane.id, ':', planeRealization);
+frontend/src/components/panels/ThreeView.vue:286:    // console.log('[ThreeView] Plane', projPlane.id, 'origin in domain:', Ox, Oy, Oz);
+frontend/src/components/panels/ThreeView.vue:294:    // console.log('[ThreeView] Plane', projPlane.id, 'U-axis:', Ux, Uy, Uz);
+frontend/src/components/panels/ThreeView.vue:295:    // console.log('[ThreeView] Plane', projPlane.id, 'V-axis:', Vx, Vy, Vz);
+frontend/src/components/panels/ThreeView.vue:318:        const projPlaneRealization = world.getProjectionPlane3DRealization(projPlane.id!);
+frontend/src/components/panels/ThreeView.vue:339:    // console.log('[ThreeView] Converting', gridSegments.length, 'grid segments to Three.js coordinates');
+frontend/src/components/panels/ThreeView.vue:361:    gridMesh.userData.type = 'projection-plane-grid';
+frontend/src/components/panels/ThreeView.vue:364:    // console.log('[ThreeView] Added projection plane grid for', projPlane.id);
+frontend/src/components/panels/ThreeView.vue:367:    // console.log('[ThreeView] Checking auxiliary axes:', projPlane instanceof AuxiliaryProjectionPlane, displayOptions.value.showReferenceAxes);
+frontend/src/components/panels/ThreeView.vue:369:      // console.log('[ThreeView] Calling renderAuxiliaryPlaneAxes');
+frontend/src/components/panels/ThreeView.vue:397:    .filter(child => child.userData.type === '3d-element')
+frontend/src/components/panels/ThreeView.vue:407:    const points3D = world.getAll3DPoints();
+frontend/src/components/panels/ThreeView.vue:408:    // console.log('[ThreeView] render3DElements called - found', points3D.length, '3D points');
+frontend/src/components/panels/ThreeView.vue:413:        // console.log('[ThreeView] Skipping invisible 3D point:', point.id);
+frontend/src/components/panels/ThreeView.vue:417:      // console.log('[ThreeView] Processing 3D point:', point.id, point.kind);
+frontend/src/components/panels/ThreeView.vue:420:      // console.log('[ThreeView] Got realization:', {
+frontend/src/components/panels/ThreeView.vue:431:      // console.log('[ThreeView] Point 3D coordinates (domain):', { x, y, z });
+frontend/src/components/panels/ThreeView.vue:436:      // console.log('[ThreeView] Point 3D coordinates (three):', threePos);
+frontend/src/components/panels/ThreeView.vue:448:      sphere.userData.type = '3d-element';
+frontend/src/components/panels/ThreeView.vue:455:    const lines3D = world.getAll3DLines();
+frontend/src/components/panels/ThreeView.vue:456:    // console.log('[ThreeView] Rendering', lines3D.length, '3D lines');
+frontend/src/components/panels/ThreeView.vue:492:      lineObj.userData.type = '3d-element';
+frontend/src/components/panels/ThreeView.vue:499:    const segments3D = world.getAll3DSegments();
+frontend/src/components/panels/ThreeView.vue:500:    // console.log('[ThreeView] Rendering', segments3D.length, '3D segments');
+frontend/src/components/panels/ThreeView.vue:520:      segmentObj.userData.type = '3d-element';
+frontend/src/components/panels/ThreeView.vue:536:      startSphere.userData.type = '3d-element';
+frontend/src/components/panels/ThreeView.vue:541:      endSphere.userData.type = '3d-element';
+frontend/src/components/panels/ThreeView.vue:547:    // console.log('[ThreeView] Rendering', planes3D.length, '3D planes');
+frontend/src/components/panels/ThreeView.vue:593:      planeMesh.userData.type = '3d-element';
+frontend/src/components/panels/ThreeView.vue:614:    .filter(child => child.userData.type === 'guide-perpendicular-plane' || child.userData.type === 'guide-intersection-highlight')
+frontend/src/components/panels/ThreeView.vue:628:      const plane3DReal = world.getProjectionPlane3DRealization(planeId);
+frontend/src/components/panels/ThreeView.vue:632:      const guideReal = line.realize2D(world);
+frontend/src/components/panels/ThreeView.vue:701:      planeMesh.userData.type = 'guide-perpendicular-plane';
+frontend/src/components/panels/ThreeView.vue:729:    marker.userData.type = 'guide-intersection-highlight';
+frontend/src/components/panels/ThreeView.vue:734:  for (const point of world.getAll3DPoints()) {
+frontend/src/components/panels/ThreeView.vue:746:  for (const line of world.getAll3DLines()) {
+frontend/src/components/panels/ThreeView.vue:758:  for (const segment of world.getAll3DSegments()) {
+frontend/src/components/panels/ThreeView.vue:772: * Uses HingeLine.realize3D() to compute 3D geometry from canonical coordinates.
+frontend/src/components/panels/ThreeView.vue:778:  console.log('[ThreeView.renderHingeLines] Called');
+frontend/src/components/panels/ThreeView.vue:781:  const existingLines = scene.children.filter(child => child.userData.type === 'hinge-line');
+frontend/src/components/panels/ThreeView.vue:786:    const hingeLines = world.getAllHingeLines();
+frontend/src/components/panels/ThreeView.vue:787:    console.log('[ThreeView.renderHingeLines] Found', hingeLines.length, 'hinge lines:', hingeLines.map(hl => ({
+frontend/src/components/panels/ThreeView.vue:794:      // Phase 84: Use realize3D() to get 3D geometry
+frontend/src/components/panels/ThreeView.vue:795:      const line3D = hingeLine.realize3D(world);
+frontend/src/components/panels/ThreeView.vue:824:      const material = new THREE.LineDashedMaterial({
+frontend/src/components/panels/ThreeView.vue:833:      line.userData.type = 'hinge-line';
+frontend/src/components/panels/ThreeView.vue:860:    .filter(child => child.userData.type === 'reference-axis' || child.userData.type === 'reference-axis-label')
+frontend/src/components/panels/ThreeView.vue:874:  xArrow.userData.type = 'reference-axis';
+frontend/src/components/panels/ThreeView.vue:884:  yArrow.userData.type = 'reference-axis';
+frontend/src/components/panels/ThreeView.vue:894:  zArrow.userData.type = 'reference-axis';
+frontend/src/components/panels/ThreeView.vue:922:  // console.log('[ThreeView] renderAuxiliaryPlaneAxes called for plane', projPlane.id);
+frontend/src/components/panels/ThreeView.vue:923:  // console.log('[ThreeView] Origin (domain):', Ox, Oy, Oz);
+frontend/src/components/panels/ThreeView.vue:924:  // console.log('[ThreeView] U-axis (domain):', Ux, Uy, Uz);
+frontend/src/components/panels/ThreeView.vue:925:  // console.log('[ThreeView] V-axis (domain):', Vx, Vy, Vz);
+frontend/src/components/panels/ThreeView.vue:930:  // console.log('[ThreeView] Origin (Three.js):', origin.x, origin.y, origin.z);
+frontend/src/components/panels/ThreeView.vue:938:  // console.log('[ThreeView] U direction (Three.js):', uDir.x, uDir.y, uDir.z);
+frontend/src/components/panels/ThreeView.vue:940:  uArrow.userData.type = 'auxiliary-plane-axis';
+frontend/src/components/panels/ThreeView.vue:944:  // console.log('[ThreeView] Added U-axis arrow to scene');
+frontend/src/components/panels/ThreeView.vue:950:  // console.log('[ThreeView] V direction (Three.js):', vDir.x, vDir.y, vDir.z);
+frontend/src/components/panels/ThreeView.vue:952:  vArrow.userData.type = 'auxiliary-plane-axis';
+frontend/src/components/panels/ThreeView.vue:956:  // console.log('[ThreeView] Added V-axis arrow to scene');
+frontend/src/components/panels/ThreeView.vue:982:  const label = new CSS2DObject(labelDiv);
+frontend/src/components/panels/ThreeView.vue:983:  label.userData.type = 'reference-axis-label';
+frontend/src/components/panels/ThreeView.vue:1016:  const label = new CSS2DObject(labelDiv);
+frontend/src/components/panels/ThreeView.vue:1017:  label.userData.type = 'auxiliary-plane-axis-label';
+frontend/src/components/panels/ThreeView.vue:1143:  (window as any).__threeViewWorldChangeHandler = handleWorldChange;
+frontend/src/components/panels/ThreeView.vue:1148:  const handleWorldChange = (window as any).__threeViewWorldChangeHandler;
+frontend/src/components/panels/ThreeView.vue:1151:    delete (window as any).__threeViewWorldChangeHandler;
+frontend/src/services/Element2DRenderer3D.ts:73:    const planes = Array.from(world.projectionPlanes.values());
+frontend/src/services/Element2DRenderer3D.ts:99:      const realization2D = line.realize2D(world);
+frontend/src/services/Element2DRenderer3D.ts:125:    const realization2D = point.realize2D(world);
+frontend/src/services/Element2DRenderer3D.ts:166:    const realization2D = line.realize2D(world);
+frontend/src/services/Element2DRenderer3D.ts:219:    const realization2D = line.realize2D(world);
+frontend/src/services/Element2DRenderer3D.ts:263:    const realization2D = circle.realize2D(world);
+frontend/src/services/Element2DRenderer3D.ts:347:    const planeRealization = world.getProjectionPlane3DRealization(plane.id);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:80:    const planeRealization = world.getProjectionPlane3DRealization(plane.id); const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:82:    for (const point3D of world.getAll3DPoints()) { const r = point3D.realize3D(world); if (!r?.isFeasible()) continue; const position = applyMatrix3x4(r.position, planeRealization.threeDToPlane).applyMatrix3(planeToPaper); items.push(item({ type: 'point', id: `proj3d-point-${point3D.id}-on-${plane.id}`, sourceEntityId: point3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_POINT_STYLE, position, radius: 6 }, 'projected-3d-point')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:83:    for (const line3D of world.getAll3DLines()) { const r = line3D.realize3D(world); if (!r?.isFeasible()) continue; const dir = applyMatrix3x4(r.direction, planeRealization.threeDToPlane); if (dir.length() < EPSILON) continue; items.push(item({ type: 'line', id: `proj3d-line-${line3D.id}-on-${plane.id}`, sourceEntityId: line3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_LINE_STYLE, point: applyMatrix3x4(r.point, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), direction: dir.applyMatrix3(planeToPaper) }, 'projected-3d-line')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:84:    for (const segment3D of world.getAll3DSegments()) { const r = segment3D.realize3D(world); if (!r?.isFeasible()) continue; items.push(item({ type: 'segment', id: `proj3d-segment-${segment3D.id}-on-${plane.id}`, sourceEntityId: segment3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_SEGMENT_STYLE, point1: applyMatrix3x4(r.startPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), point2: applyMatrix3x4(r.endPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper) }, 'projected-3d-segment')); }
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:62:  realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:49: * Computation happens in realize3D() methods of ProjectionPlane subclasses.
+frontend/src/domain/world/HingeLine.ts:76:   *   world.getProjectionPlane3DRealization(this.planeId)
+frontend/src/domain/world/HingeLine.ts:111:      console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
+frontend/src/domain/world/HingeLine.ts:120:        console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
+frontend/src/domain/world/HingeLine.ts:131:      console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
+frontend/src/domain/world/HingeLine.ts:140:      console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
+frontend/src/domain/world/HingeLine.ts:192:    const line3D = hingeLine.realize3D(world);
+frontend/src/domain/world/HingeLine.ts:193:    const plane2Real = world.getProjectionPlane3DRealization(this.planeId)!;
+frontend/src/domain/world/HingeLine.ts:259:  realize3D(world: import('./World').World): Line3DRealization3D {
+frontend/src/domain/world/HingeLine.ts:273:        allHingeLines: world.getAllHingeLines().map(hl => ({ 
+frontend/src/domain/world/HingeLine.ts:300:    const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id)!;
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:74:  realize3D(_context?: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D {
+frontend/src/domain/world/Point.ts:247:    const line1 = l1.realize2D(world);
+frontend/src/domain/world/Point.ts:248:    const line2 = l2.realize2D(world);
+frontend/src/domain/world/Point.ts:390:    const line = l.realize2D(world);
+frontend/src/domain/world/Point.ts:391:    const circle = c.realize2D(world);
+frontend/src/domain/world/Point.ts:518:    const circle1 = c1.realize2D(world);
+frontend/src/domain/world/Point.ts:519:    const circle2 = c2.realize2D(world);
+frontend/src/domain/world/Point.ts:609:    const primaryRealization = primaryPoint.realize2D(world);
+frontend/src/domain/world/Point.ts:637:        const primaryPlaneReal3D = world.getProjectionPlane3DRealization(primaryBHHL.planeId);
+frontend/src/domain/world/Point.ts:638:        const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
+frontend/src/domain/world/Point.ts:650:        console.log(`[SiblingIntersectionPoint2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → R'=(${R_prime.x.toFixed(2)},${R_prime.y.toFixed(2)})`);
+frontend/src/domain/world/World.ts:42: *    const realization = point?.realize2D(world);  // Get computed coordinates
+frontend/src/domain/world/World.ts:541:    const planeRealization3D = this.getProjectionPlane3DRealization(point.planeId!);
+frontend/src/domain/world/World.ts:588:  getProjectionPlane3DRealization(planeId: string): ProjectionPlaneRealization3D | undefined {
+frontend/src/domain/world/World.ts:602:    realization = plane.realize3D(this);
+frontend/src/domain/world/World.ts:916:  getAllHingeLines(): HingeLine[] {
+frontend/src/domain/world/World.ts:1105:  getAll3DPoints(): Point3D[] {
+frontend/src/domain/world/World.ts:1138:  getAll3DLines(): Line3D[] {
+frontend/src/domain/world/World.ts:1171:  getAll3DSegments(): Segment3D[] {
+frontend/src/domain/world/World.ts:1231:    const realization = point.realize3D(this);
+frontend/src/domain/world/World.ts:1250:    const realization = line.realize3D(this);
+frontend/src/domain/world/World.ts:1269:    const realization = segment.realize3D(this);
+frontend/src/domain/world/World.ts:1288:    const realization = plane.realize3D(this);
+frontend/src/domain/world/Guide.ts:110:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Guide.ts:125:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Guide.ts:276:    console.log(`[SiblingGuide2D] realize2D called for ${this.id}, primaryGuideId: ${this.primaryGuideId}`);
+frontend/src/domain/world/Guide.ts:281:    const primaryGuideRealization = primaryGuide.realize2D(world);
+frontend/src/domain/world/Guide.ts:282:    console.log(`[SiblingGuide2D] Primary guide realization feasible:`, primaryGuideRealization.feasible);
+frontend/src/domain/world/Guide.ts:291:    const primaryHalfHingeLineRealization = primaryHHL.realize2D(world);
+frontend/src/domain/world/Guide.ts:303:    const siblingHalfHingeLineRealization = myHHL.realize2D(world);
+frontend/src/domain/world/Guide.ts:320:      const primaryPlaneReal3D = world.getProjectionPlane3DRealization(primaryHHL.planeId);
+frontend/src/domain/world/Guide.ts:321:      const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
+frontend/src/domain/world/Guide.ts:335:      console.log(`[SiblingGuide2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → twin=(${twinPosition.x.toFixed(2)},${twinPosition.y.toFixed(2)})`);
+frontend/src/domain/world/Plane.ts:37:  realize3D(world: any): Plane3DRealization3D {
+frontend/src/domain/world/Plane.ts:242: * realize3D() reconstructs plane equation from trace coordinates.
+frontend/src/domain/world/Plane.ts:273:    console.log('[Plane3DFromTraces] getPlaneEquation called for plane:', this.id, 'trace1:', this.trace1, 'trace2:', this.trace2);
+frontend/src/domain/world/Plane.ts:278:    const t1InP1 = t1Line.realize2D(world);
+frontend/src/domain/world/Plane.ts:279:    const t2InP2 = t2Line.realize2D(world);
+frontend/src/domain/world/Plane.ts:289:    const p1 = world.getProjectionPlane3DRealization(plane1.id);
+frontend/src/domain/world/Plane.ts:290:    const p2 = world.getProjectionPlane3DRealization(plane2.id);
+frontend/src/domain/world/Plane.ts:303:    console.log('[Plane3DFromTraces] All realizations feasible - computing plane');
+frontend/src/domain/world/Plane.ts:309:    console.log('[Plane3DFromTraces] t1 in 3D: t1PointIn3D:', t1PointIn3D, 't1DirIn3D:', t1DirIn3D);
+frontend/src/domain/world/Plane.ts:315:    console.log('[Plane3DFromTraces] t2 in 3D: t2PointIn3D:', t2PointIn3D, 't2DirIn3D:', t2DirIn3D);
+frontend/src/domain/world/Plane.ts:330:    console.log('[Plane3DFromTraces] Traces intersect at:', intersection.position);
+frontend/src/domain/world/Plane.ts:338:    console.log('[Plane3DFromTraces] Normalized normal:', [a, b, c]);
+frontend/src/domain/world/Plane.ts:343:    console.log('[Plane3DFromTraces] Plane equation: a=', a, 'b=', b, 'c=', c, 'd=', d);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:260:    const realization = point.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:284:    const realization = line.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:308:    const realization = circle.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:428:    const line1 = l1.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:429:    const line2 = l2.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:475:    const line = lineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:476:    const circle = circleElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:527:    const circle1 = circle1Element.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:528:    const circle2 = circle2Element.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:593:    const point1Realization = point1.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:594:    const point2Realization = point2.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:647:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:694:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:805:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:968:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1017:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1223:  abstract realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1259:   * Used by FixedProjectionPlane.realize3D().
+frontend/src/domain/world/DependencyService.ts:311:    console.log('=== CASCADE INVALIDATION START ===');
+frontend/src/domain/world/DependencyService.ts:312:    console.log(`Root element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:327:        console.log(`${indent}${id} → invalidates ${directDependents.length} descendant(s):`);
+frontend/src/domain/world/DependencyService.ts:329:          console.log(`${indent}  • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:342:    console.log(`=== CASCADE COMPLETE (${visited.size} elements invalidated) ===\n`);
+frontend/src/domain/world/DependencyService.ts:353:    console.log('=== INVALIDATION PROPAGATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:354:    console.log(`Starting from: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:355:    console.log('');
+frontend/src/domain/world/DependencyService.ts:370:      console.log(`${indent}[Depth ${depth}] ${id}`);
+frontend/src/domain/world/DependencyService.ts:372:        console.log(`${indent}  → Invalidates ${dependents.length} dependent(s):`);
+frontend/src/domain/world/DependencyService.ts:374:          console.log(`${indent}    • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:377:        console.log(`${indent}  → (leaf element - no dependents)`);
+frontend/src/domain/world/DependencyService.ts:390:    console.log('');
+frontend/src/domain/world/DependencyService.ts:391:    console.log(`Total elements invalidated: ${trace.length}`);
+frontend/src/domain/world/DependencyService.ts:392:    console.log('=== END INVALIDATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:404:    console.log('=== DEPENDENCY GRAPH ===');
+frontend/src/domain/world/DependencyService.ts:405:    console.log(`Total elements tracked: ${this.dependenciesMap.size}`);
+frontend/src/domain/world/DependencyService.ts:406:    console.log('');
+frontend/src/domain/world/DependencyService.ts:422:      console.log(`Element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:424:        console.log(`  Depends on (${dependencies.length}):`);
+frontend/src/domain/world/DependencyService.ts:425:        dependencies.forEach(dep => console.log(`    <- ${dep}`));
+frontend/src/domain/world/DependencyService.ts:427:        console.log(`  Depends on: (none - base element)`);
+frontend/src/domain/world/DependencyService.ts:431:        console.log(`  Depended on by (${dependents.length}):`);
+frontend/src/domain/world/DependencyService.ts:432:        dependents.forEach(dep => console.log(`    -> ${dep}`));
+frontend/src/domain/world/DependencyService.ts:434:        console.log(`  Depended on by: (none - leaf element)`);
+frontend/src/domain/world/DependencyService.ts:436:      console.log('');
+frontend/src/domain/world/DependencyService.ts:439:    console.log('=== END DEPENDENCY GRAPH ===');
+frontend/src/domain/world/Element3DRealization3D.ts:41: * Result of realize3D() geometric calculation
+frontend/src/domain/world/Element3DRealization3D.ts:84: * Result of realize3D() geometric calculation
+frontend/src/domain/world/Element3DRealization3D.ts:136: * Result of realize3D() geometric calculation
+frontend/src/domain/world/Element3DRealization3D.ts:193: * Result of realize3D() geometric calculation
+frontend/src/domain/world/Line3D.ts:13: * - realize3D() computes numeric geometry → Line3DRealization3D
+frontend/src/domain/world/Line3D.ts:28: * All 3D lines must implement realize3D() to compute their geometric realization.
+frontend/src/domain/world/Line3D.ts:37:  abstract realize3D(world: World): Line3DRealization3D;
+frontend/src/domain/world/Line3D.ts:45: * realize3D() reconstructs 3D line from 2D projection coordinates.
+frontend/src/domain/world/Line3D.ts:74:  realize3D(world: World): Line3DRealization3D {
+frontend/src/domain/world/Line3D.ts:100:      const line1Real = line1Element.realize2D(world);
+frontend/src/domain/world/Line3D.ts:101:      const line2Real = line2Element.realize2D(world);
+frontend/src/domain/world/Line3D.ts:115:      console.log('[Line3DFromProjections] Reconstructing 3D line from projections:', {
+frontend/src/domain/world/Line3D.ts:123:      const plane1Real = plane1.realize3D(world);
+frontend/src/domain/world/Line3D.ts:124:      const plane2Real = plane2.realize3D(world);
+frontend/src/domain/world/Line3D.ts:142:      console.log('[Line3DFromProjections] 2D line data:', {
+frontend/src/domain/world/Line3D.ts:208:      console.log('[Line3DFromProjections] Plane 1 (3D):', {
+frontend/src/domain/world/Line3D.ts:259:      console.log('[Line3DFromProjections] Plane 2 (3D):', {
+frontend/src/domain/world/Line3D.ts:297:      console.log('[Line3DFromProjections] 3D line direction:', [direction3D.x, direction3D.y, direction3D.z]);
+frontend/src/domain/world/Line3D.ts:309:      console.log('[Line3DFromProjections] Plane equations:', {
+frontend/src/domain/world/Line3D.ts:337:        console.log('[Line3DFromProjections] Fixed z=0, solved for x,y');
+frontend/src/domain/world/Line3D.ts:354:        console.log('[Line3DFromProjections] Fixed y=0, solved for x,z');
+frontend/src/domain/world/Line3D.ts:371:        console.log('[Line3DFromProjections] Fixed x=0, solved for y,z');
+frontend/src/domain/world/Line3D.ts:374:      console.log('[Line3DFromProjections] 3D line point:', [point3D.x, point3D.y, point3D.z]);
+frontend/src/domain/world/Line3D.ts:375:      console.log('[Line3DFromProjections] ✓ Success! 3D line reconstructed');
+frontend/src/domain/world/Element3D.ts:41:  abstract realize3D(world: any): any;  // Using any to avoid circular dependencies
+frontend/src/domain/world/BrokenHingeLine.ts:70:  realize3D(world: World, context?: { planeId?: string }): Line3DRealization3D {
+frontend/src/domain/world/BrokenHingeLine.ts:100:    const t2Real2D = t2Line.realize2D(world);
+frontend/src/domain/world/BrokenHingeLine.ts:107:    const sourcePlaneReal3D = world.getProjectionPlane3DRealization(t2Line.planeId);
+frontend/src/domain/world/BrokenHingeLine.ts:118:    console.log(`[BHL ${this.label}] ${traceName} on ${t2Line.planeId}: (${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/BrokenHingeLine.ts:119:    console.log(`[BHL ${this.label}] 3D point: (${point3D.x.toFixed(2)}, ${point3D.y.toFixed(2)}, ${point3D.z.toFixed(2)}, ${point3D.w.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:128:    const t2Real2D = t2Line.realize2D(world);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:151:    console.log(`[BHHL ${this.label}] ${traceName} (${t2TraceId}) on ${t2Line.planeId}: point=(${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:152:    console.log(`[BHHL ${this.label}] origin2D: (${origin2D.x.toFixed(2)}, ${origin2D.y.toFixed(2)}, z=${origin2D.z.toFixed(2)}) on plane ${this.planeId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:169:    console.log(`[BHHL ${this.label}] Looking for T1 hinge between ${this.planeId} and ${mainHinge.plane1Id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:170:    const allHingeLines = world.getAllHingeLines();
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:171:    console.log(`[BHHL ${this.label}] Available hinge lines:`, allHingeLines.map(hl => `${hl.id}(${hl.plane1Id}-${hl.plane2Id})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:183:    console.log(`[BHHL ${this.label}] Found T1 hinge: ${t1HingeLine.id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:187:    console.log(`[BHHL ${this.label}] Lines on plane ${this.planeId}:`, allLinesOnPlane.map(l => `${l.id}(${l.constructor.name})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:200:    console.log(`[BHHL ${this.label}] Found T1 trace: ${t1HalfHinge.id} (${t1HalfHinge.label})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:202:    const t1Realization = t1HalfHinge.realize2D(world);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:208:    console.log(`[BHHL ${this.label}] T1 realization feasible`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:213:    console.log(`[BHHL ${this.label}] Guide vector parallel to T1: (${guideVector.x.toFixed(2)}, ${guideVector.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:214:    console.log(`[BHHL ${this.label}] ✅ REALIZATION COMPLETE - returning feasible result`);
+frontend/src/domain/world/Line.ts:229:    const p1Realization = point1.realize2D(world);
+frontend/src/domain/world/Line.ts:230:    const p2Realization = point2.realize2D(world);
+frontend/src/domain/world/Line.ts:314:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Line.ts:326:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:429:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Line.ts:440:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:564:    const circleRealization = circle.realize2D(world);
+frontend/src/domain/world/Line.ts:570:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:634:    console.log('[TangentLine] Through Point:', {
+frontend/src/domain/world/Line.ts:741:    const circleRealization = circle.realize2D(world);
+frontend/src/domain/world/Line.ts:748:    const refLineRealization = refLine.realize2D(world);
+frontend/src/domain/world/Line.ts:830:    console.log('[TangentLine] Parallel to Line:', {
+frontend/src/domain/world/Circle.ts:150:    const centerRealization = centerPoint.realize2D(world);
+frontend/src/domain/world/Circle.ts:151:    const circumferenceRealization = circumferencePoint.realize2D(world);
+frontend/src/domain/world/Circle.ts:250:    const p1Realization = point1.realize2D(world);
+frontend/src/domain/world/Circle.ts:251:    const p2Realization = point2.realize2D(world);
+frontend/src/domain/world/Circle.ts:252:    const p3Realization = point3.realize2D(world);
+frontend/src/domain/world/Segment.ts:87:    const p1Realization = p1.realize2D(world);
+frontend/src/domain/world/Segment.ts:88:    const p2Realization = p2.realize2D(world);
