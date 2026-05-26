@@ -1,0 +1,536 @@
+== operation dirs ==
+frontend/src/commands/operations/IOperation.ts
+frontend/src/commands/operations/OperationRegistry.ts
+frontend/src/commands/operations/paper/README.md
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
+frontend/src/commands/operations/processTree/index.ts
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+frontend/src/commands/operations/processTree/README.md
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts
+frontend/src/commands/operations/toolbar/README.md
+frontend/src/commands/operations/viewState/index.ts
+frontend/src/commands/operations/viewState/README.md
+frontend/src/commands/operations/viewState/ViewStateOperations.ts
+frontend/src/commands/operations/world/Add3DLineOp.ts
+frontend/src/commands/operations/world/Add3DPlaneOp.ts
+frontend/src/commands/operations/world/Add3DPointOp.ts
+frontend/src/commands/operations/world/Add3DSegmentOp.ts
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddCircleOp.ts
+frontend/src/commands/operations/world/AddFreePointOp.ts
+frontend/src/commands/operations/world/AddGuideOp.ts
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddLineOp.ts
+frontend/src/commands/operations/world/AddSegmentOp.ts
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/index.ts
+frontend/src/commands/operations/world/InitializationOps.ts
+frontend/src/commands/operations/world/README.md
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts
+frontend/src/commands/operations/world/RemoveElementOps.ts
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts
+
+== README-only operation dirs ==
+frontend/src/commands/operations/paper: README.md 
+
+frontend/src/commands/operations/processTree: AddProcessTreeActionGroupOp.ts AddProcessTreeActionOp.ts PopSubprocessOp.ts ProcessTreeOperations.ts PushSubprocessOp.ts README.md RenameSubprocessOp.ts ToggleEncapsulationOp.ts ToggleOutputOp.ts index.ts registerProcessTreeOperationDescriptors.ts 
+
+frontend/src/commands/operations/toolbar: README.md 
+
+frontend/src/commands/operations/viewState: README.md ViewStateOperations.ts index.ts 
+
+frontend/src/commands/operations/world: Add3DLineOp.ts Add3DPlaneOp.ts Add3DPointOp.ts Add3DSegmentOp.ts AddAuxiliaryProjectionPlaneOp.ts AddBrokenHingeLineOp.ts AddCircleCircleIntersectionPoint2DOp.ts AddCircleOp.ts AddFreePointOp.ts AddGuideOp.ts AddIntersectionPointOp.ts AddLineCircleIntersectionPoint2DOp.ts AddLineLineIntersectionPoint2DOp.ts AddLineOp.ts AddSegmentOp.ts AddSiblingIntersectionPoint2DOp.ts InitializationOps.ts README.md RemoveElementOps.ts UpdateElementStyleOp.ts UpdateFreePoint2DPositionOp.ts index.ts registerWorldOperationDescriptors.ts 
+
+
+== debug/example refs excluding audit/logs ==
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:16:- `frontend/tests/unit/architecture/importBoundaries.spec.ts` — added strict UI command import, frontend/backend implementation import, stale backend project term, and deleted examples/debug surface gates.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:19:## Deleted legacy/debug surfaces
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:21:- Deleted `frontend/src/components/menus/ExamplesMenu.vue`.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:22:- Deleted `frontend/src/commands/operations/debug/AddExampleSetupOp.ts`.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:23:- Removed the now-empty `frontend/src/commands/operations/debug/` directory.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:25:Static usage evidence before deletion: `validation/pre-implementation-examples-usage.stdout` showed references only in `ExamplesMenu.vue` and `AddExampleSetupOp.ts`; no parent registration or e2e/test references existed.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:70:- Full Vitest has pre-existing PropertiesDialog failures unrelated to Wave 011. No component behavior was changed in this wave except deleting an unreferenced debug examples menu.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:73:- No broad Wave 012 debug/placeholder cleanup or Wave 013 docs/spec reconciliation was performed beyond deleting the specific examples/debug path and stale backend Playwright comments required by the decision.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:93:- Static deletion/backend scans: `static-examples-deleted-scan.stdout`, `static-examples-deleted-scan.stderr` — no `ExamplesMenu`, `AddExampleSetupOp`, or `operations/debug` references remain in source/tests except the architecture gate assertion text itself; package scripts and `frontend/playwright.config.ts` contain no stale backend server/config terms.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:104:These failures are classified as pre-existing/unrelated because Wave 011 touched package scripts, architecture tests, one app-shell boundary test, Playwright config comments, and deleted the unreferenced examples/debug menu/command. It did not modify guide-creation integration tests, intersection calculation tests/implementation, PropertiesDialog behavior/tests, `vue-tsc`/TypeScript versions, or the corrupted broad e2e specs. The focused Wave 011 gates and representative Playwright guard pass.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:124:No Wave-011-attributable validation failure remains. The executable architecture/static gates pass and enforce the decision constraints; the known full-suite/build/e2e failures are unrelated validation debt to be handled by future waves. No Wave 012 debug/placeholder cleanup, Wave 013 docs/spec reconciliation, or unrelated source cleanup was performed during this validation stage.
+architecture-audit/wave-plan.md:22:5. Preserve aggressive deletion: obsolete shims, dead files, placeholder docs, compatibility branches, and duplicate paths must be removed rather than wrapped.
+architecture-audit/wave-plan.md:285:- example/debug construction setup use-cases or deletion decisions for toolbar shortcuts such as Alt+E
+architecture-audit/wave-plan.md:287:- focused process-history, panel/toolbar intent, retained example setup, and e2e behavior tests
+architecture-audit/wave-plan.md:291:This wave begins only after Wave 006a completes and its implementation log records any remaining panel/toolbar command leaks. It must not reopen the canvas/tool controller extraction except for consuming the stable application command/use-case boundary created in 006a. If the toolbar example construction is judged debug-only, prefer deletion over migrating a dead shortcut.
+architecture-audit/wave-plan.md:295:The baseline flags direct UI-to-command/operation imports as an architectural leak (`architecture-map.md` leak 3; `risk-register.md` R5; `quality-report.md` Q1, Q4, Q19). The Wave 006 scope check found that `ActionsPanel.vue` directly imports `Command` plus concrete process-tree operations and constructs/pushes commands in panel handlers, while `Toolbar.vue` directly imports `Command`, `CommandStack`, `Vector3`, and concrete world operations for the Alt+E example setup. The scope check also concluded these panel/toolbar paths are separate from canvas tools because they require process-history edit use-cases, debug/example construction decisions, and independent validation.
+architecture-audit/wave-plan.md:299:Panel and toolbar components emit typed user intents and render state only. Application use-cases own process-tree stack/action mutations, command creation, validation, and command-stack execution for panel actions. Toolbar example/setup behavior is either deleted as debug-only or routed through an explicit application construction/example use-case without direct concrete operation imports in the component.
+architecture-audit/wave-plan.md:305:- Delete `Toolbar.vue` imports of `Command`, `CommandStack`, `Vector3`, `AddFreePoint2DOp`, `AddLine2DByTwoPointsOp`, and any other concrete command/operation construction dependencies used only by the Alt+E/example setup path.
+architecture-audit/wave-plan.md:306:- Delete the Toolbar Alt+E example/debug shortcut entirely if review/implementation determines it is not user-facing architecture worth preserving.
+architecture-audit/wave-plan.md:307:- Delete panel/toolbar tests that inspect command internals or rely on debug/example construction details; replace them with use-case/controller tests and behavior/e2e coverage for retained flows.
+architecture-audit/wave-plan.md:347:- Delete rendering TODO branches that become obsolete or are replaced by explicit selector behavior.
+architecture-audit/wave-plan.md:423:- Delete debug/error TODO stubs that are not implemented by the extracted services.
+architecture-audit/wave-plan.md:513:## Wave 012 — Remove vacant placeholders, noisy debug surfaces, and obsolete operation docs
+architecture-audit/wave-plan.md:517:- `frontend/src/commands/operations/paper/README.md`
+architecture-audit/wave-plan.md:518:- `frontend/src/commands/operations/toolbar/README.md`
+architecture-audit/wave-plan.md:519:- debug-only operation paths such as `frontend/src/commands/operations/debug/` if no longer active
+architecture-audit/wave-plan.md:520:- debug logging in `frontend/src/App.vue`, `frontend/src/services/ProjectService.ts`, `frontend/src/services/PaperService.ts`, `frontend/src/services/GoogleDriveService.ts`
+architecture-audit/wave-plan.md:521:- TODOs made obsolete by earlier waves
+architecture-audit/wave-plan.md:526:Corrections identify `paper/` and `toolbar/` operation directories as README-only future-operation placeholders and deletion candidates (`inventory.md` corrections; `quality-report.md` Q21; `risk-register.md` R13). The baseline also flags TODOs in user-facing rendering/feedback paths and debug logging across app/service code (`quality-report.md` Q15, Q17).
+architecture-audit/wave-plan.md:530:The active source tree contains no aspirational placeholder operation families, no obsolete TODO branches from refactored paths, and no routine debug logging that obscures boundaries or risks leaking integration metadata.
+architecture-audit/wave-plan.md:534:- Delete `frontend/src/commands/operations/paper/` if still README-only.
+architecture-audit/wave-plan.md:535:- Delete `frontend/src/commands/operations/toolbar/` if still README-only.
+architecture-audit/wave-plan.md:536:- Delete debug operation directories/files if not used by validated current behavior.
+architecture-audit/wave-plan.md:537:- Delete routine console debug logging and obsolete TODO stubs in touched modules.
+architecture-audit/wave-plan.md:542:- No debug logging remains in normal app/persistence/rendering/Drive paths except explicitly justified error logging.
+architecture-audit/wave-plan.md:543:- Tests and e2e confirm no deleted debug/example path was required for normal behavior.
+architecture-audit/wave-plan.md:547:Depends on Waves 004, 006, 007, and 009 so placeholder/delete decisions are made after command, rendering, and shell boundaries are settled.
+architecture-audit/wave-plan.md:564:The baseline inventories the current `specs/001-dihedral-learning-mvp/` tree and the docs areas under `docs/architecture/`, `docs/api/`, `docs/guide/`, and `docs/contributing/testing.md` (`inventory.md` Specs and Docs sections). It also notes that current code comments still cite the original MVP spec for world/process/command concepts and that README-only operation placeholders are deletion candidates (`inventory.md` corrections; `quality-report.md` Q21; `risk-register.md` R13). Earlier objectives require docs/comments waves after central domain, persistence, rendering, tool-state, and UI composition work.
+architecture-audit/wave-plan.md:572:- Delete docs pages that describe removed legacy state paths, command subclass assumptions, placeholder operation families, or disconnected backend behavior.
+frontend/tests/e2e/point-transport.spec.ts:31:    // TODO: Implement full E2E test once HL visualization is available
+frontend/tests/e2e/point-transport.spec.ts:44:    // TODO: Test error handling:
+frontend/tests/e2e/point-transport.spec.ts:56:    // TODO: Test undo functionality:
+frontend/tests/e2e/parametric-update.spec.ts:21:    // TODO: Initialize project
+frontend/tests/e2e/parametric-update.spec.ts:25:    // TODO: Once drag-and-drop and MoveFreePointCommand are integrated:
+frontend/tests/e2e/parametric-update.spec.ts:54:    // TODO: Once complex dependencies are integrated:
+frontend/tests/e2e/parametric-update.spec.ts:85:    // TODO: This should be prevented by the dependency graph validation
+frontend/tests/e2e/parametric-update.spec.ts:106:    // TODO: Performance test for selective recomputation
+frontend/tests/e2e/parametric-update.spec.ts:129:    // TODO: Performance test for smooth dragging
+frontend/src/utils/rectangleGrid.ts:94:let clipDebugDone = false;  // Debug flag for first segment only
+frontend/src/utils/rectangleGrid.ts:113:  let debugFirstSegment = false;
+frontend/src/utils/rectangleGrid.ts:114:  if (!clipDebugDone) {
+frontend/src/utils/rectangleGrid.ts:115:    clipDebugDone = true;
+frontend/src/utils/rectangleGrid.ts:116:    debugFirstSegment = true;
+frontend/src/utils/rectangleGrid.ts:117:    console.log('[clipSegmentToRectangle] First segment debug:');
+frontend/src/utils/rectangleGrid.ts:118:    console.log('  Segment:', segment);
+frontend/src/utils/rectangleGrid.ts:119:    console.log('  dx:', dx, 'dy:', dy);
+frontend/src/utils/rectangleGrid.ts:142:    if (debugFirstSegment) {
+frontend/src/utils/rectangleGrid.ts:143:      console.log(`  Edge ${i}: corner1=(${corner1.u.toFixed(2)}, ${corner1.v.toFixed(2)}) corner2=(${corner2.u.toFixed(2)}, ${corner2.v.toFixed(2)})`);
+frontend/src/utils/rectangleGrid.ts:144:      console.log(`    edge=(${edgeU.toFixed(2)}, ${edgeV.toFixed(2)}) normal=(${normalU.toFixed(2)}, ${normalV.toFixed(2)})`);
+frontend/src/utils/rectangleGrid.ts:145:      console.log(`    dist1=${dist1.toFixed(4)} denom=${denominator.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:152:        if (debugFirstSegment) console.log(`    -> Parallel and outside, marking invalid`);
+frontend/src/utils/rectangleGrid.ts:155:        if (debugFirstSegment) console.log(`    -> Parallel and inside/on edge`);
+frontend/src/utils/rectangleGrid.ts:162:    if (debugFirstSegment) {
+frontend/src/utils/rectangleGrid.ts:163:      console.log(`    t=${t.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:169:      if (debugFirstSegment) console.log(`    -> Leaving: tMax ${tMax.toFixed(4)} -> ${newTMax.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:174:      if (debugFirstSegment) console.log(`    -> Entering: tMin ${tMin.toFixed(4)} -> ${newTMin.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:180:      if (debugFirstSegment) console.log(`    -> tMin > tMax (${tMin.toFixed(4)} > ${tMax.toFixed(4)}), rejecting`);
+frontend/src/utils/rectangleGrid.ts:185:  if (debugFirstSegment) {
+frontend/src/utils/rectangleGrid.ts:186:    console.log(`  Final: tMin=${tMin.toFixed(4)} tMax=${tMax.toFixed(4)} - ACCEPTED`);
+frontend/src/utils/rectangleGrid.ts:211:  console.log('[generateClippedGrid] Bounds:', bounds);
+frontend/src/utils/rectangleGrid.ts:212:  console.log('[generateClippedGrid] Rectangle corners:', rect.corners);
+frontend/src/utils/rectangleGrid.ts:222:  console.log('[generateClippedGrid] Extended bounds: u=[', minU, ',', maxU, '] v=[', minV, ',', maxV, ']');
+frontend/src/utils/rectangleGrid.ts:223:  console.log('[generateClippedGrid] divisions:', divisions);
+frontend/src/utils/rectangleGrid.ts:269:  console.log('[generateClippedGrid] U-parallel lines clipped:', clippedCount);
+frontend/src/utils/rectangleGrid.ts:306:  console.log('[generateClippedGrid] V-parallel lines clipped:', clippedCount);
+frontend/src/utils/rectangleGrid.ts:307:  console.log('[generateClippedGrid] Total segments:', segments.length);
+frontend/tests/e2e/navigation.spec.ts:21:    // TODO: Initialize project with some elements for reference
+frontend/tests/e2e/navigation.spec.ts:25:    // TODO: Once navigation and tools are integrated:
+frontend/tests/e2e/navigation.spec.ts:52:    // TODO: Once zoom and tools are integrated:
+frontend/tests/e2e/navigation.spec.ts:79:    // TODO: Test viewport persistence:
+frontend/tests/e2e/navigation.spec.ts:101:    // TODO: Once keyboard shortcuts are implemented:
+frontend/tests/e2e/navigation.spec.ts:129:    // TODO: Once mouse navigation is implemented:
+frontend/tests/e2e/navigation.spec.ts:156:    // TODO: Performance test for navigation with many elements
+frontend/tests/e2e/navigation.spec.ts:189:    // TODO: Test that tool preview (e.g., line preview) persists during pan/zoom
+frontend/tests/e2e/navigation.spec.ts:220:    // TODO: Once touch support is implemented:
+frontend/src/utils/projectionPlaneUtils.ts:282:  console.log('[computeProjectionPlaneMatrices] dot_t1_t2_In3D:', dot_t1_t2_In3D);
+frontend/src/utils/projectionPlaneUtils.ts:283:  console.log('[computeProjectionPlaneMatrices] dot_t1_t2Prime_InP1:', dot_t1_t2Prime_InP1);
+frontend/src/utils/projectionPlaneUtils.ts:284:  console.log('[computeProjectionPlaneMatrices] needsFlip:', needsFlip);
+frontend/src/utils/projectionPlaneUtils.ts:293:  console.log('[computeProjectionPlaneMatrices] auxVDirInP1 (after correction):', auxVDirInP1);
+frontend/src/utils/projectionPlaneUtils.ts:300:  console.log('[computeProjectionPlaneMatrices] auxUDirInPaper:', auxUDirInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:301:  console.log('[computeProjectionPlaneMatrices] auxVDirInPaper:', auxVDirInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:302:  console.log('[computeProjectionPlaneMatrices] auxOriginInPaper (in P1 paper coords):', auxOriginInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:341:  console.log('[computeProjectionPlaneMatrices] auxUDirIn3D:', auxUDirIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:342:  console.log('[computeProjectionPlaneMatrices] auxVDirIn3D:', auxVDirIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:343:  console.log('[computeProjectionPlaneMatrices] auxOriginIn3D:', auxOriginIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:350:  console.log('[computeProjectionPlaneMatrices] Auxiliary plane normal (u×v):', auxNormalIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:351:  console.log('[computeProjectionPlaneMatrices] Normal should match Plane3DFromTraces normal: (0.408, 0.816, 0.408)');
+frontend/tests/e2e/infeasibility.spec.ts:21:    // TODO: Initialize project
+frontend/tests/e2e/infeasibility.spec.ts:25:    // TODO: Once infeasibility constraints are implemented:
+frontend/tests/e2e/infeasibility.spec.ts:57:    // TODO: Once dependency propagation is integrated:
+frontend/tests/e2e/infeasibility.spec.ts:88:    // TODO: Once action infeasibility tracking is implemented:
+frontend/tests/e2e/infeasibility.spec.ts:109:    // TODO: Once infeasibility clearing is integrated:
+frontend/tests/e2e/infeasibility.spec.ts:133:    // TODO: Test isolation of infeasibility
+frontend/tests/e2e/infeasibility.spec.ts:163:    // TODO: Performance test for infeasibility during dragging
+frontend/tests/e2e/distance-transport.spec.ts:26:    // TODO: Implement project initialization
+frontend/tests/e2e/distance-transport.spec.ts:30:    // TODO: Replace placeholder with UI-driven distance-transport coverage when the current SvgCanvas workflow exposes stable test IDs:
+frontend/tests/e2e/distance-transport.spec.ts:69:    // TODO: Once rendering is complete:
+frontend/tests/e2e/distance-transport.spec.ts:94:    // TODO: Once coordinate system and measurements are integrated:
+frontend/tests/e2e/distance-transport.spec.ts:112:    // TODO: Once parametric update is implemented:
+frontend/tests/e2e/distance-transport.spec.ts:135:    // TODO: Once Actions panel is complete:
+frontend/tests/e2e/dependencies.spec.ts:40:    // TODO: Move one of the base points and verify intersection point updates
+frontend/tests/e2e/dependencies.spec.ts:68:    // TODO: Move the center point and verify circle moves with it
+frontend/tests/e2e/dependencies.spec.ts:92:    // TODO: Move one of the points and verify line rotates/moves
+frontend/tests/e2e/dependencies.spec.ts:134:    // TODO: Move point1 and verify that line1, intersection, and circle all update
+frontend/tests/e2e/dependencies.spec.ts:168:    // TODO: Move the shared center point and verify all three circles move together
+frontend/tests/e2e/dependencies.spec.ts:195:    // TODO: Hover over line action and verify it highlights dependent points
+frontend/tests/e2e/dependencies.spec.ts:256:    // TODO: Programmatically move a point and verify that:
+frontend/tests/e2e/debug.spec.ts:3:test('debug console', async ({ page }) => {
+frontend/tests/e2e/debug.spec.ts:4:  page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
+frontend/tests/e2e/debug.spec.ts:5:  page.on('requestfailed', request => console.log(`REQUEST FAILED: ${request.url()} - ${request.failure()?.errorText}`));
+frontend/tests/e2e/debug.spec.ts:7:    if (response.status() === 404) console.log(`RESPONSE 404: ${response.url()}`);
+frontend/tests/e2e/debug.spec.ts:9:  page.on('pageerror', exception => console.log(`In-page error: "${exception}"`));
+frontend/tests/e2e/debug.spec.ts:15:  console.log('SVG count:', count);
+frontend/tests/e2e/debug.spec.ts:17:  console.log('SVG visible:', visible);
+frontend/tests/e2e/debug.spec.ts:19:  console.log('SVG class:', classes);
+frontend/tests/e2e/create-point.spec.ts:137:    // TODO: Add assertions for hover feedback (cursor change, preview indicator, etc.)
+frontend/tests/integration/phase76-fail-fast.spec.ts:97:    it('should throw errors that include stack traces for debugging', () => {
+frontend/src/types/SelectionMask.ts:91:   * Get human-readable description of mask (for debugging)
+frontend/tests/e2e/command-chaining.spec.ts:116:    // This test serves as a placeholder to make the file valid
+frontend/tests/e2e/basic-construction.spec.ts:24:    // TODO: Implement project initialization
+frontend/tests/e2e/basic-construction.spec.ts:28:    // TODO: Replace placeholder with UI-driven point-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:53:    // TODO: Replace placeholder with UI-driven segment-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:79:    // TODO: Replace placeholder with UI-driven panel/tool coverage when the current app shell exposes stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:104:    // TODO: Once panels are integrated:
+frontend/src/tools/ArgumentCollectorTool.ts:352:   * Get current tool state (for debugging/testing)
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:96:    // Debug: Check coordinates
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:99:    console.log('[TEST] Point C coords on P_H:', cRealization.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:100:    console.log('[TEST] Point C\' coords on P_V:', cPrimeRealization.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:142:    console.log('[Test] Point C coords:', coordsC.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:143:    console.log('[Test] Point C\' coords:', coordsCPrime.position);
+frontend/src/stores/settingsStore.ts:126:      console.log('[SettingsStore] Settings saved to localStorage');
+frontend/src/stores/settingsStore.ts:219:    console.log('[SettingsStore] Settings reset to defaults');
+frontend/src/stores/settingsStore.ts:227:    console.log(`[SettingsStore] ${category} settings reset to defaults`);
+frontend/src/config/toolFamilies.ts:28:import ExampleIcon from '@/components/icons/toolbar/FreePointIcon.vue';  // TODO: Create dedicated icon for examples
+frontend/src/config/toolFamilies.ts:39: * 6. Transport Family: transport (placeholder - not yet implemented)
+frontend/src/config/toolFamilies.ts:213:        icon: Create3DPlaneIcon,  // TODO: Create dedicated icon for auxiliary projection planes
+frontend/tests/unit/components/panelToolbarBehavior.spec.ts:197:  it('preserves toolbar presentation behavior for tool selection, view toggles, and Alt+E deletion', async () => {
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:31:      'Alt+E'
+frontend/src/components/LoginStatusWidget.vue:36:      <div v-else class="user-avatar-placeholder">
+frontend/src/components/LoginStatusWidget.vue:99: * Get initials from name for avatar placeholder
+frontend/src/components/LoginStatusWidget.vue:192:.user-avatar-placeholder {
+frontend/tests/unit/commands/createFreePoint.spec.ts:121:      // TODO Phase 83: Re-enable when visualStyle is fully implemented
+frontend/src/components/workspace/SvgCanvas.vue:493:  console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:496:  console.log('Points in world:', totalPoints);
+frontend/src/components/workspace/SvgCanvas.vue:518:    console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+frontend/src/components/workspace/SvgCanvas.vue:593:      // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:617:      // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:630:      // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:688:  // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:712:  // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+frontend/src/components/workspace/SvgCanvas.vue:733:        // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:737:        // console.log('[SvgCanvas] Selected:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:742:      // console.log('[SvgCanvas] Cleared selection');
+frontend/src/components/workspace/SvgCanvas.vue:772:  // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+frontend/src/components/workspace/SvgCanvas.vue:775:    console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:804:  console.log('[Zoom] BEFORE:', {
+frontend/src/components/workspace/SvgCanvas.vue:820:  console.log('[Zoom] AFTER:', {
+frontend/src/components/workspace/SvgCanvas.vue:922:    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:931:  console.log('[SvgCanvas] Saving property changes:', changes);
+frontend/src/components/workspace/SvgCanvas.vue:946:    console.log('[SvgCanvas] Style updated and command added to stack');
+frontend/src/components/workspace/SvgCanvas.vue:1168:  console.log('[SvgCanvas] fitToView called');
+frontend/src/components/workspace/SvgCanvas.vue:1175:    console.log('[SvgCanvas] No elements to fit, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1217:    console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1241:  console.log('[SvgCanvas] Fit to view:', {
+frontend/src/application/construction/QuickToolUseCases.ts:14:    message: `${intent.type} was removed from the active canvas tool registry in Wave 006a as example/debug construction flow`
+frontend/tests/unit/architecture/importBoundaries.spec.ts:61:  it('does not reference the deleted debug examples setup surface from active source or tests', () => {
+frontend/tests/unit/architecture/importBoundaries.spec.ts:64:    expect(findContentMatches(files, /ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
+frontend/tests/unit/autosave.spec.ts:15:    // This is a placeholder test that verifies the autosave timing logic
+frontend/src/components/toolbars/ToolFamilyButton.vue:96:    console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
+frontend/src/components/toolbars/ToolFamilyButton.vue:97:    console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
+frontend/src/components/toolbars/ToolFamilyButton.vue:102:  console.log('[ToolFamilyButton] Selecting tool:', toolId);
+frontend/src/components/panels/ThreeView.vue:18:        <label class="control-label" title="Show coordinate axes (X/Y/Z) at origin for spatial reference and debugging">
+frontend/src/components/panels/ElementsPanel.vue:166:  console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
+frontend/src/components/panels/ElementsPanel.vue:170:  // console.log('[ElementsPanel] Initial points:', totalPoints);
+frontend/src/components/panels/ElementsPanel.vue:171:  // console.log('[ElementsPanel] Initial lines:', totalLines);
+frontend/src/components/panels/ElementsPanel.vue:176:      console.log('[ElementsPanel] World version changed:', lastVersion, '→', currentVersion);
+frontend/src/components/panels/ElementsPanel.vue:195:  console.log('[ElementsPanel] Computing projection planes list, version:', version, 'forceUpdate:', update);
+frontend/src/components/panels/ElementsPanel.vue:248:  console.log('[ElementsPanel] Computing 3D elements');
+frontend/src/components/panels/ElementsPanel.vue:256:  console.log('[ElementsPanel] 3D elements:', {
+frontend/src/components/panels/ElementTypeGroup.vue:64:  // TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:  // TODO: Clear highlight
+frontend/src/components/dialogs/PropertiesDialog.vue:62:                placeholder="#000000"
+frontend/src/components/dialogs/PropertiesDialog.vue:333:  // TODO: Get creation action from ProcessTree
+frontend/src/components/dialogs/PropertiesDialog.vue:334:  // For now, just show placeholder
+frontend/src/components/dialogs/PropertiesDialog.vue:357:  // TODO: Load current element properties from world
+frontend/src/components/dialogs/NewProjectDialog.vue:13:            placeholder="Enter project name..."
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:151:// TODO: Add comprehensive tests for computeProjectionPlaneMatrices once we have test fixtures
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:156:describe('computeProjectionPlaneMatrices - TODO', () => {
+frontend/src/domain/processTree/ProcessTree.ts:239:        console.log(`[ProcessTree.toggleSubprocessEncapsulation] subprocessId: ${subprocessId}, ${oldValue} → ${subprocess.showIntermediates}`);
+frontend/src/domain/processTree/ProcessTree.ts:256:        console.log(`[ProcessTree.toggleOutput] subprocess ${nodeId}, ${oldValue} → ${subprocess.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:273:        console.log(`[ProcessTree.toggleOutput] actionGroup ${nodeId}, ${oldValue} → ${group.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:279:        console.log(`[ProcessTree.toggleOutput] action ${nodeId}, ${oldValue} → ${action.isOutput}`);
+frontend/src/domain/world/DependencyService.ts:311:    console.log('=== CASCADE INVALIDATION START ===');
+frontend/src/domain/world/DependencyService.ts:312:    console.log(`Root element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:327:        console.log(`${indent}${id} → invalidates ${directDependents.length} descendant(s):`);
+frontend/src/domain/world/DependencyService.ts:329:          console.log(`${indent}  • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:342:    console.log(`=== CASCADE COMPLETE (${visited.size} elements invalidated) ===\n`);
+frontend/src/domain/world/DependencyService.ts:353:    console.log('=== INVALIDATION PROPAGATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:354:    console.log(`Starting from: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:355:    console.log('');
+frontend/src/domain/world/DependencyService.ts:370:      console.log(`${indent}[Depth ${depth}] ${id}`);
+frontend/src/domain/world/DependencyService.ts:372:        console.log(`${indent}  → Invalidates ${dependents.length} dependent(s):`);
+frontend/src/domain/world/DependencyService.ts:374:          console.log(`${indent}    • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:377:        console.log(`${indent}  → (leaf element - no dependents)`);
+frontend/src/domain/world/DependencyService.ts:390:    console.log('');
+frontend/src/domain/world/DependencyService.ts:391:    console.log(`Total elements invalidated: ${trace.length}`);
+frontend/src/domain/world/DependencyService.ts:392:    console.log('=== END INVALIDATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:399:   * Useful for debugging dependency tracking issues
+frontend/src/domain/world/DependencyService.ts:404:    console.log('=== DEPENDENCY GRAPH ===');
+frontend/src/domain/world/DependencyService.ts:405:    console.log(`Total elements tracked: ${this.dependenciesMap.size}`);
+frontend/src/domain/world/DependencyService.ts:406:    console.log('');
+frontend/src/domain/world/DependencyService.ts:422:      console.log(`Element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:424:        console.log(`  Depends on (${dependencies.length}):`);
+frontend/src/domain/world/DependencyService.ts:425:        dependencies.forEach(dep => console.log(`    <- ${dep}`));
+frontend/src/domain/world/DependencyService.ts:427:        console.log(`  Depends on: (none - base element)`);
+frontend/src/domain/world/DependencyService.ts:431:        console.log(`  Depended on by (${dependents.length}):`);
+frontend/src/domain/world/DependencyService.ts:432:        dependents.forEach(dep => console.log(`    -> ${dep}`));
+frontend/src/domain/world/DependencyService.ts:434:        console.log(`  Depended on by: (none - leaf element)`);
+frontend/src/domain/world/DependencyService.ts:436:      console.log('');
+frontend/src/domain/world/DependencyService.ts:439:    console.log('=== END DEPENDENCY GRAPH ===');
+frontend/src/domain/world/Point3D.ts:186:   * TODO: Implement proper validation in GeometryValidator
+frontend/src/domain/world/Point.ts:650:        console.log(`[SiblingIntersectionPoint2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → R'=(${R_prime.x.toFixed(2)},${R_prime.y.toFixed(2)})`);
+frontend/src/domain/world/Plane.ts:273:    console.log('[Plane3DFromTraces] getPlaneEquation called for plane:', this.id, 'trace1:', this.trace1, 'trace2:', this.trace2);
+frontend/src/domain/world/Plane.ts:303:    console.log('[Plane3DFromTraces] All realizations feasible - computing plane');
+frontend/src/domain/world/Plane.ts:309:    console.log('[Plane3DFromTraces] t1 in 3D: t1PointIn3D:', t1PointIn3D, 't1DirIn3D:', t1DirIn3D);
+frontend/src/domain/world/Plane.ts:315:    console.log('[Plane3DFromTraces] t2 in 3D: t2PointIn3D:', t2PointIn3D, 't2DirIn3D:', t2DirIn3D);
+frontend/src/domain/world/Plane.ts:330:    console.log('[Plane3DFromTraces] Traces intersect at:', intersection.position);
+frontend/src/domain/world/Plane.ts:338:    console.log('[Plane3DFromTraces] Normalized normal:', [a, b, c]);
+frontend/src/domain/world/Plane.ts:343:    console.log('[Plane3DFromTraces] Plane equation: a=', a, 'b=', b, 'c=', c, 'd=', d);
+frontend/src/domain/world/Line3D.ts:115:      console.log('[Line3DFromProjections] Reconstructing 3D line from projections:', {
+frontend/src/domain/world/Line3D.ts:142:      console.log('[Line3DFromProjections] 2D line data:', {
+frontend/src/domain/world/Line3D.ts:208:      console.log('[Line3DFromProjections] Plane 1 (3D):', {
+frontend/src/domain/world/Line3D.ts:259:      console.log('[Line3DFromProjections] Plane 2 (3D):', {
+frontend/src/domain/world/Line3D.ts:297:      console.log('[Line3DFromProjections] 3D line direction:', [direction3D.x, direction3D.y, direction3D.z]);
+frontend/src/domain/world/Line3D.ts:309:      console.log('[Line3DFromProjections] Plane equations:', {
+frontend/src/domain/world/Line3D.ts:337:        console.log('[Line3DFromProjections] Fixed z=0, solved for x,y');
+frontend/src/domain/world/Line3D.ts:354:        console.log('[Line3DFromProjections] Fixed y=0, solved for x,z');
+frontend/src/domain/world/Line3D.ts:371:        console.log('[Line3DFromProjections] Fixed x=0, solved for y,z');
+frontend/src/domain/world/Line3D.ts:374:      console.log('[Line3DFromProjections] 3D line point:', [point3D.x, point3D.y, point3D.z]);
+frontend/src/domain/world/Line3D.ts:375:      console.log('[Line3DFromProjections] ✓ Success! 3D line reconstructed');
+frontend/src/domain/world/Line.ts:271: * TODO: Implement in later phase when parallel line tool is added
+frontend/src/domain/world/Line.ts:357: * TODO: Implement in later phase when perpendicular line tool is added
+frontend/src/domain/world/Line.ts:634:    console.log('[TangentLine] Through Point:', {
+frontend/src/domain/world/Line.ts:830:    console.log('[TangentLine] Parallel to Line:', {
+frontend/src/domain/world/HingeLine.ts:111:      console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
+frontend/src/domain/world/HingeLine.ts:120:        console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
+frontend/src/domain/world/HingeLine.ts:131:      console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
+frontend/src/domain/world/HingeLine.ts:140:      console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:151:    console.log(`[BHHL ${this.label}] ${traceName} (${t2TraceId}) on ${t2Line.planeId}: point=(${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:152:    console.log(`[BHHL ${this.label}] origin2D: (${origin2D.x.toFixed(2)}, ${origin2D.y.toFixed(2)}, z=${origin2D.z.toFixed(2)}) on plane ${this.planeId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:169:    console.log(`[BHHL ${this.label}] Looking for T1 hinge between ${this.planeId} and ${mainHinge.plane1Id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:171:    console.log(`[BHHL ${this.label}] Available hinge lines:`, allHingeLines.map(hl => `${hl.id}(${hl.plane1Id}-${hl.plane2Id})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:183:    console.log(`[BHHL ${this.label}] Found T1 hinge: ${t1HingeLine.id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:187:    console.log(`[BHHL ${this.label}] Lines on plane ${this.planeId}:`, allLinesOnPlane.map(l => `${l.id}(${l.constructor.name})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:200:    console.log(`[BHHL ${this.label}] Found T1 trace: ${t1HalfHinge.id} (${t1HalfHinge.label})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:208:    console.log(`[BHHL ${this.label}] T1 realization feasible`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:213:    console.log(`[BHHL ${this.label}] Guide vector parallel to T1: (${guideVector.x.toFixed(2)}, ${guideVector.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:214:    console.log(`[BHHL ${this.label}] ✅ REALIZATION COMPLETE - returning feasible result`);
+frontend/src/domain/world/BrokenHingeLine.ts:118:    console.log(`[BHL ${this.label}] ${traceName} on ${t2Line.planeId}: (${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/BrokenHingeLine.ts:119:    console.log(`[BHL ${this.label}] 3D point: (${point3D.x.toFixed(2)}, ${point3D.y.toFixed(2)}, ${point3D.z.toFixed(2)}, ${point3D.w.toFixed(2)})`);
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:105:  // TODO: Implement when needed
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:145:  // TODO: Implement when needed
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:20:      console.log(`[ToggleOutputOp.apply] nodeId: ${this.nodeId}`);
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:35:    console.log(`[ToggleOutputOp.redo] nodeId: ${this.nodeId}`);
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:20:      console.log(`[ToggleEncapsulationOp.apply] subprocessId: ${this.subprocessId}`);
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:35:    console.log(`[ToggleEncapsulationOp.redo] subprocessId: ${this.subprocessId}`);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:239:        console.log(
+frontend/src/commands/factories/GuideSequenceFactory.ts:58:    console.log(`[GuideSequenceFactory] createGuideWithSibling called: plane=${planeId}, refLine=${referenceLineId}, point=${throughPointId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:66:    console.log(`[GuideSequenceFactory] Primary guide created: ${guideId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:68:    console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:80:      console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:84:    console.log(`[GuideSequenceFactory] Sibling plane: ${siblingInfo.siblingPlaneId}, HHL: ${siblingInfo.siblingHalfHingeLineId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:100:    console.log(
+frontend/src/commands/factories/GuideSequenceFactory.ts:108:      console.log(`[GuideSequenceFactory] Reference is BrokenHalfHingeLine2D - computing arc geometry`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:121:        console.log(`[GuideSequenceFactory] Arc geometry computed and stored`);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:66:    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:97:      console.log('[UpdateElementStyleOp] Applied style to:', this.elementId, element.visualStyle);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:137:      console.log('[UpdateElementStyleOp] Restored style for:', this.elementId, element.visualStyle);
+frontend/src/commands/operations/world/RemoveElementOps.ts:440:              console.log(`[RemoveGuide2DOp] Removed sibling guide ${siblingGuideId} from plane ${this.siblingPlaneId}`);
+frontend/src/domain/world/Guide.ts:276:    console.log(`[SiblingGuide2D] realize2D called for ${this.id}, primaryGuideId: ${this.primaryGuideId}`);
+frontend/src/domain/world/Guide.ts:282:    console.log(`[SiblingGuide2D] Primary guide realization feasible:`, primaryGuideRealization.feasible);
+frontend/src/domain/world/Guide.ts:335:      console.log(`[SiblingGuide2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → twin=(${twinPosition.x.toFixed(2)},${twinPosition.y.toFixed(2)})`);
+frontend/src/services/factories/PlaneSequenceFactory.ts:132:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for projPlane:', projPlaneId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:134:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for projPlane');
+frontend/src/services/factories/PlaneSequenceFactory.ts:144:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for hingeLine:', hingeLineId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:149:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for hingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:154:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #1:', hhl1Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:159:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:163:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #2:', hhl2Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:168:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #2');
+frontend/src/services/factories/PlaneSequenceFactory.ts:230:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BrokenHingeLine:', brokenHingeLineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:235:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BrokenHingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:237:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #1:', bhhl1Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:242:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:243:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:245:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #2:', bhhl2Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:250:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #2');
+frontend/src/services/GoogleDriveService.ts:82:          console.log('[GoogleDrive] Initializing with config:', {
+frontend/src/services/GoogleDriveService.ts:108:          console.log('[GoogleDrive] Initialization successful');
+frontend/src/services/GoogleDriveService.ts:131:        console.log('[GoogleDrive] Session restored automatically');
+frontend/src/services/GoogleDriveService.ts:133:        console.log('[GoogleDrive] Could not restore session:', error);
+frontend/src/services/GoogleDriveService.ts:204:          console.log('[GoogleDrive] Sign-in successful');
+frontend/src/services/GoogleDriveService.ts:475:      console.log('[GoogleDrive] Checking file status before update:', fileId);
+frontend/src/services/GoogleDriveService.ts:483:      console.log('[GoogleDrive] File status:', fileCheckResponse.result);
+frontend/src/services/GoogleDriveService.ts:527:      console.log('[GoogleDrive] File updated successfully:', fileId);
+frontend/src/services/GoogleDriveService.ts:556:      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
+frontend/src/services/GoogleDriveService.ts:566:          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
+frontend/src/services/GoogleDriveService.ts:571:      console.log('[GoogleDrive] Extracted numbers:', numbers);
+frontend/src/services/GoogleDriveService.ts:575:        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
+frontend/src/services/GoogleDriveService.ts:585:          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
+frontend/src/services/GoogleDriveService.ts:592:      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
+frontend/src/services/GoogleDriveService.ts:631:      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);
+
+== operation registry ==
+     1	import type { IOperation, OperationDescriptor } from './IOperation';
+     2	
+     3	type OperationRestorer<TDescriptor extends OperationDescriptor = OperationDescriptor> = (descriptor: TDescriptor) => IOperation;
+     4	
+     5	export class OperationRegistry {
+     6	  private readonly restorers = new Map<string, OperationRestorer>();
+     7	
+     8	  register<TDescriptor extends OperationDescriptor>(opType: TDescriptor['opType'], restore: OperationRestorer<TDescriptor>): void {
+     9	    if (this.restorers.has(opType)) {
+    10	      throw new Error(`Duplicate operation descriptor registration: ${opType}`);
+    11	    }
+    12	    this.restorers.set(opType, restore as OperationRestorer);
+    13	  }
+    14	
+    15	  deserialize(descriptor: OperationDescriptor): IOperation {
+    16	    assertOperationDescriptor(descriptor);
+    17	    const restore = this.restorers.get(descriptor.opType);
+    18	    if (!restore) {
+    19	      throw new Error(`Unknown operation type: ${descriptor.opType}`);
+    20	    }
+    21	    return restore(descriptor);
+    22	  }
+    23	
+    24	  serialize(operation: IOperation): OperationDescriptor {
+    25	    if (!operation.serialize) {
+    26	      throw new Error(`Operation type cannot be persisted without a descriptor serializer: ${operation.type}`);
+    27	    }
+    28	    const descriptor = operation.serialize();
+    29	    assertOperationDescriptor(descriptor);
+    30	    if (!this.restorers.has(descriptor.opType)) {
+    31	      throw new Error(`Operation type is not registered: ${descriptor.opType}`);
+    32	    }
+    33	    return descriptor;
+    34	  }
+    35	
+    36	  getRegisteredTypes(): readonly string[] {
+    37	    return [...this.restorers.keys()].sort();
+    38	  }
+    39	}
+    40	
+    41	export function assertOperationDescriptor(value: unknown): asserts value is OperationDescriptor {
+    42	  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    43	    throw new Error('Invalid operation descriptor: expected object');
+    44	  }
+    45	  const opType = (value as { opType?: unknown }).opType;
+    46	  if (typeof opType !== 'string' || opType.length === 0) {
+    47	    throw new Error('Invalid operation descriptor: missing opType');
+    48	  }
+    49	}
+    50	
+    51	const defaultRegistry = new OperationRegistry();
+    52	let registered = false;
+    53	
+    54	export function registerAllOperations(registry: OperationRegistry = defaultRegistry): OperationRegistry {
+    55	  if (registry === defaultRegistry && registered) {
+    56	    return defaultRegistry;
+    57	  }
+    58	  registerWorldOperationDescriptors(registry);
+    59	  registerProcessTreeOperationDescriptors(registry);
+    60	  if (registry === defaultRegistry) {
+    61	    registered = true;
+    62	  }
+    63	  return registry;
+    64	}
+    65	
+    66	export function serializeOperation(operation: IOperation): OperationDescriptor {
+    67	  return registerAllOperations().serialize(operation);
+    68	}
+    69	
+    70	export function deserializeOperation(descriptor: OperationDescriptor): IOperation {
+    71	  return registerAllOperations().deserialize(descriptor);
+    72	}
+    73	
+    74	export function getRegisteredOperationTypes(): readonly string[] {
+    75	  return registerAllOperations().getRegisteredTypes();
+    76	}
+    77	
+    78	import { registerWorldOperationDescriptors } from './world/registerWorldOperationDescriptors';
+    79	import { registerProcessTreeOperationDescriptors } from './processTree/registerProcessTreeOperationDescriptors';
+
+== package scripts ==
+     1	{
+     2	  "name": "diedrico",
+     3	  "version": "0.1.0",
+     4	  "description": "Educational web application for teaching dihedral/orthographic projection",
+     5	  "private": true,
+     6	  "license": "GPL-3.0-or-later",
+     7	  "workspaces": [
+     8	    "frontend"
+     9	  ],
+    10	  "scripts": {
+    11	    "dev": "npm run dev:frontend",
+    12	    "dev:frontend": "npm run dev --workspace=frontend",
+    13	    "build": "npm run build --workspace=frontend",
+    14	    "test": "npm run test --workspace=frontend",
+    15	    "test:frontend": "npm run test --workspace=frontend",
+    16	    "lint": "npm run lint --workspace=frontend",
+    17	    "docs:dev": "vitepress dev docs",
+    18	    "docs:build": "vitepress build docs",
+    19	    "docs:preview": "vitepress preview docs",
+    20	    "test:architecture": "npm run test:architecture --workspace=frontend",
+    21	    "test:e2e": "npm run test:e2e --workspace=frontend"
+    22	  },
+    23	  "devDependencies": {
+    24	    "concurrently": "^8.2.2",
+    25	    "vitepress": "^1.6.4"
+    26	  },
+    27	  "engines": {
+    28	    "node": ">=18.0.0",
+    29	    "npm": ">=9.0.0"
+    30	  }
+    31	}
+
+== frontend package scripts ==
+     1	{
+     2	  "name": "diedrico-frontend",
+     3	  "version": "0.1.0",
+     4	  "type": "module",
+     5	  "license": "GPL-3.0-or-later",
+     6	  "scripts": {
+     7	    "dev": "vite",
+     8	    "build": "vue-tsc && vite build",
+     9	    "preview": "vite preview",
+    10	    "test": "vitest run",
+    11	    "test:watch": "vitest",
+    12	    "test:ui": "vitest --ui",
+    13	    "test:architecture": "vitest run tests/unit/architecture",
+    14	    "test:e2e": "playwright test",
+    15	    "test:e2e:headed": "playwright test --headed",
+    16	    "lint": "npm run test:architecture"
+    17	  },
+    18	  "dependencies": {
+    19	    "@types/katex": "^0.16.8",
+    20	    "d3": "^7.8.5",
+    21	    "katex": "^0.16.28",
+    22	    "pinia": "^2.1.7",
+    23	    "three": "^0.160.0",
+    24	    "vue": "^3.4.0"
+    25	  },
+    26	  "devDependencies": {
+    27	    "@playwright/test": "^1.40.0",
+    28	    "@types/d3": "^7.4.3",
+    29	    "@types/gapi": "^0.0.47",
+    30	    "@types/gapi.client.drive-v3": "^0.0.5",
+    31	    "@types/three": "^0.160.0",
+    32	    "@vitejs/plugin-vue": "^5.0.0",
+    33	    "@vitest/ui": "^1.0.0",
+    34	    "@vue/test-utils": "^2.4.6",
+    35	    "@vue/tsconfig": "^0.5.0",
+    36	    "jsdom": "^27.3.0",
+    37	    "typescript": "^5.3.0",
+    38	    "vite": "^5.0.0",
+    39	    "vitest": "^1.0.0",
+    40	    "vue-tsc": "^1.8.0"
+    41	  }
+    42	}

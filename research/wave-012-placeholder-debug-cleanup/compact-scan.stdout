@@ -1,0 +1,847 @@
+== operation folder file counts ==
+frontend/src/commands/operations/IOperation.ts
+frontend/src/commands/operations/OperationRegistry.ts
+frontend/src/commands/operations/paper/README.md
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
+frontend/src/commands/operations/processTree/index.ts
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+frontend/src/commands/operations/processTree/README.md
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts
+frontend/src/commands/operations/toolbar/README.md
+frontend/src/commands/operations/viewState/index.ts
+frontend/src/commands/operations/viewState/README.md
+frontend/src/commands/operations/viewState/ViewStateOperations.ts
+frontend/src/commands/operations/world/Add3DLineOp.ts
+frontend/src/commands/operations/world/Add3DPlaneOp.ts
+frontend/src/commands/operations/world/Add3DPointOp.ts
+frontend/src/commands/operations/world/Add3DSegmentOp.ts
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddCircleOp.ts
+frontend/src/commands/operations/world/AddFreePointOp.ts
+frontend/src/commands/operations/world/AddGuideOp.ts
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddLineOp.ts
+frontend/src/commands/operations/world/AddSegmentOp.ts
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/index.ts
+frontend/src/commands/operations/world/InitializationOps.ts
+frontend/src/commands/operations/world/README.md
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts
+frontend/src/commands/operations/world/RemoveElementOps.ts
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts
+
+== active console/debug/todo matches in frontend/src ==
+frontend/src/tools/Create3DLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/commands/CommandStack.ts:46:   * Phase 47: Non-undoable commands (canUndo() === false) are not added to the stack.
+frontend/src/commands/CommandStack.ts:58:    // Phase 47: Skip non-undoable commands
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:56:        // Phase 113: Validate point is outside or on the circle
+frontend/src/tools/CircleTool.ts:2: * CircleTool - Tool for creating circles by center point and circumference point (Phase 64)
+frontend/src/tools/BaseTool.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:58:        // Phase 113: Validate reference line is feasible
+frontend/src/commands/Command.ts:134:   * Phase 114: Used for post-creation feasibility checking
+frontend/src/commands/Command.ts:198:   * Phase 47: Non-undoable commands (like world initialization) are not added to stack.
+frontend/src/tools/SegmentTool.ts:2: * SegmentTool - Tool for creating finite line segments between two points (Phase 64 Migration)
+frontend/src/App.vue:69:        <!-- 3D View Overlay (Phase 25) -->
+frontend/src/tools/PerpendicularLineTool.ts:2: * PerpendicularLineTool - Tool for creating lines perpendicular to a reference line through a point (Phase 64)
+frontend/src/tools/PerpendicularLineTool.ts:32:  readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
+frontend/src/tools/PerpendicularLineTool.ts:51:        // Phase 113: Validate reference line produces a feasible realization
+frontend/src/tools/ArgumentCollectorTool.ts:2: * ArgumentCollectorTool.ts - Base class for multi-argument tool construction (Phase 64)
+frontend/src/tools/ArgumentCollectorTool.ts:37: * Reference: data-model.md §Tool Argument Collection Framework (Phase 64)
+frontend/src/tools/ArgumentCollectorTool.ts:352:   * Get current tool state (for debugging/testing)
+frontend/src/tools/ParallelLineTool.ts:2: * ParallelLineTool - Tool for creating lines parallel to a reference line through a point (Phase 64)
+frontend/src/tools/ParallelLineTool.ts:32:  readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
+frontend/src/tools/ParallelLineTool.ts:51:        // Phase 113: Validate reference line produces a feasible realization
+frontend/src/tools/LineTool.ts:2: * LineTool - Tool for creating lines through two points (Phase 64 Migration)
+frontend/src/components/LoginStatusWidget.vue:2:  T404-T405: LoginStatusWidget - Display Google Drive authentication status
+frontend/src/components/LoginStatusWidget.vue:7:  @see specs/001-dihedral-learning-mvp/ui-spec.md - Google Drive Login Status Widget
+frontend/src/components/LoginStatusWidget.vue:205:/* User name - T405: Responsive behavior */
+frontend/src/stores/viewStore.ts:33:// Phase 106: 3D element projection display toggle with localStorage persistence
+frontend/src/stores/viewStore.ts:159:   * Toggle 3D element projection display (Phase 106 - T1831/T1832)
+frontend/src/stores/viewStore.ts:171:   * Update 3D view display options (Phase 77.5 - T1203)
+frontend/src/tools/CreateProjectionPlaneTool.ts:2: * CreateProjectionPlaneTool - Creates auxiliary projection planes (Phase 82)
+frontend/src/tools/CreateProjectionPlaneTool.ts:20: * Reference: data-model.md §Phase 82 - Create Projection Plane Tool
+frontend/src/tools/Create3DSegmentTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/stores/toolStore.ts:12: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/stores/toolStore.ts:165:   * Phase 115: Set contextual tool step feedback message
+frontend/src/stores/toolStore.ts:172:   * Phase 115: Get reactive tool step message
+frontend/src/tools/Create3DPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/stores/settingsStore.ts:13: * @see specs/001-dihedral-learning-mvp/ui-spec.md#project-settings-dialog
+frontend/src/stores/settingsStore.ts:14: * @see specs/001-dihedral-learning-mvp/ui-spec.md#state-persistence
+frontend/src/stores/settingsStore.ts:126:      console.log('[SettingsStore] Settings saved to localStorage');
+frontend/src/stores/settingsStore.ts:219:    console.log('[SettingsStore] Settings reset to defaults');
+frontend/src/stores/settingsStore.ts:227:    console.log(`[SettingsStore] ${category} settings reset to defaults`);
+frontend/src/tools/Create3DPlaneTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/stores/processTreeStore.ts:4: * Phase 118: Fixes the bug where adding elements expands all subprocesses.
+frontend/src/application/construction/QuickToolUseCases.ts:14:    message: `${intent.type} was removed from the active canvas tool registry in Wave 006a as example/debug construction flow`
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:7: * Phase 83: Now actually updates element.visualStyle property
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:97:      console.log('[UpdateElementStyleOp] Applied style to:', this.elementId, element.visualStyle);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:137:      console.log('[UpdateElementStyleOp] Restored style for:', this.elementId, element.visualStyle);
+frontend/src/commands/operations/world/RemoveElementOps.ts:7: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30, T286
+frontend/src/commands/operations/world/RemoveElementOps.ts:440:              console.log(`[RemoveGuide2DOp] Removed sibling guide ${siblingGuideId} from plane ${this.siblingPlaneId}`);
+frontend/src/constants/colors.ts:3: * Phase 68: Toolbar Icon-Only Design
+frontend/src/commands/operations/world/InitializationOps.ts:4: * Phase 47: Operations for setting up World's fixed elements (planes, origins, hinge lines)
+frontend/src/commands/operations/world/InitializationOps.ts:63:      // Phase 95: Back-fill generated ID into parameters for persistence
+frontend/src/commands/operations/world/InitializationOps.ts:81:      // Phase 78: Access planes3D map, not 'planes'
+frontend/src/commands/operations/world/InitializationOps.ts:116:    // Phase 94: threeDToPlane computed from planeTo3D in realization constructor
+frontend/src/commands/operations/world/InitializationOps.ts:129:      // Phase 94: Pass only forward matrices, derived matrices computed in realization
+frontend/src/commands/operations/world/InitializationOps.ts:140:      // Phase 95: Back-fill generated ID into parameters for persistence
+frontend/src/commands/operations/world/InitializationOps.ts:164:    // Phase 94: Omit both derived matrices (paperToPlane2D, threeDToPlane)
+frontend/src/commands/operations/world/InitializationOps.ts:224:      // Phase 95: Back-fill generated ID into parameters for persistence
+frontend/src/commands/operations/world/InitializationOps.ts:227:      // Phase 53: No longer storing origin IDs in World - use label-based access instead
+frontend/src/commands/operations/world/InitializationOps.ts:251:        // Phase 53: No longer storing origin IDs in World - use label-based access instead
+frontend/src/commands/operations/world/InitializationOps.ts:297:      // Phase 95: Back-fill generated ID into parameters for persistence
+frontend/src/commands/operations/world/InitializationOps.ts:334: * **Phase 84**: No geometry arguments - computed on demand from canonical coordinates.
+frontend/src/commands/operations/world/InitializationOps.ts:364:      // Phase 84: Call element factory method without geometry - it handles ID generation
+frontend/src/commands/operations/world/InitializationOps.ts:374:      // Phase 95: Back-fill generated ID into parameters for persistence
+frontend/src/commands/operations/world/InitializationOps.ts:436:      // Phase 95: Back-fill generated ID into parameters for persistence
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:14: * Pattern: Follows the same architecture as AddSiblingGuide2DOp (Phase 36)
+frontend/src/utils/threeUtils.ts:271: * @see specs/001-dihedral-learning-mvp/data-model.md §Coordinate System Note
+frontend/src/config/toolFamilies.ts:9: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/config/toolFamilies.ts:28:import ExampleIcon from '@/components/icons/toolbar/FreePointIcon.vue';  // TODO: Create dedicated icon for examples
+frontend/src/config/toolFamilies.ts:40: * 7. 3D Elements Family: create3dpoint, create3dline, create3dsegment, create3dplane (Phase 78)
+frontend/src/config/toolFamilies.ts:213:        icon: Create3DPlaneIcon,  // TODO: Create dedicated icon for auxiliary projection planes
+frontend/src/utils/rectangleGrid.ts:94:let clipDebugDone = false;  // Debug flag for first segment only
+frontend/src/utils/rectangleGrid.ts:113:  let debugFirstSegment = false;
+frontend/src/utils/rectangleGrid.ts:114:  if (!clipDebugDone) {
+frontend/src/utils/rectangleGrid.ts:115:    clipDebugDone = true;
+frontend/src/utils/rectangleGrid.ts:116:    debugFirstSegment = true;
+frontend/src/utils/rectangleGrid.ts:117:    console.log('[clipSegmentToRectangle] First segment debug:');
+frontend/src/utils/rectangleGrid.ts:118:    console.log('  Segment:', segment);
+frontend/src/utils/rectangleGrid.ts:119:    console.log('  dx:', dx, 'dy:', dy);
+frontend/src/utils/rectangleGrid.ts:142:    if (debugFirstSegment) {
+frontend/src/utils/rectangleGrid.ts:143:      console.log(`  Edge ${i}: corner1=(${corner1.u.toFixed(2)}, ${corner1.v.toFixed(2)}) corner2=(${corner2.u.toFixed(2)}, ${corner2.v.toFixed(2)})`);
+frontend/src/utils/rectangleGrid.ts:144:      console.log(`    edge=(${edgeU.toFixed(2)}, ${edgeV.toFixed(2)}) normal=(${normalU.toFixed(2)}, ${normalV.toFixed(2)})`);
+frontend/src/utils/rectangleGrid.ts:145:      console.log(`    dist1=${dist1.toFixed(4)} denom=${denominator.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:152:        if (debugFirstSegment) console.log(`    -> Parallel and outside, marking invalid`);
+frontend/src/utils/rectangleGrid.ts:155:        if (debugFirstSegment) console.log(`    -> Parallel and inside/on edge`);
+frontend/src/utils/rectangleGrid.ts:162:    if (debugFirstSegment) {
+frontend/src/utils/rectangleGrid.ts:163:      console.log(`    t=${t.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:169:      if (debugFirstSegment) console.log(`    -> Leaving: tMax ${tMax.toFixed(4)} -> ${newTMax.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:174:      if (debugFirstSegment) console.log(`    -> Entering: tMin ${tMin.toFixed(4)} -> ${newTMin.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:180:      if (debugFirstSegment) console.log(`    -> tMin > tMax (${tMin.toFixed(4)} > ${tMax.toFixed(4)}), rejecting`);
+frontend/src/utils/rectangleGrid.ts:185:  if (debugFirstSegment) {
+frontend/src/utils/rectangleGrid.ts:186:    console.log(`  Final: tMin=${tMin.toFixed(4)} tMax=${tMax.toFixed(4)} - ACCEPTED`);
+frontend/src/utils/rectangleGrid.ts:211:  console.log('[generateClippedGrid] Bounds:', bounds);
+frontend/src/utils/rectangleGrid.ts:212:  console.log('[generateClippedGrid] Rectangle corners:', rect.corners);
+frontend/src/utils/rectangleGrid.ts:222:  console.log('[generateClippedGrid] Extended bounds: u=[', minU, ',', maxU, '] v=[', minV, ',', maxV, ']');
+frontend/src/utils/rectangleGrid.ts:223:  console.log('[generateClippedGrid] divisions:', divisions);
+frontend/src/utils/rectangleGrid.ts:269:  console.log('[generateClippedGrid] U-parallel lines clipped:', clippedCount);
+frontend/src/utils/rectangleGrid.ts:306:  console.log('[generateClippedGrid] V-parallel lines clipped:', clippedCount);
+frontend/src/utils/rectangleGrid.ts:307:  console.log('[generateClippedGrid] Total segments:', segments.length);
+frontend/src/commands/operations/world/AddLineOp.ts:207: * Phase 60: Tangent line to circle through external point
+frontend/src/commands/operations/world/AddLineOp.ts:276: * Phase 61: Tangent line to circle parallel to reference line
+frontend/src/domain/world/HingeLine.ts:11: * **Phase 52**: Refactored to extend Element3D, removing id and label properties
+frontend/src/domain/world/HingeLine.ts:30: * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates.
+frontend/src/domain/world/HingeLine.ts:42:  // Phase 84: NO geometry storage - computed via realize2D()
+frontend/src/domain/world/HingeLine.ts:75:   * Phase 85 FIX: Must include planeId because realize2D() for plane2 calls:
+frontend/src/domain/world/HingeLine.ts:111:      console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
+frontend/src/domain/world/HingeLine.ts:120:        console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
+frontend/src/domain/world/HingeLine.ts:131:      console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
+frontend/src/domain/world/HingeLine.ts:140:      console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
+frontend/src/domain/world/HingeLine.ts:150:   * Realize this half-hinge line using canonical coordinates (Phase 84)
+frontend/src/domain/world/HingeLine.ts:155:   * **Phase 84 Architecture**:
+frontend/src/domain/world/HingeLine.ts:159:   * **Phase 101**: Returns HalfHingeLineRealization2D with guideVector
+frontend/src/domain/world/HingeLine.ts:226: * **Phase 52**: Refactored to extend Element3D. Inherits id and label from Element.
+frontend/src/domain/world/HingeLine.ts:227: * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates (0,0,1), (1,0,0).
+frontend/src/domain/world/HingeLine.ts:240:    // Phase 52: Call Element3D constructor with id and label
+frontend/src/domain/world/HingeLine.ts:252:   * Compute 3D realization using canonical coordinates (Phase 84)
+frontend/src/domain/world/HingeLine.ts:348:   * Phase 84: validateParametricConsistency() REMOVED
+frontend/src/utils/projectionPlaneUtils.ts:2: * Projection Plane Utilities - Phase 82
+frontend/src/utils/projectionPlaneUtils.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 82
+frontend/src/utils/projectionPlaneUtils.ts:157: * Algorithm (Phase 82.1 - Complete geometric specification):
+frontend/src/utils/projectionPlaneUtils.ts:174: * Reference: data-model.md §Phase 82.1
+frontend/src/utils/projectionPlaneUtils.ts:282:  console.log('[computeProjectionPlaneMatrices] dot_t1_t2_In3D:', dot_t1_t2_In3D);
+frontend/src/utils/projectionPlaneUtils.ts:283:  console.log('[computeProjectionPlaneMatrices] dot_t1_t2Prime_InP1:', dot_t1_t2Prime_InP1);
+frontend/src/utils/projectionPlaneUtils.ts:284:  console.log('[computeProjectionPlaneMatrices] needsFlip:', needsFlip);
+frontend/src/utils/projectionPlaneUtils.ts:293:  console.log('[computeProjectionPlaneMatrices] auxVDirInP1 (after correction):', auxVDirInP1);
+frontend/src/utils/projectionPlaneUtils.ts:300:  console.log('[computeProjectionPlaneMatrices] auxUDirInPaper:', auxUDirInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:301:  console.log('[computeProjectionPlaneMatrices] auxVDirInPaper:', auxVDirInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:302:  console.log('[computeProjectionPlaneMatrices] auxOriginInPaper (in P1 paper coords):', auxOriginInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:341:  console.log('[computeProjectionPlaneMatrices] auxUDirIn3D:', auxUDirIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:342:  console.log('[computeProjectionPlaneMatrices] auxVDirIn3D:', auxVDirIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:343:  console.log('[computeProjectionPlaneMatrices] auxOriginIn3D:', auxOriginIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:350:  console.log('[computeProjectionPlaneMatrices] Auxiliary plane normal (u×v):', auxNormalIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:351:  console.log('[computeProjectionPlaneMatrices] Normal should match Plane3DFromTraces normal: (0.408, 0.816, 0.408)');
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:15: * **Phase 101**: Broken Hinge Lines and Distance Transport Guides
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:20: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:4: * Phase 101: Broken Hinge Lines (BHL) for Auxiliary Planes
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:19: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:103:      // Phase 102: Create BrokenHalfHingeLine2D passing BrokenHingeLine object
+frontend/src/domain/world/Guide.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#guide
+frontend/src/domain/world/Guide.ts:18: * @see specs/001-dihedral-learning-mvp/spec.md#guides
+frontend/src/domain/world/Guide.ts:44:  arcGeometry?: ArcGeometry;  // Arc between this guide and sibling (Phase 101: Broken Hinge Lines)
+frontend/src/domain/world/Guide.ts:55:    // Phase 52: Pass 'guide' as type to parent constructor
+frontend/src/domain/world/Guide.ts:76:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+frontend/src/domain/world/Guide.ts:80:   * Phase 101: For HalfHingeLine realizations, use the guideVector from realization
+frontend/src/domain/world/Guide.ts:137:      // Phase 101: For hinge lines (regular or broken), use the guideVector from realization
+frontend/src/domain/world/Guide.ts:186: * @see specs/001-dihedral-learning-mvp/data-model.md#siblingguide2d
+frontend/src/domain/world/Guide.ts:193:  arcGeometry?: ArcGeometry;  // Arc between this guide and primary (Phase 101: Broken Hinge Lines)
+frontend/src/domain/world/Guide.ts:251:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+frontend/src/domain/world/Guide.ts:276:    console.log(`[SiblingGuide2D] realize2D called for ${this.id}, primaryGuideId: ${this.primaryGuideId}`);
+frontend/src/domain/world/Guide.ts:282:    console.log(`[SiblingGuide2D] Primary guide realization feasible:`, primaryGuideRealization.feasible);
+frontend/src/domain/world/Guide.ts:335:      console.log(`[SiblingGuide2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → twin=(${twinPosition.x.toFixed(2)},${twinPosition.y.toFixed(2)})`);
+frontend/src/utils/arcGeometry.ts:4: * Phase 101: Broken Hinge Lines (BHL) - Arc Rendering
+frontend/src/utils/arcGeometry.ts:27: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101.6
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:4: * Phase 82: Create Projection Plane Tool
+frontend/src/domain/world/ElementId.ts:4: * Phase 45: Element IDs now use hierarchical format: {containerId}/{localId}
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:4: * Phase 78: 3D Element Creation Tools
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:59:      // Phase 78 requirement: Different-plane validation
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:86:      // Phase 107: Validate compatibility — check that at least one endpoint pairing
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:126:      // Phase 97: Generate default label if not provided
+frontend/src/types/arcGeometry.ts:8: * **Phase 101**: Broken Hinge Lines and Distance Transport Guides
+frontend/src/types/arcGeometry.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/Element3DRealization3D.ts:13: * Phase 78: Introduced for user-created 3D elements from 2D projections
+frontend/src/domain/world/Element3DRealization3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#element3drealization3d
+frontend/src/types/ToolConfig.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/domain/world/Element3D.ts:7: * **Phase 52**: Introduced as part of unified Element hierarchy to distinguish
+frontend/src/domain/world/Element3D.ts:30: * @see specs/001-dihedral-learning-mvp/data-model.md#element3d-class
+frontend/src/commands/operations/world/Add3DPointOp.ts:4: * Phase 78: 3D Element Creation Tools
+frontend/src/commands/operations/world/Add3DPointOp.ts:64:      // Phase 78 requirement: MANDATORY different-plane validation
+frontend/src/commands/operations/world/Add3DPointOp.ts:95:      // Phase 97: Generate default label if not provided
+frontend/src/types/ToolArgumentCollector.ts:2: * ToolArgumentCollector.ts - Framework interfaces for multi-argument tool construction (Phase 64)
+frontend/src/types/ToolArgumentCollector.ts:14: * Reference: data-model.md §Tool Argument Collection Framework (Phase 64)
+frontend/src/domain/world/Element2D.ts:16: * **Phase 44**: Originally introduced as standalone base class with id, planeId, label, visible, type properties.
+frontend/src/domain/world/Element2D.ts:18: * **Phase 52 Refactoring**: Element2D now extends Element base class to share id and label properties
+frontend/src/domain/world/Element2D.ts:23: * Before Element2D (Phase 44), Point2D, Line2D, and Circle2D were three separate hierarchies
+frontend/src/domain/world/Element2D.ts:30: * Element2D (Phase 44) provided:
+frontend/src/domain/world/Element2D.ts:36: * Element2D (Phase 52) now extends Element:
+frontend/src/domain/world/Element2D.ts:84:    // Phase 52: Call Element base constructor with id and label
+frontend/src/domain/world/Element2D.ts:87:    // Phase 45: Validate hierarchical ID format
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:20:      console.log(`[ToggleOutputOp.apply] nodeId: ${this.nodeId}`);
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:35:    console.log(`[ToggleOutputOp.redo] nodeId: ${this.nodeId}`);
+frontend/src/types/ThreeViewDisplayOptions.ts:9:  /** Show 2D elements positioned on their planes in 3D space (Phase 77) */
+frontend/src/types/ThreeViewDisplayOptions.ts:18:  /** Show reference coordinate axes (X/Y/Z) at origin (Phase 82) */
+frontend/src/domain/world/Element.ts:9: * **Phase 52**: Introduced to eliminate code duplication and enable uniform handling
+frontend/src/domain/world/Element.ts:12: * **Phase 83**: Added visualStyle property for unified styling across all elements.
+frontend/src/domain/world/Element.ts:26: * @see specs/001-dihedral-learning-mvp/data-model.md#element-base-class-hierarchy
+frontend/src/domain/world/Element.ts:38:  /** Visual styling properties (color, lineWidth, lineStyle, visibility, opacity) - Phase 83 */
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:20:      console.log(`[ToggleEncapsulationOp.apply] subprocessId: ${this.subprocessId}`);
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:35:    console.log(`[ToggleEncapsulationOp.redo] subprocessId: ${this.subprocessId}`);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:4: * Phase 78: 3D Element Creation Tools
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:59:      // Phase 78 requirement: Different-plane validation
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:155:      // Phase 97: Generate default label if not provided
+frontend/src/types/SelectionMask.ts:2: * SelectionMask.ts - Class-based selection filtering architecture (Phase 63)
+frontend/src/types/SelectionMask.ts:7: * Reference: data-model.md §Class-Based Selection Mask Architecture (Phase 63)
+frontend/src/types/SelectionMask.ts:35: * Phase 63: Uses instanceof checks to leverage TypeScript class hierarchy.
+frontend/src/types/SelectionMask.ts:91:   * Get human-readable description of mask (for debugging)
+frontend/src/types/SelectionMask.ts:154:   * Phase 63: All Line2D subclasses (perpendicular, parallel, by-two-points) map to 'line',
+frontend/src/commands/operations/world/Add3DLineOp.ts:4: * Phase 78: 3D Element Creation Tools
+frontend/src/commands/operations/world/Add3DLineOp.ts:58:      // Phase 78 requirement: Different-plane validation
+frontend/src/commands/operations/world/Add3DLineOp.ts:88:      // Phase 97: Generate default label if not provided
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:7: * Phase 85: ProcessTree Subprocess Stack Architecture
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/domain/world/Circle.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#circle2d
+frontend/src/domain/world/Circle.ts:134:   * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
+frontend/src/domain/world/Circle.ts:230:   * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:9: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:105:  // TODO: Implement when needed
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:145:  // TODO: Implement when needed
+frontend/src/domain/world/BrokenHingeLine.ts:12: * **Phase 101**: Broken Hinge Lines and Distance Transport Guides
+frontend/src/domain/world/BrokenHingeLine.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/BrokenHingeLine.ts:118:    console.log(`[BHL ${this.label}] ${traceName} on ${t2Line.planeId}: (${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/BrokenHingeLine.ts:119:    console.log(`[BHL ${this.label}] 3D point: (${point3D.x.toFixed(2)}, ${point3D.y.toFixed(2)}, ${point3D.z.toFixed(2)}, ${point3D.w.toFixed(2)})`);
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:7: * Phase 85: ProcessTree Subprocess Stack Architecture
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/domain/world/Realization.ts:10: * **Phase 52**: Introduced as part of unified realization hierarchy to eliminate
+frontend/src/domain/world/Realization.ts:35: * @see specs/001-dihedral-learning-mvp/data-model.md#realization-base-class
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree Action Registration (Phase 81)
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:35:    // Phase 93: Actions no longer have IDs - store elementId for tracking
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:53:    // Phase 93: Remove action by elementId
+frontend/src/domain/world/Element2DRealization2D.ts:7: * **Phase 44**: Originally introduced as standalone base class with feasible property.
+frontend/src/domain/world/Element2DRealization2D.ts:9: * **Phase 52 Refactoring**: Element2DRealization2D now extends Realization base class
+frontend/src/domain/world/Element2DRealization2D.ts:24: * @see specs/001-dihedral-learning-mvp/data-model.md#element2drealization2d-base-class
+frontend/src/domain/world/Element2DRealization2D.ts:35:    // Phase 52: Call Realization base constructor with feasible
+frontend/src/components/workspace/SvgCanvas.vue:84:      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+frontend/src/components/workspace/SvgCanvas.vue:175: * - Will support pan/zoom viewport transformations in Phase 6
+frontend/src/components/workspace/SvgCanvas.vue:178: * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+frontend/src/components/workspace/SvgCanvas.vue:290:// Viewport pan in select mode (T965: drag empty space pans)
+frontend/src/components/workspace/SvgCanvas.vue:337:    // T956: Cancel viewport pan on Esc
+frontend/src/components/workspace/SvgCanvas.vue:347:    // T956: Cancel point drag on Esc
+frontend/src/components/workspace/SvgCanvas.vue:438:  // Phase 78: 3D Element Creation Tools
+frontend/src/components/workspace/SvgCanvas.vue:443:  // Phase 82: Auxiliary Projection Plane Tool
+frontend/src/components/workspace/SvgCanvas.vue:493:  console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:496:  console.log('Points in world:', totalPoints);
+frontend/src/components/workspace/SvgCanvas.vue:518:    console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+frontend/src/components/workspace/SvgCanvas.vue:593:      // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:617:      // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:630:      // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:664: * Phase 6.5: Unified tool delegation for all tools (point, line, circle, etc.)
+frontend/src/components/workspace/SvgCanvas.vue:675:  // T030: Transform coordinates: Screen → Canvas using SVG's native methods
+frontend/src/components/workspace/SvgCanvas.vue:688:  // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:712:  // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+frontend/src/components/workspace/SvgCanvas.vue:718:  // Phase 20: Handle selection mode when 'select' tool is active
+frontend/src/components/workspace/SvgCanvas.vue:733:        // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:737:        // console.log('[SvgCanvas] Selected:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:742:      // console.log('[SvgCanvas] Cleared selection');
+frontend/src/components/workspace/SvgCanvas.vue:747:  // Phase 6.5: Delegate to active tool instead of direct World mutation
+frontend/src/components/workspace/SvgCanvas.vue:772:  // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+frontend/src/components/workspace/SvgCanvas.vue:775:    console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:780:  // Phase 115: Update tool step message for contextual feedback
+frontend/src/components/workspace/SvgCanvas.vue:785: * Handle mouse wheel for zoom with mouse position as center (Phase 70)
+frontend/src/components/workspace/SvgCanvas.vue:804:  console.log('[Zoom] BEFORE:', {
+frontend/src/components/workspace/SvgCanvas.vue:820:  console.log('[Zoom] AFTER:', {
+frontend/src/components/workspace/SvgCanvas.vue:829: * T954: Check if clicking on movable point, start drag if so
+frontend/src/components/workspace/SvgCanvas.vue:830: * T965: Otherwise, prepare for viewport pan
+frontend/src/components/workspace/SvgCanvas.vue:881:  // No movable point hit - start viewport pan (T965: Drag empty space pans)
+frontend/src/components/workspace/SvgCanvas.vue:893: * T188: Show properties dialog when user double-clicks an element
+frontend/src/components/workspace/SvgCanvas.vue:922:    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:928: * T193: Apply property changes and record as command
+frontend/src/components/workspace/SvgCanvas.vue:931:  console.log('[SvgCanvas] Saving property changes:', changes);
+frontend/src/components/workspace/SvgCanvas.vue:946:    console.log('[SvgCanvas] Style updated and command added to stack');
+frontend/src/components/workspace/SvgCanvas.vue:956: * T955: Continuous feedback for point dragging
+frontend/src/components/workspace/SvgCanvas.vue:957: * T965: Viewport pan when dragging empty space
+frontend/src/components/workspace/SvgCanvas.vue:962:  // T965: Handle viewport pan in select mode (drag empty space)
+frontend/src/components/workspace/SvgCanvas.vue:976:  // T955: Live preview for point dragging (Select mode)
+frontend/src/components/workspace/SvgCanvas.vue:1125:// T957: Handle viewport pan end
+frontend/src/components/workspace/SvgCanvas.vue:1168:  console.log('[SvgCanvas] fitToView called');
+frontend/src/components/workspace/SvgCanvas.vue:1175:    console.log('[SvgCanvas] No elements to fit, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1217:    console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1241:  console.log('[SvgCanvas] Fit to view:', {
+frontend/src/components/workspace/SvgCanvas.vue:1335:/* Phase 78: Grid coordinate labels */
+frontend/src/components/icons/toolbar/index.ts:3: * Phase 68: Toolbar Icon-Only Design
+frontend/src/components/dialogs/PropertiesDialog.vue:333:  // TODO: Get creation action from ProcessTree
+frontend/src/components/dialogs/PropertiesDialog.vue:357:  // TODO: Load current element properties from world
+frontend/src/domain/processTree/Subprocess.ts:13:  showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
+frontend/src/domain/processTree/Subprocess.ts:14:  isOutput: boolean;                       // Phase 87: Output flag
+frontend/src/components/toolbars/Toolbar.vue:91:    <!-- Phase 54.5: Selection Tool (standalone, not in family) -->
+frontend/src/components/toolbars/Toolbar.vue:102:    <!-- Phase 67: Tool Family Buttons with Dropdowns -->
+frontend/src/components/toolbars/Toolbar.vue:109:    <!-- T406: Login Status Widget at far right -->
+frontend/src/components/toolbars/Toolbar.vue:161:// Reactive trigger for history updates (Phase 91)
+frontend/src/components/toolbars/Toolbar.vue:179:// Phase 106: 3D element projection display
+frontend/src/components/toolbars/Toolbar.vue:240: * Toggle 3D element projection display (Phase 106 - T1836)
+frontend/src/components/toolbars/Toolbar.vue:254: * T406: Handle sign in request
+frontend/src/components/toolbars/Toolbar.vue:261: * T407: Handle sign out request
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:55: * Phase 78: 3D Element Creation Tools
+frontend/src/components/icons/toolbar/Create3DPointIcon.vue:25: * Phase 78: 3D Element Creation Tools
+frontend/src/components/toolbars/ToolFamilyButton.vue:96:    console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
+frontend/src/components/toolbars/ToolFamilyButton.vue:97:    console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
+frontend/src/components/toolbars/ToolFamilyButton.vue:102:  console.log('[ToolFamilyButton] Selecting tool:', toolId);
+frontend/src/domain/processTree/ProcessTree.ts:29:  showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
+frontend/src/domain/processTree/ProcessTree.ts:30:  isOutput: boolean;                       // Phase 87: Output flag (punches through encapsulation)
+frontend/src/domain/processTree/ProcessTree.ts:37:  isOutput: boolean;                       // Phase 87: Output flag
+frontend/src/domain/processTree/ProcessTree.ts:52:  private subprocessStack: Subprocess[] = [];  // Phase 85: Subprocess stack
+frontend/src/domain/processTree/ProcessTree.ts:57:    // Phase 95: Use fixed ID for root so toggle operations work across sessions
+frontend/src/domain/processTree/ProcessTree.ts:95:   * Phase 85: Stack-based subprocess management
+frontend/src/domain/processTree/ProcessTree.ts:104:   * Phase 85: Stack-based subprocess management
+frontend/src/domain/processTree/ProcessTree.ts:133:   * Phase 85: Stack-based subprocess management
+frontend/src/domain/processTree/ProcessTree.ts:175:   * Add a complete ActionGroup to the tree (Phase 81 Refactor)
+frontend/src/domain/processTree/ProcessTree.ts:204:    // Phase 93: Wrap Action (3 fields) in ActionNode (adds id, type, created)
+frontend/src/domain/processTree/ProcessTree.ts:239:        console.log(`[ProcessTree.toggleSubprocessEncapsulation] subprocessId: ${subprocessId}, ${oldValue} → ${subprocess.showIntermediates}`);
+frontend/src/domain/processTree/ProcessTree.ts:256:        console.log(`[ProcessTree.toggleOutput] subprocess ${nodeId}, ${oldValue} → ${subprocess.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:273:        console.log(`[ProcessTree.toggleOutput] actionGroup ${nodeId}, ${oldValue} → ${group.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:279:        console.log(`[ProcessTree.toggleOutput] action ${nodeId}, ${oldValue} → ${action.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:365:   * Phase 92: Use action.elementId instead of action.outputs
+frontend/src/domain/processTree/ProcessTree.ts:401:   * Remove an action by elementId (Phase 93)
+frontend/src/components/icons/toolbar/Create3DPlaneIcon.vue:41: * Phase 78: 3D Element Creation Tools
+frontend/src/domain/processTree/ActionGroup.ts:12:  isOutput: boolean;               // Phase 87: Output flag
+frontend/src/components/icons/toolbar/Create3DLineIcon.vue:48: * Phase 78: 3D Element Creation Tools
+frontend/src/domain/processTree/Action.ts:4: * Phase 93: Minimal Action interface - only 3 fields
+frontend/src/domain/processTree/Action.ts:9: * Phase 98: Dynamic Action Descriptions
+frontend/src/domain/processTree/Action.ts:23: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93, §Phase 98
+frontend/src/domain/processTree/Action.ts:33:  isOutput: boolean;             // Phase 87: Output flag (Show in black box stack)
+frontend/src/domain/processTree/Action.ts:118:    isOutput: true  // Default to true (user correction from Phase 93 planning)
+frontend/src/commands/factories/ProjectionSetupFactory.ts:91:  // --- Phase 2: Compute T2' by geometric unfolding ---
+frontend/src/commands/factories/ProjectionSetupFactory.ts:177:  // Phase 101: Create broken hinge line connecting auxiliary plane to P_V
+frontend/src/domain/processTree/actions/InitializeWorldActions.ts:4: * Phase 47: These actions are produced by initialization operations.
+frontend/src/domain/processTree/actions/InitializeWorldActions.ts:5: * Phase 93: Convenience wrappers for generic createAction().
+frontend/src/domain/processTree/actions/InitializeWorldActions.ts:45: * Phase 101: Broken Hinge Lines for auxiliary projection planes
+frontend/src/domain/processTree/actions/InitializeWorldActions.ts:56: * Phase 101: Broken Hinge Lines for auxiliary projection planes
+frontend/src/domain/world/descriptors/registerDescriptors.ts:2: * Phase 98: Dynamic Action Descriptions - Descriptor Registration
+frontend/src/domain/processTree/actions/Element3DActions.ts:4: * Phase 78: These actions are produced by 3D element operations.
+frontend/src/domain/processTree/actions/Element3DActions.ts:5: * Phase 93: Convenience wrappers for generic createAction().
+frontend/src/domain/processTree/actions/Element3DActions.ts:15: * Phase 93: Dependencies tracked by DependencyService.
+frontend/src/domain/processTree/actions/Element3DActions.ts:27: * Phase 93: Dependencies tracked by DependencyService.
+frontend/src/domain/processTree/actions/Element3DActions.ts:39: * Phase 107: Dependencies tracked by DependencyService.
+frontend/src/domain/processTree/actions/Element3DActions.ts:51: * Phase 93: Dependencies tracked by DependencyService.
+frontend/src/commands/factories/PointSequenceFactory.ts:4: * Follows the sequence factory pattern established in Phase 81:
+frontend/src/commands/factories/PointSequenceFactory.ts:45:    // Create ProcessTree action for dependency tracking (Phase 92: minimal signature)
+frontend/src/domain/world/descriptors/Point2DDescriptors.ts:2: * Phase 98: Dynamic Action Descriptions - 2D Point Descriptors
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:4: * Phase 60: Tangent line to circle through external point
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:5: * Phase 61: Tangent line to circle parallel to reference line
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:6: * Phase 93: Convenience wrappers for generic createAction().
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:15:// ===== Phase 60: Tangent Through Point =====
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:23:// ===== Phase 61: Tangent Parallel to Line =====
+frontend/src/commands/factories/LineSequenceFactory.ts:85:    // Record ProcessTree action for dependency tracking (Phase 92: minimal signature)
+frontend/src/components/panels/ActionItem.vue:13:    <!-- Phase 92: Display elementId instead of outputs array -->
+frontend/src/domain/processTree/actions/CreateSiblingIntersectionPointAction.ts:7: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:2: * Phase 98: Dynamic Action Descriptions - 2D Line Descriptors
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:151: * Phase 101: Shows which hinge line this trace belongs to and the connected planes
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:182: * Phase 101: Shows broken hinge line trace and its distance transport relationship
+frontend/src/domain/calculations/CoordinateTransform.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
+frontend/src/domain/calculations/CoordinateTransform.ts:196: * Used for viewport transformations in Phase 6
+frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts:7: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/world/descriptors/ElementDescriptor.ts:2: * Phase 98: Dynamic Action Descriptions - Descriptor Pattern
+frontend/src/domain/processTree/actions/CreateSegmentAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateSegmentAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:4: * Phase 74: Refactored to eliminate IntersectionData string discriminator.
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:13: * Phase 42: Handles HalfHingeLine2D intersections by creating sibling points
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:14: * on the complementary plane (follows same pattern as SiblingGuide2D from Phase 36).
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:21: * - Callers use instanceof directly, matching Phase 73 architectural principle
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:42: * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:239:        console.log(
+frontend/src/components/panels/ActionsPanel.vue:211:  // Check each action's elementId and dependencies (Phase 92)
+frontend/src/domain/processTree/actions/CreateProjectionPlaneAction.ts:4: * Phase 82: Create Projection Plane Tool
+frontend/src/domain/processTree/actions/CreateProjectionPlaneAction.ts:5: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/components/panels/ElementTypeGroup.vue:64:  // TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:  // TODO: Clear highlight
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:2: * Phase 98: Dynamic Action Descriptions - 3D Element Descriptors
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:238: * Phase 101: Shows connection between auxiliary and other planes via main hinge
+frontend/src/domain/processTree/actions/CreatePointAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreatePointAction.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/commands/factories/InitializationSequenceFactory.ts:84:  // Phase 94: threeDToPlane_H computed from planeTo3D_H in realization constructor
+frontend/src/commands/factories/InitializationSequenceFactory.ts:107:  // Phase 94: threeDToPlane_V computed from planeTo3D_V in realization constructor
+frontend/src/commands/factories/InitializationSequenceFactory.ts:120:  // Phase 53: Add labels for semantic access
+frontend/src/commands/factories/InitializationSequenceFactory.ts:123:  // Phase 85: Action automatically recorded removed from Op, adding explicitly
+frontend/src/commands/factories/InitializationSequenceFactory.ts:137:  // Phase 84: No geometry arguments - computed from canonical coordinates
+frontend/src/commands/factories/InitializationSequenceFactory.ts:142:  // Phase 89: Direct state mutation (Active Plane is UI state, not Operation)
+frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/descriptors/DescriptorRegistry.ts:2: * Phase 98: Dynamic Action Descriptions - Descriptor Pattern
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factories
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:37: * **Phase 84**: No geometry parameters - computed on demand from canonical coordinates
+frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateParallelLineAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateParallelLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/descriptors/DescriptionPart.ts:2: * Phase 98: Dynamic Action Descriptions - Descriptor Pattern
+frontend/src/domain/processTree/actions/CreateGuideAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateGuideAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:83:   * Phase 53: Enable label-based point lookup for semantic references
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:117:   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:169:   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:222:   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:243:  // Phase 22.5: Realization computation moved from World to ProjectionPlane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:319:  // Phase 22.5: Factory methods moved from World to ProjectionPlane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:323:   * Phase 95: Generate unique Point2D ID (camelCase format)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:331:   * Phase 95: Generate unique Line2D ID (camelCase format)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:339:   * Phase 95: Generate unique Segment2D ID (camelCase format)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:347:   * Phase 95: Generate unique Circle2D ID (camelCase format)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:355:   * Phase 95: Generate unique Guide2D ID (camelCase format)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:394:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:443:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:495:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:547:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:610:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:657:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:704:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:716:   * Phase 60: Tangent line to circle passing through external point
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:758:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:777:   * Phase 61: Tangent line to circle parallel to reference line
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:820:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:877:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:927:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:978:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1055:   * Architecture note: Follows the same pattern as addSiblingGuide2D (Phase 36).
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1166:   * **Phase 84**: No geometry parameters - computed on demand from canonical coordinates
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1187:    // Phase 84: Create without geometry - computed on demand via realize2D()
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1188:    // Phase 102: Pass HingeLine object instead of just ID
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1195:    // Phase 84: No parametric consistency validation needed - automatic with canonical coordinates
+frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/commands/factories/GuideSequenceFactory.ts:58:    console.log(`[GuideSequenceFactory] createGuideWithSibling called: plane=${planeId}, refLine=${referenceLineId}, point=${throughPointId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:66:    console.log(`[GuideSequenceFactory] Primary guide created: ${guideId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:68:    console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:80:      console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:84:    console.log(`[GuideSequenceFactory] Sibling plane: ${siblingInfo.siblingPlaneId}, HHL: ${siblingInfo.siblingHalfHingeLineId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:100:    console.log(
+frontend/src/commands/factories/GuideSequenceFactory.ts:105:    // Phase 101: If reference line is BrokenHalfHingeLine2D, compute arc geometry
+frontend/src/commands/factories/GuideSequenceFactory.ts:108:      console.log(`[GuideSequenceFactory] Reference is BrokenHalfHingeLine2D - computing arc geometry`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:121:        console.log(`[GuideSequenceFactory] Arc geometry computed and stored`);
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:2: * Phase 98: Dynamic Action Descriptions - 2D Circle, Segment, Guide Descriptors
+frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateLineAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:4: * Phase 93: Convenience wrapper for generic createAction().
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:5: * Dependencies (centerId, circumferencePointId) now tracked by DependencyService (Phase 91).
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/commands/factories/DeletionSequenceFactory.ts:19: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
+frontend/src/commands/factories/DeletionSequenceFactory.ts:66:    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+frontend/src/commands/factories/CircleSequenceFactory.ts:58:    // Record ProcessTree action for dependency tracking (Phase 92: minimal signature)
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:48: * Phase 94: Simple data holder - stores both forward and backward matrices as public fields.
+frontend/src/components/panels/ElementsPanel.vue:166:  console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
+frontend/src/components/panels/ElementsPanel.vue:170:  // console.log('[ElementsPanel] Initial points:', totalPoints);
+frontend/src/components/panels/ElementsPanel.vue:171:  // console.log('[ElementsPanel] Initial lines:', totalLines);
+frontend/src/components/panels/ElementsPanel.vue:176:      console.log('[ElementsPanel] World version changed:', lastVersion, '→', currentVersion);
+frontend/src/components/panels/ElementsPanel.vue:194:  // Phase 90: Dynamic projection planes list
+frontend/src/components/panels/ElementsPanel.vue:195:  console.log('[ElementsPanel] Computing projection planes list, version:', version, 'forceUpdate:', update);
+frontend/src/components/panels/ElementsPanel.vue:248:  console.log('[ElementsPanel] Computing 3D elements');
+frontend/src/components/panels/ElementsPanel.vue:250:  // Fetch 3D elements from World (Phase 78)
+frontend/src/components/panels/ElementsPanel.vue:256:  console.log('[ElementsPanel] 3D elements:', {
+frontend/src/domain/world/World.ts:12: * ## Architecture: Element Access Patterns (Phase 48)
+frontend/src/domain/world/World.ts:21: * 1. **Via Hierarchical ID** (Phase 45 - preferred for known IDs):
+frontend/src/domain/world/World.ts:57: * 5. **Semantic Access** (Phase 46 - for fixed initial planes):
+frontend/src/domain/world/World.ts:61: *    const originH = horizontalPlane.getPoint2DByLabel('O_H');  // Phase 53
+frontend/src/domain/world/World.ts:65: * **Why Facade Methods Were Removed** (Phase 48):
+frontend/src/domain/world/World.ts:77: * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
+frontend/src/domain/world/World.ts:78: * @see Phase 45: Hierarchical Element IDs
+frontend/src/domain/world/World.ts:79: * @see Phase 46: Semantic Accessors
+frontend/src/domain/world/World.ts:80: * @see Phase 48: Remove World Facade Methods
+frontend/src/domain/world/World.ts:99:// Phase 78: 3D element domain types
+frontend/src/domain/world/World.ts:104:// Phase 78: 3D element realization types (Element3DRealization3D.ts)
+frontend/src/domain/world/World.ts:110:  // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
+frontend/src/domain/world/World.ts:115:  // Phase 78: User-created 3D elements (domain layer - definitions)
+frontend/src/domain/world/World.ts:126:  // Realization caches - Phase 22.5.3: 2D element realizations now cached in ProjectionPlane
+frontend/src/domain/world/World.ts:131:  // Phase 78: 3D element realization caches (computed numeric geometry)
+frontend/src/domain/world/World.ts:138:  private changeListeners: Array<() => void> = [];  // Phase 80: Observer pattern for view updates
+frontend/src/domain/world/World.ts:146:  // Phase 78: ID generation counters for 3D elements
+frontend/src/domain/world/World.ts:152:  // Phase 116: Sequential mathematical label generator
+frontend/src/domain/world/World.ts:156:    // Phase 22.5.3: Element storage removed - stored in ProjectionPlane
+frontend/src/domain/world/World.ts:161:    // Phase 78: Initialize 3D element storage
+frontend/src/domain/world/World.ts:171:    // Phase 78: Initialize 3D realization caches
+frontend/src/domain/world/World.ts:180:    // Phase 47: Static initialization removed.
+frontend/src/domain/world/World.ts:193:   * Subscribe to World change notifications (Phase 80)
+frontend/src/domain/world/World.ts:205:   * Unsubscribe from World change notifications (Phase 80)
+frontend/src/domain/world/World.ts:218:   * Phase 80: Also notifies all subscribed observers
+frontend/src/domain/world/World.ts:241:    // Phase 22.5.3: Clear plane storage instead of World storage
+frontend/src/domain/world/World.ts:256:    // Phase 95: Do NOT re-initialize automatically.
+frontend/src/domain/world/World.ts:287:   * Phase 95: Generate unique projection plane ID (camelCase format)
+frontend/src/domain/world/World.ts:296:   * Phase 95: Generate unique 3D plane ID (camelCase format)
+frontend/src/domain/world/World.ts:305:   * Phase 95: Generate unique hinge line ID (camelCase format)
+frontend/src/domain/world/World.ts:314:   * Phase 97: Generate default label from element ID and type
+frontend/src/domain/world/World.ts:395:    // Phase 52: Plane3DFixed constructor signature changed to (id, point, normal, label)
+frontend/src/domain/world/World.ts:412:   * Phase 94: Only forward matrices required as parameters.
+frontend/src/domain/world/World.ts:432:    // Phase 94: Derived matrices computed in realization constructors
+frontend/src/domain/world/World.ts:615:    // Phase 22.5.3: Clear realizations from ProjectionPlane caches
+frontend/src/domain/world/World.ts:618:      // Clear all 3D realization caches (Phase 78: includes 3D elements)
+frontend/src/domain/world/World.ts:632:      // Phase 84: If this ID is a projection plane, clear its transformation cache
+frontend/src/domain/world/World.ts:658:    // Phase 22.5.3: Clear realizations from ProjectionPlane caches
+frontend/src/domain/world/World.ts:661:      // Clear all 3D realization caches (Phase 78: includes 3D elements)
+frontend/src/domain/world/World.ts:693:    // Phase 22.5.3: Remove from plane storage
+frontend/src/domain/world/World.ts:708:   * Phase 22.5: Delegates to ProjectionPlane for computation
+frontend/src/domain/world/World.ts:760:   * Get any 2D element by hierarchical ID (Phase 45)
+frontend/src/domain/world/World.ts:785:   * Get Point2D by hierarchical ID (Phase 45)
+frontend/src/domain/world/World.ts:802:   * Get Line2D by hierarchical ID (Phase 45)
+frontend/src/domain/world/World.ts:819:   * Get Circle2D by hierarchical ID (Phase 45)
+frontend/src/domain/world/World.ts:836:   * Get Segment2D by hierarchical ID (Phase 45)
+frontend/src/domain/world/World.ts:859:   * Get Guide2D by hierarchical ID (Phase 45)
+frontend/src/domain/world/World.ts:943:   * @throws Error if the ID is invalid (Phase 76: fail-fast for corrupted state)
+frontend/src/domain/world/World.ts:947:    // Phase 76: getLine2D throws for invalid IDs (fail-fast)
+frontend/src/domain/world/World.ts:1041:  // Phase 78: 3D Element Storage and Access
+frontend/src/domain/world/World.ts:1045:   * Phase 95: Generate unique ID for 3D point (camelCase format)
+frontend/src/domain/world/World.ts:1053:   * Phase 95: Generate unique ID for 3D line (camelCase format)
+frontend/src/domain/world/World.ts:1061:   * Phase 95: Generate unique ID for 3D segment (camelCase format)
+frontend/src/domain/world/World.ts:1069:   * Phase 95: Generate unique ID for user-created 3D plane (camelCase format)
+frontend/src/components/panels/ProcessTreeNode.vue:383:  // Phase 93: Actions only have elementId (single output element)
+frontend/src/components/panels/ProcessTreeNode.vue:395:    // Phase 93: Actions only have elementId (single output element)
+frontend/src/components/panels/ProcessTreeNode.vue:744:/* Phase 99: Clickable Labels */
+frontend/src/domain/world/DependencyService.ts:47:    // Phase 91: ProcessTree argument removed. 
+frontend/src/domain/world/DependencyService.ts:311:    console.log('=== CASCADE INVALIDATION START ===');
+frontend/src/domain/world/DependencyService.ts:312:    console.log(`Root element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:327:        console.log(`${indent}${id} → invalidates ${directDependents.length} descendant(s):`);
+frontend/src/domain/world/DependencyService.ts:329:          console.log(`${indent}  • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:342:    console.log(`=== CASCADE COMPLETE (${visited.size} elements invalidated) ===\n`);
+frontend/src/domain/world/DependencyService.ts:353:    console.log('=== INVALIDATION PROPAGATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:354:    console.log(`Starting from: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:355:    console.log('');
+frontend/src/domain/world/DependencyService.ts:370:      console.log(`${indent}[Depth ${depth}] ${id}`);
+frontend/src/domain/world/DependencyService.ts:372:        console.log(`${indent}  → Invalidates ${dependents.length} dependent(s):`);
+frontend/src/domain/world/DependencyService.ts:374:          console.log(`${indent}    • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:377:        console.log(`${indent}  → (leaf element - no dependents)`);
+frontend/src/domain/world/DependencyService.ts:390:    console.log('');
+frontend/src/domain/world/DependencyService.ts:391:    console.log(`Total elements invalidated: ${trace.length}`);
+frontend/src/domain/world/DependencyService.ts:392:    console.log('=== END INVALIDATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:399:   * Useful for debugging dependency tracking issues
+frontend/src/domain/world/DependencyService.ts:404:    console.log('=== DEPENDENCY GRAPH ===');
+frontend/src/domain/world/DependencyService.ts:405:    console.log(`Total elements tracked: ${this.dependenciesMap.size}`);
+frontend/src/domain/world/DependencyService.ts:406:    console.log('');
+frontend/src/domain/world/DependencyService.ts:422:      console.log(`Element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:424:        console.log(`  Depends on (${dependencies.length}):`);
+frontend/src/domain/world/DependencyService.ts:425:        dependencies.forEach(dep => console.log(`    <- ${dep}`));
+frontend/src/domain/world/DependencyService.ts:427:        console.log(`  Depends on: (none - base element)`);
+frontend/src/domain/world/DependencyService.ts:431:        console.log(`  Depended on by (${dependents.length}):`);
+frontend/src/domain/world/DependencyService.ts:432:        dependents.forEach(dep => console.log(`    -> ${dep}`));
+frontend/src/domain/world/DependencyService.ts:434:        console.log(`  Depended on by: (none - leaf element)`);
+frontend/src/domain/world/DependencyService.ts:436:      console.log('');
+frontend/src/domain/world/DependencyService.ts:439:    console.log('=== END DEPENDENCY GRAPH ===');
+frontend/src/domain/world/Point3D.ts:9: * - Point3DFromProjections: User-created point from two 2D projections (Phase 78)
+frontend/src/domain/world/Point3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#point3d
+frontend/src/domain/world/Point3D.ts:75: * User-created element (Phase 78)
+frontend/src/domain/world/Point3D.ts:177:   * Called during creation to enforce Phase 78 requirement
+frontend/src/domain/world/Point3D.ts:186:   * TODO: Implement proper validation in GeometryValidator
+frontend/src/domain/world/styleService.ts:4: * Phase 83: Element Visibility Property
+frontend/src/domain/world/styleService.ts:9: * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
+frontend/src/domain/world/styleService.ts:64:  // Phase 87: Encapsulation / Black Box Logic
+frontend/src/domain/world/index.ts:15:// 3D Element Realization Types (Phase 78)
+frontend/src/domain/world/index.ts:24:// 3D Element Domain Types (Phase 78)
+frontend/src/domain/world/index.ts:42:// Phase 101: Broken Hinge Lines
+frontend/src/domain/world/index.ts:47:// Phase 116: Sequential label generation
+frontend/src/domain/world/Point.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
+frontend/src/domain/world/Point.ts:603:   * @see specs/001-dihedral-learning-mvp/data-model.md §Parametric Consistency Requirement
+frontend/src/domain/world/Point.ts:650:        console.log(`[SiblingIntersectionPoint2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → R'=(${R_prime.x.toFixed(2)},${R_prime.y.toFixed(2)})`);
+frontend/src/domain/world/Segment.ts:4: * Phase 22.5: Segments now extend Line2D base class
+frontend/src/domain/world/Segment.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Segment.ts:22:export type Segment2DType = typeof SEGMENT_2D_TYPE[keyof typeof SEGMENT_2D_TYPE];  // Phase 22.5: Use 'segment' to match Line2DType
+frontend/src/domain/world/Segment.ts:26: * Phase 22.5: Now extends Line2D base class
+frontend/src/domain/world/Segment.ts:72:   * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
+frontend/src/components/panels/ThreeView.vue:18:        <label class="control-label" title="Show coordinate axes (X/Y/Z) at origin for spatial reference and debugging">
+frontend/src/stores/authStore.ts:4: * T402: Manages Google Drive authentication state and user profile information.
+frontend/src/stores/authStore.ts:8: * @see specs/001-dihedral-learning-mvp/data-model.md - Authentication State
+frontend/src/services/factories/PlaneSequenceFactory.ts:4: * Follows the sequence factory pattern established in Phase 81:
+frontend/src/services/factories/PlaneSequenceFactory.ts:11: * Phase 85: Uses PushSubprocessOp/PopSubprocessOp for subprocess stack management.
+frontend/src/services/factories/PlaneSequenceFactory.ts:132:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for projPlane:', projPlaneId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:134:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for projPlane');
+frontend/src/services/factories/PlaneSequenceFactory.ts:144:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for hingeLine:', hingeLineId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:149:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for hingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:154:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #1:', hhl1Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:159:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:163:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #2:', hhl2Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:168:    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #2');
+frontend/src/services/factories/PlaneSequenceFactory.ts:190:   * Phase 101: Broken Hinge Lines for Auxiliary Planes
+frontend/src/services/factories/PlaneSequenceFactory.ts:230:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BrokenHingeLine:', brokenHingeLineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:235:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BrokenHingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:237:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #1:', bhhl1Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:242:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:243:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:245:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #2:', bhhl2Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:250:    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #2');
+frontend/src/services/SVGRenderer.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-transformations
+frontend/src/services/SVGRenderer.ts:130:    // Phase 101: Support quadratic Bezier curves for broken hinge line arcs
+frontend/src/services/GoogleDriveService.ts:12: * @see specs/001-dihedral-learning-mvp/ui-spec.md - Startup Flow and Google Drive Authentication
+frontend/src/services/GoogleDriveService.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md - Persistence Strategy
+frontend/src/services/GoogleDriveService.ts:46:  // T400: Add profile and email scopes for user profile information
+frontend/src/services/GoogleDriveService.ts:82:          console.log('[GoogleDrive] Initializing with config:', {
+frontend/src/services/GoogleDriveService.ts:108:          console.log('[GoogleDrive] Initialization successful');
+frontend/src/services/GoogleDriveService.ts:131:        console.log('[GoogleDrive] Session restored automatically');
+frontend/src/services/GoogleDriveService.ts:133:        console.log('[GoogleDrive] Could not restore session:', error);
+frontend/src/services/GoogleDriveService.ts:204:          console.log('[GoogleDrive] Sign-in successful');
+frontend/src/services/GoogleDriveService.ts:238:   * T401: Fetch user profile information from Google
+frontend/src/services/GoogleDriveService.ts:432:      // T409: Fix "Ghost files" loading from trash
+frontend/src/services/GoogleDriveService.ts:475:      console.log('[GoogleDrive] Checking file status before update:', fileId);
+frontend/src/services/GoogleDriveService.ts:483:      console.log('[GoogleDrive] File status:', fileCheckResponse.result);
+frontend/src/services/GoogleDriveService.ts:527:      console.log('[GoogleDrive] File updated successfully:', fileId);
+frontend/src/services/GoogleDriveService.ts:556:      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
+frontend/src/services/GoogleDriveService.ts:566:          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
+frontend/src/services/GoogleDriveService.ts:571:      console.log('[GoogleDrive] Extracted numbers:', numbers);
+frontend/src/services/GoogleDriveService.ts:575:        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
+frontend/src/services/GoogleDriveService.ts:585:          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
+frontend/src/services/GoogleDriveService.ts:592:      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
+frontend/src/services/GoogleDriveService.ts:631:      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);
+frontend/src/domain/world/Segment3D.ts:8: * - Segment3DFromProjections: User-created segment from two 2D segment projections (Phase 78)
+frontend/src/domain/world/Segment3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#segment3d
+frontend/src/domain/world/Segment3D.ts:27: * User-created element (Phase 78)
+frontend/src/domain/world/Segment3D.ts:183:   * Called during creation to enforce Phase 78 requirement
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:12: * **Phase 101**: Broken Hinge Lines and Distance Transport Guides
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:151:    console.log(`[BHHL ${this.label}] ${traceName} (${t2TraceId}) on ${t2Line.planeId}: point=(${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:152:    console.log(`[BHHL ${this.label}] origin2D: (${origin2D.x.toFixed(2)}, ${origin2D.y.toFixed(2)}, z=${origin2D.z.toFixed(2)}) on plane ${this.planeId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:169:    console.log(`[BHHL ${this.label}] Looking for T1 hinge between ${this.planeId} and ${mainHinge.plane1Id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:171:    console.log(`[BHHL ${this.label}] Available hinge lines:`, allHingeLines.map(hl => `${hl.id}(${hl.plane1Id}-${hl.plane2Id})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:183:    console.log(`[BHHL ${this.label}] Found T1 hinge: ${t1HingeLine.id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:187:    console.log(`[BHHL ${this.label}] Lines on plane ${this.planeId}:`, allLinesOnPlane.map(l => `${l.id}(${l.constructor.name})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:200:    console.log(`[BHHL ${this.label}] Found T1 trace: ${t1HalfHinge.id} (${t1HalfHinge.label})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:208:    console.log(`[BHHL ${this.label}] T1 realization feasible`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:213:    console.log(`[BHHL ${this.label}] Guide vector parallel to T1: (${guideVector.x.toFixed(2)}, ${guideVector.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:214:    console.log(`[BHHL ${this.label}] ✅ REALIZATION COMPLETE - returning feasible result`);
+frontend/src/domain/world/Plane.ts:9: * **Phase 52**: Refactored to extend Element3D, removing id and label properties
+frontend/src/domain/world/Plane.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
+frontend/src/domain/world/Plane.ts:116: * **Phase 52**: Updated constructor to pass id as required parameter to parent,
+frontend/src/domain/world/Plane.ts:168:    // Phase 52: Fixed planes have no dependencies
+frontend/src/domain/world/Plane.ts:239: * Plane3DFromTraces - Plane from two trace lines (user-constructed - Phase 78)
+frontend/src/domain/world/Plane.ts:273:    console.log('[Plane3DFromTraces] getPlaneEquation called for plane:', this.id, 'trace1:', this.trace1, 'trace2:', this.trace2);
+frontend/src/domain/world/Plane.ts:303:    console.log('[Plane3DFromTraces] All realizations feasible - computing plane');
+frontend/src/domain/world/Plane.ts:309:    console.log('[Plane3DFromTraces] t1 in 3D: t1PointIn3D:', t1PointIn3D, 't1DirIn3D:', t1DirIn3D);
+frontend/src/domain/world/Plane.ts:315:    console.log('[Plane3DFromTraces] t2 in 3D: t2PointIn3D:', t2PointIn3D, 't2DirIn3D:', t2DirIn3D);
+frontend/src/domain/world/Plane.ts:330:    console.log('[Plane3DFromTraces] Traces intersect at:', intersection.position);
+frontend/src/domain/world/Plane.ts:338:    console.log('[Plane3DFromTraces] Normalized normal:', [a, b, c]);
+frontend/src/domain/world/Plane.ts:343:    console.log('[Plane3DFromTraces] Plane equation: a=', a, 'b=', b, 'c=', c, 'd=', d);
+frontend/src/domain/world/Plane.ts:365:   * Called during creation to enforce Phase 78 requirement
+frontend/src/domain/world/Line.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Line.ts:157:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+frontend/src/domain/world/Line.ts:211:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+frontend/src/domain/world/Line.ts:271: * TODO: Implement in later phase when parallel line tool is added
+frontend/src/domain/world/Line.ts:304:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+frontend/src/domain/world/Line.ts:357: * TODO: Implement in later phase when perpendicular line tool is added
+frontend/src/domain/world/Line.ts:372:  readonly type: Line2DType;  // Phase 52: Allow subclasses to override with their own type
+frontend/src/domain/world/Line.ts:408:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+frontend/src/domain/world/Line.ts:479: * Phase 60: Tangent line construction through external point
+frontend/src/domain/world/Line.ts:493: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocirclethroughpoint
+frontend/src/domain/world/Line.ts:553:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+frontend/src/domain/world/Line.ts:634:    console.log('[TangentLine] Through Point:', {
+frontend/src/domain/world/Line.ts:659: * Phase 61: Tangent line construction parallel to reference line
+frontend/src/domain/world/Line.ts:675: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocircleparalleltoline
+frontend/src/domain/world/Line.ts:730:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+frontend/src/domain/world/Line.ts:830:    console.log('[TangentLine] Parallel to Line:', {
+frontend/src/domain/world/Line3D.ts:8: * - HingeLine: System line representing fold between projection planes (Phase 84)
+frontend/src/domain/world/Line3D.ts:9: * - Line3DFromProjections: User-created line from two 2D line projections (Phase 78)
+frontend/src/domain/world/Line3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line3d
+frontend/src/domain/world/Line3D.ts:42: * User-created element (Phase 78)
+frontend/src/domain/world/Line3D.ts:115:      console.log('[Line3DFromProjections] Reconstructing 3D line from projections:', {
+frontend/src/domain/world/Line3D.ts:142:      console.log('[Line3DFromProjections] 2D line data:', {
+frontend/src/domain/world/Line3D.ts:208:      console.log('[Line3DFromProjections] Plane 1 (3D):', {
+frontend/src/domain/world/Line3D.ts:259:      console.log('[Line3DFromProjections] Plane 2 (3D):', {
+frontend/src/domain/world/Line3D.ts:297:      console.log('[Line3DFromProjections] 3D line direction:', [direction3D.x, direction3D.y, direction3D.z]);
+frontend/src/domain/world/Line3D.ts:309:      console.log('[Line3DFromProjections] Plane equations:', {
+frontend/src/domain/world/Line3D.ts:337:        console.log('[Line3DFromProjections] Fixed z=0, solved for x,y');
+frontend/src/domain/world/Line3D.ts:354:        console.log('[Line3DFromProjections] Fixed y=0, solved for x,z');
+frontend/src/domain/world/Line3D.ts:371:        console.log('[Line3DFromProjections] Fixed x=0, solved for y,z');
+frontend/src/domain/world/Line3D.ts:374:      console.log('[Line3DFromProjections] 3D line point:', [point3D.x, point3D.y, point3D.z]);
+frontend/src/domain/world/Line3D.ts:375:      console.log('[Line3DFromProjections] ✓ Success! 3D line reconstructed');
+frontend/src/domain/world/Line3D.ts:406:   * Called during creation to enforce Phase 78 requirement
+
+== test/docs refs to placeholder operation dirs/debug surfaces ==
+architecture-audit/wave-plan.md:347:- Delete rendering TODO branches that become obsolete or are replaced by explicit selector behavior.
+architecture-audit/wave-plan.md:423:- Delete debug/error TODO stubs that are not implemented by the extracted services.
+architecture-audit/wave-plan.md:517:- `frontend/src/commands/operations/paper/README.md`
+architecture-audit/wave-plan.md:518:- `frontend/src/commands/operations/toolbar/README.md`
+architecture-audit/wave-plan.md:519:- debug-only operation paths such as `frontend/src/commands/operations/debug/` if no longer active
+architecture-audit/wave-plan.md:521:- TODOs made obsolete by earlier waves
+architecture-audit/wave-plan.md:526:Corrections identify `paper/` and `toolbar/` operation directories as README-only future-operation placeholders and deletion candidates (`inventory.md` corrections; `quality-report.md` Q21; `risk-register.md` R13). The baseline also flags TODOs in user-facing rendering/feedback paths and debug logging across app/service code (`quality-report.md` Q15, Q17).
+architecture-audit/wave-plan.md:530:The active source tree contains no aspirational placeholder operation families, no obsolete TODO branches from refactored paths, and no routine debug logging that obscures boundaries or risks leaking integration metadata.
+architecture-audit/wave-plan.md:534:- Delete `frontend/src/commands/operations/paper/` if still README-only.
+architecture-audit/wave-plan.md:535:- Delete `frontend/src/commands/operations/toolbar/` if still README-only.
+architecture-audit/wave-plan.md:537:- Delete routine console debug logging and obsolete TODO stubs in touched modules.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:21:- Deleted `frontend/src/components/menus/ExamplesMenu.vue`.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:22:- Deleted `frontend/src/commands/operations/debug/AddExampleSetupOp.ts`.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:23:- Removed the now-empty `frontend/src/commands/operations/debug/` directory.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:25:Static usage evidence before deletion: `validation/pre-implementation-examples-usage.stdout` showed references only in `ExamplesMenu.vue` and `AddExampleSetupOp.ts`; no parent registration or e2e/test references existed.
+architecture-audit/cycle-011-architecture-tests-validation-gates/implementation-log.md:93:- Static deletion/backend scans: `static-examples-deleted-scan.stdout`, `static-examples-deleted-scan.stderr` — no `ExamplesMenu`, `AddExampleSetupOp`, or `operations/debug` references remain in source/tests except the architecture gate assertion text itself; package scripts and `frontend/playwright.config.ts` contain no stale backend server/config terms.
+specs/001-dihedral-learning-mvp/ui-spec.md:1445:- Network errors: Error logged to console (TODO: show user feedback)
+frontend/tests/e2e/dependencies.spec.ts:40:    // TODO: Move one of the base points and verify intersection point updates
+frontend/tests/e2e/dependencies.spec.ts:68:    // TODO: Move the center point and verify circle moves with it
+frontend/tests/e2e/dependencies.spec.ts:92:    // TODO: Move one of the points and verify line rotates/moves
+frontend/tests/e2e/dependencies.spec.ts:134:    // TODO: Move point1 and verify that line1, intersection, and circle all update
+frontend/tests/e2e/dependencies.spec.ts:168:    // TODO: Move the shared center point and verify all three circles move together
+frontend/tests/e2e/dependencies.spec.ts:195:    // TODO: Hover over line action and verify it highlights dependent points
+frontend/tests/e2e/dependencies.spec.ts:256:    // TODO: Programmatically move a point and verify that:
+frontend/tests/e2e/debug.spec.ts:4:  page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
+frontend/tests/e2e/debug.spec.ts:5:  page.on('requestfailed', request => console.log(`REQUEST FAILED: ${request.url()} - ${request.failure()?.errorText}`));
+frontend/tests/e2e/debug.spec.ts:7:    if (response.status() === 404) console.log(`RESPONSE 404: ${response.url()}`);
+frontend/tests/e2e/debug.spec.ts:9:  page.on('pageerror', exception => console.log(`In-page error: "${exception}"`));
+frontend/tests/e2e/debug.spec.ts:15:  console.log('SVG count:', count);
+frontend/tests/e2e/debug.spec.ts:17:  console.log('SVG visible:', visible);
+frontend/tests/e2e/debug.spec.ts:19:  console.log('SVG class:', classes);
+frontend/tests/e2e/infeasibility.spec.ts:21:    // TODO: Initialize project
+frontend/tests/e2e/infeasibility.spec.ts:25:    // TODO: Once infeasibility constraints are implemented:
+frontend/tests/e2e/infeasibility.spec.ts:57:    // TODO: Once dependency propagation is integrated:
+frontend/tests/e2e/infeasibility.spec.ts:88:    // TODO: Once action infeasibility tracking is implemented:
+frontend/tests/e2e/infeasibility.spec.ts:109:    // TODO: Once infeasibility clearing is integrated:
+frontend/tests/e2e/infeasibility.spec.ts:133:    // TODO: Test isolation of infeasibility
+frontend/tests/e2e/infeasibility.spec.ts:163:    // TODO: Performance test for infeasibility during dragging
+frontend/tests/e2e/create-point.spec.ts:137:    // TODO: Add assertions for hover feedback (cursor change, preview indicator, etc.)
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:151:// TODO: Add comprehensive tests for computeProjectionPlaneMatrices once we have test fixtures
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:156:describe('computeProjectionPlaneMatrices - TODO', () => {
+frontend/tests/e2e/distance-transport.spec.ts:26:    // TODO: Implement project initialization
+frontend/tests/e2e/distance-transport.spec.ts:30:    // TODO: Replace placeholder with UI-driven distance-transport coverage when the current SvgCanvas workflow exposes stable test IDs:
+frontend/tests/e2e/distance-transport.spec.ts:69:    // TODO: Once rendering is complete:
+frontend/tests/e2e/distance-transport.spec.ts:94:    // TODO: Once coordinate system and measurements are integrated:
+frontend/tests/e2e/distance-transport.spec.ts:112:    // TODO: Once parametric update is implemented:
+frontend/tests/e2e/distance-transport.spec.ts:135:    // TODO: Once Actions panel is complete:
+frontend/tests/e2e/navigation.spec.ts:21:    // TODO: Initialize project with some elements for reference
+frontend/tests/e2e/navigation.spec.ts:25:    // TODO: Once navigation and tools are integrated:
+frontend/tests/e2e/navigation.spec.ts:52:    // TODO: Once zoom and tools are integrated:
+frontend/tests/e2e/navigation.spec.ts:79:    // TODO: Test viewport persistence:
+frontend/tests/e2e/navigation.spec.ts:101:    // TODO: Once keyboard shortcuts are implemented:
+frontend/tests/e2e/navigation.spec.ts:129:    // TODO: Once mouse navigation is implemented:
+frontend/tests/e2e/navigation.spec.ts:156:    // TODO: Performance test for navigation with many elements
+frontend/tests/e2e/navigation.spec.ts:189:    // TODO: Test that tool preview (e.g., line preview) persists during pan/zoom
+frontend/tests/e2e/navigation.spec.ts:220:    // TODO: Once touch support is implemented:
+frontend/tests/e2e/basic-construction.spec.ts:24:    // TODO: Implement project initialization
+frontend/tests/e2e/basic-construction.spec.ts:28:    // TODO: Replace placeholder with UI-driven point-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:53:    // TODO: Replace placeholder with UI-driven segment-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:79:    // TODO: Replace placeholder with UI-driven panel/tool coverage when the current app shell exposes stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:104:    // TODO: Once panels are integrated:
+specs/001-dihedral-learning-mvp/tasks.md:2753:- ⏳ TODO: Update unit tests to use generic Command pattern, then delete Command subclasses
+specs/001-dihedral-learning-mvp/tasks.md:2758:- This phase fixes the TODO comment in App.vue handleDeleteSelected()
+specs/001-dihedral-learning-mvp/tasks.md:2781:1. `UpdateElementStyleCommand` - Placeholder implementation (just console.log)
+specs/001-dihedral-learning-mvp/tasks.md:3604:- Create `operations/paper/` folder (already created in T446)
+specs/001-dihedral-learning-mvp/tasks.md:3611:- Create `operations/toolbar/` folder (already created in T446)
+specs/001-dihedral-learning-mvp/tasks.md:5804:  - Add console.log for debugging: "Snapped to existing point" vs "Created new circumference point"
+specs/001-dihedral-learning-mvp/tasks.md:11395:- [ ] T1323 Update all factory callers to use new pattern (CreateProjectionPlaneTool, ProjectionSetupFactory, AddExampleSetupOp)
+frontend/tests/e2e/point-transport.spec.ts:31:    // TODO: Implement full E2E test once HL visualization is available
+frontend/tests/e2e/point-transport.spec.ts:44:    // TODO: Test error handling:
+frontend/tests/e2e/point-transport.spec.ts:56:    // TODO: Test undo functionality:
+frontend/tests/e2e/parametric-update.spec.ts:21:    // TODO: Initialize project
+frontend/tests/e2e/parametric-update.spec.ts:25:    // TODO: Once drag-and-drop and MoveFreePointCommand are integrated:
+frontend/tests/e2e/parametric-update.spec.ts:54:    // TODO: Once complex dependencies are integrated:
+frontend/tests/e2e/parametric-update.spec.ts:85:    // TODO: This should be prevented by the dependency graph validation
+frontend/tests/e2e/parametric-update.spec.ts:106:    // TODO: Performance test for selective recomputation
+frontend/tests/e2e/parametric-update.spec.ts:129:    // TODO: Performance test for smooth dragging
+specs/001-dihedral-learning-mvp/for-planing.md:121:  - **Problem**: Segment3DFromProjections.realize3D() is a TODO stub returning placeholder coordinates. No compatibility validation at creation time. No process tree action recording.
+specs/001-dihedral-learning-mvp/for-planing.md:1350:  - **Future Considerations** (TODO):
+specs/001-dihedral-learning-mvp/for-planing.md:1356:    - **Implementation TODO**: When non-orthogonal planes are introduced, verify grid rendering and label placement work correctly
+specs/001-dihedral-learning-mvp/for-planing.md:2350:  - **Context**: Line2DParallel class exists but realize2D() returns null with TODO comment
+frontend/tests/unit/commands/createFreePoint.spec.ts:121:      // TODO Phase 83: Re-enable when visualStyle is fully implemented
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:99:    console.log('[TEST] Point C coords on P_H:', cRealization.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:100:    console.log('[TEST] Point C\' coords on P_V:', cPrimeRealization.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:142:    console.log('[Test] Point C coords:', coordsC.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:143:    console.log('[Test] Point C\' coords:', coordsCPrime.position);
+frontend/tests/unit/architecture/importBoundaries.spec.ts:64:    expect(findContentMatches(files, /ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
+architecture-audit/baseline/inventory.md:131:Additional component groups omitted from the first inventory include `components/header/ProjectNameDisplay.vue`, `components/menus/ExamplesMenu.vue`, `components/LoginStatusWidget.vue`, and `components/icons/toolbar/` icon components. `ElementRenderer.vue` is a workspace renderer over legacy structural `ElementTypes` and `worldStore` (`frontend/src/components/workspace/ElementRenderer.vue:80`, `frontend/src/components/workspace/ElementRenderer.vue:81`, `frontend/src/components/workspace/ElementRenderer.vue:83`, `frontend/src/components/workspace/ElementRenderer.vue:88`, `frontend/src/components/workspace/ElementRenderer.vue:95`), but it is imported only by `Workspace2D.vue` (`frontend/src/components/workspace/Workspace2D.vue:37`, `frontend/src/components/workspace/Workspace2D.vue:69`). `Workspace2D.vue` itself imports six non-existent command-class paths (`frontend/src/components/workspace/Workspace2D.vue:71`, `frontend/src/components/workspace/Workspace2D.vue:72`, `frontend/src/components/workspace/Workspace2D.vue:73`, `frontend/src/components/workspace/Workspace2D.vue:74`, `frontend/src/components/workspace/Workspace2D.vue:75`, `frontend/src/components/workspace/Workspace2D.vue:76`) while the current `frontend/src/commands/` directory contains only `Command.ts`, `CommandStack.ts`, `factories/`, and `operations/`. A source-tree grep found no active import of `Workspace2D.vue`, and only `Workspace2D.vue` imports `ElementRenderer.vue`, so both are dead/uncompilable deletion candidates.
+architecture-audit/baseline/inventory.md:133:`frontend/src/utils/` additionally contains `arcGeometry.ts`, `assert.ts`, `formatUtils.ts`, and `rectangleGrid.ts` alongside the transform/projection utilities described above. `frontend/src/commands/operations/` contains `world/`, `processTree/`, `viewState/`, `debug/`, `paper/`, and `toolbar/` subdirectories. `debug/` contains `AddExampleSetupOp.ts`; `viewState/` contains view-state operations; `paper/` and `toolbar/` contain only `README.md`, making them vacant placeholder directories rather than implemented operation families. The paper README identifies only future operations (`frontend/src/commands/operations/paper/README.md:7`, `frontend/src/commands/operations/paper/README.md:8`, `frontend/src/commands/operations/paper/README.md:9`, `frontend/src/commands/operations/paper/README.md:10`), and the toolbar README likewise lists only future operations (`frontend/src/commands/operations/toolbar/README.md:7`, `frontend/src/commands/operations/toolbar/README.md:8`, `frontend/src/commands/operations/toolbar/README.md:9`, `frontend/src/commands/operations/toolbar/README.md:10`).
+architecture-audit/baseline/corrections-round-01.md:9:| Reviewer-A C1; Reviewer-B C1 — inventory missing modules | Addressed | `inventory.md` | Added domain-world support files and descriptor registry (`frontend/src/domain/world/Element.ts:29`, `frontend/src/domain/world/Element2D.ts:1`, `frontend/src/domain/world/Realization.ts:37`, `frontend/src/domain/world/descriptors/DescriptorRegistry.ts:15`), services (`frontend/src/services/GeometryService.ts:21`, `frontend/src/services/InputService.ts:17`, `frontend/src/services/ValidationService.ts:16`), types (`frontend/src/types/ResultTypes.ts:2`, `frontend/src/types/ToolArgumentCollector.ts:17`), operation subdirectories including README-only placeholders (`frontend/src/commands/operations/paper/README.md:7`, `frontend/src/commands/operations/toolbar/README.md:7`), and test breadth. |
+architecture-audit/baseline/corrections-round-01.md:12:| Reviewer-B C4 — vacant operation subdirectories | Addressed | `inventory.md`, `quality-report.md`, `risk-register.md` | Flagged `frontend/src/commands/operations/paper/` and `frontend/src/commands/operations/toolbar/` as README-only placeholder/deletion candidates (`frontend/src/commands/operations/paper/README.md:7`-`10`, `frontend/src/commands/operations/toolbar/README.md:7`-`10`). |
+architecture-audit/baseline/quality-report.md:71:## Dead code, TODOs, and obsolete surfaces
+architecture-audit/baseline/quality-report.md:73:### Q15. TODOs document incomplete behavior in user-facing paths
+architecture-audit/baseline/quality-report.md:75:`App.vue` has unimplemented highlight/clear-highlight handlers and a TODO for error feedback (`frontend/src/App.vue:641`, `frontend/src/App.vue:650`, `frontend/src/App.vue:680`). `PaperService` has TODOs for visibility/infeasibility and missing element types (`frontend/src/services/PaperService.ts:202`, `frontend/src/services/PaperService.ts:238`, `frontend/src/services/PaperService.ts:343`, `frontend/src/services/PaperService.ts:437`, `frontend/src/services/PaperService.ts:610`, `frontend/src/services/PaperService.ts:888`). `SVGRenderer` has a TODO around actual canvas dimensions (`frontend/src/services/SVGRenderer.ts:220`). These TODOs sit on rendering/feedback paths and should either become explicit wave scope or be deleted if obsolete.
+architecture-audit/baseline/quality-report.md:126:`frontend/src/commands/operations/paper/` and `frontend/src/commands/operations/toolbar/` contain only `README.md` files and no operation implementations. The paper README's concrete content is a "Future Operations" list (`frontend/src/commands/operations/paper/README.md:7`, `frontend/src/commands/operations/paper/README.md:8`, `frontend/src/commands/operations/paper/README.md:9`, `frontend/src/commands/operations/paper/README.md:10`), and the toolbar README has the same future-only shape (`frontend/src/commands/operations/toolbar/README.md:7`, `frontend/src/commands/operations/toolbar/README.md:8`, `frontend/src/commands/operations/toolbar/README.md:9`, `frontend/src/commands/operations/toolbar/README.md:10`). Under the current no-backcompat/aggressive-deletion priorities, these are dead specification placeholders unless a wave immediately implements them. They should be deleted rather than preserved as aspirational architecture.
+architecture-audit/baseline/reviews/round-01-reviewer-b.md:48:8. **Components not mentioned** — components/header/ProjectNameDisplay.vue, components/menus/ExamplesMenu.vue, components/icons/toolbar/ (28 Vue icons + index.ts), components/LoginStatusWidget.vue.
+architecture-audit/baseline/reviews/round-01-reviewer-b.md:49:9. **`commands/operations/` subdirectories** — Only `world/` and `processTree/` operation directories are described. `debug/` (AddExampleSetupOp.ts), `paper/` (README-only, planned operations), `toolbar/` (README-only), `viewState/` (ViewStateOperations.ts) are unmentioned.
+architecture-audit/baseline/reviews/round-01-reviewer-b.md:125:4. **Q17 (Debug logging)** — Agreed with reviewer-A that debug logging is weighted at the same level as type-safety and domain coupling, which overweights it. Most are `console.log` statements that are trivial to remove, not architectural concerns.
+architecture-audit/baseline/reviews/round-01-reviewer-b.md:127:5. **Additional quality finding**: `commands/operations/paper/` and `commands/operations/toolbar/` contain only README files describing aspirational operations that have never been implemented. These are vacant placeholders that should be flagged for deletion under the project's aggressive deletion priority.
+architecture-audit/baseline/reviews/round-01-reviewer-b.md:160:- The e2e test files that reference `Workspace2D` (`basic-construction.spec.ts`, `distance-transport.spec.ts`) only mention it in TODO comments, not in actual test code.
+architecture-audit/baseline/reviews/round-01-reviewer-b.md:165:The `commands/operations/paper/` and `commands/operations/toolbar/` subdirectories contain only README.md files describing aspirational operations never implemented. These are vacant placeholders without any actual operation files. Under the project's aggressive deletion priority, they should be identified as deletion candidates.
+architecture-audit/baseline/reviews/round-02-reviewer-b.md:20:| C4 — Vacant operation directories | Flag paper/ and toolbar/ as README-only deletion candidates | **Addressed** | inventory.md addendum identifies paper/ and toolbar/ operation directories as "vacant placeholder directories" with README-only content. quality-report.md adds Q21 specifically for vacant operation directories with path:line evidence (paper/README.md:7-10, toolbar/README.md:7-10). risk-register.md adds R13 flagging them as deletion candidates. I independently verified: `ls frontend/src/commands/operations/paper/ frontend/src/commands/operations/toolbar/` confirms both contain only README.md files. |
+architecture-audit/baseline/reviews/round-01-reviewer-a.md:55:9. **Components not mentioned**: `frontend/src/components/header/ProjectNameDisplay.vue`, `frontend/src/components/menus/ExamplesMenu.vue`, `frontend/src/components/icons/toolbar/` (28 icon components + `index.ts`), `frontend/src/components/LoginStatusWidget.vue`. While individually small, the icon system and `ExamplesMenu` have service/tool integration implications.
+architecture-audit/baseline/reviews/round-01-reviewer-a.md:61:12. **`frontend/src/commands/operations/` subdirectories**: The inventory summarizes `IOperation` and mentions `AddFreePoint2DOp` and `InitializationOps`, but does not enumerate the operation subdirectories (`world/`, `processTree/`, `paper/`, `toolbar/`, `viewState/`, `debug/`) or their contents. Only `world/` and `processTree/` are detailed. The `paper/` and `debug/` subdirectories (containing `AddExampleSetupOp.ts`) are unmentioned.
+architecture-audit/baseline/reviews/round-01-reviewer-a.md:121:4. **Q17 (Debug logging)**: While valid, some logging entries (e.g., `console.log('[ActionsPanel] World changed, re-fetching ProcessTree')`) are debug statements that should be removed but represent a trivial cleanup, not an architectural concern. The quality report treats them at the same level as type-safety and domain coupling issues, which overweights their significance.
+architecture-audit/baseline/reviews/round-01-reviewer-a.md:148:- `components/header/ProjectNameDisplay.vue`, `components/menus/ExamplesMenu.vue`, `components/icons/toolbar/` (28 files), `components/LoginStatusWidget.vue`
+architecture-audit/baseline/reviews/round-01-reviewer-a.md:150:- `commands/operations/paper/`, `commands/operations/debug/`, `commands/operations/toolbar/`, `commands/operations/viewState/`
+architecture-audit/baseline/reviews/round-01-reviewer-a.md:160:The quality-report and risk-register correctly identify that `Workspace2D.vue` imports legacy command-subclass files, but they do not state that **(a) those six imported files do not exist in the tree**, and **(b) `Workspace2D.vue` itself is imported nowhere** (not by App.vue, not by any component, not by any test except e2e `basic-construction.spec.ts` and `distance-transport.spec.ts` which contain TODOs about integrating it). The file is dead, uncompilable code.
+architecture-audit/baseline/reviews/round-02-reviewer-a.md:67:- ✅ Additional components (ProjectNameDisplay, ExamplesMenu, icons/toolbar, LoginStatusWidget)
+architecture-audit/baseline/risk-register.md:187:**Evidence:** `frontend/src/commands/operations/` contains `paper/` and `toolbar/`, but each contains only `README.md` and no operation implementations. The paper placeholder lists `InvalidateCacheOp`, `SetVisibilityOp`, and `UpdateHighlightOp` only under "Future Operations" (`frontend/src/commands/operations/paper/README.md:7`, `frontend/src/commands/operations/paper/README.md:8`, `frontend/src/commands/operations/paper/README.md:9`, `frontend/src/commands/operations/paper/README.md:10`); the toolbar placeholder similarly lists `SetActiveToolOp`, `SetToolFeedbackOp`, and `SetToolOptionsOp` only under "Future Operations" (`frontend/src/commands/operations/toolbar/README.md:7`, `frontend/src/commands/operations/toolbar/README.md:8`, `frontend/src/commands/operations/toolbar/README.md:9`, `frontend/src/commands/operations/toolbar/README.md:10`).
+specs/001-dihedral-learning-mvp/data-model.md:1958:    console.log(`[ProjectService] Migrating from ${data.schemaVersion} to 6.0.0`);
+specs/001-dihedral-learning-mvp/data-model.md:1959:    console.log('[ProjectService] Converting element IDs to camelCase');
+specs/001-dihedral-learning-mvp/data-model.md:1970:    console.log('[ProjectService] Migration complete');
+specs/001-dihedral-learning-mvp/data-model.md:8966:    // TODO: Also invalidate dependent objects
+specs/001-dihedral-learning-mvp/data-model.md:9169:// TODO: Also invalidate dependents:
+specs/001-dihedral-learning-mvp/data-model.md:10455:      console.log('[CircleTool] Snapped to existing point:', circumferencePointId);
+specs/001-dihedral-learning-mvp/data-model.md:10461:      console.log('[CircleTool] Created new circumference point:', circumferencePointId);
+specs/001-dihedral-learning-mvp/data-model.md:12926:- 📋 TODO: Plane3DFixed split from current Plane3D (Phase 28)
+specs/001-dihedral-learning-mvp/data-model.md:13576:**Example: Paper Operations Container**
+specs/001-dihedral-learning-mvp/data-model.md:13578:// operations/paper/HighlightElementOp.ts
+specs/001-dihedral-learning-mvp/data-model.md:13608:- `operations/paper/` - TBD files (rendering operations)
+specs/001-dihedral-learning-mvp/data-model.md:13609:- `operations/toolbar/` - TBD files (UI operations)
+specs/001-dihedral-learning-mvp/data-model.md:14489:  console.log(realization.u, realization.v);
+specs/001-dihedral-learning-mvp/data-model.md:20834:Phase 78 scaffolded the full infrastructure for `Segment3DFromProjections` (domain class, operation, tool, 3D rendering, projection display, descriptors, serialization) but left `realize3D()` as a TODO stub returning placeholder coordinates `(0,0,0)→(1,0,0)`. Phase 107 implements the actual 3D reconstruction algorithm and adds geometric compatibility validation at creation time.
+specs/001-dihedral-learning-mvp/data-model.md:20954:| `frontend/src/domain/world/Segment3D.ts` | Replace TODO stub with full `realize3D()` implementation |
+
+== GoogleDrive console lines only ==
+12: * @see specs/001-dihedral-learning-mvp/ui-spec.md - Startup Flow and Google Drive Authentication
+13: * @see specs/001-dihedral-learning-mvp/data-model.md - Persistence Strategy
+46:  // T400: Add profile and email scopes for user profile information
+82:          console.log('[GoogleDrive] Initializing with config:', {
+108:          console.log('[GoogleDrive] Initialization successful');
+114:          console.error('[GoogleDrive] Initialization failed:', error);
+115:          console.error('[GoogleDrive] Error details:', JSON.stringify(error, null, 2));
+131:        console.log('[GoogleDrive] Session restored automatically');
+133:        console.log('[GoogleDrive] Could not restore session:', error);
+204:          console.log('[GoogleDrive] Sign-in successful');
+238:   * T401: Fetch user profile information from Google
+432:      // T409: Fix "Ghost files" loading from trash
+475:      console.log('[GoogleDrive] Checking file status before update:', fileId);
+483:      console.log('[GoogleDrive] File status:', fileCheckResponse.result);
+486:        console.warn('[GoogleDrive] File is in trash, throwing error');
+527:      console.log('[GoogleDrive] File updated successfully:', fileId);
+556:      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
+566:          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
+571:      console.log('[GoogleDrive] Extracted numbers:', numbers);
+575:        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
+585:          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
+592:      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
+595:      console.error('Failed to generate default name, using "untitled 1":', error);
+631:      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);

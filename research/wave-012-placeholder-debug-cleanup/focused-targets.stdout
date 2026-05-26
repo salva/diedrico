@@ -1,0 +1,123 @@
+--- frontend/src/services/GoogleDriveService.ts ---
+12: * @see specs/001-dihedral-learning-mvp/ui-spec.md - Startup Flow and Google Drive Authentication
+13: * @see specs/001-dihedral-learning-mvp/data-model.md - Persistence Strategy
+46:  // T400: Add profile and email scopes for user profile information
+82:          console.log('[GoogleDrive] Initializing with config:', {
+108:          console.log('[GoogleDrive] Initialization successful');
+131:        console.log('[GoogleDrive] Session restored automatically');
+133:        console.log('[GoogleDrive] Could not restore session:', error);
+204:          console.log('[GoogleDrive] Sign-in successful');
+238:   * T401: Fetch user profile information from Google
+432:      // T409: Fix "Ghost files" loading from trash
+475:      console.log('[GoogleDrive] Checking file status before update:', fileId);
+483:      console.log('[GoogleDrive] File status:', fileCheckResponse.result);
+527:      console.log('[GoogleDrive] File updated successfully:', fileId);
+556:      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
+566:          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
+571:      console.log('[GoogleDrive] Extracted numbers:', numbers);
+575:        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
+585:          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
+592:      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
+631:      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);
+--- frontend/src/utils/rectangleGrid.ts ---
+94:let clipDebugDone = false;  // Debug flag for first segment only
+113:  let debugFirstSegment = false;
+114:  if (!clipDebugDone) {
+115:    clipDebugDone = true;
+116:    debugFirstSegment = true;
+117:    console.log('[clipSegmentToRectangle] First segment debug:');
+118:    console.log('  Segment:', segment);
+119:    console.log('  dx:', dx, 'dy:', dy);
+142:    if (debugFirstSegment) {
+143:      console.log(`  Edge ${i}: corner1=(${corner1.u.toFixed(2)}, ${corner1.v.toFixed(2)}) corner2=(${corner2.u.toFixed(2)}, ${corner2.v.toFixed(2)})`);
+144:      console.log(`    edge=(${edgeU.toFixed(2)}, ${edgeV.toFixed(2)}) normal=(${normalU.toFixed(2)}, ${normalV.toFixed(2)})`);
+145:      console.log(`    dist1=${dist1.toFixed(4)} denom=${denominator.toFixed(4)}`);
+152:        if (debugFirstSegment) console.log(`    -> Parallel and outside, marking invalid`);
+155:        if (debugFirstSegment) console.log(`    -> Parallel and inside/on edge`);
+162:    if (debugFirstSegment) {
+163:      console.log(`    t=${t.toFixed(4)}`);
+169:      if (debugFirstSegment) console.log(`    -> Leaving: tMax ${tMax.toFixed(4)} -> ${newTMax.toFixed(4)}`);
+174:      if (debugFirstSegment) console.log(`    -> Entering: tMin ${tMin.toFixed(4)} -> ${newTMin.toFixed(4)}`);
+180:      if (debugFirstSegment) console.log(`    -> tMin > tMax (${tMin.toFixed(4)} > ${tMax.toFixed(4)}), rejecting`);
+185:  if (debugFirstSegment) {
+186:    console.log(`  Final: tMin=${tMin.toFixed(4)} tMax=${tMax.toFixed(4)} - ACCEPTED`);
+211:  console.log('[generateClippedGrid] Bounds:', bounds);
+212:  console.log('[generateClippedGrid] Rectangle corners:', rect.corners);
+222:  console.log('[generateClippedGrid] Extended bounds: u=[', minU, ',', maxU, '] v=[', minV, ',', maxV, ']');
+223:  console.log('[generateClippedGrid] divisions:', divisions);
+269:  console.log('[generateClippedGrid] U-parallel lines clipped:', clippedCount);
+306:  console.log('[generateClippedGrid] V-parallel lines clipped:', clippedCount);
+307:  console.log('[generateClippedGrid] Total segments:', segments.length);
+--- frontend/src/utils/projectionPlaneUtils.ts ---
+2: * Projection Plane Utilities - Phase 82
+13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 82
+157: * Algorithm (Phase 82.1 - Complete geometric specification):
+174: * Reference: data-model.md §Phase 82.1
+282:  console.log('[computeProjectionPlaneMatrices] dot_t1_t2_In3D:', dot_t1_t2_In3D);
+283:  console.log('[computeProjectionPlaneMatrices] dot_t1_t2Prime_InP1:', dot_t1_t2Prime_InP1);
+284:  console.log('[computeProjectionPlaneMatrices] needsFlip:', needsFlip);
+293:  console.log('[computeProjectionPlaneMatrices] auxVDirInP1 (after correction):', auxVDirInP1);
+300:  console.log('[computeProjectionPlaneMatrices] auxUDirInPaper:', auxUDirInPaper);
+301:  console.log('[computeProjectionPlaneMatrices] auxVDirInPaper:', auxVDirInPaper);
+302:  console.log('[computeProjectionPlaneMatrices] auxOriginInPaper (in P1 paper coords):', auxOriginInPaper);
+341:  console.log('[computeProjectionPlaneMatrices] auxUDirIn3D:', auxUDirIn3D);
+342:  console.log('[computeProjectionPlaneMatrices] auxVDirIn3D:', auxVDirIn3D);
+343:  console.log('[computeProjectionPlaneMatrices] auxOriginIn3D:', auxOriginIn3D);
+350:  console.log('[computeProjectionPlaneMatrices] Auxiliary plane normal (u×v):', auxNormalIn3D);
+351:  console.log('[computeProjectionPlaneMatrices] Normal should match Plane3DFromTraces normal: (0.408, 0.816, 0.408)');
+--- frontend/src/domain/world/HingeLine.ts ---
+11: * **Phase 52**: Refactored to extend Element3D, removing id and label properties
+30: * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates.
+42:  // Phase 84: NO geometry storage - computed via realize2D()
+75:   * Phase 85 FIX: Must include planeId because realize2D() for plane2 calls:
+111:      console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
+120:        console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
+131:      console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
+140:      console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
+150:   * Realize this half-hinge line using canonical coordinates (Phase 84)
+155:   * **Phase 84 Architecture**:
+159:   * **Phase 101**: Returns HalfHingeLineRealization2D with guideVector
+226: * **Phase 52**: Refactored to extend Element3D. Inherits id and label from Element.
+227: * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates (0,0,1), (1,0,0).
+240:    // Phase 52: Call Element3D constructor with id and label
+252:   * Compute 3D realization using canonical coordinates (Phase 84)
+348:   * Phase 84: validateParametricConsistency() REMOVED
+--- frontend/src/domain/world/Guide.ts ---
+17: * @see specs/001-dihedral-learning-mvp/data-model.md#guide
+18: * @see specs/001-dihedral-learning-mvp/spec.md#guides
+44:  arcGeometry?: ArcGeometry;  // Arc between this guide and sibling (Phase 101: Broken Hinge Lines)
+55:    // Phase 52: Pass 'guide' as type to parent constructor
+76:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+80:   * Phase 101: For HalfHingeLine realizations, use the guideVector from realization
+137:      // Phase 101: For hinge lines (regular or broken), use the guideVector from realization
+186: * @see specs/001-dihedral-learning-mvp/data-model.md#siblingguide2d
+193:  arcGeometry?: ArcGeometry;  // Arc between this guide and primary (Phase 101: Broken Hinge Lines)
+251:   * Phase 76: Returns Line2DRealization2D (non-nullable)
+276:    console.log(`[SiblingGuide2D] realize2D called for ${this.id}, primaryGuideId: ${this.primaryGuideId}`);
+282:    console.log(`[SiblingGuide2D] Primary guide realization feasible:`, primaryGuideRealization.feasible);
+335:      console.log(`[SiblingGuide2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → twin=(${twinPosition.x.toFixed(2)},${twinPosition.y.toFixed(2)})`);
+--- frontend/src/commands/operations/world/UpdateElementStyleOp.ts ---
+7: * Phase 83: Now actually updates element.visualStyle property
+97:      console.log('[UpdateElementStyleOp] Applied style to:', this.elementId, element.visualStyle);
+137:      console.log('[UpdateElementStyleOp] Restored style for:', this.elementId, element.visualStyle);
+--- frontend/src/commands/operations/world/RemoveElementOps.ts ---
+7: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30, T286
+440:              console.log(`[RemoveGuide2DOp] Removed sibling guide ${siblingGuideId} from plane ${this.siblingPlaneId}`);
+--- frontend/src/commands/operations/processTree/ToggleOutputOp.ts ---
+20:      console.log(`[ToggleOutputOp.apply] nodeId: ${this.nodeId}`);
+35:    console.log(`[ToggleOutputOp.redo] nodeId: ${this.nodeId}`);
+--- frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts ---
+20:      console.log(`[ToggleEncapsulationOp.apply] subprocessId: ${this.subprocessId}`);
+35:    console.log(`[ToggleEncapsulationOp.redo] subprocessId: ${this.subprocessId}`);
+--- frontend/src/config/toolFamilies.ts ---
+9: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+28:import ExampleIcon from '@/components/icons/toolbar/FreePointIcon.vue';  // TODO: Create dedicated icon for examples
+40: * 7. 3D Elements Family: create3dpoint, create3dline, create3dsegment, create3dplane (Phase 78)
+213:        icon: Create3DPlaneIcon,  // TODO: Create dedicated icon for auxiliary projection planes
+--- frontend/src/services/SVGRenderer.ts ---
+18: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-transformations
+130:    // Phase 101: Support quadratic Bezier curves for broken hinge line arcs
+--- frontend/src/rendering/threeView ---
+
+== PaperService absence ==
+frontend/src/services/PaperService.ts absent
