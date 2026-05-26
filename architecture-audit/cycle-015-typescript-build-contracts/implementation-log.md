@@ -477,3 +477,26 @@ The earlier preview start command `final-closure-live-preview-start.stdout` exit
 Wave 015 should not advance to the next architecture wave as fully complete until the e2e validation surface is corrected or explicitly reclassified through a reviewed validation-contract decision. Recommended immediate next stage: a targeted `cycle-015-e2e-validation-contract-correction` (or equivalent corrections round) that audits the failing e2e specs, deletes or rewrites stale hard-coded `localhost:5180` and obsolete selector contracts, reruns focused Playwright for the corrected flows, then reruns full `npm run test:e2e` before closing Wave 015.
 
 Do not start the next wave from `wave-plan.md` on the basis of this closure attempt alone: build, lint, unit, and preview are green, but mandatory e2e is source/test-contract red rather than externally blocked.
+
+## t2 correction — stale Playwright/e2e validation contracts
+
+Task `t2-correct-e2e-validation-contracts` corrected stale Playwright contracts exposed during final validation after Chromium provisioning was available.
+
+Source/test contract corrections:
+
+- `frontend/src/components/workspace/SvgCanvas.vue`: restored the stable e2e canvas hooks on the authoritative SVG root with `class="svg-canvas diedrico-canvas"` and `data-testid="svg-canvas"`; no rendering behavior changed.
+- `frontend/src/components/toolbars/ToolFamilyButton.vue`: exposed stable `data-testid="tool-<tool-id>"` hooks on current family main buttons and menu items so tests do not rely on ambiguous accessible-name regexes.
+- `frontend/src/components/toolbars/Toolbar.vue`: exposed `data-testid="tool-select"` on the standalone selection tool.
+- `frontend/src/components/toolbars/PlaneSelector.vue`: exposed stable plane selector/test option hooks while preserving the current custom dropdown contract.
+- `frontend/src/components/toolbars/StatusBar.vue`: exposed stable status-bar hooks for active plane/tool/3D coordinate assertions.
+- `frontend/tests/e2e/active-plane-shortcuts.spec.ts`: replaced the stale `.plane-select` HTML-select contract with the current status-bar active-plane read model while preserving Tab/Shift+Tab behavior verification.
+- `frontend/tests/e2e/keyboard-shortcuts.spec.ts` and `frontend/tests/e2e/selection-mask.spec.ts`: replaced ambiguous role regex selectors and obsolete `.point-marker` assertions with the stable tool/canvas/render primitive contracts.
+
+Validation evidence captured under `architecture-audit/cycle-015-typescript-build-contracts/validation/`:
+
+- `t2-e2e-contracts-playwright-install-chromium.stdout` / `.stderr`: `npx --workspace=frontend playwright install chromium` completed successfully; no secret/provider files were read.
+- `t2-e2e-contracts-frontend-build-rerun.stdout` / `.stderr`: `npm run build --workspace=frontend` passed after the selector/test contract corrections.
+- `t2-e2e-contracts-focused-e2e-green2.stdout` / `.stderr`: targeted Playwright slice passed (`active-plane-shortcuts.spec.ts`, `keyboard-shortcuts.spec.ts`, `selection-mask.spec.ts`), 5 passed.
+- `t2-e2e-contracts-root-e2e-full.stdout` / `.stderr`: full root `npm run test:e2e` was rerun with Chromium available. It still exits non-zero, but now runs the browser and reports 40 passed, 7 skipped, and remaining failures concentrated in broader legacy e2e specs whose contracts still assume older canvas/tool/panel selectors or exact fixture counts outside this t2 stale-contract slice.
+
+Current disposition: the stale contracts directly blocking the final validation smoke path are corrected and focused e2e is green. Full e2e remains rejected until the remaining legacy e2e suite is either brought onto the current UI/render contract or explicitly deleted/replaced in a dedicated validation/test-contract cleanup wave; this task did not broaden into unrelated e2e rewrites.

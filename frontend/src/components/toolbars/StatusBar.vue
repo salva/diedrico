@@ -1,14 +1,14 @@
 <template>
-  <div class="status-bar">
+  <div class="status-bar" data-testid="status-bar">
     <!-- Left section: General info -->
     <div class="status-section status-left">
       <span class="status-item">
         <span class="status-label">Plane:</span>
-        <span class="status-value">{{ activePlaneName }}</span>
+        <span class="status-value" data-testid="active-plane-status">{{ activePlaneName }}</span>
       </span>
       <span class="status-item">
         <span class="status-label">Tool:</span>
-        <span class="status-value">{{ activeToolName }}</span>
+        <span class="status-value" data-testid="active-tool-status">{{ activeToolName }}</span>
       </span>
     </div>
     
@@ -34,7 +34,7 @@
     <div class="status-section status-right">
       <span class="status-item coordinates-3d">
         <span class="status-label">3D:</span>
-        <span class="status-value coordinates-value" :class="{ 'coordinates-inactive': !has3DCoordinates }">
+        <span class="status-value coordinates-value" data-testid="coordinates-3d" :class="{ 'coordinates-inactive': !has3DCoordinates }">
           {{ formattedCoordinates }}
         </span>
       </span>

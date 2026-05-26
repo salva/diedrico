@@ -7,6 +7,7 @@
       @click="activateLastUsed"
       :title="activeToolTooltip"
       :aria-label="activeToolConfig?.label || family.label"
+      :data-testid="`tool-${activeToolConfig?.id || family.defaultTool}`"
     >
       <component :is="activeToolIcon" class="button-icon" />
     </button>
@@ -30,6 +31,7 @@
         class="tool-menu-item"
         :class="{ active: toolStore.isToolActive(tool.id as any) }"
         @click="selectTool(tool.id)"
+        :data-testid="`tool-${tool.id}`"
       >
         <component :is="tool.icon" class="menu-icon" />
         <span class="tool-label">{{ tool.label }}</span>

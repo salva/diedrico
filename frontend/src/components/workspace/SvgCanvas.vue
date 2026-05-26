@@ -2,7 +2,8 @@
   <div class="svg-canvas-container">
     <svg
       ref="svgElement"
-      class="svg-canvas"
+      class="svg-canvas diedrico-canvas"
+      data-testid="svg-canvas"
       xmlns="http://www.w3.org/2000/svg"
       :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
       preserveAspectRatio="xMidYMid meet"

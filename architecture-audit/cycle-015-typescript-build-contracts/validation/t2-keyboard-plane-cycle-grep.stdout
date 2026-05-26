@@ -1,0 +1,10 @@
+frontend/src/components/panels/ActionsPanel.vue:104:function handleKeyDown(event: KeyboardEvent) {
+frontend/src/components/toolbars/PlaneSelector.vue:153:function handleKeyDown(event: KeyboardEvent) {
+frontend/src/components/workspace/SvgCanvas.vue:338:function handleGlobalKeyDown(event: KeyboardEvent) {
+frontend/src/composables/useViewport.ts:97:  function handleKeyDown(event: KeyboardEvent) {
+frontend/src/composables/useViewport.ts:107:  function handleKeyUp(event: KeyboardEvent) {
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:9:  addEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:10:  removeEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:15:  private readonly boundHandler = (event: KeyboardEvent) => this.handle(event);
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:41:  handle(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey' | 'target' | 'preventDefault'>): void {
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:62:    if (event.key === 'Tab' && !isTextInput) {

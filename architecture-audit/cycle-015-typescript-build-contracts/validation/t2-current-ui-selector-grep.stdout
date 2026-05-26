@@ -1,0 +1,223 @@
+frontend/src/components/dialogs/PropertiesDialog.vue:72:            <!-- Line Width (for non-point elements) -->
+frontend/src/components/dialogs/PropertiesDialog.vue:73:            <div class="control-row" v-if="elementType !== '2D Point'">
+frontend/src/components/dialogs/PropertiesDialog.vue:74:              <label for="width-input">Line Width:</label>
+frontend/src/components/dialogs/PropertiesDialog.vue:81:                v-model.number="editableLineWidth"
+frontend/src/components/dialogs/PropertiesDialog.vue:83:                @change="lineWidthOverride && validateLineWidth(editableLineWidth)"
+frontend/src/components/dialogs/PropertiesDialog.vue:87:                v-model.number="editableLineWidth"
+frontend/src/components/dialogs/PropertiesDialog.vue:94:                @blur="lineWidthOverride && validateLineWidth(editableLineWidth)"
+frontend/src/components/dialogs/PropertiesDialog.vue:103:            <!-- Line Style (for line/segment/guide elements) -->
+frontend/src/components/dialogs/PropertiesDialog.vue:104:            <div class="control-row" v-if="hasLineStyle">
+frontend/src/components/dialogs/PropertiesDialog.vue:105:              <label for="style-input">Line Style:</label>
+frontend/src/components/dialogs/PropertiesDialog.vue:108:                v-model="editableLineStyle"
+frontend/src/components/dialogs/PropertiesDialog.vue:111:                @change="lineStyleOverride && validateLineStyle(editableLineStyle)"
+frontend/src/components/dialogs/PropertiesDialog.vue:163:import { Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from '@/domain/world/Point';
+frontend/src/components/dialogs/PropertiesDialog.vue:164:import { Line2DByTwoPoints } from '@/domain/world/Line';
+frontend/src/components/dialogs/PropertiesDialog.vue:165:import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/src/components/dialogs/PropertiesDialog.vue:166:import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '@/domain/world/Circle';
+frontend/src/components/dialogs/PropertiesDialog.vue:167:import { Guide2D } from '@/domain/world/Guide';
+frontend/src/components/dialogs/PropertiesDialog.vue:191:const editableLineWidth = ref<number>(1.0);
+frontend/src/components/dialogs/PropertiesDialog.vue:192:const editableLineStyle = ref<string>('solid');
+frontend/src/components/dialogs/PropertiesDialog.vue:218:  const point = props.world.getPoint2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:219:  if (point) return '2D Point';
+frontend/src/components/dialogs/PropertiesDialog.vue:221:  const line = props.world.getLine2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:222:  if (line) return '2D Line';
+frontend/src/components/dialogs/PropertiesDialog.vue:224:  const segment = props.world.getSegment2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:225:  if (segment) return '2D Segment';
+frontend/src/components/dialogs/PropertiesDialog.vue:227:  const circle = props.world.getCircle2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:228:  if (circle) return '2D Circle';
+frontend/src/components/dialogs/PropertiesDialog.vue:230:  const guide = props.world.getGuide2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:231:  if (guide) return '2D Guide';
+frontend/src/components/dialogs/PropertiesDialog.vue:240:  const point = props.world.getPoint2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:243:  const line = props.world.getLine2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:246:  const segment = props.world.getSegment2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:249:  const circle = props.world.getCircle2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:252:  const guide = props.world.getGuide2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:262:  const point = props.world.getPoint2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:265:    const realization = plane?.getPoint(props.elementId)?.realize2D(props.world);
+frontend/src/components/dialogs/PropertiesDialog.vue:272:  const circle = props.world.getCircle2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:275:    const realization = plane?.getCircle(props.elementId)?.realize2D(props.world);
+frontend/src/components/dialogs/PropertiesDialog.vue:282:  // Lines, segments, and guides don't show coordinates directly
+frontend/src/components/dialogs/PropertiesDialog.vue:290:  const point = props.world.getPoint2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:291:  if (point instanceof Point2DLineLineIntersection) {
+frontend/src/components/dialogs/PropertiesDialog.vue:294:  if (point instanceof Point2DLineCircleIntersection) {
+frontend/src/components/dialogs/PropertiesDialog.vue:297:  if (point instanceof Point2DCircleCircleIntersection) {
+frontend/src/components/dialogs/PropertiesDialog.vue:301:  const line = props.world.getLine2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:302:  if (line instanceof Line2DByTwoPoints) {
+frontend/src/components/dialogs/PropertiesDialog.vue:306:  const segment = props.world.getSegment2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:307:  if (segment instanceof Segment2DByPoints) {
+frontend/src/components/dialogs/PropertiesDialog.vue:311:  const circle = props.world.getCircle2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:312:  if (circle instanceof Circle2DByCenterAndPoint) {
+frontend/src/components/dialogs/PropertiesDialog.vue:313:    return [circle.centerPointId, circle.circumferencePointId];
+frontend/src/components/dialogs/PropertiesDialog.vue:315:  if (circle instanceof Circle2DByThreePoints) {
+frontend/src/components/dialogs/PropertiesDialog.vue:319:  const guide = props.world.getGuide2D(props.elementId);
+frontend/src/components/dialogs/PropertiesDialog.vue:320:  if (guide instanceof Guide2D) {
+frontend/src/components/dialogs/PropertiesDialog.vue:321:    return [guide.referenceLineId, guide.throughPointId];
+frontend/src/components/dialogs/PropertiesDialog.vue:334:const hasLineStyle = computed(() => {
+frontend/src/components/dialogs/PropertiesDialog.vue:336:  return type === '2D Line' || type === '2D Segment' || type === '2D Guide';
+frontend/src/components/dialogs/PropertiesDialog.vue:356:  editableLineWidth.value = 1.0;
+frontend/src/components/dialogs/PropertiesDialog.vue:357:  editableLineStyle.value = 'solid';
+frontend/src/components/dialogs/PropertiesDialog.vue:388:function validateLineWidth(width: number): boolean {
+frontend/src/components/dialogs/PropertiesDialog.vue:390:    lineWidthError.value = 'Line width must be between 0.5 and 5.0';
+frontend/src/components/dialogs/PropertiesDialog.vue:400:function validateLineStyle(style: string): boolean {
+frontend/src/components/dialogs/PropertiesDialog.vue:423:  if (lineWidthOverride.value && !validateLineWidth(editableLineWidth.value)) {
+frontend/src/components/dialogs/PropertiesDialog.vue:426:  if (lineStyleOverride.value && !validateLineStyle(editableLineStyle.value)) {
+frontend/src/components/dialogs/PropertiesDialog.vue:445:    changes.lineWidth = editableLineWidth.value;
+frontend/src/components/dialogs/PropertiesDialog.vue:448:    changes.lineStyle = editableLineStyle.value;
+frontend/src/components/icons/toolbar/Create3DLineIcon.vue:3:    <!-- 3D Line - main line with parallel depth line -->
+frontend/src/components/icons/toolbar/Create3DLineIcon.vue:47: * Create3DLineIcon - Icon for 3D line creation tool
+frontend/src/components/icons/toolbar/Create3DPointIcon.vue:3:    <!-- 3D Point - larger filled circle with small depth indicator -->
+frontend/src/components/icons/toolbar/Create3DPointIcon.vue:24: * Create3DPointIcon - Icon for 3D point creation tool
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:3:    <!-- 3D Segment - main segment with endpoints -->
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:54: * Create3DSegmentIcon - Icon for 3D segment creation tool
+frontend/src/components/icons/toolbar/index.ts:7:import FreePointIcon from './FreePointIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:8:import IntersectionPointIcon from './IntersectionPointIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:9:import LineByTwoPointsIcon from './LineByTwoPointsIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:10:import SegmentIcon from './SegmentIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:11:import ParallelLineIcon from './ParallelLineIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:12:import PerpendicularLineIcon from './PerpendicularLineIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:13:import TangentThroughPointIcon from './TangentThroughPointIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:15:import CircleIcon from './CircleIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:16:import GuideLineIcon from './GuideLineIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:17:import TransportPointIcon from './TransportPointIcon.vue';
+frontend/src/components/icons/toolbar/index.ts:32:  FreePointIcon,
+frontend/src/components/icons/toolbar/index.ts:33:  IntersectionPointIcon,
+frontend/src/components/icons/toolbar/index.ts:34:  LineByTwoPointsIcon,
+frontend/src/components/icons/toolbar/index.ts:35:  SegmentIcon,
+frontend/src/components/icons/toolbar/index.ts:36:  ParallelLineIcon,
+frontend/src/components/icons/toolbar/index.ts:37:  PerpendicularLineIcon,
+frontend/src/components/icons/toolbar/index.ts:38:  TangentThroughPointIcon,
+frontend/src/components/icons/toolbar/index.ts:40:  CircleIcon,
+frontend/src/components/icons/toolbar/index.ts:41:  GuideLineIcon,
+frontend/src/components/icons/toolbar/index.ts:42:  TransportPointIcon,
+frontend/src/components/panels/ElementsPanel.vue:35:                  title="Points"
+frontend/src/components/panels/ElementsPanel.vue:42:                  title="Lines"
+frontend/src/components/panels/ElementsPanel.vue:49:                  title="Segments"
+frontend/src/components/panels/ElementsPanel.vue:56:                  title="Circles"
+frontend/src/components/panels/ElementsPanel.vue:63:                  title="Guides"
+frontend/src/components/panels/ElementsPanel.vue:89:            title="Points"
+frontend/src/components/panels/ElementsPanel.vue:96:            title="Lines"
+frontend/src/components/panels/ElementsPanel.vue:103:            title="Segments"
+frontend/src/components/panels/ElementsPanel.vue:131:import { Point2D } from '@/domain/world/Point';
+frontend/src/components/panels/ElementsPanel.vue:132:import { Line2D } from '@/domain/world/Line';
+frontend/src/components/panels/ElementsPanel.vue:133:import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/src/components/panels/ElementsPanel.vue:134:import { Circle2D } from '@/domain/world/Circle';
+frontend/src/components/panels/ElementsPanel.vue:135:import { Guide2D } from '@/domain/world/Guide';
+frontend/src/components/panels/ElementsPanel.vue:136:import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+frontend/src/components/panels/ElementsPanel.vue:205:    const points = plane.getAllPoints();
+frontend/src/components/panels/ElementsPanel.vue:206:    const allLines = plane.getAllLines();
+frontend/src/components/panels/ElementsPanel.vue:207:    const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
+frontend/src/components/panels/ElementsPanel.vue:208:    const segments = allLines.filter(l => l instanceof Segment2DByPoints);
+frontend/src/components/panels/ElementsPanel.vue:209:    const circles = plane.getAllCircles();
+frontend/src/components/panels/ElementsPanel.vue:210:    const guides = allLines.filter(l => l instanceof Guide2D);
+frontend/src/components/panels/ElementsPanel.vue:244:  const points = world.getAll3DPoints();
+frontend/src/components/panels/ElementsPanel.vue:245:  const lines = world.getAll3DLines();
+frontend/src/components/panels/ElementsPanel.vue:246:  const segments = world.getAll3DSegments();
+frontend/src/components/panels/ElementsPanel.vue:274:  if (element instanceof Guide2D) {
+frontend/src/components/panels/ElementsPanel.vue:276:  } else if (element instanceof Segment2DByPoints) {
+frontend/src/components/panels/ElementsPanel.vue:278:  } else if (element instanceof Line2D) {
+frontend/src/components/panels/ElementsPanel.vue:280:  } else if (element instanceof Circle2D) {
+frontend/src/components/panels/ElementsPanel.vue:282:  } else if (element instanceof Point2D) {
+frontend/src/components/panels/ProcessTreeNode.vue:82:        <!-- Insertion Point Cursor -->
+frontend/src/components/toolbars/MainToolbar.vue:36:  { id: TOOL_TYPE.POINT, name: 'Point', icon: '●', category: 'point' },
+frontend/src/components/toolbars/MainToolbar.vue:37:  { id: TOOL_TYPE.INTERSECTION, name: 'Intersection Point', icon: '⊗', category: 'point' },
+frontend/src/components/toolbars/MainToolbar.vue:38:  { id: TOOL_TYPE.SEGMENT, name: 'Segment', icon: '─', category: 'line' },
+frontend/src/components/toolbars/MainToolbar.vue:39:  { id: TOOL_TYPE.LINE, name: 'Line', icon: '↔', category: 'line' },
+frontend/src/components/toolbars/MainToolbar.vue:40:  { id: TOOL_TYPE.CIRCLE, name: 'Circle', icon: '○', category: 'circle' },
+frontend/src/components/toolbars/Toolbar.vue:138: * Provides buttons for selecting geometric construction tools (Point, Line, etc.),
+frontend/src/components/workspace/SvgCanvas.vue:2:  <div class="svg-canvas-container">
+frontend/src/components/workspace/SvgCanvas.vue:5:      class="svg-canvas"
+frontend/src/components/workspace/SvgCanvas.vue:18:          v-for="line in gridLines"
+frontend/src/components/workspace/SvgCanvas.vue:31:        v-for="{ primitive, attrs } in renderedLines"
+frontend/src/components/workspace/SvgCanvas.vue:38:        v-for="{ primitive, attrs } in renderedSegments"
+frontend/src/components/workspace/SvgCanvas.vue:45:        v-for="{ primitive, attrs } in renderedGuides"
+frontend/src/components/workspace/SvgCanvas.vue:52:        v-for="{ primitive, attrs } in renderedCircles"
+frontend/src/components/workspace/SvgCanvas.vue:66:        v-for="{ primitive, attrs } in renderedPoints"
+frontend/src/components/workspace/SvgCanvas.vue:184:import { PointTool } from '@/tools/PointTool';
+frontend/src/components/workspace/SvgCanvas.vue:185:import { LineTool } from '@/tools/LineTool';
+frontend/src/components/workspace/SvgCanvas.vue:186:import { SegmentTool } from '@/tools/SegmentTool';
+frontend/src/components/workspace/SvgCanvas.vue:187:import { CircleTool } from '@/tools/CircleTool';
+frontend/src/components/workspace/SvgCanvas.vue:188:import { GuideTool } from '@/tools/GuideTool';
+frontend/src/components/workspace/SvgCanvas.vue:190:import { ParallelLineTool } from '@/tools/ParallelLineTool';
+frontend/src/components/workspace/SvgCanvas.vue:191:import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+frontend/src/components/workspace/SvgCanvas.vue:192:import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+frontend/src/components/workspace/SvgCanvas.vue:193:import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+frontend/src/components/workspace/SvgCanvas.vue:194:import { Create3DPointTool } from '@/tools/Create3DPointTool';
+frontend/src/components/workspace/SvgCanvas.vue:195:import { Create3DLineTool } from '@/tools/Create3DLineTool';
+frontend/src/components/workspace/SvgCanvas.vue:196:import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+frontend/src/components/workspace/SvgCanvas.vue:199:import { FreePoint2D } from '@/domain/world/Point';
+frontend/src/components/workspace/SvgCanvas.vue:209:import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+frontend/src/components/workspace/SvgCanvas.vue:274:  moveSession: FreePointMoveSession | null;
+frontend/src/components/workspace/SvgCanvas.vue:301:function isMovableFreePoint(point: unknown): point is FreePoint2D {
+frontend/src/components/workspace/SvgCanvas.vue:302:  return point instanceof FreePoint2D && !point.locked;
+frontend/src/components/workspace/SvgCanvas.vue:309:function endPointDrag(commit: boolean): void {
+frontend/src/components/workspace/SvgCanvas.vue:318:        if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:352:      endPointDrag(false);
+frontend/src/components/workspace/SvgCanvas.vue:372:          element = plane.getPoint(elementId);
+frontend/src/components/workspace/SvgCanvas.vue:376:        case 'segment':  // Segments are Line2D objects, use getLine
+frontend/src/components/workspace/SvgCanvas.vue:377:        case 'guide':  // Guides are Line2D objects, use getLine
+frontend/src/components/workspace/SvgCanvas.vue:378:          element = plane.getLine(elementId);
+frontend/src/components/workspace/SvgCanvas.vue:381:          element = plane.getCircle(elementId);
+frontend/src/components/workspace/SvgCanvas.vue:390:          element = plane.getPoint(elementId);
+frontend/src/components/workspace/SvgCanvas.vue:394:        case 'segment':  // Segments are Line2D objects, use getLine
+frontend/src/components/workspace/SvgCanvas.vue:395:        case 'guide':  // Guides are Line2D objects, use getLine
+frontend/src/components/workspace/SvgCanvas.vue:396:          element = plane.getLine(elementId);
+frontend/src/components/workspace/SvgCanvas.vue:399:          element = plane.getCircle(elementId);
+frontend/src/components/workspace/SvgCanvas.vue:424:  'point': () => new PointTool(),
+frontend/src/components/workspace/SvgCanvas.vue:425:  'line': () => new LineTool(),
+frontend/src/components/workspace/SvgCanvas.vue:426:  'segment': () => new SegmentTool(),
+frontend/src/components/workspace/SvgCanvas.vue:427:  'circle': () => new CircleTool(),
+frontend/src/components/workspace/SvgCanvas.vue:428:  'guide': () => new GuideTool(),
+frontend/src/components/workspace/SvgCanvas.vue:430:  'parallel-line': () => new ParallelLineTool(),
+frontend/src/components/workspace/SvgCanvas.vue:431:  'perpendicular-line': () => new PerpendicularLineTool(),
+frontend/src/components/workspace/SvgCanvas.vue:432:  'tangent-line-to-circle-through-point': () => new TangentLineToCircleThroughPointTool(),
+frontend/src/components/workspace/SvgCanvas.vue:433:  'tangent-line-to-circle-parallel': () => new TangentLineToCircleParallelToLineTool(),
+frontend/src/components/workspace/SvgCanvas.vue:435:  'create3dpoint': () => new Create3DPointTool(),
+frontend/src/components/workspace/SvgCanvas.vue:436:  'create3dline': () => new Create3DLineTool(),
+frontend/src/components/workspace/SvgCanvas.vue:437:  'create3dsegment': () => new Create3DSegmentTool(),
+frontend/src/components/workspace/SvgCanvas.vue:491:  const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
+frontend/src/components/workspace/SvgCanvas.vue:492:  console.log('Points in world:', totalPoints);
+frontend/src/components/workspace/SvgCanvas.vue:565:const gridLines = computed(() => canvasPresentation.value.gridLines);
+frontend/src/components/workspace/SvgCanvas.vue:569:const renderedPoints = computed(() => {
+frontend/src/components/workspace/SvgCanvas.vue:582:const renderedLines = computed(() => {
+frontend/src/components/workspace/SvgCanvas.vue:593:const renderedSegments = computed(() => {
+frontend/src/components/workspace/SvgCanvas.vue:606:const renderedCircles = computed(() => {
+frontend/src/components/workspace/SvgCanvas.vue:619:const renderedGuides = computed(() => {
+frontend/src/components/workspace/SvgCanvas.vue:659:  const pt = svg.createSVGPoint();
+frontend/src/components/workspace/SvgCanvas.vue:667:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:669:  // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:686:    canvasPoint.x,
+frontend/src/components/workspace/SvgCanvas.vue:687:    canvasPoint.y,
+frontend/src/components/workspace/SvgCanvas.vue:699:  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+frontend/src/components/workspace/SvgCanvas.vue:744:    canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
+frontend/src/components/workspace/SvgCanvas.vue:777:  const pt = svg.createSVGPoint();
+frontend/src/components/workspace/SvgCanvas.vue:784:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:789:    mouseCanvas: { x: canvasPoint.x, y: canvasPoint.y },
+frontend/src/components/workspace/SvgCanvas.vue:800:  viewStore.adjustZoom(delta, canvasPoint.x, canvasPoint.y);
+frontend/src/components/workspace/SvgCanvas.vue:827:  const pt = svg.createSVGPoint();
+frontend/src/components/workspace/SvgCanvas.vue:833:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:842:  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+frontend/src/components/workspace/SvgCanvas.vue:849:    const point = plane.getPoint(hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:851:    if (point && isMovableFreePoint(point)) {
+frontend/src/components/workspace/SvgCanvas.vue:859:        moveSession: canvasToolController.startFreePointMove({ planeId: activePlaneId, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+frontend/src/components/workspace/SvgCanvas.vue:888:  const pt = svg.createSVGPoint();
+frontend/src/components/workspace/SvgCanvas.vue:895:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:896:  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+frontend/src/components/workspace/SvgCanvas.vue:982:    const pt = svg.createSVGPoint();
+frontend/src/components/workspace/SvgCanvas.vue:987:    const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:994:      canvasPoint.x,
+frontend/src/components/workspace/SvgCanvas.vue:995:      canvasPoint.y,
+frontend/src/components/workspace/SvgCanvas.vue:1004:      console.error('[SvgCanvas] Point move preview failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:1019:  const pt = svg.createSVGPoint();
+frontend/src/components/workspace/SvgCanvas.vue:1026:  const canvasPoint = pt.matrixTransform(ctm.inverse());
+frontend/src/components/workspace/SvgCanvas.vue:1040:  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+frontend/src/components/workspace/SvgCanvas.vue:1044:  // Point snap preview when the cursor is within snap radius of an existing point.
+frontend/src/components/workspace/SvgCanvas.vue:1046:    // Point is within snap radius - show snap preview indicator
+frontend/src/components/workspace/SvgCanvas.vue:1049:      position: { x: canvasPoint.x, y: canvasPoint.y }
+frontend/src/components/workspace/SvgCanvas.vue:1143:    endPointDrag(true);
+frontend/src/components/workspace/SvgCanvas.vue:1145:    endPointDrag(false);
+frontend/src/components/workspace/SvgCanvas.vue:1250:.svg-canvas-container {
+frontend/src/components/workspace/SvgCanvas.vue:1295:.svg-canvas {
+frontend/src/components/workspace/SvgCanvas.vue:1302:.svg-canvas circle,
+frontend/src/components/workspace/SvgCanvas.vue:1303:.svg-canvas line,
+frontend/src/components/workspace/SvgCanvas.vue:1304:.svg-canvas path,
+frontend/src/components/workspace/SvgCanvas.vue:1305:.svg-canvas rect {

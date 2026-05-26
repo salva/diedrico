@@ -8,18 +8,18 @@ test.describe('Selection mask system', () => {
 
   test('line tool exposes point-only target flow after point creation', async ({ page }) => {
     const canvas = page.locator('svg.diedrico-canvas');
-    await page.getByRole('button', { name: /point/i }).click();
-    await canvas.click({ position: { x: 100, y: 100 } });
-    await canvas.click({ position: { x: 200, y: 100 } });
+    await page.getByTestId('tool-point').click();
+    await canvas.click({ position: { x: 60, y: 100 } });
+    await canvas.click({ position: { x: 120, y: 100 } });
 
-    await page.getByRole('button', { name: /line/i }).click();
-    await expect(page.getByRole('button', { name: /line/i })).toHaveClass(/active|selected/);
-    await expect(page.locator('circle.point-marker')).toHaveCount(2);
+    await page.getByTestId('tool-line').click();
+    await expect(page.getByTestId('tool-line')).toHaveClass(/active|selected/);
+    expect(await page.locator('svg.diedrico-canvas circle[data-primitive-id^="point-"]').count()).toBeGreaterThanOrEqual(2);
   });
 
   test('intersection tool can be selected for line-selection masks', async ({ page }) => {
-    const intersectionTool = page.getByRole('button', { name: /intersection/i });
-    await intersectionTool.click();
+    await page.keyboard.press('i');
+    const intersectionTool = page.getByTestId('tool-intersection');
     await expect(intersectionTool).toHaveClass(/active|selected/);
   });
 });

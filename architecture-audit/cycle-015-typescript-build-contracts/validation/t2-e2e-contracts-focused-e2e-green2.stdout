@@ -1,0 +1,13 @@
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test active-plane-shortcuts.spec.ts keyboard-shortcuts.spec.ts selection-mask.spec.ts
+
+
+Running 5 tests using 4 workers
+
+[1A[2K[1/5] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[2/5] [chromium] › tests/e2e/active-plane-shortcuts.spec.ts:9:3 › Active Plane Shortcuts (Phase 89) › should cycle active plane with Tab and Shift+Tab
+[1A[2K[3/5] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[4/5] [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation
+[1A[2K[5/5] [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks
+[1A[2K  5 passed (13.7s)

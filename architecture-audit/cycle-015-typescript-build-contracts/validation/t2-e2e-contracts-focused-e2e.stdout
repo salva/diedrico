@@ -1,0 +1,113 @@
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test active-plane-shortcuts.spec.ts keyboard-shortcuts.spec.ts selection-mask.spec.ts
+
+
+Running 5 tests using 4 workers
+
+[1A[2K[1/5] [chromium] › tests/e2e/active-plane-shortcuts.spec.ts:9:3 › Active Plane Shortcuts (Phase 89) › should cycle active plane with Tab and Shift+Tab
+[1A[2K[2/5] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[3/5] [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation
+[1A[2K[4/5] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K  1) [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation 
+
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+        1) <button data-v-c6484326="" aria-label="Free Point" class="tool-button-main" data-testid="tool-point" title="Create free point - Click to place point (P)">…</button> aka getByTestId('tool-point')
+        2) <button data-v-c6484326="" class="tool-button-dropdown" title="Show all Point tools" aria-label="Show all Point tools">…</button> aka getByRole('button', { name: 'Show all Point tools' })
+        3) <button data-v-c6484326="" data-testid="tool-line" class="tool-button-main" aria-label="Line Through Points" title="Create line through two points (L)">…</button> aka getByTestId('tool-line')
+        4) <button data-v-c6484326="" aria-label="3D Point" class="tool-button-main" data-testid="tool-create3dpoint" title="Create 3D point from two 2D projections on different planes">…</button> aka getByTestId('tool-create3dpoint')
+
+    Call log:
+    [2m  - waiting for getByRole('button', { name: /point/i })[22m
+
+
+       9 |   test('line tool exposes point-only target flow after point creation', async ({ page }) => {
+      10 |     const canvas = page.locator('svg.diedrico-canvas');
+    > 11 |     await page.getByRole('button', { name: /point/i }).click();
+         |                                                        ^
+      12 |     await canvas.click({ position: { x: 100, y: 100 } });
+      13 |     await canvas.click({ position: { x: 200, y: 100 } });
+      14 |
+        at /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts:11:56
+
+    Error Context: test-results/selection-mask-Selection-m-4c4a3-t-flow-after-point-creation-chromium/error-context.md
+
+
+[1A[2K  2) [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveClass[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('button', { name: /point/i })
+    Expected pattern: [32m/active|selected/[39m
+    Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+        1) <button data-v-c6484326="" aria-label="Free Point" data-testid="tool-point" class="tool-button-main active" title="Create free point - Click to place point (P)">…</button> aka getByTestId('tool-point')
+        2) <button data-v-c6484326="" title="Show all Point tools" aria-label="Show all Point tools" class="tool-button-dropdown active">…</button> aka getByRole('button', { name: 'Show all Point tools' })
+        3) <button data-v-c6484326="" data-testid="tool-line" class="tool-button-main" aria-label="Line Through Points" title="Create line through two points (L)">…</button> aka getByTestId('tool-line')
+        4) <button data-v-c6484326="" aria-label="3D Point" class="tool-button-main" data-testid="tool-create3dpoint" title="Create 3D point from two 2D projections on different planes">…</button> aka getByTestId('tool-create3dpoint')
+
+    Call log:
+    [2m  - Expect "toHaveClass" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('button', { name: /point/i })[22m
+
+
+      18 |     for (const [key, name] of shortcuts) {
+      19 |       await page.keyboard.press(key);
+    > 20 |       await expect(page.getByRole('button', { name })).toHaveClass(/active|selected/);
+         |                                                        ^
+      21 |     }
+      22 |   });
+      23 |
+        at /work/diedrico/frontend/tests/e2e/keyboard-shortcuts.spec.ts:20:56
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-67ef4-tivate-current-tool-buttons-chromium/error-context.md
+
+
+[1A[2K[5/5] [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks
+[1A[2K  3) [chromium] › tests/e2e/active-plane-shortcuts.spec.ts:9:3 › Active Plane Shortcuts (Phase 89) › should cycle active plane with Tab and Shift+Tab 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.inputValue: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.plane-select')[22m
+
+
+      18 |     
+      19 |     // Check initial value
+    > 20 |     const initialValue = await planeSelect.inputValue();
+         |                                            ^
+      21 |     expect(initialValue).toBeTruthy();
+      22 |     
+      23 |     // Press Tab to cycle forward
+        at /work/diedrico/frontend/tests/e2e/active-plane-shortcuts.spec.ts:20:44
+
+    Error Context: test-results/active-plane-shortcuts-Act-d4df7-lane-with-Tab-and-Shift-Tab-chromium/error-context.md
+
+
+[1A[2K  4) [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: /intersection/i })[22m
+
+
+      20 |   test('intersection tool can be selected for line-selection masks', async ({ page }) => {
+      21 |     const intersectionTool = page.getByRole('button', { name: /intersection/i });
+    > 22 |     await intersectionTool.click();
+         |                            ^
+      23 |     await expect(intersectionTool).toHaveClass(/active|selected/);
+      24 |   });
+      25 | });
+        at /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts:22:28
+
+    Error Context: test-results/selection-mask-Selection-m-4817c-ed-for-line-selection-masks-chromium/error-context.md
+
+
+[1A[2K  4 failed
+    [chromium] › tests/e2e/active-plane-shortcuts.spec.ts:9:3 › Active Plane Shortcuts (Phase 89) › should cycle active plane with Tab and Shift+Tab 
+    [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons 
+    [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation 
+    [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks 
+  1 passed (40.1s)

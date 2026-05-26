@@ -1,0 +1,43 @@
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test active-plane-shortcuts.spec.ts keyboard-shortcuts.spec.ts selection-mask.spec.ts
+
+
+Running 5 tests using 4 workers
+
+[1A[2K[1/5] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[2/5] [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation
+[1A[2K[3/5] [chromium] › tests/e2e/active-plane-shortcuts.spec.ts:9:3 › Active Plane Shortcuts (Phase 89) › should cycle active plane with Tab and Shift+Tab
+[1A[2K[4/5] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[5/5] [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks
+[1A[2K  1) [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('circle.point-marker')
+    Expected: [32m2[39m
+    Received: [31m0[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('circle.point-marker')[22m
+    [2m    13 × locator resolved to 0 elements[22m
+    [2m       - unexpected value "0"[22m
+
+
+      15 |     await page.getByTestId('tool-line').click();
+      16 |     await expect(page.getByTestId('tool-line')).toHaveClass(/active|selected/);
+    > 17 |     await expect(page.locator('circle.point-marker')).toHaveCount(2);
+         |                                                       ^
+      18 |   });
+      19 |
+      20 |   test('intersection tool can be selected for line-selection masks', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts:17:55
+
+    Error Context: test-results/selection-mask-Selection-m-4c4a3-t-flow-after-point-creation-chromium/error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation 
+  4 passed (16.9s)

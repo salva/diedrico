@@ -8,16 +8,16 @@ test.describe('Keyboard shortcuts', () => {
 
   test('tool shortcut keys activate current tool buttons', async ({ page }) => {
     const shortcuts = [
-      ['p', /point/i],
-      ['l', /line/i],
-      ['s', /segment/i],
-      ['c', /circle/i],
-      ['g', /guide/i],
+      ['p', 'tool-point'],
+      ['l', 'tool-line'],
+      ['s', 'tool-segment'],
+      ['c', 'tool-circle'],
+      ['g', 'tool-guide'],
     ] as const;
 
-    for (const [key, name] of shortcuts) {
+    for (const [key, testId] of shortcuts) {
       await page.keyboard.press(key);
-      await expect(page.getByRole('button', { name })).toHaveClass(/active|selected/);
+      await expect(page.getByTestId(testId)).toHaveClass(/active|selected/);
     }
   });
 
@@ -26,6 +26,6 @@ test.describe('Keyboard shortcuts', () => {
     await page.keyboard.press('p');
     await canvas.click({ position: { x: 100, y: 100 } });
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('button', { name: /select/i })).toHaveClass(/active|selected/);
+    await expect(page.getByTestId('tool-select')).toHaveClass(/active|selected/);
   });
 });

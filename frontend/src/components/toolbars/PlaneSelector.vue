@@ -3,6 +3,7 @@
     class="plane-selector" 
     aria-label="Active plane selector"
     ref="dropdownRef"
+    data-testid="plane-selector"
   >
     <button
       class="plane-select-button"
@@ -12,6 +13,7 @@
       :aria-expanded="isOpen"
       aria-haspopup="listbox"
       title="Active Plane"
+      data-testid="plane-selector-button"
     >
       <div class="formatted-label" v-html="formatElementLabel(activePlaneLabel)"></div>
       <svg class="chevron" width="12" height="12" viewBox="0 0 20 20" aria-hidden="true">
@@ -35,6 +37,7 @@
           'focused': index === focusedIndex
         }"
         role="option"
+        :data-testid="`plane-selector-${plane.id}`"
         :aria-selected="plane.id === activePlaneId"
         @click="selectPlane(plane.id)"
         @mouseenter="focusedIndex = index"

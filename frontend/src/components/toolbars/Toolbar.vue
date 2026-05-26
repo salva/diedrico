@@ -95,6 +95,7 @@
       @click="selectTool('select')"
       title="Selection Tool - Pick, move, and edit objects (Esc)"
       aria-label="Selection Tool"
+      data-testid="tool-select"
     >
       <SelectionToolIcon class="button-icon" />
     </button>
