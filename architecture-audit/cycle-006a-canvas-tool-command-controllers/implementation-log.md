@@ -189,3 +189,14 @@ All new validation artifacts for this stage are under `architecture-audit/cycle-
 - No Wave-006a-attributable validation failure remains after correcting the obsolete GuideTool unit test.
 - Remaining blockers are pre-existing or environment/tooling issues: missing `eslint`, `vue-tsc` incompatibility with current Node/TypeScript runtime, unrelated full-suite unit failures, and syntactically corrupt e2e files. These should be addressed in separate validation/tooling/test-hygiene work and should not broaden Wave 006a implementation scope.
 - Because Playwright e2e parsing fails before app launch, live behavioral Playwright coverage for construction/undo-redo could not be completed in this stage; the successful live preview probe confirms the refreshed app is reachable, but e2e test-file repair is required before automated user-visible coverage can run.
+
+## Validation loop closure — `t3-rerun-root-vitest-after-guidetool-fix`
+
+Root Vitest was rerun after the Wave 006a `GuideTool` unit-test correction to close the full-suite validation loop.
+
+- Command: `npm run test` from the repository root.
+- Logs: `validation/t3-root-vitest-after-guidetool-fix.stdout`, `validation/t3-root-vitest-after-guidetool-fix.stderr`, and summary tail `validation/t3-root-vitest-after-guidetool-fix-tail.stdout/.stderr`.
+- Result: FAIL, but no Wave-006a-attributable failure remains. The rerun confirms `tests/unit/tools/GuideTool.test.ts` now passes 8/8 tests.
+- Remaining root Vitest failures match the previously classified unrelated/pre-existing suite issues: `tests/integration/guide-creation.test.ts` fails during collection on a missing obsolete `AddFreePoint2DOp` import; `tests/unit/architecture/noCommandSubclasses.spec.ts` fails with `default.resolve is not a function`; `tests/unit/calculations/intersections.spec.ts` has legacy intersection expectation mismatches; `tests/unit/components/propertiesDialog.spec.ts` has dialog event expectation failures; and `tests/unit/selectionMask.spec.ts` still expects the old GuideTool initial dynamic mask behavior. Evidence is in `t3-root-vitest-after-guidetool-fix.stderr` and `t3-root-vitest-after-guidetool-fix-tail.stdout`.
+- Classification: non-attributable to Wave 006a after the GuideTool compatibility-test correction. The selected Wave 006a focused suite and the corrected GuideTool suite pass; the remaining failures are outside the implemented canvas/tool command-controller boundary and should be handled by separate test-hygiene/domain/UI validation work rather than broadening Wave 006a.
+
