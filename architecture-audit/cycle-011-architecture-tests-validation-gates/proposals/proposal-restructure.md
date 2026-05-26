@@ -14,7 +14,31 @@ Architecture tests should express the intended architecture, not memorize known 
 - It injects `world` and `commandStack` directly (`frontend/src/components/menus/ExamplesMenu.vue:57-58`).
 - It constructs, executes, commits, and pushes a command from the component (`frontend/src/components/menus/ExamplesMenu.vue:70-75`).
 
-If Wave 011 adds a UI import-boundary test while preserving that component via allowlist, the project gets a weaker validation contract at the exact boundary the wave is supposed to harden. Because the project priorities prefer clean architecture and deletion over compatibility, this proposal removes the blocker before freezing the rule.
+If Wave 011 adds a UI import-boundary test while preserving that component via allowlist, the project gets a weaker validation contract at the exact boundary the wave is supposed to harden. Because the project priorities prefer clean architecture and deletion over compatibility, this proposal removes or moves the blocker before freezing the rule.
+
+## Concrete validation command contract after Wave 010
+
+Wave 011 must leave the validation command surface below. Root commands are delegators to the single active frontend workspace; frontend commands are the executable implementations.
+
+| Command surface | Required Wave 011 state |
+| --- | --- |
+| Root `npm run lint` | Delegates to `npm run lint --workspace=frontend` and must execute a real frontend static gate. It must not call a missing binary and must not be `true`, `echo`, or `|| true`. |
+| Frontend `npm run lint --workspace=frontend` | Make the existing lint contract truthful by adding/restoring minimal ESLint dependencies/config **or** replacing it with the installed TypeScript static gate `vue-tsc --noEmit`. Restructure prefers a real ESLint setup if the dependency/config addition is small, because a first-class validation contract should preserve the semantic meaning of `lint`; if that expands scope, use `vue-tsc --noEmit` and rename/describe the command in `implementation-log.md` as the project’s static lint gate. |
+| Root `npm run test` | Remains `npm run test --workspace=frontend`; full Vitest failures from pre-existing intersections debt are classified with exact files/errors if still red. |
+| Frontend `npm run test --workspace=frontend` | Remains `vitest run`; full-suite failures are classified unless caused by Wave 011 changes. |
+| Root `npm run build` | Remains `npm run build --workspace=frontend`; Node 24/`vue-tsc` debt is remediated if small and tooling-scoped, otherwise classified exactly. |
+| Frontend `npm run build --workspace=frontend` | Remains the active frontend build command; no backend build command is reintroduced. |
+| Root `npm run test:e2e` | **Add a root e2e alias** `test:e2e` -> `npm run test:e2e --workspace=frontend` in this restructure proposal. The project objectives name root/workspace validation cadence, and this proposal makes the root contract explicit rather than relying on implementation-log explanation. |
+| Frontend `npm run test:e2e --workspace=frontend` | Remains the sole implementation e2e entrypoint; the root alias delegates here. Broad e2e syntax debt is classified unless Wave 011 touches the affected file or the failure blocks the focused Wave 010 guard/examples smoke. |
+| Root `npm run test:architecture` | Add this alias to delegate to `npm run test:architecture --workspace=frontend`. |
+| Frontend `npm run test:architecture --workspace=frontend` | Add `vitest run tests/unit/architecture` as the focused architecture gate. |
+
+The implementation must select and document one executable lint/static path before changing tests:
+
+1. **Preferred restructure path:** add minimal ESLint dependency/config so `frontend/package.json`'s lint script remains semantically a lint command and runs with installed tooling.
+2. **Allowed fallback:** replace `lint` with `vue-tsc --noEmit` or equivalent installed static checker if ESLint config would cause broad unrelated style churn. If this fallback is selected, no no-op script is allowed and the implementation log must explicitly state that `lint` currently means the supported TypeScript static gate.
+
+Either path must remove the current missing executable failure. “Classify `eslint: not found` if still red” is not an acceptable result.
 
 ## Files to change
 
@@ -35,7 +59,7 @@ If Wave 011 adds a UI import-boundary test while preserving that component via a
 
 ### Source cleanup required for a truthful UI gate
 
-Choose one during implementation based on quick usage evidence, with deletion preferred:
+Choose one during implementation based on quick usage evidence, with deletion preferred. This choice is the only Wave 012-adjacent source cleanup allowed in Wave 011; do not broaden into unrelated debug/placeholder deletion.
 
 #### Option A — Delete debug example menu path
 
@@ -43,6 +67,7 @@ Choose one during implementation based on quick usage evidence, with deletion pr
 - Delete `frontend/src/commands/operations/debug/AddExampleSetupOp.ts` and any `frontend/src/commands/operations/debug/` directory if this operation is only used by the menu.
 - Remove the menu from its parent component(s) and tests/e2e references.
 - Delete tests/fixtures that reference the examples menu or debug setup operation.
+- Focused validation must include a static scan proving no source/test/doc fixture still references the deleted examples/debug setup surface.
 
 #### Option B — Move example setup behind application use case
 
@@ -51,16 +76,18 @@ Only if review decides the examples menu is a real user-facing feature worth ret
 - Add `frontend/src/application/examples/ExampleSetupUseCases.ts` or similar to own `Command`, `CommandStack`, and `AddExampleSetupOp` construction.
 - Change `ExamplesMenu.vue` to emit/select example setup intents and call the application use case through a typed injection/prop; it must not import command/operation classes or inject raw `CommandStack`.
 - Keep `AddExampleSetupOp` only if it remains an application-owned implementation detail. Otherwise delete it.
+- Focused validation must include a component/use-case test proving the menu no longer imports command surfaces plus the strict UI architecture gate.
 
 ### Package/script/config changes
 
 - Root `package.json`:
   - keep only the active `frontend` workspace (`package.json:7-9`);
-  - add root script aliases for architecture tests if useful, e.g. `test:architecture` delegates to frontend;
+  - add `test:architecture` delegating to frontend;
+  - add `test:e2e` delegating to frontend so the mandatory root cadence has an explicit root entrypoint after backend deletion;
   - do not add backend validation because backend was deleted in Wave 010.
 - `frontend/package.json`:
   - add `test:architecture`;
-  - make `lint` executable and truthful, because it currently invokes missing `eslint` (`frontend/package.json:15`, `frontend/package.json:25-39`). Prefer adding minimal dependencies/config rather than making lint a no-op.
+  - make `lint` executable and truthful by adding minimal ESLint dependencies/config or replacing it with `vue-tsc --noEmit`; no missing executable and no no-op script are allowed.
 - `frontend/playwright.config.ts`:
   - delete stale commented backend webServer block (`frontend/playwright.config.ts:46-53`).
 
@@ -78,7 +105,7 @@ Conditional but preferred deletes:
 - Delete `frontend/src/commands/operations/debug/AddExampleSetupOp.ts` and the debug operation directory if no longer active.
 - Delete tests/e2e/docs references to the examples/debug setup surface if they only preserve debug convenience.
 
-Do **not** delete README-only operation placeholder directories or broad debug logging in this wave unless they are directly part of the example menu cleanup. Those remain Wave 012.
+Do **not** delete README-only operation placeholder directories, broad debug logging, or broad docs/spec references in this wave unless they are directly part of the selected example menu cleanup. Those remain Wave 012/013.
 
 ## Expected behavior change
 
@@ -89,7 +116,9 @@ Do **not** delete README-only operation placeholder directories or broad debug l
   - full-domain import boundaries are tested;
   - frontend/backend deleted-backend rules are centralized in architecture tests;
   - root/frontend scripts include focused architecture validation;
-  - lint is made executable or explicitly classified if impossible within the wave.
+  - root scripts include an explicit e2e alias delegating to the active frontend workspace;
+  - lint is executable and truthful; the current missing-ESLint failure is gone;
+  - stale backend Playwright comments are removed.
 
 ## Validation plan
 
@@ -97,40 +126,46 @@ Capture all logs under `architecture-audit/cycle-011-architecture-tests-validati
 
 1. Static scans:
    - no `frontend/src/domain/**` imports from forbidden outer layers;
-   - no `frontend/src/components/**` imports from `@/commands/**`, command factories, operations, or `CommandStack`;
-   - no frontend imports from `backend/src/**` and no stale backend project terms except the Wave 010 negative e2e guard.
+   - no `frontend/src/components/**` imports from `@/commands/**`, command factories, operations, or `CommandStack`, with no allowlist;
+   - no frontend imports from `backend/src/**` and no stale backend project terms except the Wave 010 negative e2e guard;
+   - if Option A is selected, no references to `ExamplesMenu.vue`, `AddExampleSetupOp`, or debug example setup remain outside the implementation log/proposal artifacts;
+   - if Option B is selected, `ExamplesMenu.vue` imports only application-facing use-case/injection surfaces, not command/operation classes.
 2. Focused architecture tests:
-   - root `npm run test:architecture` if added;
-   - frontend `npm run test:architecture`.
+   - root: `npm run test:architecture`;
+   - frontend: `npm run test:architecture --workspace=frontend`.
 3. Focused tests for source cleanup:
    - if deleting examples/debug path, run static scans proving deleted files are absent and no source/tests reference them;
    - if moving examples, run new focused application example use-case tests plus a component test if present.
 4. Focused app-shell tests:
-   - `AppShellBoundary.test.ts`, `KeyboardShortcutRouter.test.ts`, and Wave 010 project-flow e2e guard.
+   - `npx vitest run tests/unit/application/appShell/AppShellBoundary.test.ts tests/unit/application/appShell/KeyboardShortcutRouter.test.ts` from `frontend/` or equivalent workspace invocation;
+   - `npx playwright test tests/e2e/wave010-app-shell-project-flow.spec.ts` from `frontend/` or equivalent workspace invocation.
 5. Mandatory cadence:
-   - root/frontend lint;
-   - focused Vitest for touched tests/source;
-   - full root/frontend Vitest with existing intersections debt classification if still failing;
-   - root/frontend build with `vue-tsc`/Node classification if still failing;
-   - frontend e2e with broad syntax debt classification if still failing.
+   - root: `npm run lint`, `npm run test`, `npm run build`, `npm run test:e2e`;
+   - frontend workspace: `npm run lint --workspace=frontend`, `npm run test --workspace=frontend`, `npm run build --workspace=frontend`, `npm run test:e2e --workspace=frontend`;
+   - lint must no longer fail because `eslint` is missing. If lint fails, it must fail from the selected real checker and be classified/remediated with exact output;
+   - full root/frontend Vitest may still expose existing intersections debt and must be classified if not caused by Wave 011;
+   - root/frontend build may still expose Node 24/`vue-tsc` debt and must be classified if not caused by Wave 011;
+   - root/frontend e2e may still expose broad syntax debt and must be classified unless directly affected by the examples cleanup.
 6. Live app verification:
    - refresh preview on `0.0.0.0` and probe `http://127.0.0.1:5173/`;
    - run a Playwright smoke covering startup and, if retained, examples menu behavior. If examples are deleted, the smoke should assert there is no dead affordance/reference.
 
 ## Known debt classification/remediation strategy
 
-- **Lint:** This proposal strongly prefers making lint executable in Wave 011 because validation gates are central to the wave. Add proper dependencies/config; do not hide lint behind `|| true` or a no-op.
+- **Lint/static gate:** Remediate in Wave 011. The current `eslint: not found` state is not acceptable as classified residual debt because it makes a declared validation command non-executable. Prefer minimal ESLint dependencies/config; fall back to `vue-tsc --noEmit` if ESLint expands scope.
 - **Build/vue-tsc:** Remediate if a dependency update/config pin is low-risk and directly tooling-scoped; otherwise classify as pre-existing debt.
 - **Full Vitest intersections failures:** Classify as pre-existing geometry correctness debt unless source cleanup causes new failures.
-- **E2E syntax corruption:** Because this proposal may touch/removes a UI affordance, repair or delete directly affected e2e references. Do not rewrite unrelated corrupted e2e files unless necessary to make the e2e command parse.
+- **E2E syntax corruption:** Because this proposal may touch/remove a UI affordance and adds a root e2e alias, repair or delete directly affected e2e references. Do not rewrite unrelated corrupted e2e files unless necessary to make the e2e command parse and reviewers accept it as validation-gate debt.
+- **Wave 012/013 overreach guard:** Only the selected `ExamplesMenu.vue`/debug operation cleanup is allowed here because it directly blocks the strict UI boundary. Leave unrelated placeholders/debug docs for Wave 012 and broad docs/spec reconciliation for Wave 013.
 
 ## Risks
 
 - Deleting `ExamplesMenu.vue` may remove a user-visible convenience. Mitigation: first verify usage/imports and choose Option B if it is genuinely part of accepted behavior.
 - Moving examples behind a use case risks overlapping Wave 012 debug cleanup. Mitigation: keep the change narrow; only address the UI-to-command leak needed for a strict architecture test.
-- Making lint executable could reveal many style issues unrelated to Wave 011. Mitigation: configure lint as a static correctness/architecture gate without automatic broad formatting churn, or classify residual lint failures precisely.
+- Making lint executable could reveal many style issues unrelated to Wave 011. Mitigation: configure lint as a static correctness/architecture gate without automatic broad formatting churn, or use the supported TypeScript static gate and classify residual style lint as future work.
 - Strict UI boundary tests could block future application composition if too broad. Mitigation: define allowed command imports by layer (`frontend/src/application/**`), not by arbitrary file names.
+- Adding root `test:e2e` changes the root command surface. Mitigation: make it a transparent delegation to the already-active frontend workspace and validate both root and frontend invocations.
 
 ## Recommendation
 
-Prefer this proposal if reviewers agree that `ExamplesMenu.vue` is debug-only or easily moved. Otherwise choose Proposal Direct with a temporary allowlist and require Wave 012 to delete or migrate the examples/debug surface before it can become permanent validation debt.
+Prefer this proposal if reviewers agree that `ExamplesMenu.vue` is debug-only or easily moved. Otherwise choose Proposal Direct with its explicitly temporary single-file allowlist and require Wave 012 to delete or migrate the examples/debug surface before it can become permanent validation debt.
