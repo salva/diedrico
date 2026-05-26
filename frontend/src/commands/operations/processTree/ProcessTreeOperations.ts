@@ -6,7 +6,6 @@
  * - Indices never shift, making undo/redo trivial
  * - Visualization skips over null entries
  * 
- * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30
  */
 
 import type { IOperation, OperationResult } from '../IOperation';

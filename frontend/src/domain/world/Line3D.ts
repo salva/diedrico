@@ -13,7 +13,6 @@
  * - realize3D() computes numeric geometry → Line3DRealization3D
  * - Lazy evaluation with caching in World.lineRealizations3D
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#line3d
  */
 import { Vector4 } from 'three';
 import { Element3D } from './Element3D';

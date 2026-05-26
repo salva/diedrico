@@ -17,7 +17,6 @@
  * - Each hinge line type computes its appropriate guide direction
  * - Extensible: future hinge line variants can define their own guide directions
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
  */
 
 import { Vector3 } from 'three';

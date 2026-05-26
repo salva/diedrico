@@ -34,7 +34,6 @@
  * }
  * ```
  * 
- * Reference: data-model.md §Tool Argument Collection Framework (Phase 64)
  */
 
 import { Vector3 } from 'three';

@@ -32,7 +32,6 @@
  * (Plane3DByTraces, HingeLine). If future phases introduce dynamically computed 3D
  * geometry, Element3DRealization3D can extend Realization.
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#realization-base-class
  */
 export abstract class Realization {
   /**

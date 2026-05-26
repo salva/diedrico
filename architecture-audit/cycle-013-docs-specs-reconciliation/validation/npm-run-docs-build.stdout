@@ -1,0 +1,4 @@
+
+> diedrico@0.1.0 docs:build
+> vitepress build docs
+

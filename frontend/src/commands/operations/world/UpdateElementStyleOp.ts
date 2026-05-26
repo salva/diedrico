@@ -6,8 +6,6 @@
  * 
  * Phase 83: Now actually updates element.visualStyle property
  * 
- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Element Properties Dialog
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
  */
 
 import type { IOperation, OperationResult } from '../IOperation';

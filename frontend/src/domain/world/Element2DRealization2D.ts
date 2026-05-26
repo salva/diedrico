@@ -21,7 +21,6 @@
  * Realization classes contain ONLY geometric data (positions, vectors, feasibility).
  * All behavioral differences belong in domain classes (Point2D, Line2D, Circle2D).
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#element2drealization2d-base-class
  */
 import { Realization } from './Realization';
 

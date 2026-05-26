@@ -10,8 +10,7 @@
  * - Default Styles: Colors, line widths for new elements
  * - 3D View: Initial camera position, display options
  * 
- * @see specs/001-dihedral-learning-mvp/ui-spec.md#project-settings-dialog
- * @see specs/001-dihedral-learning-mvp/ui-spec.md#state-persistence
+ * Settings are UI preferences persisted locally; project data persistence is handled separately.
  */
 
 import { ref, computed, watch } from 'vue';
@@ -21,7 +20,7 @@ const STORAGE_KEY = 'diedrico_settings_v1';
 
 /**
  * Default settings values
- * Following ui-spec.md recommendations
+ * Default settings values used when localStorage has no saved preferences.
  */
 const DEFAULT_SETTINGS = {
   // Grid settings

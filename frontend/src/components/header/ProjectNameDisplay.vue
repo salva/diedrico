@@ -52,7 +52,7 @@ import { ref, computed, nextTick, watch } from 'vue';
  * - Validates name (non-empty, reasonable length, no special characters)
  * - Shows save indicator while renaming
  * 
- * Reference: specs/001-dihedral-learning-mvp/spec.md - Project Name Display and Editing
+ * Emits validated rename requests to the application shell.
  */
 
 interface Props {

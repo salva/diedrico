@@ -6,7 +6,6 @@
  * - Default tool for each family
  * - Tool configurations (icons, labels, shortcuts, completion behavior)
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
  */
 
 import type { ToolFamilyConfig } from '@/types/ToolConfig';

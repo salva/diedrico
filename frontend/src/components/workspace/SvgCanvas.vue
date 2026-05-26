@@ -169,13 +169,11 @@
  * 4. → SVG elements
  * 
  * Key requirements:
- * - SVG element (not HTML Canvas) per ui-spec.md
+ * - SVG element, not HTML Canvas
  * - Rendering consumes the canvas presentation read model
- * - Generic rendering algorithms (no special cases for fixed elements)
- * - Will support pan/zoom viewport transformations in Phase 6
- * - Elements rendered using principle-based algorithms (Constitution Principle IV)
- * 
- * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+ * - Generic rendering algorithms, with fixed elements represented by selectors
+ * - Pan/zoom viewport transformations remain view state
+ * - Element drawing policy comes from presentation selectors and SVGRenderer
  */
 
 import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
@@ -435,12 +433,12 @@ const toolFactories: Record<string, () => ITool> = {
   'perpendicular-line': () => new PerpendicularLineTool(),
   'tangent-line-to-circle-through-point': () => new TangentLineToCircleThroughPointTool(),
   'tangent-line-to-circle-parallel': () => new TangentLineToCircleParallelToLineTool(),
-  // Phase 78: 3D Element Creation Tools
+  // 3D element creation tools
   'create3dpoint': () => new Create3DPointTool(),
   'create3dline': () => new Create3DLineTool(),
   'create3dsegment': () => new Create3DSegmentTool(),
   'create3dplane': () => new Create3DPlaneTool(),
-  // Phase 82: Auxiliary Projection Plane Tool
+  // Auxiliary projection plane tool
   'createprojectionplane': () => new CreateProjectionPlaneTool(),
 };
 
@@ -719,7 +717,7 @@ function handleCanvasClick(event: MouseEvent) {
   const activeToolName = toolStore.currentTool.value;
   
   if (activeToolName === 'select') {
-    // Selection mode per ui-spec.md §Element Interaction
+    // Selection mode: click selects, Shift+click extends, empty click clears.
     // Click element: Select (Shift+click: add to selection)
     // Click empty: Deselect all
     
@@ -1045,7 +1043,7 @@ function handleMouseMove(event: MouseEvent) {
   const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane }, selectionMask);
   
   // Update snap target if hovering over a point within snap radius
-  // Per ui-spec.md: "Point Snap: When cursor within snap radius of existing point: bright outline or glow"
+  // Point snap preview when the cursor is within snap radius of an existing point.
   if (hit && hit.elementType === 'point') {
     // Point is within snap radius - show snap preview indicator
     snapTarget.value = {

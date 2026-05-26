@@ -5,7 +5,6 @@
  * Used by toolStore for managing tool families with dropdown menus,
  * last-used sub-tool memory, and completion behavior.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
  */
 
 import type { Component } from 'vue';

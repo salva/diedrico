@@ -27,7 +27,6 @@
  * - **Dependency Interface**: All 3D elements must implement getDependencies()
  * - **Future Extensibility**: Common place to add 3D-specific functionality later
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#element3d-class
  */
 import { Element } from './Element';
 

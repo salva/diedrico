@@ -5,10 +5,8 @@
  * - undoStack: Commands that can be undone
  * - redoStack: Commands that have been undone and can be redone
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
- * 
  * Behavior:
- * - execute(): Adds command to undo stack, clears redo stack
+ * - push(): records committed commands and clears redo stack
  * - undo(): Pops from undo stack, pushes to redo stack
  * - redo(): Pops from redo stack, pushes back to undo stack
  */
@@ -43,11 +41,11 @@ export class CommandStack {
    * Push a pre-built and committed command to the undo stack
    * Clears the redo stack (can't redo after new action)
    * 
-   * Phase 47: Non-undoable commands (canUndo() === false) are not added to the stack.
+   * Non-undoable commands (canUndo() === false) are not added to the stack.
    * This allows world initialization and other non-undoable commands to execute
    * without appearing in undo history.
    * 
-   * Note: Commands should be built, executed, and committed by tools before pushing
+   * Note: Commands should be built, executed, and committed by application use cases before pushing.
    */
   push(command: Command): void {
     // Verify command is committed (not building)
@@ -55,7 +53,7 @@ export class CommandStack {
       throw new Error('Can only push committed commands to stack');
     }
     
-    // Phase 47: Skip non-undoable commands
+    // Skip non-undoable commands
     if (!command.canUndo()) {
       return;
     }

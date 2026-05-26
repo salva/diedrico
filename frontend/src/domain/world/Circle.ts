@@ -10,7 +10,6 @@
  * - Principle V: Circle stores DEFINITION (point IDs, radius), realization stores computed geometry
  * - Dependencies: Circle depends on center point (and optionally other points)
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#circle2d
  */
 
 import { Vector3 } from 'three';

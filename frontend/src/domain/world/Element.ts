@@ -23,7 +23,6 @@
  * - **Consistent Property Names**: Enforce `label` instead of `name` across all elements
  * - **Unified Styling**: All elements have consistent visual configuration through visualStyle
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#element-base-class-hierarchy
  */
 
 import type { VisualStyle } from './VisualStyle';

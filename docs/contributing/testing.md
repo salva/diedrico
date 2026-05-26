@@ -1,115 +1,44 @@
-# Testing
+# Testing and validation
 
-Diedrico uses a comprehensive testing strategy with Vitest for unit/integration tests and Playwright for E2E tests.
+Root scripts are the required project validation surface. Where applicable they delegate to the `frontend` workspace; docs commands run VitePress from the root.
 
-## Test Runner
-
-### Unit & Integration Tests
+## Commands
 
 ```bash
-cd frontend
-npm run test           # Run once
-npm run test:watch     # Watch mode
-npm run test:coverage  # With coverage report
+npm run docs:build
+npm run lint
+npm run lint --workspace=frontend
+npm run test:architecture
+npm run test:architecture --workspace=frontend
+npm run test
+npm run test --workspace=frontend
+npm run build
+npm run build --workspace=frontend
+npm run test:e2e
+npm run test:e2e --workspace=frontend
 ```
 
-Uses **Vitest** with `jsdom` environment.
-
-### E2E Tests
+Useful development commands:
 
 ```bash
-cd frontend
-npx playwright test
+npm run dev
+npm run test:watch --workspace=frontend
+npm run test:e2e:headed --workspace=frontend
 ```
 
-Uses **Playwright** with Chromium. Configuration in `playwright.config.ts`.
+There is no current `test:coverage` script.
 
-## Test Organization
+## Test organization
 
-```
-frontend/tests/
-├── unit/
-│   ├── domain/           # Domain model tests
-│   │   ├── math/         # Vector/matrix operations
-│   │   ├── world/        # World, planes, elements
-│   │   └── processTree/  # Process tree operations
-│   ├── commands/         # Command and operation tests
-│   ├── services/         # Service layer tests
-│   ├── tools/            # Tool behavior tests
-│   └── utils/            # Utility function tests
-├── integration/
-│   └── ...               # Cross-layer integration tests
-└── e2e/
-    └── ...               # Full browser tests
-```
+- `frontend/tests/unit/architecture` — architecture/static boundary tests.
+- `frontend/tests/unit` — Vitest unit tests.
+- `frontend/tests/integration` — integration tests where present.
+- `frontend/tests/e2e` — Playwright browser tests.
 
-## Writing Tests
+## Current residual debt
 
-### Unit Test Example
+Recent refactor-wave validation documented pre-existing failures outside docs-only reconciliation scope: full Vitest has known intersection/PropertiesDialog/zero-test-guide failures, build can fail before Vite because of the Node 24/`vue-tsc` signature, and broad Playwright can be blocked by existing spec parse/corruption issues. New work should record exact logs and distinguish unchanged known debt from regressions introduced by the change.
 
-```typescript
-import { describe, it, expect } from 'vitest'
-import { FreePoint2D } from '@/domain/world/FreePoint2D'
+## Expectations
 
-describe('FreePoint2D', () => {
-  it('should realize at the specified coordinates', () => {
-    const point = new FreePoint2D('p1', 'projPlane1', 3.5, 2.0)
-    const world = createTestWorld()
-    const realization = point.realize2D(world)
-
-    expect(realization.feasible).toBe(true)
-    expect(realization.position[0]).toBeCloseTo(3.5)
-    expect(realization.position[1]).toBeCloseTo(2.0)
-  })
-})
-```
-
-### Test Helpers
-
-Common patterns used in tests:
-
-- `createTestWorld()` — creates a minimal `World` with base planes
-- Direct operation calls — `op.apply(world)` to set up state
-- Realization checks — validate geometry via `realize2D()` / `realize3D()`
-- Feasibility checks — verify `realization.feasible` for valid/invalid inputs
-
-## Test Categories
-
-### Domain Tests
-
-Test pure geometric logic: element creation, realization computation, dependency tracking, coordinate transformations.
-
-### Command Tests
-
-Test operation apply/undo/redo: verify world state after each step, ensure perfect reversal on undo.
-
-### Service Tests
-
-Test PaperService primitive generation, SVGRenderer transforms, ProjectService serialization/deserialization.
-
-### Tool Tests
-
-Test tool argument collection, multi-pick flows, keyboard shortcuts, tool switching.
-
-### Integration Tests
-
-Test complete workflows: create elements → modify → undo → verify.
-
-### E2E Tests
-
-Test the full UI: canvas clicks, panel interactions, selection behavior, keyboard shortcuts.
-
-## Test Baseline
-
-The project maintains a known baseline of pre-existing test results. When running the full test suite, compare against this baseline to detect regressions.
-
-## Tips
-
-- Run tests frequently during development
-- New features should include tests covering:
-  - Happy path (element creation, realization)
-  - Edge cases (degenerate inputs, infeasibility)
-  - Undo/redo correctness
-  - Serialization round-trip
-- Use `toBeCloseTo()` for floating-point comparisons
-- Test feasibility propagation when adding dependent elements
+Run focused tests for touched modules and the full cadence for implementation waves. Store long validation logs under the relevant `architecture-audit/cycle-*/validation/` directory.

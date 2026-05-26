@@ -10,7 +10,6 @@
  * - Rendered as dashed gray curves in the canvas
  * - Toggleable via "Show Distance Arcs" setting
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
  */
 
 import { Vector2 } from 'three';

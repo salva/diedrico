@@ -15,7 +15,6 @@
  * - Convert primitives to SVG element attributes
  * - Handle coordinate transformations for different primitive types
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-transformations
  */
 
 import { Vector3 } from 'three';

@@ -5,7 +5,6 @@
  * The subprocess remains in the tree as a child of its parent - only the stack is affected.
  * 
  * Phase 85: ProcessTree Subprocess Stack Architecture
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
  */
 
 import type { IOperation, OperationResult } from '../IOperation';

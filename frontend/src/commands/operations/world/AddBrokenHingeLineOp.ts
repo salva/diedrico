@@ -16,7 +16,6 @@
  * 
  * @see BrokenHingeLine in BrokenHingeLine.ts
  * @see BrokenHalfHingeLine2D in BrokenHalfHingeLine2D.ts
- * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101
  */
 
 import type { IOperation, OperationResult } from '../IOperation';

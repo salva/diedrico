@@ -13,7 +13,6 @@
  * Plane3D intrinsic <u,v> ↔ Canvas (x,y) ↔ Viewport
  * Plane3D intrinsic <u,v> → 3D world (x,y,z)
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
  */
 
 import type { Plane3DCoordinateSystem } from '../world/Plane';

@@ -8,7 +8,6 @@
  * - InteractiveProjectionSetupTool (user selects points)
  * - QuickProjectionSetupTool (uses predefined points)
  * 
- * Reference: specs/001-dihedral-learning-mvp/example-setups.md
  */
 
 import type { Command } from '@/commands/Command';

@@ -4,7 +4,6 @@
  * These operations store complete element state for restoration during undo.
  * Each operation handles a specific element type (Point2D, Line2D, etc.).
  * 
- * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30, T286
  */
 
 import type { IOperation, OperationResult } from '../IOperation';

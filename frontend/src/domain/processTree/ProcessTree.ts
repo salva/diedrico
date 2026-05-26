@@ -4,7 +4,6 @@
  * Tracks all construction actions in a tree structure. Actions are grouped
  * into ActionGroups which can be organized into Subprocesses.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree
  */
 
 import type { Action } from './Action';

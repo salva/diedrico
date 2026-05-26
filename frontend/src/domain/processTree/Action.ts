@@ -20,7 +20,6 @@
  * Dependencies: Query world.dependencyService.getDependencies(elementId)
  * Element properties: Direct access (element.planeId, line.point1Id, etc.)
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93, §Phase 98
  */
 
 import type { World } from '@/domain/world/World';

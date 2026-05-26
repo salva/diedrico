@@ -1,11 +1,9 @@
 /**
  * authStore.ts - Authentication state management
  * 
- * T402: Manages Google Drive authentication state and user profile information.
- * NOT part of the command stack (authentication is user-specific, not document-specific).
- * NOT persisted in project files (session-only via session storage).
- * 
- * @see specs/001-dihedral-learning-mvp/data-model.md - Authentication State
+ * Manages Google Drive authentication state and user profile information.
+ * Authentication is user-specific runtime state, not command history and not project data.
+ * Session restoration uses browser sessionStorage only.
  */
 
 import { ref, computed } from 'vue';

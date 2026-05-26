@@ -39,7 +39,6 @@
  * 
  * @see frontend/src/commands/factories/README.md
  * @see data-model.md §HalfHingeLine2D Intersection Sibling Behavior
- * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
  */
 
 import type { Command } from '../Command';

@@ -11,7 +11,6 @@
  * - Automatic UI feedback: Status messages generated based on viable sets and collected arguments
  * - Three-layer validation: Type (via SelectionMask), argument-level (per spec), set-level (cross-argument)
  * 
- * Reference: data-model.md §Tool Argument Collection Framework (Phase 64)
  */
 
 import type { SelectionMask } from './SelectionMask';

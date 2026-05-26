@@ -14,7 +14,6 @@
  * - Normal vector (n)
  * - Plane3D equation: n·(P - P₀) = 0
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
  */
 
 import { Vector3, Vector4 } from 'three';

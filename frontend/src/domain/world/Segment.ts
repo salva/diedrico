@@ -10,7 +10,6 @@
  * - Principle V: Segment stores DEFINITION (point IDs), realization stores computed coordinates
  * - Dependencies: Segment depends on both endpoint points
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
  */
 
 import { Vector3 } from 'three';

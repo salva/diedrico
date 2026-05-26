@@ -16,7 +16,6 @@
  * CRITICAL: Elements must be deleted in reverse topological order to maintain
  * referential integrity (dependents first, roots last).
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
  */
 
 import type { Command } from '@/commands/Command';

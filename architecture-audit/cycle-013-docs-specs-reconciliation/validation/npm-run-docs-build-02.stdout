@@ -1,0 +1,8 @@
+
+> diedrico@0.1.0 docs:build
+> vitepress build docs
+
+
+  vitepress v1.6.4
+
+build complete in 4.14s.

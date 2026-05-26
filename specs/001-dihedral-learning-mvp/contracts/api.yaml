@@ -1,9 +1,0 @@
-openapi: 3.0.3
-info:
-  title: Diedrico Backend API
-  description: |
-    Wave 010 removed the disconnected backend project persistence API. There is no
-    active the removed backend project route contract; project persistence is owned by the frontend
-    app-shell ProjectPersistencePort and ProjectService/Drive adapter.
-  version: 0.0.0
-paths: {}

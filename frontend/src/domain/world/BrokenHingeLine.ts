@@ -14,7 +14,6 @@
  * - Only directions parallel to T1 preserve distance relationships between T2 and T2'
  * - Used for distance transport operations in auxiliary plane constructions
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
  */
 
 import { HingeLine } from './HingeLine';

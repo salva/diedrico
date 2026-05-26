@@ -12,7 +12,6 @@
  * Design principles:
  * - Principle V: Coordinates computed and cached in realizations
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
  */
 
 import { Vector3, Vector4 } from 'three';
@@ -600,7 +599,6 @@ export class SiblingIntersectionPoint2D extends Point2D {
    * @param world World instance to access primary point realization
    * @returns Point2DRealization2D with same coordinates as primary
    * @see HingeLine constructor must ensure parametric consistency for paired HalfHingeLine2D
-   * @see specs/001-dihedral-learning-mvp/data-model.md §Parametric Consistency Requirement
    */
   realize2D(world: World): Point2DRealization2D {
     // Get primary intersection point's 2D realization

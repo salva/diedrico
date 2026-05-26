@@ -8,7 +8,6 @@
  * Dependencies tracked by DependencyService,
  * construction parameters accessible via element properties.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingIntersectionPoint2D
  */
 
 import { createAction, type Action } from '../Action';

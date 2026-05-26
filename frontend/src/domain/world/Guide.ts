@@ -14,8 +14,6 @@
  * - Principle V: Homogeneous coordinates for perpendicular calculation
  * - Guides store DEFINITION (lineId, pointId), realization stores computed geometry
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#guide
- * @see specs/001-dihedral-learning-mvp/spec.md#guides
  */
 
 import { Vector3 } from 'three';
@@ -183,7 +181,6 @@ export class Guide2D extends Line2DPerpendicularToLine {
  * Note: SiblingGuide2D extends Line2D directly (not Line2DPerpendicularToLine)
  * to have its own type discriminator, similar to SiblingIntersectionPoint2D pattern.
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#siblingguide2d
  */
 export class SiblingGuide2D extends Line2D {
   readonly type: Line2DType = 'sibling-guide';

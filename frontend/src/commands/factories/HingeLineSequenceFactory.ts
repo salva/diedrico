@@ -15,7 +15,6 @@
  * - Each operation calls its respective element factory method
  * - Element factories handle ID generation (with redo support)
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factories
  */
 
 import type { Command } from '../Command';

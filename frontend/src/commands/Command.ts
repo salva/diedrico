@@ -4,7 +4,6 @@
  * Commands represent complete user actions that can be executed and undone.
  * They are composed from one or more Operations that execute incrementally.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
  * 
  * ═══════════════════════════════════════════════════════════════════════════
  * ARCHITECTURAL PRINCIPLE: Command MUST NOT be subclassed

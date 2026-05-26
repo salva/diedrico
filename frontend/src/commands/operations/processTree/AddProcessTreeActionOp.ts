@@ -5,7 +5,6 @@
  * This ensures that when commands are undone, both the element AND its
  * ProcessTree action are removed, preventing orphaned dependency entries.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree Action Registration (Phase 81)
  */
 
 import type { IOperation, OperationResult } from '../IOperation';

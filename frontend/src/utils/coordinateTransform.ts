@@ -11,7 +11,6 @@
  * 4. Plane: Projection plane intrinsic (u,v) coordinates
  * 5. 3D: World 3D (x,y,z) coordinates
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Coordinate Systems
  */
 
 import { Vector3, Vector4, Matrix3 } from 'three';

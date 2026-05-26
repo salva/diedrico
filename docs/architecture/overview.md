@@ -1,79 +1,21 @@
-# Architecture Overview
+# Architecture overview
 
-Diedrico follows a layered architecture with clear separation between domain logic, state management, commands, and UI.
+Diedrico is currently a frontend-only Vue 3 + TypeScript application. The root `package.json` declares only the `frontend` workspace; root scripts are wrappers for frontend validation/build tasks and VitePress documentation tasks.
 
-## Layer Diagram
+## Layers
 
-```
-┌─────────────────────────────────────────────────┐
-│                  Components (Vue)                │
-│  CanvasPanel · ThreeView · ElementsPanel · ...   │
-├─────────────────────────────────────────────────┤
-│                 Stores (Pinia)                   │
-│  toolStore · selectionStore · viewStore · ...    │
-├─────────────────────────────────────────────────┤
-│               Commands & Operations              │
-│  CommandStack · Command · IOperation impls       │
-├─────────────────────────────────────────────────┤
-│                   Services                       │
-│  PaperService · SVGRenderer · ProjectService     │
-├─────────────────────────────────────────────────┤
-│                Domain Model                      │
-│  World · ProjectionPlane · Element2D/3D          │
-└─────────────────────────────────────────────────┘
-```
+1. **Vue shell (`frontend/src/components`)** renders panels, canvas, header, and dialogs. Components receive presentation data and forward events to stores/controllers.
+2. **Stores (`frontend/src/stores`)** hold UI/runtime state such as active tool, selection, settings, process-tree panel state, auth/session state, and service instances.
+3. **Application layer (`frontend/src/application`)** owns use cases, controllers, and presentation selectors. It translates UI/tool intents into command operations and converts domain state into renderable DTOs.
+4. **Commands (`frontend/src/commands`)** group serializable operations, enforce undo/redo, and provide descriptors for persistence replay.
+5. **Domain (`frontend/src/domain`)** owns geometry, projection planes, process tree, dependency graph, realizations, and pure calculations.
+6. **Rendering (`frontend/src/rendering`)** adapts presentation DTOs to Three.js scene objects; 2D canvas rendering consumes paper primitives selected by the application layer.
+7. **Services (`frontend/src/services`)** provide persistence, Drive integration, SVG/input helpers, and orchestration around domain/application objects.
 
-## Data Flow
+## Boundary rules
 
-### User Action → Domain Change
-
-```
-User clicks canvas
-  → InputService detects click target
-  → Active Tool receives argument (point, line, etc.)
-  → Tool creates Command with Operations
-  → Operations mutate World (add element, update position)
-  → World.markDirty() increments version
-  → Observers re-render (2D canvas, 3D view, panels)
-```
-
-### Rendering Pipeline
-
-```
-Domain (definitions)
-  → realize2D() computes intrinsic (u, v) coordinates
-  → planeToPaper2D matrix transforms to paper space
-  → PaperService generates drawing primitives
-  → SVGRenderer converts to SVG elements with viewport transform
-```
-
-## Key Design Decisions
-
-### Definition vs Realization
-
-Elements store **what they are** (definition), not **where they are** (coordinates). Coordinates are computed lazily via `realize()` and cached. This enables:
-
-- Clean undo/redo (only definitions change)
-- Efficient recomputation (only dirty elements re-realize)
-- Consistent serialization (save definitions, not coordinates)
-
-### Command Sourcing
-
-Persistence saves the command sequence, not world state. On load, commands replay to reconstruct everything. This ensures perfect fidelity and enables schema migration.
-
-### Plane Ownership
-
-Each 2D element belongs to exactly one projection plane. Elements use hierarchical IDs (`{planeId}/{localId}`) to encode this relationship. This avoids cross-plane ambiguity and simplifies lookup.
-
-## Technology Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Vue 3 (Composition API) |
-| State | Pinia stores |
-| 2D Rendering | D3.js + SVG |
-| 3D Rendering | Three.js + CSS2DRenderer |
-| Math Labels | KaTeX |
-| Build | Vite |
-| Testing | Vitest + Playwright |
-| Backend | Express (minimal REST API) |
+- UI tools create typed intents, not direct domain mutations.
+- Application use cases build commands and push committed commands to `CommandStack`.
+- Stores do not own `World` geometry or command construction policy.
+- Selectors are the boundary between domain state and rendering adapters.
+- Persistence uses the current command descriptor schema only; old project formats are not active compatibility surfaces.

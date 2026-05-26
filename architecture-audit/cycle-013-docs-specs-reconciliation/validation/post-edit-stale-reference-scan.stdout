@@ -1,0 +1,190 @@
+=== active stale-reference scan after edits ===
+docs/architecture/commands.md:21:There is no active model where tools construct arbitrary command subclasses directly or call an `addAndExecute()` lifecycle from UI code.
+docs/contributing/development-setup.md:16:This installs dependencies for both `frontend/` and `backend/` workspaces.
+docs/contributing/development-setup.md:65:├── backend/         # Express REST API
+docs/contributing/testing.md:29:There is no current `test:coverage` script.
+frontend/src/commands/factories/README.md:45:  // Add operations via cmd.addAndExecute()
+frontend/src/commands/factories/README.md:53:- Tool creates command once, factory adds to it
+frontend/src/commands/factories/CircleSequenceFactory.ts:50:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/CircleSequenceFactory.ts:61:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:12: * - Adds operations via cmd.addAndExecute()
+frontend/src/commands/factories/DeletionSequenceFactory.ts:19: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
+frontend/src/commands/factories/DeletionSequenceFactory.ts:102:          cmd.addAndExecute(new RemovePoint2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:112:            cmd.addAndExecute(new RemoveSegment2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:114:            cmd.addAndExecute(new RemoveGuide2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:116:            cmd.addAndExecute(new RemoveLine2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:125:          cmd.addAndExecute(new RemoveCircle2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:138:      cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+frontend/src/commands/factories/GuideSequenceFactory.ts:61:    const result = cmd.addAndExecute(
+frontend/src/commands/factories/GuideSequenceFactory.ts:87:    const siblingResult = cmd.addAndExecute(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factories
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:52:  cmd.addAndExecute(hingeLineOp);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:55:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:63:  cmd.addAndExecute(hhl1Op);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:64:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:71:  cmd.addAndExecute(hhl2Op);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:72:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:48:  cmd.addAndExecute(planeHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:51:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:63:  cmd.addAndExecute(planeVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:66:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:87:  cmd.addAndExecute(projPlaneHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:90:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:110:  cmd.addAndExecute(projPlaneVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:113:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:122:  cmd.addAndExecute(originHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:124:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:130:  cmd.addAndExecute(originVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:131:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:42: * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:96:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:109:          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:146:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:159:          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:196:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:213:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:234:        const siblingResult = cmd.addAndExecute(
+frontend/src/commands/factories/LineSequenceFactory.ts:77:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:88:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:111:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:122:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:145:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:156:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:180:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:208:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/PointSequenceFactory.ts:42:    const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
+frontend/src/commands/factories/PointSequenceFactory.ts:48:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/ProjectionSetupFactory.ts:11: * Reference: specs/001-dihedral-learning-mvp/example-setups.md
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree Action Registration (Phase 81)
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:9: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:19: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101
+frontend/src/commands/operations/world/InitializationOps.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
+frontend/src/commands/operations/world/RemoveElementOps.ts:7: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30, T286
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:9: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Element Properties Dialog
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/Command.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/Command.ts:30: *    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
+frontend/src/commands/Command.ts:31: *    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
+frontend/src/commands/Command.ts:32: *    cmd.addAndExecute(new AddSegment2DOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+frontend/src/commands/Command.ts:45: * - Tools add operations: `cmd.addAndExecute(operation)`
+frontend/src/commands/Command.ts:164:  addAndExecute(operation: IOperation): OperationResult {
+frontend/src/commands/Command.ts:215:    // Note: No need to call markDirty() here - it's called after each operation in addAndExecute()
+frontend/src/components/toolbars/Toolbar.vue:142: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+frontend/src/components/LoginStatusWidget.vue:7:  @see specs/001-dihedral-learning-mvp/ui-spec.md - Google Drive Login Status Widget
+frontend/src/composables/useHoverHighlight.ts:13: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Unified Hover Highlighting
+frontend/src/composables/useViewport.ts:11: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Viewport Navigation
+frontend/src/config/toolFamilies.ts:9: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/domain/calculations/CoordinateTransform.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
+frontend/src/domain/calculations/Intersections.ts:18: * - specs/001-dihedral-learning-mvp/data-model.md#intersection-calculations
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:9: * Reference: specs/001-dihedral-learning-mvp/spec.md FR-042
+frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateGuideAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateParallelLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreatePointAction.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateSegmentAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts:11: * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingGuide2D
+frontend/src/domain/processTree/actions/CreateSiblingIntersectionPointAction.ts:11: * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingIntersectionPoint2D
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/Action.ts:23: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93, §Phase 98
+frontend/src/domain/processTree/ProcessTree.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree
+frontend/src/domain/world/Element2DRealization2D.ts:24: * @see specs/001-dihedral-learning-mvp/data-model.md#element2drealization2d-base-class
+frontend/src/domain/world/Realization.ts:35: * @see specs/001-dihedral-learning-mvp/data-model.md#realization-base-class
+frontend/src/domain/world/BrokenHingeLine.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/Circle.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#circle2d
+frontend/src/domain/world/Element.ts:26: * @see specs/001-dihedral-learning-mvp/data-model.md#element-base-class-hierarchy
+frontend/src/domain/world/Element3D.ts:30: * @see specs/001-dihedral-learning-mvp/data-model.md#element3d-class
+frontend/src/domain/world/Element3DRealization3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#element3drealization3d
+frontend/src/domain/world/Guide.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#guide
+frontend/src/domain/world/Guide.ts:18: * @see specs/001-dihedral-learning-mvp/spec.md#guides
+frontend/src/domain/world/Guide.ts:186: * @see specs/001-dihedral-learning-mvp/data-model.md#siblingguide2d
+frontend/src/domain/world/Guide.ts:263:   * 3. Express R parametrically: R = Q + d·D (extract scalar d)
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:20: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/HingeLine.ts:14: * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
+frontend/src/domain/world/HingeLine.ts:38: * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
+frontend/src/domain/world/Line.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Line.ts:493: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocirclethroughpoint
+frontend/src/domain/world/Line.ts:675: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocircleparalleltoline
+frontend/src/domain/world/Line3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line3d
+frontend/src/domain/world/Plane.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
+frontend/src/domain/world/Point.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
+frontend/src/domain/world/Point.ts:603:   * @see specs/001-dihedral-learning-mvp/data-model.md §Parametric Consistency Requirement
+frontend/src/domain/world/Point3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#point3d
+frontend/src/domain/world/Segment.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Segment3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#segment3d
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/styleService.ts:9: * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
+frontend/src/domain/world/DependencyService.ts:16: * Reference: specs/001-dihedral-learning-mvp/spec.md §Parametric Behavior and Dependencies
+frontend/src/domain/world/World.ts:77: * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
+frontend/src/services/GoogleDriveService.ts:12: * @see specs/001-dihedral-learning-mvp/ui-spec.md - Startup Flow and Google Drive Authentication
+frontend/src/services/GoogleDriveService.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md - Persistence Strategy
+frontend/src/services/SVGRenderer.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-transformations
+frontend/src/services/factories/PlaneSequenceFactory.ts:62:    const result = cmd.addAndExecute(new Add3DPlaneOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:76:      cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/services/factories/PlaneSequenceFactory.ts:119:    const result = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:133:    cmd.addAndExecute(new AddProcessTreeActionOp(projPlaneAction, groupId));
+frontend/src/services/factories/PlaneSequenceFactory.ts:138:    const hingeLineResult = cmd.addAndExecute(new AddHingeLineOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:145:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:153:    cmd.addAndExecute(hhl1Op);
+frontend/src/services/factories/PlaneSequenceFactory.ts:155:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:162:    cmd.addAndExecute(hhl2Op);
+frontend/src/services/factories/PlaneSequenceFactory.ts:164:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:176:        cmd.addAndExecute(new UpdateElementStyleOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:217:    const result = cmd.addAndExecute(new AddBrokenHingeLineOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:231:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:238:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:246:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/stores/viewStore.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md - View Transformation
+frontend/src/tools/BaseTool.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/tools/CircleTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2 - Create circles
+frontend/src/tools/Create3DLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/Create3DPlaneTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/Create3DPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/Create3DSegmentTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/GuideTool.ts:22: * - specs/001-dihedral-learning-mvp/spec.md §US3 - Create Guide
+frontend/src/tools/GuideTool.ts:23: * - specs/001-dihedral-learning-mvp/spec.md §Guides
+frontend/src/tools/IntersectionTool.ts:17: * Reference: specs/001-dihedral-learning-mvp/spec.md
+frontend/src/tools/LineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+frontend/src/tools/ParallelLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-043 (Parallel Line Tool)
+frontend/src/tools/PerpendicularLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-044 (Perpendicular Line Tool)
+frontend/src/tools/PointTool.ts:11: * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
+frontend/src/tools/SegmentTool.ts:11: * Unlike LineTool which creates infinite lines, SegmentTool creates finite segments
+frontend/src/tools/SegmentTool.ts:16: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-046, §FR-047
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-045
+frontend/src/types/SelectionMask.ts:196: * Use this for tools that only create new elements (e.g., PointTool creates free points,
+frontend/src/types/ToolArgumentCollector.ts:28: * - planeCoords contains free position where user clicked (e.g., PointTool creates free point)
+frontend/src/types/ToolConfig.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/types/arcGeometry.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/utils/arcGeometry.ts:27: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101.6
+frontend/src/utils/coordinateTransform.ts:14: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Coordinate Systems
+frontend/src/utils/projectionPlaneUtils.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 82
+frontend/src/utils/threeUtils.ts:271: * @see specs/001-dihedral-learning-mvp/data-model.md §Coordinate System Note
+frontend/src/application/world/initializeWorld.ts:24:  initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+frontend/src/application/world/initializeWorld.ts:28:  initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/world/initializeWorld.ts:32:  initCmd.addAndExecute(new PopSubprocessOp());
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:19:          cmd.addAndExecute(new UpdateFreePoint2DPositionOp(request.planeId, request.pointId, position));
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+frontend/src/application/construction/ConstructionUseCases.ts:40:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/construction/ConstructionUseCases.ts:73:      const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1.id, p2.id));
+frontend/src/application/construction/ConstructionUseCases.ts:74:      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:87:      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:88:      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:111:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(planeId, circle.id, point.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:112:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:119:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(planeId, circle.id, line.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:120:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:126:      const result = cmd.addAndExecute(new Add3DPointOp(p1.id, p2.id, p1.planeId, p2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:127:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:133:      const result = cmd.addAndExecute(new Add3DLineOp(l1.id, l2.id, l1.planeId, l2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:134:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:140:      const result = cmd.addAndExecute(new Add3DSegmentOp(s1.id, s2.id, s1.planeId, s2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:141:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:76:      command.addAndExecute(operation);

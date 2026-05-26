@@ -4,7 +4,6 @@
   Shows either "Sign in" button or user profile (avatar + name + dropdown).
   Responsive behavior: full name → first name → avatar only.
   
-  @see specs/001-dihedral-learning-mvp/ui-spec.md - Google Drive Login Status Widget
 -->
 <template>
   <div class="login-status-widget">

@@ -11,7 +11,6 @@
  * **Phase 52**: Refactored to extend Element3D, removing id and label properties
  * which are now inherited from Element base class. Replaces `name` with `label`.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
  */
 
 import { Vector3 } from 'three';
@@ -35,7 +34,6 @@ import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
  * Guides reference HalfHingeLine2D (not HingeLine) because guides are perpendicular
  * to the 2D representation.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
  */
 export class HalfHingeLine2D extends Line2D {
   readonly hingeLineId: string;  // Parent HingeLine

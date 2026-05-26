@@ -6,7 +6,6 @@
  * Provides utility functions for resolving element visual properties,
  * particularly visibility with subprocess inheritance support.
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
  */
 
 import type { Element } from './Element';

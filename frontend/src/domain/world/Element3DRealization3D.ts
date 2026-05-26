@@ -12,7 +12,6 @@
  * 
  * Phase 78: Introduced for user-created 3D elements from 2D projections
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#element3drealization3d
  */
 import { Vector4 } from 'three';
 import { Realization } from './Realization';

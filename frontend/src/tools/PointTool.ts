@@ -8,7 +8,6 @@
  * 
  * Code reduction: ~80 lines → ~50 lines (37% reduction)
  * 
- * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';

@@ -13,7 +13,6 @@
  * - When base element changes, all dependent elements are invalidated and recomputed
  * - Cascading updates propagate through dependency chains
  * 
- * Reference: specs/001-dihedral-learning-mvp/spec.md §Parametric Behavior and Dependencies
  */
 
 

@@ -268,7 +268,6 @@ export function applyMatrix4x3(vector: Vector3, matrix: Matrix4x3): Vector4 {
  * 
  * @param domainPosition Position in domain coordinates (Vector4 with homogeneous w)
  * @returns Position in Three.js coordinates (Vector3)
- * @see specs/001-dihedral-learning-mvp/data-model.md §Coordinate System Note
  */
 export function domainToThreeJS(domainPosition: Vector4): Vector3 {
   return new Vector3(

@@ -10,7 +10,6 @@
  * - computeExpectedT2Prime: Compute expected T2' position for validation warning
  * - computeAuxiliaryPlaneLayout: Determine paper-space position for new auxiliary plane
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 82
  */
 
 import { Matrix3, Vector3, Vector4 } from 'three';
@@ -171,7 +170,6 @@ export interface ProjectionPlaneMatrices {
  * - 2D: Vector3(x, y, 1) for points, (x, y, 0) for directions
  * - 3D: Vector4(x, y, z, 1) for points, (x, y, z, 0) for directions
  * 
- * Reference: data-model.md §Phase 82.1
  * 
  * @param t1HingeTraceId - Line ID for hinge trace T1 on plane P1
  * @param t2OtherTraceId - Line ID for other trace T2 on plane P2 (different from P1)

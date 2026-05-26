@@ -10,7 +10,6 @@
  * 
  * Code reduction: 192 lines → ~60 lines (68% reduction)
  * 
- * Reference: specs/001-dihedral-learning-mvp/spec.md §US2 - Create circles
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';

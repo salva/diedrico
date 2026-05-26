@@ -17,7 +17,6 @@
  * - T2' must be on same plane as T1
  * - T2' position warning: If far from expected position (computed via computeExpectedT2Prime)
  * 
- * Reference: data-model.md §Phase 82 - Create Projection Plane Tool
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';

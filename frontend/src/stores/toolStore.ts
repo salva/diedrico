@@ -8,8 +8,7 @@
  * Supports tool families with dropdown menus, last-used sub-tool memory,
  * and configurable completion behavior (stay-active vs return-to-selection).
  * 
- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Tool Interactions
- * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+ * Tool interaction state is UI/runtime state; command construction belongs to application controllers.
  */
 
 import { ref, computed } from 'vue';
@@ -162,14 +161,14 @@ export function useToolStore() {
   }
 
   /**
-   * Phase 115: Set contextual tool step feedback message
+   * Set contextual tool step feedback message
    */
   function setToolStepMessage(message: string) {
     toolStepMessage.value = message;
   }
 
   /**
-   * Phase 115: Get reactive tool step message
+   * Get reactive tool step message
    */
   const currentToolStepMessage = computed(() => toolStepMessage.value);
 

@@ -5,7 +5,6 @@
  * All subsequent actions will be added to this subprocess until it is popped.
  * 
  * Phase 85: ProcessTree Subprocess Stack Architecture
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
  */
 
 import type { IOperation, OperationResult } from '../IOperation';

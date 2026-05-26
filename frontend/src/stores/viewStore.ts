@@ -10,7 +10,6 @@
  * 2. Paper coordinates (x,y) (after plane-to-paper transform)
  * 3. Viewport coordinates (after pan/zoom transform)
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md - View Transformation
  */
 
 import { ref, computed } from 'vue';

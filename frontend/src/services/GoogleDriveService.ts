@@ -9,8 +9,6 @@
  * - OAuth2 authentication with scope: drive.file (app-created files only)
  * - No backend server required
  * 
- * @see specs/001-dihedral-learning-mvp/ui-spec.md - Startup Flow and Google Drive Authentication
- * @see specs/001-dihedral-learning-mvp/data-model.md - Persistence Strategy
  */
 
 /// <reference types="gapi" />

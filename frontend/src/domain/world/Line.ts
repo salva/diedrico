@@ -13,7 +13,6 @@
  * Design principles:
  * - Principle V: Coordinates computed and cached in realizations
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
  */
 
 import { Vector3 } from 'three';
@@ -490,7 +489,6 @@ export class Line2DPerpendicularToLine extends Line2D {
  * 
  * Pattern: Follows sortPointsByAngleFromRadiusVector() indexing convention
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocirclethroughpoint
  */
 export class Line2DTangentToCircleThroughPoint extends Line2D {
   readonly type: Line2DType = 'tangent-to-circle-through-point';
@@ -672,7 +670,6 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
  * 
  * Pattern: Follows sortPointsByAngleFromRadiusVector() indexing convention
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocircleparalleltoline
  */
 export class Line2DTangentToCircleParallelToLine extends Line2D {
   readonly type: Line2DType = 'tangent-to-circle-parallel';

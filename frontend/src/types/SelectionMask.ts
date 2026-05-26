@@ -4,7 +4,6 @@
  * Provides type-safe, composable selection masks for tool-specific filtering.
  * Replaces string-based system with polymorphic class hierarchy.
  * 
- * Reference: data-model.md §Class-Based Selection Mask Architecture (Phase 63)
  */
 
 import type { Element2D } from '@/domain/world/Element2D';

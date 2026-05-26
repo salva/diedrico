@@ -14,7 +14,6 @@
  * 
  * These are simple atomic operations - the orchestration happens in InitializationSequenceFactory.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
  */
 
 import { Vector3, Vector4, Matrix3 } from 'three';

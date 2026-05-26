@@ -1,0 +1,7 @@
+=== active stale-reference scan after comment cleanup ===
+docs/contributing/testing.md:29:There is no current `test:coverage` script.
+frontend/src/commands/factories/README.md:53:- Tool creates command once, factory adds to it
+frontend/src/domain/world/Guide.ts:260:   * 3. Express R parametrically: R = Q + d·D (extract scalar d)
+frontend/src/tools/SegmentTool.ts:11: * Unlike LineTool which creates infinite lines, SegmentTool creates finite segments
+frontend/src/types/SelectionMask.ts:195: * Use this for tools that only create new elements (e.g., PointTool creates free points,
+frontend/src/types/ToolArgumentCollector.ts:27: * - planeCoords contains free position where user clicked (e.g., PointTool creates free point)

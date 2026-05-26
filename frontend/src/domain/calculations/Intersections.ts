@@ -15,7 +15,6 @@
  * - Implicit form: ax + by + c = 0 (computation format for intersections)
  * 
  * Reference:
- * - specs/001-dihedral-learning-mvp/data-model.md#intersection-calculations
  * - .specify/memory/constitution.md#v-homogeneous-coordinate-system
  */
 

@@ -1,0 +1,521 @@
+=== active stale-reference scan before edits ===
+README.md:86:├── backend/           # Express backend (optional, for future features)
+README.md:89:    └── 001-dihedral-learning-mvp/
+README.md:129:- **Express** for API endpoints
+README.md:134:Diedrico follows strict architectural principles documented in [data-model.md](specs/001-dihedral-learning-mvp/data-model.md):
+README.md:160:- **[Feature Specification](specs/001-dihedral-learning-mvp/spec.md)**: Complete functional requirements (FR-001 through FR-052)
+README.md:161:- **[UI Specification](specs/001-dihedral-learning-mvp/ui-spec.md)**: Detailed UI/UX guidelines and interaction patterns
+README.md:162:- **[Data Model](specs/001-dihedral-learning-mvp/data-model.md)**: Architecture documentation with 70+ implementation phases
+README.md:163:- **[Tasks](specs/001-dihedral-learning-mvp/tasks.md)**: Detailed task breakdown for all features
+README.md:194:1. **Read the specifications first**: Familiarize yourself with [spec.md](specs/001-dihedral-learning-mvp/spec.md) and [data-model.md](specs/001-dihedral-learning-mvp/data-model.md)
+README.md:201:1. Check [for-planing.md](specs/001-dihedral-learning-mvp/for-planing.md) for planned features
+README.md:241:**Note**: This project is under active development. The current MVP focuses on core dihedral projection features. See [for-planing.md](specs/001-dihedral-learning-mvp/for-planing.md) for upcoming features and improvements.
+docs/architecture/commands.md:15:├── addAndExecute(op) → executes immediately, stores for undo
+docs/architecture/commands.md:82:1. Tool creates new Command
+docs/architecture/commands.md:83:2. Tool calls command.addAndExecute(op1)  → op1.apply(world)
+docs/architecture/commands.md:84:3. Tool calls command.addAndExecute(op2)  → op2.apply(world)
+docs/architecture/commands.md:122:The `ProjectService.reconstructOperation()` switch handles deserialization of all operation types.
+docs/architecture/overview.md:34:  → Tool creates Command with Operations
+docs/architecture/overview.md:79:| Backend | Express (minimal REST API) |
+docs/contributing/development-setup.md:16:This installs dependencies for both `frontend/` and `backend/` workspaces.
+docs/contributing/development-setup.md:65:├── backend/         # Express REST API
+docs/contributing/testing.md:13:npm run test:coverage  # With coverage report
+docs/guide/getting-started.md:70:├── backend/              # Express API (minimal, file storage)
+frontend/src/commands/factories/README.md:45:  // Add operations via cmd.addAndExecute()
+frontend/src/commands/factories/README.md:53:- Tool creates command once, factory adds to it
+frontend/src/commands/factories/CircleSequenceFactory.ts:50:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/CircleSequenceFactory.ts:61:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:12: * - Adds operations via cmd.addAndExecute()
+frontend/src/commands/factories/DeletionSequenceFactory.ts:19: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
+frontend/src/commands/factories/DeletionSequenceFactory.ts:102:          cmd.addAndExecute(new RemovePoint2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:112:            cmd.addAndExecute(new RemoveSegment2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:114:            cmd.addAndExecute(new RemoveGuide2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:116:            cmd.addAndExecute(new RemoveLine2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:125:          cmd.addAndExecute(new RemoveCircle2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:138:      cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+frontend/src/commands/factories/GuideSequenceFactory.ts:61:    const result = cmd.addAndExecute(
+frontend/src/commands/factories/GuideSequenceFactory.ts:87:    const siblingResult = cmd.addAndExecute(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factories
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:52:  cmd.addAndExecute(hingeLineOp);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:55:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:63:  cmd.addAndExecute(hhl1Op);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:64:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:71:  cmd.addAndExecute(hhl2Op);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:72:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:48:  cmd.addAndExecute(planeHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:51:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:63:  cmd.addAndExecute(planeVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:66:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:87:  cmd.addAndExecute(projPlaneHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:90:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:110:  cmd.addAndExecute(projPlaneVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:113:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:122:  cmd.addAndExecute(originHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:124:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:130:  cmd.addAndExecute(originVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:131:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:42: * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:96:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:109:          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:146:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:159:          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:196:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:213:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:234:        const siblingResult = cmd.addAndExecute(
+frontend/src/commands/factories/LineSequenceFactory.ts:77:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:88:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:111:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:122:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:145:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:156:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:180:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:208:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/PointSequenceFactory.ts:42:    const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
+frontend/src/commands/factories/PointSequenceFactory.ts:48:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/ProjectionSetupFactory.ts:11: * Reference: specs/001-dihedral-learning-mvp/example-setups.md
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree Action Registration (Phase 81)
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:9: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:19: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101
+frontend/src/commands/operations/world/InitializationOps.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
+frontend/src/commands/operations/world/RemoveElementOps.ts:7: * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30, T286
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:9: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Element Properties Dialog
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/Command.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/commands/Command.ts:30: *    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
+frontend/src/commands/Command.ts:31: *    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
+frontend/src/commands/Command.ts:32: *    cmd.addAndExecute(new AddSegment2DOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+frontend/src/commands/Command.ts:45: * - Tools add operations: `cmd.addAndExecute(operation)`
+frontend/src/commands/Command.ts:164:  addAndExecute(operation: IOperation): OperationResult {
+frontend/src/commands/Command.ts:215:    // Note: No need to call markDirty() here - it's called after each operation in addAndExecute()
+frontend/src/commands/CommandStack.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+frontend/src/components/header/ProjectNameDisplay.vue:55: * Reference: specs/001-dihedral-learning-mvp/spec.md - Project Name Display and Editing
+frontend/src/components/toolbars/Toolbar.vue:142: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+frontend/src/components/workspace/SvgCanvas.vue:178: * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+frontend/src/components/LoginStatusWidget.vue:7:  @see specs/001-dihedral-learning-mvp/ui-spec.md - Google Drive Login Status Widget
+frontend/src/composables/useHoverHighlight.ts:13: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Unified Hover Highlighting
+frontend/src/composables/useViewport.ts:11: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Viewport Navigation
+frontend/src/config/toolFamilies.ts:9: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/domain/calculations/CoordinateTransform.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
+frontend/src/domain/calculations/Intersections.ts:18: * - specs/001-dihedral-learning-mvp/data-model.md#intersection-calculations
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateCircleAction.ts:9: * Reference: specs/001-dihedral-learning-mvp/spec.md FR-042
+frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateGuideAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateParallelLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreatePointAction.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateSegmentAction.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts:11: * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingGuide2D
+frontend/src/domain/processTree/actions/CreateSiblingIntersectionPointAction.ts:11: * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingIntersectionPoint2D
+frontend/src/domain/processTree/actions/CreateTangentLineAction.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+frontend/src/domain/processTree/Action.ts:23: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93, §Phase 98
+frontend/src/domain/processTree/ProcessTree.ts:7: * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree
+frontend/src/domain/world/Element2DRealization2D.ts:24: * @see specs/001-dihedral-learning-mvp/data-model.md#element2drealization2d-base-class
+frontend/src/domain/world/Realization.ts:35: * @see specs/001-dihedral-learning-mvp/data-model.md#realization-base-class
+frontend/src/domain/world/BrokenHingeLine.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/Circle.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#circle2d
+frontend/src/domain/world/Element.ts:26: * @see specs/001-dihedral-learning-mvp/data-model.md#element-base-class-hierarchy
+frontend/src/domain/world/Element3D.ts:30: * @see specs/001-dihedral-learning-mvp/data-model.md#element3d-class
+frontend/src/domain/world/Element3DRealization3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#element3drealization3d
+frontend/src/domain/world/Guide.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#guide
+frontend/src/domain/world/Guide.ts:18: * @see specs/001-dihedral-learning-mvp/spec.md#guides
+frontend/src/domain/world/Guide.ts:186: * @see specs/001-dihedral-learning-mvp/data-model.md#siblingguide2d
+frontend/src/domain/world/Guide.ts:263:   * 3. Express R parametrically: R = Q + d·D (extract scalar d)
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:20: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/HingeLine.ts:14: * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
+frontend/src/domain/world/HingeLine.ts:38: * Reference: specs/001-dihedral-learning-mvp/data-model.md §HingeLine
+frontend/src/domain/world/Line.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Line.ts:493: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocirclethroughpoint
+frontend/src/domain/world/Line.ts:675: * @see specs/001-dihedral-learning-mvp/data-model.md#line2dtangenttocircleparalleltoline
+frontend/src/domain/world/Line3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#line3d
+frontend/src/domain/world/Plane.ts:17: * @see specs/001-dihedral-learning-mvp/data-model.md#plane3dbypointandnormal
+frontend/src/domain/world/Point.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#point2d
+frontend/src/domain/world/Point.ts:603:   * @see specs/001-dihedral-learning-mvp/data-model.md §Parametric Consistency Requirement
+frontend/src/domain/world/Point3D.ts:16: * @see specs/001-dihedral-learning-mvp/data-model.md#point3d
+frontend/src/domain/world/Segment.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md#line2d
+frontend/src/domain/world/Segment3D.ts:15: * @see specs/001-dihedral-learning-mvp/data-model.md#segment3d
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:17: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/domain/world/styleService.ts:9: * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
+frontend/src/domain/world/DependencyService.ts:16: * Reference: specs/001-dihedral-learning-mvp/spec.md §Parametric Behavior and Dependencies
+frontend/src/domain/world/World.ts:77: * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
+frontend/src/services/GoogleDriveService.ts:12: * @see specs/001-dihedral-learning-mvp/ui-spec.md - Startup Flow and Google Drive Authentication
+frontend/src/services/GoogleDriveService.ts:13: * @see specs/001-dihedral-learning-mvp/data-model.md - Persistence Strategy
+frontend/src/services/SVGRenderer.ts:18: * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-transformations
+frontend/src/services/factories/PlaneSequenceFactory.ts:62:    const result = cmd.addAndExecute(new Add3DPlaneOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:76:      cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/services/factories/PlaneSequenceFactory.ts:119:    const result = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:133:    cmd.addAndExecute(new AddProcessTreeActionOp(projPlaneAction, groupId));
+frontend/src/services/factories/PlaneSequenceFactory.ts:138:    const hingeLineResult = cmd.addAndExecute(new AddHingeLineOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:145:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:153:    cmd.addAndExecute(hhl1Op);
+frontend/src/services/factories/PlaneSequenceFactory.ts:155:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:162:    cmd.addAndExecute(hhl2Op);
+frontend/src/services/factories/PlaneSequenceFactory.ts:164:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:176:        cmd.addAndExecute(new UpdateElementStyleOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:217:    const result = cmd.addAndExecute(new AddBrokenHingeLineOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:231:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:238:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:246:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/stores/authStore.ts:8: * @see specs/001-dihedral-learning-mvp/data-model.md - Authentication State
+frontend/src/stores/settingsStore.ts:13: * @see specs/001-dihedral-learning-mvp/ui-spec.md#project-settings-dialog
+frontend/src/stores/settingsStore.ts:14: * @see specs/001-dihedral-learning-mvp/ui-spec.md#state-persistence
+frontend/src/stores/toolStore.ts:11: * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Tool Interactions
+frontend/src/stores/toolStore.ts:12: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/stores/viewStore.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md - View Transformation
+frontend/src/tools/BaseTool.ts:10: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/tools/CircleTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2 - Create circles
+frontend/src/tools/Create3DLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/Create3DPlaneTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/Create3DPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/Create3DSegmentTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+frontend/src/tools/GuideTool.ts:22: * - specs/001-dihedral-learning-mvp/spec.md §US3 - Create Guide
+frontend/src/tools/GuideTool.ts:23: * - specs/001-dihedral-learning-mvp/spec.md §Guides
+frontend/src/tools/IntersectionTool.ts:17: * Reference: specs/001-dihedral-learning-mvp/spec.md
+frontend/src/tools/LineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+frontend/src/tools/ParallelLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-043 (Parallel Line Tool)
+frontend/src/tools/PerpendicularLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-044 (Perpendicular Line Tool)
+frontend/src/tools/PointTool.ts:11: * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
+frontend/src/tools/SegmentTool.ts:11: * Unlike LineTool which creates infinite lines, SegmentTool creates finite segments
+frontend/src/tools/SegmentTool.ts:16: * Reference: specs/001-dihedral-learning-mvp/spec.md §US2
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-046, §FR-047
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:13: * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-045
+frontend/src/types/SelectionMask.ts:196: * Use this for tools that only create new elements (e.g., PointTool creates free points,
+frontend/src/types/ToolArgumentCollector.ts:28: * - planeCoords contains free position where user clicked (e.g., PointTool creates free point)
+frontend/src/types/ToolConfig.ts:8: * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+frontend/src/types/arcGeometry.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
+frontend/src/utils/arcGeometry.ts:27: * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101.6
+frontend/src/utils/coordinateTransform.ts:14: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Coordinate Systems
+frontend/src/utils/projectionPlaneUtils.ts:13: * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 82
+frontend/src/utils/threeUtils.ts:271: * @see specs/001-dihedral-learning-mvp/data-model.md §Coordinate System Note
+frontend/src/application/world/initializeWorld.ts:24:  initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+frontend/src/application/world/initializeWorld.ts:28:  initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/world/initializeWorld.ts:32:  initCmd.addAndExecute(new PopSubprocessOp());
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:19:          cmd.addAndExecute(new UpdateFreePoint2DPositionOp(request.planeId, request.pointId, position));
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+frontend/src/application/construction/ConstructionUseCases.ts:40:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/construction/ConstructionUseCases.ts:73:      const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1.id, p2.id));
+frontend/src/application/construction/ConstructionUseCases.ts:74:      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:87:      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:88:      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:111:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(planeId, circle.id, point.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:112:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:119:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(planeId, circle.id, line.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:120:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:126:      const result = cmd.addAndExecute(new Add3DPointOp(p1.id, p2.id, p1.planeId, p2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:127:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:133:      const result = cmd.addAndExecute(new Add3DLineOp(l1.id, l2.id, l1.planeId, l2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:134:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:140:      const result = cmd.addAndExecute(new Add3DSegmentOp(s1.id, s2.id, s1.planeId, s2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:141:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:76:      command.addAndExecute(operation);
+specs/001-dihedral-learning-mvp/checklists/requirements.md:5:**Feature**: specs/001-dihedral-learning-mvp/spec.md
+specs/001-dihedral-learning-mvp/plan.md:3:**Branch**: `001-dihedral-learning-mvp` | **Date**: 2025-12-29 (Updated: 2026-01-06) | **Spec**: [spec.md](./spec.md)
+specs/001-dihedral-learning-mvp/plan.md:4:**Input**: Feature specification from `/specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/plan.md:33:- [x] **Technology Discipline**: Yes - Uses approved stack: Vue.js 3, TypeScript, Vite, Vitest, Playwright, Node.js, Express
+specs/001-dihedral-learning-mvp/plan.md:101:See [data-model.md § Realization Layer Boundary](/specs/001-dihedral-learning-mvp/data-model.md#critical-realization-layer-boundary) for detailed examples.
+specs/001-dihedral-learning-mvp/plan.md:194:See [data-model.md § HingeLine](/specs/001-dihedral-learning-mvp/data-model.md#domain-entity-hingeline) and [data-model.md § Guide](/specs/001-dihedral-learning-mvp/data-model.md#domain-entity-guide) for detailed specifications.
+specs/001-dihedral-learning-mvp/plan.md:201:specs/001-dihedral-learning-mvp/
+specs/001-dihedral-learning-mvp/quickstart.md:244:- **Feature Specification**: `specs/001-dihedral-learning-mvp/spec.md` - Complete feature requirements
+specs/001-dihedral-learning-mvp/quickstart.md:245:- **Data Model**: `specs/001-dihedral-learning-mvp/data-model.md` - Entity definitions
+specs/001-dihedral-learning-mvp/quickstart.md:271:- **Research Decisions**: `specs/001-dihedral-learning-mvp/research.md` - Technology choices
+specs/001-dihedral-learning-mvp/quickstart.md:272:- **Implementation Plan**: `specs/001-dihedral-learning-mvp/plan.md` - MVP phasing strategy
+specs/001-dihedral-learning-mvp/research.md:10:1. **Backend framework**: Express vs Fastify
+specs/001-dihedral-learning-mvp/research.md:17:### 1. Backend Framework: Express
+specs/001-dihedral-learning-mvp/research.md:19:**Decision**: Use **Express.js**
+specs/001-dihedral-learning-mvp/research.md:22:- **Maturity**: Express is the de facto standard for Node.js web frameworks with extensive ecosystem
+specs/001-dihedral-learning-mvp/research.md:23:- **Simplicity**: For this MVP, we need only 4-5 REST endpoints (CRUD for projects). Express provides exactly what we need without ceremony
+specs/001-dihedral-learning-mvp/research.md:26:- **Performance**: For persistence-only API with low concurrency (single-user educational tool), Express performance is more than sufficient
+specs/001-dihedral-learning-mvp/research.md:33:- Use Express 4.x with TypeScript
+specs/001-dihedral-learning-mvp/research.md:1649:| Backend framework | Express | Simple, mature, sufficient for 5 endpoints |
+specs/001-dihedral-learning-mvp/data-model.md:3281:cmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/data-model.md:3282:cmd.addAndExecute(new AddProjectionPlaneFixedOp('P_H', ...));
+specs/001-dihedral-learning-mvp/data-model.md:3283:cmd.addAndExecute(new AddProcessTreeActionOp(createInitializeProjectionPlaneAction(...)));
+specs/001-dihedral-learning-mvp/data-model.md:3284:cmd.addAndExecute(new AddHingeLineOp(...));
+specs/001-dihedral-learning-mvp/data-model.md:3285:cmd.addAndExecute(new AddProcessTreeActionOp(createInitializeHingeLineAction(...)));
+specs/001-dihedral-learning-mvp/data-model.md:3286:cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/data-model.md:3289:cmd.addAndExecute(new PushSubprocessOp('Create Projection Plane'));
+specs/001-dihedral-learning-mvp/data-model.md:3290:const result = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(...));
+specs/001-dihedral-learning-mvp/data-model.md:3291:cmd.addAndExecute(new AddProcessTreeActionOp(createInitializeProjectionPlaneAction(...)));
+specs/001-dihedral-learning-mvp/data-model.md:3292:cmd.addAndExecute(new AddHingeLineOp(...));
+specs/001-dihedral-learning-mvp/data-model.md:3293:cmd.addAndExecute(new AddProcessTreeActionOp(createInitializeHingeLineAction(...)));
+specs/001-dihedral-learning-mvp/data-model.md:3294:cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/data-model.md:4094:    cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(planeId, line1Id, line2Id));
+specs/001-dihedral-learning-mvp/data-model.md:4100:      cmd.addAndExecute(new AddSiblingIntersectionPoint2DOp(siblingPlaneId, primaryId));
+specs/001-dihedral-learning-mvp/data-model.md:5097:  3. Express R parametrically on primary HalfHingeLine: R = Q + d·D (extract scalar d)
+specs/001-dihedral-learning-mvp/data-model.md:5119:   - Express R parametrically: R = Q + d·D (extract scalar d)
+specs/001-dihedral-learning-mvp/data-model.md:5727:        const result = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:6159:        const pointResult = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:6165:        const lineResult = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:6194:        const result = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:6648:        cmd.addAndExecute(pointOp);
+specs/001-dihedral-learning-mvp/data-model.md:6743:      const result = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:6928:      const result = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:7424:      const result = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:7534:- **Expressiveness**: Complex selection patterns ("any line subtype except guides", "constructible elements only")
+specs/001-dihedral-learning-mvp/data-model.md:10425:const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
+specs/001-dihedral-learning-mvp/data-model.md:10459:      const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
+specs/001-dihedral-learning-mvp/data-model.md:10481:    const result = cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(
+specs/001-dihedral-learning-mvp/data-model.md:11610:- ✅ `specs/001-dihedral-learning-mvp/for-planing.md` - Architecture documentation updated
+specs/001-dihedral-learning-mvp/data-model.md:12397:  addAndExecute(operation: IOperation): OperationResult;
+specs/001-dihedral-learning-mvp/data-model.md:12418:- **Incremental Execution**: Operations execute immediately when added via `addAndExecute()`
+specs/001-dihedral-learning-mvp/data-model.md:12434:const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
+specs/001-dihedral-learning-mvp/data-model.md:12438:const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
+specs/001-dihedral-learning-mvp/data-model.md:12442:const segResult = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:12458:const result = cmd.addAndExecute(op);
+specs/001-dihedral-learning-mvp/data-model.md:12479:// Tool creates operation and command
+specs/001-dihedral-learning-mvp/data-model.md:12485:  const result = cmd.addAndExecute(op);
+specs/001-dihedral-learning-mvp/data-model.md:12516:  const p1Result = cmd.addAndExecute(p1Op);
+specs/001-dihedral-learning-mvp/data-model.md:12520:  const p2Result = cmd.addAndExecute(p2Op);
+specs/001-dihedral-learning-mvp/data-model.md:12525:  const segResult = cmd.addAndExecute(segOp);
+specs/001-dihedral-learning-mvp/data-model.md:12568:  addAndExecute<T extends Operation>(operation: T): OperationResult {
+specs/001-dihedral-learning-mvp/data-model.md:12668:  cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/data-model.md:12677:  cmd.addAndExecute(new AddPlane3DOp(planeHId, 'horizontal'));
+specs/001-dihedral-learning-mvp/data-model.md:12678:  cmd.addAndExecute(new AddPlane3DOp(planeVId, 'vertical'));
+specs/001-dihedral-learning-mvp/data-model.md:12681:  cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneHId, planeHId, 'horizontal'));
+specs/001-dihedral-learning-mvp/data-model.md:12682:  cmd.addAndExecute(new AddProjectionPlaneOp(projPlaneVId, planeVId, 'vertical'));
+specs/001-dihedral-learning-mvp/data-model.md:12685:  cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneHId, new Vector3(0, 0, 1)));
+specs/001-dihedral-learning-mvp/data-model.md:12686:  cmd.addAndExecute(new AddOriginPoint2DOp(projPlaneVId, new Vector3(0, 0, 1)));
+specs/001-dihedral-learning-mvp/data-model.md:12690:  cmd.addAndExecute(new AddHingeLineOp(hingeLineId, projPlaneHId, projPlaneVId));
+specs/001-dihedral-learning-mvp/data-model.md:12695:  cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneHId, hingeLineId, hingePoint, hingeDirection));
+specs/001-dihedral-learning-mvp/data-model.md:12696:  cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneVId, hingeLineId, hingePoint, hingeDirection));
+specs/001-dihedral-learning-mvp/data-model.md:12699:  cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
+specs/001-dihedral-learning-mvp/data-model.md:12782:  cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/data-model.md:12785:  cmd.addAndExecute(new AddPlane3DOp('horizontal'));  // No ID passed - factory generates
+specs/001-dihedral-learning-mvp/data-model.md:12786:  cmd.addAndExecute(new AddPlane3DOp('vertical'));
+specs/001-dihedral-learning-mvp/data-model.md:12807:  cmd.addAndExecute(new AddPlane3DOp('horizontal', planeHId)); // ❌ WRONG
+specs/001-dihedral-learning-mvp/data-model.md:12842:  cmd.addAndExecute(hingeOp);
+specs/001-dihedral-learning-mvp/data-model.md:12846:  cmd.addAndExecute(new AddHalfHingeLine2DOp(horizPlaneId, hingeLineId, point, dir));
+specs/001-dihedral-learning-mvp/data-model.md:12849:  cmd.addAndExecute(new AddHalfHingeLine2DOp(vertPlaneId, hingeLineId, point, dir));
+specs/001-dihedral-learning-mvp/data-model.md:13182:      cmd.addAndExecute(new AddPlane3DByTracesOp(this.traceHId!, hit.elementId));
+specs/001-dihedral-learning-mvp/data-model.md:13273:  cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/data-model.md:13274:  cmd.addAndExecute(new AddPlane3DOp('horizontal'));  // No ID - factory method generates
+specs/001-dihedral-learning-mvp/data-model.md:13275:  cmd.addAndExecute(new AddPlane3DOp('vertical'));
+specs/001-dihedral-learning-mvp/data-model.md:13458:- **Operation Registry**: `ProjectService.reconstructOperation(serializedOp)`
+specs/001-dihedral-learning-mvp/data-model.md:13530:   cmd.addAndExecute(new AddPoint2DOp(planeId, position));  // from world/
+specs/001-dihedral-learning-mvp/data-model.md:13533:   cmd.addAndExecute(new HighlightElementOp(pointId));      // from paper/
+specs/001-dihedral-learning-mvp/data-model.md:13536:   cmd.addAndExecute(new UpdateToolFeedbackOp("Point created")); // from toolbar/
+specs/001-dihedral-learning-mvp/data-model.md:13578:// operations/paper/HighlightElementOp.ts
+specs/001-dihedral-learning-mvp/data-model.md:13608:- `operations/paper/` - TBD files (rendering operations)
+specs/001-dihedral-learning-mvp/data-model.md:13609:- `operations/toolbar/` - TBD files (UI operations)
+specs/001-dihedral-learning-mvp/data-model.md:13617:5. Update ProjectService.reconstructOperation() with new paths
+specs/001-dihedral-learning-mvp/data-model.md:13719:    this.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/data-model.md:13722:    this.addAndExecute(new AddPlane3DOp('plane_H', 'horizontal'));
+specs/001-dihedral-learning-mvp/data-model.md:13723:    this.addAndExecute(new AddPlane3DOp('plane_V', 'vertical'));
+specs/001-dihedral-learning-mvp/data-model.md:13726:    this.addAndExecute(new AddProjectionPlaneOp('proj_plane_1', 'plane_H', 'horizontal'));
+specs/001-dihedral-learning-mvp/data-model.md:13727:    this.addAndExecute(new AddProjectionPlaneOp('proj_plane_2', 'plane_V', 'vertical'));
+specs/001-dihedral-learning-mvp/data-model.md:13731:    this.addAndExecute(new AddOriginPoint2DOp('proj_plane_1', originPos));
+specs/001-dihedral-learning-mvp/data-model.md:13732:    this.addAndExecute(new AddOriginPoint2DOp('proj_plane_2', originPos));
+specs/001-dihedral-learning-mvp/data-model.md:13735:    this.addAndExecute(new AddHingeLineOp('hinge_line_1', 'proj_plane_1', 'proj_plane_2'));
+specs/001-dihedral-learning-mvp/data-model.md:13740:    this.addAndExecute(new AddHalfHingeLine2DOp('proj_plane_1', 'hinge_line_1', hingePoint, hingeDirection));
+specs/001-dihedral-learning-mvp/data-model.md:13741:    this.addAndExecute(new AddHalfHingeLine2DOp('proj_plane_2', 'hinge_line_1', hingePoint, hingeDirection));
+specs/001-dihedral-learning-mvp/data-model.md:13933:  const result = cmd.addAndExecute(new AddGuide2DPerpendicularToLineOp(planeId, referenceLineId, throughPointId));
+specs/001-dihedral-learning-mvp/data-model.md:13942:      const siblingResult = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:14027:    const result = cmd.addAndExecute(op);
+specs/001-dihedral-learning-mvp/data-model.md:14130:  const result = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:14138:    cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:14260:    cmd.addAndExecute(op);
+specs/001-dihedral-learning-mvp/data-model.md:14282:  const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+specs/001-dihedral-learning-mvp/data-model.md:14285:  const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+specs/001-dihedral-learning-mvp/data-model.md:14288:  const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+specs/001-dihedral-learning-mvp/data-model.md:14351:    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, point1Pos));
+specs/001-dihedral-learning-mvp/data-model.md:14354:    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, point2Pos));
+specs/001-dihedral-learning-mvp/data-model.md:14357:    const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+specs/001-dihedral-learning-mvp/data-model.md:14777:- **Outputs**: Returned by `addAndExecute()` for operation chaining - next operations use these as constructor arguments
+specs/001-dihedral-learning-mvp/data-model.md:14805:const p1Result = cmd.addAndExecute(p1Op);
+specs/001-dihedral-learning-mvp/data-model.md:14810:const p2Result = cmd.addAndExecute(p2Op);
+specs/001-dihedral-learning-mvp/data-model.md:14815:const segResult = cmd.addAndExecute(segOp);
+specs/001-dihedral-learning-mvp/data-model.md:14944:  const p1Result = cmd.addAndExecute(new AddElementOp({ 
+specs/001-dihedral-learning-mvp/data-model.md:14952:  const p2Result = cmd.addAndExecute(new AddElementOp({ 
+specs/001-dihedral-learning-mvp/data-model.md:14960:  const segmentResult = cmd.addAndExecute(new AddElementOp({ 
+specs/001-dihedral-learning-mvp/data-model.md:14975:  const actionResult = cmd.addAndExecute(new AddActionToGroupOp({ 
+specs/001-dihedral-learning-mvp/data-model.md:14988:  cmd.addAndExecute(new AddDependencyEdgesOp({ 
+specs/001-dihedral-learning-mvp/data-model.md:15000:  // Some operation failed, rollback already occurred in addAndExecute
+specs/001-dihedral-learning-mvp/data-model.md:15006:moveCmd.addAndExecute(new UpdateElementOp({
+specs/001-dihedral-learning-mvp/data-model.md:16913:const result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(...));
+specs/001-dihedral-learning-mvp/data-model.md:17061:const result = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:17068:cmd.addAndExecute(new AddProcessTreeActionOp(action));
+specs/001-dihedral-learning-mvp/data-model.md:17609:      const plane3DResult = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:17618:      const projPlaneResult = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:17629:      const hingeLineResult = cmd.addAndExecute(
+specs/001-dihedral-learning-mvp/data-model.md:17645:      cmd.addAndExecute(new AddProcessTreeActionOp(action));
+specs/001-dihedral-learning-mvp/data-model.md:18334:- Planning Document: [for-planing.md](./for-planing.md) (lines 21-23)
+specs/001-dihedral-learning-mvp/data-model.md:18805:  cmd.addAndExecute(new UpdateElementVisibilityOp(element.id, newVisibility));
+specs/001-dihedral-learning-mvp/data-model.md:19644:command.addAndExecute(addBrokenHingeLineOp);
+specs/001-dihedral-learning-mvp/data-model.md:19720:[Documentation for Phase 102 - see conversation summary and for-planing.md]
+specs/001-dihedral-learning-mvp/for-planing.md:1041:    - Tools: Replace `world.getProcessTree().addAction(action)` with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+specs/001-dihedral-learning-mvp/for-planing.md:1669:    - Updated [backend/package.json](../../backend/package.json): Added license field
+specs/001-dihedral-learning-mvp/for-planing.md:2836:      cmd.addAndExecute(new CreateInitializationSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/for-planing.md:2844:      cmd.addAndExecute(planeHOp);
+specs/001-dihedral-learning-mvp/for-planing.md:2853:      cmd.addAndExecute(new SetActivePlaneOp(projPlaneHId));
+specs/001-dihedral-learning-mvp/for-planing.md:2971:        this.addAndExecute(subprocessOp);
+specs/001-dihedral-learning-mvp/for-planing.md:2974:        this.addAndExecute(new AddPlane3DOp('plane_H', 'horizontal'));
+specs/001-dihedral-learning-mvp/for-planing.md:2975:        this.addAndExecute(new AddPlane3DOp('plane_V', 'vertical'));
+specs/001-dihedral-learning-mvp/for-planing.md:2978:        this.addAndExecute(new AddProjectionPlaneOp('proj_plane_H', 'plane_H'));
+specs/001-dihedral-learning-mvp/for-planing.md:2979:        this.addAndExecute(new AddProjectionPlaneOp('proj_plane_V', 'plane_V'));
+specs/001-dihedral-learning-mvp/for-planing.md:2982:        this.addAndExecute(new AddOriginPoint2DOp('proj_plane_H', new Vector3(0,0,1)));
+specs/001-dihedral-learning-mvp/for-planing.md:2983:        this.addAndExecute(new AddOriginPoint2DOp('proj_plane_V', new Vector3(0,0,1)));
+specs/001-dihedral-learning-mvp/for-planing.md:2986:        this.addAndExecute(new AddHingeLineOp('HL_HV', 'proj_plane_H', 'proj_plane_V'));
+specs/001-dihedral-learning-mvp/for-planing.md:2989:        this.addAndExecute(new AddHalfHingeLine2DOp('proj_plane_H', 'HL_HV', new Vector3(0,0,1), new Vector3(1,0,0)));
+specs/001-dihedral-learning-mvp/for-planing.md:2990:        this.addAndExecute(new AddHalfHingeLine2DOp('proj_plane_V', 'HL_HV', new Vector3(0,0,1), new Vector3(1,0,0)));
+specs/001-dihedral-learning-mvp/for-planing.md:3176:  - **Open Command Pattern**: Factories accept `cmd: Command` parameter, add operations via `cmd.addAndExecute()`, return void
+specs/001-dihedral-learning-mvp/for-planing.md:3179:    // Tool creates command and calls factory
+specs/001-dihedral-learning-mvp/for-planing.md:3237:  - **Problem**: ProjectService.reconstructOperation() only handles 8 operation types (creation), but 19 operation classes exist
+specs/001-dihedral-learning-mvp/phase-83-generic-projection-plane-plan.md:54:**Location**: `specs/001-dihedral-learning-mvp/data-model.md` - Add new section after Phase 82.
+specs/001-dihedral-learning-mvp/phase-83-generic-projection-plane-plan.md:118:  cmd.addAndExecute(new AddProjectionPlaneFixedOp(
+specs/001-dihedral-learning-mvp/phase-83-generic-projection-plane-plan.md:140:  cmd.addAndExecute(new AddProjectionPlaneFixedOp(
+specs/001-dihedral-learning-mvp/phase-83-generic-projection-plane-plan.md:225:- [x] Move to "ALREADY PLANNED" section in for-planing.md
+specs/001-dihedral-learning-mvp/phase-84-geometry-free-hinge-lines.md:99:5. **for-planing.md**: Move Phase 84 from FOR PLANING to ALREADY PLANNED section
+specs/001-dihedral-learning-mvp/phase-84-geometry-free-hinge-lines.md:149:- [ ] T1260 [P] Move Phase 84 from FOR PLANING to ALREADY PLANNED in for-planing.md
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:36:cmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:39:cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:42:cmd.addAndExecute(new PushSubprocessOp('Create Projection Plane'));  
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:45:cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:241:  cmd.addAndExecute(new PushSubprocessOp('Create Auxiliary Projection Plane'));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:244:  const result = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(...));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:248:  const hingeLineResult = cmd.addAndExecute(new AddHingeLineOp(projPlaneId, hingeTracePlaneId));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:252:  cmd.addAndExecute(new AddHalfHingeLine2DOp(projPlaneId, hingeLineId));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:253:  cmd.addAndExecute(new AddHalfHingeLine2DOp(hingeTracePlaneId, hingeLineId));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:260:      cmd.addAndExecute(new UpdateElementStyleOp(t1HingeTraceId, hingeTracePlaneId, { visible: false }));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:265:  cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:278:cmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:281:cmd.addAndExecute(new AddProjectionPlaneFixedOp('P_H', ...));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:282:cmd.addAndExecute(new AddProjectionPlaneFixedOp('P_V', ...));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:285:cmd.addAndExecute(new AddHingeLineOp(P_H.id, P_V.id));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:288:cmd.addAndExecute(new AddHalfHingeLine2DOp(P_H.id, hingeLineId));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:289:cmd.addAndExecute(new AddHalfHingeLine2DOp(P_V.id, hingeLineId));
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:292:cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md:354:cmd.addAndExecute(new AddProcessTreeActionOp(
+specs/001-dihedral-learning-mvp/spec.md:3:**Feature Branch**: `001-dihedral-learning-mvp`  
+specs/001-dihedral-learning-mvp/tasks.md:3:**Input**: Design documents from `/specs/001-dihedral-learning-mvp/`  
+specs/001-dihedral-learning-mvp/tasks.md:76:- [ ] T1009 Update for-planing.md: move "Clickable Labels in Process Tree" to ALREADY PLANNED section with Phase 99 status
+specs/001-dihedral-learning-mvp/tasks.md:232:- **Incremental Execution**: Operations execute immediately via `command.addAndExecute(operation)` pattern - not deferred
+specs/001-dihedral-learning-mvp/tasks.md:242:           → Command.addAndExecute(Operation) (composition)
+specs/001-dihedral-learning-mvp/tasks.md:267:  - Methods: addAndExecute(operation), commit(), rollback(), undo(), redo()
+specs/001-dihedral-learning-mvp/tasks.md:292:  - execute() generates point ID, creates operation, calls addAndExecute()
+specs/001-dihedral-learning-mvp/tasks.md:318:  - Test addAndExecute() pattern with mock operations
+specs/001-dihedral-learning-mvp/tasks.md:584:// Tool creates command subclass
+specs/001-dihedral-learning-mvp/tasks.md:590:this.addAndExecute(op);
+specs/001-dihedral-learning-mvp/tasks.md:598:const result = cmd.addAndExecute(new AddIntersectionPoint2DOp(...));
+specs/001-dihedral-learning-mvp/tasks.md:605:const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
+specs/001-dihedral-learning-mvp/tasks.md:607:const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
+specs/001-dihedral-learning-mvp/tasks.md:609:const segResult = cmd.addAndExecute(new AddSegment2DOp(planeId, p1Id, p2Id));  // ← Uses previous outputs
+specs/001-dihedral-learning-mvp/tasks.md:616:2. **Tools access op.outputs directly**: Should use `addAndExecute()` return value
+specs/001-dihedral-learning-mvp/tasks.md:634:  - Ensure addAndExecute(), commit(), rollback(), undo(), redo() work without subclasses
+specs/001-dihedral-learning-mvp/tasks.md:653:  - Use return value: `const result = cmd.addAndExecute(new AddFreePoint2DOp(...));`
+specs/001-dihedral-learning-mvp/tasks.md:662:  - Use addAndExecute() return value for lineId
+specs/001-dihedral-learning-mvp/tasks.md:668:  - Use addAndExecute() return value for circleId
+specs/001-dihedral-learning-mvp/tasks.md:674:  - Use addAndExecute() return value for pointId and siblingPointId
+specs/001-dihedral-learning-mvp/tasks.md:680:  - Use addAndExecute() return value for guideId
+specs/001-dihedral-learning-mvp/tasks.md:748:  - Test: addAndExecute() returns OperationResult with outputs
+specs/001-dihedral-learning-mvp/tasks.md:827:  - **DONE in Phase 6.5**: Command base class with addAndExecute(), commit(), rollback(), undo(), redo()
+specs/001-dihedral-learning-mvp/tasks.md:2053:3. Tool creates point on guide at exactly that distance from hinge line
+specs/001-dihedral-learning-mvp/tasks.md:2209:**Reference**: [data-model.md](./data-model.md#guide2d-and-siblingguide2d) - Guide2D and SiblingGuide2D specification, [for-planing.md](./for-planing.md) - "It seems SiblingGuide2D type is missing"
+specs/001-dihedral-learning-mvp/tasks.md:2348:  - File: specs/001-dihedral-learning-mvp/data-model.md
+specs/001-dihedral-learning-mvp/tasks.md:2372:**Reference**: [data-model.md](./data-model.md#halfhingeline2d-parametric-consistency-requirement) - HalfHingeLine2D Parametric Consistency Requirement, [for-planing.md](./for-planing.md) - "Ensure that SiblingIntersectionPoint2D works for any HL"
+specs/001-dihedral-learning-mvp/tasks.md:2461:  - File: specs/001-dihedral-learning-mvp/data-model.md
+specs/001-dihedral-learning-mvp/tasks.md:2523:  - File: specs/001-dihedral-learning-mvp/data-model.md
+specs/001-dihedral-learning-mvp/tasks.md:2770:**Reference**: [for-planing.md](./for-planing.md#todo) - "We still have Command subclasses. Those must be removed"
+specs/001-dihedral-learning-mvp/tasks.md:2826:- [X] T302 [D] Update for-planing.md to mark transport removal as complete
+specs/001-dihedral-learning-mvp/tasks.md:2845:  - Add UpdateElementStyleOp via cmd.addAndExecute()
+specs/001-dihedral-learning-mvp/tasks.md:2903:**Reference**: [for-planing.md](./for-planing.md#for-planing) - "Ensure we have different classes for different intersection types"
+specs/001-dihedral-learning-mvp/tasks.md:3281:**Problem**: ProjectService.reconstructOperation() only handles 8 operation types, but 19 operation classes exist. This means operations like deletion, style changes, and ProcessTree operations are NOT saved to files, causing data loss on project reload.
+specs/001-dihedral-learning-mvp/tasks.md:3342:- Test: Verify each operation type has case in ProjectService.reconstructOperation()
+specs/001-dihedral-learning-mvp/tasks.md:3429:- ✅ All 19 operation types have cases in ProjectService.reconstructOperation()
+specs/001-dihedral-learning-mvp/tasks.md:3522:[X] T451 [P] Update ProjectService.reconstructOperation() import paths
+specs/001-dihedral-learning-mvp/tasks.md:3551:- Verify each operation has case in ProjectService.reconstructOperation()
+specs/001-dihedral-learning-mvp/tasks.md:3565:  cmd.addAndExecute(new AddPoint2DOp(...));        // world/
+specs/001-dihedral-learning-mvp/tasks.md:3566:  cmd.addAndExecute(new SetActivePlaneOp(...));    // viewState/
+specs/001-dihedral-learning-mvp/tasks.md:3567:  cmd.addAndExecute(new RemoveActionOp(...));      // processTree/
+specs/001-dihedral-learning-mvp/tasks.md:3604:- Create `operations/paper/` folder (already created in T446)
+specs/001-dihedral-learning-mvp/tasks.md:3611:- Create `operations/toolbar/` folder (already created in T446)
+specs/001-dihedral-learning-mvp/tasks.md:3633:- ✅ ProjectService.reconstructOperation() works with new paths
+specs/001-dihedral-learning-mvp/tasks.md:3662:**Architectural Requirement** (per for-planing.md):
+specs/001-dihedral-learning-mvp/tasks.md:3695:    cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(...));
+specs/001-dihedral-learning-mvp/tasks.md:3701:      cmd.addAndExecute(new AddSiblingIntersectionPoint2DOp(siblingPlaneId, primaryId));
+specs/001-dihedral-learning-mvp/tasks.md:3719:- for-planing.md - architectural requirements
+specs/001-dihedral-learning-mvp/tasks.md:3763:  cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(planeId, line1Id, line2Id));
+specs/001-dihedral-learning-mvp/tasks.md:3769:    cmd.addAndExecute(new AddSiblingIntersectionPoint2DOp(siblingPlaneId, primaryId));
+specs/001-dihedral-learning-mvp/tasks.md:3882:- ✅ IntersectionTool creates both primary + sibling points for HHL intersections
+specs/001-dihedral-learning-mvp/tasks.md:4291:**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 46 specification
+specs/001-dihedral-learning-mvp/tasks.md:4432:**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 47 specification
+specs/001-dihedral-learning-mvp/tasks.md:4582:**Reference**: [for-planing.md](./for-planing.md#for-planing) - Phase 48 specification
+specs/001-dihedral-learning-mvp/tasks.md:5160:**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 50 specification, [data-model.md](./data-model.md#phase-50-remove-deprecated-commandstackexecute-method) - Implementation details
+specs/001-dihedral-learning-mvp/tasks.md:5196:**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 51 specification, [data-model.md](./data-model.md#phase-51-complete-segment2drealization2d-migration) - Implementation details
+specs/001-dihedral-learning-mvp/tasks.md:5244:**Reference**: [for-planing.md](./for-planing.md#already-planned) - Phase 52 specification, [data-model.md](./data-model.md#element-base-class-hierarchy) - Complete architecture and rationale
+specs/001-dihedral-learning-mvp/tasks.md:5506:  - Files: `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:5786:const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, circumferencePos));
+specs/001-dihedral-learning-mvp/tasks.md:6128:  - File: `specs/001-dihedral-learning-mvp/data-model.md` (~line 3400, new section)
+specs/001-dihedral-learning-mvp/tasks.md:6291:- File: `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:6753:- File: `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:6920:- Open: `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:6927:**T1066: Update for-planing.md** [DOCUMENTATION]
+specs/001-dihedral-learning-mvp/tasks.md:6928:- Open: `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:7647:**Reference**: [for-planing.md Phase 76](./for-planing.md#fail-fast-error-handling---eliminate-optional-chaining-anti-patterns-phase-76), [data-model.md §Phase 76](./data-model.md#phase-76-fail-fast-error-handling---eliminate-optional-chaining-anti-patterns)
+specs/001-dihedral-learning-mvp/tasks.md:8339:- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+specs/001-dihedral-learning-mvp/tasks.md:8346:- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+specs/001-dihedral-learning-mvp/tasks.md:8353:- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+specs/001-dihedral-learning-mvp/tasks.md:8360:- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+specs/001-dihedral-learning-mvp/tasks.md:8367:- Replace direct `world.getProcessTree().addAction(action)` call with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+specs/001-dihedral-learning-mvp/tasks.md:8376:- Replace direct calls with `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+specs/001-dihedral-learning-mvp/tasks.md:8665:  - `cmd.addAndExecute(new AddPlane3DByTracesOp(args.t1HingeTrace, args.t2OtherTrace))`
+specs/001-dihedral-learning-mvp/tasks.md:8668:  - `cmd.addAndExecute(new AddProjectionPlaneOp(plane3DId, matrices.planeToPaper, matrices.planeTo3D, matrices.threeDToPlane))`
+specs/001-dihedral-learning-mvp/tasks.md:8672:  - `cmd.addAndExecute(new AddHingeLineOp(args.t1HingeTrace, t1PlaneId, projPlaneId))`
+specs/001-dihedral-learning-mvp/tasks.md:8676:  - `cmd.addAndExecute(new AddProcessTreeActionOp(action))`
+specs/001-dihedral-learning-mvp/tasks.md:8858:- **Files**: `specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:8879:- **Files**: `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:8909:- **Files**: `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:8915:- **Files**: `specs/001-dihedral-learning-mvp/tasks.md`
+specs/001-dihedral-learning-mvp/tasks.md:8917:### T1815: Update for-planing.md Status
+specs/001-dihedral-learning-mvp/tasks.md:8923:- **Files**: `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:9547:[Documentation for Phase 102 - see conversation summary and for-planing.md]
+specs/001-dihedral-learning-mvp/tasks.md:9559:- Update for-planing.md (mark as planned, move to "ALREADY PLANNED")
+specs/001-dihedral-learning-mvp/tasks.md:9561:  - `specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9562:  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9563:  - `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:9564:  - `specs/001-dihedral-learning-mvp/tasks.md`
+specs/001-dihedral-learning-mvp/tasks.md:9565:  - `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:9670:- Update for-planing.md (mark as planned, move to "ALREADY PLANNED")
+specs/001-dihedral-learning-mvp/tasks.md:9672:  - `specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9673:  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9674:  - `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:9675:  - `specs/001-dihedral-learning-mvp/tasks.md`
+specs/001-dihedral-learning-mvp/tasks.md:9676:  - `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:9811:- Update for-planing.md (mark as planned, move to "ALREADY PLANNED")
+specs/001-dihedral-learning-mvp/tasks.md:9813:  - `specs/001-dihedral-learning-mvp/spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9814:  - `specs/001-dihedral-learning-mvp/ui-spec.md`
+specs/001-dihedral-learning-mvp/tasks.md:9815:  - `specs/001-dihedral-learning-mvp/data-model.md`
+specs/001-dihedral-learning-mvp/tasks.md:9816:  - `specs/001-dihedral-learning-mvp/tasks.md`
+specs/001-dihedral-learning-mvp/tasks.md:9817:  - `specs/001-dihedral-learning-mvp/for-planing.md`
+specs/001-dihedral-learning-mvp/tasks.md:9993:- Update for-planing.md (mark as planned, move to "ALREADY PLANNED")
+specs/001-dihedral-learning-mvp/tasks.md:10006:  tasks.md. Feature moved to ALREADY PLANNED in for-planing.md.
+specs/001-dihedral-learning-mvp/tasks.md:10539:5. **for-planing.md**: Move Phase 84 from FOR PLANING to ALREADY PLANNED section
+specs/001-dihedral-learning-mvp/tasks.md:10589:- [ ] T1260 [P] Move Phase 84 from FOR PLANING to ALREADY PLANNED in for-planing.md
+specs/001-dihedral-learning-mvp/tasks.md:10875:     cmd.addAndExecute(new PushSubprocessOp(name));
+specs/001-dihedral-learning-mvp/tasks.md:10883:     cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/tasks.md:11000:  pushCmd.addAndExecute(new PushSubprocessOp('Level 1'));
+specs/001-dihedral-learning-mvp/tasks.md:11008:  actionCmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
+specs/001-dihedral-learning-mvp/tasks.md:11019:  popCmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/tasks.md:11272:- [specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md](./phase-85-subprocess-stack-architecture.md) - Complete architecture
+specs/001-dihedral-learning-mvp/tasks.md:11302:cmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+specs/001-dihedral-learning-mvp/tasks.md:11303:cmd.addAndExecute(new AddProjectionPlaneFixedOp(...));
+specs/001-dihedral-learning-mvp/tasks.md:11304:cmd.addAndExecute(new AddProcessTreeActionOp(createAction(...)));
+specs/001-dihedral-learning-mvp/tasks.md:11305:cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/tasks.md:11308:cmd.addAndExecute(new PushSubprocessOp('Create Projection Plane'));
+specs/001-dihedral-learning-mvp/tasks.md:11309:cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(...));
+specs/001-dihedral-learning-mvp/tasks.md:11310:cmd.addAndExecute(new AddProcessTreeActionOp(createAction(...)));
+specs/001-dihedral-learning-mvp/tasks.md:11311:cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/tasks.md:11327:- [ ] T1293 [P] Move Phase 85 from FOR PLANING to ALREADY PLANNED in for-planing.md
+specs/001-dihedral-learning-mvp/tasks.md:11395:- [ ] T1323 Update all factory callers to use new pattern (CreateProjectionPlaneTool, ProjectionSetupFactory, AddExampleSetupOp)
+specs/001-dihedral-learning-mvp/tasks.md:11871:**Reference**: [for-planing.md](./for-planing.md) - Matrix serialization optimization, [data-model.md](./data-model.md#phase-94-matrix-serialization-optimization)  
+specs/001-dihedral-learning-mvp/tasks.md:12431:- [ ] T1853 Unit test: Quick3DSegmentTool creates 4 points, 2 segments, and 1 3D segment — verify all elements exist in world after execution
+specs/001-dihedral-learning-mvp/ui-spec.md:14:- **[specs/001-dihedral-learning-mvp/spec.md](spec.md)**: Provides detailed tool behaviors, functional requirements, geometric definitions, and user scenarios. This document references spec.md for functional specifics while focusing on UI structure and interaction patterns.
+specs/001-dihedral-learning-mvp/ui-spec.md:16:- **[specs/001-dihedral-learning-mvp/data-model.md](data-model.md)**: Defines world data structures that the UI dynamically renders.
+specs/001-dihedral-learning-mvp/ui-spec.md:1311:   cmd.addAndExecute(new PushSubprocessOp('User Subprocess'));
+specs/001-dihedral-learning-mvp/ui-spec.md:1325:   cmd.addAndExecute(new PopSubprocessOp());
+specs/001-dihedral-learning-mvp/ui-spec.md:2887:The Circle Tool creates circles defined by two points (center and circumference). Both point selection steps MUST support consistent snapping behavior:

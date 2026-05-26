@@ -1,96 +1,45 @@
-# Development Setup
+# Development setup
+
+Diedrico is a frontend-only Vue 3 + TypeScript workspace.
 
 ## Prerequisites
 
-- **Node.js** ≥ 18
-- **npm** ≥ 9
+- Node.js 18 or newer
+- npm 9 or newer
 
-## Clone and Install
+## Install
 
 ```bash
-git clone <repo-url> diedrico
-cd diedrico
 npm install
 ```
 
-This installs dependencies for both `frontend/` and `backend/` workspaces.
+The root workspace installs the `frontend` package and root VitePress documentation dependencies.
 
-## Running
-
-### Frontend Development Server
+## Run the application
 
 ```bash
-cd frontend
 npm run dev
 ```
 
-Opens at `http://localhost:5173/diedrico/` with HMR.
+This delegates to the frontend Vite dev server. Open the URL printed by Vite, normally `http://localhost:5173`.
 
-### Backend Server
-
-```bash
-cd backend
-npm run dev
-```
-
-Runs at `http://localhost:3001` (health check, project API).
-
-### Documentation Site
+## Useful validation commands
 
 ```bash
-npm run docs:dev
-```
-
-Opens the VitePress documentation at `http://localhost:5173`.
-
-## Project Structure
-
-```
-diedrico/
-├── frontend/        # Vue 3 SPA
-│   ├── src/
-│   │   ├── commands/      # Command pattern + operations
-│   │   ├── components/    # Vue components (panels, tools)
-│   │   ├── composables/   # Vue composables
-│   │   ├── domain/        # Domain model (pure logic)
-│   │   ├── services/      # Application services
-│   │   ├── stores/        # Pinia state management
-│   │   ├── tools/         # Construction tool implementations
-│   │   ├── types/         # TypeScript type definitions
-│   │   └── utils/         # Utilities and math
-│   └── tests/
-│       ├── unit/          # Vitest unit tests
-│       ├── integration/   # Vitest integration tests
-│       └── e2e/           # Playwright E2E tests
-├── backend/         # Express REST API
-│   ├── src/
-│   └── tests/
-├── docs/            # VitePress documentation
-└── specs/           # Feature specifications
-```
-
-## Build
-
-```bash
-cd frontend
+npm run docs:build
+npm run lint
+npm run test:architecture
+npm run test
 npm run build
+npm run test:e2e
 ```
 
-Output goes to `frontend/dist/`.
+Use `--workspace=frontend` when you need to run the underlying frontend script directly.
 
-## IDE Setup
+## Source layout
 
-VS Code is recommended. Useful extensions:
-
-- **Vue - Official** (Volar) — Vue 3 language support
-- **ESLint** — code linting
-- **Vitest** — test runner integration
-
-## Environment Variables
-
-For Google Drive integration, configure:
-
-- `VITE_GOOGLE_CLIENT_ID` — Google OAuth2 client ID
-- `VITE_GOOGLE_API_KEY` — Google API key
-
-See [Google Drive Setup](/GOOGLE_DRIVE_SETUP) for details.
+```text
+frontend/              # Vue application source and tests
+docs/                  # VitePress documentation
+architecture-audit/    # reviewed refactor-wave artifacts
+```

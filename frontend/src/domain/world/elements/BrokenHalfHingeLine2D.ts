@@ -14,7 +14,6 @@
  * - Stores siblingBHHLId for creating linked guides on both T2 and T2'
  * - realize2D() returns BrokenHalfHingeLineRealization2D with parallelVector field
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 101
  */
 
 import { HalfHingeLine2D } from '../HingeLine';

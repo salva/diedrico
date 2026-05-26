@@ -10,7 +10,6 @@
  * - Panels: Call setHoveredElement() on mouse enter, clearHover() on mouse leave
  * - Components: Watch hoveredElementId to apply visual feedback
  * 
- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Unified Hover Highlighting
  */
 
 import { ref, computed, type Ref } from 'vue';

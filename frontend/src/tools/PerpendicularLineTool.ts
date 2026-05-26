@@ -10,7 +10,6 @@
  * 
  * Code reduction: 186 lines → ~106 lines (43% reduction)
  * 
- * Reference: specs/001-dihedral-learning-mvp/spec.md §FR-044 (Perpendicular Line Tool)
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';

@@ -139,7 +139,6 @@ import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
  * file operations (New, Open), and history controls (Undo/Redo).
  * Manages active tool state via tool store.
  *
- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
  */
 
 interface Emits {

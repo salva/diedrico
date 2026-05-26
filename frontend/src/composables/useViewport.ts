@@ -8,7 +8,6 @@
  * - Pan: Shift + drag, Space + drag, or middle mouse button drag
  * - Zoom: Mouse wheel or pinch gesture
  * 
- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Viewport Navigation
  */
 
 import { ref, onMounted, onUnmounted, type Ref } from 'vue';

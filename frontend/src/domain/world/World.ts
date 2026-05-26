@@ -74,7 +74,6 @@
  * The current architecture enforces proper ownership: ProjectionPlane owns its elements,
  * World provides semantic access and ID-based lookup.
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#world-entity
  * @see Phase 45: Hierarchical Element IDs
  * @see Phase 46: Semantic Accessors
  * @see Phase 48: Remove World Facade Methods

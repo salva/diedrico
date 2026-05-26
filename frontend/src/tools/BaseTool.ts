@@ -7,7 +7,6 @@
  * Subclasses override handleClick() to implement specific tool behavior.
  * Subclasses must declare completionBehavior to control post-operation behavior.
  * 
- * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
  */
 
 import type { ToolContext, ToolResult } from './ITool';

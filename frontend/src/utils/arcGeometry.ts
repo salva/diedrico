@@ -24,7 +24,6 @@
  * @returns ArcGeometry in paper coordinates, or null if infeasible
  * 
  * @see ArcGeometry in types/arcGeometry.ts
- * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101.6
  */
 
 import type { World } from '@/domain/world/World';

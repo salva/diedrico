@@ -12,7 +12,6 @@
  * - realize3D() computes numeric geometry → Segment3DRealization3D
  * - Lazy evaluation with caching in World.segmentRealizations3D
  * 
- * @see specs/001-dihedral-learning-mvp/data-model.md#segment3d
  */
 import { Vector4 } from 'three';
 import { Element3D } from './Element3D';
