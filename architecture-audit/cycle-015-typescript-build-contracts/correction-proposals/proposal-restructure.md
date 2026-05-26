@@ -11,7 +11,7 @@ The current partial diff contains two qualitatively different problem classes:
 1. **Safe build-contract convergence edits** that can likely be completed directly: app-shell ports, operation-output typing, process-tree `ActionNode` ownership, stale action UI deletion, strict unused imports/defaults.
 2. **High-risk conceptual boundary edits** that should not be silently finished inside an implementation retry: projection-plane/world realization context and deletion identity semantics.
 
-This proposal recommends splitting the follow-up into a reviewed correction mini-cycle if either high-risk lane cannot be resolved by a small, explicit owner contract. The split is not a new broad wave; it is a bounded delta review required by the existing Cycle 015 decision's expansion stop rule.
+This proposal recommends splitting the follow-up into a reviewed correction mini-cycle if either high-risk lane cannot be resolved by a small, explicit owner contract. The split is not a new broad wave; it is a bounded delta review required by the existing Cycle 015 decision's expansion stop rule. Any implementation choosing this route must start by re-checking every retained/changed/reverted file against a fresh current `git diff`, because the Wave 015 partial diff remains uncommitted and mixed with unrelated dirty artifacts.
 
 ## Split decision criteria
 
@@ -19,7 +19,7 @@ This proposal recommends splitting the follow-up into a reviewed correction mini
 
 - The projection-plane/world lane can define one narrow named realization context without changing the domain model beyond current `vue-tsc` owner errors.
 - `World`, `ProjectionPlane`, `AuxiliaryProjectionPlane`, and element realization signatures can all consume/supply that context without structural-typing escapes.
-- The process-tree deletion fix can be restored to action-node identity without changing the `RemoveActionFromProcessTreeOp(actionId)` contract.
+- The process-tree deletion fix can be restored to authoritative action-node identity without changing the `RemoveActionFromProcessTreeOp(actionId)` contract and without substituting element ids, group ids, subprocess ids, or inferred payload ids for `actionId`.
 - Focused process-tree and projection-plane tests can be added/run using existing test surfaces.
 - `implementation-log.md` can be reconciled to the final diff before validation.
 
@@ -30,6 +30,7 @@ This proposal recommends splitting the follow-up into a reviewed correction mini
 - Publicizing `World.getPlaneForElement` is needed only because of structural compatibility pressure rather than a named owner port.
 - Deletion semantics require changing from action removal to group/action-node removal, subprocess removal, or element-to-action index ownership beyond a local bug fix.
 - Existing focused tests reveal behavior divergence in deletion/undo or projection-plane realization.
+- The implementation cannot prove, with a focused test, that deleting an element removes the producing action by action-node id and undo restores the same action node at the same group/index.
 
 ## Proposed mini-cycle A: projection-plane/world realization context
 
@@ -107,7 +108,7 @@ Process-tree deletion uses authoritative action-node ids for process-tree tombst
 - Keep `processStore.ts` null-tombstone guards and `ActionNode` usage.
 - Keep `ActionItem.vue` stale-field deletion.
 - Change `ActionGroupItem.vue` to avoid template non-null assertions if possible.
-- Revert/replace `DeletionSequenceFactory.ts` `actionKey = actions[0]?.elementId ?? elementId`.
+- Revert/replace `DeletionSequenceFactory.ts` `actionKey = actions[0]?.elementId ?? elementId`. The replacement must pass only authoritative action-node ids into `RemoveActionFromProcessTreeOp(actionId)`; element ids remain world payload/evidence and group ids/subprocess ids/inferred payload ids are forbidden substitutes.
 
 ### Explicit DELETE/revert list
 
@@ -118,7 +119,7 @@ Process-tree deletion uses authoritative action-node ids for process-tree tombst
 ### Validation for mini-cycle B
 
 - `npm run test --workspace=frontend -- --run frontend/tests/unit/commands/removeElementOps.spec.ts frontend/tests/unit/processTree.spec.ts frontend/tests/unit/stores/processTreeStore.spec.ts`
-- Add a focused test if existing `removeElementOps.spec.ts` does not assert that deleting an element removes the producing action by action-node id and undo restores the same action at the same index.
+- Add a focused test if existing `removeElementOps.spec.ts` does not assert that deleting an element removes the producing action by action-node id and undo restores the same action at the same group/index. The assertion must fail if an element id or group id is passed as the process-tree removal id.
 - `npm run build --workspace=frontend` must not report process-tree identity errors.
 
 ## Remaining direct Wave 015 closure after mini-cycle(s)
@@ -135,7 +136,7 @@ These remaining categories must still obey the original `decision.md` scope: dir
 
 ## Validation plan for split route
 
-Each mini-cycle must capture its focused validation logs under `architecture-audit/cycle-015-typescript-build-contracts/validation/` with names identifying the correction lane, for example:
+At the start of each mini-cycle implementation, inspect root/frontend package scripts and the existing test tree, then pin the actual focused test/package-script entrypoints in `implementation-log.md` before running commands. Placeholder commands below may be adjusted only with cited package-script/path evidence. Each mini-cycle must capture its focused validation logs under `architecture-audit/cycle-015-typescript-build-contracts/validation/` with names identifying the correction lane, for example:
 
 - `process-tree-identity.focused.stdout/stderr`
 - `projection-context.focused.stdout/stderr`
@@ -151,12 +152,12 @@ Before Wave 015 completion can be claimed, still run the full mandatory cadence 
 5. root/frontend e2e/Playwright where defined because frontend behavior is touched;
 6. later validation/preview refresh stage with HTTP reachability and live Playwright smoke.
 
-If a script is undefined, cite exact package-script evidence in `implementation-log.md` rather than silently skipping it.
+If a script is undefined, cite exact package-script evidence in `implementation-log.md` rather than silently skipping it. The log must also inventory every retained, reverted, completed, newly corrected, or intentionally untouched Wave 015 partial-diff file; state which correction-diff-audit disposition each followed; and record per-file protected-surface checks for Wave 014 repaired files and `frontend/src/components/panels/ActionsPanel.vue`.
 
 ## Protection rules
 
-- Do not modify or revert Wave 014 repaired files unless a current build error directly cites them and the causal link is documented.
-- Treat `frontend/src/components/panels/ActionsPanel.vue` as protected except for current build-cited process-tree contract errors and direct owner dependencies.
+- Do not modify or revert Wave 014 repaired files unless a current build error directly cites them and the causal link is documented per file in `implementation-log.md`; do not use them for opportunistic cleanup.
+- Treat `frontend/src/components/panels/ActionsPanel.vue` as protected except for current build-cited process-tree contract errors and direct owner dependencies, with causal notes captured in `implementation-log.md` for any touch.
 - Do not edit package/tooling/build configuration to bypass type checking.
 - Do not mine or revive discarded stale audit conclusions.
 - Do not commit broad geometry redesign, UI normalization, rendering extraction, persistence changes, or docs cleanup inside these correction mini-cycles.

@@ -27,7 +27,7 @@ Resume Wave 015 by reconciling the current uncommitted partial implementation in
   - `frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts`
 - Output guards in `frontend/src/commands/factories/PointSequenceFactory.ts`.
 
-These retained edits are still subject to focused tests and a green `npm run build --workspace=frontend`.
+These retained edits are still subject to focused tests and a green `npm run build --workspace=frontend`. The follow-up implementation must begin by re-checking this list against a fresh current `git diff`; because the Wave 015 partial diff is mixed with unrelated dirty artifacts, no retained/complete/revert disposition may be assumed from stale status alone.
 
 ## Files to complete in the follow-up implementation
 
@@ -71,7 +71,7 @@ Required completion path:
 4. Reconcile method names currently split across `getProjectionPlane3DRealization`, build-required `get3DPlaneRealization`, and `getAllProjectionPlanes`.
 5. Make `World` implement/supply that context intentionally. Do not publicize private methods only to satisfy structural compatibility; `World.getPlaneForElement` may remain public only if documented as the owner port for a current build error.
 6. Add strict guards for `getProjectionPlaneById` returning undefined in `Point.ts`, `Line.ts`, `Circle.ts`, `Segment.ts`, and `ProjectionPlane.ts` where the build reports `possibly undefined`.
-7. If these steps require redesign beyond the current build-error owner boundary, stop and use the restructure proposal's mini-cycle split instead.
+7. If these steps require redesign beyond the current build-error owner boundary, stop and use the restructure proposal's mini-cycle split instead. In particular, if implementation must choose between multiple conceptual owners beyond one narrow named read-only realization context (`World` as realization provider, `ProjectionPlane` as local provider, or a separate domain query port), do not continue inside the direct path; request a reviewed split before making that owner decision.
 
 ### Process-tree identity boundary
 
@@ -86,8 +86,8 @@ Required completion path:
 
 1. Revert the current `actionKey = actions[0]?.elementId ?? elementId` change.
 2. Build the deletion set from authoritative action-node ids returned by the process-tree lookup path.
-3. Keep element ids only as payload/evidence about which world elements are deleted, never as ids passed to `RemoveActionFromProcessTreeOp(actionId)`.
-4. Add/adjust focused tests proving deletion removes the correct action tombstones and undo restores them at stable indices.
+3. Keep element ids only as payload/evidence about which world elements are deleted, never as ids passed to `RemoveActionFromProcessTreeOp(actionId)`. Group ids, element ids, subprocess ids, and inferred payload ids are explicitly forbidden substitutes for the `actionId` parameter.
+4. Add/adjust at least one focused test proving that deleting an element removes the producing action by action-node id and that undo restores the same action node at the same group/index. The test must fail if an element id or group id is passed to `RemoveActionFromProcessTreeOp(actionId)`.
 
 ### UI/store/service strictness
 
@@ -118,13 +118,16 @@ Required focused validation before any completion claim:
    - `npm run build --workspace=frontend`
    - expected initially red until corrections are complete; save as `frontend-build.correction-start.*`.
 2. Focused command/process-tree tests:
-   - `npm run test --workspace=frontend -- --run frontend/tests/unit/commands/removeElementOps.spec.ts frontend/tests/unit/processTree.spec.ts frontend/tests/unit/stores/processTreeStore.spec.ts`
-   - adjust exact command if the workspace script requires a different Vitest invocation; cite package-script evidence if a script is missing.
+   - At the start of the implementation stage, inspect the root and frontend `package.json` scripts and pin the actual existing Vitest/package-script entrypoints in `implementation-log.md` before running tests.
+   - Suggested target if supported: `npm run test --workspace=frontend -- --run frontend/tests/unit/commands/removeElementOps.spec.ts frontend/tests/unit/processTree.spec.ts frontend/tests/unit/stores/processTreeStore.spec.ts`
+   - Adjust exact command only when the package scripts or existing test paths require it; cite the package-script/path evidence in `implementation-log.md` rather than leaving placeholder command forms.
 3. Focused world/projection tests:
-   - `npm run test --workspace=frontend -- --run frontend/tests/unit/projectionPlane.spec.ts frontend/tests/unit/world frontend/tests/unit/calculations`
-   - include additional hinge-line/guide tests if existing paths cover them.
+   - Pin actual existing projection/world/hinge-line/calculation test entrypoints from the test tree before implementation.
+   - Suggested target if supported: `npm run test --workspace=frontend -- --run frontend/tests/unit/projectionPlane.spec.ts frontend/tests/unit/world frontend/tests/unit/calculations`
+   - Include additional hinge-line/guide tests if existing paths cover them; if no existing path covers retained realization-context behavior, add a focused test in the nearest existing unit-test area.
 4. Focused command-output/factory tests:
-   - `npm run test --workspace=frontend -- --run frontend/tests/unit/commands.spec.ts frontend/tests/unit/commandStack.spec.ts frontend/tests/unit/commands`
+   - Pin actual command/factory test paths before implementation.
+   - Suggested target if supported: `npm run test --workspace=frontend -- --run frontend/tests/unit/commands.spec.ts frontend/tests/unit/commandStack.spec.ts frontend/tests/unit/commands`
 5. Final mandatory Wave 015 implementation gates after focused tests pass:
    - `npm run lint`
    - `npm run lint --workspace=frontend` where defined
@@ -139,17 +142,19 @@ Required focused validation before any completion claim:
 
 Before final validation, update `architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md` with:
 
-- every source file retained, changed, or reverted;
+- every Wave 015 source file retained, newly changed, completed, or reverted, reconciled against the fresh current partial diff;
+- the audit disposition each file followed (`keep`, `complete`, `revert`, `needs-review`) and the reason if implementation deviated from the audit disposition;
+- any already-modified working-tree files intentionally left untouched, with an explicit reason they were unrelated or protected;
 - a kept/completed/reverted status for each six-boundary lane;
-- explicit note that the unsafe deletion identity edit was corrected;
-- focused test command paths and outcomes;
+- explicit note that the unsafe deletion identity edit was corrected and that `RemoveActionFromProcessTreeOp(actionId)` receives action-node ids only;
+- focused test command paths, the package-script/test-path discovery evidence used to choose them, and outcomes;
 - frontend build rerun paths and outcome;
-- protected Wave 014 surface checks;
+- per-file protected-surface entries for Wave 014 repaired files and `frontend/src/components/panels/ActionsPanel.vue`, including causal justification for every protected file touched and confirmation that untouched protected files were not used for opportunistic cleanup;
 - confirmation that no suppressions, compatibility shims, broad casts, tooling weakening, package downgrades, or parallel build paths were introduced.
 
 ## Protection rules
 
-- Protect Wave 014 repaired files and prior `ActionsPanel.vue` boundaries exactly as `decision.md` states. Touch them only for current build-cited errors and direct owner dependencies.
+- Protect Wave 014 repaired files and `frontend/src/components/panels/ActionsPanel.vue` exactly as `decision.md` states. They may be touched only for current build-cited failures and direct owner dependencies, with causal notes captured per file in `implementation-log.md`; do not use those areas for opportunistic cleanup or unrelated normalization.
 - Do not modify `frontend/package.json`, tsconfig, build scripts, or package manager files to bypass type checking.
 - Do not make arbitrary formatting/source cleanup outside the inventoried diff and current build log.
 - Do not continue after a red focused test or red frontend build if the failure is attributable to the correction.
