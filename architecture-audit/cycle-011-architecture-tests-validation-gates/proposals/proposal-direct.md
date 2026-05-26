@@ -94,9 +94,12 @@ Capture logs under `architecture-audit/cycle-011-architecture-tests-validation-g
    - `npm run test` at root and frontend full Vitest; expected pre-existing intersections failures unless fixed by a chosen validation-debt remediation within scope;
    - `npm run build` at root and frontend; expected pre-existing Node 24 / `vue-tsc` issue unless remediated;
    - `npm run test:e2e --workspace=frontend`; expected pre-existing broad e2e syntax debt unless implementation scopes a direct syntax repair.
-5. Focused Playwright/live smoke because validation config changed and frontend tests are user-facing validation infrastructure:
-   - focused Wave 010 app-shell project flow (`tests/e2e/wave010-app-shell-project-flow.spec.ts`) to ensure backend deletion guard still works;
-   - live preview refresh/reachability probe after validation.
+5. E2E and live smoke because validation config changed and frontend tests are user-facing validation infrastructure:
+   - run the root-form e2e entrypoint `npm run test:e2e` if Wave 011 adds it at the root; if no root e2e alias is added, record that root e2e is intentionally absent and run the active workspace command `npm run test:e2e --workspace=frontend`;
+   - run the frontend workspace e2e entrypoint `npm run test:e2e --workspace=frontend`, with known broad e2e syntax failures classified by exact file/error if they remain pre-existing;
+   - run the focused Wave 010 app-shell project flow through the frontend workspace, e.g. `npx playwright test tests/e2e/wave010-app-shell-project-flow.spec.ts`, to ensure the backend-deletion guard still works;
+   - refresh the live preview after validation by stopping/restarting the frontend preview/dev server bound to `0.0.0.0` (for example `npm run dev --workspace=frontend -- --host 0.0.0.0`) and capture logs under the cycle `validation/` directory;
+   - probe the refreshed preview with `curl -I http://127.0.0.1:5173/` (or the configured preview port if implementation changes it) and record the HTTP response in the implementation log.
 
 ## Known debt classification/remediation strategy
 
