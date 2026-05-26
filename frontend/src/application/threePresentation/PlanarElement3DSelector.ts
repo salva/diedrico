@@ -1,29 +1,28 @@
 import { CatmullRomCurve3, Vector3 } from 'three';
-import type { World } from '@/domain/world/World';
-import { Segment2DByPoints } from '@/domain/world/Segment';
-import { applyMatrix4x3, domainToThreeJS } from '@/utils/threeUtils';
+import { applyMatrix4x3, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import type { PlanarElementPresentationDto, Vec3 } from './ThreePresentationModel';
+import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
 import { isVisible2D, planarStyle, THREE_STYLE } from './ThreeStylePolicy';
 
 export class PlanarElement3DSelector {
-  select(world: World, show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
+  select(readPort: Pick<ThreeWorldReadPort, 'getPlanarPlaneModels'>, show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
     if (!show2DElementsOnPlanes) return [];
     const items: PlanarElementPresentationDto[] = [];
-    for (const plane of world.getAllProjectionPlanes()) {
-      const planeRealization = world.getProjectionPlane3DRealization(plane.id);
+    for (const plane of readPort.getPlanarPlaneModels()) {
+      const planeRealization = plane.realization;
       if (!planeRealization?.feasible) continue;
-      for (const point of plane.getAllPoints()) {
+      for (const point of plane.points) {
         if (!isVisible2D(point)) continue;
-        const realization = point.realize2D(world);
+        const realization = point.realization;
         if (!realization?.feasible) continue;
         items.push({ id: `planar-point-${point.id}`, kind: 'planar-point', sourceEntityId: point.id, planeId: plane.id, visible: true, style: planarStyle(point), renderGroup: 'planarElements', position: v(lift(realization.position, planeRealization.planeTo3D)) });
       }
-      for (const line of plane.getAllLines()) {
+      for (const line of plane.lines) {
         if (!isVisible2D(line)) continue;
-        const realization = line.realize2D(world);
+        const realization = line.realization;
         if (!realization?.feasible) continue;
         const style = planarStyle(line);
-        if (line instanceof Segment2DByPoints || realization.isBounded()) {
+        if (line.isSegment || realization.isBounded()) {
           items.push({ id: `planar-segment-${line.id}`, kind: 'planar-segment', sourceEntityId: line.id, planeId: plane.id, visible: true, style, renderGroup: 'planarElements', start: v(lift(realization.point1, planeRealization.planeTo3D)), end: v(lift(realization.point2, planeRealization.planeTo3D)) });
         } else {
           const direction = realization.getDirection().clone().normalize();
@@ -32,9 +31,9 @@ export class PlanarElement3DSelector {
           items.push({ id: `planar-line-${line.id}`, kind: 'planar-line', sourceEntityId: line.id, planeId: plane.id, visible: true, style, renderGroup: 'planarElements', start: v(lift(start2D, planeRealization.planeTo3D)), end: v(lift(end2D, planeRealization.planeTo3D)) });
         }
       }
-      for (const circle of plane.getAllCircles()) {
+      for (const circle of plane.circles) {
         if (!isVisible2D(circle)) continue;
-        const realization = circle.realize2D(world);
+        const realization = circle.realization;
         if (!realization?.feasible) continue;
         const radius = realization.getRadius();
         const points: Vec3[] = [];
@@ -45,7 +44,6 @@ export class PlanarElement3DSelector {
           p.y += Math.sin(angle) * radius;
           points.push(v(lift(p, planeRealization.planeTo3D)));
         }
-        // keep import checked by constructing equivalent curve metadata policy through point order
         void CatmullRomCurve3;
         items.push({ id: `planar-circle-${circle.id}`, kind: 'planar-circle', sourceEntityId: circle.id, planeId: plane.id, visible: true, style: planarStyle(circle), renderGroup: 'planarElements', points });
       }
@@ -54,7 +52,7 @@ export class PlanarElement3DSelector {
   }
 }
 
-function lift(point2D: Vector3, matrix: any): Vector3 {
+function lift(point2D: Vector3, matrix: Matrix4x3): Vector3 {
   const domain = applyMatrix4x3(point2D, matrix);
   const e = matrix.elements;
   const normal = new Vector3().crossVectors(new Vector3(e[0], e[3], e[6]), new Vector3(e[1], e[4], e[7])).normalize();

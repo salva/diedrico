@@ -1,0 +1,107 @@
+frontend/src/domain/world/VisualStyle.ts:5:export interface VisualStyle {
+frontend/src/domain/world/Element2DRealization2D.ts:27:export abstract class Element2DRealization2D extends Realization {
+frontend/src/domain/world/Realization.ts:36:export abstract class Realization {
+frontend/src/domain/world/BrokenHingeLine.ts:30:export class BrokenHingeLine extends HingeLine {
+frontend/src/domain/world/Circle.ts:15:import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/Circle.ts:49:export class Circle2DRealization2D extends Element2DRealization2D {
+frontend/src/domain/world/Circle.ts:97:export class Circle2DByCenterAndPoint extends Circle2D {
+frontend/src/domain/world/Circle.ts:189:export class Circle2DByThreePoints extends Circle2D {
+frontend/src/domain/world/DependencyGraph.ts:6:export interface GraphNode {
+frontend/src/domain/world/DependencyGraph.ts:12:export class DependencyGraph {
+frontend/src/domain/world/Element2D.ts:1:import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/Element2D.ts:11:export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | Circle2DRealization2D;
+frontend/src/domain/world/Element3DRealization3D.ts:27:export abstract class Element3DRealization3D extends Realization {
+frontend/src/domain/world/Element3DRealization3D.ts:44:export class Point3DRealization3D extends Element3DRealization3D {
+frontend/src/domain/world/Element3DRealization3D.ts:91:export class Line3DRealization3D extends Element3DRealization3D {
+frontend/src/domain/world/Element3DRealization3D.ts:143:export class Segment3DRealization3D extends Element3DRealization3D {
+frontend/src/domain/world/Element3DRealization3D.ts:205:export class Plane3DRealization3D extends Element3DRealization3D {
+frontend/src/domain/world/Guide.ts:19:import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/Guide.ts:40:export class Guide2D extends Line2DPerpendicularToLine {
+frontend/src/domain/world/Guide.ts:186:export class SiblingGuide2D extends Line2D {
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:33:export class HalfHingeLineRealization2D extends Line2DRealization2D {
+frontend/src/domain/world/HingeLine.ts:16:import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/HingeLine.ts:39:export class HalfHingeLine2D extends Line2D {
+frontend/src/domain/world/HingeLine.ts:208:export class HingeLine extends Line3D {
+frontend/src/domain/world/LabelGenerator.ts:80:export class LabelGenerator {
+frontend/src/domain/world/Line.ts:18:import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/Line.ts:70:export class Line2DRealization2D extends Element2DRealization2D {
+frontend/src/domain/world/Line.ts:178:export class Line2DByTwoPoints extends Line2D {
+frontend/src/domain/world/Line.ts:274:export class Line2DParallel extends Line2D {
+frontend/src/domain/world/Line.ts:373:export class Line2DPerpendicularToLine extends Line2D {
+frontend/src/domain/world/Line.ts:496:export class Line2DTangentToCircleThroughPoint extends Line2D {
+frontend/src/domain/world/Line.ts:678:export class Line2DTangentToCircleParallelToLine extends Line2D {
+frontend/src/domain/world/Line3D.ts:46:export class Line3DFromProjections extends Line3D {
+frontend/src/domain/world/Plane.ts:121:export class Plane3DFixed extends Plane3D {
+frontend/src/domain/world/Plane.ts:243:export class Plane3DFromTraces extends Plane3D {
+frontend/src/domain/world/Point.ts:18:import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/Point.ts:47:export class Point2DRealization2D extends Element2DRealization2D {
+frontend/src/domain/world/Point.ts:68:export class Point3DRealization3D {
+frontend/src/domain/world/Point.ts:116:export class FreePoint2D extends Point2D {
+frontend/src/domain/world/Point.ts:197:export class Point2DLineLineIntersection extends IntersectionPoint2D {
+frontend/src/domain/world/Point.ts:336:export class Point2DLineCircleIntersection extends IntersectionPoint2D {
+frontend/src/domain/world/Point.ts:464:export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
+frontend/src/domain/world/Point.ts:556:export class SiblingIntersectionPoint2D extends Point2D {
+frontend/src/domain/world/Point3D.ts:29:export class Point3DByCoordinates extends Element3D {
+frontend/src/domain/world/Point3D.ts:79:export class Point3DFromProjections extends Element3D {
+frontend/src/domain/world/Segment.ts:15:import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/Segment.ts:28:export class Segment2DByPoints extends Line2D {
+frontend/src/domain/world/Segment3D.ts:31:export class Segment3DFromProjections extends Element3D {
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:20:export class Circle2DByCenterAndPointDescriptor implements ElementDescriptor<Circle2DByCenterAndPoint> {
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:45:export class Circle2DByThreePointsDescriptor implements ElementDescriptor<Circle2DByThreePoints> {
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:73:export class Segment2DByPointsDescriptor implements ElementDescriptor<Segment2DByPoints> {
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:98:export class Guide2DDescriptor implements ElementDescriptor<Guide2D> {
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:123:export class SiblingGuide2DDescriptor implements ElementDescriptor<SiblingGuide2D> {
+frontend/src/domain/world/descriptors/DescriptionPart.ts:11:export interface DescriptionPart {
+frontend/src/domain/world/descriptors/DescriptorRegistry.ts:22:export class DescriptorRegistry {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:23:export class Point3DByCoordinatesDescriptor implements ElementDescriptor<Point3DByCoordinates> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:36:export class Point3DFromProjectionsDescriptor implements ElementDescriptor<Point3DFromProjections> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:65:export class Line3DFromProjectionsDescriptor implements ElementDescriptor<Line3DFromProjections> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:94:export class Segment3DFromProjectionsDescriptor implements ElementDescriptor<Segment3DFromProjections> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:123:export class FixedProjectionPlaneDescriptor implements ElementDescriptor<FixedProjectionPlane> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:136:export class AuxiliaryProjectionPlaneDescriptor implements ElementDescriptor<AuxiliaryProjectionPlane> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:177:export class Plane3DFixedDescriptor implements ElementDescriptor<Plane3DFixed> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:190:export class Plane3DFromTracesDescriptor implements ElementDescriptor<Plane3DFromTraces> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:218:export class HingeLineDescriptor implements ElementDescriptor<HingeLine> {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:240:export class BrokenHingeLineDescriptor implements ElementDescriptor<BrokenHingeLine> {
+frontend/src/domain/world/descriptors/ElementDescriptor.ts:21:export interface ElementDescriptor<T extends Element = Element> {
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:23:export class Line2DByTwoPointsDescriptor implements ElementDescriptor<Line2DByTwoPoints> {
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:48:export class Line2DParallelDescriptor implements ElementDescriptor<Line2DParallel> {
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:73:export class Line2DPerpendicularToLineDescriptor implements ElementDescriptor<Line2DPerpendicularToLine> {
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:98:export class Line2DTangentToCircleThroughPointDescriptor implements ElementDescriptor<Line2DTangentToCircleThroughPoint> {
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:125:export class Line2DTangentToCircleParallelToLineDescriptor implements ElementDescriptor<Line2DTangentToCircleParallelToLine> {
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:153:export class HalfHingeLine2DDescriptor implements ElementDescriptor<HalfHingeLine2D> {
+frontend/src/domain/world/descriptors/Line2DDescriptors.ts:184:export class BrokenHalfHingeLine2DDescriptor implements ElementDescriptor<BrokenHalfHingeLine2D> {
+frontend/src/domain/world/descriptors/Point2DDescriptors.ts:20:export class FreePoint2DDescriptor implements ElementDescriptor<FreePoint2D> {
+frontend/src/domain/world/descriptors/Point2DDescriptors.ts:42:export class Point2DLineLineIntersectionDescriptor implements ElementDescriptor<Point2DLineLineIntersection> {
+frontend/src/domain/world/descriptors/Point2DDescriptors.ts:67:export class Point2DLineCircleIntersectionDescriptor implements ElementDescriptor<Point2DLineCircleIntersection> {
+frontend/src/domain/world/descriptors/Point2DDescriptors.ts:94:export class Point2DCircleCircleIntersectionDescriptor implements ElementDescriptor<Point2DCircleCircleIntersection> {
+frontend/src/domain/world/descriptors/Point2DDescriptors.ts:121:export class SiblingIntersectionPoint2DDescriptor implements ElementDescriptor<SiblingIntersectionPoint2D> {
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:23:import type { ProjectionElementRealizationContext } from '../projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:32:export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
+frontend/src/domain/world/index.ts:7:export { Element2D, type Element2DRealization } from './Element2D';
+frontend/src/domain/world/DependencyService.ts:23:export interface DependencyEdge {
+frontend/src/domain/world/DependencyService.ts:32:export interface ElementDependencies {
+frontend/src/domain/world/DependencyService.ts:40:export class DependencyService {
+frontend/src/domain/world/World.ts:108:export class World {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:5:export class ProjectionPlaneRealization2D extends Realization {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:51:export class ProjectionPlaneRealization3D extends Realization {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:1:import type { Plane3DRealization3D } from '../Element3DRealization3D';
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:7:import type { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9:export interface ProjectionElementRealizationContext {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:22:export interface ProjectionPlaneRealizationContext extends ProjectionElementRealizationContext {}
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:24:export interface ProjectionOwnerPlaneQuery {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:28:export interface ProjectionPlaneDependencyRegistrar {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:33:export interface ProjectionPlaneMutationContext extends ProjectionPlaneRealizationContext, ProjectionOwnerPlaneQuery {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:1:import type { Circle2D, Circle2DRealization2D } from '../Circle';
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:2:import type { Line2D, Line2DRealization2D } from '../Line';
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:3:import type { Point2D, Point2DRealization2D } from '../Point';
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:6:export interface ProjectionPlaneStoreMutationContext {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:11:export class ProjectionPlaneElementStore {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:5:import type { Point2D, Point2DRealization2D } from '../Point';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:7:import type { Line2D, Line2DRealization2D } from '../Line';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:9:import type { Circle2D, Circle2DRealization2D } from '../Circle';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:15:import type { ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:3:import type { ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:7:export class FixedProjectionPlane extends ProjectionPlane {
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:4:import type { ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:8:export class AuxiliaryProjectionPlane extends ProjectionPlane {

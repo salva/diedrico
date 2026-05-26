@@ -1,0 +1,13 @@
+HEAD:frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14:export interface CanvasWorldReadPort {
+HEAD:frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:30:export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+HEAD:frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46:    realizePoint2D: (plane, point) => plane.realizePoint2D(point, world),
+HEAD:frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:47:    realizeLine2D: (plane, line) => plane.realizeLine2D(line, world),
+HEAD:frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:48:    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, world),
+HEAD:frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:49:    realizePoint3D: point => point.realize3D(world),
+HEAD:frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:50:    realizeLine3D: line => line.realize3D(world),
+HEAD:frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51:    realizeSegment3D: segment => segment.realize3D(world),
+HEAD:frontend/src/application/threePresentation/Guide3DSelector.ts:16:      const guideReal = line.realize2D(world);
+HEAD:frontend/src/application/threePresentation/Hinge3DSelector.ts:12:      const realization = hingeLine.realize3D(world);
+HEAD:frontend/src/application/threePresentation/PlanarElement3DSelector.ts:17:        const realization = point.realize2D(world);
+HEAD:frontend/src/application/threePresentation/PlanarElement3DSelector.ts:23:        const realization = line.realize2D(world);
+HEAD:frontend/src/application/threePresentation/PlanarElement3DSelector.ts:37:        const realization = circle.realize2D(world);

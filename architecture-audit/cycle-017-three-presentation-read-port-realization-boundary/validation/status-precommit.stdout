@@ -1,0 +1,15 @@
+ M frontend/src/application/threePresentation/Guide3DSelector.ts
+ M frontend/src/application/threePresentation/Hinge3DSelector.ts
+ M frontend/src/application/threePresentation/PlanarElement3DSelector.ts
+ M frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts
+ M frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts
+ M frontend/src/application/threePresentation/ThreePresentationModel.ts
+ M frontend/src/application/threePresentation/ThreePresentationSelector.ts
+ M frontend/src/application/threePresentation/ThreeStylePolicy.ts
+ M frontend/src/components/panels/ThreeView.vue
+ M frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts
+ M frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts
+ M frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/
+?? frontend/src/application/threePresentation/ThreeWorldReadPort.ts

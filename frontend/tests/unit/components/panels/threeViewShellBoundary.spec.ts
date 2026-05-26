@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import source from '../../../../src/components/panels/ThreeView.vue?raw';
 
 describe('ThreeView shell boundary', () => {
-  it('delegates scene construction to ThreeViewRuntime and avoids low-level Three.js/rendering imports', () => {
+  it('delegates scene construction to ThreeViewRuntime through the three-presentation read port and avoids low-level Three.js/rendering imports', () => {
     expect(source).toContain("import { ThreeViewRuntime } from '@/rendering/threeView/ThreeViewRuntime'");
+    expect(source).toContain("import { createThreeWorldReadPort } from '@/application/threePresentation/ThreeWorldReadPort'");
+    expect(source).toContain('const readPort = createThreeWorldReadPort(world);');
     expect(source).toContain('runtime.mount');
-    expect(source).toContain('runtime.refresh({ world, displayOptions: displayOptions.value, selectedIds: selectedIds() })');
+    expect(source).toContain('runtime.refresh({ readPort, displayOptions: displayOptions.value, selectedIds: selectedIds() })');
     expect(source).toContain('runtime.resize');
     expect(source).toContain('runtime.dispose');
 

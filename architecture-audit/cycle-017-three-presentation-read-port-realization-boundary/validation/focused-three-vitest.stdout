@@ -1,0 +1,27 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/threePresentation/threePresentationSelector.spec.ts tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test | 1 failed) 14ms
+   ❯ tests/unit/application/threePresentation/threePresentationSelector.spec.ts > ThreePresentationSelector > orchestrates concern-split selectors and passes selected IDs only to guide selection
+     → expected [ undefined, true, true, true ] to deeply equal [ { marker: 'world' }, true, …(2) ]
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (5 tests | 5 failed) 15ms
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds projection-plane surface/grid DTOs and reference-axis/label DTOs without scene objects
+     → readPort.getProjectionPlaneModels is not a function or its return value is not iterable
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds planar 2D-on-3D DTOs from projection-plane realizations only when the display option is enabled
+     → readPort.getPlanarPlaneModels is not a function or its return value is not iterable
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds reconstructed 3D point, line, segment, and plane DTOs behind a single concern boundary
+     → readPort.getReconstructedModels is not a function
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds selected-guide perpendicular-plane and intersection-marker DTOs from selected IDs
+     → readPort.getSelectedGuideModels is not a function or its return value is not iterable
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds hinge DTOs only from feasible hinge-line realizations when planes are visible
+     → readPort.getHingeModels is not a function or its return value is not iterable
+
+ Test Files  2 failed (2)
+      Tests  6 failed (6)
+   Start at  23:00:29
+   Duration  1.28s (transform 408ms, setup 0ms, collect 588ms, tests 29ms, environment 986ms, prepare 168ms)
+

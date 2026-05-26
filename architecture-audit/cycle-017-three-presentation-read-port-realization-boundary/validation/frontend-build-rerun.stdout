@@ -1,0 +1,5 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/application/threePresentation/ThreeWorldReadPort.ts(1,10): error TS6133: 'Vector3' is declared but its value is never read.

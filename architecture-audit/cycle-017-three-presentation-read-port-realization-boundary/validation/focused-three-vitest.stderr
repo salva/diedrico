@@ -1,0 +1,100 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds projection-plane surface/grid DTOs and reference-axis/label DTOs without scene objects
+TypeError: readPort.getProjectionPlaneModels is not a function or its return value is not iterable
+ ❯ ProjectionPlane3DSelector.select src/application/threePresentation/ProjectionPlane3DSelector.ts:15:34
+     13|     if (!showPlanes) return items;
+     14| 
+     15|     for (const plane of readPort.getProjectionPlaneModels()) {
+       |                                  ^
+     16|       const realization = plane.realization;
+     17|       if (!realization?.feasible) continue;
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:26:50
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds planar 2D-on-3D DTOs from projection-plane realizations only when the display option is enabled
+TypeError: readPort.getPlanarPlaneModels is not a function or its return value is not iterable
+ ❯ PlanarElement3DSelector.select src/application/threePresentation/PlanarElement3DSelector.ts:11:34
+      9|     if (!show2DElementsOnPlanes) return [];
+     10|     const items: PlanarElementPresentationDto[] = [];
+     11|     for (const plane of readPort.getPlanarPlaneModels()) {
+       |                                  ^
+     12|       const planeRealization = plane.realization;
+     13|       if (!planeRealization?.feasible) continue;
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:43:48
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds reconstructed 3D point, line, segment, and plane DTOs behind a single concern boundary
+TypeError: readPort.getReconstructedModels is not a function
+ ❯ ReconstructedElement3DSelector.select src/application/threePresentation/ReconstructedElement3DSelector.ts:12:29
+     10|     if (!showPlanes) return [];
+     11|     const items: ReconstructedElementPresentationDto[] = [];
+     12|     const models = readPort.getReconstructedModels();
+       |                             ^
+     13|     for (const point of models.points) {
+     14|       if (!isVisible3D(point)) continue;
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:65:56
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds selected-guide perpendicular-plane and intersection-marker DTOs from selected IDs
+TypeError: readPort.getSelectedGuideModels is not a function or its return value is not iterable
+ ❯ Guide3DSelector.select src/application/threePresentation/Guide3DSelector.ts:11:34
+      9|   select(readPort: Pick<ThreeWorldReadPort, 'getSelectedGuideModels' |…
+     10|     const items: GuidePresentationDto[] = [];
+     11|     for (const guide of readPort.getSelectedGuideModels(selectedIds)) {
+       |                                  ^
+     12|       const planeReal = guide.planeRealization;
+     13|       const guideReal = guide.realization;
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:84:44
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds hinge DTOs only from feasible hinge-line realizations when planes are visible
+TypeError: readPort.getHingeModels is not a function or its return value is not iterable
+ ❯ Hinge3DSelector.select src/application/threePresentation/Hinge3DSelector.ts:11:38
+      9|     if (!showPlanes) return [];
+     10|     const items: HingePresentationDto[] = [];
+     11|     for (const hingeLine of readPort.getHingeModels()) {
+       |                                      ^
+     12|       const realization = hingeLine.realization;
+     13|       if (!realization?.isFeasible() || !realization.point || !realiza…
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:96:40
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationSelector.spec.ts > ThreePresentationSelector > orchestrates concern-split selectors and passes selected IDs only to guide selection
+AssertionError: expected [ undefined, true, true, true ] to deeply equal [ { marker: 'world' }, true, …(2) ]
+
+- Expected
++ Received
+
+  Array [
+-   Object {
+-     "marker": "world",
+-   },
++   undefined,
+    true,
+    true,
+    true,
+  ]
+
+ ❯ tests/unit/application/threePresentation/threePresentationSelector.spec.ts:28:46
+     26|     const model = selector.select({ world, displayOptions, selectedIds…
+     27|     expect(model.projectionPlanes).toHaveLength(1);
+     28|     expect(projectionPlanes.select.calls[0]).toEqual([world, true, tru…
+       |                                              ^
+     29|     expect(planarElements.select.calls[0]).toEqual([world, true]);
+     30|     expect(reconstructedElements.select.calls[0]).toEqual([world, true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/application/threePresentation/threePresentationSelector.spec.ts tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts

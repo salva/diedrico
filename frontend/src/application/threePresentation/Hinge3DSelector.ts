@@ -1,15 +1,15 @@
 import { Vector3 } from 'three';
-import type { World } from '@/domain/world/World';
 import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
 import type { HingePresentationDto, Vec3 } from './ThreePresentationModel';
+import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
 import { THREE_STYLE } from './ThreeStylePolicy';
 
 export class Hinge3DSelector {
-  select(world: World, showPlanes: boolean): HingePresentationDto[] {
+  select(readPort: Pick<ThreeWorldReadPort, 'getHingeModels'>, showPlanes: boolean): HingePresentationDto[] {
     if (!showPlanes) return [];
     const items: HingePresentationDto[] = [];
-    for (const hingeLine of world.getAllHingeLines()) {
-      const realization = hingeLine.realize3D(world);
+    for (const hingeLine of readPort.getHingeModels()) {
+      const realization = hingeLine.realization;
       if (!realization?.isFeasible() || !realization.point || !realization.direction) continue;
       const origin = domainToThreeJS(realization.point);
       const direction = domainDirectionToThreeJS(new Vector3(realization.direction.x, realization.direction.y, realization.direction.z)).normalize();

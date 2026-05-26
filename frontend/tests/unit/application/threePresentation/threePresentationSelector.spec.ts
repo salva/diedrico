@@ -20,15 +20,15 @@ function viFn<T extends (...args: any[]) => any>(impl: T): T & { calls: any[][] 
 }
 
 describe('ThreePresentationSelector', () => {
-  it('orchestrates concern-split selectors and passes selected IDs only to guide selection', () => {
+  it('orchestrates concern-split selectors through the read port and passes selected IDs only to guide selection', () => {
     const { selector, projectionPlanes, planarElements, reconstructedElements, guides, hinges } = selectorWithSpies();
-    const world = { marker: 'world' } as any;
-    const model = selector.select({ world, displayOptions, selectedIds: ['guide-1'] });
+    const readPort = { marker: 'read-port' } as any;
+    const model = selector.select({ readPort, displayOptions, selectedIds: ['guide-1'] });
     expect(model.projectionPlanes).toHaveLength(1);
-    expect(projectionPlanes.select.calls[0]).toEqual([world, true, true, true]);
-    expect(planarElements.select.calls[0]).toEqual([world, true]);
-    expect(reconstructedElements.select.calls[0]).toEqual([world, true]);
-    expect(guides.select.calls[0]).toEqual([world, ['guide-1']]);
-    expect(hinges.select.calls[0]).toEqual([world, true]);
+    expect(projectionPlanes.select.calls[0]).toEqual([readPort, true, true, true]);
+    expect(planarElements.select.calls[0]).toEqual([readPort, true]);
+    expect(reconstructedElements.select.calls[0]).toEqual([readPort, true]);
+    expect(guides.select.calls[0]).toEqual([readPort, ['guide-1']]);
+    expect(hinges.select.calls[0]).toEqual([readPort, true]);
   });
 });

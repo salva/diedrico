@@ -1,0 +1,32 @@
+HEAD:frontend/src/application/threePresentation/Guide3DSelector.ts:2:import type { World } from '@/domain/world/World';
+HEAD:frontend/src/application/threePresentation/Guide3DSelector.ts:10:  select(world: World, selectedIds: readonly string[]): GuidePresentationDto[] {
+HEAD:frontend/src/application/threePresentation/Guide3DSelector.ts:33:function safeLine(world: World, id: string) { try { return world.getLine2D(id); } catch { return undefined; } }
+HEAD:frontend/src/application/threePresentation/Guide3DSelector.ts:41:function intersections(world: World, planePoint: Vector4, planeNormal: Vector3, guideId: string): GuidePresentationDto[] {
+HEAD:frontend/src/application/threePresentation/Hinge3DSelector.ts:2:import type { World } from '@/domain/world/World';
+HEAD:frontend/src/application/threePresentation/Hinge3DSelector.ts:8:  select(world: World, showPlanes: boolean): HingePresentationDto[] {
+HEAD:frontend/src/application/threePresentation/PlanarElement3DSelector.ts:2:import type { World } from '@/domain/world/World';
+HEAD:frontend/src/application/threePresentation/PlanarElement3DSelector.ts:9:  select(world: World, show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
+HEAD:frontend/src/application/threePresentation/PlanarElement3DSelector.ts:57:function lift(point2D: Vector3, matrix: any): Vector3 {
+HEAD:frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:2:import type { World } from '@/domain/world/World';
+HEAD:frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:11:  select(world: World, showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
+HEAD:frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:37:function gridSegments(world: World, planeId: string): Segment2D[] {
+HEAD:frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:59:function to3DSegment(segment: Segment2D, matrix: any): SegmentGeometryDto {
+HEAD:frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:2:import type { World } from '@/domain/world/World';
+HEAD:frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:9:  select(world: World, showPlanes: boolean): ReconstructedElementPresentationDto[] {
+HEAD:frontend/src/application/threePresentation/ThreePresentationModel.ts:1:import type { World } from '@/domain/world/World';
+HEAD:frontend/src/application/threePresentation/ThreePresentationModel.ts:10:export interface ThreePresentationInput { world: World; displayOptions: ThreeViewDisplayOptions; selectedIds: readonly string[] }
+HEAD:frontend/src/application/threePresentation/ThreePresentationSelector.ts:20:      projectionPlanes: this.projectionPlanes.select(world, displayOptions.showPlanes, displayOptions.showGrid, displayOptions.showReferenceAxes),
+HEAD:frontend/src/application/threePresentation/ThreePresentationSelector.ts:21:      planarElements: this.planarElements.select(world, displayOptions.show2DElementsOnPlanes),
+HEAD:frontend/src/application/threePresentation/ThreePresentationSelector.ts:22:      reconstructedElements: this.reconstructedElements.select(world, displayOptions.showPlanes),
+HEAD:frontend/src/application/threePresentation/ThreePresentationSelector.ts:23:      guides: this.guides.select(world, selectedIds),
+HEAD:frontend/src/application/threePresentation/ThreePresentationSelector.ts:24:      hinges: this.hinges.select(world, displayOptions.showPlanes),
+HEAD:frontend/src/components/panels/ThreeView.vue:29:import type { World } from '@/domain/world/World';
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:26:    const dtos = new ProjectionPlane3DSelector().select(world, true, true, true);
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:42:    expect(new PlanarElement3DSelector().select(world, false)).toEqual([]);
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:43:    const dtos = new PlanarElement3DSelector().select(world, true);
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:65:    const kinds = new ReconstructedElement3DSelector().select(world, true).map(dto => dto.kind);
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:68:    expect(new ReconstructedElement3DSelector().select(world, false)).toEqual([]);
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:84:    const selected = new Guide3DSelector().select(world, ['PH/guide-1']);
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:85:    const unselected = new Guide3DSelector().select(world, ['unrelated']);
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:96:    const dtos = new Hinge3DSelector().select(world, true);
+HEAD:frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:100:    expect(new Hinge3DSelector().select(world, false)).toEqual([]);

@@ -1,0 +1,18 @@
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+ M frontend/src/application/threePresentation/Guide3DSelector.ts
+ M frontend/src/application/threePresentation/Hinge3DSelector.ts
+ M frontend/src/application/threePresentation/PlanarElement3DSelector.ts
+ M frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts
+ M frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts
+ M frontend/src/application/threePresentation/ThreePresentationModel.ts
+ M frontend/src/application/threePresentation/ThreePresentationSelector.ts
+ M frontend/src/application/threePresentation/ThreeStylePolicy.ts
+ M frontend/src/components/panels/ThreeView.vue
+ M frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts
+ M frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts
+ M frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts
+?? .saivage/stages/cycle-017-implement-three-presentation-read-port-realization-boundary/
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/reviews/
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/status-before-implementation.txt
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/
+?? frontend/src/application/threePresentation/ThreeWorldReadPort.ts

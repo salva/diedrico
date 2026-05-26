@@ -1,0 +1,8 @@
+511180
+salva     511180       1  0 23:06 ?        00:00:00 npm run dev --host 0.0.0.0
+salva     511194  511180  0 23:06 ?        00:00:00 sh -c npm run dev:frontend --host 0.0.0.0
+salva     511195  511194  0 23:06 ?        00:00:00 npm run dev:frontend 0.0.0.0
+salva     511206  511195  0 23:06 ?        00:00:00 sh -c npm run dev --workspace=frontend 0.0.0.0
+salva     511207  511206  0 23:06 ?        00:00:00 npm run dev 0.0.0.0
+salva     511218  511207  0 23:06 ?        00:00:00 sh -c vite 0.0.0.0
+salva     511219  511218  0 23:06 ?        00:00:00 node /work/diedrico/frontend/node_modules/.bin/vite 0.0.0.0

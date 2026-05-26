@@ -1,0 +1,13 @@
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14:export interface CanvasWorldReadPort {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:30:export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46:    realizePoint2D: (plane, point) => plane.realizePoint2D(point, world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:47:    realizeLine2D: (plane, line) => plane.realizeLine2D(line, world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:48:    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:49:    realizePoint3D: point => point.realize3D(world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:50:    realizeLine3D: line => line.realize3D(world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51:    realizeSegment3D: segment => segment.realize3D(world),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:84:      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(world) })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:85:      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(world), isSegment: line instanceof Segment2DByPoints })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:86:      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(world) })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:98:        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(world) }];
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:117:    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(world) })),

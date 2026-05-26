@@ -1,0 +1,45 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/application/threePresentation/Guide3DSelector.ts(41,22): error TS2345: Argument of type 'ThreeEntityPresentationData & { cartesian: [number, number, number] | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { cartesian: [number, number, number] | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/Guide3DSelector.ts(47,22): error TS2345: Argument of type 'ThreeEntityPresentationData & { point: Vector4 | undefined; direction: Vector3 | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { point: Vector4 | undefined; direction: Vector3 | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/Guide3DSelector.ts(52,22): error TS2345: Argument of type 'ThreeEntityPresentationData & { startPoint: Vector4 | undefined; endPoint: Vector4 | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { startPoint: Vector4 | undefined; endPoint: Vector4 | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/PlanarElement3DSelector.ts(15,26): error TS2345: Argument of type 'ThreePlanarPointReadModel' is not assignable to parameter of type 'Element2D'.
+  Type 'ThreePlanarPointReadModel' is missing the following properties from type 'Element2D': planeId, clone, realize2D, getDependencies
+src/application/threePresentation/PlanarElement3DSelector.ts(18,155): error TS2345: Argument of type 'ThreePlanarPointReadModel' is not assignable to parameter of type 'Element2D'.
+  Type 'ThreePlanarPointReadModel' is missing the following properties from type 'Element2D': planeId, clone, realize2D, getDependencies
+src/application/threePresentation/PlanarElement3DSelector.ts(21,26): error TS2345: Argument of type 'ThreePlanarLineReadModel' is not assignable to parameter of type 'Element2D'.
+  Type 'ThreePlanarLineReadModel' is missing the following properties from type 'Element2D': planeId, clone, realize2D, getDependencies
+src/application/threePresentation/PlanarElement3DSelector.ts(24,35): error TS2345: Argument of type 'ThreePlanarLineReadModel' is not assignable to parameter of type 'Element2D'.
+  Type 'ThreePlanarLineReadModel' is missing the following properties from type 'Element2D': planeId, clone, realize2D, getDependencies
+src/application/threePresentation/PlanarElement3DSelector.ts(35,26): error TS2345: Argument of type 'ThreePlanarCircleReadModel' is not assignable to parameter of type 'Element2D'.
+  Type 'ThreePlanarCircleReadModel' is missing the following properties from type 'Element2D': planeId, clone, realize2D, getDependencies
+src/application/threePresentation/PlanarElement3DSelector.ts(48,159): error TS2345: Argument of type 'ThreePlanarCircleReadModel' is not assignable to parameter of type 'Element2D'.
+  Type 'ThreePlanarCircleReadModel' is missing the following properties from type 'Element2D': planeId, clone, realize2D, getDependencies
+src/application/threePresentation/ReconstructedElement3DSelector.ts(14,24): error TS2345: Argument of type 'ThreeEntityPresentationData & { realization: Point3DRealization3D | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { realization: Point3DRealization3D | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/ReconstructedElement3DSelector.ts(18,155): error TS2345: Argument of type 'ThreeEntityPresentationData & { realization: Point3DRealization3D | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { realization: Point3DRealization3D | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/ReconstructedElement3DSelector.ts(21,24): error TS2345: Argument of type 'ThreeEntityPresentationData & { realization: Line3DRealization3D | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { realization: Line3DRealization3D | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/ReconstructedElement3DSelector.ts(26,151): error TS2345: Argument of type 'ThreeEntityPresentationData & { realization: Line3DRealization3D | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { realization: Line3DRealization3D | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/ReconstructedElement3DSelector.ts(29,24): error TS2345: Argument of type 'ThreeEntityPresentationData & { realization: Segment3DRealization3D | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { realization: Segment3DRealization3D | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/ReconstructedElement3DSelector.ts(32,163): error TS2345: Argument of type 'ThreeEntityPresentationData & { realization: Segment3DRealization3D | undefined; }' is not assignable to parameter of type 'Element3D'.
+  Type 'ThreeEntityPresentationData & { realization: Segment3DRealization3D | undefined; }' is missing the following properties from type 'Element3D': realize3D, getDependencies, clone
+src/application/threePresentation/ThreeWorldReadPort.ts(67,37): error TS2322: Type '{ id: string; kind: "auxiliary" | "fixed"; plane3DId: string | undefined; realization: ProjectionPlaneRealization3D | undefined; }[]' is not assignable to type 'ThreeProjectionPlaneReadModel[]'.
+  Type '{ id: string; kind: "auxiliary" | "fixed"; plane3DId: string | undefined; realization: ProjectionPlaneRealization3D | undefined; }' is not assignable to type 'ThreeProjectionPlaneReadModel'.
+    Types of property 'plane3DId' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/application/threePresentation/ThreeWorldReadPort.ts(108,7): error TS2322: Type '{ id: string; visualStyle: VisualStyle | undefined; point: Vector4 | undefined; direction: Vector4 | undefined; }[]' is not assignable to type '(ThreeEntityPresentationData & { point: Vector4 | undefined; direction: Vector3 | undefined; })[]'.
+  Type '{ id: string; visualStyle: VisualStyle | undefined; point: Vector4 | undefined; direction: Vector4 | undefined; }' is not assignable to type 'ThreeEntityPresentationData & { point: Vector4 | undefined; direction: Vector3 | undefined; }'.
+    Type '{ id: string; visualStyle: VisualStyle | undefined; point: Vector4 | undefined; direction: Vector4 | undefined; }' is not assignable to type '{ point: Vector4 | undefined; direction: Vector3 | undefined; }'.
+      Types of property 'direction' are incompatible.
+        Type 'Vector4 | undefined' is not assignable to type 'Vector3 | undefined'.
+          Type 'Vector4' is missing the following properties from type 'Vector3': isVector3, setFromColor, multiplyVectors, applyEuler, and 30 more.

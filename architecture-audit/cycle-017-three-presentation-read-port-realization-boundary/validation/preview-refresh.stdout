@@ -1,0 +1,18 @@
+
+> diedrico@0.1.0 dev
+> npm run dev:frontend --host 0.0.0.0
+
+
+> diedrico@0.1.0 dev:frontend
+> npm run dev --workspace=frontend 0.0.0.0
+
+
+> diedrico-frontend@0.1.0 dev
+> vite 0.0.0.0
+
+Re-optimizing dependencies because vite config has changed
+
+  VITE v5.4.21  ready in 168 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose

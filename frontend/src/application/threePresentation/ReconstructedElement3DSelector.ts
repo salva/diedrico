@@ -1,37 +1,38 @@
 import { Quaternion, Vector3, Vector4 } from 'three';
-import type { World } from '@/domain/world/World';
 import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
 import { getPlaneMeshSize } from '@/config/rendering3D';
 import type { ReconstructedElementPresentationDto, Vec3 } from './ThreePresentationModel';
+import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
 import { isVisible3D, reconstructedStyle, THREE_STYLE } from './ThreeStylePolicy';
 
 export class ReconstructedElement3DSelector {
-  select(world: World, showPlanes: boolean): ReconstructedElementPresentationDto[] {
+  select(readPort: Pick<ThreeWorldReadPort, 'getReconstructedModels'>, showPlanes: boolean): ReconstructedElementPresentationDto[] {
     if (!showPlanes) return [];
     const items: ReconstructedElementPresentationDto[] = [];
-    for (const point of world.getAll3DPoints()) {
+    const models = readPort.getReconstructedModels();
+    for (const point of models.points) {
       if (!isVisible3D(point)) continue;
-      const realization = world.get3DPointRealization(point.id!);
+      const realization = point.realization;
       if (!realization?.isFeasible()) continue;
       const [x, y, z] = realization.getCartesian();
       items.push({ id: `reconstructed-point-${point.id}`, kind: 'reconstructed-point', sourceEntityId: point.id, visible: true, style: reconstructedStyle(point), renderGroup: 'reconstructedElements', position: v(domainToThreeJS(new Vector4(x, y, z, 1))) });
     }
-    for (const line of world.getAll3DLines()) {
+    for (const line of models.lines) {
       if (!isVisible3D(line)) continue;
-      const realization = world.get3DLineRealization(line.id!);
+      const realization = line.realization;
       if (!realization?.isFeasible()) continue;
       const point = domainToThreeJS(realization.point);
       const direction = domainDirectionToThreeJS(new Vector3(realization.getDirection().x, realization.getDirection().y, realization.getDirection().z)).normalize();
       items.push({ id: `reconstructed-line-${line.id}`, kind: 'reconstructed-line', sourceEntityId: line.id, visible: true, style: reconstructedStyle(line), renderGroup: 'reconstructedElements', start: v(point.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.infiniteLineExtent / 2))), end: v(point.clone().add(direction.clone().multiplyScalar(THREE_STYLE.infiniteLineExtent / 2))) });
     }
-    for (const segment of world.getAll3DSegments()) {
+    for (const segment of models.segments) {
       if (!isVisible3D(segment)) continue;
-      const realization = world.get3DSegmentRealization(segment.id!);
+      const realization = segment.realization;
       if (!realization?.isFeasible()) continue;
       items.push({ id: `reconstructed-segment-${segment.id}`, kind: 'reconstructed-segment', sourceEntityId: segment.id, visible: true, style: reconstructedStyle(segment), renderGroup: 'reconstructedElements', start: v(domainToThreeJS(realization.startPoint)), end: v(domainToThreeJS(realization.endPoint)) });
     }
-    for (const plane of world.getAllPlanes()) {
-      const realization = world.get3DPlaneRealization(plane.id!);
+    for (const plane of models.planes) {
+      const realization = plane.realization;
       if (!realization?.feasible || !realization.originPoint || !realization.normal) continue;
       const origin = domainToThreeJS(realization.originPoint);
       const normal = domainDirectionToThreeJS(new Vector3(realization.normal.x, realization.normal.y, realization.normal.z)).normalize();

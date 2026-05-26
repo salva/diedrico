@@ -1,20 +1,19 @@
 import { Vector3, Vector4 } from 'three';
-import type { World } from '@/domain/world/World';
-import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
-import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
+import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '@/utils/rectangleGrid';
 import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '@/config/rendering3D';
 import type { AxisDto, LabelDto, ProjectionPlanePresentationDto, SegmentGeometryDto, Vec3 } from './ThreePresentationModel';
+import type { ThreeProjectionPlaneReadModel, ThreeWorldReadPort } from './ThreeWorldReadPort';
 import { THREE_STYLE } from './ThreeStylePolicy';
 
 export class ProjectionPlane3DSelector {
-  select(world: World, showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
+  select(readPort: ThreeWorldReadPort, showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
     const items: ProjectionPlanePresentationDto[] = [];
     if (showReferenceAxes) items.push(...referenceAxes());
     if (!showPlanes) return items;
 
-    for (const plane of world.getAllProjectionPlanes()) {
-      const realization = world.getProjectionPlane3DRealization(plane.id);
+    for (const plane of readPort.getProjectionPlaneModels()) {
+      const realization = plane.realization;
       if (!realization?.feasible) continue;
       const basis = planeBasis(realization.planeTo3D.elements);
       const size = getPlaneMeshSize(plane.id);
@@ -23,10 +22,10 @@ export class ProjectionPlane3DSelector {
       items.push({ id: `surface-${plane.id}`, kind: 'projection-plane-surface', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.projectionPlane, renderGroup: 'projectionPlanes', geometry: { center: v(center), normal: v(normalThree), size } });
 
       if (showGrid) {
-        items.push({ id: `grid-${plane.id}`, kind: 'projection-plane-grid', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.grid, renderGroup: 'projectionPlanes', segments: gridSegments(world, plane.id).map(segment => to3DSegment(segment, realization.planeTo3D)) });
+        items.push({ id: `grid-${plane.id}`, kind: 'projection-plane-grid', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.grid, renderGroup: 'projectionPlanes', segments: gridSegments(readPort, plane.id).map(segment => to3DSegment(segment, realization.planeTo3D)) });
       }
 
-      if (plane instanceof AuxiliaryProjectionPlane && showReferenceAxes) {
+      if (plane.kind === 'auxiliary' && showReferenceAxes) {
         items.push(...auxiliaryAxes(plane.id, basis.origin, basis.uAxis, basis.vAxis));
       }
     }
@@ -34,15 +33,11 @@ export class ProjectionPlane3DSelector {
   }
 }
 
-function gridSegments(world: World, planeId: string): Segment2D[] {
-  const plane = world.getProjectionPlaneById(planeId);
-  const plane3DId = plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane?.id;
-  if (!plane3DId) return fallbackGrid();
-  const plane3DRealization = world.get3DPlaneRealization(plane3DId);
-  const projPlaneRealization = world.getProjectionPlane3DRealization(planeId);
-  if (!plane3DRealization?.feasible || !projPlaneRealization) return fallbackGrid();
+function gridSegments(readPort: Pick<ThreeWorldReadPort, 'getProjectionPlaneGridSource'>, planeId: ThreeProjectionPlaneReadModel['id']): Segment2D[] {
+  const { plane3DRealization, projectionRealization } = readPort.getProjectionPlaneGridSource(planeId);
+  if (!plane3DRealization?.feasible || !projectionRealization) return fallbackGrid();
   const corners = plane3DRealization.getRectangleCorners(PLANE_RENDERING_CONFIG.MESH_SIZE / 2) as [Vector4, Vector4, Vector4, Vector4];
-  return generateClippedGrid(convertPlaneRectangleTo2D(corners, projPlaneRealization.threeDToPlane), PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS);
+  return generateClippedGrid(convertPlaneRectangleTo2D(corners, projectionRealization.threeDToPlane), PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS);
 }
 
 function fallbackGrid(): Segment2D[] {
@@ -56,7 +51,7 @@ function fallbackGrid(): Segment2D[] {
   return segments;
 }
 
-function to3DSegment(segment: Segment2D, matrix: any): SegmentGeometryDto {
+function to3DSegment(segment: Segment2D, matrix: Matrix4x3): SegmentGeometryDto {
   const start = domainToThreeJS(applyMatrix4x3(new Vector3(segment.start.u, segment.start.v, 1), matrix));
   const end = domainToThreeJS(applyMatrix4x3(new Vector3(segment.end.u, segment.end.v, 1), matrix));
   return { start: v(start), end: v(end) };

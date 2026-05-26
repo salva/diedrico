@@ -1,0 +1,228 @@
+stderr | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initialization failed: Error: Init failed
+    at /work/diedrico/frontend/tests/unit/services/googleDriveService.spec.ts:123:46
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///work/diedrico/frontend/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+[GoogleDrive] Error details: {}
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Line Intersection > should return infeasible for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Segment Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside one segment
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside both segments
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Circle Intersection > should return infeasible when line does not intersect circle
+[Point2DLineCircleIntersection] Line and circle do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should handle segment partially intersecting circle
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Circle-Circle Intersection > should return infeasible when circles do not intersect
+[Point2DCircleCircleIntersection] Circles do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible line to line-line intersection
+[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible circle to line-circle intersection
+Circle projPlane3/circle2d15: center and circumference point are coincident
+Circle projPlane3/circle2d15: center and circumference point are coincident
+[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/world.spec.ts > ProjectionPlane Factory Methods > Factory Methods > addLineLineIntersection > should throw error for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should detect infeasible 3D line when lifted planes are parallel
+[Line3DFromProjections] Planes are parallel - no intersection
+
+stderr | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Element projPlane3/point2d10 has no producing action - skipping
+
+stderr | tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should not save with validation errors
+[PropertiesDialog] Validation failed
+
+stderr | tests/unit/stores/authStore.spec.ts > authStore > restoreSession > should handle corrupted profile data
+[AuthStore] Failed to parse stored profile: SyntaxError: Unexpected token 'i', "invalid-json{" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at Object.restoreSession (/work/diedrico/frontend/src/stores/authStore.ts:96:28)
+    at /work/diedrico/frontend/tests/unit/stores/authStore.spec.ts:166:34
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/components/panels/threeViewShellBoundary.spec.ts > ThreeView shell boundary > delegates scene construction to ThreeViewRuntime and avoids low-level Three.js/rendering imports
+AssertionError: expected '<template>\n  <div class="three-view-…' to contain 'runtime.refresh({ world, displayOptio…'
+
+- Expected
++ Received
+
+- runtime.refresh({ world, displayOptions: displayOptions.value, selectedIds: selectedIds() })
++ <template>
++   <div class="three-view-panel" ref="containerRef">
++     <canvas ref="canvasRef" class="three-canvas"></canvas>
++     <div class="three-controls">
++       <div class="control-group">
++         <label class="control-label" title="Show or hide projection plane surfaces in 3D view">
++           <input type="checkbox" v-model="displayOptions.showPlanes" @change="handleDisplayChange" />
++           Show Planes
++         </label>
++         <label class="control-label" title="Display 2D geometric elements (points, lines, circles) positioned on their planes in 3D space">
++           <input type="checkbox" v-model="displayOptions.show2DElementsOnPlanes" @change="handleDisplayChange" />
++           Show 2D Elements on Planes
++         </label>
++         <label class="control-label" title="Show coordinate grid on each projection plane for spatial reference">
++           <input type="checkbox" v-model="displayOptions.showGrid" @change="handleDisplayChange" />
++           Show Grid
++         </label>
++         <label class="control-label" title="Show coordinate axes (X/Y/Z) at origin for spatial reference and debugging">
++           <input type="checkbox" v-model="displayOptions.showReferenceAxes" @change="handleDisplayChange" />
++           Show Reference Axes
++         </label>
++       </div>
++     </div>
++   </div>
++ </template>
++
++ <script setup lang="ts">
++ import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
++ import type { World } from '@/domain/world/World';
++ import { useSelectionStore } from '@/stores/selectionStore';
++ import { useViewStore } from '@/stores/viewStore';
++ import { ThreeViewRuntime } from '@/rendering/threeView/ThreeViewRuntime';
++ import { createThreeWorldReadPort } from '@/application/threePresentation/ThreeWorldReadPort';
++
++ const containerRef = ref<HTMLDivElement>();
++ const canvasRef = ref<HTMLCanvasElement>();
++ const renderTick = ref(0);
++
++ const viewStore = useViewStore();
++ const displayOptions = viewStore.threeViewOptions;
++ const selectionStore = useSelectionStore();
++ const world = inject<World>('world')!;
++ const readPort = createThreeWorldReadPort(world);
++ const runtime = new ThreeViewRuntime();
++ let unsubscribeWorldChanges: (() => void) | undefined;
++
++ function selectedIds(): string[] { return [...selectionStore.selectedIdsArray]; }
++ function refreshThreeView(): void { runtime.refresh({ readPort, displayOptions: displayOptions.value, selectedIds: selectedIds() }); }
++ function handleDisplayChange(): void { refreshThreeView(); }
++ function handleResize(): void { runtime.resize(); }
++
++ onMounted(() => {
++   if (!containerRef.value || !canvasRef.value) return;
++   runtime.mount({ container: containerRef.value, canvas: canvasRef.value });
++   refreshThreeView();
++   window.addEventListener('resize', handleResize);
++
++   const handleWorldChange = () => { renderTick.value++; };
++   world.subscribeToChanges(handleWorldChange);
++   unsubscribeWorldChanges = () => world.unsubscribeFromChanges(handleWorldChange);
++
++   watch(renderTick, refreshThreeView);
++   watch(() => selectionStore.selectedIdsArray, refreshThreeView);
++   watch(displayOptions, refreshThreeView, { deep: true });
++ });
++
++ onUnmounted(() => {
++   unsubscribeWorldChanges?.();
++   window.removeEventListener('resize', handleResize);
++   runtime.dispose();
++ });
++ </script>
++
++ <style scoped>
++ .three-view-panel {
++   position: relative;
++   width: 100%;
++   height: 100%;
++   background: #f5f5f5;
++   overflow: hidden;
++ }
++
++ .three-canvas {
++   display: block;
++   width: 100%;
++   height: 100%;
++ }
++
++ .three-controls {
++   pointer-events: auto;
++   position: absolute;
++   top: 10px;
++   right: 10px;
++   background: rgba(255, 255, 255, 0.9);
++   padding: 12px;
++   border-radius: 4px;
++   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
++ }
++
++ .control-group {
++   display: flex;
++   flex-direction: column;
++   gap: 8px;
++ }
++
++ .control-label {
++   display: flex;
++   align-items: center;
++   gap: 6px;
++   font-size: 13px;
++   cursor: pointer;
++   user-select: none;
++ }
++
++ .control-label input[type="checkbox"] { cursor: pointer; }
++ </style>
++
+
+ ❯ tests/unit/components/panels/threeViewShellBoundary.spec.ts:8:20
+      6|     expect(source).toContain("import { ThreeViewRuntime } from '@/rend…
+      7|     expect(source).toContain('runtime.mount');
+      8|     expect(source).toContain('runtime.refresh({ world, displayOptions:…
+       |                    ^
+      9|     expect(source).toContain('runtime.resize');
+     10|     expect(source).toContain('runtime.dispose');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run
