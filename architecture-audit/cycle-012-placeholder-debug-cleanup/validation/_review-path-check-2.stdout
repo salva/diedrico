@@ -1,0 +1,5 @@
+frontend/src/commands/operations/paper: missing
+frontend/src/commands/operations/toolbar: missing
+frontend/src/commands/operations/processTree/README.md: exists
+frontend/src/commands/operations/world/README.md: exists
+frontend/src/commands/operations/viewState/README.md: exists

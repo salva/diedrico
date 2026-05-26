@@ -1,0 +1,52 @@
+0d12514 [tsk-t1-implement-wave-012-cleanup] [t1-implement-wave-012-cleanup] remove placeholder ops and debug noise
+ .../implementation-log.md                          | 119 +++
+ .../focused-playwright-wave010-app-shell.stderr    |   0
+ .../focused-playwright-wave010-app-shell.stdout    |   9 +
+ .../validation/focused-test-discovery.stderr       |   0
+ .../validation/focused-test-discovery.stdout       | 435 ++++++++++
+ .../focused-vitest-wave012-passing-subset.stderr   |   0
+ .../focused-vitest-wave012-passing-subset.stdout   |  20 +
+ .../validation/focused-vitest-wave012.stderr       | 100 +++
+ .../validation/focused-vitest-wave012.stdout       |  31 +
+ .../validation/frontend-build.stderr               |  15 +
+ .../validation/frontend-build.stdout               |   4 +
+ .../validation/frontend-lint.stderr                |   0
+ .../validation/frontend-lint.stdout                |  21 +
+ .../validation/frontend-test-architecture.stderr   |   0
+ .../validation/frontend-test-architecture.stdout   |  17 +
+ .../validation/frontend-test-e2e.stderr            |   7 +
+ .../validation/frontend-test-e2e.stdout            |  45 +
+ .../validation/frontend-test.stderr                | 322 +++++++
+ .../validation/frontend-test.stdout                | 948 ++++++++++++++++++++
+ .../validation/live-preview-probe.stderr           |   0
+ .../validation/live-preview-probe.stdout           |   1 +
+ .../validation/live-preview-refresh.stderr         |   0
+ .../validation/live-preview-refresh.stdout         |  10 +
+ .../validation/live-preview.pid                    |   1 +
+ .../pre-implementation-console-scan.stderr         |   0
+ .../pre-implementation-console-scan.stdout         |  61 ++
+ .../validation/root-build.stderr                   |  15 +
+ .../validation/root-build.stdout                   |   8 +
+ .../validation/root-lint.stderr                    |   0
+ .../validation/root-lint.stdout                    |  25 +
+ .../validation/root-test-architecture.stderr       |   0
+ .../validation/root-test-architecture.stdout       |  21 +
+ .../validation/root-test-e2e.stderr                |   7 +
+ .../validation/root-test-e2e.stdout                |  49 ++
+ .../validation/root-test.stderr                    | 322 +++++++
+ .../validation/root-test.stdout                    | 952 +++++++++++++++++++++
+ ...static-deletion-preservation-and-hygiene.stderr |   0
+ ...static-deletion-preservation-and-hygiene.stdout |   1 +
+ frontend/src/commands/operations/paper/README.md   |  12 -
+ .../processTree/ToggleEncapsulationOp.ts           |   2 -
+ .../operations/processTree/ToggleOutputOp.ts       |   2 -
+ frontend/src/commands/operations/toolbar/README.md |  12 -
+ .../commands/operations/world/RemoveElementOps.ts  |   2 -
+ .../operations/world/UpdateElementStyleOp.ts       |   3 -
+ frontend/src/domain/world/Guide.ts                 |   5 -
+ frontend/src/domain/world/HingeLine.ts             |  19 -
+ frontend/src/services/GoogleDriveService.ts        |  27 +-
+ frontend/src/utils/projectionPlaneUtils.ts         |  22 -
+ frontend/src/utils/rectangleGrid.ts                |  45 -
+ .../unit/architecture/importBoundaries.spec.ts     |  28 +-
+ 50 files changed, 3593 insertions(+), 152 deletions(-)
