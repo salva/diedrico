@@ -86,6 +86,7 @@ Only if review decides the examples menu is a real user-facing feature worth ret
 - Add `frontend/src/application/examples/ExampleSetupUseCases.ts` or similar to own `Command`, `CommandStack`, and `AddExampleSetupOp` construction.
 - Change `ExamplesMenu.vue` to emit/select example setup intents and call the application use case through a typed injection/prop; it must not import command/operation classes or inject raw `CommandStack`.
 - Keep `AddExampleSetupOp` only if it remains an application-owned implementation detail. Otherwise delete it.
+- Add focused tests/static scans proving `ExamplesMenu.vue` no longer imports command/operation/CommandStack symbols; if this cannot be done narrowly, fall back to Option A deletion rather than allowlisting.
 - Focused validation must include a component/use-case test proving the menu no longer imports command surfaces plus the strict UI architecture gate.
 
 ### Package/script/config changes
