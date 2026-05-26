@@ -1,0 +1,13 @@
+ M architecture-audit/cycle-010-backend-frontend-project-contract/validation/live-preview-refresh.stdout
+?? .saivage/stages/cycle-010-validation-and-preview-refresh/tasks.json
+?? architecture-audit/cycle-010-backend-frontend-project-contract/reviews/
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/reviewer-followup-git-show.stderr
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/reviewer-followup-git-show.stdout
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/reviewer-followup-rg.stderr
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/reviewer-followup-rg.stdout
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/reviewer-git-show.stderr
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/reviewer-git-show.stdout
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/reviewer-targeted-rg.stderr
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/reviewer-targeted-rg.stdout
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/t1-retry-focused-status.stderr
+?? architecture-audit/cycle-010-backend-frontend-project-contract/validation/t1-retry-focused-status.stdout
