@@ -1,0 +1,3 @@
+== ExamplesMenu/AddExampleSetupOp scan ==
+frontend/tests/unit/architecture/importBoundaries.spec.ts:64:    expect(findContentMatches(files, /ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
+== backend workspace/config term scan in package scripts/playwright config ==

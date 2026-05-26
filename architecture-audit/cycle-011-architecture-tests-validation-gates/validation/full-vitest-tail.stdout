@@ -1,0 +1,49 @@
+== root-test failure summary ==
+ ❯ tests/unit/calculations/intersections.spec.ts  (44 tests | 10 failed) 136ms
+     → expected undefined to be close to 3, received difference is NaN, but expected 5e-7
+     → expected undefined to be close to 2, received difference is NaN, but expected 5e-7
+     → expected Point2DRealization2D{ …(2) } to be null
+     → expected Point2DRealization2D{ …(2) } to be null
+     → expected Point2DRealization2D{ …(2) } to be null
+     → expected Point2DRealization2D{ …(2) } to be null
+     → expected undefined to be close to 4, received difference is NaN, but expected 5e-7
+     → expected undefined to be 1 // Object.is equality
+     → expected undefined to be close to +0, received difference is NaN, but expected 5e-7
+     → expected undefined to be close to -5, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/components/propertiesDialog.spec.ts  (18 tests | 5 failed) 647ms
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+ Test Files  3 failed | 100 passed | 1 skipped (104)
+      Tests  15 failed | 1198 passed | 45 skipped | 11 todo (1269)
+
+== frontend-test failure summary ==
+ ❯ tests/unit/calculations/intersections.spec.ts  (44 tests | 10 failed) 49ms
+     → expected undefined to be close to 3, received difference is NaN, but expected 5e-7
+     → expected undefined to be close to 2, received difference is NaN, but expected 5e-7
+     → expected Point2DRealization2D{ …(2) } to be null
+     → expected Point2DRealization2D{ …(2) } to be null
+     → expected Point2DRealization2D{ …(2) } to be null
+     → expected Point2DRealization2D{ …(2) } to be null
+     → expected undefined to be close to 4, received difference is NaN, but expected 5e-7
+     → expected undefined to be 1 // Object.is equality
+     → expected undefined to be close to +0, received difference is NaN, but expected 5e-7
+     → expected undefined to be close to -5, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/components/propertiesDialog.spec.ts  (18 tests | 5 failed) 776ms
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+ Test Files  3 failed | 100 passed | 1 skipped (104)
+      Tests  15 failed | 1198 passed | 45 skipped | 11 todo (1269)

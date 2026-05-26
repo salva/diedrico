@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:3:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  1 passed (5.1s)
+FOCUSED_PLAYWRIGHT_WAVE010_EXIT=0

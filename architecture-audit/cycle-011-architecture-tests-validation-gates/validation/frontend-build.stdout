@@ -1,0 +1,5 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+FRONTEND_BUILD_EXIT=1

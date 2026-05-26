@@ -1,0 +1,12 @@
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (3 tests) 5ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 11ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  09:20:40
+   Duration  1.72s (transform 464ms, setup 0ms, collect 630ms, tests 16ms, environment 1.30s, prepare 250ms)
+
+FOCUSED_APP_SHELL_EXIT=0

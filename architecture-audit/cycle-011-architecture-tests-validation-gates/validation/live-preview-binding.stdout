@@ -1,0 +1,16 @@
+== process ==
+    PID CMD
+ 390479 npm run dev --host 0.0.0.0
+== listening sockets ==
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=390493,fd=22))
+== refresh stdout tail ==
+
+> diedrico-frontend@0.1.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v5.4.21  ready in 397 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.0.3.113:5173/
+== refresh stderr tail ==
