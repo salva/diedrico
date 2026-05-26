@@ -1,0 +1,160 @@
+ ❯ tests/unit/stores/viewStore.spec.ts  (23 tests | 2 failed) 109ms
+   ❯ tests/unit/stores/viewStore.spec.ts > viewStore > Initial State > should provide viewport state object
+     → expected { zoom: 1, panX: +0, panY: +0, …(2) } to deeply equal { zoom: 1, panX: +0, panY: +0, …(2) }
+   ❯ tests/unit/stores/viewStore.spec.ts > viewStore > Integration Scenarios > should handle combined zoom and pan
+     → expected { zoom: 2, panX: 100, panY: 100, …(2) } to deeply equal { zoom: 2, panX: 100, panY: 100, …(2) }
+ ✓ tests/unit/coordinateTransform.spec.ts  (6 tests) 13ms
+ ✓ tests/unit/domain/element2dRealization.spec.ts  (14 tests) 11ms
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (5 tests) 49ms
+ ✓ tests/unit/commands.spec.ts  (12 tests) 30ms
+ ✓ tests/unit/domain/labelGenerator.spec.ts  (20 tests) 45ms
+ ✓ tests/unit/application/panelToolbarIntentControllers.spec.ts  (5 tests) 60ms
+stdout | tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > executes process-history mutations through use cases with undo/redo stack effects
+[ProcessTree.toggleSubprocessEncapsulation] subprocessId: node1779820097698njq8ppy0f, true → false
+[ProcessTree.toggleOutput] subprocess node1779820097698njq8ppy0f, true → false
+
+ ✓ tests/unit/utils/threeUtils.spec.ts  (13 tests) 26ms
+ ✓ tests/unit/commands/createGuide.spec.ts  (4 tests) 91ms
+ ✓ tests/unit/domain/segment.spec.ts  (10 tests) 80ms
+ ✓ tests/unit/composables/hoverHighlight.spec.ts  (11 tests) 27ms
+ ✓ tests/unit/commands/createCircle.spec.ts  (4 tests) 42ms
+ ✓ tests/unit/commands/createFreePoint.spec.ts  (8 tests | 2 skipped) 83ms
+ ✓ tests/unit/stores/toolStore.spec.ts  (15 tests) 78ms
+ ✓ tests/unit/calculations/perpendiculars.spec.ts  (12 tests) 13ms
+ ✓ tests/unit/utils/formatUtils.spec.ts  (21 tests) 230ms
+ ✓ tests/unit/commands/createLine.spec.ts  (4 tests) 57ms
+ ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 13ms
+ ✓ tests/unit/commands/createSegment.spec.ts  (4 tests) 29ms
+ ✓ tests/integration/guide-creation.test.ts  (2 tests) 19ms
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+ ✓ tests/unit/stores/processTreeStore.spec.ts  (13 tests) 18ms
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (7 tests) 18ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 34ms
+ ✓ tests/unit/commands/viewStateOperations.spec.ts  (4 tests) 11ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 66ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 17ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 72ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 42ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 26ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 40ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 225ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 58ms
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (3 tests) 9ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 26ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (2 tests) 53ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 30ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 74ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 67ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 56ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 12ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 15ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 282ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 3ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 26ms
+
+ Test Files  2 failed | 102 passed | 1 skipped (105)
+      Tests  3 failed | 1222 passed | 45 skipped | 11 todo (1281)
+   Start at  18:27:40
+   Duration  56.53s (transform 17.55s, setup 31ms, collect 76.39s, tests 8.53s, environment 194.36s, prepare 38.46s)
+
+-   "strokeWidth": 2,
+  }
+
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:213:40
+    211|     expect(result.parameters.elementId).toBe('point1');
+    212|     expect(result.parameters.planeId).toBe('projPlaneH');
+    213|     expect(result.parameters.newStyle).toEqual({ color: '#FF0000', str…
+       |                                        ^
+    214|   });
+    215| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/unit/stores/viewStore.spec.ts > viewStore > Initial State > should provide viewport state object
+AssertionError: expected { zoom: 1, panX: +0, panY: +0, …(2) } to deeply equal { zoom: 1, panX: +0, panY: +0, …(2) }
+
+- Expected
++ Received
+
+  Object {
+    "gridVisible": true,
+    "panX": 0,
+    "panY": 0,
+    "threeViewOptions": Object {
+      "show2DElementsOnPlanes": false,
+      "showGrid": true,
+      "showLinkingVisuals": false,
+      "showPlanes": true,
++     "showReferenceAxes": true,
+    },
+    "zoom": 1,
+  }
+
+ ❯ tests/unit/stores/viewStore.spec.ts:29:21
+     27|     it('should provide viewport state object', () => {
+     28|       const state = viewStore.viewportState.value;
+     29|       expect(state).toEqual({
+       |                     ^
+     30|         zoom: 1.0,
+     31|         panX: 0,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/unit/stores/viewStore.spec.ts > viewStore > Integration Scenarios > should handle combined zoom and pan
+AssertionError: expected { zoom: 2, panX: 100, panY: 100, …(2) } to deeply equal { zoom: 2, panX: 100, panY: 100, …(2) }
+
+- Expected
++ Received
+
+  Object {
+    "gridVisible": true,
+    "panX": 100,
+    "panY": 100,
+    "threeViewOptions": Object {
+      "show2DElementsOnPlanes": false,
+      "showGrid": true,
+      "showLinkingVisuals": false,
+      "showPlanes": true,
++     "showReferenceAxes": true,
+    },
+    "zoom": 2,
+  }
+
+ ❯ tests/unit/stores/viewStore.spec.ts:207:45
+    205|       viewStore.setPan(100, 100);
+    206|       
+    207|       expect(viewStore.viewportState.value).toEqual({
+       |                                             ^
+    208|         zoom: 2.0,
+    209|         panX: 100,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

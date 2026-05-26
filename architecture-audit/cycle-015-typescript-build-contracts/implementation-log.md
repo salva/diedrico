@@ -282,3 +282,74 @@ The UI/store/render DTO lane is closed in the current build output. Full Wave 01
 - `frontend/src/services/ProjectService.ts`: `record.nextElementId` possibly undefined after validation narrowing.
 
 The known stale `frontend/tests/unit/stores/viewStore.spec.ts` expectations around `threeViewOptions.showReferenceAxes` remain outside this lane and were already observed in the prior process/view-state stage. Completed projection/world, command/factory, and process/view-state lanes were preserved; no deleted legacy source module, package file, tooling file, fixture, or broad renderer extraction was introduced.
+
+## t2 UI/store/render DTO lane — validation/log finalization after reviewer blockers
+
+Task `t2-correct-validation-log-finalization` addressed the `t9-review-stage` blockers by adding the missing validation evidence where commands are defined, recording exact stop conditions where validation cannot pass in the current tree, and making the UI/store/render DTO lane finalization explicit as a stage-scoped section. No production source, tests, package/tooling, service/domain strictness files, Google Drive files, ProjectService files, projection/world files, command/factory files, or process/view-state operation files were edited by this correction.
+
+### Stage-scoped fixed/deleted status for cited UI/store/render owners
+
+- `frontend/src/components/dialogs/NewProjectDialog.vue`: fixed. The stale direct `projectService` singleton import/use remains deleted; the dialog is a UI event source and does not repair broad ProjectService strictness.
+- `frontend/src/components/dialogs/PropertiesDialog.vue`: fixed. Stale `Point2D.type`/dependency-shape reads were replaced in the UI lane; Wave 014 close/save emit behavior remains preserved.
+- `frontend/src/components/panels/ActionsPanel.vue`: fixed. Selection highlighting consumes current process-tree action-node ids and public dependency-service access; no private `dependencyService` read or stale `Action.id` restoration remains.
+- `frontend/src/components/panels/ElementTypeGroup.vue` and `frontend/src/components/panels/ElementsPanel.vue`: fixed/deleted stale assumptions. Unused count/import/constructor assumptions and wrong `Element2D` import path remain deleted.
+- `frontend/src/components/panels/ProcessTreeNode.vue`: fixed/deleted stale assumptions. Obsolete action `inputs`/`outputs` UI details and unused formatting helpers remain deleted; subprocess name reads are discriminator-guarded.
+- `frontend/src/components/toolbars/PlaneSelector.vue`: fixed. World access and focused-plane keyboard selection are guarded through the current store/view contracts rather than hidden by non-null assertions.
+- `frontend/src/components/workspace/SvgCanvas.vue`: fixed. Hover temporary reads, removed `getArc`, active-plane guards, primitive DTO field reads, and the local tool-status guard remain aligned to current render/hover DTOs.
+- Direct owner dependency `frontend/src/domain/processTree/ProcessTree.ts`: fixed. `getAllActions()` advertises the action-node ids it already returns at runtime for `ActionsPanel`; no process-tree redesign was introduced.
+- Direct owner dependencies `frontend/src/composables/useHoverHighlight.ts`, `frontend/src/stores/processStore.ts`, and `frontend/src/stores/viewStore.ts`: no edits were required in the UI lane; final build evidence below contains no errors from these files.
+
+No legacy source module, test fixture, package script, or documentation file was deleted by this finalization correction. The deleted legacy surfaces in this lane are stale reads/imports/UI details only, as listed above.
+
+### Added validation evidence for reviewer blocker 1
+
+Script discovery / undefined command documentation:
+
+- `t2-ui-finalization-script-discovery.stdout` / `.stderr`: root scripts are `build`, `dev`, `dev:frontend`, `docs:*`, `lint`, `test`, `test:architecture`, `test:e2e`, and `test:frontend`; frontend scripts are `build`, `dev`, `lint`, `preview`, `test`, `test:architecture`, `test:e2e`, `test:e2e:headed`, `test:ui`, and `test:watch`; `backend/package.json` is missing, so there is no backend workspace lint/build/test/e2e command to run for this frontend-only lane.
+
+Lint:
+
+- `t2-ui-finalization-root-lint.stdout` / `.stderr`: `npm run lint` passed. It delegates to frontend architecture tests; 4 files / 11 tests passed.
+- `t2-ui-finalization-frontend-lint.stdout` / `.stderr`: `npm run lint --workspace=frontend` passed. It ran the same architecture tests; 4 files / 11 tests passed.
+
+Focused UI/store/render tests from the original UI lane remain the behavior evidence for the changed owners:
+
+- `ui-store-render-focused-tests-rerun.stdout` / `.stderr`: `npm run test --workspace=frontend -- --run tests/unit/processTree.spec.ts tests/unit/commands/viewStateOperations.spec.ts` passed, 2 files / 19 tests. This covers the process-tree/action-node owner dependency and preserves the view-state operation contract the UI lane consumed.
+- `ui-store-render-focused-tests.stdout` / `.stderr`: the broader attempted focused run including `tests/unit/stores/viewStore.spec.ts` still failed only on the pre-existing `threeViewOptions.showReferenceAxes` fixture drift, already categorized before this correction.
+
+Full Vitest:
+
+- `t2-ui-finalization-frontend-full-vitest.stdout` / `.stderr` and summary `t2-ui-finalization-frontend-full-vitest-summary.stdout` / `.stderr`: `npm run test --workspace=frontend` ran the full frontend Vitest suite. It failed on known non-UI-lane residuals: `tests/unit/services/ProjectService.roundTrip.spec.ts` style payload expectation drift and two `tests/unit/stores/viewStore.spec.ts` expectations missing `threeViewOptions.showReferenceAxes`. Summary: 2 failed files, 102 passed files, 1 skipped file; 3 failed tests, 1222 passed, 45 skipped, 11 todo.
+- `t2-ui-finalization-root-full-vitest.stdout` / `.stderr` and summary `t2-ui-finalization-root-full-vitest-summary.stdout` / `.stderr`: `npm run test` delegates to the same frontend Vitest suite and failed on the same three known residual tests. This is a validation stop condition for full-wave closure, not evidence of remaining cited UI/store/render TypeScript errors.
+
+Build:
+
+- `t2-ui-finalization-frontend-build.stdout` / `.stderr`: `npm run build --workspace=frontend` remains red only on non-UI service/domain strictness categories: `CoordinateTransform.ts` stale `Plane3DCoordinateSystem` import, `GeometryService.ts` stale `lineLineIntersection` import and `Ok<unknown>` result typing, nullable string strictness in `GoogleDriveService.ts`, and `ProjectService.ts` possible undefined `record.nextElementId`. No errors from `NewProjectDialog.vue`, `PropertiesDialog.vue`, `ActionsPanel.vue`, `ElementTypeGroup.vue`, `ElementsPanel.vue`, `ProcessTreeNode.vue`, `PlaneSelector.vue`, `SvgCanvas.vue`, `useHoverHighlight.ts`, `processStore.ts`, or `viewStore.ts` are present.
+- `t2-ui-finalization-root-build.stdout` / `.stderr`: `npm run build` delegates to the frontend build and fails on the same out-of-scope service/domain strictness categories. This lane still does not claim full Wave 015 completion.
+
+E2E / Playwright:
+
+- `t2-ui-finalization-frontend-e2e.stdout` / `.stderr` and summary `t2-ui-finalization-frontend-e2e-summary.stdout` / `.stderr`: `npm run test:e2e --workspace=frontend` started the Playwright web server and Vite reported `http://localhost:5173/`, then the suite failed because the Playwright Chromium executable is missing at `/home/salva/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`. The failure recommends `npx playwright install`. Summary tail reports 1 passed, 5 skipped, many chromium tests unable to launch.
+- `t2-ui-finalization-root-e2e.stdout` / `.stderr` and summary `t2-ui-finalization-root-e2e-summary.stdout` / `.stderr`: `npm run test:e2e` delegates to frontend e2e and failed for the same missing Playwright browser executable. This is an environment/tooling stop condition; this correction did not alter package/tooling or install browsers because that is outside the requested log/validation-finalization task.
+
+Live preview / reachability:
+
+- `t2-ui-finalization-preview-probe.stdout` / `.stderr`: probed `http://127.0.0.1:5173/` and `http://127.0.0.1:4173/` after the e2e command exited. Neither endpoint was reachable. Playwright had launched a temporary Vite server on `localhost:5173` during the e2e run, but it was not a persistent preview and was not bound to `0.0.0.0`. Because the frontend build remains red on out-of-scope service/domain strictness categories and the finalization task is not the validation-and-preview-refresh stage, no successful live-preview refresh is claimed here.
+
+### Protected-surface and forbidden-repair checks
+
+- The UI/store/render finalization correction changed only `architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md` and validation evidence files under `architecture-audit/cycle-015-typescript-build-contracts/validation/`.
+- No `@ts-ignore`, `@ts-expect-error`, broad cast, compatibility shim, stale domain field restoration, non-null assertion hiding invalid state, alternate build path, or package/tooling change was introduced by this correction.
+- Prior protected lanes remain preserved: projection/world, command/factory, and process/view-state operation source files were not edited; the UI lane source files from `t1-close-ui-store-render-dto-errors` were not reopened.
+- Forbidden secret paths were not read; this correction used package scripts, validation logs, reviewer/task reports, and public source/audit artifacts only.
+
+### Residual service/domain and validation stop conditions
+
+The UI/store/render DTO TypeScript category remains closed in current build output, but the stage still must not claim full Wave 015 completion. Remaining blockers are outside this lane:
+
+- Service/domain build strictness: `frontend/src/domain/calculations/CoordinateTransform.ts`, `frontend/src/services/GeometryService.ts`, `frontend/src/services/GoogleDriveService.ts`, and `frontend/src/services/ProjectService.ts`.
+- Full Vitest residuals: `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts` style payload expectation drift and `frontend/tests/unit/stores/viewStore.spec.ts` `threeViewOptions.showReferenceAxes` fixture drift.
+- Playwright/e2e environment: missing Chromium browser executable; install/repair browser cache before expecting e2e pass.
+- Persistent live preview: not refreshed successfully in this correction; the only observed server was Playwright's temporary localhost Vite web server, and post-run probes to 5173/4173 failed.
+
+These stop conditions are now explicit for reviewer consumption. The corrected log satisfies the stage-scoped UI/store/render DTO finalization requirement without broadening the implementation into forbidden service/domain, tooling, or preview-management repairs.

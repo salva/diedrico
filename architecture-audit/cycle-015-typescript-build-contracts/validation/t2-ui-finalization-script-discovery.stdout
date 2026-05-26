@@ -1,0 +1,3 @@
+package.json build, dev, dev:frontend, docs:build, docs:dev, docs:preview, lint, test, test:architecture, test:e2e, test:frontend
+frontend/package.json build, dev, lint, preview, test, test:architecture, test:e2e, test:e2e:headed, test:ui, test:watch
+backend/package.json MISSING

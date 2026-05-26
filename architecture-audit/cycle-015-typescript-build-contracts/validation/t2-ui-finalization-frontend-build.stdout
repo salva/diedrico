@@ -1,0 +1,14 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/domain/calculations/CoordinateTransform.ts(18,15): error TS2305: Module '"../world/Plane"' has no exported member 'Plane3DCoordinateSystem'.
+src/services/GeometryService.ts(4,3): error TS2305: Module '"../domain/calculations/Intersections"' has no exported member 'lineLineIntersection'.
+src/services/GeometryService.ts(34,9): error TS2322: Type 'Ok<unknown>' is not assignable to type 'Result<{ x: number; y: number; } | null, string>'.
+  Type 'Ok<unknown>' is not assignable to type 'Ok<{ x: number; y: number; } | null>'.
+    Type 'unknown' is not assignable to type '{ x: number; y: number; } | null'.
+src/services/GoogleDriveService.ts(154,34): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/GoogleDriveService.ts(190,34): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/ProjectService.ts(93,52): error TS18048: 'record.nextElementId' is possibly 'undefined'.

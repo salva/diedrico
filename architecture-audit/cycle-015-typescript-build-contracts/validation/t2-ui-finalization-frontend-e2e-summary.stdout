@@ -1,0 +1,107 @@
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:133:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling on correct plane (H ↔ V mapping) 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:163:3 › HalfHingeLine2D Intersection - Sibling Points › should preserve sibling coordinates (HHL coordinate consistency) 
+    [chromium] › tests/e2e/hover.spec.ts:9:3 › Hover Highlighting › should show tooltip when hovering over a point 
+    [chromium] › tests/e2e/hover.spec.ts:33:3 › Hover Highlighting › should clear tooltip when mouse leaves element 
+    [chromium] › tests/e2e/hover.spec.ts:56:3 › Hover Highlighting › should apply hover highlight to hovered element 
+    [chromium] › tests/e2e/hover.spec.ts:86:3 › Hover Highlighting › should distinguish hover from selection highlight 
+    [chromium] › tests/e2e/hover.spec.ts:111:3 › Hover Highlighting › should show hover tooltip for different element types 
+    [chromium] › tests/e2e/hover.spec.ts:147:3 › Hover Highlighting › selection highlight should take precedence over hover 
+    [chromium] › tests/e2e/infeasibility.spec.ts:24:3 › Infeasibility Detection and Rendering › should mark infeasible segment and render it in red dashed style 
+    [chromium] › tests/e2e/infeasibility.spec.ts:56:3 › Infeasibility Detection and Rendering › should propagate infeasibility to dependent elements 
+    [chromium] › tests/e2e/infeasibility.spec.ts:87:3 › Infeasibility Detection and Rendering › should show infeasibility reason in action panel 
+    [chromium] › tests/e2e/infeasibility.spec.ts:108:3 › Infeasibility Detection and Rendering › should clear infeasibility when constraint is satisfied 
+    [chromium] › tests/e2e/infeasibility.spec.ts:132:3 › Infeasibility Detection and Rendering › should not affect independent branches when one becomes infeasible 
+    [chromium] › tests/e2e/infeasibility.spec.ts:162:3 › Infeasibility Detection and Rendering › should handle infeasibility during rapid updates 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:25:3 › Intersection Point Creation › should create intersection point between two lines 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:67:3 › Intersection Point Creation › should show error for parallel lines 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:95:3 › Intersection Point Creation › should undo intersection point creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:120:3 › Intersection Point Creation › should redo intersection point creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:144:3 › Intersection Point Creation › should support keyboard shortcut for undo (Ctrl+Z) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:167:3 › Intersection Point Creation › should support keyboard shortcut for redo (Ctrl+Shift+Z) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:189:3 › Intersection Point Creation › should create multiple intersections on different line pairs 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:225:3 › Intersection Point Creation › should handle clicking same line twice (error case) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:243:3 › Intersection Point Creation › should highlight selected line before second click 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:268:3 › Intersection Point Creation › should change cursor on hover over line 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:289:3 › Intersection Point Creation › should create intersection point between line and circle - secant 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:333:3 › Intersection Point Creation › should create intersection point between line and circle - tangent 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:358:3 › Intersection Point Creation › should select nearest intersection when multiple exist (circle-circle) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:397:3 › Intersection Point Creation › should create intersection between two circles - secant 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:421:3 › Intersection Point Creation › should undo line-circle intersection creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:446:3 › Intersection Point Creation › should handle no intersection case (line too far from circle) 
+    [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons 
+    [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow 
+    [chromium] › tests/e2e/line-creation.spec.ts:24:3 › Line Creation › should create line between two clicked points 
+    [chromium] › tests/e2e/line-creation.spec.ts:64:3 › Line Creation › should snap to nearby points when creating line 
+    [chromium] › tests/e2e/line-creation.spec.ts:85:3 › Line Creation › should create multiple lines 
+    [chromium] › tests/e2e/line-creation.spec.ts:111:3 › Line Creation › should highlight points on hover during line creation 
+    [chromium] › tests/e2e/line-creation.spec.ts:136:3 › Line Creation › should switch from Point tool to Line tool 
+    [chromium] › tests/e2e/navigation.spec.ts:24:3 › Navigation and Tool Interaction › should pan viewport without canceling active tool 
+    [chromium] › tests/e2e/navigation.spec.ts:51:3 › Navigation and Tool Interaction › should zoom viewport without canceling active tool 
+    [chromium] › tests/e2e/navigation.spec.ts:78:3 › Navigation and Tool Interaction › should maintain viewport state during tool usage 
+    [chromium] › tests/e2e/navigation.spec.ts:100:3 › Navigation and Tool Interaction › should support keyboard navigation shortcuts 
+    [chromium] › tests/e2e/navigation.spec.ts:128:3 › Navigation and Tool Interaction › should support mouse navigation controls 
+    [chromium] › tests/e2e/navigation.spec.ts:155:3 › Navigation and Tool Interaction › should perform pan/zoom with acceptable performance (SC-002) 
+    [chromium] › tests/e2e/navigation.spec.ts:188:3 › Navigation and Tool Interaction › should preserve tool preview during navigation 
+    [chromium] › tests/e2e/navigation.spec.ts:219:3 › Navigation and Tool Interaction › should handle touch gestures for navigation on mobile 
+    [chromium] › tests/e2e/parametric-update.spec.ts:24:3 › Parametric Update and Recomputation › should update segment when endpoint is moved 
+    [chromium] › tests/e2e/parametric-update.spec.ts:53:3 › Parametric Update and Recomputation › should propagate changes through dependency chain 
+    [chromium] › tests/e2e/parametric-update.spec.ts:84:3 › Parametric Update and Recomputation › should handle circular dependencies gracefully 
+    [chromium] › tests/e2e/parametric-update.spec.ts:105:3 › Parametric Update and Recomputation › should recompute only affected elements 
+    [chromium] › tests/e2e/parametric-update.spec.ts:128:3 › Parametric Update and Recomputation › should handle rapid updates without lag 
+    [chromium] › tests/e2e/point-transport.spec.ts:24:3 › Point Transport › should transport point between planes via guide 
+    [chromium] › tests/e2e/point-transport.spec.ts:43:3 › Point Transport › should handle invalid transport selection gracefully 
+    [chromium] › tests/e2e/point-transport.spec.ts:55:3 › Point Transport › should undo transport operation 
+    [chromium] › tests/e2e/properties.spec.ts:23:3 › Properties Dialog › should open properties dialog on double-click 
+    [chromium] › tests/e2e/properties.spec.ts:39:3 › Properties Dialog › should display geometry info for point element 
+    [chromium] › tests/e2e/properties.spec.ts:57:3 › Properties Dialog › should allow editing color property 
+    [chromium] › tests/e2e/properties.spec.ts:81:3 › Properties Dialog › should validate invalid hex color 
+    [chromium] › tests/e2e/properties.spec.ts:107:3 › Properties Dialog › should validate line width range 
+    [chromium] › tests/e2e/properties.spec.ts:138:3 › Properties Dialog › should reset properties to default 
+    [chromium] › tests/e2e/properties.spec.ts:164:3 › Properties Dialog › should close dialog on cancel 
+    [chromium] › tests/e2e/properties.spec.ts:187:3 › Properties Dialog › should close dialog on overlay click 
+    [chromium] › tests/e2e/properties.spec.ts:204:3 › Properties Dialog › should show different properties for different element types 
+    [chromium] › tests/e2e/properties.spec.ts:235:3 › Properties Dialog › should allow multiple override properties 
+    [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation 
+    [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks 
+    [chromium] › tests/e2e/selection.spec.ts:45:3 › Object Selection › should select single element on click 
+    [chromium] › tests/e2e/selection.spec.ts:63:3 › Object Selection › should replace selection when clicking different element 
+    [chromium] › tests/e2e/selection.spec.ts:79:3 › Object Selection › should add to selection with Shift+click (multi-select) 
+    [chromium] › tests/e2e/selection.spec.ts:98:3 › Object Selection › should add multiple elements to selection with repeated Shift+click 
+    [chromium] › tests/e2e/selection.spec.ts:124:3 › Object Selection › should clear selection when clicking empty space 
+    [chromium] › tests/e2e/selection.spec.ts:144:3 › Object Selection › should show selection highlighting (visual feedback) 
+    [chromium] › tests/e2e/selection.spec.ts:230:3 › Object Selection › should deselect element with Shift+click on already selected element 
+    [chromium] › tests/e2e/selection.spec.ts:285:3 › Object Selection › should not select elements when using drawing tools 
+    [chromium] › tests/e2e/selection.spec.ts:300:3 › Object Selection › should clear selection when switching tools 
+    [chromium] › tests/e2e/selection.spec.ts:320:3 › Object Selection › should handle rapid selection changes 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:49:3 › Undo/Redo › should undo point creation via button 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:87:3 › Undo/Redo › should enable redo after undo ──
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:102:3 › Undo/Redo › should redo point creation via button 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:206:3 › Undo/Redo › should undo/redo line creation 
+    [chromium] › tests/e2e/undo-redo.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point 
+    [chromium] › tests/e2e/undo-redo.spec.ts:49:3 › Undo/Redo › should undo point creation via button 
+    [chromium] › tests/e2e/undo-redo.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+    [chromium] › tests/e2e/undo-redo.spec.ts:87:3 › Undo/Redo › should enable redo after undo ──────
+    [chromium] › tests/e2e/undo-redo.spec.ts:102:3 › Undo/Redo › should redo point creation via button 
+    [chromium] › tests/e2e/undo-redo.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+    [chromium] › tests/e2e/undo-redo.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action 
+    [chromium] › tests/e2e/undo-redo.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order 
+    [chromium] › tests/e2e/undo-redo.spec.ts:206:3 › Undo/Redo › should undo/redo line creation ────
+    [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls 
+  5 skipped
+  1 passed (1.2m)
+npm error Lifecycle script `test:e2e` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c playwright test
