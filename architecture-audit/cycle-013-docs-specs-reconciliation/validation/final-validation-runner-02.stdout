@@ -1,0 +1,60 @@
+=== npm-run-docs-build ===
+Command: npm run docs:build
+Started: 2026-05-26T12:25:59+00:00
+Exit: 0
+Completed: 2026-05-26T12:26:04+00:00
+=== npm-run-lint ===
+Command: npm run lint
+Started: 2026-05-26T12:26:04+00:00
+Exit: 1
+Completed: 2026-05-26T12:26:10+00:00
+=== npm-run-lint-workspace-frontend ===
+Command: npm run lint --workspace=frontend
+Started: 2026-05-26T12:26:10+00:00
+Exit: 1
+Completed: 2026-05-26T12:26:14+00:00
+=== npm-run-test-architecture ===
+Command: npm run test:architecture
+Started: 2026-05-26T12:26:14+00:00
+Exit: 1
+Completed: 2026-05-26T12:26:19+00:00
+=== npm-run-test-architecture-workspace-frontend ===
+Command: npm run test:architecture --workspace=frontend
+Started: 2026-05-26T12:26:19+00:00
+Exit: 1
+Completed: 2026-05-26T12:26:23+00:00
+=== npm-run-focused-vitest-command-docs ===
+Command: npm run test --workspace=frontend -- tests/unit/architecture/noCommandSubclasses.spec.ts tests/unit/architecture/importBoundaries.spec.ts
+Started: 2026-05-26T12:26:23+00:00
+Exit: 1
+Completed: 2026-05-26T12:26:27+00:00
+=== npm-run-test ===
+Command: npm run test
+Started: 2026-05-26T12:26:27+00:00
+Exit: 1
+Completed: 2026-05-26T12:26:58+00:00
+=== npm-run-test-workspace-frontend ===
+Command: npm run test --workspace=frontend
+Started: 2026-05-26T12:26:58+00:00
+Exit: 1
+Completed: 2026-05-26T12:27:32+00:00
+=== npm-run-build ===
+Command: npm run build
+Started: 2026-05-26T12:27:32+00:00
+Exit: 1
+Completed: 2026-05-26T12:27:32+00:00
+=== npm-run-build-workspace-frontend ===
+Command: npm run build --workspace=frontend
+Started: 2026-05-26T12:27:32+00:00
+Exit: 1
+Completed: 2026-05-26T12:27:32+00:00
+=== npm-run-test-e2e ===
+Command: npm run test:e2e
+Started: 2026-05-26T12:27:32+00:00
+Exit: 1
+Completed: 2026-05-26T12:27:35+00:00
+=== npm-run-test-e2e-workspace-frontend ===
+Command: npm run test:e2e --workspace=frontend
+Started: 2026-05-26T12:27:35+00:00
+Exit: 1
+Completed: 2026-05-26T12:27:37+00:00

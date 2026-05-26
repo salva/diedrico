@@ -107,5 +107,5 @@ export class Segment2DByPoints extends Line2D {
   }
 }
 
-// Export legacy type alias for backward compatibility during migration
+// Public alias retained for call sites that use the shorter domain name.
 export type Segment2D = Segment2DByPoints;

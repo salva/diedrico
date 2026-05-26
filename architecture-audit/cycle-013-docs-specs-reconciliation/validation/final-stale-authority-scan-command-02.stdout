@@ -1,0 +1,111 @@
+Wave 013 final stale-authority scan
+Timestamp: 2026-05-26T12:25:35+00:00
+Scope: README.md docs/ frontend/src comments/spec references; architecture-audit excluded from pass/fail decisions
+
+[1] Deleted MVP spec path references in active README/docs/frontend/src
+
+[2] Backend/Express/backend project API active-authority candidates
+docs/guide/hinge-lines.md:3:Hinge lines express relationships between projection planes. Guides help transport distances and align projected constructions between planes.
+docs/guide/persistence.md:5:Unsupported schema versions are rejected. Current documentation should not rely on old migration paths or backend project APIs.
+frontend/src/domain/world/Guide.ts:260:   * 3. Express R parametrically: R = Q + d·D (extract scalar d)
+
+[3] Removed command/persistence model candidates
+docs/api/services.md:9:Unsupported schema versions are rejected. There is no active automatic migration framework for old project formats.
+docs/architecture/commands.md:21:There is no active model where tools construct arbitrary command subclasses directly or call an `addAndExecute()` lifecycle from UI code.
+docs/guide/persistence.md:5:Unsupported schema versions are rejected. Current documentation should not rely on old migration paths or backend project APIs.
+frontend/src/commands/factories/CircleSequenceFactory.ts:50:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/CircleSequenceFactory.ts:61:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:12: * - Adds operations via cmd.addAndExecute()
+frontend/src/commands/factories/DeletionSequenceFactory.ts:101:          cmd.addAndExecute(new RemovePoint2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:111:            cmd.addAndExecute(new RemoveSegment2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:113:            cmd.addAndExecute(new RemoveGuide2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:115:            cmd.addAndExecute(new RemoveLine2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:124:          cmd.addAndExecute(new RemoveCircle2DOp(planeId, elementId));
+frontend/src/commands/factories/DeletionSequenceFactory.ts:137:      cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+frontend/src/commands/factories/GuideSequenceFactory.ts:61:    const result = cmd.addAndExecute(
+frontend/src/commands/factories/GuideSequenceFactory.ts:87:    const siblingResult = cmd.addAndExecute(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:51:  cmd.addAndExecute(hingeLineOp);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:54:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:62:  cmd.addAndExecute(hhl1Op);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:63:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:70:  cmd.addAndExecute(hhl2Op);
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:71:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:48:  cmd.addAndExecute(planeHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:51:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:63:  cmd.addAndExecute(planeVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:66:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:87:  cmd.addAndExecute(projPlaneHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:90:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:110:  cmd.addAndExecute(projPlaneVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:113:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:122:  cmd.addAndExecute(originHOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:124:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:130:  cmd.addAndExecute(originVOp);
+frontend/src/commands/factories/InitializationSequenceFactory.ts:131:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:95:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:108:          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:145:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:158:          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:195:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:212:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:233:        const siblingResult = cmd.addAndExecute(
+frontend/src/commands/factories/LineSequenceFactory.ts:77:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:88:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:111:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:122:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:145:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:156:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:180:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/LineSequenceFactory.ts:208:    const result = cmd.addAndExecute(operation);
+frontend/src/commands/factories/PointSequenceFactory.ts:42:    const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
+frontend/src/commands/factories/PointSequenceFactory.ts:48:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/Command.ts:28: *    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
+frontend/src/commands/Command.ts:29: *    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
+frontend/src/commands/Command.ts:30: *    cmd.addAndExecute(new AddSegment2DOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+frontend/src/commands/Command.ts:42: * - Commands add operations with `cmd.addAndExecute(operation)`
+frontend/src/commands/Command.ts:160:  addAndExecute(operation: IOperation): OperationResult {
+frontend/src/commands/Command.ts:211:    // Note: No need to call markDirty() here - it's called after each operation in addAndExecute()
+frontend/src/services/factories/PlaneSequenceFactory.ts:62:    const result = cmd.addAndExecute(new Add3DPlaneOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:76:      cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/services/factories/PlaneSequenceFactory.ts:119:    const result = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:133:    cmd.addAndExecute(new AddProcessTreeActionOp(projPlaneAction, groupId));
+frontend/src/services/factories/PlaneSequenceFactory.ts:138:    const hingeLineResult = cmd.addAndExecute(new AddHingeLineOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:145:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:153:    cmd.addAndExecute(hhl1Op);
+frontend/src/services/factories/PlaneSequenceFactory.ts:155:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:162:    cmd.addAndExecute(hhl2Op);
+frontend/src/services/factories/PlaneSequenceFactory.ts:164:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:176:        cmd.addAndExecute(new UpdateElementStyleOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:217:    const result = cmd.addAndExecute(new AddBrokenHingeLineOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:231:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:238:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:246:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/application/world/initializeWorld.ts:24:  initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+frontend/src/application/world/initializeWorld.ts:28:  initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/world/initializeWorld.ts:32:  initCmd.addAndExecute(new PopSubprocessOp());
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:19:          cmd.addAndExecute(new UpdateFreePoint2DPositionOp(request.planeId, request.pointId, position));
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+frontend/src/application/construction/ConstructionUseCases.ts:40:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/construction/ConstructionUseCases.ts:73:      const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1.id, p2.id));
+frontend/src/application/construction/ConstructionUseCases.ts:74:      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:87:      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:88:      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:111:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(planeId, circle.id, point.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:112:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:119:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(planeId, circle.id, line.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:120:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:126:      const result = cmd.addAndExecute(new Add3DPointOp(p1.id, p2.id, p1.planeId, p2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:127:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:133:      const result = cmd.addAndExecute(new Add3DLineOp(l1.id, l2.id, l1.planeId, l2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:134:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:140:      const result = cmd.addAndExecute(new Add3DSegmentOp(s1.id, s2.id, s1.planeId, s2.planeId));
+frontend/src/application/construction/ConstructionUseCases.ts:141:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:76:      command.addAndExecute(operation);
+
+[4] Placeholder operation/deleted surface candidates
+docs/guide/tools.md:7:A tool may show step feedback while it waits for required picks. Completing a construction records an undoable command when the operation is valid. Quick setup tools are current UI conveniences only when present in the toolbar configuration; deleted placeholder operation families are not part of the current tool model.
+
+[5] test:coverage candidates
+docs/contributing/testing.md:29:There is no current `test:coverage` script.
+
+Interpretation: candidate hits require manual classification; explicit removed-history/negated statements are allowed.

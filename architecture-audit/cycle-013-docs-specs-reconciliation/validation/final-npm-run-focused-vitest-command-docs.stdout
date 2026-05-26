@@ -1,0 +1,17 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/architecture/noCommandSubclasses.spec.ts tests/unit/architecture/importBoundaries.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests | 1 failed) 29ms
+   ❯ tests/unit/architecture/noCommandSubclasses.spec.ts > Architecture: Command Pattern > documents Command as sealed and operation-backed
+     → expected '/**\n * Command - Base class for user…' to contain 'data-model.md'
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 75ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 7 passed (8)
+   Start at  12:26:24
+   Duration  3.15s (transform 1.61s, setup 0ms, collect 4.22s, tests 104ms, environment 1.03s, prepare 270ms)
+

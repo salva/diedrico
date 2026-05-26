@@ -1,0 +1,19 @@
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 20ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 30ms
+ ❯ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests | 1 failed) 37ms
+   ❯ tests/unit/architecture/noCommandSubclasses.spec.ts > Architecture: Command Pattern > documents Command as sealed and operation-backed
+     → expected '/**\n * Command - Base class for user…' to contain 'data-model.md'
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 91ms
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 10 passed (11)
+   Start at  12:26:19
+   Duration  3.41s (transform 1.82s, setup 0ms, collect 9.13s, tests 178ms, environment 2.43s, prepare 466ms)
+

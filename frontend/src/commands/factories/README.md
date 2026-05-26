@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Operation Sequence Factories encapsulate common multi-operation patterns used across tools and command builders. They promote testability, reusability, and maintainability by centralizing complex sequencing logic.
+Operation Sequence Factories encapsulate common multi-operation patterns used across construction use cases and command builders. They promote testability, reusability, and maintainability by centralizing complex sequencing logic.
 
 ## Design Principles
 
@@ -33,26 +33,25 @@ Operation Sequence Factories encapsulate common multi-operation patterns used ac
 
 ## The Open Command Pattern
 
-All factories follow the **Open Command Pattern**:
+Factories that build command sequences receive an open `Command` from an application use case or command builder and append the domain-specific operation sequence to it.
 
 ```typescript
 // Factory signature
 static createSequence(
-  cmd: Command,           // ← Open command object
+  cmd: Command,           // Open command object
   ...parameters: any[],   // Domain-specific parameters
   world: World            // Context for conditional logic
 ): void {
-  // Add operations via cmd.addAndExecute()
-  // Operations execute immediately
+  // Add and execute operations on the open command
   // Handle conditionals based on domain state
   // Return void (operations added to command)
 }
 ```
 
 **Why Open Command?**
-- Tool creates command once, factory adds to it
+- Application use case creates command once, factory adds to it
 - Multiple factories can contribute to same command
-- Tool controls commit/push timing
+- Caller controls commit/push timing through the application command boundary
 - Operations execute immediately (world state updated for subsequent ops)
 
 ## Usage Examples
@@ -60,10 +59,8 @@ static createSequence(
 ### GuideSequenceFactory
 
 ```typescript
-// In GuideTool
 const cmd = new Command('Create guide', world);
 
-// Factory handles: primary guide op + conditional sibling op
 GuideSequenceFactory.createGuideWithSibling(
   cmd,
   planeId,
@@ -72,7 +69,6 @@ GuideSequenceFactory.createGuideWithSibling(
   world
 );
 
-// Tool still handles: process tree actions, commit, push, feedback
 cmd.commit();
 commandStack.push(cmd);
 ```
@@ -80,10 +76,8 @@ commandStack.push(cmd);
 ### IntersectionSequenceFactory
 
 ```typescript
-// In IntersectionTool
 const cmd = new Command('Create intersection', world);
 
-// Factory handles: type detection + correct op dispatch + conditional sibling
 IntersectionSequenceFactory.createIntersection(
   cmd,
   planeId,
@@ -100,10 +94,8 @@ commandStack.push(cmd);
 ### DeletionSequenceFactory
 
 ```typescript
-// In App.vue
 const cmd = new Command('Delete elements', world);
 
-// Factory handles: topological sort + type-specific RemoveOps + process tree cleanup
 DeletionSequenceFactory.createCascadeDeletion(
   cmd,
   selectedIds,
@@ -118,7 +110,7 @@ commandStack.push(cmd);
 ## Architecture
 
 ```
-Tool (UI interaction)
+Application use case / command builder
   ↓
 Factory (sequencing logic)
   ↓
@@ -128,7 +120,7 @@ Domain (world state)
 ```
 
 **Responsibilities**:
-- **Tool**: Mouse input, user feedback, command creation, commit/push
+- **Application use case / command builder**: Command lifecycle, commit/push, user-intent orchestration
 - **Factory**: Determine operation sequence, handle conditionals, add operations
 - **Operation**: Single atomic change, serializable, undo/redo
 - **Domain**: Maintain world state, enforce invariants
@@ -144,17 +136,17 @@ describe('GuideSequenceFactory', () => {
   it('creates single operation for non-HHL reference line', () => {
     const cmd = new Command('Test', mockWorld);
     GuideSequenceFactory.createGuideWithSibling(cmd, planeId, lineId, pointId, mockWorld);
-    
-    expect(cmd.operations).toHaveLength(1);
-    expect(cmd.operations[0]).toBeInstanceOf(AddGuide2DPerpendicularToLineOp);
+
+    expect(cmd.getOperations()).toHaveLength(1);
+    expect(cmd.getOperations()[0]).toBeInstanceOf(AddGuide2DPerpendicularToLineOp);
   });
-  
+
   it('creates two operations for HHL reference line', () => {
     const cmd = new Command('Test', mockWorldWithHHL);
     GuideSequenceFactory.createGuideWithSibling(cmd, planeId, hhlId, pointId, mockWorldWithHHL);
-    
-    expect(cmd.operations).toHaveLength(2);
-    expect(cmd.operations[1]).toBeInstanceOf(AddSiblingGuide2DOp);
+
+    expect(cmd.getOperations()).toHaveLength(2);
+    expect(cmd.getOperations()[1]).toBeInstanceOf(AddSiblingGuide2DOp);
   });
 });
 ```
@@ -167,10 +159,10 @@ Test with real World and CommandStack:
 it('guide factory creates both guides when using HHL', () => {
   const world = createTestWorld();
   const cmd = new Command('Create guide', world);
-  
+
   GuideSequenceFactory.createGuideWithSibling(cmd, planeId, hhlId, pointId, world);
   cmd.commit();
-  
+
   const guides = world.getAllGuides();
   expect(guides).toHaveLength(2);
   expect(guides[0].siblingGuideId).toBe(guides[1].id);

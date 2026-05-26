@@ -1,7 +1,7 @@
 /**
  * IOperation - Base interface for atomic, reversible mutations.
  *
- * Operations are the smallest command-sourced domain change. Persistence is owned by
+ * Operations are the smallest command-contained domain change. Persistence is owned by
  * each operation's typed descriptor plus the operation registry; ProjectService must
  * not inspect mutable operation internals or contain operation reconstruction cases.
  */

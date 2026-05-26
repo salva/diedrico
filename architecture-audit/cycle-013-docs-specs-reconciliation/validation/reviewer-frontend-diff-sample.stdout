@@ -1,0 +1,260 @@
+diff --git a/frontend/src/commands/Command.ts b/frontend/src/commands/Command.ts
+index d156995..a0664bd 100644
+--- a/frontend/src/commands/Command.ts
++++ b/frontend/src/commands/Command.ts
+@@ -7 +6,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+diff --git a/frontend/src/commands/CommandStack.ts b/frontend/src/commands/CommandStack.ts
+index 1f7969f..8b0ad2d 100644
+--- a/frontend/src/commands/CommandStack.ts
++++ b/frontend/src/commands/CommandStack.ts
+@@ -8,2 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+- * 
+@@ -11 +9 @@
+- * - execute(): Adds command to undo stack, clears redo stack
++ * - push(): records committed commands and clears redo stack
+@@ -46 +44 @@ export class CommandStack {
+-   * Phase 47: Non-undoable commands (canUndo() === false) are not added to the stack.
++   * Non-undoable commands (canUndo() === false) are not added to the stack.
+@@ -50 +48 @@ export class CommandStack {
+-   * Note: Commands should be built, executed, and committed by tools before pushing
++   * Note: Commands should be built, executed, and committed by application use cases before pushing.
+@@ -58 +56 @@ export class CommandStack {
+-    // Phase 47: Skip non-undoable commands
++    // Skip non-undoable commands
+diff --git a/frontend/src/commands/factories/DeletionSequenceFactory.ts b/frontend/src/commands/factories/DeletionSequenceFactory.ts
+index 57ff7f8..25199ff 100644
+--- a/frontend/src/commands/factories/DeletionSequenceFactory.ts
++++ b/frontend/src/commands/factories/DeletionSequenceFactory.ts
+@@ -19 +18,0 @@
+- * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factory-methods
+diff --git a/frontend/src/commands/factories/HingeLineSequenceFactory.ts b/frontend/src/commands/factories/HingeLineSequenceFactory.ts
+index 1f0bf34..256ad33 100644
+--- a/frontend/src/commands/factories/HingeLineSequenceFactory.ts
++++ b/frontend/src/commands/factories/HingeLineSequenceFactory.ts
+@@ -18 +17,0 @@
+- * @see specs/001-dihedral-learning-mvp/data-model.md#operation-sequence-factories
+diff --git a/frontend/src/commands/factories/IntersectionSequenceFactory.ts b/frontend/src/commands/factories/IntersectionSequenceFactory.ts
+index eae01b9..9d7d9b0 100644
+--- a/frontend/src/commands/factories/IntersectionSequenceFactory.ts
++++ b/frontend/src/commands/factories/IntersectionSequenceFactory.ts
+@@ -42 +41,0 @@
+- * @see specs/001-dihedral-learning-mvp/for-planing.md Phase 74
+diff --git a/frontend/src/commands/factories/ProjectionSetupFactory.ts b/frontend/src/commands/factories/ProjectionSetupFactory.ts
+index eed10f9..c21706a 100644
+--- a/frontend/src/commands/factories/ProjectionSetupFactory.ts
++++ b/frontend/src/commands/factories/ProjectionSetupFactory.ts
+@@ -11 +10,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/example-setups.md
+diff --git a/frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts b/frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
+index 13353fb..c71f186 100644
+--- a/frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
++++ b/frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree Action Registration (Phase 81)
+diff --git a/frontend/src/commands/operations/processTree/PopSubprocessOp.ts b/frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+index 23d1c98..cb232fa 100644
+--- a/frontend/src/commands/operations/processTree/PopSubprocessOp.ts
++++ b/frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+diff --git a/frontend/src/commands/operations/processTree/ProcessTreeOperations.ts b/frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+index a1837a8..938900e 100644
+--- a/frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
++++ b/frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+@@ -9 +8,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30
+diff --git a/frontend/src/commands/operations/processTree/PushSubprocessOp.ts b/frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+index c553d9b..0d1d158 100644
+--- a/frontend/src/commands/operations/processTree/PushSubprocessOp.ts
++++ b/frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree (Phase 85)
+diff --git a/frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts b/frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts
+index bd6acae..45197b3 100644
+--- a/frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts
++++ b/frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts
+@@ -19 +18,0 @@
+- * @see specs/001-dihedral-learning-mvp/spec.md §Phase 101
+diff --git a/frontend/src/commands/operations/world/InitializationOps.ts b/frontend/src/commands/operations/world/InitializationOps.ts
+index 0143667..57f6ef2 100644
+--- a/frontend/src/commands/operations/world/InitializationOps.ts
++++ b/frontend/src/commands/operations/world/InitializationOps.ts
+@@ -17 +16,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §World Initialization
+diff --git a/frontend/src/commands/operations/world/RemoveElementOps.ts b/frontend/src/commands/operations/world/RemoveElementOps.ts
+index 6cd1e29..3894c48 100644
+--- a/frontend/src/commands/operations/world/RemoveElementOps.ts
++++ b/frontend/src/commands/operations/world/RemoveElementOps.ts
+@@ -7 +6,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/tasks.md Phase 30, T286
+diff --git a/frontend/src/commands/operations/world/UpdateElementStyleOp.ts b/frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+index a73ee4c..a3abb5d 100644
+--- a/frontend/src/commands/operations/world/UpdateElementStyleOp.ts
++++ b/frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+@@ -9,2 +8,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Element Properties Dialog
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+diff --git a/frontend/src/components/LoginStatusWidget.vue b/frontend/src/components/LoginStatusWidget.vue
+index 0db2e2d..00cbeaf 100644
+--- a/frontend/src/components/LoginStatusWidget.vue
++++ b/frontend/src/components/LoginStatusWidget.vue
+@@ -7 +6,0 @@
+-  @see specs/001-dihedral-learning-mvp/ui-spec.md - Google Drive Login Status Widget
+diff --git a/frontend/src/components/header/ProjectNameDisplay.vue b/frontend/src/components/header/ProjectNameDisplay.vue
+index f6aa017..23e50dc 100644
+--- a/frontend/src/components/header/ProjectNameDisplay.vue
++++ b/frontend/src/components/header/ProjectNameDisplay.vue
+@@ -55 +55 @@ import { ref, computed, nextTick, watch } from 'vue';
+- * Reference: specs/001-dihedral-learning-mvp/spec.md - Project Name Display and Editing
++ * Emits validated rename requests to the application shell.
+diff --git a/frontend/src/components/toolbars/Toolbar.vue b/frontend/src/components/toolbars/Toolbar.vue
+index 46e634d..4aecdbd 100644
+--- a/frontend/src/components/toolbars/Toolbar.vue
++++ b/frontend/src/components/toolbars/Toolbar.vue
+@@ -142 +141,0 @@ import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
+- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+diff --git a/frontend/src/components/workspace/SvgCanvas.vue b/frontend/src/components/workspace/SvgCanvas.vue
+index ecaeccf..f0011dc 100644
+--- a/frontend/src/components/workspace/SvgCanvas.vue
++++ b/frontend/src/components/workspace/SvgCanvas.vue
+@@ -172 +172 @@
+- * - SVG element (not HTML Canvas) per ui-spec.md
++ * - SVG element, not HTML Canvas
+@@ -174,5 +174,3 @@
+- * - Generic rendering algorithms (no special cases for fixed elements)
+- * - Will support pan/zoom viewport transformations in Phase 6
+- * - Elements rendered using principle-based algorithms (Constitution Principle IV)
+- * 
+- * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
++ * - Generic rendering algorithms, with fixed elements represented by selectors
++ * - Pan/zoom viewport transformations remain view state
++ * - Element drawing policy comes from presentation selectors and SVGRenderer
+@@ -438 +436 @@ const toolFactories: Record<string, () => ITool> = {
+-  // Phase 78: 3D Element Creation Tools
++  // 3D element creation tools
+@@ -443 +441 @@ const toolFactories: Record<string, () => ITool> = {
+-  // Phase 82: Auxiliary Projection Plane Tool
++  // Auxiliary projection plane tool
+@@ -722 +720 @@ function handleCanvasClick(event: MouseEvent) {
+-    // Selection mode per ui-spec.md §Element Interaction
++    // Selection mode: click selects, Shift+click extends, empty click clears.
+@@ -1048 +1046 @@ function handleMouseMove(event: MouseEvent) {
+-  // Per ui-spec.md: "Point Snap: When cursor within snap radius of existing point: bright outline or glow"
++  // Point snap preview when the cursor is within snap radius of an existing point.
+diff --git a/frontend/src/composables/useHoverHighlight.ts b/frontend/src/composables/useHoverHighlight.ts
+index 25735ee..b4d614c 100644
+--- a/frontend/src/composables/useHoverHighlight.ts
++++ b/frontend/src/composables/useHoverHighlight.ts
+@@ -13 +12,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md §Unified Hover Highlighting
+diff --git a/frontend/src/composables/useViewport.ts b/frontend/src/composables/useViewport.ts
+index 396610a..e373aaf 100644
+--- a/frontend/src/composables/useViewport.ts
++++ b/frontend/src/composables/useViewport.ts
+@@ -11 +10,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Viewport Navigation
+diff --git a/frontend/src/config/toolFamilies.ts b/frontend/src/config/toolFamilies.ts
+index 1285644..28c862d 100644
+--- a/frontend/src/config/toolFamilies.ts
++++ b/frontend/src/config/toolFamilies.ts
+@@ -9 +8,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md - Phase 67
+diff --git a/frontend/src/domain/calculations/CoordinateTransform.ts b/frontend/src/domain/calculations/CoordinateTransform.ts
+index 46ccb70..d6674da 100644
+--- a/frontend/src/domain/calculations/CoordinateTransform.ts
++++ b/frontend/src/domain/calculations/CoordinateTransform.ts
+@@ -16 +15,0 @@
+- * @see specs/001-dihedral-learning-mvp/data-model.md#coordinate-systems-and-transformations
+diff --git a/frontend/src/domain/calculations/Intersections.ts b/frontend/src/domain/calculations/Intersections.ts
+index 28ba3ce..841fb6c 100644
+--- a/frontend/src/domain/calculations/Intersections.ts
++++ b/frontend/src/domain/calculations/Intersections.ts
+@@ -18 +17,0 @@
+- * - specs/001-dihedral-learning-mvp/data-model.md#intersection-calculations
+diff --git a/frontend/src/domain/processTree/Action.ts b/frontend/src/domain/processTree/Action.ts
+index 01a8669..948c6d2 100644
+--- a/frontend/src/domain/processTree/Action.ts
++++ b/frontend/src/domain/processTree/Action.ts
+@@ -23 +22,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93, §Phase 98
+diff --git a/frontend/src/domain/processTree/ProcessTree.ts b/frontend/src/domain/processTree/ProcessTree.ts
+index 8aa01e3..2f8f519 100644
+--- a/frontend/src/domain/processTree/ProcessTree.ts
++++ b/frontend/src/domain/processTree/ProcessTree.ts
+@@ -7 +6,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §ProcessTree
+diff --git a/frontend/src/domain/processTree/actions/CreateCircleAction.ts b/frontend/src/domain/processTree/actions/CreateCircleAction.ts
+index fad317d..cc8be0d 100644
+--- a/frontend/src/domain/processTree/actions/CreateCircleAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateCircleAction.ts
+@@ -8,2 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+- * Reference: specs/001-dihedral-learning-mvp/spec.md FR-042
+diff --git a/frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts b/frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts
+index 315c63e..896c125 100644
+--- a/frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreateGuideAction.ts b/frontend/src/domain/processTree/actions/CreateGuideAction.ts
+index 3c54334..a0dd56a 100644
+--- a/frontend/src/domain/processTree/actions/CreateGuideAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateGuideAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts b/frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts
+index 3f7f817..7e6df93 100644
+--- a/frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreateLineAction.ts b/frontend/src/domain/processTree/actions/CreateLineAction.ts
+index 1274e24..32d5724 100644
+--- a/frontend/src/domain/processTree/actions/CreateLineAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateLineAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts b/frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts
+index 54824cd..af2f72c 100644
+--- a/frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts b/frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts
+index bce14de..6feeaca 100644
+--- a/frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreateParallelLineAction.ts b/frontend/src/domain/processTree/actions/CreateParallelLineAction.ts
+index 3c117c0..017c3b3 100644
+--- a/frontend/src/domain/processTree/actions/CreateParallelLineAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateParallelLineAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts b/frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts
+index 8191013..0c92012 100644
+--- a/frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts
++++ b/frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreatePointAction.ts b/frontend/src/domain/processTree/actions/CreatePointAction.ts
+index 171aeee..bf670ff 100644
+--- a/frontend/src/domain/processTree/actions/CreatePointAction.ts
++++ b/frontend/src/domain/processTree/actions/CreatePointAction.ts
+@@ -7 +6,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreateSegmentAction.ts b/frontend/src/domain/processTree/actions/CreateSegmentAction.ts
+index 22247ff..45873b5 100644
+--- a/frontend/src/domain/processTree/actions/CreateSegmentAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateSegmentAction.ts
+@@ -8 +7,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §Phase 93
+diff --git a/frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts b/frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts
+index 9293bc8..3ea1af5 100644
+--- a/frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts
++++ b/frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts
+@@ -11 +10,0 @@
+- * Reference: specs/001-dihedral-learning-mvp/data-model.md §SiblingGuide2D

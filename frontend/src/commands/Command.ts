@@ -1,27 +1,26 @@
 /**
  * Command - Base class for user actions composed from operations
- * 
+ *
  * Commands represent complete user actions that can be executed and undone.
  * They are composed from one or more Operations that execute incrementally.
- * 
- * 
+ *
  * ═══════════════════════════════════════════════════════════════════════════
  * ARCHITECTURAL PRINCIPLE: Command MUST NOT be subclassed
  * ═══════════════════════════════════════════════════════════════════════════
- * 
- * Per data-model.md §Command Pattern:
- * "Architecture: Single Command class (not subclasses) - the real logic is in Operation classes"
- * "No Subclasses Needed: Tools create operations directly and pass to generic Command"
- * 
- * WHY THIS MATTERS:
- * 
+ *
+ * Command is a generic container for Operations. The command owns undo/redo
+ * infrastructure and incremental rollback, while domain mutation logic belongs
+ * in Operation implementations.
+ *
+ * Key principles:
+ *
  * 1. **Generic Container Pattern**: Command is a generic container for Operations.
  *    It provides undo/redo infrastructure but contains NO domain logic.
- * 
+ *
  * 2. **All Logic in Operations**: Domain logic (create point, add line, update style)
  *    belongs in Operation classes (AddFreePoint2DOp, AddLine2DOp, UpdateElementStyleOp).
  *    Operations implement the IOperation interface with apply() and undo() methods.
- * 
+ *
  * 3. **Operation Chaining**: Commands enable incremental execution where later operations
  *    can use outputs from earlier operations. Example:
  *    ```typescript
@@ -31,40 +30,39 @@
  *    cmd.addAndExecute(new AddSegment2DOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
  *    cmd.commit();
  *    ```
- * 
+ *
  * 4. **Architectural Consistency**: Having Command subclasses encourages violating
  *    the Operation pattern and leads to inconsistent architecture.
- * 
+ *
  * 5. **Testability**: The generic Command + Operations pattern is easier to test
  *    because each Operation can be tested independently.
- * 
+ *
  * CORRECT USAGE:
- * - Tools create Operations: `new AddFreePoint2DOp(planeId, position)`
- * - Tools create generic Command: `new Command("Create point", world)`
- * - Tools add operations: `cmd.addAndExecute(operation)`
- * - Tools commit: `cmd.commit()` and `commandStack.push(cmd)`
- * 
+ * - Application use cases and sequence factories create operations
+ * - Commands add operations with `cmd.addAndExecute(operation)`
+ * - Commands are committed and pushed through the application command boundary
+ *
  * INCORRECT USAGE (DO NOT DO THIS):
  * - ❌ class CreatePointCommand extends Command { ... }
  * - ❌ class UpdateStyleCommand extends Command { ... }
  * - ❌ Overriding execute(), undo(), or redo() methods
- * 
+ *
  * See UpdateElementStyleOp as example of correct pattern - it's an Operation,
  * not a Command subclass.
- * 
+ *
  * This architectural rule is enforced by:
  * - This documentation comment
  * - @sealed JSDoc annotation
  * - Automated test in tests/unit/architecture/noCommandSubclasses.spec.ts
- * 
+ *
  * ═══════════════════════════════════════════════════════════════════════════
- * 
+ *
  * Key Principles:
  * - Operations execute immediately when added (incremental execution)
  * - Later operations can use outputs from earlier operations
  * - If any operation fails, entire command is rolled back
  * - Commands maintain status: Building → Committed → Undone
- * 
+ *
  * @sealed - This class must NOT be extended. All domain logic belongs in Operation classes.
  */
 
@@ -130,7 +128,6 @@ export class Command {
 
   /**
    * Get the list of operations in this command (read-only access)
-   * Phase 114: Used for post-creation feasibility checking
    */
   getOperations(): readonly IOperation[] {
     return this.operations;
@@ -193,10 +190,10 @@ export class Command {
 
   /**
    * Determines whether this command can be undone
-   * 
-   * Phase 47: Non-undoable commands (like world initialization) are not added to stack.
-   * CommandStack checks this before adding commands to the undo stack.
-   * 
+   *
+   * Non-undoable commands, such as bootstrap commands, are not added to the
+   * undo stack. CommandStack checks this before adding commands.
+   *
    * @returns true if command can be undone (default), false for non-undoable commands
    */
   canUndo(): boolean {

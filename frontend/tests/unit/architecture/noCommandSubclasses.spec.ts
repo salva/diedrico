@@ -28,12 +28,13 @@ describe('Architecture: Command Pattern', () => {
     expect(violations).toEqual([]);
   });
 
-  it('documents Command as sealed and operation-backed', () => {
+  it('documents Command as sealed and operation-backed without relying on deleted spec authority', () => {
     const commandFile = scanTextFiles(['src/commands']).find(file => file.projectPath === 'src/commands/Command.ts');
 
     expect(commandFile?.content).toContain('@sealed');
     expect(commandFile?.content).toContain('MUST NOT be subclassed');
     expect(commandFile?.content).toContain('All domain logic belongs in Operation classes');
-    expect(commandFile?.content).toContain('data-model.md');
+    expect(commandFile?.content).toContain('Application use cases and sequence factories create operations');
+    expect(commandFile?.content).not.toContain('data-model.md');
   });
 });

@@ -1,0 +1,188 @@
+SPEC TREE
+
+DOCS FILES
+docs/api/domain-model.md
+docs/api/operations.md
+docs/api/services.md
+docs/api/utilities.md
+docs/architecture/commands.md
+docs/architecture/domain-model.md
+docs/architecture/overview.md
+docs/architecture/realization.md
+docs/architecture/rendering.md
+docs/architecture/stores.md
+docs/contributing/development-setup.md
+docs/contributing/testing.md
+docs/DEPLOYMENT.md
+docs/GOOGLE_DRIVE_SETUP.md
+docs/guide/3d-reconstruction.md
+docs/guide/getting-started.md
+docs/guide/hinge-lines.md
+docs/guide/persistence.md
+docs/guide/process-tree.md
+docs/guide/projection-planes.md
+docs/guide/three-view.md
+docs/guide/tools.md
+docs/guide/what-is-diedrico.md
+docs/guide/workspace.md
+docs/index.md
+docs/.vitepress/config.mts
+docs/.vitepress/dist/404.html
+docs/.vitepress/dist/DEPLOYMENT.html
+docs/.vitepress/dist/GOOGLE_DRIVE_SETUP.html
+docs/.vitepress/dist/hashmap.json
+docs/.vitepress/dist/index.html
+docs/.vitepress/dist/vp-icons.css
+
+CHANGED IN IMPLEMENT COMMITS
+M	README.md
+A	architecture-audit/cycle-013-docs-specs-reconciliation/implementation-log.md
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/inspected-spec-files.txt
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-docs-build-02.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-docs-build-02.stdout
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-docs-build.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-docs-build.stdout
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-lint-workspace-frontend.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-lint-workspace-frontend.stdout
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-lint.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-lint.stdout
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-architecture-workspace-frontend.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-architecture-workspace-frontend.stdout
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-architecture.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-architecture.stdout
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/post-edit-stale-reference-scan-02.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/post-edit-stale-reference-scan-02.stdout
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/post-edit-stale-reference-scan.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/post-edit-stale-reference-scan.stdout
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/pre-edit-stale-reference-scan.stderr
+A	architecture-audit/cycle-013-docs-specs-reconciliation/validation/pre-edit-stale-reference-scan.stdout
+M	docs/api/domain-model.md
+M	docs/api/operations.md
+M	docs/api/services.md
+M	docs/api/utilities.md
+M	docs/architecture/commands.md
+M	docs/architecture/domain-model.md
+M	docs/architecture/overview.md
+M	docs/architecture/realization.md
+M	docs/architecture/rendering.md
+M	docs/architecture/stores.md
+M	docs/contributing/development-setup.md
+M	docs/contributing/testing.md
+M	docs/guide/3d-reconstruction.md
+M	docs/guide/getting-started.md
+M	docs/guide/hinge-lines.md
+M	docs/guide/persistence.md
+M	docs/guide/process-tree.md
+M	docs/guide/projection-planes.md
+M	docs/guide/three-view.md
+M	docs/guide/tools.md
+M	docs/guide/what-is-diedrico.md
+M	docs/guide/workspace.md
+M	frontend/src/commands/Command.ts
+M	frontend/src/commands/CommandStack.ts
+M	frontend/src/commands/factories/DeletionSequenceFactory.ts
+M	frontend/src/commands/factories/HingeLineSequenceFactory.ts
+M	frontend/src/commands/factories/IntersectionSequenceFactory.ts
+M	frontend/src/commands/factories/ProjectionSetupFactory.ts
+M	frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
+M	frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+M	frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+M	frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+M	frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts
+M	frontend/src/commands/operations/world/InitializationOps.ts
+M	frontend/src/commands/operations/world/RemoveElementOps.ts
+M	frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+M	frontend/src/components/LoginStatusWidget.vue
+M	frontend/src/components/header/ProjectNameDisplay.vue
+M	frontend/src/components/toolbars/Toolbar.vue
+M	frontend/src/components/workspace/SvgCanvas.vue
+M	frontend/src/composables/useHoverHighlight.ts
+M	frontend/src/composables/useViewport.ts
+M	frontend/src/config/toolFamilies.ts
+M	frontend/src/domain/calculations/CoordinateTransform.ts
+M	frontend/src/domain/calculations/Intersections.ts
+M	frontend/src/domain/processTree/Action.ts
+M	frontend/src/domain/processTree/ProcessTree.ts
+M	frontend/src/domain/processTree/actions/CreateCircleAction.ts
+M	frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts
+M	frontend/src/domain/processTree/actions/CreateGuideAction.ts
+M	frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts
+M	frontend/src/domain/processTree/actions/CreateLineAction.ts
+M	frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts
+M	frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts
+M	frontend/src/domain/processTree/actions/CreateParallelLineAction.ts
+M	frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts
+M	frontend/src/domain/processTree/actions/CreatePointAction.ts
+M	frontend/src/domain/processTree/actions/CreateSegmentAction.ts
+M	frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts
+M	frontend/src/domain/processTree/actions/CreateSiblingIntersectionPointAction.ts
+M	frontend/src/domain/processTree/actions/CreateTangentLineAction.ts
+M	frontend/src/domain/world/BrokenHingeLine.ts
+M	frontend/src/domain/world/Circle.ts
+M	frontend/src/domain/world/DependencyService.ts
+M	frontend/src/domain/world/Element.ts
+M	frontend/src/domain/world/Element2DRealization2D.ts
+M	frontend/src/domain/world/Element3D.ts
+M	frontend/src/domain/world/Element3DRealization3D.ts
+M	frontend/src/domain/world/Guide.ts
+M	frontend/src/domain/world/HalfHingeLineRealization2D.ts
+M	frontend/src/domain/world/HingeLine.ts
+M	frontend/src/domain/world/Line.ts
+M	frontend/src/domain/world/Line3D.ts
+M	frontend/src/domain/world/Plane.ts
+M	frontend/src/domain/world/Point.ts
+M	frontend/src/domain/world/Point3D.ts
+M	frontend/src/domain/world/Realization.ts
+M	frontend/src/domain/world/Segment.ts
+M	frontend/src/domain/world/Segment3D.ts
+M	frontend/src/domain/world/World.ts
+M	frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts
+M	frontend/src/domain/world/styleService.ts
+M	frontend/src/services/GoogleDriveService.ts
+M	frontend/src/services/SVGRenderer.ts
+M	frontend/src/stores/authStore.ts
+M	frontend/src/stores/settingsStore.ts
+M	frontend/src/stores/toolStore.ts
+M	frontend/src/stores/viewStore.ts
+M	frontend/src/tools/ArgumentCollectorTool.ts
+M	frontend/src/tools/BaseTool.ts
+M	frontend/src/tools/CircleTool.ts
+M	frontend/src/tools/Create3DLineTool.ts
+M	frontend/src/tools/Create3DPlaneTool.ts
+M	frontend/src/tools/Create3DPointTool.ts
+M	frontend/src/tools/Create3DSegmentTool.ts
+M	frontend/src/tools/CreateProjectionPlaneTool.ts
+M	frontend/src/tools/GuideTool.ts
+M	frontend/src/tools/IntersectionTool.ts
+M	frontend/src/tools/LineTool.ts
+M	frontend/src/tools/ParallelLineTool.ts
+M	frontend/src/tools/PerpendicularLineTool.ts
+M	frontend/src/tools/PointTool.ts
+M	frontend/src/tools/SegmentTool.ts
+M	frontend/src/tools/TangentLineToCircleParallelToLineTool.ts
+M	frontend/src/tools/TangentLineToCircleThroughPointTool.ts
+M	frontend/src/types/SelectionMask.ts
+M	frontend/src/types/ToolArgumentCollector.ts
+M	frontend/src/types/ToolConfig.ts
+M	frontend/src/types/arcGeometry.ts
+M	frontend/src/utils/arcGeometry.ts
+M	frontend/src/utils/coordinateTransform.ts
+M	frontend/src/utils/projectionPlaneUtils.ts
+M	frontend/src/utils/threeUtils.ts
+D	specs/001-dihedral-learning-mvp/checklists/requirements.md
+D	specs/001-dihedral-learning-mvp/contracts/api.yaml
+D	specs/001-dihedral-learning-mvp/data-model-optimization.md
+D	specs/001-dihedral-learning-mvp/data-model.md
+D	specs/001-dihedral-learning-mvp/example-setups.md
+D	specs/001-dihedral-learning-mvp/for-planing.md
+D	specs/001-dihedral-learning-mvp/phase-78-completion-summary.md
+D	specs/001-dihedral-learning-mvp/phase-83-generic-projection-plane-plan.md
+D	specs/001-dihedral-learning-mvp/phase-84-geometry-free-hinge-lines.md
+D	specs/001-dihedral-learning-mvp/phase-85-subprocess-stack-architecture.md
+D	specs/001-dihedral-learning-mvp/phase-96-implementation-summary.md
+D	specs/001-dihedral-learning-mvp/plan.md
+D	specs/001-dihedral-learning-mvp/quickstart.md
+D	specs/001-dihedral-learning-mvp/research.md
+D	specs/001-dihedral-learning-mvp/spec.md
+D	specs/001-dihedral-learning-mvp/tasks.md
+D	specs/001-dihedral-learning-mvp/ui-spec.md
