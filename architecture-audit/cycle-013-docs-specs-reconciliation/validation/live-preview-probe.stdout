@@ -1,0 +1,32 @@
+HTTP probe for existing preview at http://127.0.0.1:5173/
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2b2-5k8lCQMThEC3J0EARyn6IYvkDuI"
+Date: Tue, 26 May 2026 12:14:25 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 690
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diedrico - Dihedral Learning MVP</title>
+    <!-- Google API Client Library -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Google Identity Services (new OAuth library) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts?t=1779796736315"></script>
+  </body>
+</html>
+
+probe_exit_code=0

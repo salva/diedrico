@@ -1,0 +1,9 @@
+Existing relevant processes:
+400675 npm run dev --host 0.0.0.0 --port 5173 --strictPort
+400686 sh -c vite --host 0.0.0.0 --port 5173 --strictPort
+400687 node /work/diedrico/node_modules/.bin/vite --host 0.0.0.0 --port 5173 --strictPort
+400695 /work/diedrico/node_modules/vite/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.21.5 --ping
+405532 /bin/sh -c set +e printf 'Existing relevant processes:\n' pgrep -af 'vite|npm run dev|vite --host|dev:frontend' || true printf '\nListening sockets:\n' (ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null || true) | grep -E '(:5173|:4173|vite|node)' || true 
+
+Listening sockets:
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=400687,fd=22))

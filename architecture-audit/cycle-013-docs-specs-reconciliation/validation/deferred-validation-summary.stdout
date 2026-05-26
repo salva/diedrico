@@ -1,0 +1,36 @@
+## Vitest failure headings
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:11:    at startTests (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:967:3)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:87: FAIL  tests/integration/guide-creation.test.ts [ tests/integration/guide-creation.test.ts ]
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:99:⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:101: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of perpendicular lines
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:113: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of diagonal lines
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:125: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel horizontal lines
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:137: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel vertical lines
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:149: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel diagonal lines
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:161: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect coincident lines
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:173: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle lines with non-unit direction vectors
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:185: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should produce homogeneous points with z=1
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:204: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection at origin
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:216: FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection with negative coordinates
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:228: FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:247: FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:266: FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:285: FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr:304: FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stdout:607:stdout | tests/integration/factories/AllFactories.spec.ts > Factory Integration Tests > GuideSequenceFactory Integration > should create guide with sibling on HHL and support undo/redo
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stdout:890: ❯ tests/integration/guide-creation.test.ts  (0 test)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stdout:948: Test Files  3 failed | 100 passed | 1 skipped (104)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stdout:949:      Tests  15 failed | 1199 passed | 45 skipped | 11 todo (1270)
+
+## Build failure signature
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-build.stderr:2:/work/diedrico/node_modules/vue-tsc/bin/vue-tsc.js:68
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-build.stderr:5:Search string not found: "/supportedTSExtensions = .*(?=;)/"
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-build.stderr:8:Node.js v24.15.0
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-build.stderr:15:npm error command sh -c vue-tsc && vite build
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-build.stdout:7:> vue-tsc && vite build
+
+## E2E parse failure signature
+9:SyntaxError: /work/diedrico/frontend/tests/e2e/keyboard-shortcuts.spec.ts: Unexpected token (267:10160)
+19:   at keyboard-shortcuts.spec.ts:267
+29:SyntaxError: /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts: Unexpected token (188:2)
+39:   at selection-mask.spec.ts:188

@@ -1,0 +1,366 @@
+===== architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-architecture-workspace-frontend.stdout
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 31ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 36ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 38ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 89ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  11:59:32
+   Duration  3.50s (transform 1.91s, setup 0ms, collect 9.80s, tests 194ms, environment 2.26s, prepare 416ms)
+
+===== architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-architecture.stdout
+
+> diedrico@0.1.0 test:architecture
+> npm run test:architecture --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 28ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 28ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 35ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 86ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  11:59:28
+   Duration  3.30s (transform 1.84s, setup 1ms, collect 8.79s, tests 177ms, environment 2.28s, prepare 584ms)
+
+===== architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-workspace-frontend.stdout
+ ✓ tests/integration/processTree-stack.test.ts  (16 tests) 61ms
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 50ms
+ ✓ tests/unit/commands/initializeWorldCommand.spec.ts  (11 tests) 67ms
+ ✓ tests/integration/projectService.cascadeDeletion.spec.ts  (4 tests) 58ms
+ ✓ tests/unit/utils/projectionPlaneUtils.spec.ts  (19 tests | 11 skipped) 19ms
+ ✓ tests/unit/projectionPlaneMatrix.test.ts  (5 tests) 18ms
+ ✓ tests/unit/domain/projectionPlaneRealization.spec.ts  (10 tests | 3 skipped) 26ms
+ ✓ tests/unit/world/generateDefaultLabel.test.ts  (24 tests) 33ms
+ ✓ tests/integration/semanticReferences.spec.ts  (11 tests | 4 skipped) 35ms
+ ✓ tests/unit/commandStack.spec.ts  (15 tests) 42ms
+ ✓ tests/unit/components/SvgCanvas.gridLabels.spec.ts  (10 tests) 16ms
+ ✓ tests/unit/domain/elementId.spec.ts  (21 tests) 120ms
+ ✓ tests/unit/domain/circle.spec.ts  (8 tests) 60ms
+ ✓ tests/unit/commands/createIntersectionPoint.spec.ts  (4 tests) 55ms
+ ✓ tests/unit/domain/line.spec.ts  (10 tests) 85ms
+ ✓ tests/integration/world/defaultLabels.integration.test.ts  (9 tests) 67ms
+ ✓ tests/unit/coordinateTransform.spec.ts  (6 tests) 10ms
+ ✓ tests/unit/calculations/distances.spec.ts  (18 tests) 27ms
+ ❯ tests/integration/guide-creation.test.ts  (0 test)
+ ✓ tests/unit/domain/element2dRealization.spec.ts  (14 tests) 42ms
+ ✓ tests/unit/stores/viewStore.spec.ts  (23 tests) 93ms
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (5 tests) 24ms
+ ✓ tests/unit/commands.spec.ts  (12 tests) 15ms
+ ✓ tests/unit/application/panelToolbarIntentControllers.spec.ts  (5 tests) 29ms
+stdout | tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > executes process-history mutations through use cases with undo/redo stack effects
+[ProcessTree.toggleSubprocessEncapsulation] subprocessId: node1779797285524pkhliobaz, true → false
+[ProcessTree.toggleOutput] subprocess node1779797285524pkhliobaz, true → false
+
+ ✓ tests/unit/utils/threeUtils.spec.ts  (13 tests) 13ms
+ ✓ tests/unit/commands/createGuide.spec.ts  (4 tests) 20ms
+ ✓ tests/unit/domain/labelGenerator.spec.ts  (20 tests) 67ms
+ ✓ tests/unit/domain/segment.spec.ts  (10 tests) 44ms
+ ✓ tests/unit/composables/hoverHighlight.spec.ts  (11 tests) 51ms
+ ✓ tests/unit/commands/createCircle.spec.ts  (4 tests) 15ms
+ ✓ tests/unit/stores/toolStore.spec.ts  (15 tests) 19ms
+ ✓ tests/unit/calculations/perpendiculars.spec.ts  (12 tests) 19ms
+ ✓ tests/unit/commands/createFreePoint.spec.ts  (8 tests | 2 skipped) 21ms
+ ✓ tests/unit/utils/formatUtils.spec.ts  (21 tests) 47ms
+ ✓ tests/unit/commands/createLine.spec.ts  (4 tests) 18ms
+ ✓ tests/unit/commands/createSegment.spec.ts  (4 tests) 23ms
+ ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 15ms
+ ✓ tests/unit/stores/processTreeStore.spec.ts  (13 tests) 15ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 27ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 24ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 21ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 9ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 24ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 8ms
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (6 tests) 14ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 22ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 20ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 221ms
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (3 tests) 14ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 40ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (2 tests) 95ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 57ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 12ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 34ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 12ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 52ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 59ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 150ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 6ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 31ms
+
+ Test Files  3 failed | 100 passed | 1 skipped (104)
+      Tests  15 failed | 1199 passed | 45 skipped | 11 todo (1270)
+   Start at  12:07:36
+   Duration  41.70s (transform 14.89s, setup 28ms, collect 59.16s, tests 6.23s, environment 140.50s, prepare 27.79s)
+
+===== architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stdout
+ ✓ tests/integration/processTree-stack.test.ts  (16 tests) 35ms
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 23ms
+ ✓ tests/unit/commands/initializeWorldCommand.spec.ts  (11 tests) 57ms
+ ✓ tests/unit/utils/projectionPlaneUtils.spec.ts  (19 tests | 11 skipped) 10ms
+ ✓ tests/integration/projectService.cascadeDeletion.spec.ts  (4 tests) 30ms
+ ✓ tests/unit/projectionPlaneMatrix.test.ts  (5 tests) 8ms
+ ✓ tests/unit/domain/projectionPlaneRealization.spec.ts  (10 tests | 3 skipped) 19ms
+ ✓ tests/unit/world/generateDefaultLabel.test.ts  (24 tests) 21ms
+ ✓ tests/unit/commandStack.spec.ts  (15 tests) 30ms
+ ✓ tests/integration/semanticReferences.spec.ts  (11 tests | 4 skipped) 27ms
+ ✓ tests/unit/components/SvgCanvas.gridLabels.spec.ts  (10 tests) 39ms
+ ✓ tests/unit/domain/elementId.spec.ts  (21 tests) 23ms
+ ✓ tests/unit/domain/circle.spec.ts  (8 tests) 37ms
+ ✓ tests/unit/domain/line.spec.ts  (10 tests) 25ms
+ ✓ tests/unit/commands/createIntersectionPoint.spec.ts  (4 tests) 22ms
+ ✓ tests/integration/world/defaultLabels.integration.test.ts  (9 tests) 57ms
+ ✓ tests/unit/coordinateTransform.spec.ts  (6 tests) 23ms
+ ❯ tests/integration/guide-creation.test.ts  (0 test)
+ ✓ tests/unit/calculations/distances.spec.ts  (18 tests) 37ms
+ ✓ tests/unit/stores/viewStore.spec.ts  (23 tests) 35ms
+ ✓ tests/unit/domain/element2dRealization.spec.ts  (14 tests) 19ms
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (5 tests) 19ms
+ ✓ tests/unit/commands.spec.ts  (12 tests) 15ms
+stdout | tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > executes process-history mutations through use cases with undo/redo stack effects
+[ProcessTree.toggleSubprocessEncapsulation] subprocessId: node1779797237198dty4jf20c, true → false
+[ProcessTree.toggleOutput] subprocess node1779797237198dty4jf20c, true → false
+
+ ✓ tests/unit/application/panelToolbarIntentControllers.spec.ts  (5 tests) 34ms
+ ✓ tests/unit/utils/threeUtils.spec.ts  (13 tests) 13ms
+ ✓ tests/unit/commands/createGuide.spec.ts  (4 tests) 49ms
+ ✓ tests/unit/domain/labelGenerator.spec.ts  (20 tests) 18ms
+ ✓ tests/unit/domain/segment.spec.ts  (10 tests) 23ms
+ ✓ tests/unit/composables/hoverHighlight.spec.ts  (11 tests) 12ms
+ ✓ tests/unit/stores/toolStore.spec.ts  (15 tests) 11ms
+ ✓ tests/unit/commands/createCircle.spec.ts  (4 tests) 20ms
+ ✓ tests/unit/calculations/perpendiculars.spec.ts  (12 tests) 14ms
+ ✓ tests/unit/commands/createFreePoint.spec.ts  (8 tests | 2 skipped) 21ms
+ ✓ tests/unit/utils/formatUtils.spec.ts  (21 tests) 57ms
+ ✓ tests/unit/commands/createLine.spec.ts  (4 tests) 17ms
+ ✓ tests/unit/commands/createSegment.spec.ts  (4 tests) 29ms
+ ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 19ms
+ ✓ tests/unit/stores/processTreeStore.spec.ts  (13 tests) 42ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 29ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 44ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 19ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 9ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 29ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 16ms
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (6 tests) 34ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 19ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 100ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 8ms
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (3 tests) 6ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 20ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (2 tests) 27ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 6ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 21ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 8ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 6ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 33ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 36ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 112ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 6ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 21ms
+
+ Test Files  3 failed | 100 passed | 1 skipped (104)
+      Tests  15 failed | 1199 passed | 45 skipped | 11 todo (1270)
+   Start at  12:06:55
+   Duration  32.06s (transform 11.03s, setup 18ms, collect 45.78s, tests 5.14s, environment 111.95s, prepare 20.73s)
+
+===== architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-architecture-workspace-frontend.stderr
+===== architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-architecture.stderr
+===== architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test-workspace-frontend.stderr
+     71| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:82:40
+     80|       
+     81|       await wrapper.find('.dialog-overlay').trigger('click');
+     82|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     83|     });
+     84| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:95:40
+     93|       
+     94|       await wrapper.find('.button-secondary').trigger('click');
+     95|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     96|     });
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:295:39
+    293|       
+    294|       // Should emit save event with changes
+    295|       expect(wrapper.emitted('save')).toBeTruthy();
+       |                                       ^
+    296|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    297|       expect(saveEvent.elementId).toStrictEqual(pointId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+TypeError: Cannot read properties of undefined (reading 'color')
+ ❯ tests/unit/components/propertiesDialog.spec.ts:329:24
+    327|       // Should only include color in save event
+    328|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    329|       expect(saveEvent.color).toBe('#FF5733');
+       |                        ^
+    330|       expect(saveEvent.lineWidth).toBeUndefined();
+    331|       expect(saveEvent.lineStyle).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run
+===== architecture-audit/cycle-013-docs-specs-reconciliation/validation/npm-run-test.stderr
+     71| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:82:40
+     80|       
+     81|       await wrapper.find('.dialog-overlay').trigger('click');
+     82|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     83|     });
+     84| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:95:40
+     93|       
+     94|       await wrapper.find('.button-secondary').trigger('click');
+     95|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     96|     });
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:295:39
+    293|       
+    294|       // Should emit save event with changes
+    295|       expect(wrapper.emitted('save')).toBeTruthy();
+       |                                       ^
+    296|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    297|       expect(saveEvent.elementId).toStrictEqual(pointId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+TypeError: Cannot read properties of undefined (reading 'color')
+ ❯ tests/unit/components/propertiesDialog.spec.ts:329:24
+    327|       // Should only include color in save event
+    328|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    329|       expect(saveEvent.color).toBe('#FF5733');
+       |                        ^
+    330|       expect(saveEvent.lineWidth).toBeUndefined();
+    331|       expect(saveEvent.lineStyle).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

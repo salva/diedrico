@@ -76,17 +76,21 @@ Stable logs are under `architecture-audit/cycle-013-docs-specs-reconciliation/va
 - `npm-run-test-architecture.stdout` / `.stderr` — `npm run test:architecture` succeeded; root wrapper delegates to frontend architecture checks.
 - `npm-run-test-architecture-workspace-frontend.stdout` / `.stderr` — `npm run test:architecture --workspace=frontend` succeeded.
 
-## Validation deferred to separate validation stage
+## Deferred validation and preview evidence collected in `t3-run-deferred-validation-and-preview`
 
-Per the current stage split, full Vitest, build, e2e, and live preview refresh/probe are deferred to `cycle-013-validation-and-preview-refresh` unless the Manager asks this implementation stage to run the full cadence. This implementation changed docs/specs/comments only, so the deferred runs should verify no runtime regression and classify known Wave 012 residual debt if signatures match:
+The reviewer-requested remaining Wave 013 cadence was run on 2026-05-26 with full stdout/stderr captured under `architecture-audit/cycle-013-docs-specs-reconciliation/validation/`. Root commands are wrappers around the frontend workspace where `package.json` defines them that way; matching root/workspace failures therefore represent the same underlying frontend surface, not independent suites. No runtime source, tests, scripts, or validation tooling were changed while collecting this evidence.
 
-- `npm run test` and `npm run test --workspace=frontend`
-- `npm run build` and `npm run build --workspace=frontend`
-- `npm run test:e2e` and `npm run test:e2e --workspace=frontend`
-- Live preview refresh or continuity check on `0.0.0.0` plus HTTP reachability probe
+- `npm run test` — **failed with known pre-existing Wave 012 signatures**, logged at `validation/npm-run-test.stdout` and `validation/npm-run-test.stderr`. Summary: 3 failed test files / 15 failed tests; failures are the accepted residual categories from the decision: `tests/unit/calculations/intersections.spec.ts` intersection expectations, `tests/unit/components/propertiesDialog.spec.ts` close/save emission expectations, and `tests/integration/guide-creation.test.ts` collecting 0 tests. See `validation/deferred-validation-summary.stdout`.
+- `npm run test --workspace=frontend` — **failed with the same underlying frontend Vitest signatures**, logged at `validation/npm-run-test-workspace-frontend.stdout` and `validation/npm-run-test-workspace-frontend.stderr`. Summary: 3 failed test files / 15 failed tests; no Wave 013 docs/spec/comment-attributable failure was observed.
+- `npm run build` — **failed with the known Node 24 / `vue-tsc` signature**, logged at `validation/npm-run-build.stdout` and `validation/npm-run-build.stderr`: `Search string not found: "/supportedTSExtensions = .*(?=;)/"` under `Node.js v24.15.0`.
+- `npm run build --workspace=frontend` — **failed with the same `vue-tsc`/Node 24 signature**, logged at `validation/npm-run-build-workspace-frontend.stdout` and `validation/npm-run-build-workspace-frontend.stderr`.
+- `npm run test:e2e` — **failed before browser execution on the known broad Playwright spec parse/corruption category**, logged at `validation/npm-run-test-e2e.stdout` and `validation/npm-run-test-e2e.stderr`. Current parse failures are `frontend/tests/e2e/keyboard-shortcuts.spec.ts:267` and `frontend/tests/e2e/selection-mask.spec.ts:188`; this validation run did not edit those files.
+- `npm run test:e2e --workspace=frontend` — **failed with the same Playwright parse/corruption signatures**, logged at `validation/npm-run-test-e2e-workspace-frontend.stdout` and `validation/npm-run-test-e2e-workspace-frontend.stderr`.
+- `validation/test-tail-summary.stdout` / `.stderr` and `validation/deferred-validation-summary.stdout` / `.stderr` provide concise extracted evidence from the long command logs.
+- Live preview continuity was verified rather than rebuilt because Wave 013 changed docs/specs/comments only. `validation/live-preview-precheck.stdout` records an existing Vite dev server bound to `0.0.0.0:5173`; `validation/live-preview-probe.stdout` records an HTTP `200 OK` probe against `http://127.0.0.1:5173/`. This verifies preview reachability, not new runtime behavior.
 
 ## Residual risks / follow-up
 
 - Many source files had obsolete comment citations to deleted MVP specs. They were removed as comment-only cleanup, but the underlying code still contains phase-era naming in some comments that does not cite deleted files and may be worth a future comments/naming hygiene pass if it becomes confusing.
 - The final stale-reference scan intentionally allows explicit negation (`There is no current test:coverage script`) and current non-obsolete prose matches. Future scans should remain evidence-based rather than phrase-only.
-- Full validation and live preview continuity remain for the dedicated validation stage.
+- Full validation and live preview continuity evidence has now been collected in this implementation stage. The remaining failures match accepted pre-existing validation debt (Vitest intersections/PropertiesDialog/guide collection, Node 24 `vue-tsc`, and corrupted Playwright specs) rather than Wave 013 docs/spec/comment edits.
