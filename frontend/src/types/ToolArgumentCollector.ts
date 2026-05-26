@@ -65,7 +65,7 @@ export interface ToolArgumentSpec {
   
   /**
    * Selection mask defining which element types are acceptable
-   * Framework uses this for Paper.hitTest() filtering and computing next viable selections
+   * Framework uses this for CanvasInteractionQuery filtering and computing next viable selections
    */
   mask: SelectionMask;
   

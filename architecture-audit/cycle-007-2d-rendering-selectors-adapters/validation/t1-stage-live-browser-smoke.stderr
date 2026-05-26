@@ -1,0 +1,13 @@
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:5173/
+Call log:
+  - navigating to "http://127.0.0.1:5173/", waiting until "networkidle"
+
+    at /work/diedrico/architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/t1-stage-live-browser-smoke.cjs:11:14 {
+  name: 'Error'
+}
+
+Node.js v24.15.0

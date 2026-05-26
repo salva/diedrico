@@ -1,0 +1,8 @@
+# preview refresh 2026-05-26T02:38:57+00:00
+Existing vite/node processes:
+351773 npm run dev --host 0.0.0.0
+351785 sh -c vite --host 0.0.0.0
+351786 node /work/diedrico/node_modules/.bin/vite --host 0.0.0.0
+351794 /work/diedrico/node_modules/vite/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.21.5 --ping
+355747 /bin/sh -c bash -lc 'set -euo pipefail VAL=architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation echo "# preview refresh $(date -Iseconds)" echo "Existing vite/node processes:" pgrep -af "vite|npm run dev" || true pkill -f "vite.*5173|vite --host|npm run dev --workspace=frontend" || true sleep 1 nohup npm run dev --workspace=frontend -- --host 0.0.0.0 > "$VAL/t1-stage-live-preview.stdout" 2> "$VAL/t1-stage-live-preview.stderr" & echo $! > "$VAL/t1-stage-live-preview.pid" sleep 5 echo "Started PID: $(cat "$VAL/t1-stage-live-preview.pid")" echo "Processes after refresh:" pgrep -af "vite|npm run dev" || true ss -ltnp 2>/dev/null | grep 5173 || true'
+355748 bash -lc set -euo pipefail VAL=architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation echo "# preview refresh $(date -Iseconds)" echo "Existing vite/node processes:" pgrep -af "vite|npm run dev" || true pkill -f "vite.*5173|vite --host|npm run dev --workspace=frontend" || true sleep 1 nohup npm run dev --workspace=frontend -- --host 0.0.0.0 > "$VAL/t1-stage-live-preview.stdout" 2> "$VAL/t1-stage-live-preview.stderr" & echo $! > "$VAL/t1-stage-live-preview.pid" sleep 5 echo "Started PID: $(cat "$VAL/t1-stage-live-preview.pid")" echo "Processes after refresh:" pgrep -af "vite|npm run dev" || true ss -ltnp 2>/dev/null | grep 5173 || true

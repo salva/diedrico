@@ -140,3 +140,73 @@ Classification:
 - Live preview refresh and reachability are complete: the refreshed Vite process is bound on `0.0.0.0` and the app answers HTTP 200.
 - Browser smoke is partially successful: the application loads, the 2D SVG canvas mounts, Wave 007 grid/read-model groups exist in the DOM, controls are accessible, and no browser/page errors occur.
 - User-visible 2D geometry smoke remains inconclusive/blocked by default-state behavior: the empty initial project exposes no visible grid labels/lines and a Free Point click did not render a point. The stable logs above classify the observed behavior precisely for the validation stage/reviewer rather than hiding it as a generic Playwright failure.
+
+## cycle-007-validation-and-preview-refresh / t1 validation cadence
+
+Validation-stage worker `t1-validation-cadence-static-preview-log` reran the required cadence and captured stable logs under `architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/` with the `t1-stage-*` prefix. No application architecture refactor was performed in this stage; only stale comments that still named `Paper.hitTest()` were updated to reference the Wave 007 `CanvasInteractionQuery` boundary.
+
+### Commands attempted and classification
+
+- Root lint: `npm run lint`
+  - Logs: `validation/t1-stage-root-lint.stdout`, `validation/t1-stage-root-lint.stderr`
+  - Result: **failed, non-attributable/pre-existing tooling blocker**. The command delegates to frontend lint and fails before linting with `sh: 1: eslint: not found`, matching the implementation-stage blocker.
+- Frontend lint: `npm run lint --workspace=frontend`
+  - Logs: `validation/t1-stage-frontend-lint.stdout`, `validation/t1-stage-frontend-lint.stderr`
+  - Result: **failed, non-attributable/pre-existing tooling blocker** for the same missing `eslint` executable.
+- Backend lint probe:
+  - Logs: `validation/t1-stage-backend-lint.stdout`, `validation/t1-stage-backend-lint.stderr`
+  - Result: **not applicable/pass**. `backend/package.json` has no lint script.
+- Focused Wave 007 Vitest: `npm run test --workspace=frontend -- --run tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts tests/unit/services/svgCanvasRenderer.spec.ts tests/unit/application/canvasToolControllers.spec.ts tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts tests/unit/tools/pointTool.spec.ts tests/unit/components/SvgCanvas.gridLabels.spec.ts`
+  - Logs: `validation/t1-stage-focused-vitest.stdout`, `validation/t1-stage-focused-vitest.stderr`
+  - Result: **passed**. 9 files passed / 65 tests passed, covering selector DTOs, interaction/hit query, grid/labels, renderer adapter, controller/tool boundaries, point/circle construction behavior, and SvgCanvas grid-label behavior.
+- Root Vitest: `npm run test`
+  - Logs: `validation/t1-stage-root-test.stdout`, `validation/t1-stage-root-test.stderr`
+  - Result: **failed, non-attributable/pre-existing/unrelated suite failures**. Failure set includes `tests/integration/guide-creation.test.ts` importing removed/renamed `../../src/commands/operations/AddFreePoint2DOp`, `tests/unit/architecture/noCommandSubclasses.spec.ts` failing on `default.resolve is not a function`, many unrelated `tests/unit/calculations/intersections.spec.ts` expectation mismatches, and `tests/unit/components/propertiesDialog.spec.ts` close/save event expectations. Focused Wave 007 tests passed inside the same codebase.
+- Full frontend Vitest: `npm run test --workspace=frontend`
+  - Logs: `validation/t1-stage-frontend-test.stdout`, `validation/t1-stage-frontend-test.stderr`
+  - Result: **failed, non-attributable/pre-existing/unrelated suite failures** with the same failure classes as root Vitest.
+- Backend Vitest: `npm run test --workspace=backend`
+  - Logs: `validation/t1-stage-backend-test.stdout`, `validation/t1-stage-backend-test.stderr`
+  - Result: **passed**. 1 file passed / 15 tests passed.
+- Root build: `npm run build`
+  - Logs: `validation/t1-stage-root-build.stdout`, `validation/t1-stage-root-build.stderr`
+  - Result: **failed, non-attributable/pre-existing toolchain blocker**. `vue-tsc` aborts before app compilation with `Search string not found: "/supportedTSExtensions = .*(?=;)/"` under Node v24.15.0.
+- Frontend build: `npm run build --workspace=frontend`
+  - Logs: `validation/t1-stage-frontend-build.stdout`, `validation/t1-stage-frontend-build.stderr`
+  - Result: **failed, non-attributable/pre-existing toolchain blocker** with the same `vue-tsc`/Node v24.15.0 error.
+- Backend build: `npm run build --workspace=backend`
+  - Logs: `validation/t1-stage-backend-build.stdout`, `validation/t1-stage-backend-build.stderr`
+  - Result: **passed**.
+- Frontend Playwright/e2e: `npm run test:e2e --workspace=frontend`
+  - Logs: `validation/t1-stage-e2e.stdout`, `validation/t1-stage-e2e.stderr`
+  - Result: **failed, non-attributable/pre-existing malformed e2e specs**. Playwright aborts during spec parsing with syntax errors in `frontend/tests/e2e/keyboard-shortcuts.spec.ts` at line 267 and `frontend/tests/e2e/selection-mask.spec.ts` at line 188, before browser execution.
+
+### Static architecture boundary checks
+
+- Consolidated scans: `validation/t1-stage-static-boundary-scan.stdout` / `.stderr` and final scan `validation/t1-stage-static-boundary-scan-final.stdout` / `.stderr`.
+- Result: **passed with expected scoped findings**.
+  - `frontend/src/services/RenderService.ts`, `frontend/src/services/PaperService.ts`, and obsolete RenderService/PaperService/Paper hit-testing tests remain absent.
+  - No active `SvgCanvas.vue` references to `PrimitiveContext`, `paperService`, `generatePrimitives`, `Paper.hitTest`, direct `world.projectionPlanes`, component-owned `computeAdaptiveGridParams`, or `realize2D(world)` grid logic were found.
+  - `frontend/src/domain/presentation/Paper.ts` has no raw `domain/world` imports and no hit-test API.
+  - `frontend/src/services/SVGRenderer.ts` imports only presentation primitives from `domain/presentation/Paper`, not raw `domain/world` classes.
+  - Raw domain traversal remains confined to the reviewed `frontend/src/application/canvasPresentation/` selector/policy boundary.
+  - No Wave 008 3D scene-adapter files were changed by this stage.
+  - No UI command/operation construction was reintroduced in `SvgCanvas.vue`; the only command-scan match was an error-message string in `ArgumentCollectorTool.ts`.
+- Comment cleanup: `frontend/src/types/ToolArgumentCollector.ts` and `frontend/src/types/SelectionMask.ts` no longer mention `Paper.hitTest()` in comments; logs: `validation/t1-stage-comment-boundary-fix.stdout`, `validation/t1-stage-comment-boundary-fix.stderr`.
+
+### Live preview refresh and browser smoke
+
+- Preview refresh/probe evidence:
+  - Initial process-management attempts: `validation/t1-stage-preview-refresh.stdout` / `.stderr`, `validation/t1-stage-preview-refresh2.stdout` / `.stderr` show the hazard that broad process matching can kill the wrapper itself.
+  - Successful detached preview start/probe: `validation/t1-stage-live-preview-detached.stdout`, `validation/t1-stage-live-preview-detached.stderr`, `validation/t1-stage-live-preview-detached.pid`, `validation/t1-stage-preview-detached-probe.stdout`, `validation/t1-stage-preview-detached-probe.stderr`.
+  - Binding/reachability: `ss` showed `0.0.0.0:5173` served by `node /work/diedrico/node_modules/.bin/vite --host 0.0.0.0`; `curl http://127.0.0.1:5173/` returned HTTP 200 and the Diedrico index HTML.
+- Live browser smoke:
+  - Strict click smoke: `validation/t1-stage-live-browser-smoke2.stdout`, `validation/t1-stage-live-browser-smoke2.stderr` loaded the app and resolved `svg.svg-canvas`, but clicking the SVG center timed out because the existing `canvas.three-canvas` overlay intercepted pointer events.
+  - Diagnostic smoke: `validation/t1-stage-live-browser-diagnostic.stdout`, `validation/t1-stage-live-browser-diagnostic.stderr` passed. It confirmed the title `Diedrico - Dihedral Learning MVP`, one mounted SVG canvas at about `980x612.5`, Wave 007 presentation groups `g.background-grid` and `g.grid-labels`, no page/console errors, and HTTP-served app reachability. The diagnostic also recorded default-state behavior: zero grid lines/labels and center point hit target is the 3D overlay canvas, making user-visible 2D point-click smoke inconclusive without changing app state or 3D overlay behavior.
+- Classification: preview refresh and reachability are **complete**. Browser smoke is **partially successful/inconclusive for point construction**, blocked by the current overlay/default-state behavior rather than a Wave 007 selector/adapter test failure; focused Wave 007 tests provide the behavioral coverage for hit semantics, grid/labels, style/visibility, and construction/controller boundaries.
+
+### Residual risks for reviewer
+
+- Full lint/build/e2e remain blocked by project/toolchain/spec problems that predate this validation stage: missing eslint, `vue-tsc` incompatibility with Node v24.15.0, malformed e2e specs, and unrelated frontend Vitest failures.
+- Live 2D click smoke remains inconclusive because the 3D overlay intercepts pointer events at the SVG center; this may be a future UI layering/preview concern, not a Wave 007 canvas-presentation boundary regression.
+- No Wave-007-attributable validation failure remains after the comment-boundary cleanup and focused Vitest pass.

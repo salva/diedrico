@@ -1,0 +1,20 @@
+PID 355891
+ 355904 sh -c vite --host 0.0.0.0
+ 355905 node /work/diedrico/node_modules/.bin/vite --host 0.0.0.0
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=355905,fd=22))
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2a2-jmzE7161kdnXI7JasQMw+v8+14s"
+Date: Tue, 26 May 2026 02:50:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 674
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />

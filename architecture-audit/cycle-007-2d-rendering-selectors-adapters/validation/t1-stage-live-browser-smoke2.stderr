@@ -1,0 +1,36 @@
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('svg.svg-canvas, svg.diedrico-canvas').first()
+    - locator resolved to <svg data-v-8488fee1="" class="svg-canvas" viewBox="0 0 980 612.5" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">…</svg>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <canvas width="800" height="600" data-v-84e2a3ab="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-3b6f5781="" class="three-view-overlay">…</div> subtree intercepts pointer events
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <canvas width="800" height="600" data-v-84e2a3ab="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-3b6f5781="" class="three-view-overlay">…</div> subtree intercepts pointer events
+    - retrying click action
+      - waiting 100ms
+    56 × waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <canvas width="800" height="600" data-v-84e2a3ab="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-3b6f5781="" class="three-view-overlay">…</div> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+
+    at /work/diedrico/architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/t1-stage-live-browser-smoke.cjs:29:18 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.15.0

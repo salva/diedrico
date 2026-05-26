@@ -197,7 +197,7 @@ export abstract class SelectionMask {
  * doesn't select existing points).
  * 
  * When NoneMask is used:
- * - Paper.hitTest() returns null (no element selected)
+ * - CanvasInteractionQuery returns no selected element
  * - ToolContext.planeCoords still contains the click position
  * - Tool uses the position to create new elements at clicked location
  * 
@@ -206,7 +206,7 @@ export abstract class SelectionMask {
  */
 export class NoneMask extends SelectionMask {
   matches(_element: Element2D): boolean {
-    return false; // Never matches anything - ensures hitTest returns null
+    return false; // Never matches anything - ensures interaction queries return no selected element
   }
 
   toString(): string {

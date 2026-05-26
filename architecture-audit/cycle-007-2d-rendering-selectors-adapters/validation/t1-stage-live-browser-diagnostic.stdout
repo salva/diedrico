@@ -1,0 +1,39 @@
+{
+  "result": {
+    "title": "Diedrico - Dihedral Learning MVP",
+    "svgBox": {
+      "x": 300,
+      "y": 91,
+      "width": 980,
+      "height": 612.5
+    },
+    "centerHitElement": {
+      "tag": "CANVAS",
+      "className": "three-canvas",
+      "dataEngine": "three.js r160"
+    },
+    "svgCanvasCount": 1,
+    "backgroundGridGroups": 1,
+    "gridLabelGroups": 1,
+    "gridLines": 0,
+    "gridLabels": 0,
+    "renderedGeometry": 53,
+    "toolbarButtons": [
+      "▼",
+      "▼",
+      "▼",
+      "▼",
+      "▼",
+      "▼",
+      "▼",
+      "▼",
+      "Sign in",
+      "<",
+      ">",
+      "▼",
+      "▲"
+    ],
+    "bodyToolLine": "Tool:"
+  },
+  "errors": []
+}

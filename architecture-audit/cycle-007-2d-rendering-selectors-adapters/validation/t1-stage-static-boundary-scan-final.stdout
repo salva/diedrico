@@ -1,0 +1,59 @@
+# Wave 007 static boundary scan after comment cleanup 2026-05-26T02:38:47+00:00
+## Deleted files
+PASS absent: frontend/src/services/RenderService.ts
+PASS absent: frontend/src/services/PaperService.ts
+PASS absent: frontend/tests/unit/services/renderService.spec.ts
+PASS absent: frontend/tests/unit/services/paperService.spec.ts
+PASS absent: frontend/tests/unit/domain/paperHitTesting.spec.ts
+PASS absent: frontend/tests/unit/selectionMask.spec.ts
+PASS absent: frontend/tests/unit/services/projectionDisplay.spec.ts
+## Legacy runtime symbols in Wave 007 boundary
+## SvgCanvas forbidden symbols
+## Paper raw-domain imports/hitTest
+6: * selector/query layer; this module intentionally has no World dependency.
+## Renderer adapter forbidden domain/world imports
+## Expected Canvas presentation raw-domain boundary imports
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:1:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:7:  buildModel(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:1:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:2:import { resolveVisibility } from '@/domain/world/styleService';
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:4:export function isCanvasElementVisible(element: object, world: World): boolean {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:3:import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:4:import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:5:import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:14:  select(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:18:    for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:19:      const realization = world.getProjectionPlane2DRealization(plane.id);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:22:    for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:27:        const realization = plane.realizePoint2D(point, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:36:        const realization = plane.realizeLine2D(line, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:37:        const kind = line instanceof HalfHingeLine2D ? 'half-hinge-line' : line instanceof Segment2DByPoints ? 'finite-segment' : line instanceof SiblingGuide2D ? 'sibling-guide' : line instanceof Guide2D ? 'guide' : 'infinite-line';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:44:          const style = kind === 'guide' || kind === 'sibling-guide' ? guideStyle(line as Guide2D | SiblingGuide2D, stateFor(line.id!, state)) : kind === 'half-hinge-line' ? hingeStyle(line as HalfHingeLine2D, stateFor(line.id!, state)) : lineStyle(line, stateFor(line.id!, state));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:59:        const realization = plane.realizeCircle2D(circle, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:77:function projected3D(world: World, planeTransforms: Map<string, any>): CanvasRenderItem[] {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:79:  for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:80:    const planeRealization = world.getProjectionPlane3DRealization(plane.id); const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:81:    if (!planeRealization || !planeToPaper) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:82:    for (const point3D of world.getAll3DPoints()) { const r = point3D.realize3D(world); if (!r?.isFeasible()) continue; const position = applyMatrix3x4(r.position, planeRealization.threeDToPlane).applyMatrix3(planeToPaper); items.push(item({ type: 'point', id: `proj3d-point-${point3D.id}-on-${plane.id}`, sourceEntityId: point3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_POINT_STYLE, position, radius: 6 }, 'projected-3d-point')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:83:    for (const line3D of world.getAll3DLines()) { const r = line3D.realize3D(world); if (!r?.isFeasible()) continue; const dir = applyMatrix3x4(r.direction, planeRealization.threeDToPlane); if (dir.length() < EPSILON) continue; items.push(item({ type: 'line', id: `proj3d-line-${line3D.id}-on-${plane.id}`, sourceEntityId: line3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_LINE_STYLE, point: applyMatrix3x4(r.point, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), direction: dir.applyMatrix3(planeToPaper) }, 'projected-3d-line')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:84:    for (const segment3D of world.getAll3DSegments()) { const r = segment3D.realize3D(world); if (!r?.isFeasible()) continue; items.push(item({ type: 'segment', id: `proj3d-segment-${segment3D.id}-on-${plane.id}`, sourceEntityId: segment3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_SEGMENT_STYLE, point1: applyMatrix3x4(r.startPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), point2: applyMatrix3x4(r.endPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper) }, 'projected-3d-segment')); }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:1:import { FreePoint2D } from '@/domain/world/Point';
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:2:import type { Point2D } from '@/domain/world/Point';
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:3:import type { Line2D } from '@/domain/world/Line';
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:4:import type { Circle2D } from '@/domain/world/Circle';
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:5:import type { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:6:import type { HalfHingeLine2D, HingeLine } from '@/domain/world/HingeLine';
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:14:export function pointStyle(point: Point2D, ctx: StyleContext): { style: ResolvedStyle; layer: RenderLayer; radius: number } {
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:18:  else if (ctx.selected) { fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77'; stroke = '#0066CC'; strokeWidth = 2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:19:  else if (ctx.hovered) { fill = point instanceof FreePoint2D ? '#6BB6FF' : '#FF6B9D'; stroke = '#4A90E2'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:20:  else { fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77'; stroke = '#333333'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:21:  return { layer: ctx.snapTarget ? RenderLayer.Highlights : RenderLayer.Elements, radius: point instanceof FreePoint2D ? 5 : 4, style: { stroke, strokeWidth, strokeStyle: 'solid', fill, opacity: opacity(point.planeId, ctx.activePlaneId), zIndex: 10 + zBoost(point.planeId, ctx.activePlaneId) } };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:24:export function lineStyle(line: Line2D, ctx: StyleContext): ResolvedStyle {
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:33:export function segmentStyle(line: Line2D, ctx: StyleContext): ResolvedStyle {
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:42:export function circleStyle(circle: Circle2D, ctx: StyleContext): ResolvedStyle {
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:60:export function hingeStyle(_hinge: HingeLine | HalfHingeLine2D, ctx: StyleContext): ResolvedStyle {
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:62:  return { stroke: highlighted ? '#6BB6FF' : '#333333', strokeWidth: highlighted ? 2 : 1.5, strokeStyle: 'dashed', fill: 'none', opacity: 1, zIndex: 2 + zBoost((_hinge as HalfHingeLine2D).planeId, ctx.activePlaneId) };
+## Wave 008 files changed in git status
+## UI command construction scan in canvas/tools/panels
+frontend/src/tools/ArgumentCollectorTool.ts:141:      throw new Error(result.message || `Failed to ${this.getCommandDescription().toLowerCase()}`);
