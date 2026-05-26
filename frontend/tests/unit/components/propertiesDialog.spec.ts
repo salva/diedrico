@@ -57,42 +57,48 @@ describe('PropertiesDialog', () => {
     });
 
     it('should emit close event when close button clicked', async () => {
+      const onClose = vi.fn();
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
           elementId: testPointId,
-          world
+          world,
+          onClose
         }
       });
       
       await wrapper.find('.close-button').trigger('click');
-      expect(wrapper.emitted('close')).toBeTruthy();
+      expect(onClose).toHaveBeenCalledOnce();
     });
 
     it('should emit close event when overlay clicked', async () => {
+      const onClose = vi.fn();
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
           elementId: testPointId,
-          world
+          world,
+          onClose
         }
       });
       
       await wrapper.find('.dialog-overlay').trigger('click');
-      expect(wrapper.emitted('close')).toBeTruthy();
+      expect(onClose).toHaveBeenCalledOnce();
     });
 
     it('should emit close event when cancel button clicked', async () => {
+      const onClose = vi.fn();
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
           elementId: testPointId,
-          world
+          world,
+          onClose
         }
       });
       
       await wrapper.find('.button-secondary').trigger('click');
-      expect(wrapper.emitted('close')).toBeTruthy();
+      expect(onClose).toHaveBeenCalledOnce();
     });
   });
 
@@ -271,11 +277,13 @@ describe('PropertiesDialog', () => {
       const point = planeH.addFreePoint2D(position, world);
       const pointId = point.id;
       
+      const onSave = vi.fn();
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
           elementId: pointId,
-          world
+          world,
+          onSave
         }
       });
       
@@ -292,8 +300,8 @@ describe('PropertiesDialog', () => {
       await saveButton.trigger('click');
       
       // Should emit save event with changes
-      expect(wrapper.emitted('save')).toBeTruthy();
-      const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+      expect(onSave).toHaveBeenCalledOnce();
+      const saveEvent = onSave.mock.calls[0][0];
       expect(saveEvent.elementId).toStrictEqual(pointId);
       expect(saveEvent.color).toBe('#FF5733');
     });
@@ -304,11 +312,13 @@ describe('PropertiesDialog', () => {
       const point = planeH.addFreePoint2D(position, world);
       const pointId = point.id;
       
+      const onSave = vi.fn();
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
           elementId: pointId,
-          world
+          world,
+          onSave
         }
       });
       
@@ -325,7 +335,8 @@ describe('PropertiesDialog', () => {
       await saveButton.trigger('click');
       
       // Should only include color in save event
-      const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+      expect(onSave).toHaveBeenCalledOnce();
+      const saveEvent = onSave.mock.calls[0][0];
       expect(saveEvent.color).toBe('#FF5733');
       expect(saveEvent.lineWidth).toBeUndefined();
       expect(saveEvent.lineStyle).toBeUndefined();

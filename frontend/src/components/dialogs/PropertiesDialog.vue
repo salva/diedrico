@@ -167,11 +167,6 @@ interface Props {
   world: World | null;
 }
 
-interface Emits {
-  (e: 'close'): void;
-  (e: 'save', changes: StyleChanges): void;
-}
-
 interface StyleChanges {
   elementId: string;
   color?: string;
@@ -181,7 +176,10 @@ interface StyleChanges {
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+const emit = defineEmits<{
+  close: [];
+  save: [changes: StyleChanges];
+}>();
 
 // Editable state
 const editableColor = ref<string>('#000000');

@@ -44,10 +44,10 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result).not.toBeNull();
-      expect(result!.x).toBeCloseTo(3, 6);
-      expect(result!.y).toBeCloseTo(2, 6);
-      expect(result!.z).toBe(1); // homogeneous coordinate
+      expect(result.feasible).toBe(true);
+      expect(result.position.x).toBeCloseTo(3, 6);
+      expect(result.position.y).toBeCloseTo(2, 6);
+      expect(result.position.z).toBe(1); // homogeneous coordinate
     });
     
     it('should find intersection of diagonal lines', () => {
@@ -69,10 +69,10 @@ describe('Intersections', () => {
       
       // Intersection: y = x and y = -x + 4
       // x = -x + 4 => 2x = 4 => x = 2, y = 2
-      expect(result).not.toBeNull();
-      expect(result!.x).toBeCloseTo(2, 6);
-      expect(result!.y).toBeCloseTo(2, 6);
-      expect(result!.z).toBe(1);
+      expect(result.feasible).toBe(true);
+      expect(result.position.x).toBeCloseTo(2, 6);
+      expect(result.position.y).toBeCloseTo(2, 6);
+      expect(result.position.z).toBe(1);
     });
     
     it('should detect parallel horizontal lines', () => {
@@ -90,7 +90,7 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result).toBeNull();
+      expect(result.feasible).toBe(false);
     });
     
     it('should detect parallel vertical lines', () => {
@@ -108,7 +108,7 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result).toBeNull();
+      expect(result.feasible).toBe(false);
     });
     
     it('should detect parallel diagonal lines', () => {
@@ -126,7 +126,7 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result).toBeNull();
+      expect(result.feasible).toBe(false);
     });
     
     it('should detect coincident lines', () => {
@@ -144,7 +144,7 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result).toBeNull();
+      expect(result.feasible).toBe(false);
     });
     
     it('should handle lines with non-unit direction vectors', () => {
@@ -163,9 +163,9 @@ describe('Intersections', () => {
       const result = intersectLineLine(line1, line2);
       
       // Should still find correct intersection at (4, 1)
-      expect(result).not.toBeNull();
-      expect(result!.x).toBeCloseTo(4, 6);
-      expect(result!.y).toBeCloseTo(1, 6);
+      expect(result.feasible).toBe(true);
+      expect(result.position.x).toBeCloseTo(4, 6);
+      expect(result.position.y).toBeCloseTo(1, 6);
     });
     
     it('should produce homogeneous points with z=1', () => {
@@ -181,8 +181,8 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result).not.toBeNull();
-      expect(result!.z).toBe(1); // Homogeneous coordinate
+      expect(result.feasible).toBe(true);
+      expect(result.position.z).toBe(1); // Homogeneous coordinate
     });
     
     it('should handle intersection at origin', () => {
@@ -200,9 +200,9 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result).not.toBeNull();
-      expect(result!.x).toBeCloseTo(0, 6);
-      expect(result!.y).toBeCloseTo(0, 6);
+      expect(result.feasible).toBe(true);
+      expect(result.position.x).toBeCloseTo(0, 6);
+      expect(result.position.y).toBeCloseTo(0, 6);
     });
     
     it('should handle intersection with negative coordinates', () => {
@@ -220,9 +220,9 @@ describe('Intersections', () => {
       
       const result = intersectLineLine(line1, line2);
       
-      expect(result).not.toBeNull();
-      expect(result!.x).toBeCloseTo(-5, 6);
-      expect(result!.y).toBeCloseTo(-3, 6);
+      expect(result.feasible).toBe(true);
+      expect(result.position.x).toBeCloseTo(-5, 6);
+      expect(result.position.y).toBeCloseTo(-3, 6);
     });
   });
   
