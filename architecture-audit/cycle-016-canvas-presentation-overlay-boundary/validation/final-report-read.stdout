@@ -1,0 +1,111 @@
+{
+  "task_id": "t1-implement-direct-read-port-overlay-boundary",
+  "stage_id": "cycle-016-implement-canvas-presentation-overlay-boundary",
+  "status": "completed",
+  "summary": "Implemented the Cycle 016 direct path: added CanvasWorldReadPort, moved projected 3D-on-2D DTO creation into Projected3DCanvasSelector, changed canvas selector/controller to consume the read port, deleted active canvasPresentation any seams and the obsolete mutable Paper collection/query class, and made the 3D overlay pointer contract explicit. Added focused read-port/projected-3D tests and updated existing selector/tool tests to use the new boundary. Mandatory validation passed after updating obsolete test helper seams; logs and implementation details are recorded in architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md.",
+  "checklist_results": [
+    {
+      "item": "Inspect current git diff/status and decision.md first",
+      "status": "passed",
+      "notes": "Captured pre-edit status/diff logs and read decision/proposal/scope artifacts before source edits."
+    },
+    {
+      "item": "Follow selected proposal-direct path without unreviewed restructure broadening",
+      "status": "passed",
+      "notes": "No shared presentation snapshot/facade was introduced; changes stayed in authorized canvas presentation/overlay/Paper/test surfaces."
+    },
+    {
+      "item": "Implement canvas read-port and overlay interaction boundary",
+      "status": "passed",
+      "notes": "CanvasWorldReadPort and Projected3DCanvasSelector were added; SvgCanvas uses the port; overlay pointer ownership is explicit."
+    },
+    {
+      "item": "Delete or prove inapplicable authorized legacy/duplicate surfaces",
+      "status": "passed",
+      "notes": "Deleted full-World selector/controller APIs, active any seams, inline projected-3D loop, obsolete concrete-World selector tests, and unused Paper mutable/query class."
+    },
+    {
+      "item": "Do not modify protected out-of-scope surfaces",
+      "status": "passed",
+      "notes": "No backend, package metadata, dependency/config, command, persistence, Drive, or broad app-shell/renderer rewrites were made."
+    },
+    {
+      "item": "Run focused read-port/overlay tests and mandatory validation gates with stable logs",
+      "status": "passed",
+      "notes": "Root/frontend lint, focused Vitest, full root/frontend Vitest, root/frontend build, root/frontend e2e, preview probe, and live Playwright evidence are captured under the Cycle 016 validation directory."
+    },
+    {
+      "item": "Refresh persistent live preview on 0.0.0.0 and capture reachability/live evidence",
+      "status": "passed",
+      "notes": "Frontend Vite server started with --host 0.0.0.0; probe reached port 5173; live Playwright evidence verified overlay/canvas pointer contract."
+    },
+    {
+      "item": "Update implementation-log.md",
+      "status": "passed",
+      "notes": "implementation-log.md records files changed, deletes/narrowing, validation log index, preview evidence, protected-surface checks, and residual risks."
+    }
+  ],
+  "issues_found": [
+    {
+      "severity": "info",
+      "description": "Initial full Vitest failed because existing tool test helpers still passed concrete World to CanvasPresentationSelector after the selector API changed to CanvasWorldReadPort.",
+      "file": "frontend/tests/unit/tools/pointTool.spec.ts",
+      "line": 27,
+      "error_output": "TypeError: readPort.getProjectionPlane2DTransform is not a function",
+      "root_cause": "Obsolete test helper seams instantiated the selector with World instead of the new read-port adapter.",
+      "suggestion": "Keep test helpers aligned with createCanvasWorldReadPort(world); this was fixed and full root/frontend Vitest reran green."
+    },
+    {
+      "severity": "info",
+      "description": "Initial live preview refresh attempts failed because the root npm script forwarded --host incorrectly to Vite.",
+      "file": "architecture-audit/cycle-016-canvas-presentation-overlay-boundary/validation/preview-server.stdout",
+      "line": 8,
+      "error_output": "vite 0.0.0.0 ... Network: use --host to expose",
+      "root_cause": "Running npm run dev -- --host 0.0.0.0 at the root caused npm/root scripts to pass 0.0.0.0 as a positional Vite argument.",
+      "suggestion": "Start preview from frontend/ with npm run dev -- --host 0.0.0.0; this was done and the reachability probe passed."
+    },
+    {
+      "severity": "info",
+      "description": "Final focused diff showed an App.vue tool-step-message hunk that was already present in the pre-existing workspace diff, alongside the Cycle 016 overlay pointer change.",
+      "file": "frontend/src/App.vue",
+      "line": 85,
+      "error_output": "Diff includes :tool-step-message=\"toolStore.currentToolStepMessage.value\" in addition to three-view-overlay data-testid/pointer-events changes.",
+      "root_cause": "The workspace contained inherited App.vue changes before this task; source-control discipline required not reverting unrelated dirty work.",
+      "suggestion": "Reviewer should evaluate Cycle 016 overlay changes separately from inherited App.vue dirty hunk; no protected scope was intentionally broadened by this task."
+    }
+  ],
+  "files_changed": [
+    "architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md",
+    "architecture-audit/cycle-016-canvas-presentation-overlay-boundary/validation/",
+    "frontend/src/App.vue",
+    "frontend/src/application/canvasPresentation/CanvasPresentationController.ts",
+    "frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts",
+    "frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts",
+    "frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts",
+    "frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts",
+    "frontend/src/components/panels/ThreeView.vue",
+    "frontend/src/components/workspace/SvgCanvas.vue",
+    "frontend/src/domain/presentation/Paper.ts",
+    "frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts",
+    "frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts",
+    "frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts",
+    "frontend/tests/unit/tools/CircleTool.spec.ts",
+    "frontend/tests/unit/tools/pointTool.spec.ts",
+    "frontend/tests/unit/tools/toolValidation.spec.ts"
+  ],
+  "validation": {
+    "root_lint": "passed",
+    "frontend_lint": "passed",
+    "focused_vitest": "passed",
+    "root_vitest": "passed",
+    "frontend_vitest": "passed",
+    "root_build": "passed",
+    "frontend_build": "passed",
+    "root_e2e": "passed",
+    "frontend_e2e": "passed",
+    "preview_reachability": "passed",
+    "live_overlay_canvas_playwright": "passed"
+  },
+  "commit_sha": "f5ccb224c8c2f3917eb44130e50fb1972f783d71",
+  "report_commit_sha": "d1ab1bc3cad5b968b30cd3aaac279ced8eadd79e"
+}
