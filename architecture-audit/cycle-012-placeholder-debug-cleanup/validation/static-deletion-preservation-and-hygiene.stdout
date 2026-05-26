@@ -1,1 +1,6 @@
-Wave 012 static deletion/preservation and bounded hygiene scans passed.
+absent: frontend/src/commands/operations/paper
+absent: frontend/src/commands/operations/toolbar
+preserved: frontend/src/commands/operations/processTree/README.md
+preserved: frontend/src/commands/operations/world/README.md
+preserved: frontend/src/commands/operations/viewState/README.md
+Wave 012 static deletion/preservation/hygiene scan passed.

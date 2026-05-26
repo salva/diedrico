@@ -12,9 +12,6 @@ stderr | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > i
     at file:///work/diedrico/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
 [GoogleDrive] Error details: {}
 
-stderr | tests/unit/domain/world.spec.ts > ProjectionPlane Factory Methods > Factory Methods > addLineLineIntersection > should throw error for parallel lines
-[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
-
 stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Line Intersection > should return infeasible for parallel lines
 [Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
 
@@ -46,6 +43,9 @@ stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctne
 Circle projPlane3/circle2d15: center and circumference point are coincident
 Circle projPlane3/circle2d15: center and circumference point are coincident
 [Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/world.spec.ts > ProjectionPlane Factory Methods > Factory Methods > addLineLineIntersection > should throw error for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
 
 stderr | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should detect infeasible 3D line when lifted planes are parallel
 [Line3DFromProjections] Planes are parallel - no intersection

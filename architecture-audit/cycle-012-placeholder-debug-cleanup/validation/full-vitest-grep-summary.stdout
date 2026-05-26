@@ -1,0 +1,18 @@
+23: ❯ tests/unit/calculations/intersections.spec.ts  (44 tests | 10 failed) 48ms
+24:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of perpendicular lines
+26:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of diagonal lines
+28:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel horizontal lines
+30:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel vertical lines
+32:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel diagonal lines
+34:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect coincident lines
+36:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle lines with non-unit direction vectors
+38:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should produce homogeneous points with z=1
+40:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection at origin
+42:   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection with negative coordinates
+768: ❯ tests/unit/components/propertiesDialog.spec.ts  (18 tests | 5 failed) 507ms
+769:   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+771:   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+773:   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+775:   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+777:   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+891: ❯ tests/integration/guide-creation.test.ts  (0 test)

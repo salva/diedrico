@@ -1,1 +1,2 @@
-attempt 1 HTTP 200
+attempt 1 HTTP 200 from http://127.0.0.1:5173/
+<!doctype html> <html lang="en">   <head>     <script type="module" src="/@vite/client"></script>      <meta charset="UT

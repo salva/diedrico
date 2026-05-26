@@ -1,20 +1,16 @@
 
-> diedrico-frontend@0.1.0 test
-> vitest run tests/unit/commands/operations/operationRegistry.spec.ts tests/integration/processTree-stack.test.ts tests/unit/processTree.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/unit/rectangleGrid.test.ts tests/unit/utils/projectionPlaneUtils.spec.ts tests/unit/domain/guide.spec.ts
-
-
  RUN  v1.6.1 /work/diedrico/frontend
 
- ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 9ms
- ✓ tests/unit/processTree.spec.ts  (15 tests) 22ms
- ✓ tests/unit/utils/projectionPlaneUtils.spec.ts  (19 tests | 11 skipped) 18ms
- ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (6 tests) 18ms
- ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 33ms
- ✓ tests/integration/processTree-stack.test.ts  (16 tests) 40ms
- ✓ tests/unit/domain/guide.spec.ts  (13 tests) 43ms
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 18ms
+ ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 10ms
+ ✓ tests/unit/utils/projectionPlaneUtils.spec.ts  (19 tests | 11 skipped) 12ms
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (6 tests) 9ms
+ ✓ tests/unit/domain/projectionPlaneRealization.spec.ts  (10 tests | 3 skipped) 13ms
+ ✓ tests/unit/domain/guide.spec.ts  (13 tests) 22ms
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 21ms
 
  Test Files  7 passed (7)
-      Tests  73 passed | 11 todo (84)
-   Start at  10:35:03
-   Duration  2.71s (transform 2.28s, setup 1ms, collect 5.37s, tests 183ms, environment 7.15s, prepare 1.46s)
+      Tests  64 passed | 3 skipped | 11 todo (78)
+   Start at  10:52:42
+   Duration  2.02s (transform 1.72s, setup 1ms, collect 4.06s, tests 105ms, environment 5.58s, prepare 951ms)
 
