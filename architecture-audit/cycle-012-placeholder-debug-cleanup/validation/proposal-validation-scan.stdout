@@ -1,0 +1,111 @@
+operation dirs:
+frontend/src/commands/operations/IOperation.ts
+frontend/src/commands/operations/OperationRegistry.ts
+frontend/src/commands/operations/paper/README.md
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts
+frontend/src/commands/operations/processTree/index.ts
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+frontend/src/commands/operations/processTree/README.md
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts
+frontend/src/commands/operations/toolbar/README.md
+frontend/src/commands/operations/viewState/index.ts
+frontend/src/commands/operations/viewState/README.md
+frontend/src/commands/operations/viewState/ViewStateOperations.ts
+frontend/src/commands/operations/world/Add3DLineOp.ts
+frontend/src/commands/operations/world/Add3DPlaneOp.ts
+frontend/src/commands/operations/world/Add3DPointOp.ts
+frontend/src/commands/operations/world/Add3DSegmentOp.ts
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddCircleOp.ts
+frontend/src/commands/operations/world/AddFreePointOp.ts
+frontend/src/commands/operations/world/AddGuideOp.ts
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/AddLineOp.ts
+frontend/src/commands/operations/world/AddSegmentOp.ts
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+frontend/src/commands/operations/world/index.ts
+frontend/src/commands/operations/world/InitializationOps.ts
+frontend/src/commands/operations/world/README.md
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts
+frontend/src/commands/operations/world/RemoveElementOps.ts
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts
+
+missing PaperService?
+absent
+
+console log/info/debug hits in scoped files:
+frontend/src/utils/rectangleGrid.ts:117:    console.log('[clipSegmentToRectangle] First segment debug:');
+frontend/src/utils/rectangleGrid.ts:118:    console.log('  Segment:', segment);
+frontend/src/utils/rectangleGrid.ts:119:    console.log('  dx:', dx, 'dy:', dy);
+frontend/src/utils/rectangleGrid.ts:143:      console.log(`  Edge ${i}: corner1=(${corner1.u.toFixed(2)}, ${corner1.v.toFixed(2)}) corner2=(${corner2.u.toFixed(2)}, ${corner2.v.toFixed(2)})`);
+frontend/src/utils/rectangleGrid.ts:144:      console.log(`    edge=(${edgeU.toFixed(2)}, ${edgeV.toFixed(2)}) normal=(${normalU.toFixed(2)}, ${normalV.toFixed(2)})`);
+frontend/src/utils/rectangleGrid.ts:145:      console.log(`    dist1=${dist1.toFixed(4)} denom=${denominator.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:152:        if (debugFirstSegment) console.log(`    -> Parallel and outside, marking invalid`);
+frontend/src/utils/rectangleGrid.ts:155:        if (debugFirstSegment) console.log(`    -> Parallel and inside/on edge`);
+frontend/src/utils/rectangleGrid.ts:163:      console.log(`    t=${t.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:169:      if (debugFirstSegment) console.log(`    -> Leaving: tMax ${tMax.toFixed(4)} -> ${newTMax.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:174:      if (debugFirstSegment) console.log(`    -> Entering: tMin ${tMin.toFixed(4)} -> ${newTMin.toFixed(4)}`);
+frontend/src/utils/rectangleGrid.ts:180:      if (debugFirstSegment) console.log(`    -> tMin > tMax (${tMin.toFixed(4)} > ${tMax.toFixed(4)}), rejecting`);
+frontend/src/utils/rectangleGrid.ts:186:    console.log(`  Final: tMin=${tMin.toFixed(4)} tMax=${tMax.toFixed(4)} - ACCEPTED`);
+frontend/src/utils/rectangleGrid.ts:211:  console.log('[generateClippedGrid] Bounds:', bounds);
+frontend/src/utils/rectangleGrid.ts:212:  console.log('[generateClippedGrid] Rectangle corners:', rect.corners);
+frontend/src/utils/rectangleGrid.ts:222:  console.log('[generateClippedGrid] Extended bounds: u=[', minU, ',', maxU, '] v=[', minV, ',', maxV, ']');
+frontend/src/utils/rectangleGrid.ts:223:  console.log('[generateClippedGrid] divisions:', divisions);
+frontend/src/utils/rectangleGrid.ts:269:  console.log('[generateClippedGrid] U-parallel lines clipped:', clippedCount);
+frontend/src/utils/rectangleGrid.ts:306:  console.log('[generateClippedGrid] V-parallel lines clipped:', clippedCount);
+frontend/src/utils/rectangleGrid.ts:307:  console.log('[generateClippedGrid] Total segments:', segments.length);
+frontend/src/utils/projectionPlaneUtils.ts:282:  console.log('[computeProjectionPlaneMatrices] dot_t1_t2_In3D:', dot_t1_t2_In3D);
+frontend/src/utils/projectionPlaneUtils.ts:283:  console.log('[computeProjectionPlaneMatrices] dot_t1_t2Prime_InP1:', dot_t1_t2Prime_InP1);
+frontend/src/utils/projectionPlaneUtils.ts:284:  console.log('[computeProjectionPlaneMatrices] needsFlip:', needsFlip);
+frontend/src/utils/projectionPlaneUtils.ts:293:  console.log('[computeProjectionPlaneMatrices] auxVDirInP1 (after correction):', auxVDirInP1);
+frontend/src/utils/projectionPlaneUtils.ts:300:  console.log('[computeProjectionPlaneMatrices] auxUDirInPaper:', auxUDirInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:301:  console.log('[computeProjectionPlaneMatrices] auxVDirInPaper:', auxVDirInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:302:  console.log('[computeProjectionPlaneMatrices] auxOriginInPaper (in P1 paper coords):', auxOriginInPaper);
+frontend/src/utils/projectionPlaneUtils.ts:341:  console.log('[computeProjectionPlaneMatrices] auxUDirIn3D:', auxUDirIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:342:  console.log('[computeProjectionPlaneMatrices] auxVDirIn3D:', auxVDirIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:343:  console.log('[computeProjectionPlaneMatrices] auxOriginIn3D:', auxOriginIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:350:  console.log('[computeProjectionPlaneMatrices] Auxiliary plane normal (u×v):', auxNormalIn3D);
+frontend/src/utils/projectionPlaneUtils.ts:351:  console.log('[computeProjectionPlaneMatrices] Normal should match Plane3DFromTraces normal: (0.408, 0.816, 0.408)');
+frontend/src/domain/world/HingeLine.ts:111:      console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
+frontend/src/domain/world/HingeLine.ts:120:        console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
+frontend/src/domain/world/HingeLine.ts:131:      console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
+frontend/src/domain/world/HingeLine.ts:140:      console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
+frontend/src/domain/world/Guide.ts:276:    console.log(`[SiblingGuide2D] realize2D called for ${this.id}, primaryGuideId: ${this.primaryGuideId}`);
+frontend/src/domain/world/Guide.ts:282:    console.log(`[SiblingGuide2D] Primary guide realization feasible:`, primaryGuideRealization.feasible);
+frontend/src/domain/world/Guide.ts:335:      console.log(`[SiblingGuide2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → twin=(${twinPosition.x.toFixed(2)},${twinPosition.y.toFixed(2)})`);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:97:      console.log('[UpdateElementStyleOp] Applied style to:', this.elementId, element.visualStyle);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:137:      console.log('[UpdateElementStyleOp] Restored style for:', this.elementId, element.visualStyle);
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:20:      console.log(`[ToggleOutputOp.apply] nodeId: ${this.nodeId}`);
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:35:    console.log(`[ToggleOutputOp.redo] nodeId: ${this.nodeId}`);
+frontend/src/commands/operations/world/RemoveElementOps.ts:440:              console.log(`[RemoveGuide2DOp] Removed sibling guide ${siblingGuideId} from plane ${this.siblingPlaneId}`);
+frontend/src/services/GoogleDriveService.ts:82:          console.log('[GoogleDrive] Initializing with config:', {
+frontend/src/services/GoogleDriveService.ts:108:          console.log('[GoogleDrive] Initialization successful');
+frontend/src/services/GoogleDriveService.ts:131:        console.log('[GoogleDrive] Session restored automatically');
+frontend/src/services/GoogleDriveService.ts:133:        console.log('[GoogleDrive] Could not restore session:', error);
+frontend/src/services/GoogleDriveService.ts:204:          console.log('[GoogleDrive] Sign-in successful');
+frontend/src/services/GoogleDriveService.ts:475:      console.log('[GoogleDrive] Checking file status before update:', fileId);
+frontend/src/services/GoogleDriveService.ts:483:      console.log('[GoogleDrive] File status:', fileCheckResponse.result);
+frontend/src/services/GoogleDriveService.ts:527:      console.log('[GoogleDrive] File updated successfully:', fileId);
+frontend/src/services/GoogleDriveService.ts:556:      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
+frontend/src/services/GoogleDriveService.ts:566:          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
+frontend/src/services/GoogleDriveService.ts:571:      console.log('[GoogleDrive] Extracted numbers:', numbers);
+frontend/src/services/GoogleDriveService.ts:575:        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
+frontend/src/services/GoogleDriveService.ts:585:          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
+frontend/src/services/GoogleDriveService.ts:592:      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
+frontend/src/services/GoogleDriveService.ts:631:      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:20:      console.log(`[ToggleEncapsulationOp.apply] subprocessId: ${this.subprocessId}`);
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:35:    console.log(`[ToggleEncapsulationOp.redo] subprocessId: ${this.subprocessId}`);
+
+placeholder/debug refs in src/tests:
+frontend/tests/unit/architecture/importBoundaries.spec.ts:64:    expect(findContentMatches(files, /ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
