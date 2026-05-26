@@ -103,3 +103,30 @@ No source module, package file, tooling file, fixture, or documentation file was
 - The read-only element realization port is still broad because current hinge/auxiliary realization methods require projection realization caches, 3D plane realization lookup, hinge lookup, and aggregate plane/hinge enumeration. This is explicitly named rather than hidden behind concrete `World`, but a later architecture wave may split hinge/auxiliary realization into a more dedicated service.
 - Full Wave 015 build closure remains blocked by the non-projection categories listed above.
 - Live preview/full validation refresh remains for the later validation-and-preview stage after all TypeScript build-contract categories are closed.
+
+
+## t1b correction — forbidden broad cast removal and evidence reconciliation
+
+Task `t1b-correct-forbidden-cast-and-log` reconciled the remaining broad casts found in the scoped projection/world lane after the first implementation pass.
+
+Source corrections:
+
+- `frontend/src/domain/world/HingeLine.ts`: `HalfHingeLine2D` now stores the authoritative parent hinge-line id directly in its constructor. `clone()` no longer fabricates a partial `{ id } as HingeLine` object.
+- `frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts`: `BrokenHalfHingeLine2D` now receives the authoritative broken hinge-line id and its `clone()` no longer fabricates `{ id } as BrokenHingeLine`.
+- `frontend/src/domain/world/projectionPlane/ProjectionPlane.ts`: half-hinge-line creation passes `hingeLine.id` to the id-based constructor.
+- `frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts`: broken half-hinge-line creation passes `brokenHingeLine.id`. The operation no longer writes/deletes `World.hingeLines` through `(world as any)`.
+- `frontend/src/domain/world/World.ts`: added narrow `addHingeLineEntity(hingeLine)` and `removeHingeLine(id)` storage hooks for already-constructed specialized hinge-line entities. This avoids a broad private-storage cast without exposing the full `hingeLines` map or introducing a World-shaped adapter.
+
+Forbidden-pattern evidence:
+
+- `projection-world-forbidden-cast-after-command-api.stdout` / `.stderr` — scoped scan across projection plane files, element realization files, `BrokenHalfHingeLine2D.ts`, `AddBrokenHingeLineOp.ts`, and `World.ts`; no `as any`, `as unknown as`, TypeScript suppressions, context-to-World casts, or fabricated `HingeLine` / `BrokenHingeLine` casts remain in the corrected lane.
+
+Validation evidence captured after the correction:
+
+- `projection-world-cast-fix-focused-projection.stdout` / `.stderr` — projection-focused Vitest passed: 34 passed, 3 skipped.
+- `projection-world-cast-fix-guide-hinge-aux.stdout` / `.stderr` — guide/hinge/auxiliary focused Vitest passed: 53 passed, 11 todo.
+- `projection-world-cast-fix-process-tree-identity.stdout` / `.stderr` — process-tree deletion/undo regression passed: 32 passed.
+- `projection-world-cast-fix-combined-focused.stdout` / `.stderr` — combined focused rerun passed: 119 passed, 3 skipped, 11 todo.
+- `frontend-build.projection-world-cast-fix-final.stdout` / `.stderr` — `npm run build --workspace=frontend` remains red only on residual non-projection Wave 015 categories already separated in this log. No errors from `ProjectionPlane.ts`, `AuxiliaryProjectionPlane.ts`, `ProjectionPlaneContext.ts`, `Element2D.ts`, `Point.ts`, `Line.ts`, `Circle.ts`, `Guide.ts`, `Segment.ts`, `HingeLine.ts`, `BrokenHalfHingeLine2D.ts`, or `projectionPlaneUtils.ts` appear in the final build output.
+
+Build residual categorization remains unchanged: command/factory contract mismatches, process/view-state operation issues, UI/store/render DTO and protected panel categories, and non-projection service/domain categories are still outside this projection/world decision lane and were not repaired here.

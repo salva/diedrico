@@ -1,0 +1,5 @@
+frontend/src/domain/world/Element2D.ts:49: * function hideElement(element: Element2D, world: World): void {
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:51:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:125:      (world as any).hingeLines.set(bhlId, brokenHingeLine);
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:164:  undo(world: World): void {
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:172:      (world as any).hingeLines.delete(this.outputs.brokenHingeLineId);

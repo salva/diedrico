@@ -1212,10 +1212,10 @@ export abstract class ProjectionPlane extends Element {
     }
 
     // Phase 84: Create without geometry - computed on demand via realize2D()
-    // Phase 102: Pass HingeLine object instead of just ID
+    // HalfHingeLine2D stores the authoritative parent hinge id; realization resolves it through the context.
     const halfHingeLine = new HalfHingeLine2D(
       id,
-      hingeLine,
+      hingeLine.id,
       this.id
     );
 

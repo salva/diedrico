@@ -1,0 +1,15 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/domain/projectionPlaneRealization.spec.ts tests/unit/projectionPlane.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/domain/projectionPlaneRealization.spec.ts  (10 tests | 3 skipped) 15ms
+ ✓ tests/unit/projectionPlane.spec.ts  (27 tests) 23ms
+
+ Test Files  2 passed (2)
+      Tests  34 passed | 3 skipped (37)
+   Start at  17:21:09
+   Duration  2.78s (transform 934ms, setup 0ms, collect 1.83s, tests 38ms, environment 2.08s, prepare 492ms)
+

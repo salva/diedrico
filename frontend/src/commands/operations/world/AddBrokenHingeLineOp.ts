@@ -99,12 +99,12 @@ export class AddBrokenHingeLineOp implements IOperation {
         this.auxiliaryPlaneId
       );
 
-      // Phase 102: Create BrokenHalfHingeLine2D passing BrokenHingeLine object
+      // Create BrokenHalfHingeLine2D traces using the authoritative BrokenHingeLine id.
       // Create BrokenHalfHingeLine2D on plane1 (no label - will generate BHHL_{n})
       const bhhl1 = new BrokenHalfHingeLine2D(
         bhhl1Id,
         this.plane1Id,    // planeId
-        brokenHingeLine,  // brokenHingeLine object (not just ID)
+        brokenHingeLine.id,  // broken hinge line id
         this.mainHingeId, // mainHingeId
         bhhl2Id           // siblingBHHLId (Reference to sibling on plane2)
         // No label parameter - constructor will generate BHHL_{n}
@@ -114,15 +114,14 @@ export class AddBrokenHingeLineOp implements IOperation {
       const bhhl2 = new BrokenHalfHingeLine2D(
         bhhl2Id,
         this.plane2Id,    // planeId
-        brokenHingeLine,  // brokenHingeLine object (not just ID)
+        brokenHingeLine.id,  // broken hinge line id
         this.mainHingeId, // mainHingeId
         bhhl1Id           // siblingBHHLId (Reference to sibling on plane1)
         // No label parameter - constructor will generate BHHL_{n}
       );
 
-      // Add to World storage
-      // Use internal access for now - World doesn't have addBrokenHingeLine method yet
-      (world as any).hingeLines.set(bhlId, brokenHingeLine);
+      // Add to World storage through the narrow hinge-line entity API.
+      world.addHingeLineEntity(brokenHingeLine);
       plane1.addLine(bhhl1);
       plane2.addLine(bhhl2);
 
@@ -169,7 +168,7 @@ export class AddBrokenHingeLineOp implements IOperation {
       world.getDependencyService().unregisterNode(this.outputs.bhhl2Id);
 
       // Remove from World storage
-      (world as any).hingeLines.delete(this.outputs.brokenHingeLineId);
+      world.removeHingeLine(this.outputs.brokenHingeLineId);
 
       // Remove from projection planes
       const plane1 = world.getProjectionPlaneById(this.outputs.plane1Id);

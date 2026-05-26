@@ -36,7 +36,7 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
   constructor(
     id: string,
     planeId: string,
-    brokenHingeLine: BrokenHingeLine,
+    brokenHingeLineId: string,
     mainHingeId: string,
     siblingBHHLId: string,
     label?: string
@@ -46,7 +46,7 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     const numericPart = id.match(/line2d(\d+)/)?.[1] || id.match(/\d+$/)?.[0] || id;
     const bhhlLabel = label || `BHHL_{${numericPart}}`;
     
-    super(id, brokenHingeLine, planeId, bhhlLabel);
+    super(id, brokenHingeLineId, planeId, bhhlLabel);
     this.mainHingeId = mainHingeId;
     this.siblingBHHLId = siblingBHHLId;
   }
@@ -55,13 +55,10 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
    * Clone this BrokenHalfHingeLine2D
    */
   clone(): BrokenHalfHingeLine2D {
-    // Note: Cloning requires looking up brokenHingeLine from world, which isn't available here
-    // This is a limitation of the current clone() signature  
-    // For now, keep the ID-based approach for clone()
     return new BrokenHalfHingeLine2D(
       this.id,
       this.planeId,
-      { id: this.hingeLineId } as BrokenHingeLine,  // Minimal object with just ID
+      this.hingeLineId,
       this.mainHingeId,
       this.siblingBHHLId,
       this.label

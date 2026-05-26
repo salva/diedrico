@@ -1,0 +1,13 @@
+110:  private hingeLines: Map<string, HingeLine>;
+156:    this.hingeLines = new Map();
+245:    this.hingeLines.clear();
+308:  generateHingeLineId(): string {
+466:  addHingeLine(
+471:    const id = hingeLineId || this.generateHingeLineId();
+481:    this.hingeLines.set(id, hingeLine);
+908:  getHingeLineById(id: string): HingeLine | undefined {
+909:    return this.hingeLines.get(id);
+916:    return Array.from(this.hingeLines.values());
+954:    return this.getHingeLineById(halfHL.hingeLineId);
+1008:    const hingeLine = this.getHingeLineById(halfHingeLine.hingeLineId);
+1211:      || this.getHingeLineById(id);

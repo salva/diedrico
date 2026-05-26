@@ -1,0 +1,7 @@
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:104:      const bhhl1 = new BrokenHalfHingeLine2D(
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:114:      const bhhl2 = new BrokenHalfHingeLine2D(
+frontend/src/domain/world/HingeLine.ts:57:    return new HalfHingeLine2D(
+frontend/src/domain/world/descriptors/registerDescriptors.ts:87:  DescriptorRegistry.register(HalfHingeLine2D, new HalfHingeLine2DDescriptor());
+frontend/src/domain/world/descriptors/registerDescriptors.ts:88:  DescriptorRegistry.register(BrokenHalfHingeLine2D, new BrokenHalfHingeLine2DDescriptor());
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:58:    return new BrokenHalfHingeLine2D(
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1216:    const halfHingeLine = new HalfHingeLine2D(

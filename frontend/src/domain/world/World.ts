@@ -491,7 +491,7 @@ export class World {
    * @param elementId ID of element to find
    * @returns ProjectionPlane that owns the element, or undefined if not found
    */
-  private getPlaneForElement(elementId: string): ProjectionPlane | undefined {
+  getPlaneForElement(elementId: string): ProjectionPlane | undefined {
     for (const plane of this.projectionPlanes.values()) {
       if (plane.getPoint(elementId) || plane.getLine(elementId) || plane.getCircle(elementId)) {
         return plane;
@@ -901,6 +901,23 @@ export class World {
   // ========================================
   // HingeLine Methods
   // ========================================
+
+  /**
+   * Add an already-constructed hinge line entity to World storage.
+   *
+   * Command operations that create specialized HingeLine subtypes use this
+   * narrow storage hook after constructing and validating the domain entity.
+   */
+  addHingeLineEntity(hingeLine: HingeLine): void {
+    this.hingeLines.set(hingeLine.id, hingeLine);
+  }
+
+  /**
+   * Remove a hinge line entity from World storage.
+   */
+  removeHingeLine(id: string): void {
+    this.hingeLines.delete(id);
+  }
 
   /**
    * Get a hinge line by ID
