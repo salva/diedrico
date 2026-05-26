@@ -13,7 +13,7 @@ Implemented the selected Proposal Direct from `decision.md` without reopening Wa
 - `frontend/src/application/toolbar/ToolbarHistoryUseCases.ts` — moved toolbar history `canUndo`/`canRedo` reads and undo/redo execution into application use-cases.
 - `frontend/src/application/toolbar/ToolbarHistoryController.ts` — added narrow Vue-facing controller/provider factory for Toolbar.
 - `frontend/src/components/panels/ActionsPanel.vue` — removed component command/operation imports and direct `CommandStack.push()` paths; handlers now delegate typed process-history intents; routine mount/subscription/world-change console logs removed while read-side rendering/subscription behavior remains.
-- `frontend/src/components/toolbars/Toolbar.vue` — removed component command-stack import/access for undo/redo; removed Alt+E debug/example shortcut and projection-plane setup command assembly; undo/redo state/actions now delegate to toolbar history controller.
+- `frontend/src/components/toolbars/Toolbar.vue` — removed component command-stack import/access for undo/redo; removed Alt+E debug/example shortcut and projection-plane setup command assembly; removed routine tool-selection console logging; undo/redo state/actions now delegate to toolbar history controller.
 - `frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts` — added focused use-case/controller and static component-boundary regression tests.
 
 ## Explicit DELETE / retain completion
@@ -39,6 +39,10 @@ Retained in `Toolbar.vue`:
 
 - Tool selection, file/open/save/auth/view events, grid/projection/view toggles, and presentation of undo/redo enabled state via a typed controller.
 
+Deleted noisy logging from `Toolbar.vue`:
+
+- Routine `console.log` calls in `selectTool()`.
+
 ## Out-of-scope guards
 
 - No changes made to `frontend/src/components/workspace/SvgCanvas.vue`.
@@ -55,13 +59,15 @@ All logs are under `architecture-audit/cycle-006b-panel-toolbar-command-intents/
 | `npm run test --workspace=frontend -- --run frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts` | Failed | `focused-panel-toolbar-vitest.stdout.log` | `focused-panel-toolbar-vitest.stderr.log` | Command used a root-relative spec path while Vitest ran in `/work/diedrico/frontend`; no tests collected. Rerun with workspace-relative path. |
 | `npm run test --workspace=frontend -- --run tests/unit/application/panelToolbarIntentControllers.spec.ts` | Failed then corrected | `focused-panel-toolbar-vitest-rerun.stdout.log` | `focused-panel-toolbar-vitest-rerun.stderr.log` | Initial assertions assumed an empty helper command stack; corrected tests to compare deltas because `createTestWorld()` seeds initialization history. |
 | `npm run test --workspace=frontend -- --run tests/unit/application/panelToolbarIntentControllers.spec.ts` | Passed | `focused-panel-toolbar-vitest-final.stdout.log` | `focused-panel-toolbar-vitest-final.stderr.log` | 5/5 focused Wave 006b tests passed. |
-| Static component command-boundary scan | Passed | `static-component-command-boundary.stdout.log` | `static-component-command-boundary.stderr.log` | Verified `ActionsPanel.vue` and `Toolbar.vue` no longer contain prohibited command/operation/direct stack patterns or Alt+E setup path. |
+| Static component command-boundary scan | Passed | `static-component-command-boundary.stdout.log` | `static-component-command-boundary.stderr.log` | Verified `ActionsPanel.vue` and `Toolbar.vue` no longer contain prohibited command/operation/direct stack patterns or Alt+E setup path. This is static boundary evidence, not mounted component behavior coverage. |
 | `npm run build --workspace=frontend` | Failed, non-attributable environment/tooling blocker | `frontend-build.stdout.log` | `frontend-build.stderr.log` | `vue-tsc` crashes before project typecheck with `Search string not found: "/supportedTSExtensions = .*(?=;)/"` under Node.js v24.15.0. This is a known vue-tsc/TypeScript patch compatibility failure and occurs before Wave 006b source diagnostics. |
 | `npm run lint --workspace=frontend` | Failed, non-attributable dependency/tooling blocker | `frontend-lint.stdout.log` | `frontend-lint.stderr.log` | Workspace lint script invokes `eslint`, but the binary is not installed/resolvable in this workspace (`sh: 1: eslint: not found`). |
+| `npm run test --workspace=frontend -- --run tests/unit/application/panelToolbarIntentControllers.spec.ts` | Passed | `t3-focused-panel-toolbar-vitest.stdout.log` | `t3-focused-panel-toolbar-vitest.stderr.log` | 5/5 focused Wave 006b use-case/controller and static boundary tests passed after removing Toolbar routine logging. |
+| Static component command/logging boundary scan | Passed | `t3-static-component-command-boundary.stdout.log` | `t3-static-component-command-boundary.stderr.log` | Re-verified `ActionsPanel.vue` and `Toolbar.vue` have no prohibited command/operation/direct stack patterns, no Alt+E setup path, and no `console.log` calls. |
 
 ## Residual risks
 
-- Component behavior was covered by static boundary assertions and use-case behavior tests, but full Vue-mounted button/keyboard behavior and Playwright/e2e validation remain for the next validation stage.
+- Focused validation covers application use-case/controller behavior plus static component-boundary assertions. Full Vue-mounted button/keyboard behavior and Playwright/e2e validation remain for the next validation stage; they are not claimed as covered by this implementation-stage focused test run.
 - `ProcessTree` operation classes still contain routine `console.log` calls internally; Wave 006b only deleted noisy `ActionsPanel.vue` logging per decision. A future cleanup wave may remove domain/operation logging if desired.
 - Build and lint could not complete due environment/tooling blockers unrelated to this implementation; next validation stage should classify or remediate those environment issues before full cadence sign-off.
 

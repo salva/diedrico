@@ -183,9 +183,7 @@ const showProjectedElements = computed(() => viewStore.showProjectedElements.val
  * Select a tool
  */
 function selectTool(tool: 'select' | 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection') {
-  console.log('Selecting tool:', tool);
   toolStore.setTool(tool);
-  console.log('Tool set. Current tool:', toolStore.currentTool);
 }
 
 /**
